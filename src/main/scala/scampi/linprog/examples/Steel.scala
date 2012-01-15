@@ -73,7 +73,7 @@ object Steel extends LPModel with MIPModel{
 	  val colorOrders = Cols.map(c => (Slabs).filter (s => col(s) == c))
 		
 
-	  val lp = new LPSolver(LPSolverLib.glpk)
+	  val lp = new LPSolver(LPSolverLib.lp_solve)
 				
 	  var C : Array[Column] = Array()
 		
@@ -91,7 +91,7 @@ object Steel extends LPModel with MIPModel{
 	  // Master Problem 
 	  lp.minimize(sum(C)(c => c.x*c.capa)) subjectTo {
 	 	  for (s <- 0 until nbSlab) {
-	 		  meet=meet :+ lp.add(sum(C)(c => c.x*c.contains(s)) == 1)
+	 		  meet = meet :+ lp.add(sum(C)(c => c.x*c.contains(s)) == 1)
 	 	  }
 	 }
 
@@ -127,6 +127,8 @@ object Steel extends LPModel with MIPModel{
 	    		  C = C :+ new Column(x,loss(tmp), use.map(_.getValue.toInt))
 	    		  added = true
 	    	  }
+	    	  
+	    	  println("==> master obj:"+lp.getObjectiveValue())
 	 	 
 	      } while(added)
 	  }	  
