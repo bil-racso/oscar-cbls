@@ -17,7 +17,6 @@ import scampi.cp.core.CPVarInt;
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-
 public class AllDiffAC extends Constraint {
 
 	private CPVarInt[] x;
