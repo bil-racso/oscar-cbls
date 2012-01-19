@@ -24,53 +24,67 @@ import scampi.search.Branching
 object Cosmos extends CPModel {
 	def main(args: Array[String]) {
 	  
-	  val firstLine::restLines = Source.fromFile("data/cosmoshard.txt").getLines.toList
+	  val cp = CPSolver()
+	  
+	  case class Order(data: Array[Int]) {
+	    
+	    val qty = data(0) // amount of electricity he is ready to produce (>0) or consume (<0)
+	    val start = data(1) // [start,end] is the interval of validity of the order. 
+	    val end = data(2)
+	    val selected = CPVarBool(cp) // If the order is selected the orderer will have to produce/consume 
+	                                 // the quantity at each period: start, start+1, ...., end-1, end.
+	    def energy = qty.abs * (end - start + 1)
+	    def overlap(t : Int) = t <= end && t >= start
+	    var sol = true
+	    def bound = selected.isBound()
+	    
+	    cp.onSolution {
+	      sol = selected.isTrue()
+	    }
+	    def restore() =  if (sol) selected.constraintTrue() else selected.constraintFalse()
+	  }
+	  
+	  val firstLine::restLines = Source.fromFile("data/cosmos.txt").getLines.toList
 	  val n = firstLine.toInt
 	  
-	  val orders = restLines.map(_.split(" ").map(_.toInt))
-	  val producers = orders.filter(_(0) > 0)
-	  val consumers = orders.filter(_(0) < 0)
+	  val orders = restLines.map(_.split(" ").map(_.toInt)).map(Order(_)).toArray
+	  val producers = orders.filter(_.qty > 0)
+	  val consumers = orders.filter(_.qty < 0)
 	  
-	  val tmin = orders.map(_(1)).min
-	  val tmax = orders.map(_(2)).max
+	  val tmin = orders.map(_.start).min
+	  val tmax = orders.map(_.end).max
 	  
-	  // one variable for each order if we take it or not
-	  val cp = new CPSolver()
-	  val varMap = Map[Array[Int],CPVarBool]() 
-	  orders.foreach(o => varMap += (o -> CPVarBool(cp)))
-	  
-	  // helper functions
-	  def overlap(order: Array[Int], t: Int) = t <= order(2) && t >= order(1) 
-	  def vars(l: List[Array[Int]], t: Int) = l.filter(overlap(_,t)).map(varMap(_)).toArray
-	  def qty(l: List[Array[Int]], t: Int) = l.filter(overlap(_,t)).map(_(0).abs).toArray
-
-
 	  // one var for each time slot = the quantity exchanged on that slot
 	  val varMapQty = Map[Int,CPVarInt]() 
 	  for (t <- tmin to tmax) {
-	    val prodUB = producers.map(_(0)).sum
+	    val prodUB = producers.map(_.qty.abs).sum
 	    varMapQty += (t -> CPVarInt(cp, 0 to prodUB))
 	  }
 	  
 	  // total amount of exchanged quantity
-	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
+	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))	  
 	  
 	  cp.onSolution {
 	    println((tmin to tmax).map(varMapQty(_).getValue).mkString("\t"))
 	  }
-
+	  
 	  cp.maximize(obj) subjectTo {
 	    for (t <- tmin to tmax) {
-	    	cp.add(binaryknapsack(vars(producers,t),qty(producers,t),varMapQty(t)), Strong)
-	    	cp.add(binaryknapsack(vars(consumers,t),qty(consumers,t),varMapQty(t)), Strong)
+	        val prodVars = producers.filter(_.overlap(t)).map(_.selected)
+	        val prodQty = producers.filter(_.overlap(t)).map(_.qty)
+	        val consVars = consumers.filter(_.overlap(t)).map(_.selected)
+	        val consQty = consumers.filter(_.overlap(t)).map(_.qty.abs)
+	        
+	    	cp.add(binaryknapsack(prodVars,prodQty,varMapQty(t)), Strong)
+	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
 	  } exploring {
-	    val unboundOrders = orders.filter(!varMap(_).isBound)
-	    unboundOrders match {
-	      case o::_ => 
-	        val order = argMax(unboundOrders)(o => o(0)*(o(2)-o(1))).head
-	        cp.branchOn(varMap(order) == 1, varMap(order) == 0)
-	      case Nil => Branching.noAlternative
+	    val unboundOrders = orders.filter(!_.bound)
+	    if (unboundOrders.size == 0) {
+	      Branching.noAlternative
+	    } else {
+	      val order = argMax(unboundOrders)(_.energy).head
+	      cp.branchOn(order.selected == 1, order.selected == 0)
 	    }
 	  }
 	  cp.printStats()

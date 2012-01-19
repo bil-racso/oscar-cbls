@@ -63,12 +63,10 @@ trait CPModel extends Constraints {
    *         having the smallest domain size. an empty array if every variable is bound
    */
   def minDomNotbound(vars: Array[CPVarInt]): Array[(CPVarInt, Int)] = {
-    val ArrayUtils = vars.filterNot(_.isBound)
-    if (vars.nonEmpty) {
-      val sizeMin = vars.map {
-        _.getSize
-      }.min
-      vars.zipWithIndex.filter {
+    val notbound = vars.filterNot(_.isBound)
+    if (notbound.nonEmpty) {
+      val sizeMin = notbound.map(_.getSize).min
+      notbound.zipWithIndex.filter {
         _._1.getSize == sizeMin
       }
     } else {

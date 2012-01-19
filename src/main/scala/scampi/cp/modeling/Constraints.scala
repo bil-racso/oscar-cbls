@@ -14,6 +14,7 @@ import scampi.cp.constraints._
 import scampi.cp.core._
 import scampi.cp.scheduling._
 
+import scala.collection._
 trait Constraints {
 
   /**
@@ -24,8 +25,8 @@ trait Constraints {
    * @param l with l(j) is the load of bin j
    * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*x[i] for all bins i
    */
-  def binpacking(x: Array[CPVarInt], w: Array[Int], l: Array[CPVarInt]): Constraint = {
-    return new BinPacking(x, w, l)
+  def binpacking(x: IndexedSeq[CPVarInt], w: IndexedSeq[Int], l: IndexedSeq[CPVarInt]): Constraint = {
+    return new BinPacking(x.toArray, w.toArray, l.toArray)
   }
   
   def binpackingflow(x: Array[CPVarInt], w: Array[Int], l: Array[CPVarInt]): Constraint = {
@@ -39,8 +40,8 @@ trait Constraints {
    * @param l the load of the knapsack
    * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
    */
-  def binaryknapsack(x: Array[CPVarBool], w: Array[Int], l: CPVarInt): Constraint = {
-    return new BinaryKnapsack(x, w, l)
+  def binaryknapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], l: CPVarInt): Constraint = {
+    return new BinaryKnapsack(x.toArray, w.toArray, l)
   }
 
 

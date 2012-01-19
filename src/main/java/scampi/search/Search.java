@@ -9,9 +9,11 @@
  ******************************************************************************/
 package scampi.search;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import scampi.cp.core.CPVarInt;
 import scampi.reversible.ReversibleSearchNode;
 
 /**
@@ -44,7 +46,6 @@ public class Search {
     
     private Restart restart = null;
     
-  
 
     /**
      * Creates a new search object on a reversible node using a particular branching.

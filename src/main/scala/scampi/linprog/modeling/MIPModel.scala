@@ -17,7 +17,6 @@ package scampi.linprog.modeling
  */
 trait MIPModel extends AbstractLPModel {
 	
-	//type Var = MIPVar
   
 	class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(mip,name,lbound,ubound,false) {
 
@@ -54,6 +53,8 @@ trait MIPModel extends AbstractLPModel {
 		val solver = solverLib match {
 		  case LPSolverLib.lp_solve => new LPSolve()
 		  case LPSolverLib.glpk => new GlpkMIP()
+		  case LPSolverLib.cplex => new CplexLP()
+		  case LPSolverLib.gurobi => new GurobiLP()
 		  case _  => new LPSolve()		
 		}
 		
