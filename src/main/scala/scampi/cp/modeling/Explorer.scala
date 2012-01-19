@@ -52,36 +52,9 @@ class Explorer(val cp: Store, val br: Branching) extends Search(cp,br) {
 //		})
 //	}
 	
-	/**
-	 * starts a dfs search to find all the feasible solutions
-	 */
-	def findAllSolutions() {
-		solveAll()
-	}
 	
-	/**
-	 * starts a dfs search and stop when the first feasible solution is met
-	 */
-	def findOneSolution() {
-		println("find one solution")
-		solveOne()
-	}
 	
-	/**
-	 * starts a dfs B&B search to minimize the objective
-	 */
-	def minimize(objective: CPVarInt)  = {
-		//cp.minimization(objective)
-		solveAll()
-	}
-	
-	/**
-	 * starts a dfs B&B search to maximize the objective
-	 */
-	def maximize(objective: CPVarInt)  = {
-		//cp.maximization(objective)
-		solveAll()
-	}
+
 	
 	/**
 	 * limit the execution time of the search

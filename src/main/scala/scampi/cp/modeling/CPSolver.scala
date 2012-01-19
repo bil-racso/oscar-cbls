@@ -18,16 +18,24 @@ import scampi.cp.constraints._;
 class NoSol(msg : String) extends Exception(msg)
 
 class CPSolver() extends Store() { 
+  
+    case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
 	
 	val branchings = new BranchingCombinator()
 	
-	var search = new Explorer(this, branchings)
+	val search = new Explorer(this, branchings)
 	
-	var startSearch : Unit => Unit = null
+	var startSearch : Unit => Unit = Unit => search.solveOne()
+	
+	var stateObjective : Unit => Unit = Unit => Unit
 	
 	var time : Long = 0
 	
 	var tree = false
+	
+	var restart: Option[Restart] = None
+	
+	var lns: Option[LNS] = None
 	
 	/**
 	 * @param block a code block
@@ -39,36 +47,42 @@ class CPSolver() extends Store() {
 			System.currentTimeMillis - t0
 	}
 	
-	def showTree() {
-		search = new Explorer(this, branchings)
-	}
-	
 	def += (cons : Constraint,propagStrength: CPPropagStrength = CPPropagStrength.Weak ) : Unit = {
 		 this.add(cons, propagStrength)
 	}
-
 	
 	def minimize(obj : CPVarInt) : CPSolver = {
-	    minimization(obj)
-		startSearch = { Unit => search.minimize(obj) } 
+	    stateObjective = Unit => minimization(obj)
+		solveAll() 
 		this
 	}
 	
 	def maximize(obj : CPVarInt) : CPSolver = {
-		maximization(obj)
-		startSearch = { Unit => search.maximize(obj) } 
+		stateObjective = Unit => maximization(obj)
+		solveAll()
 		this
 	}
-	
+		
 	def solve() : CPSolver = {
-		startSearch = { Unit =>
-      println("start search...")
-      search.findOneSolution }
+		startSearch = Unit => search.solveOne() 
 		this
 	}
 	
 	def solveAll() : CPSolver = {
-		startSearch = { Unit => search.findAllSolutions } 
+		startSearch = Unit => {
+		 lns match {
+		   case None => search.solveAll()
+		   case Some(LNS(nbRestart,nbFailures,rest)) => {
+		     // creates the restart object
+		     val r = new Restart() {
+		        override def restart() {
+				  rest()
+				}
+		     }
+		     search.solveLNS(nbRestart,nbFailures,r) 
+		   }
+		 } 
+		} 
 		this
 	}
 	
@@ -94,6 +108,11 @@ class CPSolver() extends Store() {
 						})
 	}
 	
+	private def run() {
+	  	stateObjective()
+		startSearch()
+	}
+	
 	def exploring(searchBlock : => Array[Alternative]) {
 		if (this.getStatus() != CPOutcome.Failure) {
 			time = getTime {
@@ -103,10 +122,7 @@ class CPSolver() extends Store() {
 									searchBlock
 							}
 						})
-
-						time = getTime {
-							startSearch()
-						}
+						time = getTime { run() }
 			}
 		}
 	}
@@ -114,7 +130,7 @@ class CPSolver() extends Store() {
 	def exploring(branching : Branching*) : CPSolver = {
 		if (this.getStatus() != CPOutcome.Failure) {
 			branching.foreach(branchings.addBranching(_))
-			time = getTime {startSearch()}
+			time = getTime {run()}
 		} else {
           println("failed model")
         }
@@ -124,20 +140,14 @@ class CPSolver() extends Store() {
 	def exploring(searchBlock : => Unit) : CPSolver = {
 		searchBlock //execute the search block adding the branchings
 		if (this.getStatus() != CPOutcome.Failure) {
-			time = getTime {startSearch()}
+			time = getTime {run()}
 		}
 		this
 	}
-	/*
-	def relaxAfter(nbFail : Int)(block: => Unit ) : CPSolver = {
-		search.relaxAfter(nbFail)(block)
-		this
-	}*/
 	
-//	def relaxAfter(block: => Unit ) : CPSolver = {
-//		search.relaxAfter(200)(block)
-//		this
-//	}	
+	def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
+	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+	}
 
 	def onSolution(block: => Unit ) : CPSolver = {
 		search.onSolution(block)
@@ -154,6 +164,7 @@ class CPSolver() extends Store() {
 	
 	def branchOn(vals : Range,filter : (Int => Boolean), by : (Int => Double) ) (cons: (Int => Constraint)) : Array[Alternative] = {
 		val alts = for(v <- vals; if filter(v))  yield (by(v),new CPAlternative(this,cons(v)))
+		if (alts.isEmpty) fail()
 		val sortedalts = alts.toList.sort((e1,e2) => (e1._1 < e2._1))
 		sortedalts.map(_._2).toArray
 	}

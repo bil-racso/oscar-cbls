@@ -75,41 +75,46 @@ object Steel extends CPModel{
 		val cp = new CPSolver
 		val x = (for(s <- Slabs) yield CPVarInt(cp,0 until nbSlab))
 		val l = for(s <- Slabs) yield CPVarInt(cp,0 to capa.max)
-		val obj = CPVarInt(cp,0 to nbSlab * capa.max)
 		val xsol = (for(s <- Slabs) yield 0) toArray //current best solution
 
 		cp.onSolution { //record the current best solution to be used by the LNS
-			Slabs.foreach( s => xsol(s) = x(s).getValue)
+			Slabs.foreach( s => xsol(s) = x(s).getValue)			
 		}
 
 		val rnd = new Random(0)
+		cp.lns(200,50) {
+		  for (s <- Slabs; if rnd.nextInt(100) > 80) {
+		    cp.add(x(s) == xsol(s))
+		  }
+		}	
 
-		cp.minimization(obj)
-
-		cp.solveAll subjectTo {
+		cp.minimize(sum(Cols)(s => element(loss,l(s)))) subjectTo {
 			cp.add(binpacking(x,weight,l),Strong)
-			cp.add(sum(Cols)(s => element(loss,l(s))) == obj )
 			for (s <- Slabs) {
 				def colPresent(c : Int) = or ((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
 				cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
 			}
 		} exploring {
-			val currLoads = (Slabs).map(v => 0).toArray
-			Slabs.foreach(s => if(x(s).isBound) currLoads(x(s).getValue) += weight(s))
-			def lossDelta(o: Int, s : Int) = loss(currLoads(s)+weight(o)) - loss(currLoads(s)) //delta on the loss if you place order o in slab s
-			val res = minDomNotbound(x)
-			
-			
-			if (res.size >= 0) { //not every variables are bound
-				val (y,i) = res(0)
-				val maxboundval = 0 max  (x.filter(_.isBound()).map(_.getValue()).max + 1)
-				cp.branchOn(y.getMin() to maxboundval, //range of values
-					   s => y.hasValue(s) && currLoads(s)+weight(i) <= capa.max, //we only try values in the domain
-					   s => lossDelta(i,s)) { //try first value that will induce the smallest increase of loss
-							v => y == v
-					   }
+			val currLoads = Array.tabulate(nbSlab)(s => 0)
+			for (s <- Slabs; if (x(s).isBound())) {
+			  currLoads(x(s).getValue) += weight(s)
 			}
-			else Branching.noAlternative
+			def lossDelta(o: Int, s : Int) = loss(currLoads(s) + weight(o)) - loss(currLoads(s)) //delta on the loss if you place order o in slab s
+			val res = minDomNotbound(x)
+
+			if (res.size > 0) { //not every variables are bound			
+			    val (y,i) = res(0)
+				val bound = x.filter(_.isBound())
+				val maxboundval = if (bound.size == 0) 0 else (bound.map(_.getValue()).max + 1)
+				cp.branchOn(y.getMin() to maxboundval, //range of values
+					        s => y.hasValue(s) && currLoads(s)+weight(i) <= capa.max, //we only try values in the domain
+					        s => lossDelta(i,s)) { //try first value that will induce the smallest increase of loss
+						  	   v => y == v
+					        }
+			}
+			else {
+				Branching.noAlternative 
+			}
 		}
 
 		cp.printStats()
