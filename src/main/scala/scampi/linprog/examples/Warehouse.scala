@@ -56,12 +56,12 @@ object Warehouse extends MIPModel {
 		// ----------- MIP Model ------------
 		
 		// MIP Solver
-		val mip = new MIPSolver() // "lp_solve" glpk
+		val mip = MIPSolver() // "lp_solve" glpk
 		// For each plant whether it is open (1) or not (0)
-		val open = Plants.map(p => new MIPVar(mip,"open"+p, 0 to 1)) //Integer variable
+		val open = Plants.map(p => MIPVar(mip,"open"+p, 0 to 1)) //Integer variable
 		
 		// Transportation decision variables: how much to transport from a plant p to a warehouse w
-		val transport = Array.tabulate(Warehouses.length,Plants.length)((w,p) => new MIPVar(mip,"trans"+(w,p)))
+		val transport = Array.tabulate(Warehouses.length,Plants.length)((w,p) => MIPVar(mip,"trans"+(w,p)))
 		
 		// The objective is to minimize the total fixed and variable costs
 		mip.minimize(sum(Warehouses,Plants){(w,p) => transport(w)(p)*transCosts(w)(p)} //variable cost

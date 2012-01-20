@@ -47,7 +47,7 @@ object QuadraticAssignment extends CPModel {
     }
 
     // State the model and solve it
-    val cp = new CPSolver()
+    val cp = CPSolver()
     val x = N map (v => CPVarInt(cp, 0 until n))
     val D = Array.tabulate(n, n)((i, j) => element(d, x(i), x(j))) //matrix of variables representing the distances
 

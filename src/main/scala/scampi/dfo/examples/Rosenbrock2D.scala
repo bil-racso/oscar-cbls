@@ -23,8 +23,8 @@ object Rosenbrock2D extends DFOModel{
       //dfo.algo = DFOAlgo.DDS
 
       // declare two variables and their domain
-      val x = new DFOVar(dfo, "x1", -10, +10)
-      val y = new DFOVar(dfo, "x2", -10, +10)
+      val x = DFOVar(dfo, "x1", -10, +10)
+      val y = DFOVar(dfo, "x2", -10, +10)
     
       // 2D Rosenbrock function
       val objective = (1-x) * (1-x) + 100 * (y-x*x) * (y-x*x)

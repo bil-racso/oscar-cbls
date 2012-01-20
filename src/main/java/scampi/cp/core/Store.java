@@ -280,10 +280,8 @@ public class Store extends ReversibleSearchNode {
 		
 		long t0 = System.currentTimeMillis();
 		
-		CPOutcome ok = CPOutcome.Suspend;
-		if (hasObjective()) {
-			ok = ((CPObjective) objective).execute();
-		}
+		CPOutcome ok = !objective.isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
+		
 		while (ok != CPOutcome.Failure) {
 			int p;
 			

@@ -12,7 +12,6 @@ package scampi.reversible;
 import java.util.Random;
 import java.util.Stack;
 
-import scampi.cp.core.Objective;
 
 /**
  * Class representing a reversible search node, that is a node able to restore all
@@ -34,6 +33,7 @@ public class ReversibleSearchNode {
 	public ReversibleSearchNode() {
 		trail = new Trail();
 		magic = 0;
+		objective = new DummyObjective();
 	}
 	
 	/**
@@ -58,14 +58,6 @@ public class ReversibleSearchNode {
      */
 	public Objective getObjective() {
 		return objective;
-	}
-
-    /**
-     *
-     * @return if an objective is attached to this search node
-     */
-	public boolean hasObjective() {
-		return objective != null;
 	}
 
     /**

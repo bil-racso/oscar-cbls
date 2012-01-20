@@ -211,7 +211,6 @@ public class Search {
      */
 	public void solveLNS(int maxNbRestart, int failure, Restart restart) {		
 		totRestarts = 0;
-		if (! node.hasObjective()) throw new RuntimeException("an objective must be defined to use lns");
 		restartLimit = failure;
 		this.restart = restart;
 
@@ -269,9 +268,7 @@ public class Search {
 		if (alt == null || alt.length == 0) {
 			if (!node.isFailed()) {
 				notifySolution();
-				if (node.hasObjective()) {
-					node.getObjective().tighten();
-				}
+				node.getObjective().tighten();
 			}
 		} else {
 			if (alt.length == 1) {
