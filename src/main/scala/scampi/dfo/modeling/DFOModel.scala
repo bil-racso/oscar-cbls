@@ -31,7 +31,7 @@ trait DFOModel extends Algebra {
   val rand = new scala.util.Random(12)
   
 
-  class DFOVar(val solver: DFOSolver, varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
+  case class DFOVar(val solver: DFOSolver, varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
     override def value = solver.getValue(index)
     def name = varName

@@ -7,7 +7,7 @@
  * Contributors:
  *      www.n-side.com
  ******************************************************************************/
-package scampi.cp.core;
+package scampi.reversible;
 
 
 
@@ -37,5 +37,11 @@ public interface Objective {
      * @return true if the objective is at optimum, that is if the current bound is better than the optimum bound
      */
     abstract public boolean isOptimum();
+    
+    /**
+     * 
+     * @return
+     */
+    public boolean isOK();
 
 }

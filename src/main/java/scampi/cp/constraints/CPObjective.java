@@ -13,7 +13,7 @@ import scampi.cp.core.CPOutcome;
 import scampi.cp.core.CPPropagStrength;
 import scampi.cp.core.Constraint;
 import scampi.cp.core.CPVarInt;
-import scampi.cp.core.Objective;
+import scampi.reversible.Objective;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -49,6 +49,11 @@ public abstract class CPObjective extends Constraint implements Objective{
 
     public int getOptimumBound() {
         return optimum;
+    }
+    
+    @Override
+    public boolean isOK() {
+    	return propagate() != CPOutcome.Failure;
     }
 
 

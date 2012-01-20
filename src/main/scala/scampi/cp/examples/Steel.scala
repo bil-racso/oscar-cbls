@@ -44,7 +44,6 @@ object Steel extends CPModel{
     var (capa, vals_) = vals splitAt nbCapa
     capa = 0 :: capa
     val maxcapa = capa.max
-    println(capa, vals_)
     val nbCol = vals_.head
     vals_ = vals_.drop(1)
     val nbSlab = vals_.head

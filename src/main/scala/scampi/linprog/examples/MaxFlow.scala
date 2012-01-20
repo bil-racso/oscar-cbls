@@ -26,7 +26,7 @@ object MaxFlow extends LPModel {
   def main(args: Array[String]) = {  
 	  
 
-	 val lp = new LPSolver()
+	 val lp = new LPSolver(LPSolverLib.glpk)
 	 
 	 val Lines = 0 to 7
      val Columns = 0 to 8
