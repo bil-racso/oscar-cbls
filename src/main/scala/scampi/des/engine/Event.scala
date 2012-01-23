@@ -16,16 +16,8 @@ package scampi.des.engine
 abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
 	def process = {}
 	
-	def compare(that : SimEvent) = {
-		val res: Double = that.time - this.time
-		if (res < 0) {
-		  -1
-		} else if (res > 0) {
-			1
-		} else {
-		  0
-		}
-	}
+	def compare(that : SimEvent) = that.time.compare(this.time)
+	
 	
 }
 

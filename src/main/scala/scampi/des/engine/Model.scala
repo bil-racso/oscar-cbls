@@ -35,7 +35,7 @@ class Model {
 			if(currentTime <= horizon){
 				e.process
 			}
-			else{
+			else {
 				currentTime = horizon;
 				return
 			}
