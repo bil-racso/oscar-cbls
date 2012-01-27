@@ -11,6 +11,7 @@ package scampi.des.examples
 
 
 import scampi.des.engine._
+import scala.util.continuations._
 
 /**
  * two machines can be broken, there is only one repair person that can repair it at a time
@@ -30,48 +31,45 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 	
 	def isRepairInProgress : Boolean =  repairInProgress 
 	
-	def beAlive() {
+	def alive(): Unit @ suspendable = {
 		println(name+" is alive")
 		broken = false
 		repairInProgress = false
-		m.wait (liveDur.nextInt(10).max(0)) {
-			beBroken()
-		}
+		m.wait (liveDur.nextInt(10).max(0))
+		break()
 	}
 	
-	def beBroken() {
+	def break() : Unit @ suspendable ={
 		println(name+" is broken waiting to be repaired")
 		broken = true
 		
 		if (machineList.notAllBroken()) {
-			m.suspend(this) {
-				askToBeRepaired() //we wait because some of the machines are not yet broken
-			}
+			m.suspend(this) 
+			//we wait because some of the machines are not yet broken
+			repair() 
+			
 		} else {
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
 			machineList.notBeingRepaired().foreach(ma => if(ma != this) m.resume(ma))
-			askToBeRepaired()
+		repair() 
 		}
 	}
 	
-	def askToBeRepaired() {
+	def repair()  : Unit @ suspendable ={
 		println(name+" is asking to be repaired")
-		m.request(repairPerson) { //ask for the repair person resource
-			beRepaired()
-		}
-	}
-	
-	def beRepaired() {
+		m.request(repairPerson) 
+		
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(0)) {
-			m.release(repairPerson)
-			beAlive()
-		}
+		m.wait(repairDur.nextInt(3).max(0))
+		m.release(repairPerson)
+		alive()
 	}		
 	
 	def run() {
-		beAlive()
+		reset{
+		  alive()
+		}
 	}
 }
 

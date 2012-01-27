@@ -8,6 +8,7 @@
  *      www.n-side.com
  ******************************************************************************/
 package scampi.des.engine
+import scala.util.continuations._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
@@ -18,18 +19,20 @@ class Process (m: Model, name : String = "Process"){
 	private var suspending = false
 	private var suspended = {}
 	
-	def suspend(block : => Unit) {
-		if (suspending) {
-			//throw new RuntimeException("The process " + name + " is already suspending");
-		}
+	def suspend(): Unit @ suspendable = {
+//		if (suspending) {
+//			//throw new RuntimeException("The process " + name + " is already suspending");
+//		}
 		suspending = true
-		suspended = block
+		shift{k:(Unit=>Unit)=>
+		  suspended = {k()}
+		}
 	}
 	
 	def resume(){
-		if (!suspending){
-			//throw new RuntimeException("The process " + name + " is not suspending");
-		}
+//		if (!suspending){
+//			//throw new RuntimeException("The process " + name + " is not suspending");
+//		}
 		suspending = false
 		suspended
 	}

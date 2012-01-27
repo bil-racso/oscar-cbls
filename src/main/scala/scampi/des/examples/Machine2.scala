@@ -11,7 +11,7 @@ package scampi.des.examples
 
 
 import scampi.des.engine._
-
+import scala.util.continuations._
 
 /**
  * Two machines can be broken, there is only one repair person that can fix it at a time,
@@ -24,30 +24,31 @@ class Machine2(m : Model, name: String) extends Process(m,name) {
 	val repairDur = new scala.util.Random(0)
 	val repairPerson = new UnaryResource(m)
 	
-	def beAlive() {
+	def alive(): Unit @suspendable = {
 		println(name+" is alive")
-		m.wait (liveDur.nextInt(10).max(0)) {
-			beBroken()
-		}
+		m.wait(liveDur.nextInt(10).max(0));
+		broken()
 	}
 	
-	def beBroken() {
+	def broken(): Unit @ suspendable = {
 		println(name+" is broken waiting to be repaired")
-		m.request(repairPerson) {
-			beRepaired()
-		}
+		m.request(repairPerson)
+		repair()
+		
 	}
 	
-	def beRepaired() {
+	def repair(): Unit @ suspendable ={
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(0)) {
-			m.release(repairPerson)
-			beAlive()
-		}
+		m.wait(repairDur.nextInt(3).max(0));
+		m.release(repairPerson)
+		alive()
+		
 	}		
 	
 	def run() {
-		beAlive()
+		reset{
+		  alive()
+		}
 	}
 	
 }
