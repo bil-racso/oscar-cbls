@@ -16,7 +16,7 @@ import scala.util.continuations._
 /**
  * Two machines can be broken, there is only one repair person that can fix it at a time,
  * so one of the machines must wait if the two machines are broken at the same time
- *  @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Machine2(m : Model, name: String) extends Process(m,name) {
 	

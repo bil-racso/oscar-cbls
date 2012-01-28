@@ -12,7 +12,7 @@ import scala.util.continuations._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Process (m: Model, name : String = "Process"){
 

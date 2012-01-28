@@ -15,7 +15,7 @@ import scala.util.continuations._
 
 /**
  * Capacitated resource where waiting customers are served in FIFO order
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Resource(m : Model, capacity: Int) {
 	

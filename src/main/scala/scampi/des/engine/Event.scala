@@ -11,7 +11,7 @@ package scampi.des.engine
 
 /**
  * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
 	def process = {}

@@ -15,14 +15,14 @@ import scala.util.continuations._
 /**
  * This is the main engine of the simulation.
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Model {
    
 	private val eventQueue = new PriorityQueue[SimEvent]()
 	private var currentTime = 0.0
-//	
-	def clock() : Double = currentTime
+	
+	def clock : Double = currentTime
 	
 	private def addEvent(e : SimEvent) = eventQueue += e
 	
@@ -42,11 +42,6 @@ class Model {
 			}
 		}
 	}
-
-	def time(o: Any): Double = {
-	  clock()
-	}
-	def frequency[_](state: State[_]) = new Frequency(this,state)
 	
 	def waitt(duration : Double)(block : => Unit):Unit =  {
 		assert(duration >= 0)
@@ -71,7 +66,7 @@ class Model {
 	def release(r : Resource) {
 		r.release()
 	}
-//	
+	
 	def suspend(proc : Process):Unit @suspendable = {proc.suspend()}
 
 	def resume(proc : Process){
@@ -81,7 +76,5 @@ class Model {
 }
 
 object Model{
-  def main(args: Array[String]){
-    println(45)
-  }
+
 }

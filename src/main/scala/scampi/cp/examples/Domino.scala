@@ -41,11 +41,11 @@ object Domino  extends CPModel {
 						     
 		
 		// gives a unique integer id to a domino, t = the two numbers on the domino				   
-		def dominoId(t: Tuple2[Int,Int]) = t._1.min(t._2) * 9 + t._1.max(t._2)
+		def dominoId(t: (Int,Int)) = t._1.min(t._2) * 9 + t._1.max(t._2)
 		// convert a coord entry to an integer index
 		def toIndex(i: Int, j: Int) = i * nCols + j
 		// check if i,j is a valid coord in values 
-		def inBound(t: Tuple2[Int,Int]) = t._1 >= 0 && t._1 < nLines && t._2 >= 0 && t._2 < nCols
+		def inBound(t: (Int,Int)) = t._1 >= 0 && t._1 < nLines && t._2 >= 0 && t._2 < nCols
 		// for an entry (i,j) the neighbor entries
 		def neighbors(i: Int, j: Int) = Set((i-1,j),(i,j-1),(i+1,j),(i,j+1)).filter(inBound(_))
 		// for an entry (i,j) the neighbor indices
