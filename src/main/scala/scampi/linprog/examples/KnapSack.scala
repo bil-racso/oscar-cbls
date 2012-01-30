@@ -21,35 +21,32 @@ import scampi.linprog.modeling._
 object KnapSack extends MIPModel {
   
   def main(args: Array[String]) {
-       
-    // each object is represented as a tuple (weight, utility)
-    val objects = Array((100,40), (50,35), (45,18), (20,4), (10,10), (5,2))
+    
+    class O(val weight: Int, val utility: Int, val x: MIPVar)   
+    val weights = Array(100,50,45,20,10,5)
+    val utility = Array( 40,35,18, 4,10,2)
+    
+    val mip = MIPSolver(LPSolverLib.glpk)
+    val objects = Array.tabulate(weights.size)(i => new O(weights(i),utility(i),MIPVar(mip, "x"+i, 0 to 1)))
+    
     val capacity = 100
-    val size = objects.length
-    val Objects = 0 until size
     
-    // prepare solver
- 	val mip = new MIPSolver(LPSolverLib.glpk)
-    
-    // binary decision variables: we take the object or not
-    val x = Array.tabulate(size) (i => new MIPVar(mip, "x"+i, 0 to 1))
     
     // maximize total utility
-    mip.maximize(sum(Objects)(o => x(o)*objects(o)._2)) subjectTo {
+    mip.maximize(sum(objects)(o => o.x * o.utility)) subjectTo {
       
       // given the limited capacity of the pack
-      mip.add(sum(Objects)(o => x(o)*objects(o)._1) <= capacity)
+      mip.add(sum(objects)(o => o.x * o.weight) <= capacity)
       
     }
         
-    val selected = Objects.filter(x(_).getValue == 1)  
-    var totalWeight = selected.map(objects(_)._1).sum  
+    val selected = objects.filter(o => o.x.getValue == 1)  
+    var totalWeight = selected.map(o => o.weight).sum  
         
     println("Status: " + mip.status)
-    println("Utility: " + mip.getObjectiveValue())
-    println("Total weight: " + totalWeight)
+    println("Total Utility: " + mip.getObjectiveValue())
+    println("Total Weight: " + totalWeight)
         
-    println("Final object collection: "+selected.map(objects(_)).mkString(","))
         
     mip.release()
   }
