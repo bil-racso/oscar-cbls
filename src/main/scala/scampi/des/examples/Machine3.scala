@@ -64,13 +64,12 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		m.wait(repairDur.nextInt(3).max(0))
 		m.release(repairPerson)
 		alive()
-	}		
-	
-	def run() {
-		reset{
-		  alive()
-		}
 	}
+	
+	override def start(): Unit @ suspendable =  {
+		alive()
+	}
+	
 }
 
 class MachineList{
@@ -92,13 +91,11 @@ class MachineList{
 
 
 object Machine3 {
-	def main(args: Array[String]) {
+	def main(args: Array[String])  = {
   		val mod = new Model()
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)
-		m1.run()
 		val m2 = new Machine3(mod,"machine2",mlist)
-		m2.run()
 		mod.simulate(100,true);
   		println("done1")
 	}

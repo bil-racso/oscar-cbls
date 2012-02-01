@@ -45,22 +45,18 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 		
 	}		
 	
-	def run() {
-		reset{
-		  alive()
-		}
+	override def start(): Unit @ suspendable =  {
+		alive()
 	}
 	
 }
 
 object Machine2 {
-	def main(args: Array[String]) {
+	def main(args: Array[String]) = {
   		val mod = new Model()
   		val repairPerson = new UnaryResource(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
-		m1.run()
 		val m2 = new Machine2(mod,"machine2",repairPerson)
-		m2.run()
 		mod.simulate(100,true)
 	}
 }

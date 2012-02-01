@@ -36,19 +36,17 @@ class Machine1(m : Model, name: String) extends Process(m,name) {
 		beAlive()
 	}
 	
-	def run(): Unit @ suspendable =  {
+	override def start(): Unit @ suspendable =  {
 		beAlive()
 	}
 	
 }
 
 object Machine1 {
-	def main(args: Array[String]): Unit @ suspendable =  {
+	def main(args: Array[String]) =  {
   		val mod = new Model()
 		val m1 = new Machine1(mod,"machine1")
-		m1.run()
 		val m2 = new Machine1(mod,"machine2")
-		m2.run()
 		mod.simulate(100,true);
 	}
 }

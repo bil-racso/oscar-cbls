@@ -11,6 +11,9 @@ package scampi.des.engine
 
 import scala.collection.mutable._
 import scala.util.continuations._
+import java.util.LinkedList
+import scala.collection.JavaConversions._
+
 
 /**
  * This is the main engine of the simulation.
@@ -26,8 +29,19 @@ class Model {
 	
 	private def addEvent(e : SimEvent) = eventQueue += e
 	
-	def simulate(horizon: Int,verbose: Boolean = true) {
-		while (eventQueue.nonEmpty) {
+	private val processes = new LinkedList[Process]()
+	
+	def addProcess(p : Process) {
+	  processes.addLast(p)
+	}
+	
+	def simulate(horizon: Int,verbose: Boolean = true) =  {
+	    // make all the process alive
+		val it = processes.iterator 
+		while(it.hasNext) { 
+			it.next().simulate()
+		}
+		while (eventQueue.nonEmpty && currentTime <= horizon) {
 			val e = eventQueue.dequeue()
 			if(verbose && e.time <= horizon && e.time != currentTime){
 				println("-----------> time: "+  e.time)
@@ -35,10 +49,6 @@ class Model {
 			currentTime = e.time;
 			if(currentTime <= horizon){
 				e.process
-			}
-			else{
-				currentTime = horizon;
-				return
 			}
 		}
 	}

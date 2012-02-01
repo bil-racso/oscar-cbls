@@ -28,8 +28,8 @@ class Resource(m : Model, capacity: Int) {
 	    } else {
 	         shift {
 	            k: (Unit=>Unit)=>
-	         	pendings.addLast(() => {n+= 1
-	         	                       k()})
+	         	pendings.addLast(() => { n+= 1
+	         	                         k()   })
 	         }
 	    }
 	}
