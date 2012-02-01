@@ -20,7 +20,7 @@ import scala.util.continuations._
 class Resource(m : Model, capacity: Int) {
 	
 	private var n = 0
-	private val pendings = new DoubleLinkedList()
+	private val pendings = new java.util.LinkedList[() => Unit]()
 	
 	def request(): Unit @suspendable = {
 		if (n < capacity) {
@@ -28,17 +28,17 @@ class Resource(m : Model, capacity: Int) {
 	    } else {
 	         shift {
 	            k: (Unit=>Unit)=>
-	         	val a = pendings :+ {k()}
+	         	pendings.addLast(() => {n+= 1
+	         	                       k()})
 	         }
 	    }
 	}
 	
 	def release() {
 		n -= 1
-		if (pendings.nonEmpty) {
-			val block = pendings.head
-			pendings.drop(1)
-			block
+		if (!pendings.isEmpty()) {
+			pendings.removeFirst()()
+			
 		}
 	}
 	
