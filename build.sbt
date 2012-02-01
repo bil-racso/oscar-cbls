@@ -7,6 +7,14 @@ organization := "nside"
 
 scalaVersion := "2.9.0"
 
+autoCompilerPlugins := true
+
+libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
+    deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
+}
+
+scalacOptions += "-P:continuations:enable"
+
 seq(assemblySettings: _*)
 
 jarName in assembly := "scampi.jar"

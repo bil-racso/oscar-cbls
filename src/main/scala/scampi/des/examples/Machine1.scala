@@ -11,43 +11,42 @@ package scampi.des.examples
 
 
 import scampi.des.engine._
+import scala.util.continuations._
+
 
 /**
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Machine1(m : Model, name: String) extends Process(m,name) {
 	
 	val liveDur = new scala.util.Random(0)
 	val breakDur = new scala.util.Random(0)
 	
-	def beAlive() {
+	def beAlive(): Unit @ suspendable = {
 		println(name+" is alive");
-		m.wait (liveDur.nextInt(10).max(0).toDouble) {
-			beBroken()
-		}
+		m.wait (liveDur.nextInt(10).max(0).toDouble)
+		beBroken()
+		
 	}
 	
-	def beBroken() {
+	def beBroken(): Unit @ suspendable =  {
 		println(name+" is broken");
-		m.wait(breakDur.nextInt(2).max(0).toDouble) {
-			beAlive()
-		}
+		m.wait(breakDur.nextInt(2).max(0).toDouble)
+		beAlive()
 	}
 	
-	def run() {
+	override def start(): Unit @ suspendable =  {
 		beAlive()
 	}
 	
 }
 
 object Machine1 {
-	def main(args: Array[String]) {
+	def main(args: Array[String]) =  {
   		val mod = new Model()
 		val m1 = new Machine1(mod,"machine1")
-		m1.run()
 		val m2 = new Machine1(mod,"machine2")
-		m2.run()
 		mod.simulate(100,true);
 	}
 }

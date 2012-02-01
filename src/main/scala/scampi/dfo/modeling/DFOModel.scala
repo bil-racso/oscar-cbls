@@ -41,17 +41,14 @@ trait DFOModel extends Algebra {
 
 
   
-  class DFOSolver {
+  class DFOSolver(val algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
          
     // map from the index of variables to their implementation
     private lazy val vars = mutable.HashMap.empty[Int,DFOVar]
     private lazy val solution = mutable.HashMap.empty[Int,Double]
     
 
-    /**
-     * Single Objective DFO Algorithm used for the optimization
-     */
-    var algo : DFOAlgo.Value = DFOAlgo.NelderMead
+
     /**
      * Tolerance used to decide completion
      */
@@ -65,6 +62,9 @@ trait DFOModel extends Algebra {
      */
     var maxTime = 10 // max time(s)
  
+    class Block(block: => Unit )
+	
+	
     
     def register(vari: DFOVar): Int = {
       vars(vars.size) = vari
@@ -73,10 +73,10 @@ trait DFOModel extends Algebra {
     
     def getValue(varIndex: Int): Option[Double] = solution.get(varIndex)
     
-    var onSolutionCallbacks: List[Function0[Unit]] = List()  
+    var onSolutionCallbacks: List[() => Unit] = List()  
     
-    def onSolution(block: Function0[Unit] ) : DFOSolver = {
-		onSolutionCallbacks =  block :: onSolutionCallbacks
+    def onSolution(block: => Unit) : DFOSolver = {
+		onSolutionCallbacks =  (() => block) :: onSolutionCallbacks
 		this
 	}
     
@@ -111,7 +111,7 @@ trait DFOModel extends Algebra {
     	}
     	
     	onSolution { // update the sol when a new one is found
-    	  () => recordSolution(algoImplem.currentBest)
+    	   recordSolution(algoImplem.currentBest)
     	}
     	
     	algoImplem.onImprovement = () => {
@@ -133,7 +133,7 @@ trait DFOModel extends Algebra {
   }
   
   object DFOSolver {
-	def apply(): DFOSolver = new DFOSolver()
+	def apply(algo:DFOAlgo.Value = DFOAlgo.NelderMead): DFOSolver = new DFOSolver(algo)
   }
   
   

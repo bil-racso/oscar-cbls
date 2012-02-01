@@ -14,27 +14,34 @@ import scampi.dfo.modeling._
 /**
  * @author pierre.schaus@n-side.com
  */
-object Rosenbrock2D extends DFOModel{
+object Himmelblau extends DFOModel{
 
   def main(args: Array[String]): Unit = {  
     
       val dfo = DFOSolver()
+      
 
       // declare two variables and their domain
-      val x = DFOVar(dfo, "x1", -10, +10)
-      val y = DFOVar(dfo, "x2", -10, +10)
+      val x = DFOVar(dfo, "x1", -4, +4)
+      val y = DFOVar(dfo, "x2", -4, +4)
     
-      // 2D Rosenbrock function
-      val objective = (1-x) * (1-x) + 100 * (y-x*x) * (y-x*x)
-      
+      // Himmelblau function
+      // 4 local minima: 
+      //  f(-0.27,-0.92) = 181.61
+      //  f(-3,2) = 0
+      //  f(-2.8,-3.13) = 0
+      //  f(-3.77,-3.28) = 0
+      // f(-3.58,-1.84) = 0
+      val objective = (x*x + y - 11) * (x*x + y - 11) + (x + y*y - 7) * (x + y*y - 7)
+     
       // callback to print evolution of objective during optimization
       dfo.onSolution {
-        () => println(objective.value)
+       println(objective.value)
       }    
       
       // start the effective optimization
       dfo.minimize(objective)
-
+      
       println(x+" "+x.value)
       println(y+" "+y.value)
       println("objective:"+objective.value) 

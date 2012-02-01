@@ -34,12 +34,15 @@ class GlpkMIP extends GlpkLP {
     		//ioocp.setMip_gap(0.03) 
 
 
-    		val ret = GLPK.glp_intopt(lp, iocp);
+    		val ret = GLPK.glp_intopt(lp, iocp)
+    		if (ret != 0) {
+    		  println("glpk return code was not zero, must be problem somewhere...")
+    		}
     		
-    		GLPK.glp_get_status(lp)  match {	  
-    		  case GLPKConstants.LPX_I_UNDEF => LPStatus.UNBOUNDED
-    		  case GLPKConstants.LPX_I_NOFEAS => LPStatus.INFEASIBLE
-    		  case GLPKConstants.LPX_I_OPT => {
+    		GLPK.glp_mip_status(lp)  match {	  
+    		  case GLPKConstants.GLP_UNBND => LPStatus.UNBOUNDED
+    		  case GLPKConstants.GLP_INFEAS => LPStatus.INFEASIBLE
+    		  case GLPKConstants.GLP_OPT => {
     		  	sol = Array.tabulate(nbCols)(col => GLPK.glp_mip_col_val(lp,col +1))
     			objectiveValue = GLPK.glp_get_obj_val(lp)
     			LPStatus.OPTIMAL

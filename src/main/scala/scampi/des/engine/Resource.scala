@@ -11,32 +11,34 @@ package scampi.des.engine
 
 
 import scala.collection.mutable._
-
+import scala.util.continuations._
 
 /**
  * Capacitated resource where waiting customers are served in FIFO order
- * @author pschaus
+ * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Resource(m : Model, capacity: Int) {
 	
 	private var n = 0
-	private var pendings = new DoubleLinkedList ()
+	private val pendings = new java.util.LinkedList[() => Unit]()
 	
-	def request(block: => Unit) {
+	def request(): Unit @suspendable = {
 		if (n < capacity) {
 	         n += 1
-	         block
 	    } else {
-	         pendings :+ block;
+	         shift {
+	            k: (Unit=>Unit)=>
+	         	pendings.addLast(() => { n+= 1
+	         	                         k()   })
+	         }
 	    }
 	}
 	
 	def release() {
 		n -= 1
-		if (pendings.nonEmpty) {
-			val block = pendings.head
-			pendings = pendings.drop(1)
-			block
+		if (!pendings.isEmpty()) {
+			pendings.removeFirst()()
+			
 		}
 	}
 	
