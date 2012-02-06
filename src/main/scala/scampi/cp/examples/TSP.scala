@@ -49,7 +49,7 @@ object TSP extends CPModel {
       //exploration of the search tree
       val res = minDomNotbound(succ)
       if (!res.isEmpty) {
-        val (x, i) = res(0)
+        val (x, i) = res.first
         cp.branchOn(x, distMatrix(i)(_)) {v => x == v} //create a n-ary branch trying first the closest cities
       } else {
         Branching.noAlternative

@@ -102,7 +102,7 @@ object Steel extends CPModel{
 			val res = minDomNotbound(x)
 
 			if (res.size > 0) { //not every variables are bound			
-			    val (y,i) = res(0)
+			    val (y,i) = res.first
 				val bound = x.filter(_.isBound())
 				val maxboundval = if (bound.size == 0) 0 else (bound.map(_.getValue()).max + 1)
 				cp.branchOn(y.getMin() to maxboundval, //range of values

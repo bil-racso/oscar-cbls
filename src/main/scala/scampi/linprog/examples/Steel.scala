@@ -123,7 +123,7 @@ object Steel extends LPModel with MIPModel{
 	    			  tmp += (use(i).getValue.toInt*weight(i))
 	    		  }
 
-	    		  val x = lp.addColumn(loss(tmp),meet toArray,use.map(_.getValue)) //create a new variable by introducing a new column
+	    		  val x = lp.addColumn(loss(tmp),meet,use.map(_.getValue)) //create a new variable by introducing a new column
 	    		  C = C :+ new Column(x,loss(tmp), use.map(_.getValue.toInt))
 	    		  added = true
 	    	  }

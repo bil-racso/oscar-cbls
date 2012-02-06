@@ -62,7 +62,7 @@ trait CPModel extends Constraints {
    *         of the not-bound variables (at least two values in the domain)
    *         having the smallest domain size. an empty array if every variable is bound
    */
-  def minDomNotbound(vars: Array[CPVarInt]): Array[(CPVarInt, Int)] = {
+  def minDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
     val notbound = vars.filterNot(_.isBound)
     if (notbound.nonEmpty) {
       val sizeMin = notbound.map(_.getSize).min
@@ -70,18 +70,13 @@ trait CPModel extends Constraints {
         _._1.getSize == sizeMin
       }
     } else {
-      Array()
+      Iterable()
     }
   }
+  
+  def allBounds(vars: Iterable[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
 
-  /**
-   * @see minDomNotbound(vars)
-   * @param vars
-   * @return
-   */
-  def minDomNotbound(vars: scala.collection.immutable.IndexedSeq[CPVarInt]): Array[(CPVarInt, Int)] = {
-    minDomNotbound(vars toArray)
-  }
+
   
   
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {

@@ -45,9 +45,7 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 		
 	}		
 	
-	override def start(): Unit @ suspendable =  {
-		alive()
-	}
+	override def start = alive
 	
 }
 

@@ -9,11 +9,13 @@
  ******************************************************************************/
 package scampi.cp.modeling
 
-import scampi.search._;
+import scampi.search._
 import scampi.cp._
-import scampi.cp.core._;
-import scampi.cp.search._;
-import scampi.cp.constraints._;
+import scampi.cp.core._
+import scampi.cp.search._
+import scampi.cp.constraints._
+import scala.util.continuations._
+import scala.collection.mutable.Stack
 
 class NoSol(msg : String) extends Exception(msg)
 
@@ -36,6 +38,14 @@ class CPSolver() extends Store() {
 	var restart: Option[Restart] = None
 	
 	var lns: Option[LNS] = None
+	
+	class Closure(msg: String, block: => Unit)  {
+      def run() = {
+        block
+      }
+      override def toString = msg
+    }
+	val stack: Stack[Closure] = new Stack()
 	
 	/**
 	 * @param block a code block
@@ -145,6 +155,23 @@ class CPSolver() extends Store() {
 		this
 	}
 	
+	def exploration(searchBlock : => Unit @suspendable) : CPSolver = {
+		stateObjective()
+		reset { 
+		  searchBlock
+		  if (!isFailed()) getObjective().tighten()
+		}
+		var bkt = 0
+		var t = System.currentTimeMillis()
+        while(stack.size > 0) {
+    	  val r = stack.pop().run()
+    	  bkt +=1
+        }
+        println("#bkt:"+bkt)
+        println("time:"+(System.currentTimeMillis()-t))
+        this
+	}
+	
 	def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
 	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
 	}
@@ -177,6 +204,36 @@ class CPSolver() extends Store() {
 	def branchOn(c : Constraint*) : Array[Alternative] = {
 		c.map(cons => new CPAlternative(this,cons)).toArray
 	}
+	
+    def branch(left: => Unit)(right: => Unit): Unit @suspendable = {
+        if (!isFailed()) {
+        	// push state
+        	//println("push, go to left")
+        	pushState()
+        	left // go to left if not failed
+        	shift { k: (Unit => Unit) => 
+        	stack.push(new Closure("right",{
+        									//println("pop comming from left")
+        	  							  	pop() // bkt from left
+        	  							  	//println("push, go to right")
+        	  							  	pushState() // push state
+        	  							  	right // go to right
+        	  							  	// continue only if not failed
+        	  							  	
+        	  							  	stack.push(new Closure("bkt right", {
+        	  							  		//println("pop, comming from right")
+        	  							  		pop() // bkt from right
+        									}))
+        	  							  	k()   
+        	  							  	
+        									
+          								  }))
+          								  // continue left only if not failed
+          								  if (!isFailed()) k()
+	        }
+        }
+    }	
+	
 }
 
 object CPSolver {
