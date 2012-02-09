@@ -204,19 +204,11 @@ class CPSolver() extends Store() {
       val b = () => block
 	  reset {
         shift { k1: (Unit => Unit ) =>
-          //sc.start(new MyContinuation("exit", {k1()}))
+          sc.start(new MyContinuation("exit", {k1()}))
           reset {
-            b()
-      	  
+            b()  	  
             if (!isFailed()) getObjective().tighten()
-            //sc.fail()
-            
-            if (sc.stack.isEmpty) k1() 
-            else {
-            	sc.nbFail += 1
-            	sc.node.pop()
-            	sc.stack.pop().call()
-            }
+            sc.fail()
       	   }  
         } 
       }
