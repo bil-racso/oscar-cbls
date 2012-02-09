@@ -17,7 +17,7 @@ class MyContinuation(msg: String, block: => Unit)  {
  * Non deterministic search controller as described in the wonderful paper:
  * "Non Deterministic Control for Hybrid Search" by Pascal Van Hentenryck and Laurent Michel.
  * In their paper they introduce the nicest possible way to implement a search for CP (in Comet).
- * @author Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com & Sebastien Mouthuy smouthuy@gmail.com
  */
 class SearchController(val node: ReversibleSearchNode) {
   
@@ -37,13 +37,15 @@ class SearchController(val node: ReversibleSearchNode) {
   } 
   
   def fail() { 
-    if (stack.isEmpty) exit() 
-    else {
       nbFail += 1
+  }
+  
+  def explore() {
+    while(!stack.isEmpty) {
       node.pop()
-      stack.pop().call()
+      stack.pop.call()
     }
-    
+    exit()
   }
 
 }

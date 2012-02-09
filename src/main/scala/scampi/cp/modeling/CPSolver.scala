@@ -209,9 +209,11 @@ class CPSolver() extends Store() {
             b()  	  
             if (!isFailed()) getObjective().tighten()
             sc.fail()
-      	   }  
+      	   }
+          sc.explore() // let's go 
         } 
       }
+      
     }
     
 	

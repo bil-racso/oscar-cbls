@@ -25,7 +25,7 @@ import scampi.reversible.ReversibleBool
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Test  extends CPModel {
+object TestNDS  extends CPModel {
   def main(args: Array[String])  {
 
     
@@ -47,7 +47,7 @@ object Test  extends CPModel {
       
 		
 	val cp = CPSolver()
-	val v = Array.tabulate(8)(i => new ReversibleBool(cp))
+	val v = Array.tabulate(9)(i => new ReversibleBool(cp))
 	var nb = 0
 	cp.exploration {		
 	     loop(0 until v.length) {
@@ -57,7 +57,7 @@ object Test  extends CPModel {
     	                       v(i).setValue(false)}
          }
 	     nb += 1
-	     //println("solution:"+v.mkString(","))
+	     println("solution:"+v.mkString(","))
 	}
 	println("nb:"+nb)
 

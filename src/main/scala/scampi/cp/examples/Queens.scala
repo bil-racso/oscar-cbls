@@ -35,7 +35,7 @@ object Queens  extends CPModel {
       }
       
       cp.solveAll subjectTo {
-    	  cp.add(alldifferent(queens:_*))
+    	  cp.add(alldifferent(queens))
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i))
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i))
       } exploring {
