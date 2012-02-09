@@ -42,16 +42,13 @@ object QueensNDS  extends CPModel {
         while (!allBounds && !cp.isFailed()) {
     	   val q = Queens.filter(!queens(_).isBound).first
            val v = queens(q).getMin()
-    	   cp.branch {
-             cp.post(queens(q) == v)
-           } {
-             cp.post(queens(q) !=v)
-           }
+    	   cp.branch { cp.post(queens(q) == v) } // left alternative
+    	             { cp.post(queens(q) != v) } // right alternative
         }
         if (!cp.isFailed()) {
     	  nbsol += 1
           println("solution"+queens.mkString(","))
-        }  
+        }
       }
   
       //print some statistics

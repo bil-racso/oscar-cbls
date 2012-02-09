@@ -5,7 +5,7 @@ version := "1.0"
 
 organization := "nside"
 
-scalaVersion := "2.9.0"
+scalaVersion := "2.9.1"
 
 autoCompilerPlugins := true
 

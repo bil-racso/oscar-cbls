@@ -64,6 +64,7 @@ object QuadraticAssignmentNDS extends CPModel {
            }
         }
         if (!cp.isFailed()) {
+          println(cp.sc.nbFail)
           println("solution"+x.mkString(","))
         }  
     }
