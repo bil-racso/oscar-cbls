@@ -16,7 +16,7 @@ import scampi.cp.search._
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
  * this program search for all the solutions
- * 
+ * Using Non Deterministic Search
  * @author Pierre Schaus pschaus@gmail.com
  */
 object Queens  extends CPModel {
@@ -24,27 +24,30 @@ object Queens  extends CPModel {
 		
       val cp = CPSolver()
       
-      val n = 6 //number of queens
+      val n = 10 //number of queens
       val Queens = 0 until n
       //variables
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
-      cp.onSolution {
-    	  nbsol += 1
-      }
       
       cp.solveAll subjectTo {
-    	  cp.add(alldifferent(queens))
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i))
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i))
-      } exploring {
-    	  //exploration of the search tree
-    	  new Binary(queens:_*)
+    	  cp.add(alldifferent(queens),Strong)
+    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
+    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
+      } exploration {
+        while (!allBounds(queens) && !cp.isFailed()) {
+    	   val q = Queens.filter(!queens(_).isBound).first
+           val v = queens(q).getMin()
+    	   cp.branch { cp.post(queens(q) == v) } // left alternative
+    	             { cp.post(queens(q) != v) } // right alternative
+        }
+        if (!cp.isFailed()) {
+    	  nbsol += 1
+        }
       }
   
       //print some statistics
       println("#sol",nbsol)
-      cp.printStats()
     }
 }

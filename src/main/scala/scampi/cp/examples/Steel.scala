@@ -83,7 +83,7 @@ object Steel extends CPModel{
 		val rnd = new Random(0)
 		cp.lns(200,50) {
 		  for (s <- Slabs; if rnd.nextInt(100) > 80) {
-		    cp.add(x(s) == xsol(s))
+		    cp.post(x(s) == xsol(s))
 		  }
 		}	
 

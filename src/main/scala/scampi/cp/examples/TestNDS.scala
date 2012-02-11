@@ -47,14 +47,12 @@ object TestNDS  extends CPModel {
       
 		
 	val cp = CPSolver()
-	val v = Array.tabulate(9)(i => new ReversibleBool(cp))
+	val v = Array.tabulate(3)(i => new ReversibleBool(cp))
 	var nb = 0
 	cp.exploration {		
 	     loop(0 until v.length) {
-    	     i => cp.branch {//println("left "+i)
-    	                       v(i).setValue(true)} 
-    	                      {//println("right "+i)
-    	                       v(i).setValue(false)}
+    	     i => cp.branch { v(i).setValue(true) } 
+    	                    { v(i).setValue(false)}
          }
 	     nb += 1
 	     println("solution:"+v.mkString(","))

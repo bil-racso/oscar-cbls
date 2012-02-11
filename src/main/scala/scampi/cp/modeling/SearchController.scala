@@ -3,6 +3,7 @@ package scampi.cp.modeling
 
 import scampi.reversible.ReversibleSearchNode
 import scala.collection.mutable.Stack
+import scampi.search._
 
 
 
@@ -23,13 +24,13 @@ class SearchController(val node: ReversibleSearchNode) {
   
   val stack: Stack[MyContinuation] = new Stack()
   
-  var exitCont: MyContinuation = null
+  //var exitCont: MyContinuation = null
   
   var nbFail = 0
-
-
-  def start(e: MyContinuation) { exitCont = e } 
-  def exit() = { exitCont.call() }
+  
+  var failLimit = Int.MaxValue
+  
+  var limitReached = false
   
   def addChoice(e: MyContinuation) { 
 	node.pushState()
@@ -38,14 +39,24 @@ class SearchController(val node: ReversibleSearchNode) {
   
   def fail() { 
       nbFail += 1
+      if (nbFail > failLimit) {
+        limitReached = true
+      }
   }
   
+  def reset() {
+    stack.clear()
+    limitReached = false
+    nbFail = 0
+  }
+  
+  
   def explore() {
-    while(!stack.isEmpty) {
+    while(!stack.isEmpty && !limitReached) {
       node.pop()
       stack.pop.call()
     }
-    exit()
+    //exit()
   }
 
 }

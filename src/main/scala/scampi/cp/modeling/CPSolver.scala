@@ -39,6 +39,8 @@ class CPSolver() extends Store() {
 	
 	var lns: Option[LNS] = None
 	
+	var solveOne = false
+	
 	class Closure(msg: String, block: => Unit)  {
       def run() = {
         block
@@ -75,6 +77,7 @@ class CPSolver() extends Store() {
 	}
 		
 	def solve() : CPSolver = {
+	    solveOne = true
 		startSearch = Unit => search.solveOne() 
 		this
 	}
@@ -200,20 +203,59 @@ class CPSolver() extends Store() {
     }
     
 	def exploration(block: => Unit @suspendable ): Unit  =  {
+	  
 	  stateObjective()
-      val b = () => block
+	  var nbRestart = 0
+	  var maxRestart = 1
+	  var limit = Int.MaxValue
+	  
+	  val relax = lns match {
+		   case None => () => Unit
+		   case Some(LNS(nbRestart,nbFailures,restar)) => {
+		     maxRestart = nbRestart
+		     limit = nbFailures
+		     restar
+		   }
+	  }  
+
+
 	  reset {
         shift { k1: (Unit => Unit ) =>
-          sc.start(new MyContinuation("exit", {k1()}))
-          reset {
-            b()  	  
-            if (!isFailed()) getObjective().tighten()
-            sc.fail()
+          val b = () => {
+                block
+                if (!isFailed()) {
+                	println("solution found")
+                	sc.failLimit = limit
+                	if (solveOne) {
+                	  sc.reset()
+                	  k1()
+                	}
+                }
+          }
+
+          def restart(relaxation: Boolean = false) {
+           popAll()
+           pushState()
+           if (relaxation) relax()
+           sc.reset()
+           nbRestart += 1 
+           reset {
+             b()  	  
+             if (!isFailed()) getObjective().tighten()
+             sc.fail()
       	   }
-          sc.explore() // let's go 
+           sc.explore() // let's go
+          }
+          sc.failLimit = limit
+          restart(false) // first restart, find a feasible solution so no limit
+          for (r <- 2 to maxRestart; if (!getObjective().isOptimum())) {
+            restart(true)
+            if (sc.limitReached) print("!")
+            else print("R")
+          }
+          k1()          
         } 
       }
-      
     }
     
 	
