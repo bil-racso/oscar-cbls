@@ -168,9 +168,36 @@ class CPSolver() extends Store() {
 		this
 	}
 	
+	/**
+	 * return true if every variable is bound
+	 */
+	def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
+	
+	
+	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
+	  binaryFirstFail(vars.toIndexedSeq)
+	}
+	
+	def binaryFirstFail(vars: Array[CPVarInt]): Unit @suspendable = {
+	  binaryFirstFail(vars.toIndexedSeq)
+	}
+	
+	/**
+     * Binary First Fail on the decision variables vars
+     */
+    def binaryFirstFail(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+     while (!allBounds(vars)) {
+    	   val unbound = vars.filter(!_.isBound)
+    	   val minDomSize = unbound.map(_.getSize()).min 
+    	   val x = unbound.filter(_.getSize == minDomSize).first
+           val v = x.getMin()
+    	   branch (post(x == v))(post(x != v))// right alternative
+     }
+    }
+	
 	def printStats() {
 		println("time(ms)",time)
-		println("#bkts",search.getNbBkts())
+		println("#bkts",sc.nbFail)
 		println( "time in fix point(ms)",getTimeInFixPoint())
 		println( "time in trail restore(ms)",getTrail().getTimeInRestore())
 		println( "max trail size",getTrail().getMaxSize())
@@ -196,14 +223,21 @@ class CPSolver() extends Store() {
       shift { k: (Unit => Unit) =>
         sc.addChoice(new MyContinuation("right", {
           right
-          k()}))
+          if (!isFailed()) k()}))
         left
-        k()
+        if (!isFailed()) k()
+      }
+    }
+    
+    def branchOne(left: => Unit): Unit @suspendable = {
+      shift { k: (Unit => Unit) =>
+        left
+        if (!isFailed()) k()
       }
     }
     
 	def exploration(block: => Unit @suspendable ): Unit  =  {
-	  
+	  val t1 = System.currentTimeMillis()
 	  stateObjective()
 	  var nbRestart = 0
 	  var maxRestart = 1
@@ -224,7 +258,7 @@ class CPSolver() extends Store() {
           val b = () => {
                 block
                 if (!isFailed()) {
-                	println("solution found")
+                	//println("solution found")
                 	sc.failLimit = limit
                 	if (solveOne) {
                 	  sc.reset()
@@ -256,7 +290,9 @@ class CPSolver() extends Store() {
           k1()          
         } 
       }
+	  time = System.currentTimeMillis() - t1
     }
+	
     
 	
 }

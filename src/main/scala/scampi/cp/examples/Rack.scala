@@ -58,7 +58,7 @@ object Rack extends CPModel {
 
     // CP Model
 
-    val cp = new CPSolver()
+    val cp = CPSolver()
     val rack = Racks.map(r => CPVarInt(cp, 0 to nbModel)) // the model type in each rack
     val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPVarInt(cp, 0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
     val cost = CPVarInt(cp, 0 to maxCost)
@@ -87,7 +87,10 @@ object Rack extends CPModel {
       }
 
 
-    } exploring (new BinaryFirstFail(rack: _*), new BinaryFirstFail(counters.flatten: _*))
+    } exploration {
+      cp.binaryFirstFail(rack)
+      cp.binaryFirstFail(counters.flatten)
+    } 
 
 
     cp.printStats()

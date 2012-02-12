@@ -52,6 +52,8 @@ trait CPModel extends Constraints {
     block
     System.currentTimeMillis - t0;
   }
+  
+
 
 
   //helper functions

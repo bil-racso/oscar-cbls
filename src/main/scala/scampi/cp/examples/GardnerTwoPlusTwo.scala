@@ -40,16 +40,12 @@ object GardnerTwoPlusTwo  extends CPModel {
 	  val U = CPVarInt(cp,0 to 9)
 	  val R = CPVarInt(cp,0 to 9)
 	  
-	  
-	  cp onSolution {
-	    println("T:"+T+" W:"+W+" O:"+O+" F:"+F+" U:"+U+" R:"+R)
-	  }
-	  
 	  cp.solveAll() subjectTo {
 	    cp.add((T*100+W*10+O)*2 == F*1000+O*100+U+10+R)
 	    cp.add(alldifferent(Array(T,W,O,F,U,R)), Strong)
-	  } exploring {
-	    new BinaryFirstFail(T,W,O,F,U,R)
+	  } exploration {
+	    cp.binaryFirstFail(T,W,O,F,U,R)
+	    println("T:"+T+" W:"+W+" O:"+O+" F:"+F+" U:"+U+" R:"+R)
 	  }
 	  
 	  cp.printStats()

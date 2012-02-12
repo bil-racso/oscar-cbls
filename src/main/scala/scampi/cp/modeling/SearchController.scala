@@ -24,8 +24,6 @@ class SearchController(val node: ReversibleSearchNode) {
   
   val stack: Stack[MyContinuation] = new Stack()
   
-  //var exitCont: MyContinuation = null
-  
   var nbFail = 0
   
   var failLimit = Int.MaxValue
@@ -55,8 +53,8 @@ class SearchController(val node: ReversibleSearchNode) {
     while(!stack.isEmpty && !limitReached) {
       node.pop()
       stack.pop.call()
+      fail()
     }
-    //exit()
   }
 
 }

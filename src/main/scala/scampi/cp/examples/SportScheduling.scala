@@ -36,13 +36,13 @@ object SportScheduling extends CPModel {
     val Weeks = 0 until nbWeeks
     val Homes = 0 to 1 // 0/1 for home/away game
 
-    val cp = new CPSolver()
+    val cp = CPSolver()
 
     val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPVarInt(cp, 0 until nbTeams))
     val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPVarInt(cp, 0 until (n * n - 1)))
     val tuples = for (i <- Teams; j <- i + 1 until nbTeams) yield (i, j, i * nbWeeks + j - 1)
 
-    cp.onSolution {
+    def printSol() {
       println("---------games---------")
       Periods.foreach {
         p => println(Weeks.map(w => game(p)(w).getValue).mkString("\t"))
@@ -68,7 +68,10 @@ object SportScheduling extends CPModel {
       // a team can play at most twice in the same period
       for (p <- Periods)
         cp.add(gcc(team(p).flatten, Teams, 1, 2))
-    } exploring (new BinaryFirstFail(game.flatten:_*))
+    } exploration {
+      cp.binaryFirstFail(game.flatten)
+      printSol()
+    }
     
     cp.printStats()
 

@@ -35,17 +35,13 @@ object Dudeney extends CPModel {
     val nb = new CPVarInt(cp, 1, math.pow(10, n).toInt - 1)
     val s = new CPVarInt(cp, 1, 9 * n)
 
-    cp.onSolution {
-      println(nb.getValue)
-    }
-
-
     cp.solveAll subjectTo {
       cp.add(nb == (s mul s mul s))
       cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)
       cp.add(sum(x) == s)
-    } exploring {
-      new NaryFirstFail(x:_*)
+    } exploration {
+      cp.binaryFirstFail(x)
+      println(nb.getValue)
     }
 
     cp.printStats()

@@ -59,12 +59,6 @@ object FreqAssignment extends CPModel {
        val cp = new CPSolver()
 	   val freq = Array.tabulate(nbCells)(c => Array.tabulate(trans(c))(t => CPVarInt(cp,0 to nbFreq)))
 	   
-	   cp.onSolution {
-	     freq.foreach { c =>
-	       c.foreach(print(_))
-	       println()
-	     }
-	   }
 	   
 	   cp.solve subjectTo {
 	     
@@ -77,8 +71,12 @@ object FreqAssignment extends CPModel {
 	     }
 		 println("inter cell constraints added")
 	     
-	   } exploring {
-	     new BinaryFirstFail(freq.flatten:_*)
+	   } exploration {
+	     cp.binaryFirstFail(freq.flatten)
+	     freq.foreach { c =>
+	       c.foreach(print(_))
+	       println()
+	     }
 	   }    
  
 	   cp.printStats()
