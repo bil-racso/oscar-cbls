@@ -34,10 +34,10 @@ object BinPacking1D extends MIPModel {
     val nObjects = objectSizes.length
     
     // binary variables: does object o goes to bin b ?
-    val objectAssignations = Array.tabulate(nObjects, nBins) ((o, b) => new MIPVar(mip, "o" + o + "b" + b, 0 to 1))  
+    val objectAssignations = Array.tabulate(nObjects, nBins) ((o, b) => MIPVar(mip, "o" + o + "b" + b, 0 to 1))  
     
     // binary variables: is bin b selected ?
-    val binSelection = Array.tabulate(nBins) (b => new MIPVar(mip, "b" + b, 0 to 1))
+    val binSelection = Array.tabulate(nBins) (b => MIPVar(mip, "b" + b, 0 to 1))
     
     mip.minimize(sum(0 until nBins) (j => binSelection(j))) subjectTo {
       

@@ -17,12 +17,12 @@ object BasicMIP extends MIPModel{
 	
   def main(args: Array[String]): Unit = {  
 	  
-	  val mip = new MIPSolver(LPSolverLib.lp_solve)
+	  val mip = MIPSolver(LPSolverLib.lp_solve)
  
-	  val x0 = new MIPVar(mip,"x0",0.0,40.0)
-	  val x1 = new MIPVar(mip,"x1",0 to 1000) 
-	  val x2 = new MIPVar(mip,"x2",0 to 1000) 
-	  val x3 = new MIPVar(mip,"x3",2.0,3.0)	 
+	  val x0 = MIPVar(mip,"x0",0.0,40.0)
+	  val x1 = MIPVar(mip,"x1",0 to 1000) 
+	  val x2 = MIPVar(mip,"x2",0 until 18) 
+	  val x3 = MIPVar(mip,"x3",2.0,3.0)	 
 	   
 	   
 	  mip.maximize(x0+2*x1+3*x2+x3) subjectTo {

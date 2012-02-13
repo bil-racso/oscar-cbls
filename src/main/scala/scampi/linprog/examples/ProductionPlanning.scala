@@ -40,8 +40,8 @@ object ProductionPlanning  extends LPModel {
 						 Array( 0,  32,   0,  0,   0,   5,   0,  3,  0, 660, 0, 9))
 
 
-		val lp = new LPSolver()
-		val x = Products.map(p => new LPVar(lp,"x",0,10000))
+		val lp = LPSolver()
+		val x = Products.map(p => LPVar(lp,"x",0,10000))
 
 		lp.maximize(sum(Products){p => x(p)*c(p)}) subjectTo {
 			for (d <- Dimensions) {

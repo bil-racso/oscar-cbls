@@ -32,8 +32,8 @@ object MagicSquare extends MIPModel{
 	  
 	  val mip = new MIPSolver(LPSolverLib.glpk)
 	 
-	  val x = Array.tabulate(n,n,n*n) ((l,c,N) => new MIPVar(mip,"x"+(l,c,N), 0 to 1))
-	  val s = new MIPVar(mip,"s",0 to 10000000)
+	  val x = Array.tabulate(n,n,n*n) ((l,c,N) => MIPVar(mip,"x"+(l,c,N), 0 to 1))
+	  val s = MIPVar(mip,"s",0 to 10000000)
 	  
 	  mip.maximize(s) subjectTo {
 	     /* each cell must be assigned exactly one integer */

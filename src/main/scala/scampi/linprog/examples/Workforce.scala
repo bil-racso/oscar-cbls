@@ -26,7 +26,7 @@ object Workforce extends MIPModel{
   def main(args: Array[String]): Unit = {  
 	  
 
-	  val mip = new MIPSolver(LPSolverLib.glpk)
+	  val mip = MIPSolver(LPSolverLib.glpk)
 	   
       val Shifts = 0 to 13
       val Workers = 0 to 6
@@ -43,7 +43,7 @@ object Workforce extends MIPModel{
               Array( 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1 ),
               Array( 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ) )
               
-	 val assigned = Array.tabulate(Workers.size,Shifts.size)((_, _) => new MIPVar(mip,"",0 to 1))
+	 val assigned = Array.tabulate(Workers.size,Shifts.size)((_, _) => MIPVar(mip,"",0 to 1))
 	 
 	 mip.minimize(sum(Workers,Shifts)((w,s) =>  assigned(w)(s)*pay(w))) subjectTo {
 		 for (s <-0 until Shifts.size) {

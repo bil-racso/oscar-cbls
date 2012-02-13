@@ -33,9 +33,9 @@ object Cosmos extends MIPModel {
 	  val tmax = orders.map(_(2)).max
 	  
 	  // one variable for each order if we take it or not
-	  val mip = new MIPSolver(LPSolverLib.glpk)
+	  val mip = MIPSolver(LPSolverLib.glpk)
 	  val varMap = Map[Array[Int],MIPVar]() 
-	  orders.foreach(o => varMap += (o -> new MIPVar(mip,"order",0 to 1)))
+	  orders.foreach(o => varMap += (o -> MIPVar(mip,"order",0 to 1)))
 	  
 	  // helper functions
 	  def overlap(order: Array[Int], t: Int) = t <= order(2) && t >= order(1) 

@@ -17,16 +17,18 @@ object BasicLP extends LPModel{
 	
   def main(args: Array[String]): Unit = {  
       
-	  val lp = new LPSolver()
+	  val lp = LPSolver()
 	   
-	  val x1 = new LPVar(lp,"x1")
-	  val x2 = new LPVar(lp,"x2",0,1000) 
-	  val x3 = new LPVar(lp,"x3",0,1000) 
-	  val x4 = new LPVar(lp,"x4",0,1000) 
+	  val x0 = LPVar(lp,"x0",0,40)
+	  val x1 = LPVar(lp,"x1",0, 1000) 
+	  val x2 = LPVar(lp,"x2",0 ,17) 
+	  val x3 = LPVar(lp,"x3",2,3)	 
 	   
-	  lp.minimize(2 * x1 + x2) subjectTo {
-	 	  lp.add(3 * x1 + 2 * x2 + 2 * x3 + 1 * x4 <= 4)
-	 	  lp.add(4 * x2 + 3 * x3 + 1 * x4 >= 3)
+	   
+	  lp.maximize(x0+2*x1+3*x2+x3) subjectTo {
+	 	  lp.add(-1*x0 + x1 + x2 + 10*x3 <= 20)
+	 	  lp.add(x0 - 3.0*x1 + x2 <= 30)
+	 	  lp.add(x1 - 3.5*x3 == 0 )
 	  }
   
 	  println("objective"+lp.getObjectiveValue())
