@@ -37,7 +37,7 @@ object Steel extends CPModel{
 
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlab.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)
@@ -81,11 +81,12 @@ object Steel extends CPModel{
 		}
 
 		val rnd = new Random(0)
-		cp.lns(200,50) {
-		  for (s <- Slabs; if rnd.nextInt(100) > 80) {
-		    cp.add(x(s) == xsol(s))
+		
+		cp.lns(100,50) {
+		  for (s <- Slabs; if rnd.nextInt(100) > 70) {
+		    cp.post(x(s) == xsol(s))
 		  }
-		}	
+		}
 
 		cp.minimize(sum(Cols)(s => element(loss,l(s)))) subjectTo {
 			cp.add(binpacking(x,weight,l),Strong)
@@ -93,28 +94,26 @@ object Steel extends CPModel{
 				def colPresent(c : Int) = or ((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
 				cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
 			}
-		} exploring {
-			val currLoads = Array.tabulate(nbSlab)(s => 0)
-			for (s <- Slabs; if (x(s).isBound())) {
-			  currLoads(x(s).getValue) += weight(s)
-			}
-			def lossDelta(o: Int, s : Int) = loss(currLoads(s) + weight(o)) - loss(currLoads(s)) //delta on the loss if you place order o in slab s
-			val res = minDomNotbound(x)
-
-			if (res.size > 0) { //not every variables are bound			
-			    val (y,i) = res(0)
-				val bound = x.filter(_.isBound())
-				val maxboundval = if (bound.size == 0) 0 else (bound.map(_.getValue()).max + 1)
-				cp.branchOn(y.getMin() to maxboundval, //range of values
-					        s => y.hasValue(s) && currLoads(s)+weight(i) <= capa.max, //we only try values in the domain
-					        s => lossDelta(i,s)) { //try first value that will induce the smallest increase of loss
-						  	   v => y == v
-					        }
-			}
-			else {
-				Branching.noAlternative 
-			}
+		} exploration {
+		  while (!allBounds(x)) {
+		    val unBound = x.filter(_.isBound())
+		    val maxUsedSlab = if (unBound.isEmpty) -1 else unBound.map(_.getValue()).max
+		    //delta on the loss if you place order o in slab s
+		    val (y,o) = minDomNotbound(x).first // retrieve the var and its index in x with smallest domain
+		    val v = y.getMin()
+		    if (v > maxUsedSlab) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
+		      cp.branchOne(cp.post(y == v))
+		    }
+		    else  {
+		      cp.branch(cp.post(y == v))(cp.post(y != v))
+		    }
+		  }
+		  
+		  println("failed:"+cp.isFailed())
+		  Slabs.foreach(o => xsol(o) = x(o).getValue)	
+		  println("sol #fail:"+cp.sc.nbFail)
 		}
+		println("end--------------")
 
 		cp.printStats()
 

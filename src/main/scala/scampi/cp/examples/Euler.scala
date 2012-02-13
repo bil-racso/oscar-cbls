@@ -25,8 +25,8 @@ import scampi.cp.search._
 object Euler  extends CPModel {
 	def main(args: Array[String]) {
 
-		def reachables(i : Int) : Array[Int] = {
-			def onBoard (y : Int*) : Array[Int] = y.filter(x=> x>=0 && x<=63).toArray
+		def reachables(i : Int) : Set[Int] = {
+			def onBoard (y : Int*) : Set[Int] = y.filter(x=> x>=0 && x<=63).toSet
 			i%8 match {
 				case 0 =>  onBoard(i-15,i-16,i+10,i+17)
 				case 1 =>  onBoard(i-17,i-15,i-6,i+10,i+15,i+17)
@@ -37,16 +37,13 @@ object Euler  extends CPModel {
 		}
 		
 		val cp = new CPSolver()
-		val x = (0 until 64).map(v => new CPVarInt(cp,reachables(v):_*))
-		
-		cp.onSolution {
-			println(x.map(_.getValue).mkString(","))
-		}
+		val x = (0 until 64).map(v => CPVarInt(cp,reachables(v)))
 		
 		cp.solve subjectTo {
 			cp.add(circuit(x))
-		} exploring {
-			new NaryFirstFail(x:_*)
+		} exploration {
+		  cp.binaryFirstFail(x)
+		  println(x.map(_.getValue).mkString(","))
 		}
 		
 		cp.printStats()

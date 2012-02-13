@@ -17,9 +17,9 @@ import scampi.linprog.modeling._
  */
 object CuttingStock extends LPModel with MIPModel {
 	
-  class Column (val x : LPVar, val shelf : Array[Int]) {
+  class Column (val x : LPVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
-	 	  shelf.mkString("\t")
+	 	  pattern.mkString("\t")
 	  }   
 	  def number() : Int = Math.ceil(x.getValue).toInt
   }
@@ -27,26 +27,25 @@ object CuttingStock extends LPModel with MIPModel {
   
   def main(args: Array[String]) {
 	  	  
-	  val boardWidth = 110
-	  val nbShelves = 5
-	  val Shelves = 0 until nbShelves
-	  val shelf =  Array(20, 45, 50, 55, 75)
+	  val rollStock = 110	  
+	  val roll =  Array(20, 45, 50, 55, 75)
 	  val demand = Array(48, 35, 24, 10,  8)
-
+	  val Rolls = 0 until roll.size
+	  
 	  val lp = LPSolver(LPSolverLib.lp_solve)
 	  var C : Array[Column] = Array()
-	  for (s <- Shelves) {
-	 	  val config = Array.tabulate(nbShelves)(_ => 0)
-	 	  config(s) = boardWidth/shelf(s)
-	 	  C = C :+ new Column(new LPVar(lp,"config"+s), config)
+	  for (r <- Rolls) {
+	 	  val config = Array.tabulate(roll.size)(_ => 0)
+	 	  config(r) = rollStock/roll(r)
+	 	  C = C :+ new Column(new LPVar(lp,"pattern"+r), config)
 	  }
 	   
-	  var meet = Array[LPConstraint]()
+	  var constraints = Array[LPConstraint]()
  
 	  // Master Problem 
 	  lp.minimize(sum(C)(c => c.x)) subjectTo {
-	 	  for (s <- Shelves) {
-	 	 	  meet = meet :+ lp.add(sum(C)(c => c.x * c.shelf(s)) >= demand(s))
+	 	  for (r <- Rolls) {
+	 	 	  constraints = constraints :+ lp.add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
 	 	  }
 	  }
 	  println("master obj:" + lp.getObjectiveValue)
@@ -55,16 +54,16 @@ object CuttingStock extends LPModel with MIPModel {
 	  var mip : MIPSolver = null
 	  do {
 		  mip = MIPSolver()
-		  val use = Array.tabulate(nbShelves)(_ => MIPVar(mip,"use",0 to boardWidth))
-		  val cost = Array.tabulate(nbShelves)(meet(_).getDual)
+		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
+		  val cost = Array.tabulate(roll.size)(constraints(_).getDual)
 
-		  mip.minimize(1 - sum(Shelves)(s => cost(s) * use(s))) subjectTo {
-			  mip.add(sum(Shelves)(s => shelf(s)*use(s)) <= boardWidth)
+		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) subjectTo {
+			  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
 		  }
 
-		  val x = lp.addColumn(1,meet toArray,use.map(_.getValue)) //create a new variable by introducing a new column
+		  val x = lp.addColumn(1,constraints, newPattern.map(_.getValue)) //create a new variable by introducing a new column
 		  
-		  C = C :+ new Column(x, use.map(_.getValue.toInt))		  
+		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		  
 		  
 		  println("master obj:" + lp.getObjectiveValue)
 		  
@@ -72,7 +71,7 @@ object CuttingStock extends LPModel with MIPModel {
 	  } while(mip.getObjectiveValue < 0)
 
 	  	  
-	  println("\n"+shelf.mkString("\t"))
+	  println("\n"+roll.mkString("\t"))
 	  println("-----------------------------------")
 	  C.foreach(c => println(c+" * "+c.number))
 	  println("-----------------------------------")

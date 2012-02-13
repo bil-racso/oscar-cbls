@@ -9,11 +9,13 @@
  ******************************************************************************/
 package scampi.cp.modeling
 
-import scampi.search._;
+import scampi.search._
 import scampi.cp._
-import scampi.cp.core._;
-import scampi.cp.search._;
-import scampi.cp.constraints._;
+import scampi.cp.core._
+import scampi.cp.search._
+import scampi.cp.constraints._
+import scala.util.continuations._
+import scala.collection.mutable.Stack
 
 class NoSol(msg : String) extends Exception(msg)
 
@@ -36,6 +38,17 @@ class CPSolver() extends Store() {
 	var restart: Option[Restart] = None
 	
 	var lns: Option[LNS] = None
+	
+	var solveOne = false
+	
+	class Closure(msg: String, block: => Unit)  {
+      def run() = {
+        block
+      }
+      override def toString = msg
+    }
+	
+	val sc = new SearchController(this)
 	
 	/**
 	 * @param block a code block
@@ -64,6 +77,7 @@ class CPSolver() extends Store() {
 	}
 		
 	def solve() : CPSolver = {
+	    solveOne = true
 		startSearch = Unit => search.solveOne() 
 		this
 	}
@@ -154,9 +168,36 @@ class CPSolver() extends Store() {
 		this
 	}
 	
+	/**
+	 * return true if every variable is bound
+	 */
+	def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
+	
+	
+	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
+	  binaryFirstFail(vars.toIndexedSeq)
+	}
+	
+	def binaryFirstFail(vars: Array[CPVarInt]): Unit @suspendable = {
+	  binaryFirstFail(vars.toIndexedSeq)
+	}
+	
+	/**
+     * Binary First Fail on the decision variables vars
+     */
+    def binaryFirstFail(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+     while (!allBounds(vars)) {
+    	   val unbound = vars.filter(!_.isBound)
+    	   val minDomSize = unbound.map(_.getSize()).min 
+    	   val x = unbound.filter(_.getSize == minDomSize).first
+           val v = x.getMin()
+    	   branch (post(x == v))(post(x != v))// right alternative
+     }
+    }
+	
 	def printStats() {
 		println("time(ms)",time)
-		println("#bkts",search.getNbBkts())
+		println("#bkts",sc.nbFail)
 		println( "time in fix point(ms)",getTimeInFixPoint())
 		println( "time in trail restore(ms)",getTrail().getTimeInRestore())
 		println( "max trail size",getTrail().getMaxSize())
@@ -176,7 +217,84 @@ class CPSolver() extends Store() {
 	
 	def branchOn(c : Constraint*) : Array[Alternative] = {
 		c.map(cons => new CPAlternative(this,cons)).toArray
-	}
+	}	
+    
+    def branch(left: => Unit)(right: => Unit): Unit @suspendable = {
+      shift { k: (Unit => Unit) =>
+        sc.addChoice(new MyContinuation("right", {
+          right
+          if (!isFailed()) k()}))
+        left
+        if (!isFailed()) k()
+      }
+    }
+    
+    def branchOne(left: => Unit): Unit @suspendable = {
+      shift { k: (Unit => Unit) =>
+        left
+        if (!isFailed()) k()
+      }
+    }
+    
+	def exploration(block: => Unit @suspendable ): Unit  =  {
+	  val t1 = System.currentTimeMillis()
+	  stateObjective()
+	  var nbRestart = 0
+	  var maxRestart = 1
+	  var limit = Int.MaxValue
+	  
+	  val relax = lns match {
+		   case None => () => Unit
+		   case Some(LNS(nbRestart,nbFailures,restar)) => {
+		     maxRestart = nbRestart
+		     limit = nbFailures
+		     restar
+		   }
+	  }  
+
+
+	  reset {
+        shift { k1: (Unit => Unit ) =>
+          val b = () => {
+                block
+                if (!isFailed()) {
+                	//println("solution found")
+                	sc.failLimit = limit
+                	if (solveOne) {
+                	  sc.reset()
+                	  k1()
+                	}
+                }
+          }
+
+          def restart(relaxation: Boolean = false) {
+           popAll()
+           pushState()
+           if (relaxation) relax()
+           sc.reset()
+           nbRestart += 1 
+           reset {
+             b()  	  
+             if (!isFailed()) getObjective().tighten()
+             sc.fail()
+      	   }
+           sc.explore() // let's go
+          }
+          sc.failLimit = limit
+          restart(false) // first restart, find a feasible solution so no limit
+          for (r <- 2 to maxRestart; if (!getObjective().isOptimum())) {
+            restart(true)
+            if (sc.limitReached) print("!")
+            else print("R")
+          }
+          k1()          
+        } 
+      }
+	  time = System.currentTimeMillis() - t1
+    }
+	
+    
+	
 }
 
 object CPSolver {

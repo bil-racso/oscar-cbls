@@ -52,7 +52,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
 			machineList.notBeingRepaired().foreach(ma => if(ma != this) m.resume(ma))
-		repair() 
+			repair() 
 		}
 	}
 	
@@ -66,9 +66,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		alive()
 	}
 	
-	override def start(): Unit @ suspendable =  {
-		alive()
-	}
+	override def start()  = alive()
 	
 }
 

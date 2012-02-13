@@ -32,10 +32,7 @@ object PrimeLooking extends CPModel {
     val d1 = CPVarInt(cp,2 to n)
     val d2 = CPVarInt(cp,2 to n)
     
-    var cpt = 0;
-    cp.onSolution {
-      cpt += 1
-    }
+    var cpt = 0 // number of solution
     
     cp.solveAll subjectTo {
       cp.add(d1*d2 == x)
@@ -47,8 +44,9 @@ object PrimeLooking extends CPModel {
     	  cp.add(d2 != (v*i))
         }
       }
-    } exploring {
-      new BinaryFirstFail(x,d1,d2)
+    } exploration {
+      cp.binaryFirstFail(x,d1,d2)
+      cpt += 1
     }
     
     println("number of solutions:"+cpt)

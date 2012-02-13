@@ -53,8 +53,17 @@ object QuadraticAssignment extends CPModel {
 
     cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
       cp.add(alldifferent(x), Strong)
-    } exploring {
-      new NaryFirstFail(x:_*)
+    } exploration {
+        while (!allBounds(x)) {
+           val (y,i) = minDomNotbound(x).first
+           val v = y.getMin()
+    	   cp.branch {
+             cp.post(y == v)
+           } {
+             cp.post(y !=v)
+           }
+        }
+        println("solution"+x.mkString(",")) 
     }
 
     // Print some statistics

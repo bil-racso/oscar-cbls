@@ -48,10 +48,10 @@ trait LPModel extends AbstractLPModel {
 
 		def getReducedCost(varId : Int) : Double = solver.getReducedCost(varId)
 
-		def addColumn(objCoef : Double, constraints : Array[LPConstraint], lhsConstraintCoefs : Array[Double]) : LPVar = {
+		def addColumn(objCoef : Double, constraints : IndexedSeq[LPConstraint], lhsConstraintCoefs : Array[Double]) : LPVar = {
 		    val colVar = new LPVar(this,"column var")
 			objective += (objCoef * colVar)
-			solver.addColumn(objCoef, constraints.map(_.index), lhsConstraintCoefs)
+			solver.addColumn(objCoef, constraints.map(_.index).toArray, lhsConstraintCoefs)
 			solveModel()
 			colVar 
 		}

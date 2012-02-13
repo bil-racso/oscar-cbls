@@ -44,14 +44,7 @@ object GardnerSumSquare extends CPModel {
     val s2 = CPVarInt(cp,(0 to (dom.max*4)^2).toSet)
     val obj = (s1*s1) + (s2*s2)
 
-
-    cp.onSolution {
-      println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
-    }
-
     cp.minimize(obj) subjectTo {
-    //cp.solveAll subjectTo {
-      //cp.post(s1*s1 + s2*s2 == 34)
       
       cp.add(alldifferent(Array(a,b,c,d,e,f,g,h)), Strong)
       cp.add(sum(Array(a,b,c,d),s1))
@@ -74,8 +67,9 @@ object GardnerSumSquare extends CPModel {
       println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
       println("---------------")
       
-    } exploring {
-      new Nary(a,b,c,d,e,f,g,h)
+    } exploration {
+      cp.binaryFirstFail(a,b,c,d,e,f,g,h)
+      println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
     }
 
     cp.printStats()

@@ -65,7 +65,7 @@ object Domino  extends CPModel {
 		val id = Array.tabulate(nLines,nCols)((i,j) => CPVarInt(cp,neighborValues(i,j).map(dominoId(_,values(i)(j)))))
 		
 		
-		cp.onSolution {
+		def printSol() {
 		  def sameDomino(i: Int, j: Int, k: Int, l: Int) = id(i)(j).getValue() == id(k)(l).getValue()
 		  for(i <- Lines) {
 		    for (j <- Cols) {
@@ -94,7 +94,10 @@ object Domino  extends CPModel {
 		  // each domino can appear at most once so each domino id can appear at most twice
 		  cp.add(gcc(id.flatten,0 to 9*9,0,2))
 		  
-		} exploring (new NaryFirstFail(id.flatten:_*))
+		} exploration {
+		  cp.binaryFirstFail(id.flatten)
+		  printSol()
+		}
 		
 		cp.printStats()
 

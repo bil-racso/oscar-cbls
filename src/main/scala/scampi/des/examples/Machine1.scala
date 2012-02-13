@@ -36,9 +36,8 @@ class Machine1(m : Model, name: String) extends Process(m,name) {
 		beAlive()
 	}
 	
-	override def start(): Unit @ suspendable =  {
-		beAlive()
-	}
+	override def start() = beAlive()
+	
 	
 }
 

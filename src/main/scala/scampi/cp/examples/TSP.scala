@@ -45,14 +45,14 @@ object TSP extends CPModel {
     cp.minimize(dist) subjectTo {
       cp.add(circuit(succ), Strong) //ask to have a strong filtering
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
-    } exploring {
+    } exploration {
       //exploration of the search tree
-      val res = minDomNotbound(succ)
-      if (!res.isEmpty) {
-        val (x, i) = res(0)
-        cp.branchOn(x, distMatrix(i)(_)) {v => x == v} //create a n-ary branch trying first the closest cities
-      } else {
-        Branching.noAlternative
+      while (!allBounds(succ)) {
+         val res = minDomNotbound(succ)
+         val (x, i) = res.first
+         // get the closest successor in the domain of x
+         val v = argMin((x.getMin() to x.getMax()).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
     }
 

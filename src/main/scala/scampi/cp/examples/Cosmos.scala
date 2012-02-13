@@ -62,11 +62,7 @@ object Cosmos extends CPModel {
 	  }
 	  
 	  // total amount of exchanged quantity
-	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))	  
-	  
-	  cp.onSolution {
-	    println((tmin to tmax).map(varMapQty(_).getValue).mkString("\t"))
-	  }
+	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
 	  
 	  cp.maximize(obj) subjectTo {
 	    for (t <- tmin to tmax) {
@@ -78,13 +74,12 @@ object Cosmos extends CPModel {
 	    	cp.add(binaryknapsack(prodVars,prodQty,varMapQty(t)), Strong)
 	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
-	  } exploring {
-	    val unboundOrders = orders.filter(!_.bound)
-	    if (unboundOrders.size == 0) {
-	      Branching.noAlternative
-	    } else {
+	  } exploration {
+	    def allBounds = orders.filter(!_.bound).isEmpty
+	    while (!cp.isFailed() && !allBounds) {
+	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
-	      cp.branchOn(order.selected == 1, order.selected == 0)
+	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
 	  }
 	  cp.printStats()
