@@ -11,37 +11,25 @@ package scampi.des.engine
 
 import scala.collection.mutable._
 import scala.util.continuations._
-import java.util.LinkedList
-import scala.collection.JavaConversions._
 
+import scala.react._
 
 /**
  * This is the main engine of the simulation.
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
 class Model {
    
 	private val eventQueue = new PriorityQueue[SimEvent]()
 	private var currentTime = 0.0
-	
-	def clock : Double = currentTime
+//	
+	def clock() : Double = currentTime
 	
 	private def addEvent(e : SimEvent) = eventQueue += e
 	
-	private val processes = new LinkedList[Process]()
-	
-	def addProcess(p : Process) {
-	  processes.addLast(p)
-	}
-	
-	def simulate(horizon: Int,verbose: Boolean = true) =  {
-	    // make all the process alive
-		val it = processes.iterator 
-		while(it.hasNext) { 
-			it.next().simulate()
-		}
-		while (eventQueue.nonEmpty && currentTime <= horizon) {
+	def simulate(horizon: Int,verbose: Boolean = true) {
+		while (eventQueue.nonEmpty) {
 			val e = eventQueue.dequeue()
 			if(verbose && e.time <= horizon && e.time != currentTime){
 				println("-----------> time: "+  e.time)
@@ -50,8 +38,17 @@ class Model {
 			if(currentTime <= horizon){
 				e.process
 			}
+			else{
+				currentTime = horizon;
+				return
+			}
 		}
 	}
+
+	def time(o: Any): Double = {
+	  clock()
+	}
+	def frequency[_](state: State[_]) = new Frequency(this,state)
 	
 	def waitt(duration : Double)(block : => Unit):Unit =  {
 		assert(duration >= 0)
@@ -69,6 +66,16 @@ class Model {
     }
     def wait(duration : Int):Unit@suspendable={wait(duration.toDouble)}
 	
+  def waitFor[A](ev: SourceReactive[A, A], f: A => Boolean): Unit @suspendable = {
+    if (!f(ev.now)) {
+      val a = Reactor loop { self =>
+        if (f(self.next(ev))) self.dispose()
+        else shift{k:(Unit=>Unit) => }
+        
+      }
+    }
+  }
+
 	def request(r : Resource): Unit @ suspendable = {
 		r.request
 	}
@@ -76,7 +83,7 @@ class Model {
 	def release(r : Resource) {
 		r.release()
 	}
-	
+//	
 	def suspend(proc : Process):Unit @suspendable = {proc.suspend()}
 
 	def resume(proc : Process){
@@ -86,5 +93,7 @@ class Model {
 }
 
 object Model{
-
+  def main(args: Array[String]){
+    println(45)
+  }
 }

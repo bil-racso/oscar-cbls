@@ -1,51 +1,74 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v3
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
- *  
+ *
  * Contributors:
  *      www.n-side.com
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package scampi.des.examples
-
 
 import scampi.des.engine._
 import scala.util.continuations._
-
+import scala.react._
 
 /**
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
-class Machine1(m : Model, name: String) extends Process(m,name) {
-	
-	val liveDur = new scala.util.Random(0)
-	val breakDur = new scala.util.Random(0)
-	
-	def beAlive(): Unit @ suspendable = {
-		println(name+" is alive");
-		m.wait (liveDur.nextInt(10).max(0).toDouble)
-		beBroken()
-		
-	}
-	
-	def beBroken(): Unit @ suspendable =  {
-		println(name+" is broken");
-		m.wait(breakDur.nextInt(2).max(0).toDouble)
-		beAlive()
-	}
-	
-	override def start() = beAlive()
-	
-	
+
+class Machine1(m: Model, name: String) extends Process(m, name) {
+
+  val atLiving = new EventSource[Int]
+  val atEndLiving = new EventSource[Unit]
+  val atDeath = new EventSource[Unit]
+
+  val live = new State[Int]() {
+    override def code(i:Int): Unit@suspendable = {
+      m.wait(10)
+    }
+  }
+
+  def broken(): Unit @suspendable = {
+    m.wait(24)
+  }
+
+  def repair(): Unit @suspendable = {
+    m.wait(2)
+  }
+
+  def firstState = {
+      val r = 1 to 5
+      val iter = r.iterator()
+      while (true) {
+        live.run(1)
+        broken
+      }
+    }
+
 }
 
-object Machine1 {
-	def main(args: Array[String]) =  {
-  		val mod = new Model()
-		val m1 = new Machine1(mod,"machine1")
-		val m2 = new Machine1(mod,"machine2")
-		mod.simulate(100,true);
-	}
+object Machine1 extends Observing {
+  def main(args: Array[String]) {
+    val mod = new Model()
+    val m1 = new Machine1(mod, "machine1")
+//
+//    val f1 = mod.frequency(m1.live)
+//
+//        Reactor.once { self =>
+//          self.loopUntil(m1.atDeath) {
+//            println("m1" + " is working for the " + self.next(m1.live.atEntry) + "rd time");
+//            self delay
+//          }
+//          println("Hooo, m1 is too old")
+//        }
+val t0 = System.currentTimeMillis()
+    m1.run()
+    mod.simulate(200000000, false);
+//        println("m1 lived " + f1() * 100 + "% of the time")
+        println(System.currentTimeMillis() - t0)
+  }
 }

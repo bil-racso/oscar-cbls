@@ -12,11 +12,10 @@ import scala.util.continuations._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
 abstract class Process (m: Model, name : String = "Process"){
 
-	m.addProcess(this)
 	private var suspending = false
 	private var suspended = {}
 	
@@ -38,19 +37,9 @@ abstract class Process (m: Model, name : String = "Process"){
 		suspended
 	}
 	
-	/**
-	 * Entry point of the simulation for this process
-	 */
-	def start(): Unit @ suspendable
 	
-	/**
-	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
-	 */
-	def simulate(): Unit @ suspendable = {
-	  reset {
-	    start()
-	  }
+	def firstState(): Unit@suspendable
+	def run(){
+	  reset{firstState}	  
 	}
-	
-	
 }

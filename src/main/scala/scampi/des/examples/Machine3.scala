@@ -16,7 +16,7 @@ import scala.util.continuations._
 /**
  * two machines can be broken, there is only one repair person that can repair it at a time
  * but this person must wait that the two machines are broken to start repairing any of them
- * @author Pierre Schaus, Sebastien Mouthuy
+ *  @author pschaus
  */
 class Machine3(m : Model, name: String, machineList : MachineList) extends Process(m,name) {
 	
@@ -52,7 +52,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
 			machineList.notBeingRepaired().foreach(ma => if(ma != this) m.resume(ma))
-			repair() 
+		repair() 
 		}
 	}
 	
@@ -64,10 +64,9 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		m.wait(repairDur.nextInt(3).max(0))
 		m.release(repairPerson)
 		alive()
-	}
+	}		
 	
-	override def start()  = alive()
-	
+	def firstState = alive
 }
 
 class MachineList{
@@ -89,11 +88,13 @@ class MachineList{
 
 
 object Machine3 {
-	def main(args: Array[String])  = {
+	def main(args: Array[String]) {
   		val mod = new Model()
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)
+		m1.run()
 		val m2 = new Machine3(mod,"machine2",mlist)
+		m2.run()
 		mod.simulate(100,true);
   		println("done1")
 	}
