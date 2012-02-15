@@ -33,11 +33,7 @@ import scampi.cp.constraints.Sum;
 import scampi.cp.util.ArrayUtils;
 import scampi.reversible.ReversiblePointer;
 import scampi.reversible.ReversibleQueue;
-
-// import org.python.core.Py; // for the jython wrapper
-
-
-
+import scala.collection.immutable.Range;
 
 /**
  * Finite Domain Integer Variables <br>
@@ -77,6 +73,14 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
     protected CPVarInt(Store s) {
         this.s = s;
     }
+	
+    /**
+     * Builds a variable with domain defined by the range into the store s
+     * @param r a scala range
+     */
+	public CPVarInt(Store s, Range r) {
+		this(s,r.start(),r.isInclusive() ? r.end() : r.end()-1);
+	}
 
 
     /**

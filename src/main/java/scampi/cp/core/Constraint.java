@@ -9,6 +9,8 @@
  ******************************************************************************/
 package scampi.cp.core;
 
+import scampi.cp.core.CPVarBool;
+import scampi.cp.core.Constraint;
 import scampi.cp.constraints.Garded;
 import scampi.reversible.ReversibleBool;
 
@@ -49,7 +51,15 @@ public abstract class Constraint {
 	 * @return a garded version of this constraint i.e. that will only be posted when b is true
 	 */
 	public Constraint when(CPVarBool b) {
-		return new Garded(b,this);
+		return new Garded(b,this,true);
+	}
+	
+	/**
+	 * @param b
+	 * @return a garded version of this constraint i.e. that will only be posted when b is false
+	 */
+	public Constraint whenNot(CPVarBool b) {
+		return new Garded(b,this,false);
 	}
 	
 	@Override

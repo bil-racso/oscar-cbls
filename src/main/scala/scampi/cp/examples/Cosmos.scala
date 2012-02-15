@@ -76,12 +76,13 @@ object Cosmos extends CPModel {
 	    } 
 	  } exploration {
 	    def allBounds = orders.filter(!_.bound).isEmpty
-	    while (!cp.isFailed() && !allBounds) {
+	    while (!allBounds) {
 	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
 	  }
 	  cp.printStats()
+	  
 	}
 }
