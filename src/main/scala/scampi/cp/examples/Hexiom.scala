@@ -100,7 +100,7 @@ object Hexiom  extends CPModel {
 		    cp.add((card(i) == nbNeighbors).when(used(i)))
 		    cp.add((card(i) == dummy).whenNot(used(i)))
 		  }
-		  cp.add(gcc(card,0 to 7,cardinalities,cardinalities))
+		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities))
 		} exploration {
 		  while (!allBounds(used)) {
 			  val x = used.filter(!_.isBound()).first
