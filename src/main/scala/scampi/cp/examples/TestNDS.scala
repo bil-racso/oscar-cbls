@@ -37,12 +37,12 @@ object TestNDS  extends CPModel {
 	//cp.solve
 	cp.sc = new IDSSearchController(cp,4)
 	cp.exploration {
-	  cp.branch { v(0).setValue(true) } 
-    	        { v(0).setValue(false)}
-      cp.branch { v(1).setValue(true) } 
-    	        { v(1).setValue(false)}
-      cp.branch { v(2).setValue(true) } 
-    	        { v(2).setValue(false)}
+	  cp.branch { v(0).value = true } 
+    	        { v(0).value = false}
+      cp.branch { v(1).value = true } 
+    	        { v(1).value = false}
+      cp.branch { v(2).value = true } 
+    	        { v(2).value = false}
       println(v.mkString(","))	
       nb += 1
 	}

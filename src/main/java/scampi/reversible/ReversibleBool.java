@@ -16,13 +16,12 @@ package scampi.reversible;
  */
 public class ReversibleBool extends ReversiblePointer<Boolean> {
 
+	public ReversibleBool(ReversibleSearchNode node, boolean b) {
+		super(node,b);
+	}
+	
 	public ReversibleBool(ReversibleSearchNode node) {
-		super(node);
-	}
-
-	public ReversibleBool(ReversibleSearchNode node, boolean val) {
-		this(node);
-		setValue(val);
-	}
+		super(node, false);
+	}	
 	
 }
