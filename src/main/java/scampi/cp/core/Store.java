@@ -106,6 +106,7 @@ public class Store extends ReversibleSearchNode {
     /**
      * Set the status of the store to a failed state
      */
+	@Override
 	public void fail() {
 		status.setValue(CPOutcome.Failure);
 	}
@@ -280,7 +281,7 @@ public class Store extends ReversibleSearchNode {
 		
 		long t0 = System.currentTimeMillis();
 		
-		CPOutcome ok = !objective.isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
+		CPOutcome ok = !getObjective().isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
 		
 		while (ok != CPOutcome.Failure) {
 			int p;

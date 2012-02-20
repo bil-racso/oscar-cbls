@@ -20,4 +20,9 @@ public class ReversibleBool extends ReversiblePointer<Boolean> {
 		super(node);
 	}
 
+	public ReversibleBool(ReversibleSearchNode node, boolean val) {
+		this(node);
+		setValue(val);
+	}
+	
 }
