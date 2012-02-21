@@ -17,6 +17,7 @@ object Test extends LPModel{
 	
   def main(args: Array[String]): Unit = {  
       
+    
 	  val lp = LPSolver()
 	   	  
 	  val x1 = LPVar(lp,"x1")

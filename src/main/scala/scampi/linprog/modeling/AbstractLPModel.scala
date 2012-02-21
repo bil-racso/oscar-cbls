@@ -192,6 +192,20 @@ trait AbstractLPModel extends Algebra {
 
 
 	def name = varName
+	
+	/**
+	 * Adjust the bound of the variable and re-optimize
+	 */
+	def setBounds(lb: Double, ub: Double) {
+	  solver.setBounds(this,lb,ub)
+	}
+	
+	/**
+	 * Reset initial bounds and repotimize
+	 */
+	def resetBounds() {
+	  solver.setVarProperties()
+	}
 
   	
 	/**
@@ -297,30 +311,29 @@ trait AbstractLPModel extends Algebra {
 	
 	def setVarProperties() = {
 	  vars  foreach { case (i,x) =>
-	    if (x.isUnbounded) {
-			solver.setUnboundUpperBound(i)
-			solver.setUnboundLowerBound(i)
-		} else {
-			solver.setBounds(i, x.lb , x.ub)
-		}
+	    setVarBounds(x)
 	  }
-	}	
+	}
+	
+	def setVarBounds(x: AbstractLPVar) = {
+	    if (x.isUnbounded) {
+			solver.setUnboundUpperBound(x.index)
+			solver.setUnboundLowerBound(x.index)
+		} else {
+			solver.setBounds(x.index, x.lb , x.ub)
+		}
+	    solveModel()
+	}
+	
+	def setBounds(x: AbstractLPVar, lb: Double, ub: Double) = {
+		solver.setBounds(x.index,lb,ub)
+	    solveModel()
+	}
 	
 	
 	def optimize(linExpr: LinearExpression, minimize : Boolean) : AbstractLPSolver = {
     	objective = linExpr
     	this.minimize = minimize
-	  /*
-	    objective = linExpr
-		solver.startModelBuilding(0,vars.size)
-		setVarProperties() //set the the var bounds correctly
-		val e = linExpr.coef.toList
- 		val coef : Array[Double] = e.map(_._2).toArray
-		val varIds : Array[Int] =  e.map(_._1.index).toArray
-		
-		solver.addObjective(coef, varIds, minimize)
-		this
-		*/
 	    this
 	}
 	
