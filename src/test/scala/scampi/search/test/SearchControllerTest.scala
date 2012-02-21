@@ -28,7 +28,7 @@ class SearchControllerTest extends FunSuite with ShouldMatchers {
 	    n.sc = new IDSSearchController(n,4)
 	    
     	n.exploration {
-	      n.branch { v(0).value = true) } 
+	      n.branch { v(0).value = true } 
     	           { v(0).setValue(false)}
           n.branch { v(1).setValue(true) } 
     	           { v(1).setValue(false)}

@@ -72,6 +72,27 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 		}
     }	
 	
+	test("lp test 4") {
+		for (lib <- solvers) {
+			val lp = new LPSolver(lib)
+			val x = new LPVar(lp,"x",100,200)
+			val y = new LPVar(lp,"y",80,170)
+			var z: LPVar = null
+			lp.minimize(-2*x+5*y) subjectTo {
+			  z = new LPVar(lp,"z",80,170)
+			  lp.add(z >= 170)
+			  lp.add(y >= -x + 200)
+			}
+
+			x.value should equal (Some(200))
+			y.value should equal (Some(80))
+			z.value should equal (Some(170))
+			lp.getObjectiveValue() should equal(0)
+			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.release()
+		}
+    } 
+	
 
 	
 

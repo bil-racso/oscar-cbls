@@ -11,8 +11,7 @@ package scampi.cp.examples
 
 
 import scampi.cp.modeling._
-import scampi.cp.core._
-import scampi.cp.search._
+import scampi.search._
 
 
 /**

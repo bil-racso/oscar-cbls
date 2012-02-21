@@ -233,7 +233,7 @@ trait AbstractLPModel extends Algebra {
 
   }
 
-  class LPConstraint(val solver : AbstractLPSolver, cstr : LinearConstraint, val index: Int) {
+  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int) {
     val e = cstr.linExpr.coef.toList
  	val coef : Array[Double] = e.map(_._2).toArray
 	val varIds : Array[Int] =  e.map(_._1.index).toArray
@@ -258,6 +258,7 @@ trait AbstractLPModel extends Algebra {
     private val cons = mutable.HashMap.empty[Int,LPConstraint]
     private val solution = mutable.HashMap.empty[Int,Double]
     protected var objective: LinearExpression = 0
+    protected var minimize = true
     
     val solver: AbstractLP
     
@@ -271,13 +272,21 @@ trait AbstractLPModel extends Algebra {
     
     def add(constr : LinearConstraint): LPConstraint = {
       val constraint = new LPConstraint(this,constr,cons.size)
-      constr.consType match {
-                        case ConstraintType.GQ => solver.addConstraintGreaterEqual(constraint.coef,constraint.varIds,constraint.rhs)
-                        case ConstraintType.LQ => solver.addConstraintLessEqual(constraint.coef,constraint.varIds,constraint.rhs)
-                        case ConstraintType.EQ => solver.addConstraintEqual(constraint.coef,constraint.varIds,constraint.rhs)
-      }
       cons(cons.size) = constraint
       constraint
+    }
+    
+    /**
+     * add the constraints really into the solver implem
+     */
+    def addAllConstraints() {
+      cons  foreach { case (i,c) =>
+        c.cstr.consType match {
+              case ConstraintType.GQ => solver.addConstraintGreaterEqual(c.coef,c.varIds,c.rhs)
+              case ConstraintType.LQ => solver.addConstraintLessEqual(c.coef,c.varIds,c.rhs)
+              case ConstraintType.EQ => solver.addConstraintEqual(c.coef,c.varIds,c.rhs)
+        }
+      }
     }
     
     def getValue(varIndex: Int): Option[Double] = solution.get(varIndex)
@@ -300,6 +309,9 @@ trait AbstractLPModel extends Algebra {
 	
 	def optimize(linExpr: LinearExpression, minimize : Boolean) : AbstractLPSolver = {
     	objective = linExpr
+    	this.minimize = minimize
+	  /*
+	    objective = linExpr
 		solver.startModelBuilding(0,vars.size)
 		setVarProperties() //set the the var bounds correctly
 		val e = linExpr.coef.toList
@@ -308,6 +320,8 @@ trait AbstractLPModel extends Algebra {
 		
 		solver.addObjective(coef, varIds, minimize)
 		this
+		*/
+	    this
 	}
 	
 	def minimize(expr: LinearExpression) : AbstractLPSolver = {
@@ -321,6 +335,18 @@ trait AbstractLPModel extends Algebra {
 	def subjectTo (constraintsBlock : => Unit) {
 		//executes the block containing the constraints
 		constraintsBlock
+		
+
+		solver.startModelBuilding(0,vars.size)
+		setVarProperties() //set the the var bounds correctly
+		val e = objective.coef.toList
+ 		val coef : Array[Double] = e.map(_._2).toArray
+		val varIds : Array[Int] =  e.map(_._1.index).toArray
+		
+		solver.addObjective(coef, varIds, minimize)
+		addAllConstraints()
+		
+		
 		//close the model and optimize
 		solveModel()
 	}
