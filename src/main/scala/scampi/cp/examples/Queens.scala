@@ -11,7 +11,7 @@ package scampi.cp.examples
 
 
 import scampi.cp.modeling._
-import scampi.cp.search._
+import scampi.search._
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
@@ -30,17 +30,19 @@ object Queens  extends CPModel {
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
-      
       cp.solveAll subjectTo {
     	  cp.add(alldifferent(queens),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
       } exploration {
-        cp.binaryFirstFail(queens)
+        loop(Queens) {
+          q =>  cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
+        }
         nbsol += 1
       }
   
       //print some statistics
       println("#sol",nbsol)
-    }
+      cp.printStats()
+	}
 }

@@ -37,11 +37,7 @@ object Cosmos extends CPModel {
 	    def overlap(t : Int) = t <= end && t >= start
 	    var sol = true
 	    def bound = selected.isBound()
-	    
-	    cp.onSolution {
-	      sol = selected.isTrue()
-	    }
-	    def restore() =  if (sol) selected.constraintTrue() else selected.constraintFalse()
+
 	  }
 	  
 	  val firstLine::restLines = Source.fromFile("data/cosmos.txt").getLines.toList

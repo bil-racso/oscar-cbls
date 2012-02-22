@@ -198,7 +198,7 @@ class CplexLP extends AbstractLP{
   	}
   	
   	def addVariable() {
-  	  val col= model.column(lp)
+  	  val col = model.column(lp)
 	  model.numVar(col,0, java.lang.Double.MAX_VALUE,IloNumVarType.Float)
   	}
 
@@ -206,7 +206,7 @@ class CplexLP extends AbstractLP{
   		  model.remove(lp.getNumVar(colId))
   	}
   	
-  	def release(){
+  	def release() {
   		model.end()
   	}
 }

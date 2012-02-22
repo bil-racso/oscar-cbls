@@ -62,8 +62,8 @@ public class TestTrailInt extends TestCase {
     public void testEquals(){
     	
     	
-    	assertTrue(a.getValue()==null);
-    	assertTrue(b.getValue()==null);
+    	assertTrue(a.getValue() == 0);
+    	assertTrue(b.getValue() == 0);
     	
     	//a = null, b = null
     	s.pushState();
@@ -90,16 +90,16 @@ public class TestTrailInt extends TestCase {
     	b.setValue(6);
     	
     	s.pop();
-    	assertTrue(a.getValue()==1);
-    	assertTrue(b.getValue()==1);
+    	assertTrue(a.getValue() == 1);
+    	assertTrue(b.getValue() == 1);
     	
     	s.pop();
-    	assertTrue(a.getValue()==2);
-    	assertTrue(b.getValue()==2);
+    	assertTrue(a.getValue() == 2);
+    	assertTrue(b.getValue() == 2);
     	
     	s.pop();
-    	assertTrue(a.getValue()==null);
-    	assertTrue(b.getValue()==null);
+    	assertTrue(a.getValue() == 0);
+    	assertTrue(b.getValue() == 0);
 
     }
 

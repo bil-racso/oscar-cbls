@@ -18,7 +18,7 @@ import scampi.cp.core.Queue;
 public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
 
 	public ReversibleQueue(ReversibleSearchNode node) {
-		super(node);
+		super(node,null);
 	}
 }
 

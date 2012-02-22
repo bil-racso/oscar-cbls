@@ -98,17 +98,17 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		onBindL2   = new ReversibleQueue<Constraint>(s);
 		onDomainL2 = new ReversibleQueue<Constraint>(s);
 		
-		onMinL1    = new ReversiblePointer<PropagEventQueue>(s);
-		onMaxL1    = new ReversiblePointer<PropagEventQueue>(s);
-		onBoundsL1 = new ReversiblePointer<PropagEventQueue>(s);
-		onBindL1   = new ReversiblePointer<PropagEventQueue>(s);
-		onDomainL1 = new ReversiblePointer<PropagEventQueue>(s);
+		onMinL1    = new ReversiblePointer<PropagEventQueue>(s,null);
+		onMaxL1    = new ReversiblePointer<PropagEventQueue>(s,null);
+		onBoundsL1 = new ReversiblePointer<PropagEventQueue>(s,null);
+		onBindL1   = new ReversiblePointer<PropagEventQueue>(s,null);
+		onDomainL1 = new ReversiblePointer<PropagEventQueue>(s,null);
 		
-		onMinIdxL1    = new ReversiblePointer<PropagEventQueue>(s);
-		onMaxIdxL1    = new ReversiblePointer<PropagEventQueue>(s);
-		onBoundsIdxL1 = new ReversiblePointer<PropagEventQueue>(s);
-		onBindIdxL1   = new ReversiblePointer<PropagEventQueue>(s);
-		onDomainIdxL1 = new ReversiblePointer<PropagEventQueue>(s);
+		onMinIdxL1    = new ReversiblePointer<PropagEventQueue>(s,null);
+		onMaxIdxL1    = new ReversiblePointer<PropagEventQueue>(s,null);
+		onBoundsIdxL1 = new ReversiblePointer<PropagEventQueue>(s,null);
+		onBindIdxL1   = new ReversiblePointer<PropagEventQueue>(s,null);
+		onDomainIdxL1 = new ReversiblePointer<PropagEventQueue>(s,null);
 	}
 
 

@@ -11,12 +11,12 @@ package scampi.cp.examples
 
 
 import scampi.cp.modeling._
-import scampi.cp.search._
+import scampi.search._
 import scala.collection.JavaConversions._
 import scala.io.Source
 import scala.util.Random
 import java.lang._
-import scampi.search.Branching
+
 
 /**
  * Model for the steel mill slab problem:
@@ -76,13 +76,10 @@ object Steel extends CPModel{
 		val l = for(s <- Slabs) yield CPVarInt(cp,0 to capa.max)
 		val xsol = (for(s <- Slabs) yield 0) toArray //current best solution
 
-		cp.onSolution { //record the current best solution to be used by the LNS
-			Slabs.foreach( s => xsol(s) = x(s).getValue)			
-		}
 
 		val rnd = new Random(0)
 		
-		cp.lns(100,50) {
+		cp.lns(100,200) {
 		  for (s <- Slabs; if rnd.nextInt(100) > 70) {
 		    cp.post(x(s) == xsol(s))
 		  }

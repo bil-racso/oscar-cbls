@@ -93,20 +93,25 @@ object Hexiom  extends CPModel {
 		val dummy = 7 // dummy value when no pawn in the neighborhood
 		// card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
 		val card =  Array.fill(k)(CPVarInt(cp,0 to 7))
-		
+		var nbSol = 0
 		cp.solve subjectTo {
-		  for (i <- 0 until k) {
+		  
+		  val tuples = (for (i <- 0 to 6) yield (i,0,7)) ++ (for (i <- 0 to 6) yield (i,1,i))
+		  println(tuples)
+		  for (i <- 0 until k) { 
 		    val nbNeighbors = sum(neighbors(i))(used(_))		    
-		    cp.add((card(i) == nbNeighbors).when(used(i)))
-		    cp.add((card(i) == dummy).whenNot(used(i)))
+		    cp.add(table(nbNeighbors,used(i),card(i),tuples))
 		  }
-		  cp.add(gcc(card,0 to 7,cardinalities,cardinalities))
+		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities))
 		} exploration {
+		  
 		  while (!allBounds(used)) {
 			  val x = used.filter(!_.isBound()).first
 			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
-		  }		  
+		  }
+		  nbSol += 1
 	    }
+		println("nbsol"+nbSol)
 		
 		println("++++++++++++++++++ solution ++++++++++++++++++++\n")
 		// pretty print
