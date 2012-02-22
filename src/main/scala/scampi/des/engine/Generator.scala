@@ -16,3 +16,6 @@ class Generator(m: Model, dist: ProbabilityDistribution, block: => Unit) extends
     }
   }
 }
+object Generator {
+  def apply(m: Model, dist: ProbabilityDistribution)(block: => Unit) = new Generator(m,dist,block)
+}
