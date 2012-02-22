@@ -34,6 +34,7 @@ object CarWash {
     val m = new Model()
 
     // one day = 8 hours
+    // event fired emmitted when clock become 480
     val endOfDay = m.clock === 480
 
     class CarWash(m: Model) {
@@ -46,7 +47,7 @@ object CarWash {
         if ( !queue.enter ) cpsfalse
         else {
            waitFor(isWorking === true)
-           waitFor(m.clock === m.clock() + 10)
+           m.wait(10)
            cpstrue
         }
       }
@@ -64,15 +65,16 @@ object CarWash {
     class CarWasher(m: Model, carWash: CarWash) extends Process(m, "Washer") {
 
       var eod = false
-      once(endOfDay){ _=>eod = true }
+      once(endOfDay){ eod = true }
       def atTearoom(): Unit @suspendable = {
-        m print("washer at tea room")
-        println(carWash.queue.isEmpty())
-        val opt = waitFor( carWash.queue.isEmpty === false | endOfDay)
-        if (opt == 1) atEndOfDay()
-        else {
+        m.print("washer at tea room")
+        
+        val a = waitFor((carWash.queue.isEmpty === false) {
           atCarWash()
-        }
+        } | endOfDay {
+          atEndOfDay()
+        })
+        
       }
 
       def atCarWash(): Unit @suspendable = {
