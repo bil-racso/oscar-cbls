@@ -11,8 +11,9 @@ package scampi.des.engine
 
 import scala.collection.mutable._
 import scala.util.continuations._
-
-import scala.react._
+import java.util.LinkedList
+import scala.collection.JavaConversions._
+import scampi.invariants._
 
 /**
  * This is the main engine of the simulation.
@@ -21,60 +22,72 @@ import scala.react._
  */
 class Model {
    
-	private val eventQueue = new PriorityQueue[SimEvent]()
-	private var currentTime = 0.0
-//	
-	def clock() : Double = currentTime
+	val clock = new PQCounter(0)
+		
+	private val processes = new LinkedList[Process]()
 	
-	private def addEvent(e : SimEvent) = eventQueue += e
+	def addProcess(p : Process) {
+	  processes.addLast(p)
+	}
 	
 	def simulate(horizon: Int,verbose: Boolean = true) {
-		while (eventQueue.nonEmpty) {
-			val e = eventQueue.dequeue()
-			if(verbose && e.time <= horizon && e.time != currentTime){
+	    // make all the process alive
+	  //reset{
+		val it = processes.iterator 
+		while(it.hasNext) { 
+			it.next().simulate()
+		}
+	  println(clock.nonEmpty)
+	  println(clock() <= horizon)
+		while (clock.nonEmpty && clock() <= horizon) {
+			val e = clock.next
+						
+			if(verbose && e.time <= horizon ){
 				println("-----------> time: "+  e.time)
 			}
-			currentTime = e.time;
-			if(currentTime <= horizon){
+			if(clock() <= horizon){
 				e.process
 			}
-			else{
-				currentTime = horizon;
-				return
-			}
 		}
+	  //}
 	}
-
+	def print(s: String){
+	  println(clock() + ": " + s)
+	}
 	def time(o: Any): Double = {
 	  clock()
 	}
 	def frequency[_](state: State[_]) = new Frequency(this,state)
 	
-	def waitt(duration : Double)(block : => Unit):Unit =  {
-		assert(duration >= 0)
-		addEvent(new WaitEvent(clock + duration, block))
-	}
-	
-    def waitt(duration : Int)(block : => Unit) {
-		waitt(duration.toDouble)(block)
-	}
-    
-    def wait(duration : Double):Unit@suspendable= {
-		shift{ k:(Unit=>Unit) =>
-		  waitt(duration.toDouble){k()}
-		}
+//	def waitt(duration : Double)(block : => Unit):Unit =  {
+//		assert(duration >= 0)
+//		addEvent(new WaitEvent(clock + duration, block))
+//	}
+//	
+//    def waitt(duration : Int)(block : => Unit) {
+//		waitt(duration.toDouble)(block)
+//	}
+//    
+    def wait(duration : Double):Double@suspendable= {
+		waitFor( clock === clock() + duration.toDouble)
+		
     }
-    def wait(duration : Int):Unit@suspendable={wait(duration.toDouble)}
-	
-  def waitFor[A](ev: SourceReactive[A, A], f: A => Boolean): Unit @suspendable = {
-    if (!f(ev.now)) {
-      val a = Reactor loop { self =>
-        if (f(self.next(ev))) self.dispose()
-        else shift{k:(Unit=>Unit) => }
-        
-      }
-    }
-  }
+def wait(duration : Int):Double@suspendable={wait(duration.toDouble)}
+
+//  def waitFor[A](ev: Signal[A], f: A => Boolean): Unit @suspendable = {
+//    if ( !f(ev())){ 
+//    var obs: Reaction[A] = null
+//    shift { k: (Unit => Unit) =>
+//      obs = when(ev) { (x: A) =>
+//        if (f(x)) {
+//          k()
+//        }
+//        true
+//      }
+//    }
+//    obs.dispose()
+//    }
+//  }
 
 	def request(r : Resource): Unit @ suspendable = {
 		r.request

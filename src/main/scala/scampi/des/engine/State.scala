@@ -1,14 +1,14 @@
 package scampi.des.engine
 
 import scala.util.continuations._
-import scala.react._
+import scampi.invariants._
 
 class BasicState{}
-
 class State[A] extends BasicState {
+  
 
-  val atEntry = new EventSource[A]
-  val atLeaving = new EventSource[A]
+  val atEntry = new Event[A]
+  val atLeaving = new Event[A]
   
   def code(param: A): Unit @suspendable={println()}
   

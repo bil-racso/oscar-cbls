@@ -9,25 +9,30 @@
  ******************************************************************************/
 package scampi.des.engine
 
+
+import scala.collection.mutable._
+import scala.util.continuations._
+import scampi.invariants._
+
 /**
- * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
+ * Capacitated resource where waiting customers are served in FIFO order
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
-	
-	def compare(that : SimEvent) = this.time.compare(that.time)
-	
-	
-}
 
-class WaitEvent[A](time: Double, block: Double => Boolean ) extends SimEvent(time) {
+class Resource(m : Model, capacity: Int) {
 	
-	def process(){
-	  block(time)
+	private val n = new VarInt(0)
+	
+	def request(): Unit @suspendable = {
+	  waitFor( n.filter( _ < capacity ))	 	  
+	  n :+= 1
+	}
+	  
+	 	
+	def release() {
+	  n :-= 1
 	}
 	
 }
 
-
-
-
+class UnaryResource(m : Model) extends Resource(m,1)

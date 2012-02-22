@@ -1,24 +1,22 @@
+
+
 package scampi.des.engine
 
 import scala.util.continuations._
-import scala.react._
+import scampi.invariants._
 
 class Tank(m: Model, capacity: Double) {
 
-  var load = new Var[Double](0)
-
-  private var pendings: List[(Double, () => Unit)] = Nil
+  val load = new Var[Double](0.0)  
 
   def get(qty: Double): Unit @suspendable = {
-    m.waitFor[Double](load, _ >= qty)
-    load.update(load() - qty)
-
+    waitFor( load.filter(_ >= qty) )
+    load := load - qty
   }
 
   def put(qty: Double): Unit @suspendable = {
 
-    m.waitFor[Double](load, _ <= capacity)
-    load.update(load() + qty)
-
+    waitFor(load.filter( _ <= capacity-qty) )
+    load := load + qty
   }
 }
