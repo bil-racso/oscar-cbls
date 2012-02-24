@@ -33,6 +33,18 @@ public abstract class Constraint {
 	
 	protected String name="cons";
 	
+	/**
+	 * Set to true when it is currently exexuting the propagate method
+	 */
+	private boolean executingPropagate = false;
+	
+	
+	/**
+	 * True if the constraint is idempotent i.e. calling two times propagate is useless if no other changes occurred
+	 * sigma(store) = sigma(sigma(store))
+	 */
+	protected boolean idempotent = false;
+	
 	public Constraint(Store s){
 		this.s = s;
 		active = new ReversibleBool(s);
@@ -44,6 +56,21 @@ public abstract class Constraint {
 	public Constraint(Store s,String name){
 		this(s);
 		this.name = name;
+	}
+	
+	/**
+	 * @return true if it is currently executing the propagate method.
+	 */
+	protected boolean inPropagate() {
+		return executingPropagate;
+	}
+	
+	/**
+	 * Tells the store that this constraint is idempotent which means that if a changes occur during propagate method,
+	 * it will not be called again because you know it would be useless.
+	 */
+	public void setIdempotent() {
+		this.idempotent = true;
 	}
 	
 	/**
@@ -281,7 +308,9 @@ public abstract class Constraint {
 	
 	protected CPOutcome execute() {
 		inQueue.setValue(false);
+		executingPropagate = true;
 		CPOutcome oc = propagate();
+		executingPropagate = false;
 		if (oc == CPOutcome.Success) {
 			deactivate();
 		}
