@@ -27,11 +27,11 @@ object StochasticFarmer extends LPModel {
     val fileOut = new PrintWriter("stochasticFarmerSolution.csv")
     
     // Indexes
-    val crops = Set("Wheat", "Corn", "Beet")
-    val scenarios = Set("Bad", "Fair", "Good")
-    val allVarGroups = Set("surface","buy","sell","cheapSell")
-    val firstStage = Set("surface")
-    val secondStage = allVarGroups diff firstStage
+    val crops = List("Wheat", "Corn", "Beet")
+    val scenarios = List("Bad", "Fair", "Good")
+    val allVarGroups = List("surface","buy","sell","cheapSell")
+    val firstStage = List("surface")
+    val secondStage = allVarGroups.toSet diff firstStage.toSet toList
 
     // Data
     val costs = crops zip List(150.0, 230.0, 260.0) toMap // Cost by square meter
@@ -68,7 +68,7 @@ object StochasticFarmer extends LPModel {
      * By providing a solution for the first stage variables you can will evaluate a first stage solution obtained by another mean. 
      */
     def solveDeterministicModel(scenario: String, firstStageSolution: Option[Solution]): Solution = {
-      val detModel = new LPSolver(LPSolverLib.cplex)
+      val detModel = new LPSolver(LPSolverLib.lp_solve)
 
       // Creating all variables 
       val detVars = Map[String, LPVar]()
@@ -78,14 +78,14 @@ object StochasticFarmer extends LPModel {
         firstStageSolution match {
           case Some(solution) =>
             val lb, ub = solution.getValue(vG + crop)
-            detVars += (vG + crop -> new LPVar(detModel, vG + crop, lb, ub))
+            detVars += (vG + crop -> LPVar(detModel, vG + crop, lb, ub))
           case None =>
-            detVars += (vG + crop -> new LPVar(detModel, vG + crop))
+            detVars += (vG + crop -> LPVar(detModel, vG + crop))
         }
       }
 
       // Second stage
-      secondStage foreach { vG => crops foreach (crop => detVars += (vG + crop -> new LPVar(detModel, vG + crop))) }
+      secondStage foreach { vG => crops foreach (crop => detVars += (vG + crop -> LPVar(detModel, vG + crop))) }
       
       // Generating and solving the model
       detModel.minimize(sum(crops)(c => (detVars("surface" + c) * costs(c)) // Plantation costs
@@ -97,8 +97,9 @@ object StochasticFarmer extends LPModel {
         detModel.add(sum(crops)(c => (detVars("surface" + c))) <= availableSurface)
 
         // Impose quotas
-        crops.foreach(c => detModel.add(detVars("sell" + c) <= quotas(c)))
-
+        for (c <- crops; if (quotas(c) != Double.PositiveInfinity)) {
+          detModel.add(detVars("sell" + c) <= quotas(c))
+        }
         // Production + purchases == consumption + sales
         crops.foreach(c => detModel.add(detVars("surface" + c) * stoYields(scenario)(c)
           + detVars("buy" + c)
@@ -118,7 +119,7 @@ object StochasticFarmer extends LPModel {
     }
 
     def solveStochasticModel(): Solution = {
-      val stoModel = new LPSolver(LPSolverLib.cplex)
+      val stoModel = LPSolver(LPSolverLib.lp_solve)
       val stoVars = Map[String, LPVar]()
 
       for (varGroup <- firstStage) {
@@ -139,8 +140,10 @@ object StochasticFarmer extends LPModel {
         stoModel.add(sum(crops)(c => (stoVars("surface" + c))) <= availableSurface)
 
         // Impose quotas
-        scenarios foreach (s => crops.foreach(c => stoModel.add(stoVars("sell" + c + s) <= quotas(c))))
-
+        for (s <- scenarios; c <- crops; if (quotas(c) != Double.PositiveInfinity)) {
+          stoModel.add(stoVars("sell" + c + s) <= quotas(c))
+        }
+        
         // Production + purchases == consumption + sales
         scenarios foreach (s => crops.foreach(c => stoModel.add(stoVars("surface" + c) * stoYields(s)(c)
           + stoVars("buy" + c + s)

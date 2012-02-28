@@ -7,27 +7,23 @@
  * Contributors:
  *      www.n-side.com
  ******************************************************************************/
+
 package scampi.des.engine
 
-/**
- * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
- * @author Pierre Schaus, Sebastien Mouthuy
- */
-abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
-	
-	def compare(that : SimEvent) = this.time.compare(that.time)
-	
-	
+import scala.Math._
+import scala.util.Random
+import scala.util.continuations._
+import JSci.maths.statistics._
+
+class NumberGenerator(dist: ProbabilityDistribution) {
+
+  val generator = new Random()
+
+  var generating = true
+
+  def stop() { generating = false }
+
+  def apply(): Double = dist.inverse(generator.nextDouble)
+  def generateNext = apply
+
 }
-
-class WaitEvent[A](time: Double, block: Double => Boolean ) extends SimEvent(time) {
-	
-	def process(){
-	  block(time)
-	}
-	
-}
-
-
-
-

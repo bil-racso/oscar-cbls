@@ -16,6 +16,7 @@ import scampi.cp.search._
 import scala.util.continuations._
 import scampi.reversible.ReversibleBool
 import scampi.search.IDSSearchController
+import scampi.reversible.ReversibleInt
 
 
 
@@ -33,17 +34,22 @@ object TestNDS  extends CPModel {
 		
 	val cp = CPSolver()
 	val v = Array.tabulate(3)(i => new ReversibleBool(cp))
+	
+	val bcr = new ReversibleInt(cp,0)
+	
 	var nb = 0
+	
 	//cp.solve
-	cp.sc = new IDSSearchController(cp,4)
+	//cp.sc = new IDSSearchController(cp,4)
 	cp.exploration {
 	  cp.branch { v(0).value = true } 
     	        { v(0).value = false}
-      cp.branch { v(1).value = true } 
+      cp.branch { v(1).value = true 
+                  bcr.value = 3} 
     	        { v(1).value = false}
       cp.branch { v(2).value = true } 
     	        { v(2).value = false}
-      println(v.mkString(","))	
+      println(v.mkString(",")+" "+bcr.getValue())	
       nb += 1
 	}
 	
