@@ -46,48 +46,49 @@ class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int
     outcome
   }
 
+  /**
+   * TODO Ensure idempotent
+   * TODO Persistence and ReversibleInt
+   * TODO Implement other listeners
+   * TODO Efficiency, dataStructures
+   */
   override def propagate(): CPOutcome = {
     var outcome: CPOutcome = CPOutcome.Suspend
 
-    println("something changed:" + X.mkString(","));
+    // DEBUG 
+    //    println("something changed:" + X.mkString(","));
 
     // Set of variables that have at least one value in the set of cardinality constrained values 
     var X2 = Set[scampi.cp.core.CPVarInt]()
     constrainedValues foreach (v => X2 = X2 union (X filter (x => x.hasValue(v)) toSet))
 
-    // Subset of X2 such that each variable has some values out of the set of cardinality constrained values 
-    var X3 = X2 filter (x => x.getMin() < constrainedValues.first || x.getMax() > constrainedValues.last)
-
-    // Process values one by one
-
-    val skipList = Array.tabulate(low.length)(x => true) // Change skipList(i) to false if you do not wan to consider it 
+    // Process constrained values one by one
+    val skipList = Array.tabulate(low.length)(x => true) // Change skipList(i) to false if you do not want to consider value i anymore 
     var restart = true // Restart the loop each time a domain is changed...
     while (outcome != CPOutcome.Failure && restart) {
       restart = false
-      
-      for {i <- 0 until low.length; if (skipList(i))} {
+
+      for { i <- 0 until low.length; if (skipList(i)) } {
         // i is the index of the value to process
-        
+
         val candidates = X2 filter (_.hasValue(constrainedValues(i))) toSet
         val boundCandidates = candidates filter (x => x.isBound())
-        val nonBoundCandidates = candidates diff boundCandidates
-        val nbCandidates = candidates.size
 
-        if (nbCandidates < low(i)) {
+        if (candidates.size < low(i)) {
           // Not enough candidates to satisfy ith cardinality constraint
           outcome = CPOutcome.Failure
-        } else if (nbCandidates == low(i)) {
-          // Exactly enough candidates to satisfy ith cardinality constraint
-          for (x <- nonBoundCandidates) {
-            x.assign(constrainedValues(i)) //FIXME (when) will propagate be called? 
+        } else if (candidates.size == low(i)) {
+          // Exactly enough candidates to satisfy ith cardinality constraint= 
+          for (x <- candidates diff boundCandidates) {
+            outcome = x.assign(constrainedValues(i))
             restart = true
             skipList(i) = false // Stop considering this value in the loop
           }
         } else if (boundCandidates.size >= low(i) && candidates.size < up(i)) {
           skipList(i) = false // Stop considering this value in the loop
         } else if (boundCandidates.size == up(i)) {
-          for (x <- nonBoundCandidates) {
-            x.removeValue(constrainedValues(i))
+          for (x <- candidates diff boundCandidates) {
+            outcome = x.removeValue(constrainedValues(i))
             restart = true
             skipList(i) = false // Stop considering this value in the loop
           }
@@ -100,63 +101,81 @@ class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int
 
         // Reevaluate X2 and X3
         constrainedValues foreach (v => X2 = X2 union (X filter (x => x.hasValue(v)) toSet))
-        X3 = X2 filter (x => x.getMin() < constrainedValues.first || x.getMax() > constrainedValues.last)
       }
     }
 
     // Check overall feasibility after potential changes
+
+    // Subset of X2 such that each variable has some values out of the set of cardinality constrained values 
+    val X3 = X2 filter (x => x.getMin() < constrainedValues.first || x.getMax() > constrainedValues.last)
     if (low.sum > X2.size) {
+      // DEBUG
       println("Too few variables to satisfy the lower bounds of CC")
       outcome = CPOutcome.Failure
     } else if (X2.size - up.sum > X3.size) {
+      // DEBUG
       println("Too many variables to satisfy the upper bounds of CC")
       outcome = CPOutcome.Failure
     }
 
     val candidatesByValue = constrainedValues map (v => X filter (_.hasValue(v)) toList) toArray
-
-     println("something changed:" + X.mkString(","));
+    // DEBUG
+    //    println("something changed:" + X.mkString(","));
 
     outcome
   }
 
   override def valRemoveIdx(x: CPVarInt, i: Int, v: Int): CPOutcome = {
-    println("var at index " + i + " lost value " + v)
+    // DEBUG
+    //    println("var at index " + i + " lost value " + v)
     CPOutcome.Suspend
+  }
+
+  def getX = X
+
+  def check(): Boolean = {
+    check(List.tabulate(low.size)(v => v))
+  }
+
+  def check(indexes: List[Int]): Boolean = {
+    indexes.isEmpty match {
+      case false =>
+        val i = indexes.head
+        val histogram = X count (_.getValue() == constrainedValues(i))
+        val outcome = (histogram < low(i) || histogram > up(i))
+        // DEBUG 
+        if (outcome) { println("" + low(i) + "<?>" + histogram + "<?>" + up(i)) }
+        outcome && check(indexes.tail)
+      case true => true
+    }
+  }
+  
+  override def toString(): String = {
+    println("Values: "+ constrainedValues.mkString(" "))
+    println("Low   : "+low.mkString(" "))
+    println("Up    : "+up.mkString(" "))
+	""	  
   }
 }
 
+
 object GCCFWC {
-
   def main(args: Array[String]) {
+    var nbSol = 0  
+    import scampi.cp.test.TestGCCFWC._
     val cp = new CPSolver()
-    var x1 = new CPVarInt(cp, 0, 2)
-    var x2 = new CPVarInt(cp, 1, 3)
-    var x3 = new CPVarInt(cp, 0, 3)
-    val x = Array(x1, x2, x3)
-
-    // T1 
-    //    	  cp.add(new GCCFWC(x,0,Array(0,2,0,2),Array(3,2,3,2)))
-    // Too few variables to satisfy the lower bounds of CC
-
-    // T2
-    //    	  cp.add(new GCCFWC(x,0,Array(0,0,0,0),Array(2,0,0,0)))
-    // Too many variables to satisfy the upper bounds of CC
-
-    // T3 variation of T2
-    //    cp.add(new GCCFWC(x,0,Array(0,0,0),Array(2,0,0)))
-    // --> Candidates by value: List( 0,  [0, 3]),List(),List()
-
-    // T4
-    cp.add(new GCCFWC(x, 0, Array(0, 1, 0, 2), Array(3, 2, 3, 2)))
-
-    // T5 
-    //    cp.add(new GCCFWC(x,0,Array(0,0,0,2),Array(0,2,3,2)))
-
-    // T6
-    // cp.add(new GCCFWC(x,0,Array(0,0,0,0),Array(1,1,1,1)))
-
-    //cp.add(x1 != 0)
-
+    
+    // Generate the constraint and solve
+    val GCC = GCCGen(cp)
+    cp.solveAll subjectTo {
+      cp.add(GCC)
+    } exploration {
+      cp.binaryFirstFail(GCC.getX)
+      println(GCC)
+      println((GCC.getX map (_.getValue())).mkString(";"))
+      GCC.check()
+      nbSol += 1
+    }
+    
   }
 }
