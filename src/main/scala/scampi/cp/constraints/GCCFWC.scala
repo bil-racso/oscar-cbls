@@ -18,7 +18,7 @@ import scampi.cp.modeling._
  *
  * @author Pierre Schaus pschaus@gmail.com and Bertrand Cornelusse bcr@n-side.com
  */
-class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int]) extends Constraint(X(0).getStore(), "GCCFWC") {
+class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).getStore(), "GCCFWC") {
 
   val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(X(0).getStore, 0))
   val constrainedValues = minVal until minVal + low.length toArray
@@ -39,7 +39,6 @@ class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int
     if (outcome == CPOutcome.Suspend) {
       for (i <- 0 until X.length) {
         X(i).callPropagateWhenDomainChanges(this);
-        X(i).callValRemoveIdxWhenValueIsRemoved(this, i)
       }
     }
 
@@ -125,26 +124,27 @@ class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int
     outcome
   }
 
-  override def valRemoveIdx(x: CPVarInt, i: Int, v: Int): CPOutcome = {
-    // DEBUG
-    //    println("var at index " + i + " lost value " + v)
-    CPOutcome.Suspend
-  }
-
-  def getX = X
-
+//  def low():Array[Int] = low
+//  def up():Array[Int] = up
+  
+  /**
+   * check a solution
+   */
   def check(): Boolean = {
     check(List.tabulate(low.size)(v => v))
   }
 
+  /**
+   * check a solution
+   */
   def check(indexes: List[Int]): Boolean = {
     indexes.isEmpty match {
       case false =>
         val i = indexes.head
         val histogram = X count (_.getValue() == constrainedValues(i))
-        val outcome = (histogram < low(i) || histogram > up(i))
+        val outcome = (histogram >= low(i) && histogram <= up(i))
         // DEBUG 
-        if (outcome) { println("" + low(i) + "<?>" + histogram + "<?>" + up(i)) }
+        if (!outcome) { println("" + low(i) + "<?>" + histogram + "<?>" + up(i)) }
         outcome && check(indexes.tail)
       case true => true
     }
@@ -161,21 +161,21 @@ class GCCFWC(val X: Array[CPVarInt], minVal: Int, low: Array[Int], up: Array[Int
 
 object GCCFWC {
   def main(args: Array[String]) {
-    var nbSol = 0  
-    import scampi.cp.test.TestGCCFWC._
-    val cp = new CPSolver()
-    
-    // Generate the constraint and solve
-    val GCC = GCCGen(cp)
-    cp.solveAll subjectTo {
-      cp.add(GCC)
-    } exploration {
-      cp.binaryFirstFail(GCC.getX)
-      println(GCC)
-      println((GCC.getX map (_.getValue())).mkString(";"))
-      GCC.check()
-      nbSol += 1
-    }
+//    var nbSol = 0  
+//    import scampi.cp.test.TestGCCFWC._
+//    val cp = new CPSolver()
+//    
+//    // Generate the constraint and solve
+//    val GCC = GCCGen(cp)
+//    cp.solveAll subjectTo {
+//      cp.add(GCC)
+//    } exploration {
+//      cp.binaryFirstFail(GCC.getX)
+//      println(GCC)
+//      println((GCC.getX map (_.getValue())).mkString(";"))
+//      GCC.check()
+//      nbSol += 1
+//    }
     
   }
 }
