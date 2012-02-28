@@ -21,13 +21,18 @@ import scampi.cp.modeling._
 class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).getStore(), "GCCFWC") {
 
   val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(X(0).getStore, 0))
+  val nbVarWithValue = Array.tabulate(low.size)(i => new ReversibleInt(X(0).getStore, 0))
   val constrainedValues = minVal until minVal + low.length toArray
 
   /**
    * Initialization, input checks and registration to events
    */
   override def setup(l: CPPropagStrength): CPOutcome = {
+    
+    println("chez beber")
     var outcome: CPOutcome = CPOutcome.Suspend
+    
+    // initialize correctly nbBound and nbVarWithValue
 
     // Input checks
     assert(low.length == up.length)
@@ -37,13 +42,34 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
 
     outcome = propagate()
     if (outcome == CPOutcome.Suspend) {
-      for (i <- 0 until X.length) {
+      for (i <- 0 until X.length; if (!X(i).isBound())) {
         X(i).callPropagateWhenDomainChanges(this);
+        //X(i).callValBindWhenBind(this);
+        //X(i).callValRemoveWhenValueIsRemoved(this);
       }
     }
 
     outcome
   }
+  
+  override def valBind(x:CPVarInt): CPOutcome = {
+    val idx = x.getValue() - minVal
+    if (idx >= 0 && idx < low.size) {
+      nbBound(idx).incr()
+      if (nbBound(idx).getValue() == up(idx)) {
+        //remove this value from other domains
+      }
+    }
+    CPOutcome.Suspend
+  }
+  
+   override def valRemove(x:CPVarInt,v: Int): CPOutcome = {
+    
+    CPOutcome.Suspend
+  }
+  
+  
+  
 
   /**
    * TODO Ensure idempotent
