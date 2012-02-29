@@ -67,8 +67,9 @@ object SportScheduling extends CPModel {
       cp.add(alldifferent(game.flatten), Strong)
       // a team can play at most twice in the same period
       for (p <- Periods)
-        cp.add(gcc(team(p).flatten, Teams, 1, 2))
+        cp.add(gcc(team(p).flatten, Teams, 1, 2),Strong)
     } exploration {
+      
       cp.binaryFirstFail(game.flatten)
       printSol()
     }

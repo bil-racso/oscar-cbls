@@ -17,11 +17,11 @@ import scala.collection.mutable.Map
 import scampi.search.Branching
 
 /** 
- * Cosmos Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
+ * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Cosmos extends CPModel {
+object ElectricityMarket extends CPModel {
 	def main(args: Array[String]) {
 	  
 	  val cp = CPSolver()
@@ -40,7 +40,7 @@ object Cosmos extends CPModel {
 
 	  }
 	  
-	  val firstLine::restLines = Source.fromFile("data/cosmos.txt").getLines.toList
+	  val firstLine::restLines = Source.fromFile("data/electricityMarket.txt").getLines.toList
 	  val n = firstLine.toInt
 	  
 	  val orders = restLines.map(_.split(" ").map(_.toInt)).map(Order(_)).toArray
