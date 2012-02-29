@@ -146,46 +146,46 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 
   }
 
-  test("Test 7: Checking random instances and comparing to an alternative approach") {
-    println("Test 7")
-    var nbSol = 0
-    var nbSolAlternative = 0
-
-
-    // Generate the constraint
-    val cp = new CPSolver()
-    val GCC = GCCGen(cp)
-    val cp2 = new CPSolver()
-    val o: Array[CPVarInt] = Array.tabulate(GCC.low.size) ( v => {
-     new CPVarInt(cp2, GCC.low(v), GCC.up(v)) 
-    })
-    val X2 = GCC.X map (x => new CPVarInt(cp2,x.getMin(), x.getMax()) )
-    println(GCC.X.mkString(";"))
-    println(X2.mkString(";"))
-    println(o.mkString(";"))
-    
-    // Solve with GCCFWC
-    cp.solveAll subjectTo {
-      cp.post(GCC)
-    } exploration {
-      cp.binaryFirstFail(GCC.X)
-      //println((GCC.X map (_.getValue())).mkString(";"))
-      GCC.check() should be(true)
-      nbSol += 1
-    }
-
-    // Compare with GCCVar
-    cp2.solveAll subjectTo {
-      cp2.post(new GCCVar(X2,GCC.minVal,o))
-    } exploration {
-      cp2.binaryFirstFail(X2)
-      //println((X2 map (_.getValue())).mkString(";"))
-      nbSolAlternative += 1
-    }
-
-    // Compare with brute force approach
-    nbSol should be (nbSolAlternative)
-  }
+//  test("Test 7: Checking random instances and comparing to an alternative approach") {
+//    println("Test 7")
+//    var nbSol = 0
+//    var nbSolAlternative = 0
+//
+//
+//    // Generate the constraint
+//    val cp = new CPSolver()
+//    val GCC = GCCGen(cp)
+//    val cp2 = new CPSolver()
+//    val o: Array[CPVarInt] = Array.tabulate(GCC.low.size) ( v => {
+//     new CPVarInt(cp2, GCC.low(v), GCC.up(v)) 
+//    })
+//    val X2 = GCC.X map (x => new CPVarInt(cp2,x.getMin(), x.getMax()) )
+//    println(GCC.X.mkString(";"))
+//    println(X2.mkString(";"))
+//    println(o.mkString(";"))
+//    
+//    // Solve with GCCFWC
+//    cp.solveAll subjectTo {
+//      cp.post(GCC)
+//    } exploration {
+//      cp.binaryFirstFail(GCC.X)
+//      //println((GCC.X map (_.getValue())).mkString(";"))
+//      GCC.check() should be(true)
+//      nbSol += 1
+//    }
+//
+//    // Compare with GCCVar
+//    cp2.solveAll subjectTo {
+//      cp2.post(new GCCVar(X2,GCC.minVal,o))
+//    } exploration {
+//      cp2.binaryFirstFail(X2)
+//      //println((X2 map (_.getValue())).mkString(";"))
+//      nbSolAlternative += 1
+//    }
+//
+//    // Compare with brute force approach
+//    nbSol should be (nbSolAlternative)
+//  }
 
 }
 

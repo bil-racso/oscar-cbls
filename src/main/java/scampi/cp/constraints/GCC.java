@@ -42,7 +42,7 @@ public class GCC extends Constraint {
 	
 	protected CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = CPOutcome.Success;
-		if (l == CPPropagStrength.Strong) {
+		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy
 			ok = s.post(new SoftGCC(x, minval, low, up, new CPVarInt(s,0,0)));
 		} else {
 			ok = s.post(new GCCFWC(x, minval, low, up));
