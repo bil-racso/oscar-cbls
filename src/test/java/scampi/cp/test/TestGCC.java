@@ -72,7 +72,9 @@ public class TestGCC extends TestCase {
     	return new int[][]{low,up};
     }
     
-    
+    /**
+     * return the number of sol of the constraints
+     */
     private int test(int [][]randomDom,int [][]randomOcc,final boolean gccvar) {
     	Store s = new Store();
     	final CPVarInt [] x = new CPVarInt[randomDom[0].length];

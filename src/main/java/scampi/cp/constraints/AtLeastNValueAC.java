@@ -61,6 +61,7 @@ public class AtLeastNValueAC extends Constraint {
 		this.posted = false;
 		this.nValueVar = nval;
 		this.priorityL2 = Store.MAXPRIORL2-1;
+		//setIdempotent();
 	}
 	
 	public AtLeastNValueAC(CPVarInt [] x, CPVarInt nval, boolean dontPostFWC) {

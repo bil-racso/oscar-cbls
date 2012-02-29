@@ -12,6 +12,7 @@ package scampi.cp.examples
 
 import scampi.cp.modeling._
 import scampi.search._
+import scampi.visual._
 
 import scala.collection.JavaConversions._
 import scala.io.Source

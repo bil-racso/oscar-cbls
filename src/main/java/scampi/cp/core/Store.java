@@ -26,6 +26,11 @@ import scampi.reversible.ReversibleSearchNode;
  * @author Pierre Schaus pschaus@gmail.com
  */
 public class Store extends ReversibleSearchNode {
+	
+	/**
+	 * Number of call to propagate method in any constraints
+	 */
+	private int nbPropag = 0;
 
     /**
      * The highest priority for an Level 1 filtering method (the lowest priority is 0)
@@ -64,6 +69,13 @@ public class Store extends ReversibleSearchNode {
 		}
 		highestPriorL2 = 0;
 	}
+	
+	/**
+	 * @return the number of call to propagate method in anyone of the constraints
+	 */
+	public int getNbPropag() {
+		return nbPropag;
+	}	
 	
 	private void optimize(CPObjective objective) {
 		CPOutcome oc = post(objective);
@@ -301,6 +313,7 @@ public class Store extends ReversibleSearchNode {
 			while (ok != CPOutcome.Failure && !propagQueueL2[p].isEmpty()) {
 				Constraint c = propagQueueL2[p].removeFirst();
 				highestPriorL2 = p;
+				nbPropag++;
 				ok = c.execute();
 				if (highestPriorL2 > p || !isL1QueueEmpty()) break;
 			}

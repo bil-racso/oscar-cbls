@@ -23,6 +23,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileInputStream;
@@ -73,34 +74,12 @@ public class VisualDrawing extends JPanel  {
 		
 		drawingPanel.setBackground(Color.white);
 
-		
-
 		add(drawingPanel, BorderLayout.CENTER);
 
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		
 		buttonPanel.setBackground(Color.white);
-		ImageIcon icon = new ImageIcon(VisualDrawing.class.getResource("icon/save.png"));
-
-		Image img = icon.getImage();  
-		Image newimg = img.getScaledInstance(30, 30,  java.awt.Image.SCALE_SMOOTH);  
-		icon = new ImageIcon(newimg);  
-
-
-		final JButton export = new JButton(icon);
-		export.setSize(30, 30);
-		export.addActionListener(new ActionListener() {	
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-
-			}
-		});
-
-		buttonPanel.add(export);
-
-		if (saveButton) {
-			add(buttonPanel, BorderLayout.NORTH);			
-		}
 
 
 	}
@@ -108,6 +87,33 @@ public class VisualDrawing extends JPanel  {
 
 	public void addShape(ColoredShape s) {
 		shapes.add(s);
+		repaint();
+	}
+	
+	
+	
+	public static void main(String[] args) {
+		
+		VisualFrame f = new VisualFrame("toto");
+		VisualDrawing d = new VisualDrawing(false);
+		JInternalFrame inf = f.createFrame("Drawing");
+		inf.add(d);
+		f.pack();
+		Rectangle2D r = new Rectangle2D.Double(0, 0,100,100);
+		ColoredShape<Rectangle2D> rect = new ColoredShape<Rectangle2D>(d,r);
+
+	    ColoredShape<Line2D> l = new ColoredShape<Line2D>(d,new Line2D.Double(0, 0, 100, 100));
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		rect.setInnerCol(Color.red);
+		
+		
+		
 	}
 
 
