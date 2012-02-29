@@ -13,16 +13,16 @@ import scampi.linprog.modeling._
 import scala.io.Source
 import scala.collection.mutable.Map
 /** 
- * Cosmos Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
+ * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Cosmos extends MIPModel {
+object ElectricityMarket extends MIPModel {
 	def main(args: Array[String]) {
 	  
 
 	  // format is : qty ( > 0 if producer < 0 if consumer) start end
-	  val firstLine::restLines = Source.fromFile("data/cosmoseasy.txt").getLines.toList
+	  val firstLine::restLines = Source.fromFile("data/electricityMarketEasy.txt").getLines.toList
 	  val n = firstLine.toInt
 	  
 	  val orders = restLines.map(_.split(" ").map(_.toInt))
@@ -33,9 +33,9 @@ object Cosmos extends MIPModel {
 	  val tmax = orders.map(_(2)).max
 	  
 	  // one variable for each order if we take it or not
-	  val mip = new MIPSolver(LPSolverLib.glpk)
+	  val mip = MIPSolver(LPSolverLib.glpk)
 	  val varMap = Map[Array[Int],MIPVar]() 
-	  orders.foreach(o => varMap += (o -> new MIPVar(mip,"order",0 to 1)))
+	  orders.foreach(o => varMap += (o -> MIPVar(mip,"order",0 to 1)))
 	  
 	  // helper functions
 	  def overlap(order: Array[Int], t: Int) = t <= order(2) && t >= order(1) 

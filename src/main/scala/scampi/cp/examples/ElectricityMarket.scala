@@ -17,11 +17,11 @@ import scala.collection.mutable.Map
 import scampi.search.Branching
 
 /** 
- * Cosmos Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
+ * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Cosmos extends CPModel {
+object ElectricityMarket extends CPModel {
 	def main(args: Array[String]) {
 	  
 	  val cp = CPSolver()
@@ -37,14 +37,10 @@ object Cosmos extends CPModel {
 	    def overlap(t : Int) = t <= end && t >= start
 	    var sol = true
 	    def bound = selected.isBound()
-	    
-	    cp.onSolution {
-	      sol = selected.isTrue()
-	    }
-	    def restore() =  if (sol) selected.constraintTrue() else selected.constraintFalse()
+
 	  }
 	  
-	  val firstLine::restLines = Source.fromFile("data/cosmos.txt").getLines.toList
+	  val firstLine::restLines = Source.fromFile("data/electricityMarket.txt").getLines.toList
 	  val n = firstLine.toInt
 	  
 	  val orders = restLines.map(_.split(" ").map(_.toInt)).map(Order(_)).toArray
@@ -76,12 +72,13 @@ object Cosmos extends CPModel {
 	    } 
 	  } exploration {
 	    def allBounds = orders.filter(!_.bound).isEmpty
-	    while (!cp.isFailed() && !allBounds) {
+	    while (!allBounds) {
 	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
 	  }
 	  cp.printStats()
+	  
 	}
 }

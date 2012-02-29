@@ -42,7 +42,7 @@ class Machine1(m : Model, name: String) extends Process(m,name) {
 }
 
 object Machine1 {
-	def main(args: Array[String]) =  {
+	def main(args: Array[String]){
   		val mod = new Model()
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")

@@ -20,13 +20,14 @@ public class ColoredShape<E extends Shape> {
 	private Color outerCol = Color.black;
 	
 	private VisualDrawing drawing;
-	private E shape;
+	public E shape;
 	private boolean visible = true;
 	
 	
 	public ColoredShape(VisualDrawing d, E shape) {
 		this.drawing = d;
 		this.shape = shape;
+		d.addShape(this);
 	}	
 	
 	public void draw(Graphics2D g) {
@@ -40,6 +41,7 @@ public class ColoredShape<E extends Shape> {
 	
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+		drawing.repaint();
 	}
 
 	public Color getInnerCol() {

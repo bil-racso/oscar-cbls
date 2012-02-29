@@ -20,36 +20,7 @@ import scala.collection.mutable.Stack
 class NoSol(msg : String) extends Exception(msg)
 
 class CPSolver() extends Store() { 
-  
-    case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
-	
-	val branchings = new BranchingCombinator()
-	
-	val search = new Explorer(this, branchings)
-	
-	var startSearch : Unit => Unit = Unit => search.solveOne()
-	
-	var stateObjective : Unit => Unit = Unit => Unit
-	
-	var time : Long = 0
-	
-	var tree = false
-	
-	var restart: Option[Restart] = None
-	
-	var lns: Option[LNS] = None
-	
-	var solveOne = false
-	
-	class Closure(msg: String, block: => Unit)  {
-      def run() = {
-        block
-      }
-      override def toString = msg
-    }
-	
-	val sc = new SearchController(this)
-	
+
 	/**
 	 * @param block a code block
 	 * @return the time (ms) to execute the block
@@ -78,25 +49,11 @@ class CPSolver() extends Store() {
 		
 	def solve() : CPSolver = {
 	    solveOne = true
-		startSearch = Unit => search.solveOne() 
 		this
 	}
 	
 	def solveAll() : CPSolver = {
-		startSearch = Unit => {
-		 lns match {
-		   case None => search.solveAll()
-		   case Some(LNS(nbRestart,nbFailures,rest)) => {
-		     // creates the restart object
-		     val r = new Restart() {
-		        override def restart() {
-				  rest()
-				}
-		     }
-		     search.solveLNS(nbRestart,nbFailures,r) 
-		   }
-		 } 
-		} 
+	    solveOne = false
 		this
 	}
 	
@@ -106,65 +63,6 @@ class CPSolver() extends Store() {
 		} catch {
 			case ex : NoSol => println("No Solution, inconsistent model")
 		}
-		this
-	}
-	
-	def addBranching(searchBlock : Branching) {
-		branchings.addBranching(searchBlock)
-	}
-	
-	def addBranching(searchBlock : => Array[Alternative] ) {
-		branchings.addBranching(
-						new Branching() {
-							override def getAlternatives(): Array[Alternative] = {
-									searchBlock
-							}
-						})
-	}
-	
-	private def run() {
-	  	stateObjective()
-		startSearch()
-	}
-	
-	def exploring(searchBlock : => Array[Alternative]) {
-		if (this.getStatus() != CPOutcome.Failure) {
-			time = getTime {
-				branchings.addBranching(
-						new Branching() {
-							override def getAlternatives(): Array[Alternative] = {
-									searchBlock
-							}
-						})
-						time = getTime { run() }
-			}
-		}
-	}
-	
-	def exploring(branching : Branching*) : CPSolver = {
-		if (this.getStatus() != CPOutcome.Failure) {
-			branching.foreach(branchings.addBranching(_))
-			time = getTime {run()}
-		} else {
-          println("failed model")
-        }
-		this
-	}
-	
-	def exploring(searchBlock : => Unit) : CPSolver = {
-		searchBlock //execute the search block adding the branchings
-		if (this.getStatus() != CPOutcome.Failure) {
-			time = getTime {run()}
-		}
-		this
-	}
-	
-	def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
-	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
-	}
-
-	def onSolution(block: => Unit ) : CPSolver = {
-		search.onSolution(block)
 		this
 	}
 	
@@ -183,6 +81,13 @@ class CPSolver() extends Store() {
 	}
 	
 	/**
+	 * Set the maximum number of fails for the search
+	 */
+	def failLimit(nbFailMax: Int) {
+	  sc.failLimit = nbFailMax 
+	}
+	
+	/**
      * Binary First Fail on the decision variables vars
      */
     def binaryFirstFail(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
@@ -198,100 +103,10 @@ class CPSolver() extends Store() {
 	def printStats() {
 		println("time(ms)",time)
 		println("#bkts",sc.nbFail)
-		println( "time in fix point(ms)",getTimeInFixPoint())
-		println( "time in trail restore(ms)",getTrail().getTimeInRestore())
-		println( "max trail size",getTrail().getMaxSize())
+		println("time in fix point(ms)",getTimeInFixPoint())
+		println("time in trail restore(ms)",getTrail().getTimeInRestore())
+		println("max trail size",getTrail().getMaxSize())
 	}
-	
-	def branchOn(vals : Range,filter : (Int => Boolean), by : (Int => Double) ) (cons: (Int => Constraint)) : Array[Alternative] = {
-		val alts = for(v <- vals; if filter(v))  yield (by(v),new CPAlternative(this,cons(v)))
-		if (alts.isEmpty) fail()
-		val sortedalts = alts.toList.sort((e1,e2) => (e1._1 < e2._1))
-		sortedalts.map(_._2).toArray
-	}
-	
-	def branchOn(x : CPVarInt, by : (Int => Double) = (v => v) ) (cons: (Int => Constraint)) : Array[Alternative] = {
-		branchOn(x.getMin to x.getMax,x.hasValue(_),by)(cons)
-	}
-	
-	
-	def branchOn(c : Constraint*) : Array[Alternative] = {
-		c.map(cons => new CPAlternative(this,cons)).toArray
-	}	
-    
-    def branch(left: => Unit)(right: => Unit): Unit @suspendable = {
-      shift { k: (Unit => Unit) =>
-        sc.addChoice(new MyContinuation("right", {
-          right
-          if (!isFailed()) k()}))
-        left
-        if (!isFailed()) k()
-      }
-    }
-    
-    def branchOne(left: => Unit): Unit @suspendable = {
-      shift { k: (Unit => Unit) =>
-        left
-        if (!isFailed()) k()
-      }
-    }
-    
-	def exploration(block: => Unit @suspendable ): Unit  =  {
-	  val t1 = System.currentTimeMillis()
-	  stateObjective()
-	  var nbRestart = 0
-	  var maxRestart = 1
-	  var limit = Int.MaxValue
-	  
-	  val relax = lns match {
-		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => {
-		     maxRestart = nbRestart
-		     limit = nbFailures
-		     restar
-		   }
-	  }  
-
-
-	  reset {
-        shift { k1: (Unit => Unit ) =>
-          val b = () => {
-                block
-                if (!isFailed()) {
-                	//println("solution found")
-                	sc.failLimit = limit
-                	if (solveOne) {
-                	  sc.reset()
-                	  k1()
-                	}
-                }
-          }
-
-          def restart(relaxation: Boolean = false) {
-           popAll()
-           pushState()
-           if (relaxation) relax()
-           sc.reset()
-           nbRestart += 1 
-           reset {
-             b()  	  
-             if (!isFailed()) getObjective().tighten()
-             sc.fail()
-      	   }
-           sc.explore() // let's go
-          }
-          sc.failLimit = limit
-          restart(false) // first restart, find a feasible solution so no limit
-          for (r <- 2 to maxRestart; if (!getObjective().isOptimum())) {
-            restart(true)
-            if (sc.limitReached) print("!")
-            else print("R")
-          }
-          k1()          
-        } 
-      }
-	  time = System.currentTimeMillis() - t1
-    }
 	
     
 	

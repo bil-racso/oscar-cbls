@@ -23,9 +23,9 @@ object Sudoku extends MIPModel{
 
 			val N = 0 until n
 
-			val mip = new MIPSolver(LPSolverLib.glpk)
+			val mip = MIPSolver(LPSolverLib.glpk)
 
-			val x = Array.tabulate(n,n,n) ((l,c,n) => new MIPVar(mip,"x"+(l,c,n), 0 to 1))
+			val x = Array.tabulate(n,n,n) ((l,c,n) => MIPVar(mip,"x"+(l,c,n), 0 to 1))
 
 			mip.maximize(0) subjectTo {
 

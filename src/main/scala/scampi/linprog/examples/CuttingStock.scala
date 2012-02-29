@@ -37,7 +37,7 @@ object CuttingStock extends LPModel with MIPModel {
 	  for (r <- Rolls) {
 	 	  val config = Array.tabulate(roll.size)(_ => 0)
 	 	  config(r) = rollStock/roll(r)
-	 	  C = C :+ new Column(new LPVar(lp,"pattern"+r), config)
+	 	  C = C :+ new Column(LPVar(lp,"pattern"+r), config)
 	  }
 	   
 	  var constraints = Array[LPConstraint]()

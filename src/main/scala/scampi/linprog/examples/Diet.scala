@@ -33,7 +33,7 @@ object Diet extends LPModel {
 	  
 		val nutriments = List("A","C","B1","B2","NA","CAL").map{Nutriment}
 		
-		def nvar(name : String) = new LPVar(lp,name,2,10) //Each food is limited between 2 and 10
+		def nvar(name : String) = LPVar(lp,name,2,10) //Each food is limited between 2 and 10
 		
 		val foods = List(
 				(nvar("Beef"),      3.19, List(60,20,10,15,938,295)),

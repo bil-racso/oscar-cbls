@@ -14,16 +14,17 @@ package scampi.des.engine
  * @author Pierre Schaus, Sebastien Mouthuy
  */
 abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
-	def process = {}
 	
-	def compare(that : SimEvent) = that.time.compare(this.time)
+	def compare(that : SimEvent) = this.time.compare(that.time)
 	
 	
 }
 
-class WaitEvent(time: Double, block: => Unit ) extends SimEvent(time) {
+class WaitEvent[A](time: Double, block: Double => Boolean ) extends SimEvent(time) {
 	
-	override def process = block
+	def process(){
+	  block(time)
+	}
 	
 }
 

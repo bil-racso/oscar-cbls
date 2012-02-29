@@ -26,7 +26,7 @@ object MaxFlow extends LPModel {
   def main(args: Array[String]) = {  
 	  
 
-	 val lp = new LPSolver(LPSolverLib.glpk)
+	 val lp = LPSolver(LPSolverLib.glpk)
 	 
 	 val Lines = 0 to 7
      val Columns = 0 to 8
@@ -41,7 +41,7 @@ object MaxFlow extends LPModel {
 					  Array( 0,   0,   0,  0,  0,   0,  0,  0, 15),
 					  Array( 0,   0,   0,  0,  0,  63,  0,  0, 20))
 
-	val x = Array.tabulate(nbline,nbcol) ((l,c) => new LPVar(lp,"x"+(l,c), 0,capa(l)(c) ))					 
+	val x = Array.tabulate(nbline,nbcol) ((l,c) => LPVar(lp,"x"+(l,c), 0,capa(l)(c) ))					 
 						 
 	lp.maximize(sum(Lines)(l => x(l)(nbcol-1))) subjectTo {
 		 for(l <- 1 to nbline-1)

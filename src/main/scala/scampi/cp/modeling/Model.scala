@@ -10,6 +10,10 @@
 package scampi.cp.modeling
 
 
+import scala.util.continuations._
+
+
+
 /**
  *
  * A CP model should extend this class to benefit from the modeling facilities (constraints functions...)
@@ -79,6 +83,21 @@ trait CPModel extends Constraints {
   def allBounds(vars: Iterable[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
 
 
+   def loopWhile[T](cond: =>Boolean)(body: =>(Unit @suspendable)): Unit @suspendable = {
+     if (cond) {
+       body
+       loopWhile[T](cond)(body)
+     } 
+   }
+    
+   def loop(r: Range)(body: Int =>(Unit @suspendable)): Unit @suspendable = {
+      var i = r.start
+      loopWhile(i < r.end) {
+        val k = i
+        body(i)
+        i = k+1
+      }
+   }
   
   
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {

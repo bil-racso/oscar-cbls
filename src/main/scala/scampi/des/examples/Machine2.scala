@@ -32,7 +32,8 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 	
 	def broken(): Unit @ suspendable = {
 		println(name+" is broken waiting to be repaired")
-		m.request(repairPerson)
+		//m.request(repairPerson)
+		repairPerson.request
 		repair()
 		
 	}
@@ -40,7 +41,8 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 	def repair(): Unit @ suspendable ={
 		println(name+" being repaired")
 		m.wait(repairDur.nextInt(3).max(1));
-		m.release(repairPerson)
+		//m.release(repairPerson)
+		repairPerson.release
 		alive()
 		
 	}		
@@ -50,7 +52,7 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 }
 
 object Machine2 {
-	def main(args: Array[String]) = {
+	def main(args: Array[String]){
   		val mod = new Model()
   		val repairPerson = new UnaryResource(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)

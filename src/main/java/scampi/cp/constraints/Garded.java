@@ -14,24 +14,24 @@ import scampi.cp.core.CPPropagStrength;
 import scampi.cp.core.Constraint;
 import scampi.cp.core.CPVarBool;
 
-/**
- * @author Pierre Schaus pschaus@gmail.com
- */
 public class Garded extends Constraint {
 	
 	private CPVarBool b;
 	private Constraint c;
+	private boolean onTrue;
 	
 	/**
-	 * Garded constraint: c is posted only when b becomes true
+	 * Garded constraint: c is posted only when b becomes true (if onTrue) or when b becomes false (if onFalse)
 	 * @param b
 	 * @param c
+	 * @param onTrue 
      * @see  Constraint#when(cp.core.CPVarBool)
 	 */
-	public Garded(CPVarBool b, Constraint c) {
+	public Garded(CPVarBool b, Constraint c, boolean onTrue) {
 		super(b.getStore(),"Garded Constraint");
 		this.b = b;
 		this.c = c;
+		this.onTrue = onTrue;
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class Garded extends Constraint {
 			b.callPropagateWhenBind(this);
 			return CPOutcome.Suspend;
 		} else {
-			if (b.getValue() == 1) {
+			if ((b.getValue() == 1 && onTrue) || (b.getValue() == 0 && !onTrue)) {
 				if (s.post(c) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
@@ -51,7 +51,7 @@ public class Garded extends Constraint {
 	
 	@Override
 	public CPOutcome propagate() {
-		if (b.getValue() == 1) {
+		if ((b.getValue() == 1 && onTrue) || (b.getValue() == 0 && !onTrue)) {
 			if (s.post(c) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

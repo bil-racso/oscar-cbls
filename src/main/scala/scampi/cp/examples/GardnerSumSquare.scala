@@ -11,7 +11,7 @@ package scampi.cp.examples
 
 
 import scampi.cp.modeling._
-import scampi.cp.search._
+
 
 import scala.math
 
@@ -30,7 +30,7 @@ object GardnerSumSquare extends CPModel {
     
     
     
-    val cp = new CPSolver()
+    val cp = CPSolver()
 
     val a = CPVarInt(cp,dom)
     val b = CPVarInt(cp,dom)

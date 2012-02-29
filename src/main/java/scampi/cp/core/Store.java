@@ -26,6 +26,11 @@ import scampi.reversible.ReversibleSearchNode;
  * @author Pierre Schaus pschaus@gmail.com
  */
 public class Store extends ReversibleSearchNode {
+	
+	/**
+	 * Number of call to propagate method in any constraints
+	 */
+	private int nbPropag = 0;
 
     /**
      * The highest priority for an Level 1 filtering method (the lowest priority is 0)
@@ -51,7 +56,7 @@ public class Store extends ReversibleSearchNode {
 	public Store(){
 		super();
 		
-		status = new ReversiblePointer<CPOutcome>(this);
+		status = new ReversiblePointer<CPOutcome>(this,CPOutcome.Suspend);
 		status.setValue(CPOutcome.Suspend);
 
 		propagQueueL1 = new LinkedList[MAXPRIORL2+1];
@@ -64,6 +69,13 @@ public class Store extends ReversibleSearchNode {
 		}
 		highestPriorL2 = 0;
 	}
+	
+	/**
+	 * @return the number of call to propagate method in anyone of the constraints
+	 */
+	public int getNbPropag() {
+		return nbPropag;
+	}	
 	
 	private void optimize(CPObjective objective) {
 		CPOutcome oc = post(objective);
@@ -106,6 +118,7 @@ public class Store extends ReversibleSearchNode {
     /**
      * Set the status of the store to a failed state
      */
+	@Override
 	public void fail() {
 		status.setValue(CPOutcome.Failure);
 	}
@@ -120,7 +133,7 @@ public class Store extends ReversibleSearchNode {
 	}
 
     private int addQueueL2(Constraint c) {
-         if (c.isActive() && !c.isInQueue()) {
+         if ((c.isActive() && !c.isInQueue()) && (!c.inPropagate() || !c.idempotent)) {
 			c.setInQueue();
 			propagQueueL2[c.getPriorityL2()].add(c);
 			return c.getPriorityL2();
@@ -280,12 +293,12 @@ public class Store extends ReversibleSearchNode {
 		
 		long t0 = System.currentTimeMillis();
 		
-		CPOutcome ok = !objective.isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
+		CPOutcome ok = !getObjective().isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
 		
 		while (ok != CPOutcome.Failure) {
 			int p;
 			
-			while (ok != CPOutcome.Failure && !isAC5QueueEmpty()) {
+			while (ok != CPOutcome.Failure && !isL1QueueEmpty()) {
 				for (int i = MAXPRIORL1; i >= 0; i--) {
 					if(!propagQueueL1[i].isEmpty()) {
 						PropagEvent event = propagQueueL1[i].removeFirst();
@@ -300,15 +313,16 @@ public class Store extends ReversibleSearchNode {
 			while (ok != CPOutcome.Failure && !propagQueueL2[p].isEmpty()) {
 				Constraint c = propagQueueL2[p].removeFirst();
 				highestPriorL2 = p;
+				nbPropag++;
 				ok = c.execute();
-				if (highestPriorL2 > p || !isAC5QueueEmpty()) break;
+				if (highestPriorL2 > p || !isL1QueueEmpty()) break;
 			}
 		}
 		timeInFixPoint += System.currentTimeMillis()-t0;
 		return ok==CPOutcome.Failure ? ok : CPOutcome.Suspend;
 	}
 	
-	private boolean isAC5QueueEmpty() {
+	private boolean isL1QueueEmpty() {
 		for(int i = 0; i <= MAXPRIORL1; i++) {
 			if (!propagQueueL1[i].isEmpty()) return false;
 		}

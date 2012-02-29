@@ -42,13 +42,13 @@ object LandingLocation extends MIPModel {
   	
   	// ---------- MIP model ----------
   	// The MIP solver
-  	val mip = new MIPSolver()//glpk lp_solve cplex gurobi
+  	val mip = MIPSolver()//glpk lp_solve cplex gurobi
   	// Variables
   	// For each landing either it is ON or OFF
   	val y = for(land <- Landings) yield new MIPVar(mip, "y"+land, 0 to 1)
   	
   	// Transportation decision variables
-  	val x = Array.tabulate(Logs.length,Landings.length) ((log,land) => new MIPVar(mip,"x"+(log,land), 0 to 1))
+  	val x = Array.tabulate(Logs.length,Landings.length) ((log,land) => MIPVar(mip,"x"+(log,land), 0 to 1))
 
   	
   	val obj = sum(Logs,Landings) {(log,land) => x(log)(land)*transportationCost(log)(land)} + sum(Landings) {land => openingCost(land)*y(land)} + Alpha *(Demand - (sum(Logs,Landings) {(log,land) => x(log)(land)*1}))

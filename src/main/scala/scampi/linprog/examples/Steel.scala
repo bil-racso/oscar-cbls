@@ -73,7 +73,7 @@ object Steel extends LPModel with MIPModel{
 	  val colorOrders = Cols.map(c => (Slabs).filter (s => col(s) == c))
 		
 
-	  val lp = new LPSolver(LPSolverLib.lp_solve)
+	  val lp = LPSolver(LPSolverLib.lp_solve)
 				
 	  var C : Array[Column] = Array()
 		
@@ -83,7 +83,7 @@ object Steel extends LPModel with MIPModel{
 	  for (s <- 0 until nbSlab) {
 		  val cont = Array.tabulate(nbSlab)(_ => 0)
 		  cont(s) = 1
-		  C = C :+ new Column(new LPVar(lp,"x",0,10000),loss(weight(s)), cont)
+		  C = C :+ new Column(LPVar(lp,"x",0,10000),loss(weight(s)), cont)
 	  }
 		
 	  var meet : Array[LPConstraint] = Array()
@@ -101,10 +101,10 @@ object Steel extends LPModel with MIPModel{
 	  for (CAPA <- capa) {		  
 	      do{
 	    	  added = false
-	    	  val mip = new MIPSolver(LPSolverLib.lp_solve)
+	    	  val mip = MIPSolver(LPSolverLib.lp_solve)
 
-	    	  val use = Array.tabulate(nbSlab)(_ => new MIPVar(mip,"use",0 to 1))
-	    	  val v = Array.tabulate(nbCol)(_ => new MIPVar(mip,"v",0 to 1))
+	    	  val use = Array.tabulate(nbSlab)(_ => MIPVar(mip,"use",0 to 1))
+	    	  val v = Array.tabulate(nbCol)(_ => MIPVar(mip,"v",0 to 1))
 	    	  val cost = Array.tabulate(nbSlab)(meet(_).getDual)
 
 	    	  mip.maximize(sum(Slabs)(s => ((cost(s)+weight(s)) * use(s)))) subjectTo {

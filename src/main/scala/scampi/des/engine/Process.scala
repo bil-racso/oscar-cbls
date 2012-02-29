@@ -46,7 +46,7 @@ abstract class Process (m: Model, name : String = "Process"){
 	/**
 	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
 	 */
-	def simulate(): Unit @ suspendable = {
+	def simulate(){
 	  reset {
 	    start()
 	  }

@@ -89,7 +89,7 @@ class MachineList{
 
 
 object Machine3 {
-	def main(args: Array[String])  = {
+	def main(args: Array[String]){
   		val mod = new Model()
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)

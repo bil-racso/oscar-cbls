@@ -15,6 +15,8 @@ import scampi.cp.core._
 import scampi.cp.search._
 import scala.util.continuations._
 import scampi.reversible.ReversibleBool
+import scampi.search.IDSSearchController
+import scampi.reversible.ReversibleInt
 
 
 
@@ -28,27 +30,31 @@ import scampi.reversible.ReversibleBool
 object TestNDS  extends CPModel {
   def main(args: Array[String])  {
 
-    
-    def loopWhile[T](cond: =>Boolean)(body: =>(Unit @suspendable)): Unit @suspendable = {
-     if (cond) {
-       body
-       loopWhile[T](cond)(body)
-     } 
-    }
-    
-    def loop(r: Range)(body: Int =>(Unit @suspendable)): Unit @suspendable = {
-      var i = r.start
-      loopWhile(i < r.end) {
-        val k = i
-        body(i)
-        i = k+1
-      }
-    }
       
 		
 	val cp = CPSolver()
 	val v = Array.tabulate(3)(i => new ReversibleBool(cp))
+	
+	val bcr = new ReversibleInt(cp,0)
+	
 	var nb = 0
+	
+	//cp.solve
+	//cp.sc = new IDSSearchController(cp,4)
+	cp.exploration {
+	  cp.branch { v(0).value = true } 
+    	        { v(0).value = false}
+      cp.branch { v(1).value = true 
+                  bcr.value = 3} 
+    	        { v(1).value = false}
+      cp.branch { v(2).value = true } 
+    	        { v(2).value = false}
+      println(v.mkString(",")+" "+bcr.getValue())	
+      nb += 1
+	}
+	
+	
+	/*
 	cp.exploration {		
 	     loop(0 until v.length) {
     	     i => cp.branch { v(i).setValue(true) } 
@@ -56,8 +62,10 @@ object TestNDS  extends CPModel {
          }
 	     nb += 1
 	     println("solution:"+v.mkString(","))
-	}
+	}*/
 	println("nb:"+nb)
+	
+	
 
 
 

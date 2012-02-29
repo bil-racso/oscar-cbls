@@ -28,7 +28,7 @@ abstract class LP extends AbstractLP {
  */
 trait LPModel extends AbstractLPModel {
   	
-	class LPVar(lp: LPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name,lbound,ubound,false) {
+  case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name_,lbound,ubound,false) {
 
 	    def this(lp: LPSolver, name: String, unbounded: Boolean) = {
 	      this(lp,name,if (unbounded) Double.PositiveInfinity else 0.0,Double.PositiveInfinity)

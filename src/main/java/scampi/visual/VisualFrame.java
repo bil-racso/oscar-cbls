@@ -18,9 +18,22 @@ public class VisualFrame extends JFrame {
 
 
 	JDesktopPane desktop;
+	Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	
-	public VisualFrame(String title) {
+	private int w;
+	private int h;
+	private int n;
+	private int nbLines;
+	private int nbCols;
+	
+	
+	public VisualFrame(String title,int nbLines, int nbCols) {
 		super(title);
+		this.nbLines = nbLines;
+		this.nbCols = nbCols;
+		n = 0;
+		w = screenSize.width/nbCols;
+		h = screenSize.height/nbCols;
 
 		addWindowListener(new WindowAdapter() {
 			 public void windowClosing(WindowEvent event) {
@@ -32,13 +45,13 @@ public class VisualFrame extends JFrame {
 		content.setBackground(Color.white);
 		desktop = new JDesktopPane();
 		desktop.setBackground(Color.white);
-		content.add(new JScrollPane(desktop));
-		//content.add(desktop);
-		
-		
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		content.add(new JScrollPane(desktop));	
 		setSize(screenSize);
 		setVisible(true);
+	}
+	
+	public VisualFrame(String title) {
+		this(title,2,2);
 
 	}
 	
@@ -62,15 +75,18 @@ public class VisualFrame extends JFrame {
 	}
 	
 	public JInternalFrame createFrame(String title) {
-
+		int c = n%nbCols;
+		int l = n/nbCols;
+		
 		JInternalFrame frame = new JInternalFrame(title, true, false, true, true);
 		
-		frame.setLocation(10,10);
-		frame.setSize(200, 150);
+		frame.setLocation(c*w,l*h);
+		frame.setSize(w,h);
 		frame.setBackground(Color.white);
 		frame.setVisible(true);
 		desktop.add(frame);
-		frame.moveToFront();		
+		frame.moveToFront();
+		n++;
 		return frame;
 	}	
 

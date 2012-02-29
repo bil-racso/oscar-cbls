@@ -20,12 +20,11 @@ public class ReversibleInt extends ReversiblePointer<Integer> {
      * @param node
      */
 	public ReversibleInt(ReversibleSearchNode node) {
-		super(node);
+		super(node,0);
 	}
 	
 	public ReversibleInt(ReversibleSearchNode node, int val) {
-		super(node);
-		setValue(val);
+		super(node,val);
 	}
 
     /**

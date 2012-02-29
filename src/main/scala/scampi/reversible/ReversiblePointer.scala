@@ -13,53 +13,52 @@ package scampi.reversible;
  * Creates a generic reversible pointer
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversiblePointer<T> extends Reversible {
+class ReversiblePointer[T](node: ReversibleSearchNode, v: T) extends Reversible(node) {
+  
+    //this(node: ReversibleSearchNode) = this(node,null)
+    
 	
-	private T pointer;
+	var pointer: Option[T] = Some(v)
 
-	public ReversiblePointer(ReversibleSearchNode node) {
-		super(node);
-	}
+
 	
-	public void setValue(T val) {
-		assert(val != null);
-		if (val != pointer) {
-			trail();
-			this.pointer = val;
+	def setValue(value: T) {
+		if (value != pointer) {
+			trail()
+			this.pointer = Some(value)
 		}
 	}
+	
+	def value_=(value: T) {
+        setValue(value)
+    }
 
     /**
      * Check if the pointer is different from null
      * @return true if the pointer is != null, false otherwise
      */
-	public boolean hasValue() {
-		return pointer != null;
-	}
+	def hasValue() = pointer != null
+	
 
     /**
      *
      * @return the current pointer
      */
-	public T getValue() {
-		return pointer;
+	def getValue(): T = pointer.getOrElse(v)
+	
+	
+	def value = getValue
+		
+	override def addOnTrail() {
+		node.getTrail().addEntry(this, pointer.getOrElse(v))
 	}
 
-	@Override
-	protected void addOnTrail() {
-		node.getTrail().addEntry(this, pointer);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected void restore(Object val) {
-		pointer = null;
-		pointer = (T) val;
+	override def restore(value: Object) {
+		pointer = null
+		pointer = Some(value.asInstanceOf[T])
 	}
 	
-	@Override
-	public String toString() {
-		return pointer+"";
-	}
+	override def toString() = pointer.getOrElse("")+""
+	
 
 }

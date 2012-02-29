@@ -9,6 +9,8 @@
  ******************************************************************************/
 package scampi.cp.core;
 
+import scampi.cp.core.CPVarBool;
+import scampi.cp.core.Constraint;
 import scampi.cp.constraints.Garded;
 import scampi.reversible.ReversibleBool;
 
@@ -31,6 +33,18 @@ public abstract class Constraint {
 	
 	protected String name="cons";
 	
+	/**
+	 * Set to true when it is currently exexuting the propagate method
+	 */
+	private boolean executingPropagate = false;
+	
+	
+	/**
+	 * True if the constraint is idempotent i.e. calling two times propagate is useless if no other changes occurred
+	 * sigma(store) = sigma(sigma(store))
+	 */
+	protected boolean idempotent = false;
+	
 	public Constraint(Store s){
 		this.s = s;
 		active = new ReversibleBool(s);
@@ -45,11 +59,34 @@ public abstract class Constraint {
 	}
 	
 	/**
+	 * @return true if it is currently executing the propagate method.
+	 */
+	protected boolean inPropagate() {
+		return executingPropagate;
+	}
+	
+	/**
+	 * Tells the store that this constraint is idempotent which means that if a changes occur during propagate method,
+	 * it will not be called again because you know it would be useless.
+	 */
+	public void setIdempotent() {
+		this.idempotent = true;
+	}
+	
+	/**
 	 * @param b
 	 * @return a garded version of this constraint i.e. that will only be posted when b is true
 	 */
 	public Constraint when(CPVarBool b) {
-		return new Garded(b,this);
+		return new Garded(b,this,true);
+	}
+	
+	/**
+	 * @param b
+	 * @return a garded version of this constraint i.e. that will only be posted when b is false
+	 */
+	public Constraint whenNot(CPVarBool b) {
+		return new Garded(b,this,false);
 	}
 	
 	@Override
@@ -271,7 +308,9 @@ public abstract class Constraint {
 	
 	protected CPOutcome execute() {
 		inQueue.setValue(false);
+		executingPropagate = true;
 		CPOutcome oc = propagate();
+		executingPropagate = false;
 		if (oc == CPOutcome.Success) {
 			deactivate();
 		}
