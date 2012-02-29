@@ -80,6 +80,8 @@ object TSPVisual extends CPModel {
       plot.addPoint(nbSol,dist.getValue())
     }
     // ------------------------------------------
+    
+    cp.failLimit(1000) // maximum 1000 backtracks for this search
 
     cp.minimize(dist) subjectTo {
       cp.add(circuit(succ), Strong) //ask to have a strong filtering

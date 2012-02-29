@@ -149,7 +149,7 @@ class ReversibleSearchNode {
 	  stateObjective()
 	  var nbRestart = 0
 	  var maxRestart = 1
-	  var limit = Int.MaxValue
+	  var limit = sc.failLimit
 	  
 	  val relax = lns match {
 		   case None => () => Unit
