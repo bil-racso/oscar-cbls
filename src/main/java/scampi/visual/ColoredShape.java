@@ -19,7 +19,7 @@ public class ColoredShape<E extends Shape> {
 	private Color innerCol = Color.white;
 	private Color outerCol = Color.black;
 	
-	private VisualDrawing drawing;
+	protected VisualDrawing drawing;
 	public E shape;
 	private boolean visible = true;
 	
