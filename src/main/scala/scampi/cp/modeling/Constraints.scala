@@ -282,12 +282,12 @@ trait Constraints {
    * @return a constraint such that each value in the range values occurs at least min and at most max times.
    */
   def gcc(x: Array[CPVarInt], values: Range, min: Int, max: Int): Constraint = {
-    return new SoftGCC(x, values.min, values.map(v => min).toArray, values.map(v => max).toArray, new CPVarInt(x(0).getStore, 0, 0))
+    return new GCC(x, values.min, Array.fill(values.size)(min), Array.fill(values.size)(max))
   }
 
   
   def gcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int]): Constraint = {
-    return new SoftGCC(x, values.min, min, max, new CPVarInt(x(0).getStore, 0, 0))
+    return new GCC(x, values.min, min, max)
   }
   
   def softgcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol :CPVarInt) {

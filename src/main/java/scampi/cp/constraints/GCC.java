@@ -15,7 +15,12 @@ import scampi.cp.core.*;
  * Global Cardinality Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class GCC extends SoftGCC {
+public class GCC extends Constraint {
+	
+	private CPVarInt [] x;
+	private int minval;
+	private int [] low;
+	private int [] up;
 
     /**
      * Constraint the values minval+i to appear between low[i] and up[i] times in x
@@ -27,8 +32,24 @@ public class GCC extends SoftGCC {
      * @see GCCVar
      */
 	public GCC(CPVarInt [] x,int minval, int [] low, int [] up) {
-         super(x,minval,low,up,new CPVarInt(x[0].getStore(),0,0));
+		super(x[0].getStore());
+		this.x = x;
+		this.minval = minval;
+		this.low = low;
+		this.up = up;
+        // super(x,minval,low,up,new CPVarInt(x[0].getStore(),0,0));
     }
+	
+	protected CPOutcome setup(CPPropagStrength l) {
+		CPOutcome ok = CPOutcome.Success;
+		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy
+			ok = s.post(new SoftGCC(x, minval, low, up, new CPVarInt(s,0,0)));
+		} else {
+			ok = s.post(new GCCFWC(x, minval, low, up));
+		}
+		if (ok == CPOutcome.Failure) return CPOutcome.Failure;
+		else return ok;
+	}
 	
 
 }//end of class GCCVar

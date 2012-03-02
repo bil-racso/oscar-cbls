@@ -41,7 +41,7 @@ object Hexiom  extends CPModel {
 		 * For instance neighbors(7) = {3,8,12} 
 		 */
 	  
-		val lines = Source.fromFile("data/hexiom40.txt").getLines.toArray
+		val lines = Source.fromFile("data/hexiom16.txt").getLines.toArray
 		val oneline = (1 until lines.size).map(lines(_)).foldLeft("")((i,j) => i+j)
 		val n = lines(0).toInt // number of entries in the firt row of the hexagon
 		
@@ -94,7 +94,7 @@ object Hexiom  extends CPModel {
 		// card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
 		val card =  Array.fill(k)(CPVarInt(cp,0 to 7))
 		var nbSol = 0
-		cp.solve subjectTo {
+		cp.solveAll subjectTo {
 		  
 		  val tuples = (for (i <- 0 to 6) yield (i,0,7)) ++ (for (i <- 0 to 6) yield (i,1,i))
 		  println(tuples)
@@ -102,7 +102,7 @@ object Hexiom  extends CPModel {
 		    val nbNeighbors = sum(neighbors(i))(used(_))		    
 		    cp.add(table(nbNeighbors,used(i),card(i),tuples))
 		  }
-		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities))
+		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities),Strong)
 		} exploration {
 		  
 		  while (!allBounds(used)) {
@@ -112,7 +112,7 @@ object Hexiom  extends CPModel {
 		  nbSol += 1
 	    }
 		println("nbsol"+nbSol)
-		
+		/*
 		println("++++++++++++++++++ solution ++++++++++++++++++++\n")
 		// pretty print
 		for (ind <- 0 until k; if (card(ind).getValue() < 7)) {
@@ -122,7 +122,7 @@ object Hexiom  extends CPModel {
 		tab.foreach(i => println(i.mkString(" ")))
 		
 		println("++++++++++++++++++++++++++++++++++++++++++++++++\n")
-		
+		*/
 		cp.printStats()
 
 	}

@@ -31,9 +31,9 @@ object Dudeney extends CPModel {
 
     val cp = new CPSolver()
 
-    val x = (0 until n).map(v => new CPVarInt(cp, 0, 9))
-    val nb = new CPVarInt(cp, 1, math.pow(10, n).toInt - 1)
-    val s = new CPVarInt(cp, 1, 9 * n)
+    val x = (0 until n).map(v => new CPVarInt(cp, 0 to 9))
+    val nb = CPVarInt(cp, 1 to math.pow(10, n).toInt - 1)
+    val s = CPVarInt(cp, 1 to 9 * n)
 
     cp.solveAll subjectTo {
       cp.add(nb == (s mul s mul s))

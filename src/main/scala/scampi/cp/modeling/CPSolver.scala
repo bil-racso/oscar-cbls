@@ -81,6 +81,13 @@ class CPSolver() extends Store() {
 	}
 	
 	/**
+	 * Set the maximum number of fails for the search
+	 */
+	def failLimit(nbFailMax: Int) {
+	  sc.failLimit = nbFailMax 
+	}
+	
+	/**
      * Binary First Fail on the decision variables vars
      */
     def binaryFirstFail(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
