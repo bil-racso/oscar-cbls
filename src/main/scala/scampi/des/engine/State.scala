@@ -12,19 +12,38 @@ package scampi.des.engine
 
 import scala.util.continuations._
 import scampi.invariants._
+import scala.annotation._
 
-class BasicState{}
-class State[A] extends BasicState {
-  
+import scala.util.control.TailCalls._
 
-  val atEntry = new Event[A]
-  val atLeaving = new Event[A]
+abstract class State[A](m: Model) {
   
-  def code(param: A): Unit @suspendable={println()}
   
-  def run(param:A): Unit@suspendable = {
-    atEntry emit param
-    code(param)
-    atLeaving.emit(param)
+	val isIn = new Var[Boolean](m, false)
+  
+   def code(param: A): Unit @suspendable
+  
+  def apply(param:A)={
+    isIn := true
+        code(param)
+    isIn := false
   }
 }
+
+object State{
+  type state[A] = TailRec[A] 
+  def done[A](a: A):state[A] = done(a)
+}
+
+//abstract class StateOne[A](m: Model) {
+//  
+//	val isIn = new SignalOne[Boolean](m, false)
+//  
+//  def code(param: A): Unit @suspendable
+//  
+//  def apply(param:A): Unit@suspendable = {
+//    isIn set( true )
+//    code(param)
+//    isIn set false
+//  }
+//}

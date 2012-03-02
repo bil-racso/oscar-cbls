@@ -21,8 +21,9 @@ import scampi.invariants._
 
 class Resource(m : Model, capacity: Int) {
 	
-	private val n = new VarInt(0)
+	private val n = new VarInt(m, 0)
 	
+	def pendings = n
 	def request(): Unit @suspendable = {
 	  waitFor( n.filter( _ < capacity ))	 	  
 	  n :+= 1
@@ -32,7 +33,9 @@ class Resource(m : Model, capacity: Int) {
 	def release() {
 	  n :-= 1
 	}
-	
+	def isEmpty = {
+    n() == 0
+	}
 }
 
 class UnaryResource(m : Model) extends Resource(m,1)
