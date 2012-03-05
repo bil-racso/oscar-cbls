@@ -20,11 +20,9 @@ abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
 	
 }
 
-class WaitEvent[A](time: Double, block: Double => Boolean ) extends SimEvent(time) {
+class WaitEvent(time: Double, block: Unit => Unit ) extends SimEvent(time) {
 	
-	def process(){
-	  block(time)
-	}
+	def process = block
 	
 }
 

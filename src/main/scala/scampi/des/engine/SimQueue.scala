@@ -13,37 +13,34 @@ package scampi.des.engine
 import scampi.invariants._
 import scala.util.continuations._
 
-class SimQueue {
+object QueueState extends Enumeration{
+    type QueueState = Value
+    val empty, serving, closed = Value
+  }
 
-  val isOpen = new Var[Boolean](false)
-  val serve = new EventOne[Unit]  
-  val isBusy = new Var[Boolean](false)
-  val isEmpty = new Var[Boolean](true)
+class SimQueue(m: Model) extends Resource(m, 1){
+
   
-  def enter: Boolean@suspendable = {
-    if ( ! isOpen() ) false
-    else {
-      isEmpty := false
-      if ( isBusy() )
-        waitFor(serve) 
-      else
-        cpsunit
-      isBusy := true
-      true
+  import QueueState._
+  
+  val state = new Var[QueueState](m,closed)
+  
+  
+  def enter = {
+    if ( state is closed ) false
+    else{
+      if ( state is empty) state := serving
+      request
+      true    
     }
   }
   
-  def leave(){
-    
-    if ( serve.hanging > 0 ){
-      serve emit()
-    }else{
-      isEmpty := true
-      isBusy := false
-    }
-    
+  override def release(){
+    super.release()
+    if ( isEmpty && ! (state is closed) ) state := empty    
   }
-  def close(){isOpen := false}
-  def open(){isOpen := true}
+  
+  def close(){state := closed}
+  def open(){state := empty}
   
 }
