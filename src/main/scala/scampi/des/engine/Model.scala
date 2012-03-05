@@ -20,9 +20,9 @@ import scampi.invariants._
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
  * @author pschaus
  */
-class Model extends EventModel{
+class Model {
    
-	val clock = new PQCounter(this, 0)
+	val clock = new PQCounter(0)
 		
 	private val processes = new LinkedList[Process]()
 	
@@ -31,23 +31,25 @@ class Model extends EventModel{
 	}
 	
 	def simulate(horizon: Int,verbose: Boolean = true) {
+	    // make all the process alive
+	  //reset{
 		val it = processes.iterator 
 		while(it.hasNext) { 
 			it.next().simulate()
 		}
-
+	  println(clock.nonEmpty)
+	  println(clock() <= horizon)
 		while (clock.nonEmpty && clock() <= horizon) {
 			val e = clock.next
 						
 			if(verbose && e.time <= horizon ){
-				println("-----------> time: "+ clock())
+				println("-----------> time: "+  e.time)
 			}
 			if(clock() <= horizon){
-			  withDelay{
-				e.process()
-			  }				
+				e.process
 			}
 		}
+	  //}
 	}
 	def print(s: String){
 	  println(clock() + ": " + s)
@@ -55,7 +57,7 @@ class Model extends EventModel{
 	def time(o: Any): Double = {
 	  clock()
 	}
-//	def frequency[_](state: State[_]) = new Frequency(this,state)
+	def frequency[_](state: State[_]) = new Frequency(this,state)
 	
 //	def waitt(duration : Double)(block : => Unit):Unit =  {
 //		assert(duration >= 0)
@@ -66,12 +68,11 @@ class Model extends EventModel{
 //		waitt(duration.toDouble)(block)
 //	}
 //    
-    def wait(duration : Double):Unit@suspendable= {
+    def wait(duration : Double):Double@suspendable= {
 		waitFor( clock === clock() + duration.toDouble)
-		()
 		
     }
-def wait(duration : Int):Unit@suspendable={wait(duration.toDouble)}
+def wait(duration : Int):Double@suspendable={wait(duration.toDouble)}
 
 //  def waitFor[A](ev: Signal[A], f: A => Boolean): Unit @suspendable = {
 //    if ( !f(ev())){ 

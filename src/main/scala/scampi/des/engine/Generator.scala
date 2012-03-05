@@ -11,7 +11,7 @@ class Generator(m: Model, dist: ProbabilityDistribution, block: => Unit) extends
   reset {
     while (generating) {
       val t = generateNext
-      m.wait(t)
+      waitFor(m.clock === m.clock() + t)
       block
     }
   }

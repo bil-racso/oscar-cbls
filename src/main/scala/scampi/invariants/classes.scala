@@ -5,28 +5,32 @@ import scala.collection.immutable._
 import scampi.invariants._
 
 
-abstract class Dependency[A](val reactive: Reactive, f: A => Boolean) extends ListDepending[A](f){ 
-  def nowDependsOn(d: Occuring[_,A])
+abstract class Dependency[A](val reactive: Reactive, var reaction: Reaction[A]) extends Depending{ 
+  def apply(msg: A) = {
+    if ( !reaction.apply(msg) )
+      dispose()
+  }
+  def nowReactsOn(d: Occuring[A]){
+    //dispose()
+    reaction.dispose()
+    reaction = d.foreach(reaction.f)
+  }
 }
 
 
 class Reactive {
   val dependingOn = new MyDLL[RDependency[_]]
   
-  class RDependency[B](m: EventModel, dinit: Occuring[_,B], f: B => Boolean) extends Dependency[B](this, f){
-    def model = m
-    var reaction = dinit.foreach(f)
+  class RDependency[A](reaction: Reaction[A]) extends Dependency[A](this, reaction){
     val elem = dependingOn.add(this)
     def dispose(){
       reaction.dispose()
       dependingOn.remove(elem)
     }
-    override def nowDependsOn(d: Occuring[_,B]){
-      reaction.dispose()
-      reaction = d.foreach(f)
-    }
   }
-  def dependsOn[B](d: Occuring[_,B])(f: B => Boolean): Dependency[B] = new RDependency[B](d.model, d,f)
+  def dependsOn[C](d: Occuring[C])(f: C => Boolean): Dependency[C] = {
+    new RDependency[C]( for (msg <- d) f(msg))
+  }
   def dispose() = {
     for ( d <- dependingOn) d.dispose()
     true
@@ -35,9 +39,9 @@ class Reactive {
 
 
 
-class Var[A](m: EventModel, _value: A) extends SourceSignal[A](m, _value) {	
+class Var[A](_value: A) extends Signal[A](_value) {	
   
-  def :=(v: A) = set(v)
+  def :=(v: A) = emit (v)
   
   def <= (f: this.type => Any): this.type = {
     f(this)
@@ -45,8 +49,16 @@ class Var[A](m: EventModel, _value: A) extends SourceSignal[A](m, _value) {
   }
 }
 
-class VarInt(m: EventModel, v: Int) extends Var[Int](m, v) {
-  val incChanges = new Event[(Int, Int)](m)
+object Var {
+  def apply[A](v: A) = {
+    v match {
+      case Int => new VarInt(v.asInstanceOf[Int])
+    }
+  }
+}
+
+class VarInt(v: Int) extends Var[Int](v) {
+  val incChanges = new Event[(Int, Int)]
   @inline override final def :=(v: Int) {
     val old = this()
     super.:=(v)
@@ -56,9 +68,9 @@ class VarInt(m: EventModel, v: Int) extends Var[Int](m, v) {
   def :-=(v: Int) { this := this() - v}
 }
 
-class VarList[A](m: EventModel) extends Var[Seq[A]](m, Nil){
-  val isIncreased = new Event[A](m)
-  val isDecreased = new Event[A](m)
+class VarList[A]() extends Var[Seq[A]](Nil){
+  val isIncreased = new Event[A]
+  val isDecreased = new Event[A]
   def add(elem: A){
     this := this() :+ elem
     isIncreased emit(elem)
@@ -92,9 +104,9 @@ class Element1[A](x: IndexedSeq[Var[A]], y: Var[Int], v: Var[A]) extends StaticI
     v := w
     true
   }
-  val a = dependsOn(y.changes) { (w: Int) =>
+  val a = dependsOn(y) { (w: Int) =>
     v := x(w)
-    dep nowDependsOn(x(w))
+    dep nowReactsOn(x(w))
     true
   }
 }
@@ -147,10 +159,7 @@ class SumInvariantOnListOfVars(result: VarInt, list: VarList[VarInt]) extends St
   }
   dependsOn (list.isDecreased ){ v=>
     result :-= v
-    mmap.get(v) match{
-      case None => println("no such variable in list")
-      case Some(v: Dependency[_]) => v.dispose()
-    }
+    mmap.get(v).get.dispose()
     true
   }
 }
@@ -159,43 +168,37 @@ object invariants {
 
   def main(args: Array[String]) {
 
-    val m = new EventModel
-    
-    val y = new VarInt(m, 1)
-    val z = new VarInt(m, 1)
-    val x =  (for (j <- 0 to 10) yield new VarInt(m, 100 + j))
+    val y = new VarInt(1)
+    val z = new VarInt(1)
+    val x =  (for (j <- 0 to 10) yield new VarInt(100 + j))
     
     
-    val s = new VarInt(m, 0) <= sum(z,y)
+    val s = new VarInt(0) <= sum(z,y)
         
-    val l = new VarList[VarInt](m)
+    val l = new VarList[VarInt]
     
     l.add(y)
     l.add(z)
 
-    val sl = new VarInt(m, 0) <= sumOnListOfVars(l)
+    val sl = new VarInt(0) <= sumOnListOfVars(l)
     
-    val f = new VarInt(m, 0) <= (x at y)  //(y, z) //new Element1(x,y)
+    val f = new VarInt(0) <= (x at y)  //(y, z) //new Element1(x,y)
 //
-    when (sl changes){ x => println("sum changed to " + x )
-      true}
+//    when (sl changes){ x => println("sum changed to " + x )
+//      true}
 //        
-    when(f changes) { w =>
-      println("f changed to " + w)
-      true
-    }
+//    when(f changes) { w =>
+//      println("f changed to " + w)
+//      true
+//    }
 
-//    val r = (y~~>{w:Int=>println("y changed "+ w)} | z~~>{w:Int=>println("z changed")}) ~~> {
-//      _: Unit=> println("y or z just changed")
-//    } 
-//    perform (r) until x(6)
+    val r = (y~>{w:Int=>println("y changed "+ w)} | z~>{w:Int=>println("z changed")}) ~> {
+      _:Int=> println("y or z just changed")
+    } 
+    perform (r) until x(6)
     
-    when(y){
-      println(111)
-      true}
-    when(y){println(222)
-      true}
-    whenever ( y ){
+    
+    whenever ( y.filter(_==5) ){w:Int=>
       println("super")
     }
      

@@ -18,14 +18,14 @@ import scala.util.continuations._
 /**
  * @author Sebastien Mouthuy
  */
-class PQCounter(m: EventModel, v: Double) extends SourceSignal(m, v){
+class PQCounter(v: Double) extends Signal[Double](v){
 	
-  val pq = new PriorityQueue[WaitEvent]
-  def addEvent(ev: WaitEvent) {
+  val pq = new PriorityQueue[WaitEvent[Double]]
+  
+  def addEvent(ev: WaitEvent[Double]) {
     pq.add(ev)
   }
-  def inc(d:Double) = this === this() + d
-  def removeEvent(ev: WaitEvent) { pq.remove(ev)}
+  def removeEvent(ev: WaitEvent[Double]) { pq.remove(ev)}
   override def ===(i:Double) = {
     new PQCounterCond(this,i)
   }
@@ -33,33 +33,31 @@ class PQCounter(m: EventModel, v: Double) extends SourceSignal(m, v){
   def generate(){
     while (nonEmpty){
       generateNext()
-      m.processPendings
     }
   }
   def generateNext(){
     val ev = next
+    println("counter " + ev.time)
     ev.process
   }
   def next = {
     val res = pq.poll()
-    this set res.time    
+    this emit res.time    
     res
   }
 }
 
-class PQCounterCond(pqc: PQCounter, v: Double) extends Occuring[Double, Unit]{
-  def model = pqc.model
-  def foreach(f2: Unit => Boolean) = {
-    val a = new WaitEvent(v,{_=>f2();()})
+class PQCounterCond(pqc: PQCounter, v: Double) extends Occuring[Double]{
+  def foreach(f2:Double=>Boolean) = {
+    val a = new WaitEvent[Double](v,f2)
     pqc addEvent(a)
     new PQEventBlock(pqc,a)
   }
-  def ===(v: Unit) = this
 }
 
 
-class PQEventBlock[A](pqc: PQCounter, ev: WaitEvent) extends ListDepending[Double]({_=>false}){
-  def model = pqc.model
+class PQEventBlock[A](pqc: PQCounter, ev: WaitEvent[Double]) extends Reaction[Double]({_=>false}, pqc){
+  
   def dispose(){
     pqc.removeEvent(ev)
   }
@@ -69,20 +67,18 @@ object Counter{
   
   def main(args: Array[String]){
     
-    val m = new Model
+    val x = new VarInt(5)
+    val y = new VarInt(8)
     
-    val x = new VarInt(m,5)
-    val y = new VarInt(m,8)
-    
-    val c = new PQCounter(m,0)
+    val c = new PQCounter(0)
     
     
     reset{    
-      val a = waitFor(x.changes)
+      val a = waitFor(x)
       println("500")
     }
     
-    once ( c === 5 ){
+    whenever ( c === 5 ){w:Double =>
       println("super")
     }
     println("here")

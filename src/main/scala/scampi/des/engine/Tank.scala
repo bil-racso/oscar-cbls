@@ -15,7 +15,7 @@ import scampi.invariants._
 
 class Tank(m: Model, capacity: Double) {
 
-  val load = new Var[Double](m, 0.0)  
+  val load = new Var[Double](0.0)  
 
   def get(qty: Double): Unit @suspendable = {
     waitFor( load.filter(_ >= qty) )

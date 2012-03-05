@@ -9,7 +9,6 @@
  ******************************************************************************/
 package scampi.des.engine
 import scala.util.continuations._
-import scampi.invariants._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
@@ -21,8 +20,6 @@ abstract class Process (m: Model, name : String = "Process"){
 	private var suspending = false
 	private var suspended = {}
 	
-	def is[A](s: State[A]) = s.isIn.filter(_ == true) 
-	  
 	def suspend(): Unit @ suspendable = {
 //		if (suspending) {
 //			//throw new RuntimeException("The process " + name + " is already suspending");
