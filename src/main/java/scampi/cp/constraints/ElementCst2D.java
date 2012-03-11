@@ -54,7 +54,12 @@ public class ElementCst2D extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
+		/*
 		if (s.post(new Table(prevData,x,y,z)) == CPOutcome.Failure) {
+			return CPOutcome.Failure;
+		}
+		*/
+		if (s.post(new TableSTR2(new CPVarInt[]{x,y,z}, prevData.getTuples())) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;

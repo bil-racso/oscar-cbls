@@ -26,6 +26,8 @@ public class TableData {
 	int [][] nextSupport;
 	int [] min;
 	int [] max;
+	
+	int [][] tuples = null;
 
 	/**
 	 *
@@ -46,6 +48,21 @@ public class TableData {
 		max = new int [arity];
 
 
+	}
+	
+	/**
+	 * @return one array entry per tuple
+	 */
+	public int [][] getTuples() {
+		if (tuples != null) return tuples;
+		int [][] res = new int[data[0].size()][arity];
+		for (int i = 0; i < res.length; i++) {
+			for (int a = 0; a < arity; a++) {
+				res[i][a] = data[a].get(i);
+			}
+		}
+		tuples = res;
+		return tuples;
 	}
 
 	protected int getMin(int i){
