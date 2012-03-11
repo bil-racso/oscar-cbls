@@ -112,6 +112,16 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
 		return true;
 	}
 	
+	/**
+	 * remove all elements in the set
+	 */
+	public void empty() {
+		setSize(0);
+	}
+	
+	/**
+	 * @return true if the set is empty
+	 */
 	public boolean isEmpty() {
 		return getSize() == 0;
 	}

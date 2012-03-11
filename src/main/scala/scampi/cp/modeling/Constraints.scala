@@ -223,6 +223,11 @@ trait Constraints {
     vars(0).getStore.post(new Or(vars, z))
     return (z)
   }
+  
+  
+  def table(x: Array[CPVarInt], tuples: Array[Array[Int]]): Constraint = {
+    new TableSTR2(x,tuples)
+  }
 
 
   /**
@@ -232,12 +237,15 @@ trait Constraints {
    * @param tuples a collection of coulples
    * @return a constraint enforcing that (x1,x2) is one of the couples given in tuples
    */
-  def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[Tuple2[Int, Int]]): Constraint = {
+  def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]): Constraint = {
+    table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
+    /*
     val tableCons = new Table(x1,x2)
     for (t <- tuples) {
       tableCons.addTupple(t._1, t._2)
     }
     tableCons
+  	*/
   }
 
   /**
@@ -248,12 +256,15 @@ trait Constraints {
    * @param tuples a collection of triples
    * @return a constraint enforcing that (x1,x2,x3) is one of the triples given in tuples
    */
-  def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, tuples: Iterable[Tuple3[Int, Int, Int]]): Constraint = {
+  def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, tuples: Iterable[(Int, Int, Int)]): Constraint = {
+    table(Array(x1,x2,x3),tuples.map(t => Array(t._1,t._2,t._3)).toArray)
+    /*
     val tableCons = new Table(x1,x2,x3)
     for (t <- tuples) {
       tableCons.addTupple(t._1, t._2, t._3)
     }
     tableCons
+  	*/
   }
 
   /**
@@ -265,12 +276,15 @@ trait Constraints {
    * @param tuples a collection of quadruples
    * @return a constraint enforcing that (x1,x2,x3,x4) is one of the quadruples given in tuples
    */
-  def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, tuples: Iterable[Tuple4[Int, Int, Int, Int]]): Constraint = {
+  def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, tuples: Iterable[(Int, Int, Int, Int)]): Constraint = {
+    table(Array(x1,x2,x3,x4),tuples.map(t => Array(t._1,t._2,t._3,t._4)).toArray)
+    /*
     val tableCons = new Table(x1, x2, x3, x4)
     for (t <- tuples) {
       tableCons.addTupple(t._1, t._2, t._3, t._4)
     }
     tableCons
+    */
   }
 
   /**

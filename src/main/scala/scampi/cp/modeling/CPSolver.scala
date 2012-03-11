@@ -71,6 +71,13 @@ class CPSolver() extends Store() {
 	 */
 	def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
 	
+	/**
+	 * Set the maximum number of fails for the search
+	 */
+	def failLimit(nbFailMax: Int) {
+	  sc.failLimit = nbFailMax 
+	}
+	
 	
 	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
 	  binaryFirstFail(vars.toIndexedSeq)
@@ -79,14 +86,7 @@ class CPSolver() extends Store() {
 	def binaryFirstFail(vars: Array[CPVarInt]): Unit @suspendable = {
 	  binaryFirstFail(vars.toIndexedSeq)
 	}
-	
-	/**
-	 * Set the maximum number of fails for the search
-	 */
-	def failLimit(nbFailMax: Int) {
-	  sc.failLimit = nbFailMax 
-	}
-	
+
 	/**
      * Binary First Fail on the decision variables vars
      */
@@ -99,6 +99,25 @@ class CPSolver() extends Store() {
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
+    
+	def binary(vars: CPVarInt*): Unit @suspendable = {
+	  binary(vars.toIndexedSeq)
+	}
+	
+	def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+	  binary(vars.toIndexedSeq)
+	}
+
+	/**
+     * Binary search on the decision variables vars
+     */
+    def binary(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+     while (!allBounds(vars)) {
+    	   val x = vars.filter(!_.isBound).first
+           val v = x.getMin()
+    	   branch (post(x == v))(post(x != v))// right alternative
+     }
+    }    
 	
 	def printStats() {
 		println("time(ms)",time)
