@@ -45,10 +45,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
 
-import sun.misc.Cleaner;
-
-
-
 public class VisualDrawing extends JPanel  {
 
 	JPanel drawingPanel;

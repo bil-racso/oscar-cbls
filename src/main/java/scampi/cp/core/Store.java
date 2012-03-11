@@ -347,7 +347,7 @@ public class Store extends ReversibleSearchNode {
      * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
      */
 	public CPOutcome post(Constraint c, CPPropagStrength st) {
-		assert(status.getValue() != CPOutcome.Failure);
+		if (status.getValue() == CPOutcome.Failure) return CPOutcome.Failure; 
 		CPOutcome oc = c.setup(st);
 		if (oc != CPOutcome.Failure) {
 			if (oc == CPOutcome.Success) {
@@ -382,7 +382,7 @@ public class Store extends ReversibleSearchNode {
      * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
      */
 	public CPOutcome post(Collection<Constraint> constraints, CPPropagStrength st) {
-		assert(status.getValue() != CPOutcome.Failure);
+		if (status.getValue() == CPOutcome.Failure) return CPOutcome.Failure;
 		CPOutcome oc = CPOutcome.Suspend;
 		for (Constraint c : constraints) {
 			oc = c.setup(st);

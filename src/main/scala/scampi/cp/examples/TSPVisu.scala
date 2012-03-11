@@ -16,7 +16,7 @@ import scampi.visual._
 import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
-import java.awt.geom.Line2D
+import java.awt.Color
 
 
 /**
@@ -43,14 +43,14 @@ object TSPVisual extends CPModel {
     // ------------------------------------------
     
 
-    val n = 20
+    val n = 18
     val Cities = 0 until n
 
-    val rand = new scala.util.Random()
-    val coord = Array.tabulate(n)(i => (rand.nextInt(500),rand.nextInt(500)))
+    val rand = new scala.util.Random(0)
+    val coord = Array.tabulate(n)(i => (100+rand.nextInt(400),rand.nextInt(400)))
     
     
-    val lines = Array.tabulate(n)(i => new ColoredShape(drawing,new Line2D.Double(coord(i)._1,coord(i)._2,0,0)))
+    val lines = Array.tabulate(n)(i => new VisualLine(drawing,coord(i)._1,coord(i)._2,0,0))
 
     
     def getDist(p1: (Int,Int), p2: (Int,Int)): Int = {
@@ -72,8 +72,9 @@ object TSPVisual extends CPModel {
     
     // -----------------visual update -----------
     var nbSol = 0
+    coord.foreach(c => new VisualCircle(drawing, c._1 , c._2, 5, Color.blue))
     def updateVisu() {
-      def update(i: Int) = lines(i).shape.setLine(coord(i)._1,coord(i)._2,coord(succ(i).getValue())._1,coord(succ(i).getValue())._2)
+      def update(i: Int) = lines(i).setDest(coord(succ(i).getValue())._1,coord(succ(i).getValue())._2)
       nbSol += 1
       (0 until n).foreach(update(_))
       drawing.repaint()
@@ -81,8 +82,6 @@ object TSPVisual extends CPModel {
     }
     // ------------------------------------------
     
-    cp.failLimit(1000) // maximum 1000 backtracks for this search
-
     cp.minimize(dist) subjectTo {
       cp.add(circuit(succ), Strong) //ask to have a strong filtering
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)

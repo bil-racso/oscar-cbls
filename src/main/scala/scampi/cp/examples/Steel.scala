@@ -74,7 +74,7 @@ object Steel extends CPModel{
 		val cp = new CPSolver
 		val x = (for(s <- Slabs) yield CPVarInt(cp,0 until nbSlab))
 		val l = for(s <- Slabs) yield CPVarInt(cp,0 to capa.max)
-		val xsol = (for(s <- Slabs) yield 0) toArray //current best solution
+		val xsol = Array.fill(nbSlab)(0) //current best solution
 
 
 		val rnd = new Random(0)
@@ -85,7 +85,7 @@ object Steel extends CPModel{
 		  }
 		}
 
-		cp.minimize(sum(Cols)(s => element(loss,l(s)))) subjectTo {
+		cp.minimize(sum(Slabs)(s => element(loss,l(s)))) subjectTo {
 			cp.add(binpacking(x,weight,l),Strong)
 			for (s <- Slabs) {
 				def colPresent(c : Int) = or ((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
@@ -93,8 +93,8 @@ object Steel extends CPModel{
 			}
 		} exploration {
 		  while (!allBounds(x)) {
-		    val unBound = x.filter(_.isBound())
-		    val maxUsedSlab = if (unBound.isEmpty) -1 else unBound.map(_.getValue()).max
+		    val bound = x.filter(_.isBound())
+		    val maxUsedSlab = if (bound.isEmpty) -1 else bound.map(_.getValue()).max
 		    //delta on the loss if you place order o in slab s
 		    val (y,o) = minDomNotbound(x).first // retrieve the var and its index in x with smallest domain
 		    val v = y.getMin()

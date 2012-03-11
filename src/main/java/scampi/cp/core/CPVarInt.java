@@ -726,7 +726,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int res = currIteratorVal;
 		for (int i = res+1; i <= getMax()+1; i++) {
 			currIteratorVal = i;
-			if(hasValue(i)){
+			if (hasValue(i)) {
 				break;
 			}
 		}

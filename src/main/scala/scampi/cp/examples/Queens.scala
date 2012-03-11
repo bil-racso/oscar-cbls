@@ -30,7 +30,7 @@ object Queens  extends CPModel {
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
-      cp.solveAll subjectTo {
+      cp.solve subjectTo {
     	  cp.add(alldifferent(queens),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
@@ -44,5 +44,6 @@ object Queens  extends CPModel {
       //print some statistics
       println("#sol",nbsol)
       cp.printStats()
+      
 	}
 }

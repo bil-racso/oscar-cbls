@@ -13,8 +13,6 @@ package scampi.cp.examples
 import scampi.cp.modeling._
 import scampi.search._
 import scampi.visual._
-import java.awt.geom.Line2D
-import java.awt.geom.Rectangle2D
 import java.awt.Color
 
 /**
@@ -30,19 +28,17 @@ object Euler  extends CPModel {
 		def reachables(i : Int) : Set[Int] = {
 			def onBoard (y : Int*) : Set[Int] = y.filter(x=> x>=0 && x<=63).toSet
 			i%8 match {
-				case 0 =>  onBoard(i-15,i-16,i+10,i+17)
+				case 0 =>  onBoard(i-15,i-6,i+10,i+17)
 				case 1 =>  onBoard(i-17,i-15,i-6,i+10,i+15,i+17)
 				case 6 =>  onBoard(i-17,i-15,i-10,i+6,i+15,i+17)
 				case 7 =>  onBoard(i-17,i-10,i+6,i+15)
 				case _ =>  onBoard(i-17,i-15,i-10,i-6,i+6,i+10,i+15,i+17)
-			}		
+			}
 		}
 		
 		val cp = new CPSolver()
 		val x = (0 until 64).map(v => CPVarInt(cp,reachables(v)))
 		
-		println(x(16))
-		//2,0
 		cp.solve subjectTo {
 			cp.add(circuit(x))
 		} exploration {
@@ -53,30 +49,29 @@ object Euler  extends CPModel {
 		cp.printStats()
 		
 		//  -----------visualization of the euler tour ----------
-		
+	
 		val f = new VisualFrame("Euler",1,1)
 		val drawing = new VisualDrawing(false)
 		f.createFrame("Euler Tour").add(drawing)
 		val scale = 100
 		
 		for (i <- 0 until 8; j <- 0 until 8) {
-		  val rect = new ColoredShape(drawing,new Rectangle2D.Double(i*scale,j*scale,scale,scale))
-		  if (i%2 == 0) {
+		  val rect = new VisualRectangle(drawing,i*scale,j*scale,scale,scale)
+		  if (i % 2 == 0) {
 		    if (j % 2 == 0) rect.setInnerCol(Color.gray)
 		  } else {
 		    if (j % 2 == 1) rect.setInnerCol(Color.gray)
 		  }	
-		  if (i == 0 && j == 2) rect.setInnerCol(Color.red)
-		}
-		
+		}		
 		for (i <- 0 until 64) {
 		  val v = x(i).getValue()
 		  val (c,l) = (v/8, v%8)
-		  
-		  new ColoredShape(drawing,new Line2D.Double(scale/2+(i/8)*scale,scale/2+(i%8)*scale,scale/2+c*scale+10,scale/2+l*scale+10))
+		  new VisualCircle(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,3).setInnerCol(Color.RED)
+		  new VisualLine(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,scale/2+c*scale,scale/2+l*scale)
 		}
 		f.pack()
 		drawing.repaint()
+	
 
 	}
 

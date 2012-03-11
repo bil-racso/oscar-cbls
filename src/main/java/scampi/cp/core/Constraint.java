@@ -117,7 +117,7 @@ public abstract class Constraint {
 
 	/**
 	 * 
-	 * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and Store.MAXPRIORAC3 
+	 * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and Store.MAXPRIORL2 
 	 */
 	protected void setPriorityL2(int priority) {
 		this.priorityL2 = priority;

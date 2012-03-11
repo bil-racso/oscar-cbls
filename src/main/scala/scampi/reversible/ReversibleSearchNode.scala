@@ -169,7 +169,9 @@ class ReversibleSearchNode {
                 if (!isFailed()) {
                 	sc.failLimit = limit
                 	if (solveOne) {
+                	  val nbFail = sc.nbFail
                 	  sc.reset()
+                	  sc.nbFail = nbFail
                 	  k1() // exit the exploration block
                 	}
                 }

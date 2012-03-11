@@ -27,7 +27,7 @@ object SportScheduling extends CPModel {
   
   def main(args: Array[String]) {
 
-    val n = 10
+    val n = 14
     val nbPeriods = n / 2
     val Periods = 0 until nbPeriods
     val nbTeams = n
@@ -41,7 +41,7 @@ object SportScheduling extends CPModel {
     val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPVarInt(cp, 0 until nbTeams))
     val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPVarInt(cp, 0 until (n * n - 1)))
     val tuples = for (i <- Teams; j <- i + 1 until nbTeams) yield (i, j, i * nbWeeks + j - 1)
-
+    
     def printSol() {
       println("---------games---------")
       Periods.foreach {
@@ -56,8 +56,9 @@ object SportScheduling extends CPModel {
 
     cp.solve subjectTo {
       // make the link between the team and game variables
-      for (p <- Periods; w <- Weeks)
+      for (p <- Periods; w <- Weeks) {
         cp.add(table(team(p)(w)(0), team(p)(w)(1), game(p)(w), tuples))
+      }
       // a team plays exactly one game per week
       for (w <- Weeks) {
         val teamw = for (p <- Periods; h <- Homes) yield team(p)(w)(h)
