@@ -57,23 +57,6 @@ public class Plot2D extends JPanel {
 		chart.fireChartChanged();
 	}
 
-	private JFreeChart createPlot() {
-
-
-		final XYSeries series = new XYSeries("Points");
-		series.add(20.0, 10.0);
-		series.add(40.0, 20.0);
-		series.add(70.0, 50.0);
-		XYDataset xyDataset = new XYSeriesCollection(series);
-		final JFreeChart chart = ChartFactory.createXYLineChart("Sample XYChart", "Height","Weight",xyDataset,PlotOrientation.VERTICAL,true,false, false);
-
-		System.out.println("return chart");
-
-		return chart;
-
-	}
-
-
 
 	public static void main(String[] args) {
 

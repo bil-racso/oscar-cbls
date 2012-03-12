@@ -11,6 +11,7 @@ package scampi.cp.examples
 
 
 import scampi.cp.modeling._
+import scampi.visual._
 import scampi.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
@@ -50,13 +51,25 @@ object ElectricityMarket extends CPModel {
 	  val tmin = orders.map(_.start).min
 	  val tmax = orders.map(_.end).max
 	  
+	  
+	  // -------------visual components ------------
+	  val f = new VisualFrame("Electricity Market")
+		// creates the plot and place it into the frame
+	  val plot = new Plot2D("","Solution number","Qty")
+	  f.createFrame("Objective").add(plot)
+	  val barPlot = new BarChart("","Time","Qty",tmax-tmin+1)	
+	  f.createFrame("Qty Exchange").add(barPlot)
+	  f.pack()
+	  // ------------------------------------------
+	  
+	  
 	  // one var for each time slot = the quantity exchanged on that slot
 	  val varMapQty = Map[Int,CPVarInt]() 
 	  for (t <- tmin to tmax) {
 	    val prodUB = producers.map(_.qty.abs).sum
 	    varMapQty += (t -> CPVarInt(cp, 0 to prodUB))
 	  }
-	  
+	  var nbSol = 0
 	  // total amount of exchanged quantity
 	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
 	  
@@ -71,14 +84,22 @@ object ElectricityMarket extends CPModel {
 	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
 	  } exploration {
+	    cp.binaryFirstFail(orders.map(_.selected))
+	    /*
+	    // efficient heuristic
 	    def allBounds = orders.filter(!_.bound).isEmpty
 	    while (!allBounds) {
 	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
-	    
-	    
+	    */
+	    // update visualization
+	    for (t <- tmin to tmax) {
+	      barPlot.setValue(t-tmin,varMapQty(t).getValue())
+	    }
+	    plot.addPoint(nbSol,obj.getValue())
+	    nbSol += 1
 	    
 	  }
 	  cp.printStats()
