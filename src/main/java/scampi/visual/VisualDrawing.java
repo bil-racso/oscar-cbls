@@ -48,18 +48,28 @@ import javax.swing.table.TableCellRenderer;
 public class VisualDrawing extends JPanel  {
 
 	JPanel drawingPanel;
-	
+
 
 	LinkedList<ColoredShape> shapes;
-
+	
 	public VisualDrawing(boolean saveButton) {
+		this(saveButton,false);
+	}
+
+	public VisualDrawing(boolean saveButton, final boolean flipped) {
 		super(new BorderLayout());
-		
 		shapes = new LinkedList<ColoredShape>();
 		
 		drawingPanel = new JPanel() {
 			
 			public void paintComponent(Graphics g) {
+				
+				if (flipped) {
+					g.translate(0,getHeight()); 
+					((Graphics2D)g).scale(1, -1);
+				}
+				
+				
 			
 				super.paintComponent(g);
 				for (ColoredShape s: shapes) {

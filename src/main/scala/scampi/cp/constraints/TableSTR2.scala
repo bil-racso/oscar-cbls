@@ -15,7 +15,6 @@ import scampi.reversible._
 import scampi.cp.core.CPOutcome
 import scampi.cp.modeling._
 import scala.collection.JavaConversions._
-import scala.xml.dtd.EMPTY
 
 
 /**
@@ -78,6 +77,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
     
     // retrieve domains in sets
     import scala.collection.mutable.Set
+    
     val toRemoveValues = Array.tabulate(X.size)(i => Set((X(i).getMin() to X(i).getMax).filter(X(i).hasValue(_)) : _*))
     
     val toRemoveFromTuples = Set[Integer]() // used to avoid removing while iterating in validTuples

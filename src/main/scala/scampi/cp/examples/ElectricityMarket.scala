@@ -77,6 +77,9 @@ object ElectricityMarket extends CPModel {
 	      val order = argMax(unboundOrders)(_.energy).head
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
+	    
+	    
+	    
 	  }
 	  cp.printStats()
 	  

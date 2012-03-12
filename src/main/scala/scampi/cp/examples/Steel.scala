@@ -16,6 +16,8 @@ import scala.collection.JavaConversions._
 import scala.io.Source
 import scala.util.Random
 import java.lang._
+import scampi.visual._
+import java.awt.Color
 
 
 /**
@@ -37,7 +39,7 @@ object Steel extends CPModel{
 
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/steelMillSlab.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)
@@ -75,17 +77,34 @@ object Steel extends CPModel{
 		val x = (for(s <- Slabs) yield CPVarInt(cp,0 until nbSlab))
 		val l = for(s <- Slabs) yield CPVarInt(cp,0 to capa.max)
 		val xsol = Array.fill(nbSlab)(0) //current best solution
+		
+		
+		// -------------visual components ------------
+		val colors = VisualUtil.getRandomColorArray(nbCol)
+		val scale = 7
+		val f = new VisualFrame("Steel Mill Slab")
+		// creates the plot and place it into the frame
+		val plot = new Plot2D("","Solution number","Loss")
+		f.createFrame("Objective").add(plot)
+		// creates the tour visu and place it into the frame
+		val drawing: VisualBinPacking = new VisualBinPacking(nbSlab,12)
+		val items = Slabs.map(i => drawing.addItem(i,scale*weight(i))).toArray
+		Slabs.foreach(o => items(o).setInnerCol(colors(col(o))))
+		f.createFrame("Steel Mill Slab").add(drawing)
+		capa.foreach(c => new VisualLine(drawing,0,c*scale,nbSlab*12,c*scale).setOuterCol(Color.red))
+		f.pack()
+		// ------------------------------------------
 
 
 		val rnd = new Random(0)
-		
+		var nbSol = 0
 		cp.lns(100,200) {
 		  for (s <- Slabs; if rnd.nextInt(100) > 70) {
 		    cp.post(x(s) == xsol(s))
 		  }
 		}
-
-		cp.minimize(sum(Slabs)(s => element(loss,l(s)))) subjectTo {
+		val obj = sum(Slabs)(s => element(loss,l(s)))
+		cp.minimize(obj) subjectTo {
 			cp.add(binpacking(x,weight,l),Strong)
 			for (s <- Slabs) {
 				def colPresent(c : Int) = or ((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
@@ -107,7 +126,10 @@ object Steel extends CPModel{
 		  }
 		  
 		  println("failed:"+cp.isFailed())
-		  Slabs.foreach(o => xsol(o) = x(o).getValue)	
+		  Slabs.foreach(o => {xsol(o) = x(o).getValue
+		                     items(o).setBin(xsol(o))})
+		  plot.addPoint(nbSol,obj.getValue())                   
+		  nbSol += 1
 		  println("sol #fail:"+cp.sc.nbFail)
 		}
 		println("end--------------")
