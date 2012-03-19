@@ -12,6 +12,7 @@ package scampi.visual;
 
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 
 import javax.swing.JInternalFrame;
 
@@ -21,7 +22,7 @@ import javax.swing.JInternalFrame;
  * @author Pierre Schaus
  *
  */
-public class VisualText extends ColoredShape {
+public class VisualText extends ColoredShape<Rectangle2D> {
 	
 	private String text;
 	private int x,y;
