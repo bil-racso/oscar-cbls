@@ -23,6 +23,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -68,15 +70,27 @@ public class VisualDrawing extends JPanel  {
 					g.translate(0,getHeight()); 
 					((Graphics2D)g).scale(1, -1);
 				}
-				
-				
-			
 				super.paintComponent(g);
 				for (ColoredShape s: shapes) {
 					s.draw((Graphics2D)g);
 				}
 			}
 		};
+		
+		drawingPanel.addMouseMotionListener(new MouseMotionListener() {
+			
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				drawingPanel.setToolTipText("");
+				for (ColoredShape s: shapes) {
+					s.showToolTip(e.getPoint());
+				}
+			}
+			@Override
+			public void mouseDragged(MouseEvent arg0) {
+			}
+		});
+		
 		
 		drawingPanel.setBackground(Color.white);
 
@@ -88,6 +102,10 @@ public class VisualDrawing extends JPanel  {
 		buttonPanel.setBackground(Color.white);
 
 
+	}
+	
+	public void showToolTip(String text) {
+		drawingPanel.setToolTipText(text);
 	}
 
 

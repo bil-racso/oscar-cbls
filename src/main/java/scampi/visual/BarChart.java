@@ -40,9 +40,10 @@ public class BarChart extends JPanel {
 	JFreeChart chart;
 	String [] categories;
 	String [] columns;
+	boolean stacked;
 	
 	public BarChart(String title, String xlab, String ylab, int nbCols) {
-		this(title,xlab,ylab,new String[0],new String[0]);
+		this(title,xlab,ylab,new String[0],new String[0],false);
 
 		for (int i = 0; i < nbCols; i++) {
 			dataSet.addValue(0, "data", ""+i);
@@ -50,8 +51,11 @@ public class BarChart extends JPanel {
 		
 	}
 	
-	
 	public BarChart(String title, String xlab, String ylab, String [] categories, String [] columns) {
+		this(title, xlab, ylab, categories, columns,false);
+	}
+	
+	public BarChart(String title, String xlab, String ylab, String [] categories, String [] columns, boolean stacked) {
 		super(new BorderLayout());
 		dataSet = new DefaultCategoryDataset();
 		this.categories = categories;	
@@ -61,7 +65,14 @@ public class BarChart extends JPanel {
 				dataSet.addValue(0, c, col);
 			}
 		}
-		chart = ChartFactory.createBarChart(title,xlab,ylab,dataSet,PlotOrientation.VERTICAL,false,false, false);
+		if (stacked) {
+			chart = ChartFactory.createStackedBarChart(title,xlab,ylab,dataSet,PlotOrientation.VERTICAL,false,false, false);
+		}
+		else {
+			chart = ChartFactory.createBarChart(title,xlab,ylab,dataSet,PlotOrientation.VERTICAL,false,false, false);
+		}
+			
+			
 		chart.getPlot().setBackgroundPaint(Color.white);
 		ChartPanel panel = new ChartPanel(chart);
 		
@@ -84,7 +95,7 @@ public class BarChart extends JPanel {
 		VisualFrame f = new VisualFrame("toto");
 		
 		JInternalFrame inf = f.createFrame("Drawing");
-		final BarChart demo = new BarChart("My Plot","xlab","ylab", new String[]{"One","Two"},new String[]{"1","2"});
+		final BarChart demo = new BarChart("My Plot","xlab","ylab", new String[]{"One","Two"},new String[]{"1","2"},true);
 		demo.setValue("One", "1", 1);
 		demo.setValue("One", "2", 3);
 		demo.setValue("Two", "2", 2);
