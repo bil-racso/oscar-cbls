@@ -14,8 +14,9 @@ import scampi.cp.modeling._
 import scampi.search._
 import scampi.reversible._
 import scampi.cp.core._
+import scala.io.Source
 
-/**
+/** 
  * Binero is a grid game, similar to Sudoku.
  * You get a 2n x 2n grid which must be filled with ones and zeroes.
  * Some of the symbols are given. Empty squares are represented with -1.
@@ -24,62 +25,41 @@ import scampi.cp.core._
  * - Identical columns or lines are forbidden.
  * 
  * @author VictorJavAdore
- */
-/** Input examples :
+ * 
+ * Input examples :
  * - First line : an integer n, the half dimension of the grid
  * - Next 2n lines : original state of the grid (a dot means a blank square)
-5
-0.11.....1
-..1....0.0
-.0..1.1.1.
-.1........
-1.0..1....
-.0..0...11
-...1.....1
-0..1.1.0..
-..0.......
-11....11.0
-(possible)
-5
-.0.0...1..
-1...1.....
-.0.0......
-..1..1..0.
-...0...1..
-1..0.0....
-..1....0.0
-..01....1.
-1.....0...
-1.0......1
-(possible)
-2
-1.01
-0110
-01.0
-1001
-(impossible)
+ *	5
+ *	0.11.....1
+ *	..1....0.0
+ *	.0..1.1.1.
+ *	.1........
+ *	1.0..1....
+ *	.0..0...11
+ *	...1.....1
+ *	0..1.1.0..
+ *	..0.......
+ *	11....11.0
+ *
  */
-
-object Binero extends CPModel
-{
-  def main(args: Array[String]): Unit =
-  {
+object Binero extends CPModel {
+  def main(args: Array[String]): Unit = {
     val cp = CPSolver()
     
-    val n = readInt // The grid's half size
-    
+    val firstLine::restLines = Source.fromFile("data/binero2.txt").getLines.toList
+	val n = firstLine.toInt // The grid's half size
+	     
     val range = 0 until 2*n
     val rangeArr = (0 until 2*n).toArray
     
-    val origGrid = for(i <- range) // Reading the input grid
-      yield readLine.toArray.map{
+    val origGrid = for(l <- restLines.toArray) // Reading the input grid
+      yield l.toArray.map {
         case '0' => 0
         case '1' => 1
         case '.' => -1
       }
     
-    val grid = for(i <- rangeArr; j <- rangeArr) // The variable grid
-      yield CPVarInt(cp, 0 to 1)
+    val grid = for(i <- rangeArr; j <- rangeArr)  yield CPVarInt(cp, 0 to 1) // The variable grid
     
     // Arrays containing the elements of the lines and columns of the variable grids
     val line = for(i <- rangeArr) yield grid.slice(i*2*n, (i+1)*2*n)
@@ -87,26 +67,20 @@ object Binero extends CPModel
     
     var numSol = 0
     
-    val transitions = Array((0,1),(1,0))
-    
-    cp.solveAll() subjectTo
-    {
+    cp.solveAll() subjectTo {
       // The solution must contain the elements of the input grid
-      for(i <- range; j <- range)
-        if(origGrid(i)(j) != -1)
+      for(i <- range; j <- range; if(origGrid(i)(j) != -1))
           cp.add(grid(2*n*i+j) == origGrid(i)(j))
       
-      for(i <- range)
-      {
+      for(i <- range) {
         // Each line must contain exactly n zeroes (and ones)
-        cp.add(gcc(line(i), 0 to 0, n, n))
-        cp.add(gcc(column(i), 0 to 0, n, n))
+        cp.add(gcc(line(i), 0 to 1, n, n))
+        cp.add(gcc(column(i), 0 to 1, n, n))
         // There can't be more than 2 ones or zeroes consecutively
-        cp.add(regular(line(i), stretchAutomaton(line(i), 1, 2, transitions)))
-        cp.add(regular(column(i), stretchAutomaton(column(i), 1, 2, transitions)))
+        cp.add(regular(line(i), stretchAutomaton(line(i), 1, 2)))
+        cp.add(regular(column(i), stretchAutomaton(column(i), 1, 2)))
         // All lines and all columns must be different
-        for(j <- i+1 until 2*n)
-        {
+        for(j <- i+1 until 2*n) {
           cp.add(new TabNotEqual(line(i),  line(j), 2*n))
           cp.add(new TabNotEqual(column(i), column(j), 2*n))
         }
@@ -128,22 +102,18 @@ object Binero extends CPModel
   /**
    * Custom constraint which obliges two arrays to be different
    */
-  class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len: Int) extends Constraint(tab1(0).getStore())
-  {
+  class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len: Int) extends Constraint(tab1(0).getStore()) {
     
     val valuesBin = Array(new ReversibleInt(s,0), new ReversibleInt(s,0))
     val numBound = Array(new ReversibleInt(s,0), new ReversibleInt(s,0))
     
     
-    override def setup(l: CPPropagStrength): CPOutcome = 
-    {
+    override def setup(l: CPPropagStrength): CPOutcome = {
       if(tab1.length != len || tab2.length != len)
         CPOutcome.Success
       
-      for ((v,i) <- (tab1++tab2).zipWithIndex)
-      {
-        if(v.isBound)
-        {
+      for ((v,i) <- (tab1++tab2).zipWithIndex) {
+        if(v.isBound) {
           val ok = valBindIdx(v,i) 
           if (ok != CPOutcome.Suspend) return ok
         }
@@ -153,23 +123,19 @@ object Binero extends CPModel
       CPOutcome.Suspend
     }
     
-    override def valBindIdx (x: CPVarInt, i: Int): CPOutcome =
-    {
+    override def valBindIdx (x: CPVarInt, i: Int): CPOutcome = {
       valuesBin(i/len).value += x.getValue()*intPow(2, i%len)
       numBound(i/len).incr()
-      if(numBound(0).value == len && numBound(1).value == len)
-        propagate()
+      if(numBound(0).value == len && numBound(1).value == len) {
+    	  if(valuesBin(0).value == valuesBin(1).value)
+    		 CPOutcome.Failure
+    	  else
+    		 CPOutcome.Success
+      }
       else
         CPOutcome.Suspend
     }
-    
-    override def propagate(): CPOutcome =
-    {
-      if(valuesBin(0).value == valuesBin(1).value)
-        CPOutcome.Failure
-      else
-        CPOutcome.Success
-    }
+
     /**
      * Integer power function
      * @param a an integer
