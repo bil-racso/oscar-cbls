@@ -350,6 +350,14 @@ trait Constraints {
   }
 
   // regular and automatons
+  
+  
+  /**
+   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Iterable[Tuple2[Int, Int]])
+   */  
+  def stretchAutomaton(vars: Array[CPVarInt], minStretch: Int, maxStretch: Int): Automaton = {
+    stretchAutomaton(vars, minStretch, maxStretch, None)
+  }  
 
   /**
    * Builds an automaton restricting the number consecutive times the values appear.
@@ -364,22 +372,23 @@ trait Constraints {
     val maxv = vars.map(x => x.getMax).max
     val minv = vars.map(x => x.getMin).min
     if (minv < 0) throw new RuntimeException("warning stretch automaton: some domains with <0 values, only >=0 values can be constrained")
+    
     val minimumStretch = Array.tabulate(maxv + 1)(_ => minStretch)
     val maximumStretch = Array.tabulate(maxv + 1)(_ => maxStretch)
-    val transiFrom = (for (t <- transitions) yield t._1) toArray;
-    val transiTo = (for (t <- transitions) yield t._2) toArray;
-    Stretch.getStretchAutomaton(vars, minimumStretch, maximumStretch,transiFrom,transiTo)
-  }
+    
+    stretchAutomaton(vars, minimumStretch, maximumStretch, transitions)
+   }
+
 
   /**
-   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Array[Tuple2[Int, Int]])
+   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Iterable[Tuple2[Int, Int]])
    */
   def stretchAutomaton(vars: Array[CPVarInt], minStretch: Array[Int], maxStretch: Array[Int], transitions: Iterable[Tuple2[Int, Int]] = None): Automaton = {
     val maxv = vars.map(x => x.getMax).max
     val minv = vars.map(x => x.getMin).min
     if (minv < 0) throw new RuntimeException("warning stretch automaton: some domains with <0 values, only >=0 values can be constrained")
     
-    if (transitions != None) {
+    if (transitions != None && !transitions.isEmpty) {
     	var transiFrom = Array[Int]()
     	var transiTo = Array[Int]()
     	transitions.foreach(t => {transiFrom = transiFrom :+ t._1; transiTo = transiTo :+ t._2})

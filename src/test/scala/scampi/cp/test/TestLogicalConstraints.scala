@@ -13,7 +13,7 @@ import org.scalacheck._
 class TestLogicalConstraints extends FunSuite with ShouldMatchers with CPModel {
 
 
-  test("test 1") {
+  test("test logical 1") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPVarBool(cp))
     
@@ -27,7 +27,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers with CPModel {
 
   }
   
-  test("test 2") {
+  test("test logical 2") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPVarBool(cp))
     
@@ -41,7 +41,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers with CPModel {
 
   }
   
-  test("test 3") {
+  test("test logical 3") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPVarBool(cp))
     
