@@ -16,7 +16,7 @@ import java.util.Comparator;
 import java.util.Random;
 
 import scampi.cp.core.CPVarInt;
-import scampi.reversible.Objective;
+import scampi.search.Objective;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

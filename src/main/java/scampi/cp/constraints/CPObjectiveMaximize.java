@@ -10,8 +10,6 @@
 package scampi.cp.constraints;
 
 
-import scampi.cp.core.CPOutcome;
-import scampi.cp.core.CPPropagStrength;
 import scampi.cp.core.CPVarInt;
 
 /**
@@ -19,40 +17,37 @@ import scampi.cp.core.CPVarInt;
  */
 public class CPObjectiveMaximize extends CPObjective{
 	
+	private CPVarInt objVar;
+	
 	public CPObjectiveMaximize(CPVarInt objVar) {
 		super(objVar);
+		this.objVar = objVar;
+		optimum = objVar.getMax();
 	}
 
-    @Override
-	public CPOutcome setup(CPPropagStrength l) {
-        optimum = objVar.getMax();
-		return super.setup(l);
-	}
-		
 	@Override
-	protected CPOutcome propagate() {
-		if (objVar.updateMin(objVal) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Suspend;
-	}
-
-	
 	public void tighten() throws RuntimeException{
 		if (!objVar.isBound()) {
 			throw new RuntimeException("objective not bound, not possible to tighten");
 		}
-		objVal = Math.max(objVal+1, objVar.getValue()+1);
+		setNewBound(Math.max(objVal+1, objVar.getValue()+1));
 		System.out.println("objective tighten to "+(objVal-1));
 	}
 	
+	@Override
 	public void relax() {
 		objVal = Integer.MIN_VALUE;
 	}
 
+	@Override
     public boolean isOptimum() {
         return getBound() > getOptimumBound();
     }
+
+	@Override
+	protected CPObjectiveConstraint createObjectiveConstraint(CPVarInt objVar) {
+		return new CPObjectiveConstraintMaximize(this, objVar);
+	}
 
 
 

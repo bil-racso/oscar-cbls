@@ -12,7 +12,10 @@ package scampi.reversible;
 import java.util.Random
 import java.util.Stack
 import scala.util.continuations._
+import scampi.search.DummyObjective;
+import scampi.search.Objective;
 import scampi.search._
+
 
 
 /**

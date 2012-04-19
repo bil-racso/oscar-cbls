@@ -79,7 +79,7 @@ public class Store extends ReversibleSearchNode {
 	}	
 	
 	private void optimize(CPObjective objective) {
-		CPOutcome oc = post(objective);
+		CPOutcome oc = post(objective.getConstraint());
 		assert(oc != CPOutcome.Failure);
 		setObjective(objective);
 	}

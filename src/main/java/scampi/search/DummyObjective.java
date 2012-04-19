@@ -7,13 +7,13 @@
  * Contributors:
  *      www.n-side.com
  ******************************************************************************/
-package scampi.reversible;
+package scampi.search;
 
 /**
  * Dummy Objective doing nothing (used for feasibility problems)
  * @author pschaus@gmail.com
  */
-public class DummyObjective implements Objective {
+public class DummyObjective extends Objective {
 
 	@Override
 	public void tighten() {		

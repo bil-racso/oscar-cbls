@@ -31,7 +31,7 @@ import java.util.Iterator;
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iterable<Integer> {
+public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	
 	private int _min;
 	private int [] values;
@@ -265,26 +265,30 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
 		Arrays.sort(values);
 		return values;
 	}
-
-	public boolean hasNext() {
-		return iterIndex < getSize();
-	}
-
-	public Integer next() {
-		assert(hasNext());
-		int i = iterIndex;
-		iterIndex++;
-		return values[i]+_min;
-	}
-
-	public void remove() {
-		throw new RuntimeException("not implemented");
-		
-	}
-
+	
+	
 	public Iterator<Integer> iterator() {
 		iterIndex = 0;
-		return this;
+		return new Iterator<Integer>() {
+
+			@Override
+			public boolean hasNext() {
+				return iterIndex < getSize();
+			}
+
+			@Override
+			public Integer next() {
+				assert(hasNext());
+				int i = iterIndex;
+				iterIndex++;
+				return values[i]+_min;
+			}
+
+			@Override
+			public void remove() {
+				throw new RuntimeException("not implemented");
+			}
+		};
 	}
 
     /**
@@ -293,8 +297,9 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
     public int [] getSortedVals() {
         int [] vals = new int [getSize()];
         int i = 0;
-        for (int v: this) {
-             vals[i++] = v ;
+        Iterator<Integer> ite = this.iterator();
+        while (ite.hasNext()) {
+             vals[i++] = ite.next() ;
         }
         Arrays.sort(vals);
         return vals;
