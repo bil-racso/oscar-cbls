@@ -12,6 +12,7 @@ package scampi.cp.modeling
 
 import scala.util.continuations._
 import scala.collection.IterableLike
+import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
 
 
@@ -48,14 +49,31 @@ trait CPModel extends Constraints {
 
   //implicit def convertSeqVars2ArrayVars[T <: CPVarInt](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
   
-  implicit def richIterable[A,Repr](xs: IterableLike[A,Repr]) = new { 
+  implicit def richIterable[A,Repr](xs: SeqLike[A,Repr]) = new { 
 	def suspendable = new {
-		def foreach(yld: A => Unit @suspendable): Unit @suspendable = {
-				val it = xs.iterator
-				while (it.hasNext) yld(it.next)
+		def foreach(yld: A => Unit @suspendable): Unit @suspendable = {	
+				loop(xs.indices) {
+				  i => yld(xs(i))
+				}
 		}
 	}
- }
+  }
+  
+  def loopWhile[T](cond: =>Boolean)(body: =>(Unit @suspendable)): Unit @suspendable = {
+     if (cond) {
+       body
+       loopWhile[T](cond)(body)
+     } 
+   }
+    
+   def loop(r: Range)(body: Int =>(Unit @suspendable)): Unit @suspendable = {
+      var i = r.start
+      loopWhile(i < r.end) {
+        val k = i
+        body(i)
+        i = k+1
+      }
+   }
   
 
 
@@ -95,21 +113,7 @@ trait CPModel extends Constraints {
   def allBounds(vars: Iterable[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
 
 
-   def loopWhile[T](cond: =>Boolean)(body: =>(Unit @suspendable)): Unit @suspendable = {
-     if (cond) {
-       body
-       loopWhile[T](cond)(body)
-     } 
-   }
-    
-   def loop(r: Range)(body: Int =>(Unit @suspendable)): Unit @suspendable = {
-      var i = r.start
-      loopWhile(i < r.end) {
-        val k = i
-        body(i)
-        i = k+1
-      }
-   }
+
   
   
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {

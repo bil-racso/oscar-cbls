@@ -39,8 +39,8 @@ object Queens  extends CPModel {
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
       } exploration {        
-        loop(Queens) {
-          q =>  cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
+        for (q <- Queens.suspendable) {
+          cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }
         nbsol += 1
       }
