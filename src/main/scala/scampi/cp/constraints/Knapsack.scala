@@ -29,9 +29,11 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
   val x = efficiencyPerm.map(X(_))
   val p = efficiencyPerm.map(profit(_))
   val w = efficiencyPerm.map(weight(_))
-  val unbound = new ReversibleOrderedSet(s,0,x.size-1);
+  val unbound = new ReversibleOrderedSet(s,0,x.size-1)
   val packedWeight = new ReversibleInt(s,0)
   val packedProfit = new ReversibleInt(s,0)
+  
+  val weightPerm = (0 until x.size).sortBy(i => w(i))
   
   
   override def setup(l: CPPropagStrength): CPOutcome = {    
@@ -66,37 +68,50 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
     return CPOutcome.Suspend
   }
   
-  
- 
-  override def propagate(): CPOutcome = {
-    //println("progagate")
-    // try to find the maximum profit under the weight/capa constraint using the linear relaxation
+  /**
+   * return (profit,weight,s) of already packed items and unbound items up to s-1
+   */
+  private def getCriticalItem() : (Int,Int,Int) = {
     var profit = packedProfit.value
     var weight = packedWeight.value
-    
-    if (unbound.size == 0) {
-      if (W.assign(weight) == CPOutcome.Failure) return CPOutcome.Failure 
-      if (P.assign(profit) == CPOutcome.Failure) return CPOutcome.Failure
-      return CPOutcome.Success
-    }
-    
+        
     val ite = unbound.iterator()
-    var found = false
-    while (ite.hasNext() && !found) {
+    var s = -1 // critical item index
+    while (ite.hasNext() && s < 0) {
       val i = ite.next()
       if (weight + w(i) <= W.getMax()) {
         weight += w(i)
         profit += p(i)
       } else {
-        found = true
         // reached the critical item, take a fraction of it to reach max capa
-        val weightSlack = W.getMax() - weight
-        profit += Math.floor(weightSlack.toDouble / w(i) * p(i)).toInt
-        weight = W.getMax();
+        s = i
       }
     }
-    if (W.updateMax(weight) == CPOutcome.Failure) return CPOutcome.Failure
-    if (P.updateMax(profit) == CPOutcome.Failure) return CPOutcome.Failure
+    return (profit,weight,s)
+  }
+  
+ 
+  override def propagate(): CPOutcome = {
+    //println("progagate")
+    // try to find the maximum profit under the weight/capa constraint using the linear relaxation
+    val (profit,weight,s) = getCriticalItem()
+    
+    if (s == -1) { // enough capa to take all items
+      if (P.updateMax(profit) == CPOutcome.Failure) return CPOutcome.Failure
+      else return CPOutcome.Suspend
+    } else {
+      val weightSlack = W.getMax() - weight
+      val maxProfit = profit + Math.floor(weightSlack.toDouble / w(s) * p(s)).toInt
+      if (P.updateMax(maxProfit) == CPOutcome.Failure) return CPOutcome.Failure
+      
+      //for (i <- packedWeight)
+      
+      
+      
+      return CPOutcome.Suspend
+    }
+
+    
     return CPOutcome.Suspend
   }
 

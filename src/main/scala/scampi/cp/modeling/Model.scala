@@ -11,6 +11,8 @@ package scampi.cp.modeling
 
 
 import scala.util.continuations._
+import scala.collection.IterableLike
+import scala.collection.generic.CanBuildFrom
 
 
 
@@ -45,6 +47,16 @@ trait CPModel extends Constraints {
   implicit def concert3(x: scala.collection.immutable.IndexedSeq[Constraint]) = x.toArray
 
   //implicit def convertSeqVars2ArrayVars[T <: CPVarInt](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
+  
+  implicit def richIterable[A,Repr](xs: IterableLike[A,Repr]) = new { 
+	def suspendable = new {
+		def foreach(yld: A => Unit @suspendable): Unit @suspendable = {
+				val it = xs.iterator
+				while (it.hasNext) yld(it.next)
+		}
+	}
+ }
+  
 
 
   /**
