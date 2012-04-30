@@ -46,7 +46,7 @@ public class OrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getFirst() {
+	public int getFirst() {
 		return first;
 	}
 
@@ -56,7 +56,7 @@ public class OrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getLast() {
+	public int getLast() {
 		return last;
 	}
 	
@@ -66,7 +66,7 @@ public class OrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getNext(int i) {
+	public int getNext(int i) {
 		return next[i];
 	}
 
@@ -76,7 +76,7 @@ public class OrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getPrev(int i) {
+	public int getPrev(int i) {
 		return prev[i];
 	}
 

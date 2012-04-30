@@ -19,31 +19,45 @@ import scala.collection.JavaConversions._
 
 
 /**
- * Implementation of Knapsack Constraint
+ * Implementation of Knapsack Constraint.
+ * A Knapsack Constraint is the conjunction of two constraints:
+ * Sum(i) w(i)*X(i) == W && Sum(i) p(i)*w(i) == P
+ * And you generally want to maximize P under weight constraint.
+ * Weights must be > 0, Profit must be non negative.
+ * @author Pierre Schaus pschaus@gmail.com
  */
 class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).getStore(), "Table2") with Constraints {
 
-  // sort items by efficiency, tie break on the weights
+  def pre(): Boolean = weight.forall(_ > 0) && profit.forall(_ >= 0)
   
-  val efficiencyPerm = (0 until X.size).sortBy(i => (-profit(i).toDouble/weight(i), -weight(i)))
+  assert(pre())
+
+  val tol = 10e-5 // tolerance of the alogorithm when dealing with floats
+  // sort items by decreasing efficiency (p/w) with tie break on the weights
+  val efficiencyPerm = (0 until X.size).sortBy(i => (-profit(i).toDouble/weight(i), -weight(i))).toArray
   val x = efficiencyPerm.map(X(_))
-  val p = efficiencyPerm.map(profit(_))
-  val w = efficiencyPerm.map(weight(_))
+  val p: Array[Double] = efficiencyPerm.map(profit(_).toDouble)
+  val w: Array[Int] = efficiencyPerm.map(weight(_))
+  val e: Array[Double] = efficiencyPerm.map(i => profit(i).toDouble / weight(i))
   val unbound = new ReversibleOrderedSet(s,0,x.size-1)
   val packedWeight = new ReversibleInt(s,0)
   val packedProfit = new ReversibleInt(s,0)
   
-  val weightPerm = (0 until x.size).sortBy(i => w(i))
   
   
   override def setup(l: CPPropagStrength): CPOutcome = {    
-    setIdempotent() 
     if (s.post(binaryknapsack(X,profit,P)) == CPOutcome.Failure) {
       return CPOutcome.Failure;
     }
     if (s.post(binaryknapsack(X,weight,W)) == CPOutcome.Failure) {
     		return CPOutcome.Failure;
     }
+    if (!pre) {
+     println("Knapasack Constraint Not Posted, weights must be > 0 and profit >= 0")
+     return CPOutcome.Success 
+    }
+
+    
     if (filter) {
     	x.filter(!_.isBound()).foreach(_.callPropagateWhenDomainChanges(this))
     	for ((y,i) <- x.zipWithIndex) {
@@ -62,17 +76,29 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
     unbound.removeValue(i);
     if (y.getValue() == 1) {
     	// add this to the capacity and to the reward
-        packedProfit.value = packedProfit.value + p(i)  
+        packedProfit.value = packedProfit.value + p(i).toInt 
         packedWeight.value = packedWeight.value + w(i)  
     }
     return CPOutcome.Suspend
   }
   
   /**
+   * @return The index of the critical item, -1 if no such critical items
+   */
+  def criticalItem() = {
+    val i = getCriticalItem()._3
+    if (i == -1) {
+      i
+    } else {
+      efficiencyPerm(i)
+    }
+  }
+  
+  /**
    * return (profit,weight,s) of already packed items and unbound items up to s-1
    */
   private def getCriticalItem() : (Int,Int,Int) = {
-    var profit = packedProfit.value
+    var profit: Double = packedProfit.value.toDouble
     var weight = packedWeight.value
         
     val ite = unbound.iterator()
@@ -87,62 +113,103 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
         s = i
       }
     }
-    return (profit,weight,s)
+    return (profit.toInt,weight,s)
   }
   
  
   override def propagate(): CPOutcome = {
-    //println("progagate")
     // try to find the maximum profit under the weight/capa constraint using the linear relaxation
-    val (profit,weight,s) = getCriticalItem()
+    val (profit: Int,weight: Int,s: Int) = getCriticalItem()
     
     if (s == -1) { // enough capa to take all items
       if (P.updateMax(profit) == CPOutcome.Failure) return CPOutcome.Failure
       else return CPOutcome.Suspend
     } else {
       val weightSlack = W.getMax() - weight
-      val maxProfit = profit + Math.floor(weightSlack.toDouble / w(s) * p(s)).toInt
-      if (P.updateMax(maxProfit) == CPOutcome.Failure) return CPOutcome.Failure
+      // fraction of item s taken in the relaxed sol
+      val fraq_s = weightSlack.toDouble / w(s) 
       
-      //for (i <- packedWeight)
+      val maxProfit = profit + fraq_s * p(s)
+      if (P.updateMax(Math.floor(maxProfit).toInt) == CPOutcome.Failure) return CPOutcome.Failure
+      // we store the initial weight and profit of the critical item to restore it at the end
+      val w_s_init = w(s)
+      val p_s_init = p(s)
+      
+      def restore_s() = {
+        w(s) = w_s_init
+        p(s) = p_s_init
+      }
+ 
+      // try to detect mandatory items between indices 0 and s-1   
+      //  +--------------------------+
+      //  |      i<s    |s|    j>=s  |
+      //  +--------------------------+
+      w(s) = w(s) - weightSlack // amount of w_s not used in the relaxed sol
+      p(s) -= p(s)*fraq_s
+      var gap = P.getMin() - maxProfit 
+      var i = unbound.getFirst()
+      var j = s
+      if (i < s) {
+         var w_acc = 0.0
+         var p_acc = 0.0
+         while (i < s && i != -1 && j!= -1) {
+        	 var found = false // become true when the max weight of i that can be removed has been found
+        	 while (!found && j != -1) {
+        	    val gap = (maxProfit - P.getMin()) - (w_acc * e(i) - p_acc) 
+        	    val w_ = gap / (e(i) - e(j))
+        	    if (w_ > w(j)) { // must go to next
+                  w_acc += w(j) // accumulate the weight
+                  p_acc += p(j)
+                  j = unbound.getNext(j)
+        	    } else { // found the exact weight that fills the gap
+                  if (w_acc + w_ + tol < w(i)) { // item i is mandatory
+                    val ok = x(i).assign(1) // should not fail
+                    assert(ok != CPOutcome.Failure)
+                  }
+                  found = true
+        	    }
+        	 }        	 
+      		 i = unbound.getNext(i)
+      	} 
+      }
       
       
-      
+      // try to detect forbidden items between indices s+1 and n
+      //  +--------------------------+
+      //  |      j<=s    |s|    i>s  |
+      //  +--------------------------+ 
+      w(s) = weightSlack // amount of w_s not used in the relaxed sol
+      p(s) = p_s_init *fraq_s
+      j = s
+      i = unbound.getLast()
+      if (i > s) {
+         var w_acc = 0.0
+         var p_acc = 0.0
+         while (i > s && i != -1 && j!= -1) {
+           var found = false // become true when the max weight of i that can be removed has been found
+            while (!found && j != -1) {
+              val gap = (maxProfit - P.getMin()) - (p_acc - w_acc * e(i)) 
+              val w_ = gap / (e(j) - e(i))
+              if (w_ > w(j)) { // must go to prev
+                  w_acc += w(j) // accumulate the weight
+                  p_acc += p(j)
+                  j = unbound.getPrev(j)
+        	  } else { // found the exact weight that fills the gap
+                  if (w_acc + w_ + tol < w(i)) { // item i is forbidden because we could force it's complete insertion
+                    val ok = x(i).removeValue(1) // should not fail
+                    assert(ok != CPOutcome.Failure)
+                  }
+                  found = true
+        	  }
+            }
+           i = unbound.getPrev(i)
+         }
+      } 
+      restore_s() // restore w(s) and p(s)
       return CPOutcome.Suspend
     }
-
-    
-    return CPOutcome.Suspend
   }
 
-}
-
-object Knapsack {
-  def main(args: Array[String]) {
-	  val rand = new scala.util.Random(0)
-	  val n = 30
-	  val u = 40
-	  val profit = Array.fill(n)(rand.nextInt(100))
-	  val weight = Array.fill(n)(rand.nextInt(u))
-	  val cp = CPSolver()
-	  val P = new CPVarInt(cp,0 to Int.MaxValue)
-	  val W = new CPVarInt(cp,0 to (n/2 * u/2))
-	  val X = Array.fill(profit.size)(new CPVarBool(cp))
-	  
-	  cp.maximize(P) subjectTo {
-	    cp.add(new Knapsack(X,profit,weight,P,W,true))
-	  } exploration {
-	    while(!cp.allBounds(X)) {
-	      val (x,i) = X.zipWithIndex.filter{case (x,i) => !x.isBound}.maxBy{case (x,i) => weight(i)}
-	      cp.branch(cp.post(x == 1))(cp.post(x == 0))
-	    }
-	  }
-	  
-	  cp.printStats()
-
-      
-
-  }
 }
 
 

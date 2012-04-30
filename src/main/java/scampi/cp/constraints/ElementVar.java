@@ -38,16 +38,15 @@ public class ElementVar extends Constraint {
 
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		if (propagate() == CPOutcome.Failure) {
-		      return CPOutcome.Failure;
-		}
 		if (x.updateMin(0) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		if (x.updateMax(y.length-1) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		
+		if (propagate() == CPOutcome.Failure) {
+		      return CPOutcome.Failure;
+		}
 		z.callPropagateWhenBoundsChange(this);
 		x.callPropagateWhenDomainChanges(this);			
 		for (Integer v: x) {

@@ -57,7 +57,7 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getFirst() {
+	public int getFirst() {
 		return first.getValue();
 	}
 
@@ -67,7 +67,7 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getLast() {
+	public int getLast() {
 		return last.getValue();
 	}
 	
@@ -77,7 +77,7 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getNext(int i) {
+	public int getNext(int i) {
 		return next[i].getValue();
 	}
 
@@ -87,7 +87,7 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	}
 
 	@Override
-	protected int getPrev(int i) {
+	public int getPrev(int i) {
 		return prev[i].getValue();
 	}
 

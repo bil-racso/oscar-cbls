@@ -40,6 +40,7 @@ trait CPModel extends Constraints {
   val Medium = CPPropagStrength.Medium
   val Weak = CPPropagStrength.Weak
   
+
   
   implicit def convert1(x: scala.collection.immutable.IndexedSeq[CPVarInt]) = x.toArray
 

@@ -23,8 +23,7 @@ public abstract class AbstractOrderedSet implements Iterable<Integer> {
 	private int min;
 	private int max;
 
-	private int iterIndex = 0; // used for iterator
-	
+
 	
 	public AbstractOrderedSet(int min, int max) {
 		assert(max >= min);
@@ -49,13 +48,13 @@ public abstract class AbstractOrderedSet implements Iterable<Integer> {
 	protected abstract void setSize(int size);
 	public abstract int getSize();
 	protected abstract void setFirst(int f);
-	protected abstract int getFirst();
+	public abstract int getFirst();
 	protected abstract void setLast(int l);
-	protected abstract int getLast();
+	public abstract int getLast();
 	protected abstract void setNext(int i,int v);
-	protected abstract int getNext(int i);
+	public abstract int getNext(int i);
 	protected abstract void setPrev(int i,int v);
-	protected abstract int getPrev(int i);
+	public abstract int getPrev(int i);
 	
 	
 	
@@ -101,12 +100,19 @@ public abstract class AbstractOrderedSet implements Iterable<Integer> {
 	}
 	
 
+	public boolean hasNext(int i) {
+		return getNext(i) != -1;
+	}
+	
+	public boolean hasPrev(int i) {
+		return getPrev(i) != -1;
+	}
 
 	@Override
 	public Iterator<Integer> iterator() {
-		iterIndex = getFirst();
+		
 		return new Iterator<Integer>() {
-
+			private int iterIndex = getFirst();
 			@Override
 			public boolean hasNext() {
 				return getSize() > 0 && iterIndex != -1;

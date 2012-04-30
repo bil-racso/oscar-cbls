@@ -48,13 +48,13 @@ trait Constraints {
   /**
    * Binary-Knapsack Constraint computing the total profit of items placed into a capacitated knapsack
    * @param x with x(i) == 1 if the item is selected, 0 otherwise
-   * @param p with p(i) is the profit you get selecting item i
-   * @param w with w(i) is the weight of item i into the knapsack
+   * @param p with p(i) >= 0 is the profit you get selecting item i
+   * @param w with w(i) > 0 is the weight of item i into the knapsack
    * @param P the total profit of the knapsack
    * @param W the total weight of the knapsack
    * @return a binary-knapsack constraint linking the variables in argument such that P == sum,,j,, p[j]*x[i] and W == sum,,j,, w[j]*x[i]
    */
-  def binaryknapsack(x: IndexedSeq[CPVarBool], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPVarInt, W: CPVarInt): Constraint = {
+  def binaryknapsack(x: IndexedSeq[CPVarBool], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPVarInt, W: CPVarInt): Knapsack = {
     return new Knapsack(x.toArray,p.toArray,w.toArray,P,W)
   }
   
@@ -301,7 +301,15 @@ trait Constraints {
     tableCons
     */
   }
+  
+  def modulo(x: CPVarInt, v: Int, y: CPVarInt): Constraint = {
+    return new Modulo(x,v,y)
+  }  
 
+  def modulo(x: CPVarInt, v: Int, y: Int): Constraint = {
+    return new Modulo(x,v,new CPVarInt(x.getStore(),y))
+  } 
+  
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
    * @param x an non empty array of variables
