@@ -19,6 +19,7 @@ import java.lang._
 import java.awt.Color
 
 
+
 /**
  * 
  * tsp model with visualization: 
@@ -87,7 +88,7 @@ object TSPVisual extends CPModel {
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
     } exploration {
       //exploration of the search tree
-      while (!allBounds(succ)) {
+      while (!succ.forall(_.isBound())) {
          val res = minDomNotbound(succ)
          val (x, i) = res.first
          // get the closest successor in the domain of x

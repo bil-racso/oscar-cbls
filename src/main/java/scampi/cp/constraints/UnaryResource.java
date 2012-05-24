@@ -17,12 +17,15 @@ import scampi.cp.core.CPPropagStrength;
 import scampi.cp.core.Constraint;
 import scampi.cp.core.CPVarBool;
 import scampi.cp.core.CPVarInt;
+import scampi.cp.core.Store;
 import scampi.cp.scheduling.Activity;
+import scampi.reversible.ReversibleBool;
 
 public class UnaryResource extends Constraint {
 
 	private int nbAct;
 	private Activity [] activities;
+	private CPVarBool [] required;
 	private ThetaTree thetaTree;
 	private LambdaThetaTree lamdaThetaTree;
 
@@ -48,23 +51,30 @@ public class UnaryResource extends Constraint {
 
 	private boolean failure;
 
-	private CPVarInt [] positions; //position[i] = index of activity in positions i
-	private CPVarInt [] ranks; //rank[i] position of activity i => positions[ranks[i]] == i
+	//private CPVarInt [] positions; //position[i] = index of activity in positions i
+	//private CPVarInt [] ranks; //rank[i] position of activity i => positions[ranks[i]] == i
+	
+	private ReversibleBool[] ranked;
 	
 
-	public UnaryResource(Activity [] activities) {
-		this(activities, "UnaryResource");
-	}
-
-	public UnaryResource(Activity [] activities, String name) {
+	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
 		super(activities[0].getStart().getStore(),name);
+		assert(activities.length == required.length);
 		this.name = name;
 		this.activities = activities;
+		this.required = required;
 		this.nbAct = activities.length;
 
+		/*
 		positions = CPVarInt.getArray(s, nbAct, 0, nbAct-1,"pos");
 		ranks = CPVarInt.getArray(s, nbAct, 0, nbAct-1,"rank");
+		*/
+		ranked = new ReversibleBool[nbAct];
+		for (int i = 0; i < nbAct; i++) {
+			ranked[i] = new ReversibleBool(s,false);
+		}
 
+		
 		this.thetaTree = new ThetaTree(activities.length);
 		this.lamdaThetaTree = new LambdaThetaTree(activities.length);
 
@@ -84,7 +94,7 @@ public class UnaryResource extends Constraint {
 		new_lct = new int [nbAct];
 
 		for (int i = 0; i < activities.length; i++) {
-			ActivityWrapper w = new ActivityWrapper(i,activities[i]);
+			ActivityWrapper w = new ActivityWrapper(i,activities[i],required[i]);
 			wrappers[i] = w;
 			ect[i] = w;
 			est[i] = w;
@@ -92,7 +102,7 @@ public class UnaryResource extends Constraint {
 			lst[i] = w;
 			new_est[i] = Integer.MIN_VALUE;
 
-			w = new ActivityWrapper(i,new MirrorActivity(activities[i]));
+			w = new ActivityWrapper(i,new MirrorActivity(activities[i]),required[i]);
 			mwrappers[i] = w;
 			mect[i] = w;
 			mest[i] = w;
@@ -102,6 +112,59 @@ public class UnaryResource extends Constraint {
 		}		
 
 		failure = false;
+	}
+
+	public UnaryResource(Activity [] activities, String name) {
+		this(activities, makeRequiredArray(activities.length,activities[0].getStart().getStore()), name);
+	}
+	
+	/**
+	 * a number between 0/1 representing the business of the resource over it's horizon
+	 * close to 1 means that almost at any point there is an activity executing, close to 0 is the opposite
+	 */
+	public double getCriticality() {
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MIN_VALUE;
+		int totDur = 0;
+		for (int i = 0; i < nbAct; i++) {
+			if (required[i].isTrue()) {
+				min = Math.min(min, activities[i].getEST());
+				max = Math.max(max, activities[i].getLCT());
+				totDur += activities[i].getMinDuration();
+			}
+		}
+		return ((double) totDur)/(max-min);
+	}
+	
+	public boolean isRanked() {
+		for (int i = 0; i < nbAct; i++) {
+			if (required[i].isTrue() && !ranked[i].getValue()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public boolean isRanked(int i) {
+		return required[i].isTrue() && ranked[i].getValue();
+	}
+	
+	public void rankFirst(int j) {
+		for (int i = 0; i < nbAct; i++) {
+			if (i!= j && required[i].isTrue() && !ranked[i].getValue()) {
+				s.post(new LeEq(activities[j].getEnd(),activities[i].getStart()));
+			}
+		}
+		ranked[j].setValue(true);
+	}
+	
+	private static CPVarBool[] makeRequiredArray(int n, Store s) {
+		CPVarBool [] res = new CPVarBool[n];
+		for (int i = 0; i < res.length; i++) {
+			res[i] = new CPVarBool(s);
+			s.add(res[i].constraintTrue());
+		}
+		return res;
 	}
 
 	public int getMinTotDur() {
@@ -121,47 +184,27 @@ public class UnaryResource extends Constraint {
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
 
+		
 		for (int i = 0; i < nbAct; i++) {
 			activities[i].getStart().callPropagateWhenBoundsChange(this);
 			activities[i].getEnd().callPropagateWhenBoundsChange(this);
-		}
-
-		if (s.post(new AllDifferent(positions),CPPropagStrength.Strong) == CPOutcome.Failure) { //should not fail
-			return CPOutcome.Failure;
-		}
-
-		
-		if (s.post(new AllDifferent(ranks),CPPropagStrength.Strong) == CPOutcome.Failure) { //should not fail
-			return CPOutcome.Failure;
-		}
-		
-		CPVarInt [] starts = new CPVarInt[nbAct];
-		CPVarInt [] ends = new CPVarInt[nbAct];
-		for (int i = 0; i < nbAct; i++) {
-			starts[i] = activities[i].getStart();
-			ends[i] = activities[i].getEnd();
-		}
-		
-		
-		for (int i = 0; i < nbAct-1; i++) {
-			if (s.post(new ElementVar(positions, ranks[i], i)) == CPOutcome.Failure) {
-				return CPOutcome.Failure;
-			}
-			CPVarInt endi = Element.get(ends, positions[i]);
-			CPVarInt starti1 = Element.get(starts, positions[i+1]);
-			if (s.post(new LeEq(endi, starti1)) == CPOutcome.Failure) {
-				return CPOutcome.Failure;
+			
+			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
+				//required[i].callValBindIdxWhenBind(this,i);
+				required[i].callPropagateWhenBind(this);
 			}
 		}
-
+		
 		for (int i = 0; i < nbAct; i++) {
 			for (int j = i+1; j < nbAct; j++) {
-				if (notOverlap(activities[i], activities[j]) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
+				if (required[i].isTrue() && required[j].isTrue()) {
+					if (s.post(new Disjunctive(activities[i], activities[j])) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
 				}
 			}
 		}
-
+		
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -170,20 +213,18 @@ public class UnaryResource extends Constraint {
 	}
 
 
-	/**
-	 * 
-	 * @return rank[i] is the position of the activity y in the sequence
-	 */
-	public CPVarInt[] getRanks() {
-		return ranks;
-	}
-
-
-	private CPOutcome notOverlap(Activity act1, Activity act2) {
-		CPVarBool b1 = act2.getStart().isGrEq(act1.getEnd());
-		CPVarBool b2 = act1.getStart().isGrEq(act2.getEnd());
-		if (s.post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
+	
+	@Override
+	protected CPOutcome valBindIdx(CPVarInt x, int idx) { 
+		if (required[idx].isTrue()) {
+			// activity idx is mandatory
+			for (int i = 0; i < nbAct; i++) {
+				if (i != idx && required[i].isTrue()) {
+					if (s.post(new Disjunctive(activities[i], activities[idx])) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
+				}
+			}
 		}
 		return CPOutcome.Suspend;
 	}
@@ -227,10 +268,10 @@ public class UnaryResource extends Constraint {
 
 	private boolean overloadChecking() {
 		// Init
-		updateEst();
+		updateEst(); // update the activity wrappers such that they now their position according to a non decreasing est sorting
 
 		// One direction
-		Arrays.sort(lct, lctComp);
+		Arrays.sort(lct, lctComp); // sort activity in non decreasing latest completion time
 		thetaTree.reset();
 		for (int i = 0; i < nbAct; i++) {
 			ActivityWrapper aw = lct[i];
@@ -578,14 +619,37 @@ class MirrorActivity extends Activity {
 
 class ActivityWrapper {
 
+	CPVarBool required;
 	Activity act;
 	int index;
 	int est_pos;
 
-	protected ActivityWrapper(int index, Activity act) {
+	protected ActivityWrapper(int index, Activity act, CPVarBool required) {
 		this.act = act;
+		this.required = required;
 		this.index = index;
 		this.est_pos = -1;
+	}
+	
+	/**
+	 * @return true if the activity may be possibly be scheduled on this resource
+	 */
+	public boolean isOptional() {
+		return !required.isBound();
+	}
+	
+	/**
+	 * @return true if the activity must be scheduled on this resource
+	 */
+	public boolean isMandatory() {
+		return required.isTrue();
+	}
+	
+	/**
+	 * @return true if the activity cannot be scheduled on this resource
+	 */
+	public boolean isForbidden() {
+		return required.isFalse();
 	}
 
 	Activity getActivity() {
@@ -615,8 +679,15 @@ class ESTComparator implements Comparator<ActivityWrapper> {
 
 class LCTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
-		return act0.getActivity().getLCT()-act1.getActivity().getLCT();
-
+		int lct0 = act0.getActivity().getLCT();
+		int lct1 = act1.getActivity().getLCT();
+		if (act0.isOptional()) {
+			lct0 = Integer.MAX_VALUE;
+		}
+		if (act1.isOptional()) {
+			lct1 = Integer.MAX_VALUE;
+		}
+		return lct0 - lct1;
 	}
 }
 

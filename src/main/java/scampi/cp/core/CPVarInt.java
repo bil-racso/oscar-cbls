@@ -1005,6 +1005,19 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		return this.isDiff(v);
 	}
 	/**
+	 * Scala wrapper: b <=> x == y
+	 */
+	//public CPVarBool $eq$eq$eq(CPVarInt y) {
+		//return this.isEq(y);
+	//}
+	/**
+	 * Scala wrapper: b <=> x != v
+	 */
+	//public CPVarBool $bang$eq$eq(CPVarInt y) {
+		//return this.isDiff(y);
+	//}
+	
+	/**
 	 * Scala wrapper: b <=> x >= v
 	 */
 	public CPVarBool $greater$eq$eq(int v) {

@@ -111,11 +111,7 @@ trait CPModel extends Constraints {
     }
   }
   
-  def allBounds(vars: Iterable[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
-
-
-
-  
+  def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound())
   
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
     val max = indexes.map(f).max
