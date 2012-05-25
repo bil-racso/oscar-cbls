@@ -461,6 +461,38 @@ trait Constraints {
     cp.add(maximum(x, m))
     m
   }
+  
+  
+  /**
+   * Minimum Constraint
+   * @param indexes
+   * @param f function mapping each element from indexes to a variable
+   * @return a fresh variable z linked to vars by a constraint such that z is the minimum of all variables f(A) for all A in indexes
+   */
+  def minimum[A](indexes: Iterable[A])(f: A => CPVarInt): CPVarInt = minimum(indexes map f)
+
+  /**
+   * Minimum Constraint
+   * @param vars an non empty array of variables
+   * @param m a variables representing the maximum of vars
+   * @return a constraint ensuring that m is the minimum of variables in vars
+   */
+  def minimum(vars: Array[CPVarInt], m: CPVarInt): Constraint = {
+    new Minimum(vars, m)
+  }
+
+  /**
+   * Minimum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the minimum of all variables in vars
+   */
+  def minimum(vars: Iterable[CPVarInt]): CPVarInt = {
+    val x = vars.toArray
+    val cp = x(0).getStore
+    val m = new CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+    cp.add(minimum(x, m))
+    m
+  }
 
 
   // scheduling constraints

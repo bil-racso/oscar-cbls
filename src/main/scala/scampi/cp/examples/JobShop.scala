@@ -123,11 +123,12 @@ object JobShop  extends CPModel {
 	     println("all ranked")
 	     val min = makespan.getMin()
 	     println("try min makespan:"+min)
-	     cp.branch(cp.post(makespan == min))(cp.post(makespan > min))
+	     cp.binary(makespan)
 	     println("makespan fixed to:"+min+" makespan:"+makespan)
-	     cp.binaryFirstFail(activities.flatten.map(_.act.getStart))
+	     //cp.binaryFirstFail(activities.flatten.map(_.act.getStart))
 	     // sol found, update the visu
 	     updateVisu()
+	     cp.printStats()
 
 	   }
        cp.printStats()
