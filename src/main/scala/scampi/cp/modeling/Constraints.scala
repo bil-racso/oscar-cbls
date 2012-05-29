@@ -255,6 +255,7 @@ trait Constraints {
   def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]): Constraint = {
     table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
     /*
+    println("new table")
     val tableCons = new Table(x1,x2)
     for (t <- tuples) {
       tableCons.addTupple(t._1, t._2)

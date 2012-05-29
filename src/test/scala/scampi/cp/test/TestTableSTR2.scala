@@ -64,21 +64,24 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers with CPModel {
     	
     cp.solveAll subjectTo {
       cp.add(new TableSTR2(x,tuples))
-      /*
-      cp.add(x(0) == 2)
-      println("after x(0)==2");
-      println(x.mkString(","))
-      cp.add(x(1) == 1)
-    	 
-      println(x.mkString(","))
-      println("ppppppp")
-    	*/
     } exploration {
       cp.binary(x)
-      println("sol:"+x.mkString(","))
       nbSol += 1
     }
     nbSol should be(4)
+
+  }
+  
+    test("Table Test 4") {
+    val cp = CPSolver()
+    var x = Array.fill(2)(CPVarInt(cp, 1 to 1))
+    
+    val tuples = Array(Array(1,2),Array(2,1))
+    
+
+    cp.post(new TableSTR2(x,tuples))
+    cp.isFailed should be(true)
+    
 
   }
   

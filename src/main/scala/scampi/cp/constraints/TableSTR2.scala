@@ -71,7 +71,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
 
     for ((x,i) <- X.zipWithIndex) {
        if (changed(i)) sval.insert(i)
-       if (!x.isBound()) sup.insert(i) 
+       /*if (!x.isBound())*/ sup.insert(i) 
     }
     
     // retrieve domains in sets
