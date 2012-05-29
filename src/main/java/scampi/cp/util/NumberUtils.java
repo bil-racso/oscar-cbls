@@ -98,5 +98,37 @@ public class NumberUtils {
 		return res;
 	}
 	
+	
+	/**
+	 * @param a
+	 * @param b
+	 * @return true if a*b generates an overflow
+	 */
+	public static boolean overFlowMul(int a, int b) {
+		if (a == 0 || b == 0) return false;
+		return (a * b) / b != a;
+	}
+	
+	/**
+	 * 
+	 * @param a
+	 * @param b
+	 * @return a*b (rounded to Integer.MAX_VALUE /Integer.MIN_VALUE in case of overflow)
+	 */
+	public static int safeMul(int a, int b) {
+		if (overFlowMul(a, b)) {
+			System.out.println("warning: overflow multiplying "+a+"*"+b);
+			if ((a > 0 && b > 0) || (a < 0 && b < 0)) {
+				return Integer.MAX_VALUE;
+			} else {
+				return Integer.MIN_VALUE;
+			}
+		} else {
+			return a*b;
+		}
+	}
+	
+
+	
 
 }

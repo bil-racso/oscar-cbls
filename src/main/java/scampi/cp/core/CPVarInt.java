@@ -34,6 +34,7 @@ import scampi.cp.util.ArrayUtils;
 import scampi.reversible.ReversiblePointer;
 import scampi.reversible.ReversibleQueue;
 import scala.collection.immutable.Range;
+import scampi.cp.util.NumberUtils;
 
 /**
  * Finite Domain Integer Variables <br>
@@ -250,10 +251,12 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 			if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 				for (int i = dom.getMin(); i <= dom.getMax(); i++) {
 					if (i!= val && dom.hasValue(i)) {
-						if (onDomainL1.hasValue())
+						if (onDomainL1.hasValue()) {
 							s.notifRemoveL1(onDomainL1.getValue(),this,i);
-						if (onDomainIdxL1.hasValue())
+						}
+						if (onDomainIdxL1.hasValue()) {
 							s.notifyRemoveIdxL1(onDomainIdxL1.getValue(),this,i);
+						}
 					}
 				}
 			}
@@ -318,7 +321,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int omax = dom.getMax();
 		
 		//must notifyAC3 the removed value before the actual removal
-		if(onDomainL1.hasValue() || onDomainIdxL1.hasValue()){
+		if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 			for (int i = omax; i > val; i--) {
 				if(dom.hasValue(i)){
 					if (onDomainL1.hasValue())
@@ -807,7 +810,8 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int b = getMax();
 		int c = y.getMin();
 		int d = y.getMax();
-		int [] t = new int[]{a*c,a*d,b*c,b*d}; 
+		System.out.println(a+" "+b+" "+c+" "+d);
+		int [] t = new int[]{NumberUtils.safeMul(a,c),NumberUtils.safeMul(a,d),NumberUtils.safeMul(b,c),NumberUtils.safeMul(b,d)}; 
 		CPVarInt z = new CPVarInt(getStore(),ArrayUtils.min(t), ArrayUtils.max(t));
 		CPOutcome ok = s.post(new MulVar(this,y,z));
         assert(ok != CPOutcome.Failure);

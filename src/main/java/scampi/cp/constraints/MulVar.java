@@ -71,8 +71,8 @@ public class MulVar extends Constraint {
 		
 	@Override
 	protected CPOutcome propagate() {
-		
 		if (!z.hasValue(0)) {
+			
 			if (x.removeValue(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -96,20 +96,22 @@ public class MulVar extends Constraint {
 			}
 			return CPOutcome.Success;
 		} else { // none of the variables are bound
+
 			assert (!x.isBound() && !x.isBound() && !y.isBound());
 			// propagation of z (try every combination of x and y's bounds)
-			if (z.updateMin(ArrayUtils.min(x.getMin() * y.getMin(),
-										   x.getMin() * y.getMax(),
-										   x.getMax() * y.getMin(),
-										   x.getMax() * y.getMax())) == CPOutcome.Failure) {
+			if (z.updateMin(ArrayUtils.min(NumberUtils.safeMul(x.getMin() , y.getMin()),
+										   NumberUtils.safeMul(x.getMin() , y.getMax()),
+										   NumberUtils.safeMul(x.getMax() , y.getMin()),
+									       NumberUtils.safeMul(x.getMax() , y.getMax()))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
-			if (z.updateMax(ArrayUtils.max(x.getMin() * y.getMin(),
-					   					   x.getMin() * y.getMax(),
-					   					   x.getMax() * y.getMin(),
-					   					   x.getMax() * y.getMax())) == CPOutcome.Failure) {
+			if (z.updateMax(ArrayUtils.max(NumberUtils.safeMul(x.getMin() , y.getMin()),
+										   NumberUtils.safeMul(x.getMin() , y.getMax()),
+							               NumberUtils.safeMul(x.getMax() , y.getMin()),
+									       NumberUtils.safeMul(x.getMax() , y.getMax()))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
+			
 			// propagate x
 			if (propagateMul(x, y, z) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

@@ -51,7 +51,7 @@ public class MulCte extends Constraint {
 	@Override
 	protected CPOutcome propagate() {
 		if (x.isBound()) {
-			if (z.assign(c * x.getValue()) == CPOutcome.Failure) {
+			if (z.assign(NumberUtils.safeMul(c , x.getValue())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -63,10 +63,10 @@ public class MulCte extends Constraint {
 				}
 				return CPOutcome.Success;
 			} else {
-				if (z.updateMin(Math.min(c * x.getMin(), c * x.getMax())) == CPOutcome.Failure) {
+				if (z.updateMin(Math.min(NumberUtils.safeMul(c , x.getMin()), NumberUtils.safeMul(c , x.getMax()))) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
-				if (z.updateMax(Math.max(c * x.getMin(), c * x.getMax())) == CPOutcome.Failure) {
+				if (z.updateMax(Math.max(NumberUtils.safeMul(c , x.getMin()), NumberUtils.safeMul(c , x.getMax()))) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 				if (x.updateMin(Math.min(NumberUtils.ceilDiv(z.getMin(), c), 
