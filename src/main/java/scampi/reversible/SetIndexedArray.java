@@ -43,7 +43,7 @@ public class SetIndexedArray extends AbstractSetIndexedArray {
 	
 	@Override
 	protected void setMax(int max) {
-		this.minV = max;
+		this.maxV = max;
 	}
 	
 	@Override
@@ -52,12 +52,12 @@ public class SetIndexedArray extends AbstractSetIndexedArray {
 	}
 	
 	@Override
-	protected int getMin() {
+	public int getMin() {
 		return minV;
 	}
 	
 	@Override
-	protected int getMax() {
+	public int getMax() {
 		return maxV;
 	}
 	

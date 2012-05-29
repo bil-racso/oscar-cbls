@@ -44,8 +44,8 @@ public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	protected abstract void setMin(int min);
 	protected abstract void setMax(int max);
 	public abstract int getSize();
-	protected abstract int getMin();
-	protected abstract int getMax();
+	public abstract int getMin();
+	public abstract int getMax();
 	
 	private void incrSize() {
 		setSize(getSize()+1);
@@ -256,14 +256,23 @@ public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	public Integer[] getValues() {
 		if (isEmpty()) return new Integer[]{};
 		ArrayList<Integer> vals = new ArrayList<Integer>();
+		System.out.println("min:"+getMin()+" max:"+getMax());
 		for (int v = getMin(); v <= getMax(); v++) {
 			if (hasValue(v)) {
 				vals.add(v);
+				System.out.println("add value:"+v);
+			} else {
+				System.out.println("do not have value"+v);
 			}
 		}
 		Integer [] values = vals.toArray(new Integer[]{});
 		Arrays.sort(values);
 		return values;
+	}
+	
+	@Override
+	public String toString() {
+		return Arrays.toString(getValues());
 	}
 	
 	
