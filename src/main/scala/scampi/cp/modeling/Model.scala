@@ -139,7 +139,7 @@ trait CPModel extends Constraints {
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
   def apply(cp: CPSolver, domain: Range): CPVarInt = {
-    new CPVarInt(cp, domain.min, domain.max)
+    new CPVarInt(cp, domain)
   }
 
   /**
