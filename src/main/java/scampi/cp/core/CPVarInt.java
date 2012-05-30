@@ -810,7 +810,6 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int b = getMax();
 		int c = y.getMin();
 		int d = y.getMax();
-		System.out.println(a+" "+b+" "+c+" "+d);
 		int [] t = new int[]{NumberUtils.safeMul(a,c),NumberUtils.safeMul(a,d),NumberUtils.safeMul(b,c),NumberUtils.safeMul(b,d)}; 
 		CPVarInt z = new CPVarInt(getStore(),ArrayUtils.min(t), ArrayUtils.max(t));
 		CPOutcome ok = s.post(new MulVar(this,y,z));
