@@ -72,12 +72,12 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	}
 
 	@Override
-	protected int getMin() {
+	public int getMin() {
 		return minV.getValue();
 	}
 
 	@Override
-	protected int getMax() {
+	public int getMax() {
 		return maxV.getValue();
 	}
 

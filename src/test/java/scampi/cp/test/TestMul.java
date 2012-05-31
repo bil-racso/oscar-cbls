@@ -25,7 +25,7 @@ import java.util.Arrays;
  */
 public class TestMul extends TestCase {
 	
-	private Store s;	
+
 	
     public TestMul(String name) {
         super(name);
@@ -36,7 +36,7 @@ public class TestMul extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        
     }
 
     /**
@@ -44,17 +44,18 @@ public class TestMul extends TestCase {
      */
     protected void tearDown() throws Exception {
         super.tearDown();
-        s = null;
     }
     
-    public void testMul1() {  	
+    public void testMul1() {  
+    	Store s = new Store();
     	CPVarInt x = new CPVarInt(s,0,5);
     	CPVarInt y = x.mul(-2);
     	s.post(new Gr(y,-10));
     	assertTrue(x.getMax()==4);
     }
     
-    public void testMul2() {  	
+    public void testMul2() { 
+    	Store s = new Store();
     	CPVarInt x = new CPVarInt(s,2,5);
     	CPVarInt y = new CPVarInt(s,10,10);
     	s.post(new MulCte(x,3,y));
@@ -63,6 +64,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul3() {  	
+    	Store s = new Store();
     	CPVarInt x = new CPVarInt(s,2,5);
     	CPVarInt z = new CPVarInt(s,10,12);
     	s.post(new MulCte(x,3,z));
@@ -70,7 +72,8 @@ public class TestMul extends TestCase {
     	assertTrue(x.isBound() && x.getValue()==4);
     }
     
-    public void testMul4() {  	
+    public void testMul4() { 
+    	Store s = new Store();
     	CPVarInt x = new CPVarInt(s,2,5);
     	CPVarInt z = new CPVarInt(s,9,12);
     	s.post(new MulCte(x,3,z));
@@ -80,6 +83,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul5() {  
+    	Store s = new Store();
     	CPVarInt x = new CPVarInt(s,2,5);
     	CPVarInt y = new CPVarInt(s,10,10);
     	//s.post(new MulCte(x,3,y));
@@ -284,6 +288,22 @@ public class TestMul extends TestCase {
     	assertTrue(x.getMax() == 4);
     	assertTrue(y.getMax() == 16);
     	assertTrue(y.getMin() == 0);
+    }
+    
+    public void testMul19() {  
+    	Store s = new Store();
+    	
+
+    	CPVarInt x = new CPVarInt(s,6,43986624);
+    	CPVarInt y = new CPVarInt(s,4,355);
+    	CPVarInt z = new CPVarInt(s,711,711);
+    	//s.post(new MulVar(x, y, z));
+    	System.out.println("hello");
+    	z = x.mul(y);
+    	System.out.println("z:"+z);
+    	s.post(new Eq(z, new CPVarInt(s,711))); // should detect it is a square constraint
+    	assertTrue(!s.isFailed());
+
     }
     
 

@@ -19,6 +19,7 @@ import java.lang._
 import java.awt.Color
 
 
+
 /**
  * 
  * tsp model with visualization: 
@@ -34,7 +35,7 @@ object TSPVisual extends CPModel {
     // -------------visual components ------------
     val f = new VisualFrame("TSP")
     // creates the plot and place it into the frame
-	val plot = new Plot2D("TSP","solultion number","distance")
+	val plot = new Plot2D("","Solution number","Distance")
     f.createFrame("TSP Objective Function").add(plot)
     // creates the tour visu and place it into the frame
     val drawing = new VisualDrawing(false)
@@ -72,7 +73,7 @@ object TSPVisual extends CPModel {
     
     // -----------------visual update -----------
     var nbSol = 0
-    coord.foreach(c => new VisualCircle(drawing, c._1 , c._2, 5, Color.blue))
+    coord.foreach(c => new VisualCircle(drawing, c._1 , c._2, 2, Color.blue))
     def updateVisu() {
       def update(i: Int) = lines(i).setDest(coord(succ(i).getValue())._1,coord(succ(i).getValue())._2)
       nbSol += 1
@@ -87,7 +88,7 @@ object TSPVisual extends CPModel {
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
     } exploration {
       //exploration of the search tree
-      while (!allBounds(succ)) {
+      while (!succ.forall(_.isBound())) {
          val res = minDomNotbound(succ)
          val (x, i) = res.first
          // get the closest successor in the domain of x

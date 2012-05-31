@@ -9,13 +9,11 @@
  ******************************************************************************/
 
 package scampi.cp.constraints
-import scampi.cp.core.Constraint
 import scampi.cp.core._
 import scampi.reversible._
 import scampi.cp.core.CPOutcome
 import scampi.cp.modeling._
 import scala.collection.JavaConversions._
-import scala.xml.dtd.EMPTY
 
 
 /**
@@ -65,7 +63,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
   
   def isValid(t: Int): Boolean = {
     val tuple = table(t) 
-    !IterableWrapper(sval).exists(i => !X(i).hasValue(tuple(i)))
+    ! sval.exists(i => !X(i).hasValue(tuple(i)))
   }
 
   override def propagate(): CPOutcome = {
@@ -73,19 +71,20 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
 
     for ((x,i) <- X.zipWithIndex) {
        if (changed(i)) sval.insert(i)
-       if (!x.isBound()) sup.insert(i) 
+       /*if (!x.isBound())*/ sup.insert(i) 
     }
     
     // retrieve domains in sets
     import scala.collection.mutable.Set
+    
     val toRemoveValues = Array.tabulate(X.size)(i => Set((X(i).getMin() to X(i).getMax).filter(X(i).hasValue(_)) : _*))
     
     val toRemoveFromTuples = Set[Integer]() // used to avoid removing while iterating in validTuples
     
-    for (t <- IterableWrapper(validTuples)) {  
+    for (t <- validTuples) {  
       val tuple = table(t)
       if (isValid(t)) { // check if tuple is valid wrt changed variables
-        val toRemoveFromSup = for (i <- IterableWrapper(sup); if (toRemoveValues(i).remove(tuple(i)) && toRemoveValues(i).isEmpty)) yield i
+        val toRemoveFromSup = for (i <- sup; if (toRemoveValues(i).remove(tuple(i)) && toRemoveValues(i).isEmpty)) yield i
         toRemoveFromSup.foreach(sup.removeValue(_))
       } else {
         toRemoveFromTuples += t
@@ -93,7 +92,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
     }
     toRemoveFromTuples.foreach(validTuples.removeValue(_))
     
-    for (i <- IterableWrapper(sup); v <- toRemoveValues(i)) {
+    for (i <- sup; v <- toRemoveValues(i)) {
       if (X(i).removeValue(v) == CPOutcome.Failure) {
         return CPOutcome.Failure
       }

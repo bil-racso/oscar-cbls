@@ -14,8 +14,10 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import scampi.search._
 import scampi.reversible._
+import scampi.cp.modeling._
+import scampi.cp.core.CPVarInt
 
-class SearchControllerTest extends FunSuite with ShouldMatchers {
+class SearchControllerTest extends FunSuite with ShouldMatchers with CPModel {
 
    
  
@@ -40,12 +42,28 @@ class SearchControllerTest extends FunSuite with ShouldMatchers {
           sol = sol :+ v(0)*4+v(1)*2+v(2)
 	   }
     	
-    	sol should equal(Array(0,1,2,3,4,5,6,7))
+       sol should equal(Array(0,1,2,3,4,5,6,7))
+	
+    }
+    
+    test("test 2 dfs") {
+    			
+    	val cp = CPSolver()
+    	val x = Array.fill(2)(CPVarInt(cp,1 to 2))
+    	val y = Array.fill(2)(CPVarInt(cp,1 to 2))
+	
+    	def dom(x: CPVarInt) = (x.getMin() to x.getMax()).filter(x.hasValue(_))
     	
-    	
-
-
-    	
+    	var nbSol = 0
+    	cp.exploration {
+        	while (! allBounds(x)) {
+    		 val i = x.indices.find(!x(_).isBound()).get	    
+    		 cp.branchAll(dom(x(i)))(v => cp.post(x(i) == v))
+    		 cp.branchAll(dom(y(i)))(v => cp.post(y(i) == v))      
+    	    }
+        	nbSol += 1
+    	}
+    	nbSol should equal(16)
     }
 
 }

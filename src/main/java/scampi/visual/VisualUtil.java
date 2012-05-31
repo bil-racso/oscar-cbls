@@ -19,13 +19,8 @@ public class VisualUtil {
 	public static Color[] getRandomColorArray(int n) {
 		Color [] myColors =  new Color[n];
 		for(int i = 0; i < n; i++){
-			
-			int red=(int)(next() * 255);
-			int green=(int)(next() * 255);
-			int blue=(int)(next() * 255);
-
 			//fill our array with random colors
-			myColors[i] = new Color(red, green, blue);//.brighter();
+			myColors[i] = getRandomColor();//.brighter();
 		}
 		return myColors;
 	}
@@ -33,6 +28,11 @@ public class VisualUtil {
 	private static double next() {
 		return rand.nextDouble()*0.5 + 0.4;
 		
+	}
+	
+	
+	public static Color getRandomColor() {
+		return new Color((int)(next() * 255),(int)(next() * 255), (int)(next() * 255));
 	}
 
 }

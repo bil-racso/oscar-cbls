@@ -35,7 +35,7 @@ trait Constraints {
   
   /**
    * Binary-Knapsack Constraint computing the total weight of items placed into a knapsack
-   * @param x with x(i) is the bin where the item i is placed
+   * @param x with x(i) == 1 if the item is selected, 0 otherwise
    * @param w with w(i) is the weight of item i
    * @param l the load of the knapsack
    * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
@@ -43,6 +43,21 @@ trait Constraints {
   def binaryknapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], l: CPVarInt): Constraint = {
     return new BinaryKnapsack(x.toArray, w.toArray, l)
   }
+  
+
+  /**
+   * Binary-Knapsack Constraint computing the total profit of items placed into a capacitated knapsack
+   * @param x with x(i) == 1 if the item is selected, 0 otherwise
+   * @param p with p(i) >= 0 is the profit you get selecting item i
+   * @param w with w(i) > 0 is the weight of item i into the knapsack
+   * @param P the total profit of the knapsack
+   * @param W the total weight of the knapsack
+   * @return a binary-knapsack constraint linking the variables in argument such that P == sum,,j,, p[j]*x[i] and W == sum,,j,, w[j]*x[i]
+   */
+  def binaryknapsack(x: IndexedSeq[CPVarBool], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPVarInt, W: CPVarInt): Knapsack = {
+    return new Knapsack(x.toArray,p.toArray,w.toArray,P,W)
+  }
+  
 
 
   /**
@@ -240,6 +255,7 @@ trait Constraints {
   def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]): Constraint = {
     table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
     /*
+    println("new table")
     val tableCons = new Table(x1,x2)
     for (t <- tuples) {
       tableCons.addTupple(t._1, t._2)
@@ -286,7 +302,15 @@ trait Constraints {
     tableCons
     */
   }
+  
+  def modulo(x: CPVarInt, v: Int, y: CPVarInt): Constraint = {
+    return new Modulo(x,v,y)
+  }  
 
+  def modulo(x: CPVarInt, v: Int, y: Int): Constraint = {
+    return new Modulo(x,v,new CPVarInt(x.getStore(),y))
+  } 
+  
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
    * @param x an non empty array of variables
@@ -350,6 +374,14 @@ trait Constraints {
   }
 
   // regular and automatons
+  
+  
+  /**
+   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Iterable[Tuple2[Int, Int]])
+   */  
+  def stretchAutomaton(vars: Array[CPVarInt], minStretch: Int, maxStretch: Int): Automaton = {
+    stretchAutomaton(vars, minStretch, maxStretch, None)
+  }  
 
   /**
    * Builds an automaton restricting the number consecutive times the values appear.
@@ -364,22 +396,23 @@ trait Constraints {
     val maxv = vars.map(x => x.getMax).max
     val minv = vars.map(x => x.getMin).min
     if (minv < 0) throw new RuntimeException("warning stretch automaton: some domains with <0 values, only >=0 values can be constrained")
+    
     val minimumStretch = Array.tabulate(maxv + 1)(_ => minStretch)
     val maximumStretch = Array.tabulate(maxv + 1)(_ => maxStretch)
-    val transiFrom = (for (t <- transitions) yield t._1) toArray;
-    val transiTo = (for (t <- transitions) yield t._2) toArray;
-    Stretch.getStretchAutomaton(vars, minimumStretch, maximumStretch,transiFrom,transiTo)
-  }
+    
+    stretchAutomaton(vars, minimumStretch, maximumStretch, transitions)
+   }
+
 
   /**
-   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Array[Tuple2[Int, Int]])
+   * @see stretchAutomaton(Array[CPVarInt],Int,Int,Iterable[Tuple2[Int, Int]])
    */
   def stretchAutomaton(vars: Array[CPVarInt], minStretch: Array[Int], maxStretch: Array[Int], transitions: Iterable[Tuple2[Int, Int]] = None): Automaton = {
     val maxv = vars.map(x => x.getMax).max
     val minv = vars.map(x => x.getMin).min
     if (minv < 0) throw new RuntimeException("warning stretch automaton: some domains with <0 values, only >=0 values can be constrained")
     
-    if (transitions != None) {
+    if (transitions != None && !transitions.isEmpty) {
     	var transiFrom = Array[Int]()
     	var transiTo = Array[Int]()
     	transitions.foreach(t => {transiFrom = transiFrom :+ t._1; transiTo = transiTo :+ t._2})
@@ -427,6 +460,38 @@ trait Constraints {
     val cp = x(0).getStore
     val m = new CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
     cp.add(maximum(x, m))
+    m
+  }
+  
+  
+  /**
+   * Minimum Constraint
+   * @param indexes
+   * @param f function mapping each element from indexes to a variable
+   * @return a fresh variable z linked to vars by a constraint such that z is the minimum of all variables f(A) for all A in indexes
+   */
+  def minimum[A](indexes: Iterable[A])(f: A => CPVarInt): CPVarInt = minimum(indexes map f)
+
+  /**
+   * Minimum Constraint
+   * @param vars an non empty array of variables
+   * @param m a variables representing the maximum of vars
+   * @return a constraint ensuring that m is the minimum of variables in vars
+   */
+  def minimum(vars: Array[CPVarInt], m: CPVarInt): Constraint = {
+    new Minimum(vars, m)
+  }
+
+  /**
+   * Minimum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the minimum of all variables in vars
+   */
+  def minimum(vars: Iterable[CPVarInt]): CPVarInt = {
+    val x = vars.toArray
+    val cp = x(0).getStore
+    val m = new CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+    cp.add(minimum(x, m))
     m
   }
 

@@ -34,6 +34,7 @@ import scampi.cp.util.ArrayUtils;
 import scampi.reversible.ReversiblePointer;
 import scampi.reversible.ReversibleQueue;
 import scala.collection.immutable.Range;
+import scampi.cp.util.NumberUtils;
 
 /**
  * Finite Domain Integer Variables <br>
@@ -109,6 +110,32 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		onBoundsIdxL1 = new ReversiblePointer<PropagEventQueue>(s,null);
 		onBindIdxL1   = new ReversiblePointer<PropagEventQueue>(s,null);
 		onDomainIdxL1 = new ReversiblePointer<PropagEventQueue>(s,null);
+	}
+	
+	/**
+	 * 
+	 * @return The number of propagation methods of L2 attached to changes of this variables.
+	 */
+	public int getConstraintDegree() {
+		int tot = 0;
+		if (onMinL2.hasValue()) tot += onMinL2.getValue().getSize();
+		if (onMaxL2.hasValue()) tot += onMaxL2.getValue().getSize();
+		if (onBoundsL2.hasValue()) tot += onBoundsL2.getValue().getSize();
+		if (onBindL2.hasValue()) tot += onBindL2.getValue().getSize();
+		if (onDomainL2.hasValue()) tot += onDomainL2.getValue().getSize();
+		
+		if (onMinL1.hasValue())    tot += onMinL1.getValue().getSize();
+		if (onMaxL1.hasValue())    tot += onMaxL1.getValue().getSize();
+		if (onBoundsL1.hasValue()) tot += onBoundsL1.getValue().getSize();
+		if (onBindL1.hasValue())   tot += onBindL1.getValue().getSize();
+		if (onDomainL1.hasValue()) tot += onDomainL1.getValue().getSize();
+		
+		if (onMinIdxL1.hasValue())    tot += onMinIdxL1.getValue().getSize();
+		if (onMaxIdxL1.hasValue())    tot += onMaxIdxL1.getValue().getSize();
+		if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.getValue().getSize();
+		if (onBindIdxL1.hasValue())   tot += onBindIdxL1.getValue().getSize();
+		if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.getValue().getSize();	
+		return tot;
 	}
 
 
@@ -250,10 +277,12 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 			if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 				for (int i = dom.getMin(); i <= dom.getMax(); i++) {
 					if (i!= val && dom.hasValue(i)) {
-						if (onDomainL1.hasValue())
+						if (onDomainL1.hasValue()) {
 							s.notifRemoveL1(onDomainL1.getValue(),this,i);
-						if (onDomainIdxL1.hasValue())
+						}
+						if (onDomainIdxL1.hasValue()) {
 							s.notifyRemoveIdxL1(onDomainIdxL1.getValue(),this,i);
+						}
 					}
 				}
 			}
@@ -318,7 +347,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int omax = dom.getMax();
 		
 		//must notifyAC3 the removed value before the actual removal
-		if(onDomainL1.hasValue() || onDomainIdxL1.hasValue()){
+		if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 			for (int i = omax; i > val; i--) {
 				if(dom.hasValue(i)){
 					if (onDomainL1.hasValue())
@@ -776,7 +805,19 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
      * @return a variable in the same store representing: x + y
      */
 	public CPVarInt plus(CPVarInt y) {
-		CPVarInt c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
+		CPVarInt c;
+		if (this.getSize() * y.getSize() <= 500) {
+			Set<Integer> vals = new java.util.HashSet<Integer>();
+			for (int v1: this) {
+				for (int v2: y) {
+					vals.add(v1+v2);
+				}
+			}
+			c = new CPVarInt(getStore(),vals);
+		}
+		else {
+			c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
+		}
 		CPOutcome ok = s.post(new Sum(new CPVarInt[]{this,y},c));
         assert (ok != CPOutcome.Failure);
 		return c;
@@ -794,8 +835,9 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int b = c > 0 ? getMax()*c : getMin()*c;
 		CPVarInt y = new CPVarInt(getStore(),a,b);
 		CPOutcome ok = s.post(new MulCte(this,c,y));
-        assert(ok != CPOutcome.Failure);
+		assert(ok != CPOutcome.Failure);
 		return y;
+
 	}
 
     /**
@@ -807,7 +849,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int b = getMax();
 		int c = y.getMin();
 		int d = y.getMax();
-		int [] t = new int[]{a*c,a*d,b*c,b*d}; 
+		int [] t = new int[]{NumberUtils.safeMul(a,c),NumberUtils.safeMul(a,d),NumberUtils.safeMul(b,c),NumberUtils.safeMul(b,d)}; 
 		CPVarInt z = new CPVarInt(getStore(),ArrayUtils.min(t), ArrayUtils.max(t));
 		CPOutcome ok = s.post(new MulVar(this,y,z));
         assert(ok != CPOutcome.Failure);
@@ -1004,6 +1046,19 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 	public CPVarBool $bang$eq$eq(int v) {
 		return this.isDiff(v);
 	}
+	/**
+	 * Scala wrapper: b <=> x == y
+	 */
+	//public CPVarBool $eq$eq$eq(CPVarInt y) {
+		//return this.isEq(y);
+	//}
+	/**
+	 * Scala wrapper: b <=> x != v
+	 */
+	//public CPVarBool $bang$eq$eq(CPVarInt y) {
+		//return this.isDiff(y);
+	//}
+	
 	/**
 	 * Scala wrapper: b <=> x >= v
 	 */

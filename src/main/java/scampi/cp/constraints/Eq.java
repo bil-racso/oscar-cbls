@@ -68,17 +68,19 @@ public class Eq extends Constraint {
 		if(y.updateMin(x.getMin()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		for(Integer v:x) {
-			if(!y.hasValue(v)) {
-				if(x.removeValue(v) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
+		if (l == CPPropagStrength.Strong) {
+			for(Integer v:x) {
+				if(!y.hasValue(v)) {
+					if(x.removeValue(v) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
 				}
 			}
-		}
-		for(Integer v:y) {
-			if(!x.hasValue(v)) {
-				if(y.removeValue(v) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
+			for(Integer v:y) {
+				if(!x.hasValue(v)) {
+					if(y.removeValue(v) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
 				}
 			}
 		}

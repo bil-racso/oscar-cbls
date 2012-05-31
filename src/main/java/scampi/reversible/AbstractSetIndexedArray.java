@@ -31,7 +31,7 @@ import java.util.Iterator;
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iterable<Integer> {
+public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	
 	private int _min;
 	private int [] values;
@@ -44,8 +44,8 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
 	protected abstract void setMin(int min);
 	protected abstract void setMax(int max);
 	public abstract int getSize();
-	protected abstract int getMin();
-	protected abstract int getMax();
+	public abstract int getMin();
+	public abstract int getMax();
 	
 	private void incrSize() {
 		setSize(getSize()+1);
@@ -256,35 +256,48 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
 	public Integer[] getValues() {
 		if (isEmpty()) return new Integer[]{};
 		ArrayList<Integer> vals = new ArrayList<Integer>();
+		System.out.println("min:"+getMin()+" max:"+getMax());
 		for (int v = getMin(); v <= getMax(); v++) {
 			if (hasValue(v)) {
 				vals.add(v);
+				System.out.println("add value:"+v);
+			} else {
+				System.out.println("do not have value"+v);
 			}
 		}
 		Integer [] values = vals.toArray(new Integer[]{});
 		Arrays.sort(values);
 		return values;
 	}
-
-	public boolean hasNext() {
-		return iterIndex < getSize();
+	
+	@Override
+	public String toString() {
+		return Arrays.toString(getValues());
 	}
-
-	public Integer next() {
-		assert(hasNext());
-		int i = iterIndex;
-		iterIndex++;
-		return values[i]+_min;
-	}
-
-	public void remove() {
-		throw new RuntimeException("not implemented");
-		
-	}
-
+	
+	
 	public Iterator<Integer> iterator() {
 		iterIndex = 0;
-		return this;
+		return new Iterator<Integer>() {
+
+			@Override
+			public boolean hasNext() {
+				return iterIndex < getSize();
+			}
+
+			@Override
+			public Integer next() {
+				assert(hasNext());
+				int i = iterIndex;
+				iterIndex++;
+				return values[i]+_min;
+			}
+
+			@Override
+			public void remove() {
+				throw new RuntimeException("not implemented");
+			}
+		};
 	}
 
     /**
@@ -293,8 +306,9 @@ public abstract class AbstractSetIndexedArray implements Iterator<Integer>, Iter
     public int [] getSortedVals() {
         int [] vals = new int [getSize()];
         int i = 0;
-        for (int v: this) {
-             vals[i++] = v ;
+        Iterator<Integer> ite = this.iterator();
+        while (ite.hasNext()) {
+             vals[i++] = ite.next() ;
         }
         Arrays.sort(vals);
         return vals;

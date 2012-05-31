@@ -7,25 +7,45 @@
  * Contributors:
  *      www.n-side.com
  ******************************************************************************/
-package scampi.reversible;
+package scampi.search;
+
+import java.util.LinkedList;
 
 
 
  /**
   * @author Pierre Schaus pschaus@gmail.com
   */
-public interface Objective {
+public abstract class Objective {
+	
+	protected int objVal;
+	LinkedList<ObjectiveObserver> observers;
+	
+	public Objective() {
+		observers = new LinkedList<ObjectiveObserver>();
+	}
+	
+	public void notifyNewBound() {
+		for (ObjectiveObserver o: observers) {
+			o.newObj(getBound());
+		}
+	}
 	
 	public abstract void tighten();
 	
 	abstract public void relax();
 	
-	abstract public void setNewBound(int val);
+	public void setNewBound(int val) {
+		objVal = val;
+		notifyNewBound();
+	}
 
     /**
      * @return the current lower/uppper bound in a maximization/minimization problem
      */
-	abstract public int getBound();
+	public int getBound() {
+		return objVal;
+	}
 
     /**
      * @return an upper/lower bound on the possible objective in a maximization/minimization problem
@@ -42,6 +62,6 @@ public interface Objective {
      * 
      * @return
      */
-    public boolean isOK();
+    abstract public boolean isOK();
 
 }

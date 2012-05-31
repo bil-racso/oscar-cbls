@@ -33,7 +33,7 @@ public class VisualFrame extends JFrame {
 		this.nbCols = nbCols;
 		n = 0;
 		w = screenSize.width/nbCols;
-		h = screenSize.height/nbCols;
+		h = screenSize.height/nbLines;
 
 		addWindowListener(new WindowAdapter() {
 			 public void windowClosing(WindowEvent event) {

@@ -20,7 +20,8 @@ import java.awt.geom.Line2D;
  */
 public class VisualLine extends ColoredShape<Line2D.Double>{
 	
-	Line2D.Double line;
+	public Line2D.Double line;
+	
 	
 	public VisualLine(VisualDrawing d,double xorig, double yorig, double xdest, double ydest) {
 		super(d, new Line2D.Double(xorig,yorig,xdest,ydest));

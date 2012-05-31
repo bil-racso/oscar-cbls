@@ -20,20 +20,19 @@ public class ThetaTree {
 
 
 	private Node [] nodes;
-	private int isize; //number of internal nodes
+	private int isize; // number of internal nodes
 	private int size;
 
 	public ThetaTree(int size) {
 		// http://en.wikipedia.org/wiki/Binary_heap#Adding_to_the_heap
 		this.size = size;
 		isize = 1;
-		//enumerate mupltiples of two 2, 4, 6, 8 ... until isize larger than size
+		//enumerate multiples of two 2, 4, 6, 8 ... until isize larger than size
 		while (isize < size) {
 			isize <<= 1; //shift the pattern to the left by 1 (i.e. multiplies by 2)
-			//System.out.println(isize);
 		}	
-		//number of nodes in a complete  binary tree with isize leaf nodes is (isize*2)-1
-		nodes = new Node[(isize << 2) -1];
+		//number of nodes in a complete  binary tree with isize leaf nodes is (isize * 2) - 1
+		nodes = new Node[(isize << 2) - 1];
 		for (int i = 0; i < nodes.length; i++) {
 			nodes[i] = new Node();
 		}
@@ -48,7 +47,7 @@ public class ThetaTree {
 	}
 	
 	public void insert(Activity act, int pos) {
-		//the last size nodes are the leaf nodes so the first one is isize (the number of internal nodes)
+		// the last size nodes are the leaf nodes so the first one is isize (the number of internal nodes)
 		int curr_pos = isize + pos; 
 		Node node = nodes[curr_pos];
 		node.setActivity(act);

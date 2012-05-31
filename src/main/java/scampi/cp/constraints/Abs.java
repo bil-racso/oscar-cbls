@@ -60,7 +60,8 @@ public class Abs extends Constraint {
 	
 	@Override
 	protected CPOutcome propagate() {
-		// y = |x|			
+		// y = |x|	
+		
 		if (x.getMin() >= 0) {
 			if (y.updateMin(x.getMin()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -106,13 +107,17 @@ public class Abs extends Constraint {
 	
 	@Override
 	protected CPOutcome valBind(CPVarInt var) {
+		//return CPOutcome.Suspend;
+		
 		if (x.isBound()) {
+			
 			if (y.assign(Math.abs(x.getValue())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 			
-		} else { //y is bound
+		} else { // y is bound
+			// y = |x|	
 			if(!x.hasValue(-y.getValue())) {
 				if (x.assign(y.getValue()) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -123,10 +128,12 @@ public class Abs extends Constraint {
 					return CPOutcome.Failure;
 				}
 			}
+
 			else {
-				
-				for(Integer v: x) {
-					if(v != y.getValue() || v != -y.getValue()) {
+				// x can be (y or -y)
+				// remove everything except y and -y from x
+				for (int v = x.getMin(); v <= x.getMax(); v++) {
+					if(v != y.getValue() && v != -y.getValue()) {
 						if (x.removeValue(v) == CPOutcome.Failure) {
 							return CPOutcome.Failure;
 						}
@@ -134,6 +141,7 @@ public class Abs extends Constraint {
 				}
 			}
 			return CPOutcome.Success;
+			
 		}
 	}
 }

@@ -13,6 +13,10 @@ package scampi.cp.examples
 import scampi.cp.modeling._
 import scampi.search._
 
+
+
+
+
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
  * this program search for all the solutions
@@ -30,13 +34,13 @@ object Queens  extends CPModel {
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
-      cp.solve subjectTo {
+      cp.solveAll subjectTo {
     	  cp.add(alldifferent(queens),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } exploration {
-        loop(Queens) {
-          q =>  cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
+      } exploration {        
+        for (q <- Queens.suspendable) {
+          cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }
         nbsol += 1
       }

@@ -11,7 +11,8 @@ package scampi.cp.core;
 
 
 import scampi.cp.constraints.Eq;
-
+import scampi.cp.constraints.Or;
+import scampi.cp.constraints.Sum;
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -89,8 +90,54 @@ public class CPVarBool extends CPVarInt{
     public boolean isFalse() {
         return  isBound() && getValue() == 0;
     }
+    
+    
+	/**
+	 * Logical or
+	 */
+	public CPVarBool or(CPVarBool y) {
+		CPVarBool b = new CPVarBool(getStore());
+		getStore().post(new Or(new CPVarBool[]{this,y},b));
+		return b;
+	} 
+	
+	/**
+	 * Logical and
+	 */
+	public CPVarBool and(CPVarBool y) {
+		CPVarInt res = this.plus(y);
+		return res.isEq(2);
+	} 
 
+	//--------------------methods for the scala wrapper--------------------
+    
+	/**
+	 * Scala wrapper: x | y
+	 */
+	public CPVarBool $bar(CPVarBool y) {
+		return this.or(y);
+	} 
+    
+	/**
+	 * Scala wrapper: x || y
+	 */
+	public CPVarBool $bar$bar(CPVarBool y) {
+		return this.or(y);
+	}  
 
+	/**
+	 * Scala wrapper: x & y
+	 */
+	public CPVarBool $amp(CPVarBool y) {
+		return this.and(y);
+	}
+	
+	/**
+	 * Scala wrapper: x && y
+	 */
+	public CPVarBool $amp$amp(CPVarBool y) {
+		return this.and(y);
+	}
 
 
 }

@@ -13,47 +13,37 @@ import scampi.cp.core.CPOutcome;
 import scampi.cp.core.CPPropagStrength;
 import scampi.cp.core.Constraint;
 import scampi.cp.core.CPVarInt;
-import scampi.reversible.Objective;
+import scampi.search.Objective;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class CPObjective extends Constraint implements Objective{
-	
-	protected CPVarInt objVar;
-	
-	protected int objVal;
+public abstract class CPObjective extends Objective {
 
     protected int optimum;
-	
+    
+    protected CPObjectiveConstraint objConstr;
+    
 	public CPObjective(CPVarInt objVar) {
-		super(objVar.getStore(),"Objective");
-		this.objVar = objVar;
 		relax();
+		objConstr = createObjectiveConstraint(objVar);
 	}
 	
-	@Override
-	public CPOutcome setup(CPPropagStrength l) {
-		objVar.callPropagateWhenBoundsChange(this);
-		return propagate();
-	}
-	
-	
-	public void setNewBound(int val) {
-		objVal = val;
-	}
-	
-	public int getBound() {
-		return objVal;
-	}
+	protected abstract CPObjectiveConstraint createObjectiveConstraint(CPVarInt objVar);
 
     public int getOptimumBound() {
         return optimum;
     }
     
+    public CPObjectiveConstraint getConstraint() {
+    	assert objConstr != null;
+    	return objConstr;
+    }
+    
     @Override
     public boolean isOK() {
-    	return propagate() != CPOutcome.Failure;
+    	assert objConstr != null;
+    	return objConstr.isOK();
     }
 
 

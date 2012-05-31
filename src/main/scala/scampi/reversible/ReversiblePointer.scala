@@ -37,7 +37,7 @@ class ReversiblePointer[T](node: ReversibleSearchNode, v: T) extends Reversible(
      * Check if the pointer is different from null
      * @return true if the pointer is != null, false otherwise
      */
-	def hasValue() = pointer != null
+	def hasValue() = pointer.get != null
 	
 
     /**

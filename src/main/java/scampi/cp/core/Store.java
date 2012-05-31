@@ -16,6 +16,7 @@ import java.util.Random;
 import scampi.cp.constraints.CPObjective;
 import scampi.cp.constraints.CPObjectiveMaximize;
 import scampi.cp.constraints.CPObjectiveMinimize;
+import scampi.cp.constraints.Eq;
 import scampi.reversible.ReversiblePointer;
 import scampi.reversible.ReversibleSearchNode;
 
@@ -78,7 +79,7 @@ public class Store extends ReversibleSearchNode {
 	}	
 	
 	private void optimize(CPObjective objective) {
-		CPOutcome oc = post(objective);
+		CPOutcome oc = post(objective.getConstraint());
 		assert(oc != CPOutcome.Failure);
 		setObjective(objective);
 	}
@@ -338,6 +339,16 @@ public class Store extends ReversibleSearchNode {
 	public CPOutcome post(Constraint c) {
 		return post(c, CPPropagStrength.Weak);
 	}
+	
+    /**
+     * Add a constraint b == true to the store (with a Weak propagation strength) in a reversible way and trigger the fix-point algorithm. <br>
+     * In a reversible way means that the constraint is present in the store only for descendant nodes.
+     * @param c, the constraint
+     * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise
+     */
+	public CPOutcome post(CPVarBool b) {
+		return post(new Eq(b, 1), CPPropagStrength.Weak);
+	}	
 
     /**
      * Add a constraint to the store in a reversible way and trigger the fix-point algorithm. <br>
@@ -425,6 +436,18 @@ public class Store extends ReversibleSearchNode {
     public void add(Constraint c, CPPropagStrength st) {
         if (post(c,st) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
             throw  new NoSolutionException("the store failed when adding constraint :"+c);
+        }
+    }
+    
+    /**
+     * Add a constraint to the store (b == true) in a reversible way and trigger the fix-point algorithm. <br>
+     * In a reversible way means that the constraint is present in the store only for descendant nodes.
+     * @param c
+     * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
+     */
+    public void add(CPVarBool b) {
+        if (post(new Eq(b, 1)) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+            throw  new NoSolutionException("the store failed when setting boolvar " + b + " to true");
         }
     }
 

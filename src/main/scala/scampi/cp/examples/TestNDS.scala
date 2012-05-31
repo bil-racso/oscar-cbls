@@ -22,8 +22,7 @@ import scampi.reversible.ReversibleInt
 
 /**
  * 
- * Euler Problem, a knight must visit every position of a chess board once and come back to its initial position
- * using only valid knight moves.
+ * Test Non deterministic search
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */

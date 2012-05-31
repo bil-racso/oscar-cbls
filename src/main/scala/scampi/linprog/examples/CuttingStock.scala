@@ -63,7 +63,7 @@ object CuttingStock extends LPModel with MIPModel {
 
 		  val x = lp.addColumn(1,constraints, newPattern.map(_.getValue)) //create a new variable by introducing a new column
 		  
-		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		  
+		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		
 		  
 		  println("master obj:" + lp.getObjectiveValue)
 		  

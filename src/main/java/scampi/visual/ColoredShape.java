@@ -12,6 +12,7 @@ package scampi.visual;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.geom.Point2D;
 
 public class ColoredShape<E extends Shape> {
 
@@ -22,6 +23,8 @@ public class ColoredShape<E extends Shape> {
 	protected VisualDrawing drawing;
 	public E shape;
 	private boolean visible = true;
+	
+	public String toolTip = null;
 	
 	
 	public ColoredShape(VisualDrawing d, E shape) {
@@ -61,5 +64,18 @@ public class ColoredShape<E extends Shape> {
 		this.outerCol = outerCol;
 		drawing.repaint();
 	}
+	
+	public void setToolTip(String text) {
+		this.toolTip = text;
+	}
+	
+	protected void showToolTip(Point2D mousePoint) {
+		if (toolTip != null && shape.contains(mousePoint)) {
+			drawing.showToolTip(toolTip);
+		}
+	}
+	
+	
+	
 	
 }

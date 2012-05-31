@@ -117,7 +117,30 @@ class CPSolver() extends Store() {
            val v = x.getMin()
     	   branch (post(x == v))(post(x != v))// right alternative
      }
-    }    
+    }
+    
+    
+    def binaryMaxDegree(vars: CPVarInt*): Unit @suspendable = {
+	  binaryMaxDegree(vars.toIndexedSeq)
+	}
+	
+	def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
+	  binaryMaxDegree(vars.toIndexedSeq)
+	}
+
+	/**
+     * Binary search on the decision variables vars, selecting first the variables having the max number
+     * of propagation methods attached to it.
+     */
+    def binaryMaxDegree(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+     while (!allBounds(vars)) {
+    	   val unbound = vars.filter(!_.isBound)
+    	   val maxDegree = unbound.map(_.getConstraintDegree()).max 
+    	   val x = unbound.filter(_.getConstraintDegree() == maxDegree).first
+           val v = x.getMin()
+    	   branch (post(x == v))(post(x != v))// right alternative
+     }
+    }  
 	
 	def printStats() {
 		println("time(ms)",time)
