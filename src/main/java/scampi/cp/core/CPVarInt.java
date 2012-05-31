@@ -805,7 +805,19 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
      * @return a variable in the same store representing: x + y
      */
 	public CPVarInt plus(CPVarInt y) {
-		CPVarInt c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
+		CPVarInt c;
+		if (this.getSize() * y.getSize() <= 500) {
+			Set<Integer> vals = new java.util.HashSet<Integer>();
+			for (int v1: this) {
+				for (int v2: y) {
+					vals.add(v1+v2);
+				}
+			}
+			c = new CPVarInt(getStore(),vals);
+		}
+		else {
+			c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
+		}
 		CPOutcome ok = s.post(new Sum(new CPVarInt[]{this,y},c));
         assert (ok != CPOutcome.Failure);
 		return c;
@@ -823,8 +835,9 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		int b = c > 0 ? getMax()*c : getMin()*c;
 		CPVarInt y = new CPVarInt(getStore(),a,b);
 		CPOutcome ok = s.post(new MulCte(this,c,y));
-        assert(ok != CPOutcome.Failure);
+		assert(ok != CPOutcome.Failure);
 		return y;
+
 	}
 
     /**

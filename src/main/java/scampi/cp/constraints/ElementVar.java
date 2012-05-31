@@ -73,12 +73,22 @@ public class ElementVar extends Constraint {
 		      return CPOutcome.Failure;
 		   
 		   // update x
-		   for (Integer v: x) {
+		   for (int v = x.getMin(); v <= x.getMax(); v++) {
 			   if (y[v].getMin() > z.getMax() || y[v].getMax() < z.getMin()) {
 				   if (x.removeValue(v) == CPOutcome.Failure) {
 					   return CPOutcome.Failure;
 				   }
 			   }
+			   if (z.isBound()) {
+				   int zval = z.getValue();
+				   if (!y[v].hasValue(zval)) {
+					   if (x.removeValue(v) == CPOutcome.Failure) {
+						   return CPOutcome.Failure;
+					   }
+				   }
+			   }
+			   // could do more pruning taking holes of z into account
+			   // if note of the values in dom(z) are in y[v], we can safely remove v from x
 		   }
 		   
 		   if (x.isBound()) { // x is bound
@@ -88,6 +98,7 @@ public class ElementVar extends Constraint {
 		      if (yx.updateMax(z.getMax()) == CPOutcome.Failure)
 		         return CPOutcome.Failure;
 		   }
+		   
 		   return CPOutcome.Suspend;
 	}
 
