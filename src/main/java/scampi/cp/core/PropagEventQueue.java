@@ -55,5 +55,15 @@ public class PropagEventQueue extends Queue<Constraint> {
 	public String toString() {
 		return "PropagEventQueue constraint:"+elem+" var:"+var+" idx:"+idx;
 	}
+	
+	public int getSize() {
+		int size = 0;
+		PropagEventQueue q = this;
+		while (q != null) {
+			size++;
+			q = q.getNext();
+		}
+		return size;
+	}
 
 }

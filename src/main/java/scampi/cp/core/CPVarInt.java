@@ -111,6 +111,32 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		onBindIdxL1   = new ReversiblePointer<PropagEventQueue>(s,null);
 		onDomainIdxL1 = new ReversiblePointer<PropagEventQueue>(s,null);
 	}
+	
+	/**
+	 * 
+	 * @return The number of propagation methods of L2 attached to changes of this variables.
+	 */
+	public int getConstraintDegree() {
+		int tot = 0;
+		if (onMinL2.hasValue()) tot += onMinL2.getValue().getSize();
+		if (onMaxL2.hasValue()) tot += onMaxL2.getValue().getSize();
+		if (onBoundsL2.hasValue()) tot += onBoundsL2.getValue().getSize();
+		if (onBindL2.hasValue()) tot += onBindL2.getValue().getSize();
+		if (onDomainL2.hasValue()) tot += onDomainL2.getValue().getSize();
+		
+		if (onMinL1.hasValue())    tot += onMinL1.getValue().getSize();
+		if (onMaxL1.hasValue())    tot += onMaxL1.getValue().getSize();
+		if (onBoundsL1.hasValue()) tot += onBoundsL1.getValue().getSize();
+		if (onBindL1.hasValue())   tot += onBindL1.getValue().getSize();
+		if (onDomainL1.hasValue()) tot += onDomainL1.getValue().getSize();
+		
+		if (onMinIdxL1.hasValue())    tot += onMinIdxL1.getValue().getSize();
+		if (onMaxIdxL1.hasValue())    tot += onMaxIdxL1.getValue().getSize();
+		if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.getValue().getSize();
+		if (onBindIdxL1.hasValue())   tot += onBindIdxL1.getValue().getSize();
+		if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.getValue().getSize();	
+		return tot;
+	}
 
 
     /**

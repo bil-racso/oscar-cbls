@@ -62,7 +62,20 @@ public class Queue<T>{
 			T e = q.getElem();
 			res += e.toString() + (q.hasNext() ? "->" : "");
 			q = q.getNext();
-		} while(q!=null);
+		} while (q != null);
 		return res;
+	}
+	
+	/**
+	 * @return The size of the queue in Theta(n)
+	 */
+	public int getSize() {
+		int size = 0;
+		Queue<T> q = this;
+		do {
+			size++;
+			q = q.getNext();
+		} while(q != null);
+		return size;
 	}
 }

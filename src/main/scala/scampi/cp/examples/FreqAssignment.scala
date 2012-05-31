@@ -72,7 +72,7 @@ object FreqAssignment extends CPModel {
 		 println("inter cell constraints added")
 	     
 	   } exploration {
-	     cp.binaryFirstFail(freq.flatten)
+	     cp.binaryMaxDegree(freq.flatten)
 	     freq.foreach { c =>
 	       c.foreach(print(_))
 	       println()
