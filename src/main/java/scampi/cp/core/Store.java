@@ -242,6 +242,7 @@ public class Store extends ReversibleSearchNode {
 			Constraint c = q.getElem();
 			int d = q.getDelta();
 			if (c.isActive()) {
+				System.out.println("add propag event max var:"+q.getVar()+" val:"+val+" shift:"+d);
 				addQueueL1(new PropagEventUpdateMax(c,q.getVar(),val+d));
 			}
 			q = q.getNext();

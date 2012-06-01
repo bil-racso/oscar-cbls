@@ -220,7 +220,7 @@ public abstract class Constraint {
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked so
 	 * with the method call x.callUpdateMaxWhenMaxChanges(this)
-	 * @param val is a new updated minimum of x that has changed since last call 
+	 * @param val is the old maximum of x that has changed
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
 	protected CPOutcome updateMax(CPVarInt x, int val) {
@@ -231,7 +231,7 @@ public abstract class Constraint {
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-	 * @param val is a new updated maximum of x that has changed since last call 
+	 * @param val is the old maximum of x that has changed 
 	 * @param idx is a key value that was given to callUpdateMaxIdxWhenMaxChanges(x,this,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time
 	 * @return the outcome i.e. Failure, Success or Suspend
@@ -243,7 +243,7 @@ public abstract class Constraint {
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked so
 	 * with the method call x.callUpdateMinWhenMinChanges(this)
-	 * @param val is a new updated minimum of x that has changed since last call 
+	 * @param val is the old minimum of x that has changed 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
 	protected CPOutcome updateMin(CPVarInt x, int val) {
@@ -253,7 +253,7 @@ public abstract class Constraint {
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-	 * @param val is a new updated minimum of x that has changed since last call 
+	 * @param val is the old minimum of x that has changed 
 	 * @param idx is a key value that was given to callUpdateMinIdxWhenMinChanges(x,this,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time
 	 * @return the outcome i.e. Failure, Success or Suspend
