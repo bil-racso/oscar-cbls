@@ -87,10 +87,13 @@ class CPSolver() extends Store() {
 	  binaryFirstFail(vars.toIndexedSeq)
 	}
 
+	def minVal(x: CPVarInt): Int = x.getMin()
+	def maxVal(x: CPVarInt): Int = x.getMax()
+	
 	/**
      * Binary First Fail on the decision variables vars
      */
-    def binaryFirstFail(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+    def binaryFirstFail(vars: IndexedSeq[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val unbound = vars.filter(!_.isBound)
     	   val minDomSize = unbound.map(_.getSize()).min 
