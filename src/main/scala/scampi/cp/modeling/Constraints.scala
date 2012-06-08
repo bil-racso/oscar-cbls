@@ -328,22 +328,8 @@ trait Constraints {
     return new GCC(x, values.min, min, max)
   }
   
-  def softgcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol :CPVarInt) {
-    val cp = x(0).getStore()
-    val occ = values.map(v => new CPVarInt(cp,0 , x.size))
-    val viol = values.map(v => new CPVarInt(cp,0 , x.size))
-    
-    cp.add(gcc(x,values.map(v => (occ(v),v)).toArray))
-    for (v <- values) {
-      val violtab = (0 to x.size).map(k => {
-        if (k >= min(v) && k <= max(v)) 0 
-        else Array(min(v)-k,k-max(v)).max
-      }).toArray
-      cp.add(element(violtab,occ(v),viol(v)))
-    }
-    cp.add(sum(viol) == totviol)
-    
-    //return new SoftGCC(x, values.min, min, max, new CPVarInt(x(0).getStore, 0, 0))
+  def softgcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol :CPVarInt): Constraint = {
+    return new SoftGCC(x, values.min, min, max, new CPVarInt(x(0).getStore, 0, 0))
   } 
   
   
