@@ -84,7 +84,7 @@ object ElectricityMarket extends CPModel {
 	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
 	  } exploration {
-	    cp.binaryFirstFail(orders.map(_.selected))
+	    cp.binary(orders.map(_.selected))
 	    /*
 	    // efficient heuristic
 	    def allBounds = orders.filter(!_.bound).isEmpty

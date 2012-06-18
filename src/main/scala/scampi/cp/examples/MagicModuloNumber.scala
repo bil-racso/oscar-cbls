@@ -46,7 +46,7 @@ object MagicModuloNumber  extends CPModel {
     	    cp.add(modulo(x,i,i-1))
     	  }
       } exploration {        
-        cp.binaryFirstFail(x)
+        cp.binaryFirstFail(Array(x))
         println(x)
       }
       cp.printStats() 

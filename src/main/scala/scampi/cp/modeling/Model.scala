@@ -42,12 +42,19 @@ trait CPModel extends Constraints {
   
 
   
-  implicit def convert1(x: scala.collection.immutable.IndexedSeq[CPVarInt]) = x.toArray
 
-  implicit def convert2(vals: scala.collection.immutable.IndexedSeq[Int]) = vals.toArray
+  implicit def convert2(vals: IndexedSeq[Int]) = vals.toArray[Int]
 
-  implicit def concert3(x: scala.collection.immutable.IndexedSeq[Constraint]) = x.toArray
+  
+  implicit def indexed2Array(x: IndexedSeq[CPVarInt]) = x.toArray[CPVarInt]
+  implicit def args2Array(x: CPVarInt*) = x.toArray[CPVarInt]
 
+  
+  implicit def indexed2ArrayBool(x: IndexedSeq[CPVarBool]) = x.toArray[CPVarBool]
+  implicit def args2ArrayBool(x: CPVarBool*) = x.toArray[CPVarBool]
+
+  
+  
   //implicit def convertSeqVars2ArrayVars[T <: CPVarInt](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
   
   implicit def richIterable[A,Repr](xs: SeqLike[A,Repr]) = new { 

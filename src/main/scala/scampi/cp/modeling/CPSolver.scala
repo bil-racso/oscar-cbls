@@ -78,22 +78,13 @@ class CPSolver() extends Store() {
 	  sc.failLimit = nbFailMax 
 	}
 	
-	
-	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
-	  binaryFirstFail(vars.toIndexedSeq)
-	}
-	
-	def binaryFirstFail(vars: Array[CPVarInt]): Unit @suspendable = {
-	  binaryFirstFail(vars.toIndexedSeq)
-	}
-
 	def minVal(x: CPVarInt): Int = x.getMin()
 	def maxVal(x: CPVarInt): Int = x.getMax()
 	
 	/**
      * Binary First Fail on the decision variables vars
      */
-    def binaryFirstFail(vars: IndexedSeq[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val unbound = vars.filter(!_.isBound)
     	   val minDomSize = unbound.map(_.getSize()).min 
@@ -102,40 +93,27 @@ class CPSolver() extends Store() {
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
-    
-	def binary(vars: CPVarInt*): Unit @suspendable = {
-	  binary(vars.toIndexedSeq)
-	}
 	
-	def binary(vars: Array[CPVarInt]): Unit @suspendable = {
-	  binary(vars.toIndexedSeq)
-	}
+	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
+     binaryFirstFail(vars.toArray,valHeuris = minVal)
+    }
 
 	/**
      * Binary search on the decision variables vars
      */
-    def binary(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+    def binary(vars: Array[CPVarInt]): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val x = vars.filter(!_.isBound).first
            val v = x.getMin()
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
-    
-    
-    def binaryMaxDegree(vars: CPVarInt*): Unit @suspendable = {
-	  binaryMaxDegree(vars.toIndexedSeq)
-	}
-	
-	def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
-	  binaryMaxDegree(vars.toIndexedSeq)
-	}
 
 	/**
      * Binary search on the decision variables vars, selecting first the variables having the max number
      * of propagation methods attached to it.
      */
-    def binaryMaxDegree(vars: IndexedSeq[CPVarInt]): Unit @suspendable = {
+    def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val unbound = vars.filter(!_.isBound)
     	   val maxDegree = unbound.map(_.getConstraintDegree()).max 

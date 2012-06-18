@@ -45,7 +45,7 @@ object PrimeLooking extends CPModel {
         }
       }
     } exploration {
-      cp.binaryFirstFail(x,d1,d2)
+      cp.binaryFirstFail(Array(x,d1,d2))
       cpt += 1
     }
     

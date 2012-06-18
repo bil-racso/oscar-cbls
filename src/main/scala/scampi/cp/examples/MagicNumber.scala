@@ -47,7 +47,7 @@ object MagicNumber  extends CPModel {
     	  cp.add(gcc(x,1 to 4,2,2))
     	  cp.add(one < two)
       } exploration {        
-        cp.binaryFirstFail(one,two,three,four)
+        cp.binaryFirstFail(Array(one,two,three,four))
         println(x.mkString((",")))
       }
       cp.printStats() 

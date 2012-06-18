@@ -68,7 +68,7 @@ object GardnerSumSquare extends CPModel {
       println("---------------")
       
     } exploration {
-      cp.binaryFirstFail(a,b,c,d,e,f,g,h)
+      cp.binaryFirstFail(Array(a,b,c,d,e,f,g,h))
       println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
     }
 
