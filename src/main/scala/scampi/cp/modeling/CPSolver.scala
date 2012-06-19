@@ -89,7 +89,7 @@ class CPSolver() extends Store() {
     	   val unbound = vars.filter(!_.isBound)
     	   val minDomSize = unbound.map(_.getSize()).min 
     	   val x = unbound.filter(_.getSize == minDomSize).first
-           val v = x.getMin()
+           val v = valHeuris(x)
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
