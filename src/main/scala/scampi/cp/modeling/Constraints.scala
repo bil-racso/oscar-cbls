@@ -328,8 +328,8 @@ trait Constraints {
     return new GCC(x, values.min, min, max)
   }
   
-  def softgcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol :CPVarInt): Constraint = {
-    return new SoftGCC(x, values.min, min, max, new CPVarInt(x(0).getStore, 0, 0))
+  def softgcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol: CPVarInt): Constraint = {
+    return new SoftGCC(x, values.min, min, max, totviol)
   } 
   
   
