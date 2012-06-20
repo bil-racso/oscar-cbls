@@ -39,6 +39,12 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   
   var limitReached = false
   
+  var exit = false
+  
+  def stop() {
+    exit = true
+  }
+  
   def addChoice(e: MyContinuation)
   
   def start(): Unit@suspendable = {}

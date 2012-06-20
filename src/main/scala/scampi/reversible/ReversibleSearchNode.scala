@@ -60,6 +60,13 @@ class ReversibleSearchNode {
 	def fail() {
 		failed.setValue(true)
 	}
+	
+	/**
+	 * Exit the search in progress and/or the LNS if any
+	 */
+	def stop() {
+	  sc.stop()
+	}
 
     /**
      *
@@ -190,11 +197,11 @@ class ReversibleSearchNode {
                b()  	  
                if (!isFailed()) getObjective().tighten()
       	     }
-             sc.explore() // let's go
+             if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
           }
           sc.failLimit = limit
           restart(false) // first restart, find a feasible solution so no limit
-          for (r <- 2 to maxRestart; if (!getObjective().isOptimum())) {
+          for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
              restart(true)
              if (sc.limitReached) print("!")
              else print("R")

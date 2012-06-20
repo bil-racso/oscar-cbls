@@ -40,7 +40,7 @@ class DFSSearchController(node: ReversibleSearchNode) extends SearchController(n
   
   
   def explore() {
-    while(!stack.isEmpty && !limitReached) {
+    while(!stack.isEmpty && !limitReached && !exit) {
       node.pop()
       fail()
       stack.pop.call()

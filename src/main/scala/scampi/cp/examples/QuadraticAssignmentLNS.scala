@@ -56,11 +56,12 @@ object QuadraticAssignmentLNS extends CPModel {
     val bestSol = Array.fill(n)(0)
     
     
-    cp.lns(300,50) {
+    cp.lns(20,50) {
       // relax 50% of the variables
       cp.post((0 until n).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
     }
     
+    var nbSol = 0
     
     cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
       cp.add(alldifferent(x), Strong)
@@ -69,6 +70,8 @@ object QuadraticAssignmentLNS extends CPModel {
         println("solution"+x.mkString(","))
         // store the current best solution
         (0 until n).foreach(i => bestSol(i) = x(i).getValue())
+        nbSol += 1
+        if (nbSol == 100) cp.stop() // stop after the 100th solution
     }
 
     // Print some statistics
