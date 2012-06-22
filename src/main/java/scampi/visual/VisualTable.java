@@ -50,8 +50,8 @@ public class VisualTable extends JPanel  {
 	AbstractTableModel model;
 	Color [][] bgCol, fgCol;
 
-	public VisualTable(final int n,final int m, boolean exportPanel) {
-		super(new BorderLayout());
+	public VisualTable(final int n,final int m) {
+		super();
 
 		this.n = n;
 		this.m = m;
@@ -155,7 +155,7 @@ public class VisualTable extends JPanel  {
 
 		jtable.getTableHeader().setVisible(false);
 		JScrollPane jscr = new JScrollPane(jtable);
-		add(jscr, BorderLayout.CENTER);
+		add(jscr);
 
 	}
 
@@ -198,7 +198,7 @@ public class VisualTable extends JPanel  {
 		JInternalFrame subframe = frame.createFrame("Table");
 
 
-		final VisualTable t = new VisualTable(3,4,true);
+		final VisualTable t = new VisualTable(3,4);
 
 		t.setValueAt("toto", 0, 0);
 		t.setValueAt("1", 1, 0);

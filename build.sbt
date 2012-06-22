@@ -1,4 +1,6 @@
 import AssemblyKeys._
+
+
 name := "scampi"
 
 version := "1.0"
@@ -30,7 +32,6 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->defau
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
- 
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 
