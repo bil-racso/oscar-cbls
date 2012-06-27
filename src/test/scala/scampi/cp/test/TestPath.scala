@@ -22,6 +22,8 @@ class TestPath extends FunSuite with ShouldMatchers with CPModel {
   //                   \   /
   //                   _\\/_
   //                     5
+  
+  /*
   test("Path1") {
       
 	  val cp = CPSolver()
@@ -57,7 +59,7 @@ class TestPath extends FunSuite with ShouldMatchers with CPModel {
         nbSol += 1
       }
       nbSol should be(2)
-  }   
+  }  */ 
   
 
 

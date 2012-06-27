@@ -86,9 +86,10 @@ trait Constraints {
   * the successor of the last node of the path is the first node by convention
   * @author Pierre Schaus
   */
-  def path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt): Constraint = {
-    return new Path(succ,start,end,length)
-  }
+  
+//  def path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt): Constraint = {
+//    return new Path(succ,start,end,length)
+//  }
   
 
   /**
