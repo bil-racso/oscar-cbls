@@ -45,7 +45,9 @@ object LostAtSea  extends CPModel {
                         Array(0,2,3,3,3,0,2,4),
                         Array(2,3,2,4,2,4,1,1),
                         Array(2,1,2,2,2,4,1,3))
-                        
+       
+       val probaFlat = proba.flatten
+       
        // retrieve line and col from the cell number
        def getLineCol(i: Int) = (i/8,i%8)
          
@@ -68,14 +70,24 @@ object LostAtSea  extends CPModel {
        val sol = Array.fill(10)(0) 
        
 
+       //cp.add(path(0) == 0)
+       //cp.add(path(9) == 1)
        
        cp.maximize(sum(0 until 10)(i => element(proba.flatten,path(i)))) subjectTo {
                 for (i <- 0 until 9) {
                   cp.add(table(path(i),path(i+1),tuples)) // for each consecutive visits, give the possible valid transitions
                 }
                 cp.add(alldifferent(path),Strong) // each visit must be different
+                println(path.mkString(","))
        } exploration {
+         def heuris(x : CPVarInt): Int = {
+           val values = (x.getMin() to x.getMax).filter(x.hasValue(_))
+           val maxProba = values.map(probaFlat(_)).max
+           values.filter(probaFlat(_) == maxProba).first
+         }
+         //cp.binaryFirstFail(path, heuris(_))
          cp.binaryFirstFail(path)
+         
          (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the solution
        }
        
@@ -91,7 +103,8 @@ object LostAtSea  extends CPModel {
 	   // draw the 8x8 board and the proba in each cell
 	   for (i <- 0 until 8; j <- 0 until 8) {
 		  val rect = new VisualRectangle(drawing,i*scale,j*scale,scale,scale)
-		  val text = new VisualText(drawing,scale/2+i*scale,scale/2+j*scale,proba(i)(j).toString)
+		  val text = new VisualText(drawing,scale/4+i*scale,scale/4+j*scale,proba(i)(j).toString+ " id:"+(i*8+j))
+
 	   }
        // draw the solution
        for (i <- 0 until 9) {

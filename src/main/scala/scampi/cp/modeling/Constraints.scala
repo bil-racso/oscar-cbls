@@ -72,6 +72,24 @@ trait Constraints {
   def alldifferent(vars: Iterable[CPVarInt]): Constraint = {
     return alldifferent(vars.toArray: _*)
   }
+  
+  
+ /**
+  * @param succ[i] is the successor of node i (also place i inside the domain of succ[i] if you want to allow it not to be part of the path
+  * @param start start is the index of the first node on the path
+  * @param end is the index of the last node on the path
+  * @param length is the length of the path (number edges)
+  * 
+  * Example: 
+  * succ [1, 3, 2, 5, 4, 0], start = 0, end = 5, length = 3 represents the path 0 -> 1 -> 3 -> 5
+  * Notice that nodes that do not belong to the path, have them-self as successor and that 
+  * the successor of the last node of the path is the first node by convention
+  * @author Pierre Schaus
+  */
+  def path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt): Constraint = {
+    return new Path(succ,start,end,length)
+  }
+  
 
   /**
    * Circuit Constraint (Available Filtering: Weak, Strong)

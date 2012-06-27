@@ -11,6 +11,7 @@ package scampi.cp.core;
 
 
 import scampi.cp.constraints.Eq;
+import scampi.cp.constraints.Implication;
 import scampi.cp.constraints.Or;
 import scampi.cp.constraints.Sum;
 
@@ -108,6 +109,12 @@ public class CPVarBool extends CPVarInt{
 		CPVarInt res = this.plus(y);
 		return res.isEq(2);
 	} 
+	
+	public CPVarBool implies(CPVarBool y) {
+		CPVarBool V = new CPVarBool(getStore());
+		getStore().post(new Implication(this, y, V));
+		return V;
+	}
 
 	//--------------------methods for the scala wrapper--------------------
     
@@ -138,6 +145,16 @@ public class CPVarBool extends CPVarInt{
 	public CPVarBool $amp$amp(CPVarBool y) {
 		return this.and(y);
 	}
+	
+	/**
+	 * Scala wrapper: x => y
+	 */
+	public CPVarBool $eq$eq$greater(CPVarBool y) {
+		return this.implies(y);
+	}
+
+
+
 
 
 }

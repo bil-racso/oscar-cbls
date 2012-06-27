@@ -71,6 +71,7 @@ object LostAtSeaCircuit  extends CPModel {
                 cp.add(circuit(succ),Strong)
        } exploration {
          cp.binaryFirstFail(path)
+         println(path.mkString(","))
          (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the best solution
        }
        
@@ -86,7 +87,7 @@ object LostAtSeaCircuit  extends CPModel {
 	   // draw the 8x8 board and the proba in each cell
 	   for (i <- 0 until 8; j <- 0 until 8) {
 		  val rect = new VisualRectangle(drawing,i*scale,j*scale,scale,scale)
-		  val text = new VisualText(drawing,scale/2+i*scale,scale/2+j*scale,proba(i)(j).toString)
+		  val text = new VisualText(drawing,scale/2+i*scale,scale/2+j*scale,proba(i)(j).toString+ " id:"+(i*8+j))
 	   }
        // draw the solution
        for (i <- 0 until 9) {

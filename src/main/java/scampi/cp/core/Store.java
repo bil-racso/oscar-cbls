@@ -51,6 +51,8 @@ public class Store extends ReversibleSearchNode {
 	
 	private int highestPriorL1;
 	private int highestPriorL2;
+	
+	private boolean inPropagate = false;
 
 	
 	@SuppressWarnings("unchecked")
@@ -293,7 +295,7 @@ public class Store extends ReversibleSearchNode {
 		assert(status.getValue() != CPOutcome.Failure);
 		
 		long t0 = System.currentTimeMillis();
-		
+		inPropagate = true;
 		CPOutcome ok = !getObjective().isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
 		
 		while (ok != CPOutcome.Failure) {
@@ -319,6 +321,7 @@ public class Store extends ReversibleSearchNode {
 				if (highestPriorL2 > p || !isL1QueueEmpty()) break;
 			}
 		}
+		inPropagate = false;
 		timeInFixPoint += System.currentTimeMillis()-t0;
 		return ok==CPOutcome.Failure ? ok : CPOutcome.Suspend;
 	}
@@ -365,8 +368,9 @@ public class Store extends ReversibleSearchNode {
 				c.deactivate();
 			}
 			//don't forget that posting a constraint can also post other constraints (e.g. reformulation)
-			//so we must propagate because the queues may not be empty.
-			oc = propagate();
+			//so we must propagate because the queues may not be empty
+			// we also check that posting this new constraint does not come from the propagate method otherwise we might have infinite recurtion
+			if (!inPropagate) oc = propagate();
 		}
 		if (oc == CPOutcome.Failure) {//failure
 			cleanQueues();
