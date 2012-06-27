@@ -1072,6 +1072,13 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		return this.isGrEq(y);
 	}
 	/**
+	 * Scala wrapper: b <=> x <= y
+	 */
+	public CPVarBool $less$eq$eq(CPVarInt y) {
+		return y.isGrEq(this);
+	}	
+	
+	/**
 	 * Scala wrapper: x >= v
 	 */
 	public Constraint $greater$eq(int v) {
