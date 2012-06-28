@@ -167,7 +167,20 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers with CPModel {
     cp.add(z == 5)
     y.hasValue(5) should be(false)
     
-  }  
+  }
+  
+  test("test logical 11") {
+    
+    val cp = CPSolver()
+    
+    val y = CPVarInt(cp,Set(1,5,9))
+    val z = CPVarInt(cp,Set(5,10,13))
+    val b = z !== y
+    cp.add(b)
+    cp.add(z == 5)
+    y.hasValue(5) should be(false)
+    
+  }   
   
 
   

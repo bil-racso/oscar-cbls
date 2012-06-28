@@ -17,6 +17,7 @@ import java.util.TreeSet;
 import scampi.cp.constraints.Abs;
 import scampi.cp.constraints.Diff;
 import scampi.cp.constraints.DiffReif;
+import scampi.cp.constraints.DiffReifVar;
 import scampi.cp.constraints.Eq;
 import scampi.cp.constraints.EqReif;
 import scampi.cp.constraints.EqReifVar;
@@ -903,6 +904,18 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
         assert ok != CPOutcome.Failure;
 		return b;
 	}
+	
+    /**
+     * Reified constraint
+     * @param y
+     * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
+     */
+	public CPVarBool isDiff(CPVarBool y) {
+		CPVarBool b = new CPVarBool(getStore());
+		CPOutcome ok = s.post(new DiffReifVar(this,y,b));
+        assert ok != CPOutcome.Failure;
+		return b;
+	}
 
     /**
      * Reified constraint
@@ -1137,9 +1150,9 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 	/**
 	 * Scala wrapper: b <=> x != v
 	 */
-	//public CPVarBool $bang$eq$eq(CPVarInt y) {
-		//return this.isDiff(y);
-	//}
+	public CPVarBool $bang$eq$eq(CPVarInt y) {
+		return this.isDiff(y);
+	}
 	/**
 	 * Scala wrapper: b <=> x >= v
 	 */
