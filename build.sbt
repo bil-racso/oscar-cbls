@@ -1,9 +1,11 @@
 import AssemblyKeys._
-name := "scampi"
+
+
+name := "oscar"
 
 version := "1.0"
 
-organization := "nside"
+organization := ""
 
 scalaVersion := "2.9.2"
 
@@ -17,7 +19,7 @@ scalacOptions += "-P:continuations:enable"
 
 seq(assemblySettings: _*)
 
-jarName in assembly := "scampi.jar"
+jarName in assembly := "oscar.jar"
 
 
 test in assembly := {}
@@ -30,7 +32,6 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->defau
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
- 
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 
@@ -39,7 +40,7 @@ libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
 
-//mainClass in (Compile, run) := Some("main.scala.scampi.dfo.examples.Rosenbrock2D")
+//mainClass in (Compile, run) := Some("main.scala.oscar.dfo.examples.Rosenbrock2D")
 
 
 parallelExecution in Test := false
