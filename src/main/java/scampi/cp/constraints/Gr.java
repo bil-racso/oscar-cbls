@@ -49,19 +49,16 @@ public class Gr extends Constraint {
 	
 	@Override
 	protected CPOutcome propagate() {
-		System.out.println("x:"+x+" y:"+y);
 		if (x.getMin() > y.getMax()) {
 			return CPOutcome.Success;
 		}
 		if (x.updateMin(y.getMin()+1) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		System.out.println("new max y:"+(x.getMax()-1)+" oldmax:"+y.getMax());
 		if (y.updateMax(x.getMax()-1) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Suspend;
-		
 	
 	}
 

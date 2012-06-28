@@ -19,12 +19,14 @@ import scampi.cp.constraints.Diff;
 import scampi.cp.constraints.DiffReif;
 import scampi.cp.constraints.Eq;
 import scampi.cp.constraints.EqReif;
+import scampi.cp.constraints.EqReifVar;
 import scampi.cp.constraints.Gr;
 import scampi.cp.constraints.GrEq;
 import scampi.cp.constraints.GrEqCteReif;
 import scampi.cp.constraints.GrEqVarReif;
 import scampi.cp.constraints.Le;
 import scampi.cp.constraints.LeEq;
+import scampi.cp.constraints.LeEqCteReif;
 import scampi.cp.constraints.Minus;
 import scampi.cp.constraints.MulCte;
 import scampi.cp.constraints.MulVar;
@@ -877,6 +879,18 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
         assert(ok != CPOutcome.Failure);
 		return b;
 	}
+	
+    /**
+     * Reified constraint
+     * @param y a variable
+     * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
+     */
+	public CPVarBool isEq(CPVarInt y) {
+		CPVarBool b = new CPVarBool(getStore());
+		CPOutcome ok = s.post(new EqReifVar(this,y,b));
+        assert(ok != CPOutcome.Failure);
+		return b;
+	}	
 
     /**
      * Reified constraint
@@ -901,6 +915,18 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
         assert (ok != CPOutcome.Failure);
 		return b;
 	}	
+	
+    /**
+     * Reified constraint
+     * @param v
+     * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
+     */
+	public CPVarBool isLeEq(int v) {
+		CPVarBool b = new CPVarBool(getStore());
+		CPOutcome ok = s.post(new LeEqCteReif(this,v,b));
+        assert (ok != CPOutcome.Failure);
+		return b;
+	}
 
     /**
      * Reified constraint
@@ -1034,49 +1060,10 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 	public Constraint $eq$eq(CPVarInt y) {
 		return new Eq(this,y);
 	}
-	/**
-	 * Scala wrapper: b <=> x == v
-	 */
-	public CPVarBool $eq$eq$eq(int v) {
-		return this.isEq(v);
-	}
-	/**
-	 * Scala wrapper: b <=> x != v
-	 */
-	public CPVarBool $bang$eq$eq(int v) {
-		return this.isDiff(v);
-	}
-	/**
-	 * Scala wrapper: b <=> x == y
-	 */
-	//public CPVarBool $eq$eq$eq(CPVarInt y) {
-		//return this.isEq(y);
-	//}
-	/**
-	 * Scala wrapper: b <=> x != v
-	 */
-	//public CPVarBool $bang$eq$eq(CPVarInt y) {
-		//return this.isDiff(y);
-	//}
 	
-	/**
-	 * Scala wrapper: b <=> x >= v
-	 */
-	public CPVarBool $greater$eq$eq(int v) {
-		return this.isGrEq(v);
-	}
-	/**
-	 * Scala wrapper: b <=> x >=y
-	 */
-	public CPVarBool $greater$eq$eq(CPVarInt y) {
-		return this.isGrEq(y);
-	}
-	/**
-	 * Scala wrapper: b <=> x <= y
-	 */
-	public CPVarBool $less$eq$eq(CPVarInt y) {
-		return y.isGrEq(this);
-	}	
+
+	
+	// -------------------- ----------------------------
 	
 	/**
 	 * Scala wrapper: x >= v
@@ -1126,6 +1113,90 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 	public Constraint $less(CPVarInt y) {
 		return new Le(this,y);
 	}
+	
+	// -------------------- reified constraints ----------------------------
+	
+	/**
+	 * Scala wrapper: b <=> x == v
+	 */
+	public CPVarBool $eq$eq$eq(int v) {
+		return this.isEq(v);
+	}
+	/**
+	 * Scala wrapper: b <=> x != v
+	 */
+	public CPVarBool $bang$eq$eq(int v) {
+		return this.isDiff(v);
+	}
+	/**
+	 * Scala wrapper: b <=> x == y
+	 */
+	public CPVarBool $eq$eq$eq(CPVarInt y) {
+		return this.isEq(y);
+	}
+	/**
+	 * Scala wrapper: b <=> x != v
+	 */
+	//public CPVarBool $bang$eq$eq(CPVarInt y) {
+		//return this.isDiff(y);
+	//}
+	/**
+	 * Scala wrapper: b <=> x >= v
+	 */
+	public CPVarBool $greater$eq$eq(int v) {
+		return this.isGrEq(v);
+	}
+	/**
+	 * Scala wrapper: b <=> x <= v
+	 */
+	public CPVarBool $less$eq$eq(int v) {
+		return this.isLeEq(v);
+	}
+	
+	
+	/**
+	 * Scala wrapper: b <=> x >=y
+	 */
+	public CPVarBool $greater$eq$eq(CPVarInt y) {
+		return this.isGrEq(y);
+	}
+	/**
+	 * Scala wrapper: b <=> x <= y
+	 */
+	public CPVarBool $less$eq$eq(CPVarInt y) {
+		return y.isGrEq(this);
+	}
+	
+	/**
+	 * Scala wrapper: b <=> x > y
+	 */
+	public CPVarBool $greater$greater$eq(CPVarInt y) {
+		return this.isGrEq(y.plus(1));
+	}
+	/**
+	 * Scala wrapper: b <=> x < y
+	 */
+	public CPVarBool $less$less$eq(CPVarInt y) {
+		return y.isGrEq(this.plus(1));
+	}
+
+	
+	/**
+	 * Scala wrapper: b <=> x > v
+	 */
+	public CPVarBool $greater$greater$eq(int v) {
+		return this.isGrEq(v+1);
+	}
+	/**
+	 * Scala wrapper: b <=> x < y
+	 */
+	public CPVarBool $less$less$eq(int v) {
+		return this.isLeEq(v-1);
+	}		
+
+	
+	
+	
 	
 //	//--------------------methods for the jython wrapper--------------------
 	
