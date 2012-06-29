@@ -1,4 +1,6 @@
 import AssemblyKeys._
+import de.johoop.jacoco4sbt._
+import JacocoPlugin._
 
 
 name := "oscar"
@@ -19,6 +21,8 @@ scalacOptions += "-P:continuations:enable"
 
 seq(assemblySettings: _*)
 
+seq(jacoco.settings : _*)
+
 jarName in assembly := "oscar.jar"
 
 
@@ -35,7 +39,7 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 
-
+libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
 
 testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
