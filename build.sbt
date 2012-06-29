@@ -39,7 +39,7 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 
-
+libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
 
 testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
