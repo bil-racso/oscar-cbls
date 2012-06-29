@@ -1,4 +1,6 @@
 import AssemblyKeys._
+import de.johoop.jacoco4sbt._
+import JacocoPlugin._
 
 
 name := "oscar"
@@ -18,6 +20,8 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
 scalacOptions += "-P:continuations:enable"
 
 seq(assemblySettings: _*)
+
+seq(jacoco.settings : _*)
 
 jarName in assembly := "oscar.jar"
 
