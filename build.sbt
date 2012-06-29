@@ -40,7 +40,7 @@ libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
 
-//mainClass in (Compile, run) := Some("main.scala.oscar.dfo.examples.Rosenbrock2D")
+//mainClass in (Compile, run) := Some("main.scala.oscar	.dfo.examples.Rosenbrock2D")
 
 
 parallelExecution in Test := false
