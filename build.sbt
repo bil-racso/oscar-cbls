@@ -29,7 +29,7 @@ jarName in assembly := "oscar.jar"
 test in assembly := {}
 
 
-libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
+//libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->default"
