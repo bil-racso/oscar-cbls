@@ -1,6 +1,11 @@
+resolvers += Classpaths.typesafeResolver
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.7.2")
+addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.0.0")
 
+resolvers += Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
+
+
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.8.3")
 
 // Jacoco4SBT (I put an earlier version to be compatible with SBT 0.11.2 and Scala 2.9.1)
 libraryDependencies ++= Seq(
