@@ -129,11 +129,11 @@ trait Constraints {
    * @param x an index variable with domain defined on (0..n-1)
    * @return a variable z linked to tab and x by the relation tab(x) == z
    */
-  def element(tab: Array[Int], x: CPVarInt): CPVarInt = {
+  def element(tab: Array[Int], x: CPVarInt, strength: CPPropagStrength = CPPropagStrength.Medium): CPVarInt = {
     val minval = tab.min
     val maxval = tab.max
     val z = new CPVarInt(x.getStore, minval, maxval)
-    x.getStore.post(new ElementCst(tab, x, z))
+    x.getStore.post(new ElementCst(tab, x, z),strength)
     z
   }
 

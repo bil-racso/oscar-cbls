@@ -85,11 +85,26 @@ public class ElementCst extends Constraint {
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-
+		if (l == CPPropagStrength.Strong) {
+			z.callValRemoveWhenValueIsRemoved(this);
+		}
 		z.callPropagateWhenBoundsChange(this);
 		x.callPropagateWhenDomainChanges(this);		
 		x.callValBindWhenBind(this);
 
+		return CPOutcome.Suspend;
+	}
+	
+	@Override
+	protected CPOutcome valRemove(CPVarInt z, int val) {
+		assert( this.z == z);
+		for (int i = 0; i < y.length; i++) {
+			if (y[i] == val) {
+				if (x.removeValue(i) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				}
+			}
+		}
 		return CPOutcome.Suspend;
 	}
 
