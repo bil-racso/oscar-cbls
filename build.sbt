@@ -28,6 +28,28 @@ jarName in assembly := "oscar.jar"
 
 test in assembly := {}
 
+mergeStrategy in assembly := { 
+  case "reference.conf" =>
+    MergeStrategy.concat
+  case PathList(ps @ _*) if isReadme(ps.last) || isLicenseFile(ps.last) =>
+    MergeStrategy.rename
+  case PathList("META-INF", xs @ _*) =>
+    (xs map {_.toLowerCase}) match {
+      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
+        MergeStrategy.deduplicate
+      case ps @ (x :: xs) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
+        MergeStrategy.discard
+      case "plexus" :: xs =>
+        MergeStrategy.discard
+      case "services" :: xs =>
+        MergeStrategy.filterDistinctLines
+      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
+        MergeStrategy.filterDistinctLines
+      case _ => MergeStrategy.deduplicate
+    }
+  case _ => MergeStrategy.deduplicate
+}
+
 
 //libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
