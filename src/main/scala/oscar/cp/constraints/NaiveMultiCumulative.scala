@@ -19,7 +19,15 @@ package oscar.cp.constraints
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import scala.math._
+
+/**This is a brute-force decomposition of the global constraint describe in "A New Multi-Resource 
+ * Cumulatives Constraint with Negative Heights" by Nicolas Beldiceanu and Mats Carlsson.
+ * 
+ * It was build as a support during during the implementation of the global constraint from the 
+ * same reference.
+ * 
+ * @author Renaud Hartert - ren.hartert@gmail.com
+ */
 
 object NaiveMultiCumulative extends CPModel {
   
@@ -39,21 +47,24 @@ object NaiveMultiCumulative extends CPModel {
 						c: Array[Int]) {
     
 		// Keep tasks with positive duration
-		val tasks = (0 until s.size).filter(i => d(i).getMax > 0)
+		val Tasks = (0 until s.size).filter(i => d(i).getMax > 0)
 
 		// Boundaries of the total processing time
-		val t_min = tasks.map(i => s(i).getMin).min
-		val d_max = tasks.map(i => d(i).getMax).max
-		val t_max = tasks.map(i => s(i).getMax + d_max).min
+		val t_min = Tasks.map(i => s(i).getMin).min
+		val d_max = Tasks.map(i => d(i).getMax).max
+		val t_max = Tasks.map(i => s(i).getMax + d_max).min
             
 		// For all the instant t
 		for (t <- t_min to t_max) {
+
+		    val tasks = (0 until s.size).filter(i => d(i).getMax > 0 && s(i).getMin() <= t && s(i).getMax()+d(i).getMax() > t)
+		    
 			// For all machines
 			for (machine <- 0 until c.size) {
 				// Get all tasks on this machine
- 				val B = tasks.map(i => (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t))
+ 				def overlap(i: Int) = (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t)
 				// The consumption of all those tasks must be leq than the capacity of the machine
- 				cp.add(sum(tasks)(i => B(i)*r(i)) <= c(machine))
+ 				cp.add(sum(tasks)(i => overlap(i)*r(i)) <= c(machine))
 			}
 		}    
 	}

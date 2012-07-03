@@ -26,16 +26,7 @@ import oscar.visual._
 import scala.io.Source
 import oscar.cp.constraints.NaiveMultiCumulative
 
-/**
- * @author Pierre Schaus pschaus@gmail.com
- * 
- * Model for the classical nxn Job-Shop problem
- * 
- * A Job is a a sequence of n Activities that must be executed one after the others.
- * There are n machines and each activity of the jobs require one of the n machines.
- * The objective is to assign the starting time of each activity minimizing the total makespan and
- * such that no two activities from two different jobs requiring the same machine overlap.
- */
+
 object CumulativeJobShop extends CPModel {
   
 	def main(args: Array[String]) {
@@ -69,7 +60,7 @@ object CumulativeJobShop extends CPModel {
 	  	    lines = lines.drop(1)
 		}
 		
-		val horizon = durations.flatten.sum
+		val horizon = durations.flatten.sum*3/(2*nJobs)
 
 		// Modeling
 		val cp = CPSolver()
@@ -87,8 +78,9 @@ object CumulativeJobShop extends CPModel {
   	   	}) 	   
   	   	
   	   	val act_machines  = activities.flatten.map(_.machine)   
-  	   	val act_start     = activities.flatten.map(_.act.getStart())  
-  	   	val act_durations = activities.flatten.map(_.act.getDur())   
+  	   	val act_starts    = activities.flatten.map(_.act.getStart())  
+  	   	val act_durations = activities.flatten.map(_.act.getDur())
+  	   	val act_ends      = activities.flatten.map(_.act.getEnd())
   	   	val act_resources = activities.flatten.map(_.resource)  
   	   	
   	   	val makespan = maximum(0 until nJobs)(i => activities(i)(nTasks-1).act.getEnd)
@@ -101,12 +93,21 @@ object CumulativeJobShop extends CPModel {
 				cp.add(activities(i)(j).act.getEnd() <= activities(i)(j+1).act.getStart())
 			}
 			
+			for (i <- 0 until act_starts.size) 
+				cp.add(act_starts(i) + act_durations(i) == act_ends(i))
+			
 			// add the unary resources
-	  	   	NaiveMultiCumulative.multiCumulative(cp, act_machines, act_start, act_durations, act_resources, capacities)
-	  	   
+	  	   NaiveMultiCumulative.multiCumulative(cp, act_machines, act_starts, act_durations, act_resources, capacities)
+
 	   } exploration {
-	     
-		   cp.binaryFirstFail(act_start)
+	       
+		   /*while(!act_starts.forall(_.isBound())) {
+		     val x = act_starts.filter(!_.isBound).first
+		     val v = x.getMin()
+		     cp.branch(cp.post(x == v))(cp.post(x != v))
+		   }*/
+		   cp.binaryFirstFail(act_starts)
+		   
 	   }
        cp.printStats()
 	}
