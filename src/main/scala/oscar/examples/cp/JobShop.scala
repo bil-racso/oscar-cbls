@@ -92,6 +92,7 @@ object JobShop  extends CPModel {
 	   
 	   
 	   val makespanLine = new VisualLine(drawing,0,0,0,n*scale_y)
+	   
 	   def updateVisu() = {
 	     for (i <- 0 until n; j <- 0 until m) {	       
 	    	 visualAct(i)(j).move(activities(i)(j).act.getStart().getMin()*scale_x,scale_y*activities(i)(j).job)

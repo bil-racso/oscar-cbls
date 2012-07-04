@@ -61,27 +61,33 @@ object CumulativeJobShop extends CPModel {
 		}
 		
 		val horizon = durations.flatten.sum*3/(2*nJobs)
+		
+		// Visualization
+		val frame = new VisualFrame("Cumulative Job-Shop Problem")						  
+		val profile = new VisualProfile(false)
+		val inf = frame.createFrame("Ressource Consumption")
+		inf.add(profile)
+		frame.pack
 
 		// Modeling
 		val cp = CPSolver()
 
-		// A cumulative JobShop activity is an activity, inside a job, consuming a quantity of resource 
-		// of a specific machine.
-		class CumJobShopAct(val act : Activity, val job: Int, val machine : CPVarInt, val resource : CPVarInt)
+		// A cumulative JobShop activity
+		class CumJobShopAct(val act : CumulativeActivity, val job: Int)
 	   
 		val activities = Array.tabulate(nJobs, nTasks)((i,j) => {
-  	   		val dur     = CPVarInt(cp, durations(i)(j))
-  	   		val machine = CPVarInt(cp, machines(i)(j))
-  	   		val start   = CPVarInt(cp,0 to horizon - dur.getMin())
+			
+  	   		val dur      = CPVarInt(cp, durations(i)(j))
+  	   		val start    = CPVarInt(cp,0 to horizon - dur.getMin())
   	   		
-  	   		new CumJobShopAct(new Activity(start,dur), i, machine, CPVarInt(cp,1)) 
+  	   		new CumJobShopAct(CumulativeActivity(start,dur, machines(i)(j), 1), i) 
   	   	}) 	   
   	   	
-  	   	val act_machines  = activities.flatten.map(_.machine)   
+  	   	val act_machines  = activities.flatten.map(_.act.getMachine)   
   	   	val act_starts    = activities.flatten.map(_.act.getStart())  
   	   	val act_durations = activities.flatten.map(_.act.getDur())
   	   	val act_ends      = activities.flatten.map(_.act.getEnd())
-  	   	val act_resources = activities.flatten.map(_.resource)  
+  	   	val act_resources = activities.flatten.map(_.act.getResource)  
   	   	
   	   	val makespan = maximum(0 until nJobs)(i => activities(i)(nTasks-1).act.getEnd)
              
@@ -101,12 +107,9 @@ object CumulativeJobShop extends CPModel {
 
 	   } exploration {
 	       
-		   /*while(!act_starts.forall(_.isBound())) {
-		     val x = act_starts.filter(!_.isBound).first
-		     val v = x.getMin()
-		     cp.branch(cp.post(x == v))(cp.post(x != v))
-		   }*/
 		   cp.binaryFirstFail(act_starts)
+		   
+		   //Update visualization
 		   
 	   }
        cp.printStats()

@@ -56,5 +56,36 @@ class VisualProfile(b : Boolean) extends VisualDrawing(b : Boolean) {
 														 lastPoint._2*yScale, 
 														 nextPoint._1*xScale, 
 														 nextPoint._2*yScale))
+														 
+		new ColoredShape[Line2D](this, new Line2D.Double(0, 
+														 capacity*yScale, 
+														 (nextPoint._1+1)*xScale, 
+														 capacity*yScale))
 	}
+}
+
+object VisualProfile extends Application{
+		
+	/** You should see :
+	 *      _
+	 *     | |_
+	 *  ___|___|_____capacity
+	 *    _|   |  _
+	 *  _|     |_| |_
+	 */
+						  
+	val frame = new VisualFrame("toto")						  
+	val profile = new VisualProfile(false)
+	val inf = frame.createFrame("Ressource Consumption")
+	inf.add(profile)
+	frame.pack
+	
+	val activities = List(new VisualActivity(1, 4, 1, 0),
+						  new VisualActivity(2, 3, 1, 0),
+						  new VisualActivity(2, 4, 2, 0),
+						  new VisualActivity(5, 6, 1, 0))
+	
+	profile.addActivities(activities)
+	profile.setCapacity(2)
+	profile.update(50, 50)
 }
