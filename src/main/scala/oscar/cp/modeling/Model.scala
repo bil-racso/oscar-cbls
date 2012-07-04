@@ -153,7 +153,7 @@ trait CPModel extends Constraints {
    * @param domain the range defining the possible values for the variable
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
-  def apply(cp: CPSolver, domain: Range): CPVarInt = {
+  def apply(cp: Store, domain: Range): CPVarInt = {
     new CPVarInt(cp, domain)
   }
 
@@ -163,7 +163,7 @@ trait CPModel extends Constraints {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
-  def apply(cp: CPSolver, value: Int): CPVarInt = {
+  def apply(cp: Store, value: Int): CPVarInt = {
     new CPVarInt(cp, value, value)
   }
 
@@ -173,7 +173,7 @@ trait CPModel extends Constraints {
    * @param values is the initial set of values possible for the variable (domain)
    * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
    */
-  def apply(cp: CPSolver, values: Set[Int]): CPVarInt = {
+  def apply(cp: Store, values: Set[Int]): CPVarInt = {
     val vals = new java.util.HashSet[Integer]()
     values.foreach(v => vals.add(v))
     new CPVarInt(cp, vals)
@@ -185,7 +185,7 @@ trait CPModel extends Constraints {
    /**
     * Creates a new CP Boolean Variable
     */
-   def apply(cp: CPSolver): CPVarBool = {
+   def apply(cp: Store): CPVarBool = {
     new CPVarBool(cp)
    }
   }

@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+
+
 import oscar.cp.constraints.Abs;
 import oscar.cp.constraints.Diff;
 import oscar.cp.constraints.DiffReif;
@@ -500,6 +502,23 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		} else {
 			return dom.getPrevValue(val-1);
 		}
+	}
+	
+	/**
+	 * Number of values in common in both domains
+	 * @param other
+	 * @return Number of values in common in both domains
+	 */
+	public int getIntersectionSize(CPVarInt other) {
+		if (other.getMin() > getMax()) return 0;
+		if (other.getMax() < getMin()) return 0;
+		int res = 0;
+		for (int v = Math.max(other.getMin(), getMin()); v <= Math.min(other.getMax(), getMax()); v++) {
+			if (hasValue(v) && other.hasValue(v)) {
+				res++;
+			}
+		}
+		return res;
 	}
 	
 	
