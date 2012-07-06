@@ -17,7 +17,6 @@
 
 package oscar.cp.modeling
 
-
 import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -66,8 +65,6 @@ trait Constraints {
     return new Knapsack(x.toArray,p.toArray,w.toArray,P,W)
   }
   
-
-
   /**
    * AllDifferent Constraint (Available Filtering: Weak, Strong)
    * @param vars an non empty array of variables

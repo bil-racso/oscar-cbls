@@ -1,91 +1,46 @@
 package oscar.visual
 
 import oscar.visual._
-import java.awt.geom.Line2D;
+import java.awt.geom.Line2D
+import java.awt.Color
 
-class VisualProfile(b : Boolean) extends VisualDrawing(b : Boolean) {
+import oscar.algo.CumulativeProfile
 
-	private var activities : List[VisualActivity] = Nil
-	private var capacity : Int = 0
+class VisualProfile(private var activities: Set[VisualActivity], col : Color) extends VisualDrawing(false, true) {
 	
-	def setCapacity(c : Int) { capacity = c }
-	def addActivity(activity : VisualActivity) { activities = activity :: activities }
-	def addActivities(activities : List[VisualActivity]) { this.activities = activities }
-	def resetActivities() { activities = Nil }
+	private var c : Int = _
+	
+	private val polygon : VisualPolygon = new VisualPolygon(this)
+	private val line    : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+	
+	def capacity = c
+	def capacity_= (x : Int) { c = x }
+	
+	def addActivity(activity : VisualActivity) = { activities =  activities + activity }
+	def removeActivity(activity : VisualActivity) = { activities = activities - activity }
+	
+	def draw(xScale : Int, yScale: Int) {
+		
+		val points  = CumulativeProfile.getCumulativeProfile(activities)
+		polygon.draw(points.map(p => (p._1*xScale, p._2*yScale)))
+		polygon.setInnerCol(col)
+		
+		line.setOrig(xScale*points(0)._1, yScale*capacity)
+		line.setDest(xScale*points(points.size-1)._1, yScale*capacity)
+		line.setOuterCol(Color.RED);
+		
+		repaint()
+	}
 	
 	def update(xScale : Int, yScale: Int) {
 		
-		var points : List[Tuple2[Int, Int]] = Nil
+		val points  = CumulativeProfile.getCumulativeProfile(activities)
 		
-		for (act <- activities) {
-			points = (act.getStart, act.getHeight) :: points
-			points = (act.getEnd, -act.getHeight) :: points
-		}
+		polygon.update(points.map(p => (p._1*xScale, p._2*yScale)))
 		
-		// Sort the points
-		val sortedPoints = points.sort((s, t) => s._1 < t._1)
+		line.setOrig(xScale*points(0)._1, yScale*capacity)
+		line.setDest(xScale*points(points.size-1)._1, yScale*capacity)
 		
-		var lastPoint = (0,0)
-		var nextPoint = (0,0)
-		
-		for (point <- sortedPoints) {
-			
-			if (nextPoint._1 == point._1) {
-				//Edit the height of the next point to draw
-				nextPoint = (point._1, nextPoint._2 + point._2)	
-				
-			} else {
-				
-				new ColoredShape[Line2D](this, new Line2D.Double(lastPoint._1*xScale, 
-																 lastPoint._2*yScale, 
-																 nextPoint._1*xScale, 
-																 nextPoint._2*yScale))
-																 
-				new ColoredShape[Line2D](this, new Line2D.Double(nextPoint._1*xScale, 
-																 nextPoint._2*yScale, 
-																 point._1*xScale, 
-																 nextPoint._2*yScale))
-				
-				lastPoint = (point._1, nextPoint._2)
-				nextPoint = (point._1, nextPoint._2 + point._2)
-				
-			}
-		}
-		
-		new ColoredShape[Line2D](this, new Line2D.Double(lastPoint._1*xScale, 
-														 lastPoint._2*yScale, 
-														 nextPoint._1*xScale, 
-														 nextPoint._2*yScale))
-														 
-		new ColoredShape[Line2D](this, new Line2D.Double(0, 
-														 capacity*yScale, 
-														 (nextPoint._1+1)*xScale, 
-														 capacity*yScale))
+		repaint()
 	}
-}
-
-object VisualProfile extends Application{
-		
-	/** You should see :
-	 *      _
-	 *     | |_
-	 *  ___|___|_____capacity
-	 *    _|   |  _
-	 *  _|     |_| |_
-	 */
-						  
-	val frame = new VisualFrame("toto")						  
-	val profile = new VisualProfile(false)
-	val inf = frame.createFrame("Ressource Consumption")
-	inf.add(profile)
-	frame.pack
-	
-	val activities = List(new VisualActivity(1, 4, 1, 0),
-						  new VisualActivity(2, 3, 1, 0),
-						  new VisualActivity(2, 4, 2, 0),
-						  new VisualActivity(5, 6, 1, 0))
-	
-	profile.addActivities(activities)
-	profile.setCapacity(2)
-	profile.update(50, 50)
 }

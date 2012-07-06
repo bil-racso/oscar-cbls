@@ -1,28 +1,19 @@
 package oscar.visual
 
-class VisualActivity(start : Int, end : Int, height : Int, color : Int) {
-  
-	def setStart(start : Int) {
-		
-	}
+import oscar.cp.scheduling.CumulativeActivity
+
+class VisualActivity(activity : CumulativeActivity, col : Int) {
 	
-	def getStart() = start
+	def start = activity.getEST()
+
+	def end = activity.getLCT()
   
-	def setEnd(end : Int) {
-		
-	}
+	def resource = activity.getMaxResource()
 	
-	def getEnd() = end
-  
-	def setHeight(height : Int) {
-		
-	}
+	def color = col
+}
+
+object VisualActivity {
 	
-	def getHeight() = height
-  
-	def setColor(color : Int) {
-		
-	}
-	
-	def getColor() = color
+	def apply(activity : CumulativeActivity) = { new VisualActivity(activity, 0) }
 }

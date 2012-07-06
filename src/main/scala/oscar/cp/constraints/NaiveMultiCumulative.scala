@@ -19,6 +19,7 @@ package oscar.cp.constraints
 
 import oscar.cp.modeling._
 import oscar.cp.core._
+import oscar.cp.scheduling.CumulativeActivity
 
 /**This is a brute-force decomposition of the global constraint describe in "A New Multi-Resource 
  * Cumulatives Constraint with Negative Heights" by Nicolas Beldiceanu and Mats Carlsson.
@@ -38,6 +39,16 @@ object NaiveMultiCumulative extends CPModel {
 	// c : capacity of each machine
 	  
 	// Note : this decomposition does not enforce e = s+d !
+	
+	def multiCumulative(cp: CPSolver, activities : Array[CumulativeActivity], c : Array[Int]) {
+		
+		multiCumulative(cp, 
+						activities.map(_.mach), 
+						activities.map(_.getStart), 
+						activities.map(_.getDur), 
+						activities.map(_.getResource),
+						c)
+	}
   
 	def multiCumulative(cp: CPSolver,
 						m: Array[CPVarInt],
@@ -45,27 +56,34 @@ object NaiveMultiCumulative extends CPModel {
 						d: Array[CPVarInt],
 						r: Array[CPVarInt],
 						c: Array[Int]) {
+		
+		val Tasks    = 0 until s.size
+		val Machines = 0 until c.size
     
 		// Keep tasks with positive duration
-		val Tasks = (0 until s.size).filter(i => d(i).getMax > 0)
+		val tasks = (Tasks).filter(i => d(i).getMax > 0)
 
 		// Boundaries of the total processing time
-		val t_min = Tasks.map(i => s(i).getMin).min
-		val d_max = Tasks.map(i => d(i).getMax).max
-		val t_max = Tasks.map(i => s(i).getMax + d_max).min
+		val t_min = tasks.map(i => s(i).getMin).min
+		val d_max = tasks.map(i => d(i).getMax).max
+		val t_max = tasks.map(i => s(i).getMax + d_max).max
             
 		// For all the instant t
 		for (t <- t_min to t_max) {
-
-		    val tasks = (0 until s.size).filter(i => d(i).getMax > 0 && s(i).getMin() <= t && s(i).getMax()+d(i).getMax() > t)
+			
+			println("Instant " + t + " of horizon : " + t_min + ".." + t_max)
+		    val tasks = (Tasks).filter(i => d(i).getMax > 0 && s(i).getMin() <= t && s(i).getMax()+d(i).getMax() > t)
 		    
-			// For all machines
-			for (machine <- 0 until c.size) {
-				// Get all tasks on this machine
- 				def overlap(i: Int) = (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t)
-				// The consumption of all those tasks must be leq than the capacity of the machine
- 				cp.add(sum(tasks)(i => overlap(i)*r(i)) <= c(machine))
-			}
+		    if (!tasks.isEmpty) {
+				// For all machines
+				for (machine <- Machines) {
+	
+					// Get all tasks on this machine
+	 				def overlap(i: Int) = (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t)
+					// The consumption of all those tasks must be leq than the capacity of the machine
+	 				cp.add(sum(tasks)(i => overlap(i)*r(i)) <== c(machine))
+				}
+		    }
 		}    
 	}
 }
