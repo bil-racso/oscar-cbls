@@ -62,7 +62,7 @@ object CumulativeJobShop extends CPModel {
 			println("job "+ (i+1) +"\t" + l.mkString(" "))
 			
 			machines(i)  = Array.tabulate(nTasks)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1)/15)
+			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1)/8)
 	  	    lines = lines.drop(1)
 		}
 		
