@@ -9,7 +9,7 @@ class CumulativeProfileTest extends FunSuite with ShouldMatchers {
 
    
  
-    test("test one") {
+   /* test("test one") {
       
        val a = new CumulativeProfile(5)
        a.i() should be(5)
@@ -17,7 +17,7 @@ class CumulativeProfileTest extends FunSuite with ShouldMatchers {
     	
         
     	
-    }
+    }*/
     
     
 
