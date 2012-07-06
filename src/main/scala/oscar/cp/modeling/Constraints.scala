@@ -268,11 +268,12 @@ trait Constraints {
   
   
   def table(x: Array[CPVarInt], tuples: Array[Array[Int]]): Constraint = {
-    //new TableSTR2(x,tuples)
-    import oscar.cp.constraints.TableAC5TCRecomp
-    val data = new TableData(x.size)
-    tuples.foreach(t => data.add(t:_*))
-    new oscar.cp.constraints.TableAC5TCRecomp(data,x:_*)
+    new TableSTR2(x,tuples)
+    
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //val data = new TableData(x.size)
+    //tuples.foreach(t => data.add(t:_*))
+    //new oscar.cp.constraints.TableAC5TCRecomp(data,x:_*)
   }
 
 
@@ -284,10 +285,9 @@ trait Constraints {
    * @return a constraint enforcing that (x1,x2) is one of the couples given in tuples
    */
   def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]): Constraint = {
-    //table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
-    
-    import oscar.cp.constraints.TableAC5TCRecomp
-    new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,tuples)
+    table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,tuples)
   	
   }
 
@@ -300,9 +300,9 @@ trait Constraints {
    * @return a constraint enforcing that (x1,x2,x3) is one of the triples given in tuples
    */
   def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, tuples: Iterable[(Int, Int, Int)]): Constraint = {
-    //table(Array(x1,x2,x3),tuples.map(t => Array(t._1,t._2,t._3)).toArray)
-    import oscar.cp.constraints.TableAC5TCRecomp
-    new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,tuples)
+    table(Array(x1,x2,x3),tuples.map(t => Array(t._1,t._2,t._3)).toArray)
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,tuples)
   }
 
   /**
@@ -316,8 +316,8 @@ trait Constraints {
    */
   def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, tuples: Iterable[(Int, Int, Int, Int)]): Constraint = {
     table(Array(x1,x2,x3,x4),tuples.map(t => Array(t._1,t._2,t._3,t._4)).toArray)
-    import oscar.cp.constraints.TableAC5TCRecomp
-    new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
   }
   
   def modulo(x: CPVarInt, v: Int, y: CPVarInt): Constraint = {
