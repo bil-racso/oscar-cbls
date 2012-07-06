@@ -201,6 +201,22 @@ public class TestVariable extends TestCase {
         System.out.println(Arrays.toString(freq));
     }
     
+    public void testf(){
+    	Store cp = new Store();
+    	CPVarInt x = new CPVarInt(cp, 1,5,9,10);
+    	CPVarInt y = new CPVarInt(cp, 5,9,11);
+    	CPVarInt z = new CPVarInt(cp, 6,7,11);
+    	CPVarInt w = new CPVarInt(cp, 14);
+    	assertTrue(x.getIntersectionSize(y) == 2);
+    	assertTrue(y.getIntersectionSize(x) == 2);
+    	
+    	assertTrue(z.getIntersectionSize(y) == 1);
+    	assertTrue(y.getIntersectionSize(z) == 1);
+    	
+    	assertTrue(w.getIntersectionSize(x) == 0);
+    	assertTrue(x.getIntersectionSize(w) == 1);
+    }
+    
 
 }
 
