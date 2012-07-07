@@ -202,8 +202,11 @@ trait Constraints {
    * @param j the second index variable (column index) with domain defined on (0..m-1)
    * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
    */
-  def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt) = {
-    ElementCst2D.get(matrix, i, j)
+  def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt): CPVarInt = {
+     val z = new CPVarInt(i.getStore(),matrix.flatten.min to matrix.flatten.max)
+	 val ok = i.getStore().post(ElementCst2D(matrix,i,j,z))
+	 assert(ok != CPOutcome.Failure, {println("element on matrix, should not fail")})
+	 return z
   }
 
 
@@ -268,12 +271,18 @@ trait Constraints {
   
   
   def table(x: Array[CPVarInt], tuples: Array[Array[Int]]): Constraint = {
-    new TableSTR2(x,tuples)
+    //new TableSTR2(x,tuples)
     
-    //import oscar.cp.constraints.TableAC5TCRecomp
-    //val data = new TableData(x.size)
-    //tuples.foreach(t => data.add(t:_*))
-    //new oscar.cp.constraints.TableAC5TCRecomp(data,x:_*)
+    import oscar.cp.constraints.TableAC5TCRecomp
+    val data = new TableData(x.size)
+    tuples.foreach(t => data.add(t:_*))
+    new oscar.cp.constraints.TableAC5TCRecomp(data,x:_*)
+    
+    /*
+    val tab = new TableJava(x:_*)
+    tuples.foreach(t => tab.addTupple(t:_*))
+    return tab
+  	*/
   }
 
 

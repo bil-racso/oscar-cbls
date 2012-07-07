@@ -31,6 +31,7 @@ test in assembly := {}
 
 //libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
+//testOptions in Test += Tests.Argument("-oDF")
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->default"
 

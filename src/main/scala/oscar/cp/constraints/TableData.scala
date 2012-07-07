@@ -53,7 +53,9 @@ class TableData(val arity: Int) {
   /**
    * retrieve entry i of tuple t
    */
-  def apply(t: Int, i: Int) = data(i)(t)
+  def apply(t: Int, i: Int) = {
+    data(i)(t) 
+  }
   
   def setup() = {
     for (i <- 0 until arity) {
