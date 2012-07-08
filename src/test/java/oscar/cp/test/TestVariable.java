@@ -214,7 +214,7 @@ public class TestVariable extends TestCase {
     	assertTrue(y.getIntersectionSize(z) == 1);
     	
     	assertTrue(w.getIntersectionSize(x) == 0);
-    	assertTrue(x.getIntersectionSize(w) == 1);
+    	assertTrue(x.getIntersectionSize(w) == 0);
     }
     
 
