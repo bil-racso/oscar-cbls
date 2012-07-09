@@ -62,7 +62,7 @@ object CumulativeJobShop extends CPModel {
 			println("job "+ (i+1) +"\t" + l.mkString(" "))
 			
 			machines(i)  = Array.tabulate(nTasks)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1)/8)
+			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1)/6)
 	  	    lines = lines.drop(1)
 		}
 		
@@ -100,7 +100,7 @@ object CumulativeJobShop extends CPModel {
 		val drawing = new VisualDrawing(false)
 		
 		val yScale = 20
-		val xScale = 10
+		val xScale = 5
 		
 		
 		val cols = VisualUtil.getRandomColorArray(nMachines)

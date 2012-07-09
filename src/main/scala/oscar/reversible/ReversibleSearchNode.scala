@@ -36,7 +36,6 @@ import oscar.search._
  */
 class ReversibleSearchNode {
 	
-	
 	var magic = 0	
 	var trail = new Trail();
 	val pointerStack = new Stack[TrailEntry]()

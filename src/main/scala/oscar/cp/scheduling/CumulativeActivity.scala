@@ -35,6 +35,11 @@ class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,
 	 */
 	def getMaxResource() = resource.getMax()
 	
+	/**
+	 * Have a compulsory part ?
+	 */
+	def hasCompulsoryPart() = (start.getMax < end.getMin)
+	
 	override def toString() = "dur:"+getDur()+ " in ["+getEST()+","+getLCT()+"[ using ["+getMinResource+","+getMinResource+"] on machine(s) "+machine 
 }
 
@@ -63,21 +68,4 @@ object CumulativeActivity {
 		val r = new CPVarInt(start.getStore(), resource, resource)
 		new CumulativeActivity(start, duration, start.plus(duration), m, r)
 	}
-	
-	/*implicit def var2Left(v:CPVarInt) = Left(v)
-	implicit def int2Right(i:Int) = Right(i)
-		
-	def apply(start : Either[CPVarInt,Int], duration : Either[CPVarInt,Int],  end : Either[CPVarInt,Int],  machine : Either[CPVarInt,Int], resource : Either[CPVarInt,Int]) = {
-		val cp = Seq(start,duration,end,machine,resource).find(_.isLeft) match {
-			case Some(Left(v)) => v.getStore()
-			case None => throw new Exception("No CPVarInt provided")
-		}
-		
-		def getVar(in:Either[CPVarInt,Int]) = in match {
-			case Left(v) => v
-			case Right(i) => new CPVarInt(cp,i to i)
-		}
-		
-		new CumulativeActivity(getVar(start), getVar(duration), getVar(end), getVar(machine),getVar(resource))
-	}*/
 }
