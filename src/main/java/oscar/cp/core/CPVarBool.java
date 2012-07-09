@@ -136,8 +136,7 @@ public class CPVarBool extends CPVarInt{
 	
 	
 	public CPVarBool implies(CPVarBool y) {
-		//return this.not().or(y);
-		
+		// return this.not().or(y);
 		CPVarBool V = new CPVarBool(getStore());
 		getStore().post(new Implication(this, y, V));
 		return V;
