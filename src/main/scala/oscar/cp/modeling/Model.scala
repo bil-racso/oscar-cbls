@@ -124,6 +124,10 @@ trait CPModel extends Constraints {
      */
     def ==(y: CPVarInt) = new Eq(x,y)
     /**
+     * x==y
+     */
+    def ==(y: Int) = new Eq(x,y)     
+    /**
      * x<y
      */
     def <(y: CPVarInt) = new Le(x,y) 
@@ -154,11 +158,7 @@ trait CPModel extends Constraints {
     /**
      * x>=y
      */
-    def >=(y: Int) = new GrEq(x,y)        
-    /**
-     * x==y
-     */
-    def ==(y: Int) = new Eq(x,y)  
+    def >=(y: Int) = new GrEq(x,y)             
 	/**
 	 * b <=> x == v
 	 */
