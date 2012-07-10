@@ -7,7 +7,7 @@
  * Contributors:
  *      Hakan Kjellerstrand (hakank@gmail.com)
  ******************************************************************************/
-package oscar.example.cp.hakank
+package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
