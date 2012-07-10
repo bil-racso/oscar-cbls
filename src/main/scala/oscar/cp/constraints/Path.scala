@@ -38,7 +38,7 @@ import scala.collection.JavaConversions._
  * the successor of the last node of the path is the first node by convention
  * @author Pierre Schaus
  */
-class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt) extends Constraint(succ(0).getStore(), "Path") with Constraints {
+class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt) extends Constraint(succ(0).getStore(), "Path") with Constraints with CPModel {
 
   // for each node, it's position in the path
   val y = Array.fill(succ.size)(new CPVarInt(s,0 until succ.size))

@@ -48,8 +48,7 @@ public class Or extends Constraint {
 		super(x[0].getStore());
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s);
-		nbBound.setValue(0);
+		nbBound = new ReversibleInt(s,0);
 		ytrue = new ReversibleBool(s);
 		ytrue.setValue(false);
 	}
@@ -57,14 +56,31 @@ public class Or extends Constraint {
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
 		for (int i = 0; i < x.length; i++) {
+			if (x[i].isTrue()) {
+				if (y.assign(1) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				} else {
+					return CPOutcome.Success;
+				}
+			}
+		}
+		// we know no variables from X are bound to 1
+		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) {
 				x[i].callValBindIdxWhenBind(this, i);
 			} else {
+				assert(x[i].isFalse());
 				nbBound.incr();
 			}
 		}
-		if (!y.isBound())
+		if (!y.isBound()) {
+			if (nbBound.getValue() == x.length) {
+				if (y.assign(0) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				}
+			}
 			y.callValBindWhenBind(this);
+		}
 		else {
 			if (y.getValue() == 0) {
 				for (int i = 0; i < x.length; i++) {
@@ -75,7 +91,7 @@ public class Or extends Constraint {
 				return CPOutcome.Success;
 			} else {
 				ytrue.setValue(true);
-				if (nbBound.getValue() == x.length-1){
+				if (nbBound.getValue() == x.length-1) {
 					for (int i = 0; i < x.length; i++) {
 						if (!x[i].isBound()) {
 							if (x[i].assign(1) == CPOutcome.Failure) {
@@ -93,13 +109,13 @@ public class Or extends Constraint {
 	
 	@Override
 	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
-		nbBound.incr();
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else {
+			nbBound.incr();
 			if (nbBound.getValue() == x.length) {
 				if (y.assign(0) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -131,6 +147,16 @@ public class Or extends Constraint {
 			return CPOutcome.Success;
 		} else {
 			ytrue.setValue(true);
+			if (nbBound.getValue() == x.length-1){
+				for (int i = 0; i < x.length; i++) {
+					if (!x[i].isBound()) {
+						if (x[i].assign(1) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
+						return CPOutcome.Success;
+					}
+				}
+			}
 		}
 		return CPOutcome.Suspend;
 	}

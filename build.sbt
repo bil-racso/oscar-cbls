@@ -17,7 +17,7 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
     deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
 }
 
-scalacOptions += "-P:continuations:enable"
+scalacOptions ++= Seq("-P:continuations:enable") //,"-optimize"
 
 seq(assemblySettings: _*)
 
@@ -29,8 +29,9 @@ jarName in assembly := "oscar.jar"
 test in assembly := {}
 
 
-libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
+//libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
+//testOptions in Test += Tests.Argument("-oDF")
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->default"
 

@@ -22,6 +22,7 @@ import oscar.cp.constraints.Eq;
 import oscar.cp.constraints.Implication;
 import oscar.cp.constraints.Or;
 import oscar.cp.constraints.Sum;
+import oscar.cp.constraints.Not;
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -61,6 +62,15 @@ public class CPVarBool extends CPVarInt{
     
 	public CPVarBool(Store s) {
 		super(s,0,1);
+	}
+	
+	public CPVarBool(Store s,boolean b) {
+		this(s);
+		if (b) {
+			assign(1);
+		} else {
+			assign(0);
+		}
 	}
 	
 	@Override
@@ -118,51 +128,19 @@ public class CPVarBool extends CPVarInt{
 		return res.isEq(2);
 	} 
 	
+	public CPVarBool not() {
+		CPVarBool not = new CPVarBool(getStore());
+		getStore().post(new Not(this,not));
+		return not;
+	} 
+	
+	
 	public CPVarBool implies(CPVarBool y) {
+		// return this.not().or(y);
 		CPVarBool V = new CPVarBool(getStore());
 		getStore().post(new Implication(this, y, V));
 		return V;
 	}
-
-	//--------------------methods for the scala wrapper--------------------
-    
-	/**
-	 * Scala wrapper: x | y
-	 */
-	public CPVarBool $bar(CPVarBool y) {
-		return this.or(y);
-	} 
-    
-	/**
-	 * Scala wrapper: x || y
-	 */
-	public CPVarBool $bar$bar(CPVarBool y) {
-		return this.or(y);
-	}  
-
-	/**
-	 * Scala wrapper: x & y
-	 */
-	public CPVarBool $amp(CPVarBool y) {
-		return this.and(y);
-	}
-	
-	/**
-	 * Scala wrapper: x && y
-	 */
-	public CPVarBool $amp$amp(CPVarBool y) {
-		return this.and(y);
-	}
-	
-	/**
-	 * Scala wrapper: x => y
-	 */
-	public CPVarBool $eq$eq$greater(CPVarBool y) {
-		return this.implies(y);
-	}
-
-
-
 
 
 }

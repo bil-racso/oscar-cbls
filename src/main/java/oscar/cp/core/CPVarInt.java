@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+
+
 import oscar.cp.constraints.Abs;
 import oscar.cp.constraints.Diff;
 import oscar.cp.constraints.DiffReif;
@@ -500,6 +502,23 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		} else {
 			return dom.getPrevValue(val-1);
 		}
+	}
+	
+	/**
+	 * Number of values in common in both domains
+	 * @param other
+	 * @return Number of values in common in both domains
+	 */
+	public int getIntersectionSize(CPVarInt other) {
+		if (other.getMin() > getMax()) return 0;
+		if (other.getMax() < getMin()) return 0;
+		int res = 0;
+		for (int v = Math.max(other.getMin(), getMin()); v <= Math.min(other.getMax(), getMax()); v++) {
+			if (hasValue(v) && other.hasValue(v)) {
+				res++;
+			}
+		}
+		return res;
 	}
 	
 	
@@ -1214,122 +1233,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 	 */
 	public CPVarBool $less$less$eq(int v) {
 		return this.isLeEq(v-1);
-	}		
-
-	
-	
-	
-	
-//	//--------------------methods for the jython wrapper--------------------
-	
-//	public CPVarInt __add__(CPVarInt x) {
-//		return this.plus(x);
-//	}
-//	
-//	public CPVarInt __radd__(CPVarInt x) {
-//		return this.plus(x);
-//	}
-//	
-//	public CPVarInt __add__(int b) {
-//		return this.plus(b);
-//	}
-//	
-//	public CPVarInt __radd__(int b) {
-//		return this.plus(b);
-//	}	
-//	
-//	public CPVarInt __sub__(CPVarInt x) {
-//		return this.minus(x);
-//	}
-//	
-//	public CPVarInt __rsub__(CPVarInt x) {
-//		return this.minus(x);
-//	}
-//	
-//	public CPVarInt __sub__(int b) {
-//		return this.minus(b);
-//	}
-//	
-//	public CPVarInt __rsub__(int b) {
-//		return this.minus(b);
-//	}
-//	
-//	public CPVarInt __mul__(CPVarInt x) {
-//		return this.mul(x);
-//	}
-//	
-//	public CPVarInt __rmul__(CPVarInt x) {
-//		return this.mul(x);
-//	}
-//	
-//	public CPVarInt __mul__(int b) {
-//		return this.mul(b);
-//	}
-//	
-//	public CPVarInt __rmul__(int b) {
-//		return this.mul(b);
-//	}
-//	
-//	public CPVarInt __neg__() {
-//		return opposite();
-//	}
-//	
-//	public CPVarInt __pos__() {
-//		return this;
-//	}	
-//	
-//	public Iterator<Integer>__iter__() {
-//		return iterator();
-//	}
-//	
-//	public Constraint __ne__(int v) {
-//		return new Diff(this,v);
-//	}
-//	
-//	public Constraint __ne__(CPVarInt x) {
-//		return new Diff(this,x);
-//	}
-//	
-//	public Constraint __eq__(int v) {
-//		return new Eq(this,v);
-//	}
-//	
-//	public Constraint __eq__(CPVarInt x) {
-//		return new Eq(this,x);
-//	}
-//	
-//	public Constraint __ge__(int v) {
-//		return new GrEq(this,v);
-//	}
-//	
-//	public Constraint __ge__(CPVarInt x) {
-//		return new GrEq(this,x);
-//	}
-//	
-//	public Constraint __gt__(int v) {
-//		return new Gr(this,v);
-//	}
-//	
-//	public Constraint __gt__(CPVarInt x) {
-//		return new Gr(this,x);
-//	}
-//	
-//	public Constraint __le__(int v) {
-//		return new LeEq(this,v);
-//	}
-//	
-//	public Constraint __le__(CPVarInt x) {
-//		return new LeEq(this,x);
-//	}
-//	
-//	public Constraint __lt__(int v) {
-//		return new Le(this,v);
-//	}
-//	
-//	public Constraint __lt__(CPVarInt x) {
-//		return new Le(this,x);
-//	}
-
+	}
 	
 } // end of class
 

@@ -62,7 +62,7 @@ public class Regular extends Constraint {
 	
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(new ElementCst2D(T,new CPVarInt(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
+		if (s.post(ElementCst2D.apply(T,new CPVarInt(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		
@@ -75,7 +75,7 @@ public class Regular extends Constraint {
 		}
 		
 		for (int i = 1; i < x.length; i++) {
-			if (s.post(new ElementCst2D(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
+			if (s.post(ElementCst2D.apply(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}

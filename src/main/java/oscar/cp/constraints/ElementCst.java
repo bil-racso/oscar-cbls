@@ -19,6 +19,8 @@ package oscar.cp.constraints;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Hashtable;
+
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -43,6 +45,8 @@ public class ElementCst extends Constraint {
 	private Integer [] sortedPerm; //y[sortedPerm[0]] is the min element of y... y[sortedPerm[y.length]] is the largest element of y 
 	private ReversibleInt minIndSupp;
 	private ReversibleInt maxIndSupp;
+	
+	private Hashtable<Integer,ReversibleInt> counters;
 
 
     /**
@@ -70,6 +74,7 @@ public class ElementCst extends Constraint {
 		minIndSupp.setValue(0);
 		maxIndSupp = new ReversibleInt(s);
 		maxIndSupp.setValue(y.length-1);
+		
 	}
 
 	@Override
@@ -85,11 +90,51 @@ public class ElementCst extends Constraint {
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-
+		if (l == CPPropagStrength.Strong) {
+			initCounters();
+			x.callValRemoveWhenValueIsRemoved(this);
+			z.callValRemoveWhenValueIsRemoved(this);
+		}
 		z.callPropagateWhenBoundsChange(this);
 		x.callPropagateWhenDomainChanges(this);		
 		x.callValBindWhenBind(this);
 
+		return CPOutcome.Suspend;
+	}
+	
+	private void initCounters() {
+		counters = new Hashtable<Integer, ReversibleInt>();
+		for (int i = 0; i < y.length; i++) {
+			ReversibleInt counter = counters.get(y[i]);
+			if (counter == null) {
+				counter = new ReversibleInt(s,1);
+				counters.put(y[i], counter);
+			} else {
+				counter.incr();
+			}
+		}
+	}
+	
+	@Override
+	protected CPOutcome valRemove(CPVarInt var, int val) {
+		if (var == z) {
+			for (int i = 0; i < y.length; i++) {
+				if (y[i] == val) {
+					if (x.removeValue(i) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
+				}
+			}
+		} else {
+			assert(var == x);
+			ReversibleInt counter = counters.get(y[val]);
+			counter.decr();
+			if (counter.getValue() == 0) {
+				if (z.removeValue(y[val]) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				}
+			}
+		}
 		return CPOutcome.Suspend;
 	}
 

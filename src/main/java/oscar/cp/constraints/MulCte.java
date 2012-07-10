@@ -53,6 +53,17 @@ public class MulCte extends Constraint {
 			x.callPropagateWhenBoundsChange(this);
 			z.callPropagateWhenBoundsChange(this);
 		}
+		if (l == CPPropagStrength.Strong) {
+			if (x.getSize() <= 100) { // remove all numbers not multiples of c if dom size to too big
+				for (int v = z.getMin(); v <= z.getMax(); v++) {
+					if (z.hasValue(v) && (v%c != 0)) {
+						if (z.removeValue(v) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
+					}
+				}
+			}
+		}
 		return ok;
 	}
 	
@@ -85,15 +96,7 @@ public class MulCte extends Constraint {
 										 NumberUtils.floorDiv(z.getMax(), c))) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
-				if (x.getSize() <= 200) { // remove all numbers not multiples of c if dom size to too big
-					for (int v = z.getMin(); v <= z.getMax(); v++) {
-						if (z.hasValue(v) && (v%c != 0)) {
-							if (z.removeValue(v) == CPOutcome.Failure) {
-								return CPOutcome.Failure;
-							}
-						}
-					}
-				}
+
 				return CPOutcome.Suspend;
 			}
 		}

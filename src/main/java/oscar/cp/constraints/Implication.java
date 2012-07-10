@@ -50,17 +50,20 @@ public class Implication extends Constraint {
 	
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		if (A.isBound()) return valBind(A);
+		if (A.isBound()) {
+			if (valBind(A) == CPOutcome.Failure) return CPOutcome.Failure;
+		}
 		else A.callValBindWhenBind(this);
 		
-		if (B.isBound()) return valBind(B);
+		if (B.isBound()) {
+			if (valBind(B) == CPOutcome.Failure) return CPOutcome.Failure;
+		}
 		else B.callValBindWhenBind(this);
 		
-		if (V.isBound()) return valBind(V);
+		if (V.isBound()) {
+			if (valBind(V) == CPOutcome.Failure) return CPOutcome.Failure;
+		}
 		else V.callValBindWhenBind(this);
-		
-		if (B.isBound()) return valBind(B);
-		else B.callValBindWhenBind(this);
 		
 		return CPOutcome.Suspend;
 	}
@@ -115,6 +118,9 @@ public class Implication extends Constraint {
 				}
 				if (B.isBoundTo(1)) { // A => T <-> T it means A can be true of false, doesn't matter
 					return CPOutcome.Success;
+				}
+				if (A.isBoundTo(1)) {
+					if (B.assign(1) == CPOutcome.Failure) return CPOutcome.Failure;
 				}
 			}
 		}
