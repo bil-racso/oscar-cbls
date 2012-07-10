@@ -52,7 +52,7 @@ class TestArithmetics extends FunSuite with ShouldMatchers with CPModel {
     val ix2 = (ia)*n + (jb) // what is the index of k+1
     
     println(ix2)
-    ix2.getSize() should be(6) // should contain: 0,1,8,16,17
+    ix2.getSize() should be(18) // should contain: 0,1,8,16,17
 
   }  
   
