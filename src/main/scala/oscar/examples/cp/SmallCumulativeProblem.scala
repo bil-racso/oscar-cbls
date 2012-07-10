@@ -1,6 +1,7 @@
 package oscar.examples.cp
 
 import oscar.cp.constraints.MultiCumulative
+import oscar.cp.constraints.Cumulative
 import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -78,9 +79,10 @@ object SmallCumulativeProblem extends CPModel {
 			for (i <- 0 until rectangles.size) 
 				cp.add(rectangles(i).getStart + rectangles(i).getDur == rectangles(i).getEnd)
 			
-			cp.add(new MultiCumulative(cp, rectangles, capacities, true))
+			//cp.add(new MultiCumulative(cp, rectangles, capacities, true))
 			//NaiveMultiCumulative.multiCumulative(cp, rectangles, capacities)
-
+			cp.add(new Cumulative(cp, rectangles, 2, 2, 0))
+			
 	   } exploration {
 	       
 		   cp.binaryFirstFail(rectangles.map(_.getStart))
