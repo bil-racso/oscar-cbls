@@ -84,10 +84,10 @@ object CumulativeJobShop extends CPModel {
   	   		new CumJobShopAct(CumulativeActivity(start,dur, machines(i)(j), 1), i) 
   	   	}) 	   
   	   	
-  	   	val act_machines  = activities.flatten.map(_.act.mach)   
-  	   	val act_starts    = activities.flatten.map(_.act.getStart())  
-  	   	val act_durations = activities.flatten.map(_.act.getDur())
-  	   	val act_ends      = activities.flatten.map(_.act.getEnd())
+  	   	val act_machines  = activities.flatten.map(_.act.getMachines)   
+  	   	val act_starts    = activities.flatten.map(_.act.getStart)  
+  	   	val act_durations = activities.flatten.map(_.act.getDur)
+  	   	val act_ends      = activities.flatten.map(_.act.getEnd)
   	   	val act_resources = activities.flatten.map(_.act.getResource)  
   	   	
   	   	val makespan = maximum(0 until nJobs)(i => activities(i)(nTasks-1).act.getEnd)
@@ -108,7 +108,7 @@ object CumulativeJobShop extends CPModel {
 		frame.createFrame("Jobs").add(drawing)
 		
 		val visualActivities: Array[Set[VisualActivity]] = Array.tabulate(nMachines){ m => 
-  	   		activities.flatten.filter(_.act.mach.getValue() == m).map(v => VisualActivity(v.act)).toSet
+  	   		activities.flatten.filter(_.act.getMachines.getValue() == m).map(v => VisualActivity(v.act)).toSet
 		}
 
 		val profiles : Array[VisualProfile] = new Array(nTasks)
@@ -124,7 +124,7 @@ object CumulativeJobShop extends CPModel {
 		drawing.repaint()
 		val visualAct: Array[Array[VisualRectangle]] = Array.tabulate(nJobs,nMachines){(i,j) => val activity = activities(i)(j)
 	                                                val rect = new VisualRectangle(drawing,0,yScale*activity.job, activity.act.getMinDuration()*xScale,yScale)
-	   												rect.setInnerCol(cols(activity.act.mach.getValue))
+	   												rect.setInnerCol(cols(activity.act.getMachines.getValue))
 	   												rect }
 
 		val makespanLine = new VisualLine(drawing,0,0,0,nJobs*yScale)

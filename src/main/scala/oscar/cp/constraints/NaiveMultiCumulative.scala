@@ -43,7 +43,7 @@ object NaiveMultiCumulative extends CPModel {
 	def multiCumulative(cp: CPSolver, activities : Array[CumulativeActivity], c : Array[Int]) {
 		
 		multiCumulative(cp, 
-						activities.map(_.mach), 
+						activities.map(_.getMachines), 
 						activities.map(_.getStart), 
 						activities.map(_.getDur), 
 						activities.map(_.getResource),
@@ -71,7 +71,6 @@ object NaiveMultiCumulative extends CPModel {
 		// For all the instant t
 		for (t <- t_min to t_max) {
 			
-			println("Instant " + t + " of horizon : " + t_min + ".." + t_max)
 		    val tasks = (Tasks).filter(i => d(i).getMax > 0 && s(i).getMin() <= t && s(i).getMax()+d(i).getMax() > t)
 		    
 		    if (!tasks.isEmpty) {
@@ -81,7 +80,7 @@ object NaiveMultiCumulative extends CPModel {
 					// Get all tasks on this machine
 	 				def overlap(i: Int) = (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t)
 					// The consumption of all those tasks must be leq than the capacity of the machine
-	 				cp.add(sum(tasks)(i => overlap(i)*r(i)) <== c(machine))
+	 				cp.add(sum(tasks)(i => overlap(i)*r(i)) >== c(machine))
 				}
 		    }
 		}    

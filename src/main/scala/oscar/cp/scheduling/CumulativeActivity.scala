@@ -22,8 +22,8 @@ import oscar.cp.core.Store;
 
 class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,  machine : CPVarInt, resource : CPVarInt) extends Activity(start, duration) {
 
-	def mach() = machine
-	def getResource() = resource
+	def getMachines = machine
+	def getResource = resource
 	
 	/**
 	 * smallest quantity of resource
@@ -40,7 +40,7 @@ class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,
 	 */
 	def hasCompulsoryPart() = (start.getMax < end.getMin)
 	
-	override def toString() = "dur:"+getDur()+ " in ["+getEST()+","+getLCT()+"[ using ["+getMinResource+","+getMinResource+"] on machine(s) "+machine 
+	override def toString() = "dur:"+getDur()+ " from ["+getEST()+","+getLST()+"[ to ["+getECT()+","+getLCT()+"[ using ["+getMinResource+","+getMaxResource+"] on machine(s) "+machine 
 }
 
 object CumulativeActivity {

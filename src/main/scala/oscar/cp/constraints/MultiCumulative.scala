@@ -1,7 +1,8 @@
 package oscar.cp.constraints
 
 import scala.math.max
-import scala.collection.mutable.Queue
+import scala.math.min
+import scala.collection.mutable.PriorityQueue
 
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
@@ -9,47 +10,16 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
+import oscar.cp.modeling.CPModel
 
 /**
  * 
  */
-class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int]) extends Constraint(tasks(0).mach.getStore(), "MultiCumulative") {
+class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int]) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
 	
 	// Event Point Series
-	val eventPointSeries = Queue[Event]()
+	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
 	val sweepLine : SweepLine = new SweepLine
-	
-	def adjustMin(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		val min = x.getMin
-		val oc  = x.updateMin(v)
-		
-		return (min != x.getMin, oc)
-	}
-	
-	def adjustMax(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		val max = x.getMax
-		val oc  = x.updateMax(v)
-		
-		return (max != x.getMax, oc)
-	}
-	
-	def fixVar(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		val size = x.getSize
-		val oc   = x.assign(v)
-		
-		return (size > 1, oc)
-	}
-	
-	def removeValue(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		val size = x.getSize
-		val oc   = x.removeValue(v)
-		
-		return (x.getSize == size-1, oc)
-	}
 	
 	override def setup(l: CPPropagStrength) : CPOutcome =  {
 		
@@ -61,7 +31,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
         		if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
         		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
         		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-        		if (!tasks(i).mach.isBound) tasks(i).mach.callPropagateWhenDomainChanges(this)
+        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
         	}
         }
         
@@ -72,8 +42,8 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		var change = true
 		var res : Tuple2[Boolean, CPOutcome] = null
-
-		for (i <- 0 to limits.size) {
+		
+		for (i <- 0 until limits.size) {
 			
 			while (change) {
 				
@@ -96,7 +66,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		// For each cumulative activity
 		for (i <- 0 until tasks.size) {
 			
-			if (tasks(i).hasCompulsoryPart && tasks(i).mach.isBoundTo(r)) {
+			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
 				if (tasks(i).getMaxResource < max(0, limits(r))) {
@@ -115,7 +85,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 				}			
 			}
 			
-			if (tasks(i).mach.hasValue(r)) {
+			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good)
 				if (tasks(i).getMaxResource > 0) {
@@ -126,7 +96,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 				}
 				
 				// Pruning (if something is not fixed)
-				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).mach.isBound && tasks(i).getResource.isBound)) {
+				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBound && tasks(i).getResource.isBound)) {
 					
 					// Generate event
 					eventPointSeries enqueue new Event(EventType.Pruning, tasks(i), tasks(i).getEST, 0)
@@ -143,8 +113,8 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		// Reset the parameters of the sweep line
 		sweepLine.reset
 		
-		// Sort by increasing date
-		eventPointSeries.sortBy(_.date)
+		// Generate events (no need to sort them as we use a priorityQueue)
+		generateEventPointSeries(r)
 		
 		var event = nextEvent
 		var d = event.date
@@ -180,7 +150,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		// Consistency check
 		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure)
 		// Pruning
-		res = prune(r, d, event.date - 1)
+		res = prune(r, d, d)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
@@ -221,27 +191,32 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		}
 		
 		// Fix the activity to the machine r and check consistency
-		res = fixVar(t.mach, r)
+		res = MultiCumulative.fixVar(t.getMachines, r)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the EST of the activity and check consistency
-		res = adjustMin(t.getStart, up - t.getMaxDuration + 1)
+		res = MultiCumulative.adjustMin(t.getStart, up - t.getMaxDuration + 1)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the LST of the activity and check consistency
-		res = adjustMax(t.getStart, low)
+		res = MultiCumulative.adjustMax(t.getStart, low)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the LCT of the activity and check consistency
-		res = adjustMax(t.getEnd, low + t.getMaxDuration)
+		res = MultiCumulative.adjustMax(t.getEnd, low + t.getMaxDuration)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the ECT of the activity and check consistency
-		res = adjustMin(t.getEnd, up + 1)
+		res = MultiCumulative.adjustMin(t.getEnd, up + 1)
+		change |= res._1
+		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		
+		// Adjust the minimal duration of the activity and check consistency
+		res = MultiCumulative.adjustMin(t.getDur, min(up - t.getLST+1, t.getECT-low))
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
@@ -261,9 +236,9 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		var res : Tuple2[Boolean, CPOutcome] = (false, CPOutcome.Suspend)
 		
-		if (t.mach.isBound && t.getECT > low && t.getLST < up && t.getMinDuration > 0) {
+		if (t.getMachines.isBound && t.getECT > low && t.getLST <= up && t.getMinDuration > 0) {
 			
-			res = adjustMin(t.getResource, limits(r) - (sweepLine.sumHeight - t.getMaxResource ))
+			res = MultiCumulative.adjustMin(t.getResource, limits(r) - (sweepLine.sumHeight - t.getMaxResource))
 		}
 			
 		return res
@@ -308,5 +283,71 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		def eType     = e
 		def increment = inc
 		def task      = t
+		
+		override def toString = { "<" + e + ", " + t + ", " + d + ", " + inc +">" }
+	}
+}
+
+object MultiCumulative extends CPModel {
+	
+	def adjustMin(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+		
+		val min = x.getMin
+		val oc  = x.updateMin(v)
+		
+		return (min != x.getMin, oc)
+	}
+	
+	def adjustMax(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+		
+		val max = x.getMax
+		val oc  = x.updateMax(v)
+		
+		return (max != x.getMax, oc)
+	}
+	
+	def fixVar(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+		
+		val size = x.getSize
+		val oc   = x.assign(v)
+		
+		return (size > 1, oc)
+	}
+	
+	def removeValue(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+		
+		val size = x.getSize
+		val oc   = x.removeValue(v)
+		
+		return (x.getSize == size-1, oc)
+	}
+	
+	def main(args: Array[String]) {
+		
+		val cp = CPSolver()
+		
+		val t1 = new CumulativeActivity(new CPVarInt(cp, 1 to 2), // start
+										new CPVarInt(cp, 2 to 4), // duration
+										new CPVarInt(cp, 3 to 6), // end
+										new CPVarInt(cp, 0 to 0), // machine
+										new CPVarInt(cp, -1 to 1)) // resource
+		
+		val t2 = new CumulativeActivity(new CPVarInt(cp, 0 to 6), // start
+										new CPVarInt(cp, 0 to 2), // duration
+										new CPVarInt(cp, 0 to 8), // end
+										new CPVarInt(cp, 0 to 1), // machine
+										new CPVarInt(cp, -3 to 4)) // resource
+		
+		val tasks = Array(t1, t2)
+		val capacities = Array(4, 3)
+		
+		val constraint = new MultiCumulative(cp, tasks, capacities)
+		
+		constraint.propagate
+		
+		println(t2.getStart)
+		println(t2.getEnd)
+		println(t2.getDur)
+		println(t2.getResource)
 	}
 }
