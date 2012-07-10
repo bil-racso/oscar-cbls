@@ -78,7 +78,7 @@ object SmallCumulativeProblem extends CPModel {
 			for (i <- 0 until rectangles.size) 
 				cp.add(rectangles(i).getStart + rectangles(i).getDur == rectangles(i).getEnd)
 			
-			cp.add(new MultiCumulative(cp, rectangles, capacities))
+			cp.add(new MultiCumulative(cp, rectangles, capacities, true))
 			//NaiveMultiCumulative.multiCumulative(cp, rectangles, capacities)
 
 	   } exploration {

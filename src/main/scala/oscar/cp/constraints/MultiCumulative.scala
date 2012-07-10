@@ -15,7 +15,7 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int]) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
+class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
@@ -69,37 +69,37 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
-				if (tasks(i).getMaxResource < max(0, limits(r))) {
+				if (tasks(i).getMaxResource < max(0, limits(r))) { // TODO
 					
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Check, tasks(i), tasks(i).getLST, 1)
-					eventPointSeries enqueue new Event(EventType.Check, tasks(i), tasks(i).getECT, -1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
 				}
 				
 				// Profile (Bad)
-				if (tasks(i).getMaxResource < 0) {
+				if (tasks(i).getMaxResource < 0) { // TODO
 					
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Profile, tasks(i), tasks(i).getLST, tasks(i).getMaxResource())
-					eventPointSeries enqueue new Event(EventType.Profile, tasks(i), tasks(i).getECT, -tasks(i).getMaxResource())
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource())  // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource()) // TODO
 				}			
 			}
 			
 			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good)
-				if (tasks(i).getMaxResource > 0) {
+				if (tasks(i).getMaxResource > 0) { // TODO
 					
 					// Generate events		
-					eventPointSeries enqueue new Event(EventType.Profile, tasks(i), tasks(i).getEST, tasks(i).getMaxResource())
-					eventPointSeries enqueue new Event(EventType.Profile, tasks(i), tasks(i).getLCT, -tasks(i).getMaxResource())
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource())  // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource()) // TODO
 				}
 				
 				// Pruning (if something is not fixed)
-				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBound && tasks(i).getResource.isBound)) {
+				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBoundTo(r) && tasks(i).getResource.isBound)) {
 					
 					// Generate event
-					eventPointSeries enqueue new Event(EventType.Pruning, tasks(i), tasks(i).getEST, 0)
+					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0)
 				}
 			}			
 		}
@@ -126,7 +126,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 				// If we have considered all the events of the previous date
 				if (d != event.date) {
 					// Consistency check
-					if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure)
+					if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
 					// Pruning (this will empty the stackPrune list)
 					res = prune(r, d, event.date - 1)
 					change |= res._1
@@ -148,7 +148,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		}
 		
 		// Consistency check
-		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure)
+		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
 		// Pruning
 		res = prune(r, d, d)
 		change |= res._1
@@ -164,15 +164,15 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		for (i <- 0 until sweepLine.stackPrune.size) {
 			
-			res = pruneMandatory(sweepLine.stackPrune(i), r, low, up)
+			res = pruneMandatory(tasks(sweepLine.stackPrune(i)), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneForbiden(sweepLine.stackPrune(i), r, low, up)
+			res = pruneForbiden(tasks(sweepLine.stackPrune(i)), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneConsumption(sweepLine.stackPrune(i), r, low, up)
+			res = pruneConsumption(tasks(sweepLine.stackPrune(i)), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		}	
@@ -186,7 +186,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Consistency check
-		if (sweepLine.nTasks == 0 || (sweepLine.sumHeight - t.getMaxResource) >= limits(r)) {
+		if (sweepLine.nTasks == 0 || (sweepLine.sumHeight - t.getMaxResource) >= limits(r)) { // TODO
 			return (change, CPOutcome.Suspend)
 		}
 		
@@ -236,9 +236,9 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		var res : Tuple2[Boolean, CPOutcome] = (false, CPOutcome.Suspend)
 		
-		if (t.getMachines.isBound && t.getECT > low && t.getLST <= up && t.getMinDuration > 0) {
+		if (t.getMachines.isBoundTo(r) && t.getECT > low && t.getLST <= up && t.getMinDuration > 0) {
 			
-			res = MultiCumulative.adjustMin(t.getResource, limits(r) - (sweepLine.sumHeight - t.getMaxResource))
+			res = MultiCumulative.adjustHeight(t, limits(r) - (sweepLine.sumHeight - t.getMaxResource), minCumulative) // TODO
 		}
 			
 		return res
@@ -250,7 +250,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		var sumHeight  : Int = _ //Size : number of machines
 		var nTasks     : Int = _ //Size : number of machines
-		var stackPrune : List[CumulativeActivity] = Nil
+		var stackPrune : List[Int] = Nil
 		
 		def reset = {
 			
@@ -273,7 +273,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 	
 	import EventType._
 	
-	class Event(e : EventType, t : CumulativeActivity, d : Int, inc : Int) extends Enumeration {
+	class Event(e : EventType, t : Int, d : Int, inc : Int) extends Enumeration {
 
 		def isCheckEvent   = { e == EventType.Check }
 		def isProfileEvent = { e == EventType.Profile }
@@ -306,6 +306,15 @@ object MultiCumulative extends CPModel {
 		return (max != x.getMax, oc)
 	}
 	
+	def adjustHeight(t : CumulativeActivity, v : Int, b : Boolean) : Tuple2[Boolean, CPOutcome] = {
+
+		if (b) {
+			return adjustMin(t.getResource, v)
+		} else {		
+			return adjustMax(t.getResource, v)
+		}
+	}
+	
 	def fixVar(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		val size = x.getSize
@@ -320,34 +329,5 @@ object MultiCumulative extends CPModel {
 		val oc   = x.removeValue(v)
 		
 		return (x.getSize == size-1, oc)
-	}
-	
-	def main(args: Array[String]) {
-		
-		val cp = CPSolver()
-		
-		val t1 = new CumulativeActivity(new CPVarInt(cp, 1 to 2), // start
-										new CPVarInt(cp, 2 to 4), // duration
-										new CPVarInt(cp, 3 to 6), // end
-										new CPVarInt(cp, 0 to 0), // machine
-										new CPVarInt(cp, -1 to 1)) // resource
-		
-		val t2 = new CumulativeActivity(new CPVarInt(cp, 0 to 6), // start
-										new CPVarInt(cp, 0 to 2), // duration
-										new CPVarInt(cp, 0 to 8), // end
-										new CPVarInt(cp, 0 to 1), // machine
-										new CPVarInt(cp, -3 to 4)) // resource
-		
-		val tasks = Array(t1, t2)
-		val capacities = Array(4, 3)
-		
-		val constraint = new MultiCumulative(cp, tasks, capacities)
-		
-		constraint.propagate
-		
-		println(t2.getStart)
-		println(t2.getEnd)
-		println(t2.getDur)
-		println(t2.getResource)
 	}
 }
