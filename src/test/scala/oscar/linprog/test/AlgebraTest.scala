@@ -24,7 +24,7 @@ import oscar.linprog.modeling._
 /**
  * Test functionality of Algebra related to linear programming and the correct domain creation of variables
  */
-class AlgebraTestLinearExpression extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class AlgebraTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 
   
 	val lp = new LPSolver()
@@ -83,7 +83,26 @@ class AlgebraTestLinearExpression extends FunSuite with ShouldMatchers with LPMo
     
 	y4.lb should equal (0)
 	y4.unbounded should equal (false)
-  }  
+  } 
+  
+  test("large sum") {
+	class MyVar(val index: Int) extends Var {
+	  def name = "MyVar"
+	  val ub = 0.0
+      val lb = 0.0
+      
+	}
+ 
+	val x = Array.tabulate(100000)(i => new MyVar(i))
+	val mysum = sum(x)
+	println("large sum done")
+
+	
+  }    
+  
+  
+  
+  
   
 
 }

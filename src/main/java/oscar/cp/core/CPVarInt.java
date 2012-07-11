@@ -316,7 +316,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 		
 		int omin = dom.getMin();
 		
-		//must notifyAC3 the removed value before the actual removal
+		//must notif AC5 event with the removed values before the actual removal
 		if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 			for (int i = dom.getMin(); i < val; i++) {
 				if(dom.hasValue(i)) {
