@@ -15,7 +15,7 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
+class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : Array[Int], upperBound : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
@@ -110,8 +110,8 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				//if (tasks(i).getMaxResource < 0) {
 				if (cons != 0 || capa != 0) {
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, cons, capa)  // TODO
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -cons, -capa) // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, cons, capa)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -cons, -capa) 
 				}			
 			}
 			
@@ -159,7 +159,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				// If we have considered all the events of the previous date
 				if (d != event.date) {
 					// Consistency check
-					if (nTasks > 0 && consSumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
+					if ((nTasks > 0 && consSumHeight < lowerBound(r)) || capaSumHeight > upperBound(r)) return (change, CPOutcome.Failure)
 					// Pruning (this will empty the stackPrune list)
 					res = prune(r, d, event.date - 1)
 					change |= res._1
@@ -169,11 +169,14 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				}
 				
 				if (event.isCheckEvent)
-					nTasks += event.consInc
+					nTasks += event.capaInc
 				else if (event.isProfileEvent) {
 					
 					consSumHeight += event.consInc
 					consContribution(event.task) += event.consInc
+					
+					capaSumHeight += event.capaInc
+					capaContribution(event.task) += event.capaInc
 				}
 			}
 			else {
@@ -184,7 +187,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		}
 		
 		// Consistency check
-		if (nTasks > 0 && consSumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
+		if ((nTasks > 0 && consSumHeight < lowerBound(r)) || capaSumHeight > upperBound(r)) return (change, CPOutcome.Failure)
 		// Pruning
 		res = prune(r, d, d)
 		change |= res._1
