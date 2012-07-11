@@ -11,13 +11,17 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPModel
+import oscar.reversible.ReversibleSetIndexedArray
 
 /**
  * 
  * 
  * 
  */
-class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : Int, upperBound : Int, r : Int) extends Constraint(tasks(0).getMachines.getStore(), "Cumulative") {
+class Cumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], lowerBound : Int, upperBound : Int, r : Int) extends Constraint(allTasks(0).getMachines.getStore, "Cumulative") {
+	
+	var tasks : Array[CumulativeActivity] = allTasks
+	var relevantTasks = new ReversibleSetIndexedArray(allTasks(0).getMachines.getStore, 0, allTasks.size-1, false)
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
@@ -34,9 +38,17 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 		stackPrune = Nil
 	}
 	
+	def filterTasks = {
+		
+		for (i <- 0 until allTasks.size) 
+			if (!allTasks(i).getMachines.hasValue(r))
+				relevantTasks.removeValue(i)
+	}
+	
 	override def setup(l: CPPropagStrength) : CPOutcome =  {
 		
-		// TODO : Generate the set of relevant activities 
+		// Keeps only the relevant tasks
+		filterTasks
 		
         val oc = propagate()
         
@@ -46,15 +58,15 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
         		if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
         		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
         		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-        		// TODO Pierre : is it registered only for the specified value ?
-        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callValRemoveIdxWhenValueIsRemoved(this, r)
+        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callValRemoveIdxWhenValueIsRemoved(this, i)
+        	    if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenBind(this)
         	}
         }
         
         return oc      
   	}
-  
-	override def propagate(): CPOutcome = {
+
+	override def propagate() : CPOutcome = {
 		
 		var modified = true
 		var res : Tuple2[Boolean, CPOutcome] = null
@@ -69,12 +81,22 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 		return CPOutcome.Suspend
 	}
 	
+	override def valRemoveIdx(x : CPVarInt, i : Int, v : Int) : CPOutcome = {
+		
+		if (v == r) {
+			relevantTasks.removeValue(i)
+			return propagate
+		} else {
+			return CPOutcome.Suspend
+		}
+	}
+	
 	def generateEventPointSeries : Boolean = {
 		
 		// Reset eventPointSeries
 		eventPointSeries.clear
 		
-		// 
+		// True if a profile event has been generated
 		var profileEvent = false
 		
 		// For each cumulative activity
@@ -96,6 +118,8 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 					// Generate events
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource())  // TODO
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource()) // TODO
+					
+					profileEvent = true
 				}			
 			}
 			
@@ -107,6 +131,8 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 					// Generate events		
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource())  // TODO
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource()) // TODO
+				
+					profileEvent = true
 				}
 				
 				// Pruning (if something is not fixed)
@@ -118,9 +144,7 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 			}			
 		}
 		
-		// TODO : switch
-		//profileEvent
-		true
+		profileEvent
 	}
 	
 	def nextEvent = if (eventPointSeries.size > 0) eventPointSeries.dequeue else null
@@ -133,10 +157,18 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 		// Reset the parameters of the sweep line
 		resetSweepLine
 		
+		// Get the tasks on this machine
+		tasks = relevantTasks.getValues.map(allTasks(_))
+		
+		// If no task on this machine, stop
+		if (tasks.isEmpty) return (change, CPOutcome.Suspend)
+		
 		// Generate events (no need to sort them as we use a priorityQueue)
-		if (!generateEventPointSeries) CPOutcome.Suspend
+		// If no profile event, no pruning so stop
+		if (!generateEventPointSeries) return (change, CPOutcome.Suspend)
 		
 		var event = nextEvent
+		
 		var d = event.date
 		
 		while (event != null) {
@@ -243,12 +275,38 @@ class Cumulative(cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : I
 		return (change, CPOutcome.Suspend)
 	}
 	
+	// TODO : Check correctness
 	def pruneForbiden(t : CumulativeActivity, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		var change = false
-		
-		//TODO
+		var res : Tuple2[Boolean, CPOutcome] = null
+		/*
+		// TODO : need to implement contributions array
+		if (sumHeight - t.getMaxResource + t.getMaxResource < lowerBound) {
 			
+			if (t.getECT > low && t.getLST <= up && t.getMinDuration > 0) {
+				
+				res = MultiCumulative.removeValue(t.getMachines, r)
+				change |= res._1
+				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+				
+			} else if (t.getMachines.isBoundTo(r)) {
+				
+				if (t.getMinDuration > 0) {
+					
+					// Prune interval only if it is on the bounds 
+					// Is it possible ?
+					
+					// Pruning end of t is relevant iff d is bounded !
+				}
+				
+				val maxD = max(max(low - t.getEST, t.getLCT - up - 1), 0)
+				res = MultiCumulative.adjustMin(t.getDur, maxD)
+				change |= res._1
+				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+			}
+		}
+			*/
 		return (change, CPOutcome.Suspend)
 	}
 	
