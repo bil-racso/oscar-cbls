@@ -51,7 +51,9 @@ trait LPModel extends AbstractLPModel {
 		val solver = solverLib match {
 		  case LPSolverLib.lp_solve => new LPSolve()
 		  case LPSolverLib.glpk => new GlpkLP()
-		  case _  => new LPSolve()		
+		  case LPSolverLib.cplex => new CplexLP()
+		  case LPSolverLib.gurobi => new GurobiLP()
+		  case _  => new LPSolve()              
 		}
 
 		def getReducedCost(varId : Int) : Double = solver.getReducedCost(varId)

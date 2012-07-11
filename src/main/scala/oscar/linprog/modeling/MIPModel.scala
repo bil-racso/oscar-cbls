@@ -59,10 +59,12 @@ trait MIPModel extends AbstractLPModel {
 
   
 		val solver = solverLib match {
-		  case LPSolverLib.lp_solve => new LPSolve()
-		  case LPSolverLib.glpk => new GlpkMIP()
-		  case _  => new LPSolve()		
-		}
+                  case LPSolverLib.lp_solve => new LPSolve()
+                  case LPSolverLib.glpk => new GlpkMIP()
+                  case LPSolverLib.cplex => new CplexLP()
+                  case LPSolverLib.gurobi => new GurobiLP()
+                  case _  => new LPSolve()              
+        }
 		
 		override def setVarProperties() = {
 			super.setVarProperties();
