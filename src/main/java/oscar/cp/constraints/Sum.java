@@ -68,7 +68,6 @@ public class Sum extends Constraint {
 			maxsumx += x[i].getMax();
 			minsumx += x[i].getMin();
 		}
-		
 		if (y.updateMax(maxsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -76,7 +75,6 @@ public class Sum extends Constraint {
 		if (y.updateMin(minsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		
 		for (int i = 0; i < x.length; i++) {
 			int maxsumxi = maxsumx - x[i].getMax();
 			int minsumxi = minsumx - x[i].getMin();

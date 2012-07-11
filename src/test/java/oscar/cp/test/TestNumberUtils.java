@@ -73,5 +73,15 @@ public class TestNumberUtils extends TestCase {
     	assertEquals(NumberUtils.ceilDiv(7, -2),-3);
     }
     
+    public void testFloorDiv() {    	
+    	assertEquals(NumberUtils.floorDiv(385810, 100000),3);
+    	assertEquals(NumberUtils.floorDiv(495700, 100000),4);
+    	assertEquals(NumberUtils.floorDiv(-5, 2),-3);
+    	
+    }
+    
+    
+
+    
     
 }

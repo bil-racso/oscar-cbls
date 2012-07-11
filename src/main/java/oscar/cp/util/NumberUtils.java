@@ -53,13 +53,21 @@ public class NumberUtils {
 		}
 	}
 	
+	public static boolean negativeProduct(int v1, int v2) {
+		return (v2 < 0 ^ v1 < 0) && (v1 != 0 && v2 != 0);
+	}
+	
+	public static boolean positiveProduct(int v1, int v2) {
+		return (v2 > 0 && v1 > 0) || (v1 < 0 && v2 < 0);
+	}
+	
 	/**
 	 * @param v1
 	 * @param v2 != 0
 	 * @return ceil(v1/v2)
 	 */
 	public static int ceilDiv(int v1, int v2) {
-		return v1 / v2 + (((v1%v2 != 0) && (v2*v1 > 0)) ? 1 : 0);
+		return v1 / v2 + (((v1%v2 != 0) && positiveProduct(v1,v2)) ? 1 : 0);
 	}
 	
 	/**
@@ -68,7 +76,7 @@ public class NumberUtils {
 	 * @return floor(v1/v2)
 	 */
 	public static int floorDiv(int v1, int v2) {
-		return v1 / v2 - (((v1%v2 != 0) && (v2*v1 < 0)) ? 1 : 0);
+		return v1 / v2 - (((v1%v2 != 0) && negativeProduct(v1,v2)) ? 1 : 0);
 	}	
 	
 	/**

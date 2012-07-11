@@ -836,6 +836,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
      */
 	public CPVarInt plus(CPVarInt y) {
 		CPVarInt c;
+		/*
 		if (this.getSize() * y.getSize() <= 500) {
 			Set<Integer> vals = new java.util.HashSet<Integer>();
 			for (int v1: this) {
@@ -844,10 +845,10 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 				}
 			}
 			c = new CPVarInt(getStore(),vals);
-		}
-		else {
+		}*/
+		//else {
 			c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
-		}
+		//}
 		CPOutcome ok = s.post(new Sum(new CPVarInt[]{this,y},c));
         assert (ok != CPOutcome.Failure);
 		return c;

@@ -52,6 +52,7 @@ public class MulCte extends Constraint {
 			x.callPropagateWhenBoundsChange(this);
 			z.callPropagateWhenBoundsChange(this);
 		}
+		/*
 		if (l == CPPropagStrength.Strong) {
 			if (x.getSize() <= 100) { // remove all numbers not multiples of c if dom size to too big
 				for (int v = z.getMin(); v <= z.getMax(); v++) {
@@ -62,13 +63,14 @@ public class MulCte extends Constraint {
 					}
 				}
 			}
-		}
+		}*/
 		return ok;
 	}
 	
 	@Override
 	protected CPOutcome propagate() {
 		if (x.isBound()) {
+			
 			if (z.assign(NumberUtils.safeMul(c , x.getValue())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
