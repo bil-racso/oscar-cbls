@@ -1,20 +1,19 @@
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *   
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *  
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *  
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
 package oscar.cp.core;
 
 import java.util.Collections;
@@ -837,6 +836,7 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
      */
 	public CPVarInt plus(CPVarInt y) {
 		CPVarInt c;
+		/*
 		if (this.getSize() * y.getSize() <= 500) {
 			Set<Integer> vals = new java.util.HashSet<Integer>();
 			for (int v1: this) {
@@ -845,10 +845,10 @@ public class CPVarInt implements Iterator<Integer>, Iterable<Integer>{
 				}
 			}
 			c = new CPVarInt(getStore(),vals);
-		}
-		else {
+		}*/
+		//else {
 			c = new CPVarInt(getStore(),getMin() + y.getMin(),getMax() + y.getMax());
-		}
+		//}
 		CPOutcome ok = s.post(new Sum(new CPVarInt[]{this,y},c));
         assert (ok != CPOutcome.Failure);
 		return c;
