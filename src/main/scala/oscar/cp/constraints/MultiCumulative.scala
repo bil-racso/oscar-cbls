@@ -19,7 +19,11 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
-
+	
+	val consContribution = new Array[Int](tasks.size)
+	val capaContribution = new Array[Int](tasks.size)
+	
+	// Sweep line
 	var consSumHeight  : Int = 0
 	var capaSumHeight  : Int = 0
 	var nTasks     : Int = 0
@@ -32,13 +36,10 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		stackPrune = Nil
 			
 		for (i <- 0 until tasks.size) {
-			minContribution(i) = 0
-			maxContribution(i) = 0
+			consContribution(i) = 0
+			capaContribution(i) = 0
 		}
 	}
-	
-	val minContribution = new Array[Int](tasks.size)
-	val maxContribution = new Array[Int](tasks.size)
 	
 	val toPropagate = new Array[Boolean](lowerBound.size)
 	
@@ -103,22 +104,28 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				}
 				
 				// Profile (Bad)
-				if (tasks(i).getMaxResource < 0) { // TODO
-					
+				val cons = min(0, tasks(i).getMaxResource)
+				val capa = max(0, tasks(i).getMinResource)
+				
+				//if (tasks(i).getMaxResource < 0) {
+				if (cons != 0 || capa != 0) {
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource(), 0)  // TODO
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource(), 0) // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, cons, capa)  // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -cons, -capa) // TODO
 				}			
 			}
 			
 			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good)
-				if (tasks(i).getMaxResource > 0) { // TODO
-					
-					// Generate events		
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource(), 0)  // TODO
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource(), 0) // TODO
+				val cons = max(0, tasks(i).getMaxResource)
+				val capa = min(0, tasks(i).getMinResource)
+				
+				//if (tasks(i).getMaxResource > 0) { 
+				if (cons != 0 || capa != 0) {
+					// Generate events	
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, cons, capa)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -cons, -capa)
 				}
 				
 				// Pruning (if something is not fixed)
@@ -166,7 +173,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				else if (event.isProfileEvent) {
 					
 					consSumHeight += event.consInc
-					minContribution(event.task) += event.consInc
+					consContribution(event.task) += event.consInc
 				}
 			}
 			else {
@@ -215,7 +222,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Consistency check
-		if (nTasks == 0 || (consSumHeight - minContribution(t)) >= lowerBound(r)) { // TODO
+		if (nTasks == 0 || (consSumHeight - consContribution(t)) >= lowerBound(r)) { // TODO
 			return (change, CPOutcome.Suspend)
 		}
 		
@@ -267,7 +274,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (consSumHeight - minContribution(t)))
+			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (consSumHeight - consContribution(t)))
 		}
 			
 		return res
