@@ -15,13 +15,21 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
+class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
 	val sweepLine : SweepLine = new SweepLine
 	
+	val minContribution = new Array[Int](tasks.size)
+	val maxContribution = new Array[Int](tasks.size)
+	
+	val toPropagate = new Array[Boolean](lowerBound.size)
+	
 	override def setup(l: CPPropagStrength) : CPOutcome =  {
+		
+		for (i <- 0 until lowerBound.size)
+			toPropagate(i) = true
 		
         val oc = propagate()
         
@@ -43,7 +51,9 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		var change = true
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
-		for (i <- 0 until limits.size) {
+		for (i <- 0 until lowerBound.size; if (toPropagate(i))) {
+			
+			//toPropagate(i) = false
 			
 			while (change) {
 				
@@ -69,7 +79,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
-				if (tasks(i).getMaxResource < max(0, limits(r))) { // TODO
+				if (tasks(i).getMaxResource < max(0, lowerBound(r))) { // TODO
 					
 					// Generate events
 					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
@@ -126,7 +136,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 				// If we have considered all the events of the previous date
 				if (d != event.date) {
 					// Consistency check
-					if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
+					if (sweepLine.nTasks > 0 && sweepLine.sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
 					// Pruning (this will empty the stackPrune list)
 					res = prune(r, d, event.date - 1)
 					change |= res._1
@@ -137,8 +147,11 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 				
 				if (event.isCheckEvent)
 					sweepLine.nTasks += event.increment
-				else if (event.isProfileEvent)
+				else if (event.isProfileEvent) {
+					
 					sweepLine.sumHeight += event.increment
+					minContribution(event.task) += event.increment
+				}
 			}
 			else {
 				sweepLine.stackPrune = event.task :: sweepLine.stackPrune
@@ -148,7 +161,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		}
 		
 		// Consistency check
-		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
+		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
 		// Pruning
 		res = prune(r, d, d)
 		change |= res._1
@@ -164,15 +177,15 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		
 		for (i <- 0 until sweepLine.stackPrune.size) {
 			
-			res = pruneMandatory(tasks(sweepLine.stackPrune(i)), r, low, up)
+			res = pruneMandatory(sweepLine.stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneForbiden(tasks(sweepLine.stackPrune(i)), r, low, up)
+			res = pruneForbiden(sweepLine.stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneConsumption(tasks(sweepLine.stackPrune(i)), r, low, up)
+			res = pruneConsumption(sweepLine.stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		}	
@@ -180,50 +193,50 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		return (change, CPOutcome.Suspend)
 	}
 	
-	def pruneMandatory(t : CumulativeActivity, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
+	def pruneMandatory(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		var change = false
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Consistency check
-		if (sweepLine.nTasks == 0 || (sweepLine.sumHeight - t.getMaxResource) >= limits(r)) { // TODO
+		if (sweepLine.nTasks == 0 || (sweepLine.sumHeight - minContribution(t)) >= lowerBound(r)) { // TODO
 			return (change, CPOutcome.Suspend)
 		}
 		
 		// Fix the activity to the machine r and check consistency
-		res = MultiCumulative.fixVar(t.getMachines, r)
+		res = MultiCumulative.fixVar(tasks(t).getMachines, r)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the EST of the activity and check consistency
-		res = MultiCumulative.adjustMin(t.getStart, up - t.getMaxDuration + 1)
+		res = MultiCumulative.adjustMin(tasks(t).getStart, up - tasks(t).getMaxDuration + 1)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the LST of the activity and check consistency
-		res = MultiCumulative.adjustMax(t.getStart, low)
+		res = MultiCumulative.adjustMax(tasks(t).getStart, low)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the LCT of the activity and check consistency
-		res = MultiCumulative.adjustMax(t.getEnd, low + t.getMaxDuration)
+		res = MultiCumulative.adjustMax(tasks(t).getEnd, low + tasks(t).getMaxDuration)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the ECT of the activity and check consistency
-		res = MultiCumulative.adjustMin(t.getEnd, up + 1)
+		res = MultiCumulative.adjustMin(tasks(t).getEnd, up + 1)
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		
 		// Adjust the minimal duration of the activity and check consistency
-		res = MultiCumulative.adjustMin(t.getDur, min(up - t.getLST+1, t.getECT-low))
+		res = MultiCumulative.adjustMin(tasks(t).getDur, min(up - tasks(t).getLST+1, tasks(t).getECT-low))
 		change |= res._1
 		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
 		return (change, CPOutcome.Suspend)
 	}
 	
-	def pruneForbiden(t : CumulativeActivity, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
+	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		var change = false
 		
@@ -232,13 +245,13 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 		return (change, CPOutcome.Suspend)
 	}
 	
-	def pruneConsumption(t : CumulativeActivity, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
+	def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		var res : Tuple2[Boolean, CPOutcome] = (false, CPOutcome.Suspend)
 		
-		if (t.getMachines.isBoundTo(r) && t.getECT > low && t.getLST <= up && t.getMinDuration > 0) {
+		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			res = MultiCumulative.adjustHeight(t, limits(r) - (sweepLine.sumHeight - t.getMaxResource), minCumulative) // TODO
+			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (sweepLine.sumHeight - minContribution(t)))
 		}
 			
 		return res
@@ -257,6 +270,11 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits :
 			sumHeight  = 0
 			nTasks     = 0
 			stackPrune = Nil
+			
+			for (i <- 0 until tasks.size) {
+				minContribution(i) = 0
+				maxContribution(i) = 0
+			}
 		}
 	}
 	
