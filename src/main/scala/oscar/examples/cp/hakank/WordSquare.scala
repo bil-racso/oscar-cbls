@@ -78,7 +78,8 @@ object WordSquare extends CPModel {
     // data
     //
     var word_list = "/usr/share/dict/words"
-    var word_len = 4
+    var word_len = 5
+    println("word_len:"+word_len)
     var num_to_show = 20
 
     if (args.length > 0) {
@@ -115,7 +116,7 @@ object WordSquare extends CPModel {
     // variables
     //
     // word matrix 
-    val A = Array.fill(num_words)(Array.fill(word_len)(CPVarInt(cp, 0 to num_letters)))
+    val A = Array.tabulate(num_words,word_len)((i,j) => d(words(i)(j)))
     val A_flat = A.flatten
 
     // the selected words
@@ -129,30 +130,20 @@ object WordSquare extends CPModel {
 
     cp.solveAll subjectTo {
 
-        cp.add(alldifferent(E), Strong)
+        cp.add(alldifferent(E),Weak)
 
-        // copy the words to the A matrix
-        for(i <- 0 until num_words) {
-          val s = words(i)
-          for(j <- WORDLEN) {
-            cp.add(A(i)(j) == d(s(j)))
-          }
-        }
 
         // now find the connections
         for(i <- WORDLEN) {
           for(j <- WORDLEN) {
-            cp.add(element(A_flat, E(i)*word_len+j) ==
-                   element(A_flat, E(j)*word_len+i))
+            cp.add(element(A, E(i),CPVarInt(cp,j)) == element(A, E(j),CPVarInt(cp,i)))
           }
         }
 
 
     } exploration {
 
-      // cp.binary(E ++ A_flat)
-      cp.binaryFirstFail(E ++ A_flat)
-      // cp.binaryMaxDegree(E ++ A_flat)
+      cp.binaryFirstFail(E)
 
       println("solution #" + (numSols+1))
       E.foreach(e=> println(words(e.getValue())))
