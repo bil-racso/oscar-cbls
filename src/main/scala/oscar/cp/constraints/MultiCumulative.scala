@@ -19,7 +19,22 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
-	val sweepLine : SweepLine = new SweepLine
+
+	var sumHeight  : Int = _ //Size : number of machines
+	var nTasks     : Int = _ //Size : number of machines
+	var stackPrune : List[Int] = Nil
+		
+	def reset = {
+			
+		sumHeight  = 0
+		nTasks     = 0
+		stackPrune = Nil
+			
+		for (i <- 0 until tasks.size) {
+			minContribution(i) = 0
+			maxContribution(i) = 0
+		}
+	}
 	
 	val minContribution = new Array[Int](tasks.size)
 	val maxContribution = new Array[Int](tasks.size)
@@ -121,7 +136,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Reset the parameters of the sweep line
-		sweepLine.reset
+		reset
 		
 		// Generate events (no need to sort them as we use a priorityQueue)
 		generateEventPointSeries(r)
@@ -136,7 +151,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				// If we have considered all the events of the previous date
 				if (d != event.date) {
 					// Consistency check
-					if (sweepLine.nTasks > 0 && sweepLine.sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
+					if (nTasks > 0 && sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
 					// Pruning (this will empty the stackPrune list)
 					res = prune(r, d, event.date - 1)
 					change |= res._1
@@ -146,22 +161,22 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				}
 				
 				if (event.isCheckEvent)
-					sweepLine.nTasks += event.increment
+					nTasks += event.increment
 				else if (event.isProfileEvent) {
 					
-					sweepLine.sumHeight += event.increment
+					sumHeight += event.increment
 					minContribution(event.task) += event.increment
 				}
 			}
 			else {
-				sweepLine.stackPrune = event.task :: sweepLine.stackPrune
+				stackPrune = event.task :: stackPrune
 			}
 			
 			event = nextEvent
 		}
 		
 		// Consistency check
-		if (sweepLine.nTasks > 0 && sweepLine.sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
+		if (nTasks > 0 && sumHeight < lowerBound(r)) return (change, CPOutcome.Failure) // TODO
 		// Pruning
 		res = prune(r, d, d)
 		change |= res._1
@@ -175,17 +190,17 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var change = false
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
-		for (i <- 0 until sweepLine.stackPrune.size) {
+		for (i <- 0 until stackPrune.size) {
 			
-			res = pruneMandatory(sweepLine.stackPrune(i), r, low, up)
+			res = pruneMandatory(stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneForbiden(sweepLine.stackPrune(i), r, low, up)
+			res = pruneForbiden(stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			
-			res = pruneConsumption(sweepLine.stackPrune(i), r, low, up)
+			res = pruneConsumption(stackPrune(i), r, low, up)
 			change |= res._1
 			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 		}	
@@ -199,7 +214,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Consistency check
-		if (sweepLine.nTasks == 0 || (sweepLine.sumHeight - minContribution(t)) >= lowerBound(r)) { // TODO
+		if (nTasks == 0 || (sumHeight - minContribution(t)) >= lowerBound(r)) { // TODO
 			return (change, CPOutcome.Suspend)
 		}
 		
@@ -251,31 +266,10 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (sweepLine.sumHeight - minContribution(t)))
+			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (sumHeight - minContribution(t)))
 		}
 			
 		return res
-	}
-
-	/** The Sweep Line
-	 */
-	class SweepLine() {
-		
-		var sumHeight  : Int = _ //Size : number of machines
-		var nTasks     : Int = _ //Size : number of machines
-		var stackPrune : List[Int] = Nil
-		
-		def reset = {
-			
-			sumHeight  = 0
-			nTasks     = 0
-			stackPrune = Nil
-			
-			for (i <- 0 until tasks.size) {
-				minContribution(i) = 0
-				maxContribution(i) = 0
-			}
-		}
 	}
 	
 	/** The Event
