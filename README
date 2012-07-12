@@ -12,3 +12,18 @@ Currently the content of OscaR is:
 - dfo: a package to solve derivative free optimization problems
 - des: a package to model discrete event simulation problems
 - visu: a package to build quickly visualizations for your optimization problem
+
+People having contributed to this project:
+
+Bertrand Cornelusse (n-side)
+Cyrille Dejemeppe (ucl)
+Renaud De Landtsheer (cbls, cetic)
+Renaud Hartert (ucl)
+HŒkan Kjellerstrand (cp blog)
+Hrayr Kostanyan (ulb)
+Gilles Meyer (n-side)
+SŽbastien Mouthuy (n-side)
+Christophe Ponsard (cbls, cetic)
+Pierre Schaus (cp blog)
+Gilles Scouvart (n-side)
+
