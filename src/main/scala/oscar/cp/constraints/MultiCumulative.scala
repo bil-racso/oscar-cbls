@@ -15,37 +15,33 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBound : Array[Int], upperBound : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
+class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limits : Array[Int], minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MultiCumulative") {
 	
 	// Event Point Series
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
-	
-	val consContribution = new Array[Int](tasks.size)
-	val capaContribution = new Array[Int](tasks.size)
-	
-	// Sweep line
-	var consSumHeight  : Int = 0
-	var capaSumHeight  : Int = 0
-	var nTasks     : Int = 0
+
+	var sumHeight  : Int = _ //Size : number of machines
+	var nTasks     : Int = _ //Size : number of machines
 	var stackPrune : List[Int] = Nil
 		
 	def reset = {
 			
-		consSumHeight  = 0
+		sumHeight  = 0
 		nTasks     = 0
 		stackPrune = Nil
 			
 		for (i <- 0 until tasks.size) {
-			consContribution(i) = 0
-			capaContribution(i) = 0
+			contribution(i) = 0
 		}
 	}
 	
-	val toPropagate = new Array[Boolean](lowerBound.size)
+	val contribution = new Array[Int](tasks.size)
+	
+	val toPropagate = new Array[Boolean](limits.size)
 	
 	override def setup(l: CPPropagStrength) : CPOutcome =  {
 		
-		for (i <- 0 until lowerBound.size)
+		for (i <- 0 until limits.size)
 			toPropagate(i) = true
 		
         val oc = propagate()
@@ -68,7 +64,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var change = true
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
-		for (i <- 0 until lowerBound.size; if (toPropagate(i))) {
+		for (i <- 0 until limits.size; if (toPropagate(i))) {
 			
 			//toPropagate(i) = false
 			
@@ -96,43 +92,37 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
-				if (tasks(i).getMaxResource < max(0, lowerBound(r))) { // TODO
+				if (tasks(i).getMaxResource < max(0, limits(r))) { // TODO
 					
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1, 1)
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1, -1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
 				}
 				
 				// Profile (Bad)
-				val cons = min(0, tasks(i).getMaxResource)
-				val capa = max(0, tasks(i).getMinResource)
-				
-				//if (tasks(i).getMaxResource < 0) {
-				if (cons != 0 || capa != 0) {
+				if (tasks(i).getMaxResource < 0) { // TODO
+					
 					// Generate events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, cons, capa)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -cons, -capa) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource())  // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource()) // TODO
 				}			
 			}
 			
 			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good)
-				val cons = max(0, tasks(i).getMaxResource)
-				val capa = min(0, tasks(i).getMinResource)
-				
-				//if (tasks(i).getMaxResource > 0) { 
-				if (cons != 0 || capa != 0) {
-					// Generate events	
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, cons, capa)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -cons, -capa)
+				if (tasks(i).getMaxResource > 0) { // TODO
+					
+					// Generate events		
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource())  // TODO
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource()) // TODO
 				}
 				
 				// Pruning (if something is not fixed)
 				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBoundTo(r) && tasks(i).getResource.isBound)) {
 					
 					// Generate event
-					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0, 0)
+					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0)
 				}
 			}			
 		}
@@ -159,7 +149,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				// If we have considered all the events of the previous date
 				if (d != event.date) {
 					// Consistency check
-					if ((nTasks > 0 && consSumHeight < lowerBound(r)) || capaSumHeight > upperBound(r)) return (change, CPOutcome.Failure)
+					if (nTasks > 0 && sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
 					// Pruning (this will empty the stackPrune list)
 					res = prune(r, d, event.date - 1)
 					change |= res._1
@@ -169,14 +159,11 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 				}
 				
 				if (event.isCheckEvent)
-					nTasks += event.capaInc
+					nTasks += event.increment
 				else if (event.isProfileEvent) {
 					
-					consSumHeight += event.consInc
-					consContribution(event.task) += event.consInc
-					
-					capaSumHeight += event.capaInc
-					capaContribution(event.task) += event.capaInc
+					sumHeight += event.increment
+					contribution(event.task) += event.increment
 				}
 			}
 			else {
@@ -187,7 +174,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		}
 		
 		// Consistency check
-		if ((nTasks > 0 && consSumHeight < lowerBound(r)) || capaSumHeight > upperBound(r)) return (change, CPOutcome.Failure)
+		if (nTasks > 0 && sumHeight < limits(r)) return (change, CPOutcome.Failure) // TODO
 		// Pruning
 		res = prune(r, d, d)
 		change |= res._1
@@ -225,7 +212,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		var res : Tuple2[Boolean, CPOutcome] = null
 		
 		// Consistency check
-		if (nTasks == 0 || (consSumHeight - consContribution(t)) >= lowerBound(r)) { // TODO
+		if (nTasks == 0 || (sumHeight - contribution(t)) >= limits(r)) { // TODO
 			return (change, CPOutcome.Suspend)
 		}
 		
@@ -265,8 +252,29 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
 		
 		var change = false
+		var res : Tuple2[Boolean, CPOutcome] = null
 		
-		//TODO
+		if (sumHeight - contribution(r) + tasks(t).getMaxResource < limits(r)) {
+			
+			if (tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
+					
+				res = MultiCumulative.removeValue(tasks(t).getMachines, r)
+				change |= res._1
+				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+				
+			} else if (tasks(t).getMachines.isBoundTo(r)) {
+				
+				if (tasks(t).getMinDuration > 0) {
+					
+					//INTERVAL PRUNING
+				}
+				
+				val maxD = max(max(low - tasks(t).getEST, tasks(t).getLCT -up - 1), 0)
+				res = MultiCumulative.adjustMax(tasks(t).getDur, maxD)
+				change |= res._1
+				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+			}
+		}
 			
 		return (change, CPOutcome.Suspend)
 	}
@@ -277,7 +285,7 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			res = MultiCumulative.adjustMin(tasks(t).getResource, lowerBound(r) - (consSumHeight - consContribution(t)))
+			res = MultiCumulative.adjustMin(tasks(t).getResource, limits(r) - (sumHeight - contribution(t)))
 		}
 			
 		return res
@@ -296,19 +304,18 @@ class MultiCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lowerBou
 	
 	import EventType._
 	
-	class Event(e : EventType, t : Int, d : Int, cons : Int, capa : Int) extends Enumeration {
+	class Event(e : EventType, t : Int, d : Int, inc : Int) extends Enumeration {
 
 		def isCheckEvent   = { e == EventType.Check }
 		def isProfileEvent = { e == EventType.Profile }
 		def isPruningEvent = { e == EventType.Pruning }
 		
-		def date    = d
-		def eType   = e
-		def consInc = cons
-		def capaInc = capa
-		def task    = t
+		def date      = d
+		def eType     = e
+		def increment = inc
+		def task      = t
 		
-		override def toString = { "<" + e + ", " + t + ", " + d + ", " + cons + "," + capa +">" }
+		override def toString = { "<" + e + ", " + t + ", " + d + ", " + inc +">" }
 	}
 }
 

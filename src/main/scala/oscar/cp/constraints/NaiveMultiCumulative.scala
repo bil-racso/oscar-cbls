@@ -80,7 +80,7 @@ object NaiveMultiCumulative extends CPModel {
 					// Get all tasks on this machine
 	 				def overlap(i: Int) = (m(i) === machine) && (s(i) <== t) && (s(i)+d(i) >>= t)
 					// The consumption of all those tasks must be leq than the capacity of the machine
-	 				cp.add(sum(tasks)(i => overlap(i)*r(i)) >== c(machine))
+	 				cp.add(sum(tasks)(i => overlap(i)*r(i)) <== c(machine))
 				}
 		    }
 		}    

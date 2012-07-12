@@ -316,6 +316,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		
 		val tasks = Array(t1, t2)
 		val capacities = Array(4, 3)
+		val capacities2 = Array(10, 10)
 		
 		val constraint = new MultiCumulative(cp, tasks, capacities, true)
 		

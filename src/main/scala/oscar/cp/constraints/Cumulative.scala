@@ -301,7 +301,7 @@ class Cumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], lowerBound 
 				}
 				
 				val maxD = max(max(low - t.getEST, t.getLCT - up - 1), 0)
-				res = MultiCumulative.adjustMin(t.getDur, maxD)
+				res = MultiCumulative.adjustMax(t.getDur, maxD)
 				change |= res._1
 				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
 			}

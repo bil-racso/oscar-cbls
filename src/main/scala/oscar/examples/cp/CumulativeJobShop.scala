@@ -18,6 +18,7 @@
 package oscar.examples.cp
 
 import oscar.cp.constraints.NaiveMultiCumulative
+import oscar.cp.constraints.MaxMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
@@ -152,15 +153,14 @@ object CumulativeJobShop extends CPModel {
 				cp.add(activities(i)(j).act.getEnd() <= activities(i)(j+1).act.getStart())
 			}
 			
-			for (i <- 0 until act_starts.size) 
-				cp.add(act_starts(i) + act_durations(i) == act_ends(i))
-			
 			// add the unary resources
-	  	   NaiveMultiCumulative.multiCumulative(cp, activities.flatten.map(_.act), capacities)
+			//NaiveMultiCumulative.multiCumulative(cp, activities.flatten.map(_.act), capacities)
+			cp.add(new MaxMultiCumulative(cp, activities.flatten.map(_.act), capacities, true))
 
 	   } exploration {
 	       
 		   cp.binaryFirstFail(act_starts)
+		   
 		   updateVisu
 	   }
        cp.printStats()
