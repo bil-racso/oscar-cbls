@@ -15,29 +15,11 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-/*
- * Copyright CETIC 2012 www.cetic.be
- *
- * This file is part of Asteroid.
- *
- * Asteroid is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * Asteroid is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Asteroid.
- * If not, see http://www.gnu.org/licenses/lgpl-2.1-standalone.html
- *
+/*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
- */
+ ******************************************************************************/
 
 package oscar.cbls.invariants.core.computation
 
@@ -70,7 +52,7 @@ trait Bulked[VarType,BulkedComputationResult] extends Invariant{
  * In this setting, the number of dependencies is O(N) instead of O(N*N)
  * Also, if you use this, please ensure that the bulk loaded invariants will not waste their time iterating
  * on the bulked variables eg for finding the min and max value of these variables. If you need to compute some value over the bulked variables,
- * you can use the method performBulkComputation in [[invariants.core.computation.Bulk]] for good efficiency.
+ * you can use the method performBulkComputation in [[oscar.invariants.invariants.core.computation.Bulk]] for good efficiency.
  *
  */
 object BulkLoad{
