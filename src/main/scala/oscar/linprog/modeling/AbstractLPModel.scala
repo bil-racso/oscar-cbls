@@ -204,8 +204,8 @@ trait AbstractLPModel extends Algebra {
 	/**
 	 * Adjust the bound of the variable and re-optimize
 	 */
-	def setBounds(lb: Double, ub: Double) {
-	  solver.setBounds(this,lb,ub)
+	def setBounds(lb: Double, ub: Double,reoptimize: Boolean = false) {
+	  solver.setBounds(this,lb,ub,reoptimize)
 	}
 	
 	/**
@@ -323,19 +323,19 @@ trait AbstractLPModel extends Algebra {
 	  }
 	}
 	
-	def setVarBounds(x: AbstractLPVar) = {
+	def setVarBounds(x: AbstractLPVar,reoptimize: Boolean = false) = {
 	    if (x.isUnbounded) {
 			solver.setUnboundUpperBound(x.index)
 			solver.setUnboundLowerBound(x.index)
 		} else {
 			solver.setBounds(x.index, x.lb , x.ub)
 		}
-	    //solveModel()
+	    if (reoptimize) solveModel()
 	}
 	
-	def setBounds(x: AbstractLPVar, lb: Double, ub: Double) = {
+	def setBounds(x: AbstractLPVar, lb: Double, ub: Double,reoptimize: Boolean = false) = {
 		solver.setBounds(x.index,lb,ub)
-	    //solveModel()
+	    if (reoptimize) solveModel()
 	}
 	
 	

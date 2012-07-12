@@ -132,8 +132,8 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 			lp.getObjectiveValue() should equal(20)
 			lp.getStatus() should equal (LPStatus.OPTIMAL)
 			
-			x.setBounds(0,11)
-			y.setBounds(0,11)
+			x.setBounds(0,11,true) // change bounds and reoptimize 
+			y.setBounds(0,11,true)
 			
 		    x.value should equal (Some(11))
 			y.value should equal (Some(11))
