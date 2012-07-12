@@ -21,12 +21,11 @@ import oscar.cp.modeling._
 import oscar.search._
 import collection.immutable.SortedSet
 
-/**
+/*
  * Problem statement :
  * There are 13 words : BUOY, CAVE, CELT, FLUB, FORK, HEMP, JUDY, JUNK, LIMN, QUIP, SWAG, VISA, WISH
  * 24 different letters that appear in the 13 words.
  * Assign the 24 letters appearing to 4 different cubes (one letter/face) so that the 4 letters of each word appears on different cubes.
- * @author VictorJavAdore
  */
 
 object Cubes extends CPModel {
@@ -63,7 +62,7 @@ object Cubes extends CPModel {
               case (v,i) => if (v.getValue()==cube) letters(i) else "."}.mkString(" "))
       }
     }
-    // Printing some stats.
+    
     cp.printStats()
   }
 }

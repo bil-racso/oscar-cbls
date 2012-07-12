@@ -86,19 +86,12 @@ class AlgebraTest extends FunSuite with ShouldMatchers with LPModel with MIPMode
   } 
   
   test("large sum") {
-	class MyVar(val index: Int) extends Var {
-	  def name = "MyVar"
-	  val ub = 0.0
-      val lb = 0.0
-      
-	}
- 
-	val x = Array.tabulate(100000)(i => new MyVar(i))
-	val mysum = sum(x)
-	println("large sum done")
-
-	
-  }    
+	    val lp = new LPSolver()
+	    val x = Array.tabulate(100000)(i => new LPVar(lp,i.toString(),0,1))
+	    println("large sum")
+	    val mysum = sum(x)
+	    println("large sum done")
+  }     
   
   
   

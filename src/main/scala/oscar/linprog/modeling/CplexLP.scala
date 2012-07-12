@@ -46,6 +46,7 @@ class CplexLP extends AbstractLP{
   	  this.nbCols = nbCols
   	    	  
   	  model.numVarArray(model.columnArray(lp, nbCols), 0.0, java.lang.Double.MAX_VALUE) // creating nbCols variables
+  	  println("model build"+nbRows+" "+nbCols)
 	}
 	
 	def endModelBuilding() {
@@ -66,6 +67,7 @@ class CplexLP extends AbstractLP{
 			case "==" =>
 				lp.addRow(model.addEq(lin,rhs))
 		}
+		println("constraint added")
 	}
 	
 	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
@@ -119,7 +121,8 @@ class CplexLP extends AbstractLP{
        lp.getNumVar(colId).setUB(ub)
     }   
     
-    def solveModel() : LPStatus.Value = {           
+    def solveModel() : LPStatus.Value = { 
+        println("solve mode========================")
         val res = model.solve()
         
         def extractSol() = {
