@@ -330,12 +330,12 @@ trait AbstractLPModel extends Algebra {
 		} else {
 			solver.setBounds(x.index, x.lb , x.ub)
 		}
-	    solveModel()
+	    //solveModel()
 	}
 	
 	def setBounds(x: AbstractLPVar, lb: Double, ub: Double) = {
 		solver.setBounds(x.index,lb,ub)
-	    solveModel()
+	    //solveModel()
 	}
 	
 	
