@@ -63,7 +63,7 @@ object CumulativeJobShop extends CPModel {
 			println("job "+ (i+1) +"\t" + l.mkString(" "))
 			
 			machines(i)  = Array.tabulate(nTasks)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1)/6)
+			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1))
 	  	    lines = lines.drop(1)
 		}
 		
@@ -101,7 +101,7 @@ object CumulativeJobShop extends CPModel {
 		val drawing = new VisualDrawing(false)
 		
 		val yScale = 20
-		val xScale = 5
+		val xScale = 1
 		
 		
 		val cols = VisualUtil.getRandomColorArray(nMachines)
@@ -144,9 +144,10 @@ object CumulativeJobShop extends CPModel {
 		}
 	   
 		// -----------------------------------------------------------------------
-		
+
   	   	// Constraints and Solving
   	   	cp.minimize(makespan) subjectTo {
+		//cp.solve subjectTo {
 
 			// add the precedence constraints inside a job
 			for (i <- 0 until nJobs; j <- 0 until nTasks-1) {
@@ -157,12 +158,28 @@ object CumulativeJobShop extends CPModel {
 			//NaiveMultiCumulative.multiCumulative(cp, activities.flatten.map(_.act), capacities)
 			cp.add(new MaxMultiCumulative(cp, activities.flatten.map(_.act), capacities, true))
 
-	   } exploration {
-	       
-		   cp.binaryFirstFail(act_starts)
-		   
-		   updateVisu
+		} exploration {
+			
+			
+			while (!allBounds(act_starts)) {
+	  	  	   
+				val idx : Array[Int] = new Array(act_starts.size)
+	  	  	   
+				for(i <- 0 until act_starts.size)
+					idx(i) = i
+
+				val unbound = idx.filter(!act_starts(_).isBound)
+				val minDomSize = unbound.min
+				val x = unbound.filter(_ == minDomSize).first
+				val v = act_starts(x).getMin
+	  		   
+				
+				cp.branch (cp.post(act_starts(x) == v))(cp.post(act_starts(x) != v))
+	  	   }
+		 
+	  	   updateVisu
 	   }
        cp.printStats()
+       
 	}
 }
