@@ -15,6 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
+/******************************************************************************
+ * Contributors:
+ *     This code has been initially developed by CETIC www.cetic.be
+ *         by Renaud De Landtsheer
+ ******************************************************************************/
+
 package oscar.cbls.jobshop
 
 import oscar.cbls.invariants.core.computation.Model

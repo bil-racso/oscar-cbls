@@ -15,6 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
+/******************************************************************************
+ * Contributors:
+ *     This code has been initially developed by CETIC www.cetic.be
+ *         by Christophe Ponsard and Renaud De Landtsheer
+ ******************************************************************************/
+
 package oscar.cbls.constraints.tests
 
 import scala.swing.SimpleSwingApplication
