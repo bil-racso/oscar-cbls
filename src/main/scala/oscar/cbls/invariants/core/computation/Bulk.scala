@@ -52,7 +52,7 @@ trait Bulked[VarType,BulkedComputationResult] extends Invariant{
  * In this setting, the number of dependencies is O(N) instead of O(N*N)
  * Also, if you use this, please ensure that the bulk loaded invariants will not waste their time iterating
  * on the bulked variables eg for finding the min and max value of these variables. If you need to compute some value over the bulked variables,
- * you can use the method performBulkComputation in [[invariants.core.computation.Bulk]] for good efficiency.
+ * you can use the method performBulkComputation in [[oscar.cbls.invariants.core.computation.Bulk]] for good efficiency.
  *
  */
 object BulkLoad{

@@ -50,7 +50,7 @@ class CycleException(n: DAGNode) extends Exception
 
 /**This data structure performs dynamic topological sort on DAG
  * the topological sort can be performed either from scratch or maintained incrementally.
- * The topological sort is about maintaining the attribute Position in the nodes [[invariants.core.algo.dag.DAGNode]]
+ * The topological sort is about maintaining the attribute Position in the nodes [[oscar.cbls.invariants.core.algo.dag.DAGNode]]
  *
  * the topological sort is lower before
  *
@@ -111,7 +111,7 @@ trait DAG {
 
   /**to notify that an edge has been added between two nodes.
    * this will trigger a re-ordering of the nodes in the topological sort if it is activated.
-   * The reordering might lead to an exception [[invariants.core.algo.dag.CycleException]] in case there is a cycle in the graph
+   * The reordering might lead to an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case there is a cycle in the graph
    * We expect the graph to be updated prior to calling this method
    * notice that you do not need to notify edge deletion.
    */
@@ -175,7 +175,7 @@ trait DAG {
 
   /**sorts DAG nodes according to dependencies.
    * first position is set to zero.
-   * this throws an exception [[invariants.core.algo.dag.CycleException]] in case a cycle is detected
+   * this throws an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case a cycle is detected
    */
   def doDAGSort() {
     //on utilise les positions pour stocker le nombre de noeuds predecesseurs non visites, puis on met l'autre valeur apres.

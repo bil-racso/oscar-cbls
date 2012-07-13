@@ -115,7 +115,7 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
   }
 }
 
-/**This is a helper object for the [[invariants.lib.logic.DenseCluster]] and [[invariants.lib.logic.SparseCluster]] invariants.*/
+/**This is a helper object for the [[oscar.cbls.invariants.lib.logic.DenseCluster]] and [[oscar.cbls.invariants.lib.logic.SparseCluster]] invariants.*/
 object Cluster{
 
   def MakeSparse(values:Array[IntVar], clusters: Iterable[Int]):SparseCluster = {

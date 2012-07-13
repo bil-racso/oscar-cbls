@@ -137,7 +137,7 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
 
 
 /**
- * This is a binary heap that is less efficient than the [[invariants.core.algo.heap.BinomialHeap]].
+ * This is a binary heap that is less efficient than the [[oscar.cbls.invariants.core.algo.heap.BinomialHeap]].
  * It offers more operations, such as delete and update value.
  * smallest first
  * @param GetKey a function that returns an integer for each element inserted i nthe heap this value is used to sort the heap content

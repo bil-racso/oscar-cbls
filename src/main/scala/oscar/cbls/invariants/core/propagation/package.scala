@@ -25,9 +25,9 @@ package oscar.cbls.invariants.core
 
 /**
  * This package proposes a model of propagation.
- * A propagation is a wave that updates something in [[invariants.core.propagation.PropagationElement]]
+ * A propagation is a wave that updates something in [[oscar.cbls.invariants.core.propagation.PropagationElement]]
  * Propagation elements have some dependencies that must be followed by the propagation wave.
- * Propagation elements are grouped in a structure called the [[invariants.core.propagation.PropagationStructure]]
+ * Propagation elements are grouped in a structure called the [[oscar.cbls.invariants.core.propagation.PropagationStructure]]
  *
  * A propagation is like wave that sweeps the graph defined by the propagation elements,
  * calling the performPropagation method of each propagation element in such a way that

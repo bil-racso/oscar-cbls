@@ -44,7 +44,7 @@ trait ObjectiveTrait{
   /**returns the value of the objective variable if the two variables a and b were swapped values.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Varaible is registered for partial propagation
-   * @see registerForPartialPropagation() in [[invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
   def getSwapVal(a:IntVar,b:IntVar):Int = {
     a :=: b
@@ -56,14 +56,14 @@ trait ObjectiveTrait{
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Varaible is registered for partial propagation
-   * @see registerForPartialPropagation() in [[invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
   def getAssignVal(a:IntVar,v:Int):Int = getAssignVal(SortedMap(a -> v))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Varaible is registered for partial propagation
-   * @see registerForPartialPropagation() in [[invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
   def getAssignVal(a:SortedMap[IntVar,Int]):Int = {
     //memorize
