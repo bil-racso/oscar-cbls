@@ -107,12 +107,11 @@ object SmallCumulativeProblem extends CPModel {
 		
 		val cols = VisualUtil.getRandomColorArray(rectangles.size)
 		
-		val visualActivities: Set[VisualActivity] = rectangles.map(v => VisualActivity(v)).toSet
+		val visualActivities = rectangles.map(v => VisualActivity(v))
 
-		val profile = new VisualProfile(visualActivities, cols(0))
+		val profile = new VisualProfile(visualActivities, 0, 2, cols(0))
 		profile.capacity = 2		
 		frame.createFrame("Profile").add(profile)
-		profile.draw(xScale, yScale)
 	   
 		def updateVisu() = { profile.update(xScale, yScale)	}
 	   

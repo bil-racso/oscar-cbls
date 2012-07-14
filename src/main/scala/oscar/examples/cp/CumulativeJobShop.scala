@@ -19,42 +19,47 @@ package oscar.examples.cp
 
 import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.constraints.MaxMultiCumulative
+import oscar.cp.constraints.MaxCumulative
+import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.search._
 import oscar.cp.scheduling._
+import oscar.reversible.ReversibleSetIndexedArray
+import oscar.reversible.ReversibleInt
+import oscar.search._
 import oscar.visual._
+
 import scala.io.Source
-import oscar.cp.constraints.NaiveMultiCumulative
 
 object CumulativeJobShop extends CPModel {
   
 	def main(args: Array[String]) {
 	  
+		// Parsing		
+		// -----------------------------------------------------------------------
+		
 		// Read the data
 		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 		
-		// Parsing
-		val nJobs     = lines.head.trim().split(" ")(0).toInt 
-		val nTasks    = lines.head.trim().split(" ")(1).toInt
-		val nMachines = nTasks
+		val nJobs        = lines.head.trim().split(" ")(0).toInt 
+		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
+		val nMachines    = nTasksPerJob
 		
-		val Jobs     = 0 until nJobs
-		val Tasks    = 0 until nTasks
-		val Machines = 0 until nMachines
+		val Jobs        = 0 until nJobs
+		val Machines    = 0 until nMachines
 		
 		val capacity = lines.head.trim().split(" ")(2).toInt
 		
-		println("#Jobs     " + nJobs)
-		println("#Tasks    " + nTasks)
-		println("#Machines " + nMachines)
-		println("#Capacity " + capacity)
+		println("#Jobs      : " + nJobs)
+		println("#Tasks/job : " + nTasksPerJob)
+		println("#Machines  : " + nMachines)
+		println("#Capacity  : " + capacity)
 		
 		lines = lines.drop(1)
 		
 		val machines   : Array[Array[Int]] = Array.fill(nJobs, nMachines)(0)
-		val durations  : Array[Array[Int]] = Array.fill(nJobs, nTasks)(0)
-		val capacities : Array[Int] = Array.fill(nTasks)(capacity);
+		val durations  : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
+		val capacities : Array[Int] = Array.fill(nTasksPerJob)(capacity);
 		
 		for (i <- Jobs) {
 			
@@ -62,124 +67,83 @@ object CumulativeJobShop extends CPModel {
 			
 			println("job "+ (i+1) +"\t" + l.mkString(" "))
 			
-			machines(i)  = Array.tabulate(nTasks)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasks)(j => l(2*j+1))
+			machines(i)  = Array.tabulate(nTasksPerJob)(j => l(2*j))
+			durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
 	  	    lines = lines.drop(1)
 		}
 		
-		val horizon = durations.flatten.sum*5/(2*nJobs)
+		// Upper bound of the horizon
+		val horizon = durations.flatten.sum
 
+		// Modeling	
 		// -----------------------------------------------------------------------
 		
-		// Modeling
 		val cp = CPSolver()
 
-		// A cumulative JobShop activity
-		class CumJobShopAct(val act : CumulativeActivity, val job: Int)
-	   
-		val activities = Array.tabulate(nJobs, nTasks)((i,j) => {
+		// Matrix of cumulative activities (each line represents a job)
+		val jobActivities = Array.tabulate(nJobs, nTasksPerJob)((i,j) => {
 			
   	   		val dur      = CPVarInt(cp, durations(i)(j))
   	   		val start    = CPVarInt(cp,0 to horizon - dur.getMin())
   	   		
-  	   		new CumJobShopAct(CumulativeActivity(start,dur, machines(i)(j), 1), i) 
+  	   		CumulativeActivity(start,dur, machines(i)(j), 1)
   	   	}) 	   
   	   	
-  	   	val act_machines  = activities.flatten.map(_.act.getMachines)   
-  	   	val act_starts    = activities.flatten.map(_.act.getStart)  
-  	   	val act_durations = activities.flatten.map(_.act.getDur)
-  	   	val act_ends      = activities.flatten.map(_.act.getEnd)
-  	   	val act_resources = activities.flatten.map(_.act.getResource)  
+  	   	// The make span to minimize
+  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).getEnd)
   	   	
-  	   	val makespan = maximum(0 until nJobs)(i => activities(i)(nTasks-1).act.getEnd)
-  	   	
+  	   	// Visualization  
   	   	// -----------------------------------------------------------------------
-  	   	
-  	   	// Visualization   	
+  	   	 	
   	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
 		
-		val drawing = new VisualDrawing(false)
-		
-		val yScale = 20
-		val xScale = 1
-		
-		
 		val cols = VisualUtil.getRandomColorArray(nMachines)
+		val visualActivities = jobActivities.flatten.map(a => VisualActivity(a))
 		
-		frame.createFrame("Jobs").add(drawing)
+		// Gantt Chart
+		val gantt = new VisualGanttChart(visualActivities, nTasksPerJob, cols)
+		frame.createFrame("Jobs").add(gantt)
 		
-		val visualActivities: Array[Set[VisualActivity]] = Array.tabulate(nMachines){ m => 
-  	   		activities.flatten.filter(_.act.getMachines.getValue() == m).map(v => VisualActivity(v.act)).toSet
-		}
-
-		val profiles : Array[VisualProfile] = new Array(nTasks)
+		// Profiles 
+		val profiles : Array[VisualProfile] = new Array(nTasksPerJob)
 		
-		for (i <- 0 until nTasks) {
+		for (i <- Machines) {
 			
-			profiles(i) = new VisualProfile(visualActivities(i), cols(i))
-			profiles(i).capacity = 2
+			profiles(i) = new VisualProfile(visualActivities, i, capacities(i), cols(i))
 			frame.createFrame("Machine " + i).add(profiles(i))
-			profiles(i).draw(xScale, yScale)
 		}
-
-		drawing.repaint()
-		val visualAct: Array[Array[VisualRectangle]] = Array.tabulate(nJobs,nMachines){(i,j) => val activity = activities(i)(j)
-	                                                val rect = new VisualRectangle(drawing,0,yScale*activity.job, activity.act.getMinDuration()*xScale,yScale)
-	   												rect.setInnerCol(cols(activity.act.getMachines.getValue))
-	   												rect }
-
-		val makespanLine = new VisualLine(drawing,0,0,0,nJobs*yScale)
 	   
-		def updateVisu() = {
+		def updateVisu(xScale : Int, yScale : Int) = {
 			
-			for (i <- 0 until nJobs; j <- 0 until nMachines) {	       
-				visualAct(i)(j).move(activities(i)(j).act.getStart().getMin()*xScale,yScale*activities(i)(j).job)
-			}
-
-			makespanLine.setOrig(makespan.getMin()*xScale,0)
-			makespanLine.setDest(makespan.getMin()*xScale,nJobs*yScale)
+			gantt.update(xScale, yScale)
 			
-			for (i <- 0 until nTasks)
+			for (i <- Machines)
 			   profiles(i).update(xScale, yScale)
 		}
-	   
+	   	
+  	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 
-  	   	// Constraints and Solving
   	   	cp.minimize(makespan) subjectTo {
-		//cp.solve subjectTo {
 
-			// add the precedence constraints inside a job
-			for (i <- 0 until nJobs; j <- 0 until nTasks-1) {
-				cp.add(activities(i)(j).act.getEnd() <= activities(i)(j+1).act.getStart())
+			// Precedence constraints
+			for (i <- Jobs; j <- 0 until nTasksPerJob-1) {
+				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
 			}
 			
-			// add the unary resources
-			//NaiveMultiCumulative.multiCumulative(cp, activities.flatten.map(_.act), capacities)
-			cp.add(new MaxMultiCumulative(cp, activities.flatten.map(_.act), capacities, true))
+			// Cumulative constraints
+			for (i <- Machines) {
+				cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i, false))
+			}
 
 		} exploration {
 			
-			
-			while (!allBounds(act_starts)) {
-	  	  	   
-				val idx : Array[Int] = new Array(act_starts.size)
-	  	  	   
-				for(i <- 0 until act_starts.size)
-					idx(i) = i
-
-				val unbound = idx.filter(!act_starts(_).isBound)
-				val minDomSize = unbound.min
-				val x = unbound.filter(_ == minDomSize).first
-				val v = act_starts(x).getMin
-	  		   
-				
-				cp.branch (cp.post(act_starts(x) == v))(cp.post(act_starts(x) != v))
-	  	   }
-		 
-	  	   updateVisu
-	   }
-       cp.printStats()
-       
+			// Efficient but not complete search strategy
+			SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
+			// Updates the visual components
+			updateVisu(1, 20)
+		}
+		
+		cp.printStats()       
 	}
 }
