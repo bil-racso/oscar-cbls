@@ -117,6 +117,7 @@ object JobShop  extends CPModel {
 	  	   // add the unary resources
 	  	   resources.foreach(r => cp.add(r))  	   	   
 	   } exploration {
+	     
 		 println("cricicality:"+(0 until m).map(resources(_).getCriticality()).mkString(","))
 		 // search
 	     for (r <- (0 until m).sortBy(-resources(_).getCriticality()).suspendable) {

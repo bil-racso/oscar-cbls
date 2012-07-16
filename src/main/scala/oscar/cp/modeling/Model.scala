@@ -48,7 +48,168 @@ trait CPModel extends Constraints {
   val Medium = CPPropagStrength.Medium
   val Weak = CPPropagStrength.Weak
   
-
+  class CPVarBoolWrappper(val b: CPVarBool) {
+    /**
+     * -b
+     */
+    def unary_!() = b.not()
+    /**
+	 * x | y
+	 */
+	def |(y: CPVarBool) = b.or(y)
+    /**
+	 * x || y
+	 */
+	def ||(y: CPVarBool)= b.or(y)
+	/**
+	 * x & y
+	 */
+	def &(y: CPVarBool) = b.and(y)
+	/**
+	 * x && y
+	 */
+	def &&(y: CPVarBool) = b.and(y)
+	/**
+	 * x ==> y
+	 */
+	def ==>(y: CPVarBool) = b.implies(y)	
+	/**
+	 * x != y
+	 */
+	def !=(y: CPVarBool) = new Not(b,y)
+  }
+  implicit def convert2CPVarBoolWrapper(b: CPVarBool) = new CPVarBoolWrappper(b)
+  
+  
+  
+  class CPVarIntWrappper(val x: CPVarInt) {
+    /**
+     * -x
+     */
+    def unary_-() = x.opposite()
+    /**
+     * x+y
+     */
+    def +(y: CPVarInt) = x.plus(y)
+    /**
+     * x-y
+     */
+    def -(y: CPVarInt) = x.minus(y)
+    /**
+     * x+y
+     */
+    def +(y: Int) = x.plus(y)
+    /**
+     * x-y
+     */
+    def -(y: Int) = x.minus(y)
+    /**
+     * x*y
+     */
+    def *(y: CPVarInt) = x.mul(y)
+    /**
+     * x*y
+     */
+    def *(y: Int) = x.mul(y)
+    /**
+     * x!=y
+     */
+    def !=(y: CPVarInt) = new Diff(x,y)
+    /**
+     * x!=y
+     */
+    def !=(y: Int) = new Diff(x,y)
+    /**
+     * x==y
+     */
+    def ==(y: CPVarInt) = new Eq(x,y)
+    /**
+     * x==y
+     */
+    def ==(y: Int) = new Eq(x,y)     
+    /**
+     * x<y
+     */
+    def <(y: CPVarInt) = new Le(x,y) 
+    /**
+     * x<y
+     */
+    def <(y: Int) = new Le(x,y)
+    /**
+     * x>y
+     */
+    def >(y: CPVarInt) = new Gr(x,y) 
+    /**
+     * x>y
+     */
+    def >(y: Int) = new Gr(x,y)
+    /**
+     * x<=y
+     */
+    def <=(y: CPVarInt) = new LeEq(x,y) 
+    /**
+     * x<=y
+     */
+    def <=(y: Int) = new LeEq(x,y)
+    /**
+     * x>=y
+     */
+    def >=(y: CPVarInt) = new GrEq(x,y) 
+    /**
+     * x>=y
+     */
+    def >=(y: Int) = new GrEq(x,y)             
+	/**
+	 * b <=> x == v
+	 */
+	def ===(v: Int) = x.isEq(v)
+	/**
+	 * b <=> x == y
+	 */
+	def ===(y: CPVarInt) = x.isEq(y)
+	/**
+	 * b <=> x!= y
+	 */
+	def !==(y: CPVarInt) = x.isDiff(y)	
+	/**
+	 * b <=> x!= y
+	 */
+	def !==(y: Int) = x.isDiff(y)	
+	/**
+	 * b <=> x >= y
+	 */
+	def >==(y: Int) = x.isGrEq(y)
+	/**
+	 * b <=> x >= y
+	 */
+	def >==(y: CPVarInt) = x.isGrEq(y)	
+	/**
+	 * b <=> x > y
+	 */
+	def >>=(y: Int) = x.isGrEq(y+1)	 
+	/**
+	 * b <=> x > y
+	 */
+	def >>=(y: CPVarInt) = x.isGrEq(y+1)		
+	/**
+	 * b <=> x >= y
+	 */
+	def <==(y: Int) = x.isLeEq(y)
+	/**
+	 * b <=> x >= y
+	 */
+	def <==(y: CPVarInt) = y >== x	
+	/**
+	 * b <=> x > y
+	 */
+	def <<=(y: Int) = x <== (y-1)	 
+	/**
+	 * b <=> x > y
+	 */
+	def <<=(y: CPVarInt) = x <== (y-1)
+  }
+  implicit def convert2CPVarIntWrapper(x: CPVarInt) = new CPVarIntWrappper(x)
+  
   
 
   implicit def convert2(vals: IndexedSeq[Int]) = vals.toArray[Int]
@@ -153,7 +314,7 @@ trait CPModel extends Constraints {
    * @param domain the range defining the possible values for the variable
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
-  def apply(cp: CPSolver, domain: Range): CPVarInt = {
+  def apply(cp: Store, domain: Range): CPVarInt = {
     new CPVarInt(cp, domain)
   }
 
@@ -163,7 +324,7 @@ trait CPModel extends Constraints {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
-  def apply(cp: CPSolver, value: Int): CPVarInt = {
+  def apply(cp: Store, value: Int): CPVarInt = {
     new CPVarInt(cp, value, value)
   }
 
@@ -173,11 +334,12 @@ trait CPModel extends Constraints {
    * @param values is the initial set of values possible for the variable (domain)
    * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
    */
-  def apply(cp: CPSolver, values: Set[Int]): CPVarInt = {
+  def apply(cp: Store, values: Set[Int]): CPVarInt = {
     val vals = new java.util.HashSet[Integer]()
     values.foreach(v => vals.add(v))
     new CPVarInt(cp, vals)
   }
+  
   }
 
   object CPVarBool {
@@ -185,8 +347,12 @@ trait CPModel extends Constraints {
    /**
     * Creates a new CP Boolean Variable
     */
-   def apply(cp: CPSolver): CPVarBool = {
+   def apply(cp: Store): CPVarBool = {
     new CPVarBool(cp)
+   }
+   
+   def apply(cp: Store,b: Boolean): CPVarBool = {
+    new CPVarBool(cp,b)
    }
   }
 

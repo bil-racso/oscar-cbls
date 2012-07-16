@@ -1,20 +1,19 @@
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *   
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *  
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *  
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
 package oscar.cp.util;
 
 public class NumberUtils {
@@ -54,13 +53,21 @@ public class NumberUtils {
 		}
 	}
 	
+	public static boolean negativeProduct(int v1, int v2) {
+		return (v2 < 0 ^ v1 < 0) && (v1 != 0 && v2 != 0);
+	}
+	
+	public static boolean positiveProduct(int v1, int v2) {
+		return (v2 > 0 && v1 > 0) || (v1 < 0 && v2 < 0);
+	}
+	
 	/**
 	 * @param v1
 	 * @param v2 != 0
 	 * @return ceil(v1/v2)
 	 */
 	public static int ceilDiv(int v1, int v2) {
-		return v1 / v2 + (((v1%v2 != 0) && (v2*v1 > 0)) ? 1 : 0);
+		return v1 / v2 + (((v1%v2 != 0) && positiveProduct(v1,v2)) ? 1 : 0);
 	}
 	
 	/**
@@ -69,7 +76,7 @@ public class NumberUtils {
 	 * @return floor(v1/v2)
 	 */
 	public static int floorDiv(int v1, int v2) {
-		return v1 / v2 - (((v1%v2 != 0) && (v2*v1 < 0)) ? 1 : 0);
+		return v1 / v2 - (((v1%v2 != 0) && negativeProduct(v1,v2)) ? 1 : 0);
 	}	
 	
 	/**

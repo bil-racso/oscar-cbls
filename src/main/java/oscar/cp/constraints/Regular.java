@@ -1,20 +1,19 @@
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *   
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *  
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *  
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
 package oscar.cp.constraints;
 
 import java.util.Set;
@@ -62,7 +61,7 @@ public class Regular extends Constraint {
 	
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(new ElementCst2D(T,new CPVarInt(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
+		if (s.post(ElementCst2D.apply(T,new CPVarInt(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		
@@ -75,7 +74,7 @@ public class Regular extends Constraint {
 		}
 		
 		for (int i = 1; i < x.length; i++) {
-			if (s.post(new ElementCst2D(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
+			if (s.post(ElementCst2D.apply(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}

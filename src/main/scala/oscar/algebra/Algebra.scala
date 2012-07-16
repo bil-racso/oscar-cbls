@@ -24,7 +24,7 @@ import scala.collection._
 
 /**
  * Abstract trait to manipulate mathematical expression (linear or not) involving symbolic variables
- *  @author Gilles Scouvart (n-Side), Pierre Schaus (n-Side)
+ *  @author Gilles Scouvart (n-Side), Pierre Schaus pschaus@gmail.com
  */
 trait Algebra {
   
@@ -77,6 +77,13 @@ trait Algebra {
       }
       Some(res)
     }
+    
+    override def derive(x: Var): Expression = {
+     coef.get(x) match {
+       case None => Zero
+       case Some(v: Double) => new Const(v)
+     }
+    }
   }
   
   class Const (val d : Double) extends LinearExpression {
@@ -96,7 +103,7 @@ trait Algebra {
     
     override def toString = d.toString
     
-    def derive(v : Var) : Expression = Zero  
+    override def derive(v : Var) : Expression = Zero  
     
   }
   
@@ -132,7 +139,7 @@ trait Algebra {
     override def toString = name
 
     
-    def derive(v : Var) : Expression = {
+    override def derive(v : Var) : Expression = {
 		if (v == this) One
 		else Zero
 	}
@@ -153,7 +160,7 @@ trait Algebra {
   /**
    * (expr1 + expr2) or (expr1 - expr2) 
    */
-  abstract class LinearExpressionBinary(val expr1: LinearExpression, val expr2: LinearExpression) extends LinearExpression {
+  abstract class LinearExpressionBinary(expr1: LinearExpression,expr2: LinearExpression) extends LinearExpression {
    
     val cte = op(expr1.cte,expr2.cte)
     val coef = merge()    
@@ -193,7 +200,7 @@ trait Algebra {
 
     def op(v1: Double, v2: Double) = v1 + v2
     
-    def derive(v : Var) : Expression = {
+    override def derive(v : Var) : Expression = {
 		expr1.derive(v) + expr2.derive(v)
 	}
   }
@@ -206,7 +213,7 @@ trait Algebra {
 
     def op(v1: Double, v2: Double) = v1 - v2
     
-    def derive(v : Var) : Expression = {
+    override def derive(v : Var) : Expression = {
 		expr1.derive(v) - expr2.derive(v)
 	}
   }  
@@ -220,7 +227,7 @@ trait Algebra {
     val coef = if (c == Zero) Map[Var,Double]() else expr.coef.map(e => (e._1 -> c.d *e._2))   
       
 
-    def derive(v : Var) : Expression = {
+    override def derive(v : Var) : Expression = {
 		c * expr.derive(v)
 	}
     override def toString = c+"*(" + expr + ")"
@@ -240,7 +247,7 @@ trait Algebra {
      
     override def toString = coeff + "*" + variable
     
-    def derive(v : Var) : Expression = {
+    override def derive(v : Var) : Expression = {
 		if (variable == v) coeff
 		else Zero
 	}
@@ -253,7 +260,29 @@ trait Algebra {
   
   
   
-  def sum(exprs : Iterable[LinearExpression]) : LinearExpression = exprs.foldLeft(Zero : LinearExpression)(_ + _)
+  def sum(exprs : Iterable[LinearExpression]) : LinearExpression = {
+    import scala.collection.mutable.Map
+    val mymap = Map[Var,Double]()
+    var mycte = 0.0
+    for (expr <- exprs) {
+      mycte += expr.cte
+      for((k,v) <- expr.coef) {
+        mymap.get(k) match {
+           case Some(c) => mymap(k) = c+v
+           case None => mymap += (k -> v)
+        }
+      }
+    }
+    mymap.filterNot(_._2 == 0)
+    new LinearExpression() {
+      val cte = mycte
+      val coef = mymap
+    }
+    
+    
+
+    //exprs.foldLeft(Zero : LinearExpression)(_ + _)
+  }
   
   def sum[A](indexes : Iterable[A])(f : A => LinearExpression) : LinearExpression = sum(indexes map f)
    

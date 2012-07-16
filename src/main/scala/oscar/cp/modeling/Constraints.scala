@@ -166,7 +166,7 @@ trait Constraints {
     val minval = (for(x <- tab) yield x.getMin) min
     val maxval = (for(x <- tab) yield x.getMax) max
     val z = new CPVarInt(x.getStore, minval, maxval)
-    x.getStore.add(new ElementVar(tab, x, z))
+    x.getStore.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x, z))
     z
   }
 
@@ -178,7 +178,7 @@ trait Constraints {
    * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
    */
   def element(tab: Array[CPVarInt], x: CPVarInt, z: CPVarInt): Constraint = {
-    new ElementVar(tab, x, z)
+    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x, z)
   }
 
   /**
@@ -191,6 +191,18 @@ trait Constraints {
   def element(tab: Array[CPVarInt], x: CPVarInt, z: Int): Constraint = {
     new ElementVar(tab, x, new CPVarInt(x.getStore, z, z))
   }
+  
+  /**
+   * Element Constraint, indexing an array of variables by a variable
+   * @param tab an non empty array n variables
+   * @param x an index variable with domain defined on (0..n-1)
+   * @param z an integer
+   * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
+   */
+  def element(tab: Array[CPVarBool], x: CPVarInt, z: Boolean): Constraint = {
+    val z_ = new CPVarBool(x.getStore(),z)
+    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x,z_)
+  }
 
   /**
    * Element 2D Constraint, indexing an integer matrix by two index variables
@@ -199,8 +211,11 @@ trait Constraints {
    * @param j the second index variable (column index) with domain defined on (0..m-1)
    * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
    */
-  def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt) = {
-    ElementCst2D.get(matrix, i, j)
+  def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt): CPVarInt = {
+     val z = new CPVarInt(i.getStore(),matrix.flatten.min to matrix.flatten.max)
+	 val ok = i.getStore().post(ElementCst2D(matrix,i,j,z))
+	 assert(ok != CPOutcome.Failure, {println("element on matrix, should not fail")})
+	 return z
   }
 
 
@@ -265,7 +280,18 @@ trait Constraints {
   
   
   def table(x: Array[CPVarInt], tuples: Array[Array[Int]]): Constraint = {
-    new TableSTR2(x,tuples)
+    //new TableSTR2(x,tuples)
+    
+    import oscar.cp.constraints.TableAC5TCRecomp
+    val data = new TableData(x.size)
+    tuples.foreach(t => data.add(t:_*))
+    new oscar.cp.constraints.TableAC5TCRecomp(data,x:_*)
+    
+    /*
+    val tab = new TableJava(x:_*)
+    tuples.foreach(t => tab.addTupple(t:_*))
+    return tab
+  	*/
   }
 
 
@@ -278,14 +304,9 @@ trait Constraints {
    */
   def table(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]): Constraint = {
     table(Array(x1,x2),tuples.map(t => Array(t._1,t._2)).toArray)
-    /*
-    println("new table")
-    val tableCons = new Table(x1,x2)
-    for (t <- tuples) {
-      tableCons.addTupple(t._1, t._2)
-    }
-    tableCons
-  	*/
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,tuples)
+  	
   }
 
   /**
@@ -298,13 +319,8 @@ trait Constraints {
    */
   def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, tuples: Iterable[(Int, Int, Int)]): Constraint = {
     table(Array(x1,x2,x3),tuples.map(t => Array(t._1,t._2,t._3)).toArray)
-    /*
-    val tableCons = new Table(x1,x2,x3)
-    for (t <- tuples) {
-      tableCons.addTupple(t._1, t._2, t._3)
-    }
-    tableCons
-  	*/
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,tuples)
   }
 
   /**
@@ -318,13 +334,8 @@ trait Constraints {
    */
   def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, tuples: Iterable[(Int, Int, Int, Int)]): Constraint = {
     table(Array(x1,x2,x3,x4),tuples.map(t => Array(t._1,t._2,t._3,t._4)).toArray)
-    /*
-    val tableCons = new Table(x1, x2, x3, x4)
-    for (t <- tuples) {
-      tableCons.addTupple(t._1, t._2, t._3, t._4)
-    }
-    tableCons
-    */
+    //import oscar.cp.constraints.TableAC5TCRecomp
+    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
   }
   
   def modulo(x: CPVarInt, v: Int, y: CPVarInt): Constraint = {

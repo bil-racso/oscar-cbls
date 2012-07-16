@@ -28,7 +28,7 @@ import oscar.cp.modeling._
 import org.scalacheck._
 
 class TestImplication extends FunSuite with ShouldMatchers with CPModel {
-
+  
   
   test("=>1") {
       
@@ -105,8 +105,7 @@ class TestImplication extends FunSuite with ShouldMatchers with CPModel {
 	  nbSol should be(4)
   }
   
-    test("=>6") {
-      val values = Set((0,0,1),(0,1,1),(1,0,0),(1,1,1))
+  test("=>6") {
 	  val cp = CPSolver()
 	  val A = CPVarBool(cp)
 	  val B = CPVarBool(cp)
@@ -115,6 +114,14 @@ class TestImplication extends FunSuite with ShouldMatchers with CPModel {
 	  A.isBoundTo(0) should be(true)
   }
   
+  test("=>7") {
+	  val cp = CPSolver()
+	  val A = CPVarBool(cp)
+	  val B = CPVarBool(cp)
+	  cp.add(A == 1)
+	  cp.add(A ==> B)
+	  B.isBoundTo(1) should be(true)
+  }
 
     
     

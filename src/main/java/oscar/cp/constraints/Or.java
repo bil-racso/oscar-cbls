@@ -1,20 +1,19 @@
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *   
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *  
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *  
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
 package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
@@ -48,8 +47,7 @@ public class Or extends Constraint {
 		super(x[0].getStore());
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s);
-		nbBound.setValue(0);
+		nbBound = new ReversibleInt(s,0);
 		ytrue = new ReversibleBool(s);
 		ytrue.setValue(false);
 	}
@@ -57,14 +55,31 @@ public class Or extends Constraint {
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
 		for (int i = 0; i < x.length; i++) {
+			if (x[i].isTrue()) {
+				if (y.assign(1) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				} else {
+					return CPOutcome.Success;
+				}
+			}
+		}
+		// we know no variables from X are bound to 1
+		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) {
 				x[i].callValBindIdxWhenBind(this, i);
 			} else {
+				assert(x[i].isFalse());
 				nbBound.incr();
 			}
 		}
-		if (!y.isBound())
+		if (!y.isBound()) {
+			if (nbBound.getValue() == x.length) {
+				if (y.assign(0) == CPOutcome.Failure) {
+					return CPOutcome.Failure;
+				}
+			}
 			y.callValBindWhenBind(this);
+		}
 		else {
 			if (y.getValue() == 0) {
 				for (int i = 0; i < x.length; i++) {
@@ -75,7 +90,7 @@ public class Or extends Constraint {
 				return CPOutcome.Success;
 			} else {
 				ytrue.setValue(true);
-				if (nbBound.getValue() == x.length-1){
+				if (nbBound.getValue() == x.length-1) {
 					for (int i = 0; i < x.length; i++) {
 						if (!x[i].isBound()) {
 							if (x[i].assign(1) == CPOutcome.Failure) {
@@ -93,13 +108,13 @@ public class Or extends Constraint {
 	
 	@Override
 	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
-		nbBound.incr();
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else {
+			nbBound.incr();
 			if (nbBound.getValue() == x.length) {
 				if (y.assign(0) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -131,6 +146,16 @@ public class Or extends Constraint {
 			return CPOutcome.Success;
 		} else {
 			ytrue.setValue(true);
+			if (nbBound.getValue() == x.length-1){
+				for (int i = 0; i < x.length; i++) {
+					if (!x[i].isBound()) {
+						if (x[i].assign(1) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
+						return CPOutcome.Success;
+					}
+				}
+			}
 		}
 		return CPOutcome.Suspend;
 	}

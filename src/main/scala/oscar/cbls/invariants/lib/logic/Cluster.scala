@@ -15,29 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-/*
- * Copyright CETIC 2012 www.cetic.be
- *
- * This file is part of Asteroid.
- *
- * Asteroid is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * Asteroid is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Asteroid.
- * If not, see http://www.gnu.org/licenses/lgpl-2.1-standalone.html
- *
+/*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
- */
+ ******************************************************************************/
+
 
 package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
@@ -133,7 +116,7 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
   }
 }
 
-/**This is a helper object for the [[invariants.lib.logic.DenseCluster]] and [[invariants.lib.logic.SparseCluster]] invariants.*/
+/**This is a helper object for the [[oscar.cbls.invariants.lib.logic.DenseCluster]] and [[oscar.cbls.invariants.lib.logic.SparseCluster]] invariants.*/
 object Cluster{
 
   def MakeSparse(values:Array[IntVar], clusters: Iterable[Int]):SparseCluster = {
