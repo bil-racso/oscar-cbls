@@ -25,8 +25,8 @@ object LPStatus extends Enumeration {
     val NOT_SOLVED = Value("not solved yet")
     val OPTIMAL = Value("optimal")
     val SUBOPTIMAL = Value("suboptimal")
-    val UNBOUNDED = Value("infeasible")
-    val INFEASIBLE = Value("unbounded")
+    val UNBOUNDED = Value("unbounded")
+    val INFEASIBLE = Value("infeasible")
 }
 
 

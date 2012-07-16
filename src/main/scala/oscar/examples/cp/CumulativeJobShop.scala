@@ -140,6 +140,10 @@ object CumulativeJobShop extends CPModel {
 			
 			// Efficient but not complete search strategy
 			SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
+			//cp.binaryFirstFail(jobActivities.flatten.map(a => a.getStart()))
+			
+			
+			println("start times:"+jobActivities.flatten.map(_.getStart()).mkString(","))
 			// Updates the visual components
 			updateVisu(1, 20)
 		}
