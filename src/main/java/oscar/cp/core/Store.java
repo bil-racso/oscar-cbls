@@ -358,7 +358,6 @@ public class Store extends ReversibleSearchNode {
      * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise
      */
 	public CPOutcome post(CPVarBool b) {
-		System.out.println("post bool ");
 		return post(new Eq(b, 1), CPPropagStrength.Weak);
 	}	
 
