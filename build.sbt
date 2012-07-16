@@ -17,6 +17,9 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
     deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
 }
 
+unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "lib_commercial") }
+
+
 scalacOptions ++= Seq("-P:continuations:enable") //,"-optimize"
 
 seq(assemblySettings: _*)
