@@ -18,6 +18,8 @@
 package oscar.examples.cp
 
 import oscar.cp.constraints.MaxCumulative
+import oscar.cp.constraints.NewMaxCumulative
+import oscar.cp.constraints.BoundedCumulative
 import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -37,7 +39,7 @@ object CumulativeJobShop extends CPModel {
 		// -----------------------------------------------------------------------
 		
 		// Read the data
-		var lines = Source.fromFile("data/cJobShopHard.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -132,14 +134,18 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines) {
-				cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
+				println("Machine : " + i)
+				cp.add(new NewMaxCumulative(cp, jobActivities.flatten, capacities(i), i))
+				//cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
 			}
+			
+			println("Here")
 
 		} exploration {
 			
 			// Efficient but not complete search strategy
-			cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
-			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
+			//cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
+			SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
 			//cp.binaryFirstFail(jobActivities.flatten.map(a => a.getStart()))
 			
 			
