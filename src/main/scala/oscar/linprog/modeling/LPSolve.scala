@@ -47,6 +47,10 @@ class LPSolve extends AbstractLP{
 		 closed = true
 	}
 	
+	def setVarName(colId : Int, name: String) { 
+	  // TODO implement
+	}
+	
 	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based

@@ -51,7 +51,10 @@ class GurobiLP extends AbstractLP{
 	def endModelBuilding() {
 		 closed = true
 	}
-	
+		
+	def setVarName(colId : Int, name: String) { 
+	  // TODO implement
+	}
 	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String){
 		nbRows += 1	
 		

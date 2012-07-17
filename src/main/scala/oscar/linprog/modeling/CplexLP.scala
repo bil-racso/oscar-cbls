@@ -25,7 +25,7 @@ import ilog.cplex._
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com
  */
 class CplexLP extends AbstractLP{
-	println("Cplex")
+	println("Using CPLEX")
 
 	var nbRows = 0
   	var nbCols = 0
@@ -38,19 +38,23 @@ class CplexLP extends AbstractLP{
   	val model = new IloCplex()
 	val lp = model.addLPMatrix() // matrix associated to model
 
-	var lexpr =  model.linearNumExpr() //
+	var lexpr =  model.linearNumExpr()
 	
   	def startModelBuilding(nbRows : Int, nbCols : Int) {
   	  
   	  this.nbRows = nbRows
   	  this.nbCols = nbCols
-  	    	  
+  	  
   	  model.numVarArray(model.columnArray(lp, nbCols), 0.0, java.lang.Double.MAX_VALUE) // creating nbCols variables
-  	  println("model build"+nbRows+" "+nbCols)
+  	  println("Model has "+nbRows+" rows and "+nbCols+" columns.")
 	}
 	
 	def endModelBuilding() {
 		 closed = true
+	}
+	
+	def setVarName(colId : Int, name: String) {
+	  lp.getNumVar(colId).setName(name);
 	}
 	
 	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String){
@@ -67,7 +71,6 @@ class CplexLP extends AbstractLP{
 			case "==" =>
 				lp.addRow(model.addEq(lin,rhs))
 		}
-		println("constraint added")
 	}
 	
 	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {

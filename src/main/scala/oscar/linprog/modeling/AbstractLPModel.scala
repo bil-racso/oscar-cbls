@@ -25,8 +25,8 @@ object LPStatus extends Enumeration {
     val NOT_SOLVED = Value("not solved yet")
     val OPTIMAL = Value("optimal")
     val SUBOPTIMAL = Value("suboptimal")
-    val UNBOUNDED = Value("infeasible")
-    val INFEASIBLE = Value("unbounded")
+    val UNBOUNDED = Value("unbounded")
+    val INFEASIBLE = Value("infeasible")
 }
 
 
@@ -120,6 +120,9 @@ abstract class AbstractLP {
   	def setUnboundUpperBound(colId : Int)
   	
   	def setUnboundLowerBound(colId : Int)
+  	
+  	/** Set name of variable in solver */
+  	def setVarName(colId : Int, name: String)
   	
   	def deleteConstraint(rowId : Int)
   	
@@ -281,6 +284,8 @@ trait AbstractLPModel extends Algebra {
     private val solution = mutable.HashMap.empty[Int,Double]
     protected var objective: LinearExpression = 0
     protected var minimize = true
+    /** Should solveModel be called at end of subjectTo and suchThat blocks?*/
+    protected var autoSolve = true 
     
     val solver: AbstractLP
     
@@ -320,8 +325,10 @@ trait AbstractLPModel extends Algebra {
 	def setVarProperties() = {
 	  vars  foreach { case (i,x) =>
 	    setVarBounds(x)
+	    solver.setVarName(x.index, x.getName())
 	  }
 	}
+	
 	
 	def setVarBounds(x: AbstractLPVar,reoptimize: Boolean = false) = {
 	    if (x.isUnbounded) {
@@ -358,35 +365,39 @@ trait AbstractLPModel extends Algebra {
 		constraintsBlock
 		
 
-		solver.startModelBuilding(0,vars.size)
+		solver.startModelBuilding(cons.size,vars.size)
+		
+		print("Setting variable bounds...")
 		setVarProperties() //set the the var bounds correctly
 		val e = objective.coef.toList
  		val coef : Array[Double] = e.map(_._2).toArray
 		val varIds : Array[Int] =  e.map(_._1.index).toArray
 		
+		print("Creating objective...")
 		solver.addObjective(coef, varIds, minimize)
+		
+		print("Creating constraints...")
 		addAllConstraints()
-		
-		
+				
 		//close the model and optimize
-		solveModel()
+		if (autoSolve) solveModel() 
 	}
 	
 	def suchThat (constraints: LinearConstraint*) {
 		// add all the constraints
 		constraints.foreach(add(_))
 		//close the model and optimize
-		solveModel()
+		if (autoSolve) solveModel()
 	}
-	
-	
-	def solveModel() {
-		solver.endModelBuilding()
-		status = solver.solveModel()
-		if ((status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)) {
-			(0 until vars.size) foreach {i =>  solution(i) = solver.getValue(i)}
-		}
-	}
+
+    def solveModel() {
+      solver.endModelBuilding()
+      println("Solving ...")
+      status = solver.solveModel()
+      if ((status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)) {
+        (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
+      }
+    }
 	
 	def getObjectiveValue() : Double = {
 			objective.value match {
@@ -401,6 +412,8 @@ trait AbstractLPModel extends Algebra {
 	def getStatus() : LPStatus.Value = status
 	
 	def release() = solver.release()
+	
+	def desactivateAutoSolve {autoSolve = false}
 	
 	
   } // end class AbstractLPSolver

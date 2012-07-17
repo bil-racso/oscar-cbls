@@ -55,25 +55,24 @@ trait MIPModel extends AbstractLPModel {
 	 def apply(mip : MIPSolver, name : String,  domain : Range): MIPVar =  new MIPVar(mip,name,domain)
 	}
 
-	class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
+  class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
 
-  
-		val solver = solverLib match {
-                  case LPSolverLib.lp_solve => new LPSolve()
-                  case LPSolverLib.glpk => new GlpkMIP()
-                  case LPSolverLib.cplex => new CplexLP()
-                  case LPSolverLib.gurobi => new GurobiLP()
-                  case _  => new LPSolve()              
-        }
-		
-		override def setVarProperties() = {
-			super.setVarProperties();
-			for (x <- vars; if(x._2.isInteger)) {
-				solver.setInteger(x._2.index)
-			}
-		}
+    val solver = solverLib match {
+      case LPSolverLib.lp_solve => new LPSolve()
+      case LPSolverLib.glpk => new GlpkMIP()
+      case LPSolverLib.cplex => new CplexLP()
+      case LPSolverLib.gurobi => new GurobiLP()
+      case _ => new LPSolve()
+    }
 
-	}
+    override def setVarProperties() = {
+      super.setVarProperties();
+      for (x <- vars; if (x._2.isInteger)) {
+        solver.setInteger(x._2.index)
+      }
+    }
+
+  }
 	
 	object MIPSolver { 
 	 def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): MIPSolver = new MIPSolver(solverLib) 
