@@ -48,12 +48,12 @@ class GlpkLP extends AbstractLP{
 	  // TODO implement
 	}
 	
-	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String){
+	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String, name:String){
 		nbRows += 1	
 		
 		//Adding a row giving a name
 		GLPK.glp_add_rows(lp, 1)
-        GLPK.glp_set_row_name(lp, nbRows, "constraint"+nbRows)       
+        GLPK.glp_set_row_name(lp, nbRows, name)       
         sign match {
 			case "<=" =>
 				GLPK.glp_set_row_bnds(lp, nbRows, GLPKConstants.GLP_UP, 0, rhs) //GLP_UP the 0 value will be ignored (col<=rhs)
@@ -79,16 +79,16 @@ class GlpkLP extends AbstractLP{
 	  
 	}
 	
-	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
-		addConstraint(coef,col,rhs,">=")
+	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
+		addConstraint(coef,col,rhs,">=", name)
 	}
 	    
-	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
-		addConstraint(coef,col,rhs,"<=")
+	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
+		addConstraint(coef,col,rhs,"<=", name)
 	}
 	
-    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
-    	addConstraint(coef,col,rhs,"==")
+    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
+    	addConstraint(coef,col,rhs,"==", name)
     }
     
     def addObjective(coef : Array[Double], col : Array[Int], minMode : Boolean = true) {

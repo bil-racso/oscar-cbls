@@ -65,28 +65,28 @@ abstract class AbstractLP {
   	 * Terminates the model building, the model cannot be modified afterwards
   	 */
   	def endModelBuilding()
-  	
-  	/**
-  	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
-  	 * @param coef are the coefficients of the linear term
-  	 * @param col indicates to which column/variable the coefficients refer to
-  	 */
-    def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double)
-    
+
+  /**
+   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   * @param coef are the coefficients of the linear term
+   * @param col indicates to which column/variable the coefficients refer to
+   */
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+     
 
   	/**
   	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
   	 * @param coef are the coefficients of the linear term
   	 * @param col indicates to which column/variable the coefficients refer to
   	 */
-  	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double)
+  	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name: String)
 
   	/**
   	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
   	 * @param coef are the coefficients of the linear term
   	 * @param col indicates to which column/variable the coefficients refer to
   	 */  	
-  	def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double)
+  	def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name: String)
   	
   	/**
   	 * Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
@@ -258,7 +258,7 @@ trait AbstractLPModel extends Algebra {
 
   }
 
-  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int) {
+  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
     val e = cstr.linExpr.coef.toList
  	val coef : Array[Double] = e.map(_._2).toArray
 	val varIds : Array[Int] =  e.map(_._1.index).toArray
@@ -297,8 +297,12 @@ trait AbstractLPModel extends Algebra {
       vars.size-1
     }
     
-    def add(constr : LinearConstraint): LPConstraint = {
-      val constraint = new LPConstraint(this,constr,cons.size)
+    def add(constr : LinearConstraint,name: Option[String]= None): LPConstraint = {
+      val cstName = name match {
+        case Some(n) => n
+        case None => "cstr"+cons.size
+      }
+      val constraint = new LPConstraint(this,constr,cons.size,cstName)
       cons(cons.size) = constraint
       constraint
     }
@@ -307,12 +311,15 @@ trait AbstractLPModel extends Algebra {
      * add the constraints really into the solver implem
      */
     def addAllConstraints() {
+      var nbC = 0
       cons  foreach { case (i,c) =>
+        if (nbC % 1000 == 0) println("Added "+nbC+" constraints. Currently at constraint index "+ i)
         c.cstr.consType match {
-              case ConstraintType.GQ => solver.addConstraintGreaterEqual(c.coef,c.varIds,c.rhs)
-              case ConstraintType.LQ => solver.addConstraintLessEqual(c.coef,c.varIds,c.rhs)
-              case ConstraintType.EQ => solver.addConstraintEqual(c.coef,c.varIds,c.rhs)
+              case ConstraintType.GQ => solver.addConstraintGreaterEqual(c.coef,c.varIds,c.rhs, c.name)
+              case ConstraintType.LQ => solver.addConstraintLessEqual(c.coef,c.varIds,c.rhs, c.name)
+              case ConstraintType.EQ => solver.addConstraintEqual(c.coef,c.varIds,c.rhs, c.name)
         }
+        nbC+=1
       }
     }
     
@@ -367,16 +374,16 @@ trait AbstractLPModel extends Algebra {
 
 		solver.startModelBuilding(cons.size,vars.size)
 		
-		print("Setting variable bounds...")
+		println("Setting variable bounds...")
 		setVarProperties() //set the the var bounds correctly
 		val e = objective.coef.toList
  		val coef : Array[Double] = e.map(_._2).toArray
 		val varIds : Array[Int] =  e.map(_._1.index).toArray
 		
-		print("Creating objective...")
+		println("Creating objective...")
 		solver.addObjective(coef, varIds, minimize)
 		
-		print("Creating constraints...")
+		println("Creating constraints...")
 		addAllConstraints()
 				
 		//close the model and optimize

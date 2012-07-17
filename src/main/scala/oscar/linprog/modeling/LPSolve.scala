@@ -51,16 +51,16 @@ class LPSolve extends AbstractLP{
 	  // TODO implement
 	}
 	
-	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
 	}
     
-	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.LE, rhs)
 	}
-    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.EQ, rhs)    	
     }
