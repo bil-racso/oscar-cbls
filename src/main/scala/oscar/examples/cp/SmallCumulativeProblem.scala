@@ -1,8 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.constraints.MultiCumulative
-import oscar.cp.constraints.MaxMultiCumulative
-import oscar.cp.constraints.Cumulative
+import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -89,9 +87,6 @@ object SmallCumulativeProblem extends CPModel {
 										 new CPVarInt(cp, 0 to 0),   // machine
 										 new CPVarInt(cp, 3 to 3))   // resource
 		
-		
-		
-		
 		val rectangles = Array(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12)
 		val capacities = Array(2)
 		
@@ -122,26 +117,12 @@ object SmallCumulativeProblem extends CPModel {
 	  
   	   	// Constraints and Solving
   	   	cp.solve subjectTo {
-
-			for (i <- 0 until rectangles.size) 
-				cp.add(rectangles(i).getStart + rectangles(i).getDur == rectangles(i).getEnd)
 			
-			//cp.add(new MultiCumulative(cp, rectangles, Array(2), true))
-			cp.add(new MaxMultiCumulative(cp, rectangles, Array(3), true))
-			//NaiveMultiCumulative.multiCumulative(cp, rectangles, capacities)
-			//cp.add(new Cumulative(cp, rectangles, 2, 2, 0))
+			cp.add(new MaxCumulative(cp, rectangles, 3, 0))
 			
 	   } exploration {
 	       
 		   cp.binaryFirstFail(rectangles.map(_.getStart))
-		   
-		   /*while (!allBounds(starts)) {
-		  	   val unbounds = starts.filter(!_.isBound)
-		  	   val maxDomSize = unbounds.map(_.getSize).max
-		  	   val x = unbounds.filter(_.getSize == maxDomSize).first
-		  	   val mid = (x.getMax - x.getMin) / 2
-		  	   cp.branch(cp.post(x < mid))(cp.post(x >= mid))
-		   }*/
 		   updateVisu
 	   }
 	     

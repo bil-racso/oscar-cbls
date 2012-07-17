@@ -17,7 +17,7 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
+class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int, domain : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
 
 	val nTasks = tasks.size
 	val Tasks  = 0 until nTasks
@@ -26,8 +26,9 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = if (b.date > a.date) {1} else if (b.date == a.date) {0} else {-1} })
 
 	// Sweep line parameters
-	var delta      : Int = 0			// Position of the line
-	var sumHeight  : Int = 0			// Height of the profile
+	var delta         : Int = 0			// Position of the line
+	var sumHeight     : Int = 0			// Height of the profile
+	var nCurrentTasks : Int = 0			// Tasks overlaping the line
 	val stackPrune : Set[Int] = Set()	// Tasks to prune
 
 	// Capacities added to sumHeight during a sweep
@@ -44,13 +45,23 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
         
         if (oc == CPOutcome.Suspend) {
         	for (i <- Tasks) {
-        		if (true){//tasks(i).getMachines.hasValue(r)) {
-      			
+
+        			
+        		if (domain) {
+        			
+        			if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenDomainChanges(this)
+        			if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenDomainChanges(this)
+        			if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenDomainChanges(this)
+        			if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenDomainChanges(this)
+        			if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
+        		
+        		} else {
+        		
 	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
+	        		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
+	        		if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
+	        		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
+	        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
         		}
         	}
         }
@@ -67,7 +78,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			fixPoint = true
 			
 			// fixPoint is modified during the sweep
-			if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
+			if (sweepAlgorithm(r) == CPOutcome.Failure) return CPOutcome.Failure
 		}
         
 		return CPOutcome.Suspend
@@ -75,7 +86,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def nextEvent = if (eventPointSeries.size > 0) eventPointSeries.dequeue else null
 	
-	def generateEventPointSeries : Boolean = {
+	def generateEventPointSeries(r : Int) : Boolean = {
 		
 		// True if a profile event has been generated
 		var profileEvent = false
@@ -87,12 +98,20 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
-				// Profile (Bad : on compulsory part)
-				if (tasks(i).getMinResource > 0) {
+				// Check
+				if (tasks(i).getMaxResource < limit) {
 					
 					// Generates events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMinResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMinResource) 
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
+				}
+				
+				// Profile (Bad : on compulsory part)
+				if (tasks(i).getMaxResource < 0) {
+					
+					// Generates events
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource) 
 					
 					profileEvent = true
 				}			
@@ -101,11 +120,11 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good : on entire domain)
-				if (tasks(i).getMinResource < 0) {
+				if (tasks(i).getMaxResource > 0) {
 					
 					// Generates events		
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMinResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMinResource) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource) 
 					
 					profileEvent = true
 				}
@@ -124,8 +143,9 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def resetSweepLine = {
 			
-		delta     = 0
-		sumHeight = 0
+		delta         = 0
+		sumHeight     = 0
+		nCurrentTasks = 0
 		stackPrune.clear
 			
 		for (i <- Tasks) {
@@ -133,13 +153,13 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		}
 	}
 
-	def sweepAlgorithm : CPOutcome = {
+	def sweepAlgorithm(r : Int) : CPOutcome = {
 		
 		// Reset the parameters of the sweep line
 		resetSweepLine
 		
 		// Generate events (no need to sort them as we use a priorityQueue)
-		if (!generateEventPointSeries) 
+		if (!generateEventPointSeries(r)) 
 			return CPOutcome.Suspend
 		
 		var event = nextEvent
@@ -153,7 +173,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 				if (delta != event.date) {
 					
 					// Consistency check
-					if (sumHeight > limit) 
+					if (nCurrentTasks > 0 && sumHeight < limit) 
 						return CPOutcome.Failure
 					
 					// Pruning (this will empty the stackPrune list)
@@ -164,11 +184,11 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 					delta = event.date	
 				}
 				
-				/*if (event.isCheckEvent) {
+				if (event.isCheckEvent) {
 					
-					nTasks += event.increment
+					nCurrentTasks += event.increment
 					
-				} else*/ if (event.isProfileEvent) {
+				} else if (event.isProfileEvent) {
 					
 					sumHeight += event.increment
 					contribution(event.task) += event.increment
@@ -182,7 +202,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		}
 		
 		// Consistency check
-		if (sumHeight > limit) 
+		if (nCurrentTasks > 0 && sumHeight < limit) 
 			return CPOutcome.Failure
 			
 		// Pruning
@@ -220,7 +240,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	def pruneMandatory(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		// Consistency check
-		if ((sumHeight - contribution(t)) <= limit) {
+		if (nCurrentTasks == 0 || (sumHeight - contribution(t)) >= limit) {
 			return CPOutcome.Suspend
 		}
 		
@@ -253,7 +273,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
-		if (sumHeight - contribution(t) + tasks(t).getMinResource > limit) {
+		if (sumHeight - contribution(t) + tasks(t).getMaxResource < limit) {
 			
 			if (tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 					
@@ -292,7 +312,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			if (adjustMax(tasks(t).getResource, limit - (sumHeight - contribution(t))) == CPOutcome.Failure) 
+			if (adjustMin(tasks(t).getResource, limit - (sumHeight - contribution(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 		}
 			
