@@ -11,11 +11,15 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPModel
-import org.hamcrest.core.IsEqual
 
-class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(tasks(0).getMachines.getStore(), "NewMaxCumulative") {
+class NewMaxCumulative(cp: CPSolver, lToRTasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(lToRTasks(0).getMachines.getStore(), "NewMaxCumulative") {
 	
-	val hEvents    = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = if (b.date > a.date) {1} else if (b.date == a.date) {0} else {-1} })
+	val rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorActivity(_))
+	
+	val nTasks = lToRTasks.size
+	val Tasks  = 0 until nTasks
+	
+	val hEvents   = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = if (b.date > a.date) {1} else if (b.date == a.date) {0} else {-1} })
 	
 	val hCheck    = new PriorityQueue[Tuple2[Int, Int]]()(new Ordering[Tuple2[Int, Int]] { def compare(a : Tuple2[Int, Int], b : Tuple2[Int, Int]) = if (b._1 > a._1) {1} else if (b._1 == a._1) {0} else {-1} })
 	val hConflict = new PriorityQueue[Tuple2[Int, Int]]()(new Ordering[Tuple2[Int, Int]] { def compare(a : Tuple2[Int, Int], b : Tuple2[Int, Int]) = if (b._1 > a._1) {1} else if (b._1 == a._1) {0} else {-1} })
@@ -24,8 +28,8 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 	
 	val newActiveTasks : Queue[Int] = Queue()
 	
-	val evup = new Array[Boolean](tasks.size)
-	val mins = new Array[Int](tasks.size)
+	val evup = new Array[Boolean](nTasks)
+	val mins = new Array[Int](nTasks)
 	
 	var delta    = 0
 	var deltaBis = 0	
@@ -36,14 +40,14 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
         val oc = propagate()
         
         if (oc == CPOutcome.Suspend) {
-        	for (i <- 0 until tasks.size) {
+        	for (i <- Tasks) {
         		if (true){
       			
-	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
+	        		if (!lToRTasks(i).getStart.isBound) lToRTasks(i).getStart.callPropagateWhenBoundsChange(this)
+		        	if (!lToRTasks(i).getDur.isBound) lToRTasks(i).getDur.callPropagateWhenBoundsChange(this)
+		        	if (!lToRTasks(i).getDur.isBound) lToRTasks(i).getEnd.callPropagateWhenBoundsChange(this)
+		        	if (!lToRTasks(i).getResource.isBound) lToRTasks(i).getResource.callPropagateWhenBoundsChange(this)
+		        	if (!lToRTasks(i).getMachines.isBound) lToRTasks(i).getMachines.callPropagateWhenDomainChanges(this)
         		}
         	}
         }
@@ -54,17 +58,18 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 	override def propagate(): CPOutcome = {
 			
 		// fixPoint is modified during the sweep
-		if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
+		if (sweepAlgorithm(lToRTasks) == CPOutcome.Failure) return CPOutcome.Failure
+		if (sweepAlgorithm(rToLTasks) == CPOutcome.Failure) return CPOutcome.Failure
         
 		return CPOutcome.Suspend
 	}
 
-	def generateEvents {
+	def generateEvents(tasks : Array[CumulativeActivity]) {
 		
 		// Reset hEvents
 		hEvents.clear
 		
-		for (i <- 0 until tasks.size; if (tasks(i).getMachines.isBoundTo(r))) {
+		for (i <- Tasks; if (tasks(i).getMachines.isBoundTo(r))) {
 			
 			if (tasks(i).getLST < tasks(i).getECT) {
 				
@@ -79,7 +84,7 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 				hEvents enqueue new Event(EventType.CCP, i, tasks(i).getLST, 0)
 			}
 			
-			if (tasks(i).getEST >= tasks(i).getLST) {
+			if (tasks(i).getEST != tasks(i).getLST) {
 				
 				// Generates events
 				hEvents enqueue new Event(EventType.PR, i, tasks(i).getEST, 0)
@@ -87,35 +92,24 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 		}
 	}
 	
-	def buildSCPEvents(t : Int, lToR : Boolean) {
+	def initDataStructures(tasks : Array[CumulativeActivity]) {
 		
-		if (lToR) {
-			new Event(EventType.SCP, t, tasks(t).getLST, -tasks(t).getMaxResource)
-		} else {
-			new Event(EventType.SCP, t, tasks(t).getLST, -tasks(t).getMaxResource)
-		}
+		hEvents.clear
+		generateEvents(tasks)
+		
+		hCheck.clear
+		hConflict.clear
+		newActiveTasks.clear
+		
+		delta = hEvents.head.date
+		deltaBis = hEvents.head.date
+		gap = limit
 	}
 	
-	def buildECPDEvents(t : Int, lToR : Boolean) {
+	def sweepAlgorithm(tasks : Array[CumulativeActivity]) : CPOutcome = {
 		
-		if (lToR) {
-			new Event(EventType.ECPD, t, tasks(t).getECT, tasks(t).getMaxResource)
-		} else {
-			new Event(EventType.ECPD, t, tasks(t).getECT, tasks(t).getMaxResource)
-		}
-	}
-	
-	def initDataStructures {
-		
-	}
-	
-	def sweepAlgorithm : CPOutcome = {
-		
-		//Generate events
-		generateEvents
-		
-		// Init data structure
-		initDataStructures
+		//INITIALIZATION
+		initDataStructures(tasks)
 		
 		while (!hEvents.isEmpty) {
 			
@@ -134,6 +128,7 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 					} else if (tasks(t).getMaxDuration > deltaBis - delta) {
 
 						hCheck.enqueue((tasks(t).getMaxResource, t))
+						hCheckSet.add(t)
 						mins(t) = delta
 						
 					} else {
@@ -141,16 +136,16 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 					}
 				}
 				
-				if (!filterMin) 
+				if (!filterMin(tasks)) 
 					return CPOutcome.Failure
 					
 				delta = deltaBis
 			}
 			
 			//HANDLING CURRENT EVENT
-			delta = synchronize(delta)
-			//extract event from eventPointSeries
-			val event : Event = null
+			delta = synchronize(tasks, delta)
+			
+			val event = hEvents.dequeue
 			
 			if (event.isSCP || event.isECPD) {
 				
@@ -162,85 +157,84 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 			}
 			
 			//GETTING NEXT EVENT
-			if (hEvents.isEmpty && !filterMin)
+			if (hEvents.isEmpty && !filterMin(tasks))
 				return CPOutcome.Failure
 				
-			deltaBis = synchronize(delta)
+			deltaBis = synchronize(tasks, delta)
 		}
 		
 		return CPOutcome.Suspend
 	}
 	
-	def filterMin : Boolean = {
+	def filterMin(tasks : Array[CumulativeActivity]) : Boolean = {
 		
 		if (gap < 0) 
 			return false
 		
 		//UPDATING TOP TASKS OF hCheck
-		if (!hCheck.isEmpty) {
+					
+		while (!hCheck.isEmpty && (hEvents.isEmpty || hCheck.head._1 > gap)) {
 			
 			val check = hCheck.dequeue
 			val t = check._2
 			val h = check._1
 			hCheckSet.remove(t)
-					
-			while (hEvents.isEmpty || h > gap) {
+			
+			if (delta >= tasks(t).getLST || delta - mins(t) >= tasks(t).getMaxDuration || hEvents.isEmpty) {
 				
-				if (delta >= tasks(t).getLST || delta - mins(t) >= tasks(t).getMaxDuration || hEvents.isEmpty) {
-					
-					adjustStart(t, mins(t), true)
-					
-					if (!evup(t)) {
-						//Update events of the compulsory part of t
-						evup(t) = true
-					}
-				} else {
-					hConflict.enqueue(check)
+				if (adjustStart(tasks(t), mins(t)) == CPOutcome.Failure) return false
+				
+				if (!evup(t)) {
+					//Update events of the compulsory part of t
+					evup(t) = true
 				}
-			}	
+			} else {
+				hConflict.enqueue(check)
+			}
 		}	
 		
 		//UPDATING TOP TASKS OF hConflict
-		if (!hConflict.isEmpty) {
+			
+		while(!hConflict.isEmpty && hConflict.head._1 <= gap) {
 			
 			val conflict = hConflict.dequeue
 			val t = conflict._2
 			val h = conflict._1
 			
-			while(h <= gap) {
+			if (delta >= tasks(t).getLST) {
 				
-				if (delta >= tasks(t).getLST) {
+				if (adjustStart(tasks(t), tasks(t).getLST) == CPOutcome.Failure) return false
+				
+				if (!evup(t)) {
+					//Update events of the compulsory part of t
+					evup(t) = true
+				}
+			} else {
+				
+				if (deltaBis - delta >= tasks(t).getMaxDuration) {
 					
-					adjustStart(t, tasks(t).getLST, true)
+					if (adjustStart(tasks(t), delta) == CPOutcome.Failure) return false
+				
+					adjustStart(tasks(t), delta)
 					
 					if (!evup(t)) {
+						
 						//Update events of the compulsory part of t
 						evup(t) = true
 					}
 				} else {
-					
-					if (deltaBis - delta >= tasks(t).getMaxDuration) {
-						
-						adjustStart(t, delta, true)
-						
-						if (!evup(t)) {
-							
-							//Update events of the compulsory part of t
-							evup(t) = true
-						}
-					} else {
-						hCheck.enqueue(conflict)
-						hCheckSet.add(t)
-						mins(t) = delta
-					}
+					hCheck.enqueue(conflict)
+					hCheckSet.add(t)
+					mins(t) = delta
 				}
 			}
 		}
+		
 			
 		true
 	}
 	
-	def synchronize(delta : Int) : Int = {
+	def synchronize(tasks : Array[CumulativeActivity], delta : Int) : Int = {
 		
 		var sync = false
 		var event : Event = null
@@ -253,17 +247,17 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 				
 			sync = true 
 			
-			event = hEvents.dequeue
+			event = hEvents.head
 			
 			//PROCESSING DYNAMIC EVENT
 			if (event.isECPD && !evup(event.task)) {
 				
 				if (hCheckSet.contains(event.task)) {
-					
+					hEvents.dequeue
 					hEvents.enqueue(new Event(event.eType, event.task, mins(event.task) + tasks(event.task).getMaxDuration, event.dec))
 					
 				} else {	
-
+					hEvents.dequeue
 					hEvents.enqueue(new Event(event.eType, event.task, tasks(event.task).getLST + tasks(event.task).getMaxDuration, event.dec))
 					
 				}
@@ -276,20 +270,20 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 				
 				if (hCheckSet.contains(event.task) && mins(event.task) + tasks(event.task).getMaxDuration > delta) {
 					
-					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, tasks(event.task).getMaxResource))
-					hEvents.enqueue(new Event(EventType.ECPD, event.task, mins(event.task), -tasks(event.task).getMaxResource))
+					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).getMaxResource))
+					hEvents.enqueue(new Event(EventType.ECPD, event.task, mins(event.task) + tasks(event.task).getMaxDuration, tasks(event.task).getMaxResource))
 					
 				} else {
 					
-					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, tasks(event.task).getMaxResource))
-					hEvents.enqueue(new Event(EventType.ECPD, event.task, mins(event.task), -tasks(event.task).getMaxResource))	
+					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).getMaxResource))
+					hEvents.enqueue(new Event(EventType.ECPD, event.task, tasks(event.task).getLCT, tasks(event.task).getMaxResource))	
 				}
 			
 				evup(event.task) = true
 				sync = false
 			}
 			
-		} while (sync)
+		} while (!sync)
 			
 		return event.date
 	}
@@ -323,11 +317,22 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 		override def toString = { "<" + e + ", " + t + ", " + d + ", " + inc +">" }
 	}
 	
-	def adjustStart(t : Int, v : Int, lToR : Boolean) = {
+	def adjustStart(t : CumulativeActivity, v : Int) = {
 		
-		if (lToR)
-			tasks(t).getStart.updateMin(v)
+		if (!t.isInstanceOf[MirrorActivity])
+			t.getStart.updateMin(v)
 		else			
-			tasks(t).getEnd.updateMax(v)
+			t.getEnd.updateMax(-v)
+	}
+	
+	class MirrorActivity(act : CumulativeActivity) extends CumulativeActivity(act.getStart, act.getDur, act.getEnd, act.getMachines, act.getResource) {
+		
+		override def getEST = -super.getLCT
+		
+		override def getLST = -super.getECT
+		
+		override def getECT = -super.getLST
+		
+		override def getLCT = -super.getEST
 	}
 }
