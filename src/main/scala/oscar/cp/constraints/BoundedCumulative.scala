@@ -38,7 +38,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 
-		setIdempotent
+		//setIdempotent
 		
         val oc = propagate()
         
@@ -62,13 +62,13 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 		
 		var fixPoint = false
 		
-		while (!fixPoint) {
+		//while (!fixPoint) {
 			
 			fixPoint = true
 			
 			// fixPoint is modified during the sweep
 			if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
-		}
+		//}
         
 		return CPOutcome.Suspend
 	}
@@ -88,7 +88,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
-				if (tasks(i).getMaxResource < lb) {
+				if (tasks(i).getMaxResource < max(0, lb)) {
 					
 					// Generates events
 					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1, 1)

@@ -17,7 +17,7 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int, domain : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
+class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
 
 	val nTasks = tasks.size
 	val Tasks  = 0 until nTasks
@@ -45,23 +45,13 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
         
         if (oc == CPOutcome.Suspend) {
         	for (i <- Tasks) {
-
-        			
-        		if (domain) {
-        			
-        			if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenDomainChanges(this)
-        			if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenDomainChanges(this)
-        			if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenDomainChanges(this)
-        			if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenDomainChanges(this)
-        			if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
-        		
-        		} else {
-        		
+        		if (true){//tasks(i).getMachines.hasValue(r)) {
+      			
 	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-	        		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-	        		if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
-	        		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-	        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
+		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
         		}
         	}
         }
@@ -78,7 +68,7 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			fixPoint = true
 			
 			// fixPoint is modified during the sweep
-			if (sweepAlgorithm(r) == CPOutcome.Failure) return CPOutcome.Failure
+			if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
 		}
         
 		return CPOutcome.Suspend
@@ -86,7 +76,7 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def nextEvent = if (eventPointSeries.size > 0) eventPointSeries.dequeue else null
 	
-	def generateEventPointSeries(r : Int) : Boolean = {
+	def generateEventPointSeries : Boolean = {
 		
 		// True if a profile event has been generated
 		var profileEvent = false
@@ -153,13 +143,13 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		}
 	}
 
-	def sweepAlgorithm(r : Int) : CPOutcome = {
+	def sweepAlgorithm : CPOutcome = {
 		
 		// Reset the parameters of the sweep line
 		resetSweepLine
 		
 		// Generate events (no need to sort them as we use a priorityQueue)
-		if (!generateEventPointSeries(r)) 
+		if (!generateEventPointSeries) 
 			return CPOutcome.Suspend
 		
 		var event = nextEvent
