@@ -17,33 +17,25 @@ import oscar.cp.modeling.CPModel
 /**
  * 
  */
-class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int, minCumulative : Boolean) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
+class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : Int, r : Int) extends Constraint(tasks(0).getMachines.getStore(), "MaxCumulative") {
+
+	val nTasks = tasks.size
+	val Tasks  = 0 until nTasks
 	
-	//val nTasks    = tasks.size
-	
-	// Event Point Series
-	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = b.date - a.date })
+	// Event Point Series (min heap on date)
+	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = if (b.date > a.date) {1} else if (b.date == a.date) {0} else {-1} })
 
 	// Sweep line parameters
-	var delta      : Int = 0
-	var sumHeight  : Int = 0
-	val stackPrune : Set[Int] = Set()
+	var delta      : Int = 0			// Position of the line
+	var sumHeight  : Int = 0			// Height of the profile
+	val stackPrune : Set[Int] = Set()	// Tasks to prune
+
+	// Capacities added to sumHeight during a sweep
+	val contribution = new Array[Int](nTasks)
 	
+	// True if the internal fix point is reached
 	var fixPoint : Boolean = false
 
-	val contribution = new Array[Int](tasks.size)
-		
-	def resetSweepLine = {
-			
-		sumHeight  = 0
-		stackPrune.clear
-			
-		for (i <- 0 until tasks.size) {
-			contribution(i) = 0
-		}
-	}
-	
-	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 
 		setIdempotent
@@ -51,25 +43,14 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
         val oc = propagate()
         
         if (oc == CPOutcome.Suspend) {
-        	for (i <- 0 until tasks.size) {
-
-        			
-        		if (minCumulative) {
-        			
-        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenDomainChanges(this)
-        		if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenDomainChanges(this)
-        		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenDomainChanges(this)
-        		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenDomainChanges(this)
-        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
-        		
-        		} else {
-        		
-        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-        		if (!tasks(i).getEnd.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
-        		if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-        		if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-        		if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
-        		
+        	for (i <- Tasks) {
+        		if (true){//tasks(i).getMachines.hasValue(r)) {
+      			
+	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
         		}
         	}
         }
@@ -79,28 +60,14 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
   
 	override def propagate(): CPOutcome = {
 		
-		var change = true
-		var res : Tuple2[Boolean, CPOutcome] = null
+		var fixPoint = false
 		
-		/*for(i <- 0 until limits.size) {
-			inQueue(i) = true
-			checkQueue.enqueue(i)
-		}
-		
-		while (!checkQueue.isEmpty) {
+		while (!fixPoint) {
 			
-			val r = checkQueue.dequeue
-			inQueue(r) = false
+			fixPoint = true
 			
-			res = sweepAlgorithm(r)
-			if (res._2 == CPOutcome.Failure) return CPOutcome.Failure
-		}*/
-		
-		while (change) {
-				
-			res = sweepAlgorithm(r)
-			change = res._1
-			if (res._2 == CPOutcome.Failure) return CPOutcome.Failure
+			// fixPoint is modified during the sweep
+			if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
 		}
         
 		return CPOutcome.Suspend
@@ -108,7 +75,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def nextEvent = if (eventPointSeries.size > 0) eventPointSeries.dequeue else null
 	
-	def generateEventPointSeries(r : Int) : Boolean = {
+	def generateEventPointSeries : Boolean = {
 		
 		// True if a profile event has been generated
 		var profileEvent = false
@@ -116,23 +83,14 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		// Reset eventPointSeries
 		eventPointSeries.clear
 		
-		// For each cumulative activity
-		for (i <- 0 until tasks.size) {
+		for (i <- Tasks) {
 			
 			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
-				/*
-				// Check
-				if (tasks(i).getMaxResource < limit) {
-					
-					// Generate events
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
-				}*/
 				
-				// Profile (Bad)
+				// Profile (Bad : on compulsory part)
 				if (tasks(i).getMinResource > 0) {
 					
-					// Generate events
+					// Generates events
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMinResource)  
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMinResource) 
 					
@@ -142,10 +100,10 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			
 			if (tasks(i).getMachines.hasValue(r)) {
 				
-				// Profile (Good)
+				// Profile (Good : on entire domain)
 				if (tasks(i).getMinResource < 0) {
 					
-					// Generate events		
+					// Generates events		
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMinResource)  
 					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMinResource) 
 					
@@ -155,7 +113,7 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 				// Pruning (if something is not fixed)
 				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBoundTo(r) && tasks(i).getResource.isBound)) {
 					
-					// Generate event
+					// Generates event
 					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0)
 				}
 			}			
@@ -163,35 +121,47 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		profileEvent
 	}
+	
+	def resetSweepLine = {
+			
+		delta     = 0
+		sumHeight = 0
+		stackPrune.clear
+			
+		for (i <- Tasks) {
+			contribution(i) = 0
+		}
+	}
 
-	def sweepAlgorithm(r : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		var change = false
-		var res : Tuple2[Boolean, CPOutcome] = null
+	def sweepAlgorithm : CPOutcome = {
 		
 		// Reset the parameters of the sweep line
 		resetSweepLine
 		
 		// Generate events (no need to sort them as we use a priorityQueue)
-		if (!generateEventPointSeries(r)) return (change, CPOutcome.Suspend)
+		if (!generateEventPointSeries) 
+			return CPOutcome.Suspend
 		
 		var event = nextEvent
-		var d = event.date
+		var delta = event.date
 		
 		while (event != null) {
 		
 			if (!event.isPruningEvent) {
 				
 				// If we have considered all the events of the previous date
-				if (d != event.date) {
+				if (delta != event.date) {
+					
 					// Consistency check
-					if (sumHeight > limit) return (change, CPOutcome.Failure)
+					if (sumHeight > limit) 
+						return CPOutcome.Failure
+					
 					// Pruning (this will empty the stackPrune list)
-					res = prune(r, d, event.date - 1)
-					change |= res._1
-					if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+					if (prune(r, delta, event.date - 1) == CPOutcome.Failure) 
+						return CPOutcome.Failure
+						
 					// New date to consider
-					d = event.date	
+					delta = event.date	
 				}
 				
 				/*if (event.isCheckEvent) {
@@ -212,19 +182,17 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		}
 		
 		// Consistency check
-		if (sumHeight > limit) return (change, CPOutcome.Failure) // TODO
+		if (sumHeight > limit) 
+			return CPOutcome.Failure
+			
 		// Pruning
-		res = prune(r, d, d)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (prune(r, delta, delta) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
-		return (change, CPOutcome.Suspend)
+		return CPOutcome.Suspend
 	}
 	
-	def prune(r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		var change = false
-		var res : Tuple2[Boolean, CPOutcome] = null
+	def prune(r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		val it = stackPrune.iterator
 		
@@ -232,81 +200,65 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			
 			val t = it.next
 			
-			res = pruneMandatory(t, r, low, up)
-			change |= res._1
-			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
+				return CPOutcome.Failure
 			
-			res = pruneForbiden(t, r, low, up)
-			change |= res._1
-			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+			if (pruneForbiden(t, r, low, up) == CPOutcome.Failure) 
+				return CPOutcome.Failure
 			
-			res = pruneConsumption(t, r, low, up)
-			change |= res._1
-			if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+			if (pruneConsumption(t, r, low, up) == CPOutcome.Failure) 
+				return CPOutcome.Failure
 			
 			if (tasks(t).getLCT <= up + 1) {
 				stackPrune.remove(t)
 			}
 		}	
 
-		return (change, CPOutcome.Suspend)
+		return CPOutcome.Suspend
 	}
 	
-	def pruneMandatory(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		var change = false
-		var res : Tuple2[Boolean, CPOutcome] = null
+	def pruneMandatory(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		// Consistency check
-		if ((sumHeight - contribution(t)) <= limit) { // TODO
-			return (change, CPOutcome.Suspend)
+		if ((sumHeight - contribution(t)) <= limit) {
+			return CPOutcome.Suspend
 		}
 		
 		// Fix the activity to the machine r and check consistency
-		res = MaxCumulative.fixVar(tasks(t).getMachines, r)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (fixVar(tasks(t).getMachines, r) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
 		// Adjust the EST of the activity and check consistency
-		res = MaxCumulative.adjustMin(tasks(t).getStart, up - tasks(t).getMaxDuration + 1)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (adjustMin(tasks(t).getStart, up - tasks(t).getMaxDuration + 1) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
 		// Adjust the LST of the activity and check consistency
-		res = MaxCumulative.adjustMax(tasks(t).getStart, low)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (adjustMax(tasks(t).getStart, low) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
 		// Adjust the LCT of the activity and check consistency
-		res = MaxCumulative.adjustMax(tasks(t).getEnd, low + tasks(t).getMaxDuration)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (adjustMax(tasks(t).getEnd, low + tasks(t).getMaxDuration) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
 		// Adjust the ECT of the activity and check consistency
-		res = MaxCumulative.adjustMin(tasks(t).getEnd, up + 1)
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (adjustMin(tasks(t).getEnd, up + 1) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 		
 		// Adjust the minimal duration of the activity and check consistency
-		res = MaxCumulative.adjustMin(tasks(t).getDur, min(up - tasks(t).getLST+1, tasks(t).getECT-low))
-		change |= res._1
-		if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+		if (adjustMin(tasks(t).getDur, min(up - tasks(t).getLST+1, tasks(t).getECT-low)) == CPOutcome.Failure) 
+			return CPOutcome.Failure
 			
-		return (change, CPOutcome.Suspend)
+		return CPOutcome.Suspend
 	}
 	
-	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		var change = false
-		var res : Tuple2[Boolean, CPOutcome] = null
+	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		if (sumHeight - contribution(t) + tasks(t).getMinResource > limit) {
 			
 			if (tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 					
-				res = MaxCumulative.removeValue(tasks(t).getMachines, r)
-				change |= res._1
-				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+				if (removeValue(tasks(t).getMachines, r) == CPOutcome.Failure) 
+					return CPOutcome.Failure
 				
 			} else if (tasks(t).getMachines.isBoundTo(r)) {
 				
@@ -315,39 +267,36 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 					//INTERVAL PRUNING
 					for (i <- low - tasks(t).getMinDuration+1 to up) {
 						
-						res = MaxCumulative.removeValue(tasks(t).getStart, i)
-						change |= res._1
-						if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+						if (removeValue(tasks(t).getStart, i) == CPOutcome.Failure) 
+							return CPOutcome.Failure
 					}
 					
 					for (i <- low + 1 to up + tasks(t).getMinDuration) {
 						
-						res = MaxCumulative.removeValue(tasks(t).getEnd, i)
-						change |= res._1
-						if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+						if (removeValue(tasks(t).getEnd, i) == CPOutcome.Failure) 
+							return CPOutcome.Failure
 					}
 				}
 				
 				val maxD = max(max(low - tasks(t).getEST, tasks(t).getLCT -up - 1), 0)
-				res = MaxCumulative.adjustMax(tasks(t).getDur, maxD)
-				change |= res._1
-				if (res._2 == CPOutcome.Failure) return (change, CPOutcome.Failure)
+				
+				if (adjustMax(tasks(t).getDur, maxD) == CPOutcome.Failure) 
+					return CPOutcome.Failure
 			}
 		}
 			
-		return (change, CPOutcome.Suspend)
+		return CPOutcome.Suspend
 	}
 	
-	def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : Tuple2[Boolean, CPOutcome] = {
-		
-		var res : Tuple2[Boolean, CPOutcome] = (false, CPOutcome.Suspend)
+	def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			res = MaxCumulative.adjustMax(tasks(t).getResource, limit - (sumHeight - contribution(t)))
+			if (adjustMax(tasks(t).getResource, limit - (sumHeight - contribution(t))) == CPOutcome.Failure) 
+				return CPOutcome.Failure
 		}
 			
-		return res
+		return CPOutcome.Suspend
 	}
 	
 	/** The Event
@@ -376,48 +325,44 @@ class MaxCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		override def toString = { "<" + e + ", " + t + ", " + d + ", " + inc +">" }
 	}
-}
-
-object MaxCumulative extends CPModel {
 	
-	def adjustMin(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+	def adjustMin(x : CPVarInt, v : Int) : CPOutcome = {
 		
 		val min = x.getMin
 		val oc  = x.updateMin(v)
 		
-		return (min != x.getMin, oc)
+		fixPoint &= min != x.getMin
+		
+		return oc
 	}
 	
-	def adjustMax(x : CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+	def adjustMax(x : CPVarInt, v : Int) : CPOutcome = {
 		
 		val max = x.getMax
 		val oc  = x.updateMax(v)
 		
-		return (max != x.getMax, oc)
+		fixPoint &= max != x.getMax
+		
+		return oc
 	}
 	
-	def adjustHeight(t : CumulativeActivity, v : Int, b : Boolean) : Tuple2[Boolean, CPOutcome] = {
-
-		if (b) {
-			return adjustMin(t.getResource, v)
-		} else {		
-			return adjustMax(t.getResource, v)
-		}
-	}
-	
-	def fixVar(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+	def fixVar(x: CPVarInt, v : Int) : CPOutcome = {
 		
 		val size = x.getSize
 		val oc   = x.assign(v)
 		
-		return (size > 1, oc)
+		fixPoint &= size > 1
+		
+		return oc
 	}
 	
-	def removeValue(x: CPVarInt, v : Int) : Tuple2[Boolean, CPOutcome] = {
+	def removeValue(x: CPVarInt, v : Int) : CPOutcome = {
 		
 		val size = x.getSize
 		val oc   = x.removeValue(v)
 		
-		return (x.getSize == size-1, oc)
+		fixPoint &= x.getSize == size-1
+		
+		return oc
 	}
 }

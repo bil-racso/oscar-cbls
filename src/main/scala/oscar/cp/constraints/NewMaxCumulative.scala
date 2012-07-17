@@ -87,6 +87,24 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 		}
 	}
 	
+	def buildSCPEvents(t : Int, lToR : Boolean) {
+		
+		if (lToR) {
+			new Event(EventType.SCP, t, tasks(t).getLST, -tasks(t).getMaxResource)
+		} else {
+			new Event(EventType.SCP, t, tasks(t).getLST, -tasks(t).getMaxResource)
+		}
+	}
+	
+	def buildECPDEvents(t : Int, lToR : Boolean) {
+		
+		if (lToR) {
+			new Event(EventType.ECPD, t, tasks(t).getECT, tasks(t).getMaxResource)
+		} else {
+			new Event(EventType.ECPD, t, tasks(t).getECT, tasks(t).getMaxResource)
+		}
+	}
+	
 	def initDataStructures {
 		
 	}
@@ -123,7 +141,7 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 					}
 				}
 				
-				if (!filterMin(delta, deltaBis, gap)) 
+				if (!filterMin) 
 					return CPOutcome.Failure
 					
 				delta = deltaBis
@@ -144,7 +162,7 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 			}
 			
 			//GETTING NEXT EVENT
-			if (hEvents.isEmpty && !filterMin(delta, delta, gap))
+			if (hEvents.isEmpty && !filterMin)
 				return CPOutcome.Failure
 				
 			deltaBis = synchronize(delta)
@@ -153,7 +171,7 @@ class NewMaxCumulative(cp: CPSolver, tasks : Array[CumulativeActivity], limit : 
 		return CPOutcome.Suspend
 	}
 	
-	def filterMin(delta : Int, deltaBis : Int, gap : Int) : Boolean = {
+	def filterMin : Boolean = {
 		
 		if (gap < 0) 
 			return false

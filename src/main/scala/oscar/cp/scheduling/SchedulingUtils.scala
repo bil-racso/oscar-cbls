@@ -9,7 +9,7 @@ import oscar.reversible.ReversibleInt
 
 object SchedulingUtils extends CPModel {
 
-	def setTimesSearch(cp : CPSolver, activities : Array[CumulativeActivity]) {
+	def setTimesSearch(cp : CPSolver, activities : Array[Activity]) {
 		
 		// Non fixed activities
 		val selectable    = new ReversibleSetIndexedArray(cp, 0, activities.size-1, false)
@@ -50,6 +50,16 @@ object SchedulingUtils extends CPModel {
 					selectable.removeValue(x)
 					notSelectable.insert(x)
 				}
+				
+				cp.branch {
+					
+					cp.post(activities(x).getStart == v)
+				}{
+					oldEST(x).setValue(v)
+					selectable.removeValue(x)
+					notSelectable.insert(x)
+				}
+
 			} else {
 				
 				cp.fail
