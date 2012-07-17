@@ -54,6 +54,7 @@ object SchedulingUtils extends CPModel {
 				  updateSelectable()
 				  if (selectableIndices().isEmpty && !allStartBounds()) cp.fail()
 		  }	
+		   
 		  
 		}		
 	}
