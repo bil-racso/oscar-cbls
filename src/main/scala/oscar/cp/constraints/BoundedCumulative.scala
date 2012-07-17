@@ -24,12 +24,14 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 
 	// Sweep line parameters
 	var delta         : Int = 0			// Position of the line
-	var sumHeight     : Int = 0			// Height of the profile
+	var consSumHeight : Int = 0			// Height of the profile
+	var capaSumHeight : Int = 0			// Height of the profile
 	var nCurrentTasks : Int = 0			// Tasks overlaping the line
 	val stackPrune : Set[Int] = Set()	// Tasks to prune
 
-	// Capacities added to sumHeight during a sweep
-	val contribution = new Array[Int](nTasks)
+	// Capacities added to consSumHeight during a sweep
+	val consContrib = new Array[Int](nTasks)
+	val capaContrib = new Array[Int](nTasks)
 	
 	// True if the internal fix point is reached
 	var fixPoint : Boolean = false
@@ -89,16 +91,19 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 				if (tasks(i).getMaxResource < lb) {
 					
 					// Generates events
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1, 1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1, -1)
 				}
 				
 				// Profile (Bad : on compulsory part)
-				if (tasks(i).getMaxResource < 0) {
+				val capaInc = max(0, tasks(i).getMinResource)
+				val consInc = min(0, tasks(i).getMaxResource)
+				
+				if (capaInc != 0 || consInc != 0) {
 					
 					// Generates events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).getMaxResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).getMaxResource) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, consInc, capaInc)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -consInc, -capaInc) 
 					
 					profileEvent = true
 				}			
@@ -107,11 +112,14 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 			if (tasks(i).getMachines.hasValue(r)) {
 				
 				// Profile (Good : on entire domain)
-				if (tasks(i).getMaxResource > 0) {
+				val capaInc = min(0, tasks(i).getMinResource)
+				val consInc = max(0, tasks(i).getMaxResource)
+				
+				if (capaInc != 0 || consInc != 0) {
 					
 					// Generates events		
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).getMaxResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).getMaxResource) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, consInc, capaInc)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -consInc, -capaInc) 
 					
 					profileEvent = true
 				}
@@ -120,7 +128,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).getMachines.isBoundTo(r) && tasks(i).getResource.isBound)) {
 					
 					// Generates event
-					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0)
+					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0, 0)
 				}
 			}			
 		}
@@ -131,12 +139,14 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 	def resetSweepLine = {
 			
 		delta         = 0
-		sumHeight     = 0
+		consSumHeight = 0
+		capaSumHeight = 0
 		nCurrentTasks = 0
 		stackPrune.clear
 			
 		for (i <- Tasks) {
-			contribution(i) = 0
+			consContrib(i) = 0
+			capaContrib(i) = 0
 		}
 	}
 
@@ -160,7 +170,8 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 				if (delta != event.date) {
 					
 					// Consistency check
-					if (nCurrentTasks > 0 && sumHeight < lb) 
+					if ((nCurrentTasks > 0 && consSumHeight < lb) ||
+						 capaSumHeight > ub) 
 						return CPOutcome.Failure
 					
 					// Pruning (this will empty the stackPrune list)
@@ -177,8 +188,11 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 					
 				} else if (event.isProfileEvent) {
 					
-					sumHeight += event.cons
-					contribution(event.task) += event.cons
+					consSumHeight += event.cons
+					consContrib(event.task) += event.cons
+					
+					capaSumHeight += event.capa
+					capaContrib(event.task) += event.capa
 				}
 			}
 			else {
@@ -189,7 +203,8 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 		}
 		
 		// Consistency check
-		if (nCurrentTasks > 0 && sumHeight < lb) 
+		if ((nCurrentTasks > 0 && consSumHeight < lb) ||
+			 capaSumHeight > ub) 
 			return CPOutcome.Failure
 			
 		// Pruning
@@ -227,9 +242,8 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 	def pruneMandatory(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
 		// Consistency check
-		if (nCurrentTasks == 0 || (sumHeight - contribution(t)) >= lb) {
+		if ((nCurrentTasks == 0 || (consSumHeight - consContrib(t)) >= lb) && (capaSumHeight - capaContrib(t) <= ub))
 			return CPOutcome.Suspend
-		}
 		
 		// Fix the activity to the machine r and check consistency
 		if (fixVar(tasks(t).getMachines, r) == CPOutcome.Failure) 
@@ -260,7 +274,8 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 	
 	def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
-		if (sumHeight - contribution(t) + tasks(t).getMaxResource < lb) {
+		if ((consSumHeight - consContrib(t) + tasks(t).getMaxResource < lb) || 
+		    (capaSumHeight - capaContrib(t) + tasks(t).getMinResource > ub)) {
 			
 			if (tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 					
@@ -299,7 +314,10 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 		
 		if (tasks(t).getMachines.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
 			
-			if (adjustMin(tasks(t).getResource, lb - (sumHeight - contribution(t))) == CPOutcome.Failure) 
+			if (adjustMin(tasks(t).getResource, lb - (consSumHeight - consContrib(t))) == CPOutcome.Failure) 
+				return CPOutcome.Failure
+				
+			if (adjustMax(tasks(t).getResource, ub - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 		}
 			
@@ -319,7 +337,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 	
 	import EventType._
 	
-	class Event(e : EventType, t : Int, d : Int, consomation : Int) extends Enumeration {
+	class Event(e : EventType, t : Int, d : Int, consomation : Int, capacity : Int) extends Enumeration {
 
 		def isCheckEvent   = { e == EventType.Check }
 		def isProfileEvent = { e == EventType.Profile }
@@ -328,6 +346,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 		def date  = d
 		def eType = e
 		def cons  = consomation
+		def capa  = capacity
 		def task  = t
 		
 		override def toString = { "<" + e + ", " + t + ", " + d + ", " + cons +">" }

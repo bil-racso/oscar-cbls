@@ -25,7 +25,8 @@ import oscar.visual._
 import scala.math
 import java.awt.Color
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.constraints.Cumulative
+import oscar.cp.constraints.BoundedCumulative
+import oscar.cp.constraints.MaxCumulative
 
 /**
  *
@@ -52,21 +53,12 @@ object PerfectSquare extends CPModel {
     	          (y(j) + side(j) <== y(i)))
       }
       
-      // decomposition of redundant constraint
-      def overlap(vars: Array[CPVarInt], i: Int, p: Int) = (vars(i) <== p) && (vars(i)+side(i) >>= p)
-      for(p <- 0 until s) {
-        cp.post(sum(0 until x.size) (i => overlap(x,i,p) * side(i)) == s)
-        cp.post(sum(0 until x.size) (i => overlap(y,i,p) * side(i)) == s)
-      }
-	
-      
-      /*
       val activitiesx = Array.tabulate(x.size)(i => new CumulativeActivity(x(i),CPVarInt(cp,side(i)),x(i)+side(i),CPVarInt(cp,0),CPVarInt(cp,0)))     
-      cp.post(new Cumulative(cp,activitiesx,s,s,0))    
+      cp.post(new BoundedCumulative(cp,activitiesx,s,s,0))
       
       val activitiesy = Array.tabulate(x.size)(i => new CumulativeActivity(y(i),CPVarInt(cp,side(i)),y(i)+side(i),CPVarInt(cp,0),CPVarInt(cp,0)))     
-      cp.post(new Cumulative(cp,activitiesy,s,s,0))  
-      */
+      cp.post(new BoundedCumulative(cp,activitiesy,s,s,0))
+      
     } exploration {
     	def label(w: Array[CPVarInt]) = {
     			while (!cp.allBounds(w)) {
