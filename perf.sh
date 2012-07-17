@@ -1,9 +1,9 @@
 #!/bin/sh
+cp target/oscar.jar perf/oscar.jar
 cd perf
 D1=$(date +"%m-%d-%y")
 D2=$(date +%s)
 C=`hg id -i`
-cp target/oscar.jar perf/oscar.jar
 for f in `ls -1 *.scala`; do
   echo "File -> $f"
   SECONDS=0; scala  -cp oscar.jar  -P:continuations:enable $f ; echo "that took approximately $SECONDS seconds"
