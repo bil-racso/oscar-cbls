@@ -17,7 +17,8 @@ def chart(title: String, input: Iterable[(String,Int,String,String,String)],divN
 """
         ]);
         var options = {
-          title: '"""+title+"""'
+          title: '"""+title+"""',
+          vAxis: { minValue: 0}
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('"""+divName+"""'));
