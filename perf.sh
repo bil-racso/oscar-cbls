@@ -1,4 +1,6 @@
 #!/bin/sh
+echo $PATH
+#/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin
 cp target/oscar.jar perf/oscar.jar
 cd perf
 D1=$(date +"%m-%d-%y")
