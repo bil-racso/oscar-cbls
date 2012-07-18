@@ -34,7 +34,7 @@ class GlpkLP extends AbstractLP{
   	var released = false
 	
 	def startModelBuilding(nbRows : Int,nbCols : Int) {
-		this.nbRows = nbRows
+		this.nbRows = 0
 		this.nbCols = nbCols
 		lp = GLPK.glp_create_prob() 
 		GLPK.glp_add_cols(lp, nbCols) //0 row, nbCols
@@ -49,8 +49,7 @@ class GlpkLP extends AbstractLP{
 	}
 	
 	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String, name:String){
-		nbRows += 1	
-		
+	    nbRows += 1	
 		//Adding a row giving a name
 		GLPK.glp_add_rows(lp, 1)
         GLPK.glp_set_row_name(lp, nbRows, name)       
