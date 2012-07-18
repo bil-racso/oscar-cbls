@@ -27,12 +27,12 @@ import oscar.linprog.modeling._
  */
 class MIPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 
-    val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.cplex)
+    val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk)
  
     test("mip test 1") {
     	for (lib <- solvers) {
  
-    		val mip = new MIPSolver()
+    		val mip = new MIPSolver(lib)
     		val x = new MIPVar(mip,"x",0 , 100)
     		val y = new MIPVar(mip,"y",0 to 100)
 
