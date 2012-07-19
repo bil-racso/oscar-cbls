@@ -33,11 +33,7 @@ class CplexLP extends AbstractLP {
   var objectiveValue = 0.0
   var status = LPStatus.NOT_SOLVED
   var closed = false
-  var released = false
-
-  /** Stores all IloRanges added to the CPLEX model, with int being the insertion order (starting from 0)*/
-  val ranges = scala.collection.mutable.HashMap[Int, IloRange]()
-  
+  var released = false  
   val model = new IloCplex()
   val lp = model.addLPMatrix() // matrix associated to model
 
@@ -60,17 +56,16 @@ class CplexLP extends AbstractLP {
   }
 
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
-
-    val lin = model.linearNumExpr()
-    for (i <- 1 to col.size)
-      lin.addTerm(coef(i - 1), lp.getNumVar(col(i - 1)))
-     val range = sign match {
-      case "<=" => model.addLe(lin, rhs, name)
-      case ">=" => model.addGe(lin, rhs, name)
-      case "==" => model.addEq(lin, rhs, name)
+     // do not use lp.addrow(model.addLe(...)). This is highly ineficient 
+     val idx = sign match {
+      case "<=" => lp.addRow(-Double.MaxValue,rhs,col,coef)
+      case ">=" => lp.addRow(rhs,Double.MaxValue,col,coef)
+      case "==" => lp.addRow(rhs,rhs,col,coef)
      }
-    ranges += (nbRows -> range)
-    nbRows += 1
+     // range constructor used above does not allow to set name directly...
+     lp.getRange(idx).setName(name)
+    
+     nbRows += 1
   }
 
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
@@ -197,12 +192,11 @@ class CplexLP extends AbstractLP {
   }
 
   def getDual(rowId: Int): Double = {
-    model.getDual(ranges(rowId))
+    model.getDual(lp.getRange(rowId))
   }
 
   def deleteConstraint(rowId: Int) {
-    model.remove(ranges(rowId))
-    ranges -= rowId
+    lp.removeRow(rowId)
    }
 
   def exportModel(fileName: String) {
