@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  *  The Queens Problem is to place as many queens as possible on the 8x8

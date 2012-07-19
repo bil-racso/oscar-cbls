@@ -18,6 +18,7 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  * The goal of the diet problem is to find the cheapest combination of foods 

@@ -198,6 +198,7 @@ class CplexLP extends AbstractLP {
   }
 
   def getDual(rowId: Int): Double = {
+    println("model:"+model)
     model.getDual(lp.getRange(rowId))
   }
 

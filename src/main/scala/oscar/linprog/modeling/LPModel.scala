@@ -17,7 +17,7 @@
 
 package oscar.linprog.modeling
 
-
+import oscar.linprog._
 /**
  * Abstract class that must be extended to define a new LP solver
  * @author Pierre Schaus

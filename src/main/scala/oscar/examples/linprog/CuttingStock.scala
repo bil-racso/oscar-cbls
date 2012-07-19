@@ -18,6 +18,7 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

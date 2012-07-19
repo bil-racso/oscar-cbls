@@ -175,15 +175,6 @@ abstract class AbstractLP {
  * @author Pierre Schaus pschaus@gmail.com
  */
 trait AbstractLPModel extends Algebra {
-  
-  
-  object LPSolverLib extends Enumeration {
-    val lp_solve = Value("lp_solve")
-    val cplex = Value("cplex")
-    val glpk = Value("glpk")
-    val gurobi = Value("gurobi")
-  }
-  
 
 
 	/**

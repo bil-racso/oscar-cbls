@@ -18,9 +18,9 @@
 package oscar.linprog.test
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.linprog.modeling._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -34,8 +34,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MI
 	  }   
 	  def number() : Int = Math.ceil(x.getValue).toInt
   }
-  
-  val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk)
+
   
   test("CuttingStock") {
 	for (lib <- solvers) {	  
@@ -60,6 +59,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MI
 	 	 	  constraints = constraints :+ lp.add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
 	 	  }
 	  }
+	 
 	  println("master obj:" + lp.getObjectiveValue)
 	  
 	  // Pricing Problem

@@ -18,6 +18,7 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 import scala.collection.mutable.Map
 import java.io.PrintWriter
 

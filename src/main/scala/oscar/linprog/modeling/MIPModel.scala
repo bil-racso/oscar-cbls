@@ -18,7 +18,7 @@
 package oscar.linprog.modeling
 
 
-
+import oscar.linprog._
 
 /**
  * Trait to extend by the class defining your LP model 

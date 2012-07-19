@@ -18,6 +18,7 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  *  a magic square of order n is an
