@@ -125,7 +125,7 @@ object EinavPuzzle extends CPModel {
     //
     // variables
     //
-    val x = Array.fill(rows)(Array.fill(cols)(CPVarInt(cp, -100 to 100)))
+    val x = Array.fill(rows,cols)(CPVarInt(cp, -100 to 100))
     val total_sum = sum(x.flatten)
     
     val row_signs = Array.fill(rows)(CPVarInt(cp, sign_domains))
@@ -146,26 +146,19 @@ object EinavPuzzle extends CPModel {
       }
       
       for(i <- ROWS) {
-        // cp.add(row_sums(i).getMin() == 0)
         cp.add(row_sums(i) >= 0)
-        // row_sums(i).updateMin(0)
       }
       
       for(j <- COLS) {
-        // cp.add(col_sums(j).getMin() == 0)
         cp.add(col_sums(j) >= 0)
-        // col_sums(j).updateMin(0)
       }
 
 
     } exploration {
        
-      // cp.binary(col_signs ++ row_signs)
-      // cp.binaryFirstFail(col_signs ++ row_signs)
       cp.binaryMaxDegree(col_signs ++ row_signs)
 
       println("\nSolution:")
-
       println("row_sums: " + row_sums.mkString(""))
       println("row_signs: " + row_signs.mkString(""))
       println("col_sums: " + col_sums.mkString(""))

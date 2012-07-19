@@ -73,7 +73,7 @@ object SetPartition extends CPModel {
     // variables
     // 
     // The matrix
-    val a = Array.fill(num_sets)(Array.fill(n)(CPVarInt(cp, 0 to 1)))
+    val a = Array.fill(num_sets,n)(CPVarInt(cp, 0 to 1))
 
 
     //
@@ -136,11 +136,8 @@ object SetPartition extends CPModel {
     } exploration {
        
       cp.binary(a.flatten)
-      // cp.binaryFirstFail(a.flatten)
-      // cp.binaryMaxDegree(a.flatten)
 
       println("\nSolution:")
-
       var sums = 0
       var sums_squared = 0
       for(i <- 0 until num_sets) {
@@ -159,7 +156,7 @@ object SetPartition extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

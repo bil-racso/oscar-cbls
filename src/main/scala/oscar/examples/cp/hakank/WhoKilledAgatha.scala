@@ -124,15 +124,15 @@ object WhoKilledAgatha extends CPModel {
        
       cp.binaryFirstFail(the_killer)
  
-       println("the_killer: " + names(the_killer.getValue()))
+      println("the_killer: " + names(the_killer.getValue()))
 
-       numSols += 1
+      numSols += 1
        
-     }
-
-     println("\nIt was " + numSols + " solutions.\n")
-
-     cp.printStats()
    }
+
+   println("\nIt was " + numSols + " solutions.\n")
+   cp.printStats()
+
+ }
 
 }

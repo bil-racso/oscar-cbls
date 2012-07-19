@@ -118,9 +118,7 @@ object SichermanDice extends CPModel {
 
     } exploration {
        
-      // cp.binary(x1 ++ x2)
       cp.binaryFirstFail(x1 ++ x2)
-      // cp.binaryMaxDegree(x1 ++ x2)
 
       println("x1: " + x1.mkString(""))
       println("x2: " + x2.mkString(""))
@@ -128,7 +126,7 @@ object SichermanDice extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

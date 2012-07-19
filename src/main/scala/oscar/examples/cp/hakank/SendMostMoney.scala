@@ -53,6 +53,8 @@ object SendMostMoney extends CPModel {
       val T = CPVarInt(cp, 0 to 9)
       val Y = CPVarInt(cp, 0 to 9)
 
+      val all = Array(S,E,N,D,M,O,T,Y)
+
       val Money = M*10000 + O*1000 + N*100 + E*10 + Y
       var this_money = money
       if (money > 0) {
@@ -65,18 +67,20 @@ object SendMostMoney extends CPModel {
           cp.add(S > 0)
           cp.add(M > 0)
           cp.add(Money == money)
-    	  cp.add(alldifferent(Array(S,E,N,D,M,O,T,Y)), Strong)
+    	  cp.add(alldifferent(all), Strong)
 
          } exploration {
 
-           cp.binaryFirstFail(S,E,N,D,M,O,T,Y)
-           println((S,E,N,D,M,O,T,Y))
+           cp.binaryFirstFail(all)
+
+           println(all.mkString(""))
            println("Money: " + Money)
 
         }
 
 
       } else {
+
         cp.maximize(Money) subjectTo {
 
           // constraints
@@ -85,22 +89,24 @@ object SendMostMoney extends CPModel {
               M*10000 + O*1000 + N*100 + E*10 + Y)
           cp.add(S > 0)
           cp.add(M > 0)
-    	  cp.add(alldifferent(Array(S,E,N,D,M,O,T,Y)), Strong)
+    	  cp.add(alldifferent(all), Strong)
 
          } exploration {
 
-           cp.binaryFirstFail(S,E,N,D,M,O,T,Y)
-           println((S,E,N,D,M,O,T,Y))
+           cp.binaryFirstFail(all)
+
+           println(all.mkString(""))
            println("Money: " + Money)
            this_money = Money.getValue()
         }
 
       }
       
+      println()
       cp.printStats()
 
       return this_money
 
-      }
+   }
 
 }

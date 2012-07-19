@@ -85,7 +85,7 @@ object Sudoku2 extends CPModel {
 
 
     // variables
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to n)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
 
     //
     // constraints
@@ -94,12 +94,9 @@ object Sudoku2 extends CPModel {
 
     cp.solveAll subjectTo {
       // fill with the hints
-      for(i <- 0 until n) {
-        for(j <- 0 until n) {
-          if (problem(i)(j) > 0) {
+      for(i <- 0 until n;
+          j <- 0 until n if problem(i)(j) > 0) {
             cp.add(x(i)(j) == problem(i)(j))
-          }
-        }
       }
 
      // rows and columns
@@ -122,10 +119,7 @@ object Sudoku2 extends CPModel {
 
        println("\nSolution:")
        for(i <- 0 until n) {
-         for(j <- 0 until n) {
-           print(x(i)(j) + " ")
-         }
-         println()
+         println(x(i).mkString(""))
        }
        println()
 

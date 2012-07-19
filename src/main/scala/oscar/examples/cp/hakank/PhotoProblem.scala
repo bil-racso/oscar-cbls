@@ -155,16 +155,11 @@ object PhotoProblem extends CPModel {
     } exploration {
        
       cp.binary(positions)
-      // cp.binaryFirstFail(positions)
-      // cp.binaryMaxDegree(positions)
 
       println("\nSolution:")
-
-
       println("positions: " + positions.mkString(""))
       println("places   : " + places.mkString(""))
       println("places   : " + places.map(p=>persons(p.getValue())).mkString(" "))
-
       println("Successful preferences:")
       for(i <- 0 until n;
           j <- 0 until n 

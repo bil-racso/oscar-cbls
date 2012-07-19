@@ -63,8 +63,6 @@ object BusSchedule extends CPModel {
     // Total number of buses
     val num_buses  = sum(x)
 
-
-
     //
     // constraints
     //
@@ -84,8 +82,6 @@ object BusSchedule extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
 

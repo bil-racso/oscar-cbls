@@ -65,8 +65,8 @@ object Rogo2 extends CPModel {
   var linec     : Int = 0;
   var problem_name : String = "";
 
-  def getValidConnections(ROWS: Array[Int], COLS: Array[Int]) : Array[Array[Int]] = {
-    return (for{i1 <- ROWS
+  def getValidConnections(ROWS: Array[Int], COLS: Array[Int]) : Array[Array[Int]] = 
+     (for{i1 <- ROWS
                 j1 <- COLS
                 i2 <- ROWS
                 j2 <- COLS
@@ -77,7 +77,6 @@ object Rogo2 extends CPModel {
                     )
                   } yield Array(i1*cols+j1, i2*cols+j2)
       ).toArray
-  }
 
   def readFile(problem_file: String) {
 
@@ -255,10 +254,9 @@ object Rogo2 extends CPModel {
       println();
       println();
 
-
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

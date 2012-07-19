@@ -133,7 +133,7 @@ object Crew extends CPModel {
     //
     // variables
     //
-    val crew = Array.fill(num_flights)(Array.fill(num_persons)(CPVarInt(cp, 0 to 1)))
+    val crew = Array.fill(num_flights,num_persons)(CPVarInt(cp, 0 to 1))
     val crew_flat = crew.flatten
 
     // val num_working = CPVarInt(cp, 1 to num_persons)
@@ -187,8 +187,6 @@ object Crew extends CPModel {
      } exploration {
 
         cp.binary(crew_flat)
-        // cp.binaryFirstFail(crew_flat)
-        // cp.binaryMaxDegree(crew_flat)
 
         println("num_working: " + num_working)
         for(f <- FLIGHTS) {

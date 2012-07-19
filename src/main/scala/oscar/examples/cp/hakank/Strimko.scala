@@ -122,9 +122,7 @@ object Strimko extends CPModel {
 
     } exploration {
        
-      // cp.binary(x.flatten)
       cp.binaryFirstFail(x.flatten)
-      // cp.binaryMaxDegree(x.flatten)
 
       for(i <- 0 until n) {
         println(x(i).mkString(""))
@@ -133,7 +131,7 @@ object Strimko extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

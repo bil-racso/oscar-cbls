@@ -63,14 +63,11 @@ object CombinatorialAuction extends CPModel {
     val bid_ids = Array(0,1,2,3)
     val bid_amount = Array(10,20,30,40,14)
 
-
-
     //
     // variables
     //
     val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
     val z  = scalarProduct(x, bid_amount)
-
 
     //
     // constraints
@@ -87,17 +84,11 @@ object CombinatorialAuction extends CPModel {
 
       }
 
-
-
-
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("z:" + z)
       println("x:" + x.mkString(""))
       println()

@@ -32,61 +32,65 @@ import oscar.cp.search._
  */
 object SendMostMoney2 extends CPModel {
 
-   def main(args: Array[String]) {
-     var money = send_most_money(0)
-     println("\nGot maximum value of MONEY: " + money)
-     println("Now we check for all solutions...")
-     money = send_most_money(money)
-     
+  def main(args: Array[String]) {
+    var money = send_most_money(0)
+    println("\nGot maximum value of MONEY: " + money)
+    println("Now we check for all solutions...")
+    money = send_most_money(money)
+      
   }
 
-   def send_most_money(money: Int) : Int = {
-      val cp = CPSolver()
+  def send_most_money(money: Int) : Int = {
+    val cp = CPSolver()
 
-      // variables
-      val S = CPVarInt(cp, 0 to 9)
-      val E = CPVarInt(cp, 0 to 9)
-      val N = CPVarInt(cp, 0 to 9)
-      val D = CPVarInt(cp, 0 to 9)
-      val M = CPVarInt(cp, 0 to 9)
-      val O = CPVarInt(cp, 0 to 9)
-      val T = CPVarInt(cp, 0 to 9)
-      val Y = CPVarInt(cp, 0 to 9)
+    // variables
+    val S = CPVarInt(cp, 0 to 9)
+    val E = CPVarInt(cp, 0 to 9)
+    val N = CPVarInt(cp, 0 to 9)
+    val D = CPVarInt(cp, 0 to 9)
+    val M = CPVarInt(cp, 0 to 9)
+    val O = CPVarInt(cp, 0 to 9)
+    val T = CPVarInt(cp, 0 to 9)
+    val Y = CPVarInt(cp, 0 to 9)
+    
+    val all = Array(S,E,N,D,M,O,T,Y)
+    val Money = M*10000 + O*1000 + N*100 + E*10 + Y
+    var this_money = money
+    
 
-      val Money = M*10000 + O*1000 + N*100 + E*10 + Y
-      var this_money = money
-
-      // constraints
-      // if (money > 0) cp.solveAll() else cp.maximize(Money) subjectTo {
-      (if (money > 0) cp.solveAll() else cp.maximize(Money)) subjectTo {
-
-          println("MONEY1: " + money)
-
-          cp.add(       S*1000 + E*100 + N*10 + D +
+    // constraints
+    (if (money > 0) cp.solveAll() else cp.maximize(Money)) subjectTo {
+      
+      println("MONEY1: " + money)
+      
+      cp.add(           S*1000 + E*100 + N*10 + D +
                         M*1000 + O*100 + S*10 + T ==
               M*10000 + O*1000 + N*100 + E*10 + Y)
-          cp.add(S > 0)
-          cp.add(M > 0)
-    	  cp.add(alldifferent(Array(S,E,N,D,M,O,T,Y)), Strong)
-
-          if (money > 0) {
-            cp.add(Money == money)
-          }
-
-
-         } exploration {
-
-           cp.binaryFirstFail(S,E,N,D,M,O,T,Y)
-           println((S,E,N,D,M,O,T,Y))
-           println("Money: " + Money)
-           this_money = Money.getValue()
-
-        }
-     
-        cp.printStats()
-
-        return this_money
-
-   }
+      cp.add(S > 0)
+      cp.add(M > 0)
+      cp.add(alldifferent(all), Strong)
+      
+      if (money > 0) {
+        cp.add(Money == money)
+      }
+        
+        
+    } exploration {
+      
+      cp.binaryFirstFail(all)
+      
+      println(all)
+      println("Money: " + Money)
+      
+      this_money = Money.getValue()
+      
+    }
+    
+    println()
+    cp.printStats()
+    
+    return this_money
+    
+  }
 
 }

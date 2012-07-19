@@ -125,14 +125,10 @@ object Zebra2 extends CPModel {
 
     } exploration {
        
-      // cp.binary(all_vars)
       cp.binaryFirstFail(all_vars)
-      // cp.binaryMaxDegree(all_vars)
 
       println("\nSolution:")
-
       val ns = Array("englishman", "spaniard", "japanese", "ukrainian", "norwegian")
-
       println("water drinker: " + 
               ns((for{i <- 0 until n if nationality(i).getValue() == water.getValue()} yield i).head))
       println("owns zebra: " + 
@@ -140,7 +136,7 @@ object Zebra2 extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

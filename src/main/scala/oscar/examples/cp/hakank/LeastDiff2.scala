@@ -35,8 +35,8 @@ import oscar.cp.core._
  */
 object LeastDiff2 extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
+   // Simple decomposition of scalarProduct
+   def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
     sum(0 until t.length)(i=>t(i)*cost(i))
 
 
@@ -74,6 +74,7 @@ object LeastDiff2 extends CPModel {
                  diff)
       }
 	  
+      println()
       cp.printStats()
 
   }

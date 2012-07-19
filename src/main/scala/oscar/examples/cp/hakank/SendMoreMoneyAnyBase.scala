@@ -36,7 +36,6 @@ object SendMoreMoneyAnyBase extends CPModel {
 
     val cp = CPSolver()
 
-
     var base = 10
     
     if (args.length > 0) {
@@ -91,9 +90,10 @@ object SendMoreMoneyAnyBase extends CPModel {
        numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.")
 
+     println("\nIt was " + numSols + " solutions.")
      cp.printStats()
+
    }
 
 }

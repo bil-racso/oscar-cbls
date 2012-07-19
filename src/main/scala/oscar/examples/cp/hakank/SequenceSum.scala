@@ -48,7 +48,6 @@ object SequenceSum extends CPModel {
 
     val cp = CPSolver()
 
-
     val n = 6
     // val m = 10 // the sum
     val s = 3 // the sliding size
@@ -59,7 +58,6 @@ object SequenceSum extends CPModel {
     // the sum
     val m = CPVarInt(cp, 1 to n*n)
 
-
     //
     // constraints
     //
@@ -67,29 +65,27 @@ object SequenceSum extends CPModel {
 
     cp.solveAll subjectTo {
 
-        // cp.(alldifferent(x), Strong)
-  
-        sequence_sum(cp, x, m, s)
-        cp.add(m == 10)
-
-        // symmetry breaking
-        // x(0) #= 1
-
-
-     } exploration {
-       
-       cp.binaryFirstFail(x)
-
-       print("x: " + x.mkString(""))
-       println("  m: " + m)
-
-
-       numSols += 1
-       
+      sequence_sum(cp, x, m, s)
+      cp.add(m == 10)
+      
+      // symmetry breaking
+      // cp.add(x(0) == 1)
+      
+      
+    } exploration {
+      
+      cp.binaryFirstFail(x)
+        
+      print("x: " + x.mkString(""))
+      println("  m: " + m)
+        
+      numSols += 1
+        
      }
-     println("\nIt was " + numSols + " solutions.")
 
+     println("\nIt was " + numSols + " solutions.")
      cp.printStats()
+
    }
 
 }

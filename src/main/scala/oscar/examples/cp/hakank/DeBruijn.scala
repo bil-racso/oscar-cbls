@@ -45,31 +45,14 @@ object DeBruijn extends CPModel {
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
 
 
-  // ensure that the minimum element is first in the array t
-  def my_minimum1(cp: CPSolver, t: Array[CPVarInt]) = {
-    val min = new CPVarInt(cp, t(0).getMin() to t(0).getMax())
-    for(i <- 0 to t.length-1) {
-      cp.add(min <= t(i))
-    }
-    cp.add(t(0) == min)
-  }
-
   // returns the minimum element in t
-  def my_min(cp: CPSolver, t: Array[CPVarInt]) : CPVarInt = {
-    val min = CPVarInt(cp, t(0).getMin() to t(0).getMax())
-    for(i <- 0 to t.length-1) {
-      cp.post(min <= t(i))
-    }
-    return min
-  }
-
-  def my_min2(t: Array[CPVarInt]) : CPVarInt = {
+  def my_min(t: Array[CPVarInt]) : CPVarInt = {
     val cp = t(0).getStore
     val mmin = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
     for(i <- 0 to t.length-1) {
       cp.post(mmin <= t(i))
     }
-    return mmin
+    mmin
   }
 
 
@@ -103,8 +86,7 @@ object DeBruijn extends CPModel {
     //
     // (Improvements from the original version suggested by Pierre Schaus.)
     val x        = Array.fill(m)(CPVarInt(cp, 0 to pow(base, n).toInt - 1))
-    val binary   = Array.fill(m)(
-                               Array.fill(n)(CPVarInt(cp, 0 to base-1)))
+    val binary   = Array.fill(m,n)(CPVarInt(cp, 0 to base-1))
     val bin_code = Array.fill(m)(CPVarInt(cp, 0 to base-1))
     val gccv     = Array.tabulate(base)(i => (CPVarInt(cp, 0 to m), i))
 
@@ -147,14 +129,8 @@ object DeBruijn extends CPModel {
        // gcc on the de Bruijn sequence
        cp.add(gcc(bin_code, gccv))
 
-       // symmetry breaking
-       // (don't know how to do this in Oscar)
-       // cp.add(min(x) == x(0)) // TODO!
-
-       // some decompositions (though they require that cp as argument)
-       // my_minimum1(cp, x) // This works
-       // cp.add(my_min(cp, x) == x(0)) // this works
-       cp.add(my_min2(x) == x(0))
+       // symmetry breaking: the smallest number in x should be first
+       cp.add(my_min(x) == x(0))
 
      } exploration {
        

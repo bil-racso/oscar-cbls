@@ -103,7 +103,7 @@ object ContiguityRegular extends CPModel {
 
       MyContiguity(cp, reg_input)
 
-     } exploration {
+    } exploration {
        
       cp.binary(reg_input)
 
@@ -111,10 +111,12 @@ object ContiguityRegular extends CPModel {
 
       numSols += 1
        
-     }
-     println("\nIt was " + numSols + " solutions.")
+    }
 
-     cp.printStats()
-   }
+    println("\nIt was " + numSols + " solutions.")
+
+    cp.printStats()
+
+  }
 
 }

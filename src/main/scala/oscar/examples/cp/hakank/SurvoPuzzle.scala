@@ -110,7 +110,7 @@ object SurvoPuzzle extends CPModel {
 
 
     // variables
-    val x = Array.fill(r)(Array.fill(c)(CPVarInt(cp, 1 to r*c)))
+    val x = Array.fill(r,c)(CPVarInt(cp, 1 to r*c))
 
     //
     // constraints
@@ -119,10 +119,9 @@ object SurvoPuzzle extends CPModel {
     cp.solveAll subjectTo {
 
       // fill the things we know
-      for (i <- 0 until r; j <- 0 until c) {
-        if (problem(i)(j) > 0) {
+      for (i <- 0 until r; 
+           j <- 0 until c if problem(i)(j) > 0) {
           cp.add(x(i)(j) == problem(i)(j))
-        }
       }
 
       cp.add(alldifferent(x.flatten.toArray), Strong)
@@ -144,19 +143,17 @@ object SurvoPuzzle extends CPModel {
 
        println("\nSolution:")
        for(i <- 0 until r) {
-         for(j <- 0 until c) {
-           print(x(i)(j) + " ")
-         }
-         println()
+         println(x(i).mkString(""))
        }
        println()
 
        numSols += 1
        
-     }
-     println("\nIt was " + numSols + " solutions.")
+    }
+    
+    println("\nIt was " + numSols + " solutions.")
+    cp.printStats()
 
-     cp.printStats()
-   }
+  }
 
 }

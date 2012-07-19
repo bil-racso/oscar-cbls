@@ -143,12 +143,9 @@ object Crypto extends CPModel {
 
     } exploration {
        
-      // cp.binary(LD)
-      // cp.binaryFirstFail(LD)
       cp.binaryMaxDegree(LD)
 
       println("\nSolution:")
-
       println("LD:" + LD.mkString(""))
 
       numSols += 1

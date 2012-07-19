@@ -103,11 +103,8 @@ object SetCovering4 extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("z: " + z)
       println("x: " + x.mkString(""))
       println("Selected alternatives: " + 
@@ -115,7 +112,7 @@ object SetCovering4 extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

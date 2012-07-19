@@ -68,7 +68,6 @@ object MrSmith extends CPModel {
     // 
     // The matrix
     val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
-
     val Array(mr_smith, mrs_smith, matt, john, tim) = x
 
     //
@@ -79,38 +78,26 @@ object MrSmith extends CPModel {
     cp.solveAll subjectTo {
 
       // If Mr Smith comes then his wife will come too.
-      // (Mr_Smith -> Mrs_Smith)
-      // cp.add(mr_smith - mrs_smith <= 0)
       cp.add((mr_smith === 1) ==> (mrs_smith === 1))
 
       // At least one of their two sons Matt and John will come.
-      // (Matt \/ John)
-      // cp.add(matt+john >= 1)
       cp.add((matt === 1 or john ===1))
 
       // Either Mrs Smith or Tim will come but not both.
-      // (Mrs_Smith xor Tim)
       cp.add(mrs_smith + tim == 1)
       
       // Either Tim and John will come or neither will come.
-      // (Tim = John)
       cp.add(tim == john)
       
       // If Matt comes /\ then John and his father will also come.
-      // (Matt -> (John /\ Mr_Smith))
-      // cp.add(matt - (john*mr_smith) <= 0)
       cp.add((matt === 1) ==> ((john === 1) && (mr_smith === 1)))
-
 
 
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println(x.mkString(""))
       println("Mr Smith : " + mr_smith)
       println("Mrs Smith: " + mrs_smith)

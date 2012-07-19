@@ -53,9 +53,10 @@ object LeastDiff extends CPModel {
       val Y = F*10000+G*1000+H*100+I*10+J
       val Diff = X - Y
 
+
+      // constraints
       cp.minimize(Diff) subjectTo {
 
-        // constraints
         cp.add(A > 0)
         cp.add(F > 0)
         cp.add(Diff > 0)
@@ -64,11 +65,14 @@ object LeastDiff extends CPModel {
       } exploration {
 
         cp.binaryFirstFail(all ++ Array(X,Y,Diff))
-         println(Array(A,B,C,D,E).mkString("") + " -" +
-                 Array(F,G,H,I,J).mkString("") + " =" +
-                 Diff)
+
+        println(Array(A,B,C,D,E).mkString("") + " -" +
+                Array(F,G,H,I,J).mkString("") + " =" +
+                Diff)
+
       }
 	  
+      println()
       cp.printStats()
 
   }

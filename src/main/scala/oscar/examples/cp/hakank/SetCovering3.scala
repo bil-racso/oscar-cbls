@@ -76,15 +76,7 @@ object SetCovering3 extends CPModel {
       // ensure that each group is covered by at least
       // one senator
       for(i <- 0 until  num_groups) {
-        /*
-        IntVar[] b = new IntVar[num_senators];
-        for(int j = 0; j < num_senators; j++) {
-          b[j] = (x[j]*belongs[i,j]).Var();
-        }
-        solver.Add(b.Sum() >= 1)
-        */
-        cp.add(
-               sum(
+        cp.add(sum(
                    for{j <- 0 until num_senators
                    } yield x(j)*belongs(i)(j)
                    ) >= 1)
@@ -94,12 +86,8 @@ object SetCovering3 extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
-
 
       println("\nSolution:")
-
       println("z: " + z)
       println("x: " + x.mkString(""))
       
@@ -114,7 +102,7 @@ object SetCovering3 extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

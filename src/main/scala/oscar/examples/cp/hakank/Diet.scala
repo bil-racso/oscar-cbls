@@ -74,6 +74,7 @@ object Diet extends CPModel {
        
      }
 
+     println()
      cp.printStats()
    }
 

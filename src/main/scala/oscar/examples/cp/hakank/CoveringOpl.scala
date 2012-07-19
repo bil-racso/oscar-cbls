@@ -74,8 +74,6 @@ object CoveringOpl extends CPModel {
     //
     // variables
     //
-
-    // the digits
     val hire = Array.fill(num_workers)(CPVarInt(cp, 0 to 1))
     val total_cost = scalarProduct(hire, cost)
 
@@ -96,15 +94,12 @@ object CoveringOpl extends CPModel {
                                    ) >= 1
                                )
                         )
-
+      
     } exploration {
        
-      // cp.binary(hire)
-      // cp.binaryFirstFail(hire)
       cp.binaryMaxDegree(hire)
 
       println("\nSolution:")
-
       println("total_cost: " + total_cost)
       println("hire: " + hire.zipWithIndex.filter(_._1.getValue() == 1).map(_._2).mkString(" "))
 

@@ -85,7 +85,6 @@ object AllIntervals extends CPModel {
       cp.add(alldifferent(diffs), Strong)
       cp.add(alldifferent(x), Strong)
       
-      // rows and columns
       for(k <- 0 until n-1) {
         cp.add(diffs(k) == (x(k+1)-(x(k))).abs()) 
       }
@@ -97,13 +96,10 @@ object AllIntervals extends CPModel {
 
     } exploration {
        
-      // cp.binaryFirstFail(x) // 3.995s and 34525 bkts for n=11
-      cp.binary(x) // 3.019s and 19779 bkts for n=11
+      cp.binary(x)
 
-      print("x:")
-      print(x.mkString(""))
-      print("  diffs:")
-      print(diffs.mkString(""))
+      print("x:" + x.mkString(""))
+      print("  diffs:" + diffs.mkString(""))
       println()
 
       numSols += 1

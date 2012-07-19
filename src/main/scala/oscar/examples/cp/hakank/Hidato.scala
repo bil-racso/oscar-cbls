@@ -28,24 +28,13 @@ import Array._
 
   Hidato puzzle in Oscar.
 
+  Note: For a faster version, see HidatoTable.scala.
+
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
 */
 object Hidato extends CPModel {
-
-  def maxDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
-    val notbound = vars.filterNot(_.isBound)
-    if (notbound.nonEmpty) {
-      val sizeMax = notbound.map(_.getSize).max
-      notbound.zipWithIndex.filter {
-        _._1.getSize == sizeMax
-      }
-    } else {
-      Iterable()
-    }
-  }
- 
 
 
   def main(args: Array[String]) {
@@ -187,106 +176,9 @@ object Hidato extends CPModel {
       }
   
 
-
     } exploration {
-
  
-        // cp.binaryFirstFail(x)
-        cp.binary(x)
-        // cp.binaryMaxDegree(x) // this is slower
-
-
-        while (false && !allBounds(x)) {
-
-          // all unbound variables
-          val notbound = x.filterNot(_.isBound)
-
-          // This is a test of many variant of variable/value selections
-
-          //
-          // variable selection
-          //
-
-          // Here are some of the standard heuristics:
-          // 
-          // input order: selects the first variable from the current input
-          //              vector,
-          // first fail: selects a variable with the smallest number of
-          //             elements in its domain,
-          // most constrained: selects a variable that appears in most
-          //                   constraints,
-          // smallest: selects a variable that has the smallest minimal
-          //           value in its domain,
-          // largest: selects a variable that has the greatest minimal
-          //          value in its domain,
-          // smallest maximal: selects a variable that has the smallest
-          //                   maximal value in its domain, and
-          // max regret: selects a variable that has the largest difference
-          //             between the smallest and the second smallest value in its domain.
-
-
-          val (y,i) = minDomNotbound(x).head  // first of those vars with smallest domains
-          // val (y,i) = minDomNotbound(x).last // last of those vars with smallest domains
-
-
-          // val (y,i) = maxDomNotbound(x).head // defined above (for the vars with largest domains)
-          // val (y,i) = maxDomNotbound(x).last // defined above: not bad
-          // val y = notbound.head
-          // val y = notbound.last
-
-          // "first fail": selects a variable with the smallest number of
-          //               elements in its domain,
-          // val y = argMin(notbound)(v=>v.getSize()).head
-          // val y = argMin(notbound)(v=>v.getSize()).last
-
-          // val y = argMax(notbound)(v=>v.getSize()).head
-          // val y = argMax(notbound)(v=>v.getSize()).last
-
-          // "Smallest"
-          // val y = argMin(notbound)(v=>v.getMin()).head
-          // val y = argMin(notbound)(v=>v.getMin()).last
-          // val y = argMax(notbound)(v=>v.getMin()).head
-          // val y = argMax(notbound)(v=>v.getMin()).last
-
-          // "Largest"
-          // val y = argMin(notbound)(v=>v.getMax()).head
-          // val y = argMax(notbound)(v=>v.getMax()).head
-
-          // "max regret"
-          // val y = argMin(notbound)(v=>v.getMax()-v.getMin()).head
-          // val y = argMin(notbound)(v=>v.getMax()-v.getMin()).last
-          // val y = argMax(notbound)(v=>v.getMax()-v.getMin()).head
-          // val y = argMax(notbound)(v=>v.getMax()-v.getMin()).last
-
-          // "maxConstraintDegree"
-          // val y = argMin(notbound)(v=>v.getConstraintDegree()).head
-          // val y = argMin(notbound)(v=>v.getConstraintDegree()).last
-          // val y = argMax(notbound)(v=>v.getConstraintDegree()).head
-          // val y = argMax(notbound)(v=>v.getConstraintDegree()).last
-
-          //    
-          // value selection
-          // 
-          val size = y.getSize
-          val vMin = y.getMin()   // min value of domain
-          val vMax = y.getMax()   // max value of domain
-          val vMidV = ((vMin + vMax) / 2).toInt; // calculate median value (of vMin and vMax)
-          val vMid = y.getValueAfter(vMidV)  // the median value in the domain
-          val vRand = y.getRandomValue()  // random value from domain
-
-          // println("y: " + y)
-          // println("vMin: " + vMin + " (vMidV: " + vMidV + ") vMid: " + vMid + " vMax: " + vMax)
-
-          var v = vRand
-
-    	  cp.branch {
-            cp.post(y == v)
-          } {
-            cp.post(y != v)
-          }
-         
-      } // while(!allBounds(x)
-
+      cp.binary(x)
 
       println("\nSolution:")
       for(i <- 0 until n) {

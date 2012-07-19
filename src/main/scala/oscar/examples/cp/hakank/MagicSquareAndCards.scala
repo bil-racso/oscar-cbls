@@ -60,7 +60,7 @@ object MagicSquareAndCards extends CPModel {
     //
     // variables
     // 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to values)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to values))
     val s = CPVarInt(cp, 1 to values*colors)
     val counts = Array.tabulate(values+1)(i => (CPVarInt(cp, 0 to colors), i))
 
@@ -86,7 +86,6 @@ object MagicSquareAndCards extends CPModel {
 
         cp.add( alldifferent(row), Strong)
         cp.add( alldifferent(col), Strong)
-
       }
 
       // diagonals
@@ -102,12 +101,9 @@ object MagicSquareAndCards extends CPModel {
 
     } exploration {
        
-      // cp.binary(x.flatten)
-      // cp.binaryFirstFail(x.flatten)
       cp.binaryMaxDegree(x.flatten)
 
       println("\nSolution:")
-
       println("counts: " + counts.mkString(""))
       for(i <- RANGE) {
         println(x(i).mkString(""))
@@ -115,7 +111,7 @@ object MagicSquareAndCards extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

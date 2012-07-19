@@ -165,7 +165,7 @@ object KenKen2 extends CPModel {
     //
     // Decision variables
     // 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to n)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
     val x_flat = x.flatten
 
     //
@@ -194,8 +194,6 @@ object KenKen2 extends CPModel {
 
     } exploration {
        
-      // cp.binary(x_flat)
-      // cp.binaryFirstFail(x_flat)
       cp.binaryMaxDegree(x_flat)
 
       for(i <- RANGE) {

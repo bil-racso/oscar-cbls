@@ -127,7 +127,7 @@ object PandigitalNumbers extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     // println("\nIt was " + numSols + " solutions.")
     // cp.printStats()
@@ -154,10 +154,11 @@ object PandigitalNumbers extends CPModel {
       for(len2 <- 0 to x_len) {
         if (x_len > len1 + len2
             && len1 > 0 && len2 > 0) {
+          // We need to catch those cases where there is no solution
           try {
             solve(base, start, len1, len2)
           } catch {
-          case e: Exception => ""
+            case e: Exception => ""
           } 
         }
       }
