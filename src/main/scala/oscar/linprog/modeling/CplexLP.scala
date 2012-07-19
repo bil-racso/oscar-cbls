@@ -18,7 +18,7 @@
 package oscar.linprog.modeling
 
 import ilog.concert._
-
+import ilog.concert.IloRange
 import ilog.cplex._
 
 /**
@@ -35,6 +35,9 @@ class CplexLP extends AbstractLP {
   var closed = false
   var released = false
 
+  /** Stores all IloRanges added to the CPLEX model, with int being the insertion order (starting from 0)*/
+  val ranges = scala.collection.mutable.HashMap[Int, IloRange]()
+  
   val model = new IloCplex()
   val lp = model.addLPMatrix() // matrix associated to model
 
@@ -42,11 +45,9 @@ class CplexLP extends AbstractLP {
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
 
-    this.nbRows = nbRows
     this.nbCols = nbCols
 
     model.numVarArray(model.columnArray(lp, nbCols), 0.0, java.lang.Double.MAX_VALUE) // creating nbCols variables
-
   }
 
   def endModelBuilding() {
@@ -59,19 +60,17 @@ class CplexLP extends AbstractLP {
   }
 
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
-    nbRows += 1
 
     val lin = model.linearNumExpr()
     for (i <- 1 to col.size)
       lin.addTerm(coef(i - 1), lp.getNumVar(col(i - 1)))
-    sign match {
-      case "<=" =>
-        model.addLe(lin, rhs, name)
-      case ">=" =>
-        model.addGe(lin, rhs, name)
-      case "==" =>
-        model.addEq(lin, rhs, name)
-    }
+     val range = sign match {
+      case "<=" => model.addLe(lin, rhs, name)
+      case ">=" => model.addGe(lin, rhs, name)
+      case "==" => model.addEq(lin, rhs, name)
+     }
+    ranges += (nbRows -> range)
+    nbRows += 1
   }
 
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
@@ -198,15 +197,13 @@ class CplexLP extends AbstractLP {
   }
 
   def getDual(rowId: Int): Double = {
-    println("model:"+model)
-    model.getDual(lp.getRange(rowId))
+    model.getDual(ranges(rowId))
   }
 
   def deleteConstraint(rowId: Int) {
-    lp.removeRow(rowId)
-    //may be lp.removeColumn(rowId)
-
-  }
+    model.remove(ranges(rowId))
+    ranges -= rowId
+   }
 
   def exportModel(fileName: String) {
     model.exportModel(fileName)
