@@ -32,13 +32,14 @@ public class Activity {
 	}
 	
 	public Activity(CPVarInt start, CPVarInt dur)  {
+		this.cp = start.getStore();
 		this.dur = dur;
 		this.start = start;
 		this.end = start.plus(dur);
 	}
 	
 	public Activity(CPVarInt start, int dur)  {
-		this(start,new CPVarInt(start.getStore(),dur,dur));
+		this(start, new CPVarInt(start.getStore(), dur, dur));
 	}
 	
 	public CPVarInt getDur() {

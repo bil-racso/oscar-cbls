@@ -39,7 +39,7 @@ object CumulativeJobShop extends CPModel {
 		// -----------------------------------------------------------------------
 		
 		// Read the data
-		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShopHard.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -84,7 +84,7 @@ object CumulativeJobShop extends CPModel {
 		val jobActivities = Array.tabulate(nJobs, nTasksPerJob)((i,j) => {
 			
   	   		val dur      = CPVarInt(cp, durations(i)(j))
-  	   		val start    = CPVarInt(cp,0 to horizon - dur.getMin())
+  	   		val start    = CPVarInt(cp, 0 to horizon - dur.getMin())
   	   		
   	   		CumulativeActivity(start,dur, machines(i)(j), 1)
   	   	}) 	   
@@ -125,35 +125,33 @@ object CumulativeJobShop extends CPModel {
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 
+		var nbSol = 0
+		
   	   	cp.minimize(makespan) subjectTo {
 
-			// Precedence constraints
-			for (i <- Jobs; j <- 0 until nTasksPerJob-1) {
-				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
+			for (i <- jobActivities.flatten) {
+				cp.add(i.getStart + i.getDur == i.getEnd)
 			}
+			
+			// Precedence constraints
+			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
+				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
 			
 			// Cumulative constraints
-			for (i <- Machines) {
-				println("Machine : " + i)
-				cp.add(new NewMaxCumulative(cp, jobActivities.flatten, capacities(i), i))
-				//cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
-			}
-			
-			println("Here")
+			for (i <- Machines)
+				cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
 
 		} exploration {
 			
-			// Efficient but not complete search strategy
 			//cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
+			
+			// Efficient but not complete search strategy
 			SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
-			//cp.binaryFirstFail(jobActivities.flatten.map(a => a.getStart()))
 			
-			
-			println("start times:"+jobActivities.flatten.map(_.getStart()).mkString(","))
 			// Updates the visual components
 			updateVisu(1, 20)
-		}
+		}    
 		
-		cp.printStats()       
+		cp.printStats() 
 	}
 }

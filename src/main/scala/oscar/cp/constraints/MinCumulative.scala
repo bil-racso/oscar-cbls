@@ -86,7 +86,7 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		for (i <- Tasks) {
 			
-			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
+			if (tasks(i).getLST < tasks(i).getECT && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
 				if (tasks(i).getMaxResource < limit) {

@@ -14,8 +14,10 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPModel
 
-class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int) extends Constraint(tasks(0).getMachines.getStore(), "BoundedCumulative") {
+class BoundedCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int) extends Constraint(allTasks(0).getMachines.getStore(), "BoundedCumulative") {
 
+	val tasks = allTasks.filter(a => a.getMachines.hasValue(r))
+	
 	val nTasks = tasks.size
 	val Tasks  = 0 until nTasks
 	
@@ -44,14 +46,12 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
         
         if (oc == CPOutcome.Suspend) {
         	for (i <- Tasks) {
-        		if (true){//tasks(i).getMachines.hasValue(r)) {
-      			
-	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
-        		}
+        		
+        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).getResource.isBound) tasks(i).getResource.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).getMachines.isBound) tasks(i).getMachines.callPropagateWhenDomainChanges(this)
         	}
         }
         
@@ -85,7 +85,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 		
 		for (i <- Tasks) {
 			
-			if (tasks(i).hasCompulsoryPart && tasks(i).getMachines.isBoundTo(r)) {
+			if (tasks(i).getLST < tasks(i).getECT && tasks(i).getMachines.isBoundTo(r)) {
 				
 				// Check
 				if (tasks(i).getMaxResource < max(0, lb)) {
@@ -175,7 +175,7 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 						return CPOutcome.Failure
 					
 					// Pruning (this will empty the stackPrune list)
-					if (prune(r, delta, event.date - 1) == CPOutcome.Failure) 
+					if (prune(delta, event.date - 1) == CPOutcome.Failure) 
 						return CPOutcome.Failure
 						
 					// New date to consider
@@ -208,13 +208,13 @@ class BoundedCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], lb : I
 			return CPOutcome.Failure
 			
 		// Pruning
-		if (prune(r, delta, delta) == CPOutcome.Failure) 
+		if (prune(delta, Int.MaxValue) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		return CPOutcome.Suspend
 	}
 	
-	def prune(r : Int, low : Int, up : Int) : CPOutcome = {
+	def prune(low : Int, up : Int) : CPOutcome = {
 		
 		val it = stackPrune.iterator
 		

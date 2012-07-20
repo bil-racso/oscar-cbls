@@ -35,11 +35,6 @@ class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,
 	 */
 	def getMaxResource() = resource.getMax()
 	
-	/**
-	 * Have a compulsory part ?
-	 */
-	def hasCompulsoryPart() = (start.getMax < end.getMin)
-	
 	override def toString() = "dur:"+getDur()+ " from ["+getEST()+","+getLST()+"[ to ["+getECT()+","+getLCT()+"[ using ["+getMinResource+","+getMaxResource+"] on machine(s) "+machine 
 }
 
