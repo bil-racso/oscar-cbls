@@ -19,7 +19,7 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
-
+import oscar.linprog._
 
 object BasicLP extends LPModel{
 	

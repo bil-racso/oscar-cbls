@@ -110,8 +110,6 @@ object MaxFlowTaha extends CPModel {
      } exploration {
        
       cp.binary(x.flatten)
-      // cp.binaryFirstFail(x.flatten)
-      // cp.binaryMaxDegree(x.flatten)
 
       println("total: " + total)
       for(i <- NODES) {

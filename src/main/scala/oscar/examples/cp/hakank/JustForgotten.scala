@@ -89,11 +89,8 @@ object JustForgotten extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("x: " + x.mkString(""))
       println("\nThe four tries, where '!' represents a correct digit:")
       for(i <- 0 until rows) {
@@ -106,7 +103,6 @@ object JustForgotten extends CPModel {
         }
         println()
       }
-
 
       numSols += 1
 

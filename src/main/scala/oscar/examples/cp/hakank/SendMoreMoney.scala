@@ -44,6 +44,8 @@ object SendMoreMoney extends CPModel {
       val R = CPVarInt(cp, 0 to 9)
       val Y = CPVarInt(cp, 0 to 9)
 
+      val all = Array(S,E,N,D,M,O,R,Y)
+
       cp.solveAll() subjectTo {
 
         // constraints
@@ -52,15 +54,17 @@ object SendMoreMoney extends CPModel {
             M*10000 + O*1000 + N*100 + E*10 + Y)
         cp.add(S > 0)
         cp.add(M > 0)
-	cp.add(alldifferent(Array(S,E,N,D,M,O,R,Y)), Strong)
+	cp.add(alldifferent(all), Strong)
 
       } exploration {
 
-         cp.binaryFirstFail(S,E,N,D,M,O,R,Y)
-         println((S,E,N,D,M,O,R,Y))
+         cp.binaryFirstFail(all)
+
+         println(all.mkString(""))
 
       }
-	  
+      
+      println()
       cp.printStats()
 
   }

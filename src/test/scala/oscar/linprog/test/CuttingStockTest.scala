@@ -15,16 +15,18 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.linprog
+package oscar.linprog.test
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * Cutting Stock using Column Generation
  */
-object CuttingStock extends LPModel with MIPModel {
+class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 	
   class Column (val x : LPVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
@@ -32,16 +34,16 @@ object CuttingStock extends LPModel with MIPModel {
 	  }   
 	  def number() : Int = Math.ceil(x.getValue).toInt
   }
+
   
-  
-  def main(args: Array[String]) {
-	  	  
+  test("CuttingStock") {
+	for (lib <- solvers) {	  
 	  val rollStock = 110	  
 	  val roll =  Array(20, 45, 50, 55, 75)
 	  val demand = Array(48, 35, 24, 10,  8)
 	  val Rolls = 0 until roll.size
 	  
-	  val lp = LPSolver(LPSolverLib.lp_solve)
+	  val lp = LPSolver(lib)
 	  var C : Array[Column] = Array()
 	  for (r <- Rolls) {
 	 	  val config = Array.tabulate(roll.size)(_ => 0)
@@ -57,12 +59,13 @@ object CuttingStock extends LPModel with MIPModel {
 	 	 	  constraints = constraints :+ lp.add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
 	 	  }
 	  }
+	 
 	  println("master obj:" + lp.getObjectiveValue)
 	  
 	  // Pricing Problem
 	  var mip : MIPSolver = null
 	  do {
-		  mip = MIPSolver()
+		  mip = MIPSolver(lib)
 		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
 		  val cost = Array.tabulate(roll.size)(constraints(_).getDual)
 
@@ -75,7 +78,7 @@ object CuttingStock extends LPModel with MIPModel {
 		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		
 		  
 		  println("master obj:" + lp.getObjectiveValue)
-		  
+		  mip.getStatus() should equal (LPStatus.OPTIMAL)
 
 	  } while(mip.getObjectiveValue < 0)
 
@@ -86,5 +89,12 @@ object CuttingStock extends LPModel with MIPModel {
 	  println("-----------------------------------")
 	  println("total #boards:" + C.map(_.number).sum)
 	  
+	  
+	  
+	  lp.getStatus() should equal (LPStatus.OPTIMAL)
+	  C.map(_.number).sum should equal(45) // // should have 45 boards at the end
+	  
+	}
   }
+  
 }

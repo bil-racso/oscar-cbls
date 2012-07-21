@@ -67,19 +67,6 @@ object PostOfficeProblem extends CPModel {
     sum(0 until t.length)(i=>t(i)*cost(i))
 
 
-  def maxDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
-    val notbound = vars.filterNot(_.isBound)
-    if (notbound.nonEmpty) {
-      val sizeMax = notbound.map(_.getSize).max
-      notbound.zipWithIndex.filter {
-        _._1.getSize == sizeMax
-      }
-    } else {
-      Iterable()
-    }
-  }
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -137,42 +124,40 @@ object PostOfficeProblem extends CPModel {
 
       while (!allBounds(x)) {
 
-          // all unbound variables
+        // all unbound variables
         val notbound = x.filterNot(_.isBound)
 
-          // variable selection
-          val y = argMax(notbound)(v=>v.getSize()).last
-          //    
-          // value selection
-          // 
-          val size = y.getSize
-          val vMin = y.getMin()   // min value of domain
-          val vMax = y.getMax()   // max value of domain
-          val vMidV = ((vMin + vMax) / 2).toInt; // calculate median value (of vMin and vMax)
-          val vMid = y.getValueAfter(vMidV)  // the median value in the domain
-          val vRand = y.getRandomValue()  // random value from domain
-
-          // var v = vMin
-          // var v = vMax
-          var v = vRand
-          // var v = vMid
-
-    	  // cp.branch {
-          //   cp.post(y == v)
-          // } {
-          //   cp.post(y != v)
-          // }
-
-          // split   <--
-    	  cp.branch {
-            cp.post(y <= v)
-          } {
-            cp.post(y > v)
-          }
-
-
+        // variable selection
+        val y = argMax(notbound)(v=>v.getSize()).last
+        //    
+        // value selection
+        // 
+        val size = y.getSize
+        val vMin = y.getMin()   // min value of domain
+        val vMax = y.getMax()   // max value of domain
+        val vMidV = ((vMin + vMax) / 2).toInt; // calculate median value (of vMin and vMax)
+        val vMid = y.getValueAfter(vMidV)  // the median value in the domain
+        val vRand = y.getRandomValue()  // random value from domain
+        
+        // var v = vMin
+        // var v = vMax
+        var v = vRand
+        // var v = vMid
+        
+        // cp.branch {
+        //   cp.post(y == v)
+        // } {
+        //   cp.post(y != v)
+        // }
+        
+        // split
+        cp.branch {
+          cp.post(y <= v)
+        } {
+          cp.post(y > v)
         }
-
+        
+      }
 
       println("\nSolution:")
 
@@ -183,7 +168,7 @@ object PostOfficeProblem extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

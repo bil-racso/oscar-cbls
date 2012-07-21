@@ -94,7 +94,6 @@ object QuasigroupCompletion extends CPModel {
     var numSols = 0
     cp.solveAll subjectTo {
 
-
       // fill the things we know
       for (i <- 0 until n; j <- 0 until n) {
         if (problem(i)(j) > X) {
@@ -115,10 +114,7 @@ object QuasigroupCompletion extends CPModel {
 
        println("\nSolution:")
        for(i <- 0 until n) {
-         for(j <- 0 until n) {
-           print(x(i)(j) + " ")
-         }
-         println()
+         println(x(i).mkString(""))
        }
        println()
 

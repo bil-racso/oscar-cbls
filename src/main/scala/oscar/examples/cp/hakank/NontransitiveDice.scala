@@ -91,10 +91,10 @@ object NontransitiveDice extends CPModel {
     //
     // Decision variables
     // 
-    val dice = Array.fill(m)(Array.fill(n)(CPVarInt(cp, 1 to n*2)))
+    val dice = Array.fill(m,n)(CPVarInt(cp, 1 to n*2))
     val dice_flat = dice.flatten
 
-    val comp = Array.fill(m)(Array.fill(2)(CPVarInt(cp, 0 to n*n)))
+    val comp = Array.fill(m,2)(CPVarInt(cp, 0 to n*n))
     val comp_flat = comp.flatten
 
     // The following variables are for summaries or objectives
@@ -105,7 +105,7 @@ object NontransitiveDice extends CPModel {
     val max_win = CPVarInt(cp, 0 to n*n)   // max of comp_flat
 
     // number of occurrences of each value of the dice
-    val counts     = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
+    val counts  = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
 
     // for labeling
     val all = dice_flat ++ Array(max_val, max_win)
@@ -146,24 +146,20 @@ object NontransitiveDice extends CPModel {
       for(d <- MRANGE) {
         val sum1 = sum(for{r1 <- NRANGE
                            r2 <- NRANGE}
-                          yield (dice(d % m)(r1) >>= dice((d+1) % m)(r2))
-          )
+                          yield (dice(d % m)(r1) >>= dice((d+1) % m)(r2)))
         
         cp.add(comp(d%m)(0) == sum1)
         
         val sum2 = sum(for{r1 <- NRANGE
                               r2 <- NRANGE}
-                              yield (dice((d+1) % m)(r1) >>= dice(d % m)(r2))
-                        )
+                              yield (dice((d+1) % m)(r1) >>= dice(d % m)(r2)))
         
         cp.add(comp(d%m)(1) == sum2)
 
       }
         
-   } exploration {
+    } exploration {
         
-      // cp.binary(all)
-      //cp.binaryFirstFail(all)
       cp.binaryMaxDegree(all)
 
       println("\ngap_sum: " + gap_sum)
@@ -180,15 +176,13 @@ object NontransitiveDice extends CPModel {
       }
       println()
        
-     // println("counts: " + counts.filter(c=>c._1 > 0).mkString(""))
-
       numSols += 1
 
       if (num_to_show > 0 && numSols >= num_to_show) {
         cp.stop()
       } 
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

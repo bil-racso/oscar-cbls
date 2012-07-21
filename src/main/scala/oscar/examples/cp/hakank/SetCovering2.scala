@@ -68,7 +68,6 @@ object SetCovering2 extends CPModel {
     //
     // variables
     //
- 
     val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
     // number of telephones, to be minimized
     val z = sum(x)
@@ -89,18 +88,14 @@ object SetCovering2 extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
-
-
+        
       println("\nSolution:")
-
       println("x: " + x.mkString(""))
       println("z: " + z)
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

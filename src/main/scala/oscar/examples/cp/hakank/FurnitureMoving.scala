@@ -100,7 +100,6 @@ object FurnitureMoving extends CPModel {
       // when searching for max_end_time
       // cp.add(num_persons == 3)
   
-      // constraints
       myCumulative(cp, starts, durations, resources, num_persons)
   
 

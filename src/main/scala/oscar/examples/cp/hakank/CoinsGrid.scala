@@ -60,15 +60,15 @@ object CoinsGrid extends CPModel {
     // data
     //
 
-    val n = 10 // 31
-    val c = 4  // 14
+    val n = 10 // original problem: 31
+    val c = 4  // original problem: 14
 
 
     //
     // variables
     //
 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 0 to 1)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 0 to 1))
 
     // quadratic horizonal distance (to minimize)
     val z = sum(List.tabulate(n)(i => List.tabulate(n)(j => x(i)(j)*abs(i-j)*abs(i-j) )).flatten)
@@ -92,10 +92,7 @@ object CoinsGrid extends CPModel {
       println("\nz:" + z)
       print("x:\n")
       for(i <- 0 until n) {
-        for(j <- 0 until n) {
-          print(x(i)(j) + " ")
-        }
-        println()
+        println(x(i).mkString(" "))
       }
 
       numSols += 1

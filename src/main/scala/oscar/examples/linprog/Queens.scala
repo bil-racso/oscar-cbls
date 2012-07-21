@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  *  The Queens Problem is to place as many queens as possible on the 8x8
@@ -34,7 +35,7 @@ object Queens extends MIPModel{
     val n = 8
 	val Lines = 0 until n
 	val Columns = 0 until n
-	val mip = MIPSolver(LPSolverLib.cplex)
+	val mip = MIPSolver()
     val x = Array.tabulate(n,n) ((l,c) => MIPVar(mip,"x"+(l,c), 0 to 1))
 
     mip.maximize(sum(Lines,Columns) {(l,c) => x(l)(c)} ) subjectTo {

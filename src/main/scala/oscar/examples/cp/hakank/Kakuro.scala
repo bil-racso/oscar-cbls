@@ -82,6 +82,7 @@ object Kakuro extends CPModel {
     // sum the numbers
     cp.add(sum(for{i <- 0 until len} yield x(cc(i*2)-1)(cc(i*2+1)-1)) == res)
   }
+
   
   def main(args: Array[String]) {
 
@@ -90,7 +91,6 @@ object Kakuro extends CPModel {
     //
     // data
     //
-
 
     //
     // variables
@@ -178,8 +178,6 @@ object Kakuro extends CPModel {
 
     } exploration {
        
-      // cp.binary(x.flatten)
-      // cp.binaryFirstFail(x.flatten)
       cp.binaryMaxDegree(x.flatten)
 
       for(i <- 0 until n) {

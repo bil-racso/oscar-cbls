@@ -55,19 +55,6 @@ import Array._
 */
 object GolombRuler extends CPModel {
 
-  def maxDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
-    val notbound = vars.filterNot(_.isBound)
-    if (notbound.nonEmpty) {
-      val sizeMax = notbound.map(_.getSize).max
-      notbound.zipWithIndex.filter {
-        _._1.getSize == sizeMax
-      }
-    } else {
-      Iterable()
-    }
-  }
- 
-
   def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
     for (i <- 1 until y.length) {
       cp.add(y(i-1) <= y(i), Strong)
@@ -116,7 +103,6 @@ object GolombRuler extends CPModel {
 
      } exploration {
  
-       // cp.binaryFirstFail(mark) // 1381 backtracks for m=8
        cp.binary(mark) // 756 backtracks for m=8
 
        println("\nSolution:")

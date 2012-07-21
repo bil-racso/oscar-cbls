@@ -57,9 +57,8 @@ object FiveFloors extends CPModel {
     //
     // decision variables
     //
-    val x = Array.tabulate(n)(i => CPVarInt(cp, 1 to n))
+    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
     val Array(baker, cooper, fletcher, miller, smith) = x
-
 
     //
     // constraints
@@ -92,8 +91,6 @@ object FiveFloors extends CPModel {
 
      } exploration {
        
-       // cp.binary(x)
-       // cp.binaryFirstFail(x)
        cp.binaryMaxDegree(x)
 
        println(x.mkString(""))

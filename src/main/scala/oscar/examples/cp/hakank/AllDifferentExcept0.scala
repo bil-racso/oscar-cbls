@@ -87,10 +87,9 @@ object AllDifferentExcept0 extends CPModel {
       alldifferent_except_0(cp, x)                                
 
       // Just for fun, we add that x should be increasing
-      // increasing(cp, x)
+      increasing(cp, x)
 
-      // There must be exactly 2 0's
-      // Perhaps a full gcc is overkill just to fetch the # of 0's...
+      // and that there must be exactly 2 0's
       cp.add(gcc(x, occurrences))
       cp.add(z == 2)
 
@@ -100,7 +99,6 @@ object AllDifferentExcept0 extends CPModel {
        cp.binaryFirstFail(x)
 
        println("x:" + x.mkString(""))
-       // println("occurrences:" + occurrences.mkString(""))
        println("z:" + z)
        println()
 

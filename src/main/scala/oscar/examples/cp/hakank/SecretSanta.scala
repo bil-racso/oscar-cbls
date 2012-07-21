@@ -74,8 +74,6 @@ object SecretSanta extends CPModel {
     //
     // data
     //
-
-
     val family = Array(1,1,1,1, 2, 3,3,3,3,3, 4,4)
     val n = family.length
 
@@ -83,7 +81,6 @@ object SecretSanta extends CPModel {
     // variables
     //
     val x = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-
 
     //
     // constraints
@@ -110,9 +107,6 @@ object SecretSanta extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
-
 
       println("\nSolution:")
 

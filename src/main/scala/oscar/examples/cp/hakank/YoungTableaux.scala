@@ -70,19 +70,17 @@ object YoungTableaux extends CPModel {
     // variables
 
     // grid
-    val x = Array.tabulate(n)(i => 
-                 Array.tabulate(n)(j =>
-                       CPVarInt(cp, 1 to n+1)))
-
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n+1))
     val x_flatten = x.flatten
 
     // the partition structure
-    val p = List.tabulate(n)(i=> CPVarInt(cp, 0 to n+1)) 
+    val p = List.fill(n)(CPVarInt(cp, 0 to n+1))
 
     //
     // constraints
     //
     var numSols = 0
+
     cp.solveAll subjectTo {
 
       // 1..n is used exactly once
@@ -108,7 +106,7 @@ object YoungTableaux extends CPModel {
 
       // calculate the structure (the partition)
       for(i <- 0 until n) {
-        val b = List.tabulate(n)(j=> CPVarBool(cp))
+        val b = List.fill(n)(CPVarBool(cp))
         val nn = CPVarInt(cp, n to n)
         for(j <- 0 until n) {
           cp.add((b(j)===1) === (nn >== (x(i)(j))))
@@ -152,7 +150,7 @@ object YoungTableaux extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

@@ -137,21 +137,20 @@ object WordSquare extends CPModel {
 
     cp.solveAll subjectTo {
 
-        cp.add(alldifferent(E),Weak)
+      cp.add(alldifferent(E),Weak)
 
-
-        // now find the connections
-        for(i <- WORDLEN) {
-          for(j <- WORDLEN) {
-            cp.add(element(A, E(i),CPVarInt(cp,j)) == element(A, E(j),CPVarInt(cp,i)))
-          }
+      // now find the connections
+      for(i <- WORDLEN) {
+        for(j <- WORDLEN) {
+          cp.add(element(A, E(i),CPVarInt(cp,j)) == element(A, E(j),CPVarInt(cp,i)))
         }
+      }
 
 
     } exploration {
 
       cp.binaryFirstFail(E)
-
+        
       println("solution #" + (numSols+1))
       E.foreach(e=> println(words(e.getValue())))
       println()
@@ -161,12 +160,11 @@ object WordSquare extends CPModel {
         cp.stop();
       }
 
-
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()
 
-  }
+ }
 
 }

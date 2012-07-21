@@ -80,12 +80,9 @@ object MagicSequence extends CPModel {
 
     } exploration {
        
-      // cp.binary(x)
-      // cp.binaryFirstFail(x)
       cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("x: " + x.mkString(" "))
 
       numSols += 1

@@ -149,11 +149,8 @@ object Zebra extends CPModel {
     } exploration {
        
       cp.binary(all_vars)
-      // cp.binaryFirstFail(all_vars)
-      // cp.binaryMaxDegree(all_vars)
 
       println("\nSolution:")
-
       val p  = Array(englishman, spaniard, japanese, ukrainian, norwegian)
       val ps = Array("englishman", "spaniard", "japanese", "ukrainian", "norwegian")
 
@@ -162,7 +159,7 @@ object Zebra extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

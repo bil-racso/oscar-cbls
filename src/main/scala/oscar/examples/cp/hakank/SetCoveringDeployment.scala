@@ -122,15 +122,11 @@ object SetCoveringDeployment extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("num_armies: " + num_armies)
       println("x: " + x.mkString(""))
       println("y: " + y.mkString(""))
-
       for(i <- 0 until n) {
         var some_army = false
         if (x(i).getValue() == 1) {

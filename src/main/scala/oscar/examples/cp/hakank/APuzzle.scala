@@ -230,8 +230,6 @@ object APuzzle extends CPModel {
     } exploration {
        
       cp.binary(all)
-      // cp.binaryFirstFail(all)
-      // cp.binaryMaxDegree(all)
 
       println("all:" + all.mkString("") + "  x:" + x)
 

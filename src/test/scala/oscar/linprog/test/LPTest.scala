@@ -22,13 +22,14 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
 
+import oscar.linprog._
+
 /**
  * LPTesting
  */
 class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 
-    val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk)
- 
+	
     test("lp test 1") {
     	for (lib <- solvers) {
     		val lp = new LPSolver(lib)

@@ -102,11 +102,8 @@ object SetCoveringSkiena extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("z: " + z)
       println("tot_elements: " + tot_elements)
       println("x: " + x.mkString(""))
@@ -115,7 +112,7 @@ object SetCoveringSkiena extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

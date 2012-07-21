@@ -93,8 +93,8 @@ object SkiAssignment extends CPModel {
      }
 
      println("\nIt was " + numSols + " solutions.\n")
-
      cp.printStats()
+
    }
 
 }

@@ -99,7 +99,6 @@ object DivisibleBy9Through1 extends CPModel {
         // Force domains
         val lb = pow(base, n-i-1).toInt
         val ub = pow(base, n-i).toInt
-        // println("lb: " + lb + " ub: " + ub)
         cp.add(t(i) >= lb)
         cp.add(t(i) <= ub)
 
@@ -118,7 +117,6 @@ object DivisibleBy9Through1 extends CPModel {
       print("\nt: " +  t.mkString(""))
       println("\nNumber: " + t(0) +  " (" + x.mkString("") + " in base " + base + ")")
       println()
-
 
       numSols += 1
 

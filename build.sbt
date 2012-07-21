@@ -26,6 +26,9 @@ seq(assemblySettings: _*)
 
 seq(jacoco.settings : _*)
 
+// Generate jacoco reports both in XML and HTML
+jacoco.reportFormats in jacoco.Config := Seq(XMLReport("utf-8"), HTMLReport("utf-8"))
+
 jarName in assembly := "oscar.jar"
 
 

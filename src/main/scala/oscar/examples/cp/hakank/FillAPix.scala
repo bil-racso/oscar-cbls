@@ -102,7 +102,7 @@ object FillAPix extends CPModel {
     //
     // decision variables
     // 
-    val pict = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 0 to 1)))
+    val pict = Array.fill(n,n)(CPVarInt(cp, 0 to 1))
     val pict_flat = pict.flatten
 
     //
@@ -123,8 +123,6 @@ object FillAPix extends CPModel {
                              if ( (i+a >= 0) && (j+b >=  0) &&
                                   (i+a < n)  && (j+b < n)) 
                                } yield pict(i+a)(j+b) ) == puzzle(i)(j))
-            
-            
         }
       }
 
@@ -145,12 +143,11 @@ object FillAPix extends CPModel {
         println()
       }
 
-
-       numSols += 1
+      numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.\n")
 
+     println("\nIt was " + numSols + " solutions.\n")
      cp.printStats()
    }
 

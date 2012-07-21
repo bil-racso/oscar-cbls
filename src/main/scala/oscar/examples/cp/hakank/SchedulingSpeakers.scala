@@ -37,11 +37,8 @@ object SchedulingSpeakers extends CPModel {
   //
   // ensure that x is a member of array y
   //
-  def isMember(cp: CPSolver, x: CPVarInt, y: Array[Int]) {
-    
-      cp.add(sum(for{j <- y} yield (x === j)) == 1)
-
-  }
+  def isMember(x: CPVarInt, y: Array[Int]) =
+      sum(for{j <- y} yield (x === j)) == 1
 
 
    def main(args: Array[String]) {
@@ -79,7 +76,7 @@ object SchedulingSpeakers extends CPModel {
 
         // Assign speakers at available slots
         for(i <- 0 until num_speakers) {
-          isMember(cp, speakers(i), available(i))
+          cp.add(isMember(speakers(i), available(i)))
         }
 
 

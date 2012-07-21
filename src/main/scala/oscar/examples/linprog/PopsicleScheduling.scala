@@ -18,6 +18,7 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
 
 /**
  * Workforce management is central to efficient operations and good customer service.  

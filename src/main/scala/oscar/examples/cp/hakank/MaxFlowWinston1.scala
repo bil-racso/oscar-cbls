@@ -81,9 +81,7 @@ object MaxFlowWinston1 extends CPModel {
 
 
     // variables
-    val flow = Array.tabulate(n)(i=>
-                              Array.tabulate(n)(j =>
-                                                CPVarInt(cp, 0 to 200)))
+    val flow = Array.fill(n,n)(CPVarInt(cp, 0 to 200))
     // to maximize
     val z = flow(n-1)(0)
 
@@ -123,8 +121,6 @@ object MaxFlowWinston1 extends CPModel {
     } exploration {
        
       cp.binary(flow.flatten)
-      // cp.binaryFirstFail(flow.flatten)
-      // cp.binaryMaxDegree(flow.flatten)
 
       println("z: " + z)
       for(i <- NODES) {

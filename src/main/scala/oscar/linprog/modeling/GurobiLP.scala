@@ -51,8 +51,11 @@ class GurobiLP extends AbstractLP{
 	def endModelBuilding() {
 		 closed = true
 	}
-	
-	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String){
+		
+	def setVarName(colId : Int, name: String) { 
+	  // TODO implement
+	}
+	def addConstraint(coef : Array[Double], col : Array[Int], rhs : Double, sign: String, name:String){
 		nbRows += 1	
 		
 		var ntot = new GRBLinExpr()
@@ -60,23 +63,23 @@ class GurobiLP extends AbstractLP{
     		ntot.addTerm(coef(i-1),model.getVar(col(i-1)))       
         sign match {
         	case "<=" =>
-         		model.addConstr(ntot,GRB.LESS_EQUAL,rhs,"")
+         		model.addConstr(ntot,GRB.LESS_EQUAL,rhs,name)
          	case ">=" =>
-         		model.addConstr(ntot,GRB.GREATER_EQUAL,rhs,"")
+         		model.addConstr(ntot,GRB.GREATER_EQUAL,rhs,name)
          	case "==" =>
-         		model.addConstr(ntot,GRB.EQUAL,rhs,"")
+         		model.addConstr(ntot,GRB.EQUAL,rhs,name)
         }
         model.update()
 	}
-	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
-		addConstraint(coef,col,rhs,">=")
+	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
+		addConstraint(coef,col,rhs,">=", name)
 	}
     
-	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double) {	
-		addConstraint(coef,col,rhs,"<=")
+	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {	
+		addConstraint(coef,col,rhs,"<=", name)
 	}
-    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double) {      
-    	addConstraint(coef,col,rhs,"==")      
+    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {      
+    	addConstraint(coef,col,rhs,"==", name)      
     }
     
     def addObjective(coef : Array[Double], col : Array[Int], minMode : Boolean = true) {    	

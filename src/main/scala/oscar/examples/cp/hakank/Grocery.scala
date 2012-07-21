@@ -69,7 +69,8 @@ object Grocery extends CPModel {
         cp.add(sum(item) == m)
 
         // Note: yields overflow (though the solution is correct)
-        // cp.add(item(0)*item(1)*item(2)*item(3) == m2)
+        // Alternative solutions:
+        // cp.add(item(0)*item(1)*item(2)*item(3) == m2) // this is slightly better
         // cp.add(item(0).mul(item(1)).mul(item(2)).mul(item(3)) == m2)
         cp.add(item.reduceLeft((acc,x) => acc*x) == m2, Strong)
 
