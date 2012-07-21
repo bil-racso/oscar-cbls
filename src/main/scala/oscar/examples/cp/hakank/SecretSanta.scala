@@ -74,6 +74,12 @@ object SecretSanta extends CPModel {
     //
     // data
     //
+
+    var num_to_show = 1
+    if (args.length > 0) {
+      num_to_show = args(0).toInt
+    }
+
     val family = Array(1,1,1,1, 2, 3,3,3,3,3, 4,4)
     val n = family.length
 
@@ -116,6 +122,10 @@ object SecretSanta extends CPModel {
       }
 
       numSols += 1
+
+      if (num_to_show > 0 && numSols >= num_to_show) {
+        cp.stop()
+      }
 
    }
 

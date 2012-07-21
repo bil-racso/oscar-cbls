@@ -50,6 +50,13 @@ object Crew extends CPModel {
     //
     // data
     // 
+    var num_to_show = 1
+
+    if (args.length > 0) {
+      num_to_show = args(0).toInt
+    }
+
+
     val names = Array("Tom",
                       "David",
                       "Jeremy",
@@ -222,6 +229,10 @@ object Crew extends CPModel {
         println();
 
         numSols += 1
+
+        if (num_to_show > 0 && numSols >= num_to_show) {
+          cp.stop()
+        }
 
      }
 
