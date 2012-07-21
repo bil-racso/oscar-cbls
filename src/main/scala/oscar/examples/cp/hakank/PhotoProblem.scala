@@ -165,7 +165,7 @@ object PhotoProblem extends CPModel {
           j <- 0 until n 
             if 
             preferences(i)(j) == 1 && 
-            Math.abs(positions(i).getValue()-positions(j).getValue()) == 1
+            abs(positions(i).getValue()-positions(j).getValue()) == 1
           ) {
         println(persons(i) + ": " + persons(j))
       }
@@ -175,7 +175,7 @@ object PhotoProblem extends CPModel {
           j <- 0 until n 
             if 
             preferences(i)(j) == 1 && 
-            Math.abs(positions(i).getValue()-positions(j).getValue()) > 1
+            abs(positions(i).getValue()-positions(j).getValue()) > 1
           ) {
         println(persons(i) + ": " + persons(j))
       }
