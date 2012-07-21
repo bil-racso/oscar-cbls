@@ -36,8 +36,12 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	var delta    = 0
 	var deltaBis = 0	
 	var gap	     = 0
+	
+	val eventList = Array.tabulate(nTasks){e => new EventList(e)}
 
 	override def setup(l: CPPropagStrength) : CPOutcome = {
+		
+		setIdempotent
 		
         val oc = propagate()
         
@@ -89,20 +93,24 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			if (tasks(i).getLST < tasks(i).getECT) {
 				
 				// Generates events
-				hEvents enqueue new Event(EventType.SCP, i, tasks(i).getLST, -tasks(i).getMinResource)
-				hEvents enqueue new Event(EventType.ECPD, i, tasks(i).getECT, tasks(i).getMinResource)		
+				hEvents enqueue eventList(i).getSCP(tasks)
+				hEvents enqueue eventList(i).getECPD(tasks)
+				//hEvents enqueue new Event(EventType.SCP, i, tasks(i).getLST, -tasks(i).getMinResource)
+				//hEvents enqueue new Event(EventType.ECPD, i, tasks(i).getECT, tasks(i).getMinResource)		
 			}
 
 			if (tasks(i).getLST >= tasks(i).getECT) {
 				
 				// Generates events
-				hEvents enqueue new Event(EventType.CCP, i, tasks(i).getLST, 0)
+				hEvents enqueue eventList(i).getCCP(tasks)
+				//hEvents enqueue new Event(EventType.CCP, i, tasks(i).getLST, 0)
 			}
 			
 			if (tasks(i).getEST != tasks(i).getLST) {
 				
 				// Generates events
-				hEvents enqueue new Event(EventType.PR, i, tasks(i).getEST, 0)
+				hEvents enqueue eventList(i).getPR(tasks)
+				//hEvents enqueue new Event(EventType.PR, i, tasks(i).getEST, 0)
 			}			
 		}
 	}
@@ -303,7 +311,7 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	
 	import EventType._
 	
-	class Event(e : EventType, t : Int, d : Int, inc : Int) extends Enumeration {
+	class Event(e : EventType, t : Int, private var d : Int, private var inc : Int) extends Enumeration {
 
 		def isSCP  = { e == EventType.SCP }
 		def isECPD = { e == EventType.ECPD }
@@ -315,7 +323,40 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 		def dec   = inc
 		def task  = t
 		
+		def date_= (x : Int) {d = x}
+		def dec_= (x : Int) {inc = x}
+		
 		override def toString = { "<" + e + ", " + t + ", " + d + ", " + inc +">" }
+	}
+	
+	class EventList(t : Int) {
+		
+		val SCP  : Event = new Event(EventType.SCP , t, 0, 0)
+		val ECPD : Event = new Event(EventType.ECPD, t, 0, 0)
+		val CCP  : Event = new Event(EventType.CCP , t, 0, 0)
+		val PR   : Event = new Event(EventType.PR  , t, 0, 0)
+		
+		def getSCP(tasks : Array[CumulativeActivity]) : Event = {
+			SCP.date = tasks(t).getLST
+			SCP.dec  = -tasks(t).getMinResource
+			return SCP
+		}
+		
+		def getECPD(tasks : Array[CumulativeActivity]) : Event = {
+			ECPD.date = tasks(t).getECT
+			ECPD.dec  = tasks(t).getMinResource
+			return ECPD
+		}
+		
+		def getCCP(tasks : Array[CumulativeActivity]) : Event = {
+			CCP.date = tasks(t).getLST
+			return CCP
+		}
+		
+		def getPR(tasks : Array[CumulativeActivity]) : Event = {
+			PR.date = tasks(t).getEST
+			return PR
+		}
 	}
 	
 	def adjustStart(t : CumulativeActivity, v : Int) = {

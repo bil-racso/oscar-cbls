@@ -55,10 +55,6 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
   	}
   
 	override def propagate(): CPOutcome = {
-		
-		/*println("--")
-		println("Sweep on machine : " + r)
-		println(allTasks.mkString("\n"))*/
 			
 		if (sweepAlgorithm == CPOutcome.Failure) return CPOutcome.Failure
         
