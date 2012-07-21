@@ -46,17 +46,15 @@ import scala.math._
   "Intel® Parallel Studio: Great for Serial Code Too (Episode 1)"
   http://software.intel.com/en-us/blogs/2009/12/07/intel-parallel-studio-great-for-serial-code-too-episode-1/
 
+  This is a generalized version of oscar.examples.cp.DivisibleBy9Through1
+  by Pierre Schaus et. al, which in turn was based on an earlier - and much 
+  slower - version of this model. 
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
 */
 object DivisibleBy9Through1 extends CPModel {
-
-  // channeling between IntVar array t <=> IntVar s
-  def toNum(t: Array[CPVarInt], base: Int=10) = sum(
-      Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
-
 
   def main(args: Array[String]) {
 
@@ -65,27 +63,30 @@ object DivisibleBy9Through1 extends CPModel {
     //
     // data
     //
-
     var base = 10
 
     if (args.length > 0) {
       base = args(0).toInt
+
+      if (base > 10) {
+        println("\nWarning: base > 10 gives overflow. Resets to base = 10");
+        base = 10
+      }
     }
 
-    val n = base - 1
-    val m = pow(base, n).toInt -1
+    val n  = base - 1
+    val m  = pow(base, n).toInt -1
+    val m2 = pow(base, n-1).toInt -1
+    val coefs = Array.tabulate(n)(i=>pow(base, n-1-i).toInt)
 
-    println("base: " + base + " n: " + n + " m: " + m)
+    println("base: " + base)
  
     //
     // variables
     //
-
-    // the digits
-    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
-
-    // the numbers. t(0) contains the answer
-    val t = Array.fill(n)(CPVarInt(cp, 0 to m))
+    val digits   = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val numbers  = Array.fill(n)(CPVarInt(cp, 1 to m))
+    val divisors = Array.fill(n)(CPVarInt(cp, 1 to m2))
 
     //
     // constraints
@@ -93,29 +94,20 @@ object DivisibleBy9Through1 extends CPModel {
     var numSols = 0
     cp.solveAll subjectTo {
       
-      cp.add(alldifferent(x), Strong)
-  
-      for(i <- 0 until n) {
-        // Force domains
-        val lb = pow(base, n-i-1).toInt
-        val ub = pow(base, n-i).toInt
-        cp.add(t(i) >= lb)
-        cp.add(t(i) <= ub)
-
-        val mm = base-i-1
-        cp.add(t(i) == toNum(Array.tabulate(mm)(j=>x(j)), base))
-        cp.add(modulo(t(i), mm, 0))
+      cp.add(alldifferent(digits), Strong)
+      for (i <- 1 to n) {
+        cp.add(sum(0 until i)(j => digits(j) * coefs.drop(n-i)(j)) == numbers(i-1))
+        cp.add(numbers(i-1) == divisors(i-1) * i)
       }
-
 
     } exploration {
        
-      cp.binaryFirstFail(x)
+      cp.binaryFirstFail(digits)
 
       println("\nSolution:")
-      print("x: " +  x.mkString(""))
-      print("\nt: " +  t.mkString(""))
-      println("\nNumber: " + t(0) +  " (" + x.mkString("") + " in base " + base + ")")
+      println("digits:" +  digits.mkString(""))
+      print("number base 10:" +  numbers.last +  " Base " + base + ": " + 
+            digits.map(_.getValue()).mkString(""))
       println()
 
       numSols += 1
