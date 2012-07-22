@@ -24,27 +24,28 @@ import scala.math._
 
 /*
 
-  Clock triplet problem in Oscar.
+  Broken weight problem in Oscar.
 
-  Problem formulation
-  http://www.f1compiler.com/samples/Dean 20Clark 27s 20Problem.f1.html
+  From http://www.mathlesstraveled.com/?p=701
   """
-  Dean Clark's Problem (Clock Triplets Problem)
- 
-  The problem was originally posed by Dean Clark and then presented
-  to a larger audience by Martin Gardner. 
- 
-  The problem was discussed in Dr. Dobbs's Journal, May 2004 in an article 
-  by Timothy Rolfe. According to the article, in his August 1986 column for 
-  Isaac Asimov's Science Fiction Magazine, Martin Gardner presented this problem:
+  Here's a fantastic problem I recently heard. Apparently it was first 
+  posed by Claude Gaspard Bachet de Maziriac in a book of arithmetic problems 
+  published in 1612, and can also be found in Heinrich Dorrieâ€™s 100 
+  Great Problems of Elementary Mathematics.
   
-    Now for a curious little combinatorial puzzle involving the twelve
-    numbers on the face of a clock. Can you rearrange the numbers (keeping
-    them in a circle) so no triplet of adjacent numbers has a sum higher 
-    than 21? This is the smallest value that the highest sum of a triplet
-    can have.
+      A merchant had a forty pound measuring weight that broke 
+      into four pieces as the result of a fall. When the pieces were 
+      subsequently weighed, it was found that the weight of each piece 
+      was a whole number of pounds and that the four pieces could be 
+      used to weigh every integral weight between 1 and 40 pounds. What 
+      were the weights of the pieces?
+  
+  Note that since this was a 17th-century merchant, he of course used a 
+  balance scale to weigh things. So, for example, he could use a 1-pound 
+  weight and a 4-pound weight to weigh a 3-pound object, by placing the 
+  3-pound object and 1-pound weight on one side of the scale, and 
+  the 4-pound weight on the other side.
   """
-
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
