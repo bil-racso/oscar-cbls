@@ -14,6 +14,26 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPModel
 
+/**
+ * This class implements the cumulative constraint described in [1]. 
+ * 
+ * @param:
+ * - cp : the CPSolver linked to the 
+ * - allTasks :
+ * - limit :
+ * - r : 
+ *
+ * 
+ * 
+ *
+ * @authors: Renaud Hartert ren.hatert@gmail.com
+ * 
+ * @references:
+ * - [1] A New Multi-Resource cumulatives Constraint with Negative Heights,
+ *       Nicolas Beldiceanu and Mats Carlsson   
+ * - [2] Choco'class CumulSweep.java
+ */
+
 class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit : Int, r : Int) extends Constraint(cp, "MaxCumulative") {
 
 	// Keeps only the relevant tasks
@@ -209,27 +229,27 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 			return CPOutcome.Suspend
 		}
 		
-		// Fix the activity to the machine r and check consistency
+		// Fix the activity to the machine r
 		if (tasks(t).getMachines.assign(r) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
-		// Adjust the EST of the activity and check consistency
+		// Adjust the EST of the activity
 		if (tasks(t).getStart.updateMin(up - tasks(t).getMaxDuration + 1) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
-		// Adjust the LST of the activity and check consistency
+		// Adjust the LST of the activity
 		if (tasks(t).getStart.updateMax(low) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
-		// Adjust the LCT of the activity and check consistency
+		// Adjust the LCT of the activity
 		if (tasks(t).getEnd.updateMax(low + tasks(t).getMaxDuration) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
-		// Adjust the ECT of the activity and check consistency
+		// Adjust the ECT of the activity
 		if (tasks(t).getEnd.updateMin(up + 1) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
-		// Adjust the minimal duration of the activity and check consistency
+		// Adjust the minimal duration of the activity
 		if (tasks(t).getDur.updateMin(min(up - tasks(t).getLST+1, tasks(t).getECT-low)) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 			
