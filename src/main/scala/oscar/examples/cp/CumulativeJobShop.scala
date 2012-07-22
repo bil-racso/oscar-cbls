@@ -139,14 +139,14 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new NewMaxCumulative(cp, jobActivities.flatten, capacities(i), i))
+				cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
 
 		} exploration {
 			
-			//cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
+			cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
 			
 			// Efficient but not complete search strategy
-			SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
+			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
 			
 			// Updates the visual components
 			updateVisu(1, 20)
