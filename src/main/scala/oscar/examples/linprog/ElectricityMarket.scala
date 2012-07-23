@@ -72,6 +72,8 @@ object ElectricityMarket extends MIPModel {
 	      }
 	  }
 	  
+	  println("cosntraints ok:"+mip.checkConstraints())
+	  
 	  println("checker:"+check.mkString(","))
 	  
 	}

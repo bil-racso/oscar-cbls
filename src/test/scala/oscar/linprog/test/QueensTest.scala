@@ -76,6 +76,8 @@ class QueensTest extends FunSuite with ShouldMatchers with LPModel with MIPModel
 						println()
 			}
 			mip.release()
+			
+			mip.checkConstraints() should be (true)
 
 
 		}

@@ -18,7 +18,6 @@
 package oscar.linprog.modeling
 
 import oscar.algebra._
-
 import scala.collection._
 
 object LPStatus extends Enumeration {
@@ -412,6 +411,34 @@ trait AbstractLPModel extends Algebra {
 	def release() = solver.release()
 	
 	def desactivateAutoSolve {autoSolve = false}
+	
+	
+	/**
+	 * Check that all the constraints are satisfied
+	 */
+	def checkConstraints(tol: Double = 10e-6): Boolean = {
+	  var violation = false
+	  cons  foreach { case (i,c) =>
+	    var res = 0.0
+	    for ((i,a) <- c.varIds.zip(c.coef)) {
+	      val x: AbstractLPVar = vars.get(i) match {
+	        case Some(variable) => variable
+	        case None => throw new IllegalArgumentException("Variable with index "+i+" not present in lp solver")
+	      }
+	      res += a * x.getValue
+	    }
+	    val ok = c.cstr.consType match {
+              case ConstraintType.GQ => res+tol >= c.rhs
+              case ConstraintType.LQ => res-tol <= c.rhs
+              case ConstraintType.EQ => res <= c.rhs+tol && res >= c.rhs-tol
+        }
+        if (!ok) {
+          println("violation of constraint:"+c)
+          violation = true
+        }
+      }
+	  !violation
+	}
 	
 	
   } // end class AbstractLPSolver

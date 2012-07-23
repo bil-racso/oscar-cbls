@@ -44,6 +44,7 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
     		y.value should equal (Some(170))
     		lp.getObjectiveValue() should equal(650)
     		lp.getStatus() should equal (LPStatus.OPTIMAL)
+    		lp.checkConstraints() should be (true)
     		lp.release()
     	}
     }
@@ -62,6 +63,7 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 			y.value should equal (Some(80))
 			lp.getObjectiveValue() should equal(0)
 			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.checkConstraints() should be (true)
 			lp.release()
 		}
     } 
