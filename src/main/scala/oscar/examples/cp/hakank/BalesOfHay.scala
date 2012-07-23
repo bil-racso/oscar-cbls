@@ -24,21 +24,37 @@ import scala.math._
 
 /*
 
-  Bus scheduling in Oscar.
-  
-  Minimize number of buses in timeslots.
+  Bales of hay problem in Oscar.
 
-  Problem from Taha "Introduction to Operations Research", page 58.
-   
-  Note: This is a slightly more general model than Taha's.
- 
+  From The Math Less Traveled, 
+  "The haybaler", http://www.mathlesstraveled.com/?p=582 
+  """
+  You have five bales of hay.
+
+  For some reason, instead of being weighed individually, they were weighed 
+  in all possible combinations of two. The weights of each of these 
+  combinations were written down and arranged in numerical order, without 
+  keeping track of which weight matched which pair of bales. The weights, 
+  in kilograms, were 80, 82, 83, 84, 85, 86, 87, 88, 90, and 91.
+
+  How much does each bale weigh? Is there a solution? Are there multiple 
+  possible solutions? 
+  """
+
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
 */
 
-object BusSchedule extends CPModel {
+object BalesOfHay extends CPModel {
+
+  // Decomposition of increasing
+  def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
+    for (i <- 1 until y.length) {
+      cp.add(y(i-1) <= y(i))
+    }
+  }
 
 
   def main(args: Array[String]) {
@@ -48,50 +64,44 @@ object BusSchedule extends CPModel {
     //
     // data
     //
-    val time_slots = 6
-    // min number of buses for each time slot
-    val demands = Array(8, 10, 7, 12, 4, 4)
-    val max_num = demands.sum
-
+    val n = 5
+    val weights = Array(80, 82, 83, 84, 85, 86, 87, 88, 90, 91)
 
     //
     // variables
     //
- 
-    // How many buses start the schedule at time slot t
-    val x = Array.fill(time_slots)(CPVarInt(cp, 0 to max_num))
-    // Total number of buses
-    val num_buses  = sum(x)
+    val bales = Array.fill(n)(CPVarInt(cp, 0 to 50))
+
 
     //
     // constraints
     //
     var numSols = 0
 
-    cp.minimize(num_buses) subjectTo {
+    cp.solveAll subjectTo {
 
-      // Meet the demands for this and the next time slot.
-      for(i <- 0 until time_slots - 1) {
-        cp.add(x(i)+x(i+1) >= demands(i))
+      for(w <- 0 until weights.length) {
+        // indices in bales
+        val i = CPVarInt(cp, 0 until n) 
+        val j = CPVarInt(cp, 0 until n)
+        
+        cp.add(element(bales,i) + element(bales,j) == weights(w))
+        cp.add(i < j) // symmetry breaking
+
       }
 
-      // The demand "around the clock"
-      cp.add(x(time_slots-1) + x(0) - demands(time_slots-1) == 0)
-      
+      // symmetry breaking
+      increasing(cp, bales)
       
     } exploration {
        
-      cp.binary(x)
+      cp.binaryMaxDegree(bales)
 
-      println("\nSolution:")
-
-      println("x: " + x.mkString(""))
-      println("num_buses : " + num_buses)
-      println()
+      println("bales:" + bales.mkString(""))
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

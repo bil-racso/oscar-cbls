@@ -30,7 +30,7 @@ import scala.math._
   and also a path extraction for the circuit (circuit_path).
 
   Please note that Oscar has a built-in circuit/1. This
-  is just an etude...
+  model is just an etude...
 
   Comparison (where the results redirects to a file)
 
@@ -158,8 +158,6 @@ object CircuitTest extends CPModel {
     //
     var numSols = 0
     cp.solveAll subjectTo {
-
-      // constraints
 
       // cp.add(circuit(x), Strong) // use the built-in
       circuit_me(cp, x)

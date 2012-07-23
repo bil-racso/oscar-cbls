@@ -24,22 +24,26 @@ import scala.math._
 
 /*
 
-  Bus scheduling in Oscar.
-  
-  Minimize number of buses in timeslots.
+  Added corner puzzle in Oscar.
 
-  Problem from Taha "Introduction to Operations Research", page 58.
-   
-  Note: This is a slightly more general model than Taha's.
- 
+  Problem from http://www.delphiforfun.org/Programs/AddedCorners.htm
+  """
+  This puzzle requires that you enter the digits 1 through 8 in the circles and 
+  squares (one digit in each figure) so that the number in each square is equal 
+  to the sum on the numbers in the circles which  adjoin it.  
+  ...
+  
+     C F C
+     F   F
+     C F C
+  """
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
 */
 
-object BusSchedule extends CPModel {
-
+object AddedCorner extends CPModel {
 
   def main(args: Array[String]) {
 
@@ -48,50 +52,41 @@ object BusSchedule extends CPModel {
     //
     // data
     //
-    val time_slots = 6
-    // min number of buses for each time slot
-    val demands = Array(8, 10, 7, 12, 4, 4)
-    val max_num = demands.sum
-
+    val n = 8
 
     //
     // variables
     //
- 
-    // How many buses start the schedule at time slot t
-    val x = Array.fill(time_slots)(CPVarInt(cp, 0 to max_num))
-    // Total number of buses
-    val num_buses  = sum(x)
+    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val Array(a,b,c,d,e,f,g,h) = x
 
     //
     // constraints
     //
     var numSols = 0
 
-    cp.minimize(num_buses) subjectTo {
+    cp.solveAll subjectTo {
 
-      // Meet the demands for this and the next time slot.
-      for(i <- 0 until time_slots - 1) {
-        cp.add(x(i)+x(i+1) >= demands(i))
-      }
 
-      // The demand "around the clock"
-      cp.add(x(time_slots-1) + x(0) - demands(time_slots-1) == 0)
-      
+      cp.add(alldifferent(x), Strong)
+      cp.add(b == a + c)
+      cp.add(d == a + f)
+      cp.add(e == c + h)
+      cp.add(g == f + h)
+
       
     } exploration {
        
-      cp.binary(x)
+      cp.binaryFirstFail(x)
 
-      println("\nSolution:")
-
-      println("x: " + x.mkString(""))
-      println("num_buses : " + num_buses)
+      println(a + " " + b   + " " + c)
+      println(d + "   "     + " " + e)
+      println(f + " " + g   + " " + h)
       println()
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

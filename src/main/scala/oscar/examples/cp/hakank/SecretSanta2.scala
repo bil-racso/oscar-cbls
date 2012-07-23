@@ -202,9 +202,7 @@ object SecretSanta2 extends CPModel {
 
     } exploration {
        
-      // cp.binary(santas ++ santa_distance)
       cp.binaryFirstFail(santas ++ santa_distance)
-      // cp.binaryMaxDegree(santas ++ santa_distance)
 
       println("santas: " + santas.mkString(""))
       println("santa_distance: " + santa_distance.mkString(""))
@@ -217,7 +215,7 @@ object SecretSanta2 extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

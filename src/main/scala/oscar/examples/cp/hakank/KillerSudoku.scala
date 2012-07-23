@@ -144,7 +144,7 @@ object KillerSudoku extends CPModel {
     //
     // Decision variables
     // 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 0 to 9)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 0 to 9))
     val x_flat = x.flatten
 
     //
@@ -183,15 +183,10 @@ object KillerSudoku extends CPModel {
 
     } exploration {
        
-      // cp.binary(x_flat)
       cp.binaryFirstFail(x_flat)
-      // cp.binaryMaxDegree(x_flat)
 
       for(i <- RANGE) {
-        for(j <- RANGE) {
-          print(x(i)(j))
-        }
-        println()
+        println(x(i).mkString(""))
       }
       println()
 

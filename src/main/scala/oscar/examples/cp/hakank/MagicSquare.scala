@@ -48,7 +48,7 @@ object MagicSquare extends CPModel {
     //
     // variables
     //
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to n2)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n2))
 
     // val total = CPVarInt(cp, 1 to n*n*n)
     val total = (n * (n*n + 1) / 2)

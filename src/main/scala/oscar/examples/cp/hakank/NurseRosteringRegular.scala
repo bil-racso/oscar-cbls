@@ -68,8 +68,6 @@ object NurseRosteringRegular extends CPModel {
       num_to_show = args(0).toInt
     }
 
-
-
     // Note: If you change num_nurses or num_days,
     //       please also change the constraints
     //       on nurse_stat and/or day_stat.
@@ -127,12 +125,9 @@ object NurseRosteringRegular extends CPModel {
     //
     // variables
     //
-    val x = Array.fill(num_nurses)(Array.fill(num_days)(CPVarInt(cp, shifts_r)))
-
-      
-    val day_stat = Array.fill(num_days)(Array.fill(num_shifts)(CPVarInt(cp, nurses)))
-
-    val nurse_stat = Array.fill(num_nurses)(Array.fill(num_shifts)(CPVarInt(cp, days)))
+    val x = Array.fill(num_nurses,num_days)(CPVarInt(cp, shifts_r))
+    val day_stat = Array.fill(num_days,num_shifts)(CPVarInt(cp, nurses))
+    val nurse_stat = Array.fill(num_nurses,num_shifts)(CPVarInt(cp, days))
 
     val all = x.flatten
 
@@ -184,8 +179,6 @@ object NurseRosteringRegular extends CPModel {
      } exploration {
 
       cp.binary(all)
-      // cp.binaryFirstFail(all)
-      // cp.binaryMaxDegree(all)
 
       for(n <- nurses) {
         print("Nurse " + n + ": ")
@@ -197,8 +190,11 @@ object NurseRosteringRegular extends CPModel {
             wd += 1
           }
         }
+
         println("#workdays:" + wd + "  d:" + nurse_stat(n)(day_shift) + "  n:" + nurse_stat(n)(night_shift) + "  o:" + nurse_stat(n)(off_shift))
+
       }
+
       println("\nDay stats:")
       println("        d  n  o")
       for(d <- days) {
@@ -217,9 +213,10 @@ object NurseRosteringRegular extends CPModel {
       }
       
      }
-     println("\nIt was " + numSols + " solutions.")
 
+     println("\nIt was " + numSols + " solutions.")
      cp.printStats()
+
    }
 
 }

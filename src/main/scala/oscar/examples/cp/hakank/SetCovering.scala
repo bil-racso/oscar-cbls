@@ -84,12 +84,8 @@ object SetCovering extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
-
 
       println("\nSolution:")
-
       println("x: " + x.mkString(""))
       println("z: " + z)
 

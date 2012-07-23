@@ -60,7 +60,7 @@ object Xkcd extends CPModel {
 
       cp.add(sum(Array.tabulate(num_prices)(i=> x(i)*price(i))) == total)
 
-     } exploration {
+    } exploration {
        
        cp.binaryFirstFail(x)
 
@@ -68,10 +68,11 @@ object Xkcd extends CPModel {
 
        numSols += 1
        
-     }
-     println("\nIt was " + numSols + " solutions.\n")
+    }
 
-     cp.printStats()
-   }
+    println("\nIt was " + numSols + " solutions.\n")
+    cp.printStats()
+
+  }
 
 }

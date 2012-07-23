@@ -57,16 +57,15 @@ object ToNum extends CPModel {
 
       } exploration {
 
-         cp.binaryFirstFail(x)
-
-         println("x:" + x.mkString("") + "  y:" + y)
-
-         numSols += 1     
+        cp.binaryFirstFail(x)
+        
+        println("x:" + x.mkString("") + "  y:" + y)
+        
+        numSols += 1     
 
       }
 
-      println("\nIt was " + numSols + " solutions.")
-	  
+      println("\nIt was " + numSols + " solutions.") 
       cp.printStats()
 
   }

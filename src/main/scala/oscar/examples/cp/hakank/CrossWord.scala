@@ -121,7 +121,7 @@ object CrossWord extends CPModel {
     //
     // variables
     //
-    val A = Array.fill(num_words)(Array.fill(word_len)(CPVarInt(cp, 0 to 26)))
+    val A = Array.fill(num_words,word_len)(CPVarInt(cp, 0 to 26))
     val A_flatten = A.flatten
 
     val E = Array.fill(N)(CPVarInt(cp, 0 to num_words))
@@ -163,21 +163,17 @@ object CrossWord extends CPModel {
      } exploration {
 
         cp.binary(E)
-        // cp.binaryFirstFail(E)
-        // cp.binaryMaxDegree(E)
-
           
         println("E: " + E.mkString(" "))
         for(ee <- 0 until N) {
-          val e_val = E(ee).getValue()
-          print(ee + ": (" + "%2d".format(e_val) + ") ")
+          print(ee + ": (" + "%2d".format(E(ee).getValue()) + ") ")
           for(ii <- 0 until word_len) {
             print(alpha(A(ee)(ii).getValue()))
           }
           println()
         }
 
-        println();
+        println()
 
         numSols += 1
 

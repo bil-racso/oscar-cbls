@@ -59,7 +59,7 @@ object Sudoku extends CPModel {
                        List(0, 0, 0, 6, 0, 8, 0, 0, 0))
 
     // variables
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to n)))
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
 
     //
     // constraints
@@ -67,30 +67,28 @@ object Sudoku extends CPModel {
     var numSols = 0
 
     cp.solveAll subjectTo {
+
       // fill with the hints
-      for(i <- 0 until n) {
-        for(j <- 0 until n) {
-          if (problem(i)(j) > 0) {
+      for(i <- 0 until n;
+          j <- 0 until n if problem(i)(j) > 0) {
             cp.add(x(i)(j) == problem(i)(j))
-          }
-        }
       }
+      
+      // rows and columns
+      for(i <- 0 until n) {
+        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
+        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
+      }
+      
+      // blocks
+      for(i <- 0 until reg; j <- 0 until reg) {
+        cp.add(alldifferent(  (for{ r <- i*reg until i*reg+reg;
+                                    c <- j*reg until j*reg+reg
+              } yield x(r)(c)).toArray), Strong)
+      }
+      
 
-     // rows and columns
-     for(i <- 0 until n) {
-       cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
-       cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
-     }
-
-     // blocks
-     for(i <- 0 until reg; j <- 0 until reg) {
-       cp.add(alldifferent(  (for{ r <- i*reg until i*reg+reg;
-                            c <- j*reg until j*reg+reg
-             } yield x(r)(c)).toArray), Strong)
-     }
-
-
-     } exploration {
+    } exploration {
        
        cp.binaryFirstFail(x.flatten)
 
@@ -105,10 +103,11 @@ object Sudoku extends CPModel {
 
        numSols += 1
        
-     }
-     println("\nIt was " + numSols + " solutions.")
+    }
 
-     cp.printStats()
-   }
+    println("\nIt was " + numSols + " solutions.")
+    cp.printStats()
+
+  }
 
 }

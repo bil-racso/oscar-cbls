@@ -91,14 +91,12 @@ object Lectures extends CPModel {
     // number of colors is max_c+1.
     val max_c = maximum(v)
 
-
     //
     // constraints
     //
     var numSols = 0
 
     cp.minimize(max_c) subjectTo {
-
 
       // Ensure that there are no clashes
       // also, adjust to 0-base.
@@ -115,14 +113,10 @@ object Lectures extends CPModel {
     } exploration {
        
       cp.binary(v)
-      // cp.binaryFirstFail(v)
-      // cp.binaryMaxDegree(v)
 
       println("\nSolution:")
-
       println("max hour: " + max_c)
       println("v: " + v.mkString(""))
-
       for(i <- 0 until n) {
         println("Lecture " + i + " at " + v(i) + "h")
       }

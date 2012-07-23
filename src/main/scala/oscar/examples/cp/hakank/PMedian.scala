@@ -72,7 +72,7 @@ object PMedian extends CPModel {
     // variables
     //
     val open = Array.fill(num_warehouses)(CPVarInt(cp, 0 to num_warehouses))
-    val ship = Array.fill(num_customers)(Array.fill(num_warehouses)(CPVarInt(cp, 0 to 1)))
+    val ship = Array.fill(num_customers,num_warehouses)(CPVarInt(cp, 0 to 1))
 
     val z = CPVarInt(cp, 0 to 1000)
       
@@ -100,12 +100,10 @@ object PMedian extends CPModel {
 
     } exploration {
        
-      // cp.binary(ship.flatten ++ open)
-      // cp.binaryFirstFail(ship.flatten ++ open)
       cp.binaryMaxDegree(ship.flatten ++ open)
 
-      println("z: " + z)
-      println("open: " + open.mkString(""))
+      println("z:" + z)
+      println("open:" + open.mkString(""))
       println("ship:")
       for(c <- CUSTOMERS) {
         println(ship(c).mkString(""))

@@ -84,13 +84,13 @@ object Tomography extends CPModel {
     val row_sums = List(0,2,2,2,2,2,8,8,4,4,4,4,4,0)
     val col_sums = List(0,0,0,12,12,2,2,2,2,7,7,0,0,0)
 
-
     val r = row_sums.length
     val c = col_sums.length
 
-
-    // variables
-    val x = Array.fill(r)(Array.fill(c)(CPVarInt(cp, 0 to 1)))
+    //
+    // decicion variables
+    //
+    val x = Array.fill(r,c)(CPVarInt(cp, 0 to 1))
 
 
     //
@@ -138,9 +138,10 @@ object Tomography extends CPModel {
        numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.")
 
+     println("\nIt was " + numSols + " solutions.")
      cp.printStats()
-   }
+
+  }
 
 }

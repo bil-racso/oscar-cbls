@@ -127,14 +127,10 @@ object TrafficLights extends CPModel {
     } exploration {
        
       cp.binary( V ++ P)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("V: " + V.mkString(""))
       println("P: " + P.mkString(""))
-
       for(i <- 0 until n) {
         print(lights(V(i).getValue()) + " " + lights(P(i).getValue()) + " ")
       }
@@ -142,7 +138,7 @@ object TrafficLights extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

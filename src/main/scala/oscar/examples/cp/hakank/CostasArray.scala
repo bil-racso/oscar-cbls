@@ -63,13 +63,12 @@ object CostasArray extends CPModel {
     }
 
 
-
     //
     // variables
     //
     val costas = Array.fill(n)(CPVarInt(cp, 1 to n))
     // Matrix of differences
-    val differences = Array.fill(n)(Array.fill(n)(CPVarInt(cp, -n+1 to n-1)))
+    val differences = Array.fill(n,n)(CPVarInt(cp, -n+1 to n-1))
 
 
     //
@@ -128,13 +127,9 @@ object CostasArray extends CPModel {
       }
       
 
-
-
     } exploration {
        
-      // cp.binary(costas)
       cp.binaryFirstFail(costas)
-      // cp.binaryMaxDegree(costas)
 
       println("\nSolution:")
 
@@ -153,7 +148,6 @@ object CostasArray extends CPModel {
       }
       println()
  
-
       numSols += 1
 
    }

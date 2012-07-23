@@ -24,21 +24,34 @@ import scala.math._
 
 /*
 
-  Bus scheduling in Oscar.
-  
-  Minimize number of buses in timeslots.
+  Safe cracking puzzle in Oscar.
 
-  Problem from Taha "Introduction to Operations Research", page 58.
-   
-  Note: This is a slightly more general model than Taha's.
- 
+  From the Oz Primer:
+  http://www.comp.nus.edu.sg/~henz/projects/puzzles/digits/index.html
+  """
+  The code of Professor Smart's safe is a sequence of 9 distinct
+  nonzero digits C1 .. C9 such that the following equations and
+  inequations are satisfied:
+
+        C4 - C6   =   C7
+   C1 * C2 * C3   =   C8 + C9
+   C2 + C3 + C6   <   C8
+             C9   <   C8
+
+   and
+
+   C1 <> 1, C2 <> 2, ..., C9 <> 9
+
+  can you find the correct combination?
+  """
+
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
 */
 
-object BusSchedule extends CPModel {
+object SafeCracking extends CPModel {
 
 
   def main(args: Array[String]) {
@@ -48,46 +61,33 @@ object BusSchedule extends CPModel {
     //
     // data
     //
-    val time_slots = 6
-    // min number of buses for each time slot
-    val demands = Array(8, 10, 7, 12, 4, 4)
-    val max_num = demands.sum
-
+    val n = 9
 
     //
     // variables
     //
- 
-    // How many buses start the schedule at time slot t
-    val x = Array.fill(time_slots)(CPVarInt(cp, 0 to max_num))
-    // Total number of buses
-    val num_buses  = sum(x)
+    val x   = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val Array(c1,c2,c3,c4,c5,c6,c7,c8,c9) = x
 
     //
     // constraints
     //
     var numSols = 0
+    cp.solveAll subjectTo {
 
-    cp.minimize(num_buses) subjectTo {
+      cp.add(alldifferent(x))
+      cp.add(c4 - c6 == c7)
+      cp.add(c1 * c2 * c3 == c8 + c9)
+      cp.add(c2 + c3 + c6 < c8)
+      cp.add(c9 < c8)
 
-      // Meet the demands for this and the next time slot.
-      for(i <- 0 until time_slots - 1) {
-        cp.add(x(i)+x(i+1) >= demands(i))
-      }
-
-      // The demand "around the clock"
-      cp.add(x(time_slots-1) + x(0) - demands(time_slots-1) == 0)
-      
+      (0 until n).foreach(i=> cp.add(x(i) != i+1))
       
     } exploration {
        
-      cp.binary(x)
+      cp.binaryFirstFail(x)
 
-      println("\nSolution:")
-
-      println("x: " + x.mkString(""))
-      println("num_buses : " + num_buses)
-      println()
+      println("x:" + x.mkString(""))
 
       numSols += 1
 

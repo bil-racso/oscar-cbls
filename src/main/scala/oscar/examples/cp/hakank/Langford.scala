@@ -66,12 +66,10 @@ object Langford extends CPModel {
     //
     // variables
     //
-
-    // the digits
     val position = Array.fill(2*k)(CPVarInt(cp, 0 to 2*k-1))
 
     // channel positions to a solution array
-    val solution = Array.tabulate(2*k)(i => CPVarInt(cp, 1 to k))
+    val solution = Array.fill(2*k)(CPVarInt(cp, 1 to k))
 
     //
     // constraints
@@ -95,7 +93,7 @@ object Langford extends CPModel {
        
       cp.binaryFirstFail(position)
 
-      // print("solution:" + solution.mkString("") + " ")
+      print("solution:" + solution.mkString("") + " ")
       println("position:" + position.mkString(""))
 
       numSols += 1

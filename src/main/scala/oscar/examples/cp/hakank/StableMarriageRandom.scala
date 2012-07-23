@@ -76,11 +76,11 @@ object StableMarriageRandom extends CPModel {
     println("Generated " + n + " ranks.")
 
     if (n <= 30) {
-      for(i <- 0 until n) {
+      for(i <- Women) {
         println("rankWomen #" + i + ": " + rankWomen(i).mkString(" "))
       }
 
-      for(i <- 0 until n) {
+      for(i <- Men) {
         println("rankMen   #" + i + ": " + rankMen(i).mkString(" "))
       }
 
@@ -127,8 +127,6 @@ object StableMarriageRandom extends CPModel {
        println("Explore...")
        
        cp.binary(wife ++ husband)
-       // cp.binaryFirstFail(wife ++ husband)
-       // cp.binaryMaxDegree(wife ++ husband)
 
        println("wife   :" + wife.mkString(""))
        println("husband:" + husband.mkString(""))
@@ -141,11 +139,11 @@ object StableMarriageRandom extends CPModel {
         cp.stop()
       }
 
-     }
+    }
 
-     println("\nIt was " + numSols + " solutions.\n")
+    println("\nIt was " + numSols + " solutions.\n")
+    cp.printStats()
 
-     cp.printStats()
-   }
+  }
 
 }

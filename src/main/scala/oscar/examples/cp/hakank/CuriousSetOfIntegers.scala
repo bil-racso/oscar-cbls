@@ -86,7 +86,16 @@ object CuriousSetOfIntegers extends CPModel {
       } exploration {
 
         cp.binary(x)
+
         println(x.mkString(""))
+
+        val s = Set(1,3,8,120)
+        for(i <- 0 until n) {
+          val v = x(i).getValue()
+          if (!s.contains(v)) {
+            println("The fifth number is " + v)
+          }
+        }
 
         numSols += 1
       }

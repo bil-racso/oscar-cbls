@@ -115,18 +115,16 @@ object Minesweeper extends CPModel {
       val tmp = List(-1,0,1)
 
       for(i <- 0 until r) {
-        for(j <- 0 until c) {
-          if (game(i)(j) >= 0) {
+        for(j <- 0 until c if game(i)(j) >= 0) {
+
+          cp.add(sum( for{ a <- tmp; b <- tmp 
+                      if ( (i+a >= 0) && (j+b  >= 0) &&
+                           (i+a <  r)  && (j+b <  c)) 
+                        } yield mines(i+a)(j+b)) == game(i)(j))
             
-            cp.add(sum( for{ a <- tmp; b <- tmp 
-                      if ( (i+a >= 0) && (j+b >=  0) &&
-                           (i+a < r)  && (j+b < c)) 
-                        } yield mines(i+a)(j+b) ) == game(i)(j))
-            
-            
-            if (game(i)(j) > X) {
-              cp.add(mines(i)(j) == 0)
-            }
+          // redundant constraint
+          if (game(i)(j) > X) {
+            cp.add(mines(i)(j) == 0)
           }
         }
       }
@@ -138,19 +136,16 @@ object Minesweeper extends CPModel {
 
       println("\nSolution:")
       for(i <- 0 until r) {
-        for(j <- 0 until c) {
-          print(mines(i)(j) + "")
-        }
-        println()
+        println(mines(i).mkString(""))
       }
 
-
-       numSols += 1
+      numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.\n")
 
+     println("\nIt was " + numSols + " solutions.\n")
      cp.printStats()
+
    }
 
 }

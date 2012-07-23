@@ -115,8 +115,6 @@ object PlaceNumberPuzzle extends CPModel {
 
     } exploration {
        
-      // cp.binary(x)
-      // cp.binaryFirstFail(x)
       cp.binaryMaxDegree(x)
 
       println("x: " + x.mkString(""))

@@ -104,8 +104,8 @@ object ARoundOfGolf extends CPModel {
       cp.add(score(Bill) < score(Paul));
       cp.add(score(Bill) < score(Frank));
       
-    // 2. Mr. Clubb, who isn't Paul, hit several balls into the woods and
-    //    scored ten strokes more than the pro-shop clerk.
+      // 2. Mr. Clubb, who isn't Paul, hit several balls into the woods and
+      //    scored ten strokes more than the pro-shop clerk.
       cp.add(clubb != Paul);
       cp.add(element(score, clubb) == element(score, clerk) + 10);
       

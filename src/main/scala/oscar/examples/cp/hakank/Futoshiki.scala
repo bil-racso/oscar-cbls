@@ -72,7 +72,7 @@ object Futoshiki extends CPModel {
     
 
     // [i1,j1, i2,j2] requires that values[i1,j1] < values[i2,j2]
-    // Note: 1-based
+    // Note: 1-based (changed to 0-based below)
     val lt1 = Array(Array(1,2,  1,1),
                     Array(1,4,  1,5),
                     Array(2,3,  1,3),
@@ -164,16 +164,14 @@ object Futoshiki extends CPModel {
       // all < constraints are satisfied
       // Also: make 0-based
       for(i <- NUMQD) {
-        cp.add(field( lt(i)(0)-1)(lt(i)(1)-1) <
+        cp.add(field(lt(i)(0)-1)(lt(i)(1)-1) <
                field(lt(i)(2)-1)(lt(i)(3)-1 ))
       }
 
 
     } exploration {
        
-      // cp.binary(field.flatten)
       cp.binaryFirstFail(field.flatten)
-      // cp.binaryMaxDegree(field.flatten)
 
       for(i <- RANGE) {
         println(field(i).mkString(""))

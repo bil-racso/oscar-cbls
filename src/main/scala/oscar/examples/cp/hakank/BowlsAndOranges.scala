@@ -86,11 +86,9 @@ object BowlsAndOranges extends CPModel {
  
     } exploration {
        
-      // cp.binary(x)
-      // cp.binaryFirstFail(x)
       cp.binaryMaxDegree(x)
 
-      // println(x.mkString(""))
+      println(x.mkString(""))
 
       numSols += 1
 
