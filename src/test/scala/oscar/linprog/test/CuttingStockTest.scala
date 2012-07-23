@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.linprog.test
+/*package oscar.linprog.test
 
 import oscar.linprog.modeling._
 import oscar.linprog._
@@ -97,4 +97,4 @@ class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MI
 	}
   }
   
-}
+}*/
