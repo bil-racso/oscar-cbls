@@ -35,11 +35,6 @@ import oscar.cp.core._
  */
 object LeastDiff2 extends CPModel {
 
-   // Simple decomposition of scalarProduct
-   def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(0 until t.length)(i=>t(i)*cost(i))
-
-
    def main(args: Array[String]) {
 
       val cp = CPSolver()
@@ -51,9 +46,8 @@ object LeastDiff2 extends CPModel {
       val all = Array.fill(n)(CPVarInt(cp, 0 to 9))
       val Array(a, b, c, d, e, f, g, h, i, j) = all
 
-
-      val x = scalarProduct(Array(a,b,c,d,e), values)
-      val y = scalarProduct(Array(f,g,h,i,j), values)
+      val x = weightedSum(values, Array(a,b,c,d,e))
+      val y = weightedSum(values, Array(f,g,h,i,j))
       val diff = x - y
 
       cp.minimize(diff) subjectTo {

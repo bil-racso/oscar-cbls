@@ -46,17 +46,6 @@ import scala.math._
 
 object NontransitiveDice extends CPModel {
 
-  // returns the maximum element in t
-  def my_max(t: Array[CPVarInt]) : CPVarInt = {
-    val cp = t(0).getStore
-    val mmax = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
-    for(i <- 0 to t.length-1) {
-      cp.post(mmax >= t(i))
-    }
-    return mmax
-  }
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -117,8 +106,9 @@ object NontransitiveDice extends CPModel {
 
     cp.solveAll subjectTo {
 
-      cp.add(my_max(dice_flat) == max_val)
-      cp.add(my_max(comp_flat) == max_win)
+      cp.add(maximum(dice_flat) == max_val)
+      cp.add(maximum(comp_flat) == max_win)
+
 
       // Number of occurrences for each number
       cp.add(gcc(dice_flat, counts))

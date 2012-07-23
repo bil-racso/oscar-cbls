@@ -85,15 +85,16 @@ object CalculsDEnfer extends CPModel {
     val u = X(20); val v = X(21); val w = X(22); val x = X(23); 
     val y = X(24); val z = X(25);
 
-    val x_max = my_max(for(I <- 0 until N) yield X(I).abs())
+    val x_max = my_max(for(I <- 0 until N) yield X(I).abs()) // this is faster
+    // val x_max = maximum(for(I <- 0 until N) yield X(I).abs())
 
     //
     // constraints
     //
     var numSols = 0
 
-    // cp.minimize(x_max) subjectTo {
-    cp.solveAll subjectTo {
+    cp.minimize(x_max) subjectTo {
+    // cp.solveAll subjectTo {
 
       cp.add(alldifferent(X), Strong)
 
@@ -112,7 +113,7 @@ object CalculsDEnfer extends CPModel {
       cp.add(t+w+e+l+f   == 12); // Sic!
       
       // for solveAll
-      cp.add(x_max == 16);
+      // cp.add(x_max == 16);
 
     } exploration {
        

@@ -38,11 +38,6 @@ import scala.math._
 
 object CombinatorialAuction extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -67,7 +62,7 @@ object CombinatorialAuction extends CPModel {
     // variables
     //
     val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
-    val z  = scalarProduct(x, bid_amount)
+    val z  = weightedSum(bid_amount, x)
 
     //
     // constraints

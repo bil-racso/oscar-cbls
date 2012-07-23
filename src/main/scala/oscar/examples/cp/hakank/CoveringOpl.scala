@@ -34,11 +34,6 @@ import scala.math._
 */
 object CoveringOpl extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -75,7 +70,7 @@ object CoveringOpl extends CPModel {
     // variables
     //
     val hire = Array.fill(num_workers)(CPVarInt(cp, 0 to 1))
-    val total_cost = scalarProduct(hire, cost)
+    val total_cost = weightedSum(cost, hire)
 
     //
     // constraints

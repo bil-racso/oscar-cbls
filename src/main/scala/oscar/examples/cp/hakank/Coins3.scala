@@ -43,11 +43,6 @@ import scala.math._
 
 object Coins3 extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -76,7 +71,7 @@ object Coins3 extends CPModel {
       // Check that all changes from 1 to 99 can be made.
       for(j <- 1 until 100) {
         val tmp = Array.fill(n)(CPVarInt(cp, 0 to 99))
-        cp.add(scalarProduct(tmp, variables) == j)
+        cp.add(weightedSum(variables, tmp) == j)
         
         for(i <- 0 until n) {
           cp.add(tmp(i) <= x(i))
