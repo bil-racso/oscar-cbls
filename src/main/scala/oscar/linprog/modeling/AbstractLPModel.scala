@@ -433,7 +433,7 @@ trait AbstractLPModel extends Algebra {
               case ConstraintType.EQ => res <= c.rhs+tol && res >= c.rhs-tol
         }
         if (!ok) {
-          println("violation of constraint:"+c)
+          println("violation of constraint: "+c.name+": "+res+" "+c.cstr.consType+" "+c.rhs)
           violation = true
         }
       }
