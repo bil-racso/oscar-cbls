@@ -20,88 +20,98 @@ package oscar.cp.scheduling;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 
-public class Activity {
+class Activity(val start: CPVarInt, val dur: CPVarInt) {
+    
+    val end = start.plus(dur)
 	
-	private Store cp;
-	private CPVarInt start;
-	private CPVarInt end;
-	private CPVarInt dur;
+	def this(start: CPVarInt,dur: Int) = this(start,new CPVarInt(start.getStore(),dur,dur))
 
-	protected Activity() {
-		
-	}
-	
-	public Activity(CPVarInt start, CPVarInt dur)  {
-		this.cp = start.getStore();
-		this.dur = dur;
-		this.start = start;
-		this.end = start.plus(dur);
-	}
-	
-	public Activity(CPVarInt start, int dur)  {
-		this(start, new CPVarInt(start.getStore(), dur, dur));
-	}
-	
-	public CPVarInt getDur() {
-		return dur;
-	}
-	
-	public CPVarInt getStart() {
-		return start;
-	}
-	
-	public CPVarInt getEnd() {
-		return end;
-	}
-	
 	/**
 	 * earliest starting time
 	 */
-	public int getEST() {
-		return start.getMin();
-	}
+	def est() = start.getMin()
+	
 	
 	/**
 	 * latest starting time
 	 */
-	public int getLST() {
-		return start.getMax();
-	}
+	def lst() = start.getMax()
 	
 	/**
 	 * earliest completion time assuming the smallest duration
 	 */
-	public int getECT() {
-		return end.getMin();
-	}
+	def ect() = end.getMin()
 	
 	/**
 	 * latest completion time assuming the smallest duration
 	 */
-	public int getLCT() {
-		return end.getMax();
-	}
+	def lct() = end.getMax()
 	
+	/**
+	 * current minimal duration of this activity
+	 */
+	def minDuration() = dur.getMin()
+
+	/**
+	 * current maximal duration of this activity
+	 */
+	def maxDuration() = dur.getMax();
+	
+	
+	override def toString() = "dur:"+dur+ " in ["+est+","+lct+"[";
+
+}
+
+
+
+class MirrorActivity(val act: Activity)  extends Activity() {
+
+	private Activity act;
+
+	public MirrorActivity(Activity act) {
+		this.act = act;
+	}
+
+	/**
+	 * earliest starting time
+	 */
+	public int getEST() {
+		return - act.getLCT();
+	}
+
+	/**
+	 * latest starting time
+	 */
+	public int getLST() {
+		return - act.getECT();
+	}
+
+	/**
+	 * earliest completion time assuming the smallest duration
+	 */
+	public int getECT() {
+		return - act.getLST();
+	}
+
+	/**
+	 * latest completion time assuming the smallest duration
+	 */
+	public int getLCT() {
+		return - act.getEST();
+	}
 
 	/**
 	 * current minimal duration of this activity
 	 */
 	public int getMinDuration() { 
-		return dur.getMin();
+		return act.getMinDuration();
 	}
-	
-	
+
+
 	/**
 	 * current maximal duration of this activity
 	 */
 	public int getMaxDuration() { 
-		return dur.getMax(); 
+		return act.getMaxDuration(); 
 	}
-	
-	public String toString() {
-		return "dur:"+getDur()+ " in ["+getEST()+","+getLCT()+"[";
-	}
-	
-	
-
 }

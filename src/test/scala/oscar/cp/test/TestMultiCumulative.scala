@@ -48,8 +48,8 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		t2.getMinDuration should be(1)
 		t2.getMaxDuration should be(2)
 		
-		t2.getMinResource should be(3)
-		t2.getMaxResource should be(4)
+		t2.minResource should be(3)
+		t2.maxResource should be(4)
 	}
 }
 

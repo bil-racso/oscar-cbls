@@ -66,7 +66,7 @@ public class UnaryResource extends Constraint {
 	
 
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
-		super(activities[0].getStart().getStore(),name);
+		super(activities[0].start().getStore(),name);
 		assert(activities.length == required.length);
 		this.name = name;
 		this.activities = activities;
@@ -123,7 +123,7 @@ public class UnaryResource extends Constraint {
 	}
 
 	public UnaryResource(Activity [] activities, String name) {
-		this(activities, makeRequiredArray(activities.length,activities[0].getStart().getStore()), name);
+		this(activities, makeRequiredArray(activities.length,activities[0].start().getStore()), name);
 	}
 	
 	/**
@@ -160,7 +160,7 @@ public class UnaryResource extends Constraint {
 	public void rankFirst(int j) {
 		for (int i = 0; i < nbAct; i++) {
 			if (i!= j && required[i].isTrue() && !ranked[i].getValue()) {
-				s.post(new LeEq(activities[j].getEnd(),activities[i].getStart()));
+				s.post(new LeEq(activities[j].getEnd(),activities[i].start()));
 			}
 		}
 		ranked[j].setValue(true);
@@ -194,7 +194,7 @@ public class UnaryResource extends Constraint {
 
 		
 		for (int i = 0; i < nbAct; i++) {
-			activities[i].getStart().callPropagateWhenBoundsChange(this);
+			activities[i].start().callPropagateWhenBoundsChange(this);
 			activities[i].getEnd().callPropagateWhenBoundsChange(this);
 			
 			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
@@ -376,7 +376,7 @@ public class UnaryResource extends Constraint {
 		for (int i = 0; i < nbAct; i++) {
 			if (new_est[i] != Integer.MIN_VALUE) {
 				modified = true;
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 			}
@@ -461,7 +461,7 @@ public class UnaryResource extends Constraint {
 			if (activities[i].getLCT() > new_lct[i] || activities[i].getEST() < new_est[i]) {
 				modified = true;
 
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 
@@ -548,7 +548,7 @@ public class UnaryResource extends Constraint {
 		for (int i = 0; i < nbAct; i++) {
 			if (activities[i].getEST() < new_est[i]) {
 				modified = true;
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 					return false;
 				}

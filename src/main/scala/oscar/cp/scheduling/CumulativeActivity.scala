@@ -20,22 +20,19 @@ package oscar.cp.scheduling
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 
-class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,  machine : CPVarInt, resource : CPVarInt) extends Activity(start, duration) {
+class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,  val machine : CPVarInt, val resource : CPVarInt) extends Activity(start, duration) {
 
-	def getMachines = machine
-	def getResource = resource
-	
 	/**
 	 * smallest quantity of resource
 	 */
-	def getMinResource() = resource.getMin()
+	def minResource() = resource.getMin()
 	
 	/**
 	 * largest quantity of resource
 	 */
-	def getMaxResource() = resource.getMax()
+	def maxResource() = resource.getMax()
 	
-	override def toString() = "dur:"+getDur()+ " from ["+getEST()+","+getLST()+"[ to ["+getECT()+","+getLCT()+"[ using ["+getMinResource+","+getMaxResource+"] on machine(s) "+machine 
+	override def toString() = "dur:"+dur+ " from ["+est+","+lst+"[ to ["+ect+","+lct+"[ using ["+minResource+","+maxResource+"] on machine(s) "+machine 
 }
 
 object CumulativeActivity {

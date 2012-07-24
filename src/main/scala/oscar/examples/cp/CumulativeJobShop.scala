@@ -90,7 +90,7 @@ object CumulativeJobShop extends CPModel {
   	   	}) 	   
   	   	
   	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).getEnd)
+  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
@@ -130,12 +130,12 @@ object CumulativeJobShop extends CPModel {
   	   	cp.minimize(makespan) subjectTo {
 
 			for (i <- jobActivities.flatten) {
-				cp.add(i.getStart + i.getDur == i.getEnd)
+				cp.add(i.start + i.dur == i.end)
 			}
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
+				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
 			
 			// Cumulative constraints
 			for (i <- Machines)
@@ -143,7 +143,7 @@ object CumulativeJobShop extends CPModel {
 
 		} exploration {
 			
-			cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
+			cp.binaryFirstFail(jobActivities.flatten.map(_.start))
 			
 			// Efficient but not complete search strategy
 			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)

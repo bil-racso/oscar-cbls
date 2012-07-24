@@ -94,7 +94,7 @@ object CumulativeJobShopLNS extends CPModel {
   	   	val activities = jobActivities.flatten
   	   	
   	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).getEnd)
+  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
@@ -144,7 +144,7 @@ object CumulativeJobShopLNS extends CPModel {
 			
 			for(precedence <- precedences) {
 				if (!selected(precedence._1) && !selected(precedence._2)) {
-					cp.post(activities(precedence._1).getEnd <= activities(precedence._2).getStart)
+					cp.post(activities(precedence._1).end <= activities(precedence._2).start)
 				}
 			}
 		}
@@ -154,12 +154,12 @@ object CumulativeJobShopLNS extends CPModel {
   	   	cp.minimize(makespan) subjectTo {
 
 			for (i <- activities) {
-				cp.add(i.getStart + i.getDur == i.getEnd)
+				cp.add(i.start + i.dur == i.end)
 			}
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
+				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
 			
 			// Cumulative constraints
 			for (i <- Machines)
@@ -167,7 +167,7 @@ object CumulativeJobShopLNS extends CPModel {
 
 		} exploration {
 			
-			//cp.binaryFirstFail(activities.map(_.getStart))
+			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
 			SchedulingUtils.setTimesSearch(cp, activities)
@@ -178,10 +178,10 @@ object CumulativeJobShopLNS extends CPModel {
 			// Best so far solution
 			for (t <- 0 until activities.size) {
 				
-				bestSol(t).start   = activities(t).getStart.getValue
-				bestSol(t).end     = activities(t).getEnd.getValue
-				bestSol(t).inc     = activities(t).getResource.getValue
-				bestSol(t).machine = activities(t).getMachines.getValue
+				bestSol(t).start   = activities(t).start.getValue
+				bestSol(t).end     = activities(t).end.getValue
+				bestSol(t).inc     = activities(t).resource.getValue
+				bestSol(t).machine = activities(t).machine.getValue
 			}
 			
 			// Updates the visual components
