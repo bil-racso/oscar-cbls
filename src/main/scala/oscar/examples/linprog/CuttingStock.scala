@@ -64,7 +64,7 @@ object CuttingStock extends LPModel with MIPModel {
 	  do {
 		  mip = MIPSolver()
 		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
-		  val cost = Array.tabulate(roll.size)(constraints(_).getDual)
+		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 
 		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) subjectTo {
 			  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
