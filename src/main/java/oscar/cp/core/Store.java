@@ -396,6 +396,15 @@ public class Store extends ReversibleSearchNode {
 	public CPOutcome post(Collection<Constraint> constraints) {
 		return post(constraints,CPPropagStrength.Weak);
 	}
+	
+	public CPOutcome post(Constraint[] constraints) {
+		
+		LinkedList<Constraint> list = new LinkedList<Constraint>();
+		for (int i = 0; i < constraints.length; i++)
+			list.add(constraints[i]);
+		
+		return post(list, CPPropagStrength.Weak);
+	}
 
     /**
      * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.

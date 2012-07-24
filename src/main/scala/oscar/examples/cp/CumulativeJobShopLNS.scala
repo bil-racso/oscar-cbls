@@ -36,10 +36,11 @@ import scala.collection.mutable.Set
 object CumulativeJobShopLNS extends CPModel {
   
 	def main(args: Array[String]) {
-	  
+		
 		// Parsing		
 		// -----------------------------------------------------------------------
 		
+		/*
 		// Read the data
 		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 		
@@ -73,6 +74,29 @@ object CumulativeJobShopLNS extends CPModel {
 			durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
 	  	    lines = lines.drop(1)
 		}
+		
+		// Upper bound of the horizon
+		val horizon = durations.flatten.sum*/
+		
+		val nJobs        = 40
+		val nTasksPerJob = 10
+		val nMachines    = 10
+		
+		val Jobs        = 0 until nJobs
+		val Machines    = 0 until nMachines
+		
+		val capacity = 2
+		
+		println("#Jobs      : " + nJobs)
+		println("#Tasks/job : " + nTasksPerJob)
+		println("#Machines  : " + nMachines)
+		println("#Capacity  : " + capacity)
+		
+		val instance = CumulativeJobShopGenerator.getInstance(nJobs, nMachines, nTasksPerJob, capacity, 50)
+		
+		val machines   = instance._1
+		val durations  = instance._2
+		val capacities = instance._3
 		
 		// Upper bound of the horizon
 		val horizon = durations.flatten.sum
@@ -130,32 +154,24 @@ object CumulativeJobShopLNS extends CPModel {
 		// -----------------------------------------------------------------------
 
 		val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
+		var precedences : Array[Tuple2[Int, Int]] = null
 		
-		cp.lns(2000,300) {		
-		
-			val precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
+		cp.lns(2000,3000) {		
 			
 			val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 			
 			// Selected are relaxed (50%)
 			for (i <- 0 until bestSol.size)
-				if (nextFloat < 0.8)
+				if (nextFloat < 0.4)
 					selected(i) = true
 			
-			for(precedence <- precedences) {
-				if (!selected(precedence._1) && !selected(precedence._2)) {
-					cp.post(activities(precedence._1).getEnd <= activities(precedence._2).getStart)
-				}
-			}
+			val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
+			val constraints = filteredPrecedences.map(p => activities(p._1).getEnd <= activities(p._2).getStart)
+			
+			cp.post(constraints)
 		}
 		
-		cp.time
-		
   	   	cp.minimize(makespan) subjectTo {
-
-			for (i <- activities) {
-				cp.add(i.getStart + i.getDur == i.getEnd)
-			}
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
@@ -183,6 +199,7 @@ object CumulativeJobShopLNS extends CPModel {
 				bestSol(t).inc     = activities(t).getResource.getValue
 				bestSol(t).machine = activities(t).getMachines.getValue
 			}
+			precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
 			
 			// Updates the visual components
 			updateVisu(1, 20)
