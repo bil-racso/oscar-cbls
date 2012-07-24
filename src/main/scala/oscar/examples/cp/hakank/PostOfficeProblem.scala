@@ -62,11 +62,6 @@ import scala.math._
 
 object PostOfficeProblem extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(0 until t.length)(i=>t(i)*cost(i))
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -92,7 +87,7 @@ object PostOfficeProblem extends CPModel {
  
     // number of workers starting at day i
     val x = Array.fill(n)(CPVarInt(cp, 0 to need.max))
-    val total_cost  = scalarProduct(x, cost)
+    val total_cost  = weightedSum(cost, x)
     val num_workers = sum(x)
 
     //

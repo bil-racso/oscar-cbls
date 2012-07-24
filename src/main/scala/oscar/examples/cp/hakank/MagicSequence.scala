@@ -40,9 +40,6 @@ import scala.math._
 */
 object MagicSequence extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
 
   def main(args: Array[String]) {
 
@@ -70,7 +67,8 @@ object MagicSequence extends CPModel {
     var numSols = 0
     cp.solveAll subjectTo {
 
-      cp.add(scalarProduct(x, Array.tabulate(n)(i=>i)) == n)
+      cp.add(weightedSum(Array.tabulate(n)(i=>i), x) == n)
+
       cp.add(sum(x) == n)
 
       cp.add(gcc(x, all_values), Strong)

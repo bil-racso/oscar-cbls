@@ -38,11 +38,6 @@ import scala.math._
 
 object SetCovering4 extends CPModel {
 
-  // Simple decomposition of scalarProduct
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -79,7 +74,7 @@ object SetCovering4 extends CPModel {
     //
  
     val x = Array.fill(num_alternatives)(CPVarInt(cp, 0 to 1))
-    val z = scalarProduct(x, costs)
+    val z = weightedSum(costs, x)
 
 
     //

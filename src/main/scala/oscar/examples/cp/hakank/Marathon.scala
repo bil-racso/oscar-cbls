@@ -65,7 +65,7 @@ object Marathon extends CPModel {
       val len = x.length
       for(i <- 0 until len;
           j <- 0 until len) {
-        cp.add( (y(j) === i) === (x(i) === j) )
+        cp.add( (y(j) === i) == (x(i) === j) )
       }
    }
 

@@ -36,17 +36,6 @@ import scala.math._
 */
 object Assignment extends CPModel {
 
-  // some helper functions
-
-  // scalarProduct(array, array)
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) : CPVarInt = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-  // scalarProduct(matrix, matrix)
-  def scalarProduct(m: Array[Array[CPVarInt]], cost: Array[Array[Int]]) : CPVarInt = 
-    sum(for{i <- 0 until m.length} yield scalarProduct(m(i), cost(i)))
-
-
   // Nicer syntax for a CPVarInt matrix 
   class CPVarIntMatrix(m: Array[Array[CPVarInt]]) {
     def row(r: Int) : Array[CPVarInt] =  m(r)
@@ -85,7 +74,7 @@ object Assignment extends CPModel {
     // variables
     //
     val x = makeCPVarIntMatrix(cp, rows, cols, 0 to 1)
-    val total_cost = scalarProduct(x, cost)
+    val total_cost = weightedSum(cost, x)
 
     //
     // constraints

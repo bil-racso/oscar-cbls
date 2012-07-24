@@ -95,13 +95,6 @@ import java.util.Random
 
 object AppointmentSchedulingSet extends CPModel {
 
-  //
-  // ensure that x is a member of array y
-  //
-  def isMember(x: CPVarInt, y: Array[Int]) =
-      sum(for{j <- y} yield (x === j)) == 1
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -157,7 +150,8 @@ object AppointmentSchedulingSet extends CPModel {
     //
 
     // The assignment of persons to a time slot (appointment number 1..n).
-    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val x = Array.tabulate(n)(i=>CPVarInt(cp, s(i).toSet))
+
 
     //
     // constraints
@@ -168,9 +162,6 @@ object AppointmentSchedulingSet extends CPModel {
       
       cp.add(alldifferent(x), Strong)
 
-      for(i <- 0 until n) {
-        cp.add(isMember(x(i), s(i)))
-      }
     } exploration {
        
       cp.binaryMaxDegree(x)

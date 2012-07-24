@@ -127,10 +127,11 @@ object DeBruijn extends CPModel {
        }
      
        // gcc on the de Bruijn sequence
-       cp.add(gcc(bin_code, gccv))
+      cp.add(gcc(bin_code, gccv))
 
        // symmetry breaking: the smallest number in x should be first
-       cp.add(my_min(x) == x(0))
+      cp.add(my_min(x) == x(0))
+      // cp.add(minimum(x, x(0)))
 
      } exploration {
        

@@ -34,13 +34,6 @@ import oscar.cp.core._
 object SchedulingSpeakers extends CPModel {
 
 
-  //
-  // ensure that x is a member of array y
-  //
-  def isMember(x: CPVarInt, y: Array[Int]) =
-      sum(for{j <- y} yield (x === j)) == 1
-
-
    def main(args: Array[String]) {
 
       val cp = CPSolver()
@@ -66,18 +59,12 @@ object SchedulingSpeakers extends CPModel {
       //
       // decision variables
       // 
-
-      val speakers = Array.fill(num_speakers)(CPVarInt(cp, 1 to num_slots ))
+      val speakers = Array.tabulate(num_speakers)(i=>CPVarInt(cp, available(i).toSet ))
 
       var numSols = 0
       cp.solveAll() subjectTo {
 
         cp.add(alldifferent(speakers))
-
-        // Assign speakers at available slots
-        for(i <- 0 until num_speakers) {
-          cp.add(isMember(speakers(i), available(i)))
-        }
 
 
       } exploration {

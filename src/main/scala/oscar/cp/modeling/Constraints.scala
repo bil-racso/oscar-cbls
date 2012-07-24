@@ -17,11 +17,13 @@
 
 package oscar.cp.modeling
 
+
 import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.scheduling._
-
 import scala.collection._
+import scala.collection.mutable.ArrayBuffer
+import java.util.LinkedList
 trait Constraints {
 
   /**
@@ -65,6 +67,8 @@ trait Constraints {
     return new Knapsack(x.toArray,p.toArray,w.toArray,P,W)
   }
   
+
+
   /**
    * AllDifferent Constraint (Available Filtering: Weak, Strong)
    * @param vars an non empty array of variables
@@ -126,11 +130,11 @@ trait Constraints {
    * @param x an index variable with domain defined on (0..n-1)
    * @return a variable z linked to tab and x by the relation tab(x) == z
    */
-  def element(tab: Array[Int], x: CPVarInt, strength: CPPropagStrength = CPPropagStrength.Medium): CPVarInt = {
+  def element(tab: IndexedSeq[Int], x: CPVarInt, strength: CPPropagStrength = CPPropagStrength.Medium): CPVarInt = {
     val minval = tab.min
     val maxval = tab.max
     val z = new CPVarInt(x.getStore, minval, maxval)
-    x.getStore.post(new ElementCst(tab, x, z),strength)
+    x.getStore.post(new ElementCst(tab.toArray, x, z),strength)
     z
   }
 
@@ -141,8 +145,8 @@ trait Constraints {
    * @param z an integer variable
    * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
    */
-  def element(tab: Array[Int], x: CPVarInt, z: CPVarInt): Constraint = {
-    new ElementCst(tab, x, z)
+  def element(tab: IndexedSeq[Int], x: CPVarInt, z: CPVarInt): Constraint = {
+    new ElementCst(tab.toArray, x, z)
   }
 
   /**
@@ -152,8 +156,8 @@ trait Constraints {
    * @param z an integer
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
-  def element(tab: Array[Int], x: CPVarInt, z: Int): Constraint = {
-    new ElementCst(tab, x, new CPVarInt(x.getStore, z, z))
+  def element(tab: IndexedSeq[Int], x: CPVarInt, z: Int): Constraint = {
+    new ElementCst(tab.toArray, x, new CPVarInt(x.getStore, z, z))
   }
 
   /**
@@ -162,11 +166,11 @@ trait Constraints {
    * @param x an index variable with domain defined on (0..n-1)
    * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
    */
-  def element(tab: Array[CPVarInt], x: CPVarInt): CPVarInt = {
+  def element(tab: IndexedSeq[CPVarInt], x: CPVarInt): CPVarInt = {
     val minval = (for(x <- tab) yield x.getMin) min
     val maxval = (for(x <- tab) yield x.getMax) max
     val z = new CPVarInt(x.getStore, minval, maxval)
-    x.getStore.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x, z))
+    x.getStore.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
     z
   }
 
@@ -178,7 +182,7 @@ trait Constraints {
    * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
    */
   def element(tab: Array[CPVarInt], x: CPVarInt, z: CPVarInt): Constraint = {
-    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x, z)
+    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
   }
 
   /**
@@ -189,7 +193,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def element(tab: Array[CPVarInt], x: CPVarInt, z: Int): Constraint = {
-    new ElementVar(tab, x, new CPVarInt(x.getStore, z, z))
+    new ElementVar(tab.toArray, x, z)
   }
   
   /**
@@ -199,9 +203,9 @@ trait Constraints {
    * @param z an integer
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
-  def element(tab: Array[CPVarBool], x: CPVarInt, z: Boolean): Constraint = {
+  def element(tab: IndexedSeq[CPVarBool], x: CPVarInt, z: Boolean): Constraint = {
     val z_ = new CPVarBool(x.getStore(),z)
-    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]), x,z_)
+    new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x,z_)
   }
 
   /**
@@ -257,7 +261,7 @@ trait Constraints {
 
 
   /**
-   * Sum Consraint
+   * Sum Constraint
    * @param indexes1 a first iterable
    * @param indexes2 a second iterable
    * @param f a function mapping A,B to a variable with A from indexes1 and B from indexes2
@@ -266,6 +270,51 @@ trait Constraints {
   def sum[A, B](indexes1: Iterable[A], indexes2: Iterable[B])(f: (A, B) => CPVarInt): CPVarInt = {
     sum(for (i <- indexes1; j <- indexes2) yield f(i, j))
   }
+  
+  /**
+   * Weighted Sum Constraint
+   * @param indexes an iterable of index values
+   * @param a function: i => (w_i, x_i) where i is an index from indexes
+   * @return a variable S linked with the relation S = sum(i in indexes) (w_i * x_i) 
+   */
+  def weightedSum[A](indexes: Iterable[A])(f: A => (Int,CPVarInt)): CPVarInt = {
+    sum(indexes) { i =>
+     val (w,x) = f(i)
+     x * w
+    }
+  }
+  
+  
+  /**
+   * Weighted Sum Constraint
+   * @param indexes1 an iterable of index values
+   * @param indexes2 an iterable of index values
+   * @param a function: (i,j) => (w_ij, x_ij) where i is an index from indexes
+   * @return a variable S linked with the relation S = sum(i in indexes1,j in indexes2) (w_ij * x_ij) 
+   */
+  def weightedSum[A, B](indexes1: Iterable[A], indexes2: Iterable[B])(f: (A ,B) => (Int,CPVarInt)): CPVarInt = {
+    sum(indexes1,indexes2) { case(i,j) =>
+     val (w,x) = f(i,j)
+     x * w
+    }
+  }
+  
+  /**
+   * Weighted Sum Constraint
+   * @return sum(i)(w_i * x_i) 
+   */
+  def weightedSum(w: Array[Int], x: Array[CPVarInt]): CPVarInt = {
+    sum(w.zip(x)){case(w_,x_) => x_ * w_}
+  }  
+  
+  /**
+   * Weighted Sum Constraint
+   * @return sum(ij)(w_ij * x_ij) 
+   */
+  def weightedSum(w: Array[Array[Int]], x: Array[Array[CPVarInt]]): CPVarInt = {
+    sum((0 until w.size).map(i => sum(w(i).zip(x(i))){case(w_,x_) => x_ * w_}))
+  }    
+        
 
   /**
    * Or (logical) Constraint
@@ -375,7 +424,7 @@ trait Constraints {
    *        where o is variable representing the number of occurrences of value v
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
-  def gcc(x: Array[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt,Int]]): Constraint = {
+  def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt,Int]]): Constraint = {
     def freshCard(): CPVarInt = new CPVarInt(x(0).getStore, 0, x.length - 1)
     val sortedValOcc = valueOccurrence.sortWith((a, b) => a._2 <= b._2)
     val (x0,v0)  = sortedValOcc(0)
@@ -391,7 +440,11 @@ trait Constraints {
       values = values :+ vi
       cardinalities = cardinalities :+ xi
     }
-    new GCCVar(x, values(0), cardinalities)
+    new GCCVar(x.toArray, values(0), cardinalities)
+  }
+  
+  def gcc(x: Array[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt,Int]]): Constraint = {
+    gcc(x.toIndexedSeq,valueOccurrence)
   }
 
   // regular and automatons
@@ -515,8 +568,73 @@ trait Constraints {
     cp.add(minimum(x, m))
     m
   }
+  
+  /*
+  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
+    val cp = x(0).getStore()
+    val n = x.size
+    val cons = new LinkedList[Constraint]
+    for (i <- 0 until n-1) {
+      cons.add(element(x,p(i)) <= element(x,p(i+1)))
+      cons.add(s(i) <= s(i+1))
+    }
+    for (i <- 0 until n) { 
+      cons.add(element(x.toArray,p(i),s(i)))
+    }
+    
+    val minVal: Int  = x.map(_.getMin()).min
+    val maxVal: Int  = x.map(_.getMax()).max
+    
+    // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
+    val occ = Array.fill(maxVal-minVal+1)(new CPVarInt(cp,0 to n))
+    cons.add(gcc(x,occ.zip(minVal to maxVal)))
+    
+    // nbBefore(i) = #{i | x(i) < i } 
+    val nbBefore =  for (i <- minVal to maxVal) yield {  
+    	if (i == minVal) new CPVarInt(cp,0)
+    	else sum(minVal to i-1)(j => occ(j))  
+    }
+    
+    for(i <- 0 until n) {  
+        // there are strictly less than i values smaller than s(i) 
+    	cons.add(element(nbBefore,s(i)) < i)   
+    } 
+    cons
+  }
+  */
 
+  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
+    val cp = x(0).getStore()
+    val n = x.size
+    val cons = new LinkedList[Constraint]
+    for (i <- 0 until n-1) {
+      cons.add(element(x,p(i)) <= element(x,p(i+1)))
+      cons.add(s(i) <= s(i+1))
+    }
+    for (i <- 0 until n) { 
+      cons.add(element(x.toArray,p(i),s(i)))
+    }
+    
+    val minVal: Int  = x.map(_.getMin()).min
+    val maxVal: Int  = x.map(_.getMax()).max
+    
+    // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
+    val occ = Array.fill(maxVal-minVal+1)(new CPVarInt(cp,0 to n))
+    cons.add(gcc(x,occ.zip(minVal to maxVal)))
+        
+    // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
+    val nbBefore =  for (i <- minVal to maxVal) yield {  
+    	if (i == minVal) new CPVarInt(cp,0)
+    	else sum(minVal to i-1)(j => occ(j))  
+    }
 
+    
+    for(i <- 1 until n) {  
+        // there are less than i values smaller than s(i) 
+    	cons.add(element(nbBefore,s(i)-minVal) <= i)   
+    } 
+    cons
+  }
   // scheduling constraints
 
   /**
