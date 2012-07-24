@@ -44,18 +44,6 @@ object DeBruijn extends CPModel {
   def toNum(t: Array[CPVarInt], base: Int=10) = sum(
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
 
-
-  // returns the minimum element in t
-  def my_min(t: Array[CPVarInt]) : CPVarInt = {
-    val cp = t(0).getStore
-    val mmin = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
-    for(i <- 0 to t.length-1) {
-      cp.post(mmin <= t(i))
-    }
-    mmin
-  }
-
-
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -130,8 +118,8 @@ object DeBruijn extends CPModel {
       cp.add(gcc(bin_code, gccv))
 
        // symmetry breaking: the smallest number in x should be first
-      cp.add(my_min(x) == x(0))
-      // cp.add(minimum(x, x(0)))
+      cp.add(minimum(x, x(0)))
+
 
      } exploration {
        

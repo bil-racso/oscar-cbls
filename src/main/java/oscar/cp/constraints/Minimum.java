@@ -52,18 +52,18 @@ public class Minimum extends Constraint {
 	}
 	
 	private void updateSupport() {
-		int min = Integer.MIN_VALUE;
-		int max = Integer.MIN_VALUE;
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MAX_VALUE;
 		for (int i = 0; i < x.length; i++) {
 			int m = x[i].getMin();
 			int M = x[i].getMax();
 			
-			if (m > min) {
+			if (m < min) {
 				minvalsupport.setValue(i);
 				minval.setValue(m);
 				min = m;
 			}
-			if (M > max) {
+			if (M < max) {
 				maxvalsupport.setValue(i);
 				maxval.setValue(M);
 				max = M;
@@ -73,9 +73,9 @@ public class Minimum extends Constraint {
 
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		
+		int ymin = y.getMin();
 		for (int i=0; i < x.length; i++) {			
-			if (x[i].updateMin(y.getMin()) == CPOutcome.Failure) {
+			if (x[i].updateMin(ymin) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}
@@ -122,8 +122,9 @@ public class Minimum extends Constraint {
 	
 	@Override
 	protected CPOutcome updateBounds(CPVarInt y) {
+		int ymin = y.getMin();
 		for (int i=0; i < x.length; i++) {			
-			if (x[i].updateMin(y.getMin()) == CPOutcome.Failure) {
+			if (x[i].updateMin(ymin) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}
