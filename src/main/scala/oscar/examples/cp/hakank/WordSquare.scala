@@ -86,13 +86,10 @@ object WordSquare extends CPModel {
 
     val WORDLEN = 0 until word_len
 
-    // Convert letters <=> digits
-    val alpha = "abcdefghijklmnopqrstuvwxyz"
-    val d = scala.collection.mutable.HashMap.empty[Char,Int]
-    for(i <- 0 until alpha.length) {
-      d += (alpha(i) -> i)
-    }
-  
+    // Convert letters => digits
+    val d = "abcdefghijklmnopqrstuvwxyz".zip(0 to 25).toMap 
+
+
     // Read the word list
     val words = readWords(word_list, word_len)
     val num_words = words.length
