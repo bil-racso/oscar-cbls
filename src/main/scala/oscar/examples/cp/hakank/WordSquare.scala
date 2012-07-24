@@ -42,39 +42,33 @@ import scala.util.matching._
 object WordSquare extends CPModel {
 
 
- /*
-   *
-   * Read the words from a word list with a specific word length.
-   *
-   */
+  /**
+    *
+    * Read the words from a word list with a specific word length.
+    *
+    */
   def readWords(word_list: String, word_len: Int) : Array[String] = {
     
     println("reading from " + word_list + " (size: " + word_len + ")");
     val words = scala.io.Source.fromFile(word_list, "utf-8").getLines
 
-    // There just must be a simpler way of just matching a regexp
-    // than using findAllIn and then check for the length of matching
-    // entries...
-    val Rex = new Regex("^([a-zA-Z]+)$") // exclude all "weird" words
+    val rex = "^([a-zA-Z]+)$"
     var all_words = List[String]()
     val seen = scala.collection.mutable.HashMap.empty[String, Boolean].withDefaultValue(false)
-    for (w <- words) {    
-      val w2 : String = w.trim().toLowerCase()
-      if(
-         w2.length > 0         && 
-         w2.length == word_len &&
-         Rex.findAllIn(w2).toList.length > 0 &&
-         !seen(w2)
-         ) {
+    for {w <- words
+         w2 = w.trim().toLowerCase()
+         if w2.length > 0
+         if w2.length == word_len
+         if !seen(w2)
+         if w2.matches(rex)
+    } {    
          all_words ::= w2
          seen += (w2 -> true)
-      }
     }
     
     return all_words.reverse.toArray
 
   }
-
 
 
   def main(args: Array[String]) {
@@ -84,51 +78,34 @@ object WordSquare extends CPModel {
     //
     // data
     //
-    var word_list = "/usr/share/dict/words"
-    var word_len = 5
-    println("word_len:"+word_len)
-    var num_to_show = 20
+    val word_list   = if (args.length > 0) args(0) else "/usr/share/dict/words"
+    val word_len    = if (args.length > 1) args(1).toInt else 5
+    val num_to_show = if (args.length > 2) args(2).toInt else 20
 
-    if (args.length > 0) {
-      word_list = args(0)
-    }
-
-    if (args.length > 1) {
-      word_len = args(1).toInt
-    }
-
-    if (args.length > 2) {
-      num_to_show = args(2).toInt
-    }
+    println("word_len:" + word_len)
 
     val WORDLEN = 0 until word_len
 
     // Convert letters <=> digits
     val alpha = "abcdefghijklmnopqrstuvwxyz"
     val d = scala.collection.mutable.HashMap.empty[Char,Int]
-    var count = 1
     for(i <- 0 until alpha.length) {
-      d += (alpha(i) -> count)
-      count += 1
+      d += (alpha(i) -> i)
     }
-
-    val num_letters = alpha.length;
-   
+  
     // Read the word list
     val words = readWords(word_list, word_len)
-    var num_words = words.length // set after reading the wordlist
+    val num_words = words.length
     println("number of words: " + num_words)
 
     //
     // variables
     //
+
     // word matrix 
     val A = Array.tabulate(num_words,word_len)((i,j) => d(words(i)(j)))
-    val A_flat = A.flatten
-
     // the selected words
     val E = Array.fill(word_len)(CPVarInt(cp, 0 to num_words))
-
 
     //
     // constraints
@@ -140,10 +117,9 @@ object WordSquare extends CPModel {
       cp.add(alldifferent(E),Weak)
 
       // now find the connections
-      for(i <- WORDLEN) {
-        for(j <- WORDLEN) {
+      for{i <- WORDLEN
+          j <- WORDLEN} {
           cp.add(element(A, E(i),CPVarInt(cp,j)) == element(A, E(j),CPVarInt(cp,i)))
-        }
       }
 
 
