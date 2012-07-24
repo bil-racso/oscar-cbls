@@ -28,8 +28,10 @@ import oscar.reversible.ReversibleSetIndexedArray
 import oscar.reversible.ReversibleInt
 import oscar.search._
 import oscar.visual._
+import scala.util.Random.nextFloat
 
 import scala.io.Source
+import scala.collection.mutable.Set
 
 object CumulativeJobShopLNS extends CPModel {
   
@@ -97,7 +99,7 @@ object CumulativeJobShopLNS extends CPModel {
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
   	   	 	
-  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
+  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem", nMachines+1, 1)
 		
 		val cols = VisualUtil.getRandomColorArray(nMachines)
 		val visualActivities = activities.map(a => VisualActivity(a))
@@ -127,19 +129,27 @@ object CumulativeJobShopLNS extends CPModel {
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 
-		val bestSol : Array[FixedActivity] = Array.tabulate(jobActivities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
+		val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
 		
-		cp.lns(20,50) {		
+		cp.lns(2000,300) {		
 		
 			val precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
 			
+			val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 			
+			// Selected are relaxed (50%)
+			for (i <- 0 until bestSol.size)
+				if (nextFloat < 0.8)
+					selected(i) = true
 			
-			for(precedence <- precedences) 
-				cp.post(activities(precedence._1).getEnd <= activities(precedence._2).getStart)
+			for(precedence <- precedences) {
+				if (!selected(precedence._1) && !selected(precedence._2)) {
+					cp.post(activities(precedence._1).getEnd <= activities(precedence._2).getStart)
+				}
+			}
 		}
 		
-		var nbSol = 0
+		cp.time
 		
   	   	cp.minimize(makespan) subjectTo {
 
@@ -157,17 +167,27 @@ object CumulativeJobShopLNS extends CPModel {
 
 		} exploration {
 			
-			cp.binaryFirstFail(activities.map(_.getStart))
+			//cp.binaryFirstFail(activities.map(_.getStart))
 			
 			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, activities)
+			SchedulingUtils.setTimesSearch(cp, activities)
+		
+			println
+			cp.printStats() 
 			
 			// Best so far solution
+			for (t <- 0 until activities.size) {
+				
+				bestSol(t).start   = activities(t).getStart.getValue
+				bestSol(t).end     = activities(t).getEnd.getValue
+				bestSol(t).inc     = activities(t).getResource.getValue
+				bestSol(t).machine = activities(t).getMachines.getValue
+			}
 			
 			// Updates the visual components
 			updateVisu(1, 20)
 		}    
-		
+		println
 		cp.printStats() 
 	}
 }

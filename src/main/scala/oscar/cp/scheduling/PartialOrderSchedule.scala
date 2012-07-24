@@ -14,9 +14,7 @@ object PartialOrderSchedule {
 	
 	def divide(tasks : Array[FixedActivity], limit : Int) {
 		
-		if (!stopCriterion) {
-			
-			tasks.sortBy(t => (t.start, t.inc, nextInt))
+		if (!stopCriterion(tasks, limit)) {
 			
 			val limit1 = ceil(limit/2).toInt
 			val limit2 = limit - limit1
@@ -73,16 +71,30 @@ object PartialOrderSchedule {
 		
 		precedences.clear
 		
+		// Sort the tasks by start, inc and random as tie breaker
+		val sortedTasks = tasks.sortBy(t => (t.start, t.inc, nextInt))
+		
 		for (m <- 0 until capacity.size)
-			divide(tasks.filter(_.machine == m), capacity(m))
+			divide(sortedTasks.filter(_.machine == m), capacity(m))
 		
 		// Sort precedences in a topological order
-		precedences.sortBy(t => tasks(t._1).start)
+		precedences.sortBy(t => sortedTasks(t._1).start)
 		
 		return precedences
 	}
 	
-	def stopCriterion : Boolean = { true }
+	def stopCriterion(tasks : Array[FixedActivity], capacity : Int) : Boolean = { 
+
+		if (tasks.size <= 2) 
+			return true
+			
+		val s = tasks.sortBy(_.inc)
+		
+		if (s(0).inc + s(1).inc <= capacity)
+			return true
+			
+		return false
+	}
 	
 	class GapStructure {
 		
