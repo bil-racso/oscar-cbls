@@ -56,15 +56,18 @@ object Rogo2 extends CPModel {
   val W = 0;
   val B = -1;
 
+  // Global variables
   var problem   : Array[Array[Int]]  = null;
   var rows      : Int = 0;
   var cols      : Int = 0;
   var max_steps : Int = 0;
   var steps     : Int = 0;
   var best      : Int = 0;
-  var linec     : Int = 0;
   var problem_name : String = "";
 
+  //
+  // create all possible connections for this grid 
+  //
   def getValidConnections(ROWS: Array[Int], COLS: Array[Int]) : Array[Array[Int]] = 
      (for{i1 <- ROWS
                 j1 <- COLS
@@ -78,43 +81,36 @@ object Rogo2 extends CPModel {
                   } yield Array(i1*cols+j1, i2*cols+j2)
       ).toArray
 
+  //
+  // read problem instance from a file
+  //
   def readFile(problem_file: String) {
 
     val file = scala.io.Source.fromFile(problem_file).getLines
+    var linec = 0;
+    for {line <- file
+         line2 = line.trim()
+         tmp = line2.split("[ ,\t]+")
+         if tmp.length > 0
+         if tmp(0) != "#" 
+         if tmp(0) != "%" 
+    } {
+      linec match {
+          case 0 => rows = line2.toInt
+          case 1 => cols = line2.toInt; problem = Array.fill(rows)(Array.fill(cols)(0))
+          case 2 => max_steps = line2.toInt
+          case 3 => best = line2.toInt
+          case _ => for(j <- 0 until cols) {
+                       problem(linec-4)(j) = tmp(j) match {
+                                                 case "B" => B
+                                                 case "W" => W
+                                                 case  _  => tmp(j).toInt;
+                                              }
+                    }
 
-    for (line <- file) {
-      var line2 = line.trim();
-      var tmp = line2.split("[ ,\t]+");
-      if (tmp(0) == "#" || tmp(0) == "%" || line2.length == 0) {
-        // no op
-      } else {
-        if (linec == 0) {
-          rows = line2.toInt;
-        } else if (linec == 1) {
-          cols = line2.toInt;
-          problem = Array.fill(rows)(Array.fill(cols)(0));
-        } else if (linec == 2) {
-          max_steps = line2.toInt;
-        } else if (linec == 3) {
-          best = line2.toInt;
-        } else {
-          for(j <- 0 until cols) {
-            var v = 0;
-            if (tmp(j) == "B") {
-              v = B;
-            } else if (tmp(j) == "W") {
-              v = W;
-            } else {
-              v = tmp(j).toInt;
-            }
-            problem(linec-4)(j) = v;
-          }
-          
-        }
-        linec += 1;
       }
+      linec += 1;
     }
-
   }
 
   def main(args: Array[String]) {
@@ -162,15 +158,15 @@ object Rogo2 extends CPModel {
 
     }
 
-    println("Problem: " + problem_name)
+    println("\nProblem: " + problem_name)
     println("rows: " + rows + " cols: " + cols + " max_steps: " + max_steps + " best: " + best)
     println()
 
     val problem_flatten = problem.flatten
-    val ROWS = 0 until rows
-    val COLS = 0 until cols
 
-    val STEPS = 0 until max_steps
+    val ROWS   = 0 until rows
+    val COLS   = 0 until cols
+    val STEPS  = 0 until max_steps
     val STEPS1 = 0 until max_steps - 1
 
     // valid connections for the problem matrix
@@ -179,9 +175,8 @@ object Rogo2 extends CPModel {
     //
     // variables
     //
-    // which word in each set
-    val path = Array.fill(max_steps)(CPVarInt(cp, 0 to rows*cols-1))
-    val points = Array.fill(max_steps)(CPVarInt(cp, 0 to best))
+    val path       = Array.fill(max_steps)(CPVarInt(cp, 0 to rows*cols-1))
+    val points     = Array.fill(max_steps)(CPVarInt(cp, 0 to best))
     val sum_points = CPVarInt(cp, 0 to best)
 
     //
@@ -224,11 +219,10 @@ object Rogo2 extends CPModel {
 
       println("sum_points: " + sum_points);
       println("(Adding 1 to coords...)");
-      val sol = Array.fill(rows)(Array.fill(cols)(0))
+      val sol = Array.fill(rows,cols)(0)
       for(s <- STEPS) {
         val p = path(s).getValue();
-        val x = (p / cols);
-        val y = (p % cols);
+        val Array(x, y) = Array(p / cols, p % cols)
         println((x+1) + "," + (y+1) + " (" +  points(s) + " points )");
         sol(x)(y) = 1
       }
@@ -236,20 +230,16 @@ object Rogo2 extends CPModel {
       println("\nThe path is marked by 'X's:");
       for(i <- ROWS) {
         for(j <- COLS) {
-          var p = " ";
-          if (sol(i)(j) == 1) {
-            p = "X";
-          }
-
-          var q = problem(i)(j) + ""
-          if (problem(i)(j) == B) {
-            q = "B"
-          } else if (problem(i)(j) == 0) {
-            q = "."
-          }
+          var p = if (sol(i)(j) == 1) "X" else  " ";
+          val q = problem(i)(j) match {
+                    case B => "B"
+                    case 0 => "."
+                    case _ => problem(i)(j) + ""
+                  }
           print("%2s".format(q) + p);
         }
         println();
+
       }
       println();
       println();
