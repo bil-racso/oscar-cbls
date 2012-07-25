@@ -16,16 +16,16 @@ object SchedulingUtils extends CPModel {
 		
 		// Non fixed activities
 		val selectable = Array.tabulate(activities.size) { i => 
-		  										if (activities(i).getStart().isBound()) new ReversibleBool(cp,false)
+		  										if (activities(i).start.isBound()) new ReversibleBool(cp,false)
 		  										else new ReversibleBool(cp,true) }
 
 		val oldEST = Array.fill(activities.size)(new ReversibleInt(cp,-1))
 		
 		def updateSelectable() = {
 		  for (i <- 0 until activities.size) {
-		    if (activities(i).getStart.isBound()) { 
+		    if (activities(i).start.isBound()) { 
 				selectable(i).value = false
-		    } else if (oldEST(i).value != activities(i).getEST()) {
+		    } else if (oldEST(i).value != activities(i).est()) {
 		         selectable(i).value = true
 		    }
 		  }
@@ -33,17 +33,17 @@ object SchedulingUtils extends CPModel {
 		
 		def selectableIndices() = (0 until activities.size).filter(i => selectable(i).value)
 		
-		def allStartBounds() = activities.forall(i => i.getStart().isBound())
+		def allStartBounds() = activities.forall(i => i.start.isBound())
 
 		while (!allStartBounds()) {
 		  // Get the smallest EST
-		  val (est,ect) = selectableIndices().map(i => (activities(i).getEST,activities(i).getECT)).min
+		  val (est,ect) = selectableIndices().map(i => (activities(i).est,activities(i).ect)).min
 		  // Select the activity with the smallest EST, ECT as tie breaker
-	      val x = selectableIndices().filter(i => activities(i).getEST == est && activities(i).getECT == ect).first
+	      val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).first
 				
 		  cp.branch {
 			  	  //println("left")
-				  cp.post(activities(x).getStart == est)
+				  cp.post(activities(x).start == est)
 				  oldEST(x).value = -1
 				  updateSelectable()
 				  if (selectableIndices().isEmpty && !allStartBounds()) cp.fail()

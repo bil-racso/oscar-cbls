@@ -39,17 +39,17 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		cp.add(constraint1)
 		cp.add(constraint2)
 		
-		t2.getEST should be(1)
-		t2.getLST should be(2)
+		t2.est should be(1)
+		t2.lst should be(2)
 		
-		t2.getECT should be(3)
-		t2.getLCT should be(4)
+		t2.ect should be(3)
+		t2.lct should be(4)
 		
-		t2.getMinDuration should be(1)
-		t2.getMaxDuration should be(2)
+		t2.minDuration should be(1)
+		t2.maxDuration should be(2)
 		
-		t2.getMinResource should be(3)
-		t2.getMaxResource should be(4)
+		t2.minResource should be(3)
+		t2.maxResource should be(4)
 	}
 }
 

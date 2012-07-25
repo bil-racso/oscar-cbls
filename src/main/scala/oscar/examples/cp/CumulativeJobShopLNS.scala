@@ -20,7 +20,6 @@ package oscar.examples.cp
 import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.BoundedCumulative
-import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -94,7 +93,7 @@ object CumulativeJobShopLNS extends CPModel {
   	   	val activities = jobActivities.flatten
   	   	
   	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).getEnd)
+  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
@@ -142,7 +141,7 @@ object CumulativeJobShopLNS extends CPModel {
 					selected(i) = true
 			
 			val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
-			val constraints = filteredPrecedences.map(p => activities(p._1).getEnd <= activities(p._2).getStart)
+			val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
 			
 			cp.post(constraints)
 		}
@@ -151,7 +150,7 @@ object CumulativeJobShopLNS extends CPModel {
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
+				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
 			
 			// Cumulative constraints
 			for (i <- Machines)
@@ -159,7 +158,7 @@ object CumulativeJobShopLNS extends CPModel {
 
 		} exploration {
 			
-			//cp.binaryFirstFail(activities.map(_.getStart))
+			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
 			SchedulingUtils.setTimesSearch(cp, activities)
@@ -170,10 +169,10 @@ object CumulativeJobShopLNS extends CPModel {
 			// Best so far solution
 			for (t <- 0 until activities.size) {
 				
-				bestSol(t).start   = activities(t).getStart.getValue
-				bestSol(t).end     = activities(t).getEnd.getValue
-				bestSol(t).inc     = activities(t).getResource.getValue
-				bestSol(t).machine = activities(t).getMachines.getValue
+				bestSol(t).start   = activities(t).start.getValue
+				bestSol(t).end     = activities(t).end.getValue
+				bestSol(t).inc     = activities(t).resource.getValue
+				bestSol(t).machine = activities(t).machine.getValue
 			}
 			precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
 			

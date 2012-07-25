@@ -4,13 +4,13 @@ import oscar.cp.scheduling.CumulativeActivity
 
 class VisualActivity(activity : CumulativeActivity) {
 	
-	def start = activity.getEST()
+	def start = activity.est
 
-	def end = activity.getLCT()
+	def end = activity.lct
   
-	def resource = activity.getMaxResource()
+	def resource = activity.maxResource
 	
-	def machine = activity.getMachines.getMin
+	def machine = activity.machine.getMin
 }
 
 object VisualActivity {

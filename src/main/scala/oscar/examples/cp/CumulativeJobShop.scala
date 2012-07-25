@@ -20,7 +20,6 @@ package oscar.examples.cp
 import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.BoundedCumulative
-import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -90,7 +89,7 @@ object CumulativeJobShop extends CPModel {
   	   	}) 	   
   	   	
   	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).getEnd)
+  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
@@ -133,7 +132,7 @@ object CumulativeJobShop extends CPModel {
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).getEnd() <= jobActivities(i)(j+1).getStart())
+				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
 			
 			// Cumulative constraints
 			for (i <- Machines)
@@ -142,7 +141,7 @@ object CumulativeJobShop extends CPModel {
 		} exploration {
 			
 			// Test heuristic
-			cp.binary(jobActivities.flatten.map(_.getStart))
+			cp.binary(jobActivities.flatten.map(_.start))
 			
 			// Efficient but not complete search strategy
 			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
