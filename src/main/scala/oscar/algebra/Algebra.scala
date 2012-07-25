@@ -37,7 +37,7 @@ trait Algebra {
   abstract class LinearExpression extends Expression {
     
     val cte: Double
-    val coef: Map[Var,Double]
+    val coef: scala.collection.immutable.Map[Var,Double]
     
     def +(expr : LinearExpression) : LinearExpression = new LinearExpressionSum(expr,this)
     
@@ -89,7 +89,7 @@ trait Algebra {
   class Const (val d : Double) extends LinearExpression {
     
     val cte = d
-    val coef = Map[Var,Double]()
+    val coef = scala.collection.immutable.Map[Var,Double]()
     
     def *(expr : LinearExpression) : LinearExpression = new LinearExpressionProd(this,expr)
 
@@ -134,7 +134,7 @@ trait Algebra {
     val index : Int
     
     val cte = 0.0
-    val coef = Map(this->1.0)
+    val coef = scala.collection.immutable.Map(this->1.0)
     
     override def toString = name
 
@@ -173,7 +173,7 @@ trait Algebra {
     override def toString() = "("+expr1+ opStr +expr2+")"
     
     
-    def merge() : Map[Var,Double] = {
+    def merge() : scala.collection.immutable.Map[Var,Double] = {
        import scala.collection.mutable.Map
        val mymap = Map[Var,Double]()
        for ((k,v) <- expr1.coef) {
@@ -185,7 +185,8 @@ trait Algebra {
           case None => mymap += (k -> op(0,v))
         }
        }
-       mymap.filterNot(_._2 == 0)
+       import scala.collection.immutable.Map
+       mymap.filterNot(_._2 == 0).toMap
     }
    
   
@@ -222,7 +223,7 @@ trait Algebra {
    * (c * linExpr)
    */
   class LinearExpressionProd(val c: Const, val expr: LinearExpression) extends LinearExpression {
-    
+    import scala.collection.immutable.Map
     val cte = if (c == Zero) 0.0 else c.d * expr.cte
     val coef = if (c == Zero) Map[Var,Double]() else expr.coef.map(e => (e._1 -> c.d *e._2))   
       
@@ -240,7 +241,7 @@ trait Algebra {
    */
   class CstVar(val coeff: Const, val variable: Var) extends LinearExpression {
 
-    
+    import scala.collection.immutable.Map
     val cte = 0.0
     val coef = if (coeff == 0) Map[Var,Double]() else Map(variable -> coeff.d)
 
@@ -273,10 +274,11 @@ trait Algebra {
         }
       }
     }
+    import scala.collection.immutable.Map
     mymap.filterNot(_._2 == 0)
     new LinearExpression() {
       val cte = mycte
-      val coef = mymap
+      val coef = mymap.toMap
     }
     
     
@@ -300,7 +302,9 @@ trait Algebra {
   /**
    * A linear constraint has the form (linearExpression REL 0) with REL in {<=, ==, >=}
    */
-  class LinearConstraint(val linExpr: LinearExpression, val consType: ConstraintType.Value)
+  class LinearConstraint(val linExpr: LinearExpression, val consType: ConstraintType.Value) {
+    override def toString = linExpr+" "+consType+" "+0
+  }
   
   // ------------------------- general mathematical expressions -------------------
   

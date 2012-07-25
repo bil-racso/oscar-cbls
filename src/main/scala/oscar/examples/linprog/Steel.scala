@@ -114,7 +114,7 @@ object Steel extends LPModel with MIPModel{
 
 	    	  val use = Array.tabulate(nbSlab)(_ => MIPVar(mip,"use",0 to 1))
 	    	  val v = Array.tabulate(nbCol)(_ => MIPVar(mip,"v",0 to 1))
-	    	  val cost = Array.tabulate(nbSlab)(meet(_).getDual)
+	    	  val cost = Array.tabulate(nbSlab)(meet(_).dual)
 
 	    	  mip.maximize(sum(Slabs)(s => ((cost(s)+weight(s)) * use(s)))) subjectTo {
 
