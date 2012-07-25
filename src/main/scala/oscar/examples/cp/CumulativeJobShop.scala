@@ -20,7 +20,6 @@ package oscar.examples.cp
 import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.BoundedCumulative
-import oscar.cp.constraints.NaiveMultiCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._

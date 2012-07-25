@@ -20,11 +20,15 @@ package oscar.cp.scheduling;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 
-class Activity(val start: CPVarInt, val dur: CPVarInt) {
+class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
-    val end = start.plus(dur)
+    private val endVar = start.plus(dur)
 	
-	def this(start: CPVarInt,dur: Int) = this(start,new CPVarInt(start.getStore(),dur,dur))
+    def start = startVar
+    def end = endVar
+    def dur = durVar
+    
+	def this(startVar: CPVarInt,dur: Int) = this(startVar,new CPVarInt(startVar.getStore(),dur,dur))
 
 	/**
 	 * earliest starting time
@@ -55,8 +59,10 @@ class Activity(val start: CPVarInt, val dur: CPVarInt) {
 	/**
 	 * current maximal duration of this activity
 	 */
-	def maxDuration() = dur.getMax();
+	def maxDuration() = dur.getMax()
 	
+	
+	def adjustStart(v : Int) = start.updateMin(v)	
 	
 	override def toString() = "dur:"+dur+ " in ["+est+","+lct+"[";
 
@@ -64,54 +70,40 @@ class Activity(val start: CPVarInt, val dur: CPVarInt) {
 
 
 
-class MirrorActivity(val act: Activity)  extends Activity() {
+class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 
-	private Activity act;
-
-	public MirrorActivity(Activity act) {
-		this.act = act;
-	}
-
+  
+	override def start(): CPVarInt = throw new UninitializedFieldError("not available") 
+	
+	override def end(): CPVarInt = throw new UninitializedFieldError("not available") 
+	
 	/**
 	 * earliest starting time
 	 */
-	public int getEST() {
-		return - act.getLCT();
-	}
+	override def est = - act.lct;
+	
 
 	/**
 	 * latest starting time
 	 */
-	public int getLST() {
-		return - act.getECT();
-	}
+	override def lst = - act.ect;
+	
 
 	/**
 	 * earliest completion time assuming the smallest duration
 	 */
-	public int getECT() {
-		return - act.getLST();
-	}
+	override def ect = - act.lst
+	
 
 	/**
 	 * latest completion time assuming the smallest duration
 	 */
-	public int getLCT() {
-		return - act.getEST();
-	}
+	override def lct = - act.est
+	
+	
+	override def adjustStart(v : Int) = end.updateMax(-v)
 
-	/**
-	 * current minimal duration of this activity
-	 */
-	public int getMinDuration() { 
-		return act.getMinDuration();
-	}
-
-
-	/**
-	 * current maximal duration of this activity
-	 */
-	public int getMaxDuration() { 
-		return act.getMaxDuration(); 
-	}
+	
+	override def toString() = "mirror of activity:"+act;
+	
 }

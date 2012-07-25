@@ -20,8 +20,12 @@ package oscar.cp.scheduling
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 
-class CumulativeActivity(start : CPVarInt, duration : CPVarInt,  end : CPVarInt,  val machine : CPVarInt, val resource : CPVarInt) extends Activity(start, duration) {
+class CumulativeActivity(startVar : CPVarInt, durationVar : CPVarInt,  endVar : CPVarInt, machineVar : CPVarInt, resourceVar : CPVarInt) extends Activity(startVar, durationVar) {
 
+    def machine = machineVar
+    
+    def resource = resourceVar
+  
 	/**
 	 * smallest quantity of resource
 	 */
@@ -60,4 +64,23 @@ object CumulativeActivity {
 		val r = new CPVarInt(start.getStore(), resource, resource)
 		new CumulativeActivity(start, duration, start.plus(duration), m, r)
 	}
+}
+
+class MirrorCumulativeActivity(act : CumulativeActivity) extends CumulativeActivity(act.start, act.dur, act.end, act.machine, act.resource) {
+
+  	override def start(): CPVarInt = throw new UninitializedFieldError("not available") 
+	
+	override def end(): CPVarInt = throw new UninitializedFieldError("not available") 
+  	
+	override def est = -act.lct
+
+	override def lst = -act.ect
+
+	override def ect = -act.lst
+
+	override def lct = -act.est
+	
+	override def adjustStart(v : Int) = end.updateMax(-v)
+	
+	override def toString() = "mirror of activity:"+act;
 }

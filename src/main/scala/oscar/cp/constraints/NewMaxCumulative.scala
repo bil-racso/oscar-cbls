@@ -5,6 +5,7 @@ import scala.collection.mutable.Set
 import scala.collection.mutable.Queue
 
 import oscar.cp.scheduling.CumulativeActivity
+import oscar.cp.scheduling.MirrorCumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
@@ -15,7 +16,7 @@ import oscar.cp.modeling.CPModel
 class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(allTasks(0).machine.getStore(), "NewMaxCumulative") {
 	
 	val lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.machine.hasValue(r))
-	val rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorActivity(_))
+	val rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorCumulativeActivity(_))
 	
 	val nTasks = lToRTasks.size
 	val Tasks  = 0 until nTasks
@@ -189,7 +190,7 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			
 			if (delta >= tasks(t).lst || delta - mins(t) >= tasks(t).minDuration || hEvents.isEmpty) {
 				
-				if (adjustStart(tasks(t), mins(t)) == CPOutcome.Failure) return false
+				if (tasks(t).adjustStart(mins(t)) == CPOutcome.Failure) return false
 				
 				if (!evup(t)) {
 					//Update events of the compulsory part of t
@@ -212,7 +213,7 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			
 			if (delta >= tasks(t).lst) {
 				
-				if (adjustStart(tasks(t), tasks(t).lst) == CPOutcome.Failure) return false
+				if (tasks(t).adjustStart(tasks(t).lst) == CPOutcome.Failure) return false
 				
 				if (!evup(t)) {
 					//Update events of the compulsory part of t
@@ -222,9 +223,9 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 				if (deltaBis - delta >= tasks(t).minDuration) {
 					
-					if (adjustStart(tasks(t), delta) == CPOutcome.Failure) return false
+					if (tasks(t).adjustStart(delta) == CPOutcome.Failure) return false
 				
-					adjustStart(tasks(t), delta)
+					tasks(t).adjustStart(delta)
 					
 					if (!evup(t)) {
 						
@@ -358,23 +359,5 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			return PR
 		}
 	}
-	
-	def adjustStart(t : CumulativeActivity, v : Int) = {
-		
-		if (!t.isInstanceOf[MirrorActivity])
-			t.start.updateMin(v)
-		else			
-			t.end.updateMax(-v)
-	}
-	
-	class MirrorActivity(act : CumulativeActivity) extends CumulativeActivity(act.start, act.dur, act.end, act.machine, act.resource) {
-		
-		override def est = -super.lct
-		
-		override def lst = -super.ect
-		
-		override def ect = -super.lst
-		
-		override def lct = -super.est
-	}
+
 }

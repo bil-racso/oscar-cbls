@@ -47,9 +47,9 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
         	for (i <- Tasks) {
         		if (true){//tasks(i).machine.hasValue(r)) {
       			
-	        		if (!tasks(i).getStart.isBound) tasks(i).getStart.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getDur.callPropagateWhenBoundsChange(this)
-		        	if (!tasks(i).getDur.isBound) tasks(i).getEnd.callPropagateWhenBoundsChange(this)
+	        		if (!tasks(i).start.isBound) tasks(i).start.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).dur.isBound) tasks(i).dur.callPropagateWhenBoundsChange(this)
+		        	if (!tasks(i).dur.isBound) tasks(i).end.callPropagateWhenBoundsChange(this)
 		        	if (!tasks(i).resource.isBound) tasks(i).resource.callPropagateWhenBoundsChange(this)
 		        	if (!tasks(i).machine.isBound) tasks(i).machine.callPropagateWhenDomainChanges(this)
         		}
@@ -86,22 +86,22 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		for (i <- Tasks) {
 			
-			if (tasks(i).getLST < tasks(i).getECT && tasks(i).machine.isBoundTo(r)) {
+			if (tasks(i).lst < tasks(i).ect && tasks(i).machine.isBoundTo(r)) {
 				
 				// Check
 				if (tasks(i).maxResource < limit) {
 					
 					// Generates events
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getLST, 1)
-					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).getECT, -1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).lst, 1)
+					eventPointSeries enqueue new Event(EventType.Check, i, tasks(i).ect, -1)
 				}
 				
 				// Profile (Bad : on compulsory part)
 				if (tasks(i).maxResource < 0) {
 					
 					// Generates events
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLST, tasks(i).maxResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getECT, -tasks(i).maxResource) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).lst, tasks(i).maxResource)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).ect, -tasks(i).maxResource) 
 					
 					profileEvent = true
 				}			
@@ -113,17 +113,17 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 				if (tasks(i).maxResource > 0) {
 					
 					// Generates events		
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getEST, tasks(i).maxResource)  
-					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).getLCT, -tasks(i).maxResource) 
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).est, tasks(i).maxResource)  
+					eventPointSeries enqueue new Event(EventType.Profile, i, tasks(i).lct, -tasks(i).maxResource) 
 					
 					profileEvent = true
 				}
 				
 				// Pruning (if something is not fixed)
-				if (!(tasks(i).getStart.isBound && tasks(i).getEnd.isBound && tasks(i).machine.isBoundTo(r) && tasks(i).resource.isBound)) {
+				if (!(tasks(i).start.isBound && tasks(i).end.isBound && tasks(i).machine.isBoundTo(r) && tasks(i).resource.isBound)) {
 					
 					// Generates event
-					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).getEST, 0)
+					eventPointSeries enqueue new Event(EventType.Pruning, i, tasks(i).est, 0)
 				}
 			}			
 		}
@@ -219,7 +219,7 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			if (pruneConsumption(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
-			if (tasks(t).getLCT <= up + 1) {
+			if (tasks(t).lct <= up + 1) {
 				stackPrune.remove(t)
 			}
 		}	
@@ -239,23 +239,23 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 			return CPOutcome.Failure
 		
 		// Adjust the EST of the activity and check consistency
-		if (adjustMin(tasks(t).getStart, up - tasks(t).getMaxDuration + 1) == CPOutcome.Failure) 
+		if (adjustMin(tasks(t).start, up - tasks(t).maxDuration + 1) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the LST of the activity and check consistency
-		if (adjustMax(tasks(t).getStart, low) == CPOutcome.Failure) 
+		if (adjustMax(tasks(t).start, low) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the LCT of the activity and check consistency
-		if (adjustMax(tasks(t).getEnd, low + tasks(t).getMaxDuration) == CPOutcome.Failure) 
+		if (adjustMax(tasks(t).end, low + tasks(t).maxDuration) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the ECT of the activity and check consistency
-		if (adjustMin(tasks(t).getEnd, up + 1) == CPOutcome.Failure) 
+		if (adjustMin(tasks(t).end, up + 1) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the minimal duration of the activity and check consistency
-		if (adjustMin(tasks(t).getDur, min(up - tasks(t).getLST+1, tasks(t).getECT-low)) == CPOutcome.Failure) 
+		if (adjustMin(tasks(t).dur, min(up - tasks(t).lst+1, tasks(t).ect-low)) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 			
 		return CPOutcome.Suspend
@@ -265,32 +265,32 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 		
 		if (sumHeight - contribution(t) + tasks(t).maxResource < limit) {
 			
-			if (tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
+			if (tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 					
 				if (removeValue(tasks(t).machine, r) == CPOutcome.Failure) 
 					return CPOutcome.Failure
 				
 			} else if (tasks(t).machine.isBoundTo(r)) {
 				
-				if (tasks(t).getMinDuration > 0) {
+				if (tasks(t).minDuration > 0) {
 					
 					//INTERVAL PRUNING
-					for (i <- low - tasks(t).getMinDuration+1 to up) {
+					for (i <- low - tasks(t).minDuration+1 to up) {
 						
-						if (removeValue(tasks(t).getStart, i) == CPOutcome.Failure) 
+						if (removeValue(tasks(t).start, i) == CPOutcome.Failure) 
 							return CPOutcome.Failure
 					}
 					
-					for (i <- low + 1 to up + tasks(t).getMinDuration) {
+					for (i <- low + 1 to up + tasks(t).minDuration) {
 						
-						if (removeValue(tasks(t).getEnd, i) == CPOutcome.Failure) 
+						if (removeValue(tasks(t).end, i) == CPOutcome.Failure) 
 							return CPOutcome.Failure
 					}
 				}
 				
-				val maxD = max(max(low - tasks(t).getEST, tasks(t).getLCT -up - 1), 0)
+				val maxD = max(max(low - tasks(t).est, tasks(t).lct -up - 1), 0)
 				
-				if (adjustMax(tasks(t).getDur, maxD) == CPOutcome.Failure) 
+				if (adjustMax(tasks(t).dur, maxD) == CPOutcome.Failure) 
 					return CPOutcome.Failure
 			}
 		}
@@ -300,7 +300,7 @@ class MinCumulative (cp: CPSolver, tasks : Array[CumulativeActivity], limit : In
 	
 	def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
-		if (tasks(t).machine.isBoundTo(r) && tasks(t).getECT > low && tasks(t).getLST <= up && tasks(t).getMinDuration > 0) {
+		if (tasks(t).machine.isBoundTo(r) && tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 			
 			if (adjustMin(tasks(t).resource, limit - (sumHeight - contribution(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure
