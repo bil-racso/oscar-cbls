@@ -2,7 +2,9 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-import scala.collection.mutable.PriorityQueue
+
+import oscar.cp.scheduling.EfficientHeap
+
 import scala.collection.mutable.Set
 import scala.collection.mutable.Queue
 
@@ -44,7 +46,7 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 	val Tasks  = 0 until nTasks
 	
 	// Event Point Series (min heap on date)
-	val eventPointSeries = new PriorityQueue[Event]()(new Ordering[Event] { def compare(a : Event, b : Event) = if (b.date > a.date) {1} else if (b.date == a.date) {0} else {-1} })
+	val eventPointSeries = new EfficientHeap[Event](nTasks*7, (a, b) => a.date < b.date)
 	
 	// Sweep line parameters
 	var delta      : Int = 0
@@ -58,6 +60,8 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 	val eventList = Array.tabulate(nTasks){e => new EventList(e)}
 
 	override def setup(l: CPPropagStrength) : CPOutcome = {
+		
+		setPriorityL2(0)
 		
         val oc = propagate()
         
@@ -175,7 +179,7 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 					if (prune(r, delta, event.date - 1) == CPOutcome.Failure) 
 						return CPOutcome.Failure
 						
-					// New date to consider
+					// Move the sweep line
 					delta = event.date	
 				}
 				if (event.isProfileEvent) {

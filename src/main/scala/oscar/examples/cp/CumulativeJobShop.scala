@@ -39,7 +39,7 @@ object CumulativeJobShop extends CPModel {
 		// -----------------------------------------------------------------------
 		
 		// Read the data
-		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShopVeryHard.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -94,7 +94,7 @@ object CumulativeJobShop extends CPModel {
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
-  	   	 	
+  	   	/* 	
   	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
 		
 		val cols = VisualUtil.getRandomColorArray(nMachines)
@@ -121,17 +121,15 @@ object CumulativeJobShop extends CPModel {
 			   profiles(i).update(xScale, yScale)
 		}
 		frame.pack
-	   	
+	   	*/
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 
 		var nbSol = 0
 		
+		cp.failLimit(100000)
+		
   	   	cp.minimize(makespan) subjectTo {
-
-			for (i <- jobActivities.flatten) {
-				cp.add(i.getStart + i.getDur == i.getEnd)
-			}
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
@@ -139,17 +137,18 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new MaxCumulative(cp, jobActivities.flatten, capacities(i), i))
+				cp.add(new NewMaxCumulative(cp, jobActivities.flatten, capacities(i), i))
 
 		} exploration {
 			
-			cp.binaryFirstFail(jobActivities.flatten.map(_.getStart))
+			// Test heuristic
+			cp.binary(jobActivities.flatten.map(_.getStart))
 			
 			// Efficient but not complete search strategy
 			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
 			
 			// Updates the visual components
-			updateVisu(1, 20)
+			//updateVisu(1, 20)
 		}    
 		
 		cp.printStats() 

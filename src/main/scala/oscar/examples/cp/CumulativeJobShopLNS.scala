@@ -40,9 +40,8 @@ object CumulativeJobShopLNS extends CPModel {
 		// Parsing		
 		// -----------------------------------------------------------------------
 		
-		/*
 		// Read the data
-		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShopVeryHard.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -74,29 +73,6 @@ object CumulativeJobShopLNS extends CPModel {
 			durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
 	  	    lines = lines.drop(1)
 		}
-		
-		// Upper bound of the horizon
-		val horizon = durations.flatten.sum*/
-		
-		val nJobs        = 40
-		val nTasksPerJob = 10
-		val nMachines    = 10
-		
-		val Jobs        = 0 until nJobs
-		val Machines    = 0 until nMachines
-		
-		val capacity = 2
-		
-		println("#Jobs      : " + nJobs)
-		println("#Tasks/job : " + nTasksPerJob)
-		println("#Machines  : " + nMachines)
-		println("#Capacity  : " + capacity)
-		
-		val instance = CumulativeJobShopGenerator.getInstance(nJobs, nMachines, nTasksPerJob, capacity, 50)
-		
-		val machines   = instance._1
-		val durations  = instance._2
-		val capacities = instance._3
 		
 		// Upper bound of the horizon
 		val horizon = durations.flatten.sum
@@ -156,13 +132,13 @@ object CumulativeJobShopLNS extends CPModel {
 		val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
 		var precedences : Array[Tuple2[Int, Int]] = null
 		
-		cp.lns(2000,3000) {		
+		cp.lns(200,300) {		
 			
 			val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 			
-			// Selected are relaxed (50%)
+			// Selected are relaxed (70%)
 			for (i <- 0 until bestSol.size)
-				if (nextFloat < 0.4)
+				if (nextFloat < 0.7)
 					selected(i) = true
 			
 			val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
