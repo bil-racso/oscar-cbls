@@ -173,15 +173,13 @@ abstract class AbstractLP {
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-//trait AbstractLPModel extends Algebra {
 
-
-	/**
-	 * Defines an Float unbounded variable in the LP solver with domain:
-	 * [0,+inf] is unbounded = true, 
-	 * [-inf,+inf] otherwise
-	 */
-  class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
+/**
+ * Defines an Float unbounded variable in the LP solver with domain:
+ * [0,+inf] is unbounded = true, 
+ * [-inf,+inf] otherwise
+ */
+class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
     
 	// do not swap next two lines
 	val index = solver.register(this)
@@ -246,9 +244,9 @@ abstract class AbstractLP {
      */
     def getName() : String = name    
 
-  }
+}
 
-  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
+class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
 
  	val e = cstr.linExpr.coef.toList
  	val perm = (0 until e.size).sortBy(i => e(i)._1.index)
@@ -263,9 +261,9 @@ abstract class AbstractLP {
     
     def dual() = solver.getDual(this)
 	
-  } 
+} 
   
-  abstract class AbstractLPSolver {
+abstract class AbstractLPSolver {
          
     // map from the index of variables to their implementation
     protected val vars = mutable.HashMap.empty[Int,AbstractLPVar]
@@ -443,9 +441,9 @@ abstract class AbstractLP {
 	}
 	
 	
-  } // end class AbstractLPSolver
+} // end class AbstractLPSolver
 
-//} // end of trait
+
 
 
 

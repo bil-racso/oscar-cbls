@@ -32,13 +32,12 @@ abstract class LP extends AbstractLP {
 	def getReducedCost(colId : Int) : Double
 }
 
+
+
 /**
- * Trait to extend by the class defining your LP model 
  * @author Pierre Schaus
- */
-//trait LPModel extends AbstractLPModel {
-  	
-    case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name_,lbound,ubound,false) {
+ */  	
+case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name_,lbound,ubound,false) {
 
 	    def this(lp: LPSolver, name: String, unbounded: Boolean) = {
 	      this(lp,name,if (unbounded) Double.PositiveInfinity else 0.0,Double.PositiveInfinity)

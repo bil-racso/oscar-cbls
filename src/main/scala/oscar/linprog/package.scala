@@ -5,6 +5,7 @@ import oscar.algebra._
 
 package object linprog {
   
+  val rand = new scala.util.Random(12)
   
   
   object LPSolverLib extends Enumeration {

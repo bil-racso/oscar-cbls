@@ -20,13 +20,11 @@ package oscar.linprog.modeling
 
 import oscar.linprog._
 
+
 /**
- * Trait to extend by the class defining your LP model 
+ * @author Pierre Schaus pschaus@gmail.com  
  */
-//trait MIPModel extends AbstractLPModel {
-	
-  
-	class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(mip,name,lbound,ubound,false) {
+class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(mip,name,lbound,ubound,false) {
 
 	  	def this(mip: MIPSolver, name: String, unbounded: Boolean) = {
 	      this(mip,name)
@@ -48,14 +46,14 @@ import oscar.linprog._
 			this.integer = true
 		}		
 		
-	}
+}
 	
-	object MIPVar { 
+object MIPVar { 
 	  def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPVar = new MIPVar(mip,name,lbound,ubound) 
 	  def apply(mip : MIPSolver, name : String,  domain : Range): MIPVar =  new MIPVar(mip,name,domain)
-	}
+}
 
-  class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
+class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
 
     val solver = solverLib match {
       case LPSolverLib.lp_solve => new LPSolve()
@@ -72,9 +70,8 @@ import oscar.linprog._
       }
     }
 
-  }
+}
 	
-	object MIPSolver { 
+object MIPSolver { 
 	 def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): MIPSolver = new MIPSolver(solverLib) 
-	}
-//}
+}
