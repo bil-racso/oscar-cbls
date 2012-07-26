@@ -568,40 +568,6 @@ trait Constraints {
     cp.add(minimum(x, m))
     m
   }
-  
-  /*
-  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
-    val cp = x(0).getStore()
-    val n = x.size
-    val cons = new LinkedList[Constraint]
-    for (i <- 0 until n-1) {
-      cons.add(element(x,p(i)) <= element(x,p(i+1)))
-      cons.add(s(i) <= s(i+1))
-    }
-    for (i <- 0 until n) { 
-      cons.add(element(x.toArray,p(i),s(i)))
-    }
-    
-    val minVal: Int  = x.map(_.getMin()).min
-    val maxVal: Int  = x.map(_.getMax()).max
-    
-    // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
-    val occ = Array.fill(maxVal-minVal+1)(new CPVarInt(cp,0 to n))
-    cons.add(gcc(x,occ.zip(minVal to maxVal)))
-    
-    // nbBefore(i) = #{i | x(i) < i } 
-    val nbBefore =  for (i <- minVal to maxVal) yield {  
-    	if (i == minVal) new CPVarInt(cp,0)
-    	else sum(minVal to i-1)(j => occ(j))  
-    }
-    
-    for(i <- 0 until n) {  
-        // there are strictly less than i values smaller than s(i) 
-    	cons.add(element(nbBefore,s(i)) < i)   
-    } 
-    cons
-  }
-  */
 
   def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
     val cp = x(0).getStore()

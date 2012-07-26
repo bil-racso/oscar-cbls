@@ -64,6 +64,14 @@ object CumulativeActivity {
 		val r = new CPVarInt(start.getStore(), resource, resource)
 		new CumulativeActivity(start, duration, start.plus(duration), m, r)
 	}
+	
+	def apply(start : CPVarInt, duration : Int, machine : Int, resource : Int) = {
+		
+		val m = new CPVarInt(start.getStore(), machine, machine)
+		val r = new CPVarInt(start.getStore(), resource, resource)
+		val d = new CPVarInt(start.getStore(), duration, duration)
+		new CumulativeActivity(start, d, start.plus(duration), m, r)
+	}
 }
 
 class MirrorCumulativeActivity(act : CumulativeActivity) extends CumulativeActivity(act.start, act.dur, act.end, act.machine, act.resource) {
