@@ -22,7 +22,7 @@ import oscar.cp.core.Store;
 
 class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
-    private val endVar = start.plus(dur)
+    private val endVar = startVar.plus(durVar)
 	
     def start = startVar
     def end = endVar

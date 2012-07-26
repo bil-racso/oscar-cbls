@@ -24,7 +24,7 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	val Tasks  = 0 until nTasks
 
 	// The events to process (min heap on date)
-	val hEvents = new EfficientHeap[Event](nTasks*4, (a, b) => a.date < b.date)
+	val hEvents = new EfficientEventHeap(nTasks*4)
 	
 	// The tasks to check (max heap on resource)
 	val hCheck = new EfficientHeap[Tuple2[Int, Int]](nTasks, (a, b) => a._1 > b._1)
@@ -366,6 +366,85 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			PR.date = tasks(t).est
 			return PR
 		}
+	}
+	
+ 	class EfficientEventHeap(maxSize : Int) {
+		
+		private val heap : Array[Event] = new Array(maxSize+1)
+		
+		private var heapSize = 0
+		
+		def head = heap(1)
+		
+		def size = heapSize
+		
+		def isEmpty = (size == 0)
+		
+		def clear() { heapSize = 0 }
+		
+		def enqueue(event : Event) {
+			
+			heapSize += 1
+			
+			var i = heapSize
+			heap(i) = event
+			
+			while (i > 1 && heap(parent(i)).date > heap(i).date) {
+				
+				val temp = heap(i)
+				val p = parent(i)
+				
+				heap(i) = heap(p)
+				heap(p) = temp
+				i = p
+			}
+		}
+		
+		def dequeue() : Event = {
+			
+			if (heapSize < 1)
+				throw new NoSuchElementException
+				
+			val max : Event = heap(1)
+			heap(1) = heap(heapSize)
+			heapSize -= 1
+			
+			heapify(1)
+			
+			return max
+		}
+		
+		def heapify(j : Int) {
+			
+			var largest = j
+			var i = 0
+			
+			do {	
+				i = largest
+				
+				val l = left(i)
+				val r = right(i)
+				
+				if (l <= heapSize && heap(l).date < heap(i).date)
+					largest = l
+				else 
+					largest = i
+					
+				if (r <= heapSize && heap(r).date < heap(largest).date)
+					largest = r
+					
+				if (largest != i) {
+					val temp = heap(i)
+					heap(i) = heap(largest)
+					heap(largest) = temp
+				}
+				
+			} while (largest != i)
+		}
+		
+		def parent(i : Int) = i/2
+		def left(i : Int) = 2*i
+		def right(i : Int) = 2*i+1
 	}
 
 }

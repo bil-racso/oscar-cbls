@@ -42,12 +42,11 @@ object CumulativeJobShop extends CPModel {
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-		val nMachines    = nTasksPerJob
+		val nMachines    = lines.head.trim().split(" ")(2).toInt
+		val capacity     = lines.head.trim().split(" ")(3).toInt
 		
-		val Jobs        = 0 until nJobs
-		val Machines    = 0 until nMachines
-		
-		val capacity = lines.head.trim().split(" ")(2).toInt
+		val Jobs     = 0 until nJobs
+		val Machines = 0 until nMachines
 		
 		println("#Jobs      : " + nJobs)
 		println("#Tasks/job : " + nTasksPerJob)
@@ -56,7 +55,7 @@ object CumulativeJobShop extends CPModel {
 		
 		lines = lines.drop(1)
 		
-		val machines   : Array[Array[Int]] = Array.fill(nJobs, nMachines)(0)
+		val machines   : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
 		val durations  : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
 		val capacities : Array[Int] = Array.fill(nTasksPerJob)(capacity);
 		
@@ -126,7 +125,7 @@ object CumulativeJobShop extends CPModel {
 
 		var nbSol = 0
 		
-		cp.failLimit(100000)
+		cp.failLimit(20000)
 		
   	   	cp.minimize(makespan) subjectTo {
 			

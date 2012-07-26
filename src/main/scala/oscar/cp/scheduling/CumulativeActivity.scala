@@ -80,7 +80,7 @@ class MirrorCumulativeActivity(act : CumulativeActivity) extends CumulativeActiv
 
 	override def lct = -act.est
 	
-	override def adjustStart(v : Int) = end.updateMax(-v)
+	override def adjustStart(v : Int) = act.end.updateMax(-v)
 	
 	override def toString() = "mirror of activity:"+act;
 }
