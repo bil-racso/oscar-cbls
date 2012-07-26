@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.NewMaxCumulative
@@ -27,13 +27,15 @@ import oscar.reversible.ReversibleSetIndexedArray
 import oscar.reversible.ReversibleInt
 import oscar.search._
 import oscar.visual._
+import scala.util.Random.nextFloat
 
 import scala.io.Source
+import scala.collection.mutable.Set
 
-object CumulativeJobShop extends CPModel {
+object CumulativeJobShopLNS extends CPModel {
   
 	def main(args: Array[String]) {
-	  
+		
 		// Parsing		
 		// -----------------------------------------------------------------------
 		
@@ -87,19 +89,21 @@ object CumulativeJobShop extends CPModel {
   	   		CumulativeActivity(start,dur, machines(i)(j), 1)
   	   	}) 	   
   	   	
+  	   	val activities = jobActivities.flatten
+  	   	
   	   	// The make span to minimize
   	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
-  	   	/* 	
-  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
+  	   	 	
+  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem", nMachines+1, 1)
 		
 		val cols = VisualUtil.getRandomColorArray(nMachines)
-		val visualActivities = jobActivities.flatten.map(a => VisualActivity(a))
+		val visualActivities = activities.map(a => VisualActivity(a))
 		
 		// Gantt Chart
-		val gantt = new VisualGanttChart(visualActivities, nTasksPerJob, cols)
+		val gantt = new VisualGanttChart(visualActivities, cols, _ / nTasksPerJob)
 		frame.createFrame("Jobs").add(gantt)
 		
 		// Profiles 
@@ -119,13 +123,27 @@ object CumulativeJobShop extends CPModel {
 			   profiles(i).update(xScale, yScale)
 		}
 		frame.pack
-	   	*/
+	   	
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 
-		var nbSol = 0
+		val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
+		var precedences : Array[Tuple2[Int, Int]] = null
 		
-		cp.failLimit(20000)
+		cp.lns(200,300) {		
+			
+			val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
+			
+			// Selected are relaxed (30%)
+			for (i <- 0 until bestSol.size)
+				if (nextFloat < 0.3)
+					selected(i) = true
+			
+			val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
+			val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
+			
+			cp.post(constraints)
+		}
 		
   	   	cp.minimize(makespan) subjectTo {
 			
@@ -135,20 +153,32 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new NewMaxCumulative(cp, jobActivities.flatten, capacities(i), i))
+				cp.add(new MaxCumulative(cp, activities, capacities(i), i))
 
 		} exploration {
 			
-			// Test heuristic
-			cp.binary(jobActivities.flatten.map(_.start))
+			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, jobActivities.flatten)
+			SchedulingUtils.setTimesSearch(cp, activities)
+		
+			println
+			cp.printStats() 
+			
+			// Best so far solution
+			for (t <- 0 until activities.size) {
+				
+				bestSol(t).start   = activities(t).start.getValue
+				bestSol(t).end     = activities(t).end.getValue
+				bestSol(t).inc     = activities(t).resource.getValue
+				bestSol(t).machine = activities(t).machine.getValue
+			}
+			precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
 			
 			// Updates the visual components
-			//updateVisu(1, 20)
+			updateVisu(1, 20)
 		}    
-		
+		println
 		cp.printStats() 
 	}
 }

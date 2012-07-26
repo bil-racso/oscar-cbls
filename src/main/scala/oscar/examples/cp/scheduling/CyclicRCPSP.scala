@@ -15,20 +15,19 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
+package oscar.examples.cp.scheduling
 
-package oscar.examples.cp
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.constraints._
-
 
 /**
  *  Example taken from the minizink competition: 
  *  http://www.g12.cs.mu.oz.au/minizinc/challenge2011/probs/cyclic-rcpsp/rcmsp.mzn
  *  Model example for Resource-Constrained Modulo Scheduling Problems (RCMSP)
  *  RCMSP is a cyclic resource-constrained project scheduling problem with 
- *  generalised precedence relations  constrained to scarce cumulative resources 
+ *  generalized precedence relations  constrained to scarce cumulative resources 
  *  and tasks which are repeated infinitely. These tasks need some resource units 
  *  from the resource for their executions, but the resource cannot be overloaded
  *  at any point in time. Moreover, the tasks have an unit durations, except the
@@ -36,7 +35,7 @@ import oscar.cp.constraints._
  *  The factor which a task is repeated is called period. Here, the periods of
  *  all tasks are the same.
  *  
- *  The generalised precedence relations, i.e., minimal and maximal time lags, are
+ *  The generalized precedence relations, i.e., minimal and maximal time lags, are
  *  of form of s[i, k] + lat[i, j] <= s[j, k + w[i,j]], where s[i, k] is the
  *  start time of task i in the k's iteration, lat[i, j] is the latency between
  *  task i and task j, and w[i, j] is the distance between task i and task j.
@@ -49,6 +48,14 @@ import oscar.cp.constraints._
  *  time within the modulus (0 ² si ² lambda - di) and ki, 
  *  called iteration number, refers to the number of full periods 
  *  elapsed before start(i,0) is scheduled.
+ * 
+ *      lambda
+ *       |---|
+ *       ____________
+ *      |____    ____|         
+ *        __ |__|
+ *   ____|  |____
+ *  |____________|
  *  
  *  A constraint based approach to cyclic RCPSP, CP2011 (Alessio Bonfietti, Michele Lombardi, Luca Benini, and Michela Milano
  * val lines = scala.io.Source.fromFile("prec.txt").getLines().toArray
@@ -58,37 +65,37 @@ import oscar.cp.constraints._
  *  @authors: Pierre Schaus pschaus@gmail.com
  */
 object CyclicRCPSP extends CPModel {
-  def main(args: Array[String]) {
+  
+	def main(args: Array[String]) {
        
-      val problemNode = xml.XML.loadFile("data/rcpsp-easy4.xml")
+		val problemNode = xml.XML.loadFile("data/rcpsp-easy4.xml")
       
-      
-      val capa = for (node <- (problemNode \ "resources" \ "resource").toArray) yield (node \ "@capa").text.toInt
+		val capa = for (node <- (problemNode \ "resources" \ "resource").toArray) yield (node \ "@capa").text.toInt
     	
-      val req = for (node <- (problemNode \ "tasks" \ "task").toArray) yield {
-        (1 to capa.size).map(i => (node \ ("@req"+i)).text.toInt)
-      }
+		val req = for (node <- (problemNode \ "tasks" \ "task").toArray) yield {
+			(1 to capa.size).map(i => (node \ ("@req"+i)).text.toInt)
+		}
       
-      val prec = for (node <- (problemNode \ "precedences" \ "precedence").toArray) yield {
-        ((node \ "@t1").text.toInt-1,(node \ "@t2").text.toInt-1,(node \ "@latency").text.toInt,(node \ "@distance").text.toInt)
-      }    
+		val prec = for (node <- (problemNode \ "precedences" \ "precedence").toArray) yield {
+			((node \ "@t1").text.toInt-1,(node \ "@t2").text.toInt-1,(node \ "@latency").text.toInt,(node \ "@distance").text.toInt)
+		}    
       
-      val nTasks = req.size
-      val Tasks = 1 until nTasks-1
-      val last = nTasks-1
-      val t_max = prec.map(_._4).sum  // Maximal period
-      val Times = 0 to t_max
-      val Iters = 0 to nTasks
-      val Res = 0 until capa.size
-      val d = Array.tabulate(nTasks)(i => if (i == 0 || i == last) 0 else 1)
-      
-      val cp = CPSolver()
-      val s = Array.fill(nTasks)(CPVarInt(cp,Times)) // Start time variables
-      val k = Array.fill(nTasks)(CPVarInt(cp,Iters)) // Iteration variables
-      
-      //  Makespan of the one iteration
+		val nTasks = req.size
+		val Tasks = 1 until nTasks-1
+		val last = nTasks-1
+		val t_max = prec.map(_._4).sum  // Maximal period
+		val Times = 0 to t_max
+		val Iters = 0 to nTasks
+		val Res = 0 until capa.size
+		val d = Array.tabulate(nTasks)(i => if (i == 0 || i == last) 0 else 1)
+  
+		val cp = CPSolver()
+		val s = Array.fill(nTasks)(CPVarInt(cp,Times)) // Start time variables
+		val k = Array.fill(nTasks)(CPVarInt(cp,Iters)) // Iteration variables
+		      
+		// Makespan of the one iteration
 
-	 val makespan = maximum(Tasks)(i => s(i) - k(i) * s(last)) - minimum(Tasks)(i => s(i) - k(i)* s(last)) + 1
+		val makespan = maximum(Tasks)(i => s(i) - k(i) * s(last)) - minimum(Tasks)(i => s(i) - k(i)* s(last)) + 1
 	 
 	 /*
 	 cp.add()
@@ -99,10 +106,9 @@ object CyclicRCPSP extends CPModel {
 	 // The objective:
      //   1. minimize the period of the schedule, i.e., "s[n_tasks]"
      //   2. minimize the makespan of one iteration, i.e., "makespan"
-     var objective = s(last) * t_max + makespan;
+		var objective = s(last) * t_max + makespan;
 
-    
-      cp.minimize(objective) subjectTo {
+		cp.minimize(objective) subjectTo {
         // Generalised Precedence Constraints
         /*
         forall(i in Prec)(
@@ -112,9 +118,11 @@ object CyclicRCPSP extends CPModel {
         )
         )
         */
+			
         for((act1,act2,latency,distance) <- prec) {
-          val b = s(act1) + latency <== s(act2)
-          cp.add(k(act1) + !b <= k(act2) + distance)
+
+        	val b = s(act1) + latency <== s(act2)
+        	cp.add(k(act1) + !b <= k(act2) + distance)
         }
         
         // Redundant non-overlapping constraints

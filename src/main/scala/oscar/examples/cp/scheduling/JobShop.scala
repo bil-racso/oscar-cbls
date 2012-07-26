@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._

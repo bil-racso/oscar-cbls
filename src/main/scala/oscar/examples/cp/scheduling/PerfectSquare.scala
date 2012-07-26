@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -56,9 +56,11 @@ object PerfectSquare extends CPModel {
       
       val activitiesx = Array.tabulate(x.size)(i => new CumulativeActivity(x(i), CPVarInt(cp,side(i)), x(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))     
       cp.post(new MaxCumulative(cp,activitiesx,s,0))
+      cp.post(new MinCumulative(cp,activitiesx,s,0))
       
       val activitiesy = Array.tabulate(x.size)(i => new CumulativeActivity(y(i), CPVarInt(cp,side(i)), y(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))     
       cp.post(new MaxCumulative(cp,activitiesy,s,0))
+      cp.post(new MinCumulative(cp,activitiesy,s,0))
       
     } exploration {
     	def label(w: Array[CPVarInt]) = {

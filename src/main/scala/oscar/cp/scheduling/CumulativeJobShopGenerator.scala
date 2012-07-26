@@ -30,12 +30,12 @@ object CumulativeJobShopGenerator {
 	
 	def main(args : Array[String]) {
 		
-		val nJobs = 10
-		val nMachines = 5
-		val nTasksPerJob = 200
+		val nJobs = 50
+		val nMachines = 15
+		val nTasksPerJob = 15
 		val capacity = 2
-		val maxDuration = 20
+		val maxDuration = 50
 		
-		getInstance(nJobs, nMachines, nTasksPerJob, capacity, maxDuration, false) 
+		getInstance(nJobs, nMachines, nTasksPerJob, capacity, maxDuration, true) 
 	}
 }

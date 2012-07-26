@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -24,12 +24,12 @@ import oscar.visual._
 import scala.math
 import java.awt.Color
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.constraints.NewMaxCumulative
+import oscar.cp.constraints.MaxCumulative
 
 /**The problem is to pack rectangles in a larger rectangles without
  * exceeding its bounds.
  * 
- * This instance contains 12 rectangles
+ * This instance contains 24 rectangles
  * 
  * @author Renaud Hartert ren.hartert@gmail.com
  */
@@ -83,15 +83,14 @@ object RectanglePacking extends CPModel {
 	    																			  xPosition(i) + width(i), 
 	    																			  CPVarInt(cp,0), 
 	    																			  height(i)))     
-	    	cp.add(new NewMaxCumulative(cp, activitiesx, y, 0))
+	    	cp.add(new MaxCumulative(cp, activitiesx, y, 0))
 	      
 	    	val activitiesy = Array.tabulate(nRectangles)(i => new CumulativeActivity(yPosition(i), 
 	    																			  height(i), 
 	    																			  yPosition(i) + height(i), 
 	    																			  CPVarInt(cp,0), 
 	    																			  width(i))) 
-	    	cp.add(new NewMaxCumulative(cp, activitiesy, x, 0))
-	    	println("here:"+cp.isFailed())
+	    	cp.add(new MaxCumulative(cp, activitiesy, x, 0))
 	
 		} exploration {
 

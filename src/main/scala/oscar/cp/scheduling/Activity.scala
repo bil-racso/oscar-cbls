@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-package oscar.cp.scheduling;
 
+package oscar.cp.scheduling;
 
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
@@ -34,7 +34,6 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	 * earliest starting time
 	 */
 	def est() = start.getMin()
-	
 	
 	/**
 	 * latest starting time
@@ -61,18 +60,15 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	 */
 	def maxDuration() = dur.getMax()
 	
-	
 	def adjustStart(v : Int) = start.updateMin(v)	
 	
 	override def toString() = "dur:"+dur+ " in ["+est+","+lct+"[";
-
 }
 
 
 
 class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 
-  
 	override def start(): CPVarInt = throw new UninitializedFieldError("not available") 
 	
 	override def end(): CPVarInt = throw new UninitializedFieldError("not available") 
@@ -82,28 +78,22 @@ class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 	 */
 	override def est = - act.lct;
 	
-
 	/**
 	 * latest starting time
 	 */
 	override def lst = - act.ect;
 	
-
 	/**
 	 * earliest completion time assuming the smallest duration
 	 */
 	override def ect = - act.lst
-	
 
 	/**
 	 * latest completion time assuming the smallest duration
 	 */
 	override def lct = - act.est
 	
-	
 	override def adjustStart(v : Int) = end.updateMax(-v)
 
-	
 	override def toString() = "mirror of activity:"+act;
-	
 }
