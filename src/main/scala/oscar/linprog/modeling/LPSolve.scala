@@ -38,8 +38,11 @@ class LPSolve extends AbstractLP{
 		this.nbCols = nbCols
 		lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
 		lp.setInfinite(Double.MaxValue)
-		lp.setVerbose(LpSolve.IMPORTANT)
 		lp.setAddRowmode(true)
+		val file = new java.io.File("options.ini")
+		if (file.exists()) {
+			lp.readParams("options.ini","[Default]");
+		}
 	}
 	
 	def endModelBuilding() {
