@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 import scala.io.Source
 import scala.collection.mutable.Map
 /** 
@@ -26,7 +27,7 @@ import scala.collection.mutable.Map
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ElectricityMarket extends MIPModel {
+object ElectricityMarket {
 	def main(args: Array[String]) {
 	  
 

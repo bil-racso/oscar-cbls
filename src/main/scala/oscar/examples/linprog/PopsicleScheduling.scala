@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  * Workforce management is central to efficient operations and good customer service.  
@@ -32,7 +33,7 @@ import oscar.linprog._
  * Question:  What is the minimal weekly staffing cost you can achieve while meeting the required staffing levels?
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PropsicleScheduling extends MIPModel {
+object PropsicleScheduling {
 	
   
   def main(args: Array[String]) {

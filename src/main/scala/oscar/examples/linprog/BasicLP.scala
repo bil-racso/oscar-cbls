@@ -20,8 +20,9 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
-object BasicLP extends LPModel{
+object BasicLP {
 	
   def main(args: Array[String]): Unit = {  
       

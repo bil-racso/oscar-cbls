@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  * The goal of the diet problem is to find the cheapest combination of foods 
@@ -28,7 +29,7 @@ import oscar.linprog._
  * We include constraints that regulate the number of 
  * calories and amounts of vitamins, minerals, fats, sodium and cholesterol in the diet.
  */
-object Diet extends LPModel {
+object Diet {
 	
   case class Nutriment(name: String) {
     val shortName = name

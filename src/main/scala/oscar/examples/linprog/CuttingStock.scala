@@ -19,12 +19,13 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * Cutting Stock using Column Generation
  */
-object CuttingStock extends LPModel with MIPModel {
+object CuttingStock {
 	
   class Column (val x : LPVar, val pattern : Array[Int]) {
 	  override def toString() : String = {

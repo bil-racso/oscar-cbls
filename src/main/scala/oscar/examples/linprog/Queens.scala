@@ -20,6 +20,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  *  The Queens Problem is to place as many queens as possible on the 8x8
@@ -29,7 +30,7 @@ import oscar.linprog._
  *  this problem. 
  *  @author Pierre Schaus pschaus@gmail.com
  */
-object Queens extends MIPModel{
+object Queens {
 	
   def main(args: Array[String]): Unit = {  
     val n = 8

@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  * One dimensional bin packing problem.
@@ -27,11 +28,11 @@ import oscar.linprog._
  * fixed capacity in a way that minimizes the number of bins used.
  * @author gme
  */
-object BinPacking1D extends MIPModel {
+object BinPacking1D {
 
   def main(args: Array[String]) {
     
-    val mip = new MIPSolver(LPSolverLib.glpk)
+    val mip = MIPSolver(LPSolverLib.glpk)
     
     // maximal number of available bins
     val nBins = 50

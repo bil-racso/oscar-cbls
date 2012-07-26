@@ -169,11 +169,11 @@ abstract class AbstractLP {
 
 
 /**
- * Trait used for the modeling of single objective minimization using DFO
+ * Trait used for the modeling of single objective minimization using LP-MIP
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-trait AbstractLPModel extends Algebra {
+//trait AbstractLPModel extends Algebra {
 
 
 	/**
@@ -445,7 +445,7 @@ trait AbstractLPModel extends Algebra {
 	
   } // end class AbstractLPSolver
 
-} // end of trait
+//} // end of trait
 
 
 
