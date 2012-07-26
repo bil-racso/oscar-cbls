@@ -45,15 +45,17 @@ import oscar.cp.constraints._
  *  schedule period and then the makespan.
  *  
  *  As the start times at iteration 0 might be greater than the modulus, we can 
- *  decompose it as: start (i, 0) = si + ki á lambda, where si is the start 
- *  time within the modulus (0 ² si ² lambda - di) and ki, 
+ *  decompose it as: start (i, 0) = si + ki * lambda, where si is the start 
+ *  time within the modulus (0 <= si <= lambda - di) and ki, 
  *  called iteration number, refers to the number of full periods 
  *  elapsed before start(i,0) is scheduled.
  *  
  *  A constraint based approach to cyclic RCPSP, CP2011 (Alessio Bonfietti, Michele Lombardi, Luca Benini, and Michela Milano
- * val lines = scala.io.Source.fromFile("prec.txt").getLines().toArray
- * lines.zipWithIndex.foreach{case(l,i) => println("<task id=\""+(i+1)+"\" "+l.trim.split(",").map(_.trim).zipWithIndex.map{case(v,i) => "req"+(i+1)+"=\""+v+"\""}.mkString(" ")+"/>")}
- * lines.zipWithIndex.foreach{case(l,i) => println("<precedence id=\""+(i+1)+"\" "+Array("t1","t2","latency","distance").zip(l.trim.split(",")).map{case(a,b) => a+"=\""+b.trim+"\""}.mkString(" ")+"/>")} 
+ *  
+ *  some scala script lines to create instances:
+ *  val lines = scala.io.Source.fromFile("prec.txt").getLines().toArray
+ *  lines.zipWithIndex.foreach{case(l,i) => println("<task id=\""+(i+1)+"\" "+l.trim.split(",").map(_.trim).zipWithIndex.map{case(v,i) => "req"+(i+1)+"=\""+v+"\""}.mkString(" ")+"/>")}
+ *  lines.zipWithIndex.foreach{case(l,i) => println("<precedence id=\""+(i+1)+"\" "+Array("t1","t2","latency","distance").zip(l.trim.split(",")).map{case(a,b) => a+"=\""+b.trim+"\""}.mkString(" ")+"/>")} 
  * 
  *  @authors: Pierre Schaus pschaus@gmail.com
  */
