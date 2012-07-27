@@ -43,8 +43,8 @@ object MachineSchedulingVariableSpeed extends CPModel {
 		// Data		
 		// -----------------------------------------------------------------------
 		
-		val nTasks    = 6
-		val nMachines = 3
+		val nTasks    = 100
+		val nMachines = 5
 		
 		val Tasks    = 0 until nTasks
 		val Machines = 0 until nMachines
@@ -78,7 +78,7 @@ object MachineSchedulingVariableSpeed extends CPModel {
   	   	// Visualization  
   	   	// -----------------------------------------------------------------------
   	   	 	
-  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
+  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem", 1, 1)
 		
 		val cols = VisualUtil.getRandomColorArray(nTasks)
 		val visualActivities = activities.map(a => VisualActivity(a))
@@ -90,7 +90,7 @@ object MachineSchedulingVariableSpeed extends CPModel {
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
 		
-		cp.failLimit(20000)
+		//cp.failLimit(20000)
 		
   	   	cp.minimize(makespan) subjectTo {
 			
@@ -112,15 +112,12 @@ object MachineSchedulingVariableSpeed extends CPModel {
 
 		} exploration {
 			
-			// Test heuristic
-			cp.binary(activities.map(_.start))
+			// Efficient but not complete search strategy
+			SchedulingUtils.setTimesSearch(cp, activities)
 			cp.binary(activities.map(_.dur))
 			
-			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, activities)
-			
 			// Updates the visual components
-			gantt.update(20, 20)
+			gantt.update(1, 20)
 		}    
 		
 		cp.printStats() 

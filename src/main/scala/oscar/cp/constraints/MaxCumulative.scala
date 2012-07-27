@@ -21,6 +21,7 @@ import scala.math.max
 import scala.math.min
 
 import oscar.cp.scheduling.EfficientHeap
+import oscar.cp.scheduling.SortUtils.stableSort
 
 import scala.collection.mutable.Set
 import scala.collection.mutable.Queue
@@ -63,7 +64,9 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 	val Tasks  = 0 until nTasks
 	
 	// Event Point Series (min heap on date)
-	val eventPointSeries = new EfficientHeap[Event](nTasks*7, (a, b) => a.date < b.date)
+	//val eventPointSeries = new EfficientHeap[Event](nTasks*7, (a, b) => a.date < b.date)
+	val eventPointSeries = new Array[Event](nTasks*7)
+	var nEvents = 0
 	
 	// Sweep line parameters
 	var delta      : Int = 0
@@ -109,8 +112,6 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 		return CPOutcome.Suspend
 	}
 	
-	def nextEvent() = if (eventPointSeries.size > 0) eventPointSeries.dequeue else null
-	
 	/**
 	 * As profile events are mandatory to allow pruning, the algorithm returns false if 
 	 * no profile event has been generated
@@ -123,7 +124,7 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 		var profileEvent = false
 		
 		// Reset eventPointSeries
-		eventPointSeries.clear
+		nEvents = 0
 		
 		for (i <- Tasks) {
 			
@@ -133,9 +134,11 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 				if (tasks(i).minResource > 0) {
 					
 					// Generates events
-					eventPointSeries enqueue eventList(i).getSBadProfile
-					eventPointSeries enqueue eventList(i).getEBadProfile
-
+					eventPointSeries(nEvents) = eventList(i).getSBadProfile
+					nEvents += 1
+					eventPointSeries(nEvents) = eventList(i).getEBadProfile
+					nEvents += 1
+					
 					profileEvent = true
 				}			
 			}
@@ -146,8 +149,10 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 				if (tasks(i).minResource < 0) {
 					
 					// Generates events		
-					eventPointSeries enqueue eventList(i).getSGoodProfile
-					eventPointSeries enqueue eventList(i).getEGoodProfile
+					eventPointSeries(nEvents) = eventList(i).getSGoodProfile
+					nEvents += 1
+					eventPointSeries(nEvents) = eventList(i).getEGoodProfile
+					nEvents += 1
 					
 					profileEvent = true
 				}
@@ -156,7 +161,8 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 				if (!(tasks(i).start.isBound && tasks(i).end.isBound && tasks(i).machine.isBoundTo(r) && tasks(i).resource.isBound)) {
 					
 					// Generates event
-					eventPointSeries enqueue eventList(i).getPruning
+					eventPointSeries(nEvents) = eventList(i).getPruning
+					nEvents += 1
 				}
 			}			
 		}
@@ -178,10 +184,15 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 		// Reset the parameters of the sweep line
 		resetSweepLine()
 		
-		var event = nextEvent()
-		var delta = event.date
+		stableSort(eventPointSeries, 0, nEvents, (a:Event,b:Event) => a.date < b.date)
 		
-		while(event != null) {
+		//var event = nextEvent()
+		var delta = eventPointSeries(nEvents-1).date//event.date
+		
+		//while(event != null) {
+		for (i <- 0 until nEvents) {
+			
+			val event = eventPointSeries(i)
 		
 			if (!event.isPruningEvent) {
 				
@@ -210,7 +221,7 @@ class MaxCumulative (cp: CPSolver, allTasks : Array[CumulativeActivity], limit :
 				stackPrune.add(event.task)
 			}
 			
-			event = nextEvent()
+			//event = nextEvent()
 		}
 		
 		// Consistency check

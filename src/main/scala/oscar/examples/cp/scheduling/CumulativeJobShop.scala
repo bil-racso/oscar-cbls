@@ -38,7 +38,7 @@ object CumulativeJobShop extends CPModel {
 		// -----------------------------------------------------------------------
 		
 		// Read the data
-		var lines = Source.fromFile("data/cJobShopVeryHard.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShopHard.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -136,7 +136,7 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new NewMaxCumulative(cp, activities, capacities(i), i))
+				cp.add(new MaxCumulative(cp, activities, capacities(i), i))
 
 		} exploration {
 			

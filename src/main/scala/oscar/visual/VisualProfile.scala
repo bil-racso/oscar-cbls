@@ -14,7 +14,7 @@ class VisualProfile(allActivities: Array[VisualActivity], resource : Int, privat
 	polygon.setInnerCol(col)
 	
 	// The limit of capacity
-	private val line    : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+	private val line : VisualLine = new VisualLine(this, 0, 0, 0, 0)
 	line.setOuterCol(Color.RED);
 	
 	def capacity = c
@@ -32,12 +32,12 @@ class VisualProfile(allActivities: Array[VisualActivity], resource : Int, privat
 			
 		val points = CumulativeProfile.getCumulativeProfile(activities)
 		
-		polygon.update(points.map(p => (p._1*xScale, p._2*yScale)))
+		polygon.update(points.map(p => (p._1*xScale, (p._2 + 5)*yScale)))
 		
 		val makespan = allActivities.map(_.end).max
 		
-		line.setOrig(0, yScale*capacity)
-		line.setDest(xScale*makespan, yScale*capacity)
+		line.setOrig(0, (capacity+5)*yScale)
+		line.setDest(xScale*makespan, (capacity+5)*yScale)
 		
 		repaint()
 	}
