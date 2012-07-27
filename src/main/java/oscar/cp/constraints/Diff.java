@@ -36,7 +36,7 @@ public class Diff extends Constraint {
      * @see AllDifferent
      */
 	public Diff(CPVarInt x, int y) {
-		super(x.getStore(),"Diff");
+		super(x.s(),"Diff");
 		diffImpl = new DiffVal(x,y);
 	}
 
@@ -47,7 +47,7 @@ public class Diff extends Constraint {
      * @see AllDifferent
      */
 	public Diff(CPVarInt x, CPVarInt y) {
-		super(x.getStore());
+		super(x.s());
 		diffImpl = new DiffVar(x,y);
 	}
 	
@@ -69,7 +69,7 @@ class DiffVal extends Constraint {
 	int y;
 	
 	public DiffVal(CPVarInt x, int y) {
-		super(x.getStore(),"DiffVal");
+		super(x.s(),"DiffVal");
 		this.x = x;
 		this.y = y;
 	}
@@ -91,7 +91,7 @@ class DiffVar extends Constraint {
 	CPVarInt x, y;
 	
 	public DiffVar(CPVarInt x, CPVarInt y) {
-		super(x.getStore(),"DiffVar");
+		super(x.s(),"DiffVar");
 		this.x = x;
 		this.y = y;
 	}

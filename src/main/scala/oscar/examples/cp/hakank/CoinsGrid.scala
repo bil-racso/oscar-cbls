@@ -50,7 +50,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object CoinsGrid extends CPModel {
+object CoinsGrid {
 
   def main(args: Array[String]) {
 

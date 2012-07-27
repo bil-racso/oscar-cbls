@@ -39,7 +39,7 @@ import scala.collection.JavaConversions._
  * http://www.hakank.org/oscar/
  *
  */
-object NurseRosteringRegular extends CPModel {
+object NurseRosteringRegular {
 
   def maxDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
     val notbound = vars.filterNot(_.isBound)
@@ -184,7 +184,7 @@ object NurseRosteringRegular extends CPModel {
         print("Nurse " + n + ": ")
         var wd = 0
         for(d <- days) {
-          val v = x(n)(d).getValue()
+          val v = x(n)(d).value
           print(days_str(v) + " ")
           if (v <= night_shift) {
             wd += 1

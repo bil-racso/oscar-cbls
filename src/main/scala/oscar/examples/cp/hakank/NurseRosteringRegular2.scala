@@ -39,7 +39,7 @@ import scala.collection.JavaConversions._
  * http://www.hakank.org/oscar/
  *
  */
-object NurseRosteringRegular2 extends CPModel {
+object NurseRosteringRegular2 {
 
 
   def main(args: Array[String]) {
@@ -154,7 +154,7 @@ object NurseRosteringRegular2 extends CPModel {
         var vv = Array(0,0,0) // shift stats
         var wd = 0
         for(d <- days) {
-          val v = x(n)(d).getValue()
+          val v = x(n)(d).value
           print(days_str(v) + " ")
           vv(v) += 1
           if (v <= night_shift) {

@@ -81,7 +81,7 @@ import scala.math._
  
 */
 
-object TrafficLights extends CPModel {
+object TrafficLights {
 
   def main(args: Array[String]) {
 
@@ -132,7 +132,7 @@ object TrafficLights extends CPModel {
       println("V: " + V.mkString(""))
       println("P: " + P.mkString(""))
       for(i <- 0 until n) {
-        print(lights(V(i).getValue()) + " " + lights(P(i).getValue()) + " ")
+        print(lights(V(i).value) + " " + lights(P(i).value) + " ")
       }
       println()
 

@@ -62,7 +62,7 @@ import scala.math._
  
 */
 
-object Olympic extends CPModel {
+object Olympic {
 
   def abs_minus(x: CPVarInt,
              y: CPVarInt,

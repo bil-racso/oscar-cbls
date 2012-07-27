@@ -38,7 +38,7 @@ import scala.math._
  
 */
 
-object OrganizeDay extends CPModel {
+object OrganizeDay {
 
 
   // No overlapping of tasks s1 and s2

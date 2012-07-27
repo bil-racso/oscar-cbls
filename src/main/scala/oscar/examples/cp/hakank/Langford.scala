@@ -47,7 +47,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object Langford extends CPModel {
+object Langford {
 
 
   def main(args: Array[String]) {

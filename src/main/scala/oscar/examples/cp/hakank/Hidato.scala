@@ -34,7 +34,7 @@ import Array._
   http://www.hakank.org/oscar/
  
 */
-object Hidato extends CPModel {
+object Hidato {
 
 
   def main(args: Array[String]) {
@@ -183,7 +183,7 @@ object Hidato extends CPModel {
       println("\nSolution:")
       for(i <- 0 until n) {
         for(j <- 0 until n) {
-          print("%4d".format(x(i*n+j).getValue()))
+          print("%4d".format(x(i*n+j).value))
         }
         println()
       }

@@ -38,7 +38,7 @@ import scala.math._
  
 */
 
-object EinsteinPuzzle extends CPModel {
+object EinsteinPuzzle {
 
   def main(args: Array[String]) {
 
@@ -142,7 +142,7 @@ object EinsteinPuzzle extends CPModel {
 
       // find the index in x where thing is
       def getIndex(x : Array[CPVarInt], thing: Int) =
-        x.zipWithIndex.filter(_._1.getValue() == thing)(0)._2 
+        x.zipWithIndex.filter(_._1.value == thing)(0)._2 
 
 
       println((for(house <- RANGE) 

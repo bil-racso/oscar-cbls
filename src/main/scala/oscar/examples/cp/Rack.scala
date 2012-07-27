@@ -30,7 +30,7 @@ import oscar.cp.core._
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Rack extends CPModel {
+object Rack {
 
   class ModelType(val power: Int, val connectors: Int, val price: Int)
 

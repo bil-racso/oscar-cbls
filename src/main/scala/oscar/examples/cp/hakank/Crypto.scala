@@ -58,7 +58,7 @@ import scala.math._
  
 */
 
-object Crypto extends CPModel {
+object Crypto {
 
 
   def main(args: Array[String]) {

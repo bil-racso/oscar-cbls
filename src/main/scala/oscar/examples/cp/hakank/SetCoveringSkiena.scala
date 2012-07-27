@@ -42,7 +42,7 @@ import scala.math._
  
 */
 
-object SetCoveringSkiena extends CPModel {
+object SetCoveringSkiena {
 
   def main(args: Array[String]) {
 
@@ -108,7 +108,7 @@ object SetCoveringSkiena extends CPModel {
       println("tot_elements: " + tot_elements)
       println("x: " + x.mkString(""))
       println("Selected alternatives: " + 
-              (for(i <- 0 until x.length if x(i).getValue()==1 ) yield i).mkString(" "))
+              (for(i <- 0 until x.length if x(i).value==1 ) yield i).mkString(" "))
 
       numSols += 1
 

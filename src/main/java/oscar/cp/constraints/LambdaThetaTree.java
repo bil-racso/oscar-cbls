@@ -58,10 +58,10 @@ public class LambdaThetaTree {
 		int curr_pos = isize + pos; 
 		LTNode node = nodes[curr_pos];
 		node.setActivity(act);
-		node.setECT(act.getECT());
-		node.setSUMP(act.getMinDuration());
-		node.setECT_OPT(act.getECT());
-		node.setSUMP_OPT(act.getMinDuration());
+		node.setECT(act.ect());
+		node.setSUMP(act.minDuration());
+		node.setECT_OPT(act.ect());
+		node.setSUMP_OPT(act.minDuration());
 		node.setResponsible_ECT(-1);
 		node.setResponsible_SUMP(-1);
 		reCompute(getFather(curr_pos));
@@ -84,12 +84,12 @@ public class LambdaThetaTree {
 		reCompute(getFather(curr_pos));
 	}
 
-	private int getECT(int pos) {
-		return nodes[pos].getECT();
+	private int ect(int pos) {
+		return nodes[pos].ect();
 	}
 
-	public int getECT() {
-		return getECT(0);
+	public int ect() {
+		return ect(0);
 	}
 	
 	private int getECT_OPT(int pos) {
@@ -149,12 +149,12 @@ public class LambdaThetaTree {
 		LTNode n = nodes[pos];
 		int pr = getSUMP(getRight(pos));
 		n.setSUMP(getSUMP(getLeft(pos)) + pr);
-		n.setECT(Math.max(getECT((getRight(pos))), getECT(getLeft(pos)) + pr));
+		n.setECT(Math.max(ect((getRight(pos))), ect(getLeft(pos)) + pr));
 		
 		
 		if (getResponsible_ECT(getLeft(pos)) == -1 && getResponsible_ECT(getRight(pos)) == -1) {
 			n.setSUMP_OPT(n.getSUMP());
-			n.setECT_OPT(n.getECT());
+			n.setECT_OPT(n.ect());
 			n.setResponsible_ECT(-1);
 			n.setResponsible_SUMP(-1);
 		} else {
@@ -168,7 +168,7 @@ public class LambdaThetaTree {
 				n.setResponsible_SUMP(getResponsible_SUMP(getRight(pos)));
 			}
 			int ect1 = getECT_OPT(getRight(pos));
-			int ect2 = getECT(getLeft(pos)) + getSUMP_OPT(getRight(pos));
+			int ect2 = ect(getLeft(pos)) + getSUMP_OPT(getRight(pos));
 			int ect3 = getECT_OPT(getLeft(pos)) + getSUMP(getRight(pos));
 			if (ect1 >= ect2 && ect1 >= ect3) {  // ect1 max
 				n.setECT_OPT(ect1);
@@ -186,15 +186,15 @@ public class LambdaThetaTree {
 	
 	public void reComputeTop() {
 		LTNode n = nodes[0];
-		n.setECT(Math.max(getECT(2), getECT(1) + getSUMP(2)));
+		n.setECT(Math.max(ect(2), ect(1) + getSUMP(2)));
 		if (getResponsible_ECT(1) == -1 && getResponsible_ECT(2) == -1) {
 			n.setSUMP_OPT(n.getSUMP());
-			n.setECT_OPT(n.getECT());
+			n.setECT_OPT(n.ect());
 			n.setResponsible_ECT(-1);
 			n.setResponsible_SUMP(-1);
 		} else {
 			int ect1 = getECT_OPT(2);
-			int ect2 = getECT(1) + getSUMP_OPT(2);
+			int ect2 = ect(1) + getSUMP_OPT(2);
 			int ect3 = getECT_OPT(1) + getSUMP(2);
 			if (ect1 >= ect2 && ect1 >= ect3) {
 				n.setECT_OPT(ect1);
@@ -253,7 +253,7 @@ class LTNode {
 		return act;
 	}
 
-	public int getECT() {
+	public int ect() {
 		return ect;
 	}
 
@@ -311,10 +311,10 @@ class LTNode {
 			   "sump:"+getSUMP()+"\n"+
 			   "sump_opt:"+getSUMP_OPT()+"\n"+
 			   "resp_sump:"+getResponsible_SUMP()+"\n"+
-			   "ect:"+getECT()+"\n"+
+			   "ect:"+ect()+"\n"+
 			   "ect_opt:"+getECT_OPT()+"\n"+
 			   "resp_ect:"+getResponsible_ECT()+"\n"+
-			   "est:"+act.getEST();
+			   "est:"+act.est();
 			   
 	}
 	

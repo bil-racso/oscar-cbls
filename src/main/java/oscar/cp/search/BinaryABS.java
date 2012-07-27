@@ -87,7 +87,7 @@ public class BinaryABS extends Nary {
 	 * @return the value to instantiate
 	 */
 	public int getVal(CPVarInt var) {
-		return var.getRandomValue();
+		return var.randomValue();
 	}
 
 	private void updateStatisticsAndReset() {

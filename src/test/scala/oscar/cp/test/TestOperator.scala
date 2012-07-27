@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestOperator extends FunSuite with ShouldMatchers with CPModel {
+class TestOperator extends FunSuite with ShouldMatchers  {
   
   
   test("unary operator") { 
@@ -35,30 +35,30 @@ class TestOperator extends FunSuite with ShouldMatchers with CPModel {
 	  val A = CPVarInt(cp,8)
 	  val B = CPVarInt(cp,-10 to 10)
 	  val C = -A
-	  C.getValue() should be(-8)
+	  C.value should be(-8)
 	  cp.post(B == -C)
-	  B.getValue() should be(8)
+	  B.value should be(8)
   }  
   
   test("boolean unary operator 1") { 
 	  val cp = CPSolver()
 	  val A = CPVarBool(cp,true)
 	  val C = -A
-	  C.getValue() should be(-1)
+	  C.value should be(-1)
   }  
 
   test("boolean unary operator 2") { 
 	  val cp = CPSolver()
 	  val A = CPVarBool(cp,true)
 	  val C = !A
-	  C.getValue() should be(0)
+	  C.value should be(0)
   }  
   
   test("boolean unary operator 3") { 
 	  val cp = CPSolver()
 	  val A = CPVarBool(cp,true)
 	  val C = !(!A)
-	  C.isTrue() should be(true)
+	  C.isTrue should be(true)
   }
   
   test("boolean unary operator 4") { 
@@ -79,8 +79,8 @@ class TestOperator extends FunSuite with ShouldMatchers with CPModel {
 	  val A = CPVarBool(cp)
 	  val B = CPVarBool(cp)
 	  cp.add(A && B)
-	  A.isTrue() should be(true)
-	  B.isTrue() should be(true)
+	  A.isTrue should be(true)
+	  B.isTrue should be(true)
   }   
 
  

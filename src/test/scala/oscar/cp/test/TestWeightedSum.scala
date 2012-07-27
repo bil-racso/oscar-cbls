@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestWeightedSum extends FunSuite with ShouldMatchers with CPModel {
+class TestWeightedSum extends FunSuite with ShouldMatchers  {
 
 
   test("Weighted Sum 1") {
@@ -35,7 +35,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers with CPModel {
     var x = Array.tabulate(5)(i => CPVarInt(cp, i))
     val y = weightedSum(0 until 5){i => (i,x(i)) }
     // 0*0 + 1*1 + 2*2 + 3*3 + 4*4
-    y.getValue() should be(30)
+    y.value should be(30)
   }
   
   test("Weighted Sum 2") {
@@ -43,7 +43,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers with CPModel {
     var x = Array.tabulate(5)(i => CPVarInt(cp, i))
     val y = weightedSum(0 until 5, x)
     // 0*0 + 1*1 + 2*2 + 3*3 + 4*4
-    y.getValue() should be(30)
+    y.value should be(30)
   }
   
   test("Weighted Sum 3") {
@@ -52,7 +52,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers with CPModel {
     var w = Array.tabulate(2,2)((i,j) => i*2+j)
     // 0*0 + 1*1 + 2*2 + 3*3
     val y = weightedSum(w,x)
-    y.getValue() should be(14)
+    y.value should be(14)
   }
   
   test("Weighted Sum 4") {
@@ -61,7 +61,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers with CPModel {
     var w = Array.tabulate(2,2)((i,j) => i*2+j)
     // 0*0 + 1*1 + 2*2 + 3*3
     val y = weightedSum(0 until x.size,0 until w.size){case(i,j) => (w(i)(j),x(i)(j))}
-    y.getValue() should be(14)
+    y.value should be(14)
   }  
   
  

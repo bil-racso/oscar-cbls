@@ -47,7 +47,7 @@ import scala.math._
  *
  */
 
-object Crypta extends CPModel {
+object Crypta {
 
 
   def main(args: Array[String]) {

@@ -27,6 +27,7 @@ import oscar.cp.core.Constraint;
 import oscar.cp.core.Store;
 import oscar.cp.scheduling.Activity;
 import oscar.reversible.ReversibleBool;
+import oscar.cp.scheduling.MirrorActivity;
 
 
 public class UnaryResource extends Constraint {
@@ -66,7 +67,7 @@ public class UnaryResource extends Constraint {
 	
 
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
-		super(activities[0].getStart().getStore(),name);
+		super(activities[0].start().s(),name);
 		assert(activities.length == required.length);
 		this.name = name;
 		this.activities = activities;
@@ -123,7 +124,7 @@ public class UnaryResource extends Constraint {
 	}
 
 	public UnaryResource(Activity [] activities, String name) {
-		this(activities, makeRequiredArray(activities.length,activities[0].getStart().getStore()), name);
+		this(activities, makeRequiredArray(activities.length,activities[0].start().s()), name);
 	}
 	
 	/**
@@ -136,9 +137,9 @@ public class UnaryResource extends Constraint {
 		int totDur = 0;
 		for (int i = 0; i < nbAct; i++) {
 			if (required[i].isTrue()) {
-				min = Math.min(min, activities[i].getEST());
-				max = Math.max(max, activities[i].getLCT());
-				totDur += activities[i].getMinDuration();
+				min = Math.min(min, activities[i].est());
+				max = Math.max(max, activities[i].lct());
+				totDur += activities[i].minDuration();
 			}
 		}
 		return ((double) totDur)/(max-min);
@@ -160,7 +161,7 @@ public class UnaryResource extends Constraint {
 	public void rankFirst(int j) {
 		for (int i = 0; i < nbAct; i++) {
 			if (i!= j && required[i].isTrue() && !ranked[i].getValue()) {
-				s.post(new LeEq(activities[j].getEnd(),activities[i].getStart()));
+				s.post(new LeEq(activities[j].end(),activities[i].start()));
 			}
 		}
 		ranked[j].setValue(true);
@@ -178,7 +179,7 @@ public class UnaryResource extends Constraint {
 	public int getMinTotDur() {
 		int d = 0;
 		for (int i = 0; i < activities.length; i++) {
-			d += activities[i].getMinDuration();
+			d += activities[i].minDuration();
 		}
 		return d;
 	}
@@ -194,8 +195,8 @@ public class UnaryResource extends Constraint {
 
 		
 		for (int i = 0; i < nbAct; i++) {
-			activities[i].getStart().callPropagateWhenBoundsChange(this);
-			activities[i].getEnd().callPropagateWhenBoundsChange(this);
+			activities[i].start().callPropagateWhenBoundsChange(this);
+			activities[i].end().callPropagateWhenBoundsChange(this);
 			
 			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
 				//required[i].callValBindIdxWhenBind(this,i);
@@ -283,8 +284,8 @@ public class UnaryResource extends Constraint {
 		thetaTree.reset();
 		for (int i = 0; i < nbAct; i++) {
 			ActivityWrapper aw = lct[i];
-			thetaTree.insert(aw.getActivity(), aw.getESTPos());
-			if (thetaTree.getECT() > aw.getActivity().getLCT()) {
+			thetaTree.insert(aw.getActivity(), aw.estPos());
+			if (thetaTree.ect() > aw.getActivity().lct()) {
 				return false;
 			}
 		}
@@ -294,8 +295,8 @@ public class UnaryResource extends Constraint {
 		thetaTree.reset();
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper aw = mlct[i];
-			thetaTree.insert(aw.getActivity(), aw.getESTPos());
-			if (thetaTree.getECT() > aw.getActivity().getLCT()) {
+			thetaTree.insert(aw.getActivity(), aw.estPos());
+			if (thetaTree.ect() > aw.getActivity().lct()) {
 				return false;
 			}
 		}
@@ -315,22 +316,22 @@ public class UnaryResource extends Constraint {
 			ActivityWrapper awi = ect[i];
 			if (j < nbAct) {
 				ActivityWrapper awj = lst[j];
-				while (awi.getActivity().getECT() > awj.getActivity().getLST()) {
-					thetaTree.insert(awj.getActivity(), awj.getESTPos());
+				while (awi.getActivity().ect() > awj.getActivity().lst()) {
+					thetaTree.insert(awj.getActivity(), awj.estPos());
 					j++;
 					if (j == nbAct)
 						break;
 					awj = lst[j];
 				}
 			}
-			int esti = awi.getActivity().getEST();
-			boolean inserted = thetaTree.isInserted(awi.getESTPos());
+			int esti = awi.getActivity().est();
+			boolean inserted = thetaTree.isInserted(awi.estPos());
 			if (inserted) {
-				thetaTree.remove(awi.getESTPos());
+				thetaTree.remove(awi.estPos());
 			}
-			int oesti = thetaTree.getECT();
+			int oesti = thetaTree.ect();
 			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.getESTPos());
+				thetaTree.insert(awi.getActivity(), awi.estPos());
 			}
 			if (oesti > esti) {
 				new_est[awi.getIndex()] = oesti;
@@ -347,22 +348,22 @@ public class UnaryResource extends Constraint {
 			ActivityWrapper awi = mect[i];
 			if (j < nbAct) {
 				ActivityWrapper awj = mlst[j];
-				while (awi.getActivity().getECT() > awj.getActivity().getLST()) {
-					thetaTree.insert(awj.getActivity(), awj.getESTPos());
+				while (awi.getActivity().ect() > awj.getActivity().lst()) {
+					thetaTree.insert(awj.getActivity(), awj.estPos());
 					j++;
 					if (j == nbAct)
 						break;
 					awj = mlst[j];
 				}
 			}
-			int lcti = awi.getActivity().getEST();
-			boolean inserted = thetaTree.isInserted(awi.getESTPos());
+			int lcti = awi.getActivity().est();
+			boolean inserted = thetaTree.isInserted(awi.estPos());
 			if (inserted) {
-				thetaTree.remove(awi.getESTPos());
+				thetaTree.remove(awi.estPos());
 			}
-			int olcti = thetaTree.getECT();
+			int olcti = thetaTree.ect();
 			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.getESTPos());
+				thetaTree.insert(awi.getActivity(), awi.estPos());
 			}
 			if (olcti > lcti) {
 				new_lct[awi.getIndex()] = -olcti;
@@ -376,13 +377,13 @@ public class UnaryResource extends Constraint {
 		for (int i = 0; i < nbAct; i++) {
 			if (new_est[i] != Integer.MIN_VALUE) {
 				modified = true;
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 			}
 			if (new_lct[i] != Integer.MAX_VALUE) {
 				modified = true;
-				if (activities[i].getEnd().updateMax(new_lct[i]) == CPOutcome.Failure) {
+				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 			}
@@ -395,8 +396,8 @@ public class UnaryResource extends Constraint {
 		// Init
 		updateEst();
 		for (int i = 0; i < nbAct; ++i) {
-			new_lct[i] = activities[i].getLCT();
-			new_est[i] = activities[i].getEST();
+			new_lct[i] = activities[i].lct();
+			new_est[i] = activities[i].est();
 		}
 
 		// Push in one direction.
@@ -408,23 +409,23 @@ public class UnaryResource extends Constraint {
 
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper awi = lct[i];
-			while (j < nbAct && awi.getActivity().getLCT() > lst[j].getActivity().getLST()) {
-				if (j > 0 && thetaTree.getECT() > lst[j].getActivity().getLST()) {
-					new_lct[lst[j].getIndex()] = lst[j - 1].getActivity().getLST();
+			while (j < nbAct && awi.getActivity().lct() > lst[j].getActivity().lst()) {
+				if (j > 0 && thetaTree.ect() > lst[j].getActivity().lst()) {
+					new_lct[lst[j].getIndex()] = lst[j - 1].getActivity().lst();
 				}
-				thetaTree.insert(lst[j].getActivity(), lst[j].getESTPos());
+				thetaTree.insert(lst[j].getActivity(), lst[j].estPos());
 				j++;
 			}
-			boolean inserted = thetaTree.isInserted(awi.getESTPos());
+			boolean inserted = thetaTree.isInserted(awi.estPos());
 			if (inserted) {
-				thetaTree.remove(awi.getESTPos());
+				thetaTree.remove(awi.estPos());
 			}
-			int ect_theta_less_i = thetaTree.getECT();
+			int ect_theta_less_i = thetaTree.ect();
 			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.getESTPos());
+				thetaTree.insert(awi.getActivity(), awi.estPos());
 			}
-			if (ect_theta_less_i > awi.getActivity().getLCT() && j > 0) {
-				new_lct[awi.getIndex()] = Math.min(new_lct[awi.getIndex()], lst[j - 1].getActivity().getLCT());
+			if (ect_theta_less_i > awi.getActivity().lct() && j > 0) {
+				new_lct[awi.getIndex()] = Math.min(new_lct[awi.getIndex()], lst[j - 1].getActivity().lct());
 			}
 		}
 
@@ -435,37 +436,37 @@ public class UnaryResource extends Constraint {
 		j = 0;
 		for (int i = 0; i < nbAct; i++) {
 			ActivityWrapper awi = mlct[i];
-			while (j < nbAct && awi.getActivity().getLCT() > mlst[j].getActivity().getLST()) {
-				if (j > 0 && thetaTree.getECT() > mlst[j].getActivity().getLST()) {
-					new_est[mlst[j].getIndex()] = -mlst[j - 1].getActivity().getLST();
+			while (j < nbAct && awi.getActivity().lct() > mlst[j].getActivity().lst()) {
+				if (j > 0 && thetaTree.ect() > mlst[j].getActivity().lst()) {
+					new_est[mlst[j].getIndex()] = -mlst[j - 1].getActivity().lst();
 				}
-				thetaTree.insert(mlst[j].getActivity(), mlst[j].getESTPos());
+				thetaTree.insert(mlst[j].getActivity(), mlst[j].estPos());
 				j++;
 			}
-			boolean inserted = thetaTree.isInserted(awi.getESTPos());
+			boolean inserted = thetaTree.isInserted(awi.estPos());
 			if (inserted) {
-				thetaTree.remove(awi.getESTPos());
+				thetaTree.remove(awi.estPos());
 			}
-			int mect_theta_less_i = thetaTree.getECT();
+			int mect_theta_less_i = thetaTree.ect();
 			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.getESTPos());
+				thetaTree.insert(awi.getActivity(), awi.estPos());
 			}
-			if (mect_theta_less_i > awi.getActivity().getLCT() && j > 0) {
-				new_est[awi.getIndex()] = Math.max(new_est[awi.getIndex()], -mlst[j - 1].getActivity().getLCT());
+			if (mect_theta_less_i > awi.getActivity().lct() && j > 0) {
+				new_est[awi.getIndex()] = Math.max(new_est[awi.getIndex()], -mlst[j - 1].getActivity().lct());
 			}
 		}
 
 		// Apply modifications
 		boolean modified = false;
 		for (int i = 0; i < nbAct; ++i) {
-			if (activities[i].getLCT() > new_lct[i] || activities[i].getEST() < new_est[i]) {
+			if (activities[i].lct() > new_lct[i] || activities[i].est() < new_est[i]) {
 				modified = true;
 
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 
-				if (activities[i].getEnd().updateMax(new_lct[i]) == CPOutcome.Failure) {
+				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
 					failure = true;
 				}
 			}
@@ -480,8 +481,8 @@ public class UnaryResource extends Constraint {
 		// Init
 		updateEst();
 		for (int i = 0; i < nbAct; i++) {
-			new_est[i] = activities[i].getEST();
-			new_lct[i] = activities[i].getLCT();
+			new_est[i] = activities[i].est();
+			new_lct[i] = activities[i].lct();
 		}
 
 		// Push in one direction.
@@ -494,21 +495,21 @@ public class UnaryResource extends Constraint {
 		int j = nbAct - 1;
 		ActivityWrapper awj = lct[j];
 		do {
-			lamdaThetaTree.grey(awj.getESTPos());
+			lamdaThetaTree.grey(awj.estPos());
 			if (--j < 0) {
 				break;
 			}
 			awj = lct[j];
-			if (lamdaThetaTree.getECT() > awj.getActivity().getLCT()) {
+			if (lamdaThetaTree.ect() > awj.getActivity().lct()) {
 				failure = true;  // Resource is overloaded
 				return false;
 			}
-			while (lamdaThetaTree.getECT_OPT() > awj.getActivity().getLCT()) {
+			while (lamdaThetaTree.getECT_OPT() > awj.getActivity().lct()) {
 				int i = lamdaThetaTree.getResponsible_ECT();
 				assert(i >= 0);
 				int act_i = est[i].getIndex();
-				if (lamdaThetaTree.getECT() > new_est[act_i]) {
-					new_est[act_i] = lamdaThetaTree.getECT();
+				if (lamdaThetaTree.ect() > new_est[act_i]) {
+					new_est[act_i] = lamdaThetaTree.ect();
 				}
 				lamdaThetaTree.remove(i);
 			}
@@ -523,21 +524,21 @@ public class UnaryResource extends Constraint {
 		j = nbAct - 1;
 		awj = mlct[j];
 		do {
-			lamdaThetaTree.grey(awj.getESTPos());
+			lamdaThetaTree.grey(awj.estPos());
 			if (--j < 0) {
 				break;
 			}
 			awj = mlct[j];
-			if (lamdaThetaTree.getECT() > awj.getActivity().getLCT()) {
+			if (lamdaThetaTree.ect() > awj.getActivity().lct()) {
 				failure = true;  // Resource is overloaded
 				return false;
 			}
-			while (lamdaThetaTree.getECT_OPT() > awj.getActivity().getLCT()) {
+			while (lamdaThetaTree.getECT_OPT() > awj.getActivity().lct()) {
 				int i = lamdaThetaTree.getResponsible_ECT();
 				assert(i >= 0);
 				int act_i = mest[i].getIndex();
-				if (-lamdaThetaTree.getECT() < new_lct[act_i]) {
-					new_lct[act_i] = -lamdaThetaTree.getECT();
+				if (-lamdaThetaTree.ect() < new_lct[act_i]) {
+					new_lct[act_i] = -lamdaThetaTree.ect();
 				}
 				lamdaThetaTree.remove(i);
 			}
@@ -546,17 +547,17 @@ public class UnaryResource extends Constraint {
 		// Apply modifications.
 		boolean modified = false;
 		for (int i = 0; i < nbAct; i++) {
-			if (activities[i].getEST() < new_est[i]) {
+			if (activities[i].est() < new_est[i]) {
 				modified = true;
-				if (activities[i].getStart().updateMin(new_est[i]) == CPOutcome.Failure) {
+				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
 					failure = true;
 					return false;
 				}
 			}
 
-			if (activities[i].getLCT() > new_lct[i] ) {
+			if (activities[i].lct() > new_lct[i] ) {
 				modified = true;
-				if (activities[i].getEnd().updateMax(new_lct[i]) == CPOutcome.Failure) {
+				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
 					failure = true;
 					return false;
 				}
@@ -567,61 +568,6 @@ public class UnaryResource extends Constraint {
 		return modified;
 	}
 
-
-
-}
-
-
-class MirrorActivity extends Activity {
-
-	private Activity act;
-
-	public MirrorActivity(Activity act) {
-		this.act = act;
-	}
-
-	/**
-	 * earliest starting time
-	 */
-	public int getEST() {
-		return - act.getLCT();
-	}
-
-	/**
-	 * latest starting time
-	 */
-	public int getLST() {
-		return - act.getECT();
-	}
-
-	/**
-	 * earliest completion time assuming the smallest duration
-	 */
-	public int getECT() {
-		return - act.getLST();
-	}
-
-	/**
-	 * latest completion time assuming the smallest duration
-	 */
-	public int getLCT() {
-		return - act.getEST();
-	}
-
-	/**
-	 * current minimal duration of this activity
-	 */
-	public int getMinDuration() { 
-		return act.getMinDuration();
-	}
-
-
-	/**
-	 * current maximal duration of this activity
-	 */
-	public int getMaxDuration() { 
-		return act.getMaxDuration(); 
-	}
 }
 
 
@@ -669,7 +615,7 @@ class ActivityWrapper {
 		return index;
 	}
 
-	int getESTPos() {
+	int estPos() {
 		return est_pos;
 	}
 
@@ -681,14 +627,14 @@ class ActivityWrapper {
 
 class ESTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
-		return act0.getActivity().getEST()-act1.getActivity().getEST();
+		return act0.getActivity().est()-act1.getActivity().est();
 	}
 }
 
 class LCTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
-		int lct0 = act0.getActivity().getLCT();
-		int lct1 = act1.getActivity().getLCT();
+		int lct0 = act0.getActivity().lct();
+		int lct1 = act1.getActivity().lct();
 		if (act0.isOptional()) {
 			lct0 = Integer.MAX_VALUE;
 		}
@@ -701,12 +647,12 @@ class LCTComparator implements Comparator<ActivityWrapper> {
 
 class LSTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
-		return act0.getActivity().getLCT()-act1.getActivity().getLCT();
+		return act0.getActivity().lct()-act1.getActivity().lct();
 	}
 }
 
 class ECTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
-		return act0.getActivity().getECT()-act1.getActivity().getECT();
+		return act0.getActivity().ect()-act1.getActivity().ect();
 	}
 }

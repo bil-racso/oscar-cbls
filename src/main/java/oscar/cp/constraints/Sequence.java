@@ -46,7 +46,7 @@ public class Sequence extends Constraint {
 	 * @param max the maximal occurrences of values from set within a sequence.
 	 */
 	public Sequence(CPVarInt [] x, SetIndexedArray values, int l, int min, int max) {
-		super(x[0].getStore(),"Sequence");
+		super(x[0].s(),"Sequence");
 		assert (!(values.getSize() == 0));
 		assert(l >= x.length);
         assert(l > 0);
@@ -63,7 +63,10 @@ public class Sequence extends Constraint {
 	@Override
 	protected CPOutcome setup(CPPropagStrength cl) {
         // creates the bool vars and create the channeling constraints
-        x = CPVarBool.getArray(s,xinit.length);
+        x = new CPVarBool[xinit.length];
+        for (int i = 0; i < x.length; i++) {
+        	x[i] = CPVarBool.apply(s);
+        }
         for (int i = 0; i < x.length; i++) {
             if (s.post(new MemberReif(xinit[i],values,x[i])) == CPOutcome.Failure) {
                 return CPOutcome.Failure;

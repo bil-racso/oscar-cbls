@@ -29,7 +29,7 @@ import scala.math._
   http://www.hakank.org/oscar/
 
  */
-object SendMoreMoneyAnyBase extends CPModel {
+object SendMoreMoneyAnyBase {
 
  
   def main(args: Array[String]) {

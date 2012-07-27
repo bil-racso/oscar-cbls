@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestImplication extends FunSuite with ShouldMatchers with CPModel {
+class TestImplication extends FunSuite with ShouldMatchers  {
   
   
   test("=>1") {

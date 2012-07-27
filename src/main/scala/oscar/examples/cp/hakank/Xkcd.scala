@@ -35,7 +35,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object Xkcd extends CPModel {
+object Xkcd {
 
 
   def main(args: Array[String]) {

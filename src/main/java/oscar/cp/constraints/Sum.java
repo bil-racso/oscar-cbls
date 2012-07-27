@@ -31,7 +31,7 @@ public class Sum extends Constraint {
 	private CPVarInt y;
 
 	public Sum(CPVarInt [] x, CPVarInt y) {
-		super(x[0].getStore(),"Sum");
+		super(x[0].s(),"Sum");
 		this.x = x;
 		this.y = y;
 		setIdempotent();
@@ -43,7 +43,7 @@ public class Sum extends Constraint {
      * @param y
      */
 	public Sum(CPVarInt [] x, int y) {
-		this(x,new CPVarInt(x[0].getStore(),y,y));
+		this(x,CPVarInt.apply(x[0].s(),y,y));
 	}
 
 	@Override

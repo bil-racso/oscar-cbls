@@ -18,6 +18,7 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -30,7 +31,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object LeastDiff extends CPModel {
+object LeastDiff {
 
    def main(args: Array[String]) {
 

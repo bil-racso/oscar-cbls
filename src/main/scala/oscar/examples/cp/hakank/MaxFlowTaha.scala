@@ -35,7 +35,7 @@ import oscar.cp.core._
    http://www.hakank.org/oscar/
  
  */
-object MaxFlowTaha extends CPModel {
+object MaxFlowTaha {
 
 
   def main(args: Array[String]) {
@@ -114,7 +114,7 @@ object MaxFlowTaha extends CPModel {
       println("total: " + total)
       for(i <- NODES) {
         for(j <- NODES) {
-          print("%3d".format(x(i)(j).getValue()))
+          print("%3d".format(x(i)(j).value))
         }
         println()
       }

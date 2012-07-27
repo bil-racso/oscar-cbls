@@ -33,14 +33,14 @@ public class Disjunctive extends Constraint {
 	private Activity act2;
 
 	public Disjunctive(Activity act1, Activity act2) {
-		super(act1.getStart().getStore(),"Binary Disjunctive Activity");
+		super(act1.start().s(),"Binary Disjunctive Activity");
 		this.act1 = act1;
 		this.act2 = act2;
 	}
 	
 	private CPOutcome notOverlap(Activity act1, Activity act2) {
-        CPVarBool b1 = act2.getStart().isGrEq(act1.getEnd());
-        CPVarBool b2 = act1.getStart().isGrEq(act2.getEnd());
+        CPVarBool b1 = act2.start().isGrEq(act1.end());
+        CPVarBool b2 = act1.start().isGrEq(act2.end());
         if (s.post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
         }
@@ -50,10 +50,10 @@ public class Disjunctive extends Constraint {
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
 		
-		if (!act1.getStart().isBound()) act1.getStart().callPropagateWhenBoundsChange(this);
-		if (!act1.getDur().isBound()) act1.getDur().callPropagateWhenBoundsChange(this);
-		if (!act2.getStart().isBound()) act2.getStart().callPropagateWhenBoundsChange(this);
-		if (!act2.getDur().isBound()) act2.getDur().callPropagateWhenBoundsChange(this);
+		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this);
+		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this);
+		if (!act2.start().isBound()) act2.start().callPropagateWhenBoundsChange(this);
+		if (!act2.dur().isBound()) act2.dur().callPropagateWhenBoundsChange(this);
 		
 		
 		if (propagate() == CPOutcome.Failure) {
@@ -67,27 +67,27 @@ public class Disjunctive extends Constraint {
 	@Override
 	protected CPOutcome propagate() {
 		
-		if (act1.getECT() > act2.getLST()) { // act1 cannot precede act2, so act1 must come after act2
-			if (act1.getStart().updateMin(act2.getEnd().getMin()) == CPOutcome.Failure) {
+		if (act1.ect() > act2.lst()) { // act1 cannot precede act2, so act1 must come after act2
+			if (act1.start().updateMin(act2.end().getMin()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
-			if (act1.getStart().getMin() >= act2.getEnd().getMax()) {
+			if (act1.start().getMin() >= act2.end().getMax()) {
 				return CPOutcome.Success;
 			}
 		}
-		if (act2.getECT() > act1.getLST()) { // act1 cannot precede act2, so act1 must come after act2
-			if (act2.getStart().updateMin(act1.getEnd().getMin()) == CPOutcome.Failure) {
+		if (act2.ect() > act1.lst()) { // act1 cannot precede act2, so act1 must come after act2
+			if (act2.start().updateMin(act1.end().getMin()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
-			if (act2.getStart().getMin() >= act1.getEnd().getMax()) {
+			if (act2.start().getMin() >= act1.end().getMax()) {
 				return CPOutcome.Success;
 			}
 		}	
 		
 		
 		/*
-		if (act2.getECT() > act1.getLST()) { // act2 must come after act1
-			if (s.post(new GrEq(act2.getStart(), act1.getEnd())) == CPOutcome.Failure) {
+		if (act2.ect() > act1.lst()) { // act2 must come after act1
+			if (s.post(new GrEq(act2.start(), act1.end())) == CPOutcome.Failure) {
 				System.out.println("failure");
 				return CPOutcome.Failure;
 			}

@@ -64,7 +64,7 @@ class ReversibleSearchNode {
      *
      * @return  true if this node can surely not lead to any solution
      */
-	def isFailed(): Boolean = failed.getValue()
+	def isFailed(): Boolean = failed.value
 	
 
 	def fail() {

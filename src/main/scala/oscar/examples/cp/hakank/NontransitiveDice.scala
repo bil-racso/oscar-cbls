@@ -44,7 +44,7 @@ import scala.math._
  *
  */
 
-object NontransitiveDice extends CPModel {
+object NontransitiveDice {
 
   def main(args: Array[String]) {
 

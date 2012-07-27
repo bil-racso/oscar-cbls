@@ -48,7 +48,7 @@ import scala.collection.JavaConversions._
   http://www.hakank.org/oscar/
 
  */
-object ContiguityRegular extends CPModel {
+object ContiguityRegular {
 
 
   def MyContiguity(cp: CPSolver, x: Array[CPVarInt]) {

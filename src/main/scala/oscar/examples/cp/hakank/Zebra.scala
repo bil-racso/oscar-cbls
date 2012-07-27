@@ -55,7 +55,7 @@ import scala.math._
  
 */
 
-object Zebra extends CPModel {
+object Zebra {
 
   def main(args: Array[String]) {
 
@@ -154,8 +154,8 @@ object Zebra extends CPModel {
       val p  = Array(englishman, spaniard, japanese, ukrainian, norwegian)
       val ps = Array("englishman", "spaniard", "japanese", "ukrainian", "norwegian")
 
-      println("water drinker: " + ps((for{i <- 0 until n if p(i).getValue() == water.getValue()} yield i).head))
-      println("owns zebra: " + ps((for{i <- 0 until n if p(i).getValue() == zebra.getValue()} yield i).head))
+      println("water drinker: " + ps((for{i <- 0 until n if p(i).value == water.value} yield i).head))
+      println("owns zebra: " + ps((for{i <- 0 until n if p(i).value == zebra.value} yield i).head))
 
       numSols += 1
 

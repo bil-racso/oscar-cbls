@@ -69,7 +69,7 @@ import scala.math._
  
 */
 
-object Alphametic extends CPModel {
+object Alphametic {
 
   // 
   //  Sum of the words
@@ -152,7 +152,7 @@ object Alphametic extends CPModel {
       val sep = if (base == 10) "" else " ";
 
       // solution map
-      val sol = chars.zip(x.map(_.getValue())).toMap
+      val sol = chars.zip(x.map(_.value)).toMap
       sol.foreach(println)
       println()
 

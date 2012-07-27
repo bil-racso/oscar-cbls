@@ -56,7 +56,10 @@ public class TestQueens extends TestCase {
     public int testQueens(int n,CPPropagStrength strength){
         final Counter nbSol = new Counter();
     	Store cp = new Store();
-	    CPVarInt [] x = CPVarInt.getArray(cp,n,0,n-1);
+	    CPVarInt [] x = new CPVarInt[n];
+	    for (int i = 0; i < n; i++) {
+	    	x[i] = CPVarInt.apply(cp,0,n-1);
+	    }
 		CPVarInt [] dia1 = new CPVarInt[n];
 		CPVarInt [] dia2 = new CPVarInt[n];
 		for (int i = 0; i < n; i++) {

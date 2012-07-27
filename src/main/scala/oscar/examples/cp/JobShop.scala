@@ -20,7 +20,7 @@ package oscar.examples.cp
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
-import oscar.cp.scheduling._
+//import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
 
@@ -34,7 +34,8 @@ import scala.io.Source
  * The objective is to assign the starting time of each activity minimizing the total makespan and
  * such that no two activities from two different jobs requiring the same machine overlap.
  */
-object JobShop  extends CPModel {
+/*
+object JobShop  {
 	def main(args: Array[String]) {
 	  
 
@@ -94,15 +95,15 @@ object JobShop  extends CPModel {
 	   val makespanLine = new VisualLine(drawing,0,0,0,n*scale_y)
 	   def updateVisu() = {
 	     for (i <- 0 until n; j <- 0 until m) {	       
-	    	 visualAct(i)(j).move(activities(i)(j).act.getStart().getMin()*scale_x,scale_y*activities(i)(j).job)
+	    	 visualAct(i)(j).move(activities(i)(j).act.start.min*scale_x,scale_y*activities(i)(j).job)
 	     }
 	     for (i <- 0 until m; j <- 0 until activitiesMachine(i).size) {
 	        val act = activitiesMachine(i)(j)
-	        machineAct(i)(j).move(act.getStart().getMin()*scale_x,scale_y*i)
+	        machineAct(i)(j).move(act.start.min*scale_x,scale_y*i)
 	       
 	     }
-	     makespanLine.setOrig(makespan.getMin()*scale_x,0)
-	     makespanLine.setDest(makespan.getMin()*scale_x,n*scale_y)
+	     makespanLine.setOrig(makespan.min*scale_x,0)
+	     makespanLine.setDest(makespan.min*scale_x,n*scale_y)
 	   }
 	   
 	   // ---------------------------------------
@@ -129,7 +130,7 @@ object JobShop  extends CPModel {
 	       }
 	     }
 	     println("all ranked")
-	     val min = makespan.getMin()
+	     val min = makespan.min
 	     println("try min makespan:"+min)
 	     cp.binary(Array(makespan))
 	     println("makespan fixed to:"+min+" makespan:"+makespan)
@@ -142,3 +143,4 @@ object JobShop  extends CPModel {
        cp.printStats()
     }
 }
+*/

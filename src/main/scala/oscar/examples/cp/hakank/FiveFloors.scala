@@ -42,7 +42,7 @@ import oscar.cp.core._
  
  */
 
-object FiveFloors extends CPModel {
+object FiveFloors {
 
 
   def main(args: Array[String]) {

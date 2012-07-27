@@ -67,7 +67,7 @@ import scala.math._
  
 */
 
-object EinavPuzzle extends CPModel {
+object EinavPuzzle {
 
   def main(args: Array[String]) {
 
@@ -166,7 +166,7 @@ object EinavPuzzle extends CPModel {
       
       for(i <- ROWS) {
         for(j <- COLS) {
-          print("%3d".format(x(i)(j).getValue()))
+          print("%3d".format(x(i)(j).value))
         }
         println()
       }

@@ -59,7 +59,7 @@ class IDSSearchController(node: ReversibleSearchNode, val maxDiscrepency: Int) e
   override def fail() {
     super.fail()
     discr.incr() // increment the number of discrepancy
-    if (inDFS.getValue() &&  discr.getValue() > maxDiscr) {
+    if (inDFS.value &&  discr.value > maxDiscr) {
       node.fail()
     }
   }

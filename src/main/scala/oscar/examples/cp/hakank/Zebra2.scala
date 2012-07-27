@@ -60,7 +60,7 @@ import scala.math._
  
 */
 
-object Zebra2 extends CPModel {
+object Zebra2 {
 
   def main(args: Array[String]) {
 
@@ -130,9 +130,9 @@ object Zebra2 extends CPModel {
       println("\nSolution:")
       val ns = Array("englishman", "spaniard", "japanese", "ukrainian", "norwegian")
       println("water drinker: " + 
-              ns((for{i <- 0 until n if nationality(i).getValue() == water.getValue()} yield i).head))
+              ns((for{i <- 0 until n if nationality(i).value == water.value} yield i).head))
       println("owns zebra: " + 
-              ns((for{i <- 0 until n if nationality(i).getValue() == zebra.getValue()} yield i).head))
+              ns((for{i <- 0 until n if nationality(i).value == zebra.value} yield i).head))
 
       numSols += 1
 

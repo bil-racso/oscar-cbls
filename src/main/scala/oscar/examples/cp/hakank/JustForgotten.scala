@@ -50,7 +50,7 @@ import scala.math._
  
 */
 
-object JustForgotten extends CPModel {
+object JustForgotten {
 
   def main(args: Array[String]) {
 
@@ -96,7 +96,7 @@ object JustForgotten extends CPModel {
       for(i <- 0 until rows) {
         for(j <- 0 until cols) {
           var c = " ";
-          if (a(i)(j) == x(j).getValue()) {
+          if (a(i)(j) == x(j).value) {
             c = "!";
           }
           print(a(i)(j) + c + " ")

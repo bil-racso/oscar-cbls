@@ -34,7 +34,7 @@ import scala.math._
  * http://www.hakank.org/oscar/
  *
  */
-object Sudoku2 extends CPModel {
+object Sudoku2 {
 
   def main(args: Array[String]) {
 

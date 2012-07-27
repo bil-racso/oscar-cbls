@@ -26,7 +26,7 @@ import scala.collection.mutable.Map
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ElectricityMarket extends CPModel {
+object ElectricityMarket {
 	def main(args: Array[String]) {
 	  
 	  val cp = CPSolver()
@@ -41,7 +41,7 @@ object ElectricityMarket extends CPModel {
 	    def energy = qty.abs * (end - start + 1)
 	    def overlap(t : Int) = t <= end && t >= start
 	    var sol = true
-	    def bound = selected.isBound()
+	    def bound = selected.isBound
 
 	  }
 	  

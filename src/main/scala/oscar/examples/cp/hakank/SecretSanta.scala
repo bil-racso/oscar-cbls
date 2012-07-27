@@ -64,7 +64,7 @@ import scala.math._
  
 */
 
-object SecretSanta extends CPModel {
+object SecretSanta {
 
 
   def main(args: Array[String]) {
@@ -118,7 +118,7 @@ object SecretSanta extends CPModel {
 
       println("x: " + x.mkString(""))
       for(i <- 0 until n) {
-        println("Person " + i + " (family " + family(i) + ") is a Secret Santa of" + x(i) + " (family " + family(x(i).getValue()) + ")")
+        println("Person " + i + " (family " + family(i) + ") is a Secret Santa of" + x(i) + " (family " + family(x(i).value) + ")")
       }
 
       numSols += 1

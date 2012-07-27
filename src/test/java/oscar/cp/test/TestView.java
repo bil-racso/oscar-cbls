@@ -58,8 +58,8 @@ public class TestView extends TestCase {
     }
     
     public void testView(){  	
-    	CPVarInt x = new CPVarInt(s,1,5,"x");
-    	CPVarInt y = new CPVarInt(s,1,5);
+    	CPVarInt x = CPVarInt.apply(s,1,5);
+    	CPVarInt y = CPVarInt.apply(s,1,5);
         System.out.println(x);
 
         CPVarBool b = new CPVarBool(s);

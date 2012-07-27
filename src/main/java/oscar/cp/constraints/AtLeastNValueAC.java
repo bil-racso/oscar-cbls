@@ -63,7 +63,7 @@ public class AtLeastNValueAC extends Constraint {
 	
 	
 	public AtLeastNValueAC(CPVarInt [] x, CPVarInt nval) {
-		super(x[0].getStore(),"AtLeastNValueAC");
+		super(x[0].s(),"AtLeastNValueAC");
 		this.x = x;
 		this.posted = false;
 		this.nValueVar = nval;

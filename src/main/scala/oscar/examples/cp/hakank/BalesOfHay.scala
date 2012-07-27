@@ -47,7 +47,7 @@ import scala.math._
  
 */
 
-object BalesOfHay extends CPModel {
+object BalesOfHay {
 
   // Decomposition of increasing
   def increasing(cp: CPSolver, y: Array[CPVarInt]) = {

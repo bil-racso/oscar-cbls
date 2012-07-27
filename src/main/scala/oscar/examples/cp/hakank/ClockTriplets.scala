@@ -51,7 +51,7 @@ import scala.math._
  
 */
 
-object ClockTriplets extends CPModel {
+object ClockTriplets {
 
 
   def main(args: Array[String]) {

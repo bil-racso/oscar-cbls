@@ -70,7 +70,7 @@ import scala.math._
  
 */
 
-object SecretSanta2 extends CPModel {
+object SecretSanta2 {
 
   def main(args: Array[String]) {
 
@@ -208,8 +208,8 @@ object SecretSanta2 extends CPModel {
       println("santa_distance: " + santa_distance.mkString(""))
       for(i <- RANGE) {
         println(persons(i) + " is a Santa to " +
-                persons(santas(i).getValue()) + " (distance " +
-                santa_distance(i).getValue() + ")") 
+                persons(santas(i).value) + " (distance " +
+                santa_distance(i).value + ")") 
       }
       println()
 

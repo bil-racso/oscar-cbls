@@ -42,7 +42,7 @@ import scala.math._
  
 */
 
-object PMedian extends CPModel {
+object PMedian {
 
   def main(args: Array[String]) {
 

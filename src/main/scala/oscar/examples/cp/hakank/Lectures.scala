@@ -51,7 +51,7 @@ import scala.math._
  
 */
 
-object Lectures extends CPModel {
+object Lectures {
 
   def main(args: Array[String]) {
 

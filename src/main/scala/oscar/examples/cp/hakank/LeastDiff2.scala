@@ -33,7 +33,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object LeastDiff2 extends CPModel {
+object LeastDiff2 {
 
    def main(args: Array[String]) {
 

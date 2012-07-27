@@ -43,7 +43,7 @@ import scala.math._
  
 */
 
-object PlaceNumberPuzzle extends CPModel {
+object PlaceNumberPuzzle {
 
   def main(args: Array[String]) {
 

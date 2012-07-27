@@ -52,7 +52,7 @@ import scala.math._
  
 */
 
-object Strimko extends CPModel {
+object Strimko {
 
   def main(args: Array[String]) {
 

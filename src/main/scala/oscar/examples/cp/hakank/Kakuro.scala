@@ -60,7 +60,7 @@ import scala.math._
  
 */
 
-object Kakuro extends CPModel {
+object Kakuro {
 
 
   /**
@@ -182,7 +182,7 @@ object Kakuro extends CPModel {
 
       for(i <- 0 until n) {
         for(j <- 0 until n) {
-          val v = x(i)(j).getValue()
+          val v = x(i)(j).value
           if (v > 0) {
             print(v + " ")
           } else {

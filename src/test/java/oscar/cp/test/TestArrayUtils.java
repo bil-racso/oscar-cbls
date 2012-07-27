@@ -15,7 +15,8 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.cp.test;
-import oscar.cp.core.CPVarInt;
+
+import oscar.cp.core.*;
 import oscar.cp.core.Store;
 import oscar.cp.util.ArrayUtils;
 
@@ -57,11 +58,11 @@ public class TestArrayUtils extends TestCase {
             assertTrue( vals1[i] <= vals1[i+1]);
         }
     }
-    
+    /*
     public void testGetRandomVar1() {
     	Store cp = new Store();
     	int [] freq = new int[5]; 
-        CPVarInt [] x = new CPVarInt[]{new CPVarInt(cp,0,1,2,3),new CPVarInt(cp,2),new CPVarInt(cp,0,1,2,3),new CPVarInt(cp,3),new CPVarInt(cp,1,3,9)};
+        CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,3),CPVarInt.apply(cp,1,3,9)};
         for (int i = 0; i < 600; i++) {
         	freq[ArrayUtils.getRandomNotBound(x)]++;
         }
@@ -75,9 +76,10 @@ public class TestArrayUtils extends TestCase {
     public void testGetRandomVar2() {
     	Store cp = new Store();
     	int [] freq = new int[5]; 
-        CPVarInt [] x = new CPVarInt[]{new CPVarInt(cp,3),new CPVarInt(cp,2),new CPVarInt(cp,2),new CPVarInt(cp,3),new CPVarInt(cp,9)};
+        CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,2),CPVarInt.apply(cp,3),CPVarInt.apply(cp,9)};
         
         assertTrue(ArrayUtils.getRandomNotBound(x) ==  -1);     
     }
+    */
 
 }

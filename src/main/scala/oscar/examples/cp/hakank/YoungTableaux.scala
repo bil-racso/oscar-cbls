@@ -58,7 +58,7 @@ import scala.math._
  http://www.hakank.org/oscar/
  
 */
-object YoungTableaux extends CPModel {
+object YoungTableaux {
 
   def main(args: Array[String]) {
 
@@ -134,7 +134,7 @@ object YoungTableaux extends CPModel {
       for(i <- 0 until n) {
         var c = 0 // number of non-empty items
         for(j <- 0 until n) {
-          val v = x(i)(j).getValue()
+          val v = x(i)(j).value
           if (v <= n) {
             print(v + " ")
             c += 1

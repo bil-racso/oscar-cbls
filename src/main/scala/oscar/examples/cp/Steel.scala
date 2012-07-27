@@ -19,11 +19,14 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
+import oscar.visual._
+
 import scala.collection.JavaConversions._
 import scala.io.Source
 import scala.util.Random
+
 import java.lang._
-import oscar.visual._
 import java.awt.Color
 
 
@@ -42,7 +45,7 @@ import java.awt.Color
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Steel extends CPModel{
+object Steel {
 
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
@@ -119,11 +122,11 @@ object Steel extends CPModel{
 			}
 		} exploration {
 		  while (!allBounds(x)) {
-		    val bound = x.filter(_.isBound())
-		    val maxUsedSlab = if (bound.isEmpty) -1 else bound.map(_.getValue()).max
+		    val bound = x.filter(_.isBound)
+		    val maxUsedSlab = if (bound.isEmpty) -1 else bound.map(_.value).max
 		    //delta on the loss if you place order o in slab s
 		    val (y,o) = minDomNotbound(x).first // retrieve the var and its index in x with smallest domain
-		    val v = y.getMin()
+		    val v = y.min
 		    if (v > maxUsedSlab) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
 		      cp.branchOne(cp.post(y == v))
 		    }
@@ -133,9 +136,9 @@ object Steel extends CPModel{
 		  }
 		  
 		  println("failed:"+cp.isFailed())
-		  Slabs.foreach(o => {xsol(o) = x(o).getValue
+		  Slabs.foreach(o => {xsol(o) = x(o).value
 		                     items(o).setBin(xsol(o))})
-		  plot.addPoint(nbSol,obj.getValue())                   
+		  plot.addPoint(nbSol,obj.value)                   
 		  nbSol += 1
 		  println("sol #fail:"+cp.sc.nbFail)
 		}

@@ -31,7 +31,7 @@ import oscar.cp.modeling._
  * 
  * @author Pierre Schaus (pschaus@gmail.com)
  */
-class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint(x(0).getStore(), "TableAC5TCRecomp") {
+class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint(x(0).s, "TableAC5TCRecomp") {
   
   def this(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]) = {
    this(new TableData(2),x1,x2)
@@ -68,7 +68,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
 	
 	for ((y,i) <- x.zipWithIndex) {
 	  if (!filterAndInitSupport(i)) return CPOutcome.Failure
-	  if (!y.isBound()) {
+	  if (!y.isBound) {
 	    y.callValRemoveIdxWhenValueIsRemoved(this,i);
 	  }
 	}
@@ -80,7 +80,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
       return false
     }
     support(i) = Array.fill(data.max(i)- data.min(i) + 1)(new ReversibleInt(s,-1))
-    for (v <- x(i).getMin() to x(i).getMax(); if (x(i).hasValue(v))) {
+    for (v <- x(i).min to x(i).max; if (x(i).hasValue(v))) {
       if (data.hasFirstSupport(i,v)) {
         if (!updateAndSeekNextSupport(i, data.firstSupport(i,v), v)) { return false }
       } else {

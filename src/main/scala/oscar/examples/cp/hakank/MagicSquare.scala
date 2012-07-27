@@ -30,7 +30,7 @@ import scala.math._
   http://www.hakank.org/oscar/
 
  */
-object MagicSquare extends CPModel {
+object MagicSquare {
 
  
   def main(args: Array[String]) {

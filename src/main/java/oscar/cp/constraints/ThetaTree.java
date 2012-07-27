@@ -58,8 +58,8 @@ public class ThetaTree {
 		int curr_pos = isize + pos; 
 		Node node = nodes[curr_pos];
 		node.setActivity(act);
-		node.setECT(act.getECT());
-		node.setSUMP(act.getMinDuration());
+		node.setECT(act.ect());
+		node.setSUMP(act.minDuration());
 		reCompute(getFather(curr_pos));
 	}
 
@@ -70,12 +70,12 @@ public class ThetaTree {
 		reCompute(getFather(curr_pos));
 	}
 
-	public int getECT(int pos) {
-		return nodes[pos].getECT();
+	public int ect(int pos) {
+		return nodes[pos].ect();
 	}
 
-	public int getECT() {
-		return getECT(0);
+	public int ect() {
+		return ect(0);
 	}
 	
 	int getSUMP(int pos) { 
@@ -106,8 +106,8 @@ public class ThetaTree {
 		int pr = getSUMP(getRight(pos));
 		nodes[pos].setECT(pl + pr);
 
-		int el = getECT(getLeft(pos));
-		int er = getECT(getRight(pos));
+		int el = ect(getLeft(pos));
+		int er = ect(getRight(pos));
 		int en = Math.max(er, el + pr);
 		nodes[pos].setECT(en);
 	}
@@ -119,8 +119,8 @@ public class ThetaTree {
 			pos = getFather(pos);
 		}
 		// Fast recompute the top node. We do not need all info.
-		nodes[0].setECT(Math.max(nodes[2].getECT(),
-				nodes[1].getECT() + nodes[2].getSUMP()));
+		nodes[0].setECT(Math.max(nodes[2].ect(),
+				nodes[1].ect() + nodes[2].getSUMP()));
 	}
 
 
@@ -150,7 +150,7 @@ class Node {
 		return act;
 	}
 
-	public int getECT() {
+	public int ect() {
 		return ect;
 	}
 

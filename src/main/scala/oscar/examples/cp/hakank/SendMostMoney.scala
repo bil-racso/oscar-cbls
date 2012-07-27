@@ -18,6 +18,7 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -30,7 +31,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object SendMostMoney extends CPModel {
+object SendMostMoney {
 
    def main(args: Array[String]) {
      val money = send_most_money(0)
@@ -97,7 +98,7 @@ object SendMostMoney extends CPModel {
 
            println(all.mkString(""))
            println("Money: " + Money)
-           this_money = Money.getValue()
+           this_money = Money.value
         }
 
       }

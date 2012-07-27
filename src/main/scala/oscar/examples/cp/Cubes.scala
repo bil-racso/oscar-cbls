@@ -19,6 +19,7 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 import collection.immutable.SortedSet
 
 /*
@@ -28,7 +29,7 @@ import collection.immutable.SortedSet
  * Assign the 24 letters appearing to 4 different cubes (one letter/face) so that the 4 letters of each word appears on different cubes.
  */
 
-object Cubes extends CPModel {
+object Cubes {
 
   def main(args: Array[String]): Unit =
   {
@@ -59,7 +60,7 @@ object Cubes extends CPModel {
       for (cube <- 0 until numCubes) { // Printing the letters placed on each cube
         println("Cube "+cube+" : "+
             placement.zipWithIndex.map {
-              case (v,i) => if (v.getValue()==cube) letters(i) else "."}.mkString(" "))
+              case (v,i) => if (v.value == cube) letters(i) else "."}.mkString(" "))
       }
     }
     

@@ -30,7 +30,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object MapColoring3 extends CPModel {
+object MapColoring3 {
 
 
   def main(args: Array[String]) {

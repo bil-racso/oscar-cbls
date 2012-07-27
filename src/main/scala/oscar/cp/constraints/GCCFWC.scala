@@ -35,10 +35,10 @@ import oscar.cp.modeling._
  *
  * @author Pierre Schaus pschaus@gmail.com and Bertrand Cornelusse bcr@n-side.com
  */
-class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).getStore(), "GCCFWC") {
+class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).s, "GCCFWC") {
 
-  val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(X(0).getStore, 0))
-  val nbVarWithValue = Array.tabulate(low.size)(i => new ReversibleInt(X(0).getStore, 0))
+  val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))
+  val nbVarWithValue = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))
   val constrainedValues = minVal until minVal + low.length toArray
 
   /**
@@ -59,7 +59,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
 
     outcome = propagate()
     if (outcome == CPOutcome.Suspend) {
-      for (i <- 0 until X.length; if (!X(i).isBound())) {
+      for (i <- 0 until X.length; if (!X(i).isBound)) {
         X(i).callPropagateWhenDomainChanges(this);
         //X(i).callValBindWhenBind(this);
         //X(i).callValRemoveWhenValueIsRemoved(this);
@@ -70,10 +70,10 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
   }
   
   override def valBind(x:CPVarInt): CPOutcome = {
-    val idx = x.getValue() - minVal
+    val idx = x.min - minVal
     if (idx >= 0 && idx < low.size) {
       nbBound(idx).incr()
-      if (nbBound(idx).getValue() == up(idx)) {
+      if (nbBound(idx).value == up(idx)) {
         //remove this value from other domains
       }
     }
@@ -114,7 +114,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
         // i is the index of the value to process
 
         val candidates = X2 filter (_.hasValue(constrainedValues(i))) toSet
-        val boundCandidates = candidates filter (x => x.isBound())
+        val boundCandidates = candidates filter (x => x.isBound)
 
         if (candidates.size < low(i)) {
           // Not enough candidates to satisfy ith cardinality constraint
@@ -149,7 +149,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     // Check overall feasibility after potential changes
 
     // Subset of X2 such that each variable has some values out of the set of cardinality constrained values 
-    val X3 = X2 filter (x => x.getMin() < constrainedValues.first || x.getMax() > constrainedValues.last)
+    val X3 = X2 filter (x => x.min < constrainedValues.first || x.max > constrainedValues.last)
     if (low.sum > X2.size) {
       // DEBUG
       println("Too few variables to satisfy the lower bounds of CC")
@@ -184,7 +184,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     indexes.isEmpty match {
       case false =>
         val i = indexes.head
-        val histogram = X count (_.getValue() == constrainedValues(i))
+        val histogram = X count (_.min == constrainedValues(i))
         val outcome = (histogram >= low(i) && histogram <= up(i))
         // DEBUG 
         if (!outcome) { println("" + low(i) + "<?>" + histogram + "<?>" + up(i)) }
@@ -215,7 +215,7 @@ object GCCFWC {
 //    } exploration {
 //      cp.binaryFirstFail(GCC.getX)
 //      println(GCC)
-//      println((GCC.getX map (_.getValue())).mkString(";"))
+//      println((GCC.getX map (_.value)).mkString(";"))
 //      GCC.check()
 //      nbSol += 1
 //    }

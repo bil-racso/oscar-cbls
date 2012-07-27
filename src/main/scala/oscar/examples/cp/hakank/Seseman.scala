@@ -18,6 +18,7 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -57,7 +58,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object Seseman extends CPModel {
+object Seseman {
 
    def main(args: Array[String]) {
 

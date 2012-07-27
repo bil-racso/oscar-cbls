@@ -51,7 +51,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
  
  */
-object SkiAssignment extends CPModel {
+object SkiAssignment {
 
 
   def main(args: Array[String]) {

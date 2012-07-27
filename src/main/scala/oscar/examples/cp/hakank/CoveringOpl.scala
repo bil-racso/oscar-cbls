@@ -32,7 +32,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object CoveringOpl extends CPModel {
+object CoveringOpl {
 
   def main(args: Array[String]) {
 
@@ -96,7 +96,7 @@ object CoveringOpl extends CPModel {
 
       println("\nSolution:")
       println("total_cost: " + total_cost)
-      println("hire: " + hire.zipWithIndex.filter(_._1.getValue() == 1).map(_._2).mkString(" "))
+      println("hire: " + hire.zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(" "))
 
       numSols += 1
 

@@ -40,7 +40,7 @@ public class MulCteRes extends Constraint {
      * @see CPVarInt#mul(cp.core.CPVarInt)
      */
 	public MulCteRes(CPVarInt x, CPVarInt y, int c) {
-		super(x.getStore(),"MulCteRes x*y=c");
+		super(x.s(),"MulCteRes x*y=c");
 		this.x = x;
 		this.y = y;
 		this.c = c;
@@ -50,7 +50,7 @@ public class MulCteRes extends Constraint {
 	protected CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s.post(new Square(x,new CPVarInt(s, c,c))) == CPOutcome.Failure) {
+			if (s.post(new Square(x,CPVarInt.apply(s,c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -84,12 +84,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s.post(new MulCte(y,x.getValue(),new CPVarInt(s, c,c))) == CPOutcome.Failure) {
+			if (s.post(new MulCte(y,x.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s.post(new MulCte(x,y.getValue(),new CPVarInt(s, c,c))) == CPOutcome.Failure) {
+			if (s.post(new MulCte(x,y.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -139,7 +139,7 @@ public class MulCteRes extends Constraint {
 			}
 			return CPOutcome.Suspend;
 		} else if (a == 0) {
-			int after0 = w.getValueAfter(0);
+			int after0 = w.valueAfter(0);
 			// a=0 ... after0 ... b
 			if (z.updateMin(NumberUtils.minCeilDiv(c,after0,b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -149,7 +149,7 @@ public class MulCteRes extends Constraint {
 			}
 			return CPOutcome.Suspend;
 		} else if (b == 0) {
-			int before0 = w.getValueBefore(0);
+			int before0 = w.valueBefore(0);
 			// a ... before0 ... b=0
 			if (z.updateMin(NumberUtils.minCeilDiv(c,before0,a)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -159,8 +159,8 @@ public class MulCteRes extends Constraint {
 			}
 			return CPOutcome.Suspend;
 		} else { // a ... 0 ... b
-			int before0 = w.getValueBefore(0);
-			int after0 = w.getValueAfter(0);
+			int before0 = w.valueBefore(0);
+			int after0 = w.valueAfter(0);
 			if (z.updateMin(NumberUtils.minCeilDiv(c, a, before0, after0, b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

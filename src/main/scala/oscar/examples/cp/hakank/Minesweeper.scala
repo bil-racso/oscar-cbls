@@ -61,7 +61,7 @@ import scala.io.Source._
  * http://www.hakank.org/oscar/
  *
  */
-object Minesweeper extends CPModel {
+object Minesweeper {
 
 
   def main(args: Array[String]) {

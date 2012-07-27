@@ -52,7 +52,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object AllIntervals extends CPModel {
+object AllIntervals {
 
   def main(args: Array[String]) {
 

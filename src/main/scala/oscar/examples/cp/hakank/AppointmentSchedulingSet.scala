@@ -93,7 +93,7 @@ import java.util.Random
  
 */
 
-object AppointmentSchedulingSet extends CPModel {
+object AppointmentSchedulingSet {
 
   def main(args: Array[String]) {
 

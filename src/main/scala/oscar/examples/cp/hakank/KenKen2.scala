@@ -64,7 +64,7 @@ import scala.math._
  *
  */
 
-object KenKen2 extends CPModel {
+object KenKen2 {
 
 
   /**

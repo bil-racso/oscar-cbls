@@ -35,7 +35,7 @@ import scala.math._
  
 */
 
-object FurnitureMoving extends CPModel {
+object FurnitureMoving {
 
   // Thanks Pierre Schaus for help with this decomposition of cumulative.
   def myCumulative(cp: CPSolver,
@@ -49,9 +49,9 @@ object FurnitureMoving extends CPModel {
       if (r(i) > 0 && d(i) > 0)
         } yield i
 
-    val times_min = tasks.map(i => s(i).getMin()).min
+    val times_min = tasks.map(i => s(i).min).min
     val d_max = d.max
-    val times_max = tasks.map(i => s(i).getMax() + d_max).min
+    val times_max = tasks.map(i => s(i).max + d_max).min
             
     for(t <- times_min to times_max) {
       cp.add(sum(tasks)(i => ((s(i) <<= t) && (s(i)+d(i) >>= t)) * r(i) ) <= b)

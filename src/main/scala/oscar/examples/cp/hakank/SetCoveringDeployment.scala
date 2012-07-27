@@ -43,7 +43,7 @@ import scala.math._
  
 */
 
-object SetCoveringDeployment extends CPModel {
+object SetCoveringDeployment {
 
   def main(args: Array[String]) {
 
@@ -129,12 +129,12 @@ object SetCoveringDeployment extends CPModel {
       println("y: " + y.mkString(""))
       for(i <- 0 until n) {
         var some_army = false
-        if (x(i).getValue() == 1) {
+        if (x(i).value == 1) {
           print("Army: " + countries(i) + " ")
           some_army = true
         }
 
-        if (y(i).getValue() == 1) {
+        if (y(i).value == 1) {
           print(" Reserve army: " + countries(i) + " ")
           some_army = true
         }

@@ -59,7 +59,7 @@ public class TestGrAbs extends TestCase {
     public void testGrAbs(){  	
     	CPVarInt [] x = new CPVarInt[2];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,1,256);
+			x[i] = CPVarInt.apply(s,1,256);
 		}
     	
     	s.post(new GrEq((x[0].minus(x[1])).abs(),0));

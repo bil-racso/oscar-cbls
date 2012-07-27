@@ -36,7 +36,7 @@ import scala.math._
  
 */
 
-object CombinatorialAuction extends CPModel {
+object CombinatorialAuction {
 
   def main(args: Array[String]) {
 

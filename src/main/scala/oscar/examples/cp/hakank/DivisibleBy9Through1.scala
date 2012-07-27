@@ -54,7 +54,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object DivisibleBy9Through1 extends CPModel {
+object DivisibleBy9Through1 {
 
   def main(args: Array[String]) {
 
@@ -107,7 +107,7 @@ object DivisibleBy9Through1 extends CPModel {
       println("\nSolution:")
       println("digits:" +  digits.mkString(""))
       print("number base 10:" +  numbers.last +  " Base " + base + ": " + 
-            digits.map(_.getValue()).mkString(""))
+            digits.map(_.value).mkString(""))
       println()
 
       numSols += 1

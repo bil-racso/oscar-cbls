@@ -43,7 +43,7 @@ import scala.math._
  
 */
 
-object Futoshiki extends CPModel {
+object Futoshiki {
 
   def main(args: Array[String]) {
 

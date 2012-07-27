@@ -40,7 +40,7 @@ public class GrEqVarReif extends Constraint {
      * @param b
      */
 	public GrEqVarReif(CPVarInt x, CPVarInt y, CPVarBool b) {
-		super(x.getStore(),"GrEqVarReif");
+		super(x.s(),"GrEqVarReif");
 		this.x = x;
 		this.y = y;
 		this.b = b;

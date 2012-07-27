@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers with CPModel {
+class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
 
 
   test("TableAC5 Test 1") {
@@ -39,8 +39,8 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers with CPModel {
     
     cp.post(new TableAC5TCRecomp(x(0),x(1),x(2),tuples))
     	
-    x(0).isBound() should be(true)
-    x(0).getValue() should be(1)
+    x(0).isBound should be(true)
+    x(0).value should be(1)
     x(2).hasValue(2) should be (false)
     
     println(x.mkString(","))
@@ -49,8 +49,8 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers with CPModel {
     println(x.mkString(","))
     
     cp.getStatus() should not be === (CPOutcome.Failure)
-    x(1).getValue() should be(1)
-    x(2).getValue() should be(1)
+    x(1).value should be(1)
+    x(2).value should be(1)
 
   }
   
@@ -65,16 +65,15 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers with CPModel {
     val tuples = (for (i <- 0 until 5; j <- i+1 until 5) yield (i,j,i*4+j-1)).toArray
     cp.post(new TableAC5TCRecomp(x,y,z,tuples))
     cp.post(z == 0)
-    x.getValue() should be(0)
-    y.getValue() should be(1)
-    z.getValue() should be(0)
+    x.value should be(0)
+    y.value should be(1)
+    z.value should be(0)
 
   }
   
   test("TableAC5 Test 3") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPVarInt(cp, 1 to 7))
-    
     val tuples = Array((1,1,1),(1,2,3),(1,2,7),(2,1,4))
     
 

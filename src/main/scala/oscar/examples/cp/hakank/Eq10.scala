@@ -33,7 +33,7 @@ import scala.math._
  
 */
 
-object Eq10 extends CPModel {
+object Eq10 {
 
 
   def main(args: Array[String]) {
