@@ -79,7 +79,26 @@ object ABCEndview extends CPModel {
         val col_left   = in_col_left
         val col_right  = in_col_right
         val name       = in_name
-          }
+
+        val letters = "_ABCDEF".split("")
+
+        def presLine(a: Array[Int]) = 
+          (for(i <- 0 until n) 
+            yield letters(a(i)+1)
+           ) mkString(" ")
+
+
+        override def toString =
+          "problem   : " + name       + "\n" +
+          "n         : " + n          + "\n" + 
+          "max_letter: " + max_letter + "\n" +
+          "row_upper : " + presLine(row_upper) + "\n" +
+          "row_lower : " + presLine(row_lower) + "\n" +
+          "col_left  : " + presLine(col_left)  + "\n" +
+          "col_right : " + presLine(col_right) + "\n"
+
+          
+    }
 
 
     //
@@ -106,7 +125,7 @@ object ABCEndview extends CPModel {
         val i = CPVarInt(cp, n-d until n)
         cp.add(element(a,i) == c)
         for(j <- 0 until n) {
-          cp.add((i <<= j) ==>  (a(j) === 0))
+          cp.add((i <<= j) ==> (a(j) === 0))
         }
       }
     }
@@ -226,11 +245,26 @@ object ABCEndview extends CPModel {
                                  Array(0,0,b,b,0),
                                  "problem9")
 
+      // http://www.janko.at/Raetsel/AbcEndView/209.a.htm
+      // ABC End View Nr. 209
+      // (7x7)
+      // (Difficulty 8, "schwer")
+
+      val problem10 = new Problem(7,
+                                  e,
+                                  Array(a,0,b,0,0,c,b),
+                                  Array(0,a,0,b,b,d,0),
+                                  Array(a,c,a,0,e,0,e),
+                                  Array(0,d,0,c,0,e,0),
+                                  "problem10")
+        
+
 
       // all problems
       val problems = Array(problem1,problem2,problem3,problem4,
                            problem5,problem6,problem7,problem8,
-                           problem9)
+                           problem9,problem10)
+
 
 
       if (args.length > 0) {
@@ -257,7 +291,8 @@ object ABCEndview extends CPModel {
       // data
       //     
       val a = 1; val b = 2; val c = 3; val d = 4; val e = 5;
-      val str = Array("_","A","B","C","D","E")
+      val str = "_ABCDEF".split("")
+      println("str: " + str.mkString(""))
 
 
       val n          = problem.n
@@ -268,7 +303,7 @@ object ABCEndview extends CPModel {
       val col_right  = problem.col_right
       val problem_name = problem.name
  
-      println("\nSolving " + problem_name)
+      println("\nSolving " + problem)
 
 
       // derived 
@@ -355,18 +390,25 @@ object ABCEndview extends CPModel {
 
         println("Solution:")
         for(i <- RANGE) {
+          println(x(i).mkString(""))
+        }
+        println()
+
+        for(i <- RANGE) {
           for(j <- RANGE) {
-            print(str(x(i)(j).getValue()) + " ")
+            print(str(1+x(i)(j).getValue()) + " ")
           }
           println()
         }
         println()
           
+        numSols +=1
 
-      }
-      
-      println()
-      cp.printStats()
+     }
+ 
+     
+     println("\nIt was " + numSols + " solution(s).")
+     cp.printStats()
 
   }
 
