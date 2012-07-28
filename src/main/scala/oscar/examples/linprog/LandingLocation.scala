@@ -19,6 +19,7 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 import scala.io.Source
 
 /**
@@ -33,7 +34,7 @@ import scala.io.Source
  * 
  * @author Bertrand Cornelusse
  */
-object LandingLocation extends MIPModel {
+object LandingLocation {
 
   def main(args: Array[String]) { 
   	

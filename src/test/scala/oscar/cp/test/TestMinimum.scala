@@ -63,8 +63,28 @@ class TestMinimum extends FunSuite with ShouldMatchers with CPModel {
     for (w <- x) {
       w.getMin() should be(2)
     }
-
-
   } 
+  
+  test("Minimum3") {
+    val cp = CPSolver()
+    
+    var x = Array.fill(3)(CPVarInt(cp, 1 to 3))
+    
+    var y = CPVarInt(cp, 0 to 6)
+   
+    cp.add(minimum(x) == y)
+    
+    cp.add(y >= 2)
+    
+    cp.add(x(0) >= 3)
+    cp.add(x(1) >= 3)
+    
+    y.getMin() should be (2)
+    
+    
+    cp.add(x(2) >= 3)
+    
+    y.getValue() should be (3)
+  }   
 
 }

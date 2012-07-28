@@ -169,19 +169,17 @@ abstract class AbstractLP {
 
 
 /**
- * Trait used for the modeling of single objective minimization using DFO
+ * Trait used for the modeling of single objective minimization using LP-MIP
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-trait AbstractLPModel extends Algebra {
 
-
-	/**
-	 * Defines an Float unbounded variable in the LP solver with domain:
-	 * [0,+inf] is unbounded = true, 
-	 * [-inf,+inf] otherwise
-	 */
-  class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
+/**
+ * Defines an Float unbounded variable in the LP solver with domain:
+ * [0,+inf] is unbounded = true, 
+ * [-inf,+inf] otherwise
+ */
+class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
     
 	// do not swap next two lines
 	val index = solver.register(this)
@@ -246,27 +244,26 @@ trait AbstractLPModel extends Algebra {
      */
     def getName() : String = name    
 
-  }
+}
 
-  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
-    val e = cstr.linExpr.coef.toList
- 	val coef : Array[Double] = e.map(_._2).toArray
-	val varIds : Array[Int] =  e.map(_._1.index).toArray
-    var rhs : Double = -cstr.linExpr.cte // value of the constant (minus because it goes from lhs to rhs)
-  
+class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
+
+ 	val e = cstr.linExpr.coef.toList
+ 	val perm = (0 until e.size).sortBy(i => e(i)._1.index)
+ 	
+    val coef : Array[Double] = perm.map(i => e(i)._2).toArray
+    val varIds : Array[Int] =  perm.map(i => e(i)._1.index).toArray
+    val rhs : Double = -cstr.linExpr.cte // value of the constant (minus because it goes from lhs to rhs)
     def getSolver() : AbstractLPSolver = solver
 
-    def getSize() : Int = coef.length
-    def getCst() : Double = rhs
-  
-    def getCoefs() = coef
-    def getVarIds() = varIds
-  
-    def getDual() = solver.getDual(this)
+    def size() : Int = coef.length
+   
+    
+    def dual() = solver.getDual(this)
 	
-  } 
+} 
   
-  abstract class AbstractLPSolver {
+abstract class AbstractLPSolver {
          
     // map from the index of variables to their implementation
     protected val vars = mutable.HashMap.empty[Int,AbstractLPVar]
@@ -420,6 +417,9 @@ trait AbstractLPModel extends Algebra {
 	  var violation = false
 	  cons  foreach { case (i,c) =>
 	    var res = 0.0
+	    
+	    val ex = c.cstr.linExpr.coef.toArray
+	    
 	    for ((i,a) <- c.varIds.zip(c.coef)) {
 	      val x: AbstractLPVar = vars.get(i) match {
 	        case Some(variable) => variable
@@ -433,7 +433,7 @@ trait AbstractLPModel extends Algebra {
               case ConstraintType.EQ => res <= c.rhs+tol && res >= c.rhs-tol
         }
         if (!ok) {
-          println("violation of constraint:"+c)
+          println("violation of constraint: "+c.name+": "+res+" "+c.cstr.consType+" "+c.rhs)
           violation = true
         }
       }
@@ -441,9 +441,9 @@ trait AbstractLPModel extends Algebra {
 	}
 	
 	
-  } // end class AbstractLPSolver
+} // end class AbstractLPSolver
 
-} // end of trait
+
 
 
 

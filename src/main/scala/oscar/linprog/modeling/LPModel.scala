@@ -18,6 +18,8 @@
 package oscar.linprog.modeling
 
 import oscar.linprog._
+import oscar.algebra._
+
 /**
  * Abstract class that must be extended to define a new LP solver
  * @author Pierre Schaus
@@ -30,13 +32,12 @@ abstract class LP extends AbstractLP {
 	def getReducedCost(colId : Int) : Double
 }
 
+
+
 /**
- * Trait to extend by the class defining your LP model 
  * @author Pierre Schaus
- */
-trait LPModel extends AbstractLPModel {
-  	
-  case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name_,lbound,ubound,false) {
+ */  	
+case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp,name_,lbound,ubound,false) {
 
 	    def this(lp: LPSolver, name: String, unbounded: Boolean) = {
 	      this(lp,name,if (unbounded) Double.PositiveInfinity else 0.0,Double.PositiveInfinity)
@@ -59,7 +60,7 @@ trait LPModel extends AbstractLPModel {
 		def getReducedCost(varId : Int) : Double = solver.getReducedCost(varId)
 
 		def addColumn(objCoef : Double, constraints : IndexedSeq[LPConstraint], lhsConstraintCoefs : Array[Double]) : LPVar = {
-		    val colVar = new LPVar(this,"column var")
+		    val colVar = LPVar(this,"column var")
 			objective += (objCoef * colVar)
 			solver.addColumn(objCoef, constraints.map(_.index).toArray, lhsConstraintCoefs)
 			solveModel()
@@ -71,5 +72,5 @@ trait LPModel extends AbstractLPModel {
 	object LPSolver {
 	  def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): LPSolver = new LPSolver(solverLib)
 	}
-}
+//}
 

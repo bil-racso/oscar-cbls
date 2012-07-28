@@ -17,9 +17,9 @@
 
 package oscar.examples.linprog
 
-
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 import scala.io.Source
 
 /**
@@ -37,7 +37,7 @@ import scala.io.Source
  * See problem 38 of http://www.csplib.org/ or http://becool.info.ucl.ac.be/steelmillslab
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Steel extends LPModel with MIPModel{
+object Steel {
 
   class Column (val x : LPVar,val capa : Int, val contains : Array[Int]) {
 	  override def toString() : String = {
@@ -114,7 +114,7 @@ object Steel extends LPModel with MIPModel{
 
 	    	  val use = Array.tabulate(nbSlab)(_ => MIPVar(mip,"use",0 to 1))
 	    	  val v = Array.tabulate(nbCol)(_ => MIPVar(mip,"v",0 to 1))
-	    	  val cost = Array.tabulate(nbSlab)(meet(_).getDual)
+	    	  val cost = Array.tabulate(nbSlab)(meet(_).dual)
 
 	    	  mip.maximize(sum(Slabs)(s => ((cost(s)+weight(s)) * use(s)))) subjectTo {
 

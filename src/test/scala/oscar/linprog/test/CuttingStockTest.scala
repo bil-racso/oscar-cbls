@@ -15,10 +15,11 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-/*package oscar.linprog.test
+package oscar.linprog.test
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -26,7 +27,7 @@ import org.scalatest.matchers.ShouldMatchers
  * @author Pierre Schaus pschaus@gmail.com
  * Cutting Stock using Column Generation
  */
-class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class CuttingStockTest extends FunSuite with ShouldMatchers {
 	
   class Column (val x : LPVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
@@ -67,7 +68,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MI
 	  do {
 		  mip = MIPSolver(lib)
 		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
-		  val cost = Array.tabulate(roll.size)(constraints(_).getDual)
+		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 
 		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) subjectTo {
 			  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
@@ -97,4 +98,4 @@ class CuttingStockTest extends FunSuite with ShouldMatchers with LPModel with MI
 	}
   }
   
-}*/
+}

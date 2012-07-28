@@ -22,11 +22,12 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 /**
  * MIP Testing
  */
-class QueensTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class QueensTest extends FunSuite with ShouldMatchers {
 
 
 	test("Queens") {

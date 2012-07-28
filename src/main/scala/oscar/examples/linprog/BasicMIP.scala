@@ -20,9 +20,10 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.linprog._
+import oscar.algebra._
 
 
-object BasicMIP extends MIPModel{
+object BasicMIP {
 	
   def main(args: Array[String]): Unit = {  
 	  
