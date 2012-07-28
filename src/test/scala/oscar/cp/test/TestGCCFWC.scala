@@ -30,27 +30,27 @@ import org.scalacheck._
 class TestGCCFWC extends FunSuite with ShouldMatchers {
   import TestGCCFWC._
 
-  test("Test 1: too few variables to satisfy the lower bounds of CC") {
-    val cp = new CPSolver()
-    var x1 = CPVarInt(cp, 0, 2)
-    var x2 = CPVarInt(cp, 1, 3)
-    var x3 = CPVarInt(cp, 0, 3)
-    val x = Array(x1, x2, x3)
-
-    val minVal = 0
-    val Low = Array(0, 2, 0, 2)
-    val Up = Array(3, 2, 3, 2)
-
-    var nbSol = 0;
-    cp.solveAll subjectTo {
-      cp.post(new GCCFWC(x, minVal, Low, Up))
-    } exploration {
-      cp.binaryFirstFail(x)
-      nbSol += 1
-    }
-
-    nbSol should be(0)
-  }
+//  test("Test 1: too few variables to satisfy the lower bounds of CC") {
+//    val cp = new CPSolver()
+//    var x1 = CPVarInt(cp, 0, 2)
+//    var x2 = CPVarInt(cp, 1, 3)
+//    var x3 = CPVarInt(cp, 0, 3)
+//    val x = Array(x1, x2, x3)
+//
+//    val minVal = 0
+//    val Low = Array(0, 2, 0, 2)
+//    val Up = Array(3, 2, 3, 2)
+//
+//    var nbSol = 0;
+//    cp.solveAll subjectTo {
+//      cp.post(new GCCFWC(x, minVal, Low, Up))
+//    } exploration {
+//      cp.binaryFirstFail(x)
+//      nbSol += 1
+//    }
+//
+//    nbSol should be(0)
+//  }
 //
 //  test("Test 2: too many variables to satisfy the upper bounds of CC") {
 //    val cp = new CPSolver()

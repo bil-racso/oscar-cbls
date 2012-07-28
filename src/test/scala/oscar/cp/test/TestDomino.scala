@@ -15,25 +15,25 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.cp.test
 
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.modeling._
+import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.search._
+import oscar.cp.modeling._
+import collection.immutable.SortedSet
 
 
-/**
- * 
- * Where are the dominoes ? (a problem that I found on this blog: http://blog.tanyakhovanova.com/?p=385)
- * A set of all 21 dominoes has been placed in a 7 by 6 rectangular tray.
- * The layout is shown with the pips replaced by numbers and domino edges removed. 
- * Draw the edges of the dominoes into the diagram to show how they are positioned (every domino is different).
- * @author Pierre Schaus pschaus@gmail.com
- */
-object Domino  {
-	def main(args: Array[String]) {
+import org.scalacheck._
 
+class TestDomino extends FunSuite with ShouldMatchers  {
+
+
+  test("Domino") {
+    
 	  	val nLines = 6
 	  	val nCols = 7
 	  	val Lines = 0 until nLines
@@ -71,25 +71,7 @@ object Domino  {
 		
 		// for each domino side (i,j) what is the id of it's domino in the solution
 		val id = Array.tabulate(nLines,nCols)((i,j) => CPVarInt(cp,neighborValues(i,j).map(dominoId(_,values(i)(j)))))
-		
-		
-		def printSol() {
-		  def sameDomino(i: Int, j: Int, k: Int, l: Int) = id(i)(j).value == id(k)(l).value
-		  for(i <- Lines) {
-		    for (j <- Cols) {
-		      print(values(i)(j))
-		      if (j != nCols-1) print(if (sameDomino(i,j,i,j+1)) "-" else " ") 
-		    }
-		    println()
-		    if (i != nLines-1) {
-		    	for (j <- Cols) {
-		    		print(if (sameDomino(i,j,i+1,j)) "| " else "  ") 
-		    	}
-		    }
-		    println()
-		  }
-		}
-		
+		var nbSol = 0
 		cp.solveAll subjectTo {
 		  for (i <- Lines; j <- Cols) {  
 		    val validTuples = for((k,l) <- neighbors(i,j)) yield (toIndex(k,l), dominoId(values(i)(j),values(k)(l)))
@@ -104,23 +86,16 @@ object Domino  {
 		  
 		} exploration {
 		  cp.binaryFirstFail(id.flatten)
-		  printSol()
+		  nbSol += 1
 		}
 		
-		cp.printStats()
+		nbSol should be(1)
 
-	}
-		
-		
-		
-		
-	
-	
+    
+  }  
+  
 
+  
 
-			
-
-
-	
 
 }

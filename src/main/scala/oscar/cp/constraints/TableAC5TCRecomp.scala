@@ -119,7 +119,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
    */
   def updateSupports(i: Int, t: Int): Boolean = {
     var k = 0
-    while (k < x.size) {
+    while (k < x.length) {
     //for (k <- 0 until x.size; if (k != i)) {
       if (k != i) {
        val valk = data(t,k) // k_th value in the new invalid tuple t
@@ -136,7 +136,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
   override def valRemoveIdx(y: CPVarInt, i: Int, v: Int): CPOutcome = {
       // all the supports using a tuple with v at index i are not support any more
 	  // we iterate on these and try to find new support in case they were used as support
-	  var t = sup(i)(v).value	  
+	  var t = sup(i)(v).value
 	  do {
 	  	 if (!updateSupports(i,t)) { return CPOutcome.Failure }
 	  	 t = data.nextSupport(i,t) // get the next tuple with a value v at index i

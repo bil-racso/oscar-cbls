@@ -25,7 +25,7 @@ import scala.collection.generic._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "CPVarInt") extends CPVarInt(st,name) {
+class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
   
 	val dom = new DomainWithHoles(s,minimum,maximum);
 	val onMinL2    = new ReversibleQueue[Constraint](s)
@@ -394,7 +394,7 @@ class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "CPVarI
 			// must notify AC5 event before the actual removal
 			if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 			    var i = dom.getMin()
-			    while(i < dom.getMax()) {
+			    while (i <= dom.getMax()) {
 				
 					if (i!= value && dom.hasValue(i)) {
 						if (onDomainL1.hasValue()) {

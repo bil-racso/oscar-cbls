@@ -15,29 +15,31 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.cp.test
 
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.modeling._
+import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.search._
+import oscar.cp.modeling._
+import collection.immutable.SortedSet
 
 
-import scala.math
+import org.scalacheck._
 
-/**
- *
- * A Dudeney Numbers is a positive integer that is a perfect cube such that the sum of
- * its decimal digits is equal to the cube root of the number.
- * There are only six Dudeney Numbers and those are very easy to find with CP.
- * @author Pierre Schaus pschaus@gmail.com
- */
-object Dudeney {
+class TestDudeney extends FunSuite with ShouldMatchers  {
 
-  def main(args: Array[String]) {
+
+  test("Dudeney") {
+    
+    val sol = Set(1,512,4913,5832,17576,19683)
+      
     val n = 5
 
     val cp = new CPSolver()
+    var nbSol = 0
 
     val x = (0 until n).map(v => CPVarInt(cp, 0 to 9))
     val nb = CPVarInt(cp, 1 to math.pow(10, n).toInt - 1)
@@ -49,11 +51,16 @@ object Dudeney {
       cp.add(sum(x) == s)
     } exploration {
       cp.binaryFirstFail(x)
-      println(nb.value)
+      sol.contains(nb.value) should be(true)
+      nbSol += 1
     }
+    nbSol should be (sol.size)
 
-    cp.printStats()
+    
+  }  
+  
 
-  }
+  
+
 
 }

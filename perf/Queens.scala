@@ -16,9 +16,9 @@
  ******************************************************************************/
 
 
-
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 
 
 
@@ -58,4 +58,5 @@ object Queens  {
       
 	}
 }
+
 

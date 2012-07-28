@@ -74,15 +74,10 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
   test("TableAC5 Test 3") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPVarInt(cp, 1 to 7))
-    val tuples = Array((1,1,1),(1,2,3),(1,2,7),(2,1,4))
-    
-
-    
-    
-    var nbSol = 0
-    	
+    val tuples = Array((1,1,1),(1,2,3),(1,2,7),(2,1,4))  
+    var nbSol = 0	
     cp.solveAll subjectTo {
-      cp.add(new TableAC5TCRecomp(x(0),x(1),x(2),tuples))
+      cp.add(new TableAC5TCRecomp(x(0),x(1),x(2),tuples))  
     } exploration {
       cp.binary(x)
       nbSol += 1

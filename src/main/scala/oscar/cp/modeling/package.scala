@@ -21,10 +21,6 @@ import oscar.cp.core._
  */
 package object modeling extends Constraints {
 
-  import oscar.cp.core._
-  import oscar.cp.core.CPVarInt
-  import oscar.cp.core.CPVarBool
-
   /**
    * Filtering power can be specified for some of the constraints.
    * The default filtering is Weak.

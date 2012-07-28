@@ -18,7 +18,7 @@
 package oscar.cp.core
 
 
-abstract class CPVarInt(val s: Store,val name: String = "var") extends Traversable[Int] {
+abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[Int] {
 
     def store = s
   
