@@ -53,9 +53,13 @@ import oscar.cp.core._
  * Note: There are some problem instances below that use A..D and
  *       5x5 or 6x6 grid which means that there may be 2 empty cells
  *       before/after.
- *
+ * 
  * Also see:
  *   http://www.janko.at/Raetsel/AbcEndView/index.htm
+ *
+ * The diagonal constraint means that the two diagonal should
+ * also be alldifferent (except empty cells). See problem11
+ * for an example: http://www.janko.at/Raetsel/AbcEndView/168.a.htm
  *
  *
  * @author Hakan Kjellerstrand hakank@gmail.com
@@ -71,6 +75,7 @@ object ABCEndview extends CPModel {
                   in_row_lower: Array[Int],
                   in_col_left: Array[Int],
                   in_col_right: Array[Int],
+                  in_diagonal: Boolean,
                   in_name: String) {
         val n = in_n
         val max_letter = in_max_letter
@@ -78,6 +83,7 @@ object ABCEndview extends CPModel {
         val row_lower  = in_row_lower
         val col_left   = in_col_left
         val col_right  = in_col_right
+        val diagonal   = in_diagonal
         val name       = in_name
 
         val letters = "_ABCDEF".split("")
@@ -95,8 +101,8 @@ object ABCEndview extends CPModel {
           "row_upper : " + presLine(row_upper) + "\n" +
           "row_lower : " + presLine(row_lower) + "\n" +
           "col_left  : " + presLine(col_left)  + "\n" +
-          "col_right : " + presLine(col_right) + "\n"
-
+          "col_right : " + presLine(col_right) + "\n" +
+          "diagonal  : " + diagonal            + "\n"
           
     }
 
@@ -135,7 +141,7 @@ object ABCEndview extends CPModel {
     // 
     def main(args: Array[String]) {
 
-      val a = 1; val b = 2; val c = 3; val d = 4; val e = 5;
+      val a = 1; val b = 2; val c = 3; val d = 4; val e = 5; val f = 6;
 
       //
       // problem instances
@@ -150,6 +156,7 @@ object ABCEndview extends CPModel {
                                  Array(0,b,0,0), // row_lower
                                  Array(0,c,c,0), // col_left
                                  Array(0,0,b,0), // col_right
+                                 false,          // has diagonal constraint?
                                  "problem1")
 
 
@@ -162,6 +169,7 @@ object ABCEndview extends CPModel {
                                  Array(b,b,0,a,0),
                                  Array(0,a,0,0,0),
                                  Array(0,b,a,b,0),
+                                 false,
                                  "problem2")
 
 
@@ -174,6 +182,7 @@ object ABCEndview extends CPModel {
                                  Array(b,c,a,a,b),
                                  Array(0,0,b,b,c),
                                  Array(0,b,0,a,b),
+                                 false,
                                  "problem3")
 
 
@@ -185,6 +194,7 @@ object ABCEndview extends CPModel {
                                  Array(0,a,b,a,c),
                                  Array(0,0,0,a,b),
                                  Array(a,b,0,0,0),
+                                 false,
                                  "problem4")
                                 
 
@@ -197,6 +207,7 @@ object ABCEndview extends CPModel {
                                  Array(0,0,0,c,0,0),
                                  Array(d,0,d,0,0,a),
                                  Array(0,0,a,d,c,c),
+                                 false,
                                  "problem5")
 
       
@@ -208,6 +219,7 @@ object ABCEndview extends CPModel {
                                  Array(b,0,0,b,c,d),
                                  Array(a,d,c,0,b,d),
                                  Array(0,0,b,b,0,0),
+                                 false,
                                  "problem6")
         
       
@@ -219,6 +231,7 @@ object ABCEndview extends CPModel {
                                  Array(0,b,c,0,0,a),
                                  Array(0,0,a,d,0,0),
                                  Array(e,0,b,e,0,0),
+                                 false,
                                  "problem7")
                                    
 
@@ -232,6 +245,7 @@ object ABCEndview extends CPModel {
                                  Array(0,0,e,d,d,c,0),
                                  Array(0,e,c,c,e,b,0),
                                  Array(0,0,b,0,0,c,0),
+                                 false,
                                  "problem8")
       
 
@@ -243,6 +257,7 @@ object ABCEndview extends CPModel {
                                  Array(0,c,c,0,0),
                                  Array(0,d,d,0,0),
                                  Array(0,0,b,b,0),
+                                 false,
                                  "problem9")
 
       // http://www.janko.at/Raetsel/AbcEndView/209.a.htm
@@ -256,14 +271,33 @@ object ABCEndview extends CPModel {
                                   Array(0,a,0,b,b,d,0),
                                   Array(a,c,a,0,e,0,e),
                                   Array(0,d,0,c,0,e,0),
+                                 false,
                                   "problem10")
+        
+
+      // http://www.janko.at/Raetsel/AbcEndView/168.a.htm
+      // ABC End View Nr. 168
+      // (7x7)
+      // (Difficulty 8, "schwer")
+      //
+      // Note: this has also the diagonal constraints.
+      // 
+      //
+      val problem11 = new Problem(7,
+                                  f,
+                                  Array(a,0,c,e,f,a,0),
+                                  Array(0,d,0,c,0,0,e),
+                                  Array(a,0,0,c,e,d,0),
+                                  Array(0,c,b,0,0,e,0),
+                                  true,
+                                  "problem11")
         
 
 
       // all problems
       val problems = Array(problem1,problem2,problem3,problem4,
                            problem5,problem6,problem7,problem8,
-                           problem9,problem10)
+                           problem9,problem10,problem11)
 
 
 
@@ -290,7 +324,7 @@ object ABCEndview extends CPModel {
       //
       // data
       //     
-      val a = 1; val b = 2; val c = 3; val d = 4; val e = 5;
+      val a = 1; val b = 2; val c = 3; val d = 4; val e = 5; val f = 6;
       val str = "_ABCDEF".split("")
       println("str: " + str.mkString(""))
 
@@ -301,7 +335,9 @@ object ABCEndview extends CPModel {
       val row_lower  = problem.row_lower
       val col_left   = problem.col_left
       val col_right  = problem.col_right
+      val diagonal   = problem.diagonal
       val problem_name = problem.name
+
  
       println("\nSolving " + problem)
 
@@ -340,6 +376,11 @@ object ABCEndview extends CPModel {
         for(i <- RANGE) {
           cp.add(gcc( for(j <- RANGE) yield x(i)(j), RANGE, counts, counts), Strong)
           cp.add(gcc( for(j <- RANGE) yield x(j)(i), RANGE, counts, counts), Strong)
+        }
+
+        if (diagonal) {
+          cp.add(gcc( for(i <- RANGE) yield x(i)(i), RANGE, counts, counts), Strong)
+          cp.add(gcc( for(i <- RANGE) yield x(i)(n-i-1), RANGE, counts, counts), Strong)
         }
 
         //
