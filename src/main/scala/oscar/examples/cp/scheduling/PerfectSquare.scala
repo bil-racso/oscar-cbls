@@ -24,10 +24,7 @@ import oscar.visual._
 import scala.math
 import java.awt.Color
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.constraints.BoundedCumulative
-import oscar.cp.constraints.NewMaxCumulative
-import oscar.cp.constraints.MaxCumulative
-import oscar.cp.constraints.MinCumulative
+import oscar.cp.constraints._
 
 /**
  *
@@ -54,13 +51,14 @@ object PerfectSquare extends CPModel {
     	          (y(j) + side(j) <== y(i)))
       }
       
-      val activitiesx = Array.tabulate(x.size)(i => new CumulativeActivity(x(i), CPVarInt(cp,side(i)), x(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))     
-      cp.post(new MaxCumulative(cp,activitiesx,s,0))
-      cp.post(new MinCumulative(cp,activitiesx,s,0))
+      val activitiesx = Array.tabulate(x.size)(i => new CumulativeActivity(x(i), CPVarInt(cp,side(i)), x(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))    
+      cp.post(new BoundedSweepCumulative(cp, activitiesx, s, s, 0))
       
-      val activitiesy = Array.tabulate(x.size)(i => new CumulativeActivity(y(i), CPVarInt(cp,side(i)), y(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))     
-      cp.post(new MaxCumulative(cp,activitiesy,s,0))
-      cp.post(new MinCumulative(cp,activitiesy,s,0))
+      
+      val activitiesy = Array.tabulate(x.size)(i => new CumulativeActivity(y(i), CPVarInt(cp,side(i)), y(i)+side(i), CPVarInt(cp,0), CPVarInt(cp,side(i))))    
+      cp.post(new BoundedSweepCumulative(cp, activitiesy, s, s, 0))
+      
+      
       
     } exploration {
     	def label(w: Array[CPVarInt]) = {

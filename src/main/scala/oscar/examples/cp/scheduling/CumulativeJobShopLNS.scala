@@ -17,9 +17,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.constraints.MaxCumulative
-import oscar.cp.constraints.NewMaxCumulative
-import oscar.cp.constraints.BoundedCumulative
+import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -153,7 +151,7 @@ object CumulativeJobShopLNS extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new MaxCumulative(cp, activities, capacities(i), i))
+				cp.add(new MaxSweepCumulative(cp, activities, capacities(i), i))
 
 		} exploration {
 			

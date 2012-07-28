@@ -17,9 +17,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.constraints.MaxCumulative
-import oscar.cp.constraints.NewMaxCumulative
-import oscar.cp.constraints.BoundedCumulative
+import oscar.cp.constraints._
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -38,7 +36,7 @@ object CumulativeJobShop extends CPModel {
 		// -----------------------------------------------------------------------
 		
 		// Read the data
-		var lines = Source.fromFile("data/cJobShopHard.txt").getLines.toList
+		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -92,41 +90,9 @@ object CumulativeJobShop extends CPModel {
   	   	// The make span to minimize
   	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
   	   	
-  	   	// Visualization  
-  	   	// -----------------------------------------------------------------------
-  	   	/* 	
-  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem",nMachines+1,1)
-		
-		val cols = VisualUtil.getRandomColorArray(nMachines)
-		val visualActivities = jobActivities.flatten.map(a => VisualActivity(a))
-		
-		// Gantt Chart
-		val gantt = new VisualGanttChart(visualActivities, nTasksPerJob, cols)
-		frame.createFrame("Jobs").add(gantt)
-		
-		// Profiles 
-		val profiles : Array[VisualProfile] = new Array(nTasksPerJob)
-		
-		for (i <- Machines) {
-			
-			profiles(i) = new VisualProfile(visualActivities, i, capacities(i), cols(i))
-			frame.createFrame("Machine " + i).add(profiles(i))
-		}
-	   
-		def updateVisu(xScale : Int, yScale : Int) = {
-			
-			gantt.update(xScale, yScale)
-			
-			for (i <- Machines)
-			   profiles(i).update(xScale, yScale)
-		}
-		frame.pack
-	   	*/
-  	   	
+	   	
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
-		
-		cp.failLimit(20000)
 		
   	   	cp.minimize(makespan) subjectTo {
 			
@@ -136,12 +102,12 @@ object CumulativeJobShop extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new MaxCumulative(cp, activities, capacities(i), i))
-
+				cp.add(new MaxSweepCumulative(cp, activities, capacities(i), i))
+				
 		} exploration {
 			
 			// Test heuristic
-			cp.binary(activities.map(_.start))
+			cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
 			//SchedulingUtils.setTimesSearch(cp, activities)

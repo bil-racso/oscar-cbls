@@ -33,8 +33,8 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		val capacities = Array(4, 3)
 		val capacities2 = Array(10, 10)
 		
-		val constraint1 = new MinCumulative(cp, tasks, 4, 0)
-		val constraint2 = new MinCumulative(cp, tasks, 3, 1)
+		val constraint1 = new MinSweepCumulative(cp, tasks, 4, 0)
+		val constraint2 = new MinSweepCumulative(cp, tasks, 3, 1)
 		
 		cp.add(constraint1)
 		cp.add(constraint2)
@@ -68,10 +68,10 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		val expectedSol = Set((0,0,1,1),(1,1,0,0))
 		cp.solveAll subjectTo {
 		
-		  cp.add(new MaxCumulative(cp, tasks, 5, 0))
-		  cp.add(new MaxCumulative(cp, tasks, 5, 1))
-		  cp.add(new MinCumulative(cp, tasks, 5, 0))
-		  cp.add(new MinCumulative(cp, tasks, 5, 1))
+		  cp.add(new MaxSweepCumulative(cp, tasks, 5, 0))
+		  cp.add(new MaxSweepCumulative(cp, tasks, 5, 1))
+		  cp.add(new MinSweepCumulative(cp, tasks, 5, 0))
+		  cp.add(new MinSweepCumulative(cp, tasks, 5, 1))
 	
 		} exploration {
 		  cp.binary(tasks.map(_.machine))
@@ -94,8 +94,8 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		var nbSol = 0
 		cp.solveAll subjectTo {
 		
-		  cp.add(new MaxCumulative(cp, tasks, 5, 0))
-		  cp.add(new MaxCumulative(cp, tasks, 5, 1))
+		  cp.add(new MaxSweepCumulative(cp, tasks, 5, 0))
+		  cp.add(new MaxSweepCumulative(cp, tasks, 5, 1))
 		  cp.add(tasks(1).machine == 0)
 		  
 		  tasks(0).machine.getValue should be(0)
@@ -125,8 +125,8 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 
 		cp.solveAll subjectTo {
 		
-		  cp.add(new MaxCumulative(cp, tasks :+ myAct, 5, 0))
-		  cp.add(new MaxCumulative(cp, tasks :+ myAct, 5, 1))
+		  cp.add(new MaxSweepCumulative(cp, tasks :+ myAct, 5, 0))
+		  cp.add(new MaxSweepCumulative(cp, tasks :+ myAct, 5, 1))
 		  cp.add(tasks(1).machine == 0)
 		  
 		  tasks(0).machine.getValue should be(0)
@@ -153,7 +153,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 						                CPVarInt(cp, -2 to 5)) // consumption						               
 		cp.solveAll subjectTo {
 		
-		  cp.add(new MaxCumulative(cp, Array(myAct1,myAct2), 3, 0))
+		  cp.add(new MaxSweepCumulative(cp, Array(myAct1,myAct2), 3, 0))
 		  
 		  cp.add(myAct1.machine == 0)
 		  cp.add(myAct2.machine == 0)
@@ -178,7 +178,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 						                CPVarInt(cp, 0 to 5)) // consumption						               
 		cp.solveAll subjectTo {
 		
-		  cp.add(new MaxCumulative(cp, Array(myAct1,myAct2), 3, 0))
+		  cp.add(new MaxSweepCumulative(cp, Array(myAct1,myAct2), 3, 0))
 		  
 		  cp.add(myAct1.machine == 0)
 		  cp.add(myAct1.resource == 2)

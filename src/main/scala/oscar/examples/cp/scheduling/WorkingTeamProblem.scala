@@ -1,6 +1,6 @@
 package oscar.examples.cp.scheduling
 
-import oscar.cp.constraints.MaxCumulative
+import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -86,7 +86,7 @@ object WorkingTeamProblem extends CPModel {
 				cp.add(teams(i).dur == teamCoeff(i)*teamDur(i))
 			
 			// Cumulative constraints
-			cp.add(new MaxCumulative(cp, allAct, 0, 0))
+			cp.add(new MaxSweepCumulative(cp, allAct, 0, 0))
 
 		} exploration {
 			

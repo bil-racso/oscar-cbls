@@ -108,7 +108,7 @@ object MachineSchedulingVariableSpeed extends CPModel {
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new MaxCumulative(cp, activities, 1, i))
+				cp.add(new MaxSweepCumulative(cp, activities, 1, i))
 
 		} exploration {
 			

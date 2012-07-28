@@ -152,7 +152,7 @@ object CyclicRCPSP extends CPModel {
             val sumReq = sel.map(i => req(i)(r)).sum
             if (sumReq > capa(r)) {
               val act = sel.map(i => CumulativeActivity(s(i),1,0,req(i)(r)))
-              cp.add(new MaxCumulative (cp, act.toArray,capa(r),0))
+              cp.add(new MaxSweepCumulative (cp, act.toArray,capa(r),0))
             }
           }
        }
