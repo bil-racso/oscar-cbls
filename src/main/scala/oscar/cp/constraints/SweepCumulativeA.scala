@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * This file is part of OscaR (Scala in OR).
+ *  
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ ******************************************************************************/
+
 package oscar.cp.constraints
 
 import scala.math.max
@@ -12,6 +29,19 @@ import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.SortUtils.stableSort
 import oscar.cp.modeling.CPSolver
 
+/** This abstract class contains the main part of the cumulative constraint described 
+ *  in [1]. 
+ * 
+ *  The abstract methods in this class allow to specialize the constraint in a Max, Min
+ *  or Bounded cumulative constraint.
+ *  
+ *  @references:
+ *  [1] A New Multi-Resource cumulatives Constraint with Negative Heights, Nicolas Beldiceanu and Mats Carlsson   
+ *  [2] Choco's class CumulSweep.java
+ *
+ *  @author Renaud Hartert
+ *  @version 28/07/2012
+ */
 abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(allTasks(0).machine.getStore(), name) {
 
 	// Keeps only the relevant tasks
@@ -21,7 +51,7 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 	protected val Tasks  = 0 until nTasks
 	
 	// Event Point Series
-	protected val eventPointSeries : Array[Event]//= new Array[Event](nTasks*7)
+	protected val eventPointSeries : Array[Event]
 	protected var nEvents = 0
 	
 	// Sweep line parameters
@@ -29,7 +59,7 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 	protected var consSumHeight : Int = 0
 	protected var capaSumHeight : Int = 0
 	protected var nCurrentTasks : Int = 0
-	protected val stackPrune : Set[Int] = Set()	
+	protected val stackPrune    : Set[Int] = Set()	
 
 	// Capacities added to during a sweep
 	protected val consContrib = new Array[Int](nTasks)
@@ -37,6 +67,20 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 	
 	// Preprocessed events used to increase efficiency of the constraint
 	protected val eventList = Array.tabulate(nTasks){e => new EventList(e)}
+	
+	// Abstract methods
+	
+	protected def generateCheck(i : Int) 
+	
+	protected def generateProfileBad(i : Int) : Boolean
+	
+	protected def generateProfileGood(i : Int) : Boolean
+	
+	protected def consistencyCheck : Boolean
+	
+	protected def mandatoryCheck(t : Int) : Boolean
+	
+	protected def forbidenCheck(t : Int) : Boolean
 	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
@@ -97,7 +141,6 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 				// Pruning (if something is not fixed)
 				if (!tasks(i).start.isBound || !tasks(i).end.isBound || !tasks(i).machine.isBoundTo(r) || !tasks(i).resource.isBound) {
 					
-					// Generates event
 					eventPointSeries(nEvents) = eventList(i).sPruning
 					nEvents += 1
 				}
@@ -106,12 +149,6 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 		
 		profileEvent
 	}
-	
-	protected def generateCheck(i : Int) 
-	
-	protected def generateProfileBad(i : Int) : Boolean
-	
-	protected def generateProfileGood(i : Int) : Boolean
 	
 	private def resetSweepLine = {
 			
@@ -126,8 +163,6 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 			capaContrib(i) = 0
 		}
 	}
-	
-	def consistencyCheck : Boolean
 
 	private def sweepAlgorithm() : CPOutcome = {
 		
@@ -248,10 +283,6 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 			
 		return CPOutcome.Suspend
 	}
-	
-	def mandatoryCheck(t : Int) : Boolean
-	
-	def forbidenCheck(t : Int) : Boolean
 	
 	private def pruneForbiden(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		

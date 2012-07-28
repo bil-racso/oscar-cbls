@@ -111,9 +111,6 @@ object CumulativeJobShop extends CPModel {
 			
 			// Efficient but not complete search strategy
 			//SchedulingUtils.setTimesSearch(cp, activities)
-			
-			// Updates the visual components
-			//updateVisu(1, 20)
 		}    
 		
 		cp.printStats() 
