@@ -3,6 +3,7 @@ echo $PATH
 #/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin
 cp target/oscar.jar perf/oscar.jar
 cd perf
+rm -f *.class
 D1=$(date +"%m-%d-%y")
 D2=$(date +%s)
 C=`hg id -i`
