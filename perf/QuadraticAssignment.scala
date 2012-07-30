@@ -15,8 +15,6 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
-
 import oscar.cp.modeling._
 import oscar.cp.search._
 import oscar.cp.core._
@@ -40,7 +38,7 @@ object QuadraticAssignment {
   def main(args: Array[String]) {
 
     // Read the data
-    var lines = Source.fromFile("data/qap.txt").getLines.toList.filter(_ != "")
+    var lines = Source.fromFile("../data/qap.txt").getLines.toList.filter(_ != "")
     val n = lines.head.toInt
     val N = 0 until n
     lines = lines.drop(1)

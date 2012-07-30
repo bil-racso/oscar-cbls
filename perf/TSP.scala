@@ -15,7 +15,6 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -39,7 +38,7 @@ object TSP {
 
     val n = 20
     val Cities = 0 until n
-    val lines = Source.fromFile("data/tsp.txt").getLines.toList
+    val lines = Source.fromFile("../data/tsp.txt").getLines.toList
 
     val distMatrix = lines.grouped(n).map(i => i.map(j => j.toInt).toArray).toArray
 

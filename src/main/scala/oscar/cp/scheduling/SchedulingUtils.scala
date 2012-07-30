@@ -29,7 +29,7 @@ object SchedulingUtils {
 				if (activities(i).start.isBound) { 	
 					selectable(i).value = false
 					
-				} else if (oldEST(i).value != activities(i).est()) {			
+				} else if (oldEST(i).value != activities(i).est) {			
 					selectable(i).value = true
 				}
 			}
