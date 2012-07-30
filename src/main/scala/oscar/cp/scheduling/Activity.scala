@@ -62,9 +62,9 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	
 	def adjustStart(v : Int) = start.updateMin(v)	
 	
-	def precedes(act : Activity) : LeEq = this.end <= act.start
+	def <<(act : Activity) : LeEq = this.end <= act.start
 	
-	def follows(act : Activity) : LeEq = act.end <= this.start
+	def >>(act : Activity) : LeEq = act.end <= this.start
 	
 	override def toString = "dur:"+dur+ " in ["+est+","+lct+"[";
 }
@@ -101,7 +101,7 @@ class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 
 	override def toString() = "mirror of activity:"+act;
 	
-	override def precedes(act : Activity) = throw new UninitializedFieldError("not available") 
+	override def <<(act : Activity) = throw new UninitializedFieldError("not available") 
 	
-	override def follows(act : Activity) = throw new UninitializedFieldError("not available") 
+	override def >>(act : Activity) = throw new UninitializedFieldError("not available") 
 }
