@@ -66,6 +66,12 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	
 	def >>(act : Activity) : LeEq = act.end <= this.start
 	
+	def precedes(act : Activity) : LeEq = this << act
+	
+	def follows(act : Activity) : LeEq = act << this
+	
+	def store = start.store
+	
 	override def toString = "dur:"+dur+ " in ["+est+","+lct+"[";
 }
 

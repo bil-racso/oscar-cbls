@@ -6,9 +6,9 @@ import scala.math.min
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.Store
 
-class BoundedSweepCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int) extends SweepCumulativeA(cp, allTasks, lb, ub, r, "BoundedSweepCumulative") {
+class BoundedSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int) extends SweepCumulativeA(cp, allTasks, lb, ub, r, "BoundedSweepCumulative") {
 
 	val eventPointSeries = new Array[Event](nTasks*7)
 	

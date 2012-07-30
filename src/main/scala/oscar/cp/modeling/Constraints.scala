@@ -17,7 +17,6 @@
 
 package oscar.cp.modeling
 
-
 import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.scheduling._
@@ -611,5 +610,23 @@ trait Constraints {
     new UnaryResource(activities, name)
   }
 
-
+  /**
+   * Cumulative
+   */
+  def cumulative(activities: Array[CumulativeActivity], machine : Int, min : Int = Int.MinValue, max : Int = Int.MaxValue): SweepCumulativeA = {  
+	
+	val cp = activities(0).store
+	  
+	if (max != Int.MaxValue) {
+		if (min != Int.MinValue) {
+			return new BoundedSweepCumulative(cp, activities, min, max, machine)
+		} else {
+			 return new MaxSweepCumulative(cp, activities, max, machine)
+		}
+	} else if (min != Int.MinValue) {
+		return new MinSweepCumulative(cp, activities, min, machine)
+	}
+	
+	throw new IllegalArgumentException("Bounds are not specified")
+  }
 }

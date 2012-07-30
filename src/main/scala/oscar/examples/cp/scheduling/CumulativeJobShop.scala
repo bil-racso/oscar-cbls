@@ -89,7 +89,6 @@ object CumulativeJobShop {
   	   	
   	   	// The make span to minimize
   	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
-  	   	
 	   	
   	   	// Constraints and Solving
 		// -----------------------------------------------------------------------
@@ -98,19 +97,19 @@ object CumulativeJobShop {
 			
 			// Precedence constraints
 			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
+				cp.add(jobActivities(i)(j) << jobActivities(i)(j+1))
 			
 			// Cumulative constraints
 			for (i <- Machines)
-				cp.add(new MaxSweepCumulative(cp, activities, capacities(i), i))
+				cp.add(cumulative(activities, i, max = capacities(i)))
 				
 		} exploration {
 			
 			// Test heuristic
-			cp.binaryFirstFail(activities.map(_.start))
+			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, activities)
+			SchedulingUtils.setTimesSearch(cp, activities)
 		}    
 		
 		cp.printStats() 

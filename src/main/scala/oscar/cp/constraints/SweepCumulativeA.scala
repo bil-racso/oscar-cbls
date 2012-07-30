@@ -26,7 +26,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.Store
 import oscar.algo.SortUtils.stableSort
 
 /** This abstract class contains the main parts of the cumulative constraint described 
@@ -56,7 +56,7 @@ import oscar.algo.SortUtils.stableSort
  *  @author Renaud Hartert
  *  @version 28/07/2012 
  */
-abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
+abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
 	protected val tasks = allTasks.filter(_.machine.hasValue(r))
