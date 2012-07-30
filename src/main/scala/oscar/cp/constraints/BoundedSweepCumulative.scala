@@ -62,7 +62,7 @@ class BoundedSweepCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity],
 	
 	override def consistencyCheck : Boolean = ((nCurrentTasks > 0 && consSumHeight < lb) || capaSumHeight > ub) 
 
-	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks == 0 || (consSumHeight - consContrib(t)) >= lb) && (capaSumHeight - capaContrib(t) <= ub)		
+	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks != 0 && (consSumHeight - consContrib(t)) < lb) || (capaSumHeight - capaContrib(t) > ub)		
 	
 	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxResource < lb) || 
 			   										(capaSumHeight - capaContrib(t) + tasks(t).minResource > ub)

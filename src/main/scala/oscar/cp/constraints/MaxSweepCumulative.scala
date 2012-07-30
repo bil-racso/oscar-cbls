@@ -43,7 +43,7 @@ class MaxSweepCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], ub 
 	
 	override def consistencyCheck : Boolean = (capaSumHeight > ub)
 	
-	override def mandatoryCheck(t: Int) : Boolean = capaSumHeight - capaContrib(t) <= ub
+	override def mandatoryCheck(t: Int) : Boolean = capaSumHeight - capaContrib(t) > ub
 	
 	override def forbidenCheck(t : Int) : Boolean = capaSumHeight - capaContrib(t) + tasks(t).minResource > ub
 }

@@ -52,7 +52,7 @@ class MinSweepCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], lb 
 	
 	override def consistencyCheck : Boolean = (nCurrentTasks > 0 && consSumHeight < lb) 
 	
-	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks == 0 || (consSumHeight - consContrib(t)) >= lb) 
+	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks != 0 && (consSumHeight - consContrib(t)) < lb) 
 	
 	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxResource < lb) 
 }

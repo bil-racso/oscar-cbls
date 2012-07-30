@@ -1,4 +1,4 @@
-package oscar.cp.scheduling
+package oscar.algo
 
 import scala.reflect.ClassManifest
 import scala.math.Ordering

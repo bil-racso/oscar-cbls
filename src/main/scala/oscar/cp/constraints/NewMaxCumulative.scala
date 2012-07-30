@@ -1,6 +1,6 @@
 package oscar.cp.constraints
 
-import oscar.cp.scheduling.EfficientHeap
+import oscar.algo.EfficientHeap
 
 import scala.collection.mutable.Set
 import scala.collection.mutable.Queue
