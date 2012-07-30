@@ -41,12 +41,9 @@ import oscar.cp.core.CPVarInt
  *  start time of task i in the k's iteration, lat[i, j] is the latency between
  *  task i and task j, and w[i, j] is the distance between task i and task j.
  *  
- *  The objective is to find a cyclic schedule that first minimizes the
- *  schedule period and then the makespan.
- *  
  *  As the start times at iteration 0 might be greater than the modulus, we can 
- *  decompose it as: start (i, 0) = si + ki á lambda, where si is the start 
- *  time within the modulus (0 ² si ² lambda - di) and ki, 
+ *  decompose it as: start (i, 0) = si + ki * lambda, where si is the start 
+ *  time within the modulus (0 <= si <= lambda - di) and ki, 
  *  called iteration number, refers to the number of full periods 
  *  elapsed before start(i,0) is scheduled.
  * 
