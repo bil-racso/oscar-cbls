@@ -33,7 +33,7 @@ public class Disjunctive extends Constraint {
 	private Activity act2;
 
 	public Disjunctive(Activity act1, Activity act2) {
-		super(act1.start().s(),"Binary Disjunctive Activity");
+		super(act1.start().store(),"Binary Disjunctive Activity");
 		this.act1 = act1;
 		this.act2 = act2;
 	}

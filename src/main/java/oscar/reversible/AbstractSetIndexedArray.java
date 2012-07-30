@@ -263,13 +263,11 @@ public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	public Integer[] getValues() {
 		if (isEmpty()) return new Integer[]{};
 		ArrayList<Integer> vals = new ArrayList<Integer>();
-		System.out.println("min:"+getMin()+" max:"+getMax());
 		for (int v = getMin(); v <= getMax(); v++) {
 			if (hasValue(v)) {
 				vals.add(v);
-				System.out.println("add value:"+v);
 			} else {
-				System.out.println("do not have value"+v);
+				//System.out.println("do not have value"+v);
 			}
 		}
 		Integer [] values = vals.toArray(new Integer[]{});

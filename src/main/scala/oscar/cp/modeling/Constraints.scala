@@ -134,8 +134,8 @@ trait Constraints {
   def element(tab: IndexedSeq[Int], x: CPVarInt, strength: CPPropagStrength = CPPropagStrength.Medium): CPVarInt = {
     val minval = tab.min
     val maxval = tab.max
-    val z = CPVarInt(x.s, minval, maxval)
-    x.s.post(new ElementCst(tab.toArray, x, z),strength)
+    val z = CPVarInt(x.store, minval, maxval)
+    x.store.post(new ElementCst(tab.toArray, x, z),strength)
     z
   }
 
@@ -158,7 +158,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def element(tab: IndexedSeq[Int], x: CPVarInt, z: Int): Constraint = {
-    new ElementCst(tab.toArray, x, CPVarInt(x.s, z, z))
+    new ElementCst(tab.toArray, x, CPVarInt(x.store, z, z))
   }
 
   /**
@@ -170,8 +170,8 @@ trait Constraints {
   def element(tab: IndexedSeq[CPVarInt], x: CPVarInt): CPVarInt = {
     val minval = (for(x <- tab) yield x.getMin) min
     val maxval = (for(x <- tab) yield x.getMax) max
-    val z = CPVarInt(x.s, minval, maxval)
-    x.s.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
+    val z = CPVarInt(x.store, minval, maxval)
+    x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
     z
   }
 
@@ -205,7 +205,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def element(tab: IndexedSeq[CPVarBool], x: CPVarInt, z: Boolean): Constraint = {
-    val z_ = new CPVarBool(x.s,z)
+    val z_ = new CPVarBool(x.store,z)
     new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x,z_)
   }
 
@@ -217,8 +217,8 @@ trait Constraints {
    * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
    */
   def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt): CPVarInt = {
-     val z = CPVarInt(i.s,matrix.flatten.min to matrix.flatten.max)
-	 val ok = i.s.post(ElementCst2D(matrix,i,j,z))
+     val z = CPVarInt(i.store,matrix.flatten.min to matrix.flatten.max)
+	 val ok = i.store.post(ElementCst2D(matrix,i,j,z))
 	 assert(ok != CPOutcome.Failure, {println("element on matrix, should not fail")})
 	 return z
   }
@@ -247,8 +247,8 @@ trait Constraints {
     val maxVal = (0 /: vars) {
       (sum, v) => sum + v.getMax
     }
-    val s = CPVarInt(x(0).s, minVal, maxVal)
-    x(0).s.post(sum(x, s))
+    val s = CPVarInt(x(0).store, minVal, maxVal)
+    x(0).store.post(sum(x, s))
     s
   }
 
@@ -323,8 +323,8 @@ trait Constraints {
    * @return a variable that will be true if at least one variable of vars is true
    */
   def or(vars: Array[CPVarBool]): CPVarBool = {
-    val z = new CPVarBool(vars(0).s)
-    vars(0).s.post(new Or(vars, z))
+    val z = new CPVarBool(vars(0).store)
+    vars(0).store.post(new Or(vars, z))
     return (z)
   }
   
@@ -393,7 +393,7 @@ trait Constraints {
   }  
 
   def modulo(x: CPVarInt, v: Int, y: Int): Constraint = {
-    return new Modulo(x,v, CPVarInt(x.s,y))
+    return new Modulo(x,v,CPVarInt(x.store,y))
   } 
   
   /**
@@ -426,7 +426,7 @@ trait Constraints {
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
   def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt,Int]]): Constraint = {
-    def freshCard(): CPVarInt = CPVarInt(x(0).s, 0, x.length - 1)
+    def freshCard(): CPVarInt = CPVarInt(x(0).store, 0, x.length - 1)
     val sortedValOcc = valueOccurrence.sortWith((a, b) => a._2 <= b._2)
     val (x0,v0)  = sortedValOcc(0)
     var values = Array(v0)
@@ -532,7 +532,7 @@ trait Constraints {
    */
   def maximum(vars: Iterable[CPVarInt]): CPVarInt = {
     val x = vars.toArray
-    val cp = x(0).s
+    val cp = x(0).store
     val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
     cp.add(maximum(x, m))
     m
@@ -564,48 +564,14 @@ trait Constraints {
    */
   def minimum(vars: Iterable[CPVarInt]): CPVarInt = {
     val x = vars.toArray
-    val cp = x(0).s
+    val cp = x(0).store
     val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
     cp.add(minimum(x, m))
     m
   }
-  
-  /*
-  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
-    val cp = x(0).s
-    val n = x.size
-    val cons = new LinkedList[Constraint]
-    for (i <- 0 until n-1) {
-      cons.add(element(x,p(i)) <= element(x,p(i+1)))
-      cons.add(s(i) <= s(i+1))
-    }
-    for (i <- 0 until n) { 
-      cons.add(element(x.toArray,p(i),s(i)))
-    }
-    
-    val minVal: Int  = x.map(_.min).min
-    val maxVal: Int  = x.map(_.max).max
-    
-    // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
-    val occ = Array.fill(maxVal-minVal+1)(CPVarInt(cp,0 to n))
-    cons.add(gcc(x,occ.zip(minVal to maxVal)))
-    
-    // nbBefore(i) = #{i | x(i) < i } 
-    val nbBefore =  for (i <- minVal to maxVal) yield {  
-    	if (i == minVal) CPVarInt(cp,0)
-    	else sum(minVal to i-1)(j => occ(j))  
-    }
-    
-    for(i <- 0 until n) {  
-        // there are strictly less than i values smaller than s(i) 
-    	cons.add(element(nbBefore,s(i)) < i)   
-    } 
-    cons
-  }
-  */
 
   def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
-    val cp = x(0).s
+    val cp = x(0).store
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n-1) {
@@ -641,11 +607,9 @@ trait Constraints {
   /**
    * Unary Resource constraint
    */
-  
   def unaryResource(activities: Array[Activity], name: String = "machine"): UnaryResource = {
     new UnaryResource(activities, name)
   }
-  
 
 
 }

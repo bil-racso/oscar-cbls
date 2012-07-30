@@ -16,62 +16,66 @@
  ******************************************************************************/
 package oscar.cp.scheduling;
 
-
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
+import oscar.cp.constraints.LeEq
 
 class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
     private val endVar: CPVarInt = startVar.plus(durVar)
 	
-    def start() = startVar
-    def end() = endVar
-    def dur() = durVar
+    def start = startVar
+    def end = endVar
+    def dur = durVar
     
 	def this(startVar: CPVarInt,dur: Int) = this(startVar, CPVarInt(startVar.s,dur,dur))
 
 	/**
 	 * earliest starting time
 	 */
-	def est() = start.min
+	def est = start.min
 	
 	/**
 	 * latest starting time
 	 */
-	def lst() = start.max
+	def lst = start.max
 	
 	/**
 	 * earliest completion time assuming the smallest duration
 	 */
-	def ect() = end.min
+	def ect = end.min
 	
 	/**
 	 * latest completion time assuming the smallest duration
 	 */
-	def lct() = end.max
+	def lct = end.max
 	
 	/**
 	 * current minimal duration of this activity
 	 */
-	def minDuration() = dur.min
+	def minDuration = dur.min
 
 	/**
 	 * current maximal duration of this activity
 	 */
-	def maxDuration() = dur.max
+	def maxDuration = dur.max
 	
 	def adjustStart(v : Int) = start.updateMin(v)	
 	
-	override def toString() = "dur:"+dur+ " in ["+est+","+lct+"[";
+	def precedes(act : Activity) : LeEq = this.end <= act.start
+	
+	def follows(act : Activity) : LeEq = act.end <= this.start
+	
+	override def toString = "dur:"+dur+ " in ["+est+","+lct+"[";
 }
 
 
 
 class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 
-	override def start(): CPVarInt = throw new UninitializedFieldError("not available") 
+	override def start: CPVarInt = throw new UninitializedFieldError("not available") 
 	
-	override def end(): CPVarInt = throw new UninitializedFieldError("not available") 
+	override def end: CPVarInt = throw new UninitializedFieldError("not available") 
 	
 	/**
 	 * earliest starting time
@@ -96,4 +100,8 @@ class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
 	override def adjustStart(v : Int) = end.updateMax(-v)
 
 	override def toString() = "mirror of activity:"+act;
+	
+	override def precedes(act : Activity) = throw new UninitializedFieldError("not available") 
+	
+	override def follows(act : Activity) = throw new UninitializedFieldError("not available") 
 }

@@ -138,9 +138,6 @@ class CPSolver() extends Store() {
 		println("time in trail restore(ms)",getTrail().getTimeInRestore())
 		println("max trail size",getTrail().getMaxSize())
 	}
-	
-    
-	
 }
 
 object CPSolver {

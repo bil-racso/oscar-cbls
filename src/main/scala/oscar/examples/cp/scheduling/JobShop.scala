@@ -15,12 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp
+package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
-//import oscar.cp.scheduling._
+import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
 
@@ -34,8 +34,7 @@ import scala.io.Source
  * The objective is to assign the starting time of each activity minimizing the total makespan and
  * such that no two activities from two different jobs requiring the same machine overlap.
  */
-/*
-object JobShop  {
+object JobShop {
 	def main(args: Array[String]) {
 	  
 
@@ -67,7 +66,7 @@ object JobShop  {
 	  	   									 val start = CPVarInt(cp,0 to horizon-dur)
 	                                         new JobShopAct(new Activity(start,dur),i,machine) }) 	   
 	   val activitiesMachine  =  Array.tabulate(m)(m => activities.flatten.filter(_.machine == m).map(_.act ).toArray)                              	   
-	   val makespan = maximum(0 until n)(i => activities(i)(m-1).act.getEnd)       
+	   val makespan = maximum(0 until n)(i => activities(i)(m-1).act.end)       
        var resources = Array.tabulate(m)(i => unaryResource(activitiesMachine(i)))
              
        
@@ -82,17 +81,18 @@ object JobShop  {
 	   f.pack()
 	   drawing.repaint()
 	   val visualAct: Array[Array[VisualRectangle]] = Array.tabulate(n,m){(i,j) => val activity = activities(i)(j)
-	                                                val rect = new VisualRectangle(drawing,0,scale_y*activity.job, activity.act.getMinDuration()*scale_x,scale_y)
+	                                                val rect = new VisualRectangle(drawing,0,scale_y*activity.job, activity.act.minDuration*scale_x,scale_y)
 	   												rect.setInnerCol(cols(activity.machine))
 	   												rect }
 	   val machineAct: Array[Array[VisualRectangle]] = Array.tabulate(m){ m => 
 	     												activitiesMachine(m).map{ a =>
-	     													val rect = new VisualRectangle(mdrawing,0,scale_y*m, a.getMinDuration()*scale_x,scale_y)
+	     													val rect = new VisualRectangle(mdrawing,0,scale_y*m, a.minDuration*scale_x,scale_y)
 	     													rect.setInnerCol(cols(m))
 	     													rect }}
 	   
 	   
 	   val makespanLine = new VisualLine(drawing,0,0,0,n*scale_y)
+	   
 	   def updateVisu() = {
 	     for (i <- 0 until n; j <- 0 until m) {	       
 	    	 visualAct(i)(j).move(activities(i)(j).act.start.min*scale_x,scale_y*activities(i)(j).job)
@@ -112,7 +112,7 @@ object JobShop  {
        cp.minimize(makespan) subjectTo {
 	  	   // add the precedence constraints inside a job
 	  	   for (i <- 0 until n; j <- 0 until m-1) {
-	  	  	   cp.add(activities(i)(j).act.getEnd() <= activities(i)(j+1).act.getStart())
+	  	  	   cp.add(activities(i)(j).act.end <= activities(i)(j+1).act.start)
 	  	   }
 	  	   // add the unary resources
 	  	   resources.foreach(r => cp.add(r))  	   	   
@@ -124,7 +124,7 @@ object JobShop  {
 	       // cp.binaryFirstFail(resources(i).getRanks())
 	       val activs = resources(r).getActivities()
 	       while (!resources(r).isRanked()) {
-	         val toRank = (0 until activs.size).filter(!resources(r).isRanked(_)).sortBy(i => (activs(i).getEST(),activs(i).getLST()))
+	         val toRank = (0 until activs.size).filter(!resources(r).isRanked(_)).sortBy(i => (activs(i).est,activs(i).lst))
 	         // try all not yet ranked activities as the first one to rank
 	         cp.branchAll(toRank)(i => resources(r).rankFirst(i))
 	       }
@@ -134,7 +134,7 @@ object JobShop  {
 	     println("try min makespan:"+min)
 	     cp.binary(Array(makespan))
 	     println("makespan fixed to:"+min+" makespan:"+makespan)
-	     //cp.binaryFirstFail(activities.flatten.map(_.act.getStart))
+	     //cp.binaryFirstFail(activities.flatten.map(_.act.start))
 	     // sol found, update the visu
 	     updateVisu()
 	     cp.printStats()
@@ -143,4 +143,3 @@ object JobShop  {
        cp.printStats()
     }
 }
-*/
