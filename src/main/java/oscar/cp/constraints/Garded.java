@@ -35,7 +35,7 @@ public class Garded extends Constraint {
      * @see  Constraint#when(cp.core.CPVarBool)
 	 */
 	public Garded(CPVarBool b, Constraint c, boolean onTrue) {
-		super(b.getStore(),"Garded Constraint");
+		super(b.s(),"Garded Constraint");
 		this.b = b;
 		this.c = c;
 		this.onTrue = onTrue;

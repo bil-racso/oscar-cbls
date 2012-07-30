@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
+
 
 
 /**
@@ -40,7 +42,7 @@ import oscar.search._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object MagicModuloNumber  extends CPModel {
+object MagicModuloNumber  {
 	def main(args: Array[String]) {
 		
       val cp = CPSolver()

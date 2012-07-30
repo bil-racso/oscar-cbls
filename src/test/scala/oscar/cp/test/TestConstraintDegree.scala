@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestConstraintDegree extends FunSuite with ShouldMatchers with CPModel {
+class TestConstraintDegree extends FunSuite with ShouldMatchers  {
 
 
   test("ConstraintDegree1") {
@@ -36,8 +36,8 @@ class TestConstraintDegree extends FunSuite with ShouldMatchers with CPModel {
     
     cp.post(x(0) != x(1))
     cp.post(x(0) != x(2))
-    x(0).getConstraintDegree() should be(2)
-    x(1).getConstraintDegree() should be(1)
+    x(0).constraintDegree should be(2)
+    x(1).constraintDegree should be(1)
     	
   }
   

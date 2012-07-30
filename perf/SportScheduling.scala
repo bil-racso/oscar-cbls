@@ -17,6 +17,7 @@
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 
 /**
@@ -28,7 +29,7 @@ import oscar.cp.search._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object SportScheduling extends CPModel {
+object SportScheduling {
   
   def main(args: Array[String]) {
 

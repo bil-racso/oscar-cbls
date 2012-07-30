@@ -49,7 +49,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object Marathon extends CPModel {
+object Marathon {
 
    // 
    // Decomposition of inverse constraint
@@ -133,7 +133,7 @@ object Marathon extends CPModel {
         println("Runners: " ++ runners.mkString(""))
         println("Places:")
         for(p <- 0 until n) {
-          println("Place " + (p+1) + ": " + runners_str(places(p).getValue()))
+          println("Place " + (p+1) + ": " + runners_str(places(p).value))
         }
         println()
 

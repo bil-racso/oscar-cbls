@@ -34,7 +34,7 @@ import scala.math._
  
 */
 
-object SetCovering extends CPModel {
+object SetCovering {
 
 
   def main(args: Array[String]) {

@@ -53,7 +53,7 @@ import Array._
   http://www.hakank.org/oscar/
  
 */
-object GolombRuler extends CPModel {
+object GolombRuler {
 
   def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
     for (i <- 1 until y.length) {

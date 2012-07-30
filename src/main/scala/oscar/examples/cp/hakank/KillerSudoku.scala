@@ -68,7 +68,7 @@ import scala.math._
  *
  */
 
-object KillerSudoku extends CPModel {
+object KillerSudoku {
 
 
   /**

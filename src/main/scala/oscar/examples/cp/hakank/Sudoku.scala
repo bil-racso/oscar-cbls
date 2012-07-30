@@ -31,7 +31,7 @@ import scala.math.pow
  * http://www.hakank.org/oscar/
  *
  */
-object Sudoku extends CPModel {
+object Sudoku {
 
   def main(args: Array[String]) {
 

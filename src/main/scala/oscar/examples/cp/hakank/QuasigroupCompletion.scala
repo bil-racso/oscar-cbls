@@ -48,7 +48,7 @@ import scala.math._
  http://www.hakank.org/oscar/
  
 */
-object QuasigroupCompletion extends CPModel {
+object QuasigroupCompletion {
 
   def main(args: Array[String]) {
 

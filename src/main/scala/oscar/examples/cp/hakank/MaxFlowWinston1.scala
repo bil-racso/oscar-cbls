@@ -33,7 +33,7 @@ import oscar.cp.core._
    http://www.hakank.org/oscar/
  
  */
-object MaxFlowWinston1 extends CPModel {
+object MaxFlowWinston1 {
 
 
   def main(args: Array[String]) {
@@ -125,7 +125,7 @@ object MaxFlowWinston1 extends CPModel {
       println("z: " + z)
       for(i <- NODES) {
         for(j <- NODES) {
-          print("%3d".format(flow(i)(j).getValue()))
+          print("%3d".format(flow(i)(j).value))
         }
         println()
       }

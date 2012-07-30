@@ -35,13 +35,13 @@ public class Le extends Constraint {
      * @param y
      */
 	public Le(CPVarInt x, CPVarInt y) {
-		super(x.getStore()," < ");
+		super(x.s()," < ");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public Le(CPVarInt x, int v) {
-		this(x, new CPVarInt(x.getStore(),v,v));
+		this(x, CPVarInt.apply(x.s(),v,v));
 	}
 	
 	@Override

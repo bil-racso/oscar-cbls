@@ -67,7 +67,7 @@ public class UnaryResource extends Constraint {
 	
 
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
-		super(activities[0].start().getStore(),name);
+		super(activities[0].start.store,name);
 		assert(activities.length == required.length);
 		this.name = name;
 		this.activities = activities;

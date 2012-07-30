@@ -68,7 +68,7 @@ import scala.math._
  
 */
 
-object SichermanDice extends CPModel {
+object SichermanDice {
 
   def main(args: Array[String]) {
 

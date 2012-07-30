@@ -49,7 +49,7 @@ public class Modulo extends Constraint{
 	 * @param y
 	 */
 	public Modulo(CPVarInt x, int v, CPVarInt y) {
-		super(x.getStore());
+		super(x.s());
 		assert( v > 0);
 		if (v <= 0) throw new RuntimeException("v must be > 0");
 		this.x = x;
@@ -68,12 +68,14 @@ public class Modulo extends Constraint{
 
 		supportSet = new ReversibleSetIndexedArray[2*v-1]; // for negative and positive numbers if v = 3, we must consider -2,-1,0,1,2
 		for (int i = -v+1; i < v; i++) {		
-			for (int val: x) {
-				if ((val % v) == i) {
-					if (supportSet[i+v-1] == null) {
-						supportSet[i+v-1] = new ReversibleSetIndexedArray(s, x.getMin(), x.getMax(),true); // contains no values initially
+			for (int val = x.min(); val <= x.max(); val++) {
+				if (x.hasValue(val)) {
+					if ((val % v) == i) {
+						if (supportSet[i+v-1] == null) {
+							supportSet[i+v-1] = new ReversibleSetIndexedArray(s, x.getMin(), x.getMax(),true); // contains no values initially
+						}
+						supportSet[i+v-1].insert(val);
 					}
-					supportSet[i+v-1].insert(val);
 				}
 			}
 			if (supportSet[i+v-1] == null || supportSet[i+v-1].isEmpty()) {

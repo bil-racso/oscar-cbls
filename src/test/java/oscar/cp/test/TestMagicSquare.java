@@ -47,7 +47,12 @@ public class TestMagicSquare extends TestCase {
     	
     	// declare variables
 		
-    	CPVarInt [][] x = CPVarInt.getArray(cp,n,n,1,n*n);
+    	CPVarInt [][] x = new CPVarInt[n][n];
+    	for (int i = 0; i < n; i++) {
+    		for (int j = 0; j < n; j++) {
+    			x[i][j] = CPVarInt.apply(cp,1,n*n);
+    		}
+    	}
 		
 		
 		//add constraints

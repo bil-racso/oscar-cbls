@@ -38,7 +38,7 @@ public class ElementVar extends Constraint {
 
 	//y[x] = z
 	public ElementVar(CPVarInt [] y, CPVarInt x, CPVarInt z) {
-		super(y[0].getStore(),"ElementVar");
+		super(y[0].s(),"ElementVar");
 		this.y = y;
 		this.x = x;
 		this.z = z;
@@ -46,7 +46,7 @@ public class ElementVar extends Constraint {
 	
 	//y[x] = z
 	public ElementVar(CPVarInt [] y, CPVarInt x, int z) {
-		this(y,x,new CPVarInt(x.getStore(), z, z));
+		this(y,x,CPVarInt.apply(x.s(), z, z));
 	}
 
 	@Override
@@ -62,8 +62,10 @@ public class ElementVar extends Constraint {
 		}
 		z.callPropagateWhenBoundsChange(this);
 		x.callPropagateWhenDomainChanges(this);			
-		for (Integer v: x) {
-			y[v].callPropagateWhenBoundsChange(this);
+		for (int v = x.min(); v <= x.max(); v++) {
+			if (x.hasValue(v)) {
+				y[v].callPropagateWhenBoundsChange(this);
+			}
 		}
 		if (x.isBound()) {
 			if (s.post(new Eq(y[x.getValue()], z)) == CPOutcome.Failure) {
@@ -105,13 +107,15 @@ public class ElementVar extends Constraint {
 		counters = new Hashtable<Integer, ReversibleInt>();
 		for (int i = 0; i < y.length; i++) {
 			if (x.hasValue(i)) {
-				for (Integer v: y[i]) {
-					ReversibleInt counter = counters.get(v);
-					if (counter == null) {
-						counter = new ReversibleInt(s,1);
-						counters.put(v, counter);
-					} else {
-						counter.incr();
+				for (int v = y[i].min(); v <= y[i].max(); v++) {
+					if (y[i].hasValue(v)) {
+						ReversibleInt counter = counters.get(v);
+						if (counter == null) {
+							counter = new ReversibleInt(s,1);
+							counters.put(v, counter);
+						} else {
+							counter.incr();
+						}
 					}
 				}
 			}
@@ -124,12 +128,13 @@ public class ElementVar extends Constraint {
 			if (z.hasValue(v)) {
 				// check if this value is present in some Dom(y[i]) with i in Dom(x)
 				boolean present = false;
-				for (Integer i: x) {
-					if (y[i].hasValue(v)) {
-						present = true;
-						break;
+				for (int i = x.min(); i <= x.max(); i++) {
+					if (x.hasValue(i)) {
+						if (y[i].hasValue(v)) {
+							present = true;
+							break;
+						}
 					}
-
 				}
 				if (!present) {
 					if (z.removeValue(v) == CPOutcome.Failure) {
@@ -144,7 +149,7 @@ public class ElementVar extends Constraint {
 	// filter dom(x) because dom of y(i) has changed
 	private CPOutcome filterX(int i) {
 		// if the size of intersection between dom(z) and dom(y[idx]) becomes 0, we can remove idx from x
-		if (z.getIntersectionSize(y[i]) == 0) {
+		if (z.intersectionSize(y[i]) == 0) {
 			if (x.removeValue(i) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -183,11 +188,12 @@ public class ElementVar extends Constraint {
 
 		   int minY = Integer.MAX_VALUE;
 		   int maxY = Integer.MIN_VALUE;
-		   for (Integer v: x) {
-			   minY = Math.min(minY, y[v].getMin());
-			   maxY = Math.max(maxY, y[v].getMax());
+		   for (int v = x.getMin(); v <= x.max(); v++) {
+			   if (x.hasValue(v)) {
+				   minY = Math.min(minY, y[v].getMin());
+				   maxY = Math.max(maxY, y[v].getMax());
+			   }
 		   }
-
 		   // update z
 		   if (z.updateMin(minY) == CPOutcome.Failure)
 		      return CPOutcome.Failure;

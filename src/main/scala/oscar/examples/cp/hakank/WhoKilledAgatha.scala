@@ -50,7 +50,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object WhoKilledAgatha extends CPModel {
+object WhoKilledAgatha {
 
 
   def main(args: Array[String]) {
@@ -124,7 +124,7 @@ object WhoKilledAgatha extends CPModel {
        
       cp.binaryFirstFail(the_killer)
  
-      println("the_killer: " + names(the_killer.getValue()))
+      println("the_killer: " + names(the_killer.value))
 
       numSols += 1
        

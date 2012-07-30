@@ -61,7 +61,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object ARoundOfGolf extends CPModel {
+object ARoundOfGolf {
 
 
   def main(args: Array[String]) {

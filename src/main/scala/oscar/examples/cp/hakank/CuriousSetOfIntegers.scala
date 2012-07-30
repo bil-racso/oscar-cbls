@@ -34,7 +34,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object CuriousSetOfIntegers extends CPModel {
+object CuriousSetOfIntegers {
 
 
    def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
@@ -91,7 +91,7 @@ object CuriousSetOfIntegers extends CPModel {
 
         val s = Set(1,3,8,120)
         for(i <- 0 until n) {
-          val v = x(i).getValue()
+          val v = x(i).value
           if (!s.contains(v)) {
             println("The fifth number is " + v)
           }

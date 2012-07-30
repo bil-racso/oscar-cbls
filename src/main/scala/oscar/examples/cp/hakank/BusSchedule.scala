@@ -38,7 +38,7 @@ import scala.math._
  
 */
 
-object BusSchedule extends CPModel {
+object BusSchedule {
 
 
   def main(args: Array[String]) {

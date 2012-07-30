@@ -14,51 +14,51 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
 package oscar.cp.scheduling;
+
 
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 
 class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
-    private val endVar = startVar.plus(durVar)
+    private val endVar: CPVarInt = startVar.plus(durVar)
 	
-    def start = startVar
-    def end = endVar
-    def dur = durVar
+    def start() = startVar
+    def end() = endVar
+    def dur() = durVar
     
-	def this(startVar: CPVarInt,dur: Int) = this(startVar,new CPVarInt(startVar.getStore(),dur,dur))
+	def this(startVar: CPVarInt,dur: Int) = this(startVar, CPVarInt(startVar.s,dur,dur))
 
 	/**
 	 * earliest starting time
 	 */
-	def est() = start.getMin()
+	def est() = start.min
 	
 	/**
 	 * latest starting time
 	 */
-	def lst() = start.getMax()
+	def lst() = start.max
 	
 	/**
 	 * earliest completion time assuming the smallest duration
 	 */
-	def ect() = end.getMin()
+	def ect() = end.min
 	
 	/**
 	 * latest completion time assuming the smallest duration
 	 */
-	def lct() = end.getMax()
+	def lct() = end.max
 	
 	/**
 	 * current minimal duration of this activity
 	 */
-	def minDuration() = dur.getMin()
+	def minDuration() = dur.min
 
 	/**
 	 * current maximal duration of this activity
 	 */
-	def maxDuration() = dur.getMax()
+	def maxDuration() = dur.max
 	
 	def adjustStart(v : Int) = start.updateMin(v)	
 	

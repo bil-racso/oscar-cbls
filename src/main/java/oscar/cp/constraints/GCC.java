@@ -40,18 +40,18 @@ public class GCC extends Constraint {
      * @see GCCVar
      */
 	public GCC(CPVarInt [] x,int minval, int [] low, int [] up) {
-		super(x[0].getStore());
+		super(x[0].s());
 		this.x = x;
 		this.minval = minval;
 		this.low = low;
 		this.up = up;
-        // super(x,minval,low,up,new CPVarInt(x[0].getStore(),0,0));
+        // super(x,minval,low,up,CPVarInt.apply(x[0].s(),0,0));
     }
 	
 	protected CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = CPOutcome.Success;
 		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy
-			ok = s.post(new SoftGCC(x, minval, low, up, new CPVarInt(s,0,0)));
+			ok = s.post(new SoftGCC(x, minval, low, up, CPVarInt.apply(s,0,0)));
 		} else {
 			ok = s.post(new GCCFWC(x, minval, low, up));
 		}

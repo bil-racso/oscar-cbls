@@ -31,7 +31,7 @@ import scala.util.Random
   * Wikipedia: http://en.wikipedia.org/wiki/Stable_marriage_problem
   * @author Hakan Kjellerstrand hakank@gmail.com http://www.hakank.org/oscar/, Pierre Schaus pschaus@gmail.com
   */
-object StableMariage extends CPModel {
+object StableMariage {
 
 
   def main(args: Array[String]) {

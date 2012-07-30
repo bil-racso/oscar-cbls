@@ -25,7 +25,7 @@ import oscar.reversible._
 import oscar.cp.modeling._
 import oscar.cp.core.CPVarInt
 
-class SearchControllerTest extends FunSuite with ShouldMatchers with CPModel {
+class SearchControllerTest extends FunSuite with ShouldMatchers  {
 
    
  
@@ -60,12 +60,12 @@ class SearchControllerTest extends FunSuite with ShouldMatchers with CPModel {
     	val x = Array.fill(2)(CPVarInt(cp,1 to 2))
     	val y = Array.fill(2)(CPVarInt(cp,1 to 2))
 	
-    	def dom(x: CPVarInt) = (x.getMin() to x.getMax()).filter(x.hasValue(_))
+    	def dom(x: CPVarInt) = (x.min to x.max).filter(x.hasValue(_))
     	
     	var nbSol = 0
     	cp.exploration {
         	while (! allBounds(x)) {
-    		 val i = x.indices.find(!x(_).isBound()).get	    
+    		 val i = x.indices.find(!x(_).isBound).get	    
     		 cp.branchAll(dom(x(i)))(v => cp.post(x(i) == v))
     		 cp.branchAll(dom(y(i)))(v => cp.post(y(i) == v))      
     	    }

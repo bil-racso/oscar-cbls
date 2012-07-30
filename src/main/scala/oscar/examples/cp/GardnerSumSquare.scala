@@ -18,6 +18,8 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
+import oscar.cp.core._
+
 
 
 import scala.math
@@ -28,7 +30,7 @@ import scala.math
  * What is the minimum possible value of (a+b+c+d)^2 + (e+f+g+h)^2
  * @author Pierre Schaus pschaus@gmail.com
  */
-object GardnerSumSquare extends CPModel {
+object GardnerSumSquare {
 
   def main(args: Array[String]) {
     val n = 5

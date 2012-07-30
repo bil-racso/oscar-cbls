@@ -42,7 +42,7 @@ public class Minimum extends Constraint {
 	 * @param y
 	 */
 	public Minimum(CPVarInt [] x, CPVarInt y) {
-		super(x[0].getStore(),"Minimum");
+		super(x[0].s(),"Minimum");
 		this.x = x;
 		this.y = y;
 		maxval = new ReversibleInt(s);

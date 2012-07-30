@@ -18,6 +18,7 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -28,7 +29,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object SendMoreMoney extends CPModel {
+object SendMoreMoney {
 
    def main(args: Array[String]) {
 
@@ -54,7 +55,7 @@ object SendMoreMoney extends CPModel {
             M*10000 + O*1000 + N*100 + E*10 + Y)
         cp.add(S > 0)
         cp.add(M > 0)
-	cp.add(alldifferent(all), Strong)
+	    cp.add(alldifferent(all), Strong)
 
       } exploration {
 

@@ -31,7 +31,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
 
  */
-object SequenceSum extends CPModel {
+object SequenceSum {
 
   // Sum the elements in y where each subsequence of length s
   // sums to m

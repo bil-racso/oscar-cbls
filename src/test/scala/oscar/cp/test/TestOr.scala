@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestOr extends FunSuite with ShouldMatchers with CPModel {
+class TestOr extends FunSuite with ShouldMatchers  {
   
   
   test("or1") { 

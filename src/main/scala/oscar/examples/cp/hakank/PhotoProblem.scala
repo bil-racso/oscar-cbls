@@ -61,7 +61,7 @@ import scala.math._
  
 */
 
-object PhotoProblem extends CPModel {
+object PhotoProblem {
 
 
   // 
@@ -159,13 +159,13 @@ object PhotoProblem extends CPModel {
       println("\nSolution:")
       println("positions: " + positions.mkString(""))
       println("places   : " + places.mkString(""))
-      println("places   : " + places.map(p=>persons(p.getValue())).mkString(" "))
+      println("places   : " + places.map(p=>persons(p.value)).mkString(" "))
       println("Successful preferences:")
       for(i <- 0 until n;
           j <- 0 until n 
             if 
             preferences(i)(j) == 1 && 
-            abs(positions(i).getValue()-positions(j).getValue()) == 1
+            abs(positions(i).value-positions(j).value) == 1
           ) {
         println(persons(i) + ": " + persons(j))
       }
@@ -175,7 +175,7 @@ object PhotoProblem extends CPModel {
           j <- 0 until n 
             if 
             preferences(i)(j) == 1 && 
-            abs(positions(i).getValue()-positions(j).getValue()) > 1
+            abs(positions(i).value-positions(j).value) > 1
           ) {
         println(persons(i) + ": " + persons(j))
       }

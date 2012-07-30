@@ -46,7 +46,7 @@ import scala.math._
  
 */
 
-object CostasArray extends CPModel {
+object CostasArray {
 
 
   def main(args: Array[String]) {
@@ -137,7 +137,7 @@ object CostasArray extends CPModel {
       println("differences:");
       for(i <- 0 until n) {
         for(j <- 0 until n) {
-          val v = differences(i)(j).getValue()
+          val v = differences(i)(j).value
           if (v == -n+1) {
             print("   ");
           } else {

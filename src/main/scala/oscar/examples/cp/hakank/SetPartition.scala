@@ -47,7 +47,7 @@ import scala.math._
  
 */
 
-object SetPartition extends CPModel {
+object SetPartition {
 
   def main(args: Array[String]) {
 
@@ -141,10 +141,10 @@ object SetPartition extends CPModel {
       var sums = 0
       var sums_squared = 0
       for(i <- 0 until num_sets) {
-        for(j <- 0 until n if a(i)(j).getValue() == 1) {
+        for(j <- 0 until n if a(i)(j).value == 1) {
           print((j+1) + " ")
           if (i == 0) {
-            val v = (j+1)*a(i)(j).getValue()
+            val v = (j+1)*a(i)(j).value
             sums += v
             sums_squared += v*v
           }

@@ -41,7 +41,7 @@ import scala.collection.JavaConversions._
   http://www.hakank.org/oscar/
  
  */
-object Crew extends CPModel {
+object Crew {
 
   def main(args: Array[String]) {
 
@@ -207,7 +207,7 @@ object Crew extends CPModel {
         for(f <- FLIGHTS) {
           print("Flight #" + f + ": ");
           for(p <- PERSONS) {
-            if (crew(f)(p).getValue() == 1) {
+            if (crew(f)(p).value == 1) {
               print(names(p) + " ")
             }
           }
@@ -218,7 +218,7 @@ object Crew extends CPModel {
         for(p <- PERSONS) {
           print("%-10s".format(names(p)) + ": Flight(s): ")
           for(f <- FLIGHTS) {
-            if (crew(f)(p).getValue() == 1) {
+            if (crew(f)(p).value == 1) {
               print(f + " ")
             }
           }

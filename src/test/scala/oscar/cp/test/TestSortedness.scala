@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestSortedness extends FunSuite with ShouldMatchers with CPModel {
+class TestSortedness extends FunSuite with ShouldMatchers  {
 
 
   test("Sortedness1") {
@@ -41,7 +41,7 @@ class TestSortedness extends FunSuite with ShouldMatchers with CPModel {
     cp.add(sortedness(x,s,p))
     println(p.mkString(","))
     for (i <- 0 until x.size) {
-      p(i).getValue() should be(p_(i))
+      p(i).value should be(p_(i))
     }
     cp.getStatus() should not be(CPOutcome.Failure)
   }
@@ -57,7 +57,7 @@ class TestSortedness extends FunSuite with ShouldMatchers with CPModel {
     cp.add(sortedness(x,s,p))
     println(p.mkString(","))
     for (i <- 0 until x.size) {
-      s(i).getValue() should be(s_(i))
+      s(i).value should be(s_(i))
     }
     cp.getStatus() should not be(CPOutcome.Failure)
   }

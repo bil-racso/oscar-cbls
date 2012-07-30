@@ -38,7 +38,7 @@ public class Square extends Constraint {
 	 * @see  CPVarInt#mul(cp.core.CPVarInt)
 	 */
 	public Square(CPVarInt x, CPVarInt y) {
-		super(x.getStore(),"Square");
+		super(x.s(),"Square");
 		this.x = x;
 		this.y = y;
 	}
@@ -93,8 +93,8 @@ public class Square extends Constraint {
 					return CPOutcome.Failure;
 				}
 			} else {
-				int a = x.getValueBefore(0);
-				int b = x.getValueAfter(0);
+				Integer a = (Integer) x.valueBefore(0);
+				Integer b = (Integer) x.valueAfter(0);
 				int a2 = a*a;
 				int b2 = b*b;
 				if (y.updateMin(Math.min(a2, b2)) == CPOutcome.Failure) {

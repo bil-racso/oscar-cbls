@@ -34,7 +34,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object Assignment extends CPModel {
+object Assignment {
 
   // Nicer syntax for a CPVarInt matrix 
   class CPVarIntMatrix(m: Array[Array[CPVarInt]]) {
@@ -100,7 +100,7 @@ object Assignment extends CPModel {
       println()
       for(i <- ROWS) {
         println("Task" + i + " is done by " + 
-                x(i).zipWithIndex.filter(_._1.getValue() == 1).map(_._2).mkString(""))
+                x(i).zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(""))
       }
       println()
 

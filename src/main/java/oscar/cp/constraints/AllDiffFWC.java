@@ -29,7 +29,7 @@ public class AllDiffFWC extends Constraint {
 	private CPVarInt[] x;
 	
 	public AllDiffFWC(CPVarInt[] x) {
-		super(x[0].getStore(),"AllDifferent forward checking");
+		super(x[0].s(),"AllDifferent forward checking");
 		this.x = x;
 	}
 

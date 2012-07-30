@@ -43,7 +43,7 @@ import scala.math._
  
 */
 
-object AddedCorner extends CPModel {
+object AddedCorner {
 
   def main(args: Array[String]) {
 

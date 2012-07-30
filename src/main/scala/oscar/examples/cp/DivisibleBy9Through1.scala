@@ -31,7 +31,7 @@ import scala.math._
  * 3. If the rightmost digit of the new number is removed, the remaining number should be divisible by 7.
  * 4. And so on, until there's only one digit (which will necessarily be divisible by 1).
  */
-object DivisibleBy9Through1 extends CPModel {
+object DivisibleBy9Through1 {
 
   def main(args: Array[String]) {
 

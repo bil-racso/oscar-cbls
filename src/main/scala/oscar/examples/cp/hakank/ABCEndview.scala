@@ -66,7 +66,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object ABCEndview extends CPModel {
+object ABCEndview {
 
  
     class Problem(in_n: Int,
@@ -413,12 +413,12 @@ object ABCEndview extends CPModel {
           val notbound = x_flat.filterNot(_.isBound)
 
           // "max regret"
-          val y = argMax(notbound)(v=>v.getMax()-v.getMin()).last
+          val y = argMax(notbound)(v=>v.max-v.min).last
 
           //    
           // value selection
           // 
-          val vMax = y.getMax()
+          val vMax = y.max
           val v = vMax
     	  cp.branch {
             cp.post(y == v)
@@ -437,7 +437,7 @@ object ABCEndview extends CPModel {
 
         for(i <- RANGE) {
           for(j <- RANGE) {
-            print(str(1+x(i)(j).getValue()) + " ")
+            print(str(1+x(i)(j).value) + " ")
           }
           println()
         }

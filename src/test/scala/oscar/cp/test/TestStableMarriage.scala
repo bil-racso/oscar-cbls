@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class StableMarriage extends FunSuite with ShouldMatchers with CPModel {
+class StableMarriage extends FunSuite with ShouldMatchers  {
 
   test("StableMarriage") {
     val n = 5

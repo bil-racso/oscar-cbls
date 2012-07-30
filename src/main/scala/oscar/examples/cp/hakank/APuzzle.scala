@@ -91,7 +91,7 @@ import oscar.cp.core._
    http://www.hakank.org/oscar/
  
  */
-object APuzzle extends CPModel {
+object APuzzle {
 
 
   def main(args: Array[String]) {

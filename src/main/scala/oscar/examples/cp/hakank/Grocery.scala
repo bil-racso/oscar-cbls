@@ -39,7 +39,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
  
  */
-object Grocery extends CPModel {
+object Grocery {
 
    def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
      for (i <- 1 until y.length) {

@@ -52,7 +52,7 @@ import scala.math._
  
 */
 
-object BrokenWeights extends CPModel {
+object BrokenWeights {
 
 
   def main(args: Array[String]) {
@@ -111,7 +111,7 @@ object BrokenWeights extends CPModel {
       for(i <- 0 until m) {
         print("weight " + "%2s".format(i+1) + ": ")
         for(j <- 0 until n) {        
-          print("%3s".format(x(i)(j).getValue()) + " ")
+          print("%3s".format(x(i)(j).value) + " ")
         }
         println()
       }

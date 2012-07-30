@@ -49,12 +49,12 @@ import scala.math._
  
 */
 
-object CalculsDEnfer extends CPModel {
+object CalculsDEnfer {
 
    // returns the maximal element in t
    def my_max(t: Array[CPVarInt]) : CPVarInt = {
-     val cp = t(0).getStore
-     val mmax = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
+     val cp = t(0).s
+     val mmax = CPVarInt(cp, (t(0).min to t(0).max))
      for(i <- 0 to t.length-1) {
        cp.post(mmax >= t(i))
      }

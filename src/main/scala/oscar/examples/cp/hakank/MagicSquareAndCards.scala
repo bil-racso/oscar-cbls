@@ -37,7 +37,7 @@ import scala.math._
  
 */
 
-object MagicSquareAndCards extends CPModel {
+object MagicSquareAndCards {
 
   def main(args: Array[String]) {
 

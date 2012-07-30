@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.constraints._
+import oscar.cp.core._
+
 
 import scala.io.Source;
 import scala.collection.mutable.Map
@@ -31,7 +33,7 @@ import scala.collection.mutable.Map
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ParcelShipment extends CPModel {
+object ParcelShipment {
 	def main(args: Array[String]) {
 	    // distance matrix between cities
 	    val distance : Array[Array[Int]] = Array( Array(   0, 85, 110,  94,  71,  76, 25,  56,  94,  67 ),

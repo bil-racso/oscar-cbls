@@ -49,7 +49,7 @@ import scala.io.Source
  *	11....11.0
  *
  */
-object Binero extends CPModel {
+object Binero {
   def main(args: Array[String]): Unit = {
     val cp = CPSolver()
     
@@ -109,7 +109,7 @@ object Binero extends CPModel {
   /**
    * Custom constraint which obliges two arrays to be different
    */
-  class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len: Int) extends Constraint(tab1(0).getStore()) {
+  class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len: Int) extends Constraint(tab1(0).s) {
     
     val valuesBin = Array(new ReversibleInt(s,0), new ReversibleInt(s,0))
     val numBound = Array(new ReversibleInt(s,0), new ReversibleInt(s,0))
@@ -131,10 +131,10 @@ object Binero extends CPModel {
     }
     
     override def valBindIdx (x: CPVarInt, i: Int): CPOutcome = {
-      valuesBin(i/len).value += x.getValue()*intPow(2, i%len)
+      valuesBin(i/len).value += x.min*intPow(2, i%len)
       numBound(i/len).incr()
       if(numBound(0).value == len && numBound(1).value == len) {
-    	  if(valuesBin(0).value == valuesBin(1).value)
+    	  if (valuesBin(0).value == valuesBin(1).value)
     		 CPOutcome.Failure
     	  else
     		 CPOutcome.Success

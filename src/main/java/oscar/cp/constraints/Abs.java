@@ -37,7 +37,7 @@ public class Abs extends Constraint {
      * @param y
      */
 	public Abs(CPVarInt x, CPVarInt y) {
-		super(x.getStore(),"Abs");
+		super(x.s(),"Abs");
 		this.x = x;
 		this.y = y;
 	}

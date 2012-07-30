@@ -32,7 +32,7 @@ import scala.math._
  * http://www.hakank.org/oscar/
  *
  */
-object ToNum extends CPModel {
+object ToNum {
 
   // channeling between IntVar array t <=> IntVar s
   def toNum(t: Array[CPVarInt], base: Int=10) = sum(

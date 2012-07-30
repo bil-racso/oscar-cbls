@@ -38,7 +38,7 @@ import Array._
   http://www.hakank.org/oscar/
  
 */
-object HidatoTable extends CPModel {
+object HidatoTable {
 
   def main(args: Array[String]) {
 
@@ -171,7 +171,7 @@ object HidatoTable extends CPModel {
 
       while (!allBounds(positions)) {
         val (y,i) = minDomNotbound(positions).head
-          val v = y.getMin()
+          val v = y.min
           cp.branch {
           cp.post(y == v)
         } {
@@ -186,7 +186,7 @@ object HidatoTable extends CPModel {
       //
       var x = Array.tabulate(n)(i=> Array.tabulate(n)(j=> 0))
       for(k <- 0 until n*n) {
-        val pos = positions(k).getValue()
+        val pos = positions(k).value
         x(pos / n)(pos % n) = k+1
       }
       

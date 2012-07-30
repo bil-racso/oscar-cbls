@@ -59,7 +59,7 @@ import scala.math._
  http://www.hakank.org/oscar/
  
 */
-object SurvoPuzzle extends CPModel {
+object SurvoPuzzle {
 
   def main(args: Array[String]) {
 

@@ -36,7 +36,7 @@ import scala.math._
  
 */
 
-object SetCovering3 extends CPModel {
+object SetCovering3 {
 
 
   def main(args: Array[String]) {
@@ -92,7 +92,7 @@ object SetCovering3 extends CPModel {
       println("x: " + x.mkString(""))
       
       // More details
-      for(j <- 0 until num_senators if x(j).getValue() == 1) {
+      for(j <- 0 until num_senators if x(j).value == 1) {
           print("Senator " + (j+1) + " belongs to these groups: ")
           for(i <- 0 until num_groups if belongs(i)(j) == 1) {
               print((1+i) + " ")

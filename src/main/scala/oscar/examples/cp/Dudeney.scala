@@ -32,14 +32,14 @@ import scala.math
  * There are only six Dudeney Numbers and those are very easy to find with CP.
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Dudeney extends CPModel {
+object Dudeney {
 
   def main(args: Array[String]) {
     val n = 5
 
     val cp = new CPSolver()
 
-    val x = (0 until n).map(v => new CPVarInt(cp, 0 to 9))
+    val x = (0 until n).map(v => CPVarInt(cp, 0 to 9))
     val nb = CPVarInt(cp, 1 to math.pow(10, n).toInt - 1)
     val s = CPVarInt(cp, 1 to 9 * n)
 
@@ -49,11 +49,10 @@ object Dudeney extends CPModel {
       cp.add(sum(x) == s)
     } exploration {
       cp.binaryFirstFail(x)
-      println(nb.getValue)
+      println(nb.value)
     }
 
     cp.printStats()
-
 
   }
 

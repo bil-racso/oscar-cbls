@@ -44,7 +44,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object BowlsAndOranges extends CPModel {
+object BowlsAndOranges {
 
   def main(args: Array[String]) {
 

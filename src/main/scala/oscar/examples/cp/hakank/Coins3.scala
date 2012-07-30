@@ -41,7 +41,7 @@ import scala.math._
  
 */
 
-object Coins3 extends CPModel {
+object Coins3 {
 
   def main(args: Array[String]) {
 

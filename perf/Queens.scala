@@ -16,9 +16,9 @@
  ******************************************************************************/
 
 
-
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 
 
 
@@ -30,7 +30,7 @@ import oscar.search._
  * Using Non Deterministic Search
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Queens  extends CPModel {
+object Queens  {
 	def main(args: Array[String]) {
 		
       val cp = CPSolver()
@@ -58,4 +58,5 @@ object Queens  extends CPModel {
       
 	}
 }
+
 

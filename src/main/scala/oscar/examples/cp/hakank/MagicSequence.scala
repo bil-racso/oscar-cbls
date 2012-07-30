@@ -38,7 +38,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object MagicSequence extends CPModel {
+object MagicSequence {
 
 
   def main(args: Array[String]) {

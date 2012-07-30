@@ -41,7 +41,7 @@ import scala.util.Random
   http://www.hakank.org/oscar/
  
  */
-object StableMarriageRandom extends CPModel {
+object StableMarriageRandom {
 
 
   def main(args: Array[String]) {

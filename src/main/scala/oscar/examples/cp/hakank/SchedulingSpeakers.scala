@@ -31,7 +31,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object SchedulingSpeakers extends CPModel {
+object SchedulingSpeakers {
 
 
    def main(args: Array[String]) {

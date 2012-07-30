@@ -51,7 +51,7 @@ import scala.io.Source._
  * http://www.hakank.org/oscar/
  *
  */
-object FillAPix extends CPModel {
+object FillAPix {
 
 
   def main(args: Array[String]) {
@@ -134,7 +134,7 @@ object FillAPix extends CPModel {
       println("\nSolution:")
       for(i <- 0 until n) {
         for(j <- 0 until n) {
-          if (pict(i)(j).getValue() == 1) {
+          if (pict(i)(j).value == 1) {
             print("#")
           } else  {
             print(" ")

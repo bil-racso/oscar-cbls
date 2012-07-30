@@ -57,10 +57,10 @@ public class TestSum extends TestCase {
     }
     
     public void testSum1() {  	
-    	CPVarInt x0 = new CPVarInt(s,0,1);
-    	CPVarInt x1 = new CPVarInt(s,0,2);
-    	CPVarInt x2 = new CPVarInt(s,0,2);
-    	CPVarInt x3 = new CPVarInt(s,0,3);
+    	CPVarInt x0 = CPVarInt.apply(s,0,1);
+    	CPVarInt x1 = CPVarInt.apply(s,0,2);
+    	CPVarInt x2 = CPVarInt.apply(s,0,2);
+    	CPVarInt x3 = CPVarInt.apply(s,0,3);
     	
     	CPVarInt [] cumulatedCounters = new CPVarInt[]{x0,x1,x2,x3};
     	int n = cumulatedCounters.length;

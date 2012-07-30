@@ -39,7 +39,7 @@ import scala.util.matching._
  
 */
 
-object WordSquare extends CPModel {
+object WordSquare {
 
 
   /**
@@ -125,7 +125,7 @@ object WordSquare extends CPModel {
       cp.binaryFirstFail(E)
         
       println("solution #" + (numSols+1))
-      E.foreach(e=> println(words(e.getValue())))
+      E.foreach(e=> println(words(e.value)))
       println()
 
       numSols += 1

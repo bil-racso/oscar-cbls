@@ -36,7 +36,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
  
  */
-object StableMarriage extends CPModel {
+object StableMarriage {
 
 
   def main(args: Array[String]) {

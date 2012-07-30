@@ -39,7 +39,7 @@ public class Minus extends Constraint {
      * @see CPVarInt#minus(cp.core.CPVarInt)
      */
 	public Minus(CPVarInt x, CPVarInt y, CPVarInt z) {
-		super(x.getStore());
+		super(x.s());
 		this.x = x;
 		this.y = y;
 		this.z = z;

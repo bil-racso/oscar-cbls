@@ -24,6 +24,7 @@ import oscar.cp.scheduling._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
+
 trait Constraints {
 
   /**

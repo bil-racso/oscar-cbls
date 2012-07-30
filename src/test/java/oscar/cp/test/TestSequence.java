@@ -59,7 +59,7 @@ public class TestSequence extends TestCase {
     public void testSequence1(){
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,0,1);
+			x[i] = CPVarInt.apply(s,0,1);
 		}
         SetIndexedArray set = new SetIndexedArray(1,1);
     
@@ -76,7 +76,7 @@ public class TestSequence extends TestCase {
     public void testSequence2(){
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,1,5);
+			x[i] = CPVarInt.apply(s,1,5);
 		}
         SetIndexedArray set = new SetIndexedArray(3,3);
 
@@ -93,7 +93,7 @@ public class TestSequence extends TestCase {
     public void testSequence3(){
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,1,5);
+			x[i] = CPVarInt.apply(s,1,5);
 		}
         SetIndexedArray set = new SetIndexedArray(2,3);
 
@@ -108,7 +108,7 @@ public class TestSequence extends TestCase {
     public void testSequence4(){
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,1,5);
+			x[i] = CPVarInt.apply(s,1,5);
 		}
         SetIndexedArray set = new SetIndexedArray(4,4);
 

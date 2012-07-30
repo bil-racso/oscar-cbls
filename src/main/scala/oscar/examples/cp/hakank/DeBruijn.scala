@@ -38,7 +38,7 @@ import scala.math.pow
  * http://www.hakank.org/oscar/
  *
  */
-object DeBruijn extends CPModel {
+object DeBruijn {
 
   // channeling between IntVar array t <=> IntVar s
   def toNum(t: Array[CPVarInt], base: Int=10) = sum(

@@ -43,7 +43,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object AllDifferentExcept0 extends CPModel {
+object AllDifferentExcept0 {
 
   // Decomposition of alldifferent_except_0
   def alldifferent_except_0(cp: CPSolver, y: Array[CPVarInt]) = {

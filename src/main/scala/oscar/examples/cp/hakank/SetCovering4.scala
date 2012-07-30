@@ -36,7 +36,7 @@ import scala.math._
  
 */
 
-object SetCovering4 extends CPModel {
+object SetCovering4 {
 
   def main(args: Array[String]) {
 
@@ -103,7 +103,7 @@ object SetCovering4 extends CPModel {
       println("z: " + z)
       println("x: " + x.mkString(""))
       println("Selected alternatives: " + 
-              x.zipWithIndex.filter(_._1.getValue() == 1).map(_._2).mkString(" "))
+              x.zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(" "))
 
       numSols += 1
 

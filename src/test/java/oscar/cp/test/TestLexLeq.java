@@ -56,9 +56,14 @@ public class TestLexLeq extends TestCase {
     }
     
     public void testLexLeq(){ 
-    	CPVarInt [] x = CPVarInt.getArray(s, 5, 0, 1);
-    	CPVarInt [] y = CPVarInt.getArray(s, 5, 0, 1);
-    	
+    	CPVarInt [] x = new CPVarInt[5];
+    	for (int i = 0; i < x.length; i++) {
+			x[i] = CPVarInt.apply(s,0,1);
+		}
+    	CPVarInt [] y = new CPVarInt[5];
+    	for (int i = 0; i < y.length; i++) {
+			y[i] = CPVarInt.apply(s,0,1);
+		}
     	
     	
     	s.post(new LexLeq(x,y));

@@ -19,6 +19,7 @@ package oscar.examples.cp
 
 
 import oscar.cp.modeling._
+import oscar.cp.core._
 import oscar.search._
 import oscar.visual._
 import java.awt.Color
@@ -35,7 +36,7 @@ import java.awt.Color
  * Then, starting from the 2, you need to write the 3 using the same permitted moves, and so on...
  * @author Pierre Schaus pschaus@gmail.com
  */
-object AudreyProblem  extends CPModel {
+object AudreyProblem  {
 	def main(args: Array[String]) {
 
 		def reachables(i : Int) : Set[Int] = {
@@ -52,7 +53,7 @@ object AudreyProblem  extends CPModel {
 			cp.add(circuit(x))
 		} exploration {
 		  cp.binaryFirstFail(x)
-		  println(x.map(_.getValue).mkString(","))
+		  println(x.map(_.value).mkString(","))
 		}
 		
 		cp.printStats()
@@ -73,7 +74,7 @@ object AudreyProblem  extends CPModel {
 		  }	
 		}		
 		for (i <- 0 until 100) {
-		  val v = x(i).getValue()
+		  val v = x(i).value
 		  val (c,l) = (v/10, v%10)
 		  new VisualCircle(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,3).setInnerCol(Color.RED)
 		  new VisualLine(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,scale/2+c*scale,scale/2+l*scale)
@@ -84,7 +85,7 @@ object AudreyProblem  extends CPModel {
 		  val c = curr%10
 		  
 		  new VisualText(drawing,scale/2+l*scale,scale/2+c*scale,i.toString)
-		  curr = x(curr).getValue()
+		  curr = x(curr).value
 		}
 		f.pack()
 		drawing.repaint()

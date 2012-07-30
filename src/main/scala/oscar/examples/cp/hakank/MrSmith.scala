@@ -52,7 +52,7 @@ import scala.math._
  
 */
 
-object MrSmith extends CPModel {
+object MrSmith {
 
   def main(args: Array[String]) {
 

@@ -60,7 +60,7 @@ import scala.math._
  
 */
 
-object PostOfficeProblem extends CPModel {
+object PostOfficeProblem {
 
   def main(args: Array[String]) {
 
@@ -123,16 +123,16 @@ object PostOfficeProblem extends CPModel {
         val notbound = x.filterNot(_.isBound)
 
         // variable selection
-        val y = argMax(notbound)(v=>v.getSize()).last
+        val y = argMax(notbound)(v=>v.size).last
         //    
         // value selection
         // 
-        val size = y.getSize
-        val vMin = y.getMin()   // min value of domain
-        val vMax = y.getMax()   // max value of domain
+        val size = y.size
+        val vMin = y.min   // min value of domain
+        val vMax = y.max   // max value of domain
         val vMidV = ((vMin + vMax) / 2).toInt; // calculate median value (of vMin and vMax)
-        val vMid = y.getValueAfter(vMidV)  // the median value in the domain
-        val vRand = y.getRandomValue()  // random value from domain
+        val vMid = y.valueAfter(vMidV)  // the median value in the domain
+        val vRand = y.randomValue  // random value from domain
         
         // var v = vMin
         // var v = vMax

@@ -51,7 +51,7 @@ import Array._
  * http://www.hakank.org/oscar/
  *
  */
-object Rogo2 extends CPModel {
+object Rogo2 {
  
   val W = 0;
   val B = -1;
@@ -221,7 +221,7 @@ object Rogo2 extends CPModel {
       println("(Adding 1 to coords...)");
       val sol = Array.fill(rows,cols)(0)
       for(s <- STEPS) {
-        val p = path(s).getValue();
+        val p = path(s).value;
         val Array(x, y) = Array(p / cols, p % cols)
         println((x+1) + "," + (y+1) + " (" +  points(s) + " points )");
         sol(x)(y) = 1

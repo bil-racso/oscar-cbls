@@ -51,7 +51,7 @@ import scala.math._
  
 */
 
-object SafeCracking extends CPModel {
+object SafeCracking {
 
 
   def main(args: Array[String]) {

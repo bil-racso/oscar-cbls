@@ -44,7 +44,7 @@ public class Or extends Constraint {
      * @param y
      */
 	public Or(CPVarBool [] x, CPVarBool y) {
-		super(x[0].getStore());
+		super(x[0].s());
 		this.x = x;
 		this.y = y;
 		nbBound = new ReversibleInt(s,0);

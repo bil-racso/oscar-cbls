@@ -57,7 +57,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
 
  */
-object Tomography extends CPModel {
+object Tomography {
 
  
   def main(args: Array[String]) {
@@ -124,7 +124,7 @@ object Tomography extends CPModel {
        for(i <- 0 until r) {
          print(" " + "%2d".format(row_sums(i)) + "   ")
            for(j <- 0 until c) {
-             if (x(i)(j).getValue() == 1) {
+             if (x(i)(j).value == 1) {
                print("X ") 
              } else {
                print("  ")

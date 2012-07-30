@@ -77,7 +77,7 @@ class CPSolver() extends Store() {
 	/**
 	 * return true if every variable is bound
 	 */
-	def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound()).foldLeft(true)((a,b) => a & b)
+	def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a,b) => a & b)
 	
 	/**
 	 * Set the maximum number of fails for the search
@@ -86,8 +86,8 @@ class CPSolver() extends Store() {
 	  sc.failLimit = nbFailMax 
 	}
 	
-	def minVal(x: CPVarInt): Int = x.getMin()
-	def maxVal(x: CPVarInt): Int = x.getMax()
+	def minVal(x: CPVarInt): Int = x.min
+	def maxVal(x: CPVarInt): Int = x.max
 	
 	/**
      * Binary First Fail on the decision variables vars
@@ -95,7 +95,7 @@ class CPSolver() extends Store() {
     def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val unbound = vars.filter(!_.isBound)
-    	   val minDomSize = unbound.map(_.getSize()).min 
+    	   val minDomSize = unbound.map(_.size).min 
     	   val x = unbound.filter(_.getSize == minDomSize).first
            val v = valHeuris(x)
     	   branch (post(x == v))(post(x != v))// right alternative
@@ -112,7 +112,7 @@ class CPSolver() extends Store() {
     def binary(vars: Array[CPVarInt]): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val x = vars.filter(!_.isBound).first
-           val v = x.getMin()
+           val v = x.min
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
@@ -124,9 +124,9 @@ class CPSolver() extends Store() {
     def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
      while (!allBounds(vars)) {
     	   val unbound = vars.filter(!_.isBound)
-    	   val maxDegree = unbound.map(_.getConstraintDegree()).max 
-    	   val x = unbound.filter(_.getConstraintDegree() == maxDegree).first
-           val v = x.getMin()
+    	   val maxDegree = unbound.map(_.constraintDegree).max 
+    	   val x = unbound.filter(_.constraintDegree == maxDegree).first
+           val v = x.min
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }  

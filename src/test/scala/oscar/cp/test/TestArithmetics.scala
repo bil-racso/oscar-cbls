@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestArithmetics extends FunSuite with ShouldMatchers with CPModel {
+class TestArithmetics extends FunSuite with ShouldMatchers  {
 
 
   test("Arithmetics") {
@@ -53,7 +53,7 @@ class TestArithmetics extends FunSuite with ShouldMatchers with CPModel {
     
     println(ix2)
 
-    ix2.getSize() should be(18) // should contain: 0,1,8,16,17
+    ix2.size should be(18) // should contain: 0,1,8,16,17
 
 
   } 

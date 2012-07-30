@@ -32,7 +32,7 @@ import scala.collection.JavaConversions._
  * 
  * @author Jean-Baptiste Mairy and Pierre Schaus (pschaus@gmail.com)
  */
-class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constraint(X(0).getStore(), "Table2") {
+class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constraint(X(0).s, "Table2") {
 
   val lastSize = Array.fill(X.size)(new ReversibleInt(s,-1))
   
@@ -56,7 +56,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
   override def setup(l: CPPropagStrength): CPOutcome = {    
     setIdempotent()
     if (propagate() == CPOutcome.Failure) return CPOutcome.Failure
-    X.filter(!_.isBound()).foreach(_.callPropagateWhenDomainChanges(this))
+    X.filter(!_.isBound).foreach(_.callPropagateWhenDomainChanges(this))
     return CPOutcome.Suspend
   }
   
@@ -65,7 +65,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
     sup.empty()
   }
   
-  private def changed(i: Int) = lastSize(i).value != X(i).getSize()
+  private def changed(i: Int) = lastSize(i).value != X(i).size
 
   
   def isValid(t: Int): Boolean = {
@@ -78,13 +78,13 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
 
     for ((x,i) <- X.zipWithIndex) {
        if (changed(i)) sval.insert(i)
-       /*if (!x.isBound())*/ sup.insert(i) 
+       /*if (!x.isBound)*/ sup.insert(i) 
     }
     
     // retrieve domains in sets
     import scala.collection.mutable.Set
     
-    val toRemoveValues = Array.tabulate(X.size)(i => Set((X(i).getMin() to X(i).getMax).filter(X(i).hasValue(_)) : _*))
+    val toRemoveValues = Array.tabulate(X.size)(i => Set((X(i).min to X(i).max).filter(X(i).hasValue(_)) : _*))
     
     val toRemoveFromTuples = Set[Integer]() // used to avoid removing while iterating in validTuples
     
@@ -105,14 +105,14 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
       }
     }
     // update sizes
-    for ((x,i) <- X.zipWithIndex) { lastSize(i).setValue(x.getSize()) }
+    for ((x,i) <- X.zipWithIndex) { lastSize(i).setValue(x.size) }
     return CPOutcome.Suspend
   }
 
 }
 
 
-object TableSTR2 extends CPModel {
+object TableSTR2 {
   def main(args: Array[String]) {
 	  val tuples = Array(Array(1,2,3),Array(2,2,3),Array(3,2,1))
 	  val cp = CPSolver()

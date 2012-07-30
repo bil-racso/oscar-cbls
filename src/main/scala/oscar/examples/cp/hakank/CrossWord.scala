@@ -60,7 +60,7 @@ import scala.collection.JavaConversions._
   http://www.hakank.org/oscar/
  
  */
-object CrossWord extends CPModel {
+object CrossWord {
 
   def main(args: Array[String]) {
 
@@ -166,9 +166,9 @@ object CrossWord extends CPModel {
           
         println("E: " + E.mkString(" "))
         for(ee <- 0 until N) {
-          print(ee + ": (" + "%2d".format(E(ee).getValue()) + ") ")
+          print(ee + ": (" + "%2d".format(E(ee).value) + ") ")
           for(ii <- 0 until word_len) {
-            print(alpha(A(ee)(ii).getValue()))
+            print(alpha(A(ee)(ii).value))
           }
           println()
         }

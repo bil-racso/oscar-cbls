@@ -18,6 +18,7 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -39,7 +40,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object Diet2 extends CPModel {
+object Diet2 {
 
    def main(args: Array[String]) {
 

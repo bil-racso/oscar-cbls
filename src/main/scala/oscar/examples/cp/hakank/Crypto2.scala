@@ -36,7 +36,7 @@ import scala.math._
  
 */
 
-object Crypto2 extends CPModel {
+object Crypto2 {
 
 
   // sums(all, "ballet", 45, ht)
