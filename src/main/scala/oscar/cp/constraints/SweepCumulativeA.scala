@@ -385,14 +385,13 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 				if (tasks(t).minDuration > 0) {
 					
 					if (pruneInterval(low - tasks(t).minDuration+1, up, tasks(t).start) == CPOutcome.Failure)
-						return CPOutcome.Failure
-						
-					if (pruneInterval(low + 1, up + tasks(t).minDuration, tasks(t).end) == CPOutcome.Failure)
-						return CPOutcome.Failure
-				
+						return CPOutcome.Failure	
 				} 
 				
 				if (!tasks(t).dur.isBound) {
+					
+					if (pruneInterval(low + 1, up + tasks(t).minDuration, tasks(t).end) == CPOutcome.Failure)
+						return CPOutcome.Failure
 						
 					val maxD = max(max(low - tasks(t).est, tasks(t).lct -up - 1), 0)
 								
