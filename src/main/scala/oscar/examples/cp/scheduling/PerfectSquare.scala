@@ -32,7 +32,7 @@ import oscar.cp.constraints._
  * 21 different smaller squares with no overlap between squares.
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PerfectSquare extends CPModel {
+object PerfectSquare {
 
   def main(args: Array[String]) {
     val s = 112
@@ -64,8 +64,8 @@ object PerfectSquare extends CPModel {
     	def label(w: Array[CPVarInt]) = {
     			while (!cp.allBounds(w)) {
     				// minimum x position 
-    				val pos = w.filter(!_.isBound()).map(_.getMin()).min
-    				val z = w.filter(w => !w.isBound() && w.hasValue(pos)).first
+    				val pos = w.filter(!_.isBound).map(_.min).min
+    				val z = w.filter(w => !w.isBound && w.hasValue(pos)).first
     				cp.branch(cp.post(z == pos))(cp.post(z != pos))
     			}
     	}
@@ -84,7 +84,7 @@ object PerfectSquare extends CPModel {
     	val bg = new VisualRectangle(d,0,0,s*scale,s*scale)
     	bg.setInnerCol(Color.black)
     	(0 until x.size).foreach { i =>
-    	  val r = new VisualRectangle(d,x(i).getValue()*scale,y(i).getValue()*scale,side(i)*scale,side(i)*scale)
+    	  val r = new VisualRectangle(d,x(i).value*scale,y(i).value*scale,side(i)*scale,side(i)*scale)
     	  r.setInnerCol(VisualUtil.getRandomColor())
     	}
     }

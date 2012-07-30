@@ -25,7 +25,7 @@ import oscar.cp.search._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 
-class TestPartialOrderSchedule extends FunSuite with ShouldMatchers with CPModel {
+class TestPartialOrderSchedule extends FunSuite with ShouldMatchers {
 
 	test("Test : Precedences generation") {
 		

@@ -11,7 +11,7 @@ import scala.util.Random.nextInt
 
 import scala.collection.mutable.Set
 
-object WorkingTeamProblem extends CPModel {
+object WorkingTeamProblem {
   
 	def main(args : Array[String]) {
 	  

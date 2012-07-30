@@ -28,7 +28,7 @@ import oscar.visual._
 
 import scala.io.Source
 
-object CumulativeJobShop extends CPModel {
+object CumulativeJobShop {
   
 	def main(args: Array[String]) {
 	  

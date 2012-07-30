@@ -28,7 +28,7 @@ import oscar.visual._
 
 import scala.io.Source
 
-object MachineSchedulingVariableSpeed extends CPModel {
+object MachineSchedulingVariableSpeed {
   
 	/**
 	 * Given 7 tasks. Each task has to run on a given machine chosen from a set of 

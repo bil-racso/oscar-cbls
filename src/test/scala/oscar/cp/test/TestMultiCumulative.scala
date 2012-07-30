@@ -11,23 +11,23 @@ import oscar.cp.scheduling.CumulativeActivity
 
 import org.scalacheck._
 
-class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
+class TestMultiCumulative extends FunSuite with ShouldMatchers {
 	
 	test("Test : Nicolas Beldiceanu example 1") {
 		
 		val cp = CPSolver()
 		
-		val t1 = new CumulativeActivity(new CPVarInt(cp, 1 to 2), // start
-										new CPVarInt(cp, 2 to 4), // duration
-										new CPVarInt(cp, 3 to 6), // end
-										new CPVarInt(cp, 0 to 0), // machine
-										new CPVarInt(cp, -1 to 1)) // resource
+		val t1 = new CumulativeActivity(CPVarInt(cp, 1 to 2), // start
+										CPVarInt(cp, 2 to 4), // duration
+										CPVarInt(cp, 3 to 6), // end
+										CPVarInt(cp, 0 to 0), // machine
+										CPVarInt(cp, -1 to 1)) // resource
 		
-		val t2 = new CumulativeActivity(new CPVarInt(cp, 0 to 6), // start
-										new CPVarInt(cp, 0 to 2), // duration
-										new CPVarInt(cp, 0 to 8), // end
-										new CPVarInt(cp, 0 to 1), // machine
-										new CPVarInt(cp, -3 to 4)) // resource
+		val t2 = new CumulativeActivity(CPVarInt(cp, 0 to 6), // start
+										CPVarInt(cp, 0 to 2), // duration
+										CPVarInt(cp, 0 to 8), // end
+										CPVarInt(cp, 0 to 1), // machine
+										CPVarInt(cp, -3 to 4)) // resource
 		
 		val tasks = Array(t1, t2)
 		val capacities = Array(4, 3)
@@ -75,7 +75,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 	
 		} exploration {
 		  cp.binary(tasks.map(_.machine))
-		  val sol = (tasks(0).machine.getValue(),tasks(1).machine.getValue(),tasks(2).machine.getValue(),tasks(3).machine.getValue())	
+		  val sol = (tasks(0).machine.value,tasks(1).machine.value,tasks(2).machine.value,tasks(3).machine.value)	
 		  expectedSol.contains(sol) should be(true)
 		  nbSol += 1
 		}
@@ -98,9 +98,9 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		  cp.add(new MaxSweepCumulative(cp, tasks, 5, 1))
 		  cp.add(tasks(1).machine == 0)
 		  
-		  tasks(0).machine.getValue should be(0)
-		  tasks(2).machine.getValue should be(1)
-		  tasks(3).machine.getValue should be(1)
+		  tasks(0).machine.value should be(0)
+		  tasks(2).machine.value should be(1)
+		  tasks(3).machine.value should be(1)
 	
 		} exploration {
 		  cp.binary(tasks.map(_.machine))
@@ -129,12 +129,12 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		  cp.add(new MaxSweepCumulative(cp, tasks :+ myAct, 5, 1))
 		  cp.add(tasks(1).machine == 0)
 		  
-		  tasks(0).machine.getValue should be(0)
-		  tasks(2).machine.getValue should be(1)
-		  tasks(3).machine.getValue should be(1)
-		  myAct.machine.getSize() should be(2)
+		  tasks(0).machine.value should be(0)
+		  tasks(2).machine.value should be(1)
+		  tasks(3).machine.value should be(1)
+		  myAct.machine.size should be(2)
 		  cp.add(myAct.machine == 0)
-		  myAct.start.getMin() should be(6)
+		  myAct.start.min should be(6)
 	
 		}
 	}
@@ -159,7 +159,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		  cp.add(myAct2.machine == 0)
 		  cp.add(myAct1.resource == 5) // it means myAct2 must have a negative consumption of -2
 		  
-		  myAct2.resource.getValue should be(-2)
+		  myAct2.resource.value should be(-2)
 		 
 		}
 	}
@@ -186,8 +186,8 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers with CPModel {
 		  cp.add(myAct2.machine == 0)
 		  cp.add(myAct2.start == 3)
 		  
-		  myAct1.dur.getMin() should be(0)
-		  myAct1.dur.getMax() should be(3)
+		  myAct1.dur.min should be(0)
+		  myAct1.dur.max should be(3)
 
 		}
 	}	

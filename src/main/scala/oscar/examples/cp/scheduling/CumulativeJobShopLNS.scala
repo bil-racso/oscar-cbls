@@ -30,7 +30,7 @@ import scala.util.Random.nextFloat
 import scala.io.Source
 import scala.collection.mutable.Set
 
-object CumulativeJobShopLNS extends CPModel {
+object CumulativeJobShopLNS {
   
 	def main(args: Array[String]) {
 		
@@ -82,7 +82,7 @@ object CumulativeJobShopLNS extends CPModel {
 		val jobActivities = Array.tabulate(nJobs, nTasksPerJob)((i,j) => {
 			
   	   		val dur      = CPVarInt(cp, durations(i)(j))
-  	   		val start    = CPVarInt(cp, 0 to horizon - dur.getMin())
+  	   		val start    = CPVarInt(cp, 0 to horizon - dur.min)
   	   		
   	   		CumulativeActivity(start,dur, machines(i)(j), 1)
   	   	}) 	   
@@ -140,7 +140,7 @@ object CumulativeJobShopLNS extends CPModel {
 			val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
 			val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
 			
-			cp.post(constraints)
+			cp.post(constraints.asInstanceOf[Array[Constraint]])
 		}
 		
   	   	cp.minimize(makespan) subjectTo {

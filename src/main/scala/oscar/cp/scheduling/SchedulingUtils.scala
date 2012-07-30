@@ -1,6 +1,5 @@
 package oscar.cp.scheduling
 
-import oscar.cp.modeling.CPModel
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core.CPOutcome
 import oscar.reversible.ReversibleSetIndexedArray
@@ -10,13 +9,13 @@ import scala.collection.JavaConverters._
 import oscar.reversible.ReversibleBool
 
 
-object SchedulingUtils extends CPModel {
+object SchedulingUtils {
 
 	def setTimesSearch(cp : CPSolver, activities : Array[CumulativeActivity]) : Unit @suspendable = {
 		
 		// Non fixed activities
 		val selectable = Array.tabulate(activities.size) { 
-			i => if (activities(i).start.isBound()) 
+			i => if (activities(i).start.isBound) 
 					 new ReversibleBool(cp,false)
 		  		 else 
 		  			 new ReversibleBool(cp,true) 
@@ -27,7 +26,7 @@ object SchedulingUtils extends CPModel {
 		def updateSelectable() = {
 			
 			for (i <- 0 until activities.size) {	
-				if (activities(i).start.isBound()) { 	
+				if (activities(i).start.isBound) { 	
 					selectable(i).value = false
 					
 				} else if (oldEST(i).value != activities(i).est()) {			
@@ -38,7 +37,7 @@ object SchedulingUtils extends CPModel {
 		
 		def selectableIndices() = (0 until activities.size).filter(i => selectable(i).value)
 		
-		def allStartBounds() = activities.forall(i => i.start.isBound())
+		def allStartBounds() = activities.forall(i => i.start.isBound)
 
 		while (!allStartBounds()) {
 			

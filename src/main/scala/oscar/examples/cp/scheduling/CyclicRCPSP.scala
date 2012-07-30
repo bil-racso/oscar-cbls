@@ -21,6 +21,7 @@ import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.constraints._
+import oscar.cp.core.CPVarInt
 
 /**
  *  Example taken from the minizink competition: 
@@ -64,7 +65,7 @@ import oscar.cp.constraints._
  * 
  *  @authors: Pierre Schaus pschaus@gmail.com
  */
-object CyclicRCPSP extends CPModel {
+object CyclicRCPSP {
   
 	def main(args: Array[String]) {
        
@@ -90,8 +91,8 @@ object CyclicRCPSP extends CPModel {
 		val d = Array.tabulate(nTasks)(i => if (i == 0 || i == last) 0 else 1)
   
 		val cp = CPSolver()
-		val s = Array.fill(nTasks)(CPVarInt(cp,Times)) // Start time variables
-		val k = Array.fill(nTasks)(CPVarInt(cp,Iters)) // Iteration variables
+		val s = Array.fill(nTasks)(CPVarInt(cp, Times)) // Start time variables
+		val k = Array.fill(nTasks)(CPVarInt(cp, Iters)) // Iteration variables
 		      
 		// Makespan of the one iteration
 

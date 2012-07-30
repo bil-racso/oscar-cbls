@@ -33,7 +33,7 @@ import oscar.cp.constraints.MaxSweepCumulative
  * 
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object RectanglePacking extends CPModel {
+object RectanglePacking {
 
 	def main(args: Array[String]) {
 	    
@@ -121,8 +121,8 @@ object RectanglePacking extends CPModel {
 	    	
 	    	(Rectangles).foreach { i =>
 	    		val r = new VisualRectangle(d,
-	    									xPosition(i).getValue()*scale,
-	    									yPosition(i).getValue()*scale,
+	    									xPosition(i).value*scale,
+	    									yPosition(i).value*scale,
 	    									width(i).getValue*scale,
 	    									height(i).getValue*scale)
 	    		

@@ -12,9 +12,8 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.modeling.CPModel
 
-class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(allTasks(0).machine.getStore(), "NewMaxCumulative") {
+class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(cp, "NewMaxCumulative") {
 	
 	// The tasks (one array by direction of the sweep)
 	val lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.machine.hasValue(r))

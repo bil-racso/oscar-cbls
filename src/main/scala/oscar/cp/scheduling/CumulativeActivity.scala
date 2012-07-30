@@ -29,12 +29,12 @@ class CumulativeActivity(startVar : CPVarInt, durationVar : CPVarInt,  endVar : 
 	/**
 	 * smallest quantity of resource
 	 */
-	def minResource() = resource.getMin()
+	def minResource() = resource.min
 	
 	/**
 	 * largest quantity of resource
 	 */
-	def maxResource() = resource.getMax()
+	def maxResource() = resource.max
 	
 	override def toString() = "dur:"+dur+ " from ["+est+","+lst+"[ to ["+ect+","+lct+"[ using ["+minResource+","+maxResource+"] on machine(s) "+machine 
 }
@@ -48,28 +48,28 @@ object CumulativeActivity {
 	
 	def apply(start : CPVarInt, duration : CPVarInt, machine : Int, resource : CPVarInt) = {
 		
-		val m = new CPVarInt(start.getStore(), machine, machine)
+		val m = CPVarInt(start.store, machine, machine)
 		new CumulativeActivity(start, duration, start.plus(duration), m, resource)
 	}
 	
 	def apply(start : CPVarInt, duration : CPVarInt, machine : CPVarInt, resource : Int) = {
 		
-		val r = new CPVarInt(start.getStore(), resource, resource)
+		val r = CPVarInt(start.store, resource, resource)
 		new CumulativeActivity(start, duration, start.plus(duration), machine, r)
 	}
 	
 	def apply(start : CPVarInt, duration : CPVarInt, machine : Int, resource : Int) = {
 		
-		val m = new CPVarInt(start.getStore(), machine, machine)
-		val r = new CPVarInt(start.getStore(), resource, resource)
+		val m = CPVarInt(start.store, machine, machine)
+		val r = CPVarInt(start.store, resource, resource)
 		new CumulativeActivity(start, duration, start.plus(duration), m, r)
 	}
 	
 	def apply(start : CPVarInt, duration : Int, machine : Int, resource : Int) = {
 		
-		val m = new CPVarInt(start.getStore(), machine, machine)
-		val r = new CPVarInt(start.getStore(), resource, resource)
-		val d = new CPVarInt(start.getStore(), duration, duration)
+		val m = CPVarInt(start.store, machine, machine)
+		val r = CPVarInt(start.store, resource, resource)
+		val d = CPVarInt(start.store, duration, duration)
 		new CumulativeActivity(start, d, start.plus(duration), m, r)
 	}
 }
