@@ -21,12 +21,13 @@ import scala.math.max
 import scala.math.min
 import scala.collection.mutable.Set
 
+import oscar.cp.core.Store
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.core.Store
+import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /** This abstract class contains the main parts of the cumulative constraint described 
@@ -421,12 +422,23 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	
 	private def pruneInterval(low : Int, up : Int, v : CPVarInt) : CPOutcome = {
+	    
+	    assert(low <= up)
+		if (low <= v.min && up <= v.max) {   
+		  v.updateMin(up+1)
+		} else if (up >= v.max && low >= v.min) {
+		  v.updateMax(low-1)
+		} else CPOutcome.Suspend
 		
+		
+	    /*
+	    // create holes, not a good idea Renaud ;-)
 		for (i <- low to up)
 			if (v.removeValue(i) == CPOutcome.Failure)
 				return CPOutcome.Failure
-		
+		*/
 		return CPOutcome.Suspend
+		
 	}
 	
 	

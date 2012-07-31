@@ -129,9 +129,11 @@ class ReversibleSearchNode {
 	
 	def branch(left: => Unit)(right: => Unit) = {
       shift { k: (Unit => Unit) =>
+        if (!isFailed) {
         sc.addChoice(new MyContinuation("right", {
           if (!isFailed) right
           if (!isFailed()) k()}))
+        }
         if (!isFailed()) left
         if (!isFailed()) k()
       }

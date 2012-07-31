@@ -24,6 +24,8 @@ import oscar.cp.search._
 import oscar.cp.constraints._
 import scala.util.continuations._
 import scala.collection.mutable.Stack
+import oscar.cp.scheduling.CumulativeActivity
+import oscar.reversible._
 
 class NoSol(msg : String) extends Exception(msg)
 
@@ -129,7 +131,38 @@ class CPSolver() extends Store() {
            val v = x.min
     	   branch (post(x == v))(post(x != v))// right alternative
      }
-    }  
+    } 
+    
+    
+	def setTimes(activities : Array[CumulativeActivity]) : Unit @suspendable = {
+		val n = activities.size
+		val Activities = 0 until n
+		// Non fixed activities
+		val selectable = Array.fill(n)(new ReversibleBool(this,true))
+		val oldEST = Array.fill(n)(new ReversibleInt(this,-1))
+		def updateSelectable() =  (Activities).filter(i => oldEST(i).value < activities(i).est).foreach(selectable(_).value = true)
+		def selectableIndices() = (Activities).filter(i => selectable(i).value && !activities(i).start.isBound)
+		def allStartBounds() = activities.forall(i => i.start.isBound)
+		def updateAndCheck() = {
+		  updateSelectable()
+		  if (selectableIndices().isEmpty && !allStartBounds()) this.fail()
+		}
+		while (!allStartBounds()) {
+			updateSelectable()
+			val (est,ect) = selectableIndices().map(i => (activities(i).est,activities(i).ect)).min
+			// Select the activity with the smallest EST, ECT as tie breaker
+			val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).first
+			branch {  
+				this.post(activities(x).start == est)
+				if (!this.isFailed) updateAndCheck()
+			} {
+				selectable(x).value = false
+				oldEST(x).value = est
+				updateAndCheck()
+			}	
+		}		
+	}    
+    
 	
 	def printStats() {
 		println("time(ms)",time)
