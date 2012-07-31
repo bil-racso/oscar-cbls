@@ -1,5 +1,5 @@
 package oscar.cp.test
-
+/*
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -192,5 +192,5 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers {
 		}
 	}	
 	
-}
+}*/
 

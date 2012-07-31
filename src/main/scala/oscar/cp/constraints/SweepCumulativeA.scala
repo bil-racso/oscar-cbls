@@ -39,7 +39,7 @@ import oscar.algo.SortUtils.stableSort
  *	[2] Choco's class CumulSweep.java
  *
  *	@define originalTasks
- *	the tasks that could be originally assigned to the resource `r`
+ *	the tasks that could be originally assigned to the height `r`
  *  @define idOfT
  *  The id `t` of the considered task in the array `tasks`.
  *  @define addEvent
@@ -59,7 +59,7 @@ import oscar.algo.SortUtils.stableSort
 abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
-	protected val tasks = allTasks.filter(_.machine.hasValue(r))
+	protected val tasks = allTasks
 	
 	protected val nTasks = tasks.size
 	protected val Tasks  = 0 until nTasks
@@ -119,7 +119,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	 */
 	protected def generateProfileGood(i : Int) : Boolean
 	
-	/** Checks the consistency of the total consumption of the resource `r` for 
+	/** Checks the consistency of the total consumption of the height `r` for 
 	 *  the current position of the sweep line `delta`.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -130,7 +130,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected def consistencyCheck : Boolean
 	
 	/** Checks that the contribution of the task `t` in the total consumption of 
-	 *  the resource `r` at the current position of the sweep line `delta` is not 
+	 *  the height `r` at the current position of the sweep line `delta` is not 
 	 *  mandatory to respect the consistency.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -143,7 +143,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected def mandatoryCheck(t : Int) : Boolean
 	
 	/** Checks that the task `t` is inconsistent with the total consumption of the
-	 *  resource `r` at the current position of the sweep line `delta` no matter 
+	 *  height `r` at the current position of the sweep line `delta` no matter 
 	 *  the height of its consumption.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -167,8 +167,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
         		if (!tasks(i).start.isBound) tasks(i).start.callPropagateWhenBoundsChange(this)
 	        	if (!tasks(i).dur.isBound) tasks(i).dur.callPropagateWhenBoundsChange(this)
 	        	if (!tasks(i).end.isBound) tasks(i).end.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).resource.isBound) tasks(i).resource.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).machine.isBound) tasks(i).machine.callPropagateWhenDomainChanges(this)
+	        	if (!tasks(i).height.isBound) tasks(i).height.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).resource.isBound) tasks(i).resource.callPropagateWhenDomainChanges(this)
     		}
         }
         
@@ -200,7 +200,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		
 		for (i <- Tasks) {
 			
-			if (tasks(i).lst < tasks(i).ect && tasks(i).machine.isBoundTo(r)) {
+			if (tasks(i).lst < tasks(i).ect && tasks(i).resource.isBoundTo(r)) {
 				
 				// Check
 				generateCheck(i)
@@ -209,13 +209,13 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				profileEvent |= generateProfileBad(i)		
 			}
 			
-			if (tasks(i).machine.hasValue(r)) {
+			if (tasks(i).resource.hasValue(r)) {
 				
 				// Profile (Good : on entire domain)
 				profileEvent |= generateProfileGood(i)
 				
 				// Pruning (if something is not fixed)
-				if (!tasks(i).start.isBound || !tasks(i).end.isBound || !tasks(i).machine.isBoundTo(r) || !tasks(i).resource.isBound) {
+				if (!tasks(i).start.isBound || !tasks(i).end.isBound || !tasks(i).resource.isBoundTo(r) || !tasks(i).height.isBound) {
 					
 					eventPointSeries(nEvents) = eventList(i).sPruning
 					nEvents += 1
@@ -276,11 +276,11 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				
 				if (event.eType == EventType.Profile) {
 					
-					// Adjusts resource consumption
+					// Adjusts height consumption
 					consSumHeight += event.cons
 					consContrib(event.task) += event.cons
 					
-					// Adjusts resource capacity
+					// Adjusts height capacity
 					capaSumHeight += event.capa
 					capaContrib(event.task) += event.capa
 					
@@ -323,7 +323,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			if (pruneForbiden(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
-			// Adjusts the resource's consumption of the tasks
+			// Adjusts the height's consumption of the tasks
 			if (pruneConsumption(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
@@ -342,8 +342,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		if (!mandatoryCheck(t))
 			return CPOutcome.Suspend
 		
-		// Fix the activity to the machine r
-		if (tasks(t).machine.assign(r) == CPOutcome.Failure) 
+		// Fix the activity to the resource r
+		if (tasks(t).resource.assign(r) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the EST of the activity
@@ -377,10 +377,10 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			
 			if (tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 					
-				if (tasks(t).machine.removeValue(r) == CPOutcome.Failure) 
+				if (tasks(t).resource.removeValue(r) == CPOutcome.Failure) 
 					return CPOutcome.Failure
 				
-			} else if (tasks(t).machine.isBoundTo(r)) {
+			} else if (tasks(t).resource.isBoundTo(r)) {
 				
 				if (tasks(t).minDuration > 0) {
 					
@@ -407,12 +407,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	private def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
-		if (tasks(t).machine.isBoundTo(r) && tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
+		if (tasks(t).resource.isBoundTo(r) && tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 			
-			if (tasks(t).resource.updateMin(lb - (consSumHeight - consContrib(t))) == CPOutcome.Failure) 
+			if (tasks(t).height.updateMin(lb - (consSumHeight - consContrib(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure	
 				
-			if (tasks(t).resource.updateMax(ub - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure) 
+			if (tasks(t).height.updateMax(ub - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure			
 		}
 			

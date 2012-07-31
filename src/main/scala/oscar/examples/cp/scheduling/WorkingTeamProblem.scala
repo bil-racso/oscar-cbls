@@ -1,4 +1,4 @@
-package oscar.examples.cp.scheduling
+/*package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
@@ -101,4 +101,4 @@ object WorkingTeamProblem {
 		
 		cp.printStats() 
 	}
-}
+}*/

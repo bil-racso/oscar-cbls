@@ -72,6 +72,10 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	
 	def store = start.store
 	
+	def needs(resource : CumulativeResource, capacity : Int) {
+    	resource.addActivity(this, capacity)
+    }
+	
 	override def toString = "dur:"+dur+ " in ["+est+","+lct+"[";
 }
 

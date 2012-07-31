@@ -13,11 +13,11 @@ class MaxSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], ub : I
 	
 	override def generateProfileBad(i : Int) : Boolean = {
 		
-		if (tasks(i).minResource > 0) {
+		if (tasks(i).minHeight > 0) {
 			
-			eventPointSeries(nEvents) = eventList(i).sBadProfile(0, tasks(i).minResource)
+			eventPointSeries(nEvents) = eventList(i).sBadProfile(0, tasks(i).minHeight)
 			nEvents += 1
-			eventPointSeries(nEvents) = eventList(i).eBadProfile(0, tasks(i).minResource)
+			eventPointSeries(nEvents) = eventList(i).eBadProfile(0, tasks(i).minHeight)
 			nEvents += 1
 			
 			return true
@@ -28,11 +28,11 @@ class MaxSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], ub : I
 	
 	override def generateProfileGood(i : Int) : Boolean = {
 		
-		if (tasks(i).minResource < 0) {
+		if (tasks(i).minHeight < 0) {
 			
-			eventPointSeries(nEvents) = eventList(i).sGoodProfile(0, tasks(i).minResource)
+			eventPointSeries(nEvents) = eventList(i).sGoodProfile(0, tasks(i).minHeight)
 			nEvents += 1
-			eventPointSeries(nEvents) = eventList(i).eGoodProfile(0, tasks(i).minResource)
+			eventPointSeries(nEvents) = eventList(i).eGoodProfile(0, tasks(i).minHeight)
 			nEvents += 1
 			
 			return true
@@ -45,5 +45,5 @@ class MaxSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], ub : I
 	
 	override def mandatoryCheck(t: Int) : Boolean = capaSumHeight - capaContrib(t) > ub
 	
-	override def forbidenCheck(t : Int) : Boolean = capaSumHeight - capaContrib(t) + tasks(t).minResource > ub
+	override def forbidenCheck(t : Int) : Boolean = capaSumHeight - capaContrib(t) + tasks(t).minHeight > ub
 }

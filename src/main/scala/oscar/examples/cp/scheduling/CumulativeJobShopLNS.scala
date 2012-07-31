@@ -15,7 +15,7 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp.scheduling
+/*package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
@@ -179,4 +179,4 @@ object CumulativeJobShopLNS {
 		println
 		cp.printStats() 
 	}
-}
+}*/

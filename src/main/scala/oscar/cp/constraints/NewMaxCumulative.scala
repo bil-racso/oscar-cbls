@@ -1,4 +1,4 @@
-package oscar.cp.constraints
+/*package oscar.cp.constraints
 
 import oscar.algo.EfficientHeap
 
@@ -446,4 +446,4 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 		def right(i : Int) = 2*i+1
 	}
 
-}
+}*/

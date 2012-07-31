@@ -1,6 +1,6 @@
 package oscar.visual
 
-import oscar.cp.scheduling.CumulativeActivity
+/*import oscar.cp.scheduling.CumulativeActivity
 
 class VisualActivity(activity : CumulativeActivity) {
 	
@@ -10,10 +10,10 @@ class VisualActivity(activity : CumulativeActivity) {
   
 	def resource = activity.maxResource
 	
-	def machine = activity.machine.getMin
+	def machine = activity.resource.getMin
 }
 
 object VisualActivity {
 	
 	def apply(activity : CumulativeActivity) = { new VisualActivity(activity) }
-}
+}*/

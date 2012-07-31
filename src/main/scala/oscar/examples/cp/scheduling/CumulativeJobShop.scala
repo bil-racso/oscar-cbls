@@ -35,73 +35,71 @@ object CumulativeJobShop {
 		// Parsing		
 		// -----------------------------------------------------------------------
 		
-		// Read the data
 		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 		
 		val nJobs        = lines.head.trim().split(" ")(0).toInt 
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-		val nMachines    = lines.head.trim().split(" ")(2).toInt
+		val nResources   = lines.head.trim().split(" ")(2).toInt
 		val capacity     = lines.head.trim().split(" ")(3).toInt
 		
-		val Jobs     = 0 until nJobs
-		val Machines = 0 until nMachines
+		val nActivities  = nJobs*nTasksPerJob
 		
-		println("#Jobs      : " + nJobs)
-		println("#Tasks/job : " + nTasksPerJob)
-		println("#Machines  : " + nMachines)
-		println("#Capacity  : " + capacity)
+		val Activities = 0 until nActivities
+		val Jobs       = 0 until nJobs
+		val Resources  = 0 until nResources
+		
+		println("#Jobs       : " + nJobs)
+		println("#Activities : " + nActivities)
+		println("#Resources  : " + nResources)
+		println("Capacity    : " + capacity)
 		
 		lines = lines.drop(1)
 		
-		val machines   : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-		val durations  : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-		val capacities : Array[Int] = Array.fill(nTasksPerJob)(capacity);
+		val jobs      = new Array[Int](nActivities)
+		val machines  = new Array[Int](nActivities)
+		val durations = new Array[Int](nActivities)
 		
-		for (i <- Jobs) {
+		for (i <- Activities) {
 			
 			val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
 			
-			println("job "+ (i+1) +"\t" + l.mkString(" "))
+			jobs(i)      = l(0)
+			machines(i)  = l(1)
+			durations(i) = l(2)
 			
-			machines(i)  = Array.tabulate(nTasksPerJob)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
 	  	    lines = lines.drop(1)
 		}
 		
-		// Upper bound of the horizon
-		val horizon = durations.flatten.sum
-
+		
 		// Modeling	
 		// -----------------------------------------------------------------------
   	   	
-  	   	val cp = CPSolver()
-
-		// Matrix of cumulative activities (each line represents a job)
-		val jobActivities = Array.tabulate(nJobs, nTasksPerJob)((i,j) => {
-			
-  	   		val dur      = CPVarInt(cp, durations(i)(j))
-  	   		val start    = CPVarInt(cp, 0 to horizon - dur.getMin)
-  	   		
-  	   		CumulativeActivity(start,dur, machines(i)(j), 1)
-  	   	}) 	   
+		val horizon = durations.sum
+  	   	val cp = new CPScheduler
   	   	
-  	   	val activities = jobActivities.flatten
-  	   	
-  	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
+  	   	// Activities
+  	    val activities = Array.tabulate(nActivities)(i => new Activity(CPVarInt(cp, 0 to horizon - durations(i)), durations(i)))
+  	   	 	
+  	   	// Resources
+  	   	val resources : Array[CumulativeResource] = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
 	   	
-  	   	// Constraints and Solving
-		// -----------------------------------------------------------------------
+  	   	// Resource allocation
+  	   	for (i <- 0 until activities.size) 
+  	   		activities(i).needs(resources(machines(i)), 1)
+  	   		
+  	   	// The make span to minimize
+  	   	val makespan = maximum(0 until nActivities)(i => activities(i).end)
+  	   	
 		
   	   	cp.minimize(makespan) subjectTo {
 			
 			// Precedence constraints
-			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j) << jobActivities(i)(j+1))
-			
-			// Cumulative constraints
-			for (i <- Machines)
-				cp.add(cumulative(activities, i, max = capacities(i)))
+			for (i <- 0 until nActivities-1; if (jobs(i) == jobs(i+1)))
+				cp.add(activities(i) << activities(i+1))
+				
+			// Posting the resources
+			for (i <- Resources) 
+				resources(i).setup()
 				
 		} exploration {
 			
@@ -109,9 +107,11 @@ object CumulativeJobShop {
 			cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, activities)
+			//cp.setTimesSearch(activities)
 		}    
 		
 		cp.printStats() 
+		for(i <- 0 until activities.size)
+			println(activities(i))
 	}
 }

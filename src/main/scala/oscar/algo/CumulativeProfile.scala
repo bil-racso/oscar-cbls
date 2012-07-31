@@ -1,6 +1,6 @@
 package oscar.algo
 
-
+/*
 import oscar.visual.VisualActivity
 
 object CumulativeProfile {
@@ -44,4 +44,4 @@ object CumulativeProfile {
 		
 		(lastPoint :: profilePoints).toArray.reverse
 	}
-}
+}*/

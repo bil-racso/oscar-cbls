@@ -1,5 +1,5 @@
 package oscar.visual
-
+/*
 import java.awt.geom.Line2D
 import java.awt.Color
 
@@ -41,4 +41,4 @@ class VisualProfile(allActivities: Array[VisualActivity], resource : Int, privat
 		
 		repaint()
 	}
-}
+}*/

@@ -1,5 +1,5 @@
 package oscar.visual
-
+/*
 import oscar.visual._
 import java.awt.geom.Line2D
 import java.awt.Color
@@ -32,3 +32,4 @@ class VisualGanttChart(activities: Array[VisualActivity], cols : Array[Color], f
 		repaint()
 	}
 }
+*/
