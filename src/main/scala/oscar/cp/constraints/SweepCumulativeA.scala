@@ -56,7 +56,7 @@ import oscar.algo.SortUtils.stableSort
  *  @author Renaud Hartert
  *  @version 28/07/2012 
  */
-abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
+abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
 	protected val tasks = allTasks.filter(_.machine.hasValue(r))
