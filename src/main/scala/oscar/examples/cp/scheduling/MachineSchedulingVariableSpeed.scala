@@ -113,7 +113,7 @@ object MachineSchedulingVariableSpeed {
 		} exploration {
 			
 			// Efficient but not complete search strategy
-			SchedulingUtils.setTimesSearch(cp, activities)
+			cp.setTimes(activities)
 			cp.binary(activities.map(_.dur))
 			
 			// Updates the visual components

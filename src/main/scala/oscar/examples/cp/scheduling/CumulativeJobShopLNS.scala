@@ -158,7 +158,7 @@ object CumulativeJobShopLNS {
 			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
-			SchedulingUtils.setTimesSearch(cp, activities)
+			cp.setTimes(activities)
 		
 			println
 			cp.printStats() 

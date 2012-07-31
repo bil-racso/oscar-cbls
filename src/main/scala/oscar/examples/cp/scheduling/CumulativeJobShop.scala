@@ -107,10 +107,10 @@ object CumulativeJobShop {
 		} exploration {
 			
 			// Test heuristic
-			cp.binaryFirstFail(activities.map(_.start))
+			//cp.binaryFirstFail(activities.map(_.start))
 			
 			// Efficient but not complete search strategy
-			//SchedulingUtils.setTimesSearch(cp, activities)
+			cp.setTimes(activities)
 		}    
 		
 		cp.printStats() 

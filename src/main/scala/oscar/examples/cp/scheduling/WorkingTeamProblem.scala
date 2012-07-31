@@ -92,7 +92,7 @@ object WorkingTeamProblem {
 			
 			// Efficient but not complete search strategy
 			
-			SchedulingUtils.setTimesSearch(cp, allAct)
+			cp.setTimes(allAct)
 			cp.binaryFirstFail(teamCoeff)
 			
 			// Updates the visual components
