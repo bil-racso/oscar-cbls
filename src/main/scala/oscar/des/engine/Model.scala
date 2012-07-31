@@ -18,6 +18,8 @@
 package oscar.des.engine
 
 import scala.collection.mutable._
+import annotation._
+import annotation.elidable._
 import scala.util.continuations._
 import java.util.LinkedList
 import scala.collection.JavaConversions._
@@ -45,9 +47,7 @@ class Model {
 		while(it.hasNext) { 
 			it.next().simulate()
 		}
-	  println(clock.nonEmpty)
-	  println(clock() <= horizon)
-		while (clock.nonEmpty && clock() <= horizon) {
+	  while (clock.nonEmpty && clock() <= horizon) {
 			val e = clock.next
 						
 			if(verbose && e.time <= horizon ){
@@ -59,7 +59,7 @@ class Model {
 		}
 	  //}
 	}
-	def print(s: String){
+	@elidable(INFO) def print(s: String){
 	  println(clock() + ": " + s)
 	}
 	def time(o: Any): Double = {
