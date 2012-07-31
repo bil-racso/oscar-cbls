@@ -421,12 +421,23 @@ abstract class SweepCumulativeA (cp: CPSolver, allTasks : Array[CumulativeActivi
 	
 	
 	private def pruneInterval(low : Int, up : Int, v : CPVarInt) : CPOutcome = {
+	    
+	    assert(low <= up)
+		if (low <= v.min && up <= v.max) {   
+		  v.updateMin(up+1)
+		} else if (up >= v.max && low >= v.min) {
+		  v.updateMax(low-1)
+		} else CPOutcome.Suspend
 		
+		
+	    /*
+	    // create holes, not a good idea Renaud ;-)
 		for (i <- low to up)
 			if (v.removeValue(i) == CPOutcome.Failure)
 				return CPOutcome.Failure
-		
+		*/
 		return CPOutcome.Suspend
+		
 	}
 	
 	
