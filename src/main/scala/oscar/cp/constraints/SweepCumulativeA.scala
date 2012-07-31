@@ -21,6 +21,7 @@ import scala.math.max
 import scala.math.min
 import scala.collection.mutable.Set
 
+import oscar.cp.core.Store
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint

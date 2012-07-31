@@ -4,6 +4,30 @@ import oscar.linprog.modeling._
 
 package object algebra {
   
+  // some useful linear algebra functions
+  
+  def min(a:Double,b:Double): Double = {a.min(b)}
+  def max(a:Double,b:Double): Double = {a.max(b)}
+  
+  def sumNum[A](indexes1:Iterable[A])(f: A => Double) : Double = {
+    (for(i<-indexes1) yield f(i)).sum
+  }
+  
+  def sumNum[A,B](indexes1 : Iterable[A],indexes2 : Iterable[B])(f: (A,B) => Double) : Double = {
+    (for(i<-indexes1;j<-indexes2) yield f(i,j)).sum
+  }
+  
+  def sumNum[A,B,C](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3: Iterable[C])(f: (A,B,C) => Double) : Double = {
+    (for(i<-indexes1;j<-indexes2;k<-indexes3) yield f(i,j,k)).sum
+  }
+  
+  def sumNum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => Double) : Double = {
+    (for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l)).sum
+  }  
+  
+  def createVarMap[T,V](ts:Seq[T])(varConstr:T=>V): Map[T,V] = { (for (t<-ts) yield t-> varConstr(t)).toMap }  
+  
+  
   // -------------------------  linear expressions & constraints -------------------
 
   /**Abstract type for variables*/
@@ -266,6 +290,14 @@ package object algebra {
   def sum[A,B](indexes1 : Iterable[A],indexes2 : Iterable[B])(f : (A,B) => LinearExpression) : LinearExpression = {
                         sum(for(i <- indexes1;j <- indexes2) yield f(i,j))
   }
+  
+  def sum[A,B,C](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C])(f : (A,B,C) => LinearExpression) : LinearExpression = {
+    		sum(for(i <- indexes1;j <- indexes2; k <- indexes3) yield f(i,j,k))
+  }
+    
+  def sum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => LinearExpression) : LinearExpression = {
+    		sum(for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l))
+  }
 
   // ------------   Implicits -----------------------
   
@@ -329,7 +361,6 @@ package object algebra {
     	 a.derive(v) + b.derive(v)
     }
     override def isZero() = a.isZero() && b.isZero()
-    
   }
   
   case class Diff(val a : Expression, val b : Expression) extends BinaryOp {    
