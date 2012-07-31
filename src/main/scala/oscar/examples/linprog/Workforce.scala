@@ -19,6 +19,8 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 
 /** 
@@ -29,7 +31,7 @@ import oscar.linprog.modeling._
  * @author Pierre Schaus pschaus@gmail.com 
  */
 
-object Workforce extends MIPModel{
+object Workforce {
 	
   def main(args: Array[String]): Unit = {  
 	  

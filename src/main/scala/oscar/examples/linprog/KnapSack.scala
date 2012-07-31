@@ -18,6 +18,8 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /* 
  * The knapsack problem is a well-known problem in combinatorial optimization: 
@@ -26,7 +28,7 @@ import oscar.linprog.modeling._
  * and the total utility is as large as possible.
  * @author gme
  */
-object KnapSack extends MIPModel {
+object KnapSack {
   
   def main(args: Array[String]) {
     

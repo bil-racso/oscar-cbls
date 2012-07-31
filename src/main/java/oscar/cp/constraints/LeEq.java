@@ -35,13 +35,13 @@ public class LeEq extends Constraint {
      * @param y
      */
 	public LeEq(CPVarInt x, CPVarInt y) {
-		super(x.getStore());
+		super(x.s());
 		this.x = x;
 		this.y = y;
 	}
 	
 	public LeEq(CPVarInt x, int v) {
-		this(x, new CPVarInt(x.getStore(),v,v));
+		this(x, CPVarInt.apply(x.s(),v,v));
 	}
 	
 	@Override

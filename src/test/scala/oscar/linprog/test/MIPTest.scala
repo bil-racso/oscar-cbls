@@ -21,20 +21,21 @@ package oscar.linprog.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
  * MIP Testing
  */
-class MIPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class MIPTest extends FunSuite with ShouldMatchers {
 
-    val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.cplex)
  
     test("mip test 1") {
     	for (lib <- solvers) {
  
-    		val mip = new MIPSolver()
-    		val x = new MIPVar(mip,"x",0 , 100)
-    		val y = new MIPVar(mip,"y",0 to 100)
+    		val mip = MIPSolver(lib)
+    		val x = MIPVar(mip,"x",0 , 100)
+    		val y = MIPVar(mip,"y",0 to 100)
 
     		mip.maximize(8 * x + 12 * y) subjectTo {
     			mip.add(10 * x + 20 * y <= 140)

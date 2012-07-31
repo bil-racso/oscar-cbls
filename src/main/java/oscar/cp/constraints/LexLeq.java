@@ -50,7 +50,7 @@ public class LexLeq extends Constraint {
      * @param y a vector of same length as x
      */
 	public LexLeq(CPVarInt [] x, CPVarInt [] y) {
-		super(x[0].getStore(),"LexLeq");
+		super(x[0].s(),"LexLeq");
 			
 		if (x.length != y.length) {
 			throw new RuntimeException("LexLeq: x and y must have the same length");

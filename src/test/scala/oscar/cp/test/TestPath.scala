@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestPath extends FunSuite with ShouldMatchers with CPModel {
+class TestPath extends FunSuite with ShouldMatchers  {
 
   val succ = Array(Set(0,1),Set(1,2,3),Set(2,4),Set(3,2,5),Set(4,5),Set(5,0))
   

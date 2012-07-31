@@ -40,12 +40,16 @@ public class BinPackingFlow extends Constraint {
 	private int [] perm ; //permutation of sorted items i.e. s[perm[i]] <= s[perm[i+1]]
 	
 	public BinPackingFlow(CPVarInt [] x, int [] sizes, CPVarInt [] l) {
-		super(x[0].getStore(),"BinPackingFlow");
+		super(x[0].s(),"BinPackingFlow");
 		this.x = x;
 		this.sizes = sizes;
 		this.l = l;
 		perm = ArrayUtils.sortPerm(sizes);
-		c = CPVarInt.getArray(s, l.length, 0, sizes.length);
+		
+		c = new CPVarInt[l.length];
+		for (int i = 0; i < l.length; i++) {
+			c[i] = CPVarInt.apply(s,0,sizes.length);
+		}
 		l_t = new ReversibleInt[sizes.length];
 		c_t = new ReversibleInt[sizes.length];
 		for (int i = 0; i < l_t.length; i++) {

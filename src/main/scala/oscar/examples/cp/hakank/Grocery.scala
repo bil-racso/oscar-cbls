@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -32,7 +39,7 @@ import oscar.cp.core._
   http://www.hakank.org/oscar/
  
  */
-object Grocery extends CPModel {
+object Grocery {
 
    def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
      for (i <- 1 until y.length) {
@@ -62,7 +69,8 @@ object Grocery extends CPModel {
         cp.add(sum(item) == m)
 
         // Note: yields overflow (though the solution is correct)
-        // cp.add(item(0)*item(1)*item(2)*item(3) == m2)
+        // Alternative solutions:
+        // cp.add(item(0)*item(1)*item(2)*item(3) == m2) // this is slightly better
         // cp.add(item(0).mul(item(1)).mul(item(2)).mul(item(3)) == m2)
         cp.add(item.reduceLeft((acc,x) => acc*x) == m2, Strong)
 

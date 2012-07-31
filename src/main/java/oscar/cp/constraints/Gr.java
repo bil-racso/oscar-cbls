@@ -35,13 +35,13 @@ public class Gr extends Constraint {
      * @param y
      */
 	public Gr(CPVarInt x, CPVarInt y) {
-		super(x.getStore(),"Gr");
+		super(x.s(),"Gr");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public Gr(CPVarInt x, int v) {
-		this(x, new CPVarInt(x.getStore(),v,v));
+		this(x, CPVarInt.apply(x.s(),v,v));
 	}
 	
 	@Override

@@ -44,7 +44,7 @@ public class Circuit extends Constraint {
      * @see CPPropagStrength
      */
 	public Circuit(CPVarInt [] succ) {
-		super(succ[0].getStore(),"Circuit");
+		super(succ[0].s(),"Circuit");
 		this.succ = succ;
 		
 		dest  = new ReversibleInt[succ.length];

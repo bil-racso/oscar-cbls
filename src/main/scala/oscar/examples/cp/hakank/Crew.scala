@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -34,7 +41,7 @@ import scala.collection.JavaConversions._
   http://www.hakank.org/oscar/
  
  */
-object Crew extends CPModel {
+object Crew {
 
   def main(args: Array[String]) {
 
@@ -43,6 +50,13 @@ object Crew extends CPModel {
     //
     // data
     // 
+    var num_to_show = 1
+
+    if (args.length > 0) {
+      num_to_show = args(0).toInt
+    }
+
+
     val names = Array("Tom",
                       "David",
                       "Jeremy",
@@ -126,7 +140,7 @@ object Crew extends CPModel {
     //
     // variables
     //
-    val crew = Array.fill(num_flights)(Array.fill(num_persons)(CPVarInt(cp, 0 to 1)))
+    val crew = Array.fill(num_flights,num_persons)(CPVarInt(cp, 0 to 1))
     val crew_flat = crew.flatten
 
     // val num_working = CPVarInt(cp, 1 to num_persons)
@@ -180,8 +194,6 @@ object Crew extends CPModel {
      } exploration {
 
         cp.binary(crew_flat)
-        // cp.binaryFirstFail(crew_flat)
-        // cp.binaryMaxDegree(crew_flat)
 
         println("num_working: " + num_working)
         for(f <- FLIGHTS) {
@@ -195,7 +207,7 @@ object Crew extends CPModel {
         for(f <- FLIGHTS) {
           print("Flight #" + f + ": ");
           for(p <- PERSONS) {
-            if (crew(f)(p).getValue() == 1) {
+            if (crew(f)(p).value == 1) {
               print(names(p) + " ")
             }
           }
@@ -206,7 +218,7 @@ object Crew extends CPModel {
         for(p <- PERSONS) {
           print("%-10s".format(names(p)) + ": Flight(s): ")
           for(f <- FLIGHTS) {
-            if (crew(f)(p).getValue() == 1) {
+            if (crew(f)(p).value == 1) {
               print(f + " ")
             }
           }
@@ -217,6 +229,10 @@ object Crew extends CPModel {
         println();
 
         numSols += 1
+
+        if (num_to_show > 0 && numSols >= num_to_show) {
+          cp.stop()
+        }
 
      }
 

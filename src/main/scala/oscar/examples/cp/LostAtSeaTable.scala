@@ -39,7 +39,7 @@ import java.awt.Color
  * 
  * @author Elise Dupont & Pierre Schaus
  */
-object LostAtSea  extends CPModel {
+object LostAtSea  {
 	def main(args: Array[String]) {
 		
 
@@ -88,14 +88,14 @@ object LostAtSea  extends CPModel {
                 println(path.mkString(","))
        } exploration {
          def heuris(x : CPVarInt): Int = {
-           val values = (x.getMin() to x.getMax).filter(x.hasValue(_))
+           val values = (x.min to x.max).filter(x.hasValue(_))
            val maxProba = values.map(probaFlat(_)).max
            values.filter(probaFlat(_) == maxProba).first
          }
          //cp.binaryFirstFail(path, heuris(_))
          cp.binaryFirstFail(path)
          
-         (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the solution
+         (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
        }
        
        cp.printStats()

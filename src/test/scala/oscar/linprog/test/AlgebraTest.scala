@@ -20,11 +20,12 @@ package oscar.linprog.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
+import oscar.algebra._
 
 /**
  * Test functionality of Algebra related to linear programming and the correct domain creation of variables
  */
-class AlgebraTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class AlgebraTest extends FunSuite with ShouldMatchers  {
 
   
 	val lp = new LPSolver()
@@ -86,13 +87,16 @@ class AlgebraTest extends FunSuite with ShouldMatchers with LPModel with MIPMode
   } 
   
   test("large sum") {
-    val lp = new LPSolver()
-    val x = Array.tabulate(100000)(i => new LPVar(lp,i.toString(),0,1))
-    println("large sum")
-    val mysum = sum(x)
-    println("large sum done")
-  }   
-
+	    val lp = new LPSolver()
+	    val x = Array.tabulate(100000)(i => new LPVar(lp,i.toString(),0,1))
+	    println("large sum")
+	    val mysum = sum(x)
+	    println("large sum done")
+  }     
+  
+  
+  
+  
   
 
 }

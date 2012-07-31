@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestStretchWrapper extends FunSuite with ShouldMatchers with CPModel {
+class TestStretchWrapper extends FunSuite with ShouldMatchers  {
 
 
   test("test stretch 1") {
@@ -40,7 +40,7 @@ class TestStretchWrapper extends FunSuite with ShouldMatchers with CPModel {
     
     //  0-2  0-2  1-2  1-2  0   0
     println(x.mkString(","))
-    x(4).getValue() should be(0)
+    x(4).value should be(0)
     x(3).hasValue(0) should be(false)
     x(2).hasValue(0) should be(false)
       

@@ -45,7 +45,7 @@ public class BinPacking extends Constraint {
      * @see BinaryKnapsack
      */
 	public BinPacking(CPVarInt [] x, int [] w, CPVarInt [] l) {
-		super(x[0].getStore(),"BinPacking");
+		super(x[0].s(),"BinPacking");
 		this.x = x;
 		this.w = w;
 		this.l = l;
@@ -84,7 +84,7 @@ public class BinPacking extends Constraint {
 			}
 		}
 		//redundant constraint
-		if (s.post(new Sum(l,new CPVarInt(s,totW,totW))) == CPOutcome.Failure) {
+		if (s.post(new Sum(l,CPVarInt.apply(s,totW,totW))) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;

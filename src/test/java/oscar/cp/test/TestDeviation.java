@@ -74,9 +74,9 @@ public class TestDeviation extends TestCase {
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(cp,-2,2);
+			x[i] = CPVarInt.apply(cp,-2,2);
 		}
-    	CPVarInt nd = new CPVarInt(cp,0,0);
+    	CPVarInt nd = CPVarInt.apply(cp,0,0);
     	cp.post(new Deviation(x,0,nd));
         assertTrue(!cp.isFailed());
         for (int i = 0; i < x.length; i++) {
@@ -88,9 +88,9 @@ public class TestDeviation extends TestCase {
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(cp,-2,2);
+			x[i] = CPVarInt.apply(cp,-2,2);
 		}
-    	CPVarInt nd = new CPVarInt(cp,0,6);
+    	CPVarInt nd = CPVarInt.apply(cp,0,6);
     	cp.post(new Deviation(x,1,nd));
         assertTrue(!cp.isFailed());
 
@@ -102,12 +102,12 @@ public class TestDeviation extends TestCase {
 
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
-    	x[0] = new CPVarInt(cp,3,7);
-        x[1] = new CPVarInt(cp,0,5);
-        x[2] = new CPVarInt(cp,5,6);
-        x[3] = new CPVarInt(cp,5,7);
+    	x[0] = CPVarInt.apply(cp,3,7);
+        x[1] = CPVarInt.apply(cp,0,5);
+        x[2] = CPVarInt.apply(cp,5,6);
+        x[3] = CPVarInt.apply(cp,5,7);
 
-    	CPVarInt nd = new CPVarInt(cp,0,18);
+    	CPVarInt nd = CPVarInt.apply(cp,0,18);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[0].getMax(),5);
@@ -118,12 +118,12 @@ public class TestDeviation extends TestCase {
 
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
-    	x[0] = new CPVarInt(cp,3,7);
-        x[1] = new CPVarInt(cp,0,5);
-        x[2] = new CPVarInt(cp,5,6);
-        x[3] = new CPVarInt(cp,5,7);
+    	x[0] = CPVarInt.apply(cp,3,7);
+        x[1] = CPVarInt.apply(cp,0,5);
+        x[2] = CPVarInt.apply(cp,5,6);
+        x[3] = CPVarInt.apply(cp,5,7);
 
-    	CPVarInt nd = new CPVarInt(cp,0,12);
+    	CPVarInt nd = CPVarInt.apply(cp,0,12);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[0].getMax(),4);
@@ -134,12 +134,12 @@ public class TestDeviation extends TestCase {
 
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
-    	x[0] = new CPVarInt(cp,3,10);
-        x[1] = new CPVarInt(cp,4,5);
-        x[2] = new CPVarInt(cp,3,6);
-        x[3] = new CPVarInt(cp,0,2);
+    	x[0] = CPVarInt.apply(cp,3,10);
+        x[1] = CPVarInt.apply(cp,4,5);
+        x[2] = CPVarInt.apply(cp,3,6);
+        x[3] = CPVarInt.apply(cp,0,2);
 
-    	CPVarInt nd = new CPVarInt(cp,0,45);
+    	CPVarInt nd = CPVarInt.apply(cp,0,45);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[0].getMin(),4);
@@ -151,12 +151,12 @@ public class TestDeviation extends TestCase {
 
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
-    	x[0] = new CPVarInt(cp,3,10);
-        x[1] = new CPVarInt(cp,4,5);
-        x[2] = new CPVarInt(cp,3,6);
-        x[3] = new CPVarInt(cp,0,2);
+    	x[0] = CPVarInt.apply(cp,3,10);
+        x[1] = CPVarInt.apply(cp,4,5);
+        x[2] = CPVarInt.apply(cp,3,6);
+        x[3] = CPVarInt.apply(cp,0,2);
 
-    	CPVarInt nd = new CPVarInt(cp,0,22);
+    	CPVarInt nd = CPVarInt.apply(cp,0,22);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[0].getMin(),4);
@@ -168,12 +168,12 @@ public class TestDeviation extends TestCase {
 
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
-    	x[0] = new CPVarInt(cp,3,10);
-        x[1] = new CPVarInt(cp,4,5);
-        x[2] = new CPVarInt(cp,3,6);
-        x[3] = new CPVarInt(cp,0,2);
+    	x[0] = CPVarInt.apply(cp,3,10);
+        x[1] = CPVarInt.apply(cp,4,5);
+        x[2] = CPVarInt.apply(cp,3,6);
+        x[3] = CPVarInt.apply(cp,0,2);
 
-    	CPVarInt nd = new CPVarInt(cp,0,30);
+    	CPVarInt nd = CPVarInt.apply(cp,0,30);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[0].getMin(),4);
@@ -186,12 +186,12 @@ public class TestDeviation extends TestCase {
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[4];
 
-        x[0] = new CPVarInt(cp,4,5);
-        x[1] = new CPVarInt(cp,3,6);
-        x[2] = new CPVarInt(cp,0,2);
-        x[3] = new CPVarInt(cp,3,10);
+        x[0] = CPVarInt.apply(cp,4,5);
+        x[1] = CPVarInt.apply(cp,3,6);
+        x[2] = CPVarInt.apply(cp,0,2);
+        x[3] = CPVarInt.apply(cp,3,10);
 
-    	CPVarInt nd = new CPVarInt(cp,0,30);
+    	CPVarInt nd = CPVarInt.apply(cp,0,30);
     	cp.post(new Deviation(x,17,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[3].getMin(),4);
@@ -204,15 +204,15 @@ public class TestDeviation extends TestCase {
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[6];
 
-        x[0] = new CPVarInt(cp,11,16);
-        x[1] = new CPVarInt(cp,9,11);
-        x[2] = new CPVarInt(cp,12,14);
-        x[3] = new CPVarInt(cp,13,14);
-        x[4] = new CPVarInt(cp,10,12);
-        x[5] = new CPVarInt(cp,12,15);
+        x[0] = CPVarInt.apply(cp,11,16);
+        x[1] = CPVarInt.apply(cp,9,11);
+        x[2] = CPVarInt.apply(cp,12,14);
+        x[3] = CPVarInt.apply(cp,13,14);
+        x[4] = CPVarInt.apply(cp,10,12);
+        x[5] = CPVarInt.apply(cp,12,15);
 
 
-    	CPVarInt nd = new CPVarInt(cp,0,1000);
+    	CPVarInt nd = CPVarInt.apply(cp,0,1000);
     	cp.post(new Deviation(x,74,nd));
         assertTrue(!cp.isFailed());
         assertEquals(nd.getMin(),24);
@@ -231,13 +231,13 @@ public class TestDeviation extends TestCase {
 
         int s = 74;
     	CPVarInt [] x = new CPVarInt[6];
-        x[0] = new CPVarInt(cp,11,16);
-        x[1] = new CPVarInt(cp,9,11);
-        x[2] = new CPVarInt(cp,12,14);
-        x[3] = new CPVarInt(cp,13,14);
-        x[4] = new CPVarInt(cp,10,12);
-        x[5] = new CPVarInt(cp,12,15);
-    	CPVarInt nd = new CPVarInt(cp,0,34);
+        x[0] = CPVarInt.apply(cp,11,16);
+        x[1] = CPVarInt.apply(cp,9,11);
+        x[2] = CPVarInt.apply(cp,12,14);
+        x[3] = CPVarInt.apply(cp,13,14);
+        x[4] = CPVarInt.apply(cp,10,12);
+        x[5] = CPVarInt.apply(cp,12,15);
+    	CPVarInt nd = CPVarInt.apply(cp,0,34);
 
         if (decomp)
         	deviationDecomp(x,s,nd);
@@ -256,7 +256,7 @@ public class TestDeviation extends TestCase {
     }
 
     private void deviationDecomp(CPVarInt [] x, int s, CPVarInt nd) {
-        Store cp = x[0].getStore();
+        Store cp = x[0].s();
         CPVarInt [] dev = new CPVarInt[x.length];
 		for (int i = 0; i < dev.length; i++) {
 			dev[i] = x[i].mul(x.length).minus(s).abs();
@@ -270,17 +270,17 @@ public class TestDeviation extends TestCase {
         Store cp = new Store();
     	CPVarInt [] x = new CPVarInt[8];
 
-        x[0] = new CPVarInt(cp,-27,-25);
-        x[1] = new CPVarInt(cp,-27,-27);
-		x[2] = new CPVarInt(cp,-27,-25);
-        x[3] = new CPVarInt(cp,-27,-25);
-		x[4] = new CPVarInt(cp,-30,-30);
-        x[5] = new CPVarInt(cp,-27,-25);
-		x[6] = new CPVarInt(cp,-27,-25);
-        x[7] = new CPVarInt(cp,-27,-23);
+        x[0] = CPVarInt.apply(cp,-27,-25);
+        x[1] = CPVarInt.apply(cp,-27,-27);
+		x[2] = CPVarInt.apply(cp,-27,-25);
+        x[3] = CPVarInt.apply(cp,-27,-25);
+		x[4] = CPVarInt.apply(cp,-30,-30);
+        x[5] = CPVarInt.apply(cp,-27,-25);
+		x[6] = CPVarInt.apply(cp,-27,-25);
+        x[7] = CPVarInt.apply(cp,-27,-23);
 
 
-    	CPVarInt nd = new CPVarInt(cp,0,75);
+    	CPVarInt nd = CPVarInt.apply(cp,0,75);
     	cp.post(new Deviation(x,-213,nd));
         assertTrue(!cp.isFailed());
         assertEquals(x[7].getMax(),-24);
@@ -291,16 +291,16 @@ public class TestDeviation extends TestCase {
 	Store cp = new Store();
 	CPVarInt [] x = new CPVarInt[6];
 
-	x[0] = new CPVarInt(cp,11,16);
-	x[1] = new CPVarInt(cp,9,11);
-	x[2] = new CPVarInt(cp,12,14);
-	x[3] = new CPVarInt(cp,13,14);
-	x[4] = new CPVarInt(cp,10,12);
-	x[5] = new CPVarInt(cp,12,15);
+	x[0] = CPVarInt.apply(cp,11,16);
+	x[1] = CPVarInt.apply(cp,9,11);
+	x[2] = CPVarInt.apply(cp,12,14);
+	x[3] = CPVarInt.apply(cp,13,14);
+	x[4] = CPVarInt.apply(cp,10,12);
+	x[5] = CPVarInt.apply(cp,12,15);
 
 
 
-	CPVarInt nd = new CPVarInt(cp,0,34);
+	CPVarInt nd = CPVarInt.apply(cp,0,34);
 	cp.post(new Deviation(x,74,nd));
 	assertTrue(!cp.isFailed());
     assertEquals(x[0].getMax(),14);
@@ -311,16 +311,16 @@ public class TestDeviation extends TestCase {
 	Store cp = new Store();
 	CPVarInt [] x = new CPVarInt[6];
 	
-	x[0] = new CPVarInt(cp,-14,-12);
-	x[1] = new CPVarInt(cp,-11,-9);
-	x[2] = new CPVarInt(cp,-14,-12);
-	x[3] = new CPVarInt(cp,-14,-13);
-	x[4] = new CPVarInt(cp,-12,-10);
-	x[5] = new CPVarInt(cp,-14,-12);
+	x[0] = CPVarInt.apply(cp,-14,-12);
+	x[1] = CPVarInt.apply(cp,-11,-9);
+	x[2] = CPVarInt.apply(cp,-14,-12);
+	x[3] = CPVarInt.apply(cp,-14,-13);
+	x[4] = CPVarInt.apply(cp,-12,-10);
+	x[5] = CPVarInt.apply(cp,-14,-12);
 
 
 
-	CPVarInt nd = new CPVarInt(cp,0,34);
+	CPVarInt nd = CPVarInt.apply(cp,0,34);
 	cp.post(new Deviation(x,-74,nd));
 	assertTrue(!cp.isFailed());
     assertEquals(x[1].getMax(),-10);

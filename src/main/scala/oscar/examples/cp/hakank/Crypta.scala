@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -40,7 +47,7 @@ import scala.math._
  *
  */
 
-object Crypta extends CPModel {
+object Crypta {
 
 
   def main(args: Array[String]) {
@@ -57,8 +64,8 @@ object Crypta extends CPModel {
     //
     val x = Array.fill(n)(CPVarInt(cp, 0 to 9))
     val Array(a,b,c,d,e,f,g,h,i,j) = x
-    val sr1 = CPVarInt(cp, 0 to 1);
-    val sr2 = CPVarInt(cp, 0 to 1);
+    val sr1 = CPVarInt(cp, 0 to 1)
+    val sr2 = CPVarInt(cp, 0 to 1)
 
 
     //
@@ -68,33 +75,30 @@ object Crypta extends CPModel {
     cp.solveAll subjectTo {
 
         cp.add(alldifferent(x), Strong)
-        cp.add(b >= 1);
-        cp.add(d >= 1);
-        cp.add(g >= 1);
+        cp.add(b >= 1)
+        cp.add(d >= 1)
+        cp.add(g >= 1)
 
         cp.add((a + e*10 + j*100 + b*1000 + b*10000 + e*100000 + f*1000000 + 
                 e + j*10 + e*100 + f*1000 + g*10000 + a*100000 + f*1000000) ==
-               (f + e*10 + e*100 + h*1000 + i*10000 + f*100000 + b*1000000 + sr1*10000000));
+               (f + e*10 + e*100 + h*1000 + i*10000 + f*100000 + b*1000000 + sr1*10000000))
 
         
         cp.add((c + f*10 + h*100 + a*1000 + i*10000 + i*100000 + j*1000000 + 
                 f + i*10 + b*100 + d*1000 + i*10000 + d*100000 + c*1000000 + sr1) ==
-               (j + f*10 + a*100 + f*1000 + h*10000 + d*100000 + d*1000000 + sr2*10000000));
+               (j + f*10 + a*100 + f*1000 + h*10000 + d*100000 + d*1000000 + sr2*10000000))
         
         
         cp.add((a + j*10 + j*100 + i*1000 + a*10000 + b*100000 + 
                 b + a*10 + g*100 + f*1000 + h*10000 + d*100000 + sr2) ==
-               (c + a*10 + g*100 + e*1000 + j*10000 + g*100000));
+               (c + a*10 + g*100 + e*1000 + j*10000 + g*100000))
 
 
     } exploration {
        
-      // cp.binary(x)
       cp.binaryFirstFail(x)
-      //cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("x:" + x.mkString(""))
 
       numSols += 1

@@ -39,7 +39,7 @@ public class MulVar extends Constraint {
      * @see CPVarInt#mul(cp.core.CPVarInt)
      */
 	public MulVar(CPVarInt x, CPVarInt y, CPVarInt z) {
-		super(x.getStore(),"Mul x*y=z");
+		super(x.s(),"Mul x*y=z");
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -166,8 +166,8 @@ public class MulVar extends Constraint {
 	         return CPOutcome.Suspend;
 	      } else {
 	    	 assert(!z.isBound());
-	    	 int after0 = w.getValueAfter(0);
-	    	 int before0 = w.getValueBefore(0);
+	    	 int after0 = w.valueAfter(0);
+	    	 int before0 = w.valueBefore(0);
 	    	 if (w.getMin() == 0) {
 	    		 return propagDiv(u, z.getMin(), z.getMax(), after0, w.getMax());
 	    	 } else if (w.getMax() == 0) {

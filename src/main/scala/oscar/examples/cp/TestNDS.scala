@@ -33,7 +33,7 @@ import oscar.reversible.ReversibleInt
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object TestNDS  extends CPModel {
+object TestNDS  {
   def main(args: Array[String])  {
 
       
@@ -55,7 +55,7 @@ object TestNDS  extends CPModel {
     	        { v(1).value = false}
       cp.branch { v(2).value = true } 
     	        { v(2).value = false}
-      println(v.mkString(",")+" "+bcr.getValue())	
+      println(v.mkString(",")+" "+bcr.value)	
       nb += 1
 	}
 	

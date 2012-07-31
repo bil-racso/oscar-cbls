@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
+
 
 
 
@@ -31,7 +33,7 @@ import oscar.search._
  *                     the fours are separated by four digits
  * @author Pierre Schaus pschaus@gmail.com
  */
-object MagicNumber  extends CPModel {
+object MagicNumber  {
 	def main(args: Array[String]) {
 		
       val cp = CPSolver()

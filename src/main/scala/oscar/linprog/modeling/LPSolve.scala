@@ -38,8 +38,11 @@ class LPSolve extends AbstractLP{
 		this.nbCols = nbCols
 		lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
 		lp.setInfinite(Double.MaxValue)
-		lp.setVerbose(LpSolve.IMPORTANT)
 		lp.setAddRowmode(true)
+		val file = new java.io.File("options.ini")
+		if (file.exists()) {
+			lp.readParams("options.ini","[Default]");
+		}
 	}
 	
 	def endModelBuilding() {
@@ -47,16 +50,20 @@ class LPSolve extends AbstractLP{
 		 closed = true
 	}
 	
-	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def setVarName(colId : Int, name: String) { 
+	  // TODO implement
+	}
+	
+	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
 	}
     
-	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.LE, rhs)
 	}
-    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.EQ, rhs)    	
     }

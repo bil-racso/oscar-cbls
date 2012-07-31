@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -27,18 +34,7 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object Assignment extends CPModel {
-
-  // some helper functions
-
-  // scalarProduct(array, array)
-  def scalarProduct(t: Array[CPVarInt], cost: Array[Int]) : CPVarInt = 
-    sum(Array.tabulate(t.length)(i=>t(i)*cost(i)))
-
-  // scalarProduct(matrix, matrix)
-  def scalarProduct(m: Array[Array[CPVarInt]], cost: Array[Array[Int]]) : CPVarInt = 
-    sum(for{i <- 0 until m.length} yield scalarProduct(m(i), cost(i)))
-
+object Assignment {
 
   // Nicer syntax for a CPVarInt matrix 
   class CPVarIntMatrix(m: Array[Array[CPVarInt]]) {
@@ -78,7 +74,7 @@ object Assignment extends CPModel {
     // variables
     //
     val x = makeCPVarIntMatrix(cp, rows, cols, 0 to 1)
-    val total_cost = scalarProduct(x, cost)
+    val total_cost = weightedSum(cost, x)
 
     //
     // constraints
@@ -104,7 +100,7 @@ object Assignment extends CPModel {
       println()
       for(i <- ROWS) {
         println("Task" + i + " is done by " + 
-                x(i).zipWithIndex.filter(_._1.getValue() == 1).map(_._2).mkString(""))
+                x(i).zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(""))
       }
       println()
 

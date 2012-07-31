@@ -83,7 +83,10 @@ public class TestCarSequencing extends TestCase {
     	Store cp = new Store();
     	
 
-		CPVarInt [] line = CPVarInt.getArray(cp, nbCars, 0, nbConfigs-1);
+		CPVarInt [] line = new CPVarInt[nbCars];
+		for (int i = 0; i < nbCars; i++) {
+			line[i] = CPVarInt.apply(cp,0, nbConfigs-1);
+		}
 		for (int o = 1; o < nbOptions; o++) {
             System.out.println(Arrays.toString(options[o].getSortedVals()));
 			cp.add(new Sequence(line, options[o], ub[o], 0, lb[o]));

@@ -38,7 +38,7 @@ public class WeightedSum extends Constraint {
      * @param y
      */
 	public WeightedSum(int [] w, CPVarInt [] x, CPVarInt y) {
-		super(x[0].getStore(),"WeightedSum");
+		super(x[0].s(),"WeightedSum");
 		
 		if (w.length != x.length) {
 			throw new RuntimeException("w and x must have the same length");
@@ -55,8 +55,8 @@ public class WeightedSum extends Constraint {
      * @param x
      * @param s
      */
-    public WeightedSum(int [] w, CPVarInt [] x, int s) {
-        this(w,x,new CPVarInt(x[0].getStore(),s,s));
+    public WeightedSum(int [] w, CPVarInt [] x, int sum) {
+        this(w,x,CPVarInt.apply(x[0].s(),sum,sum));
     }
 
 	@Override

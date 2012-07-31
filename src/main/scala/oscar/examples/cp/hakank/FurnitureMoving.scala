@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -28,7 +35,7 @@ import scala.math._
  
 */
 
-object FurnitureMoving extends CPModel {
+object FurnitureMoving {
 
   // Thanks Pierre Schaus for help with this decomposition of cumulative.
   def myCumulative(cp: CPSolver,
@@ -42,9 +49,9 @@ object FurnitureMoving extends CPModel {
       if (r(i) > 0 && d(i) > 0)
         } yield i
 
-    val times_min = tasks.map(i => s(i).getMin()).min
+    val times_min = tasks.map(i => s(i).min).min
     val d_max = d.max
-    val times_max = tasks.map(i => s(i).getMax() + d_max).min
+    val times_max = tasks.map(i => s(i).max + d_max).min
             
     for(t <- times_min to times_max) {
       cp.add(sum(tasks)(i => ((s(i) <<= t) && (s(i)+d(i) >>= t)) * r(i) ) <= b)
@@ -93,7 +100,6 @@ object FurnitureMoving extends CPModel {
       // when searching for max_end_time
       // cp.add(num_persons == 3)
   
-      // constraints
       myCumulative(cp, starts, durations, resources, num_persons)
   
 

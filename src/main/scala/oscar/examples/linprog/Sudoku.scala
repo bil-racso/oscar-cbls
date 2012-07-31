@@ -19,11 +19,13 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
  * Model for Sudoku
  */
-object Sudoku extends MIPModel{
+object Sudoku {
 
 	def main(args: Array[String]): Unit = {  
 

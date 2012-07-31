@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -42,7 +49,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object Marathon extends CPModel {
+object Marathon {
 
    // 
    // Decomposition of inverse constraint
@@ -58,7 +65,7 @@ object Marathon extends CPModel {
       val len = x.length
       for(i <- 0 until len;
           j <- 0 until len) {
-        cp.add( (y(j) === i) === (x(i) === j) )
+        cp.add( (y(j) === i) == (x(i) === j) )
       }
    }
 
@@ -126,7 +133,7 @@ object Marathon extends CPModel {
         println("Runners: " ++ runners.mkString(""))
         println("Places:")
         for(p <- 0 until n) {
-          println("Place " + (p+1) + ": " + runners_str(places(p).getValue()))
+          println("Place " + (p+1) + ": " + runners_str(places(p).value))
         }
         println()
 

@@ -20,6 +20,7 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 import oscar.visual._
 import java.awt.Color
 
@@ -30,7 +31,7 @@ import java.awt.Color
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Euler  extends CPModel {
+object Euler  {
 	def main(args: Array[String]) {
 
 		def reachables(i : Int) : Set[Int] = {
@@ -51,7 +52,7 @@ object Euler  extends CPModel {
 			cp.add(circuit(x))
 		} exploration {
 		  cp.binaryFirstFail(x)
-		  println(x.map(_.getValue).mkString(","))
+		  println(x.map(_.value).mkString(","))
 		}
 		
 		cp.printStats()
@@ -72,7 +73,7 @@ object Euler  extends CPModel {
 		  }	
 		}		
 		for (i <- 0 until 64) {
-		  val v = x(i).getValue()
+		  val v = x(i).value
 		  val (c,l) = (v/8, v%8)
 		  new VisualCircle(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,3).setInnerCol(Color.RED)
 		  new VisualLine(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,scale/2+c*scale,scale/2+l*scale)

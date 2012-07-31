@@ -18,6 +18,8 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
  *  Note: example taken from glpk
@@ -27,7 +29,7 @@ import oscar.linprog.modeling._
  *  to conservation of flow constraints at each node and flow capacities
  *  on each arc.
  */
-object MaxFlow extends LPModel {
+object MaxFlow {
 
 	
   def main(args: Array[String]) = {  

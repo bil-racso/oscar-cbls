@@ -41,7 +41,7 @@ public class Implication extends Constraint {
      * @param V
      */
 	public Implication(CPVarBool A, CPVarBool B, CPVarBool V) {
-		super(A.getStore(),"Implication");
+		super(A.s(),"Implication");
 		this.A = A; 
 		this.B = B;
 		this.V = V;

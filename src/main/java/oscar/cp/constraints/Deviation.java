@@ -54,7 +54,7 @@ public class Deviation extends Constraint {
      * @param nd
      */
     public Deviation(CPVarInt [] x, int s, CPVarInt nd) {
-        super(x[0].getStore(),"Deviation");
+        super(x[0].s(),"Deviation");
         assert (x.length >= 2);
         this.x = x;
         this.nd = nd;

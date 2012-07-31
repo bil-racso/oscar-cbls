@@ -56,7 +56,7 @@ public class TestMul extends TestCase {
     
     public void testMul1() {  
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,0,5);
+    	CPVarInt x = CPVarInt.apply(s,0,5);
     	CPVarInt y = x.mul(-2);
     	s.post(new Gr(y,-10));
     	assertTrue(x.getMax()==4);
@@ -64,8 +64,8 @@ public class TestMul extends TestCase {
     
     public void testMul2() { 
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,2,5);
-    	CPVarInt y = new CPVarInt(s,10,10);
+    	CPVarInt x = CPVarInt.apply(s,2,5);
+    	CPVarInt y = CPVarInt.apply(s,10,10);
     	s.post(new MulCte(x,3,y));
     	
     	assertTrue(s.isFailed());
@@ -73,8 +73,8 @@ public class TestMul extends TestCase {
     
     public void testMul3() {  	
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,2,5);
-    	CPVarInt z = new CPVarInt(s,10,12);
+    	CPVarInt x = CPVarInt.apply(s,2,5);
+    	CPVarInt z = CPVarInt.apply(s,10,12);
     	s.post(new MulCte(x,3,z));
     	assertTrue(!s.isFailed());
     	assertTrue(x.isBound() && x.getValue()==4);
@@ -82,8 +82,8 @@ public class TestMul extends TestCase {
     
     public void testMul4() { 
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,2,5);
-    	CPVarInt z = new CPVarInt(s,9,12);
+    	CPVarInt x = CPVarInt.apply(s,2,5);
+    	CPVarInt z = CPVarInt.apply(s,9,12);
     	s.post(new MulCte(x,3,z));
     	s.post(new LeEq(z,11));
     	assertTrue(!s.isFailed());
@@ -92,8 +92,8 @@ public class TestMul extends TestCase {
     
     public void testMul5() {  
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,2,5);
-    	CPVarInt y = new CPVarInt(s,10,10);
+    	CPVarInt x = CPVarInt.apply(s,2,5);
+    	CPVarInt y = CPVarInt.apply(s,10,10);
     	//s.post(new MulCte(x,3,y));
     	s.post(new WeightedSum(new int[]{3},new CPVarInt[]{x},y));
     	assertTrue(s.isFailed());
@@ -104,9 +104,9 @@ public class TestMul extends TestCase {
     
     public void testMul6() {  
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,-1,4);
-    	CPVarInt y = new CPVarInt(cp,-1,1);
-    	CPVarInt z = new CPVarInt(cp,0,0);
+    	CPVarInt x = CPVarInt.apply(cp,-1,4);
+    	CPVarInt y = CPVarInt.apply(cp,-1,1);
+    	CPVarInt z = CPVarInt.apply(cp,0,0);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new Diff(y,0));
@@ -117,9 +117,9 @@ public class TestMul extends TestCase {
     
     public void testMul7() {  
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,-1,4);
-    	CPVarInt y = new CPVarInt(cp,-1,1);
-    	CPVarInt z = new CPVarInt(cp,0,1);
+    	CPVarInt x = CPVarInt.apply(cp,-1,4);
+    	CPVarInt y = CPVarInt.apply(cp,-1,1);
+    	CPVarInt z = CPVarInt.apply(cp,0,1);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new Diff(z,0));
@@ -136,9 +136,9 @@ public class TestMul extends TestCase {
     	//could prune better x1
 
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,-4,4);
-    	CPVarInt y = new CPVarInt(cp,-1,1);
-    	CPVarInt z = new CPVarInt(cp,-1,1);
+    	CPVarInt x = CPVarInt.apply(cp,-4,4);
+    	CPVarInt y = CPVarInt.apply(cp,-1,1);
+    	CPVarInt z = CPVarInt.apply(cp,-1,1);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new Diff(y,0));
@@ -154,9 +154,9 @@ public class TestMul extends TestCase {
     	//could prune better x1 and y1
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,-4,4);
-    	CPVarInt y = new CPVarInt(cp,-1,1);
-    	CPVarInt z = new CPVarInt(cp,-1,1);
+    	CPVarInt x = CPVarInt.apply(cp,-4,4);
+    	CPVarInt y = CPVarInt.apply(cp,-1,1);
+    	CPVarInt z = CPVarInt.apply(cp,-1,1);
 
     	cp.post(new MulVar(x,y,z));
     	cp.post(new Diff(z,0));
@@ -165,9 +165,9 @@ public class TestMul extends TestCase {
     public void testMul10() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,0,4);
-    	CPVarInt y = new CPVarInt(cp,-3,1);
-    	CPVarInt z = new CPVarInt(cp,-1,1);
+    	CPVarInt x = CPVarInt.apply(cp,0,4);
+    	CPVarInt y = CPVarInt.apply(cp,-3,1);
+    	CPVarInt z = CPVarInt.apply(cp,-1,1);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new LeEq(y,0));
@@ -178,9 +178,9 @@ public class TestMul extends TestCase {
     public void testMul11() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,0,4);
-    	CPVarInt y = new CPVarInt(cp,-3,0);
-    	CPVarInt z = new CPVarInt(cp,0,2);
+    	CPVarInt x = CPVarInt.apply(cp,0,4);
+    	CPVarInt y = CPVarInt.apply(cp,-3,0);
+    	CPVarInt z = CPVarInt.apply(cp,0,2);
     	
     	cp.post(new MulVar(x,y,z));
     	
@@ -194,9 +194,9 @@ public class TestMul extends TestCase {
     public void testMul12() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,0,4);
-    	CPVarInt y = new CPVarInt(cp,-3,0);
-    	CPVarInt z = new CPVarInt(cp,0,2);
+    	CPVarInt x = CPVarInt.apply(cp,0,4);
+    	CPVarInt y = CPVarInt.apply(cp,-3,0);
+    	CPVarInt z = CPVarInt.apply(cp,0,2);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new LeEq(y,-1));
@@ -210,9 +210,9 @@ public class TestMul extends TestCase {
     public void testMul13() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,1,4);
-    	CPVarInt y = new CPVarInt(cp,-3,0);
-    	CPVarInt z = new CPVarInt(cp,-2,2);
+    	CPVarInt x = CPVarInt.apply(cp,1,4);
+    	CPVarInt y = CPVarInt.apply(cp,-3,0);
+    	CPVarInt z = CPVarInt.apply(cp,-2,2);
     	
     	cp.post(new MulVar(x,y,z));
     	cp.post(new LeEq(y,-1));
@@ -226,9 +226,9 @@ public class TestMul extends TestCase {
     public void testMul14() {
     	
     	Store cp = new Store();
-    	CPVarInt s = new CPVarInt(cp,1,30);
-    	CPVarInt nb = new CPVarInt(cp,10506,19596);
-    	CPVarInt tmp = new CPVarInt(cp,351,900);
+    	CPVarInt s = CPVarInt.apply(cp,1,30);
+    	CPVarInt nb = CPVarInt.apply(cp,10506,19596);
+    	CPVarInt tmp = CPVarInt.apply(cp,351,900);
     	
     	cp.post(new MulVar(tmp,s,nb));
     	cp.post(new MulVar(s,s,tmp));
@@ -237,9 +237,9 @@ public class TestMul extends TestCase {
     public void testMul15() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,1, 10);
-    	CPVarInt y = new CPVarInt(cp,new int[]{50,70});
-    	CPVarInt z = new CPVarInt(cp,100,100);
+    	CPVarInt x = CPVarInt.apply(cp,1, 10);
+    	CPVarInt y = CPVarInt.apply(cp,new int[]{50,70});
+    	CPVarInt z = CPVarInt.apply(cp,100,100);
     	
     	cp.post(new MulVar(x,y,z));
     	
@@ -252,9 +252,9 @@ public class TestMul extends TestCase {
     public void testMul16() {
     	
     	Store cp = new Store();
-    	CPVarInt x = new CPVarInt(cp,0, 10);
-    	CPVarInt y = new CPVarInt(cp,new int[]{50,70});
-    	CPVarInt z = new CPVarInt(cp,100,100);
+    	CPVarInt x = CPVarInt.apply(cp,0, 10);
+    	CPVarInt y = CPVarInt.apply(cp,new int[]{50,70});
+    	CPVarInt z = CPVarInt.apply(cp,100,100);
     	
     	cp.post(new MulVar(x,y,z));
     	
@@ -267,9 +267,9 @@ public class TestMul extends TestCase {
     public void testMul17() {
     	
     	Store cp = new Store();
-    	final CPVarInt x = new CPVarInt(cp,-10,10);
-    	final CPVarInt y = new CPVarInt(cp,new int[]{-70,-50,50,70});
-    	CPVarInt z = new CPVarInt(cp,100,100);
+    	final CPVarInt x = CPVarInt.apply(cp,-10,10);
+    	final CPVarInt y = CPVarInt.apply(cp,new int[]{-70,-50,50,70});
+    	CPVarInt z = CPVarInt.apply(cp,100,100);
     	
     	cp.post(new MulVar(x,y,z)); // should post a MulCteRes because z is fixed
     	
@@ -288,8 +288,8 @@ public class TestMul extends TestCase {
     
     public void testMul18() {  
     	Store s = new Store();
-    	CPVarInt x = new CPVarInt(s,-5,5);
-    	CPVarInt y = new CPVarInt(s,-5,16);
+    	CPVarInt x = CPVarInt.apply(s,-5,5);
+    	CPVarInt y = CPVarInt.apply(s,-5,16);
     	s.post(new Eq(x.mul(x), y)); // should detect it is a square constraint
     	assertTrue(!s.isFailed());
     	assertTrue(x.getMin() == -4);
@@ -302,14 +302,14 @@ public class TestMul extends TestCase {
     	Store s = new Store();
     	
 
-    	CPVarInt x = new CPVarInt(s,6,43986624);
-    	CPVarInt y = new CPVarInt(s,4,355);
-    	CPVarInt z = new CPVarInt(s,711,711);
+    	CPVarInt x = CPVarInt.apply(s,6,43986624);
+    	CPVarInt y = CPVarInt.apply(s,4,355);
+    	CPVarInt z = CPVarInt.apply(s,711,711);
     	//s.post(new MulVar(x, y, z));
     	System.out.println("hello");
     	z = x.mul(y);
     	System.out.println("z:"+z);
-    	s.post(new Eq(z, new CPVarInt(s,711))); // should detect it is a square constraint
+    	s.post(new Eq(z, CPVarInt.apply(s,711))); // should detect it is a square constraint
     	assertTrue(!s.isFailed());
 
     }

@@ -59,7 +59,7 @@ public class TestStretch extends TestCase {
     public void testStretch(){ 
     	CPVarInt [] x = new CPVarInt[8];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = new CPVarInt(s,0,2);
+			x[i] = CPVarInt.apply(s,0,2);
 		}
     	int [] shortest = new int[] {2,2,2};
     	int [] longest = new int[] {4,3,2};

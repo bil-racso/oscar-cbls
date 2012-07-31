@@ -44,7 +44,7 @@ public class Regular extends Constraint {
      * @param automaton
      */
 	public Regular(CPVarInt [] x, Automaton automaton) {
-		super(x[0].getStore(),"Regular");
+		super(x[0].s(),"Regular");
 		this.x = x;
 
 	    automaton.setPosted();//ensure that the automaton is not modified anymore
@@ -54,14 +54,14 @@ public class Regular extends Constraint {
 	    acceptingStates = automaton.getAcceptingStates();
 	    q = new CPVarInt[x.length];
 	    for (int i = 0; i < q.length; i++) {
-			q[i] = new CPVarInt(s,0,nbStates-1);
+			q[i] = CPVarInt.apply(s,0,nbStates-1);
 		}		
 	}
 
 	
 	@Override
 	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(ElementCst2D.apply(T,new CPVarInt(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
+		if (s.post(ElementCst2D.apply(T,CPVarInt.apply(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		

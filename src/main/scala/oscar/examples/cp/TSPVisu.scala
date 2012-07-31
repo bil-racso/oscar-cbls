@@ -19,6 +19,7 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 import oscar.visual._
 import scala.collection.JavaConversions._
 import scala.io.Source
@@ -35,7 +36,7 @@ import java.awt.Color
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object TSPVisual extends CPModel {
+object TSPVisual {
 
   def main(args: Array[String]) {
     
@@ -82,11 +83,11 @@ object TSPVisual extends CPModel {
     var nbSol = 0
     coord.foreach(c => new VisualCircle(drawing, c._1 , c._2, 2, Color.blue))
     def updateVisu() {
-      def update(i: Int) = lines(i).setDest(coord(succ(i).getValue())._1,coord(succ(i).getValue())._2)
+      def update(i: Int) = lines(i).setDest(coord(succ(i).value)._1,coord(succ(i).value)._2)
       nbSol += 1
       (0 until n).foreach(update(_))
       drawing.repaint()
-      plot.addPoint(nbSol,dist.getValue())
+      plot.addPoint(nbSol,dist.value)
     }
     // ------------------------------------------
     
@@ -95,11 +96,11 @@ object TSPVisual extends CPModel {
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
     } exploration {
       //exploration of the search tree
-      while (!succ.forall(_.isBound())) {
+      while (!succ.forall(_.isBound)) {
          val res = minDomNotbound(succ)
          val (x, i) = res.first
          // get the closest successor in the domain of x
-         val v = argMin((x.getMin() to x.getMax()).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
          cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
       updateVisu()

@@ -1,21 +1,5 @@
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- * 
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+package oscar.cp
 
-package oscar.cp.modeling
 
 
 import scala.util.continuations._
@@ -23,22 +7,19 @@ import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
 
-
+import oscar.cp.search._
+import oscar.search._
+import oscar.cp.constraints._
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPVarBool
+import oscar.search.Branching._
+import oscar.cp.modeling._
+import oscar.cp.core._
 
 /**
- *
- * A CP model should extend this class to benefit from the modeling facilities (constraints functions...)
- *
+ * @author Pierre Schaus pschaus@gmail.com
  */
-trait CPModel extends Constraints {
-  
-  import oscar.cp.core._
-  import oscar.cp.search._
-  import oscar.search._
-  import oscar.cp.constraints._
-  import oscar.cp.core.CPVarInt
-  import oscar.cp.core.CPVarBool
-  import oscar.search.Branching._
+package object modeling extends Constraints {
 
   /**
    * Filtering power can be specified for some of the constraints.
@@ -48,7 +29,7 @@ trait CPModel extends Constraints {
   val Medium = CPPropagStrength.Medium
   val Weak = CPPropagStrength.Weak
   
-  class CPVarBoolWrappper(val b: CPVarBool) {
+  class CPVarBoolWrappper(val b: oscar.cp.core.CPVarBool) {
     /**
      * -b
      */
@@ -287,7 +268,7 @@ trait CPModel extends Constraints {
     }
   }
   
-  def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound())
+  def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
   
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
     val max = indexes.map(f).max
@@ -306,55 +287,6 @@ trait CPModel extends Constraints {
     indexes.filter(f(_) == min)
   }
   
-  object CPVarInt {
 
-  /**
-   * Creates a new CP Integer Variable with a range as initial domain
-   * @param cp the solver in which the variable is created
-   * @param domain the range defining the possible values for the variable
-   * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
-   */
-  def apply(cp: Store, domain: Range): CPVarInt = {
-    new CPVarInt(cp, domain)
-  }
-
-  /**
-   * Creates a new CP Integer Variable instantiated to a value
-   * @param cp the solver in which the variable is created
-   * @param value is the value to which the variable is instantiated
-   * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
-   */
-  def apply(cp: Store, value: Int): CPVarInt = {
-    new CPVarInt(cp, value, value)
-  }
-
-  /**
-   * Creates a new CP Integer Variable with a set of values as initial domain
-   * @param cp the solver in which the variable is created
-   * @param values is the initial set of values possible for the variable (domain)
-   * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
-   */
-  def apply(cp: Store, values: Set[Int]): CPVarInt = {
-    val vals = new java.util.HashSet[Integer]()
-    values.foreach(v => vals.add(v))
-    new CPVarInt(cp, vals)
-  }
   
-  }
-
-  object CPVarBool {
-
-   /**
-    * Creates a new CP Boolean Variable
-    */
-   def apply(cp: Store): CPVarBool = {
-    new CPVarBool(cp)
-   }
-   
-   def apply(cp: Store,b: Boolean): CPVarBool = {
-    new CPVarBool(cp,b)
-   }
-  }
-
 }
-

@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -36,7 +43,7 @@ import scala.math._
  
 */
 
-object SetCoveringDeployment extends CPModel {
+object SetCoveringDeployment {
 
   def main(args: Array[String]) {
 
@@ -115,23 +122,19 @@ object SetCoveringDeployment extends CPModel {
     } exploration {
        
       cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
 
       println("\nSolution:")
-
       println("num_armies: " + num_armies)
       println("x: " + x.mkString(""))
       println("y: " + y.mkString(""))
-
       for(i <- 0 until n) {
         var some_army = false
-        if (x(i).getValue() == 1) {
+        if (x(i).value == 1) {
           print("Army: " + countries(i) + " ")
           some_army = true
         }
 
-        if (y(i).getValue() == 1) {
+        if (y(i).value == 1) {
           print(" Reserve army: " + countries(i) + " ")
           some_army = true
         }

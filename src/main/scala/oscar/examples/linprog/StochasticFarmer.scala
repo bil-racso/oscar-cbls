@@ -18,6 +18,8 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 import scala.collection.mutable.Map
 import java.io.PrintWriter
 
@@ -38,7 +40,7 @@ import java.io.PrintWriter
  * 
  *  @author bcr bcr@n-side.com
  */
-object StochasticFarmer extends LPModel {
+object StochasticFarmer {
   def main(args: Array[String]) {
 
     val fileOut = new PrintWriter("stochasticFarmerSolution.csv")

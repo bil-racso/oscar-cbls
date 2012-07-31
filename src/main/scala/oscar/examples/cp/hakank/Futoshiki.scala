@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -36,7 +43,7 @@ import scala.math._
  
 */
 
-object Futoshiki extends CPModel {
+object Futoshiki {
 
   def main(args: Array[String]) {
 
@@ -65,7 +72,7 @@ object Futoshiki extends CPModel {
     
 
     // [i1,j1, i2,j2] requires that values[i1,j1] < values[i2,j2]
-    // Note: 1-based
+    // Note: 1-based (changed to 0-based below)
     val lt1 = Array(Array(1,2,  1,1),
                     Array(1,4,  1,5),
                     Array(2,3,  1,3),
@@ -157,16 +164,14 @@ object Futoshiki extends CPModel {
       // all < constraints are satisfied
       // Also: make 0-based
       for(i <- NUMQD) {
-        cp.add(field( lt(i)(0)-1)(lt(i)(1)-1) <
+        cp.add(field(lt(i)(0)-1)(lt(i)(1)-1) <
                field(lt(i)(2)-1)(lt(i)(3)-1 ))
       }
 
 
     } exploration {
        
-      // cp.binary(field.flatten)
       cp.binaryFirstFail(field.flatten)
-      // cp.binaryMaxDegree(field.flatten)
 
       for(i <- RANGE) {
         println(field(i).mkString(""))
