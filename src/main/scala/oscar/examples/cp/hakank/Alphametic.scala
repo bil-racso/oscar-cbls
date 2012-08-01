@@ -112,7 +112,7 @@ object Alphametic {
     println("chars: " + chars.mkString(""))
                    
     // create a lookup table: list of (char, index)
-    val ht = chars.zip(0 until n).toMap
+    val ht = chars.zipWithIndex.toMap
     println("ht: " + ht)
 
     //
