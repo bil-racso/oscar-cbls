@@ -19,7 +19,7 @@ package oscar.cp.modeling
 
 import oscar.cp.constraints._
 import oscar.cp.core._
-import oscar.cp.scheduling._
+import oscar.cp.scheduling.Activity
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList

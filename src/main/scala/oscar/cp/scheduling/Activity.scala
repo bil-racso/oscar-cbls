@@ -19,16 +19,18 @@ package oscar.cp.scheduling;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
 import oscar.cp.constraints.LeEq
+import oscar.cp.modeling.CPScheduler
 
-class Activity(startVar: CPVarInt, durVar: CPVarInt) {
+class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
     
-    private val endVar: CPVarInt = startVar.plus(durVar)
-	
+	private val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
+    private val endVar   : CPVarInt = startVar.plus(durVar)
+
     def start = startVar
     def end = endVar
     def dur = durVar
     
-	def this(startVar: CPVarInt,dur: Int) = this(startVar, CPVarInt(startVar.s,dur,dur))
+	def this(scheduler : CPScheduler, dur: Int) = this(scheduler, CPVarInt(scheduler,dur,dur))
 
 	/**
 	 * earliest starting time
@@ -70,18 +72,20 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
 	
 	def follows(act : Activity) : LeEq = act << this
 	
-	def store = start.store
-	
 	def needs(resource : CumulativeResource, capacity : Int) {
     	resource.addActivity(this, capacity)
     }
 	
-	override def toString = "dur:"+dur+ " in ["+est+","+lct+"[";
+	def needs(resource : UnaryResource) {
+    	resource.addActivity(this)
+    }
+	
+	override def toString = "dur: "+dur+ " in ["+est+","+lct+"[";
 }
 
 
 
-class MirrorActivity(val act: Activity)  extends Activity(act.start,act.dur) {
+class MirrorActivity(val act: Activity)  extends Activity(act.scheduler, act.dur) {
 
 	override def start: CPVarInt = throw new UninitializedFieldError("not available") 
 	

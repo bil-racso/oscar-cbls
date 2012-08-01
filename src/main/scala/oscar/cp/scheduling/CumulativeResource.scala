@@ -5,23 +5,25 @@ import scala.collection.mutable.Set
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.constraints.MaxSweepCumulative
 
-class CumulativeResource(scheduler : CPScheduler, capacity : Int) {
+class CumulativeResource(scheduler : CPScheduler, capa : Int) extends Resource(scheduler) {
 	
-	val id : Int = 0
+	protected val activitiesSet : Set[CumulativeActivity] = Set()
 	
-	val activitiesSet : Set[CumulativeActivity] = Set()
+	def activities = activitiesSet.toArray
+	def capacity   = capa
 	
 	def addActivity(activity : Activity, height : Int) {		
 		activitiesSet.add(CumulativeActivity(activity, id, height))
 	}
 
-	def setup() {
-		
-		scheduler.add(new MaxSweepCumulative(scheduler, activitiesSet.toArray, capacity, id))
+	override def setup() {
+		scheduler.add(new MaxSweepCumulative(scheduler, activitiesSet.toArray, capa, id))
 	}
+	
+	def criticality = activities.map(_.maxDuration).sum
 }
 
 object CumulativeResource {
 	
-	def apply(scheduler : CPScheduler, capacity : Int) = new CumulativeResource(scheduler, capacity)
+	def apply(scheduler : CPScheduler, capa : Int) = new CumulativeResource(scheduler, capa)
 }

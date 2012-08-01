@@ -165,11 +165,16 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
         
         if (oc == CPOutcome.Suspend) {
         	for (i <- Tasks) {
-        		if (!tasks(i).start.isBound) tasks(i).start.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).dur.isBound) tasks(i).dur.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).end.isBound) tasks(i).end.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).height.isBound) tasks(i).height.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).resource.isBound) tasks(i).resource.callPropagateWhenDomainChanges(this)
+        		if (!tasks(i).start.isBound) 
+        			tasks(i).start.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).dur.isBound)
+	        		tasks(i).dur.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).end.isBound) 
+	        		tasks(i).end.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).height.isBound) 
+	        		tasks(i).height.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).resource.isBound)
+	        		tasks(i).resource.callPropagateWhenDomainChanges(this)
     		}
         }
         

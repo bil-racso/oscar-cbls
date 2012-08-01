@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-
+/*
 package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
@@ -50,4 +50,4 @@ object RCPSP {
 		cp.printStats()
 	
   }
-}
+}*/

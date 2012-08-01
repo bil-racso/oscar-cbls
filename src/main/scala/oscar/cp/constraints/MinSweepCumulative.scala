@@ -11,7 +11,7 @@ class MinSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb : I
 	
 	override def generateCheck(i : Int) {
 		
-		if (tasks(i).maxResource < lb) {
+		if (tasks(i).maxHeight < lb) {
 					
 			eventPointSeries(nEvents) = eventList(i).sCheck
 			nEvents += 1
@@ -22,11 +22,11 @@ class MinSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb : I
 	
 	override def generateProfileBad(i : Int) : Boolean = {
 		
-		if (tasks(i).maxResource < 0) {
+		if (tasks(i).maxHeight < 0) {
 			
-			eventPointSeries(nEvents) = eventList(i).sBadProfile(tasks(i).maxResource, 0)  
+			eventPointSeries(nEvents) = eventList(i).sBadProfile(tasks(i).maxHeight, 0)  
 			nEvents += 1
-			eventPointSeries(nEvents) = eventList(i).eBadProfile(tasks(i).maxResource, 0)  
+			eventPointSeries(nEvents) = eventList(i).eBadProfile(tasks(i).maxHeight, 0)  
 			nEvents += 1
 			
 			return true
@@ -37,11 +37,11 @@ class MinSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb : I
 	
 	override def generateProfileGood(i : Int) : Boolean = {
 		
-		if (tasks(i).maxResource > 0) {
+		if (tasks(i).maxHeight > 0) {
 				
-			eventPointSeries(nEvents) = eventList(i).sGoodProfile(tasks(i).maxResource, 0)  
+			eventPointSeries(nEvents) = eventList(i).sGoodProfile(tasks(i).maxHeight, 0)  
 			nEvents += 1
-			eventPointSeries(nEvents) = eventList(i).eGoodProfile(tasks(i).maxResource, 0)  
+			eventPointSeries(nEvents) = eventList(i).eGoodProfile(tasks(i).maxHeight, 0)  
 			nEvents += 1
 			
 			return true
@@ -54,5 +54,5 @@ class MinSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb : I
 	
 	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks != 0 && (consSumHeight - consContrib(t)) < lb) 
 	
-	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxResource < lb) 
+	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxHeight < lb) 
 }

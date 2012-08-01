@@ -1,44 +1,43 @@
 package oscar.visual
-/*
+
 import java.awt.geom.Line2D
 import java.awt.Color
 
 import oscar.algo.CumulativeProfile
+import oscar.cp.scheduling._
+import oscar.cp.core.CPVarInt
 
-class VisualProfile(allActivities: Array[VisualActivity], resource : Int, private var c : Int, col : Color) extends VisualDrawing(false, true) {
-	
-	private var activities : Set[VisualActivity] = Set()
+class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color = Color.WHITE) extends VisualDrawing(false, true) {
 	
 	// The profile is represented by a polygon
 	private val polygon : VisualPolygon = new VisualPolygon(this)
-	polygon.setInnerCol(col)
+	polygon.setInnerCol(color)
 	
-	// The limit of capacity
-	private val line : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	line.setOuterCol(Color.RED);
+	// The capacity limit
+	private val capaLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+	capaLine.setOuterCol(Color.RED);
 	
-	def capacity = c
-	def capacity_= (x : Int) { c = x }
-		
-	def addActivity(activity : VisualActivity) = { activities =  activities + activity }
+	// The zero line
+	private val zeroLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+	zeroLine.setOuterCol(Color.BLUE);
 	
-	def removeActivity(activity : VisualActivity) = { activities = activities - activity }
-	
-	def updateActivities() { activities = allActivities.filter(a => a.machine == resource).toSet }
+	def resource = res
 	
 	def update(xScale : Int, yScale: Int) {
-		
-		updateActivities
 			
+		val activities = resource.activities
 		val points = CumulativeProfile.getCumulativeProfile(activities)
 		
-		polygon.update(points.map(p => (p._1*xScale, (p._2 + 5)*yScale)))
+		val min = -points.map(_._2).min
 		
-		val makespan = allActivities.map(_.end).max
+		polygon.update(points.map(p => (p._1*xScale, (p._2 + min)*yScale)))
+
+		capaLine.setOrig(0, (resource.capacity + min)*yScale)
+		capaLine.setDest(xScale*makespan.getMax, (resource.capacity + min)*yScale)
 		
-		line.setOrig(0, (capacity+5)*yScale)
-		line.setDest(xScale*makespan, (capacity+5)*yScale)
+		zeroLine.setOrig(0, (min)*yScale)
+		zeroLine.setDest(xScale*makespan.getMax, (min)*yScale)
 		
 		repaint()
 	}
-}*/
+}
