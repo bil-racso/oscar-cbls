@@ -34,7 +34,7 @@ class LPSolve extends AbstractLP{
   	var released = false
 	
 	def startModelBuilding(nbRows : Int,nbCols : Int) {
-		this.nbRows = nbRows
+		this.nbRows = 0
 		this.nbCols = nbCols
 		lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
 		lp.setInfinite(Double.MaxValue)
@@ -101,9 +101,16 @@ class LPSolve extends AbstractLP{
     }
     
     def solveModel() : LPStatus.Value = {
-    	lp.solve match {
+    	println("nbcols initial:"+nbCols)
+    	println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
+
+    	println("nbrow initial:"+nbRows)
+    	println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
+    	
+    	
+    	val status = lp.solve match {
     		 case LpSolve.OPTIMAL => 
-    		 	    sol = lp.getPtrVariables() 
+    		        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows+c+1))
     		 	    objectiveValue = lp.getObjective()
     		 	    LPStatus.OPTIMAL
     		 case LpSolve.SUBOPTIMAL =>
@@ -116,6 +123,13 @@ class LPSolve extends AbstractLP{
     		 case _ =>
     		 	    LPStatus.INFEASIBLE   
     	 }
+    	println("------- after solving ----- "+status)
+    	println("nbcols initial:"+nbCols)
+    	println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
+
+    	println("nbrow initial:"+nbRows)
+    	println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
+    	status 
     }
     
     def getValue(colId : Int) : Double = {
