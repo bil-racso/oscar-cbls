@@ -134,7 +134,7 @@ object AlphameticGenerate {
     val n = chars.length
                    
     // create a lookup table: list of (char, index)
-    val ht = chars.zip(0 until n).toMap
+    val ht = chars.zipWithIndex.toMap
 
     //
     // variables
