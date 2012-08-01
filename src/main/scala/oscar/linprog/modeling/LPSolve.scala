@@ -101,13 +101,7 @@ class LPSolve extends AbstractLP{
     }
     
     def solveModel() : LPStatus.Value = {
-    	println("nbcols initial:"+nbCols)
-    	println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
 
-    	println("nbrow initial:"+nbRows)
-    	println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
-    	
-    	
     	val status = lp.solve match {
     		 case LpSolve.OPTIMAL => 
     		        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows+c+1))
@@ -122,13 +116,12 @@ class LPSolve extends AbstractLP{
     		 	    LPStatus.UNBOUNDED
     		 case _ =>
     		 	    LPStatus.INFEASIBLE   
-    	 }
-    	println("------- after solving ----- "+status)
-    	println("nbcols initial:"+nbCols)
-    	println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
-
-    	println("nbrow initial:"+nbRows)
-    	println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
+    	}
+    	if (status == LpSolve.OPTIMAL) {
+    	 println("-------  ssolving ----- "+status)
+    	 println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
+    	 println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
+    	}
     	status 
     }
     
