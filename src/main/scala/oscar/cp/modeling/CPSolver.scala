@@ -88,8 +88,16 @@ class CPSolver() extends Store() {
 	  sc.failLimit = nbFailMax 
 	}
 	
+	def minDom(x: CPVarInt): Int = x.size
+	def minRegre(x: CPVarInt): Int = x.max-x.min
+	def minDomMaxDegree(x: CPVarInt): (Int,Int) = (x.size,-x.constraintDegree)
+	def minVar(x: CPVarInt): Int = 1
+	def maxDegree(x: CPVarInt): Int = -x.constraintDegree
+	
+	
 	def minVal(x: CPVarInt): Int = x.min
 	def maxVal(x: CPVarInt): Int = x.max
+	def minValminVal(x: CPVarInt): (Int,Int) = (x.min,x.min)
 	
 	/**
      * Binary First Fail on the decision variables vars
@@ -104,33 +112,34 @@ class CPSolver() extends Store() {
      }
     }
 	
-	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
-     binaryFirstFail(vars.toArray,valHeuris = minVal)
-    }
-
 	/**
-     * Binary search on the decision variables vars
+     * Binary search on the decision variables vars with custom variable/value heuristic
      */
-    def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+	def binary(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
      while (!allBounds(vars)) {
-    	   val x = vars.filter(!_.isBound).first
-           val v = x.min
+    	   val unbound = vars.filter(!_.isBound)
+    	   val heuris = unbound.map(varHeuris(_)).min 
+    	   val x = unbound.filter(varHeuris(_) == heuris).first
+           val v = valHeuris(x)
     	   branch (post(x == v))(post(x != v))// right alternative
      }
     }
+		
+	
+	/**
+	 * 
+	 */
+	def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
+      binary(vars.toArray,valHeuris = minVal)
+    }
+
 
 	/**
      * Binary search on the decision variables vars, selecting first the variables having the max number
      * of propagation methods attached to it.
      */
     def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
-     while (!allBounds(vars)) {
-    	   val unbound = vars.filter(!_.isBound)
-    	   val maxDegree = unbound.map(_.constraintDegree).max 
-    	   val x = unbound.filter(_.constraintDegree == maxDegree).first
-           val v = x.min
-    	   branch (post(x == v))(post(x != v))// right alternative
-     }
+      binary(vars, varHeuris = maxDegree, valHeuris = minVal)
     } 
     
     

@@ -43,7 +43,7 @@ object ElectricityMarket {
 	  val tmax = orders.map(_(2)).max
 	  
 	  // one variable for each order if we take it or not
-	  val mip = MIPSolver(LPSolverLib.glpk)
+	  val mip = MIPSolver(LPSolverLib.lp_solve)
 	  val varMap = Map[Array[Int],MIPVar]() 
 	  orders.foreach(o => varMap += (o -> MIPVar(mip,"order",0 to 1)))
 	  
@@ -73,7 +73,7 @@ object ElectricityMarket {
 	      }
 	  }
 	  
-	  println("cosntraints ok:"+mip.checkConstraints())
+	  println("constraints ok:"+mip.checkConstraints())
 	  
 	  println("checker:"+check.mkString(","))
 	  
