@@ -46,7 +46,7 @@ object TSPDemo {
 	val plot = new Plot2D("","Solution number","Distance")
     f.createFrame("TSP Objective Function").add(plot)
     // creates the tour visu and place it into the frame
-    val map = new Map();
+    val map = new VisualMap();
     f.createFrame("TSP Tour").add(map)
     f.pack()
     // ------------------------------------------

@@ -37,13 +37,13 @@ import org.jdesktop.swingx.painter.Painter;
  * @author Pierre Schaus
  */
 class MapPainter implements Painter<JXMapViewer> {
-	Map mymap;
+	VisualMap mymap;
 	
 	
 	private WaypointRenderer renderer = new DefaultWaypointRenderer();
 
 	
-	MapPainter(Map map) {
+	MapPainter(VisualMap map) {
 		this.mymap = map;
 	}
 	

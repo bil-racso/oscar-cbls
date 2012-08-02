@@ -49,7 +49,7 @@ import org.jdesktop.swingx.painter.Painter;
 /**
  * @author Pierre Schaus
  */
-public class Map extends JPanel {
+public class VisualMap extends JPanel {
 
 
     
@@ -61,7 +61,7 @@ public class Map extends JPanel {
 
 
 
-	public Map() {
+	public VisualMap() {
 		super(new BorderLayout());
 		this.lines = new ArrayList<MapLine>();
 		this.waypoints = new ArrayList<Waypoint>();
@@ -127,7 +127,7 @@ public class Map extends JPanel {
 		VisualFrame f = new VisualFrame("toto");
 		JInternalFrame inf = f.createFrame("tmap");
 
-		Map map = new Map();
+		VisualMap map = new VisualMap();
 		try {
 			String [] countries = new String[]{"Albania", "Andorra", "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Ireland", "Latvia", "Luxembourg", "Portugal", "Spain" , "United Kingdom", };
 	        for (String c: countries) {
