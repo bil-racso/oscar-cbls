@@ -31,7 +31,7 @@ import oscar.cp.search._
  * Draw the edges of the dominoes into the diagram to show how they are positioned (every domino is different).
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Domino  extends CPModel {
+object Domino  {
 	def main(args: Array[String]) {
 
 	  	val nLines = 6
@@ -74,7 +74,7 @@ object Domino  extends CPModel {
 		
 		
 		def printSol() {
-		  def sameDomino(i: Int, j: Int, k: Int, l: Int) = id(i)(j).getValue() == id(k)(l).getValue()
+		  def sameDomino(i: Int, j: Int, k: Int, l: Int) = id(i)(j).value == id(k)(l).value
 		  for(i <- Lines) {
 		    for (j <- Cols) {
 		      print(values(i)(j))
@@ -90,7 +90,7 @@ object Domino  extends CPModel {
 		  }
 		}
 		
-		cp.solve subjectTo {
+		cp.solveAll subjectTo {
 		  for (i <- Lines; j <- Cols) {  
 		    val validTuples = for((k,l) <- neighbors(i,j)) yield (toIndex(k,l), dominoId(values(i)(j),values(k)(l)))
 		    // makes the link between the matchedNeighbor and the id of the domino

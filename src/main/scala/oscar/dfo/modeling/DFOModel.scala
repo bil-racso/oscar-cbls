@@ -21,35 +21,27 @@ package oscar.dfo.modeling
 import scala.collection._
 import oscar.dfo.algo._
 import oscar.dfo.utils._
+import oscar.dfo._
 import oscar.algebra._
 
 /**
- * Trait used for the modeling of single objective minimization using DFO
+ *
  * @author: pierre.schaus@n-side.com
  */
-trait DFOModel extends Algebra {
-  
-  object DFOAlgo extends Enumeration {
-    val NelderMead = Value("NelderMead")
-    val DDS = Value("DDS")
-    val MDS = Value("MDS")
-  }
-  
-  
-  val rand = new scala.util.Random(12)
-  
-
-  case class DFOVar(val solver: DFOSolver, varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
+case class DFOVar(val solver: DFOSolver, varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
     override def value = solver.getValue(index)
     def name = varName
     def randVal = rand.nextDouble()*(ub-lb)+lb
-  }
+}
   
 
 
-  
-  class DFOSolver(val algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
+/**
+ *
+ * @author: pierre.schaus@n-side.com
+ */ 
+class DFOSolver(val algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
          
     // map from the index of variables to their implementation
     private lazy val vars = mutable.HashMap.empty[Int,DFOVar]
@@ -138,15 +130,12 @@ trait DFOModel extends Algebra {
 
     	return objective  	  
     }
-  }
+}
   
-  object DFOSolver {
+object DFOSolver {
 	def apply(algo:DFOAlgo.Value = DFOAlgo.NelderMead): DFOSolver = new DFOSolver(algo)
-  }
+}
   
-  
-  
-  
-} // end of trait
+
 
 

@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
+
 
 /**
  * Frequency Allocation Problem:
@@ -31,7 +33,7 @@ import oscar.cp.search._
  *                             to geographical situation (described in a matrix).
  * @author Pierre Schaus pschaus@gmail.com
  */
-object FreqAssignment extends CPModel {
+object FreqAssignment {
 	def main(args: Array[String]) {
 		
 	   val nbCells = 25

@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
+
 
 /**
  * Martin Gardner Problem:
@@ -29,7 +31,7 @@ import oscar.cp.search._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PrimeLooking extends CPModel {
+object PrimeLooking {
   def main(args: Array[String]) {
     
     val n = 1000

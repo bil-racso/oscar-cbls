@@ -5,12 +5,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ * 
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *  
+ * 
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
@@ -43,7 +43,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object AllDifferentExcept0 extends CPModel {
+object AllDifferentExcept0 {
 
   // Decomposition of alldifferent_except_0
   def alldifferent_except_0(cp: CPSolver, y: Array[CPVarInt]) = {
@@ -87,10 +87,9 @@ object AllDifferentExcept0 extends CPModel {
       alldifferent_except_0(cp, x)                                
 
       // Just for fun, we add that x should be increasing
-      // increasing(cp, x)
+      increasing(cp, x)
 
-      // There must be exactly 2 0's
-      // Perhaps a full gcc is overkill just to fetch the # of 0's...
+      // and that there must be exactly 2 0's
       cp.add(gcc(x, occurrences))
       cp.add(z == 2)
 
@@ -100,7 +99,6 @@ object AllDifferentExcept0 extends CPModel {
        cp.binaryFirstFail(x)
 
        println("x:" + x.mkString(""))
-       // println("occurrences:" + occurrences.mkString(""))
        println("z:" + z)
        println()
 

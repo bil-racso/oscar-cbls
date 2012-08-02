@@ -18,6 +18,8 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
  *  a magic square of order n is an
@@ -26,7 +28,7 @@ import oscar.linprog.modeling._
  *  to the same constant. A normal magic square contains the integers
  *  from 1 to n^2.
  */
-object MagicSquare extends MIPModel{
+object MagicSquare {
 	
 
 

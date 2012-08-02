@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -53,7 +60,7 @@ import scala.collection.JavaConversions._
   http://www.hakank.org/oscar/
  
  */
-object CrossWord extends CPModel {
+object CrossWord {
 
   def main(args: Array[String]) {
 
@@ -114,7 +121,7 @@ object CrossWord extends CPModel {
     //
     // variables
     //
-    val A = Array.fill(num_words)(Array.fill(word_len)(CPVarInt(cp, 0 to 26)))
+    val A = Array.fill(num_words,word_len)(CPVarInt(cp, 0 to 26))
     val A_flatten = A.flatten
 
     val E = Array.fill(N)(CPVarInt(cp, 0 to num_words))
@@ -156,21 +163,17 @@ object CrossWord extends CPModel {
      } exploration {
 
         cp.binary(E)
-        // cp.binaryFirstFail(E)
-        // cp.binaryMaxDegree(E)
-
           
         println("E: " + E.mkString(" "))
         for(ee <- 0 until N) {
-          val e_val = E(ee).getValue()
-          print(ee + ": (" + "%2d".format(e_val) + ") ")
+          print(ee + ": (" + "%2d".format(E(ee).value) + ") ")
           for(ii <- 0 until word_len) {
-            print(alpha(A(ee)(ii).getValue()))
+            print(alpha(A(ee)(ii).value))
           }
           println()
         }
 
-        println();
+        println()
 
         numSols += 1
 

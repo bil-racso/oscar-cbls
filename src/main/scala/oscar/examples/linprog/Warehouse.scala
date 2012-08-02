@@ -19,6 +19,8 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
 
@@ -39,7 +41,7 @@ import oscar.linprog.modeling._
  * satisfying the demand of the warehouses and the capacities of the plant
  * @author Pierre Schaus pschaus@gmail.com 
  */
-object Warehouse extends MIPModel {
+object Warehouse {
 
 
   def main(args: Array[String]) {

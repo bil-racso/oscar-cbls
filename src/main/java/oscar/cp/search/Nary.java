@@ -42,7 +42,7 @@ public class Nary extends Branching {
 	
 	public Nary(CPVarInt ...x) {
 		this.x = x;
-		this.s = x[0].getStore();
+		this.s = x[0].s();
 	}
 
 	/**
@@ -56,12 +56,14 @@ public class Nary extends Branching {
 		if(j == -1) return alternatives.toArray(new CPAlternative[]{});
 		
 		alternatives.ensureCapacity(x[j].getSize());
-		
-		for (Integer v : x[j]) {
-			CPAlternative alt = new CPAlternative(x[j].getName()+"="+v,s);
-			alt.addConstraint(new Eq(x[j],v));
-			alt.addConstraintOnBacktrack(new Diff(x[j],v));
-			alternatives.add(alt);
+	
+	    for (int v = x[j].min(); v <= x[j].max(); v++) {
+	    	if (x[j].hasValue(v)) {
+	    		CPAlternative alt = new CPAlternative(x[j].name()+"="+v,s);
+	    		alt.addConstraint(new Eq(x[j],v));
+	    		alt.addConstraintOnBacktrack(new Diff(x[j],v));
+	    		alternatives.add(alt);
+	    	}
 		}
 		return alternatives.toArray(new CPAlternative[]{});
 	}

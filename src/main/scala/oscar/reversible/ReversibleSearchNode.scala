@@ -36,7 +36,6 @@ import oscar.search._
  */
 class ReversibleSearchNode {
 	
-	
 	var magic = 0	
 	var trail = new Trail();
 	val pointerStack = new Stack[TrailEntry]()
@@ -64,7 +63,7 @@ class ReversibleSearchNode {
      *
      * @return  true if this node can surely not lead to any solution
      */
-	def isFailed(): Boolean = failed.getValue()
+	def isFailed(): Boolean = failed.value
 	
 
 	def fail() {
@@ -130,9 +129,11 @@ class ReversibleSearchNode {
 	
 	def branch(left: => Unit)(right: => Unit) = {
       shift { k: (Unit => Unit) =>
+        if (!isFailed) {
         sc.addChoice(new MyContinuation("right", {
           if (!isFailed) right
           if (!isFailed()) k()}))
+        }
         if (!isFailed()) left
         if (!isFailed()) k()
       }

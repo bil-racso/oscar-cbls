@@ -18,11 +18,13 @@
 package oscar.examples.dfo
 
 import oscar.dfo.modeling._
+import oscar.dfo._
+import oscar.algebra._
 
 /**
- * @author pierre.schaus@n-side.com
+ * @author pschaus@gmail.com
  */
-object Rosenbrock2D extends DFOModel{
+object Rosenbrock2D {
 
   def main(args: Array[String]): Unit = {  
     

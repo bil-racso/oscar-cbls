@@ -1,32 +1,32 @@
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- * 
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+package oscar
 
-package oscar.algebra
+import oscar.linprog.modeling._
 
-
-import scala.collection._
-
-
-
-/**
- * Abstract trait to manipulate mathematical expression (linear or not) involving symbolic variables
- *  @author Gilles Scouvart (n-Side), Pierre Schaus (n-Side)
- */
-trait Algebra {
+package object algebra {
+  
+  // some useful linear algebra functions
+  
+  def min(a:Double,b:Double): Double = {a.min(b)}
+  def max(a:Double,b:Double): Double = {a.max(b)}
+  
+  
+  def sumNum[A](indexes1:Iterable[A])(f: A => Double) : Double = {
+    (for(i<-indexes1) yield f(i)).sum
+  }
+  
+  def sumNum[A,B](indexes1 : Iterable[A],indexes2 : Iterable[B])(f: (A,B) => Double) : Double = {
+    (for(i<-indexes1;j<-indexes2) yield f(i,j)).sum
+  }
+  
+  def sumNum[A,B,C](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3: Iterable[C])(f: (A,B,C) => Double) : Double = {
+    (for(i<-indexes1;j<-indexes2;k<-indexes3) yield f(i,j,k)).sum
+  }
+  
+  def sumNum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => Double) : Double = {
+    (for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l)).sum
+  } 
+  
+  def createVarMap[T,V](ts:Seq[T])(varConstr:T=>V): Map[T,V] = { (for (t<-ts) yield t-> varConstr(t)).toMap }  
   
   
   // -------------------------  linear expressions & constraints -------------------
@@ -37,7 +37,7 @@ trait Algebra {
   abstract class LinearExpression extends Expression {
     
     val cte: Double
-    val coef: Map[Var,Double]
+    val coef: scala.collection.immutable.Map[Var,Double]
     
     def +(expr : LinearExpression) : LinearExpression = new LinearExpressionSum(expr,this)
     
@@ -89,7 +89,7 @@ trait Algebra {
   class Const (val d : Double) extends LinearExpression {
     
     val cte = d
-    val coef = Map[Var,Double]()
+    val coef = scala.collection.immutable.Map[Var,Double]()
     
     def *(expr : LinearExpression) : LinearExpression = new LinearExpressionProd(this,expr)
 
@@ -134,7 +134,7 @@ trait Algebra {
     val index : Int
     
     val cte = 0.0
-    val coef = Map(this->1.0)
+    val coef = scala.collection.immutable.Map(this->1.0)
     
     override def toString = name
 
@@ -173,7 +173,7 @@ trait Algebra {
     override def toString() = "("+expr1+ opStr +expr2+")"
     
     
-    def merge() : Map[Var,Double] = {
+    def merge() : scala.collection.immutable.Map[Var,Double] = {
        import scala.collection.mutable.Map
        val mymap = Map[Var,Double]()
        for ((k,v) <- expr1.coef) {
@@ -185,7 +185,8 @@ trait Algebra {
           case None => mymap += (k -> op(0,v))
         }
        }
-       mymap.filterNot(_._2 == 0)
+       import scala.collection.immutable.Map
+       mymap.filterNot(_._2 == 0).toMap
     }
    
   
@@ -222,7 +223,7 @@ trait Algebra {
    * (c * linExpr)
    */
   class LinearExpressionProd(val c: Const, val expr: LinearExpression) extends LinearExpression {
-    
+    import scala.collection.immutable.Map
     val cte = if (c == Zero) 0.0 else c.d * expr.cte
     val coef = if (c == Zero) Map[Var,Double]() else expr.coef.map(e => (e._1 -> c.d *e._2))   
       
@@ -240,7 +241,7 @@ trait Algebra {
    */
   class CstVar(val coeff: Const, val variable: Var) extends LinearExpression {
 
-    
+    import scala.collection.immutable.Map
     val cte = 0.0
     val coef = if (coeff == 0) Map[Var,Double]() else Map(variable -> coeff.d)
 
@@ -273,10 +274,11 @@ trait Algebra {
         }
       }
     }
+    import scala.collection.immutable.Map
     mymap.filterNot(_._2 == 0)
     new LinearExpression() {
       val cte = mycte
-      val coef = mymap
+      val coef = mymap.toMap
     }
     
     
@@ -284,11 +286,60 @@ trait Algebra {
     //exprs.foldLeft(Zero : LinearExpression)(_ + _)
   }
   
+  /**
+   * sum[a <- A] f(a)
+   */ 
   def sum[A](indexes : Iterable[A])(f : A => LinearExpression) : LinearExpression = sum(indexes map f)
-   
+  
+  /**
+   * sum[a <- A, b <- B] f(a,b)
+   */ 
   def sum[A,B](indexes1 : Iterable[A],indexes2 : Iterable[B])(f : (A,B) => LinearExpression) : LinearExpression = {
-                        sum(for(i <- indexes1;j <- indexes2) yield f(i,j))
+         sum(for(i <- indexes1;j <- indexes2) yield f(i,j))
   }
+  
+  /**
+   * sum[a <- A, b <- B, c <- C] f(a,b,c)
+   */ 
+  def sum[A,B,C](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C])(f : (A,B,C) => LinearExpression) : LinearExpression = {
+    	sum(for(i <- indexes1;j <- indexes2; k <- indexes3) yield f(i,j,k))
+  }
+
+  /**
+   * sum[a <- A, b <- B, c <- C, d <- D] f(a,b,c,d)
+   */ 
+  def sum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => LinearExpression) : LinearExpression = {
+    	sum(for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l))
+  }
+  
+  /**
+   * sum[a <- A such that filter(a) == true] f(a)
+   */
+  def sum[A](S1:Iterable[A], filter: A => Boolean, f:(A) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; if(filter(a)))  yield f(a))  
+  }
+  
+  /**
+   * sum[a <- A, b <- B such that filter(a,b) == true] f(a,b)
+   */
+  def sum[A,B](S1:Iterable[A],S2:Iterable[B], filter: (A,B) => Boolean, f:(A,B) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; if(filter(a,b)))  yield f(a,b))  
+  }
+
+  /**
+   * sum[a <- A, b <- B, c <- C such that filter(a,b,c) == true] f(a,b,c)
+   */  
+  def sum[A,B,C](S1:Iterable[A],S2:Iterable[B],S3:Iterable[C], filter: (A,B,C) => Boolean, f:(A,B,C) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; c <- S3; if(filter(a,b,c)))  yield f(a,b,c))  
+  }
+  
+  /**
+   * sum[a <- A, b <- B, c <- C, d <- D such that filter(a,b,c,d) == true] f(a,b,c,d)
+   */    
+  def sum[A,B,C,D](S1:Iterable[A],S2:Iterable[B],S3:Iterable[C],S4:Iterable[D], filter: (A,B,C,D) => Boolean, f:(A,B,C,D) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; c <- S3; d <- S4; if(filter(a,b,c,d)))  yield f(a,b,c,d))  
+  }  
+  
 
   // ------------   Implicits -----------------------
   
@@ -300,7 +351,9 @@ trait Algebra {
   /**
    * A linear constraint has the form (linearExpression REL 0) with REL in {<=, ==, >=}
    */
-  class LinearConstraint(val linExpr: LinearExpression, val consType: ConstraintType.Value)
+  class LinearConstraint(val linExpr: LinearExpression, val consType: ConstraintType.Value) {
+    override def toString = linExpr+" "+consType+" "+0
+  }
   
   // ------------------------- general mathematical expressions -------------------
   
@@ -350,7 +403,6 @@ trait Algebra {
     	 a.derive(v) + b.derive(v)
     }
     override def isZero() = a.isZero() && b.isZero()
-    
   }
   
   case class Diff(val a : Expression, val b : Expression) extends BinaryOp {    
@@ -444,7 +496,5 @@ trait Algebra {
     val GQ = Value(">=")
     val EQ = Value("==")
   }
-  
-  
 
 }

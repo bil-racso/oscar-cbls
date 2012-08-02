@@ -63,16 +63,19 @@ public class TestRostering extends TestCase {
     	Store cp = new Store();
     	
     	
-    	CPVarInt [][] activities = new CPVarInt [nbPersons][nbSlots];
+    	CPVarInt [][] activities = new CPVarInt[nbPersons][nbSlots];
 		for (int p = 0; p < nbPersons; p++) {
 			for (int t = 0; t < nbSlots; t++) {
-				activities[p][t] = new CPVarInt(cp, possibleActivities[p]);
+				activities[p][t] = CPVarInt.apply(cp, possibleActivities[p]);
 			}
 		}
 		
-		CPVarInt [] underDemand = CPVarInt.getArray(cp, nbSlots, 0, nbPersons);
+		CPVarInt [] underDemand = new CPVarInt[nbSlots];
+		for (int i = 0; i < nbSlots; i++) {
+			underDemand[i]= CPVarInt.apply(cp, 0, nbPersons);
+		}
 		
-		final CPVarInt totUnderDemand = new CPVarInt(cp, 0,nbPersons*nbSlots);
+		final CPVarInt totUnderDemand = CPVarInt.apply(cp, 0,nbPersons*nbSlots);
 		cp.add(new Sum(underDemand,totUnderDemand));
 		
 		// each person must do a different activity every day

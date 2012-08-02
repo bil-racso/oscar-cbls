@@ -27,7 +27,7 @@ import oscar.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.cp.modeling._
 
-class IdempotencyTest extends FunSuite with ShouldMatchers with CPModel {
+class IdempotencyTest extends FunSuite with ShouldMatchers  {
 
    
  
@@ -35,7 +35,7 @@ class IdempotencyTest extends FunSuite with ShouldMatchers with CPModel {
       
         var nbCallToPropagate = 0
              
-    	class MyCons(val X: CPVarInt,idempotent: Boolean) extends Constraint(X.getStore(), "MyCons") {
+    	class MyCons(val X: CPVarInt,idempotent: Boolean) extends Constraint(X.s, "MyCons") {
  
            if (idempotent) setIdempotent()
            override def setup(l: CPPropagStrength): CPOutcome =  {  

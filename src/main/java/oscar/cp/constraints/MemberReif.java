@@ -41,7 +41,7 @@ public class MemberReif extends Constraint {
 	 * @param b
 	 */
 	public MemberReif(CPVarInt x, SetIndexedArray set, CPVarBool b) {
-		super(x.getStore());
+		super(x.s());
 		this.x = x;
 		this.set = set;
 		this.b = b;
@@ -138,12 +138,14 @@ public class MemberReif extends Constraint {
      */
     private CPOutcome removeValues(boolean memberValue) {
         assert(b.isBound());
-        for (int v: x) {
-            if ((memberValue && set.hasValue(v)) || (!memberValue && !set.hasValue(v))) {
-                if (x.removeValue(v) == CPOutcome.Failure) {
-                    return CPOutcome.Failure;
-                }
-            }
+        for (int val = x.min(); val <= x.max(); val++) {
+        	if (x.hasValue(val)) {
+        		if ((memberValue && set.hasValue(val)) || (!memberValue && !set.hasValue(val))) {
+        			if (x.removeValue(val) == CPOutcome.Failure) {
+        				return CPOutcome.Failure;
+        			}
+        		}
+        	}
         }
 		return CPOutcome.Success;
 	}

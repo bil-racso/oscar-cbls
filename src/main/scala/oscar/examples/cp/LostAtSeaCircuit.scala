@@ -39,7 +39,7 @@ import java.awt.Color
  * 
  * @author Elise Dupont & Pierre Schaus
  */
-object LostAtSeaCircuit  extends CPModel {
+object LostAtSeaCircuit  {
 	def main(args: Array[String]) {
 		
       // input data with the probabilities
@@ -79,7 +79,7 @@ object LostAtSeaCircuit  extends CPModel {
        } exploration {
          cp.binaryFirstFail(path)
          println(path.mkString(","))
-         (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the best solution
+         (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
        }
        
        cp.printStats()

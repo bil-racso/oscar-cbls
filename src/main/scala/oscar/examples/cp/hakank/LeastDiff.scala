@@ -1,16 +1,24 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
 
 /**
  *
@@ -23,7 +31,7 @@ import oscar.cp.search._
  * http://www.hakank.org/oscar/
  *
  */
-object LeastDiff extends CPModel {
+object LeastDiff {
 
    def main(args: Array[String]) {
 
@@ -46,9 +54,10 @@ object LeastDiff extends CPModel {
       val Y = F*10000+G*1000+H*100+I*10+J
       val Diff = X - Y
 
+
+      // constraints
       cp.minimize(Diff) subjectTo {
 
-        // constraints
         cp.add(A > 0)
         cp.add(F > 0)
         cp.add(Diff > 0)
@@ -57,11 +66,14 @@ object LeastDiff extends CPModel {
       } exploration {
 
         cp.binaryFirstFail(all ++ Array(X,Y,Diff))
-         println(Array(A,B,C,D,E).mkString("") + " -" +
-                 Array(F,G,H,I,J).mkString("") + " =" +
-                 Diff)
+
+        println(Array(A,B,C,D,E).mkString("") + " -" +
+                Array(F,G,H,I,J).mkString("") + " =" +
+                Diff)
+
       }
 	  
+      println()
       cp.printStats()
 
   }

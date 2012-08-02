@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.constraints._
+import oscar.cp.core._
+
 import scala.io.Source
 
 
@@ -28,7 +30,7 @@ import scala.io.Source
  * Hexiom Problem: http://www.kongregate.com/games/Moonkey/hexiom
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Hexiom  extends CPModel {
+object Hexiom  {
 	def main(args: Array[String]) {
 
 		/* Here is an Hexagon of dimension 3 (size of first row).
@@ -113,7 +115,7 @@ object Hexiom  extends CPModel {
 		} exploration {
 		  
 		  while (!allBounds(used)) {
-			  val x = used.filter(!_.isBound()).first
+			  val x = used.filter(!_.isBound).first
 			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
 		  }
 		  nbSol += 1
@@ -122,9 +124,9 @@ object Hexiom  extends CPModel {
 		/*
 		println("++++++++++++++++++ solution ++++++++++++++++++++\n")
 		// pretty print
-		for (ind <- 0 until k; if (card(ind).getValue() < 7)) {
+		for (ind <- 0 until k; if (card(ind).value < 7)) {
 		  val (i,j) = pos(ind)
-		  tab(i)(j) = card(ind).getValue() + ""
+		  tab(i)(j) = card(ind).value + ""
 		}
 		tab.foreach(i => println(i.mkString(" ")))
 		

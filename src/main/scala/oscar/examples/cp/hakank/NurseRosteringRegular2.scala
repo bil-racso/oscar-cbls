@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -32,20 +39,7 @@ import scala.collection.JavaConversions._
  * http://www.hakank.org/oscar/
  *
  */
-object NurseRosteringRegular2 extends CPModel {
-
-  def maxDomNotbound(vars: Iterable[CPVarInt]): Iterable[(CPVarInt, Int)] = {
-    val notbound = vars.filterNot(_.isBound)
-    if (notbound.nonEmpty) {
-      val sizeMax = notbound.map(_.getSize).max
-      notbound.zipWithIndex.filter {
-        _._1.getSize == sizeMax
-      }
-    } else {
-      Iterable()
-    }
-  }
- 
+object NurseRosteringRegular2 {
 
 
   def main(args: Array[String]) {
@@ -61,16 +55,11 @@ object NurseRosteringRegular2 extends CPModel {
       num_to_show = args(0).toInt
     }
 
-
-
     // Note: If you change num_nurses or num_days,
     //       please also change the constraints
     //       on nurse_stat and/or day_stat.
     val num_nurses = 7
     val num_days = 14
-      // val num_days = 7
-
-
 
     val nurses = 0 until num_nurses
     val days = 0 until num_days
@@ -126,9 +115,7 @@ object NurseRosteringRegular2 extends CPModel {
     val x = Array.fill(num_nurses,num_days)(CPVarInt(cp, shifts_r))
     val stat = Array.fill(num_days,num_shifts)(CPVarInt(cp, nurses))
 
-      // val all = x.flatten
     val all = ((x.flatten).toList ++ (stat.flatten.toList)).toArray
-    // val all = ((stat.flatten).toList ++ (x.flatten.toList)).toArray
 
     //
     // constraints
@@ -167,7 +154,7 @@ object NurseRosteringRegular2 extends CPModel {
         var vv = Array(0,0,0) // shift stats
         var wd = 0
         for(d <- days) {
-          val v = x(n)(d).getValue()
+          val v = x(n)(d).value
           print(days_str(v) + " ")
           vv(v) += 1
           if (v <= night_shift) {
@@ -176,6 +163,7 @@ object NurseRosteringRegular2 extends CPModel {
         }
         println("#workdays:" + wd + "  d:" + vv(0) + "  n:" + vv(1) + "  o:" + vv(2))
       }
+
       println("\nStats:")
       println("        d  n  o")
       for(d <- days) {
@@ -194,6 +182,7 @@ object NurseRosteringRegular2 extends CPModel {
       }
       
      }
+
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

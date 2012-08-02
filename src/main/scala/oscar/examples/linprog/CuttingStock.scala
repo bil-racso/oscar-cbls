@@ -18,12 +18,14 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * Cutting Stock using Column Generation
  */
-object CuttingStock extends LPModel with MIPModel {
+object CuttingStock {
 	
   class Column (val x : LPVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
@@ -63,7 +65,7 @@ object CuttingStock extends LPModel with MIPModel {
 	  do {
 		  mip = MIPSolver()
 		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
-		  val cost = Array.tabulate(roll.size)(constraints(_).getDual)
+		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 
 		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) subjectTo {
 			  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)

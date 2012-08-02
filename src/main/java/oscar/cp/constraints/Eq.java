@@ -35,7 +35,7 @@ public class Eq extends Constraint {
      * @param y
      */
 	public Eq(CPVarInt x, CPVarInt y) {
-		super(x.getStore(),"Eq");
+		super(x.s(),"Eq");
 		this.x = x;
 		this.y = y;
 	}
@@ -46,7 +46,7 @@ public class Eq extends Constraint {
      * @param v
      */
 	public Eq(CPVarInt x, int v) {
-		this(x,new CPVarInt(x.getStore(),v,v));
+		this(x,CPVarInt.apply(x.s(),v,v));
 	}
 	
 	@Override
@@ -76,17 +76,21 @@ public class Eq extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (l == CPPropagStrength.Strong) {
-			for(Integer v:x) {
-				if(!y.hasValue(v)) {
-					if(x.removeValue(v) == CPOutcome.Failure) {
-						return CPOutcome.Failure;
+			for (int v = x.min(); v < x.max(); v++) {
+				if (x.hasValue(v)) {
+					if(!y.hasValue(v)) {
+						if(x.removeValue(v) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
 					}
 				}
 			}
-			for(Integer v:y) {
-				if(!x.hasValue(v)) {
-					if(y.removeValue(v) == CPOutcome.Failure) {
-						return CPOutcome.Failure;
+			for (int v = y.min(); v < y.max(); v++) {
+				if (y.hasValue(v)) {
+					if(!x.hasValue(v)) {
+						if(y.removeValue(v) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
 					}
 				}
 			}

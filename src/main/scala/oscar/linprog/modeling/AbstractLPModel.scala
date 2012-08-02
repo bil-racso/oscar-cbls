@@ -18,15 +18,14 @@
 package oscar.linprog.modeling
 
 import oscar.algebra._
-
 import scala.collection._
 
 object LPStatus extends Enumeration {
     val NOT_SOLVED = Value("not solved yet")
     val OPTIMAL = Value("optimal")
     val SUBOPTIMAL = Value("suboptimal")
-    val UNBOUNDED = Value("infeasible")
-    val INFEASIBLE = Value("unbounded")
+    val UNBOUNDED = Value("unbounded")
+    val INFEASIBLE = Value("infeasible")
 }
 
 
@@ -65,28 +64,28 @@ abstract class AbstractLP {
   	 * Terminates the model building, the model cannot be modified afterwards
   	 */
   	def endModelBuilding()
-  	
-  	/**
-  	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
-  	 * @param coef are the coefficients of the linear term
-  	 * @param col indicates to which column/variable the coefficients refer to
-  	 */
-    def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double)
-    
+
+  /**
+   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   * @param coef are the coefficients of the linear term
+   * @param col indicates to which column/variable the coefficients refer to
+   */
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+     
 
   	/**
   	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
   	 * @param coef are the coefficients of the linear term
   	 * @param col indicates to which column/variable the coefficients refer to
   	 */
-  	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double)
+  	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name: String)
 
   	/**
   	 * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
   	 * @param coef are the coefficients of the linear term
   	 * @param col indicates to which column/variable the coefficients refer to
   	 */  	
-  	def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double)
+  	def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name: String)
   	
   	/**
   	 * Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
@@ -120,6 +119,9 @@ abstract class AbstractLP {
   	def setUnboundUpperBound(colId : Int)
   	
   	def setUnboundLowerBound(colId : Int)
+  	
+  	/** Set name of variable in solver */
+  	def setVarName(colId : Int, name: String)
   	
   	def deleteConstraint(rowId : Int)
   	
@@ -167,28 +169,17 @@ abstract class AbstractLP {
 
 
 /**
- * Trait used for the modeling of single objective minimization using DFO
+ * Trait used for the modeling of single objective minimization using LP-MIP
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-trait AbstractLPModel extends Algebra {
-  
-  
-  object LPSolverLib extends Enumeration {
-    val lp_solve = Value("lp_solve")
-    val cplex = Value("cplex")
-    val glpk = Value("glpk")
-    val gurobi = Value("gurobi")
-  }
-  
 
-
-	/**
-	 * Defines an Float unbounded variable in the LP solver with domain:
-	 * [0,+inf] is unbounded = true, 
-	 * [-inf,+inf] otherwise
-	 */
-  class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
+/**
+ * Defines an Float unbounded variable in the LP solver with domain:
+ * [0,+inf] is unbounded = true, 
+ * [-inf,+inf] otherwise
+ */
+class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
     
 	// do not swap next two lines
 	val index = solver.register(this)
@@ -204,8 +195,8 @@ trait AbstractLPModel extends Algebra {
 	/**
 	 * Adjust the bound of the variable and re-optimize
 	 */
-	def setBounds(lb: Double, ub: Double) {
-	  solver.setBounds(this,lb,ub)
+	def setBounds(lb: Double, ub: Double,reoptimize: Boolean = false) {
+	  solver.setBounds(this,lb,ub,reoptimize)
 	}
 	
 	/**
@@ -253,27 +244,26 @@ trait AbstractLPModel extends Algebra {
      */
     def getName() : String = name    
 
-  }
+}
 
-  class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int) {
-    val e = cstr.linExpr.coef.toList
- 	val coef : Array[Double] = e.map(_._2).toArray
-	val varIds : Array[Int] =  e.map(_._1.index).toArray
-    var rhs : Double = -cstr.linExpr.cte // value of the constant (minus because it goes from lhs to rhs)
-  
+class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
+
+ 	val e = cstr.linExpr.coef.toList
+ 	val perm = (0 until e.size).sortBy(i => e(i)._1.index)
+ 	
+    val coef : Array[Double] = perm.map(i => e(i)._2).toArray
+    val varIds : Array[Int] =  perm.map(i => e(i)._1.index).toArray
+    val rhs : Double = -cstr.linExpr.cte // value of the constant (minus because it goes from lhs to rhs)
     def getSolver() : AbstractLPSolver = solver
 
-    def getSize() : Int = coef.length
-    def getCst() : Double = rhs
-  
-    def getCoefs() = coef
-    def getVarIds() = varIds
-  
-    def getDual() = solver.getDual(this)
+    def size() : Int = coef.length
+   
+    
+    def dual() = solver.getDual(this)
 	
-  } 
+} 
   
-  abstract class AbstractLPSolver {
+abstract class AbstractLPSolver {
          
     // map from the index of variables to their implementation
     protected val vars = mutable.HashMap.empty[Int,AbstractLPVar]
@@ -281,6 +271,8 @@ trait AbstractLPModel extends Algebra {
     private val solution = mutable.HashMap.empty[Int,Double]
     protected var objective: LinearExpression = 0
     protected var minimize = true
+    /** Should solveModel be called at end of subjectTo and suchThat blocks?*/
+    protected var autoSolve = true 
     
     val solver: AbstractLP
     
@@ -292,8 +284,12 @@ trait AbstractLPModel extends Algebra {
       vars.size-1
     }
     
-    def add(constr : LinearConstraint): LPConstraint = {
-      val constraint = new LPConstraint(this,constr,cons.size)
+    def add(constr : LinearConstraint,name: Option[String]= None): LPConstraint = {
+      val cstName = name match {
+        case Some(n) => n
+        case None => "cstr"+cons.size
+      }
+      val constraint = new LPConstraint(this,constr,cons.size,cstName)
       cons(cons.size) = constraint
       constraint
     }
@@ -302,12 +298,15 @@ trait AbstractLPModel extends Algebra {
      * add the constraints really into the solver implem
      */
     def addAllConstraints() {
+      var nbC = 0
       cons  foreach { case (i,c) =>
+        if (nbC % 1000 == 0) println("Added "+nbC+" constraints. Currently at constraint index "+ i)
         c.cstr.consType match {
-              case ConstraintType.GQ => solver.addConstraintGreaterEqual(c.coef,c.varIds,c.rhs)
-              case ConstraintType.LQ => solver.addConstraintLessEqual(c.coef,c.varIds,c.rhs)
-              case ConstraintType.EQ => solver.addConstraintEqual(c.coef,c.varIds,c.rhs)
+              case ConstraintType.GQ => solver.addConstraintGreaterEqual(c.coef,c.varIds,c.rhs, c.name)
+              case ConstraintType.LQ => solver.addConstraintLessEqual(c.coef,c.varIds,c.rhs, c.name)
+              case ConstraintType.EQ => solver.addConstraintEqual(c.coef,c.varIds,c.rhs, c.name)
         }
+        nbC+=1
       }
     }
     
@@ -320,22 +319,24 @@ trait AbstractLPModel extends Algebra {
 	def setVarProperties() = {
 	  vars  foreach { case (i,x) =>
 	    setVarBounds(x)
+	    solver.setVarName(x.index, x.getName())
 	  }
 	}
 	
-	def setVarBounds(x: AbstractLPVar) = {
+	
+	def setVarBounds(x: AbstractLPVar,reoptimize: Boolean = false) = {
 	    if (x.isUnbounded) {
 			solver.setUnboundUpperBound(x.index)
 			solver.setUnboundLowerBound(x.index)
 		} else {
 			solver.setBounds(x.index, x.lb , x.ub)
 		}
-	    solveModel()
+	    if (reoptimize) solveModel()
 	}
 	
-	def setBounds(x: AbstractLPVar, lb: Double, ub: Double) = {
+	def setBounds(x: AbstractLPVar, lb: Double, ub: Double,reoptimize: Boolean = false) = {
 		solver.setBounds(x.index,lb,ub)
-	    solveModel()
+	    if (reoptimize) solveModel()
 	}
 	
 	
@@ -358,35 +359,41 @@ trait AbstractLPModel extends Algebra {
 		constraintsBlock
 		
 
-		solver.startModelBuilding(0,vars.size)
+		solver.startModelBuilding(cons.size,vars.size)
+		
+		println("Setting variable bounds...")
 		setVarProperties() //set the the var bounds correctly
 		val e = objective.coef.toList
  		val coef : Array[Double] = e.map(_._2).toArray
 		val varIds : Array[Int] =  e.map(_._1.index).toArray
 		
+		println("Creating objective...")
 		solver.addObjective(coef, varIds, minimize)
+		
+		println("Creating constraints...")
+		val t0 = System.currentTimeMillis()
 		addAllConstraints()
-		
-		
+		println("time to add constraints:"+(System.currentTimeMillis()-t0))
+				
 		//close the model and optimize
-		solveModel()
+		if (autoSolve) solveModel() 
 	}
 	
 	def suchThat (constraints: LinearConstraint*) {
 		// add all the constraints
 		constraints.foreach(add(_))
 		//close the model and optimize
-		solveModel()
+		if (autoSolve) solveModel()
 	}
-	
-	
-	def solveModel() {
-		solver.endModelBuilding()
-		status = solver.solveModel()
-		if ((status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)) {
-			(0 until vars.size) foreach {i =>  solution(i) = solver.getValue(i)}
-		}
-	}
+
+    def solveModel() {
+      solver.endModelBuilding()
+      println("Solving ...")
+      status = solver.solveModel()
+      if ((status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)) {
+        (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
+      }
+    }
 	
 	def getObjectiveValue() : Double = {
 			objective.value match {
@@ -402,10 +409,43 @@ trait AbstractLPModel extends Algebra {
 	
 	def release() = solver.release()
 	
+	def desactivateAutoSolve {autoSolve = false}
 	
-  } // end class AbstractLPSolver
+	
+	/**
+	 * Check that all the constraints are satisfied
+	 */
+	def checkConstraints(tol: Double = 10e-6): Boolean = {
+	  var violation = false
+	  cons  foreach { case (i,c) =>
+	    var res = 0.0
+	    
+	    val ex = c.cstr.linExpr.coef.toArray
+	    
+	    for ((i,a) <- c.varIds.zip(c.coef)) {
+	      val x: AbstractLPVar = vars.get(i) match {
+	        case Some(variable) => variable
+	        case None => throw new IllegalArgumentException("Variable with index "+i+" not present in lp solver")
+	      }
+	      res += a * x.getValue
+	    }
+	    val ok = c.cstr.consType match {
+              case ConstraintType.GQ => res+tol >= c.rhs
+              case ConstraintType.LQ => res-tol <= c.rhs
+              case ConstraintType.EQ => res <= c.rhs+tol && res >= c.rhs-tol
+        }
+        if (!ok) {
+          println("violation of constraint: "+c.name+": "+res+" "+c.cstr.consType+" "+c.rhs)
+          violation = true
+        }
+      }
+	  !violation
+	}
+	
+	
+} // end class AbstractLPSolver
 
-} // end of trait
+
 
 
 

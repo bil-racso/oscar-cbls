@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -37,18 +44,7 @@ import scala.math._
  *
  */
 
-object NontransitiveDice extends CPModel {
-
-  // returns the maximum element in t
-  def my_max(t: Array[CPVarInt]) : CPVarInt = {
-    val cp = t(0).getStore
-    val mmax = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
-    for(i <- 0 to t.length-1) {
-      cp.post(mmax >= t(i))
-    }
-    return mmax
-  }
-
+object NontransitiveDice {
 
   def main(args: Array[String]) {
 
@@ -84,10 +80,10 @@ object NontransitiveDice extends CPModel {
     //
     // Decision variables
     // 
-    val dice = Array.fill(m)(Array.fill(n)(CPVarInt(cp, 1 to n*2)))
+    val dice = Array.fill(m,n)(CPVarInt(cp, 1 to n*2))
     val dice_flat = dice.flatten
 
-    val comp = Array.fill(m)(Array.fill(2)(CPVarInt(cp, 0 to n*n)))
+    val comp = Array.fill(m,2)(CPVarInt(cp, 0 to n*n))
     val comp_flat = comp.flatten
 
     // The following variables are for summaries or objectives
@@ -98,7 +94,7 @@ object NontransitiveDice extends CPModel {
     val max_win = CPVarInt(cp, 0 to n*n)   // max of comp_flat
 
     // number of occurrences of each value of the dice
-    val counts     = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
+    val counts  = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
 
     // for labeling
     val all = dice_flat ++ Array(max_val, max_win)
@@ -110,8 +106,9 @@ object NontransitiveDice extends CPModel {
 
     cp.solveAll subjectTo {
 
-      cp.add(my_max(dice_flat) == max_val)
-      cp.add(my_max(comp_flat) == max_win)
+      cp.add(maximum(dice_flat) == max_val)
+      cp.add(maximum(comp_flat) == max_win)
+
 
       // Number of occurrences for each number
       cp.add(gcc(dice_flat, counts))
@@ -139,24 +136,20 @@ object NontransitiveDice extends CPModel {
       for(d <- MRANGE) {
         val sum1 = sum(for{r1 <- NRANGE
                            r2 <- NRANGE}
-                          yield (dice(d % m)(r1) >>= dice((d+1) % m)(r2))
-          )
+                          yield (dice(d % m)(r1) >>= dice((d+1) % m)(r2)))
         
         cp.add(comp(d%m)(0) == sum1)
         
         val sum2 = sum(for{r1 <- NRANGE
                               r2 <- NRANGE}
-                              yield (dice((d+1) % m)(r1) >>= dice(d % m)(r2))
-                        )
+                              yield (dice((d+1) % m)(r1) >>= dice(d % m)(r2)))
         
         cp.add(comp(d%m)(1) == sum2)
 
       }
         
-   } exploration {
+    } exploration {
         
-      // cp.binary(all)
-      //cp.binaryFirstFail(all)
       cp.binaryMaxDegree(all)
 
       println("\ngap_sum: " + gap_sum)
@@ -173,15 +166,13 @@ object NontransitiveDice extends CPModel {
       }
       println()
        
-     // println("counts: " + counts.filter(c=>c._1 > 0).mkString(""))
-
       numSols += 1
 
       if (num_to_show > 0 && numSols >= num_to_show) {
         cp.stop()
       } 
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

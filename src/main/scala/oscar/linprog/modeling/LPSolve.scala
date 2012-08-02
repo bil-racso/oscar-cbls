@@ -34,12 +34,15 @@ class LPSolve extends AbstractLP{
   	var released = false
 	
 	def startModelBuilding(nbRows : Int,nbCols : Int) {
-		this.nbRows = nbRows
+		this.nbRows = 0
 		this.nbCols = nbCols
 		lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
 		lp.setInfinite(Double.MaxValue)
-		lp.setVerbose(LpSolve.IMPORTANT)
 		lp.setAddRowmode(true)
+		val file = new java.io.File("options.ini")
+		if (file.exists()) {
+			lp.readParams("options.ini","[Default]");
+		}
 	}
 	
 	def endModelBuilding() {
@@ -47,16 +50,20 @@ class LPSolve extends AbstractLP{
 		 closed = true
 	}
 	
-	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def setVarName(colId : Int, name: String) { 
+	  // TODO implement
+	}
+	
+	def addConstraintGreaterEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
 	}
     
-	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+	def addConstraintLessEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.LE, rhs)
 	}
-    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double) {
+    def addConstraintEqual(coef : Array[Double], col : Array[Int], rhs : Double, name:String) {
 		nbRows += 1
 		lp.addConstraintex(coef.length, coef, col.map(_+1), LpSolve.EQ, rhs)    	
     }
@@ -94,9 +101,10 @@ class LPSolve extends AbstractLP{
     }
     
     def solveModel() : LPStatus.Value = {
-    	lp.solve match {
+
+    	val status = lp.solve match {
     		 case LpSolve.OPTIMAL => 
-    		 	    sol = lp.getPtrVariables() 
+    		        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows+c+1))
     		 	    objectiveValue = lp.getObjective()
     		 	    LPStatus.OPTIMAL
     		 case LpSolve.SUBOPTIMAL =>
@@ -108,7 +116,13 @@ class LPSolve extends AbstractLP{
     		 	    LPStatus.UNBOUNDED
     		 case _ =>
     		 	    LPStatus.INFEASIBLE   
-    	 }
+    	}
+    	if (status == LpSolve.OPTIMAL) {
+    	 println("-------  ssolving ----- "+status)
+    	 println("nbcol now:"+lp.getNcolumns()+" orig columns:"+lp.getNorigColumns())
+    	 println("nbrow now:"+lp.getNrows()+" orig rows:"+lp.getNorigRows())
+    	}
+    	status 
     }
     
     def getValue(colId : Int) : Double = {

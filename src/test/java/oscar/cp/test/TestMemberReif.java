@@ -62,7 +62,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = new CPVarInt(s,0,5);
+        CPVarInt x = CPVarInt.apply(s,0,5);
         //x = {0,1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -79,7 +79,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = new CPVarInt(s,0,5);
+        CPVarInt x = CPVarInt.apply(s,0,5);
         //x = {0,1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         s.post(new MemberReif(x,set,b));
@@ -96,7 +96,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = new CPVarInt(s,0,5);
+        CPVarInt x = CPVarInt.apply(s,0,5);
         //x = {0,1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -113,7 +113,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = new CPVarInt(s,0,5);
+        CPVarInt x = CPVarInt.apply(s,0,5);
         //x = {0,1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -130,7 +130,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = new CPVarInt(s,1,5);
+        CPVarInt x = CPVarInt.apply(s,1,5);
         //x = {1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -146,7 +146,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = new CPVarInt(s,1,5);
+        CPVarInt x = CPVarInt.apply(s,1,5);
         //x = {1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -162,7 +162,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = new CPVarInt(s,1,5);
+        CPVarInt x = CPVarInt.apply(s,1,5);
         //x = {1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());
@@ -178,7 +178,7 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = new CPVarInt(s,1,5);
+        CPVarInt x = CPVarInt.apply(s,1,5);
         //x = {1,2,3,4,5}
         CPVarBool b = new CPVarBool(s);
         assertFalse(b.isBound());

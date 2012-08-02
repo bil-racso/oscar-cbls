@@ -36,7 +36,7 @@ public class Not extends Constraint {
      * @param y
      */
 	public Not(CPVarBool x, CPVarBool y) {
-		super(x.getStore(),"Not");
+		super(x.s(),"Not");
 		this.x = x;
 		this.y = y;
 	}

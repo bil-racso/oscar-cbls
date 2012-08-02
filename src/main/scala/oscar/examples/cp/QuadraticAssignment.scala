@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
+
 
 import scala.io.Source
 import java.lang._
@@ -34,7 +36,7 @@ import java.lang._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object QuadraticAssignment extends CPModel {
+object QuadraticAssignment {
   def main(args: Array[String]) {
 
     // Read the data
@@ -63,7 +65,7 @@ object QuadraticAssignment extends CPModel {
     } exploration {
         while (!allBounds(x)) {
            val (y,i) = minDomNotbound(x).first
-           val v = y.getMin()
+           val v = y.min
     	   cp.branch {
              cp.post(y == v)
            } {

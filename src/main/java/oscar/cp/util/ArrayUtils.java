@@ -322,7 +322,7 @@ public class ArrayUtils {
 	 */
 	public static int getRandomNotBound(final CPVarInt [] x) {
 		assert(x.length > 0);
-		Random rand = x[0].getStore().getRandom();
+		Random rand = x[0].s().getRandom();
 		int cpt = 0;
 		int curr = -1;
 		for (int i = 0; i < x.length; i++) {

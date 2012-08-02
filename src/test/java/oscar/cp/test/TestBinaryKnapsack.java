@@ -57,10 +57,10 @@ public class TestBinaryKnapsack extends TestCase {
         Store s = new Store();
         CPVarBool [] b = new CPVarBool[111];
         for (int i = 0; i < b.length; i++) {
-			b[i] = new CPVarBool(s);
+			b[i] = CPVarBool.apply(s);
 		}
 
-        CPVarInt l = new CPVarInt(s,12,44);
+        CPVarInt l = CPVarInt.apply(s,12,44);
         int [] w = new int[]{2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 12, 12, 12, 13, 13, 13, 13, 13, 14, 14, 15, 15, 15, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 18, 18, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 20, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 26, 26, 26, 26, 26, 26, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 30, 30, 30, 30};
 
     	//propagate binary knapsack
@@ -116,7 +116,7 @@ public class TestBinaryKnapsack extends TestCase {
 
         CPVarBool [] x = CPVarBool.getArray(cp,3);
         int [] values = new int[]{43,23,23};
-        CPVarInt c = new CPVarInt(cp,1,82);
+        CPVarInt c = CPVarInt.apply(cp,1,82);
 
         cp.add(new BinaryKnapsack(x,values, c), CPPropagStrength.Strong);
 

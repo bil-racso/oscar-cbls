@@ -22,13 +22,15 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
 
+import oscar.linprog._
+import oscar.algebra._
+
 /**
  * LPTesting
  */
-class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
+class LPTest extends FunSuite with ShouldMatchers {
 
-    val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk)
- 
+	
     test("lp test 1") {
     	for (lib <- solvers) {
     		val lp = new LPSolver(lib)
@@ -43,6 +45,7 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
     		y.value should equal (Some(170))
     		lp.getObjectiveValue() should equal(650)
     		lp.getStatus() should equal (LPStatus.OPTIMAL)
+    		lp.checkConstraints() should be (true)
     		lp.release()
     	}
     }
@@ -61,6 +64,7 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 			y.value should equal (Some(80))
 			lp.getObjectiveValue() should equal(0)
 			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.checkConstraints() should be (true)
 			lp.release()
 		}
     } 
@@ -132,8 +136,8 @@ class LPTest extends FunSuite with ShouldMatchers with LPModel with MIPModel {
 			lp.getObjectiveValue() should equal(20)
 			lp.getStatus() should equal (LPStatus.OPTIMAL)
 			
-			x.setBounds(0,11)
-			y.setBounds(0,11)
+			x.setBounds(0,11,true) // change bounds and reoptimize 
+			y.setBounds(0,11,true)
 			
 		    x.value should equal (Some(11))
 			y.value should equal (Some(11))

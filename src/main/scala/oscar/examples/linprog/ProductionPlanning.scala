@@ -19,6 +19,8 @@ package oscar.examples.linprog
 
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 
 
 /**
@@ -29,7 +31,7 @@ import oscar.linprog.modeling._
  * The objective is to maximize the total profit, while satisfying capacity constraints.
  * @author pschaus@gmail.com
  */
-object ProductionPlanning  extends LPModel {
+object ProductionPlanning {
 	
 	def main(args: Array[String]) {
 		

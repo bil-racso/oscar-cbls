@@ -48,7 +48,12 @@ public class TestGolomb extends TestCase {
     	
 		//   -----------------  model -----------------------
     	Store cp = new Store();
-    	final CPVarInt [] marks = CPVarInt.getArray(cp, n, 0, n*n);
+    	final CPVarInt [] marks = new CPVarInt[n]; 
+    	
+    	for (int i = 0; i < marks.length; i++) {
+			marks[i] = CPVarInt.apply(cp,0,n*n);
+		}
+    	
 		
 		// we break symmetries to put the marks increasing
 		cp.add(new Eq(marks[0], 0));

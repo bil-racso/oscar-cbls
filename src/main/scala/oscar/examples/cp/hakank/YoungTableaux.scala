@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -51,7 +58,7 @@ import scala.math._
  http://www.hakank.org/oscar/
  
 */
-object YoungTableaux extends CPModel {
+object YoungTableaux {
 
   def main(args: Array[String]) {
 
@@ -63,19 +70,17 @@ object YoungTableaux extends CPModel {
     // variables
 
     // grid
-    val x = Array.tabulate(n)(i => 
-                 Array.tabulate(n)(j =>
-                       CPVarInt(cp, 1 to n+1)))
-
+    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n+1))
     val x_flatten = x.flatten
 
     // the partition structure
-    val p = List.tabulate(n)(i=> CPVarInt(cp, 0 to n+1)) 
+    val p = List.fill(n)(CPVarInt(cp, 0 to n+1))
 
     //
     // constraints
     //
     var numSols = 0
+
     cp.solveAll subjectTo {
 
       // 1..n is used exactly once
@@ -101,7 +106,7 @@ object YoungTableaux extends CPModel {
 
       // calculate the structure (the partition)
       for(i <- 0 until n) {
-        val b = List.tabulate(n)(j=> CPVarBool(cp))
+        val b = List.fill(n)(CPVarBool(cp))
         val nn = CPVarInt(cp, n to n)
         for(j <- 0 until n) {
           cp.add((b(j)===1) === (nn >== (x(i)(j))))
@@ -129,7 +134,7 @@ object YoungTableaux extends CPModel {
       for(i <- 0 until n) {
         var c = 0 // number of non-empty items
         for(j <- 0 until n) {
-          val v = x(i)(j).getValue()
+          val v = x(i)(j).value
           if (v <= n) {
             print(v + " ")
             c += 1
@@ -145,7 +150,7 @@ object YoungTableaux extends CPModel {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

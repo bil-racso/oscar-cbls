@@ -18,9 +18,9 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
+import oscar.cp.core._
 import oscar.search._
 import oscar.visual._
-
 import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
@@ -33,7 +33,7 @@ import java.lang._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object TSP extends CPModel {
+object TSP {
 
   def main(args: Array[String]) {
 
@@ -58,7 +58,7 @@ object TSP extends CPModel {
          val res = minDomNotbound(succ)
          val (x, i) = res.first
          // get the closest successor in the domain of x
-         val v = argMin((x.getMin() to x.getMax()).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
          cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
     }

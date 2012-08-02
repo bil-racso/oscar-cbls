@@ -42,7 +42,7 @@ public class Binary extends Nary {
 		int j = getVar();
 		if(j == -1) return alternatives.toArray(new CPAlternative[]{});
 		
-		CPAlternative left = new CPAlternative(x[j].getName()+"="+x[j].getMin(),s);
+		CPAlternative left = new CPAlternative(x[j].name()+"="+x[j].getMin(),s);
 		left.addConstraint(new Eq(x[j],x[j].getMin()));
 		alternatives.add(left);
 		

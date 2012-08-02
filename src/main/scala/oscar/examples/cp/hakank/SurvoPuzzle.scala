@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -52,7 +59,7 @@ import scala.math._
  http://www.hakank.org/oscar/
  
 */
-object SurvoPuzzle extends CPModel {
+object SurvoPuzzle {
 
   def main(args: Array[String]) {
 
@@ -103,7 +110,7 @@ object SurvoPuzzle extends CPModel {
 
 
     // variables
-    val x = Array.fill(r)(Array.fill(c)(CPVarInt(cp, 1 to r*c)))
+    val x = Array.fill(r,c)(CPVarInt(cp, 1 to r*c))
 
     //
     // constraints
@@ -112,10 +119,9 @@ object SurvoPuzzle extends CPModel {
     cp.solveAll subjectTo {
 
       // fill the things we know
-      for (i <- 0 until r; j <- 0 until c) {
-        if (problem(i)(j) > 0) {
+      for (i <- 0 until r; 
+           j <- 0 until c if problem(i)(j) > 0) {
           cp.add(x(i)(j) == problem(i)(j))
-        }
       }
 
       cp.add(alldifferent(x.flatten.toArray), Strong)
@@ -137,19 +143,17 @@ object SurvoPuzzle extends CPModel {
 
        println("\nSolution:")
        for(i <- 0 until r) {
-         for(j <- 0 until c) {
-           print(x(i)(j) + " ")
-         }
-         println()
+         println(x(i).mkString(""))
        }
        println()
 
        numSols += 1
        
-     }
-     println("\nIt was " + numSols + " solutions.")
+    }
+    
+    println("\nIt was " + numSols + " solutions.")
+    cp.printStats()
 
-     cp.printStats()
-   }
+  }
 
 }

@@ -27,7 +27,7 @@ import oscar.cp.modeling._
 
 import org.scalacheck._
 
-class TestLostAtSea extends FunSuite with ShouldMatchers with CPModel {
+class TestLostAtSea extends FunSuite with ShouldMatchers  {
 
         val proba = Array(Array(3,0,0,3,2,4,2,3),
                         Array(3,3,3,1,2,4,1,4),
@@ -67,8 +67,8 @@ class TestLostAtSea extends FunSuite with ShouldMatchers with CPModel {
                 cp.add(alldifferent(path),Strong) // each visit must be different
        } exploration {
          cp.binaryFirstFail(path)
-         (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the solution
-         best = obj.getValue()
+         (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
+         best = obj.value
        }
        best should be(33)
   }  
@@ -96,8 +96,8 @@ class TestLostAtSea extends FunSuite with ShouldMatchers with CPModel {
                 cp.add(circuit(succ),Strong)
        } exploration {
          cp.binaryFirstFail(path)
-         (0 until 10).foreach(i => sol(i) = path(i).getValue()) // record the solution
-         best = obj.getValue()
+         (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
+         best = obj.value
        }
        best should be(33)
 

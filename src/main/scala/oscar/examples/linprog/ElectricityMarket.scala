@@ -18,6 +18,8 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
+import oscar.linprog._
+import oscar.algebra._
 import scala.io.Source
 import scala.collection.mutable.Map
 /** 
@@ -25,7 +27,7 @@ import scala.collection.mutable.Map
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ElectricityMarket extends MIPModel {
+object ElectricityMarket {
 	def main(args: Array[String]) {
 	  
 
@@ -41,7 +43,7 @@ object ElectricityMarket extends MIPModel {
 	  val tmax = orders.map(_(2)).max
 	  
 	  // one variable for each order if we take it or not
-	  val mip = MIPSolver(LPSolverLib.glpk)
+	  val mip = MIPSolver(LPSolverLib.lp_solve)
 	  val varMap = Map[Array[Int],MIPVar]() 
 	  orders.foreach(o => varMap += (o -> MIPVar(mip,"order",0 to 1)))
 	  
@@ -70,6 +72,8 @@ object ElectricityMarket extends MIPModel {
 	        check(t-1) += o(0)
 	      }
 	  }
+	  
+	  println("constraints ok:"+mip.checkConstraints())
 	  
 	  println("checker:"+check.mkString(","))
 	  

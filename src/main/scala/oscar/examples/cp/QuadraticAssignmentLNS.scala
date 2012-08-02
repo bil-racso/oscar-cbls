@@ -19,6 +19,8 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.search._
+import oscar.cp.core._
+
 
 import scala.io.Source
 import java.lang._
@@ -35,7 +37,7 @@ import scala.collection.JavaConversions._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object QuadraticAssignmentLNS extends CPModel {
+object QuadraticAssignmentLNS {
   def main(args: Array[String]) {
 
     // Read the data
@@ -76,7 +78,7 @@ object QuadraticAssignmentLNS extends CPModel {
         cp.binaryFirstFail(x)
         println("solution"+x.mkString(","))
         // store the current best solution
-        (0 until n).foreach(i => bestSol(i) = x(i).getValue())
+        (0 until n).foreach(i => bestSol(i) = x(i).value)
         nbSol += 1
         if (nbSol == 100) cp.stop() // stop after the 100th solution
     }

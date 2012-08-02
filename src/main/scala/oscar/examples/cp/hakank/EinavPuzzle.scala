@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -60,7 +67,7 @@ import scala.math._
  
 */
 
-object EinavPuzzle extends CPModel {
+object EinavPuzzle {
 
   def main(args: Array[String]) {
 
@@ -118,7 +125,7 @@ object EinavPuzzle extends CPModel {
     //
     // variables
     //
-    val x = Array.fill(rows)(Array.fill(cols)(CPVarInt(cp, -100 to 100)))
+    val x = Array.fill(rows,cols)(CPVarInt(cp, -100 to 100))
     val total_sum = sum(x.flatten)
     
     val row_signs = Array.fill(rows)(CPVarInt(cp, sign_domains))
@@ -139,26 +146,19 @@ object EinavPuzzle extends CPModel {
       }
       
       for(i <- ROWS) {
-        // cp.add(row_sums(i).getMin() == 0)
         cp.add(row_sums(i) >= 0)
-        // row_sums(i).updateMin(0)
       }
       
       for(j <- COLS) {
-        // cp.add(col_sums(j).getMin() == 0)
         cp.add(col_sums(j) >= 0)
-        // col_sums(j).updateMin(0)
       }
 
 
     } exploration {
        
-      // cp.binary(col_signs ++ row_signs)
-      // cp.binaryFirstFail(col_signs ++ row_signs)
       cp.binaryMaxDegree(col_signs ++ row_signs)
 
       println("\nSolution:")
-
       println("row_sums: " + row_sums.mkString(""))
       println("row_signs: " + row_signs.mkString(""))
       println("col_sums: " + col_sums.mkString(""))
@@ -166,7 +166,7 @@ object EinavPuzzle extends CPModel {
       
       for(i <- ROWS) {
         for(j <- COLS) {
-          print("%3d".format(x(i)(j).getValue()))
+          print("%3d".format(x(i)(j).value))
         }
         println()
       }

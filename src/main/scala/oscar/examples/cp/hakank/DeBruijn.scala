@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -31,40 +38,11 @@ import scala.math.pow
  * http://www.hakank.org/oscar/
  *
  */
-object DeBruijn extends CPModel {
+object DeBruijn {
 
   // channeling between IntVar array t <=> IntVar s
   def toNum(t: Array[CPVarInt], base: Int=10) = sum(
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
-
-
-  // ensure that the minimum element is first in the array t
-  def my_minimum1(cp: CPSolver, t: Array[CPVarInt]) = {
-    val min = new CPVarInt(cp, t(0).getMin() to t(0).getMax())
-    for(i <- 0 to t.length-1) {
-      cp.add(min <= t(i))
-    }
-    cp.add(t(0) == min)
-  }
-
-  // returns the minimum element in t
-  def my_min(cp: CPSolver, t: Array[CPVarInt]) : CPVarInt = {
-    val min = CPVarInt(cp, t(0).getMin() to t(0).getMax())
-    for(i <- 0 to t.length-1) {
-      cp.post(min <= t(i))
-    }
-    return min
-  }
-
-  def my_min2(t: Array[CPVarInt]) : CPVarInt = {
-    val cp = t(0).getStore
-    val mmin = new CPVarInt(cp, (t(0).getMin() to t(0).getMax()))
-    for(i <- 0 to t.length-1) {
-      cp.post(mmin <= t(i))
-    }
-    return mmin
-  }
-
 
   def main(args: Array[String]) {
 
@@ -96,8 +74,7 @@ object DeBruijn extends CPModel {
     //
     // (Improvements from the original version suggested by Pierre Schaus.)
     val x        = Array.fill(m)(CPVarInt(cp, 0 to pow(base, n).toInt - 1))
-    val binary   = Array.fill(m)(
-                               Array.fill(n)(CPVarInt(cp, 0 to base-1)))
+    val binary   = Array.fill(m,n)(CPVarInt(cp, 0 to base-1))
     val bin_code = Array.fill(m)(CPVarInt(cp, 0 to base-1))
     val gccv     = Array.tabulate(base)(i => (CPVarInt(cp, 0 to m), i))
 
@@ -138,16 +115,11 @@ object DeBruijn extends CPModel {
        }
      
        // gcc on the de Bruijn sequence
-       cp.add(gcc(bin_code, gccv))
+      cp.add(gcc(bin_code, gccv))
 
-       // symmetry breaking
-       // (don't know how to do this in Oscar)
-       // cp.add(min(x) == x(0)) // TODO!
+       // symmetry breaking: the smallest number in x should be first
+      cp.add(minimum(x, x(0)))
 
-       // some decompositions (though they require that cp as argument)
-       // my_minimum1(cp, x) // This works
-       // cp.add(my_min(cp, x) == x(0)) // this works
-       cp.add(my_min2(x) == x(0))
 
      } exploration {
        

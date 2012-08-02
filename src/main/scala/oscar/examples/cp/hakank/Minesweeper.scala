@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -54,7 +61,7 @@ import scala.io.Source._
  * http://www.hakank.org/oscar/
  *
  */
-object Minesweeper extends CPModel {
+object Minesweeper {
 
 
   def main(args: Array[String]) {
@@ -108,18 +115,16 @@ object Minesweeper extends CPModel {
       val tmp = List(-1,0,1)
 
       for(i <- 0 until r) {
-        for(j <- 0 until c) {
-          if (game(i)(j) >= 0) {
+        for(j <- 0 until c if game(i)(j) >= 0) {
+
+          cp.add(sum( for{ a <- tmp; b <- tmp 
+                      if ( (i+a >= 0) && (j+b  >= 0) &&
+                           (i+a <  r)  && (j+b <  c)) 
+                        } yield mines(i+a)(j+b)) == game(i)(j))
             
-            cp.add(sum( for{ a <- tmp; b <- tmp 
-                      if ( (i+a >= 0) && (j+b >=  0) &&
-                           (i+a < r)  && (j+b < c)) 
-                        } yield mines(i+a)(j+b) ) == game(i)(j))
-            
-            
-            if (game(i)(j) > X) {
-              cp.add(mines(i)(j) == 0)
-            }
+          // redundant constraint
+          if (game(i)(j) > X) {
+            cp.add(mines(i)(j) == 0)
           }
         }
       }
@@ -131,19 +136,16 @@ object Minesweeper extends CPModel {
 
       println("\nSolution:")
       for(i <- 0 until r) {
-        for(j <- 0 until c) {
-          print(mines(i)(j) + "")
-        }
-        println()
+        println(mines(i).mkString(""))
       }
 
-
-       numSols += 1
+      numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.\n")
 
+     println("\nIt was " + numSols + " solutions.\n")
      cp.printStats()
+
    }
 
 }

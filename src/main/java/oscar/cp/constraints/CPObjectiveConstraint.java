@@ -30,7 +30,7 @@ public abstract class CPObjectiveConstraint extends Constraint {
 	protected CPObjective obj;
 	
 	public CPObjectiveConstraint(CPObjective obj, CPVarInt objVar) {
-		super(objVar.getStore(),"Objective");
+		super(objVar.s(),"Objective");
 		this.objVar = objVar;
 		this.obj = obj;
 	}

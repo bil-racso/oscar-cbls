@@ -33,7 +33,7 @@ import scala.collection.JavaConversions._
  * Weights must be > 0, Profit must be non negative.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).getStore(), "Table2") with Constraints {
+class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).s, "Table2") with Constraints {
 
   def pre(): Boolean = weight.forall(_ > 0) && profit.forall(_ >= 0)
   
@@ -66,9 +66,9 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
 
     
     if (filter) {
-    	x.filter(!_.isBound()).foreach(_.callPropagateWhenDomainChanges(this))
+    	x.filter(!_.isBound).foreach(_.callPropagateWhenDomainChanges(this))
     	for ((y,i) <- x.zipWithIndex) {
-    		val ok = if (y.isBound()) valBindIdx(y,i) else y.callValBindIdxWhenBind(this,i)
+    		val ok = if (y.isBound) valBindIdx(y,i) else y.callValBindIdxWhenBind(this,i)
     		if (ok == CPOutcome.Failure) return CPOutcome.Failure
     	}
     	if (propagate() == CPOutcome.Failure) return CPOutcome.Failure
@@ -81,7 +81,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
   
   override def valBindIdx(y: CPVarInt, i: Int) : CPOutcome = {
     unbound.removeValue(i);
-    if (y.getValue() == 1) {
+    if (y.min == 1) {
     	// add this to the capacity and to the reward
         packedProfit.value = packedProfit.value + p(i).toInt 
         packedWeight.value = packedWeight.value + w(i)  
@@ -112,7 +112,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
     var s = -1 // critical item index
     while (ite.hasNext() && s < 0) {
       val i = ite.next()
-      if (weight + w(i) <= W.getMax()) {
+      if (weight + w(i) <= W.max) {
         weight += w(i)
         profit += p(i)
       } else {
@@ -132,7 +132,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
       if (P.updateMax(profit) == CPOutcome.Failure) return CPOutcome.Failure
       else return CPOutcome.Suspend
     } else {
-      val weightSlack = W.getMax() - weight
+      val weightSlack = W.max - weight
       // fraction of item s taken in the relaxed sol
       val fraq_s = weightSlack.toDouble / w(s) 
       
@@ -153,7 +153,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
       //  +--------------------------+
       w(s) = w(s) - weightSlack // amount of w_s not used in the relaxed sol
       p(s) -= p(s)*fraq_s
-      var gap = P.getMin() - maxProfit 
+      var gap = P.min - maxProfit 
       var i = unbound.getFirst()
       var j = s
       if (i < s) {
@@ -162,7 +162,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
          while (i < s && i != -1 && j!= -1) {
         	 var found = false // become true when the max weight of i that can be removed has been found
         	 while (!found && j != -1) {
-        	    val gap = (maxProfit - P.getMin()) - (w_acc * e(i) - p_acc) 
+        	    val gap = (maxProfit - P.min) - (w_acc * e(i) - p_acc) 
         	    val w_ = gap / (e(i) - e(j))
         	    if (w_ > w(j)) { // must go to next
                   w_acc += w(j) // accumulate the weight
@@ -195,7 +195,7 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
          while (i > s && i != -1 && j!= -1) {
            var found = false // become true when the max weight of i that can be removed has been found
             while (!found && j != -1) {
-              val gap = (maxProfit - P.getMin()) - (p_acc - w_acc * e(i)) 
+              val gap = (maxProfit - P.min) - (p_acc - w_acc * e(i)) 
               val w_ = gap / (e(j) - e(i))
               if (w_ > w(j)) { // must go to prev
                   w_acc += w(j) // accumulate the weight

@@ -58,8 +58,8 @@ public class TestUnaryResource extends TestCase {
     }
     
     public void testRank() {  	
-//    	CPVarInt start1 = new CPVarInt(s,0,5);
-//    	CPVarInt start2 = new CPVarInt(s,2,10);
+//    	CPVarInt start1 = CPVarInt.apply(s,0,5);
+//    	CPVarInt start2 = CPVarInt.apply(s,2,10);
 //    	
 //    	Activity act1 = new Activity(start1, 5);
 //    	Activity act2 = new Activity(start2, 5);

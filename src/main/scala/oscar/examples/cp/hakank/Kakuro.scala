@@ -1,11 +1,18 @@
 /*******************************************************************************
- * This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *  
- * Contributors:
- *      Hakan Kjellerstrand (hakank@gmail.com)
+ * This file is part of OscaR (Scala in OR).
+ *   
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
@@ -53,7 +60,7 @@ import scala.math._
  
 */
 
-object Kakuro extends CPModel {
+object Kakuro {
 
 
   /**
@@ -75,6 +82,7 @@ object Kakuro extends CPModel {
     // sum the numbers
     cp.add(sum(for{i <- 0 until len} yield x(cc(i*2)-1)(cc(i*2+1)-1)) == res)
   }
+
   
   def main(args: Array[String]) {
 
@@ -83,7 +91,6 @@ object Kakuro extends CPModel {
     //
     // data
     //
-
 
     //
     // variables
@@ -171,13 +178,11 @@ object Kakuro extends CPModel {
 
     } exploration {
        
-      // cp.binary(x.flatten)
-      // cp.binaryFirstFail(x.flatten)
       cp.binaryMaxDegree(x.flatten)
 
       for(i <- 0 until n) {
         for(j <- 0 until n) {
-          val v = x(i)(j).getValue()
+          val v = x(i)(j).value
           if (v > 0) {
             print(v + " ")
           } else {

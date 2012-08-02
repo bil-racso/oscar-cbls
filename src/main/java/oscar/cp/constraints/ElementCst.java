@@ -55,7 +55,7 @@ public class ElementCst extends Constraint {
      * @see  Element#get(int[], cp.core.CPVarInt)
      */
 	public ElementCst(final int [] y, CPVarInt x, CPVarInt z) {
-		super(x.getStore(),"ElementCst");
+		super(x.s(),"ElementCst");
 		this.y = y;
 		this.x = x;
 		this.z = z;
