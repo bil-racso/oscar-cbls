@@ -29,7 +29,7 @@ import scala.math._
   Standard alphametic problem in mathematical recreations, 
   constraint programming etc.
 
-  This is an alternative approach compared to Crytpo.scala.
+  This is an alternative approach compared to Crypto.scala.
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
@@ -53,7 +53,7 @@ object Crypto2 {
     //
     val num = 26
 
-    val ht = "abcdefghijklmnopqrstuvwxyz".zip(0 until num).toMap // char -> index
+    val ht = "abcdefghijklmnopqrstuvwxyz".zipWithIndex.toMap // char -> index
 
     //
     // variables

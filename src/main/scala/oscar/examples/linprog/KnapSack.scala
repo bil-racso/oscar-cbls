@@ -36,7 +36,7 @@ object KnapSack {
     val weights = Array(100,50,45,20,10,5)
     val utility = Array( 40,35,18, 4,10,2)
     
-    val mip = MIPSolver(LPSolverLib.glpk)
+    val mip = MIPSolver(LPSolverLib.lp_solve)
     val objects = Array.tabulate(weights.size)(i => O(weights(i),utility(i),MIPVar(mip, "x"+i, 0 to 1)))
     
     val capacity = 100

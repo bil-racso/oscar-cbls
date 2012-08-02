@@ -371,7 +371,9 @@ abstract class AbstractLPSolver {
 		solver.addObjective(coef, varIds, minimize)
 		
 		println("Creating constraints...")
+		val t0 = System.currentTimeMillis()
 		addAllConstraints()
+		println("time to add constraints:"+(System.currentTimeMillis()-t0))
 				
 		//close the model and optimize
 		if (autoSolve) solveModel() 
