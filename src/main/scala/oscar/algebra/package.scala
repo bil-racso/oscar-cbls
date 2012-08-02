@@ -9,6 +9,7 @@ package object algebra {
   def min(a:Double,b:Double): Double = {a.min(b)}
   def max(a:Double,b:Double): Double = {a.max(b)}
   
+  
   def sumNum[A](indexes1:Iterable[A])(f: A => Double) : Double = {
     (for(i<-indexes1) yield f(i)).sum
   }
@@ -23,7 +24,7 @@ package object algebra {
   
   def sumNum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => Double) : Double = {
     (for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l)).sum
-  }  
+  } 
   
   def createVarMap[T,V](ts:Seq[T])(varConstr:T=>V): Map[T,V] = { (for (t<-ts) yield t-> varConstr(t)).toMap }  
   
@@ -285,19 +286,60 @@ package object algebra {
     //exprs.foldLeft(Zero : LinearExpression)(_ + _)
   }
   
+  /**
+   * sum[a <- A] f(a)
+   */ 
   def sum[A](indexes : Iterable[A])(f : A => LinearExpression) : LinearExpression = sum(indexes map f)
-   
+  
+  /**
+   * sum[a <- A, b <- B] f(a,b)
+   */ 
   def sum[A,B](indexes1 : Iterable[A],indexes2 : Iterable[B])(f : (A,B) => LinearExpression) : LinearExpression = {
-                        sum(for(i <- indexes1;j <- indexes2) yield f(i,j))
+         sum(for(i <- indexes1;j <- indexes2) yield f(i,j))
   }
   
+  /**
+   * sum[a <- A, b <- B, c <- C] f(a,b,c)
+   */ 
   def sum[A,B,C](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C])(f : (A,B,C) => LinearExpression) : LinearExpression = {
-    		sum(for(i <- indexes1;j <- indexes2; k <- indexes3) yield f(i,j,k))
+    	sum(for(i <- indexes1;j <- indexes2; k <- indexes3) yield f(i,j,k))
   }
-    
+
+  /**
+   * sum[a <- A, b <- B, c <- C, d <- D] f(a,b,c,d)
+   */ 
   def sum[A,B,C,D](indexes1 : Iterable[A],indexes2 : Iterable[B], indexes3 : Iterable[C], indexes4 : Iterable[D])(f : (A,B,C,D) => LinearExpression) : LinearExpression = {
-    		sum(for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l))
+    	sum(for(i <- indexes1;j <- indexes2; k<- indexes3; l <- indexes4) yield f(i,j,k,l))
   }
+  
+  /**
+   * sum[a <- A such that filter(a) == true] f(a)
+   */
+  def sum[A](S1:Iterable[A], filter: A => Boolean, f:(A) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; if(filter(a)))  yield f(a))  
+  }
+  
+  /**
+   * sum[a <- A, b <- B such that filter(a,b) == true] f(a,b)
+   */
+  def sum[A,B](S1:Iterable[A],S2:Iterable[B], filter: (A,B) => Boolean, f:(A,B) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; if(filter(a,b)))  yield f(a,b))  
+  }
+
+  /**
+   * sum[a <- A, b <- B, c <- C such that filter(a,b,c) == true] f(a,b,c)
+   */  
+  def sum[A,B,C](S1:Iterable[A],S2:Iterable[B],S3:Iterable[C], filter: (A,B,C) => Boolean, f:(A,B,C) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; c <- S3; if(filter(a,b,c)))  yield f(a,b,c))  
+  }
+  
+  /**
+   * sum[a <- A, b <- B, c <- C, d <- D such that filter(a,b,c,d) == true] f(a,b,c,d)
+   */    
+  def sum[A,B,C,D](S1:Iterable[A],S2:Iterable[B],S3:Iterable[C],S4:Iterable[D], filter: (A,B,C,D) => Boolean, f:(A,B,C,D) => LinearExpression): LinearExpression = {
+       sum(for (a <- S1; b <- S2; c <- S3; d <- S4; if(filter(a,b,c,d)))  yield f(a,b,c,d))  
+  }  
+  
 
   // ------------   Implicits -----------------------
   
