@@ -6,7 +6,7 @@ import oscar.cp.core.Store
 class ProdConsActivity(activity: Activity, resourceVar : CPVarInt, heightVar : CPVarInt) extends CumulativeActivity(activity, resourceVar, heightVar){
 
 	val horizon = 4
-	
+	resourceVar.store.post(activity.end == horizon)
 	private val endVar = CPVarInt(start.store, horizon)
 	private val durVar = endVar.minus(start)
 	
