@@ -57,28 +57,30 @@ object Diet2 {
      val sugar     = Array(2,2,4,4)
      val fat       = Array(2,4,1,5)
 
-     // collect for the tabulate loop
      val all = Array(calories, chocolate, sugar, fat)
 
      // variables
      val x = Array.fill(n)(CPVarInt(cp, 0 to 10))
-     val cost = sum(Array.tabulate(n)(i => x(i)*price(i)).toList)
+     val cost = weightedSum(price, x)
 
      // constraints
      cp.minimize(cost) subjectTo {
 
-       Array.tabulate(n)(
-         nutr => cp.add(sum(Array.tabulate(n)(i => x(i) * all(nutr)(i))) >= limits(nutr))
+       // handle the nutrition requirements
+       for(i <- 0 until n) (
+           cp.add(weightedSum(all(i), x) >= limits(i))
        )
 
-     } exploration {
+    } exploration {
        
        cp.binaryFirstFail(x)
        println(x.mkString(" "))
        
-     }
+    }
 
-     cp.printStats()
-   }
+    println()
+    cp.printStats()
+
+  }
 
 }

@@ -47,26 +47,14 @@ object WordSquare {
     * Read the words from a word list with a specific word length.
     *
     */
-  def readWords(word_list: String, word_len: Int) : Array[String] = {
+  def readWords(word_list: String, word_len: Int, regex: String) : Array[String] = {
     
     println("reading from " + word_list + " (size: " + word_len + ")");
-    val words = scala.io.Source.fromFile(word_list, "utf-8").getLines
-
-    val rex = "^([a-zA-Z]+)$"
-    var all_words = List[String]()
-    val seen = scala.collection.mutable.HashMap.empty[String, Boolean].withDefaultValue(false)
-    for {w <- words
-         w2 = w.trim().toLowerCase()
-         if w2.length > 0
-         if w2.length == word_len
-         if !seen(w2)
-         if w2.matches(rex)
-    } {    
-         all_words ::= w2
-         seen += (w2 -> true)
-    }
-    
-    return all_words.reverse.toArray
+    scala.io.Source.fromFile(word_list, "utf-8").getLines.
+                    filter(_.length == word_len).
+                    map(_.toLowerCase).
+                    filter(w => w.matches(regex)).
+                    toList.distinct.toArray
 
   }
 
@@ -87,11 +75,11 @@ object WordSquare {
     val WORDLEN = 0 until word_len
 
     // Convert letters => digits
-    val d = "abcdefghijklmnopqrstuvwxyz".zip(0 to 25).toMap 
+    val d = "abcdefghijklmnopqrstuvwxyz".zipWithIndex.toMap 
 
 
     // Read the word list
-    val words = readWords(word_list, word_len)
+    val words = readWords(word_list, word_len,"^([a-zA-Z]+)$")
     val num_words = words.length
     println("number of words: " + num_words)
 
