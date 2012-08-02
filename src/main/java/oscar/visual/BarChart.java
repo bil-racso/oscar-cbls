@@ -26,7 +26,13 @@ import javax.swing.SwingWorker;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.StandardChartTheme;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.general.PieDataset;
@@ -69,15 +75,38 @@ public class BarChart extends JPanel {
 				dataSet.addValue(0, c, col);
 			}
 		}
+		ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
+		BarRenderer.setDefaultShadowsVisible(false);
+		
 		if (stacked) {
 			chart = ChartFactory.createStackedBarChart(title,xlab,ylab,dataSet,PlotOrientation.VERTICAL,false,false, false);
 		}
 		else {
 			chart = ChartFactory.createBarChart(title,xlab,ylab,dataSet,PlotOrientation.VERTICAL,false,false, false);
 		}
-			
+		
+
+		
+		CategoryPlot plot = (CategoryPlot) chart.getPlot();
+		
+		BarRenderer barRenderer = (BarRenderer) plot.getRenderer();
+		
+		
 			
 		chart.getPlot().setBackgroundPaint(Color.white);
+		chart.setBackgroundPaint(Color.white);
+		
+		//CategoryAxis domainAxis = plot.getDomainAxis();
+		//domainAxis.setTickLabelPaint(Color.white);
+		//domainAxis.setTickLabelFont(new Font("Arial",Font.BOLD,12));
+		//domainAxis.setLabelPaint(Color.white);
+		//NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+		//rangeAxis.setTickLabelPaint(Color.WHITE);
+		//rangeAxis.setTickLabelFont(new Font("Arial",Font.BOLD,12));
+		//rangeAxis.setLabelPaint(Color.white);
+		//chart.getTitle().setPaint(Color.white);
+		
+		
 		ChartPanel panel = new ChartPanel(chart);
 		
 		panel.setVisible(true);
