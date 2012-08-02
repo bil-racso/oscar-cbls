@@ -25,8 +25,8 @@ import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.Store;
-import oscar.cp.scheduling.Activity;
 import oscar.reversible.ReversibleBool;
+import oscar.cp.scheduling.Activity;
 import oscar.cp.scheduling.MirrorActivity;
 
 

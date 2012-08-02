@@ -1,5 +1,5 @@
 package oscar.cp.test
-/*
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -13,9 +13,11 @@ import org.scalacheck._
 
 class TestMultiCumulative extends FunSuite with ShouldMatchers {
 	
-	test("Test : Nicolas Beldiceanu example 1") {
+	/*test("Test : Nicolas Beldiceanu example 1") {
 		
-		val cp = CPSolver()
+		val durations = Array
+		
+		val cp = CPScheduler()
 		
 		val t1 = new CumulativeActivity(CPVarInt(cp, 1 to 2), // start
 										CPVarInt(cp, 2 to 4), // duration
@@ -50,10 +52,10 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers {
 		
 		t2.minResource should be(3)
 		t2.maxResource should be(4)
-	}
+	}*/
 	
 	
-	test("Test1: alternatives") {
+	/*test("Test1: alternatives") {
 		
 		val cp = CPSolver()
 			
@@ -190,7 +192,7 @@ class TestMultiCumulative extends FunSuite with ShouldMatchers {
 		  myAct1.dur.max should be(3)
 
 		}
-	}	
+	}*/	
 	
-}*/
+}
 

@@ -24,7 +24,8 @@ import oscar.cp.modeling.CPScheduler
 class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
     
 	private val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-    private val endVar   : CPVarInt = startVar.plus(durVar)
+    private val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
+    scheduler.add(startVar + durVar == endVar) // Linking the variables
 
     def start = startVar
     def end = endVar
@@ -73,14 +74,41 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 	def follows(act : Activity) : LeEq = act << this
 	
 	def needs(resource : CumulativeResource, capacity : Int) {
-    	resource.addActivity(this, capacity)
+    	assert(capacity >= 0)
+		resource.addActivity(this, capacity)
     }
 	
-	def needs(resource : UnaryResource) {
+	def needs(resource : CumulativeResource, capacity : Range) {
+    	assert(capacity.min >= 0)
+		resource.addActivity(this, capacity)
+	}
+	
+	def supplies(resource : CumulativeResource, capacity : Int) {
+    	assert(capacity >= 0)
+    	resource.addActivity(this, -capacity)
+    }
+	
+	def supplies(resource : CumulativeResource, capacity : Range) {
+    	assert(capacity.min >= 0)
+		resource.addActivity(this, -capacity.max to -capacity.min)
+	}
+	
+	def needs(resource : UnitResource) {
     	resource.addActivity(this)
     }
 	
+	def store = scheduler
+	
 	override def toString = "dur: "+dur+ " in ["+est+","+lct+"[";
+}
+
+object Activity {
+	
+	def apply(scheduler : CPScheduler, dur : Int) = new Activity(scheduler, dur)
+	
+	def apply(scheduler : CPScheduler, dur : Range) = new Activity(scheduler, CPVarInt(scheduler, dur))
+
+	def apply(scheduler : CPScheduler, durVar : CPVarInt) = new Activity(scheduler, durVar)
 }
 
 

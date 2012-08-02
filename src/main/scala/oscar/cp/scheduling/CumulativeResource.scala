@@ -1,23 +1,36 @@
 package oscar.cp.scheduling
 
-import scala.collection.mutable.Set
+import scala.collection.mutable.Map
 
-import oscar.cp.modeling.CPScheduler
+import oscar.cp.modeling._
 import oscar.cp.constraints.MaxSweepCumulative
+import oscar.cp.core.CPVarInt
+import java.security.InvalidParameterException
 
 class CumulativeResource(scheduler : CPScheduler, capa : Int) extends Resource(scheduler) {
 	
-	protected val activitiesSet : Set[CumulativeActivity] = Set()
+	protected val activitiesSet : Map[Activity, CumulativeActivity] = Map()
 	
-	def activities = activitiesSet.toArray
+	def activities = activitiesSet.values.toArray
 	def capacity   = capa
 	
-	def addActivity(activity : Activity, height : Int) {		
-		activitiesSet.add(CumulativeActivity(activity, id, height))
+	def addActivity(activity : Activity, height : Int) { addActivity(activity, CumulativeActivity(activity, id, height)) }
+	
+	def addActivity(activity : Activity, height : CPVarInt) { addActivity(activity, CumulativeActivity(activity, id, height)) }
+	
+	def addActivity(activity : Activity, height : Range) { addActivity(activity, CumulativeActivity(activity, id, height)) }
+	
+	private def addActivity(act : Activity, cum : CumulativeActivity) {
+		if (activitiesSet.contains(act)) 
+			throw new InvalidParameterException("The activity is already scheduled on this resource.")
+		else 
+			activitiesSet += (act -> cum)
 	}
+	
+	def heightOf(act : Activity) : CPVarInt = activitiesSet(act).height
 
 	override def setup() {
-		scheduler.add(new MaxSweepCumulative(scheduler, activitiesSet.toArray, capa, id))
+		scheduler.add(cumulative(activities, id, max = capa))
 	}
 	
 	def criticality = activities.map(_.maxDuration).sum

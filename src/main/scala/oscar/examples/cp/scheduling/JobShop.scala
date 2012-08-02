@@ -82,11 +82,11 @@ object JobShop {
 
 		// Activities & Resources
 		val activities = Array.tabulate(nActivities)(i => new Activity(cp, durations(i)))
-		val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 1))
+		val resources  = Array.tabulate(nResources)(m => UnitResource(cp))
 
 		// Resource allocation
 		for (i <- Activities)
-			activities(i).needs(resources(machines(i)), 1)
+			activities(i).needs(resources(machines(i)))
 
 		// The makespan to minimize
 		val makespan = maximum(0 until nActivities)(i => activities(i).end)
@@ -94,14 +94,14 @@ object JobShop {
 		// Visualization  
 		// -----------------------------------------------------------------------
 
-		val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
+		val frame  = new VisualFrame("Cumulative JobShop Problem", 2, 1)
 		val colors = VisualUtil.getRandomColorArray(nResources)
 		
-		val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
-		//val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
+		val gantt1 = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
+		val gantt2 = new VisualGanttChart(activities, i => machines(i), colors = i => colors(machines(i)))
 		
-		frame.createFrame("Gantt chart").add(gantt)
-		//for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
+		frame.createFrame("Gantt chart").add(gantt1)
+		frame.createFrame("Resources utilization").add(gantt2)
 		frame.pack
 
 		// Constraints & Search
@@ -118,7 +118,8 @@ object JobShop {
 			//cp.setTimesSearch(activities)
 
 			//for (p <- profiles) p.update(1, 20)
-			gantt.update(1, 20)
+			gantt1.update(1, 20)
+			gantt2.update(1, 20)
 		}
 
 		cp.printStats()
