@@ -61,56 +61,30 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	}
 
 	def setTimes(activities : Array[Activity]) : Unit @suspendable = {
-
+		val n = activities.size
+		val Activities = 0 until n
 		// Non fixed activities
-		val selectable = Array.tabulate(activities.size) {
-			i =>
-				if (activities(i).start.isBound)
-					new ReversibleBool(this, false)
-				else
-					new ReversibleBool(this, true)
-		}
-
-		val oldEST = Array.fill(activities.size)(new ReversibleInt(this, -1))
-
-			def updateSelectable() = {
-
-				for (i <- 0 until activities.size) {
-					if (activities(i).start.isBound) {
-						selectable(i).value = false
-
-					} else if (oldEST(i).value != activities(i).est) {
-						selectable(i).value = true
-					}
-				}
-			}
-
-			def selectableIndices() = (0 until activities.size).filter(i => selectable(i).value)
-
+		val selectable = Array.fill(n)(new ReversibleBool(this, true))
+		val oldEST = Array.fill(n)(new ReversibleInt(this, -1))
+			def updateSelectable() = (Activities).filter(i => oldEST(i).value < activities(i).est).foreach(selectable(_).value = true)
+			def selectableIndices() = (Activities).filter(i => selectable(i).value && !activities(i).start.isBound)
 			def allStartBounds() = activities.forall(i => i.start.isBound)
-
+			def updateAndCheck() = {
+				updateSelectable()
+				if (selectableIndices().isEmpty && !allStartBounds()) this.fail()
+			}
 		while (!allStartBounds()) {
-
-			// Get the smallest EST
+			updateSelectable()
 			val (est, ect) = selectableIndices().map(i => (activities(i).est, activities(i).ect)).min
-
 			// Select the activity with the smallest EST, ECT as tie breaker
 			val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).first
-
 			branch {
-
-				post(activities(x).start == est)
-				oldEST(x).value = -1
-				updateSelectable()
-
-				if (selectableIndices().isEmpty && !allStartBounds()) fail()
+				this.post(activities(x).start == est)
+				if (!this.isFailed) updateAndCheck()
 			} {
-
 				selectable(x).value = false
 				oldEST(x).value = est
-				updateSelectable()
-
-				if (selectableIndices().isEmpty && !allStartBounds()) fail()
+				updateAndCheck()
 			}
 		}
 	}
