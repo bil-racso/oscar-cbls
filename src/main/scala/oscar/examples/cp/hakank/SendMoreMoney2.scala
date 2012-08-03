@@ -20,58 +20,46 @@ import oscar.cp.modeling._
 import oscar.cp.search._
 import oscar.cp.core._
 
-
 /**
  *
- * Implementing Xkcd knapsack problem in Oscar
- *
- * http://xkcd.com/287/
- *
- * Some amount (or none) of each dish should be ordered to
- * give a total of exact 15.05
- *
- *
+ * SEND+MORE MONEY problem in Oscar.
+ * 
+ * A slightly different approach.
+ * 
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
  */
-object Xkcd {
+object SendMoreMoney2 {
 
+   def main(args: Array[String]) {
 
-  def main(args: Array[String]) {
+      val cp = CPSolver()
 
-    val cp = CPSolver()
+      // variables
+      val all = Array.fill(8)(CPVarInt(cp, 0 to 9))
+      val Array(s,e,n,d,m,o,r,y) = all
 
-    // data
-    val price  = Array(215, 275, 335, 355, 420, 580) // in cents
-    val num_prices = price.length
-    val total = 1505
+      cp.solveAll() subjectTo {
 
+        // constraints
+        cp.add(       s*1000 + e*100 + n*10 + d +
+                      m*1000 + o*100 + r*10 + e ==
+            m*10000 + o*1000 + n*100 + e*10 + y)
+        cp.add(s > 0)
+        cp.add(m > 0)
+	cp.add(alldifferent(all), Strong)
 
-    // variables
-    val x = Array.fill(num_prices)(CPVarInt(cp, 0 to 10))
+      } exploration {
 
-    //
-    // constraints
-    //
-    var numSols = 0
+         cp.binaryFirstFail(all)
 
-    cp.solveAll subjectTo {
+         println(all.mkString(""))
 
-      cp.add(weightedSum(price, x) == total)
-
-    } exploration {
-       
-       cp.binaryFirstFail(x)
-
-       println("x:" + x.mkString(" "))
-
-       numSols += 1
-       
-    }
-
-    println("\nIt was " + numSols + " solutions.\n")
-    cp.printStats()
+      }
+      
+      println()
+      cp.printStats()
 
   }
 
