@@ -83,6 +83,16 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 		resource.addActivity(this, capacity)
 	}
 	
+	def needs(resource : CumulativeResourceSet, resources : Array[Int], capacity : Range) {
+		assert(capacity.min >= 0)
+		resource.addActivity(this, resources, capacity)	
+	}
+	
+	def needs(resource : CumulativeResourceSet, resources : Array[Int], capacity : Int) {
+		assert(capacity >= 0)
+		resource.addActivity(this, resources, capacity)	
+	}
+	
 	def supplies(resource : CumulativeResource, capacity : Int) {
     	assert(capacity >= 0)
     	resource.addActivity(this, -capacity)

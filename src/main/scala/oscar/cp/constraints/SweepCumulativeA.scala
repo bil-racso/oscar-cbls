@@ -60,7 +60,7 @@ import oscar.algo.SortUtils.stableSort
 abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
-	protected val tasks = allTasks
+	protected val tasks = allTasks.filter(_.resource.hasValue(r))
 	
 	protected val nTasks = tasks.size
 	protected val Tasks  = 0 until nTasks

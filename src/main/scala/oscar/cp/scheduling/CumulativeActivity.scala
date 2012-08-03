@@ -42,7 +42,7 @@ class CumulativeActivity(activity: Activity, resourceVar : CPVarInt, heightVar :
 	
 	def store = activity.store
 	
-	override def toString() = activity + " height: " + heightVar
+	override def toString() = activity + " height: " + heightVar + " resource: " + resourceVar
 }
 
 object CumulativeActivity {
@@ -65,6 +65,16 @@ object CumulativeActivity {
 	def apply(activity : Activity, resource : Int, heights : Range) = {
 		
 		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, heights))
+	}
+	
+	def apply(activity : Activity, resources : Range, heights : Range) = {
+		
+		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resources), CPVarInt(activity.scheduler, heights))
+	}
+		
+	def apply(activity : Activity, resources : Range, height : Int) = {
+		
+		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resources), CPVarInt(activity.scheduler, height))
 	}
 	
 	def apply(activity : Activity, resource : Int, heightVar : CPVarInt) = {

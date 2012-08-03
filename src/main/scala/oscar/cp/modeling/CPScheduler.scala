@@ -60,7 +60,7 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		this
 	}
 
-	def setTimesSearch(activities : Array[Activity]) : Unit @suspendable = {
+	def setTimes(activities : Array[Activity]) : Unit @suspendable = {
 
 		// Non fixed activities
 		val selectable = Array.tabulate(activities.size) {
