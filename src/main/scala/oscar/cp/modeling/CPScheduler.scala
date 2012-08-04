@@ -89,3 +89,8 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		}
 	}
 }
+
+object CPScheduler {
+	
+	def apply(horizon : Int) = new CPScheduler(horizon)
+}
