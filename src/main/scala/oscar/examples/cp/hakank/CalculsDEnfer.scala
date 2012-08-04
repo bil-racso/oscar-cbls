@@ -73,17 +73,9 @@ object CalculsDEnfer {
     // variables
     // 
     val X = Array.fill(N)(CPVarInt(cp, RANGE))
+    val Array(a,b,c,d,e,f,g,h,i,j,k,l,m) = X slice( 0, 13)
+    val Array(n,o,p,q,r,s,t,u,v,w,x,y,z) = X slice(13, 26)
 
-    // This don't work since Scala just handle 22 entries in Array
-    //    val Array(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) = X
-    // So we have to do like this.
-    val a =  X(0); val b =  X(1); val c =  X(2); val d =  X(3);
-    val e =  X(4); val f =  X(5); val g =  X(6); val h =  X(7); 
-    val i =  X(8); val j =  X(9); val k = X(10); val l = X(11); 
-    val m = X(12); val n = X(13); val o = X(14); val p = X(15); 
-    val q = X(16); val r = X(17); val s = X(18); val t = X(19); 
-    val u = X(20); val v = X(21); val w = X(22); val x = X(23); 
-    val y = X(24); val z = X(25);
 
     val x_max = my_max(for(I <- 0 until N) yield X(I).abs()) // this is faster
     // val x_max = maximum(for(I <- 0 until N) yield X(I).abs())

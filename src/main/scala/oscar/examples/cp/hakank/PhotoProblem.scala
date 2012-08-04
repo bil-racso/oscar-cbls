@@ -117,8 +117,15 @@ object PhotoProblem {
     //
     val positions = Array.fill(n)(CPVarInt(cp, 0 to n-1))
     val places    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-    val z = CPVarInt(cp, 0 to n*n)
 
+    // calculate all the successful preferences
+    val z =  sum(
+                 for{i <- 0 until n
+                     j <- 0 until n
+                     if preferences(i)(j) == 1
+                 } yield ((positions(i)-positions(j)).abs() === 1)
+                 )
+      
 
     //
     // constraints
@@ -130,16 +137,6 @@ object PhotoProblem {
 
       cp.add(alldifferent(positions), Strong)
       cp.add(alldifferent(places), Strong)
-
-      // calculate all the successful preferences
-      cp.add(
-             sum(
-                 for{i <- 0 until n
-                       j <- 0 until n
-                       if preferences(i)(j) == 1
-                 } yield ((positions(i)-positions(j)).abs() === 1)
-                 ) == z
-             )
 
       // Symmetry breaking (from the Oz page):
       //    Fred is somewhere left of Betty

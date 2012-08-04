@@ -55,7 +55,7 @@ object SendMoreMoney {
             M*10000 + O*1000 + N*100 + E*10 + Y)
         cp.add(S > 0)
         cp.add(M > 0)
-	    cp.add(alldifferent(all), Strong)
+        cp.add(alldifferent(all), Strong)
 
       } exploration {
 

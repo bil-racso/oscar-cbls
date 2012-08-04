@@ -66,11 +66,7 @@ object AllDifferentExcept0 {
     val cp = CPSolver()
 
     // data
-    var n = 7
-
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
+    val n = if (args.length > 0) args(0).toInt else 7
 
     // variables
     val x = Array.fill(n)(CPVarInt(cp, 0 to n))
@@ -84,7 +80,7 @@ object AllDifferentExcept0 {
 
     cp.solveAll subjectTo {
 
-      alldifferent_except_0(cp, x)                                
+      alldifferent_except_0(cp, x)
 
       // Just for fun, we add that x should be increasing
       increasing(cp, x)

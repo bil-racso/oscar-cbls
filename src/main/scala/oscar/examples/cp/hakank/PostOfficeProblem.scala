@@ -108,51 +108,12 @@ object PostOfficeProblem {
       }
 
       // Add a limit for the cost
-      cp.add(total_cost <= 20000)
+      // cp.add(total_cost <= 20000)
 
       
     } exploration {
        
-      // cp.binary(x)
-      // cp.binaryFirstFail(x)
-      // cp.binaryMaxDegree(x)
-
-      while (!allBounds(x)) {
-
-        // all unbound variables
-        val notbound = x.filterNot(_.isBound)
-
-        // variable selection
-        val y = argMax(notbound)(v=>v.size).last
-        //    
-        // value selection
-        // 
-        val size = y.size
-        val vMin = y.min   // min value of domain
-        val vMax = y.max   // max value of domain
-        val vMidV = ((vMin + vMax) / 2).toInt; // calculate median value (of vMin and vMax)
-        val vMid = y.valueAfter(vMidV)  // the median value in the domain
-        val vRand = y.randomValue  // random value from domain
-        
-        // var v = vMin
-        // var v = vMax
-        var v = vRand
-        // var v = vMid
-        
-        // cp.branch {
-        //   cp.post(y == v)
-        // } {
-        //   cp.post(y != v)
-        // }
-        
-        // split
-        cp.branch {
-          cp.post(y <= v)
-        } {
-          cp.post(y > v)
-        }
-        
-      }
+      cp.binary(x,_.min, _.min)
 
       println("\nSolution:")
 

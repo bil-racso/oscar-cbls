@@ -67,7 +67,7 @@ object Olympic {
   def abs_minus(x: CPVarInt,
              y: CPVarInt,
              z: CPVarInt) : Constraint = 
-    return z == (x-y).abs()
+    z == (x-y).abs()
 
 
   def main(args: Array[String]) {
@@ -106,7 +106,7 @@ object Olympic {
 
     } exploration {
        
-      cp.binaryMaxDegree(x)
+      cp.binary(x, _.size, _.min)
 
       println("x: " + x.mkString(""))
 
