@@ -31,6 +31,12 @@ import oscar.cp.core._
   Also, see 
   http://www.comp.rgu.ac.uk/staff/ha/ZCSP/additional_problems/stable_marriage/stable_marriage.pdf
 
+  Note: There is a better (and nicer) implementation of the constraints in
+        Pierre Schaus' improved version:
+          oscar/examples/cp/StableMariage.scala
+        which I copied to my own variant (randomizing the preferences)
+          StableMarriageRandom.scala
+
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
@@ -166,8 +172,8 @@ object StableMarriage {
 
       
     // variables
-    val wife    = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
-    val husband = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
+    val wife    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val husband = Array.fill(n)(CPVarInt(cp, 0 to n-1))
 
     //
     // constraints
@@ -192,9 +198,9 @@ object StableMarriage {
       }
       
       
-      //   forall(m in Men, o in Women)
-      //       cp.post(rankMen[m,o] < rankMen[m, wife[m]] =>
-      //               rankWomen[o,husband[o]] < rankWomen[o,m]);
+      // forall(m in Men, o in Women)
+      //    cp.post(rankMen[m,o] < rankMen[m, wife[m]] =>
+      //            rankWomen[o,husband[o]] < rankWomen[o,m]);
       for(m <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
@@ -206,9 +212,9 @@ object StableMarriage {
         
       }
       
-      //   forall(w in Women, o in Men)
-      //      cp.post(rankWomen[w,o] < rankWomen[w,husband[w]] =>
-      //              rankMen[o,wife[o]] < rankMen[o,w]);
+      // forall(w in Women, o in Men)
+      //   cp.post(rankWomen[w,o] < rankWomen[w,husband[w]] =>
+      //           rankMen[o,wife[o]] < rankMen[o,w]);
       for(w <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
@@ -216,7 +222,6 @@ object StableMarriage {
                  ==>
                  (element(rankMen(o), wife(o)) <<= rankMen(o)(w))
                  )
-
         }
       }
 

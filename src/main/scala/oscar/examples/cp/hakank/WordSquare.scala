@@ -75,7 +75,7 @@ object WordSquare {
     val WORDLEN = 0 until word_len
 
     // Convert letters => digits
-    val d = "abcdefghijklmnopqrstuvwxyz".zipWithIndex.toMap 
+    val d = ('a' to 'z').zipWithIndex.toMap 
 
 
     // Read the word list
@@ -113,7 +113,7 @@ object WordSquare {
       cp.binaryFirstFail(E)
         
       println("solution #" + (numSols+1))
-      E.foreach(e=> println(words(e.value)))
+      println(E.map(e=>words(e.value)).mkString("\n"))
       println()
 
       numSols += 1

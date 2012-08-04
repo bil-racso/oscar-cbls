@@ -91,7 +91,7 @@ object SetCovering {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

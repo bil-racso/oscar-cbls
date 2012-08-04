@@ -137,13 +137,12 @@ object SecretSanta2 {
       n = n_with_single
       rounds = rounds_single
     }
-    M = n + 1
 
+    M = n + 1
     val RANGE = 0 until n
 
     val persons = Array("Noah", "Ava", "Ryan", "Mia", "Ella",
                         "John", "Lily", "Evan", "Single")
-
     val spouses = Array(
                         Ava,  // Noah
                         Noah, // Ava
@@ -182,10 +181,8 @@ object SecretSanta2 {
       }
 
       // no Santa for a spouses
-      for(i <- RANGE) {
-        if (spouses(i) > -1) {
+      for(i <- RANGE if spouses(i) > -1) {
           cp.add(santas(i) != spouses(i))
-        }
       }
 
       // optimize "distance" to earlier rounds:
