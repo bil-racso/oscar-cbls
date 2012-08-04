@@ -29,95 +29,92 @@ import oscar.visual._
 
 import scala.io.Source
 
-object CumulativeJobShop {
+object CumulativeJobShop extends Application {
 
-	def main(args : Array[String]) {
+	// Parsing		
+	// -----------------------------------------------------------------------
 
-		// Parsing		
-		// -----------------------------------------------------------------------
+	var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 
-		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+	val nJobs        = lines.head.trim().split(" ")(0).toInt
+	val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
+	val nResources   = lines.head.trim().split(" ")(2).toInt
+	val capacity     = lines.head.trim().split(" ")(3).toInt
 
-		val nJobs        = lines.head.trim().split(" ")(0).toInt
-		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-		val nResources   = lines.head.trim().split(" ")(2).toInt
-		val capacity     = lines.head.trim().split(" ")(3).toInt
+	val nActivities  = nJobs * nTasksPerJob
 
-		val nActivities  = nJobs * nTasksPerJob
+	val Activities   = 0 until nActivities
+	val Jobs         = 0 until nJobs
+	val Resources    = 0 until nResources
 
-		val Activities   = 0 until nActivities
-		val Jobs         = 0 until nJobs
-		val Resources    = 0 until nResources
+	println("#Jobs       : " + nJobs)
+	println("#Activities : " + nActivities)
+	println("#Resources  : " + nResources)
+	println("Capacity    : " + capacity)
 
-		println("#Jobs       : " + nJobs)
-		println("#Activities : " + nActivities)
-		println("#Resources  : " + nResources)
-		println("Capacity    : " + capacity)
+	lines = lines.drop(1)
+
+	val jobs = new Array[Int](nActivities)
+	val machines = new Array[Int](nActivities)
+	val durations = new Array[Int](nActivities)
+
+	for (i <- Activities) {
+
+		val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
+
+		jobs(i) = l(0)
+		machines(i) = l(1)
+		durations(i) = l(2)
 
 		lines = lines.drop(1)
-
-		val jobs = new Array[Int](nActivities)
-		val machines = new Array[Int](nActivities)
-		val durations = new Array[Int](nActivities)
-
-		for (i <- Activities) {
-
-			val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-
-			jobs(i) = l(0)
-			machines(i) = l(1)
-			durations(i) = l(2)
-
-			lines = lines.drop(1)
-		}
-
-		// Modeling	
-		// -----------------------------------------------------------------------
-
-		val horizon = durations.sum
-		val cp = new CPScheduler(horizon)
-
-		// Activities & Resources
-		val activities = Array.tabulate(nActivities)(i => new Activity(cp, durations(i)))
-		val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
-
-		// Resource allocation
-		for (i <- Activities)
-			activities(i).needs(resources(machines(i)), 1)
-
-		// The makespan to minimize
-		val makespan = maximum(0 until nActivities)(i => activities(i).end)
-
-		// Visualization  
-		// -----------------------------------------------------------------------
-
-		val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
-		val colors = VisualUtil.getRandomColorArray(nResources)
-		
-		val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
-		val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
-		
-		frame.createFrame("Gantt chart").add(gantt)
-		for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
-		frame.pack
-
-		// Constraints & Search
-		// -----------------------------------------------------------------------
-
-		cp.minimize(makespan) subjectTo {
-			
-			for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-				cp.add(activities(i) precedes activities(i + 1))
-				
-		} exploration {
-
-			cp.binaryFirstFail(activities.map(_.start))
-			//cp.setTimesSearch(activities)
-
-			for (p <- profiles) p.update(1, 20)
-			gantt.update(1, 20)
-		}
-
-		cp.printStats()
 	}
+
+	// Modeling	
+	// -----------------------------------------------------------------------
+
+	val horizon = durations.sum
+	val cp = new CPScheduler(horizon)
+
+	// Activities & Resources
+	val activities = Array.tabulate(nActivities)(i => new Activity(cp, durations(i)))
+	val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
+
+	// Resource allocation
+	for (i <- Activities)
+		activities(i).needs(resources(machines(i)), 1)
+
+	// The makespan to minimize
+	val makespan = maximum(0 until nActivities)(i => activities(i).end)
+
+	// Visualization  
+	// -----------------------------------------------------------------------
+
+	val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
+	val colors = VisualUtil.getRandomColorArray(nResources)
+	
+	val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
+	val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
+	
+	frame.createFrame("Gantt chart").add(gantt)
+	for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
+	frame.pack
+
+	// Constraints & Search
+	// -----------------------------------------------------------------------
+
+	cp.minimize(makespan) subjectTo {
+		
+		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
+			cp.add(activities(i) precedes activities(i + 1))
+			
+	} exploration {
+
+		//cp.binaryFirstFail(activities.map(_.start))
+		cp.setTimes(activities)
+
+		for (p <- profiles) p.update(1, 20)
+		gantt.update(1, 20)
+	}
+
+	cp.printStats()
 }

@@ -78,6 +78,16 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 		resource.addActivity(this, capacity)
     }
 	
+	def needsForever(resource : CumulativeResource, capacity : Int, atEnd : Boolean = true) {
+    	assert(capacity >= 0)
+		resource.addProdConsActivity(this, capacity, atEnd)
+    }
+	
+	def suppliesForever(resource : CumulativeResource, capacity : Int, atEnd : Boolean = true) {
+    	assert(capacity >= 0)
+		resource.addProdConsActivity(this, -capacity, atEnd)
+    }
+	
 	def needs(resource : CumulativeResource, capacity : Range) {
     	assert(capacity.min >= 0)
 		resource.addActivity(this, capacity)
@@ -119,7 +129,7 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 	
 	def store = scheduler
 	
-	override def toString = "dur: "+dur+ " in ["+est+","+lct+"[";
+	override def toString = "dur: "+dur+ " in ["+est+","+lct+"["
 }
 
 object Activity {
