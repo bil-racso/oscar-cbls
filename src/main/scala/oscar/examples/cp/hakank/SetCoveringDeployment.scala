@@ -64,6 +64,7 @@ object SetCoveringDeployment {
                           "Tunis")
 
     val n = countries.length
+    val RANGE = 0 until n
 
     // the incidence matrix (neighbours)
     val mat = Array(Array(0, 1, 0, 1, 0, 0, 1, 1),
@@ -109,13 +110,12 @@ object SetCoveringDeployment {
       // Constraint 2: There should always be an backup
       //               army near every city
       //
-      for(i <- 0 until n) {
+      for(i <- RANGE) {
         cp.add(
                x(i) + 
-               sum(for{j <- 0 until n if mat(i)(j) == 1} yield y(j)) 
+               sum(for{j <- RANGE if mat(i)(j) == 1} yield y(j)) 
                >= 1
                )
-        
       }
 
 
@@ -127,22 +127,14 @@ object SetCoveringDeployment {
       println("num_armies: " + num_armies)
       println("x: " + x.mkString(""))
       println("y: " + y.mkString(""))
-      for(i <- 0 until n) {
-        var some_army = false
-        if (x(i).value == 1) {
-          print("Army: " + countries(i) + " ")
-          some_army = true
-        }
-
-        if (y(i).value == 1) {
-          print(" Reserve army: " + countries(i) + " ")
-          some_army = true
-        }
-
-        if (some_army) {
-          println()
-        }
+      val armyType = Array("\nArmy", " Reserve")
+      for(i <- RANGE) {
+        Array(x(i),y(i)).
+        filter(_.value == 1).
+        zipWithIndex.map(j=>armyType(j._2) + ": " + countries(i)).
+        foreach(print)
       }
+      println()
 
       numSols += 1
 
