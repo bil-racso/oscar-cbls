@@ -19,71 +19,47 @@ package oscar.cp.scheduling
 
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.Store
+import oscar.cp.modeling.CPScheduler
 
-class CumulativeActivity(activity: Activity, resourceVar : CPVarInt, heightVar : CPVarInt) {//extends Activity(activity.scheduler, activity.dur) {
+class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt) extends Activity(scheduler, startVar, durVar, endVar) {
 
     def resource = resourceVar
     def height   = heightVar
-    
-    def start = activity.start
-    def end = activity.end
-    def dur = activity.dur
-    
-	def est = activity.est
-	def lst = activity.lst
-	def ect = activity.ect
-	def lct = activity.lct
-	
-	def minDuration = activity.minDuration
-	def maxDuration = activity.maxDuration
 	
 	def minHeight = height.min
 	def maxHeight = height.max
 	
-	def store = activity.store
-	
-	override def toString() = activity + " height: " + heightVar + " resource: " + resourceVar
+	override def toString() = super.toString + " height: " + heightVar + " resource: " + resourceVar
 }
 
 object CumulativeActivity {
 	
-	def apply(activity : Activity, resource : Int, height : Int) = {
-		
-		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, height))
-	}
+	def apply(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt) = new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar)
 	
-	def apply(activity : Activity, resourceVar : CPVarInt, height : Int) = {
-		
-		new CumulativeActivity(activity, resourceVar, CPVarInt(activity.scheduler, height))
-	}
+	def apply(activity : Activity, resource : Int, height : Int)           = build(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, height)) 	
+	def apply(activity : Activity, resource : CPVarInt, height : Int)      = build(activity, resource, CPVarInt(activity.scheduler, height)) 	
+	def apply(activity : Activity, resource : Int, height : CPVarInt)      = build(activity, CPVarInt(activity.scheduler, resource), height)	
+	def apply(activity : Activity, resource : CPVarInt, height : CPVarInt) = build(activity, resource, height)
 	
-	def apply(activity : Activity, resourceVar : CPVarInt, heights : Range) = {
-		
-		new CumulativeActivity(activity, resourceVar, CPVarInt(activity.scheduler, heights))
+	def apply(activity : Activity, resource : CPVarInt, height : Range) = build(activity, resource, CPVarInt(activity.scheduler, height)) 	
+	def apply(activity : Activity, resource : Int, height : Range)      = build(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, height)) 	
+	def apply(activity : Activity, resource : Range, height : Range)    = build(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, height)) 	
+	def apply(activity : Activity, resource : Range, height : Int)      = build(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, height)) 	
+
+	private def build(activity : Activity, resource : CPVarInt, height : CPVarInt) = {
+		new CumulativeActivity(activity.scheduler, activity.start, activity.dur, activity.end, resource, height)
 	}
+}
+
+object ProdConsActivity {
+
+	def apply(activity : Activity, resourceVar : Int, heightVar : Int) = build(activity, CPVarInt(activity.scheduler, resourceVar), CPVarInt(activity.scheduler, heightVar), true)
+	def apply(activity : Activity, resourceVar : Int, heightVar : Int, atEnd : Boolean) = build(activity, CPVarInt(activity.scheduler, resourceVar), CPVarInt(activity.scheduler, heightVar), atEnd)
 	
-	def apply(activity : Activity, resource : Int, heights : Range) = {
-		
-		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resource), CPVarInt(activity.scheduler, heights))
-	}
-	
-	def apply(activity : Activity, resources : Range, heights : Range) = {
-		
-		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resources), CPVarInt(activity.scheduler, heights))
-	}
-		
-	def apply(activity : Activity, resources : Range, height : Int) = {
-		
-		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resources), CPVarInt(activity.scheduler, height))
-	}
-	
-	def apply(activity : Activity, resource : Int, heightVar : CPVarInt) = {
-		
-		new CumulativeActivity(activity, CPVarInt(activity.scheduler, resource), heightVar)
-	}
-	
-	def apply(activity : Activity, resourceVar : CPVarInt, heightVar : CPVarInt) = {
-		
-		new CumulativeActivity(activity, resourceVar, heightVar)
+	private def build(activity : Activity, resourceVar : CPVarInt, heightVar : CPVarInt, atEnd: Boolean) = {
+		val startVar = if (atEnd) activity.end else activity.start
+		val endVar   = CPVarInt(activity.scheduler, activity.scheduler.horizon)
+		val durVar   = CPVarInt(activity.scheduler, 0 to activity.store.horizon)
+		new CumulativeActivity(activity.scheduler, startVar, durVar, endVar, resourceVar, heightVar)
 	}
 }

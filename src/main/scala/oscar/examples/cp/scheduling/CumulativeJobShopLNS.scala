@@ -79,7 +79,7 @@ object CumulativeJobShopLNS {
 		val cp = new CPScheduler(horizon)
 
 		// Activities & Resources
-		val activities = Array.tabulate(nActivities)(i => new Activity(cp, durations(i)))
+		val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
 		val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
 
 		// Resource allocation

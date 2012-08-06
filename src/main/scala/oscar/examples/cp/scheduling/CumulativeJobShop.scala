@@ -76,7 +76,7 @@ object CumulativeJobShop extends Application {
 	val cp = new CPScheduler(horizon)
 
 	// Activities & Resources
-	val activities = Array.tabulate(nActivities)(i => new Activity(cp, durations(i)))
+	val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
 	val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
 
 	// Resource allocation
@@ -105,13 +105,11 @@ object CumulativeJobShop extends Application {
 	cp.minimize(makespan) subjectTo {
 		
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-			cp.add(activities(i) precedes activities(i + 1))
-			
+			cp.add(activities(i) precedes activities(i + 1))		
 			
 	} exploration {
 
 		cp.binaryFirstFail(activities.map(_.start))
-		//cp.setTimes(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)

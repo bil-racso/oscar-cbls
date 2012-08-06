@@ -21,47 +21,42 @@ import oscar.cp.core.Store;
 import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 
-class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
+class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt) {
     
-	private val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-    private val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
-    scheduler.add(startVar + durVar == endVar) // Linking the variables
+	// Linking the variables
+	scheduler.add(startVar + durVar == endVar) 
 
     def start = startVar
     def end = endVar
     def dur = durVar
     
-	def this(scheduler : CPScheduler, dur: Int) = this(scheduler, CPVarInt(scheduler,dur,dur))
-
-	/**
-	 * earliest starting time
+	/** earliest starting time
 	 */
 	def est = start.min
 	
-	/**
-	 * latest starting time
+	/** latest starting time
 	 */
 	def lst = start.max
 	
-	/**
-	 * earliest completion time assuming the smallest duration
+	/** earliest completion time assuming the smallest duration
 	 */
 	def ect = end.min
 	
-	/**
-	 * latest completion time assuming the smallest duration
+	/** latest completion time assuming the smallest duration
 	 */
 	def lct = end.max
 	
-	/**
-	 * current minimal duration of this activity
+	/** current minimal duration of this activity
 	 */
 	def minDuration = dur.min
 
-	/**
-	 * current maximal duration of this activity
+	/** current maximal duration of this activity
 	 */
 	def maxDuration = dur.max
+	
+	def store = scheduler
+	
+	override def toString = "dur: "+dur+ " in ["+est+","+lct+"["
 	
 	def adjustStart(v : Int) = start.updateMin(v)	
 	
@@ -73,10 +68,32 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 	
 	def follows(act : Activity) : LeEq = act << this
 	
+	
+	// UnitResource
+	def needs(resource : UnitResource) {
+    	resource.addActivity(this)
+    }
+	
+	// CumulativeResource
 	def needs(resource : CumulativeResource, capacity : Int) {
     	assert(capacity >= 0)
 		resource.addActivity(this, capacity)
     }
+	
+	def needs(resource : CumulativeResource, capacity : Range) {
+    	assert(capacity.min >= 0)
+		resource.addActivity(this, capacity)
+	}
+	
+	def supplies(resource : CumulativeResource, capacity : Int) {
+    	assert(capacity >= 0)
+    	resource.addActivity(this, -capacity)
+    }
+	
+	def supplies(resource : CumulativeResource, capacity : Range) {
+    	assert(capacity.min >= 0)
+		resource.addActivity(this, -capacity.max to -capacity.min)
+	}
 	
 	def needsForever(resource : CumulativeResource, capacity : Int, atEnd : Boolean = true) {
     	assert(capacity >= 0)
@@ -88,11 +105,7 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 		resource.addProdConsActivity(this, -capacity, atEnd)
     }
 	
-	def needs(resource : CumulativeResource, capacity : Range) {
-    	assert(capacity.min >= 0)
-		resource.addActivity(this, capacity)
-	}
-	
+	// CumulativeResourceSet	
 	def needs(resource : CumulativeResourceSet, resources : Array[Int], capacity : Range) {
 		assert(capacity.min >= 0)
 		resource.addActivity(this, resources, capacity)	
@@ -112,38 +125,27 @@ class Activity(val scheduler : CPScheduler, durVar: CPVarInt) {
 		assert(capacity >= 0)
 		resource.addActivity(this, resources, -capacity)	
 	}
-	
-	def supplies(resource : CumulativeResource, capacity : Int) {
-    	assert(capacity >= 0)
-    	resource.addActivity(this, -capacity)
-    }
-	
-	def supplies(resource : CumulativeResource, capacity : Range) {
-    	assert(capacity.min >= 0)
-		resource.addActivity(this, -capacity.max to -capacity.min)
-	}
-	
-	def needs(resource : UnitResource) {
-    	resource.addActivity(this)
-    }
-	
-	def store = scheduler
-	
-	override def toString = "dur: "+dur+ " in ["+est+","+lct+"["
 }
 
 object Activity {
 	
-	def apply(scheduler : CPScheduler, dur : Int) = new Activity(scheduler, dur)
+	def apply(scheduler : CPScheduler, dur : Int) = build(scheduler, CPVarInt(scheduler, dur))
 	
-	def apply(scheduler : CPScheduler, dur : Range) = new Activity(scheduler, CPVarInt(scheduler, dur))
+	def apply(scheduler : CPScheduler, dur : Range) = build(scheduler, CPVarInt(scheduler, dur))
 
-	def apply(scheduler : CPScheduler, durVar : CPVarInt) = new Activity(scheduler, durVar)
+	def apply(scheduler : CPScheduler, durVar : CPVarInt) = build(scheduler, durVar)
+	
+	private def build(scheduler : CPScheduler, durVar : CPVarInt) : Activity = {
+		
+		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
+		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
+		return new Activity(scheduler, startVar, durVar, endVar)
+    }
 }
 
 
 
-class MirrorActivity(val act: Activity)  extends Activity(act.scheduler, act.dur) {
+class MirrorActivity(val act: Activity)  extends Activity(act.scheduler, act.start, act.dur, act.end) {
 
 	override def start: CPVarInt = throw new UninitializedFieldError("not available") 
 	
