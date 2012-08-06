@@ -34,6 +34,18 @@ object CumulativeJobShop extends Application {
 	// Parsing		
 	// -----------------------------------------------------------------------
 	
+	
+	val table = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+	
+	val c = CPSolver()
+	
+	val i = CPVarInt(c, 0 until 10)
+	println(i)
+	c.add(table(i) == 3)
+	println(i)
+	
+	
+	
 	var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 
 	val nJobs        = lines.head.trim().split(" ")(0).toInt

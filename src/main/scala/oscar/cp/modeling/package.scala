@@ -29,6 +29,22 @@ package object modeling extends Constraints {
   val Medium = CPPropagStrength.Medium
   val Weak = CPPropagStrength.Weak
   
+  class ElementConstraintIntBuilder(a : Array[Int]) {
+	  def apply(i : CPVarInt) : CPVarInt = element(a, i)
+  }
+  
+  implicit def array2ElementConstraintBuilder(a : Array[Int]) = {
+	  new ElementConstraintIntBuilder(a)
+  }
+  
+  class ElementConstraintCPVarIntBuilder(a : Array[CPVarInt]) {
+	  def apply(i : CPVarInt) : CPVarInt = element(a, i)
+  }
+  
+  implicit def array2ElementConstraintBuilder(a : Array[CPVarInt]) = {
+	  new ElementConstraintCPVarIntBuilder(a)
+  }
+  
   class CPVarBoolWrappper(val b: oscar.cp.core.CPVarBool) {
     /**
      * -b
