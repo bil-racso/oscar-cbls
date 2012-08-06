@@ -46,11 +46,7 @@ object MagicSquareAndCards {
     //
     // data
     //
-    var n = 3
-
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
+    val n = if (args.length > 0) args(0).toInt else 3;
 
     val RANGE = 0 until n
 
@@ -79,12 +75,11 @@ object MagicSquareAndCards {
         // rows
         val row = for{j <- RANGE} yield x(i)(j)
         cp.add( sum(row) == s)
+        cp.add( alldifferent(row), Strong)
         
         // columns
         val col = for{j <- RANGE} yield x(j)(i)
         cp.add( sum(col) == s)
-
-        cp.add( alldifferent(row), Strong)
         cp.add( alldifferent(col), Strong)
       }
 

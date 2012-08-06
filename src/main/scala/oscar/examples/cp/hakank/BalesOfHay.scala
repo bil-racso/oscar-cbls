@@ -95,7 +95,7 @@ object BalesOfHay {
       
     } exploration {
        
-      cp.binaryMaxDegree(bales)
+      cp.binary(bales, -_.constraintDegree, _.max)
 
       println("bales:" + bales.mkString(""))
 

@@ -49,23 +49,9 @@ object DeBruijn {
     val cp = CPSolver()
 
     // data
-    var base = 2
-    var n = 3
-    var m = pow(base, n).toInt
-      
-    if (args.length > 0) {
-     base = args(0).toInt
-    }
-
-    if (args.length > 1) {
-      n = args(1).toInt
-    }
-
-    if (args.length > 2) {
-      m = args(2).toInt
-    } else {
-      m = pow(base, n).toInt
-    }
+    val base = if (args.length > 0) args(0).toInt else 2;
+    val n    = if (args.length > 1) args(1).toInt else 3;
+    val m    = if (args.length > 2) args(2).toInt else pow(base, n).toInt;
 
     println("base: " + base + " n: " + n + " m: " + m)
 

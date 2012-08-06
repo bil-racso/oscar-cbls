@@ -89,7 +89,7 @@ object MrSmith {
       // Either Tim and John will come or neither will come.
       cp.add(tim == john)
       
-      // If Matt comes /\ then John and his father will also come.
+      // If Matt comes then John and his father will also come.
       cp.add((matt === 1) ==> ((john === 1) && (mr_smith === 1)))
 
 

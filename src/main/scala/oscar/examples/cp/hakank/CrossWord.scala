@@ -69,7 +69,7 @@ object CrossWord {
     //
     // data
     // 
-    val alpha = Array("_","a","b","c","d","e","f",
+    val alpha = Array(" ","a","b","c","d","e","f",
                       "g","h","i","j","k","l","m",
                       "n","o","p","q","r","s","t",
                       "u","v","w","x","y","z")
@@ -135,10 +135,9 @@ object CrossWord {
 
       cp.add(alldifferent(E), Strong)
 
-      for(I <- 0 until num_words) {
-        for(J <- 0 until word_len) {
+      for(I <- 0 until num_words;
+          J <- 0 until word_len) {
           cp.add(A(I)(J) == AA(I)(J));
-        }
       }
 
 

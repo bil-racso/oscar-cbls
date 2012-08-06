@@ -60,8 +60,6 @@ import scala.math._
   I wrote code to solve this in J. I'll post that separately.
   """
 
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
@@ -166,7 +164,7 @@ object EinavPuzzle {
       
       for(i <- ROWS) {
         for(j <- COLS) {
-          print("%3d".format(x(i)(j).value))
+          print("%4d".format(x(i)(j).value))
         }
         println()
       }

@@ -90,13 +90,7 @@ object FillAPix {
       val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
       n = lines(0).toInt
       println("n:" + n)
-      var this_puzzle = List[List[Int]]()
-      for (t <- 1 to n) {
-        println(lines(t))
-        val t2:List[Int] = lines(t).split("").tail.toList.map(i=>if (i == ".") X else i.toInt)
-        this_puzzle = this_puzzle ::: List(t2)
-      }
-      puzzle = this_puzzle
+      puzzle = lines.tail.map(_.split("").tail.toList.map(i=>if (i == ".") X else i.toInt))
     }
 
     //
@@ -115,15 +109,12 @@ object FillAPix {
       val tmp = List(-1,0,1)
 
       for(i <- 0 until n;
-          j <- 0 until n) {
-
-        if (puzzle(i)(j) >= 0) {            
+          j <- 0 until n if puzzle(i)(j) >= 0) {            
             cp.add(sum( for{ a <- tmp; 
                              b <- tmp 
                              if ( (i+a >= 0) && (j+b >=  0) &&
                                   (i+a < n)  && (j+b < n)) 
                                } yield pict(i+a)(j+b) ) == puzzle(i)(j))
-        }
       }
 
 
@@ -132,16 +123,7 @@ object FillAPix {
       cp.binaryFirstFail(pict.flatten)
 
       println("\nSolution:")
-      for(i <- 0 until n) {
-        for(j <- 0 until n) {
-          if (pict(i)(j).value == 1) {
-            print("#")
-          } else  {
-            print(" ")
-          }
-        }
-        println()
-      }
+      println(pict.map(i=>i.map(j => if (j.value == 1) "#" else " ").mkString("")).mkString("\n"))
 
       numSols += 1
        
