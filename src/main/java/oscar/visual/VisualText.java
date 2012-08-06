@@ -16,6 +16,7 @@
  ******************************************************************************/
 package oscar.visual;
 
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -32,6 +33,15 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 	
 	private String text;
 	private int x,y;
+	private boolean centered = false;
+	
+	public void setText(String str) {
+		text = str;
+	}
+	
+	public void setCentered(boolean b) {
+		centered = b;
+	}
 	
 	public VisualText(VisualDrawing d,int x, int y, String text) {
 		super(d, null);
@@ -53,8 +63,22 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 	
 	@Override
 	public void draw(Graphics2D g) {
-		g.drawString(text, x, y);
+		
+		g.setColor(getInnerCol());
+		
+		if (centered) 
+			drawCenteredString(text, x, y, g);
+		else
+			g.drawString(text, x, y);
 	}
+	
+	public void drawCenteredString(String text, int x, int y, Graphics2D g) {
+	
+	    FontMetrics fm = g.getFontMetrics();
+	    
+	    int w = fm.stringWidth(text);
+	    g.drawString(text, x-(w/2), y);
+	  }
 	
 
 	public static void main(String[] args) {

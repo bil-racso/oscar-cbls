@@ -84,6 +84,11 @@ abstract class CPVarInt(val s : Store, val name : String = "") extends Traversab
 			f(v)
 		}
 	}
+	
+	def median: Int = {
+		val a = this.toArray
+		return a(a.size/2)
+	}
 
 	/**
 	 * @return  the size of the domain

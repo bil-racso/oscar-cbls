@@ -16,6 +16,10 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	})
 	   												                       
 	private val max = (0 until activities.size).map(i => f(i)).max
+	
+	private val text : VisualText = new VisualText(this, 50, 50, "")
+	text.setInnerCol(Color.RED)
+	text.setCentered(true)
 	   												               
 	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
 	makespanLine.setOuterCol(Color.RED);
@@ -37,6 +41,8 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 		makespanLine.setOrig(makespan*xScale, 0)
 		makespanLine.setDest(makespan*xScale, (max+1)*yScale)
 		
+		text.setText(makespan.toString)
+		text.move(makespan*xScale, (max+2)*yScale);
 		repaint()
 	}
 }

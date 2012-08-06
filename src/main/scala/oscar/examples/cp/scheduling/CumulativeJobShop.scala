@@ -33,7 +33,7 @@ object CumulativeJobShop extends Application {
 
 	// Parsing		
 	// -----------------------------------------------------------------------
-
+	
 	var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 
 	val nJobs        = lines.head.trim().split(" ")(0).toInt
@@ -82,9 +82,6 @@ object CumulativeJobShop extends Application {
 	// Resource allocation
 	for (i <- Activities)
 		activities(i).needs(resources(machines(i)), 1)
-		
-	val cons = Activity(cp, 0)
-	cons.needsForever(resources(3), 1, atEnd = false)
 
 	// The makespan to minimize
 	val makespan = maximum(0 until nActivities)(i => activities(i).end)
@@ -110,12 +107,11 @@ object CumulativeJobShop extends Application {
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
 			cp.add(activities(i) precedes activities(i + 1))
 			
-		//cp.add(cons.start == 0)
 			
 	} exploration {
 
-		cp.binaryFirstFail((activities :+ cons).map(_.start))
-		//cp.setTimes(activities :+ cons)
+		cp.binaryFirstFail(activities.map(_.start))
+		//cp.setTimes(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)
