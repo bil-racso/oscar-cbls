@@ -22,7 +22,7 @@ import oscar.cp.core.Store
 import oscar.cp.modeling.CPScheduler
 
 class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt) extends Activity(scheduler, startVar, durVar, endVar) {
-
+	
     def resource = resourceVar
     def height   = heightVar
 	
@@ -53,8 +53,9 @@ object CumulativeActivity {
 
 object ProdConsActivity {
 
+	def apply(activity : Activity, resourceVar : Int, heightVar : CPVarInt) = build(activity, CPVarInt(activity.scheduler, resourceVar), heightVar, true)
 	def apply(activity : Activity, resourceVar : Int, heightVar : Int) = build(activity, CPVarInt(activity.scheduler, resourceVar), CPVarInt(activity.scheduler, heightVar), true)
-	def apply(activity : Activity, resourceVar : Int, heightVar : Int, atEnd : Boolean) = build(activity, CPVarInt(activity.scheduler, resourceVar), CPVarInt(activity.scheduler, heightVar), atEnd)
+	def apply(activity : Activity, resourceVar : Int, heightVar : CPVarInt, atEnd : Boolean) = build(activity, CPVarInt(activity.scheduler, resourceVar), heightVar, atEnd)
 	
 	private def build(activity : Activity, resourceVar : CPVarInt, heightVar : CPVarInt, atEnd: Boolean) = {
 		val startVar = if (atEnd) activity.end else activity.start

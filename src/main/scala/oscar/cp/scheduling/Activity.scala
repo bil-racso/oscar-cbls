@@ -21,14 +21,12 @@ import oscar.cp.core.Store;
 import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 
-class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt, private var name : String = null) {
+class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt) {
     
 	// Linking the variables
 	scheduler.add(startVar + durVar == endVar) 
 	// Link the resource to the scheduler and get an id
 	val id = scheduler.addActivity(this)
-	// Default name
-	if (name == null) name = "Activity " + id
 
 	// The variables
     def start = startVar
@@ -89,7 +87,23 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
     }
 	
 	// CumulativeResource
-	def needs(resource : CumulativeResource, capacity : Int) {
+	def needs(resource : CumulativeResource, capacity : Capacity) {
+		resource.addActivity(this, capacity.variable(scheduler))
+	}
+	
+	def needsF(resource : CumulativeResource, capacity : Capacity, atEnd : Boolean = true) {
+		resource.addProdConsActivity(this, capacity.variable(scheduler), atEnd)
+    }
+	
+	def gives(resource : CumulativeResource, capacity : Capacity) {
+		resource.addActivity(this, capacity.opposite(scheduler))
+	}
+	
+	def givesF(resource : CumulativeResource, capacity : Capacity, atEnd : Boolean = true) {
+    	resource.addProdConsActivity(this, capacity.opposite(scheduler), atEnd)
+    }
+	
+	/*def needs(resource : CumulativeResource, capacity : Int) {
     	assert(capacity >= 0)
 		resource.addActivity(this, capacity)
     }
@@ -117,7 +131,7 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
 	def suppliesForever(resource : CumulativeResource, capacity : Int, atEnd : Boolean = true) {
     	assert(capacity >= 0)
 		resource.addProdConsActivity(this, -capacity, atEnd)
-    }
+    }*/
 	
 	// CumulativeResourceSet	
 	def needs(resource : CumulativeResourceSet, resources : Array[Int], capacity : Range) {

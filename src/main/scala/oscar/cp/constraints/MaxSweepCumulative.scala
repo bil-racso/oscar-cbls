@@ -7,7 +7,7 @@ import oscar.cp.core.Store
 
 class MaxSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], ub : Int, r : Int) extends SweepCumulativeA(cp, allTasks, Int.MinValue, ub, r, "MaxSweepCumulative") {
 
-	val eventPointSeries = new Array[Event](nTasks*5)
+	val eventPointSeries = new Array[Event](nTasks*3)
 	
 	override def generateCheck(i : Int) {}
 	

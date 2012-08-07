@@ -285,15 +285,14 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		act4.needs(resource, Array(0, 1), 2)
 		act5.needs(resource, Array(0, 1), 1)
 
-		cp.solveAll subjectTo {
-		
-			cp.add(act1.start == 0)
-			cp.add(act2.start == 0)
-			cp.add(act3.start == 0)
-			cp.add(act4.start == 0)  
+		cp.add(act1.start == 0)
+		cp.add(act2.start == 0)
+		cp.add(act3.start == 0)
+		cp.add(act4.start == 0)  
 			  
-			cp.add(resource.resourcesOf(act2) == 0)	
-		}
+		cp.add(resource.resourcesOf(act2) == 0)	
+		
+		cp.addResourceConstraints()
 		
 		resource.resourcesOf(act1).value should be(0)
 		resource.resourcesOf(act3).value should be(1)

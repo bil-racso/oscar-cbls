@@ -79,7 +79,9 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	// Number of tasks that overlap the sweep line
 	protected var nCurrentTasks : Int = 0
 	// Tasks that could intersect the sweep line
-	protected val stackPrune    : Set[Int] = Set()	
+	protected val stackPrune    : Array[Int] = Array.fill(nTasks)(0)
+	// Number of tasks in stackPrune
+	protected var nTasksToPrune : Int = 0
 
 	// Contribution of all the tasks that are added to consSumHeight
 	protected val consContrib = new Array[Int](nTasks)
@@ -187,7 +189,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// Generates events
 		if (!generateEventPointSeries()) 
 			return CPOutcome.Suspend
-			
+		
 		// Performs a sweep on the events
 		if (sweepAlgorithm() == CPOutcome.Failure) 
 			return CPOutcome.Failure
@@ -239,7 +241,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		consSumHeight = 0
 		capaSumHeight = 0
 		nCurrentTasks = 0
-		stackPrune.clear
+		nTasksToPrune = 0
 			
 		for (i <- Tasks) {
 			consContrib(i) = 0
@@ -297,7 +299,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				} 
 			}
 			else {
-				stackPrune.add(event.task)
+				stackPrune(nTasksToPrune) = event.task
+				nTasksToPrune += 1
 			}
 		}
 		
@@ -315,11 +318,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	private def prune(low : Int, up : Int) : CPOutcome = {
 		
-		val it = stackPrune.iterator
+		// Used for adjusting stackPrune
+		var nRemainingTasksToPrune = 0
 		
-		while (!it.isEmpty) {
+		for(i <- 0 until nTasksToPrune) {
 			
-			val t = it.next
+			val t = stackPrune(i)
 			
 			// Pruning on tasks that are mandatory to respect consistency
 			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
@@ -333,10 +337,15 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			if (pruneConsumption(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
-			if (tasks(t).lct <= up + 1) {
-				stackPrune.remove(t)
+			// If the task is still in conflict, we keep it
+			if (!(tasks(t).lct <= up + 1)) {
+				stackPrune(nRemainingTasksToPrune) = t
+				nRemainingTasksToPrune += 1
 			}
 		}	
+		
+		// Adjusting stackPrune
+		nTasksToPrune = nRemainingTasksToPrune
 
 		return CPOutcome.Suspend
 	}
