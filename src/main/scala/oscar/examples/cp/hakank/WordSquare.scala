@@ -104,7 +104,7 @@ object WordSquare {
       // now find the connections
       for{i <- WORDLEN
           j <- WORDLEN} {
-          cp.add(element(A, E(i),CPVarInt(cp,j)) == element(A, E(j),CPVarInt(cp,i)))
+          cp.add(A(E(i))(CPVarInt(cp,j)) == A(E(j))(CPVarInt(cp,i)))
       }
 
 
