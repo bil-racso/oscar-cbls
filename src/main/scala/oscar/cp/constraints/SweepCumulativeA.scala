@@ -42,7 +42,7 @@ import oscar.algo.SortUtils.stableSort
  *	@define originalTasks
  *	the tasks that could be originally assigned to the height `r`
  *  @define idOfT
- *  The id `t` of the considered task in the array `tasks`.
+ *  t The id `t` of the considered task in the array `tasks`.
  *  @define addEvent
  *  If the conditions are met, the events are added.
  *  
@@ -54,7 +54,7 @@ import oscar.algo.SortUtils.stableSort
  *  
  *  Note: good events are defined over the entire execution's domain of the task.
  *
- *  @author Renaud Hartert
+ *  @author Renaud Hartert ren.hartert@gmail.com
  *  @version 28/07/2012 
  */
 abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
@@ -71,18 +71,18 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected var nEvents = 0
 	
 	// Current position of the sweep line
-	protected var delta : Int = 0	
+	protected var delta = 0	
 	// Sum of the height of the tasks that overlap the sweep line
-	protected var consSumHeight : Int = 0
+	protected var consSumHeight = 0
 	// Sum of the height of the tasks that overlap the sweep line
-	protected var capaSumHeight : Int = 0
+	protected var capaSumHeight = 0
 	// Number of tasks that overlap the sweep line
-	protected var nCurrentTasks : Int = 0
-	// Tasks that could intersect the sweep line
-	protected val stackPrune    : Array[Int] = Array.fill(nTasks)(0)
+	protected var nCurrentTasks = 0
 	// Number of tasks in stackPrune
-	protected var nTasksToPrune : Int = 0
-
+	protected var nTasksToPrune = 0
+	
+	// Tasks that could intersect the sweep line
+	protected val stackPrune  = new Array[Int](nTasks)
 	// Contribution of all the tasks that are added to consSumHeight
 	protected val consContrib = new Array[Int](nTasks)
 	// Contribution of all the tasks that are added to capaSumHeight
@@ -264,7 +264,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			
 			val event = eventPointSeries(i)
 		
-			if (event.eType != EventType.Pruning) {
+			if (!event.isPruningEvent) {
 				
 				// If we have considered all the events at the previous position
 				// of the sweep line
@@ -282,7 +282,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					delta = event.date	
 				}
 				
-				if (event.eType == EventType.Profile) {
+				if (event.isProfileEvent) {
 					
 					// Adjusts height consumption
 					consSumHeight += event.cons
@@ -292,7 +292,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					capaSumHeight += event.capa
 					capaContrib(event.task) += event.capa
 					
-				} else if (event.eType == EventType.Check) {
+				} else if (event.isCheckEvent) {
 					
 					// Number of overlapping tasks
 					nCurrentTasks += event.cons
@@ -445,39 +445,31 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		} else if (up >= v.max && low >= v.min) {
 		  v.updateMax(low-1)
 		} else CPOutcome.Suspend
-		
-		
+			
 	    /*
-	    // create holes, not a good idea Renaud ;-)
+	    //create holes, not a good idea Renaud ;-)
 		for (i <- low to up)
 			if (v.removeValue(i) == CPOutcome.Failure)
 				return CPOutcome.Failure
 		*/
+		
 		return CPOutcome.Suspend
-		
 	}
 	
-	
+		
 	/**
 	 * 
 	 */
-	protected object EventType extends Enumeration {
-		
-		type EventType = Value
-		
-		val Check   = Value("Check")
-		val Profile = Value("Profile")
-		val Pruning = Value("Pruning")
-	}
-	
-	
-	import EventType._
-	
-	/**
-	 * 
-	 */
-	protected class Event(e : EventType, t : Int, private var d : Int, private var consomation : Int, private var capacity : Int) extends Enumeration {
+	protected class Event(e : Int, t : Int, private var d : Int, private var consomation : Int, private var capacity : Int) {
 
+		// 0 : Check
+		// 1 : Profile
+		// 2 : Pruning
+
+		def isCheckEvent   = (e == 0)
+		def isProfileEvent = (e == 1)
+		def isPruningEvent = (e == 2)
+		
 		def date  = d
 		def eType = e
 		def cons  = consomation
@@ -496,13 +488,13 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	 */
 	protected class EventList(t : Int) {
 		
-		val sCheckEv       : Event = new Event(EventType.Check, t, 0, 1, 1)
-		val eCheckEv       : Event = new Event(EventType.Check, t, 0, -1, -1)
-		val sBadProfileEv  : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val eBadProfileEv  : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val sGoodProfileEv : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val eGoodProfileEv : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val PruningEv      : Event = new Event(EventType.Pruning, t, 0, 0, 0)
+		val sCheckEv       : Event = new Event(0, t, 0, 1, 1)
+		val eCheckEv       : Event = new Event(0, t, 0, -1, -1)
+		val sBadProfileEv  : Event = new Event(1, t, 0, 0, 0)
+		val eBadProfileEv  : Event = new Event(1, t, 0, 0, 0)
+		val sGoodProfileEv : Event = new Event(1, t, 0, 0, 0)
+		val eGoodProfileEv : Event = new Event(1, t, 0, 0, 0)
+		val PruningEv      : Event = new Event(2, t, 0, 0, 0)
 		
 		def sCheck : Event = {
 			sCheckEv.date = tasks(sCheckEv.task).lst
