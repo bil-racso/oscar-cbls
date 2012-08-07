@@ -110,7 +110,7 @@ object JobShop {
 		cp.minimize(makespan) subjectTo {
 
 			for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-				cp.add(activities(i) precedes activities(i + 1))
+				cp.add(activities(i) endBeforeStart activities(i + 1))
 
 		} exploration {
 

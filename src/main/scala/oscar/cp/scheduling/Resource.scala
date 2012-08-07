@@ -12,7 +12,7 @@ abstract class Resource(scheduler : CPScheduler, private var name : String) {
 	// Link the resource to the scheduler and get an id
 	val id = scheduler.addResource(this)
 	
-	// Generic name
+	// Default name
 	if (name == null) name = "Resource " + id
 	
 	override def toString = name

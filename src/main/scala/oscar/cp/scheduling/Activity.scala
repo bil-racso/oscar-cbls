@@ -21,11 +21,16 @@ import oscar.cp.core.Store;
 import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 
-class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt) {
+class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt, private var name : String = null) {
     
 	// Linking the variables
 	scheduler.add(startVar + durVar == endVar) 
+	// Link the resource to the scheduler and get an id
+	val id = scheduler.addActivity(this)
+	// Default name
+	if (name == null) name = "Activity " + id
 
+	// The variables
     def start = startVar
     def end = endVar
     def dur = durVar
@@ -59,15 +64,24 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
 	override def toString = "dur: "+dur+ " in ["+est+","+lct+"["
 	
 	def adjustStart(v : Int) = start.updateMin(v)	
+
+	// Precedences 
+	// -----------------------------------------------------------
 	
-	def <<(act : Activity) : LeEq = this.end <= act.start
+	def precedes(act : Activity) = endBeforeStart(act)
 	
-	def >>(act : Activity) : LeEq = act.end <= this.start
+	def endBeforeEnd(act : Activity) = new ActivityPrecedence(this, act, EBE)
+	def endBeforeStart(act : Activity) = new ActivityPrecedence(this, act, EBS)
+	def startBeforeEnd(act : Activity) = new ActivityPrecedence(this, act, SBE)
+	def startBeforeStart(act : Activity) = new ActivityPrecedence(this, act, SBS)
 	
-	def precedes(act : Activity) : LeEq = this << act
-	
-	def follows(act : Activity) : LeEq = act << this
-	
+	def endAtEnd(act : Activity) = new ActivityPrecedence(this, act, EAE)
+	def endAtStart(act : Activity) = new ActivityPrecedence(this, act, EAS)
+	def startAtEnd(act : Activity) = new ActivityPrecedence(this, act, SAE)
+	def startAtStart(act : Activity) = new ActivityPrecedence(this, act, SAS)
+
+	// Needs / Gives
+	// -----------------------------------------------------------
 	
 	// UnitResource
 	def needs(resource : UnitResource) {
@@ -175,7 +189,13 @@ class MirrorActivity(val act: Activity)  extends Activity(act.scheduler, act.sta
 
 	override def toString() = "mirror of activity:"+act;
 	
-	override def <<(act : Activity) = throw new UninitializedFieldError("not available") 
+	override def endBeforeEnd(act : Activity)     = throw new UninitializedFieldError("not available") 
+	override def endBeforeStart(act : Activity)   = throw new UninitializedFieldError("not available") 
+	override def startBeforeEnd(act : Activity)   = throw new UninitializedFieldError("not available") 
+	override def startBeforeStart(act : Activity) = throw new UninitializedFieldError("not available") 
 	
-	override def >>(act : Activity) = throw new UninitializedFieldError("not available") 
+	override def endAtEnd(act : Activity)         = throw new UninitializedFieldError("not available") 
+	override def endAtStart(act : Activity)       = throw new UninitializedFieldError("not available") 
+	override def startAtEnd(act : Activity)       = throw new UninitializedFieldError("not available") 
+	override def startAtStart(act : Activity)     = throw new UninitializedFieldError("not available") 
 }

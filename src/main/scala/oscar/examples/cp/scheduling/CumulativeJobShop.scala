@@ -18,18 +18,13 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.constraints._
 import oscar.cp.modeling._
-import oscar.cp.core._
 import oscar.cp.scheduling._
-import oscar.reversible.ReversibleSetIndexedArray
-import oscar.reversible.ReversibleInt
-import oscar.search._
 import oscar.visual._
 
 import scala.io.Source
 
-object CumulativeJobShop extends Application {
+object CumulativeJobShop extends App {
 
 	// Parsing		
 	// -----------------------------------------------------------------------
@@ -105,11 +100,11 @@ object CumulativeJobShop extends Application {
 	cp.minimize(makespan) subjectTo {
 		
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-			cp.add(activities(i) precedes activities(i + 1))		
+			cp.add(activities(i) precedes activities(i + 1) withDelay 0)		
 			
 	} exploration {
 
-		cp.binaryFirstFail(activities.map(_.start))
+		cp.binaryFirstFail(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)
