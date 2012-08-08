@@ -7,37 +7,21 @@ import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.core.CPVarInt
 import java.security.InvalidParameterException
 
-class ContainerResource(scheduler : CPScheduler, capa : Int, initStock : Int = 0) extends Resource(scheduler) {
-	
-	protected val activitiesSet : Map[Activity, CumulativeActivity] = Map()
-	
-	def activities = activitiesSet.values.toArray
-	def capacity   = capa
-	
-	def addActivity(activity : Activity, height : CPVarInt) { addActivity(activity, CumulativeActivity(activity, id, height)) }
-	
-	private def addActivity(act : Activity, cum : CumulativeActivity) {
-		if (activitiesSet.contains(act)) 
-			throw new InvalidParameterException("The activity is already scheduled on this resource.")
-		else 
-			activitiesSet += (act -> cum)
-	}
-	
-	def heightOf(act : Activity) : CPVarInt = activitiesSet(act).height
+class ContainerResource(scheduler : CPScheduler, capa : Int, initStock : Int) extends CumulativeResource(scheduler, capa, true) {
 
 	override def setup() {
+		
 		if (initStock > 0) {
 			val act = Activity(scheduler, 0)
 			scheduler.add(act.start == 0)
 			activitiesSet += (act -> ProdConsActivity(act, id, initStock))
 		}
-		scheduler.add(cumulative(activities, id, max = capa, min = initStock))
+		
+		scheduler.add(cumulative(activities, id, max = capa, min = 0))
 	}
-	
-	def criticality = activities.map(_.maxDuration).sum
 }
 
 object ContainerResource {
 	
-	def apply(scheduler : CPScheduler, capa : Int) = new CumulativeResource(scheduler, capa)
+	def apply(scheduler : CPScheduler, capa : Int, initStock : Int = 0) = new ContainerResource(scheduler, capa, initStock)
 }

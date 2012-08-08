@@ -34,21 +34,23 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	private var nActivity = 0
 	private val resourcesSet  : Set[Resource] = Set()
 	private val activitiesSet : Set[Activity] = Set()
-
+	
 	def addResource(resource : Resource) : Int = {
 
 		resourcesSet.add(resource)
+		val temp = nResource
 		nResource += 1
 
-		return nResource
+		return temp
 	}
 	
 	def addActivity(activity : Activity) : Int = {
 
 		activitiesSet.add(activity)
+		val temp = nActivity
 		nActivity += 1
 
-		return nActivity
+		return temp
 	}
 	
 	def activities = activitiesSet.toArray

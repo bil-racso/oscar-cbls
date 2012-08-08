@@ -100,14 +100,14 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
     }
 	
 	// CumulativeResourceSet	
-	def needs(resource : CumulativeResourceSet, resources : RichVarInt, capacity : RichVarInt) {
-		if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addActivity(this, resources.variable(scheduler), capacity.variable(scheduler))	
+	def needs(set : AlternativeCumulativeResource, resourcesId : RichVarInt, height : RichVarInt) {
+		val cum = CumulativeActivity(this, resourcesId.variable(scheduler), height.variable(scheduler))
+		set.addActivity(this, cum)
 	}
 	
-	def gives(resource : CumulativeResourceSet, resources : RichVarInt, capacity : RichVarInt) {
-		if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addActivity(this, resources.variable(scheduler), capacity.opposite(scheduler))	
+	def gives(set : AlternativeCumulativeResource, resourcesId : RichVarInt, height : RichVarInt) {
+		val cum = CumulativeActivity(this, resourcesId.variable(scheduler), height.opposite(scheduler))
+		set.addActivity(this, cum)
 	}
 }
 

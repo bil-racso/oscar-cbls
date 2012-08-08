@@ -231,7 +231,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				}
 			}	
 			
-			i+=1
+			i += 1
 		}
 		
 		profileEvent
@@ -324,7 +324,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	private def prune(low : Int, up : Int) : CPOutcome = {
 		
-		// Used for adjusting stackPrune
+		// Used to adjust stackPrune
 		var nRemainingTasksToPrune = 0
 		
 		var i = 0
@@ -332,12 +332,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			
 			val t = stackPrune(i)
 			
-			// Pruning on tasks that are mandatory to respect consistency
-			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
-				return CPOutcome.Failure
-			
 			// Pruning on tasks that must be discarded to respect consistency
 			if (pruneForbiden(t, r, low, up) == CPOutcome.Failure) 
+				return CPOutcome.Failure
+			
+			// Pruning on tasks that are mandatory to respect consistency
+			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
 			// Adjusts the height's consumption of the tasks

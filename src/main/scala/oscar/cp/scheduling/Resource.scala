@@ -5,7 +5,7 @@ import oscar.cp.modeling.CPScheduler
 
 import oscar.cp.scheduling._
 
-abstract class Resource(scheduler : CPScheduler, private var name : String) {
+abstract class Resource(scheduler : CPScheduler, var name : String) {
 	
 	def this(scheduler : CPScheduler) = this(scheduler, null)
 	

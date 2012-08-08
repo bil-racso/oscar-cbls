@@ -26,7 +26,10 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 	def update(xScale : Int, yScale: Int) {
 			
 		val activities = resource.activities
-		val points = CumulativeProfile.getCumulativeProfile(activities)
+		val rawPoints  = CumulativeProfile.getCumulativeProfile(activities)
+		
+		// The end of a ProdConsActivity is not relevant
+		val points = rawPoints.map(p => if (p._1 > makespan.min) (makespan.min, p._2) else p)
 		
 		val min = -points.map(_._2).min
 		

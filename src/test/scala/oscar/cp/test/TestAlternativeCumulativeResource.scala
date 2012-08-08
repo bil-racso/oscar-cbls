@@ -11,7 +11,7 @@ import oscar.cp.scheduling._
 
 import org.scalacheck._
 
-class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
+class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	
 		
@@ -23,7 +23,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 2)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResourceSet(cp, 2, 2)
+		val resource = AlternativeCumulativeResource(cp, 2, 2)
 		
 		act1.needs(resource, 0 to 1, 1)
 		act2.needs(resource, 0 to 1, 1)
@@ -60,7 +60,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 1 to 4)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResourceSet(cp, 2, 1)
+		val resource = AlternativeCumulativeResource(cp, 2, 1)
 		
 		act1.needs(resource, 0 to 1, 1)
 		act2.needs(resource, 0 to 1, 1)
@@ -100,7 +100,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 2)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResourceSet(cp, 2, 2)
+		val resource = AlternativeCumulativeResource(cp, 2, 2)
 		
 		act1.needs(resource, 0 to 1, 1 to 2)
 		act2.needs(resource, 0 to 1, 1)
@@ -141,7 +141,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act4 = Activity(cp, 2 to 3)
 		val acts = Array(act1, act2, act3, act4)
 		
-		val resource = CumulativeResourceSet(cp, 2, 2)
+		val resource = AlternativeCumulativeResource(cp, 2, 2)
 		
 		act1.needs(resource, 0 to 1, 3)
 		act2.needs(resource, 0 to 1, 2)
@@ -188,7 +188,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act4 = Activity(cp, 2 to 3)
 		val acts = Array(act1, act2, act3, act4)
 		
-		val resource = CumulativeResourceSet(cp, 2, 2)
+		val resource = AlternativeCumulativeResource(cp, 2, 2)
 		
 		act1.needs(resource, 0 to 1, 4)
 		act2.needs(resource, 0 to 1, 3)
@@ -237,7 +237,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act4 = Activity(cp, 6)
 		val acts = Array(act1, act2, act3, act4)
 		
-		val resource = CumulativeResourceSet(cp, 2, 5)
+		val resource = AlternativeCumulativeResource(cp, 2, 5)
 		
 		act1.needs(resource, Array(0, 1), 1)
 		act2.needs(resource, Array(0, 1), 4)
@@ -277,32 +277,37 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act5 = Activity(cp, 6)
 		val acts = Array(act1, act2, act3, act4, act5)
 		
-		val resource = CumulativeResourceSet(cp, 2, 5)
+		val resource1 = CumulativeResource(cp, 5)
+		val resource2 = CumulativeResource(cp, 5)
 		
-		act1.needs(resource, Array(0, 1), 1)
-		act2.needs(resource, Array(0, 1), 4)
-		act3.needs(resource, Array(0, 1), 3)
-		act4.needs(resource, Array(0, 1), 2)
-		act5.needs(resource, Array(0, 1), 1)
-
+		val resourceSet = new AlternativeCumulativeResource(cp)
+		resourceSet addAlternative resource1
+		resourceSet addAlternative resource2
+		
+		act1.needs(resourceSet, 0 to 1, 1)
+		act2.needs(resourceSet, 0 to 1, 4)
+		act3.needs(resourceSet, 0 to 1, 3)
+		act4.needs(resourceSet, 0 to 1, 2)
+		act5.needs(resourceSet, 0 to 1, 1)
+		
 		cp.add(act1.start == 0)
 		cp.add(act2.start == 0)
 		cp.add(act3.start == 0)
 		cp.add(act4.start == 0)  
-			  
-		cp.add(resource.resourcesOf(act2) == 0)	
+		
+		cp.add(resourceSet.resourcesOf(act2) == 0)
 		
 		cp.addResourceConstraints()
 		
-		resource.resourcesOf(act1).value should be(0)
-		resource.resourcesOf(act3).value should be(1)
-		resource.resourcesOf(act4).value should be(1)
+		assert(resourceSet.resourcesOf(act1).value == 0)
+		assert(resourceSet.resourcesOf(act3).value == 1)
+		assert(resourceSet.resourcesOf(act4).value == 1)
 		
-		resource.resourcesOf(act5).size  should be(2)
+		assert(resourceSet.resourcesOf(act5).size == 2)
 			
-		cp.add(resource.resourcesOf(act5) == 0)
+		cp.add(resourceSet.resourcesOf(act5) == 0)
 			
-		act5.start.min should be(6)
+		assert(act5.start.min == 6)
 	}
 	
 	test("Test 8: alternatives") {
@@ -314,7 +319,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		val act2 = Activity(cp, 6)
 		val acts = Array(act1, act2)
 		
-		val resource = CumulativeResourceSet(cp, 2, 3)
+		val resource = AlternativeCumulativeResource(cp, 2, 3)
 		
 		act1.needs(resource, Array(0, 1), 0 to 5)
 		act2.needs(resource, Array(0, 1), 0 to 5)
@@ -333,4 +338,9 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		act1.dur.min should be(0)
 		act1.dur.max should be(3)
 	}
+}
+
+object TestCumulativeResourceSet extends App {
+	
+	
 }
