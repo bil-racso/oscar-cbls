@@ -14,11 +14,7 @@ class ContainerResource(scheduler : CPScheduler, capa : Int, initStock : Int = 0
 	def activities = activitiesSet.values.toArray
 	def capacity   = capa
 	
-	def addActivity(activity : Activity, height : Int) { addActivity(activity, CumulativeActivity(activity, id, height)) }
-	
 	def addActivity(activity : Activity, height : CPVarInt) { addActivity(activity, CumulativeActivity(activity, id, height)) }
-	
-	def addActivity(activity : Activity, height : Range) { addActivity(activity, CumulativeActivity(activity, id, height)) }
 	
 	private def addActivity(act : Activity, cum : CumulativeActivity) {
 		if (activitiesSet.contains(act)) 

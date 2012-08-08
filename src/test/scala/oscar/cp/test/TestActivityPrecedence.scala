@@ -64,7 +64,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}
@@ -86,7 +86,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}
@@ -107,7 +107,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}
@@ -128,7 +128,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}
@@ -149,7 +149,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}
@@ -170,7 +170,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
 		}

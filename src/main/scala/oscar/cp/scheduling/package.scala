@@ -11,8 +11,9 @@ package object scheduling {
 	// Precedences
 	implicit def activityPrecedence2Constraint(ap : ActivityPrecedence) = ap.withDelay(0)
 	
-	// Capacities
-	implicit def int2Capacity(i : Int) = IntCapacity(i)
-	implicit def range2Capacity(r : Range) = RangeCapacity(r)
-	implicit def variable2Capacity(v : CPVarInt) = VariableCapacity(v)
+	// RichVarInt
+	implicit def var2RichVarInt(v : CPVarInt)     = VarRichVarInt(v)
+	implicit def array2RichVarInt(a : Array[Int]) = ArrayRichVarInt(a)
+	implicit def range2RichVarInt(r : Range)      = RangeRichVarInt(r)
+	implicit def int2RichVarInt(i : Int)          = IntRichVarInt(i)
 }

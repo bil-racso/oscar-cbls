@@ -14,9 +14,13 @@ class CumulativeResourceSet(scheduler : CPScheduler, nResources : Int, capas : A
 	def activities = activitiesSet.values.toArray
 	def capacities = capas
 	
-	def addActivity(activity : Activity, resources : Array[Int], height : Int) { addActivity(activity, CumulativeActivity(activity, CPVarInt(scheduler, resources), height)) }
+	def addActivity(activity : Activity, resources : CPVarInt, height : CPVarInt) { 
+		addActivity(activity, CumulativeActivity(activity, resources, height)) 
+	}
 	
-	def addActivity(activity : Activity, resources : Array[Int], height : Range) { addActivity(activity, CumulativeActivity(activity, CPVarInt(scheduler, resources), height)) }
+	def addProdConsActivity(activity : Activity, resources : CPVarInt, height : CPVarInt, atEnd : Boolean) { 
+		addActivity(activity, ProdConsActivity.apply(activity, id, height, atEnd)) 
+	}
 	
 	private def addActivity(act : Activity, cum : CumulativeActivity) {
 		if (activitiesSet.contains(act)) 

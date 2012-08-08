@@ -146,7 +146,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		act1.needs(resource, 0 to 1, 3)
 		act2.needs(resource, 0 to 1, 2)
 		act3.needs(resource, 0 to 1, 1)
-		act4.supplies(resource, 0 to 1, 1)
+		act4.gives(resource, 0 to 1, 1)
 		
 		
 		var nSol = 0
@@ -193,7 +193,7 @@ class TestCumulativeResourceSet extends FunSuite with ShouldMatchers {
 		act1.needs(resource, 0 to 1, 4)
 		act2.needs(resource, 0 to 1, 3)
 		act3.needs(resource, 0 to 1, 1)
-		act4.supplies(resource, 0 to 1, 1 to 2)
+		act4.gives(resource, 0 to 1, 1 to 2)
 		
 		var nSol = 0
 		
