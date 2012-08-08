@@ -84,7 +84,7 @@ object CumulativeJobShop extends App {
 	// Visualization  
 	// -----------------------------------------------------------------------
 
-	val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
+	/*val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
 	val colors = VisualUtil.getRandomColorArray(nResources)
 	
 	val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
@@ -92,11 +92,13 @@ object CumulativeJobShop extends App {
 	
 	frame.createFrame("Gantt chart").add(gantt)
 	for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
-	frame.pack
+	frame.pack*/
 
 	// Constraints & Search
 	// -----------------------------------------------------------------------
 
+	cp.failLimit(100000)
+	
 	cp.minimize(makespan) subjectTo {
 		
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
@@ -106,8 +108,8 @@ object CumulativeJobShop extends App {
 
 		cp.binaryFirstFail(activities)
 
-		for (p <- profiles) p.update(1, 20)
-		gantt.update(1, 20)
+		/*for (p <- profiles) p.update(1, 20)
+		gantt.update(1, 20)*/
 	}
 
 	cp.printStats()

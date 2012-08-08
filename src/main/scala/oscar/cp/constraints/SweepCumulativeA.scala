@@ -206,7 +206,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// Reset eventPointSeries
 		nEvents = 0
 		
-		for (i <- Tasks) {
+		var i = 0
+		while (i < nTasks) {
 			
 			if (tasks(i).lst < tasks(i).ect && tasks(i).resource.isBoundTo(r)) {
 				
@@ -228,7 +229,9 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					eventPointSeries(nEvents) = eventList(i).sPruning
 					nEvents += 1
 				}
-			}			
+			}	
+			
+			i+=1
 		}
 		
 		profileEvent
@@ -260,11 +263,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// First position of the sweep line
 		var delta = eventPointSeries(0).date
 		
-		for (i <- 0 until nEvents) {
+		var i = 0
+		while (i < nEvents) {
 			
 			val event = eventPointSeries(i)
 		
-			if (!event.isPruningEvent) {
+			if (event.eType != EventType.pruning) {
 				
 				// If we have considered all the events at the previous position
 				// of the sweep line
@@ -282,7 +286,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					delta = event.date	
 				}
 				
-				if (event.isProfileEvent) {
+				if (event.eType == EventType.profile) {
 					
 					// Adjusts height consumption
 					consSumHeight += event.cons
@@ -292,7 +296,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					capaSumHeight += event.capa
 					capaContrib(event.task) += event.capa
 					
-				} else if (event.isCheckEvent) {
+				} else if (event.eType == EventType.check) {
 					
 					// Number of overlapping tasks
 					nCurrentTasks += event.cons
@@ -302,6 +306,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				stackPrune(nTasksToPrune) = event.task
 				nTasksToPrune += 1
 			}
+			
+			i += 1 
 		}
 		
 		// Checks consistency
@@ -321,7 +327,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// Used for adjusting stackPrune
 		var nRemainingTasksToPrune = 0
 		
-		for(i <- 0 until nTasksToPrune) {
+		var i = 0
+		while (i < nTasksToPrune) {
 			
 			val t = stackPrune(i)
 			
@@ -342,6 +349,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				stackPrune(nRemainingTasksToPrune) = t
 				nRemainingTasksToPrune += 1
 			}
+			
+			i += 1
 		}	
 		
 		// Adjusting stackPrune
@@ -460,15 +469,22 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	/**
 	 * 
 	 */
+	protected object EventType {
+		val check   = 0
+		val profile = 1
+		val pruning = 2
+		
+		def eventToString(i : Int) = {
+			i match {
+				case 0 => "check"
+				case 1 => "profile"
+				case 2 => "pruning"
+				case _ => "unknown event"
+			}
+		}
+	}
+	
 	protected class Event(e : Int, t : Int, private var d : Int, private var consomation : Int, private var capacity : Int) {
-
-		// 0 : Check
-		// 1 : Profile
-		// 2 : Pruning
-
-		def isCheckEvent   = (e == 0)
-		def isProfileEvent = (e == 1)
-		def isPruningEvent = (e == 2)
 		
 		def date  = d
 		def eType = e
@@ -480,7 +496,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		def cons_= (x : Int) {consomation = x}
 		def capa_= (x : Int) {capacity = x}
 		
-		override def toString = { "<" + e + ", " + t + ", " + d + ", " + capa + ", " + cons + ">" }
+		override def toString = { "<" + EventType.eventToString(e) + ", " + t + ", " + d + ", " + capa + ", " + cons + ">" }
 	}
 	
 	/**
@@ -488,13 +504,13 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	 */
 	protected class EventList(t : Int) {
 		
-		val sCheckEv       : Event = new Event(0, t, 0, 1, 1)
-		val eCheckEv       : Event = new Event(0, t, 0, -1, -1)
-		val sBadProfileEv  : Event = new Event(1, t, 0, 0, 0)
-		val eBadProfileEv  : Event = new Event(1, t, 0, 0, 0)
-		val sGoodProfileEv : Event = new Event(1, t, 0, 0, 0)
-		val eGoodProfileEv : Event = new Event(1, t, 0, 0, 0)
-		val PruningEv      : Event = new Event(2, t, 0, 0, 0)
+		val sCheckEv       : Event = new Event(EventType.check, t, 0, 1, 1)
+		val eCheckEv       : Event = new Event(EventType.check, t, 0, -1, -1)
+		val sBadProfileEv  : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val eBadProfileEv  : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val sGoodProfileEv : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val eGoodProfileEv : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val PruningEv      : Event = new Event(EventType.pruning, t, 0, 0, 0)
 		
 		def sCheck : Event = {
 			sCheckEv.date = tasks(sCheckEv.task).lst
