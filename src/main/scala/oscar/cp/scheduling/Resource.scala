@@ -5,15 +5,12 @@ import oscar.cp.modeling.CPScheduler
 
 import oscar.cp.scheduling._
 
-abstract class Resource(scheduler : CPScheduler, var name : String) {
-	
-	def this(scheduler : CPScheduler) = this(scheduler, null)
+abstract class Resource(scheduler : CPScheduler, n: String = null) {
 	
 	// Link the resource to the scheduler and get an id
 	val id = scheduler.addResource(this)
 	
-	// Default name
-	if (name == null) name = "Resource " + id
+	val name =  Option(n) getOrElse ("Resource " + id)
 	
 	override def toString = name
 	

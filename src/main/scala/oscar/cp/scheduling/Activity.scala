@@ -23,12 +23,12 @@ import oscar.cp.core.Store
 import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 
-class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt) {
+class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt, existingId: Option[Int]=None) {
     
 	// Linking the variables
 	scheduler.add(startVar + durVar == endVar) 
 	// Link the activity to the scheduler and get an id
-	val id = scheduler.addActivity(this)
+	val id = existingId.getOrElse(scheduler.addActivity(this))
 
 	// The variables
     def start = startVar
@@ -79,33 +79,33 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
     }
 	
 	// CumulativeResource
-	def needs(resource : CumulativeResource, capacity : RichVarInt) {
+	def needs(resource : CumulativeResource, capacity : ImplicitVarInt) {
 		if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
 		resource.addActivity(this, capacity.variable(scheduler))
 	}
 	
-	def needsF(resource : CumulativeResource, capacity : RichVarInt, atEnd : Boolean = true) {
+	def needsF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
 		if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
 		resource.addProdConsActivity(this, capacity.variable(scheduler), atEnd)
     }
 	
-	def gives(resource : CumulativeResource, capacity : RichVarInt) {
+	def gives(resource : CumulativeResource, capacity : ImplicitVarInt) {
 		if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
 		resource.addActivity(this, capacity.opposite(scheduler))
 	}
 	
-	def givesF(resource : CumulativeResource, capacity : RichVarInt, atEnd : Boolean = true) {
+	def givesF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
     	if(!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
 		resource.addProdConsActivity(this, capacity.opposite(scheduler), atEnd)
     }
 	
 	// CumulativeResourceSet	
-	def needs(set : AlternativeCumulativeResource, resourcesId : RichVarInt, height : RichVarInt) {
+	def needs(set : AlternativeCumulativeResource, resourcesId : ImplicitVarInt, height : ImplicitVarInt) {
 		val cum = CumulativeActivity(this, resourcesId.variable(scheduler), height.variable(scheduler))
 		set.addActivity(this, cum)
 	}
 	
-	def gives(set : AlternativeCumulativeResource, resourcesId : RichVarInt, height : RichVarInt) {
+	def gives(set : AlternativeCumulativeResource, resourcesId : ImplicitVarInt, height : ImplicitVarInt) {
 		val cum = CumulativeActivity(this, resourcesId.variable(scheduler), height.opposite(scheduler))
 		set.addActivity(this, cum)
 	}
@@ -113,14 +113,15 @@ class Activity(val scheduler : CPScheduler, startVar: CPVarInt, durVar: CPVarInt
 
 object Activity {
 	
-	def apply(scheduler : CPScheduler, dur : RichVarInt) = build(scheduler, dur.variable(scheduler))
-	
-	private def build(scheduler : CPScheduler, durVar : CPVarInt) : Activity = {
+	def apply(scheduler : CPScheduler, dur : ImplicitVarInt) = {
+		
+		val durVar = dur.variable(scheduler)
 		
 		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
 		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
-		return new Activity(scheduler, startVar, durVar, endVar)
-    }
+		
+		new Activity(scheduler, startVar, durVar, endVar)
+	}
 }
 
 

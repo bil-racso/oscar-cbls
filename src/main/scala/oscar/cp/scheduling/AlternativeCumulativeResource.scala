@@ -65,4 +65,11 @@ object AlternativeCumulativeResource extends App {
 		
 		resourceSet
 	}
+	
+	def apply(resources: CumulativeResource*): AlternativeCumulativeResource = {
+		val scheduler = resources.head.scheduler
+		val alt = new AlternativeCumulativeResource(scheduler)
+		resources foreach (alt.addAlternative(_))
+		alt
+	}
 }

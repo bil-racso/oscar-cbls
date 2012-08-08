@@ -280,9 +280,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		val resource1 = CumulativeResource(cp, 5)
 		val resource2 = CumulativeResource(cp, 5)
 		
-		val resourceSet = new AlternativeCumulativeResource(cp)
-		resourceSet addAlternative resource1
-		resourceSet addAlternative resource2
+		val resourceSet = AlternativeCumulativeResource(resource1, resource2)
 		
 		act1.needs(resourceSet, 0 to 1, 1)
 		act2.needs(resourceSet, 0 to 1, 4)

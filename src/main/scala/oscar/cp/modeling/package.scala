@@ -26,33 +26,55 @@ package object modeling extends Constraints {
 	val Strong = CPPropagStrength.Strong
 	val Medium = CPPropagStrength.Medium
 	val Weak = CPPropagStrength.Weak
+	
+	/** Element
+	 * 
+	 */
+	
+	implicit def array2ElementConstraintBuilder(a : Array[Int])       = new ArrayIntElementConstraintBuilder(a)
+	implicit def array2ElementConstraintBuilder(a : Array[CPVarInt])  = new ArrayCPVarIntElementConstraintBuilder(a)
+	implicit def array2ElementConstraintBuilder(a : Array[CPVarBool]) = new ArrayCPVarBoolElementConstraintBuilder(a)
+	
+	implicit def idSeq2ElementConstraintBuilder(s : IndexedSeq[Int])       = new IdSeqIntElementConstraintBuilder(s)
+	implicit def idSeq2ElementConstraintBuilder(s : IndexedSeq[CPVarInt])  = new IdSeqCPVarIntElementConstraintBuilder(s)
+	implicit def idSeq2ElementConstraintBuilder(s : IndexedSeq[CPVarBool]) = new IdSeqCPVarBoolElementConstraintBuilder(s)
+	
+	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = new ElementMatrixConstraintBuilderLine(a)
 
-	class ElementConstraintIntBuilder(a : Array[Int]) {
-		def apply(i : CPVarInt) : CPVarInt = element(a, i)
+	trait ElementConstraintBuilder {
+		def apply(i :CPVarInt) : CPVarInt
+	}
+	
+	class ArrayIntElementConstraintBuilder(a : Array[Int]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(a, i)
 	}
 
-	implicit def array2ElementConstraintBuilder(a : Array[Int]) = {
-		new ElementConstraintIntBuilder(a)
+	class ArrayCPVarIntElementConstraintBuilder(a : Array[CPVarInt]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(a, i)
+	}
+	
+	class ArrayCPVarBoolElementConstraintBuilder(a : Array[CPVarBool]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(a, i)
+	}
+	
+	class IdSeqIntElementConstraintBuilder(s : IndexedSeq[Int]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(s, i)
+	}
+	
+	class IdSeqCPVarIntElementConstraintBuilder(s : IndexedSeq[CPVarInt]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(s, i)
+	}
+	
+	class IdSeqCPVarBoolElementConstraintBuilder(s : IndexedSeq[CPVarBool]) extends ElementConstraintBuilder {
+		override def apply(i : CPVarInt) : CPVarInt = element(s, i)
 	}
 
-	class ElementConstraintCPVarIntBuilder(a : Array[CPVarInt]) {
-		def apply(i : CPVarInt) : CPVarInt = element(a, i)
+	class ElementMatrixConstraintBuilderLine(a : Array[Array[Int]]) {
+		def apply(i : CPVarInt) = new ElementMatrixConstraintBuilderCol(i, a)
 	}
 
-	implicit def array2ElementConstraintBuilder(a : Array[CPVarInt]) = {
-		new ElementConstraintCPVarIntBuilder(a)
-	}
-
-	class ElementMatrixConstraintBuilder1(a : Array[Array[Int]]) {
-		def apply(i : CPVarInt) = new ElementMatrixConstraintBuilder2(i, a)
-	}
-
-	class ElementMatrixConstraintBuilder2(i : CPVarInt, a : Array[Array[Int]]) {
+	class ElementMatrixConstraintBuilderCol(i : CPVarInt, a : Array[Array[Int]]) {
 		def apply(j : CPVarInt) : CPVarInt = element(a, i, j)
-	}
-
-	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = {
-		new ElementMatrixConstraintBuilder1(a)
 	}
 
 	class CPVarBoolWrappper(val b : oscar.cp.core.CPVarBool) {

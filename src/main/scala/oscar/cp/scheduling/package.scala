@@ -11,9 +11,9 @@ package object scheduling {
 	// Precedences
 	implicit def activityPrecedence2Constraint(ap : ActivityPrecedence) = ap.withDelay(0)
 	
-	// RichVarInt
-	implicit def var2RichVarInt(v : CPVarInt)     = VarRichVarInt(v)
-	implicit def array2RichVarInt(a : Array[Int]) = ArrayRichVarInt(a)
-	implicit def range2RichVarInt(r : Range)      = RangeRichVarInt(r)
-	implicit def int2RichVarInt(i : Int)          = IntRichVarInt(i)
+	// ImplicitVarInt
+	implicit def var2ImplicitVarInt(v : CPVarInt)     = VarImplicitVarInt(v)
+	implicit def array2ImplicitVarInt(a : Array[Int]) = ArrayImplicitVarInt(a)
+	implicit def range2ImplicitVarInt(r : Range)      = RangeImplicitVarInt(r)
+	implicit def int2ImplicitVarInt(i : Int)          = IntImplicitVarInt(i)
 }

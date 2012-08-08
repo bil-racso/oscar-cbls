@@ -3,7 +3,7 @@ package oscar.cp.scheduling
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.core.CPVarInt
 
-sealed trait RichVarInt {
+sealed trait ImplicitVarInt {
 	
 	def variable(scheduler : CPScheduler) : CPVarInt
 	def opposite(scheduler : CPScheduler) : CPVarInt
@@ -14,7 +14,7 @@ sealed trait RichVarInt {
 	def maxVal : Int
 }
 
-case class VarRichVarInt(v : CPVarInt) extends RichVarInt {
+case class VarImplicitVarInt(v : CPVarInt) extends ImplicitVarInt {
 	
 	override def variable(scheduler : CPScheduler) : CPVarInt = v
 	override def opposite(scheduler : CPScheduler) : CPVarInt = -v
@@ -25,7 +25,7 @@ case class VarRichVarInt(v : CPVarInt) extends RichVarInt {
 	override def maxVal = v.max
 }
 
-case class ArrayRichVarInt(a : Array[Int]) extends RichVarInt {
+case class ArrayImplicitVarInt(a : Array[Int]) extends ImplicitVarInt {
 
 	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, a)
 	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, a.map(-_))
@@ -36,7 +36,7 @@ case class ArrayRichVarInt(a : Array[Int]) extends RichVarInt {
 	override def maxVal = a.max
 }
 
-case class RangeRichVarInt(r : Range) extends RichVarInt {
+case class RangeImplicitVarInt(r : Range) extends ImplicitVarInt {
 	
 	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, r)
 	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, -r.max to -r.min)
@@ -47,7 +47,7 @@ case class RangeRichVarInt(r : Range) extends RichVarInt {
 	override def maxVal = r.max
 }
 
-case class IntRichVarInt(i : Int) extends RichVarInt {
+case class IntImplicitVarInt(i : Int) extends ImplicitVarInt {
 	
 	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, i)
 	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, -i)
