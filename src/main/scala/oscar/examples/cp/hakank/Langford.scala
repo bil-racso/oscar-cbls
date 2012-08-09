@@ -78,8 +78,8 @@ object Langford {
   
       for(i <- 1 to k) {
         cp.add(position(i+k-1) == (position(i-1) + i+1))
-        cp.add(element(solution, position(i-1)) == i)
-        cp.add(element(solution, position(k+i-1)) == i)
+        cp.add(solution(position(i-1)) == i)
+        cp.add(solution(position(k+i-1)) == i)
       }
 
       // symmetry breaking

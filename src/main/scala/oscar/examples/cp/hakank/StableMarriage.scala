@@ -188,13 +188,13 @@ object StableMarriage {
       //   forall(m in Men)
       //      cp.post(husband[wife[m]] == m);
       for(m <- 0 until n) {
-        cp.add(element(husband, wife(m)) == m);
+        cp.add(husband(wife(m)) == m);
       }
       
       //   forall(w in Women)
       //     cp.post(wife[husband[w]] == w);
       for(w <- 0 until n) {
-        cp.add(element(wife, husband(w)) == w);
+        cp.add(wife(husband(w)) == w);
       }
       
       
@@ -204,9 +204,9 @@ object StableMarriage {
       for(m <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
-                 (element(rankMen(m),wife(m)) >>= rankMen(m)(o))
+                 (rankMen(m)(wife(m)) >>= rankMen(m)(o))
                  ==> 
-                 (element(rankWomen(o), husband(o)) <<= rankWomen(o)(m))
+                 (rankWomen(o)(husband(o)) <<= rankWomen(o)(m))
                  )
         }
         
@@ -218,9 +218,9 @@ object StableMarriage {
       for(w <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
-                 (element(rankWomen(w),husband(w)) >>= rankWomen(w)(o))
+                 (rankWomen(w)(husband(w)) >>= rankWomen(w)(o))
                  ==>
-                 (element(rankMen(o), wife(o)) <<= rankMen(o)(w))
+                 (rankMen(o)(wife(o)) <<= rankMen(o)(w))
                  )
         }
       }
