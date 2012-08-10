@@ -38,8 +38,8 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		
 		cp.solveAll subjectTo {
 			
-			cp.add(act1 endBeforeStart act2)
-			cp.add(act3 endBeforeStart act4)
+			cp.add(act1 endsBeforeStartOf act2)
+			cp.add(act3 endsBeforeStartOf act4)
 			
 		} exploration {
 			cp.binary(acts.map(_.start))

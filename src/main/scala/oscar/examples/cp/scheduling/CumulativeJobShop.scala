@@ -68,7 +68,7 @@ object CumulativeJobShop extends App {
 	// -----------------------------------------------------------------------
 
 	val horizon = durations.sum
-	val cp = new CPScheduler(horizon)
+	val cp = CPScheduler(horizon)
 
 	// Activities & Resources
 	val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
@@ -76,7 +76,7 @@ object CumulativeJobShop extends App {
 
 	// Resource allocation
 	for (i <- Activities)
-		activities(i).needs(resources(machines(i)), 1)
+		activities(i) needs 1 ofResource resources(machines(i))
 
 	// The makespan to minimize
 	val makespan = maximum(0 until nActivities)(i => activities(i).end)
@@ -100,7 +100,7 @@ object CumulativeJobShop extends App {
 	cp.minimize(makespan) subjectTo {
 		
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-			cp.add(activities(i) precedes activities(i + 1) withDelay 0)		
+			cp.add(activities(i) precedes activities(i + 1))		
 			
 	} exploration {
 

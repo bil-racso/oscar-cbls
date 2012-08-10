@@ -27,9 +27,9 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val resource = CumulativeResource(cp, 2)
 		
-		act1.needs(resource, 1)
-		act2.needs(resource, 1)
-		act3.needs(resource, 1)
+		act1 needs 1 ofResource resource
+		act2 needs 1 ofResource resource
+		act3 needs 1 ofResource resource
 		
 		var nSol = 0
 		
@@ -60,9 +60,9 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val resource = CumulativeResource(cp, 1)
 		
-		act1.needs(resource, 1)
-		act2.needs(resource, 1)
-		act3.needs(resource, 1)
+		act1 needs 1 ofResource resource
+		act2 needs 1 ofResource resource
+		act3 needs 1 ofResource resource
 		
 		var nSol = 0
 		
@@ -95,9 +95,9 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val resource = CumulativeResource(cp, 2)
 		
-		act1.needs(resource, 1 to 2)
-		act2.needs(resource, 1)
-		act3.needs(resource, 1)
+		act1 needs (1 to 2) ofResource resource
+		act2 needs 1 ofResource resource
+		act3 needs 1 ofResource resource
 		
 		var nSol = 0
 		
@@ -131,11 +131,10 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val resource = CumulativeResource(cp, 2)
 		
-		act1.needs(resource, 3)
-		act2.needs(resource, 2)
-		act3.needs(resource, 1)
-		act4.gives(resource, 1)
-		
+		act1 needs 3 ofResource resource
+		act2 needs 2 ofResource resource
+		act3 needs 1 ofResource resource
+		act4 gives 1 toResource resource
 		
 		var nSol = 0
 		
@@ -166,14 +165,13 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act2 = Activity(cp, 1)
 		val act3 = Activity(cp, 2)
 		val act4 = Activity(cp, 2 to 3)
-		val acts = Array(act1, act2, act3, act4)
 		
 		val resource = CumulativeResource(cp, 2)
 		
-		act1.needs(resource, 4)
-		act2.needs(resource, 3)
-		act3.needs(resource, 1)
-		act4.gives(resource, 1 to 2)
+		act1 needs 4 ofResource resource
+		act2 needs 3 ofResource resource
+		act3 needs 1 ofResource resource
+		act4 gives (1 to 2) toResource resource
 		
 		var nSol = 0
 		
@@ -183,7 +181,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		cp.addResourceConstraints()			               
 		cp.solveAll 
 		cp.exploration {
-			cp.binary(acts.map(_.start))
+			cp.binary(cp.activities)
 			
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)

@@ -7,7 +7,7 @@ import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.core.CPVarInt
 import java.security.InvalidParameterException
 
-class CumulativeResource(val scheduler : CPScheduler, capa : Int, max : Boolean) extends Resource(scheduler) {
+class CumulativeResource(val scheduler : CPScheduler, capa : Int, max : Boolean, n : String = null) extends Resource(scheduler, n = n) {
 	
 	protected val activitiesSet : Map[Activity, CumulativeActivity] = Map()
 	
@@ -44,5 +44,5 @@ class CumulativeResource(val scheduler : CPScheduler, capa : Int, max : Boolean)
 
 object CumulativeResource {
 	
-	def apply(scheduler : CPScheduler, capa : Int, max : Boolean = true) = new CumulativeResource(scheduler, capa, max)
+	def apply(scheduler : CPScheduler, capa : Int, name : String = null, max : Boolean = true) = new CumulativeResource(scheduler, capa, max, n = name)
 }

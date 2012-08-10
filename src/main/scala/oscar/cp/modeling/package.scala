@@ -39,7 +39,7 @@ package object modeling extends Constraints {
 	implicit def idSeq2ElementConstraintBuilder(s : IndexedSeq[CPVarInt])  = new IdSeqCPVarIntElementConstraintBuilder(s)
 	implicit def idSeq2ElementConstraintBuilder(s : IndexedSeq[CPVarBool]) = new IdSeqCPVarBoolElementConstraintBuilder(s)
 	
-	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = new ElementMatrixConstraintBuilderLine(a)
+	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = new ElementIntMatrixConstraintBuilderLine(a)
 
 	trait ElementConstraintBuilder {
 		def apply(i :CPVarInt) : CPVarInt
@@ -69,13 +69,14 @@ package object modeling extends Constraints {
 		override def apply(i : CPVarInt) : CPVarInt = element(s, i)
 	}
 
-	class ElementMatrixConstraintBuilderLine(a : Array[Array[Int]]) {
-		def apply(i : CPVarInt) = new ElementMatrixConstraintBuilderCol(i, a)
+	class ElementIntMatrixConstraintBuilderLine(a : Array[Array[Int]]) {
+		def apply(i : CPVarInt) = new ElementIntMatrixConstraintBuilderCol(i, a)
 	}
 
-	class ElementMatrixConstraintBuilderCol(i : CPVarInt, a : Array[Array[Int]]) {
+	class ElementIntMatrixConstraintBuilderCol(i : CPVarInt, a : Array[Array[Int]]) {
 		def apply(j : CPVarInt) : CPVarInt = element(a, i, j)
 	}
+
 
 	class CPVarBoolWrappper(val b : oscar.cp.core.CPVarBool) {
 		/**

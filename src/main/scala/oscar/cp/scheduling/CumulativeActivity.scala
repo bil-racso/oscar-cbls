@@ -21,27 +21,38 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.Store
 import oscar.cp.modeling.CPScheduler
 
-class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt) extends Activity(scheduler, startVar, durVar, endVar) {
+class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt, n : String = null, existingId: Option[Int] = None) extends Activity(scheduler, startVar, durVar, endVar, n = n, existingId = existingId) {
 	
     def resource  = resourceVar
     def height    = heightVar
 	def minHeight = height.min
 	def maxHeight = height.max
 	
-	override def toString() = super.toString + " height: " + heightVar + " resource: " + resourceVar
+	override def toString = name + "(s: " +start+ ", d: " +dur+ ", e: " +end+ ", r: " +resource+ ", h: " +height+ ")"
 }
 
 object CumulativeActivity {
 	
-	def apply(scheduler : CPScheduler, start : ImplicitVarInt, dur : ImplicitVarInt, end : ImplicitVarInt, resource : ImplicitVarInt, height : ImplicitVarInt) = {
+	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, resource : ImplicitVarInt, height : ImplicitVarInt) = {
 		
-		val startVar    = start.variable(scheduler)
 		val durVar      = dur.variable(scheduler)
-		val endVar      = end.variable(scheduler)
+		val startVar    = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
+		val endVar      = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
 		val resourceVar = resource.variable(scheduler)
 		val heightVar   = height.variable(scheduler)
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar)
+	}
+	
+	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, resource : ImplicitVarInt, height : ImplicitVarInt, name : String) = {
+		
+		val durVar      = dur.variable(scheduler)
+		val startVar    = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
+		val endVar      = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
+		val resourceVar = resource.variable(scheduler)
+		val heightVar   = height.variable(scheduler)
+		
+		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = name)
 	}
 	
 	def apply(activity : Activity, resource : ImplicitVarInt, height : ImplicitVarInt) = {
@@ -53,7 +64,7 @@ object CumulativeActivity {
 		val resourceVar = resource.variable(scheduler)
 		val heightVar   = height.variable(scheduler)
 		
-		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar)
+		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = activity.name, existingId = Option(activity.id))
 	}
 }
 
@@ -68,6 +79,6 @@ object ProdConsActivity {
 		val resourceVar = resource.variable(scheduler)
 		val heightVar   = height.variable(scheduler)
 		
-		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar)
+		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = activity.name, existingId = Option(activity.id))
 	}
 }

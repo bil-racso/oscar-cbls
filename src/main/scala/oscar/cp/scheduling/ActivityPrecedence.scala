@@ -33,15 +33,6 @@ class ActivityPrecedence(act1 : Activity, act2 : Activity, pType : PrecedenceTyp
 
 object ActivityPrecedence {
 	
-	// Before
-	def endBeforeEnd(act1 : Activity, act2 : Activity) 	   = new ActivityPrecedence(act1, act2, EBE)
-	def endBeforeStart(act1 : Activity, act2 : Activity)   = new ActivityPrecedence(act1, act2, EBS)
-	def startBeforeEnd(act1 : Activity, act2 : Activity)   = new ActivityPrecedence(act1, act2, SBE)
-	def startBeforeStart(act1 : Activity, act2 : Activity) = new ActivityPrecedence(act1, act2, SBS)
-	
-	// At
-	def endAtEnd(act1 : Activity, act2 : Activity)     = new ActivityPrecedence(act1, act2, EAE)
-	def endAtStart(act1 : Activity, act2 : Activity)   = new ActivityPrecedence(act1, act2, EAS)
-	def startAtEnd(act1 : Activity, act2 : Activity)   = new ActivityPrecedence(act1, act2, SAE)
-	def startAtStart(act1 : Activity, act2 : Activity) = new ActivityPrecedence(act1, act2, SAS)
+	def apply(act1 : Activity, act2 : Activity, pType : PrecedenceType) = new ActivityPrecedence(act1, act2, pType)
 }
+

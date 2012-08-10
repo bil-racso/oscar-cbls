@@ -43,7 +43,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 3)
 		
 		cp.add(act1 precedes act2 withDelay 1)
-		cp.add(act2 endBeforeEnd act3 withDelay 1)
+		cp.add(act2 endsBeforeEndOf act3 withDelay 1)
 		
 		act1.start.value should be(0)
 		act2.start.value should be(3)
@@ -58,7 +58,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act2 = Activity(cp, 3)
 
 		cp.add(act2.start == 0)
-		cp.add(act1 startBeforeEnd act2 withDelay 1)
+		cp.add(act1 startsBeforeEndOf act2 withDelay 1)
 		
 		val expectedSol = Set(0, 1, 2)
 		var nSol = 0
@@ -80,7 +80,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act2 = Activity(cp, 3)
 
 		cp.add(act2.end == 5)
-		cp.add(act1 startBeforeStart act2)
+		cp.add(act1 startsBeforeStartOf act2)
 		
 		val expectedSol = Set(0, 1, 2)
 		var nSol = 0
@@ -101,7 +101,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act1 = Activity(cp, 2)
 		val act2 = Activity(cp, 2)
 
-		cp.add(act1 endAtEnd act2 withDelay 1)
+		cp.add(act1 endsAtEndOf act2 withDelay 1)
 		
 		val expectedSol = Set(0, 1, 2)
 		var nSol = 0
@@ -122,7 +122,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act1 = Activity(cp, 2)
 		val act2 = Activity(cp, 2)
 
-		cp.add(act1 endAtStart act2)
+		cp.add(act1 endsAtStartOf act2)
 		
 		val expectedSol = Set(0, 1, 2)
 		var nSol = 0
@@ -143,7 +143,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act1 = Activity(cp, 2)
 		val act2 = Activity(cp, 2)
 
-		cp.add(act1 startAtEnd act2)
+		cp.add(act1 startsAtEndOf act2)
 		
 		val expectedSol = Set(2, 3, 4)
 		var nSol = 0
@@ -164,7 +164,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 		val act1 = Activity(cp, 2)
 		val act2 = Activity(cp, 2)
 
-		cp.add(act1 startAtStart act2 withDelay 1)
+		cp.add(act1 startsAtStartOf act2 withDelay 1)
 		
 		val expectedSol = Set(0, 1, 2)
 		var nSol = 0

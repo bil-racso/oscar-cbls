@@ -26,19 +26,24 @@ import oscar.cp.core.CPVarInt
 
 import scala.util.continuations._
 import scala.collection.JavaConverters._
-import scala.collection.mutable.Set
+import scala.collection.mutable.Map
 
 class CPScheduler(val horizon : Int) extends CPSolver {
 
 	private var nResource = 0
 	private var nActivity = 0
-	private val resourcesSet  : Set[Resource] = Set()
-	private val activitiesSet : Set[Activity] = Set()
+	private val resourcesMap  : Map[Int, Resource] = Map()
+	private val activitiesMap : Map[Int, Activity] = Map()
+	
+	def resource(i : Int) = resourcesMap(i)
+	def activity(i : Int) = activitiesMap(i)
+	
+	def makespan = maximum(activities.map(_.end))
 	
 	def addResource(resource : Resource) : Int = {
 
-		resourcesSet.add(resource)
 		val temp = nResource
+		resourcesMap += temp -> resource
 		nResource += 1
 
 		return temp
@@ -46,20 +51,20 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	
 	def addActivity(activity : Activity) : Int = {
 
-		activitiesSet.add(activity)
 		val temp = nActivity
+		activitiesMap += temp -> activity
 		nActivity += 1
 
 		return temp
 	}
 	
-	def activities = activitiesSet.toArray
-	def resources  = resourcesSet.toArray
+	def activities = activitiesMap.values.toArray
+	def resources  = resourcesMap.values.toArray
 
 	def addResourceConstraints() = {
 
 		try {
-			for (r <- resourcesSet) r.setup
+			resourcesMap foreach (r => r._2.setup)
 		} catch {
 			case ex : NoSol => println("No Solution, inconsistent model (resource constraints)")
 		}
