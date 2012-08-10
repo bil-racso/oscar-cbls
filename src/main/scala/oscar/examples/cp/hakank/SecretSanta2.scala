@@ -187,7 +187,7 @@ object SecretSanta2 {
 
       // optimize "distance" to earlier rounds:
       for(i <- RANGE) {
-        cp.add(santa_distance(i) == element(rounds(i), santas(i)))
+        cp.add(santa_distance(i) == rounds(i)(santas(i)))
       }
 
       // cannot be a Secret Santa for the same person

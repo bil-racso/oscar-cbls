@@ -85,7 +85,7 @@ object BalesOfHay {
         val i = CPVarInt(cp, 0 until n) 
         val j = CPVarInt(cp, 0 until n)
         
-        cp.add(element(bales,i) + element(bales,j) == weights(w))
+        cp.add(bales(i) + bales(j) == weights(w))
         cp.add(i < j) // symmetry breaking
 
       }

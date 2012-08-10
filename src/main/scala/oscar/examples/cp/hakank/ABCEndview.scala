@@ -114,7 +114,7 @@ object ABCEndview {
       val n = a.length
       if (c > 0) {
         val i = CPVarInt(cp, 0 until d)
-        cp.add(element(a,i) == c)
+        cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i >>= j) ==> (a(j) === 0))
         }
@@ -129,7 +129,7 @@ object ABCEndview {
       val n = a.length
       if (c > 0) {
         val i = CPVarInt(cp, n-d until n)
-        cp.add(element(a,i) == c)
+        cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i <<= j) ==> (a(j) === 0))
         }

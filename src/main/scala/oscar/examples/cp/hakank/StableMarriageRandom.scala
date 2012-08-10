@@ -104,16 +104,16 @@ object StableMarriageRandom {
       val t1 = System.currentTimeMillis
 
       for (m <- Men) {
-        cp.add(element(husband, wife(m),m))
+        cp.add(husband(wife(m)) == m)
       }
 
       for (w <- Women) {
-        cp.add(element(wife, husband(w),w))
+        cp.add(wife(husband(w)) == w)
       }      
 
       for (m <- Men; w <- Women) { 
-        val pref_m = element(rankMen(m),wife(m))      // preference of m for his wife
-        val pref_w = element(rankWomen(w),husband(w)) // preference of w for her husband
+        val pref_m = rankMen(m)(wife(m))      // preference of m for his wife
+        val pref_w = rankWomen(w)(husband(w)) // preference of w for her husband
         
         cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
         cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         

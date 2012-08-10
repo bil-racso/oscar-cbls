@@ -102,7 +102,7 @@ object SecretSanta {
 
       // No Secret Santa to a person in the same family
       for(i <- 0 until n) {
-        cp.add(element(family, x(i)) != family(i));
+        cp.add(family(x(i)) != family(i))
       }
       
     } exploration {

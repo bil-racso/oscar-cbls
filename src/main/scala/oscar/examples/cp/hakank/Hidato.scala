@@ -167,11 +167,11 @@ object Hidato {
 
         // find the indices of this k
         // x(i)(j) #= k
-        cp.add(element(x, ix1) == k, Strong)
+        cp.add(x(ix1) == k, Strong)
 
         // and then find where to put the next number (k+1)
         // x(i+a)(j+b) #= k+1
-        cp.add(element(x, ix2) == k+1, Strong)
+        cp.add(x(ix2) == k+1, Strong)
 
       }
   
