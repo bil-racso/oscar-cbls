@@ -151,9 +151,9 @@ object CrossWord {
       // 
       for(I <- 0 until num_overlapping) {
            cp.add(
-                  element(A_flatten,E(overlapping(I)(0))*word_len+overlapping(I)(1))
+                  A_flatten(E(overlapping(I)(0))*word_len+overlapping(I)(1))
                   ==
-                  element(A_flatten,E(overlapping(I)(2))*word_len+overlapping(I)(3)),
+                  A_flatten(E(overlapping(I)(2))*word_len+overlapping(I)(3)),
                   Strong
                   )
       }
