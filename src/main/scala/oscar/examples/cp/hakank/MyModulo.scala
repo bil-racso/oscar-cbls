@@ -138,8 +138,8 @@ object MyModulo {
 
       for(i <- 1 until n) {
         // myMod(cp, x(i), x(i-1), one)
-        // cp.add(mod(cp, x(i), x(i-1)) == one)
-        cp.add(modulo(x(i), x(i-1)), 1)
+        cp.add(mod(cp, x(i), x(i-1)) == one)
+        // cp.add(modulo(x(i), x(i-1)), 1)
       }
 
     } exploration {
