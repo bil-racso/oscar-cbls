@@ -351,8 +351,8 @@ object ABCEndview {
       // for global cardinality (Latin square)
       val counts = Array(n-max_letter) ++ Array.fill(max_letter)(1)
 
-      println("dist: " + dist)
-      println("counts: " + counts.mkString(" "))
+      // println("dist: " + dist)
+      // println("counts: " + counts.mkString(" "))
 
 
       //
@@ -400,12 +400,14 @@ object ABCEndview {
 
 
       } exploration {
-        
+
+        /*
         println("\nBefore labeling: ")
         for(i <- RANGE) {
            println(x(i).mkString(""))
         }
         println()
+        */
   
         while (!allBounds(x_flat)) {
 

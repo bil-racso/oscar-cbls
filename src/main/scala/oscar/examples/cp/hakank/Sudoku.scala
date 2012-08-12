@@ -41,6 +41,9 @@ object Sudoku {
     val n = 9
     val reg = 3
 
+    val NRANGE = 0 until n
+    val RRANGE = 0 until reg
+
     // 
     // data
     //
@@ -70,24 +73,21 @@ object Sudoku {
     cp.solveAll subjectTo {
 
       // fill with the hints
-      for(i <- 0 until n;
-          j <- 0 until n if problem(i)(j) > 0) {
-            cp.add(x(i)(j) == problem(i)(j))
-      }
-      
+      NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0) cp.add(x(i)(j) == problem(i)(j))))
+
       // rows and columns
-      for(i <- 0 until n) {
-        cp.add(alldifferent(x(i)), Strong)
-        cp.add(alldifferent(x_t(i)), Strong)
-      }
+      NRANGE.foreach(i=>cp.add(alldifferent(x(i)), Strong))
+      NRANGE.foreach(j=>cp.add(alldifferent(x_t(j)), Strong))
       
+
       // blocks
-      for(i <- 0 until reg; j <- 0 until reg) {
-        cp.add(alldifferent(  (for{ r <- i*reg until i*reg+reg;
-                                    c <- j*reg until j*reg+reg
+      for(i <- RRANGE; 
+          j <- RRANGE) {
+        cp.add(alldifferent((for{ r <- i*reg until i*reg+reg;
+                                  c <- j*reg until j*reg+reg
               } yield x(r)(c))), Strong)
       }
-      
+
 
     } exploration {
        
