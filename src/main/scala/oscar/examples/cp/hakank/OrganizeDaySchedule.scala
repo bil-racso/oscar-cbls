@@ -36,6 +36,8 @@ import scala.math._
   Cf OrganizeDay.scala
   This version use the Scheduling API.
 
+  Thanks Renaud for a much neater version.
+
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
  
@@ -49,39 +51,29 @@ object OrganizeDaySchedule {
     //
     // data
     //
-    val n = 4
-
-    val Activities = 0 until n
-   
-    val Array(work, mail, shop, bank) = (0 to 3).toArray
-    val tasks = Array(work, mail, shop, bank)
-    val tasks_str = Array("Work", "Mail", "Shop", "Bank")
-
-    val durations = Array(4,1,2,1)
-    val resources = Array(1,1,1,1)
-
-    // precedences: 
-    // task(t,0) must be finished before task(t, 1)
-    val before_tasks = Array(Array(bank, shop),
-                             Array(mail, work))
-
-    val capa = 1
 
     // the valid times of the day
     val begin = 9
-    val end   = 17
+    val end = 17
 
-    val horizon = end - begin + 1
-    println("horizon: " + horizon)
+    val horizon = end - begin
     val cp = CPScheduler(horizon)
+
+    println("horizon: " + horizon)
 
     //
     // variables
     //
-    val resource = CumulativeResource(cp, capa, "OrganizeDay")
-    val activities = Array.tabulate(n)(a=>Activity(cp, durations(a)))
-    for(a <- Activities) {
-      activities(a) needs 1 ofResource resource
+    val work = Activity(cp, 4, "Work")
+    val mail = Activity(cp, 1, "Mail")
+    val shop = Activity(cp, 2, "Shop")
+    val bank = Activity(cp, 1, "Bank")
+
+    val resource   = UnitResource(cp)
+    val activities = cp.activities
+
+    for (activity <- activities) {
+      activity needs resource
     }
 
     val makespan = cp.makespan
@@ -94,13 +86,10 @@ object OrganizeDaySchedule {
     cp.solveAll subjectTo {
 
       // precedences
-      for(t <- 0 until before_tasks.length) {
-        cp.add(activities(before_tasks(t)(0)) precedes activities(before_tasks(t)(1)))
-      }
+      cp.add(bank precedes shop)
+      cp.add(mail precedes work)
 
-      // cp.add(activities(work).start >= 11)
-      cp.add(activities(work).start >= 11 - begin)
-      cp.add(makespan <= end-begin)
+      cp.add(work.start >= 11 - begin)
 
     } exploration {
        
@@ -109,7 +98,9 @@ object OrganizeDaySchedule {
 
       println("makespan : " + makespan)
       println("criticality: " + resource.criticality)
-      println(activities.map(a=>"Activity " + tasks_str(a.id) + ": " + (a.start.value+begin) + " --" + a.dur + "h -- " + (a.end.value+begin)).mkString("\n"))
+      println(activities.mkString("\n"))
+      println(activities.map(a=>"Activity " + a.name + ": " + (a.start.value+begin) + " --" + a.dur + "h -- " + (a.end.value+begin)).mkString("\n"))
+
       println()
 
       numSols += 1
