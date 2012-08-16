@@ -17,18 +17,22 @@ class ActivityPrecedence(act1 : Activity, act2 : Activity, pType : PrecedenceTyp
 	
 	def withDelay(delay : Int) = {
 		
+		val cp = act1.scheduler
+		
 		pType match {
-			case EBE => (act1.end   + delay <= act2.end)
-			case EBS => (act1.end   + delay <= act2.start)
-			case SBE => (act1.start + delay <= act2.end)
-			case SBS => (act1.start + delay <= act2.start)
-			case EAE => (act1.end   + delay == act2.end)
-			case EAS => (act1.end   + delay == act2.start)
-			case SAE => (act1.start + delay == act2.end)
-			case SAS => (act1.start + delay == act2.start)
+			case EBE => act1.end   + delay <= act2.end
+			case EBS => act1.end   + delay <= act2.start
+			case SBE => act1.start + delay <= act2.end
+			case SBS => act1.start + delay <= act2.start
+			case EAE => act1.end   + delay == act2.end
+			case EAS => act1.end   + delay == act2.start
+			case SAE => act1.start + delay == act2.end
+			case SAS => act1.start + delay == act2.start
 			case _   => throw new InvalidParameterException(pType + " is not a valid precedence type.")
 		}
 	}
+	
+	
 }
 
 object ActivityPrecedence {

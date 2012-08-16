@@ -38,8 +38,8 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		
 		cp.solveAll subjectTo {
 			
-			cp.add(act1 endsBeforeStartOf act2)
-			cp.add(act3 endsBeforeStartOf act4)
+			act1 endsBeforeStartOf act2
+			act3 endsBeforeStartOf act4
 			
 		} exploration {
 			cp.binary(acts.map(_.start))
@@ -77,8 +77,8 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		
 		cp.solveAll subjectTo {
 			
-			cp.add(act1 precedes act2)
-			cp.add(act3 precedes act4)
+			act1 precedes act2
+			act3 precedes act4
 			
 		} exploration {
 			cp.binary(acts.map(_.start))
@@ -106,10 +106,10 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		val resource1 = UnitResource(cp)
 		val resource2 = UnitResource(cp)
 		
-		act1.needs(resource1)
-		act2.needs(resource1)
-		act3.needs(resource2)
-		act4.needs(resource2)
+		act1 needs resource1
+		act2 needs resource1
+		act3 needs resource2
+		act4 needs resource2
 		
 		var nSol = 0
 		
