@@ -25,8 +25,8 @@ import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.Store;
-import oscar.reversible.ReversibleBool;
 import oscar.cp.scheduling.Activity;
+import oscar.reversible.ReversibleBool;
 import oscar.cp.scheduling.MirrorActivity;
 
 
@@ -241,15 +241,17 @@ public class UnaryResource extends Constraint {
 
 	@Override
 	protected CPOutcome propagate() {
-		//System.out.println("propagate "+getName());	
+		for (int i = 0; i < nbAct; i++) {
+			activities[i].update(); // forces update of start, end, dur
+		}
 		failure = false;
 		do {
 			do {
-
 				do {
 					if(!overloadChecking()) {
 						return CPOutcome.Failure;
 					}
+					
 				} while (!failure && detectablePrecedences());
 			} while (!failure && notFirstNotLast() && !failure);
 		} while (!failure && edgeFinder());
@@ -287,11 +289,15 @@ public class UnaryResource extends Constraint {
 			thetaTree.insert(aw.getActivity(), aw.estPos());
 			if (thetaTree.ect() > aw.getActivity().lct()) {
 				return false;
+				
 			}
 		}
 
 		// Other direction
 		Arrays.sort(mlct, lctComp);
+		for (int i = 0; i < nbAct; i++) {
+		    Activity act = mlct[i].getActivity();
+		}
 		thetaTree.reset();
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper aw = mlct[i];
