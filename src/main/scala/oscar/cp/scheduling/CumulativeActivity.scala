@@ -27,6 +27,8 @@ class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : 
     def height    = heightVar
 	def minHeight = height.min
 	def maxHeight = height.max
+	def minEnergy = minHeight*minDuration
+	def maxEnergy = maxHeight*maxDuration
 	
 	override def toString = name + "(s: " +start+ ", d: " +dur+ ", e: " +end+ ", r: " +resource+ ", h: " +height+ ")"
 }
@@ -81,4 +83,34 @@ object ProdConsActivity {
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = activity.name, existingId = Option(activity.id))
 	}
+}
+
+class MirrorCumulativeActivity(val act : CumulativeActivity) extends CumulativeActivity(act.scheduler, act.start, act.dur, act.end, act.resource, act.height, n = act.name, existingId = Option(act.id)) {
+
+	override def start : CPVarInt = throw new UninitializedFieldError("not available")
+	override def end : CPVarInt   = throw new UninitializedFieldError("not available")
+
+	// Earliest starting time
+	override def est = -act.lct;
+	// Latest starting time
+	override def lst = -act.ect;
+	// Earliest completion time assuming the smallest duration
+	override def ect = -act.lst
+	// Latest completion time assuming the smallest duration
+	override def lct = -act.est
+
+	override def adjustStart(v : Int) = act.end.updateMax(-v)
+
+	override def toString() = "mirror of activity:" + act;
+
+	// Precedences
+	override def precedes(act : Activity) = throw new UninitializedFieldError("not available")
+	override def endsBeforeEndOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def endsBeforeStartOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def startsBeforeEndOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def startsBeforeStartOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def endsAtEndOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def endsAtStartOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def startsAtEndOf(act : Activity) = throw new UninitializedFieldError("not available")
+	override def startsAtStartOf(act : Activity) = throw new UninitializedFieldError("not available")
 }

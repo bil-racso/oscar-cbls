@@ -69,6 +69,7 @@ object CumulativeJobShop extends App {
 
 	val horizon = durations.sum
 	val cp = CPScheduler(horizon)
+	cp.failLimit(100000)
 
 	// Activities & Resources
 	val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))

@@ -19,8 +19,6 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-import scala.collection.mutable.Set
-
 import oscar.cp.core.Store
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
@@ -29,6 +27,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
+import oscar.cp.constraints.QuadraticCumulativeEdgeFinding
 
 /** This abstract class contains the main parts of the cumulative constraint described 
  *  in [1]. 
@@ -57,7 +56,7 @@ import oscar.algo.SortUtils.stableSort
  *  @author Renaud Hartert ren.hartert@gmail.com
  *  @version 28/07/2012 
  */
-abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
+abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
 	protected val tasks = allTasks.filter(_.resource.hasValue(r))
@@ -90,6 +89,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 
 	// Contains all the possible events of each task (used for speed-up)
 	protected val eventList = Array.tabulate(nTasks){e => new EventList(e)}
+	
+	protected val edge = new QuadraticCumulativeEdgeFinding(cp, allTasks, ub, r)
 	
 	/** Checks the necessary conditions to add the check events of the task `t` 
 	 *  in the array `eventPointSeries` at the position `nEvents`. 
@@ -186,6 +187,9 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
   
 	override def propagate(): CPOutcome = {
 		
+		//if (edge.propagate() == CPOutcome.Failure) 
+			//return CPOutcome.Failure
+
 		// Generates events
 		if (!generateEventPointSeries()) 
 			return CPOutcome.Suspend
@@ -513,16 +517,19 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		val PruningEv      : Event = new Event(EventType.pruning, t, 0, 0, 0)
 		
 		def sCheck : Event = {
+			
 			sCheckEv.date = tasks(sCheckEv.task).lst
 			return sCheckEv
 		}
 		
 		def eCheck : Event = {
+			
 			eCheckEv.date = tasks(eCheckEv.task).ect
 			return eCheckEv
 		}
 		
 		def sBadProfile(consInc : Int, capaInc : Int)   : Event = {
+			
 			sBadProfileEv.date = tasks(sBadProfileEv.task).lst
 			sBadProfileEv.capa = capaInc
 			sBadProfileEv.cons = consInc
@@ -530,6 +537,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def eBadProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			eBadProfileEv.date =  tasks(eBadProfileEv.task).ect
 			eBadProfileEv.capa = -capaInc
 			eBadProfileEv.cons = -consInc
@@ -537,6 +545,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def sGoodProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			sGoodProfileEv.date = tasks(sGoodProfileEv.task).est
 			sGoodProfileEv.capa = capaInc
 			sGoodProfileEv.cons = consInc
@@ -544,6 +553,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def eGoodProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			eGoodProfileEv.date =  tasks(eGoodProfileEv.task).lct
 			eGoodProfileEv.capa = -capaInc
 			eGoodProfileEv.cons = -consInc
@@ -551,6 +561,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def sPruning : Event = {
+			
 			PruningEv.date = tasks(PruningEv.task).est
 			return PruningEv
 		}

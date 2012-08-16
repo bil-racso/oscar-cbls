@@ -136,7 +136,7 @@ object Activity {
 	}
 }
 
-class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.start, act.dur, act.end) {
+class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.start, act.dur, act.end, n = act.name, existingId = Option(act.id)) {
 
 	override def start : CPVarInt = throw new UninitializedFieldError("not available")
 	override def end : CPVarInt   = throw new UninitializedFieldError("not available")

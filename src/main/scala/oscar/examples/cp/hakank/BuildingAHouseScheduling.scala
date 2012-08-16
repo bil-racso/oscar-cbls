@@ -1,19 +1,21 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
- *   
+ *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
@@ -44,92 +46,91 @@ import scala.math._
 
 object BuildingAHouseScheduling {
 
+	def main(args : Array[String]) {
 
-  def main(args: Array[String]) {
+		//
+		// data
+		//
+		val n = 10
+		val duration = Array(35, 15, 40, 15, 5, 10, 5, 10, 5, 5)
+		val capa = 3
+		val horizon = duration.sum
+		val cp = CPScheduler(horizon)
 
-    //
-    // data
-    //
-    val n = 10
-    val duration = Array(35,15,40,15, 5,10, 5,10, 5, 5) 
-    val capa = 3
-    val horizon = duration.sum
-    val cp = CPScheduler(horizon)
+		println("horizon: " + horizon)
 
-    println("horizon: " + horizon)
+		//
+		// variables
+		//
+		val masonry   = Activity(cp, duration(0), "Masonry")
+		val carpentry = Activity(cp, duration(1), "Carpentry")
+		val plumbing  = Activity(cp, duration(2), "Plumbing")
+		val ceiling   = Activity(cp, duration(3), "Ceiling")
+		val roofing   = Activity(cp, duration(4), "Roofing")
+		val painting  = Activity(cp, duration(5), "Painting")
+		val windows   = Activity(cp, duration(6), "Windows")
+		val facade    = Activity(cp, duration(7), "Facade")
+		val garden    = Activity(cp, duration(8), "Garden")
+		val moving    = Activity(cp, duration(9), "Moving")
 
-    //
-    // variables
-    //
-    val masonry   = Activity(cp, duration(0), "Masonry")
-    val carpentry = Activity(cp, duration(1), "Carpentry")
-    val plumbing  = Activity(cp, duration(2), "Plumbing")
-    val ceiling   = Activity(cp, duration(3), "Ceiling")
-    val roofing   = Activity(cp, duration(4), "Roofing")
-    val painting  = Activity(cp, duration(5), "Painting")
-    val windows   = Activity(cp, duration(6), "Windows")
-    val facade    = Activity(cp, duration(7), "Facade")
-    val garden    = Activity(cp, duration(8), "Garden")
-    val moving    = Activity(cp, duration(9), "Moving")
+		val resource = CumulativeResource(cp, capa, "BuildingAHouse")
+		val activities = cp.activities
 
-    val resource  =  CumulativeResource(cp, capa, "BuildingAHouse")
-    val activities = cp.activities
+		for (activity <- activities) {
+			activity needs 1 ofResource resource
+		}
 
-    for (activity <- activities) {
-      activity needs 1 ofResource resource
-    }
+		val makespan = cp.makespan
 
-    val makespan = cp.makespan
+		// extra constraint
+		val zero = CPVarInt(cp, 0 to 0)
+		val z = maximum(Array(moving.end - 100, zero)) * 400 +
+			    maximum(Array(-masonry.start + 25, zero)) * 200 +
+			    maximum(Array(-carpentry.start + 75, zero)) * 300 +
+			    maximum(Array(-ceiling.start + 75, zero)) * 100
 
-    // extra constraint
-    val zero = CPVarInt(cp, 0 to 0)
-    val z = maximum(Array(moving.end - 100, zero)) * 400 +
-            maximum(Array(-masonry.start + 25, zero)) * 200 +
-            maximum(Array(-carpentry.start + 75, zero)) * 300 +
-            maximum(Array(-ceiling.start + 75 , zero)) * 100
+		//
+		// constraints
+		//
+		var numSols = 0
 
-    //
-    // constraints
-    //
-    var numSols = 0
+		// cp.minimize(makespan) subjectTo {
+		cp.minimize(z) subjectTo {
 
-    // cp.minimize(makespan) subjectTo {
-    cp.minimize(z) subjectTo {
+			// precedences
+			cp.add(masonry precedes carpentry)
+			cp.add(masonry precedes plumbing)
+			cp.add(masonry precedes ceiling)
+			cp.add(carpentry precedes roofing)
+			cp.add(ceiling precedes painting)
+			cp.add(roofing precedes windows)
+			cp.add(roofing precedes facade)
+			cp.add(plumbing precedes facade)
+			cp.add(roofing precedes garden)
+			cp.add(plumbing precedes garden)
+			cp.add(windows precedes moving)
+			cp.add(facade precedes moving)
+			cp.add(garden precedes moving)
+			cp.add(painting precedes moving)
 
-      // precedences
-      cp.add(masonry   precedes carpentry)
-      cp.add(masonry   precedes plumbing)
-      cp.add(masonry   precedes ceiling)
-      cp.add(carpentry precedes roofing)
-      cp.add(ceiling   precedes painting)
-      cp.add(roofing   precedes windows)
-      cp.add(roofing   precedes facade)
-      cp.add(plumbing  precedes facade)
-      cp.add(roofing   precedes garden)
-      cp.add(plumbing  precedes garden)
-      cp.add(windows   precedes moving)
-      cp.add(facade    precedes moving)
-      cp.add(garden    precedes moving)
-      cp.add(painting  precedes moving)
+		} exploration {
 
-    } exploration {
-       
-      // cp.setTimes(cp.activities)
-      // cp.binaryFirstFail(cp.activities)
-      cp.binaryMaxDegree(cp.activities.map(_.start))
+			// cp.setTimes(cp.activities)
+			// cp.binaryFirstFail(cp.activities)
+			cp.binaryMaxDegree(cp.activities.map(_.start))
 
-      println("makespan:" + makespan)
-      println(activities.map(a=> "%-10s".format(a.name) + ": " + "%3d".format(a.start.value) + " --" + "%3d".format(a.dur.value) + "h --" + "%3d".format(a.end.value)).mkString("\n"))
+			println("makespan:" + makespan)
+			println(activities.map(a => "%-10s".format(a.name) + ": " + "%3d".format(a.start.value) + " --" + "%3d".format(a.dur.value) + "h --" + "%3d".format(a.end.value)).mkString("\n"))
 
-      println()
+			println()
 
-      numSols += 1
+			numSols += 1
 
-   }
+		}
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+		println("\nIt was " + numSols + " solutions.")
+		cp.printStats()
 
-  }
+	}
 
 }
