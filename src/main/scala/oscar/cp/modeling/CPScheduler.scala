@@ -97,7 +97,7 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		binary(vars.map(_.start))
 	}
 
-	def setTimes(activities : Array[Activity]) : Unit @suspendable = {
+	def setTimes(activities : Array[_ <: Activity]) : Unit @suspendable = {
 
 		val n = activities.size
 		val Activities = 0 until n
