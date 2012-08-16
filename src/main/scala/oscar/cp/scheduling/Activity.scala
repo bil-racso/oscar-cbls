@@ -16,9 +16,10 @@
  ******************************************************************************/
 package oscar.cp.scheduling;
 
-import oscar.cp.core.CPVarInt;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.Store
 import oscar.cp.constraints.LeEq
+import oscar.cp.core.CPOutcome
 
 class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
@@ -30,6 +31,41 @@ class Activity(startVar: CPVarInt, durVar: CPVarInt) {
     
 	def this(startVar: CPVarInt,dur: Int) = this(startVar, CPVarInt(startVar.s,dur,dur))
 
+	/**
+	 * forces the update of start, end, dur
+	 */
+	def update(): CPOutcome = {
+      // end <= start
+      if (end.updateMin(start.min) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      else if (start.updateMax(end.max) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      // end = start + dur
+      else if (end.updateMax(start.max+dur.max) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      else if (end.updateMin(start.min+dur.min) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      // start = end - dur
+      else if (start.updateMax(end.max-dur.min) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      else if (start.updateMin(end.min-dur.max) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      // dur = end - start
+      else if (dur.updateMax(end.max-start.min) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      else if (dur.updateMin(end.min-start.max) == CPOutcome.Failure) {
+        CPOutcome.Failure
+      }
+      else CPOutcome.Suspend
+    }
+	
 	/**
 	 * earliest starting time
 	 */
