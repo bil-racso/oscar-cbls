@@ -66,16 +66,17 @@ object PMedian {
                          Array(50, 60,  3),
                          Array(40, 60,  1))
 
-
-
     //
     // variables
     //
     val open = Array.fill(num_warehouses)(CPVarInt(cp, 0 to num_warehouses))
     val ship = Array.fill(num_customers,num_warehouses)(CPVarInt(cp, 0 to 1))
 
-    val z = CPVarInt(cp, 0 to 1000)
-      
+      // val z = CPVarInt(cp, 0 to 1000)
+    val z = sum(for{c <- CUSTOMERS
+                    w <- WAREHOUSES} yield ship(c)(w)*demand(c)*distance(c)(w))      
+
+
     //
     // constraints
     //
@@ -92,15 +93,9 @@ object PMedian {
         cp.add(sum(for(w <- WAREHOUSES) yield ship(c)(w)) == 1)
       }
         
-      cp.add(z == sum(
-                for{c <- CUSTOMERS
-                    w <- WAREHOUSES} yield ship(c)(w)*demand(c)*distance(c)(w)
-                      ))
-    
-
     } exploration {
        
-      cp.binaryMaxDegree(ship.flatten ++ open)
+      cp.binary(ship.flatten ++ open, _.constraintDegree, _.max)
 
       println("z:" + z)
       println("open:" + open.mkString(""))

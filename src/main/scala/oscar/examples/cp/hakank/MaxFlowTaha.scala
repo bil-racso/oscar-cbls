@@ -64,7 +64,8 @@ object MaxFlowTaha {
 
     val out_flow = Array.fill(n)(CPVarInt(cp, 0 to 1000))
     val in_flow = Array.fill(n)(CPVarInt(cp, 0 to 1000))
-    val total = CPVarInt(cp, 0 to 10000)
+    val total = sum(for{j <- NODES
+                      if c(start)(j) > 0} yield x(start)(j))
 
 
     //
@@ -74,9 +75,6 @@ object MaxFlowTaha {
 
     cp.maximize(total) subjectTo {
 
-      cp.add( sum(for{j <- NODES
-                      if c(start)(j) > 0} yield x(start)(j)) == total)
-      
       for(i <- NODES) {
         val in_flow_sum = for{j <- NODES if c(j)(i) > 0} yield x(j)(i)
         if (in_flow_sum.length > 0) {
@@ -84,7 +82,6 @@ object MaxFlowTaha {
         }
 
         val out_flow_sum = for(j <- NODES if c(i)(j) > 0) yield x(i)(j)
-
         if (out_flow_sum.length > 0) {
           cp.add(sum(out_flow_sum)  == out_flow(i))
         }
@@ -109,15 +106,11 @@ object MaxFlowTaha {
 
      } exploration {
        
-      cp.binary(x.flatten)
+      cp.binary(x.flatten, _.min, _.max)
 
       println("total: " + total)
-      for(i <- NODES) {
-        for(j <- NODES) {
-          print("%3d".format(x(i)(j).value))
-        }
-        println()
-      }
+      println(x.map(i=>i.map(j=>"%3d".format(j.value)).mkString(" ")).mkString("\n"))
+
       println()
 
       numSols += 1

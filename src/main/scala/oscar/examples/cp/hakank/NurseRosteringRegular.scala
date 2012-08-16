@@ -178,7 +178,7 @@ object NurseRosteringRegular {
 
      } exploration {
 
-      cp.binary(all)
+      cp.binary(all, _.size, _.min)
 
       for(n <- nurses) {
         print("Nurse " + n + ": ")

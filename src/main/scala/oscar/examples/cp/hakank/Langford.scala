@@ -57,11 +57,8 @@ object Langford {
     //
     // data
     //
-
-    var k = 4
-    if (args.length > 0) {
-      k = args(0).toInt
-    }
+    val k = if (args.length > 0) args(0).toInt else 4;
+    val num_to_show = if (args.length > 1) args(1).toInt else 0;
 
     //
     // variables
@@ -88,15 +85,18 @@ object Langford {
       // symmetry breaking
       cp.add(solution(0) < solution(2*k-1))
 
-
     } exploration {
        
-      cp.binaryFirstFail(position)
+      cp.binary(position, _.size, _.min)
 
       print("solution:" + solution.mkString("") + " ")
       println("position:" + position.mkString(""))
 
       numSols += 1
+
+      if (num_to_show > 0 && numSols >= num_to_show) {
+        cp.stop()
+      }
 
    }
 

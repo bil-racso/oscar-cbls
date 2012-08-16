@@ -34,7 +34,7 @@ import scala.util.Random
   Also, see 
   http://www.comp.rgu.ac.uk/staff/ha/ZCSP/additional_problems/stable_marriage/stable_marriage.pdf
 
-  Thanks to Pierre Schaus for improving this model, but speed and
+  Thanks to Pierre Schaus for improving this model, both the speed and
   readability.
 
   @author Hakan Kjellerstrand hakank@gmail.com

@@ -62,7 +62,7 @@ object CombinatorialAuction {
     // variables
     //
     val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
-    val z  = weightedSum(bid_amount, x)
+    val z = weightedSum(bid_amount, x)
 
     //
     // constraints
@@ -73,9 +73,9 @@ object CombinatorialAuction {
 
       for(bid_id <- bid_ids) {
         cp.add(sum(for{item <- 0 until n
-                         i <- 0 until items(item).length
-                         if items(item)(i) == bid_id} yield x(item)
-            ) <= 1)
+                       i <- 0 until items(item).length
+                       if items(item)(i) == bid_id} yield x(item)
+                   ) <= 1)
 
       }
 

@@ -113,21 +113,9 @@ object AppointmentSchedulingSet {
                   )
     */
 
-    var n = 10
-    var limit = 0.6
-    var num_to_show = 0 // 0: show all solutions
-     
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
-
-    if (args.length > 1) {
-      limit = args(1).toFloat
-    }
-
-    if (args.length > 2) {
-      num_to_show = args(2).toInt
-    }
+    val n = if (args.length > 0) args(0).toInt else 10;
+    val limit = if (args.length > 1) args(1).toFloat else 0.6;
+    val num_to_show = if (args.length > 2) args(2).toInt else 0;
 
     println("n: " + n + " limit: " + limit + " num_to_show: " + num_to_show)
 

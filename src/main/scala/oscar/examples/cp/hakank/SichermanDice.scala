@@ -118,7 +118,7 @@ object SichermanDice {
 
     } exploration {
        
-      cp.binaryFirstFail(x1 ++ x2)
+      cp.binary(x1 ++ x2, _.min, _.min)
 
       println("x1: " + x1.mkString(""))
       println("x2: " + x2.mkString(""))

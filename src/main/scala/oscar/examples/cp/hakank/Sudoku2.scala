@@ -30,6 +30,10 @@ import scala.math._
  *
  * This version can also read a problem instance from a file.
  *
+ * A collection of problem instances (from Gecode) can be found 
+ * in the ./data directory.
+ *
+ *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
@@ -63,26 +67,24 @@ object Sudoku2 {
                        List(X, X, X, 6, X, 8, X, X, X))
 
      
-  // read problem instance from file
-  if (args.length > 0) {
-    println("\nReading from file: " + args(0))
+   // read problem instance from file
+   if (args.length > 0) {
+     println("\nReading from file: " + args(0))
     
-    val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
-    n = lines(0).toInt
-    reg = sqrt(n).toInt
-    println("Size:" + n)
-    var this_problem = List[List[Int]]()
-    for (t <- 1 to n) {
-      println(lines(t))
-      val t2: List[Int] = lines(t).split("\\s+").toList.map(i=>if (i == ".") X else i.toInt)
-      this_problem = this_problem ::: List(t2)
+     val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
+     n = lines(0).toInt
+     reg = sqrt(n).toInt
+     println("Size " + lines.mkString("\n"))
+     val this_problem = lines.tail.map(_.split("\\s+").toList.
+                        filter(_.length>0).map(i=>if (i == ".") X else i.toInt))
+     println()
+    
+     problem = this_problem
+
     }
-    println()
 
-    problem = this_problem
-
-  }
-
+    val NRANGE = 0 until n
+    val RRANGE = 0 until reg
 
     // variables
     val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
@@ -94,19 +96,19 @@ object Sudoku2 {
 
     cp.solveAll subjectTo {
       // fill with the hints
-      for(i <- 0 until n;
-          j <- 0 until n if problem(i)(j) > 0) {
+      for(i <- NRANGE;
+          j <- NRANGE if problem(i)(j) > 0) {
             cp.add(x(i)(j) == problem(i)(j))
       }
 
      // rows and columns
-     for(i <- 0 until n) {
+     for(i <- NRANGE) {
        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
      }
 
      // blocks
-     for(i <- 0 until reg; j <- 0 until reg) {
+     for(i <- RRANGE; j <- RRANGE) {
        cp.add(alldifferent(  (for{ r <- i*reg until i*reg+reg;
                             c <- j*reg until j*reg+reg
              } yield x(r)(c)).toArray), Strong)
@@ -115,11 +117,12 @@ object Sudoku2 {
 
      } exploration {
        
-       cp.binaryFirstFail(x.flatten)
+      cp.binaryFirstFail(x.flatten)
 
+       val alpha = ('0' to'9') ++ ('A' to 'Z')
        println("\nSolution:")
-       for(i <- 0 until n) {
-         println(x(i).mkString(""))
+       for(i <- NRANGE) {
+         println(x(i).map(j=>alpha(j.value)).mkString(" "))
        }
        println()
 
