@@ -31,100 +31,80 @@ import scala.io.Source
 import scala.collection.mutable.Set
 
 object CumulativeJobShopLNS {
-  
-	def main(args: Array[String]) {
-		
+	
+	def main(args : Array[String]) {
+
 		// Parsing		
 		// -----------------------------------------------------------------------
-		
-		// Read the data
-		var lines = Source.fromFile("data/cJobShopVeryHard.txt").getLines.toList
-		
-		val nJobs        = lines.head.trim().split(" ")(0).toInt 
+
+		var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+
+		val nJobs        = lines.head.trim().split(" ")(0).toInt
 		val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-		val nMachines    = lines.head.trim().split(" ")(2).toInt
+		val nResources   = lines.head.trim().split(" ")(2).toInt
 		val capacity     = lines.head.trim().split(" ")(3).toInt
-		
-		val Jobs     = 0 until nJobs
-		val Machines = 0 until nMachines
-		
-		println("#Jobs      : " + nJobs)
-		println("#Tasks/job : " + nTasksPerJob)
-		println("#Machines  : " + nMachines)
-		println("#Capacity  : " + capacity)
-		
+
+		val nActivities  = nJobs * nTasksPerJob
+
+		val Activities   = 0 until nActivities
+		val Jobs         = 0 until nJobs
+		val Resources    = 0 until nResources
+
+		println("#Jobs       : " + nJobs)
+		println("#Activities : " + nActivities)
+		println("#Resources  : " + nResources)
+		println("Capacity    : " + capacity)
+
 		lines = lines.drop(1)
-		
-		val machines   : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-		val durations  : Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-		val capacities : Array[Int] = Array.fill(nTasksPerJob)(capacity);
-		
-		for (i <- Jobs) {
-			
+
+		val jobs = new Array[Int](nActivities)
+		val machines = new Array[Int](nActivities)
+		val durations = new Array[Int](nActivities)
+
+		for (i <- Activities) {
+
 			val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-			
-			println("job "+ (i+1) +"\t" + l.mkString(" "))
-			
-			machines(i)  = Array.tabulate(nTasksPerJob)(j => l(2*j))
-			durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
-	  	    lines = lines.drop(1)
+
+			jobs(i) = l(0)
+			machines(i) = l(1)
+			durations(i) = l(2)
+
+			lines = lines.drop(1)
 		}
-		
-		// Upper bound of the horizon
-		val horizon = durations.flatten.sum
 
 		// Modeling	
 		// -----------------------------------------------------------------------
-		
-		val cp = CPSolver()
 
-		// Matrix of cumulative activities (each line represents a job)
-		val jobActivities = Array.tabulate(nJobs, nTasksPerJob)((i,j) => {
-			
-  	   		val dur      = CPVarInt(cp, durations(i)(j))
-  	   		val start    = CPVarInt(cp, 0 to horizon - dur.min)
-  	   		
-  	   		CumulativeActivity(start,dur, machines(i)(j), 1)
-  	   	}) 	   
-  	   	
-  	   	val activities = jobActivities.flatten
-  	   	
-  	   	// The make span to minimize
-  	   	val makespan = maximum(0 until nJobs)(i => jobActivities(i)(nTasksPerJob-1).end)
-  	   	
-  	   	// Visualization  
-  	   	// -----------------------------------------------------------------------
-  	   	 	
-  	   	val frame = new VisualFrame("Cumulative Job-Shop Problem", nMachines+1, 1)
-		
-		val cols = VisualUtil.getRandomColorArray(nMachines)
-		val visualActivities = activities.map(a => VisualActivity(a))
-		
-		// Gantt Chart
-		val gantt = new VisualGanttChart(visualActivities, cols, _ / nTasksPerJob)
-		frame.createFrame("Jobs").add(gantt)
-		
-		// Profiles 
-		val profiles : Array[VisualProfile] = new Array(nTasksPerJob)
-		
-		for (i <- Machines) {
-			
-			profiles(i) = new VisualProfile(visualActivities, i, capacities(i), cols(i))
-			frame.createFrame("Machine " + i).add(profiles(i))
-		}
-	   
-		def updateVisu(xScale : Int, yScale : Int) = {
-			
-			gantt.update(xScale, yScale)
-			
-			for (i <- Machines)
-			   profiles(i).update(xScale, yScale)
-		}
-		frame.pack
-	   	
-  	   	// Constraints and Solving
+		val horizon = durations.sum
+		val cp = new CPScheduler(horizon)
+
+		// Activities & Resources
+		val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
+		val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
+
+		// Resource allocation
+		for (i <- Activities)
+			activities(i) needs 1 ofResource resources(machines(i))
+
+		// The makespan to minimize
+		val makespan = maximum(0 until nActivities)(i => activities(i).end)
+
+		// Visualization  
 		// -----------------------------------------------------------------------
 
+		val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
+		val colors = VisualUtil.getRandomColorArray(nResources)
+		
+		val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
+		val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
+		
+		frame.createFrame("Gantt chart").add(gantt)
+		for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
+		frame.pack
+
+		// Constraints & Search
+		// -----------------------------------------------------------------------
+		
 		val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
 		var precedences : Array[Tuple2[Int, Int]] = null
 		
@@ -142,41 +122,33 @@ object CumulativeJobShopLNS {
 			
 			cp.post(constraints.asInstanceOf[Array[Constraint]])
 		}
-		
-  	   	cp.minimize(makespan) subjectTo {
-			
-			// Precedence constraints
-			for (i <- Jobs; j <- 0 until nTasksPerJob-1)
-				cp.add(jobActivities(i)(j).end <= jobActivities(i)(j+1).start)
-			
-			// Cumulative constraints
-			for (i <- Machines)
-				cp.add(new MaxSweepCumulative(cp, activities, capacities(i), i))
 
+		cp.minimize(makespan) subjectTo {
+			
+			for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
+				cp.add(activities(i) precedes activities(i + 1))
+				
 		} exploration {
-			
-			//cp.binaryFirstFail(activities.map(_.start))
-			
-			// Efficient but not complete search strategy
-			cp.setTimes(activities)
-		
-			println
-			cp.printStats() 
+
+			cp.binaryFirstFail(activities.map(_.start))
+			//cp.setTimesSearch(activities)
 			
 			// Best so far solution
-			for (t <- 0 until activities.size) {
+			for (t <- Activities) {
 				
-				bestSol(t).start   = activities(t).start.getValue
-				bestSol(t).end     = activities(t).end.getValue
-				bestSol(t).inc     = activities(t).resource.getValue
-				bestSol(t).machine = activities(t).machine.getValue
+				bestSol(t).start   = activities(t).est
+				bestSol(t).end     = activities(t).lct
+				bestSol(t).inc     = 1
+				bestSol(t).machine = machines(t)
 			}
-			precedences = PartialOrderSchedule.getPrecedences(bestSol, capacities)
 			
-			// Updates the visual components
-			updateVisu(1, 20)
-		}    
-		println
-		cp.printStats() 
+			precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+
+			for (p <- profiles) p.update(1, 20)
+			gantt.update(1, 20)
+		}
+
+		cp.printStats()
 	}
 }
+

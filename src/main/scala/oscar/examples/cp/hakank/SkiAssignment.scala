@@ -68,7 +68,7 @@ object SkiAssignment {
     // variables
     val x = Array.fill(num_skiers)(CPVarInt(cp, 1 to num_skis))
     // sum of differences between height of assigned skis to the skiers
-    val z = sum(Array.tabulate(num_skiers)(i=> (element(ski_heights, x(i)) - skier_heights(i)).abs()))
+    val z = sum(Array.tabulate(num_skiers)(i=> (ski_heights(x(i)) - skier_heights(i)).abs()))
 
     //
     // constraints
