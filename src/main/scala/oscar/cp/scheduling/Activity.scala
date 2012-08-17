@@ -74,6 +74,14 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 	def endsAtStartOf(act : Activity) = ActivityPrecedence(this, act, EAS)
 	def startsAtEndOf(act : Activity) = ActivityPrecedence(this, act, SAE)
 	def startsAtStartOf(act : Activity) = ActivityPrecedence(this, act, SAS)
+	
+	// Start and End
+	// -----------------------------------------------------------
+	
+	def startsEarlierAt(t : Int) = { scheduler.add(startVar >= t) }
+	def startsAt(t : Int)        = { scheduler.add(startVar == t) }
+	def endsLaterAt(t : Int)     = { scheduler.add(endVar <= t) }
+	def endsAt(t : Int)          = { scheduler.add(endVar == t) }
 
 	// Needs / Gives
 	// -----------------------------------------------------------
@@ -83,21 +91,10 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 		resource.addActivity(this)
 	}
 
-	// CumulativeResource
-	/*def needs(resource : CumulativeResource, capacity : ImplicitVarInt) {
-		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addActivity(this, capacity.variable(scheduler))
-	}*/
-
 	def needsF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
 		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
 		resource.addProdConsActivity(this, capacity.variable(scheduler), atEnd)
 	}
-
-	/*def gives(resource : CumulativeResource, capacity : ImplicitVarInt) {
-		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addActivity(this, capacity.opposite(scheduler))
-	}*/
 
 	def givesF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
 		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
@@ -116,7 +113,7 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 	/**
 	 * forces the update of start, end, dur
 	 */
-	def update(): CPOutcome = {
+	def update() : CPOutcome = {
       // end <= start
       if (end.updateMin(start.min) == CPOutcome.Failure) {
         CPOutcome.Failure
