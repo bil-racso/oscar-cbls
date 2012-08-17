@@ -90,7 +90,7 @@ object OrganizeDaySchedule {
 			bank precedes shop
 			mail precedes work
 
-			work startsAt (11 - begin)
+                        cp.add(work.start >= 11 - begin)
 
 		} exploration {
 
