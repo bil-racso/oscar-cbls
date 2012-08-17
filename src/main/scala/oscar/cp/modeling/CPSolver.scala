@@ -104,13 +104,13 @@ class CPSolver() extends Store() {
 	 * Binary First Fail on the decision variables vars
 	 */
 	def binaryFirstFail(vars : Array[CPVarInt], valHeuris : (CPVarInt => Int) = minVal) : Unit @suspendable = {
-		while (!allBounds(vars)) {
+	    while (!allBounds(vars)) {
 			val unbound = vars.filter(!_.isBound)
 			val minDomSize = unbound.map(_.size).min
 			val x = unbound.filter(_.getSize == minDomSize).first
 			val v = valHeuris(x)
-			branch(post(x == v))(post(x != v)) // right alternative
-		}
+			branch(post(x == v))(post(x != v)) // right alternative			
+	    }
 	}
 
 	/**
