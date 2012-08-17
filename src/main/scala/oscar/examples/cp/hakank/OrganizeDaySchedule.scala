@@ -87,10 +87,10 @@ object OrganizeDaySchedule {
 		cp.solveAll subjectTo {
 
 			// precedences
-			cp.add(bank precedes shop)
-			cp.add(mail precedes work)
+			bank precedes shop
+			mail precedes work
 
-			cp.add(work.start >= 11 - begin)
+			work startsAt (11 - begin)
 
 		} exploration {
 

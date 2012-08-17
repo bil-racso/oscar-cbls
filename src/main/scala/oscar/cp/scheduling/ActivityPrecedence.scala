@@ -1,42 +1,16 @@
 package oscar.cp.scheduling
 
-import java.security.InvalidParameterException
+import oscar.cp.core.CPVarInt
 
-// Precedence Types
-private class PrecedenceType
-private object EBE extends PrecedenceType { override def toString = "End before End"}
-private object EBS extends PrecedenceType { override def toString = "End before Start"}
-private object SBE extends PrecedenceType { override def toString = "Start before End"}
-private object SBS extends PrecedenceType { override def toString = "Start before Start"}
-private object EAE extends PrecedenceType { override def toString = "End at End"}
-private object EAS extends PrecedenceType { override def toString = "End at Start"}
-private object SAE extends PrecedenceType { override def toString = "Start at End"}
-private object SAS extends PrecedenceType { override def toString = "Start at Start"}
+class ActivityPrecedence(v : CPVarInt, d : Int, exactly : Boolean) {
+	
+	private val cp = v.store
 
-class ActivityPrecedence(act1 : Activity, act2 : Activity, pType : PrecedenceType) {
-	
-	def withDelay(delay : Int) = {
-		
-		val cp = act1.scheduler
-		
-		pType match {
-			case EBE => act1.end   + delay <= act2.end
-			case EBS => act1.end   + delay <= act2.start
-			case SBE => act1.start + delay <= act2.end
-			case SBS => act1.start + delay <= act2.start
-			case EAE => act1.end   + delay == act2.end
-			case EAS => act1.end   + delay == act2.start
-			case SAE => act1.start + delay == act2.end
-			case SAS => act1.start + delay == act2.start
-			case _   => throw new InvalidParameterException(pType + " is not a valid precedence type.")
-		}
-	}
-	
-	
+	def beforeEndOf(act : Activity)   = if (exactly) cp.add(v + d == act.end) else cp.add(v + d <= act.end)
+	def beforeStartOf(act : Activity) = if (exactly) cp.add(v + d == act.start) else cp.add(v + d <= act.start)
 }
 
 object ActivityPrecedence {
-	
-	def apply(act1 : Activity, act2 : Activity, pType : PrecedenceType) = new ActivityPrecedence(act1, act2, pType)
-}
 
+	def apply(v : CPVarInt, i : Int, b : Boolean = false) = new ActivityPrecedence(v, i, b)
+}

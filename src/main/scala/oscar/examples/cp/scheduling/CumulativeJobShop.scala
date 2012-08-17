@@ -69,7 +69,6 @@ object CumulativeJobShop extends App {
 
 	val horizon = durations.sum
 	val cp = CPScheduler(horizon)
-	cp.failLimit(100000)
 
 	// Activities & Resources
 	val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
@@ -101,11 +100,11 @@ object CumulativeJobShop extends App {
 	cp.minimize(makespan) subjectTo {
 		
 		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-			cp.add(activities(i) precedes activities(i + 1))		
+			activities(i) precedes activities(i + 1)	
 			
 	} exploration {
 
-		cp.binaryFirstFail(activities)
+		cp.setTimes(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)

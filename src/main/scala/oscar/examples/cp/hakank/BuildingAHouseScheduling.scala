@@ -98,20 +98,20 @@ object BuildingAHouseScheduling {
 		cp.minimize(z) subjectTo {
 
 			// precedences
-			cp.add(masonry precedes carpentry)
-			cp.add(masonry precedes plumbing)
-			cp.add(masonry precedes ceiling)
-			cp.add(carpentry precedes roofing)
-			cp.add(ceiling precedes painting)
-			cp.add(roofing precedes windows)
-			cp.add(roofing precedes facade)
-			cp.add(plumbing precedes facade)
-			cp.add(roofing precedes garden)
-			cp.add(plumbing precedes garden)
-			cp.add(windows precedes moving)
-			cp.add(facade precedes moving)
-			cp.add(garden precedes moving)
-			cp.add(painting precedes moving)
+			masonry precedes carpentry
+			masonry precedes plumbing
+			masonry precedes ceiling
+			carpentry precedes roofing
+			ceiling precedes painting
+			roofing precedes windows
+			roofing precedes facade
+			plumbing precedes facade
+			roofing precedes garden
+			plumbing precedes garden
+			windows precedes moving
+			facade precedes moving
+			garden precedes moving
+			painting precedes moving
 
 		} exploration {
 

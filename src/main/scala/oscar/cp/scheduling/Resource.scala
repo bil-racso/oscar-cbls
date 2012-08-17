@@ -5,7 +5,7 @@ import oscar.cp.modeling.CPScheduler
 
 import oscar.cp.scheduling._
 
-abstract class Resource(scheduler : CPScheduler, n: String = null) {
+abstract class Resource(val scheduler : CPScheduler, n: String = null) {
 	
 	// Link the resource to the scheduler and get an id
 	val id = scheduler.addResource(this)

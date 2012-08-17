@@ -187,8 +187,10 @@ abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity],
   
 	override def propagate(): CPOutcome = {
 		
-		//if (edge.propagate() == CPOutcome.Failure) 
-			//return CPOutcome.Failure
+		if (allTasks.filter(_.minHeight < 0).size == 0)
+			if (lb == Int.MinValue && ub != Int.MaxValue)
+				if (edge.propagate() == CPOutcome.Failure) 
+					return CPOutcome.Failure
 
 		// Generates events
 		if (!generateEventPointSeries()) 

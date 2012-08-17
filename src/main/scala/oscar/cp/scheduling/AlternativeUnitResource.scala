@@ -4,26 +4,21 @@ import scala.collection.mutable.Map
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.core.CPVarInt
 
-
-class AlternativeCumulativeResource(scheduler : CPScheduler) {
+class AlternativeUnitResource(scheduler : CPScheduler) {
 	
 	private var nResources = 0
 	
 	private val activitiesMap : Map[Activity, CumulativeActivity] = Map()
-	private val resourcesMap  : Map[Int, CumulativeResource] = Map()
+	private val resourcesMap  : Map[Int, UnitResource] = Map()
 
-	def resources  : Array[CumulativeResource] = resourcesMap.values.toArray
+	def resources  : Array[UnitResource]       = resourcesMap.values.toArray
 	def activities : Array[CumulativeActivity] = activitiesMap.values.toArray
 	
-	def capacities : Array[Int] = resourcesMap.values.toArray.map(_.capacity)
-	
-	def capacity(id : Int) = resourcesMap(id).capacity
 	def resource(id : Int) = resourcesMap(id)
 	
 	def resourcesOf(act : Activity) : CPVarInt = activitiesMap(act).resource
-	def heightOf(act : Activity)    : CPVarInt = activitiesMap(act).height
 	
-	def addAlternative(resource : CumulativeResource) { 
+	def addAlternative(resource : UnitResource) { 
 		
 		checkId(resource.id)
 		resourcesMap += resource.id -> resource
@@ -37,7 +32,7 @@ class AlternativeCumulativeResource(scheduler : CPScheduler) {
 		
 		for (i <- cum.resource) {
 			if (!resourcesMap.contains(i)) throw new IllegalArgumentException("id " +i+ " is not a reference resource.")
-			resourcesMap(i).addActivity(act, cum)
+			resourcesMap(i).addActivity(cum)
 		}
 	}
 	
@@ -52,23 +47,23 @@ class AlternativeCumulativeResource(scheduler : CPScheduler) {
 	}
 }
 
-object AlternativeCumulativeResource {
+object AlternativeUnitResource {
 	
 	def apply(scheduler : CPScheduler) = new AlternativeCumulativeResource(scheduler)
 	
 	def apply(scheduler: CPScheduler, nResources : Int, capa : Int) = {
 		
-		val resourceSet = new AlternativeCumulativeResource(scheduler)
+		val resourceSet = new AlternativeUnitResource(scheduler)
 		
 		for (i <- 0 until nResources)
-			resourceSet addAlternative CumulativeResource(scheduler, capa)
+			resourceSet addAlternative UnitResource(scheduler)
 		
 		resourceSet
 	}
 	
-	def apply(resources: CumulativeResource*): AlternativeCumulativeResource = {
+	def apply(resources: UnitResource*): AlternativeUnitResource = {
 		val scheduler = resources.head.scheduler
-		val alt = new AlternativeCumulativeResource(scheduler)
+		val alt = new AlternativeUnitResource(scheduler)
 		resources foreach (alt.addAlternative(_))
 		alt
 	}

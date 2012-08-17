@@ -19,6 +19,12 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 	
 	var nTasks = lToRTasks.size
 	
+	// New bound
+	val LB    = new Array[Int](nTasks) 
+	val Dupd  = new Array[Int](nTasks) 
+	val SLupd = new Array[Int](nTasks) 
+	val E     = new Array[Int](nTasks) 
+	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
 		setPriorityL2(0)
@@ -45,18 +51,30 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 	
 	override def propagate(): CPOutcome = {
 		
-		lToRTasks = lToRTasks.filter(_.resource.isBoundTo(r))
+		lToRTasks = allTasks.filter(_.resource.isBoundTo(r))
 		rToLTasks = rToLTasks.filter(_.resource.isBoundTo(r))
 		
 		nTasks = lToRTasks.size
 
 		// Adjusts starting time
-		if (edgeFind(lToRTasks) == CPOutcome.Failure)
-			return CPOutcome.Failure
+		if (nTasks > 0) {
+			if (edgeFind(lToRTasks) == CPOutcome.Failure)
+				return CPOutcome.Failure
+		}
+				
+		var t = 0
+		while (t < nTasks) {
+			lToRTasks(t).update()
+			t += 1
+		}
+			
+		nTasks = rToLTasks.size
 			
 		// Adjusts ending time
-		if (edgeFind(rToLTasks) == CPOutcome.Failure)
-			return CPOutcome.Failure
+		if (nTasks > 0) {
+			if (edgeFind(rToLTasks) == CPOutcome.Failure)
+				return CPOutcome.Failure
+		}
 			
 		return CPOutcome.Suspend
 	}
@@ -64,10 +82,16 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 	private def edgeFind(tasks : Array[CumulativeActivity]): CPOutcome = {
 		
 		// Init
-		val LB    = Array.tabulate(nTasks)(i => tasks(i).est)
-		val Dupd  = Array.fill(nTasks)(Int.MinValue)
-		val SLupd = Array.fill(nTasks)(Int.MinValue)
-		val E     = Array.fill(nTasks)(Int.MinValue)
+		var i = 0
+		while (i < nTasks) {
+			
+			LB(i)    = tasks(i).est
+			Dupd(i)  = Int.MinValue
+			SLupd(i) = Int.MinValue
+			E(i)     = Int.MinValue
+			
+			i += 1
+		}
 		
 		// Non-decreasing sequences
 		val lctList = (0 until nTasks).toArray.sortBy(t => tasks(t).lct)
@@ -78,66 +102,70 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 
 			val U = lctList(u)
 			
-			var energy    = 0
-			var maxEnergy = 0
-			var r_rho     = Int.MinValue
+			if (tasks(U).resource.isBoundTo(r)) {
 			
-			var ii = nTasks-1
-			while (ii >= 0) {
+				var energy    = 0
+				var maxEnergy = 0
+				var r_rho     = Int.MinValue
 				
-				val i = estList(ii)
-				
-				if (tasks(i).lct <= tasks(U).lct) {
+				var ii = nTasks-1
+				while (ii >= 0) {
 					
-					energy += tasks(i).minEnergy
+					val i = estList(ii)
 					
-					val density1 = energy.toFloat / (tasks(U).lct - tasks(i).est)
-					val density2 = maxEnergy.toFloat / (tasks(U).lct - r_rho)
-					
-					if (density1 > density2) {
-						maxEnergy = energy
-						r_rho = tasks(i).est
-					}
-				} else {
-					
-					val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - r_rho)
-					
-					if (rest > 0) {
-						Dupd(i) = max(Dupd(i), r_rho + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
-					}
-				}
-				
-				E(i) = energy
-				
-				ii -= 1
-			}
-			
-			var minSL = Int.MaxValue
-			var r_tau = tasks(U).lct
-			
-			ii = 0
-			while (ii < nTasks) {
-				
-				val i = estList(ii)
-				
-				if (C*(tasks(U).lct - tasks(i).est) - E(i) < minSL) {
-					r_tau = tasks(i).est
-					minSL = C*(tasks(U).lct - r_tau) - E(i)
-				}
-				
-				if (tasks(i).lct > tasks(U).lct) {
-					val rest = tasks(i).minHeight*(tasks(U).lct - r_tau) - minSL
-					
-					if (r_tau <= tasks(U).lct && rest > 0)
-						SLupd(i) = max(SLupd(i), r_tau + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
+					if (tasks(i).lct <= tasks(U).lct) {
 						
-					if (tasks(i).est + tasks(i).minDuration >= tasks(U).lct || minSL - tasks(i).minEnergy < 0)
-						LB(i) = max(LB(i), max(Dupd(i), SLupd(i)))
+						energy += tasks(i).minEnergy
+						
+						val density1 = energy.toFloat / (tasks(U).lct - tasks(i).est)
+						val density2 = maxEnergy.toFloat / (tasks(U).lct - r_rho)
+						
+						if (density1 > density2) {
+							maxEnergy = energy
+							r_rho = tasks(i).est
+						}
+					} else {
+						
+						val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - r_rho)
+						
+						if (rest > 0) {
+							Dupd(i) = max(Dupd(i), r_rho + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
+						}
+					}
+					
+					E(i) = energy
+					
+					ii -= 1
 				}
 				
-				ii += 1
+				var minSL = Int.MaxValue
+				var r_tau = tasks(U).lct
+				
+				ii = 0
+				while (ii < nTasks) {
+					
+					val i = estList(ii)
+					
+					if (C*(tasks(U).lct - tasks(i).est) - E(i) < minSL) {
+						r_tau = tasks(i).est
+						minSL = C*(tasks(U).lct - r_tau) - E(i)
+					}
+					
+					if (tasks(i).lct > tasks(U).lct) {
+						
+						val rest = tasks(i).minHeight*(tasks(U).lct - r_tau) - minSL
+						
+						if (r_tau <= tasks(U).lct && rest > 0)
+							SLupd(i) = max(SLupd(i), r_tau + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
+							
+						if (tasks(i).est + tasks(i).minDuration >= tasks(U).lct || minSL - tasks(i).minEnergy < 0)
+							LB(i) = max(LB(i), max(Dupd(i), SLupd(i)))
+					}
+					
+					ii += 1
+				}		
 			}
-			
+			// Next activity
 			u += 1
 		}
 		

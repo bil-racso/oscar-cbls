@@ -8,9 +8,6 @@ import oscar.cp.modeling.CPScheduler
  */
 package object scheduling {
 	
-	// Precedences
-	implicit def activityPrecedence2Constraint(ap : ActivityPrecedence) = ap.withDelay(0)
-	
 	// ImplicitVarInt
 	implicit def var2ImplicitVarInt(v : CPVarInt)     = VarImplicitVarInt(v)
 	implicit def array2ImplicitVarInt(a : Array[Int]) = ArrayImplicitVarInt(a)

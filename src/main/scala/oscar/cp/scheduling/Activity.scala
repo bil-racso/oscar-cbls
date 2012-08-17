@@ -37,8 +37,8 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 
 	// The variables
 	def start = startVar
-	def end   = endVar
-	def dur   = durVar
+	def end = endVar
+	def dur = durVar
 
 	// Earliest starting time
 	def est = start.min
@@ -62,26 +62,30 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 
 	// Precedences 
 	// -----------------------------------------------------------
-
-	def precedes(act : Activity) = endsBeforeStartOf(act)
-
-	def endsBeforeEndOf(act : Activity) = ActivityPrecedence(this, act, EBE)
-	def endsBeforeStartOf(act : Activity) = ActivityPrecedence(this, act, EBS)
-	def startsBeforeEndOf(act : Activity) = ActivityPrecedence(this, act, SBE)
-	def startsBeforeStartOf(act : Activity) = ActivityPrecedence(this, act, SBS)
-
-	def endsAtEndOf(act : Activity) = ActivityPrecedence(this, act, EAE)
-	def endsAtStartOf(act : Activity) = ActivityPrecedence(this, act, EAS)
-	def startsAtEndOf(act : Activity) = ActivityPrecedence(this, act, SAE)
-	def startsAtStartOf(act : Activity) = ActivityPrecedence(this, act, SAS)
 	
+	def starts(delay : Int) 	   = ActivityPrecedence(startVar, delay)
+	def ends(delay : Int)          = ActivityPrecedence(endVar, delay)
+	def startsExactly(delay : Int) = ActivityPrecedence(startVar, delay, true)
+	def endsExactly(delay : Int)   = ActivityPrecedence(endVar, delay, true)
+
+	def precedes(act : Activity)            = endsBeforeStartOf(act)
+	def endsBeforeEndOf(act : Activity)     = scheduler.add(endVar <= act.end)
+	def endsBeforeStartOf(act : Activity)   = scheduler.add(endVar <= act.start)
+	def startsBeforeEndOf(act : Activity)   = scheduler.add(startVar <= act.end)
+	def startsBeforeStartOf(act : Activity) = scheduler.add(startVar <= act.start)
+	
+	def endsAtEndOf(act : Activity) 		= scheduler.add(endVar == act.end)
+	def endsAtStartOf(act : Activity) 		= scheduler.add(endVar == act.start)
+	def startsAtEndOf(act : Activity) 		= scheduler.add(startVar == act.end)
+	def startsAtStartOf(act : Activity) 	= scheduler.add(startVar == act.start)
+
 	// Start and End
 	// -----------------------------------------------------------
-	
+
 	def startsEarlierAt(t : Int) = { scheduler.add(startVar >= t) }
 	def startsAt(t : Int)        = { scheduler.add(startVar == t) }
 	def endsLaterAt(t : Int)     = { scheduler.add(endVar <= t) }
-	def endsAt(t : Int)          = { scheduler.add(endVar == t) }
+	def endsAt(t : Int) 		 = { scheduler.add(endVar == t) }
 
 	// Needs / Gives
 	// -----------------------------------------------------------
@@ -109,70 +113,61 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 	def gives(height : ImplicitVarInt) = {
 		new GivesUsage(this, height)
 	}
-	
+
 	/**
 	 * forces the update of start, end, dur
 	 */
 	def update() : CPOutcome = {
-      // end <= start
-      if (end.updateMin(start.min) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      else if (start.updateMax(end.max) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      // end = start + dur
-      else if (end.updateMax(start.max+dur.max) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      else if (end.updateMin(start.min+dur.min) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      // start = end - dur
-      else if (start.updateMax(end.max-dur.min) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      else if (start.updateMin(end.min-dur.max) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      // dur = end - start
-      else if (dur.updateMax(end.max-start.min) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      else if (dur.updateMin(end.min-start.max) == CPOutcome.Failure) {
-        CPOutcome.Failure
-      }
-      else CPOutcome.Suspend
-    }
+		
+		// end <= start
+		if (end.updateMin(start.min) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		else if (start.updateMax(end.max) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		// end = start + dur
+		else if (end.updateMax(start.max + dur.max) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		else if (end.updateMin(start.min + dur.min) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		// start = end - dur
+		else if (start.updateMax(end.max - dur.min) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		else if (start.updateMin(end.min - dur.max) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		// dur = end - start
+		else if (dur.updateMax(end.max - start.min) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		else if (dur.updateMin(end.min - start.max) == CPOutcome.Failure) {
+			CPOutcome.Failure
+		} 
+		else CPOutcome.Suspend
+	}
 }
 
 object Activity {
 
-	def apply(scheduler : CPScheduler, dur : ImplicitVarInt) = {
+	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, n : String = null) = {
 
 		val durVar = dur.variable(scheduler)
 
 		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
+		val endVar : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
 
-		new Activity(scheduler, startVar, durVar, endVar)
-	}
-
-	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, name : String) = {
-
-		val durVar = dur.variable(scheduler)
-
-		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
-
-		new Activity(scheduler, startVar, durVar, endVar, n = name)
+		new Activity(scheduler, startVar, durVar, endVar, n)
 	}
 }
 
 class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.start, act.dur, act.end, n = act.name, existingId = Option(act.id)) {
 
 	override def start : CPVarInt = throw new UninitializedFieldError("not available")
-	override def end : CPVarInt   = throw new UninitializedFieldError("not available")
+	override def end : CPVarInt = throw new UninitializedFieldError("not available")
 
 	// Earliest starting time
 	override def est = -act.lct;
