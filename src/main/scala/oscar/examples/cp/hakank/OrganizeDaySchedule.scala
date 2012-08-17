@@ -33,7 +33,7 @@ import scala.math._
 
   Problem formulation from ECLiPSe:
    - Slides on (Finite Domain) Constraint Logic Programming, page 38f
-   - http://eclipse-clp.org/reports/eclipse.ppt
+   - http://eclipseclp.org/reports/eclipse.ppt
  
   Cf OrganizeDay.scala
   This version use the Scheduling API.
@@ -94,8 +94,8 @@ object OrganizeDaySchedule {
 
 		} exploration {
 
-			// cp.setTimes(cp.activities)
-			cp.binaryFirstFail(cp.activities)
+				cp.setTimes(cp.activities)
+			//cp.binaryFirstFail(cp.activities)
 
 			println("makespan : " + makespan)
 			println("criticality: " + resource.criticality)

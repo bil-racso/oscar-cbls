@@ -97,19 +97,22 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		binary(vars.map(_.start))
 	}
 
+	
 	def setTimes(activities : Array[_ <: Activity]) : Unit @suspendable = {
 
 		val n = activities.size
 		val Activities = 0 until n
-
-		// Non fixed activities
+		
 		val selectable = Array.fill(n)(new ReversibleBool(this, true))
+		// non fixed activities (by setTimes)
+		val bound = Array.fill(n)(new ReversibleBool(this, false))
 
 		val oldEST = Array.fill(n)(new ReversibleInt(this, -1))
 	
+		// update the new ones becoming available because est has moved
 		def updateSelectable() = (Activities).filter(i => oldEST(i).value < activities(i).est).foreach(selectable(_).value = true)
-		def selectableIndices() = (Activities).filter(i => selectable(i).value && !activities(i).start.isBound)
-		def allStartBounds() = activities.forall(i => i.start.isBound)
+		def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
+		def allStartBounds() = bound.forall(i => i.value)
 		
 		def updateAndCheck() = {
 			updateSelectable()
@@ -126,6 +129,7 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 			
 			branch {
 				this.post(activities(x).start == est)
+				bound(x).value = true
 				if (!this.isFailed) updateAndCheck()
 			} {
 				selectable(x).value = false
