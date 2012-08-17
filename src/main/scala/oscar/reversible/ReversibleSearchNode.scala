@@ -202,13 +202,15 @@ class ReversibleSearchNode {
              popAll()
              pushState()
              if (relaxation) relax()
-             sc.reset()
-             nbRestart += 1 
-             reset {
-               b()  	  
-               if (!isFailed()) getObjective().tighten()
-      	     }
-             if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+               if (!isFailed()) {
+                 sc.reset()
+                 nbRestart += 1 
+                 reset {
+                   b()  	  
+                   if (!isFailed()) getObjective().tighten()
+      	         }
+                 if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+               }
           }
           sc.failLimit = limit
           restart(false) // first restart, find a feasible solution so no limit
