@@ -14,7 +14,7 @@ import oscar.cp.scheduling.MirrorCumulativeActivity
 class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
 
 	// The tasks
-	var lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.resource.isBoundTo(r))
+	var lToRTasks : Array[CumulativeActivity] = allTasks
 	var rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorCumulativeActivity(_))
 	
 	var nTasks = lToRTasks.size
