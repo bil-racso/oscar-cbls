@@ -88,8 +88,12 @@ object JobShop {
 		for (i <- Activities)
 			activities(i).needs(resources(machines(i)))
 
+			
+
+		val lastActInJobs = (0 until nActivities).groupBy(i => jobs(i)).values.map(_.max)	
+			
 		// The makespan to minimize
-		val makespan = maximum(0 until nActivities)(i => activities(i).end)
+		val makespan = maximum(activities)(_.end) //maximum(lastActInJobs)(i => activities(i).end)
 
 		// Visualization  
 		// -----------------------------------------------------------------------
@@ -113,11 +117,11 @@ object JobShop {
 				cp.add(activities(i) precedes activities(i + 1))
 
 		} exploration {
-
-			cp.binaryFirstFail(activities.map(_.start))
-			//cp.setTimesSearch(activities)
-
-			//for (p <- profiles) p.update(1, 20)
+			
+		    for (r <- (0 until nResources).sortBy(-resources(_).criticality).suspendable) {
+		      resources(r).rank()
+			}
+			cp.binary(Array(makespan))
 			gantt1.update(1, 20)
 			gantt2.update(1, 20)
 		}

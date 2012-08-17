@@ -3,7 +3,7 @@ package oscar.cp.scheduling
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.core.CPVarInt
 
-sealed trait ImplicitVarInt {
+abstract class ImplicitVarInt {
 	
 	def variable(scheduler : CPScheduler) : CPVarInt
 	def opposite(scheduler : CPScheduler) : CPVarInt
