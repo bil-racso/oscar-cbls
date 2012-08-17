@@ -14,10 +14,10 @@ import oscar.cp.scheduling.MirrorCumulativeActivity
 class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
 
 	// The tasks
-	var tasks = allTasks
+	var lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.resource.isBoundTo(r))
+	var rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorCumulativeActivity(_))
 	
-	var nTasks = tasks.size
-	var Tasks  = 0 until nTasks
+	var nTasks = lToRTasks.size
 	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
@@ -26,17 +26,17 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
         val oc = propagate()
         
         if (oc == CPOutcome.Suspend) {
-        	for (i <- Tasks) {
-        		if (!tasks(i).start.isBound) 
-        			tasks(i).start.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).dur.isBound)
-	        		tasks(i).dur.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).end.isBound) 
-	        		tasks(i).end.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).height.isBound) 
-	        		tasks(i).height.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).resource.isBound)
-	        		tasks(i).resource.callPropagateWhenDomainChanges(this)
+        	for (i <- 0 until lToRTasks.size) {
+        		if (!lToRTasks(i).start.isBound) 
+        			lToRTasks(i).start.callPropagateWhenBoundsChange(this)
+	        	if (!lToRTasks(i).dur.isBound)
+	        		lToRTasks(i).dur.callPropagateWhenBoundsChange(this)
+	        	if (!lToRTasks(i).end.isBound) 
+	        		lToRTasks(i).end.callPropagateWhenBoundsChange(this)
+	        	if (!lToRTasks(i).height.isBound) 
+	        		lToRTasks(i).height.callPropagateWhenBoundsChange(this)
+	        	if (!lToRTasks(i).resource.isBound)
+	        		lToRTasks(i).resource.callPropagateWhenDomainChanges(this)
     		}
         }
         
@@ -45,8 +45,10 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 	
 	override def propagate(): CPOutcome = {
 		
-		val lToRTasks : Array[CumulativeActivity] = tasks.filter(_.resource.isBoundTo(r))
-		val rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorCumulativeActivity(_))
+		lToRTasks = lToRTasks.filter(_.resource.isBoundTo(r))
+		rToLTasks = rToLTasks.filter(_.resource.isBoundTo(r))
+		
+		nTasks = lToRTasks.size
 
 		// Adjusts starting time
 		if (edgeFind(lToRTasks) == CPOutcome.Failure)
@@ -126,7 +128,7 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 				if (tasks(i).lct > tasks(U).lct) {
 					val rest = tasks(i).minHeight*(tasks(U).lct - r_tau) - minSL
 					
-					if (r_tau < tasks(U).lct && rest > 0)
+					if (r_tau <= tasks(U).lct && rest > 0)
 						SLupd(i) = max(SLupd(i), r_tau + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
 						
 					if (tasks(i).est + tasks(i).minDuration >= tasks(U).lct || minSL - tasks(i).minEnergy < 0)
@@ -139,7 +141,7 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 			u += 1
 		}
 		
-		for (i <- Tasks)
+		for (i <- 0 until nTasks)
 			if (tasks(i).adjustStart(LB(i)) == CPOutcome.Failure)
 				return CPOutcome.Failure	
         
