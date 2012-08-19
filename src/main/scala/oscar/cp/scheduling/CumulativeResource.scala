@@ -7,22 +7,29 @@ import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.core.CPVarInt
 import java.security.InvalidParameterException
 
-class CumulativeResource(scheduler : CPScheduler, capa : Int, max : Boolean, n : String = null) extends Resource(scheduler, n = n) {
+class CumulativeResource(scheduler : CPScheduler, maxCapa : Int = Int.MaxValue, minCapa : Int = Int.MinValue, n : String = null) extends Resource(scheduler, n = n) {
 	
 	protected val activitiesSet : Map[Activity, CumulativeActivity] = Map()
 	
 	def activities = activitiesSet.values.toArray
-	def capacity   = capa
+	def capacity   = maxCapa
 	
-	def criticality = activities.map(_.maxDuration).sum
+	def criticality = activities.map(_.minDuration).sum
 	
 	def heightOf(act : Activity) : CPVarInt = activitiesSet(act).height
 	
 	override def setup() {
-		if (max)
-			scheduler.add(cumulative(activities, id, max = capa))
-		else
-			scheduler.add(cumulative(activities, id, min = capa))
+		
+		if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
+			scheduler.add(cumulative(activities, id, max = maxCapa, min = minCapa))
+		}
+		else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
+			scheduler.add(cumulative(activities, id, max = maxCapa))
+		}
+		else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
+			scheduler.add(cumulative(activities, id, min = minCapa))
+		}
+		else throw new InvalidParameterException("cumulative constraint bounded between -Infinity and Infinity")
 	}
 	
 	// Adding an activity
@@ -42,7 +49,22 @@ class CumulativeResource(scheduler : CPScheduler, capa : Int, max : Boolean, n :
 	}
 }
 
-object CumulativeResource {
+object MaxResource {
 	
-	def apply(scheduler : CPScheduler, capa : Int, name : String = null, max : Boolean = true) = new CumulativeResource(scheduler, capa, max, n = name)
+	def apply(scheduler : CPScheduler, capa : Int, name : String = null) = new CumulativeResource(scheduler, maxCapa = capa, n = name)
+}
+
+object MinResource {
+	
+	def apply(scheduler : CPScheduler, capa : Int, name : String = null) = new CumulativeResource(scheduler, minCapa = capa, n = name)
+}
+
+object ContainerResource {
+	
+	def apply(scheduler : CPScheduler, maxCapa : Int, name : String = null) = new CumulativeResource(scheduler, maxCapa, 0, name)
+}
+
+object BoundedResource {
+	
+	def apply(scheduler : CPScheduler, maxCapa : Int, minCapa : Int, name : String = null) = new CumulativeResource(scheduler,  maxCapa, minCapa, name)
 }

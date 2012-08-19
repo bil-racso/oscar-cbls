@@ -61,7 +61,7 @@ object AlternativeCumulativeResource {
 		val resourceSet = new AlternativeCumulativeResource(scheduler)
 		
 		for (i <- 0 until nResources)
-			resourceSet addAlternative CumulativeResource(scheduler, capa)
+			resourceSet addAlternative MaxResource(scheduler, capa)
 		
 		resourceSet
 	}

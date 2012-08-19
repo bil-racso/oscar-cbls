@@ -276,8 +276,8 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		val act5 = Activity(cp, 6)
 		val acts = Array(act1, act2, act3, act4, act5)
 		
-		val resource1 = CumulativeResource(cp, 5)
-		val resource2 = CumulativeResource(cp, 5)
+		val resource1 = MaxResource(cp, 5)
+		val resource2 = MaxResource(cp, 5)
 		
 		val resourceSet = AlternativeCumulativeResource(resource1, resource2)
 		
@@ -347,8 +347,8 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		val act4 = Activity(cp, 6)
 		val act5 = Activity(cp, 6)
 		
-		val resource1 = CumulativeResource(cp, 5)
-		val resource2 = CumulativeResource(cp, 5)
+		val resource1 = MaxResource(cp, 5)
+		val resource2 = MaxResource(cp, 5)
 		
 		// Pool of the two previous resources
 		val resourceSet = AlternativeCumulativeResource(resource1, resource2)

@@ -5,8 +5,15 @@ import oscar.cp.core.CPVarInt
 
 abstract class ImplicitVarInt {
 	
-	def variable(scheduler : CPScheduler) : CPVarInt
-	def opposite(scheduler : CPScheduler) : CPVarInt
+	protected var opp : Boolean = false
+	
+	def toCPVarInt(scheduler : CPScheduler) : CPVarInt
+	
+	def unary_-() = this.opposite()
+	def opposite() : ImplicitVarInt = {	
+		opp = !opp
+		return this
+	}
 	
 	def isPositive : Boolean
 	
@@ -16,8 +23,7 @@ abstract class ImplicitVarInt {
 
 case class VarImplicitVarInt(v : CPVarInt) extends ImplicitVarInt {
 	
-	override def variable(scheduler : CPScheduler) : CPVarInt = v
-	override def opposite(scheduler : CPScheduler) : CPVarInt = -v
+	override def toCPVarInt(scheduler : CPScheduler) = if (!opp) v else -v
 	
 	override def isPositive = v.min >= 0
 	
@@ -27,8 +33,7 @@ case class VarImplicitVarInt(v : CPVarInt) extends ImplicitVarInt {
 
 case class ArrayImplicitVarInt(a : Array[Int]) extends ImplicitVarInt {
 
-	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, a)
-	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, a.map(-_))
+	override def toCPVarInt(scheduler : CPScheduler) = if (!opp) CPVarInt(scheduler, a) else CPVarInt(scheduler, a.map(-_))
 	
 	override def isPositive = a.min >= 0
 	
@@ -38,8 +43,7 @@ case class ArrayImplicitVarInt(a : Array[Int]) extends ImplicitVarInt {
 
 case class RangeImplicitVarInt(r : Range) extends ImplicitVarInt {
 	
-	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, r)
-	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, -r.max to -r.min)
+	override def toCPVarInt(scheduler : CPScheduler) = if (!opp) CPVarInt(scheduler, r) else CPVarInt(scheduler, -r.max to -r.min)
 	
 	override def isPositive = r.min >= 0
 	
@@ -49,8 +53,7 @@ case class RangeImplicitVarInt(r : Range) extends ImplicitVarInt {
 
 case class IntImplicitVarInt(i : Int) extends ImplicitVarInt {
 	
-	override def variable(scheduler : CPScheduler) = CPVarInt(scheduler, i)
-	override def opposite(scheduler : CPScheduler) = CPVarInt(scheduler, -i)
+	override def toCPVarInt(scheduler : CPScheduler) = if (!opp) CPVarInt(scheduler, i) else CPVarInt(scheduler, -i)
 	
 	override def isPositive = i >= 0
 	

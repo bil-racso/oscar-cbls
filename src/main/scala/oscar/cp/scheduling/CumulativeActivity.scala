@@ -37,22 +37,22 @@ object CumulativeActivity {
 	
 	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, resource : ImplicitVarInt, height : ImplicitVarInt) = {
 		
-		val durVar      = dur.variable(scheduler)
+		val durVar      = dur.toCPVarInt(scheduler)
 		val startVar    = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
 		val endVar      = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
-		val resourceVar = resource.variable(scheduler)
-		val heightVar   = height.variable(scheduler)
+		val resourceVar = resource.toCPVarInt(scheduler)
+		val heightVar   = height.toCPVarInt(scheduler)
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar)
 	}
 	
 	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, resource : ImplicitVarInt, height : ImplicitVarInt, name : String) = {
 		
-		val durVar      = dur.variable(scheduler)
+		val durVar      = dur.toCPVarInt(scheduler)
 		val startVar    = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
 		val endVar      = CPVarInt(scheduler, durVar.min to scheduler.horizon) 
-		val resourceVar = resource.variable(scheduler)
-		val heightVar   = height.variable(scheduler)
+		val resourceVar = resource.toCPVarInt(scheduler)
+		val heightVar   = height.toCPVarInt(scheduler)
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = name)
 	}
@@ -63,8 +63,8 @@ object CumulativeActivity {
 		val startVar    = activity.start
 		val durVar      = activity.dur
 		val endVar      = activity.end
-		val resourceVar = resource.variable(scheduler)
-		val heightVar   = height.variable(scheduler)
+		val resourceVar = resource.toCPVarInt(scheduler)
+		val heightVar   = height.toCPVarInt(scheduler)
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = activity.name, existingId = Option(activity.id))
 	}
@@ -78,8 +78,8 @@ object ProdConsActivity {
 		val startVar    = if (atEnd) activity.end else activity.start
 		val durVar      = CPVarInt(activity.scheduler, 0 to activity.store.horizon)
 		val endVar      = CPVarInt(activity.scheduler, activity.scheduler.horizon)
-		val resourceVar = resource.variable(scheduler)
-		val heightVar   = height.variable(scheduler)
+		val resourceVar = resource.toCPVarInt(scheduler)
+		val heightVar   = height.toCPVarInt(scheduler)
 		
 		new CumulativeActivity(scheduler, startVar, durVar, endVar, resourceVar, heightVar, n = activity.name, existingId = Option(activity.id))
 	}

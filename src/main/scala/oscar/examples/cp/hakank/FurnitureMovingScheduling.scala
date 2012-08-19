@@ -64,7 +64,7 @@ object FurnitureMovingScheduling {
     //
     // variables
     //
-    val resource  =  CumulativeResource(cp, capa, "FurnitureMoving")
+    val resource  =  MaxResource(cp, capa, "FurnitureMoving")
     val activities = Array.tabulate(n)(a=>Activity(cp, durations(a)))
     for(a <- Activities) {
       activities(a) needs resources(a) ofResource resource

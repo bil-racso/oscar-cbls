@@ -31,7 +31,7 @@ class AlternativeUnitResource(scheduler : CPScheduler) {
 		activitiesMap += act -> cum
 		
 		for (i <- cum.resource) {
-			if (!resourcesMap.contains(i)) throw new IllegalArgumentException("id " +i+ " is not a reference resource.")
+			if (!resourcesMap.contains(i)) throw new IllegalArgumentException("id " +i+ " is not a declared resource.")
 			resourcesMap(i).addActivity(cum)
 		}
 	}

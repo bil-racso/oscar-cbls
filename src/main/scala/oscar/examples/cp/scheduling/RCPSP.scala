@@ -41,7 +41,7 @@ object RCPSP {
 		val horizon = instance.map(_._1).sum
 		val cp = CPScheduler(horizon)
 
-		val resource = CumulativeResource(cp, capa)
+		val resource = MaxResource(cp, capa)
 
 		instance.map(a => Activity(cp, a._1) needs a._2 ofResource resource)
 

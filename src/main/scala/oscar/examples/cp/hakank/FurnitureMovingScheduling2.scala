@@ -68,7 +68,7 @@ object FurnitureMovingScheduling2 {
     //
     // variables
     //
-    val resource  =  CumulativeResource(cp, capa, "FurnitureMoving")
+    val resource  =  MaxResource(cp, capa, "FurnitureMoving")
     instance.map(a => Activity(cp, a._1) needs a._2 ofResource resource)
     
     val makespan = cp.makespan

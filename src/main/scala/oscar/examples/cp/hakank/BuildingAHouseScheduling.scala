@@ -73,7 +73,7 @@ object BuildingAHouseScheduling {
 		val garden    = Activity(cp, duration(8), "Garden")
 		val moving    = Activity(cp, duration(9), "Moving")
 
-		val resource = CumulativeResource(cp, capa, "BuildingAHouse")
+		val resource = MaxResource(cp, capa, "BuildingAHouse")
 		val activities = cp.activities
 
 		for (activity <- activities) {

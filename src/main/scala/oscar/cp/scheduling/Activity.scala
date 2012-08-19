@@ -94,24 +94,43 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 	def needs(resource : UnitResource) {
 		resource.addActivity(this)
 	}
-
-	def needsF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
-		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addProdConsActivity(this, capacity.variable(scheduler), atEnd)
+	
+	def needs(resources : UnitResource*) {
+		val cum = CumulativeActivity(this, 1, resources.map(_.id).toArray)
+		new AlternativeUnitUsage(this, cum)
 	}
 
-	def givesF(resource : CumulativeResource, capacity : ImplicitVarInt, atEnd : Boolean = true) {
-		if (!capacity.isPositive) throw new InvalidParameterException("the capacity must be positive")
-		resource.addProdConsActivity(this, capacity.opposite(scheduler), atEnd)
-	}
-
-	// CumulativeResourceSet	
+	// CumulativeResource	
 	def needs(height : ImplicitVarInt) = {
 		new NeedsUsage(this, height)
 	}
 
 	def gives(height : ImplicitVarInt) = {
 		new GivesUsage(this, height)
+	}
+	
+	def needsF(height : ImplicitVarInt) = {
+		new NeedsFUsage(this, height, true)
+	}
+
+	def givesF(height : ImplicitVarInt) = {
+		new GivesFUsage(this, height, true)
+	}
+	
+	def needsFAtEnd(height : ImplicitVarInt) = {
+		new NeedsFUsage(this, height, true)
+	}
+
+	def givesFAtEnd(height : ImplicitVarInt) = {
+		new GivesFUsage(this, height, true)
+	}
+	
+	def needsAtStart(height : ImplicitVarInt) = {
+		new NeedsFUsage(this, height, false)
+	}
+
+	def givesFAtStart(height : ImplicitVarInt) = {
+		new GivesFUsage(this, height, false)
 	}
 
 	/**
@@ -155,7 +174,7 @@ object Activity {
 
 	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, n : String = null) = {
 
-		val durVar = dur.variable(scheduler)
+		val durVar = dur.toCPVarInt(scheduler)
 
 		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
 		val endVar : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)

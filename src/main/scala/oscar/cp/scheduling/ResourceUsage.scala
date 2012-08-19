@@ -10,23 +10,22 @@ private object Gives  extends UsageType { override def toString = "give" }
 private object NeedsF extends UsageType { override def toString = "need forever" }
 private object GivesF extends UsageType { override def toString = "give forever" }
 
-trait AmountOfResource
-class NeedsUsage(act : Activity, height : ImplicitVarInt)  extends AmountOfResource {
+class AmountOfResource(val act : Activity, val height : ImplicitVarInt) {
+	
+}
+
+class NeedsUsage(act : Activity, height : ImplicitVarInt) extends AmountOfResource(act, height) {
 	
 	def ofResources(res : ImplicitVarInt) = {
 		
-		val heightVar   = height.variable(act.scheduler)
-		val resourceVar = res.variable(act.scheduler)
-		
-		new AlternativeUsage(act, heightVar, resourceVar)
+		val cum = CumulativeActivity(act, res, height)
+		new AlternativeCumulativeUsage(act, cum)
 	}
 	
 	def ofResources(res : CumulativeResource*) = {
 		
-		val heightVar   = height.variable(act.scheduler)
-		val resourceVar = CPVarInt(act.scheduler, res.map(_.id).toArray)
-		
-		new AlternativeUsage(act, heightVar, resourceVar)
+		val cum = CumulativeActivity(act, res.map(_.id).toArray, height)
+		new AlternativeCumulativeUsage(act, cum)
 	}
 	
 	def ofResource(res : CumulativeResource) = {
@@ -36,39 +35,78 @@ class NeedsUsage(act : Activity, height : ImplicitVarInt)  extends AmountOfResou
 		res.addActivity(act, cum)
 	}
 }
-class GivesUsage(act : Activity, height : ImplicitVarInt) extends AmountOfResource {
+
+class NeedsFUsage(act : Activity, height : ImplicitVarInt, atEnd : Boolean) extends AmountOfResource(act, height) {
+	
+	def ofResources(res : ImplicitVarInt) = {
+		
+		val cum = ProdConsActivity(act, res, height, atEnd)
+		new AlternativeCumulativeUsage(act, cum)
+	}
+	
+	def ofResources(res : CumulativeResource*) = {
+		
+		val cum = ProdConsActivity(act, res.map(_.id).toArray, height, atEnd)
+		new AlternativeCumulativeUsage(act, cum)
+	}
+	
+	def ofResource(res : CumulativeResource) = {
+		
+		val cum = ProdConsActivity(act, res.id, height, atEnd)
+		res.addActivity(act, cum)
+	}
+}
+
+class GivesUsage(act : Activity, height : ImplicitVarInt) extends AmountOfResource(act, height) {
 	
 	def toResources(res : ImplicitVarInt) = {
 		
-		val heightVar   = height.opposite(act.scheduler)
-		val resourceVar = res.variable(act.scheduler)
-		
-		new AlternativeUsage(act, heightVar, resourceVar)
+		val cum = CumulativeActivity(act, res, -height)
+		new AlternativeCumulativeUsage(act, cum)
 	}
 	
-	def toResources(res : Array[CumulativeResource]) = {
+	def toResources(res : CumulativeResource*) = {
 		
-		val heightVar   = height.opposite(act.scheduler)
-		val resourceVar = CPVarInt(act.scheduler, res.map(_.id).toArray)
+		val cum = CumulativeActivity(act, res.map(_.id).toArray, -height)
+		new AlternativeCumulativeUsage(act, cum)
+	}
+	
+	def toResource(res : CumulativeResource) = {
 		
-		new AlternativeUsage(act, heightVar, resourceVar)
+		val cum = CumulativeActivity(act, res.id, -height)
+		res.addActivity(act, cum)
+	}
+}
+
+class GivesFUsage(act : Activity, height : ImplicitVarInt, atEnd : Boolean) extends AmountOfResource(act, height) {
+	
+	def toResources(res : ImplicitVarInt) = {
+		
+		val cum = ProdConsActivity(act, res, -height, atEnd)
+		new AlternativeCumulativeUsage(act, cum)
+	}
+	
+	def toResources(res : CumulativeResource*) = {
+		
+		val cum = ProdConsActivity(act, res.map(_.id).toArray, -height, atEnd)
+		new AlternativeCumulativeUsage(act, cum)
 	}
 	
 	def toResource(res : CumulativeResource) = {
 		
 		val scheduler = act.scheduler
-		val cum = CumulativeActivity(act, res.id, height.opposite(scheduler))
+		val cum = ProdConsActivity(act, res.id, -height, atEnd)
 		res.addActivity(act, cum)
 	}
 }
 
-trait ResourceUsed
-case class AlternativeUsage(act : Activity, height : CPVarInt, resource : CPVarInt) extends ResourceUsed {
+class AlternativeCumulativeUsage(act : Activity, cum : CumulativeActivity) {
 	
-	def in(set : AlternativeCumulativeResource) {
-		val scheduler = act.scheduler
-		val cum = CumulativeActivity(act, resource, height)
-		set.addActivity(act, cum)
-	}
+	def in(set : AlternativeCumulativeResource) { set.addActivity(act, cum) }
+}
+
+class AlternativeUnitUsage(act : Activity, cum : CumulativeActivity) {
+	
+	def in(set : AlternativeUnitResource) { set.addActivity(act, cum) }
 }
 

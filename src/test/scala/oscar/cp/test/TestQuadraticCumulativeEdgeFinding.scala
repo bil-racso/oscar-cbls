@@ -25,7 +25,7 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 		val ends      = Array(8, 7, 8, 8, 7, 16)
 		val cons      = Array(2, 2, 2, 1, 1, 1)
 		
-		val r = CumulativeResource(cp, 3)
+		val r = MaxResource(cp, 3)
 		
 		val activities = Array.tabulate(nActivities)({a => 
 			val act = Activity(cp, durations(a))
@@ -52,8 +52,8 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 		val ends      = Array(8, 7, 8, 8, 7, 16)
 		val cons      = Array(2, 2, 2, 1, 1, 1)
 		
-		val r1 = CumulativeResource(cp, 3)
-		val r2 = CumulativeResource(cp, 3)
+		val r1 = MaxResource(cp, 3)
+		val r2 = MaxResource(cp, 3)
 		
 		val activities1 = Array.tabulate(nActivities)({a => 
 			val act = Activity(cp, durations(a))
@@ -94,7 +94,7 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 		val ends      = Array(5, 5, 10)
 		val cons      = Array(1, 2, 1)
 		
-		val r = CumulativeResource(cp, 3)
+		val r = MaxResource(cp, 3)
 		
 		val activities = Array.tabulate(nActivities)({a => 
 			val act = Activity(cp, durations(a))
@@ -121,8 +121,8 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 		val ends      = Array(5, 5, 10)
 		val cons      = Array(1, 2, 2)
 		
-		val r1 = CumulativeResource(cp, 3)
-		val r2 = CumulativeResource(cp, 3)
+		val r1 = MaxResource(cp, 3)
+		val r2 = MaxResource(cp, 3)
 		
 		val activities1 = Array.tabulate(nActivities)({a => 
 			val act = Activity(cp, durations(a))

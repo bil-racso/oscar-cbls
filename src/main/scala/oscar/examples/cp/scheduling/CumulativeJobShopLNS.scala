@@ -80,7 +80,7 @@ object CumulativeJobShopLNS {
 
 		// Activities & Resources
 		val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
-		val resources  = Array.tabulate(nResources)(m => CumulativeResource(cp, 2))
+		val resources  = Array.tabulate(nResources)(m => MaxResource(cp, 2))
 
 		// Resource allocation
 		for (i <- Activities)

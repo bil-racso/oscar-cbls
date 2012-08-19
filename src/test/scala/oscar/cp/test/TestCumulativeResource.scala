@@ -13,7 +13,7 @@ import org.scalacheck._
 
 import oscar.visual._
 
-class TestCumulativeResource extends FunSuite with ShouldMatchers {
+class TestMaxResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	
 		
@@ -25,7 +25,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 2)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResource(cp, 2)
+		val resource = MaxResource(cp, 2)
 		
 		act1 needs 1 ofResource resource
 		act2 needs 1 ofResource resource
@@ -58,7 +58,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 1 to 4)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResource(cp, 1)
+		val resource = MaxResource(cp, 1)
 		
 		act1 needs 1 ofResource resource
 		act2 needs 1 ofResource resource
@@ -93,7 +93,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 2)
 		val acts = Array(act1, act2, act3)
 		
-		val resource = CumulativeResource(cp, 2)
+		val resource = MaxResource(cp, 2)
 		
 		act1 needs (1 to 2) ofResource resource
 		act2 needs 1 ofResource resource
@@ -129,7 +129,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act4 = Activity(cp, 2 to 3)
 		val acts = Array(act1, act2, act3, act4)
 		
-		val resource = CumulativeResource(cp, 2)
+		val resource = MaxResource(cp, 2)
 		
 		act1 needs 3 ofResource resource
 		act2 needs 2 ofResource resource
@@ -166,7 +166,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		val act3 = Activity(cp, 2)
 		val act4 = Activity(cp, 2 to 3)
 		
-		val resource = CumulativeResource(cp, 2)
+		val resource = MaxResource(cp, 2)
 		
 		act1 needs 4 ofResource resource
 		act2 needs 3 ofResource resource
