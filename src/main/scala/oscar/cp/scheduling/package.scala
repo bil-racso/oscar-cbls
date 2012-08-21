@@ -2,6 +2,7 @@ package oscar.cp
 
 import oscar.cp.core.CPVarInt
 import oscar.cp.modeling.CPScheduler
+import oscar.cp.scheduling._
 
 /**
  * @author Renaud Hartert : ren.hartert@gmail.com

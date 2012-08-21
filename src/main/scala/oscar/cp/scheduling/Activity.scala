@@ -177,7 +177,7 @@ object Activity {
 		val durVar = dur.toCPVarInt(scheduler)
 
 		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-		val endVar : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
+		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
 
 		new Activity(scheduler, startVar, durVar, endVar, n)
 	}
@@ -186,7 +186,7 @@ object Activity {
 class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.start, act.dur, act.end, n = act.name, existingId = Option(act.id)) {
 
 	override def start : CPVarInt = throw new UninitializedFieldError("not available")
-	override def end : CPVarInt = throw new UninitializedFieldError("not available")
+	override def end   : CPVarInt = throw new UninitializedFieldError("not available")
 
 	// Earliest starting time
 	override def est = -act.lct;

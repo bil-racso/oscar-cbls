@@ -193,4 +193,38 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		resource.heightOf(act4).value should be(-2)
 		nSol should be(2)
 	}
+	
+	test("Test 6: min resource") {	
+		
+		val horizon = 6
+		val cp = CPScheduler(horizon)		
+
+		val act1 = Activity(cp, 6)
+		val act2 = Activity(cp, 2)
+		val act3 = Activity(cp, 4)
+		
+		val resource = MinResource(cp, 1)
+		
+		act1 gives 1 toResource resource
+		act2 needs 2 ofResource resource
+		act3 needs 2 ofResource resource
+		
+		var nSol = 0
+		
+		val expectedSol = Set((0, 0, 2), 
+							  (0, 4, 0))
+		
+		cp.solveAll subjectTo {
+			
+		} exploration {
+			
+			cp.binary(cp.activities)
+			
+			val sol = (act1.est, act2.est, act3.est)
+			expectedSol.contains(sol) should be(true)
+			nSol += 1
+		}
+		
+		nSol should be(2)
+	}
 }
