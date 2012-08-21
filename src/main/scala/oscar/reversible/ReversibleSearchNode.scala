@@ -48,6 +48,21 @@ class ReversibleSearchNode {
     var lns: Option[LNS] = None
     var time : Long = 0
     var solveOne = false
+    private var limit = Int.MaxValue
+    
+    def failLimit = limit
+    def failLimit_= (lim: Int) {
+	  sc.failLimit_=(lim)
+	  limit = lim
+	}
+    
+    protected var lastLNSRestartCompleted = false
+  
+    /**
+     * @return true if the last lns restart was caused because of completed exploration of search tree, 
+     * false otherwise (i.e. limit on the number failure reached)
+     */
+    def isLastLNSRestartCompleted = lastLNSRestartCompleted
     
     def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
 	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
@@ -170,13 +185,12 @@ class ReversibleSearchNode {
 	  stateObjective()
 	  var nbRestart = 0
 	  var maxRestart = 1
-	  var limit = sc.failLimit
 	  
 	  val relax = lns match {
 		   case None => () => Unit
 		   case Some(LNS(nbRestart,nbFailures,restar)) => {
 		     maxRestart = nbRestart
-		     limit = nbFailures
+		     failLimit = nbFailures
 		     restar
 		   }
 	  }  
@@ -188,7 +202,6 @@ class ReversibleSearchNode {
         	  	sc.start()
                 block
                 if (!isFailed()) {
-                	sc.failLimit = limit
                 	if (solveOne) {
                 	  val nbFail = sc.nbFail
                 	  sc.reset()
@@ -202,7 +215,7 @@ class ReversibleSearchNode {
              popAll()
              pushState()
              if (relaxation) relax()
-               if (!isFailed()) {
+             if (!isFailed()) {
                  sc.reset()
                  nbRestart += 1 
                  reset {
@@ -210,14 +223,21 @@ class ReversibleSearchNode {
                    if (!isFailed()) getObjective().tighten()
       	         }
                  if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-               }
+             }
           }
-          sc.failLimit = limit
+          //sc.failLimit_=(failLimit)
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
-             restart(true)
-             if (sc.limitReached) print("!")
-             else print("R")
+            //sc.failLimit_=(failLimit)
+            restart(true)
+             if (sc.limitReached) {
+               lastLNSRestartCompleted = false
+               print("!") 
+             }
+             else {
+               lastLNSRestartCompleted = true
+               print("R") 
+             }
           }
           k1() // exit the exploration block       
         } 
