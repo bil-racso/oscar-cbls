@@ -46,32 +46,27 @@ class ReversibleSearchNode {
 	var sc: SearchController = new DFSSearchController(this)
     case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
     var lns: Option[LNS] = None
-    protected var lastLNSCompleted : Boolean = false
     var time : Long = 0
     var solveOne = false
+    private var limit = Int.MaxValue
     
-    def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
-		
-	  lns = Option(new LNS(nbRestarts,nbFailures,() => restart))
+    def failLimit = limit
+    def failLimit_= (lim: Int) {
+	  sc.failLimit_=(lim)
+	  limit = lim
 	}
-	
-	/**
-	 * 
-	 * @return True if the last LNS restart has explored all the possible solutions
-	 */
-	def islastLNSCompleted = lastLNSCompleted
-	
-	/**
-	 * 
-	 * @return The number of failures allowed during a LNS restart
-	 */
-	def lnsFailuresLimit = sc.failLimit
-	
-	/**
-	 * 
-	 * @param The number of failures allowed during a LNS restart (not modified if negative integer)
-	 */
-	def lnsFailuresLimit_= (x : Int) { if (x >= 0) sc.failLimit = x }
+    
+    protected var lastLNSRestartCompleted = false
+  
+    /**
+     * @return true if the last lns restart was caused because of completed exploration of search tree, 
+     * false otherwise (i.e. limit on the number failure reached)
+     */
+    def isLastLNSRestartCompleted = lastLNSRestartCompleted
+    
+    def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
+	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+	}
 	
 	/**
 	 * 
@@ -190,14 +185,13 @@ class ReversibleSearchNode {
 	  stateObjective()
 	  var nbRestart = 0
 	  var maxRestart = 1
-	  var limit = sc.failLimit
 	  
 	  val relax = lns match {
 		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restart)) => {
+		   case Some(LNS(nbRestart,nbFailures,restar)) => {
 		     maxRestart = nbRestart
-		     limit = nbFailures
-		     restart
+		     failLimit = nbFailures
+		     restar
 		   }
 	  }  
 
@@ -208,7 +202,6 @@ class ReversibleSearchNode {
         	  	sc.start()
                 block
                 if (!isFailed()) {
-                	sc.failLimit = limit
                 	if (solveOne) {
                 	  val nbFail = sc.nbFail
                 	  sc.reset()
@@ -221,10 +214,8 @@ class ReversibleSearchNode {
           def restart(relaxation: Boolean = false) {
              popAll()
              pushState()
-             if (relaxation) {
-            	 relax()
-             }
-               if (!isFailed()) {
+             if (relaxation) relax()
+             if (!isFailed()) {
                  sc.reset()
                  nbRestart += 1 
                  reset {
@@ -232,20 +223,20 @@ class ReversibleSearchNode {
                    if (!isFailed()) getObjective().tighten()
       	         }
                  if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-               }
+             }
           }
-          sc.failLimit = limit
+          //sc.failLimit_=(failLimit)
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
-             restart(true)
+            //sc.failLimit_=(failLimit)
+            restart(true)
              if (sc.limitReached) {
-            	 println("failLimit " + sc.failLimit)
-            	 lastLNSCompleted = false
-            	 print("!")
-             } else {
-            	 println("failLimit " + sc.failLimit)
-            	 lastLNSCompleted = true
-            	 print("R")
+               lastLNSRestartCompleted = false
+               print("!") 
+             }
+             else {
+               lastLNSRestartCompleted = true
+               print("R") 
              }
           }
           k1() // exit the exploration block       
@@ -253,4 +244,5 @@ class ReversibleSearchNode {
       }
 	  time = System.currentTimeMillis() - t1
     }	
+
 }

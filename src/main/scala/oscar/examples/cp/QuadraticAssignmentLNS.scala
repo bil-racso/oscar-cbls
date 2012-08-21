@@ -66,6 +66,15 @@ object QuadraticAssignmentLNS {
     
     
     cp.lns(20,50) {
+      println("----------restart---------------")
+      println(cp.isLastLNSRestartCompleted)
+      if (cp.isLastLNSRestartCompleted) {
+        println("set limit to "+(cp.failLimit/2))
+        cp.failLimit /= 2
+      } else {
+        println("set limit to "+(cp.failLimit*2))
+        cp.failLimit *= 2
+      }
       // relax 50% of the variables
       cp.post((0 until n).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
     }

@@ -83,12 +83,7 @@ class CPSolver() extends Store() {
 	 */
 	def allBounds(vars : IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 
-	/**
-	 * Set the maximum number of fails for the search
-	 */
-	def failLimit(nbFailMax : Int) {
-		sc.failLimit = nbFailMax
-	}
+
 
 	def minDom(x : CPVarInt) : Int = x.size
 	def minRegre(x : CPVarInt) : Int = x.max - x.min
