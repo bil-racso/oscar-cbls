@@ -140,7 +140,7 @@ object Steel {
 		                     items(o).setBin(xsol(o))})
 		  plot.addPoint(nbSol,obj.value)                   
 		  nbSol += 1
-		  println("sol #fail:"+cp.sc.nbFail)
+		  println("sol #fail:"+cp.nFail)
 		}
 		println("end--------------")
 

@@ -56,16 +56,11 @@ object SetPartition {
     //
     // data
     //
-    var n = 16
-    var num_sets = 2
+    val n        = if (args.length > 0) args(0).toInt else 16;
+    val num_sets = if (args.length > 1) args(1).toInt else 2;
 
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
-
-    if (args.length > 1) {
-      num_sets = args(1).toInt
-    }
+    val NRANGE = 0 until n
+    val SRANGE = 0 until num_sets
 
     println("n: " + n + " num_sets: " + num_sets)
 
@@ -83,47 +78,45 @@ object SetPartition {
 
     cp.solveAll subjectTo {
     
-      for(i <- 0 until num_sets) {
-        for(j <- 0 until num_sets if i!=j) {
+      for(i <- SRANGE;
+          j <- SRANGE if i!=j) {
           cp.add(
-                 sum(for{k <- 0 until n} yield a(i)(k)*a(j)(k)) == 0
+                 sum(for{k <- NRANGE} yield a(i)(k)*a(j)(k)) == 0
                  )
-          
-        }
       }
 
       // ensure that all integers is in
       // (exactly) one partition
       cp.add(
              sum(
-                 for{i <- 0 until num_sets
-                     j <- 0 until n} yield a(i)(j)
+                 for{i <- SRANGE
+                     j <- NRANGE} yield a(i)(j)
                  ) == n
              )
 
       
 
-      for(i <- 0 until num_sets; j <- 0 until num_sets if i < j) {
+      for(i <- SRANGE; j <- SRANGE if i < j) {
         // same cardinality
         cp.add(
-               sum(for{k <- 0 until n} yield a(i)(k) ) 
+               sum(for{k <- NRANGE} yield a(i)(k) ) 
                ==
-               sum(for{k <- 0 until n} yield a(j)(k) )
+               sum(for{k <- NRANGE} yield a(j)(k) )
                )
 
         // same sum
         cp.add(
-               sum(for{k <- 0 until n} yield a(i)(k)*k ) 
+               sum(for{k <- NRANGE} yield a(i)(k)*k ) 
                ==
-               sum(for{k <- 0 until n} yield a(j)(k)*k)
+               sum(for{k <- NRANGE} yield a(j)(k)*k)
                )
 
 
         // same sum squared
         cp.add(
-               sum(for{k <- 0 until n} yield a(i)(k)*k*a(i)(k)*k ) 
+               sum(for{k <- NRANGE} yield a(i)(k)*k*a(i)(k)*k ) 
                ==
-               sum(for{k <- 0 until n} yield a(j)(k)*k*a(j)(k)*k)
+               sum(for{k <- NRANGE} yield a(j)(k)*k*a(j)(k)*k)
                )
       }
 
@@ -140,8 +133,8 @@ object SetPartition {
       println("\nSolution:")
       var sums = 0
       var sums_squared = 0
-      for(i <- 0 until num_sets) {
-        for(j <- 0 until n if a(i)(j).value == 1) {
+      for(i <- SRANGE) {
+        for(j <- NRANGE if a(i)(j).value == 1) {
           print((j+1) + " ")
           if (i == 0) {
             val v = (j+1)*a(i)(j).value

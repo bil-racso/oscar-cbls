@@ -18,9 +18,11 @@
 
 import oscar.cp.modeling._
 import oscar.search._
+import oscar.cp.core._
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
+
 
 /**
  * 
@@ -36,10 +38,11 @@ object RCPSP {
 	    val horizon = instance.map(_._1).sum
 		val Times = 0 to horizon
   
-		val cp = CPSolver()
+		val cp = CPScheduler(horizon)
 
-		
-		val tasks = instance.map{case(dur,req) => CumulativeActivity(CPVarInt(cp,Times),dur,0,req)}
+		val x = CPVarInt(cp,0 to 3)
+
+		val tasks: Array[CumulativeActivity] = instance.map{case(dur,req) => CumulativeActivity(cp,dur,0,req)}
 		val makespan = maximum(tasks.map(_.end))
 		cp.minimize(makespan) subjectTo {
 		  cp.add(new MaxSweepCumulative(cp,tasks,capa,0))

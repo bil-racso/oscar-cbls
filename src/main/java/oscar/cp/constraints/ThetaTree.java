@@ -119,6 +119,8 @@ public class ThetaTree {
 			pos = getFather(pos);
 		}
 		// Fast recompute the top node. We do not need all info.
+		// nodes[2] = right of the root
+		// nodes[1] = left of the root
 		nodes[0].setECT(Math.max(nodes[2].ect(),
 				nodes[1].ect() + nodes[2].getSUMP()));
 	}

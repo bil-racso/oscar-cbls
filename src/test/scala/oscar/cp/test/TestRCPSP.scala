@@ -16,7 +16,7 @@
  ******************************************************************************/
 
 package oscar.cp.test
-
+/*
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -60,4 +60,4 @@ class TestRCPSP extends FunSuite with ShouldMatchers  {
   
 
 
-}
+}*/

@@ -52,6 +52,7 @@ import scala.math._
   Simple problems, the crypto-arithmetic puzzle ALPHACIPHER.
   """
 
+  For another approach see Crypto2.scala.
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/

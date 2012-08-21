@@ -64,8 +64,10 @@ object YoungTableaux {
 
     val cp = CPSolver()
 
-    val n = 4
+    val n = if (args.length > 0) args(0).toInt else 4;
 
+    val RANGE0 = 0 until n
+    val RANGE1 = 1 until n
 
     // variables
 
@@ -74,7 +76,7 @@ object YoungTableaux {
     val x_flatten = x.flatten
 
     // the partition structure
-    val p = List.fill(n)(CPVarInt(cp, 0 to n+1))
+    val p = Array.fill(n)(CPVarInt(cp, 0 to n+1))
 
     //
     // constraints
@@ -91,32 +93,25 @@ object YoungTableaux {
       cp.add(x(0)(0) == 1)
 
       // rows
-      for(i <- 0 until n) {
-        for(j <- 1 until n) {
+      for(i <- RANGE0;
+          j <- RANGE1) {
           cp.add(x(i)(j) >= x(i)(j-1))
-        }
       }
 
       // columns
-      for(j <- 0 until n) {
-        for(i <- 1 until n) {
+      for(j <- RANGE0;
+          i <- RANGE1) {
           cp.add(x(i)(j) >= x(i-1)(j))
-        }
       }
 
       // calculate the structure (the partition)
-      for(i <- 0 until n) {
-        val b = List.fill(n)(CPVarBool(cp))
-        val nn = CPVarInt(cp, n to n)
-        for(j <- 0 until n) {
-          cp.add((b(j)===1) === (nn >== (x(i)(j))))
-        }
-        cp.add(p(i) == sum(b))
+      for(i <- RANGE0) {
+        cp.add(p(i) == sum(for(j <- RANGE0) yield (x(i)(j) <== n)))
       }
       
       cp.add(sum(p) == n)
 
-      for(i <- 1 until n) {
+      for(i <- RANGE1) {
         cp.add(p(i-1) >= p(i))
       }
 
@@ -127,19 +122,17 @@ object YoungTableaux {
 
       println("\nSolution:")
       print("p: ")
-      for(i <- 0 until n) {
+      for(i <- RANGE0) {
         print(p(i) + " ")
       }
       println()
-      for(i <- 0 until n) {
+      for(i <- RANGE0) {
         var c = 0 // number of non-empty items
-        for(j <- 0 until n) {
+        for(j <- RANGE0) {
           val v = x(i)(j).value
           if (v <= n) {
             print(v + " ")
             c += 1
-          } else {
-            print("  ")
           }
         }
         // just print non-empty lines

@@ -20,6 +20,7 @@ import oscar.cp.modeling._
 import oscar.cp.search._
 import oscar.cp.core._
 import oscar.cp.constraints._
+import scala.util.continuations._
 
 import scala.collection.JavaConversions._
 import scala.math._
@@ -52,6 +53,29 @@ import scala.math._
  *
  */
 object CalvinPuzzleTable {
+
+  def binaryMedianSelection(cp: CPSolver,
+                            vars : Array[CPVarInt], 
+                            varHeuris : CPVarInt => Int, 
+                            valHeuris : CPVarInt => Int) : Unit @suspendable = {
+                                
+    while (!allBounds(vars)) {
+                                        
+      // Variable selection
+      val unbound   = vars.filter(!_.isBound)
+      val minHeuris = unbound.map(varHeuris(_)).min
+      val x         = unbound.filter(varHeuris(_) == minHeuris).head
+      
+      // Value selection
+      val vals      = x.toArray
+      // val sortedVal = vals.sortBy(valHeuris)
+      // val v         = sortedVal(vals.size/2)
+      val v         = vals(vals.size/2)
+      // println("x: " + x + " v: " + v)
+      cp.branch (cp.post(x == v))(cp.post(x != v))
+    }
+  }
+
 
     //
     // main
@@ -119,6 +143,7 @@ object CalvinPuzzleTable {
       } exploration {
         
         cp.binary(x_flat,-_.constraintDegree,_.randomValue)
+        // binaryMedianSelection(cp, x_flat, _.min, _.min)
 
         println("Solution:")
 

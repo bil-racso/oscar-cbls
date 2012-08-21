@@ -59,11 +59,6 @@ public class UnaryResource extends Constraint {
 	private LCTComparator lctComp = new LCTComparator();
 
 	private boolean failure;
-
-	//private CPVarInt [] positions; //position[i] = index of activity in positions i
-	//private CPVarInt [] ranks; //rank[i] position of activity i => positions[ranks[i]] == i
-	
-	private ReversibleBool[] ranked;
 	
 
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
@@ -74,14 +69,7 @@ public class UnaryResource extends Constraint {
 		this.required = required;
 		this.nbAct = activities.length;
 
-		/*
-		positions = CPVarInt.getArray(s, nbAct, 0, nbAct-1,"pos");
-		ranks = CPVarInt.getArray(s, nbAct, 0, nbAct-1,"rank");
-		*/
-		ranked = new ReversibleBool[nbAct];
-		for (int i = 0; i < nbAct; i++) {
-			ranked[i] = new ReversibleBool(s,false);
-		}
+
 
 		
 		this.thetaTree = new ThetaTree(activities.length);
@@ -127,46 +115,6 @@ public class UnaryResource extends Constraint {
 		this(activities, makeRequiredArray(activities.length,activities[0].start().store()), name);
 	}
 	
-	/**
-	 * a number between 0/1 representing the business of the resource over it's horizon
-	 * close to 1 means that almost at any point there is an activity executing, close to 0 is the opposite
-	 */
-	public double getCriticality() {
-		int min = Integer.MAX_VALUE;
-		int max = Integer.MIN_VALUE;
-		int totDur = 0;
-		for (int i = 0; i < nbAct; i++) {
-			if (required[i].isTrue()) {
-				min = Math.min(min, activities[i].est());
-				max = Math.max(max, activities[i].lct());
-				totDur += activities[i].minDuration();
-			}
-		}
-		return ((double) totDur)/(max-min);
-	}
-	
-	public boolean isRanked() {
-		for (int i = 0; i < nbAct; i++) {
-			if (required[i].isTrue() && !ranked[i].getValue()) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	public boolean isRanked(int i) {
-		return required[i].isTrue() && ranked[i].getValue();
-	}
-	
-	public void rankFirst(int j) {
-		for (int i = 0; i < nbAct; i++) {
-			if (i!= j && required[i].isTrue() && !ranked[i].getValue()) {
-				s.post(new LeEq(activities[j].end(),activities[i].start()));
-			}
-		}
-		ranked[j].setValue(true);
-	}
-	
 	private static CPVarBool[] makeRequiredArray(int n, Store s) {
 		CPVarBool [] res = new CPVarBool[n];
 		for (int i = 0; i < res.length; i++) {
@@ -204,6 +152,8 @@ public class UnaryResource extends Constraint {
 			}
 		}
 		
+		// next line are commented because we use a time-table instead instead in the UnitResource (more efficient)
+		/*
 		for (int i = 0; i < nbAct; i++) {
 			for (int j = i+1; j < nbAct; j++) {
 				if (required[i].isTrue() && required[j].isTrue()) {
@@ -212,7 +162,7 @@ public class UnaryResource extends Constraint {
 					}
 				}
 			}
-		}
+		}*/
 		
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
@@ -241,15 +191,17 @@ public class UnaryResource extends Constraint {
 
 	@Override
 	protected CPOutcome propagate() {
-		//System.out.println("propagate "+getName());	
+		for (int i = 0; i < nbAct; i++) {
+			activities[i].update(); // forces update of start, end, dur
+		}
 		failure = false;
 		do {
 			do {
-
 				do {
 					if(!overloadChecking()) {
 						return CPOutcome.Failure;
 					}
+					
 				} while (!failure && detectablePrecedences());
 			} while (!failure && notFirstNotLast() && !failure);
 		} while (!failure && edgeFinder());
@@ -287,11 +239,15 @@ public class UnaryResource extends Constraint {
 			thetaTree.insert(aw.getActivity(), aw.estPos());
 			if (thetaTree.ect() > aw.getActivity().lct()) {
 				return false;
+				
 			}
 		}
 
 		// Other direction
 		Arrays.sort(mlct, lctComp);
+		for (int i = 0; i < nbAct; i++) {
+		    Activity act = mlct[i].getActivity();
+		}
 		thetaTree.reset();
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper aw = mlct[i];

@@ -48,6 +48,21 @@ class ReversibleSearchNode {
     var lns: Option[LNS] = None
     var time : Long = 0
     var solveOne = false
+    private var limit = Int.MaxValue
+    
+    def failLimit = limit
+    def failLimit_= (lim: Int) {
+	  sc.failLimit_=(lim)
+	  limit = lim
+	}
+    
+    protected var lastLNSRestartCompleted = false
+  
+    /**
+     * @return true if the last lns restart was caused because of completed exploration of search tree, 
+     * false otherwise (i.e. limit on the number failure reached)
+     */
+    def isLastLNSRestartCompleted = lastLNSRestartCompleted
     
     def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
 	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
@@ -66,9 +81,17 @@ class ReversibleSearchNode {
 	def isFailed(): Boolean = failed.value
 	
 
+	/**
+	 * Set the node in a failed state
+	 */
 	def fail() {
 		failed.setValue(true)
 	}
+	
+	/**
+	 * @return the number of fail
+	 */
+	def nFail() = sc.nFail()
 	
 	/**
 	 * Exit the search in progress and/or the LNS if any
@@ -170,13 +193,12 @@ class ReversibleSearchNode {
 	  stateObjective()
 	  var nbRestart = 0
 	  var maxRestart = 1
-	  var limit = sc.failLimit
 	  
 	  val relax = lns match {
 		   case None => () => Unit
 		   case Some(LNS(nbRestart,nbFailures,restar)) => {
 		     maxRestart = nbRestart
-		     limit = nbFailures
+		     failLimit = nbFailures
 		     restar
 		   }
 	  }  
@@ -188,11 +210,10 @@ class ReversibleSearchNode {
         	  	sc.start()
                 block
                 if (!isFailed()) {
-                	sc.failLimit = limit
                 	if (solveOne) {
-                	  val nbFail = sc.nbFail
+                	  //val nbFail = sc.nbFail
                 	  sc.reset()
-                	  sc.nbFail = nbFail
+                	  //sc.nbFail = nbFail
                 	  k1() // exit the exploration block
                 	}
                 }
@@ -201,21 +222,32 @@ class ReversibleSearchNode {
           def restart(relaxation: Boolean = false) {
              popAll()
              pushState()
-             if (relaxation) relax()
-             sc.reset()
-             nbRestart += 1 
-             reset {
-               b()  	  
-               if (!isFailed()) getObjective().tighten()
-      	     }
-             if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+             if (relaxation) {
+               sc.reset()
+               relax()
+               
+             }
+             if (!isFailed()) {
+                 sc.reset()
+                 nbRestart += 1 
+                 reset {
+                   b()  	  
+                   if (!isFailed()) getObjective().tighten()
+      	         }
+                 if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+             }
           }
-          sc.failLimit = limit
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
              restart(true)
-             if (sc.limitReached) print("!")
-             else print("R")
+             if (sc.isLimitReached) {
+               lastLNSRestartCompleted = false
+               print("!") 
+             }
+             else {
+               lastLNSRestartCompleted = true
+               print("R") 
+             }
           }
           k1() // exit the exploration block       
         } 

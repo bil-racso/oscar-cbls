@@ -96,16 +96,11 @@ object SurvoPuzzle {
       colsums = lines(3).split(",").toList.map(i=>i.toInt)
       println("r:" + r)
       println("c:" + c)
-      println("rowsums: " + rowsums)
-      println("colsums: " + colsums)
-      var this_problem = List[List[Int]]()
-      for (t <- 4 to 4+r-1) {
-        println(lines(t))
-        val t2: List[Int] = lines(t).split(",").toList.map(i=> i.toInt)
-        this_problem = this_problem ::: List(t2)
-      }
-      println()
-      problem = this_problem
+      println("rowsums: " + rowsums.mkString(" "))
+      println("colsums: " + colsums.mkString(" "))
+
+      problem = (4 to 4+r-1).map(t=>lines(t).split(",").toList.map(i=> i.toInt)).toList
+
     }
 
 
@@ -143,7 +138,7 @@ object SurvoPuzzle {
 
        println("\nSolution:")
        for(i <- 0 until r) {
-         println(x(i).mkString(""))
+         println(x(i).map(j=>"%3d".format(j.value)).mkString(""))
        }
        println()
 

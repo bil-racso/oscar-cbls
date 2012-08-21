@@ -53,7 +53,7 @@ object Crypto2 {
     //
     val num = 26
 
-    val ht = "abcdefghijklmnopqrstuvwxyz".zipWithIndex.toMap // char -> index
+    val ht = ('a' to 'z').zipWithIndex.toMap // char -> index
 
     //
     // variables

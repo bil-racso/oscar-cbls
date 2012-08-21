@@ -19,8 +19,6 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-import scala.collection.mutable.Set
-
 import oscar.cp.core.Store
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
@@ -29,6 +27,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
+import oscar.cp.constraints.QuadraticCumulativeEdgeFinding
 
 /** This abstract class contains the main parts of the cumulative constraint described 
  *  in [1]. 
@@ -40,9 +39,9 @@ import oscar.algo.SortUtils.stableSort
  *	[2] Choco's class CumulSweep.java
  *
  *	@define originalTasks
- *	the tasks that could be originally assigned to the resource `r`
+ *	the tasks that could be originally assigned to the height `r`
  *  @define idOfT
- *  The id `t` of the considered task in the array `tasks`.
+ *  t The id `t` of the considered task in the array `tasks`.
  *  @define addEvent
  *  If the conditions are met, the events are added.
  *  
@@ -54,13 +53,13 @@ import oscar.algo.SortUtils.stableSort
  *  
  *  Note: good events are defined over the entire execution's domain of the task.
  *
- *  @author Renaud Hartert
+ *  @author Renaud Hartert ren.hartert@gmail.com
  *  @version 28/07/2012 
  */
-abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
+abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
-	protected val tasks = allTasks.filter(_.machine.hasValue(r))
+	protected val tasks = allTasks.filter(_.resource.hasValue(r))
 	
 	protected val nTasks = tasks.size
 	protected val Tasks  = 0 until nTasks
@@ -71,16 +70,18 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected var nEvents = 0
 	
 	// Current position of the sweep line
-	protected var delta : Int = 0	
+	protected var delta = 0	
 	// Sum of the height of the tasks that overlap the sweep line
-	protected var consSumHeight : Int = 0
+	protected var consSumHeight = 0
 	// Sum of the height of the tasks that overlap the sweep line
-	protected var capaSumHeight : Int = 0
+	protected var capaSumHeight = 0
 	// Number of tasks that overlap the sweep line
-	protected var nCurrentTasks : Int = 0
+	protected var nCurrentTasks = 0
+	// Number of tasks in stackPrune
+	protected var nTasksToPrune = 0
+	
 	// Tasks that could intersect the sweep line
-	protected val stackPrune    : Set[Int] = Set()	
-
+	protected val stackPrune  = new Array[Int](nTasks)
 	// Contribution of all the tasks that are added to consSumHeight
 	protected val consContrib = new Array[Int](nTasks)
 	// Contribution of all the tasks that are added to capaSumHeight
@@ -88,6 +89,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 
 	// Contains all the possible events of each task (used for speed-up)
 	protected val eventList = Array.tabulate(nTasks){e => new EventList(e)}
+	
+	protected val edge = new QuadraticCumulativeEdgeFinding(cp, allTasks, ub, r)
 	
 	/** Checks the necessary conditions to add the check events of the task `t` 
 	 *  in the array `eventPointSeries` at the position `nEvents`. 
@@ -120,7 +123,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	 */
 	protected def generateProfileGood(i : Int) : Boolean
 	
-	/** Checks the consistency of the total consumption of the resource `r` for 
+	/** Checks the consistency of the total consumption of the height `r` for 
 	 *  the current position of the sweep line `delta`.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -131,7 +134,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected def consistencyCheck : Boolean
 	
 	/** Checks that the contribution of the task `t` in the total consumption of 
-	 *  the resource `r` at the current position of the sweep line `delta` is not 
+	 *  the height `r` at the current position of the sweep line `delta` is not 
 	 *  mandatory to respect the consistency.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -144,7 +147,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	protected def mandatoryCheck(t : Int) : Boolean
 	
 	/** Checks that the task `t` is inconsistent with the total consumption of the
-	 *  resource `r` at the current position of the sweep line `delta` no matter 
+	 *  height `r` at the current position of the sweep line `delta` no matter 
 	 *  the height of its consumption.
 	 *  
 	 *  For example, in the case of a Max cumulative:
@@ -165,11 +168,16 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
         
         if (oc == CPOutcome.Suspend) {
         	for (i <- Tasks) {
-        		if (!tasks(i).start.isBound) tasks(i).start.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).dur.isBound) tasks(i).dur.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).end.isBound) tasks(i).end.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).resource.isBound) tasks(i).resource.callPropagateWhenBoundsChange(this)
-	        	if (!tasks(i).machine.isBound) tasks(i).machine.callPropagateWhenDomainChanges(this)
+        		if (!tasks(i).start.isBound) 
+        			tasks(i).start.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).dur.isBound)
+	        		tasks(i).dur.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).end.isBound) 
+	        		tasks(i).end.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).height.isBound) 
+	        		tasks(i).height.callPropagateWhenBoundsChange(this)
+	        	if (!tasks(i).resource.isBound)
+	        		tasks(i).resource.callPropagateWhenDomainChanges(this)
     		}
         }
         
@@ -179,10 +187,15 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
   
 	override def propagate(): CPOutcome = {
 		
+		/*if (allTasks.filter(_.minHeight < 0).size == 0)
+			if (lb == Int.MinValue && ub != Int.MaxValue)
+				if (edge.propagate() == CPOutcome.Failure) 
+					return CPOutcome.Failure*/
+
 		// Generates events
 		if (!generateEventPointSeries()) 
 			return CPOutcome.Suspend
-			
+		
 		// Performs a sweep on the events
 		if (sweepAlgorithm() == CPOutcome.Failure) 
 			return CPOutcome.Failure
@@ -199,9 +212,10 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// Reset eventPointSeries
 		nEvents = 0
 		
-		for (i <- Tasks) {
+		var i = 0
+		while (i < nTasks) {
 			
-			if (tasks(i).lst < tasks(i).ect && tasks(i).machine.isBoundTo(r)) {
+			if (tasks(i).lst < tasks(i).ect && tasks(i).resource.isBoundTo(r)) {
 				
 				// Check
 				generateCheck(i)
@@ -210,18 +224,20 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				profileEvent |= generateProfileBad(i)		
 			}
 			
-			if (tasks(i).machine.hasValue(r)) {
+			if (tasks(i).resource.hasValue(r)) {
 				
 				// Profile (Good : on entire domain)
 				profileEvent |= generateProfileGood(i)
 				
 				// Pruning (if something is not fixed)
-				if (!tasks(i).start.isBound || !tasks(i).end.isBound || !tasks(i).machine.isBoundTo(r) || !tasks(i).resource.isBound) {
+				if (!tasks(i).start.isBound || !tasks(i).end.isBound || !tasks(i).resource.isBoundTo(r) || !tasks(i).height.isBound) {
 					
 					eventPointSeries(nEvents) = eventList(i).sPruning
 					nEvents += 1
 				}
-			}			
+			}	
+			
+			i += 1
 		}
 		
 		profileEvent
@@ -234,7 +250,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		consSumHeight = 0
 		capaSumHeight = 0
 		nCurrentTasks = 0
-		stackPrune.clear
+		nTasksToPrune = 0
 			
 		for (i <- Tasks) {
 			consContrib(i) = 0
@@ -253,11 +269,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		// First position of the sweep line
 		var delta = eventPointSeries(0).date
 		
-		for (i <- 0 until nEvents) {
+		var i = 0
+		while (i < nEvents) {
 			
 			val event = eventPointSeries(i)
 		
-			if (event.eType != EventType.Pruning) {
+			if (event.eType != EventType.pruning) {
 				
 				// If we have considered all the events at the previous position
 				// of the sweep line
@@ -275,25 +292,28 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 					delta = event.date	
 				}
 				
-				if (event.eType == EventType.Profile) {
+				if (event.eType == EventType.profile) {
 					
-					// Adjusts resource consumption
+					// Adjusts height consumption
 					consSumHeight += event.cons
 					consContrib(event.task) += event.cons
 					
-					// Adjusts resource capacity
+					// Adjusts height capacity
 					capaSumHeight += event.capa
 					capaContrib(event.task) += event.capa
 					
-				} else if (event.eType == EventType.Check) {
+				} else if (event.eType == EventType.check) {
 					
 					// Number of overlapping tasks
 					nCurrentTasks += event.cons
 				} 
 			}
 			else {
-				stackPrune.add(event.task)
+				stackPrune(nTasksToPrune) = event.task
+				nTasksToPrune += 1
 			}
+			
+			i += 1 
 		}
 		
 		// Checks consistency
@@ -310,28 +330,37 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	private def prune(low : Int, up : Int) : CPOutcome = {
 		
-		val it = stackPrune.iterator
+		// Used to adjust stackPrune
+		var nRemainingTasksToPrune = 0
 		
-		while (!it.isEmpty) {
+		var i = 0
+		while (i < nTasksToPrune) {
 			
-			val t = it.next
-			
-			// Pruning on tasks that are mandatory to respect consistency
-			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
-				return CPOutcome.Failure
+			val t = stackPrune(i)
 			
 			// Pruning on tasks that must be discarded to respect consistency
 			if (pruneForbiden(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
-			// Adjusts the resource's consumption of the tasks
+			// Pruning on tasks that are mandatory to respect consistency
+			if (pruneMandatory(t, r, low, up) == CPOutcome.Failure) 
+				return CPOutcome.Failure
+			
+			// Adjusts the height's consumption of the tasks
 			if (pruneConsumption(t, r, low, up) == CPOutcome.Failure) 
 				return CPOutcome.Failure
 			
-			if (tasks(t).lct <= up + 1) {
-				stackPrune.remove(t)
+			// If the task is still in conflict, we keep it
+			if (!(tasks(t).lct <= up + 1)) {
+				stackPrune(nRemainingTasksToPrune) = t
+				nRemainingTasksToPrune += 1
 			}
+			
+			i += 1
 		}	
+		
+		// Adjusting stackPrune
+		nTasksToPrune = nRemainingTasksToPrune
 
 		return CPOutcome.Suspend
 	}
@@ -343,8 +372,8 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		if (!mandatoryCheck(t))
 			return CPOutcome.Suspend
 		
-		// Fix the activity to the machine r
-		if (tasks(t).machine.assign(r) == CPOutcome.Failure) 
+		// Fix the activity to the resource r
+		if (tasks(t).resource.assign(r) == CPOutcome.Failure) 
 			return CPOutcome.Failure
 		
 		// Adjust the EST of the activity
@@ -378,10 +407,10 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 			
 			if (tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 					
-				if (tasks(t).machine.removeValue(r) == CPOutcome.Failure) 
+				if (tasks(t).resource.removeValue(r) == CPOutcome.Failure) 
 					return CPOutcome.Failure
 				
-			} else if (tasks(t).machine.isBoundTo(r)) {
+			} else if (tasks(t).resource.isBoundTo(r)) {
 				
 				if (tasks(t).minDuration > 0) {
 					
@@ -391,8 +420,10 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 				
 				if (!tasks(t).dur.isBound) {
 					
-					if (pruneInterval(low + 1, up + tasks(t).minDuration, tasks(t).end) == CPOutcome.Failure)
-						return CPOutcome.Failure
+					if (tasks(t).minDuration > 0) {
+						if (pruneInterval(low + 1, up + tasks(t).minDuration, tasks(t).end) == CPOutcome.Failure)
+								return CPOutcome.Failure
+					}
 						
 					val maxD = max(max(low - tasks(t).est, tasks(t).lct -up - 1), 0)
 								
@@ -408,12 +439,12 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	
 	private def pruneConsumption(t : Int, r : Int, low : Int, up : Int) : CPOutcome = {
 		
-		if (tasks(t).machine.isBoundTo(r) && tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
+		if (tasks(t).resource.isBoundTo(r) && tasks(t).ect > low && tasks(t).lst <= up && tasks(t).minDuration > 0) {
 			
-			if (tasks(t).resource.updateMin(lb - (consSumHeight - consContrib(t))) == CPOutcome.Failure) 
+			if (tasks(t).height.updateMin(lb - (consSumHeight - consContrib(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure	
 				
-			if (tasks(t).resource.updateMax(ub - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure) 
+			if (tasks(t).height.updateMax(ub - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure) 
 				return CPOutcome.Failure			
 		}
 			
@@ -429,39 +460,38 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		} else if (up >= v.max && low >= v.min) {
 		  v.updateMax(low-1)
 		} else CPOutcome.Suspend
-		
-		
+			
 	    /*
-	    // create holes, not a good idea Renaud ;-)
+	    //create holes, not a good idea Renaud ;-)
 		for (i <- low to up)
 			if (v.removeValue(i) == CPOutcome.Failure)
 				return CPOutcome.Failure
 		*/
+		
 		return CPOutcome.Suspend
-		
 	}
 	
-	
+		
 	/**
 	 * 
 	 */
-	protected object EventType extends Enumeration {
+	protected object EventType {
+		val check   = 0
+		val profile = 1
+		val pruning = 2
 		
-		type EventType = Value
-		
-		val Check   = Value("Check")
-		val Profile = Value("Profile")
-		val Pruning = Value("Pruning")
+		def eventToString(i : Int) = {
+			i match {
+				case 0 => "check"
+				case 1 => "profile"
+				case 2 => "pruning"
+				case _ => "unknown event"
+			}
+		}
 	}
 	
-	
-	import EventType._
-	
-	/**
-	 * 
-	 */
-	protected class Event(e : EventType, t : Int, private var d : Int, private var consomation : Int, private var capacity : Int) extends Enumeration {
-
+	protected class Event(e : Int, t : Int, private var d : Int, private var consomation : Int, private var capacity : Int) {
+		
 		def date  = d
 		def eType = e
 		def cons  = consomation
@@ -472,7 +502,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		def cons_= (x : Int) {consomation = x}
 		def capa_= (x : Int) {capacity = x}
 		
-		override def toString = { "<" + e + ", " + t + ", " + d + ", " + capa + ", " + cons + ">" }
+		override def toString = { "<" + EventType.eventToString(e) + ", " + t + ", " + d + ", " + capa + ", " + cons + ">" }
 	}
 	
 	/**
@@ -480,25 +510,28 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 	 */
 	protected class EventList(t : Int) {
 		
-		val sCheckEv       : Event = new Event(EventType.Check, t, 0, 1, 1)
-		val eCheckEv       : Event = new Event(EventType.Check, t, 0, -1, -1)
-		val sBadProfileEv  : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val eBadProfileEv  : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val sGoodProfileEv : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val eGoodProfileEv : Event = new Event(EventType.Profile, t, 0, 0, 0)
-		val PruningEv      : Event = new Event(EventType.Pruning, t, 0, 0, 0)
+		val sCheckEv       : Event = new Event(EventType.check, t, 0, 1, 1)
+		val eCheckEv       : Event = new Event(EventType.check, t, 0, -1, -1)
+		val sBadProfileEv  : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val eBadProfileEv  : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val sGoodProfileEv : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val eGoodProfileEv : Event = new Event(EventType.profile, t, 0, 0, 0)
+		val PruningEv      : Event = new Event(EventType.pruning, t, 0, 0, 0)
 		
 		def sCheck : Event = {
+			
 			sCheckEv.date = tasks(sCheckEv.task).lst
 			return sCheckEv
 		}
 		
 		def eCheck : Event = {
+			
 			eCheckEv.date = tasks(eCheckEv.task).ect
 			return eCheckEv
 		}
 		
 		def sBadProfile(consInc : Int, capaInc : Int)   : Event = {
+			
 			sBadProfileEv.date = tasks(sBadProfileEv.task).lst
 			sBadProfileEv.capa = capaInc
 			sBadProfileEv.cons = consInc
@@ -506,6 +539,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def eBadProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			eBadProfileEv.date =  tasks(eBadProfileEv.task).ect
 			eBadProfileEv.capa = -capaInc
 			eBadProfileEv.cons = -consInc
@@ -513,6 +547,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def sGoodProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			sGoodProfileEv.date = tasks(sGoodProfileEv.task).est
 			sGoodProfileEv.capa = capaInc
 			sGoodProfileEv.cons = consInc
@@ -520,6 +555,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def eGoodProfile(consInc : Int, capaInc : Int) : Event = {
+			
 			eGoodProfileEv.date =  tasks(eGoodProfileEv.task).lct
 			eGoodProfileEv.capa = -capaInc
 			eGoodProfileEv.cons = -consInc
@@ -527,6 +563,7 @@ abstract class SweepCumulativeA (cp: Store, allTasks : Array[CumulativeActivity]
 		}
 		
 		def sPruning : Event = {
+			
 			PruningEv.date = tasks(PruningEv.task).est
 			return PruningEv
 		}

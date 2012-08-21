@@ -58,7 +58,7 @@ object Xkcd {
 
     cp.solveAll subjectTo {
 
-      cp.add(sum(Array.tabulate(num_prices)(i=> x(i)*price(i))) == total)
+      cp.add(weightedSum(price, x) == total)
 
     } exploration {
        

@@ -350,11 +350,16 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
      * @param y
      * @return a variable in the same store representing: x + y
      */
-	def plus(y: CPVarInt) = {
-		val	c = new CPVarIntImpl(s,min + y.min, max + y.max);
-		val ok = s.post(new oscar.cp.constraints.Sum(Array(this,y),c));
-        assert (ok != CPOutcome.Failure);
-		c
+	def plus(y: CPVarInt): CPVarInt = {
+	    if (y.isBound) { 
+	      this.plus(y.value)
+	    }
+	    else {
+	     val	c = new CPVarIntImpl(s,min + y.min, max + y.max);
+		 val ok = s.post(new oscar.cp.constraints.Sum(Array(this,y),c));
+         assert (ok != CPOutcome.Failure);
+		 c
+	    }
 	}
 
     /**
