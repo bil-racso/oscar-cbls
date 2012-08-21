@@ -30,26 +30,28 @@ import oscar.cp.core.CPVarInt
  *  @authors: Pierre Schaus  pschaus@gmail.com
  *  @authors: Renaud Hartert ren.hartert@gmail.com
  */
-object RCPSP {
+object RCPSP extends App {
 
-	def main(args : Array[String]) {
+	// (duration, consumption)
+	val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
+	val capa = 4
 
-		// (duration, consumption)
-		val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
-		val capa = 4
+	val horizon = instance.map(_._1).sum
+	val cp = CPScheduler(horizon)
 
-		val horizon = instance.map(_._1).sum
-		val cp = CPScheduler(horizon)
+	val resource   = MaxResource(cp, capa)
+	val activities = instance.map(a => Activity(cp, a._1))
 
-		val resource = MaxResource(cp, capa)
+	val makespan = cp.makespan
+	
+	cp.minimize(makespan) subjectTo {
 
-		instance.map(a => Activity(cp, a._1) needs a._2 ofResource resource)
+		for (a <- 0 until instance.size)
+			activities(a) needs instance(a)._2 ofResource resource
 
-		val makespan = cp.makespan
-		cp.minimize(makespan) subjectTo {} exploration {
-			
-			cp.setTimes(cp.activities)
-		}
-		cp.printStats()
+	} exploration {
+
+		cp.setTimes(cp.activities)
 	}
+	cp.printStats()
 }

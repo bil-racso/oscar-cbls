@@ -46,12 +46,32 @@ class ReversibleSearchNode {
 	var sc: SearchController = new DFSSearchController(this)
     case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
     var lns: Option[LNS] = None
+    protected var lastLNSCompleted : Boolean = false
     var time : Long = 0
     var solveOne = false
     
-    def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
-	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+    def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
+		
+	  lns = Option(new LNS(nbRestarts,nbFailures,() => restart))
 	}
+	
+	/**
+	 * 
+	 * @return True if the last LNS restart has explored all the possible solutions
+	 */
+	def islastLNSCompleted = lastLNSCompleted
+	
+	/**
+	 * 
+	 * @return The number of failures allowed during a LNS restart
+	 */
+	def lnsFailuresLimit = sc.failLimit
+	
+	/**
+	 * 
+	 * @param The number of failures allowed during a LNS restart (not modified if negative integer)
+	 */
+	def lnsFailuresLimit_= (x : Int) { if (x >= 0) sc.failLimit = x }
 	
 	/**
 	 * 
@@ -174,10 +194,10 @@ class ReversibleSearchNode {
 	  
 	  val relax = lns match {
 		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => {
+		   case Some(LNS(nbRestart,nbFailures,restart)) => {
 		     maxRestart = nbRestart
 		     limit = nbFailures
-		     restar
+		     restart
 		   }
 	  }  
 
@@ -201,7 +221,9 @@ class ReversibleSearchNode {
           def restart(relaxation: Boolean = false) {
              popAll()
              pushState()
-             if (relaxation) relax()
+             if (relaxation) {
+            	 relax()
+             }
                if (!isFailed()) {
                  sc.reset()
                  nbRestart += 1 
@@ -216,13 +238,19 @@ class ReversibleSearchNode {
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
              restart(true)
-             if (sc.limitReached) print("!")
-             else print("R")
+             if (sc.limitReached) {
+            	 println("failLimit " + sc.failLimit)
+            	 lastLNSCompleted = false
+            	 print("!")
+             } else {
+            	 println("failLimit " + sc.failLimit)
+            	 lastLNSCompleted = true
+            	 print("R")
+             }
           }
           k1() // exit the exploration block       
         } 
       }
 	  time = System.currentTimeMillis() - t1
     }	
-
 }

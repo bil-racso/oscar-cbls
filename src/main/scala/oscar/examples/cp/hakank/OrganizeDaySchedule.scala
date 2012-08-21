@@ -90,11 +90,11 @@ object OrganizeDaySchedule {
 			bank precedes shop
 			mail precedes work
 
-                        cp.add(work.start >= 11 - begin)
+            cp.add(work.start >= 11 - begin)
 
 		} exploration {
 
-				cp.setTimes(cp.activities)
+			cp.setTimes(cp.activities)
 			//cp.binaryFirstFail(cp.activities)
 
 			println("makespan : " + makespan)
@@ -105,7 +105,6 @@ object OrganizeDaySchedule {
 			println()
 
 			numSols += 1
-
 		}
 
 		println("\nIt was " + numSols + " solutions.")

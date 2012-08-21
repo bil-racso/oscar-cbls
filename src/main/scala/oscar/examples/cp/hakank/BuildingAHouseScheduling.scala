@@ -115,9 +115,9 @@ object BuildingAHouseScheduling {
 
 		} exploration {
 
-			// cp.setTimes(cp.activities)
+			cp.setTimes(cp.activities)
 			// cp.binaryFirstFail(cp.activities)
-			cp.binaryMaxDegree(cp.activities.map(_.start))
+			// cp.binaryMaxDegree(cp.activities.map(_.start))
 
 			println("makespan:" + makespan)
 			println(activities.map(a => "%-10s".format(a.name) + ": " + "%3d".format(a.start.value) + " --" + "%3d".format(a.dur.value) + "h --" + "%3d".format(a.end.value)).mkString("\n"))
