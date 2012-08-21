@@ -112,17 +112,17 @@ object CumulativeJobShopLNS extends App {
 	cp.lns(2000, 2000) {
 		
 		// Adaptative LNS
-		if (!cp.islastLNSCompleted) {
-			cp.lnsFailuresLimit = (cp.lnsFailuresLimit * 110)/100
+		if (!cp.isLastLNSRestartCompleted) {
+			cp.failLimit = (cp.failLimit * 110)/100
 		} else {
-			cp.lnsFailuresLimit = max(10, (cp.lnsFailuresLimit * 90)/110)
+			cp.failLimit = max(10, (cp.failLimit * 90)/110)
 		}
 		
-		println("LNS restart with nbFailure: " + cp.lnsFailuresLimit)
+		println("LNS restart with nbFailure: " + cp.failLimit)
 
 		val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 
-		// Selected are relaxed (30%)
+		// Selected are relaxed (20%)
 		for (i <- 0 until bestSol.size)
 			if (nextFloat < 0.1)
 				selected(i) = true
@@ -136,7 +136,9 @@ object CumulativeJobShopLNS extends App {
 	cp.minimize(makespan) subjectTo {
 
 		for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
-			activities(i) ends 5 beforeStartOf activities(i + 1)
+			activities(i) endsBeforeStartOf activities(i + 1)
+		
+		cp.add(makespan >= 666)
 
 	} exploration {
 
