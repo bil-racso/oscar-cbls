@@ -110,7 +110,7 @@ object CumulativeJobShopLNS extends App {
 	var precedences : Array[(Int, Int)] = null
 
 	cp.lns(2000, 2000) {
-		
+		println("-------------restart--------------"+cp.nFail())
 		// Adaptative LNS
 		if (!cp.isLastLNSRestartCompleted) {
 			cp.failLimit = (cp.failLimit * 110)/100
@@ -124,7 +124,7 @@ object CumulativeJobShopLNS extends App {
 
 		// Selected are relaxed (20%)
 		for (i <- 0 until bestSol.size)
-			if (nextFloat < 0.1)
+			if (nextFloat < 0.2)
 				selected(i) = true
 
 		val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))

@@ -223,8 +223,9 @@ class ReversibleSearchNode {
              popAll()
              pushState()
              if (relaxation) {
-               relax()
                sc.reset()
+               relax()
+               
              }
              if (!isFailed()) {
                  sc.reset()
