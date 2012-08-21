@@ -81,9 +81,17 @@ class ReversibleSearchNode {
 	def isFailed(): Boolean = failed.value
 	
 
+	/**
+	 * Set the node in a failed state
+	 */
 	def fail() {
 		failed.setValue(true)
 	}
+	
+	/**
+	 * @return the number of fail
+	 */
+	def nFail() = sc.nFail()
 	
 	/**
 	 * Exit the search in progress and/or the LNS if any
@@ -203,9 +211,9 @@ class ReversibleSearchNode {
                 block
                 if (!isFailed()) {
                 	if (solveOne) {
-                	  val nbFail = sc.nbFail
+                	  //val nbFail = sc.nbFail
                 	  sc.reset()
-                	  sc.nbFail = nbFail
+                	  //sc.nbFail = nbFail
                 	  k1() // exit the exploration block
                 	}
                 }
@@ -225,12 +233,11 @@ class ReversibleSearchNode {
                  if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
              }
           }
-          //sc.failLimit_=(failLimit)
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
             //sc.failLimit_=(failLimit)
             restart(true)
-             if (sc.limitReached) {
+             if (sc.isLimitReached) {
                lastLNSRestartCompleted = false
                print("!") 
              }

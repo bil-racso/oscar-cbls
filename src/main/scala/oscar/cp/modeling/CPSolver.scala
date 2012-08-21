@@ -157,7 +157,7 @@ class CPSolver() extends Store() {
 
 	def printStats() {
 		println("time(ms)", time)
-		println("#bkts", sc.nbFail)
+		println("#bkts", sc.nFail)
 		println("time in fix point(ms)", getTimeInFixPoint())
 		println("time in trail restore(ms)", getTrail().getTimeInRestore())
 		println("max trail size", getTrail().getMaxSize())

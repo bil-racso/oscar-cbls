@@ -66,8 +66,9 @@ object QuadraticAssignmentLNS {
     
     
     cp.lns(20,50) {
-      println("----------restart---------------")
+      println("----------restart---------------nFail:"+cp.nFail())
       println(cp.isLastLNSRestartCompleted)
+      
       if (cp.isLastLNSRestartCompleted) {
         println("set limit to "+(cp.failLimit/2))
         cp.failLimit /= 2
