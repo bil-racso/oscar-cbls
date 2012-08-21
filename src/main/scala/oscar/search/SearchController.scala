@@ -41,9 +41,10 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   
   
   
-  var nbFail = 0
+  protected var nbFail = 0
+  def nFail() = nbFail
   
-  private var nFailLimit = Int.MaxValue
+  protected var nFailLimit = Int.MaxValue
   
   /**
    * set the failure limit for this controller
@@ -52,7 +53,8 @@ abstract class SearchController(val node: ReversibleSearchNode) {
     nFailLimit = limit
   }
   
-  var limitReached = false
+  protected var limitReached = false
+  def isLimitReached = limitReached
   
   var exit = false
   
