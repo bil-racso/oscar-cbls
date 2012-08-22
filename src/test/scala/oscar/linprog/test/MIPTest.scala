@@ -42,7 +42,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
     			mip.add(6 * x + 8 * y <= 72)
     		}
     		
-    		mip.getStatus() should equal (LPStatus.OPTIMAL)
+    		mip.status should equal (LPStatus.OPTIMAL)
     		x.getValue should be (8.0 plusOrMinus 0.00001)
     		y.value should equal (Some(3))
 			mip.release()

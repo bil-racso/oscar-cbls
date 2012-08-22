@@ -66,8 +66,9 @@ class QueensTest extends FunSuite with ShouldMatchers {
 
 			}
 			
-			mip.getStatus() should equal (LPStatus.OPTIMAL)
+			mip.status should equal (LPStatus.OPTIMAL)
     		mip.getObjectiveValue() should be (8.0 plusOrMinus 0.00001)
+			mip.objectiveValue.get should be (8.0 plusOrMinus 0.00001)
 
 			println("objective: "+mip.getObjectiveValue())
 		

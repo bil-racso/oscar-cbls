@@ -79,7 +79,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		
 		  
 		  println("master obj:" + lp.getObjectiveValue)
-		  mip.getStatus() should equal (LPStatus.OPTIMAL)
+		  mip.status should equal (LPStatus.OPTIMAL)
 
 	  } while(mip.getObjectiveValue < 0)
 
@@ -92,7 +92,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  
 	  
 	  
-	  lp.getStatus() should equal (LPStatus.OPTIMAL)
+	  lp.status should equal (LPStatus.OPTIMAL)
 	  C.map(_.number).sum should equal(45) // // should have 45 boards at the end
 	  
 	}
