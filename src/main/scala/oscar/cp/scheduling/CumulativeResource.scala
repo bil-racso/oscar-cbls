@@ -14,8 +14,6 @@ class CumulativeResource(scheduler : CPScheduler, maxCapa : Int = Int.MaxValue, 
 	def activities = activitiesSet.values.toArray
 	def capacity   = maxCapa
 	
-	def criticality = activities.map(_.minDuration).sum
-	
 	def heightOf(act : Activity) : CPVarInt = activitiesSet(act).height
 	
 	override def setup() {
@@ -33,14 +31,6 @@ class CumulativeResource(scheduler : CPScheduler, maxCapa : Int = Int.MaxValue, 
 	}
 	
 	// Adding an activity
-	def addActivity(activity : Activity, height : CPVarInt) { 
-		addActivity(activity, CumulativeActivity(activity, id, height)) 
-	}
-	
-	def addProdConsActivity(activity : Activity, height : CPVarInt, atEnd : Boolean) { 
-		addActivity(activity, ProdConsActivity.apply(activity, id, height, atEnd)) 
-	}
-	
 	def addActivity(act : Activity, cum : CumulativeActivity) {
 		if (activitiesSet.contains(act)) 
 			throw new InvalidParameterException("The activity is already scheduled on this resource.")

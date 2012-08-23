@@ -104,7 +104,7 @@ object CumulativeJobShop extends App {
 			
 	} exploration {
 
-		cp.setTimes(activities)
+		cp.binaryFirstFail(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)

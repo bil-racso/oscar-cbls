@@ -58,7 +58,13 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 
 	override def toString = name + "(s: " + start + ", d: " + dur + ", e: " + end + ")"
 
-	def adjustStart(v : Int) = start.updateMin(v)
+	def adjustStart(v : Int) : CPOutcome = {
+		
+		if (start.updateMin(v) == CPOutcome.Failure)
+			return CPOutcome.Failure
+			
+		return update()
+	}
 
 	// Precedences 
 	// -----------------------------------------------------------
@@ -83,7 +89,9 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 	// -----------------------------------------------------------
 
 	def startsEarlierAt(t : Int) = { scheduler.add(startVar >= t) }
+	def startsLaterAt(t : Int)   = { scheduler.add(startVar <= t) }
 	def startsAt(t : Int)        = { scheduler.add(startVar == t) }
+	def endsEarlierAt(t : Int)   = { scheduler.add(endVar >= t) }
 	def endsLaterAt(t : Int)     = { scheduler.add(endVar <= t) }
 	def endsAt(t : Int) 		 = { scheduler.add(endVar == t) }
 
@@ -197,8 +205,14 @@ class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.sta
 	// Latest completion time assuming the smallest duration
 	override def lct = -act.est
 
-	override def adjustStart(v : Int) = end.updateMax(-v)
-
+	override def adjustStart(v : Int) : CPOutcome = {
+		
+		if (end.updateMax(-v) == CPOutcome.Failure)
+			return CPOutcome.Failure
+			
+		return update()
+	}
+	
 	override def toString() = "mirror of activity:" + act;
 
 	// Precedences

@@ -598,7 +598,7 @@ trait Constraints {
 	/**
 	 * Cumulative
 	 */
-	def cumulative(activities : Array[CumulativeActivity], machine : Int, min : Int = Int.MinValue, max : Int = Int.MaxValue) : SweepCumulativeA = {
+	def cumulative(activities : Array[CumulativeActivity], machine : Int, min : Int = Int.MinValue, max : Int = Int.MaxValue) : Constraint = {
 
 		val cp = activities(0).store
 
