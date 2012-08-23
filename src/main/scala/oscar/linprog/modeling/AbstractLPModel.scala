@@ -274,9 +274,9 @@ abstract class AbstractLPSolver {
     /** Should solveModel be called at end of subjectTo and suchThat blocks?*/
     protected var autoSolve = true 
     
-    val solver: AbstractLP
+    protected val solver: AbstractLP
     
-    var status = LPStatus.NOT_SOLVED
+    protected var statuss = LPStatus.NOT_SOLVED
  
     
     def register(vari: AbstractLPVar): Int = {
@@ -389,12 +389,15 @@ abstract class AbstractLPSolver {
     def solveModel() {
       solver.endModelBuilding()
       println("Solving ...")
-      status = solver.solveModel()
-      if ((status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)) {
+      statuss = solver.solveModel()
+      if ((statuss == LPStatus.OPTIMAL) || (statuss == LPStatus.SUBOPTIMAL)) {
         (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
       }
     }
 	
+    /**
+     * @return The objective value, 0 if no objective
+     */
 	def getObjectiveValue() : Double = {
 			objective.value match {
 				case Some(v) => v
@@ -403,9 +406,14 @@ abstract class AbstractLPSolver {
 				}	
 			}
 	}
+
+    /**
+     * @return The objective value, None if no objective (problem not yet solved or infeasible)
+     */	
+	def objectiveValue() : Option[Double] = objective.value
 	
 
-	def getStatus() : LPStatus.Value = status
+	def status() : LPStatus.Value = statuss
 	
 	def release() = solver.release()
 	

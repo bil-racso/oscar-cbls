@@ -222,7 +222,11 @@ class ReversibleSearchNode {
           def restart(relaxation: Boolean = false) {
              popAll()
              pushState()
-             if (relaxation) relax()
+             if (relaxation) {
+               sc.reset()
+               relax()
+               
+             }
              if (!isFailed()) {
                  sc.reset()
                  nbRestart += 1 
@@ -235,8 +239,7 @@ class ReversibleSearchNode {
           }
           restart(false) // first restart, find a feasible solution so no limit
           for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
-            //sc.failLimit_=(failLimit)
-            restart(true)
+             restart(true)
              if (sc.isLimitReached) {
                lastLNSRestartCompleted = false
                print("!") 
