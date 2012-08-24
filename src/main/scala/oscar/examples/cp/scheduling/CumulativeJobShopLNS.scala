@@ -1,5 +1,4 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
  * OscaR is free software: you can redistribute it and/or modify
@@ -110,21 +109,25 @@ object CumulativeJobShopLNS extends App {
 	var precedences : Array[(Int, Int)] = null
 
 	cp.lns(2000, 2000) {
-		println("-------------restart--------------"+cp.nFail())
+		
+		println("\n#fail: " + cp.nFail)
+		val temp = cp.failLimit
+		
 		// Adaptative LNS
 		if (!cp.isLastLNSRestartCompleted) {
 			cp.failLimit = (cp.failLimit * 110)/100
 		} else {
-			cp.failLimit = max(10, (cp.failLimit * 90)/110)
+			cp.failLimit = max(10, (cp.failLimit * 90)/100)
 		}
 		
-		println("LNS restart with nbFailure: " + cp.failLimit)
+		println("old: " + temp)
+		println("new: " + cp.failLimit)
 
 		val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 
 		// Selected are relaxed (20%)
 		for (i <- 0 until bestSol.size)
-			if (nextFloat < 0.2)
+			if (nextFloat < 0.1)
 				selected(i) = true
 
 		val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))

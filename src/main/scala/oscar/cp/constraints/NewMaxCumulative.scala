@@ -105,12 +105,14 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 				// Those events represent the compulsory part
 				hEvents enqueue eventList(i).getSCP(tasks)
-				hEvents enqueue eventList(i).getECPD(tasks)}
+				hEvents enqueue eventList(i).getECPD(tasks)
+			}
 
 			if (tasks(i).lst >= tasks(i).ect) {
 				
 				// Reevaluation of the compulsory part
-				hEvents enqueue eventList(i).getCCP(tasks)}
+				hEvents enqueue eventList(i).getCCP(tasks)
+			}
 			
 			if (tasks(i).est != tasks(i).lst) {
 				
@@ -245,7 +247,6 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			}
 		}
 		
-			
 		true
 	}
 	
@@ -322,8 +323,6 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			}
 		}
 	}
-	
-	import EventType._
 	
 	class Event(e : Int, t : Int, private var d : Int, private var inc : Int) extends Enumeration {
 
