@@ -319,6 +319,14 @@ trait Constraints {
 		vars(0).store.post(new Or(vars, z))
 		return (z)
 	}
+	
+	/**
+	 * Or (logical) Constraint
+	 * @return a variable that will be true if at least one variable of f(i) is true for i in indexes
+	 */	
+    def or[A](indexes:Iterable[A])(f: A => CPVarBool) : CPVarBool = {
+        or((for(i<-indexes) yield f(i)).toArray)
+    }
 
 	def table(x : Array[CPVarInt], tuples : Array[Array[Int]]) : Constraint = {
 		//new TableSTR2(x,tuples)
