@@ -60,7 +60,7 @@ class Model {
 	  //}
 	}
 	@elidable(INFO) def print(s: String){
-	  println(clock() + ": " + s)
+	  //println(clock() + ": " + s)
 	}
 	def time(o: Any): Double = {
 	  clock()
