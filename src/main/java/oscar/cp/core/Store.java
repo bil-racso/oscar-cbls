@@ -468,7 +468,7 @@ public class Store extends ReversibleSearchNode {
      */
     public void add(CPVarBool b) {
         if (post(new Eq(b, 1)) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when setting boolvar " + b + " to true");
+            throw  new NoSolutionException("the store failed when setting boolvar to true");
         }
     }
 
