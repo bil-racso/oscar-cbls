@@ -63,8 +63,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	def valueBefore(value: Int): Int
 	
 	/**
-	 * Return a random value in the domain of the variable (uniform distribution)
-	 * @return
+	 * @return A random value in the domain of the variable (uniform distribution)
 	 */
 	def randomValue: Int = {
 		val ind = s.getRandom().nextInt(size);
@@ -77,6 +76,15 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 		}
 		min
 	}	
+    
+    /**
+     * @return The median value of the domain of the variable
+	 */
+    def median : Int = {
+    	
+    	val vals = this.toArray
+    	return vals(vals.size/2)
+    }
 	
 	def foreach[U](f: Int => U) = {
 	  for (v <- min to max; if (hasValue(v))) {

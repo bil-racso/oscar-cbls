@@ -60,10 +60,13 @@ class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarI
 
 	def adjustStart(v : Int) : CPOutcome = {
 		
-		if (start.updateMin(v) == CPOutcome.Failure)
+		if (startVar.updateMin(v) == CPOutcome.Failure)
 			return CPOutcome.Failure
 			
-		return update()
+		if (endVar.updateMin(v + durVar.min) == CPOutcome.Failure)
+			return CPOutcome.Failure
+		
+		return CPOutcome.Suspend
 	}
 
 	// Precedences 
@@ -210,7 +213,10 @@ class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.sta
 		if (end.updateMax(-v) == CPOutcome.Failure)
 			return CPOutcome.Failure
 			
-		return update()
+		if (start.updateMax(-v + dur.min) == CPOutcome.Failure)
+			return CPOutcome.Failure
+			
+		return CPOutcome.Suspend
 	}
 	
 	override def toString() = "mirror of activity:" + act;
