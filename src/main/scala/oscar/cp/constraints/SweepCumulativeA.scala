@@ -27,6 +27,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
+import oscar.cp.constraints.QuadraticCumulativeEdgeFinding
 
 /** This abstract class contains the main parts of the cumulative constraint described 
  *  in [1]. 
@@ -53,7 +54,7 @@ import oscar.algo.SortUtils.stableSort
  *  Note: good events are defined over the entire execution's domain of the task.
  *
  *  @author Renaud Hartert ren.hartert@gmail.com
- *  @version 22/08/2012 
+ *  @version 28/07/2012 
  */
 abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
@@ -88,6 +89,8 @@ abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity],
 
 	// Contains all the possible events of each task (used for speed-up)
 	protected val eventList = Array.tabulate(nTasks){e => new EventList(e)}
+	
+	protected val edge = new QuadraticCumulativeEdgeFinding(cp, allTasks, ub, r)
 	
 	/** Checks the necessary conditions to add the check events of the task `t` 
 	 *  in the array `eventPointSeries` at the position `nEvents`. 
@@ -183,6 +186,11 @@ abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity],
 	
   
 	override def propagate(): CPOutcome = {
+		
+		if (allTasks.filter(_.minHeight < 0).size == 0)
+			if (lb == Int.MinValue && ub != Int.MaxValue)
+				if (edge.propagate() == CPOutcome.Failure) 
+					return CPOutcome.Failure
 
 		// Generates events
 		if (!generateEventPointSeries()) 

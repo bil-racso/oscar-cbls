@@ -47,7 +47,7 @@ public class Or extends Constraint {
 		super(x[0].s());
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s,0);
+		nbBound = new ReversibleInt(s,0); // number of values assigned to false
 		ytrue = new ReversibleBool(s);
 		ytrue.setValue(false);
 	}
@@ -114,7 +114,7 @@ public class Or extends Constraint {
 			}
 			return CPOutcome.Success;
 		} else {
-			nbBound.incr();
+			nbBound.incr();			
 			if (nbBound.getValue() == x.length) {
 				if (y.assign(0) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -128,7 +128,7 @@ public class Or extends Constraint {
 						return CPOutcome.Success;
 					}
 				}
-				return CPOutcome.Success;
+				return CPOutcome.Suspend;
 			}
 		}
 		return CPOutcome.Suspend;

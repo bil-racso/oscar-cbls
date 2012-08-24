@@ -59,7 +59,7 @@ public class EqReif extends Constraint {
 			b.callValBindWhenBind(this);
 			//x.addAC5Bounds(this);
 			x.callValRemoveWhenValueIsRemoved(this);
-			return CPOutcome.Suspend;
+			return updateBounds(x);
 		}
 	}
 	
