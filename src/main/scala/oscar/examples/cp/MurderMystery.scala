@@ -44,8 +44,13 @@ object MurderMystery extends App {
 
     val cp = CPSolver()
     
+    // data
     val Array(son,daughter,father,mother) = (0 to 3).toArray
     val name = Array("son","daughter","father","mother")
+    val sex = Array(0,1,0,1) // 0 = male, 1 = female
+    
+    
+    // variables
     val personWithAge = Array.fill(4)(CPVarInt(cp, 0 to 3)) // personWithAge(i) is younger than personWithAge(i+1)
     val age = Array.fill(4)(CPVarInt(cp, 0 to 3))  // age(i) is the age of person i
     val Array(murderer,witness,helper,victim) = Array.fill(4)(CPVarInt(cp,0 to 3))
@@ -57,17 +62,15 @@ object MurderMystery extends App {
 
       cp.add(alldifferent(Array(murderer,witness,helper,victim)),Strong)
       cp.add(alldifferent(age),Strong)
-      
-      val notSameSex = Set((father,daughter),(daughter,father),(mother,son),(son,mother),(son,daughter),(daughter,son),(father,mother),(mother,father))
-      
+            
       // 1. The witness and the one who helped the murderer were not of the same sex.
-      cp.add(table(witness,helper,notSameSex))
+      cp.add(sex(witness) != sex(helper))
       
       // 2. The oldest person and the witness were not of the same sex.
-      cp.add(table(oldest,witness,notSameSex))
+      cp.add(sex(oldest) != sex(witness))
       
       // 3. The youngest person and the victim were not of the same sex.
-      cp.add(table(youngest,victim,notSameSex))
+      cp.add(sex(youngest) != sex(victim))
       
       // 4. The one who helped the murderer was older than the victim.
       for (i <- 0 to 3) {
