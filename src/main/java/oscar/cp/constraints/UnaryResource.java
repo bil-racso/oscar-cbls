@@ -26,7 +26,6 @@ import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.Store;
 import oscar.cp.scheduling.Activity;
-import oscar.reversible.ReversibleBool;
 import oscar.cp.scheduling.MirrorActivity;
 
 
@@ -205,6 +204,7 @@ public class UnaryResource extends Constraint {
 				} while (!failure && detectablePrecedences());
 			} while (!failure && notFirstNotLast() && !failure);
 		} while (!failure && edgeFinder());
+		
 		if (failure) {
 			return CPOutcome.Failure;
 		} else {
@@ -230,30 +230,51 @@ public class UnaryResource extends Constraint {
 	private boolean overloadChecking() {
 		// Init
 		updateEst(); // update the activity wrappers such that they now their position according to a non decreasing est sorting
-
-		// One direction
-		Arrays.sort(lct, lctComp); // sort activity in non decreasing latest completion time
-		thetaTree.reset();
+		
+		// left to right
+		Arrays.sort(lct, lctComp);
+		lamdaThetaTree.reset();
 		for (int i = 0; i < nbAct; i++) {
 			ActivityWrapper aw = lct[i];
-			thetaTree.insert(aw.getActivity(), aw.estPos());
-			if (thetaTree.ect() > aw.getActivity().lct()) {
-				return false;
-				
+			if (!aw.isForbidden()) { // skip forbidden activities
+				lamdaThetaTree.insert(aw.getActivity(), aw.estPos());
+				if (aw.isOptional()) {
+					lamdaThetaTree.grey(aw.estPos());					
+				} else if (aw.isMandatory()) {
+					if (lamdaThetaTree.ect() > aw.getActivity().lct()) {
+						return false;
+					}
+				}
+				while (lamdaThetaTree.getECT_OPT() > aw.getActivity().lct()) {
+					int o = lamdaThetaTree.getResponsible_ECT();
+					int act_o = est[o].getIndex();
+					CPOutcome ok = wrappers[act_o].setForbidden();
+					assert(ok != CPOutcome.Failure);
+					lamdaThetaTree.remove(o);
+				}
 			}
 		}
-
-		// Other direction
-		Arrays.sort(mlct, lctComp);
+		// right to left
+		Arrays.sort(mlct, lctComp);		
+		lamdaThetaTree.reset();
 		for (int i = 0; i < nbAct; i++) {
-		    Activity act = mlct[i].getActivity();
-		}
-		thetaTree.reset();
-		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper aw = mlct[i];
-			thetaTree.insert(aw.getActivity(), aw.estPos());
-			if (thetaTree.ect() > aw.getActivity().lct()) {
-				return false;
+			if (!aw.isForbidden()) { // skip forbidden activities
+				lamdaThetaTree.insert(aw.getActivity(), aw.estPos());
+				if (aw.isOptional()) {
+					lamdaThetaTree.grey(aw.estPos());
+				} else if (aw.isMandatory()) {
+					if (lamdaThetaTree.ect() > aw.getActivity().lct()) {
+						return false;
+					}
+				}
+				while (lamdaThetaTree.getECT_OPT() > aw.getActivity().lct()) {
+					int o = lamdaThetaTree.getResponsible_ECT();
+					int act_o = mest[o].getIndex();
+					CPOutcome ok = mwrappers[act_o].setForbidden();
+					assert(ok != CPOutcome.Failure);
+					lamdaThetaTree.remove(o);
+				}			
 			}
 		}
 		return true;
@@ -264,35 +285,43 @@ public class UnaryResource extends Constraint {
 		// Init
 		updateEst();
 		// Propagate in one direction
-		Arrays.sort(ect, ectComp);
-		Arrays.sort(lst, lstComp);
+		Arrays.sort(ect, ectComp); // order activities in non decreasing order of est_i + p_i (i.e. earliest completion time)
+		Arrays.sort(lst, lstComp); // order activities in non decreasing lct_j - p_j (i.e. latest starting time)
 		thetaTree.reset();
 		int j = 0;
-		for (int i = 0; i < nbAct; i++) {
+		for (int i = 0; i < nbAct; i++) { // for i in T in non decreasing order of est_i + p_i
 			ActivityWrapper awi = ect[i];
-			if (j < nbAct) {
-				ActivityWrapper awj = lst[j];
-				while (awi.getActivity().ect() > awj.getActivity().lst()) {
-					thetaTree.insert(awj.getActivity(), awj.estPos());
+			if (awi.isMandatory()) {
+				while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
 					j++;
-					if (j == nbAct)
-						break;
-					awj = lst[j];
 				}
-			}
-			int esti = awi.getActivity().est();
-			boolean inserted = thetaTree.isInserted(awi.estPos());
-			if (inserted) {
-				thetaTree.remove(awi.estPos());
-			}
-			int oesti = thetaTree.ect();
-			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.estPos());
-			}
-			if (oesti > esti) {
-				new_est[awi.getIndex()] = oesti;
-			} else {
-				new_est[awi.getIndex()] = Integer.MIN_VALUE;
+				if (j < nbAct) {
+					ActivityWrapper awj = lst[j];
+					while (awi.getActivity().ect() > awj.getActivity().lst()) {
+						thetaTree.insert(awj.getActivity(), awj.estPos());
+						j++;
+						while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+							j++;
+						}
+						if (j == nbAct)
+							break;
+						awj = lst[j];
+					}
+				}
+				int esti = awi.getActivity().est();
+				boolean inserted = thetaTree.isInserted(awi.estPos());
+				if (inserted) {
+					thetaTree.remove(awi.estPos());
+				}
+				int oesti = thetaTree.ect();
+				if (inserted) {
+					thetaTree.insert(awi.getActivity(), awi.estPos());
+				}
+				if (oesti > esti) {
+					new_est[awi.getIndex()] = oesti;
+				} else {
+					new_est[awi.getIndex()] = Integer.MIN_VALUE;
+				}
 			}
 		}
 
@@ -302,45 +331,55 @@ public class UnaryResource extends Constraint {
 		j = 0;
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper awi = mect[i];
-			if (j < nbAct) {
-				ActivityWrapper awj = mlst[j];
-				while (awi.getActivity().ect() > awj.getActivity().lst()) {
-					thetaTree.insert(awj.getActivity(), awj.estPos());
-					j++;
-					if (j == nbAct)
-						break;
-					awj = mlst[j];
+			if (awi.isMandatory()) {
+				if (j < nbAct) {
+					while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+						j++;
+					}
+					ActivityWrapper awj = mlst[j];
+					while (awi.getActivity().ect() > awj.getActivity().lst()) {
+						thetaTree.insert(awj.getActivity(), awj.estPos());
+						j++;
+						while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+							j++;
+						}						
+						if (j == nbAct)
+							break;
+						awj = mlst[j];
+					}
 				}
-			}
-			int lcti = awi.getActivity().est();
-			boolean inserted = thetaTree.isInserted(awi.estPos());
-			if (inserted) {
-				thetaTree.remove(awi.estPos());
-			}
-			int olcti = thetaTree.ect();
-			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.estPos());
-			}
-			if (olcti > lcti) {
-				new_lct[awi.getIndex()] = -olcti;
-			} else {
-				new_lct[awi.getIndex()] = Integer.MAX_VALUE;
+				int lcti = awi.getActivity().est();
+				boolean inserted = thetaTree.isInserted(awi.estPos());
+				if (inserted) {
+					thetaTree.remove(awi.estPos());
+				}
+				int olcti = thetaTree.ect();
+				if (inserted) {
+					thetaTree.insert(awi.getActivity(), awi.estPos());
+				}
+				if (olcti > lcti) {
+					new_lct[awi.getIndex()] = -olcti;
+				} else {
+					new_lct[awi.getIndex()] = Integer.MAX_VALUE;
+				}
 			}
 		}
 
 		// Apply modifications
 		boolean modified = false;
 		for (int i = 0; i < nbAct; i++) {
-			if (new_est[i] != Integer.MIN_VALUE) {
-				modified = true;
-				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
-					failure = true;
+			if (required[i].isTrue()) {
+				if (new_est[i] != Integer.MIN_VALUE) {
+					modified = true;
+					if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
+						failure = true;
+					}
 				}
-			}
-			if (new_lct[i] != Integer.MAX_VALUE) {
-				modified = true;
-				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
-					failure = true;
+				if (new_lct[i] != Integer.MAX_VALUE) {
+					modified = true;
+					if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
+						failure = true;
+					}
 				}
 			}
 		}
@@ -357,31 +396,38 @@ public class UnaryResource extends Constraint {
 		}
 
 		// Push in one direction.
-		Arrays.sort(lst, lstComp);
+		Arrays.sort(lst, lstComp); // order activities in non decreasing lct_j - p_j (i.e. latest starting time)
 		Arrays.sort(lct, lctComp);
 
 		thetaTree.reset();
 		int j = 0;
-
+		while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+			j++;
+		}
 		for (int i = 0; i < nbAct; ++i) {
 			ActivityWrapper awi = lct[i];
-			while (j < nbAct && awi.getActivity().lct() > lst[j].getActivity().lst()) {
-				if (j > 0 && thetaTree.ect() > lst[j].getActivity().lst()) {
-					new_lct[lst[j].getIndex()] = lst[j - 1].getActivity().lst();
+			if (awi.isMandatory()) {
+				while (j < nbAct && awi.getActivity().lct() > lst[j].getActivity().lst()) {
+					if (j > 0 && thetaTree.ect() > lst[j].getActivity().lst()) {
+						new_lct[lst[j].getIndex()] = lst[j - 1].getActivity().lst();
+					}
+					thetaTree.insert(lst[j].getActivity(), lst[j].estPos());
+					j++;
+					while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+						j++;
+					}
 				}
-				thetaTree.insert(lst[j].getActivity(), lst[j].estPos());
-				j++;
-			}
-			boolean inserted = thetaTree.isInserted(awi.estPos());
-			if (inserted) {
-				thetaTree.remove(awi.estPos());
-			}
-			int ect_theta_less_i = thetaTree.ect();
-			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.estPos());
-			}
-			if (ect_theta_less_i > awi.getActivity().lct() && j > 0) {
-				new_lct[awi.getIndex()] = Math.min(new_lct[awi.getIndex()], lst[j - 1].getActivity().lct());
+				boolean inserted = thetaTree.isInserted(awi.estPos());
+				if (inserted) {
+					thetaTree.remove(awi.estPos());
+				}
+				int ect_theta_less_i = thetaTree.ect();
+				if (inserted) {
+					thetaTree.insert(awi.getActivity(), awi.estPos());
+				}
+				if (ect_theta_less_i > awi.getActivity().lct() && j > 0) {
+					new_lct[awi.getIndex()] = Math.min(new_lct[awi.getIndex()], lst[j - 1].getActivity().lct());
+				}
 			}
 		}
 
@@ -390,40 +436,50 @@ public class UnaryResource extends Constraint {
 		Arrays.sort(mlct,lctComp);
 		thetaTree.reset();
 		j = 0;
+		while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+			j++;
+		}
 		for (int i = 0; i < nbAct; i++) {
 			ActivityWrapper awi = mlct[i];
-			while (j < nbAct && awi.getActivity().lct() > mlst[j].getActivity().lst()) {
-				if (j > 0 && thetaTree.ect() > mlst[j].getActivity().lst()) {
-					new_est[mlst[j].getIndex()] = -mlst[j - 1].getActivity().lst();
+			if (awi.isMandatory()) {
+				while (j < nbAct && awi.getActivity().lct() > mlst[j].getActivity().lst()) {
+					if (j > 0 && thetaTree.ect() > mlst[j].getActivity().lst()) {
+						new_est[mlst[j].getIndex()] = -mlst[j - 1].getActivity().lst();
+					}
+					thetaTree.insert(mlst[j].getActivity(), mlst[j].estPos());
+					j++;
+					while (j < nbAct && !lst[j].isMandatory()) { // skip non mandatory
+						j++;
+					}
 				}
-				thetaTree.insert(mlst[j].getActivity(), mlst[j].estPos());
-				j++;
-			}
-			boolean inserted = thetaTree.isInserted(awi.estPos());
-			if (inserted) {
-				thetaTree.remove(awi.estPos());
-			}
-			int mect_theta_less_i = thetaTree.ect();
-			if (inserted) {
-				thetaTree.insert(awi.getActivity(), awi.estPos());
-			}
-			if (mect_theta_less_i > awi.getActivity().lct() && j > 0) {
-				new_est[awi.getIndex()] = Math.max(new_est[awi.getIndex()], -mlst[j - 1].getActivity().lct());
+				boolean inserted = thetaTree.isInserted(awi.estPos());
+				if (inserted) {
+					thetaTree.remove(awi.estPos());
+				}
+				int mect_theta_less_i = thetaTree.ect();
+				if (inserted) {
+					thetaTree.insert(awi.getActivity(), awi.estPos());
+				}
+				if (mect_theta_less_i > awi.getActivity().lct() && j > 0) {
+					new_est[awi.getIndex()] = Math.max(new_est[awi.getIndex()], -mlst[j - 1].getActivity().lct());
+				}
 			}
 		}
 
 		// Apply modifications
 		boolean modified = false;
 		for (int i = 0; i < nbAct; ++i) {
-			if (activities[i].lct() > new_lct[i] || activities[i].est() < new_est[i]) {
-				modified = true;
+			if (required[i].isTrue()) {
+				if (activities[i].lct() > new_lct[i] || activities[i].est() < new_est[i]) {
+					modified = true;
 
-				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
-					failure = true;
-				}
+					if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
+						failure = true;
+					}
 
-				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
-					failure = true;
+					if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
+						failure = true;
+					}
 				}
 			}
 		}
@@ -440,19 +496,29 @@ public class UnaryResource extends Constraint {
 			new_est[i] = activities[i].est();
 			new_lct[i] = activities[i].lct();
 		}
-
+		
 		// Push in one direction.
 		Arrays.sort(lct,lctComp);
 		lamdaThetaTree.reset();
-		for (int i = 0; i < nbAct; i++) {
 
-			lamdaThetaTree.insert(est[i].getActivity(), i);
+		for (int i = 0; i < nbAct; i++) {
+			if (est[i].isMandatory()) {
+				lamdaThetaTree.insert(est[i].getActivity(), i);
+			}
 		}
 		int j = nbAct - 1;
-		ActivityWrapper awj = lct[j];
-		do {
+		while( j >= 0 && !lct[j].isMandatory()) {
+			j--;
+		}
+		while (j >= 0) {
+			ActivityWrapper awj = lct[j];
+			
 			lamdaThetaTree.grey(awj.estPos());
-			if (--j < 0) {
+			--j;
+			while( j >= 0 && !lct[j].isMandatory()) {
+				j--;
+			}
+			if (j < 0) {
 				break;
 			}
 			awj = lct[j];
@@ -469,19 +535,28 @@ public class UnaryResource extends Constraint {
 				}
 				lamdaThetaTree.remove(i);
 			}
-		} while (j >= 0);
+		}
 
 		// Push in other direction.
 		Arrays.sort(mlct,lctComp);
 		lamdaThetaTree.reset();
 		for (int i = 0; i < nbAct; ++i) {
+			if (mest[i].isMandatory()) {
 			lamdaThetaTree.insert(mest[i].getActivity(), i);
+			}
 		}
 		j = nbAct - 1;
-		awj = mlct[j];
-		do {
+		while( j >= 0 && !lct[j].isMandatory()) {
+			j--;
+		}
+		while (j >= 0) {
+			ActivityWrapper awj = mlct[j];
 			lamdaThetaTree.grey(awj.estPos());
-			if (--j < 0) {
+			--j;
+			while( j >= 0 && !lct[j].isMandatory()) {
+				j--;
+			}
+			if (j < 0) {
 				break;
 			}
 			awj = mlct[j];
@@ -498,27 +573,28 @@ public class UnaryResource extends Constraint {
 				}
 				lamdaThetaTree.remove(i);
 			}
-		} while (j >= 0);
+		}
 
 		// Apply modifications.
 		boolean modified = false;
 		for (int i = 0; i < nbAct; i++) {
-			if (activities[i].est() < new_est[i]) {
-				modified = true;
-				if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
-					failure = true;
-					return false;
+			if (required[i].isTrue()) {
+				if (activities[i].est() < new_est[i]) {
+					modified = true;
+					if (activities[i].start().updateMin(new_est[i]) == CPOutcome.Failure) {
+						failure = true;
+						return false;
+					}
+				}
+
+				if (activities[i].lct() > new_lct[i] ) {
+					modified = true;
+					if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
+						failure = true;
+						return false;
+					}
 				}
 			}
-
-			if (activities[i].lct() > new_lct[i] ) {
-				modified = true;
-				if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
-					failure = true;
-					return false;
-				}
-			}
-
 
 		}
 		return modified;
@@ -531,7 +607,7 @@ class ActivityWrapper {
 
 	CPVarBool required;
 	Activity act;
-	int index;
+	private int index;
 	int est_pos;
 
 	protected ActivityWrapper(int index, Activity act, CPVarBool required) {
@@ -561,8 +637,15 @@ class ActivityWrapper {
 	public boolean isForbidden() {
 		return required.isFalse();
 	}
+	
+	/**
+	 * @return set the activity forbidden on this resource
+	 */
+	public CPOutcome setForbidden() {
+		return required.assign(0);
+	}
 
-	Activity getActivity() {
+	protected Activity getActivity() {
 		return act;
 	}
 
@@ -591,12 +674,6 @@ class LCTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
 		int lct0 = act0.getActivity().lct();
 		int lct1 = act1.getActivity().lct();
-		if (act0.isOptional()) {
-			lct0 = Integer.MAX_VALUE;
-		}
-		if (act1.isOptional()) {
-			lct1 = Integer.MAX_VALUE;
-		}
 		return lct0 - lct1;
 	}
 }
