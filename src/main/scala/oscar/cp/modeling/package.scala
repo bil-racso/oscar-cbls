@@ -41,7 +41,7 @@ package object modeling extends Constraints {
 	
 	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = new ElementIntMatrixConstraintBuilderLine(a)
 
-	trait ElementConstraintBuilder {
+	abstract class ElementConstraintBuilder {
 		def apply(i :CPVarInt) : CPVarInt
 	}
 	

@@ -33,42 +33,45 @@ import scala.io.Source
  *  
  *  @authors: Pierre Schaus  pschaus@gmail.com
  */
-object JFSSP extends App {
+object FlexibleJobShop extends App {
 
 	var lines = Source.fromFile("data/FJSSPinstances/1_Brandimarte/BrandimarteMk1.fjs").getLines.toList
-	
-	println(lines.head.trim().split("\t")(0))
+	val first = lines.head.trim().split("\t").map(_.toInt)
+	println("first Line:"+first.mkString(","))
 	
 	class Activity(val machines: Array[(Int,Int)]) // (machine,duration)
 
-	val nJobs        = lines.head.trim().split("\t")(0).toInt
-	val nMachines    = lines.head.trim().split("\t")(1).toInt
+	val nJobs        = first(0)
+	val nMachines    = first(1)
 	
 	println("#jobs:"+nJobs+" #machines:"+nMachines)
-	for (j <- 1 to nJobs) {
-	  println("line"+j+":"+lines(j).trim().split(" +").mkString("%"))
-	  //  the first number is the number of operations of that job, the second number (let's say k>=1) is the number of machines that can process the first operation; then according to k, there are k pairs of numbers (machine,processing time) 
-	  var acts = lines(j).trim().split(" +").drop(1).map(_.toInt)
+	
+	val jobs = 
+	for (j <- 1 to nJobs) yield {
+	  println("=>line"+j+":"+lines(j).trim().split(" +").mkString("  "))
+	  //  the first number is the number of operations of that job
+	  // the second number (let's say k>=1) is the number of machines that can process the first operation; 
+	  // then according to k, there are k pairs of numbers (machine,processing time) 
+	  var acts = lines(j).trim().split(" +").map(_.toInt)
 	  def read(): Int = {
+	  	println("before:"+acts.mkString(","))
 	    val r = acts(0)
 	    acts = acts.drop(1)
+	    println("after:"+acts.mkString(","))
 	    r
 	  }
 	  val nAct = read() // nb acts in the jobs
-	  /*
-	  val Job = Array.tabulate(nAct) {
-	    
-	    //for (a <- 0 until nAct) {
-	     // val nMachines = read
-	      //Array.tabulate(nMachines)(i =>read(),read())
-	      //for (m <- 0 until nMachines) {
-	    	  
-	      //}
-	    //}
-	    new Activity(Array(0),Array(0))
+	  
+	  Array.fill(nAct) {
+	      val nMachines = read()
+	      val res: Array[(Int,Int)] = Array.tabulate(nMachines)(i =>(read(),read()))
+	      new Activity(res)
 	  }
-	  */
 	}
+	
+	// modeling
+	
+	val cp = CPScheduler(10000)
 	
 	
 	
