@@ -22,17 +22,15 @@ import oscar.search._
 import oscar.cp.core._
 import collection.immutable.SortedSet
 
-/*
+/**
  * Problem statement :
  * There are 13 words : BUOY, CAVE, CELT, FLUB, FORK, HEMP, JUDY, JUNK, LIMN, QUIP, SWAG, VISA, WISH
  * 24 different letters that appear in the 13 words.
  * Assign the 24 letters appearing to 4 different cubes (one letter/face) so that the 4 letters of each word appears on different cubes.
+ * @author Pierre Schaus pschaus@gmail.com
  */
+object Cubes extends App {
 
-object Cubes {
-
-  def main(args: Array[String]): Unit =
-  {
     val cp = CPSolver()
     
     val numCubes = 4
@@ -65,5 +63,4 @@ object Cubes {
     }
     
     cp.printStats()
-  }
 }

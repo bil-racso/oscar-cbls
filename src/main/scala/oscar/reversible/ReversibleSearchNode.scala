@@ -148,16 +148,18 @@ class ReversibleSearchNode {
 		"ReversibleSearchNode: nbPushed"+pointerStack.size()+" currentTrailSize:"+trail.getSize();
 	}
 	
-	
+	var nb = 0
 	
 	def branch(left: => Unit)(right: => Unit) = {
       shift { k: (Unit => Unit) =>
         if (!isFailed) {
-        sc.addChoice(new MyContinuation("right", {
-          if (!isFailed) right
-          if (!isFailed()) k()}))
+          sc.addChoice(new MyContinuation("right", {
+                           if (!isFailed) right
+                           if (!isFailed()) k()}))
         }
-        if (!isFailed()) left
+        if (!isFailed()) {
+          left 
+        }
         if (!isFailed()) k()
       }
     }
@@ -211,9 +213,7 @@ class ReversibleSearchNode {
                 block
                 if (!isFailed()) {
                 	if (solveOne) {
-                	  //val nbFail = sc.nbFail
                 	  sc.reset()
-                	  //sc.nbFail = nbFail
                 	  k1() // exit the exploration block
                 	}
                 }
