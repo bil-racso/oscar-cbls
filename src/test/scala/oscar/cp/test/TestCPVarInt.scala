@@ -24,5 +24,4 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 		
 		a.median should be(2)
 	}
-
 }
