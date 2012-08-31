@@ -21,7 +21,6 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
