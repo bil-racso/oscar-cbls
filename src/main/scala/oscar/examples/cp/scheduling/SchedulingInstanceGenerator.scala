@@ -26,4 +26,40 @@ object SchedulingInstanceGenerator {
 		
 		return (machines, durations, capacities)
 	}
+	
+	/** 
+	 * State JOB-SHOP
+	 */
+	def stateJobShop(nJobs : Int, nTasksPerJob : Int, duration : Int) : Array[Array[Int]] = {
+		
+		val minDuration = duration/5
+		val maxDuration = duration - minDuration
+		
+		val instance = new Array[Array[Int]](nJobs*nTasksPerJob)
+		
+		for (i <- 0 until nJobs) {
+			
+			val states    = shuffle(0 until nTasksPerJob).toArray
+			val durations = Array.fill(nTasksPerJob)(nextInt(maxDuration)+minDuration)
+			
+			for (j <- 0 until nTasksPerJob) {
+				
+				instance(i*nTasksPerJob + j) = new Array[Int](3)
+				
+				instance(i*nTasksPerJob + j)(0) = i
+				instance(i*nTasksPerJob + j)(1) = states(j)
+				instance(i*nTasksPerJob + j)(2) = durations(j)
+			}
+		}
+		
+		return instance
+	}
+	
+	def main(args : Array[String]) {
+		
+		val inst = stateJobShop(20, 5, 100)
+		for (i <- 0 until 100) {
+			println(inst(i).mkString(" "))
+		}
+	}
 }
