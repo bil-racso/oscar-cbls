@@ -34,7 +34,7 @@ public class Sum extends Constraint {
 		super(x[0].s(),"Sum");
 		this.x = x;
 		this.y = y;
-		setIdempotent();
+		//setIdempotent();
 	}
 
     /**
@@ -71,7 +71,6 @@ public class Sum extends Constraint {
 		if (y.updateMax(maxsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		
 		if (y.updateMin(minsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
