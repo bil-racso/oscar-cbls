@@ -37,14 +37,14 @@ import oscar.cbls.invariants.core.propagation._;
  */
 class Model(override val Verbose:Boolean = false,
             override val DebugMode:Boolean = false,
-            override val NoCycle:Boolean = false)
-  extends PropagationStructure(Verbose,DebugMode,NoCycle){
+            override val NoCycle:Boolean = false,
+            override val TopologicalSort:Boolean = false)
+  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort){
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
   private var PropagationElements:List[PropagationElement] = List.empty
   private var Closed:Boolean=false
-
 
   def isClosed = Closed
 
@@ -146,7 +146,7 @@ class Model(override val Verbose:Boolean = false,
   def getSourceVariables(v:Variable):SortedSet[Variable] = {
     var ToExplore: List[PropagationElement] = List(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty[Variable]
-
+    //TODO: check that this works also in case of cycle.
     while(!ToExplore.isEmpty){
       val head = ToExplore.head
       ToExplore = ToExplore.tail
@@ -223,7 +223,7 @@ trait Invariant extends PropagationElement{
 
   def getPropagationStructure = this.model
 
-  /**this must be called by all invariant after they complete their initialization
+  /**Must be called by all invariant after they complete their initialization
    * that is: before they get their output variable.
    * This performs some registration to the model, which is discovered by exploring the variables that are statically registered to the model
    * no more variable can be registered statically after this method has been called.
@@ -235,7 +235,11 @@ trait Invariant extends PropagationElement{
     }else{
       this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
     }
-    UniqueID = (if (this.model!= null) this.model.registerInvariant(this) else -1)
+    if (this.model!= null){
+      UniqueID = this.model.registerInvariant(this)
+    }else{
+      UniqueID = -1
+    }
   }
 
   //TODO: these methods should be in PropagationElement, not in Invariants!!!
@@ -334,21 +338,21 @@ trait Invariant extends PropagationElement{
 
   //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
   def notifyIntChangedAny(v:IntVar,i:Any,OldVal:Int,NewVal:Int){notifyIntChanged(v,i.asInstanceOf[Int], OldVal,NewVal)}
-  @inline
+
   def notifyIntChanged(v:IntVar,i:Int,OldVal:Int,NewVal:Int){notifyIntChanged(v,OldVal,NewVal)}
-  @inline
+
   def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){}
 
   def notifyInsertOnAny(v:IntSetVar,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
-  @inline
+
   def notifyInsertOn(v:IntSetVar,i:Int,value:Int){notifyInsertOn(v,value)}
-  @inline
+
   def notifyInsertOn(v:IntSetVar,value:Int){}
 
   def notifyDeleteOnAny(v:IntSetVar,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
-  @inline
+
   def notifyDeleteOn(v:IntSetVar,i:Int,value:Int){notifyDeleteOn(v,value)}
-  @inline
+
   def notifyDeleteOn(v:IntSetVar,value:Int){}
 
   /**To override whenever possible to spot errors in invariants.
@@ -740,7 +744,7 @@ case class IntConst(ConstValue:Int, override val model:Model = null)
  * @param MinVal is the minimum value of integers included in this set. Some invariants exploit this value to declare fixed size arrays
  * @param MaxVal is the maximum value of integers included in this set. Some invariants exploit this value to declare fixed size arrays.
  * @param Value is the value of the variable
- * @param name is the name of the variable, used for pretty printin only
+ * @param name is the name of the variable, used for pretty printing only
  */
 
 class IntSetVar(override val model:Model,

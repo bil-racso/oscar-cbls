@@ -131,10 +131,10 @@ class Planning(val model:Model,val maxduration:Int){
     for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
       toreturn += "" + padToLength(j.name,20) + ":" +"[" +
         padToLength("" + j.EarliestStartDate.getValue(),4) + ";" + padToLength("" + j.EarliestEndDate.getValue(),4) + "] "+
-        nStrings(j.EarliestStartDate," ") + nStrings(j.duration,"#") + "\n"
+        (if (j.duration == 1)  nStrings(j.EarliestStartDate," ") + "#\n"
+         else nStrings(j.EarliestStartDate," ") + "#" + nStrings(j.duration-2,"=") + "#\n")
     }
     toreturn += MakeSpan + "\n"
     toreturn
   }
-  
 }

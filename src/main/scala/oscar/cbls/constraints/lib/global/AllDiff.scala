@@ -119,7 +119,7 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
 
     for (v <- variables)
-      assert(getViolation(v).getValue()  == MyValueCount(v.getValue()+offset)-1
+      assert(getViolation(v).getValue() == MyValueCount(v.getValue()+offset)-1
         ,"error on " + v + " " + getViolation(v).getValue() + " " + MyValueCount(v.getValue()+offset))
 
     var MyViol:Int = 0

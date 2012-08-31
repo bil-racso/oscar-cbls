@@ -91,3 +91,34 @@ case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), o
   }
 }
 
+/** This is a helper to define an invariant from an Int x Int -> Int function.
+ * Ths invariant is not incremental, so this should only be used for very simple functions.
+ * it maintains output = fun(a,b) The difference with [[oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun]] is that this one performs the computation only after both variables have been updated.
+ * @param a the first parameter of the function
+ * @param b the second parameter of the function
+ * @param fun the function to maintain, it is supposed not to listen to any variable in the model
+ * @param MyMin the min value of the output
+ * @param MyMax the max value of the output
+ */
+case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val MyMin:Int = Int.MinValue, override val MyMax:Int=Int.MaxValue) extends IntInvariant {
+
+  var output:IntVar=null
+  registerStaticAndDynamicDependenciesNoID(a,b)
+  finishInitialization()
+
+  override def setOutputVar(v:IntVar){
+    output = v
+    output.setDefiningInvariant(this)
+    output := fun(a,b)
+  }
+
+  @inline
+  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+    scheduleForPropagation()
+  }
+
+  override def performPropagation(){
+    output := fun(a,b)
+  }
+}
+

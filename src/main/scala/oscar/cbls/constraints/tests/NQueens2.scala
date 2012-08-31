@@ -56,6 +56,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     if (args.length<1) {
       println("Benchmarking NQueen - this takes time");
+      println("TClose, Ttotal, It")
     
       // first run could have some overhead so ignoring it
       SolveNQueen(1000)
@@ -127,3 +128,4 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     println(", " + getWatch + ", " + It)
   }
 }
+

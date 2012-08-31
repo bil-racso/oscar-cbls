@@ -36,27 +36,28 @@ import collection.Iterator
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
  */
-class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]){
+class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   var HeapArray:Array[T] = new Array[T](maxsize)
-  var size:Int=0
+  private var msize:Int=0
 
-  def isEmpty:Boolean = (size == 0)
+  override def size = msize
+  override def isEmpty:Boolean = (msize == 0)
 
   override def toString:String = {
     HeapArray.toList.toString()
   }
 
   /**makes the datastruct empty, but does not frees the space*/
-  def dropAll{
-    size = 0;
+  override def dropAll{
+    msize = 0;
   }
 
   /**log(n)*/
-  def insert(elem:T){
+  override def insert(elem:T){
     //insert en derniere position, puis bubble up
-    HeapArray(size)=elem
-    size +=1
-    pushUp(size-1)
+    HeapArray(msize)=elem
+    msize +=1
+    pushUp(msize-1)
   }
 
   /**O(1) operation*/
@@ -70,9 +71,9 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
   private def pushDown(startposition:Int):Int = {
     var position = startposition
     while(true)
-      if(leftChild(position) < size && GetKey(HeapArray(position)) > GetKey(HeapArray(leftChild(position)))){
+      if(leftChild(position) < msize && GetKey(HeapArray(position)) > GetKey(HeapArray(leftChild(position)))){
         //examiner aussi left child
-        if(rightChild(position) < size && GetKey(HeapArray(rightChild(position))) < GetKey(HeapArray(leftChild(position)))){
+        if(rightChild(position) < msize && GetKey(HeapArray(rightChild(position))) < GetKey(HeapArray(leftChild(position)))){
           //c'est avec le right child qu'il faut inverser
           swapPositions(position,rightChild(position))
           position = rightChild(position)
@@ -81,7 +82,7 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
           swapPositions(position,leftChild(position))
           position = leftChild(position)
         }
-      }else if(rightChild(position) < size && GetKey(HeapArray(position)) > GetKey(HeapArray(rightChild(position)))){
+      }else if(rightChild(position) < msize && GetKey(HeapArray(position)) > GetKey(HeapArray(rightChild(position)))){
         //only consider right child
         swapPositions(position,rightChild(position))
         position = rightChild(position)
@@ -110,32 +111,56 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
   private def father(position:Int):Int = scala.math.floor((position+1)/2).toInt-1
 
   /**O(firsts)*/
-  def getFirsts:List[T] = {
+  override def getFirsts:List[T] = {
     def ExploreFirsts(value:Int,startposition:Int,acc:List[T]):List[T] = {
-      if(startposition < size && GetKey(HeapArray(startposition)) == value){
+      if(startposition < msize && GetKey(HeapArray(startposition)) == value){
         val acc1 = ExploreFirsts(value,leftChild(startposition),HeapArray(startposition) :: acc)
         ExploreFirsts(value,rightChild(startposition),acc1)
       }else{
         acc
       }
     }
-    if(size == 0)List.empty
+    if(msize == 0)List.empty
     else ExploreFirsts(GetKey(HeapArray(0)),0,List.empty)
   }
   /**O(1)*/
-  def getFirst:T=HeapArray(0)
+  override def getFirst:T=HeapArray(0)
 
   /**O(log(n))*/
-  def removeFirst():T={
+  override def popFirst():T={
     val toreturn:T = HeapArray(0)
-    swapPositions(0,size-1)
-    size -=1
-    HeapArray(size)=null.asInstanceOf[T]
+    swapPositions(0,msize-1)
+    msize -=1
+    HeapArray(msize)=null.asInstanceOf[T]
     pushDown(0)
     toreturn
   }
+
+  /**you cannot modify the hep when iterating through this iterator*/
+  override def iterator: Iterator[T] = new BinomialHeapIterator(HeapArray,msize)
+
+  override def popFirsts: List[T] = {
+    if (isEmpty) return List.empty
+    var acc = List(popFirst())
+    val key = GetKey(acc.head)
+    while(!isEmpty && GetKey(getFirst) == key){
+      acc = popFirst() :: acc
+    }
+    acc
+  }
 }
 
+
+class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
+  var current:Int = size
+
+  def hasNext: Boolean = current > 0
+
+  def next(): T = {
+    current = current-1
+    HeapArray(current)
+  }
+}
 
 /**
  * This is a binary heap that is less efficient than the [[oscar.cbls.invariants.core.algo.heap.BinomialHeap]].

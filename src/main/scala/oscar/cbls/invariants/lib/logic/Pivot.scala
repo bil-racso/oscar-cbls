@@ -147,7 +147,7 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
         }
       }
       while(!HeapAbove.isEmpty){
-        QueueAbove.enqueue(HeapAbove.removeFirst())
+        QueueAbove.enqueue(HeapAbove.popFirst())
       }
   }
 

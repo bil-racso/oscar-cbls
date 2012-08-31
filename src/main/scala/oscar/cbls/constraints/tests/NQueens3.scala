@@ -75,9 +75,9 @@ object NQueens3 extends SearchEngine with StopWatch{
     val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
     val NonTabuMaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray, NonTabuQueens)
 
-//    m.close()
-    m.close(false)
-    println(m.dumpToDot(true,true))
+    m.close()
+   // m.close(false)
+    //println(m.dumpToDot(true,true))
 
     println("run time after model close: "+ getWatchString)
 
