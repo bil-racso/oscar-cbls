@@ -14,33 +14,12 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-package oscar.search;
+
+package oscar.search
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class Alternative {
-	
-	
-	private String name = "alternative";
-	
-	public Alternative(String name) {
-		this.name = name;
-	}
-
-    public Alternative() {
-		this.name = name;
-	}
-
-	public abstract boolean execute();
-	
-	public boolean executeOnBacktrack() {
-		return true;
-	}
-	
-	@Override
-	public String toString() {
-		return name;
-	}
-
+abstract class ObjectiveObserver {
+	def newObj(obj: Objective)
 }

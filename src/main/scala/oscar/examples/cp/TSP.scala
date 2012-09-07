@@ -49,6 +49,7 @@ object TSP {
     //total distance
     val dist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
 
+    //cp.minimize(dist) subjectTo {
     cp.minimize(dist) subjectTo {
       cp.add(circuit(succ), Strong) //ask to have a strong filtering
       cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)

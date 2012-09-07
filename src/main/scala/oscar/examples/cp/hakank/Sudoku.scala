@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.math.pow
 

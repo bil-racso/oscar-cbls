@@ -5,12 +5,10 @@ import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
 
-import oscar.cp.search._
 import oscar.search._
 import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPVarBool
-import oscar.search.Branching._
 import oscar.cp.modeling._
 import oscar.cp.core._
 

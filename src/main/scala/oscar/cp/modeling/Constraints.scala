@@ -54,6 +54,17 @@ trait Constraints {
 	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : CPVarInt) : Constraint = {
 		return new BinaryKnapsack(x.toArray, w.toArray, l)
 	}
+	
+	/**
+	 * Binary-Knapsack Constraint computing the total weight of items placed into a knapsack
+	 * @param x with x(i) == 1 if the item is selected, 0 otherwise
+	 * @param w with w(i) is the weight of item i
+	 * @param l the load of the knapsack
+	 * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
+	 */
+	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : Int) : Constraint = {
+		return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store,l))
+	}	
 
 	/**
 	 * Binary-Knapsack Constraint computing the total profit of items placed into a capacitated knapsack

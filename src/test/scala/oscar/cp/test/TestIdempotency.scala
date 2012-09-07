@@ -27,7 +27,10 @@ import oscar.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.cp.modeling._
 
-class IdempotencyTest extends FunSuite with ShouldMatchers  {
+/**
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+class TestIdempotency extends FunSuite with ShouldMatchers  {
 
    
  

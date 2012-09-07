@@ -19,7 +19,7 @@
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.search._
+
 import oscar.visual._
 import scala.math
 import java.awt.Color

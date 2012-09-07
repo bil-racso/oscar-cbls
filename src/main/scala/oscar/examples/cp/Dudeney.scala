@@ -20,7 +20,7 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.search._
+
 
 
 import scala.math

@@ -17,7 +17,6 @@
 
 package oscar.reversible;
 
-import oscar.reversible.Reversible;
 
 /**
  * Creates a generic reversible pointer

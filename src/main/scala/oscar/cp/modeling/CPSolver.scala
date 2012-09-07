@@ -22,7 +22,6 @@ package oscar.cp.modeling
 import oscar.search._
 import oscar.cp._
 import oscar.cp.core._
-import oscar.cp.search._
 import oscar.cp.constraints._
 import scala.util.continuations._
 import scala.collection.mutable.Stack
@@ -32,6 +31,22 @@ import oscar.reversible._
 class NoSol(msg : String) extends Exception(msg)
 
 class CPSolver() extends Store() {
+    
+  
+    case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
+    var lns: Option[LNS] = None
+    
+    protected var lastLNSRestartCompleted = false
+  
+    /**
+     * @return true if the last lns restart was caused because of completed exploration of search tree, 
+     * false otherwise (i.e. limit on the number failure reached)
+     */
+    def isLastLNSRestartCompleted = lastLNSRestartCompleted
+    
+    def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
+	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+	}
 
 	/**
 	 * @param block a code block
@@ -46,15 +61,26 @@ class CPSolver() extends Store() {
 	def +=(cons : Constraint, propagStrength : CPPropagStrength = CPPropagStrength.Weak) : Unit = {
 		this.add(cons, propagStrength)
 	}
+	
+	var stateObjective: Unit => Unit = Unit => Unit
 
 	def minimize(obj : CPVarInt) : CPSolver = {
-		stateObjective = Unit => minimization(obj)
+		stateObjective = Unit => {
+		  val o = new CPObjectiveMinimize(obj)
+		  objective = o
+		  post(o)
+		}
 		solveAll()
 		this
 	}
 
 	def maximize(obj : CPVarInt) : CPSolver = {
-		stateObjective = Unit => maximization(obj)
+		stateObjective = Unit => {
+		  val o = new CPObjectiveMaximize(obj)
+		  objective = o
+		  post(o)
+
+		}
 		solveAll()
 		this
 	}
@@ -162,6 +188,72 @@ class CPSolver() extends Store() {
 		println("time in trail restore(ms)", getTrail().getTimeInRestore())
 		println("max trail size", getTrail().getMaxSize())
 	}
+	
+	
+	override def exploration(block: => Unit @suspendable ): Unit  =  {
+	  val t1 = System.currentTimeMillis()
+	  stateObjective()
+	  var nbRestart = 0
+	  var maxRestart = 1
+	  
+	  val relax = lns match {
+		   case None => () => Unit
+		   case Some(LNS(nbRestart,nbFailures,restar)) => {
+		     maxRestart = nbRestart
+		     failLimit = nbFailures
+		     restar
+		   }
+	  }  
+
+	  reset {
+        shift { k1: (Unit => Unit ) =>
+          val b = () => {
+        	  	sc.start()
+                block
+                if (!isFailed()) {
+                	if (solveOne) {
+                	  sc.reset()
+                	  k1() // exit the exploration block
+                	}
+                }
+          }
+
+          def restart(relaxation: Boolean = false) {
+             popAll()
+             pushState()
+             if (relaxation) {
+               sc.reset()
+               relax()
+               
+             }
+             if (!isFailed()) {
+                 sc.reset()
+                 nbRestart += 1 
+                 reset {
+                   b()  	  
+                   if (!isFailed()) objective.tighten()
+      	         }
+                 if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+             }
+          }
+          restart(false) // first restart, find a feasible solution so no limit
+          for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
+             restart(true)
+             if (sc.isLimitReached) {
+               lastLNSRestartCompleted = false
+               print("!") 
+             }
+             else {
+               lastLNSRestartCompleted = true
+               print("R") 
+             }
+          }
+          k1() // exit the exploration block       
+        } 
+      }
+	  time = System.currentTimeMillis() - t1
+    }	
+	
 }
 
 object CPSolver {
