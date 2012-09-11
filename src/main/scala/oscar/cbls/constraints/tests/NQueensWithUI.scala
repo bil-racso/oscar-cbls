@@ -57,9 +57,9 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
       
   // UI stuff
   val cl=Thread.currentThread().getContextClassLoader()
-  val QUEEN = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ok.png"))
-  val CONFLICT = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ko.png"))
-  val EMPTY = new ImageIcon(cl.getResource("constraints/tests/resources/queen-no.png"))
+  val QUEEN = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-ok.png"))
+  val CONFLICT = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-ko.png"))
+  val EMPTY = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-no.png"))
   var boxPanel:BoxPanel=null
   var tab:Array[Array[Label]]=null
   var lNQueen:Label=null
