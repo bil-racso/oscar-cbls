@@ -14,13 +14,36 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-package oscar.search;
 
-/**
- * @author Pierre Schaus pschaus@gmail.com
- */
-public interface SolutionObserver {
+
+package oscar.search
+
+import scala.collection.mutable.ArrayBuffer
+
+ /**
+  * @author Pierre Schaus pschaus@gmail.com
+  */
+trait Objective {
+  
+	private val observers = new ArrayBuffer[ObjectiveObserver]();
+  
+	def notifyNewBound() {
+	  observers.foreach(_.newObj(this))
+	}
 	
-	public void solutionFound();
+	def addObserver(obs: ObjectiveObserver) {
+	  observers += obs
+	}
+	
+	def tighten(): Unit
+	
+	def relax(): Unit
 
+	def bound_=(value: Int): Unit
+
+	def bound : Int
+	
+	def isOptimum(): Boolean
+		
+	def isOK() : Boolean
 }

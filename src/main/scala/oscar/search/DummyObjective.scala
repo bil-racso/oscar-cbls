@@ -14,44 +14,26 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-package oscar.search;
 
-/**
- * Dummy Objective doing nothing (used for feasibility problems)
- * @author pschaus@gmail.com
- */
-public class DummyObjective extends Objective {
 
-	@Override
-	public void tighten() {		
-	}
+package oscar.search
 
-	@Override
-	public void relax() {		
-	}
+import scala.collection.mutable.ArrayBuffer
 
-	@Override
-	public void setNewBound(int val) {		
-	}
+ /**
+  * @author Pierre Schaus pschaus@gmail.com
+  */
+class DummyObjective extends Objective {
 
-	@Override
-	public int getBound() {
-		return 0;
-	}
-
-	@Override
-	public int getOptimumBound() {
-		return 0;
-	}
-
-	@Override
-	public boolean isOptimum() {
-		return false;
-	}
+	def tighten() = {}
 	
-	@Override
-	public boolean isOK() {
-		return true;
-	}
+	def relax() = {}
 
+	def bound_=(value: Int) = {}
+
+	def bound = -1
+	
+	def isOptimum() = false
+		
+	def isOK() = true
 }

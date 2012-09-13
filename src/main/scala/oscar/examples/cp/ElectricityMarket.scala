@@ -23,7 +23,6 @@ import oscar.visual._
 import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
-import oscar.search.Branching
 
 /** 
  * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:

@@ -63,8 +63,7 @@ object NQueens extends SearchEngine with StopWatch{
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
-    val Queens:Array[IntVar] = new Array[IntVar](N)
-    for (q <- range){Queens(q) = new IntVar(m, min, max, q, "queen" + q)}
+    val Queens:Array[IntVar] = Array.tabulate(N)(q => new IntVar(m, min, max, q, "queen" + q))
 
     val c:ConstraintSystem = new ConstraintSystem(m)
 
@@ -85,7 +84,7 @@ object NQueens extends SearchEngine with StopWatch{
     while((c.Violation.getValue() > 0) && (it < MaxIT)){
       val oldviolation:Int = c.Violation
       val allowedqueens = range.filter(q => Tabu(q) < it)
-      val (q1,q2) = selectMin2(allowedqueens,allowedqueens, (q1:Int, q2:Int) => c.getSwapVal(Queens(q1),Queens(q2)), (q1:Int,q2:Int) => q1 < q2)
+      val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) = it + tabulength

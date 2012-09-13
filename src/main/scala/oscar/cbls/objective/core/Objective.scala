@@ -53,6 +53,8 @@ trait ObjectiveTrait{
     a :=: b
     NewVal
   }
+  
+  def swapDelta(a:IntVar,b:IntVar):Int = getSwapVal(a,b)
 
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.

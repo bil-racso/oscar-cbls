@@ -660,14 +660,23 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       notifyChanged()
     }
   }
+  
+ 
+  def value_=(v: Int) {
+    setValue(v)
+  }
+  
+  def value {
+    getValue()
+  }
 
   def getValue(NewValue:Boolean=false):Int = {
     if(NewValue){
       assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this
         + "] queried for latest val by non-controlling invariant")
       Value
-    }else{
-      if(this.DefiningInvariant!= null && model != null){
+    } else{
+      if (this.DefiningInvariant!= null && model != null){
         model.propagate(this)
         OldValue
       }else{
@@ -675,6 +684,8 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       }
     }
   }
+  
+
 
   implicit def apply:Int = this.getValue()
 
@@ -717,6 +728,16 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 }
 
 object IntVar{
+  
+  def apply(model: Model, minVal:Int, maxVal:Int, value:Int, name:String) = {
+    new IntVar(model,minVal,maxVal,value,name)
+  }
+  
+  def apply(model: Model, domain: Range, value:Int, name:String="") = {
+    new IntVar(model,domain.start,if (domain.isInclusive) domain.end else domain.end-1,value,name)
+  }
+  
+  
   implicit def toInt(v:IntVar):Int = v.getValue()
 
   implicit val ord:Ordering[IntVar] = new Ordering[IntVar]{

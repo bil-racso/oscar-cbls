@@ -162,9 +162,9 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     var it:Int=1
     while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
       val allowed = LinearIndexes.filter(v => Tabu(v) < it)
-      val (v1,v2)=selectMin2(allowed, allowed, 
-          (v1:Int, v2:Int) => c.getSwapVal(grid(v1),grid(v2)), 
-          (v1:Int,v2:Int) => (v1 < v2) && (SquareOf(v1)==SquareOf(v2))) // swap on the same line
+      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.swapDelta(grid(v1),grid(v2)),
+                                                (v1,v2) => (v1 < v2) && (SquareOf(v1) == SquareOf(v2))) // swap on the same line
+      
       require(SquareOf(v1)==SquareOf(v2))
            
       grid(v1) :=: grid(v2)

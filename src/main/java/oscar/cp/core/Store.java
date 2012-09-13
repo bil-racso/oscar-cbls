@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.Random;
 
 import oscar.cp.constraints.CPObjective;
-import oscar.cp.constraints.CPObjectiveMaximize;
 import oscar.cp.constraints.CPObjectiveMinimize;
 import oscar.cp.constraints.Eq;
 import oscar.reversible.ReversiblePointer;
@@ -61,6 +60,8 @@ public class Store extends ReversibleSearchNode {
 	private int highestPriorL2;
 	
 	private boolean inPropagate = false;
+	
+	public CPObjective objective = new CPObjective(CPVarInt.apply(this, 0));
 
 	
 	@SuppressWarnings("unchecked")
@@ -81,33 +82,15 @@ public class Store extends ReversibleSearchNode {
 		highestPriorL2 = 0;
 	}
 	
+	public void setObjective(CPObjective o) {
+		this.objective = o;
+	}
+	
 	/**
 	 * @return the number of call to propagate method in anyone of the constraints
 	 */
 	public int getNbPropag() {
 		return nbPropag;
-	}	
-	
-	private void optimize(CPObjective objective) {
-		CPOutcome oc = post(objective.getConstraint());
-		assert(oc != CPOutcome.Failure);
-		setObjective(objective);
-	}
-
-    /**
-     * Define the store as a maximization problem of variable obj
-     * @param obj the variable to maximize
-     */
-	public void maximization(CPVarInt obj){
-		optimize(new CPObjectiveMaximize(obj));
-	}
-
-    /**
-     * Define the store as a minimization problem of variable obj
-     * @param obj the variable to minimize
-     */
-	public void minimization(CPVarInt obj){
-		optimize(new CPObjectiveMinimize(obj));
 	}
 
     /**
@@ -294,6 +277,19 @@ public class Store extends ReversibleSearchNode {
 			q = q.getNext();
 		}
 	}
+	
+	/**
+	 * call only the propagate method of the constraint and trigger the fix point does not post it
+	 * @param c
+	 */
+	public CPOutcome propagate(Constraint c) {
+		if (status.getValue() == CPOutcome.Failure) return status.getValue();
+		//assert(status.getValue() != CPOutcome.Failure);
+		if (c.propagate() == CPOutcome.Failure || propagate() == CPOutcome.Failure) {
+			status.setValue(CPOutcome.Failure);
+		}
+		return status.getValue();
+	}
 
     /**
      * Fix Point algorithm
@@ -304,8 +300,7 @@ public class Store extends ReversibleSearchNode {
 		
 		long t0 = System.currentTimeMillis();
 		inPropagate = true;
-		CPOutcome ok = !getObjective().isOK() ? CPOutcome.Failure: CPOutcome.Suspend;
-		
+		CPOutcome ok = objective.propagate();
 		while (ok != CPOutcome.Failure) {
 			int p;
 			
@@ -320,7 +315,7 @@ public class Store extends ReversibleSearchNode {
 			}
 			p = MAXPRIORL2;
 			while (p >= 0 && propagQueueL2[p].isEmpty())  --p;
-			if (p<0) break;
+			if (p < 0) break;
 			while (ok != CPOutcome.Failure && !propagQueueL2[p].isEmpty()) {
 				Constraint c = propagQueueL2[p].removeFirst();
 				highestPriorL2 = p;

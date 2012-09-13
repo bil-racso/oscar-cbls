@@ -99,8 +99,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     // search
     while((c.Violation.getValue() > 0) && (it < MAX_IT)){      
       val allowed = Dim2.filter(v => Tabu(v) < it)
-      val (v1,v2)=selectMin2(allowed, allowed, 
-          (v1:Int, v2:Int) => c.getSwapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1:Int,v2:Int) => v1 < v2)
+      val (v1,v2)=selectMin(allowed, allowed) ((v1,v2) => c.swapDelta(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1,v2) => v1 < v2)
 
       val i1=v1/N
       val j1=v1%N
