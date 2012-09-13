@@ -139,7 +139,7 @@ trait SearchEngineTrait{
 
   /**return a couple (r,s) that is allowed: filter(r,s) is true, and minimizing f(r,s) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
-   * @param st is optional and set to true if not specified
+   * @param s is optional and set to true if not specified
    */  
   def selectMin[R,S](r: Iterable[R] , s: Iterable[S]) (f: (R,S) => Int, filter: ((R,S) => Boolean)): (R,S) = {
      val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
@@ -223,7 +223,7 @@ trait SearchEngineTrait{
   /**return the first element r that is allowed: st(r) is true
    * @param st is optional and set to true if not specified
    */
-  def selectFirst[R](r: Iterable[R], st: (R => Boolean) = ((r:R) => true)): R = {
+  def selectFirst[R](r: Iterable[R],st: (R => Boolean) = ((r:R) => true)): R = {
       for(rr <- r) if(st(rr)) return rr
       null.asInstanceOf[R]
   }

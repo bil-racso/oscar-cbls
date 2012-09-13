@@ -63,11 +63,11 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
       acc + ((intvar,newvar))
     })
 
-  private val ValueCount: Array[IntVar] = (for (i <- 0 to N) yield {
+  private val ValueCount: Array[IntVar] = Array.tabulate[IntVar](N+1)((i:Int) => {
     val tmp = new IntVar(model, 0, 1, 0, "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
-  }).toArray
+  })
 
   for(v <- variables){
     val varval = v.getValue()
@@ -85,7 +85,8 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
   }
 
   for(i <- range){
-    Violation :+= 0.max(ValueCount(i).getValue(true) -1)
+    val tmp = ValueCount(i).getValue(true) -1
+    if (tmp >0) Violation :+= tmp
   }
 
   @inline

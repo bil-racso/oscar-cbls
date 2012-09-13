@@ -28,7 +28,7 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 
 class Task(val duration:Int, planning:Planning, val name:String = ""){
   val TaskID:Int = planning.AddTask(this)
@@ -54,7 +54,7 @@ class Task(val duration:Int, planning:Planning, val name:String = ""){
   val EarliestEndDate:IntVar = new IntVar(planning.model,0,planning.maxduration,duration,"eed(" + name + ")")
 
   val LatestEndDate:IntVar = new IntVar(planning.model,0,planning.maxduration,planning.maxduration,"led(" + name + ")")
-  val LatestStartDate:IntVar = LatestEndDate minus duration
+  val LatestStartDate:IntVar = LatestEndDate - duration
   var AllSucceedingTasks:IntSetVar = null
 
   var AdditionalPredecessors:IntSetVar=null

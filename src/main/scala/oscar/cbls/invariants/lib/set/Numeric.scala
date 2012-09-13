@@ -59,7 +59,7 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
 
   override def checkInternals(){
     var count = 0;
-    for (v <- on) count += fun(v)
+    for (v <- on.value) count += fun(v)
     assert(output.getValue() == count)
   }
 }
@@ -82,8 +82,8 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
   override def setOutputVar(v:IntVar){
     output = v.asInstanceOf[IntVar]
     output.setDefiningInvariant(this)
-    NonZeroProduct = on.foldLeft(1)((acc,value) => if(value==0){acc}else{acc*fun(value)})
-    if(on.contains(0)){
+    NonZeroProduct = on.value.foldLeft(1)((acc,value) => if(value==0){acc}else{acc*fun(value)})
+    if(on.value.contains(0)){
       output := 0
     }else{
       output := NonZeroProduct
@@ -119,7 +119,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
 
   override def checkInternals(){
     var count = 1;
-    for (v <- on) count *= v
+    for (v <- on.value) count *= v
     assert(output.getValue() == count)
   }
 }

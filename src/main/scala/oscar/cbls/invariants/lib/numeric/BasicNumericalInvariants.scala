@@ -36,7 +36,7 @@ import oscar.cbls.invariants.lib.logic._;
  * @param vars is an iterable of IntVars
  * */
 case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
-  assert(vars.size>0,"Invariant plus declared with zero vars to sum up")
+  assert(vars.size>0,"Invariant + declared with zero vars to sum up")
 
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -49,7 +49,7 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := vars.foldLeft(0)((a,b) => a+b)
+    output := vars.foldLeft(0)((a,b) => a+b.value)
   }
 
   @inline
@@ -72,7 +72,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   finishInitialization()
 
   var NullVarCount:Int=vars.count(v => v.getValue() == 0)
-  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.getValue() == 0){acc}else{acc*intvar})
+  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.getValue() == 0){acc}else{acc*intvar.value})
 
   var output:IntVar = null
 

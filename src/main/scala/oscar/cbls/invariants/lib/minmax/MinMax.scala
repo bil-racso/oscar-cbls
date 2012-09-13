@@ -50,14 +50,14 @@ abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
   def Better(a: Int, b: Int): Boolean //true if a is strictly more in the direction of the invariant that b
 
   private def LoadNewMiax() {
-    var CurrentMiax: Int = vars.head
+    var CurrentMiax: Int = vars.head.value
     MiaxCount = 1
     vars.foreach(v => {
       if (v == CurrentMiax) {
         MiaxCount += 1
-      } else if (Better(v, CurrentMiax)) {
+      } else if (Better(v.value, CurrentMiax)) {
         MiaxCount = 1
-        CurrentMiax = v
+        CurrentMiax = v.value
       }
     })
     output := CurrentMiax
@@ -135,13 +135,13 @@ abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
   override def setOutputVar(v: IntVar) {
       output = v.asInstanceOf[IntVar]
       output.setDefiningInvariant(this)
-      output := h.getFirst
+      output := h.getFirst.value
   }
 
   override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
     assert(vars.contains(v), name + " notified for not interesting var")
     h.notifyChange(v)
-    output := h.getFirst
+    output := h.getFirst.value
   }
 }
 

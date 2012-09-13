@@ -31,7 +31,7 @@ import oscar.cbls.invariants.lib.numeric.Implicits._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntSetVar._
 ;
 
@@ -83,27 +83,37 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val it:Iterator[Int] = getRandomPermutation(N)
     val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
+    println("before CS creation: " + getWatch)
+
     val c:ConstraintSystem = new ConstraintSystem(m)
-    
+
+    println("after CS creation: " + getWatch)
+
     //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always alldiff
-    c.post(AllDiff(for ( q <- range) yield (q plus Queens(q)).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (Queens(q) + q).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
+    println("after AllDiff: " + getWatch)
 
     for (q <- range){c.registerForViolation(Queens(q))}
+    println("after registerViolation: " + getWatch)
 
     c.close()
+    println("after c.close: " + getWatch)
 
     val ViolationArray:Array[IntVar] = (for(q <- range) yield c.getViolation(Queens(q))).toArray
     val Tabu:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
     val It = new IntVar(m,0,Int.MaxValue,1,"it")
     val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
     val NonTabuMaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray, NonTabuQueens)
+    println("before m.close: " + getWatch)
 
     m.close(false)
+    println("after m.close: " + getWatch)
+
     print(", " + getWatch)
 
     while((c.Violation.getValue() > 0) && (It.getValue() < N)){
-      val oldviolation:Int = c.Violation
+      val oldviolation:Int = c.Violation.value
 
       // to ensure that the set of tabu queens is no too restrictive
       // (but you'd better tune the tabu better)
@@ -112,8 +122,8 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
         println("Warning: Tabu it too big compared to queens count")
       }
 
-      val q1 = selectFirst(NonTabuMaxViolQueens)
-      val q2 = selectFirst(NonTabuQueens, (q:Int) => {
+      val q1 = selectFirst(NonTabuMaxViolQueens.value)
+      val q2 = selectFirst(NonTabuQueens.value, (q:Int) => {
         q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
       })
      // println("viol: " + oldviolation + " swapped: " + q1 + " and " + q2)

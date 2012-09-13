@@ -161,11 +161,11 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     // search
     var it:Int=1
     while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
-      val allowed = LinearIndexes.filter(v => Tabu(v) < it)
+      val allowed = LinearIndexes.filter(v => Tabu(v).value < it)
       val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.swapDelta(grid(v1),grid(v2)),
                                                 (v1,v2) => (v1 < v2) && (SquareOf(v1) == SquareOf(v2))) // swap on the same line
       
-      require(SquareOf(v1)==SquareOf(v2))
+//      require(SquareOf(v1)==SquareOf(v2))
            
       grid(v1) :=: grid(v2)
       

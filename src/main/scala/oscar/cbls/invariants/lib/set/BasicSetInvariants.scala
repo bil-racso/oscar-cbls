@@ -47,7 +47,7 @@ case class Union(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   override def setOutputVar(v:IntSetVar){
       output = v
       output.setDefiningInvariant(this)
-      output := left.union(right.getValue())
+      output := left.value.union(right.value)
   }
 
   @inline
@@ -60,11 +60,11 @@ case class Union(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   override def notifyDeleteOn(v:IntSetVar,value:Int){
     assert(left == v ||right == v)
     if(v == left){
-      if (!right.contains(value)){
+      if (!right.value.contains(value)){
         output.deleteValue(value)
       }
     }else if(v == right){
-      if(!left.contains(value)){
+      if(!left.value.contains(value)){
         output.deleteValue(value)
       }
     }else{
@@ -95,17 +95,17 @@ case class Inter(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   override def setOutputVar(v:IntSetVar){
       output = v.asInstanceOf[IntSetVar]
       output.setDefiningInvariant(this)
-      output := left.intersect(right.getValue())
+      output := left.value.intersect(right.getValue())
   }
 
   @inline
   override def notifyInsertOn(v:IntSetVar,value:Int){
     if(v == left){
-      if (right.contains(value)){
+      if (right.value.contains(value)){
         output.insertValue(value)
       }
     }else if(v == right){
-      if(left.contains(value)){
+      if(left.value.contains(value)){
         output.insertValue(value)
       }
     }else{
@@ -141,17 +141,17 @@ case class Diff(left:IntSetVar, right:IntSetVar) extends IntSetInvariant  {
   override def setOutputVar(v:IntSetVar){
       output = v.asInstanceOf[IntSetVar]
       output.setDefiningInvariant(this)
-      output := left.diff(right)
+      output := left.value.diff(right.value)
   }
 
   @inline
   override def notifyInsertOn(v:IntSetVar,value:Int){
     if(v == left){
-      if (!right.contains(value)){
+      if (!right.value.contains(value)){
         output.insertValue(value)
       }
     }else if(v == right){
-      if(left.contains(value)){
+      if(left.value.contains(value)){
         output.deleteValue(value)
       }
     }else{
@@ -258,7 +258,7 @@ case class MakeSet(on:SortedSet[IntVar]) extends IntSetInvariant {
 
   override def checkInternals(){
     assert(output.getValue().size == on.size)
-    for(v <- on) assert(output.contains(v.getValue()))
+    for(v <- on) assert(output.value.contains(v.getValue()))
   }
 }
 
@@ -278,7 +278,7 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
   finishInitialization()
 
   override def setOutputVar(v:IntSetVar){
-      output = v.asInstanceOf[IntSetVar]
+      output = v
       output.setDefiningInvariant(this)
       output.setValue(SortedSet.empty[Int])
       for(i <- lb.getValue() to ub.getValue())output.insertValue(i)
@@ -309,8 +309,53 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
     assert(output.getValue().size == 0.max(ub.getValue() - lb.getValue() + 1))
      if(ub.getValue() >= lb.getValue()){
        for(i <- lb.getValue() to ub.getValue())
-         assert(output.contains(i))
+         assert(output.value.contains(i))
      }
    }
 }
 
+/**maintains the output as any value taken from the intset var parameter.
+ * if this set is empty, puts the default value ni output.
+ * @param from
+ * @param default
+ */
+case class TakeAny(from:IntSetVar,  default:Int) extends IntInvariant{
+  def MyMin: Int = from.getMinVal
+  def MyMax: Int = from.getMaxVal
+
+  var output:IntVar = null
+  registerStaticAndDynamicDependency(from)
+  finishInitialization()
+
+  var wasEmpty:Boolean = false
+
+  def setOutputVar(v: IntVar){
+    output = v
+    output.setDefiningInvariant(this)
+
+    wasEmpty = from.value.isEmpty
+    if (wasEmpty){
+      output:= default
+    }else{
+      output := from.getValue().head
+    }
+  }
+
+  override def notifyInsertOn(v: IntSetVar, value: Int){
+    if (wasEmpty){
+      output := value
+      wasEmpty = false
+    }
+  }
+
+  override def notifyDeleteOn(v: IntSetVar, value: Int){
+    if (value == output.getValue(true)){
+      if (v.value.isEmpty){
+        output := default
+        wasEmpty = true
+      }else{
+        output := from.getValue().head
+      }
+    }
+  }
+}

@@ -25,12 +25,15 @@ package oscar.cbls.jobshop
 
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
+import oscar.cbls.search.StopWatch
+
+//TODO: get MT10 and solve it.
 
 /**this class loads JobShop problems as defined in
  * http://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/jobshop1.txt
  * one problem per file
  */
-object GenericJobShopTest {
+object GenericJobShopTest extends StopWatch{
   def main(args: Array[String]) {
 
     if (args.size == 0){
@@ -82,7 +85,7 @@ object GenericJobShopTest {
         PreviousTask = NewTask
       }
     }
-
+    startWatch()
     planning.close()
 
     val solver = new JobShopSolver(planning,false)
@@ -93,6 +96,7 @@ object GenericJobShopTest {
      //println(model.dumpToDot(true,true))
     solver.Solve(MaxIt,Stable,solver.WorseFirst(),8, 50)
 
+    println("run time: " + getWatch)
     println(planning.toAsciiArt)
   }
 }

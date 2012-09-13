@@ -66,7 +66,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
       output = v
       //collecter les counts et le max
       output.setDefiningInvariant(this)
-      output := cond.getValue().foldLeft(0)((acc, i) => acc + vars(i))
+      output := cond.getValue().foldLeft(0)((acc, i) => acc + vars(i).value)
   }
 
   @inline
@@ -97,7 +97,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   }
 
   override def checkInternals() {
-    assert(output.getValue() == cond.getValue().foldLeft(0)((acc, i) => acc + vars(i)))
+    assert(output.getValue() == cond.getValue().foldLeft(0)((acc, i) => acc + vars(i).value))
   }
 }
 
@@ -207,6 +207,6 @@ case class ProdElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInv
   }
 
   override def checkInternals() {
-    assert(output.getValue() == cond.getValue().foldLeft(1)((acc, i) => acc * vars(i)))
+    assert(output.getValue() == cond.getValue().foldLeft(1)((acc, i) => acc * vars(i).value))
   }
 }

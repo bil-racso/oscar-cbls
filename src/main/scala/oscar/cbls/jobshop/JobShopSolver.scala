@@ -56,7 +56,7 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
     }
 
     var plateaulength = 0
-    var BestMakeSpan:Int = p.MakeSpan
+    var BestMakeSpan:Int = p.MakeSpan.value
 
     while (it < MaxIt && plateaulength < Stable) {
       //iterative weakening and flattening
@@ -78,9 +78,9 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("iteration: " + it)
 
-      if (p.MakeSpan < BestMakeSpan) {
+      if (p.MakeSpan.value < BestMakeSpan) {
         BestSolution = model.getSolution(true)
-        BestMakeSpan = p.MakeSpan
+        BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
       }else{
@@ -122,10 +122,10 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
 
   def RandomFlatten() {
     while (!p.EarliestOvershotResources.getValue().isEmpty) {
-      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources))
-      val t: Int = r.FirstOvershoot
+      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
+      val t: Int = r.FirstOvershoot.value
 
-      val TasksAndUse = r.TasksAndUse.filter((taksAndamount:(Task, Int)) => r.Use(t).contains(taksAndamount._1.TaskID))
+      val TasksAndUse = r.TasksAndUse.filter((taksAndamount:(Task, Int)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
       val Tasks:List[Task] = TasksAndUse.map((taskAndamount:(Task, Int)) => taskAndamount._1)
 
       val a = selectFrom(Tasks)
@@ -139,10 +139,10 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
     while (!p.WorseOvershotResource.getValue().isEmpty) {
-      val r:Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource))
-      val t: Int = selectFirst(r.HighestUsePositions)
+      val r:Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
+      val t: Int = selectFirst(r.HighestUsePositions.value)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).contains(taskAndamount._1.TaskID))
+      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
 
       val conflictSet:List[(Task,Int)] = QuickXplain(
         0,
@@ -157,7 +157,7 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       //println("flatten length: " + TaskssAndUse.length)
 
       val (a,b) = selectMax2(conflictTasks,conflictTasks,
-        (a:Task,b:Task) => (b.LatestEndDate - a.EarliestStartDate),
+        (a:Task,b:Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
         (a:Task,b:Task) => a!=b)
 
       if (Verbose) println("added " + a + "->" + b)
@@ -167,8 +167,8 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
 
   def FlattenEarliestFirst() {
     while (!p.EarliestOvershotResources.getValue().isEmpty) {
-      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources))
-      val t: Int = r.FirstOvershoot
+      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
+      val t: Int = r.FirstOvershoot.value
 
       //the two selected tasks a,b must belong to a minimal conflict set
       //and they must maximize lsd(b)-esd(a)  //pq pas led(b) - esd(a)??
@@ -178,7 +178,7 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       //uniquement b doit appartenir au conflict set.
       //et on maximise led(b) - esd(a)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).contains(taskAndamount._1.TaskID))
+      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
       val Tasks:List[Task] = TaskssAndUse.map((taskAndamount:(Task, Int)) => taskAndamount._1)
 
       val conflictSet:List[(Task,Int)] = QuickXplain(
@@ -192,7 +192,7 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       val conflictTasks:List[Task] = conflictSet.map((taskAndamount:(Task, Int)) => taskAndamount._1)
 
       val (a,b) = selectMax2(Tasks,conflictTasks,
-        (a:Task,b:Task) => (b.LatestStartDate - a.EarliestEndDate), //c'est pas l'inverse?
+        (a:Task,b:Task) => (b.LatestStartDate.value - a.EarliestEndDate.value), //c'est pas l'inverse?
         (a:Task,b:Task) => a!=b)
 
       if (Verbose) println("added " + a + "->" + b)

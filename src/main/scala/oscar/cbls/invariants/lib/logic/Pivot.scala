@@ -53,10 +53,10 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
     output := SortedSet.empty[Int]
     for(v <- values.indices){
       if(values(v).getValue() <= boundary){
-        HeapBelowOrEqual.insert(values(v))
+        HeapBelowOrEqual.insert(values(v).value)
         output.insertValue(v)
       }else{
-        HeapAbove.insert(values(v))
+        HeapAbove.insert(values(v).value)
       }
     }
   }
@@ -173,7 +173,7 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
     var count:Int = 0
     for(i <- values.indices){
       if(values(i).getValue() <= boundary.getValue()){
-        assert(output.contains(i))
+        assert(output.value.contains(i))
         count +=1
       }
     }

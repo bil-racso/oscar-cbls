@@ -6,11 +6,11 @@ trait DistributedStorageUtility{
   var storage:SortedMap[Int, AnyRef] = SortedMap.empty
 
   /**returns null if nothing was stored*/
-  def getStorageAt[T](index:Int,default:T=null)=
+  final def getStorageAt[T](index:Int,default:T=null)=
     storage.getOrElse(index,default).asInstanceOf[T]
 
-  def storeAt(index:Int,value:AnyRef){
-    storage = storage + ((index,value))
+  final def storeAt(index:Int,value:AnyRef){
+      storage = storage + ((index,value))
   }
 }
 

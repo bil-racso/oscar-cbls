@@ -173,10 +173,10 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     for (q<-range){
       Event(Queens(q),viol(q),(oldqueenposition:Int) => {
         tab(q)(oldqueenposition).icon=EMPTY
-        if (viol(q)>0){
-          tab(q)(Queens(q)).icon=CONFLICT
+        if (viol(q).value>0){
+          tab(q)(Queens(q).value).icon=CONFLICT
         }else{
-          tab(q)(Queens(q)).icon=QUEEN
+          tab(q)(Queens(q).value).icon=QUEEN
         }
       })
     }
@@ -188,7 +188,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
     var longueurplateau = 0;
     while((c.Violation.getValue() > 0) && (it < MaxIT) && !stopRequested){
-      val oldviolation:Int = c.Violation
+      val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
       val (q1,q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 

@@ -27,7 +27,7 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 
 class SuperTask(start:Task, end:Task, planning:Planning,  override val name:String = "")
   extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.getValue(), "duration of " + name),
@@ -35,7 +35,7 @@ class SuperTask(start:Task, end:Task, planning:Planning,  override val name:Stri
 
   override def post(){
     super.post()
-    this.duration <== start.EarliestStartDate minus end.EarliestEndDate
+    this.duration <== start.EarliestStartDate - end.EarliestEndDate
   }
 
   override def addDynamicPredecessor(t:Task){
@@ -69,11 +69,11 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
   }
 
   var EarliestStartDate: IntVar = null
-  val EarliestEndDate: IntVar = new IntVar(planning.model, 0, planning.maxduration, duration, "eed(" + name + ")")
+  val EarliestEndDate: IntVar = new IntVar(planning.model, 0, planning.maxduration, duration.value, "eed(" + name + ")")
 
   val LatestEndDate: IntVar = new IntVar(planning.model, 0,
     planning.maxduration, planning.maxduration, "led(" + name + ")")
-  val LatestStartDate: IntVar = LatestEndDate minus duration
+  val LatestStartDate: IntVar = LatestEndDate - duration
   var AllSucceedingTasks: IntSetVar = null
 
   var AdditionalPredecessors: IntSetVar = null

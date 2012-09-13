@@ -46,7 +46,7 @@ case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val MyMin:Int = I
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := fun(a)
+    output := fun(a.value)
   }
 
   @inline
@@ -56,7 +56,7 @@ case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val MyMin:Int = I
   }
 
   override def checkInternals(){
-    assert(output.getValue() == fun(a.getValue()))
+    assert(output.getValue() == fun(a.value))
   }
 }
 
@@ -78,12 +78,12 @@ case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), o
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := fun(a,b)
+    output := fun(a.value,b.value)
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    output := fun(a,b)
+    output := fun(a.value,b.value)
   }
 
   override def checkInternals(){
@@ -109,7 +109,7 @@ case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := fun(a,b)
+    output := fun(a.value,b.value)
   }
 
   @inline
@@ -118,7 +118,7 @@ case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int
   }
 
   override def performPropagation(){
-    output := fun(a,b)
+    output := fun(a.value,b.value)
   }
 }
 

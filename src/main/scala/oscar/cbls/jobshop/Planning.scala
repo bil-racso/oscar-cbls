@@ -27,7 +27,7 @@ package oscar.cbls.jobshop
 import oscar.cbls.invariants.core.computation.{BulkLoad, IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.algebra.Implicits._;
+import oscar.cbls.algebra.Algebra._;
 
 class Planning(val model:Model,val maxduration:Int){
 
@@ -81,7 +81,7 @@ class Planning(val model:Model,val maxduration:Int){
     }
 
     for (i <- TaskArray.indices) {
-      TaskArray(i).EarliestEndDate <== (TaskArray(i).EarliestStartDate plus TaskArray(i).duration)
+      TaskArray(i).EarliestEndDate <== (TaskArray(i).EarliestStartDate + TaskArray(i).duration)
     }
 
     MakeSpan <== SentinelTask.EarliestStartDate
@@ -131,10 +131,10 @@ class Planning(val model:Model,val maxduration:Int){
     for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
       toreturn += "" + padToLength(j.name,20) + ":" +"[" +
         padToLength("" + j.EarliestStartDate.getValue(),4) + ";" + padToLength("" + j.EarliestEndDate.getValue(),4) + "] "+
-        (if (j.duration == 1)  nStrings(j.EarliestStartDate," ") + "#\n"
-         else nStrings(j.EarliestStartDate," ") + "#" + nStrings(j.duration-2,"=") + "#\n")
+        (if (j.duration == 1)  nStrings(j.EarliestStartDate.value," ") + "#\n"
+         else nStrings(j.EarliestStartDate.value," ") + "#" + nStrings(j.duration-2,"=") + "#\n")
     }
-    toreturn += MakeSpan + "\n"
-    toreturn
+    toreturn += MakeSpan
+    toreturn + "\n"
   }
 }

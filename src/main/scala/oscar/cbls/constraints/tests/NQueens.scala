@@ -72,7 +72,9 @@ object NQueens extends SearchEngine with StopWatch{
     c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
 
     c.close()
-    m.close()
+//    m.close()
+     m.close(false)
+    println(m.dumpToDot(true,true))
 
     println("run time after model close: "+ getWatchString)
 
@@ -82,7 +84,7 @@ object NQueens extends SearchEngine with StopWatch{
 
     var longueurplateau = 0;
     while((c.Violation.getValue() > 0) && (it < MaxIT)){
-      val oldviolation:Int = c.Violation
+      val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
       val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 

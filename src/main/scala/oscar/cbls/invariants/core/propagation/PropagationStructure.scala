@@ -68,7 +68,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager {
+abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) {
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -164,7 +164,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
       LayerCount = computePositionsthroughDistanceToInput(ClusteredPropagationComponents)+1
     }
 
-    PropagationPlanning = ClusteredPropagationComponents.sortWith((p, q) => p.Position < q.Position)
 
     //puis, il faut initialiser le dag sort incremental pour toutes les composantes connexes non singleton.
     //il faut que le DAG fonctionne sur base des aretes reelles.
@@ -174,12 +173,12 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     // l'idee est donc que tous les elements de propagation propagent lors de leur initialisation.
 
     //calculer les boundary avant la premiere propagation
-    for (f <- PropagationPlanning) {
+    for (f <- ClusteredPropagationComponents) {
       f.determineBoundary()
     }
 
     if (TopologicalSort){
-      ExecutionQueue = new BinomialHeap[PropagationElement](p => p.Position, PropagationPlanning.size)
+      ExecutionQueue = new BinomialHeap[PropagationElement](p => p.Position, ClusteredPropagationComponents.size)
     }else{
       ExecutionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.Position, LayerCount)
     }
@@ -198,7 +197,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     for (scc <- StrognlyConnexComponentsList){
       scc.rescheduleIfNeeded()
     }
-    propagate()
+    //propagate() we do not propagate anymore here since the first query might require a partial propagation only
   }
 
   /**This computes the position of the clustered PE, that is: the SCC and the PE not belonging to an SCC*/
@@ -270,7 +269,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     for (p <- getPropagationElements) p.dropStaticGraph()
   }
 
-  private var PropagationPlanning: List[PropagationElement] = List.empty;
   private var ScheduledElements: List[PropagationElement] = List.empty
   private var ExecutionQueue: AbstractHeap[PropagationElement] = null
   private var FastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
@@ -656,7 +654,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a static propagation graph that does not change after the call to setupPropagationStructure
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
  */
-trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
+trait PropagationElement extends DAGNode with TarjanNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -890,7 +888,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 
   /**Performs the propagation, and some bookkeeping around it.
    */
-  def propagate() {
+  final def propagate() {
     assert(isScheduled)
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({getPropagationStructure.PropagatingElement = this; true})

@@ -46,7 +46,7 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice))){acc+indice}else{acc})
+    output := values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else{acc})
   }
 
   @inline

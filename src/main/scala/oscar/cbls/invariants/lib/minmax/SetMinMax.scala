@@ -51,7 +51,7 @@ abstract case class MiaxSet(v: IntSetVar) extends IntInvariant{
 
   def name: String
 
-  var wasEmpty:Boolean = v.isEmpty
+  var wasEmpty:Boolean = v.value.isEmpty
 
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int) {
@@ -91,7 +91,7 @@ case class MinSet(override val v: IntSetVar, Default: Int = Int.MaxValue) extend
   override def Better(a:Int,b:Int):Boolean = a < b
 
   override def performPropagation(){
-    if (v.isEmpty){
+    if (v.value.isEmpty){
       output := Default
     }else{
       output := v.getValue().firstKey
@@ -120,7 +120,7 @@ case class MaxSet(override val v: IntSetVar, Default: Int = Int.MinValue) extend
   override def Better(a:Int,b:Int):Boolean = a > b
 
   override def performPropagation(){
-    if (v.isEmpty){
+    if (v.value.isEmpty){
       output := Default
     }else{
       output := v.getValue().lastKey

@@ -136,10 +136,9 @@ object SimpleSudoku extends SearchEngine with StopWatch {
       
     // search
     while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
-      val allowed = openCells.filter(v => Tabu(v) < it)
+      val allowed = openCells.filter(v => Tabu(v).value < it)
       val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.swapDelta(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
-      require(squareOf(v1)==squareOf(v2))
-            
+
       grid(v1) :=: grid(v2)
       Tabu(v1) := it + TABU_LENGTH
       Tabu(v2) := it + TABU_LENGTH

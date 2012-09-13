@@ -57,10 +57,10 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
 
   override def checkInternals(){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v))){assert(Clusters(values(v)).contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)){assert(Clusters(values(v).value).value.contains(v))}
     }
     for(value <- Clusters.keys){
-      for (indices <- Clusters(value)){
+      for (indices <- Clusters(value).value){
         assert(values(indices).getValue() == value)
       }
     }
@@ -106,10 +106,10 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
   //In this method, we check that the outputs are correct, based on non-incremental code
   override def checkInternals(){
     for(v <- values.indices){
-      assert(clusters(values(v)).contains(v))
+      assert(clusters(values(v).value).value.contains(v))
     }
     for(value <- clusters.indices){
-      for (indices <- clusters(value)){
+      for (indices <- clusters(value).value){
         assert(values(indices).getValue() == value)
       }
     }

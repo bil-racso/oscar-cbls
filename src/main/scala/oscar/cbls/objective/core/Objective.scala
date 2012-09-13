@@ -49,7 +49,7 @@ trait ObjectiveTrait{
    */
   def getSwapVal(a:IntVar,b:IntVar):Int = {
     a :=: b
-    val NewVal:Int = ObjectiveVar
+    val NewVal = ObjectiveVar.value
     a :=: b
     NewVal
   }
@@ -75,7 +75,7 @@ trait ObjectiveTrait{
 
     //excurse
     for(assign <- a){assign._1 := assign._2}
-    val NewVal:Int = ObjectiveVar
+    val NewVal = ObjectiveVar.value
 
     //undo
     for(assign <- oldvals ){assign._1 := assign._2}

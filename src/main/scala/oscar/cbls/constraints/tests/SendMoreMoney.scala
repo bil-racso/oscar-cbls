@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.computation.Implicits._
 import oscar.cbls.invariants.lib.numeric.Implicits._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -88,16 +88,16 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // c.post(AllDiff(d)) // will be enforced
     c.post(NE(d(Letter.S.id),0))
     c.post(NE(d(Letter.M.id),0))
-    c.post(EQ(r(Carry.c4.id),d(Letter.M.id)))   
-    c.post((r(Carry.c3.id) plus d(Letter.S.id) plus d(Letter.M.id)) ==: (d(Letter.O.id) plus (10 times d(Letter.M.id))))
-    c.post((r(Carry.c2.id) plus d(Letter.E.id) plus d(Letter.O.id)) ==: (d(Letter.N.id) plus (10 times r(Carry.c3.id))))
-    c.post((r(Carry.c1.id) plus d(Letter.N.id) plus d(Letter.R.id)) ==: (d(Letter.E.id) plus (10 times r(Carry.c2.id))))
-    c.post(                    (d(Letter.D.id) plus d(Letter.E.id)) ==: (d(Letter.Y.id) plus (10 times r(Carry.c1.id))))
+    c.post(EQ(r(Carry.c4.id),d(Letter.M.id)))
+    c.post((r(Carry.c3.id) + d(Letter.S.id) + d(Letter.M.id)) === (d(Letter.O.id) + (10 * d(Letter.M.id))))
+    c.post((r(Carry.c2.id) + d(Letter.E.id) + d(Letter.O.id)) === (d(Letter.N.id) + (10 * r(Carry.c3.id))))
+    c.post((r(Carry.c1.id) + d(Letter.N.id) + d(Letter.R.id)) === (d(Letter.E.id) + (10 * r(Carry.c2.id))))
+    c.post(                    (d(Letter.D.id) + d(Letter.E.id)) === (d(Letter.Y.id) + (10 * r(Carry.c1.id))))
 
-    r(Carry.c1.id) <== ((d(Letter.D.id) plus d(Letter.E.id)) div  10)
-    r(Carry.c2.id) <== ((d(Letter.N.id) plus d(Letter.R.id) plus r(Carry.c1.id)) div 10)
-    r(Carry.c3.id) <== ((d(Letter.E.id) plus d(Letter.O.id) plus r(Carry.c2.id)) div 10)
-    r(Carry.c4.id) <== ((d(Letter.S.id) plus d(Letter.M.id) plus r(Carry.c3.id)) div 10)
+    r(Carry.c1.id) <== ((d(Letter.D.id) + d(Letter.E.id)) / 10)
+    r(Carry.c2.id) <== ((d(Letter.N.id) + d(Letter.R.id) + r(Carry.c1.id)) / 10)
+    r(Carry.c3.id) <== ((d(Letter.E.id) + d(Letter.O.id) + r(Carry.c2.id)) / 10)
+    r(Carry.c4.id) <== ((d(Letter.S.id) + d(Letter.M.id) + r(Carry.c3.id)) / 10)
     
     for(l <- Letter.list) {c.registerForViolation(d(l.id))}
 //    for(i <- Carry.list)  {c.registerForViolation(r(i.id))} // carries will be enforced so no violation
@@ -115,12 +115,12 @@ object SendMoreMoney extends SearchEngine with StopWatch {
 
     // search
     while((c.Violation.getValue() > 0) && (It.getValue() < MAX_IT)){
-      val l1 = selectFrom(NonTabuMaxViolLetter)
-      val l2 = selectMin(NonTabuLetter) (i => c.swapDelta(d(l1),d(i)), (i:Int) => i!=l1)
+      val l1 = selectFrom(NonTabuMaxViolLetter.value)
+      val l2 = selectMin(NonTabuLetter.value)(i => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation+" "+c.Violation.getValue()+" "+c.getSwapVal(d(l1),d(l2)))
+      println(c.Violation.toString +" "+c.Violation.getValue()+" "+c.getSwapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
       //r(Carry.c1.id).setValue((d(Letter.D.id).getValue()+d(Letter.E.id).getValue()) / 10)
@@ -132,7 +132,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
       // Tabu(l2) := It.getValue() + TABU_LENGTH // not a good idea to tabu the second variable
       
       It.++ // try without the dot (strange line behavior)
-      println(It + " " + c.Violation+" switching "+d(l1).name+" "+d(l2).name)
+      println(It.toString + " " + c.Violation+" switching "+d(l1).name+" "+d(l2).name)
     }	
       
     println("Solution: "+m.getSolution(true))

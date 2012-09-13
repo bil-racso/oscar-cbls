@@ -29,6 +29,7 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
 import oscar.cbls.invariants.core.computation.IntVar._
+import oscar.cbls.routing.ObjectiveFunction
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -52,19 +53,19 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := (if(ifVar.getValue() > 0) thenVar else elseVar)
+    output := (if(ifVar.getValue() > 0) thenVar else elseVar).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == ifVar){
       if(NewVal > 0 && OldVal <= 0){
-        output := thenVar
+        output := thenVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(thenVar)
       }else if(NewVal <= 0 && OldVal > 0){
-        output := elseVar
+        output := elseVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(elseVar)
@@ -112,7 +113,7 @@ case class IntElement(index:IntVar, var inputarray:Array[IntVar])
 
   override def BulkLoad(bulkedVar: Array[IntVar],bcr:(Int,Int)){
     inputarray = bulkedVar
-    KeyToCurrentVar = registerDynamicDependency(inputarray(index))
+    KeyToCurrentVar = registerDynamicDependency(inputarray(index.value))
     MyMin = bcr._1
     MyMax = bcr._2
   }
@@ -120,24 +121,24 @@ case class IntElement(index:IntVar, var inputarray:Array[IntVar])
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := inputarray.apply(index)
+    output := inputarray.apply(index.value).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == index){
-      output := inputarray(NewVal)
+      output := inputarray(NewVal).value
       //modifier le graphe de dependances
       unregisterDynamicDependency(KeyToCurrentVar)
       KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
     }else{//si c'est justement celui qui est affiche.
-      assert(v == inputarray.apply(index),"access notified for non listened var")
+      assert(v == inputarray.apply(index.value),"access notified for non listened var")
       output := NewVal
     }
   }
 
   override def checkInternals(){
-    assert(output.getValue() == inputarray(index).getValue(), this)
+    assert(output.getValue() == inputarray(index.value).getValue(), this)
   }
 
   override def toString:String= {
@@ -158,8 +159,8 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
   val KeysToInputArray:Array[KeyForElementRemoval] = new Array(inputarray.size)
 
   //TODO: this could be exchanged for an array.
-  var ValueCount:SortedMap[Int,Int] = index.foldLeft(SortedMap.empty[Int,Int])((acc,i)
-  => acc+((inputarray(i).getValue(),acc.getOrElse(inputarray(i),0)+1)))
+  var ValueCount:SortedMap[Int,Int] = index.value.foldLeft(SortedMap.empty[Int,Int])((acc,i)
+  => acc+((inputarray(i).value,acc.getOrElse(inputarray(i).value,0)+1)))
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -187,7 +188,7 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := index.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => acc+inputarray(indice))
+    output := index.value.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => acc+inputarray(indice).value)
   }
 
   @inline
@@ -209,10 +210,10 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
   override def notifyInsertOn(v:IntSetVar,value:Int){
     assert(index == v)
     KeysToInputArray.update(value,registerDynamicDependency(inputarray(value)))
-    val NewVal:Int = inputarray(value)
+    val NewVal:Int = inputarray(value).value
     val NewCount:Int = ValueCount.getOrElse(NewVal,0)+1
     ValueCount += ((NewVal,NewCount))
-    if(NewCount==1){output.insertValue(inputarray(value))}
+    if(NewCount==1){output.insertValue(inputarray(value).value)}
   }
 
   @inline
@@ -221,10 +222,10 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
     assert(KeysToInputArray(value) != null)
     unregisterDynamicDependency(KeysToInputArray(value))
     KeysToInputArray.update(value,null)
-    val OldVal:Int = inputarray(value)
+    val OldVal:Int = inputarray(value).value
     val NewCount:Int = ValueCount.getOrElse(OldVal,0)-1 //le orelse c'est pour compiler.
     ValueCount+=((OldVal,NewCount))
-    if(NewCount==0) output.deleteValue(inputarray(value))
+    if(NewCount==0) output.deleteValue(inputarray(value).value)
   }
 
   override def checkInternals(){
@@ -266,7 +267,7 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
 
   override def BulkLoad(bulkedVar: Array[IntSetVar],bcr:(Int,Int)){
     inputarray = bulkedVar
-    KeyToCurrentVar = registerDynamicDependency(inputarray(index))
+    KeyToCurrentVar = registerDynamicDependency(inputarray(index.value))
     MyMin = bcr._1
     MyMax = bcr._2
   }
@@ -275,13 +276,13 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := inputarray.apply(index)
+    output := inputarray.apply(index.value).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     assert(v == index)
-    output := inputarray(NewVal)
+    output := inputarray(NewVal).value
     //modifier le graphe de dependances
     unregisterDynamicDependency(KeyToCurrentVar)
     KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
@@ -289,13 +290,13 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
 
   @inline
   override def notifyDeleteOn(v: IntSetVar, value: Int){
-    assert(v == inputarray.apply(index))
+    assert(v == inputarray.apply(index.value))
     output.deleteValue(value)
   }
 
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int){
-    assert(v == inputarray.apply(index))
+    assert(v == inputarray.apply(index.value))
     output.insertValue(value)
   }
 
