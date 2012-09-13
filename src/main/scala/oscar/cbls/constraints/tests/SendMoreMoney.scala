@@ -116,7 +116,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // search
     while((c.Violation.getValue() > 0) && (It.getValue() < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter)
-      val l2 = selectMin(NonTabuLetter, (i:Int) => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
+      val l2 = selectMin(NonTabuLetter) (i => c.swapDelta(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)

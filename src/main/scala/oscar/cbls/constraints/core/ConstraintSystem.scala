@@ -43,6 +43,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   finishInitialization(_model)
 
   val Violation:IntVar = new IntVar(this.model,0,Int.MaxValue,0,"Violation")
+  def violation = Violation
   private var Violations:SortedMap[Variable,IntVar] = SortedMap.empty[Variable,IntVar]
   private var PostedConstraints:List[(Constraint,IntVar)] = List.empty
   private var AllVars:SortedMap[Variable,List[(Constraint,IntVar)]]=SortedMap.empty

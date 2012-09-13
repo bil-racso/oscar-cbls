@@ -92,7 +92,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
 
     while((c.Violation.getValue() > 0) && (it < MaxIT)){
       val holeMax:(Int)=selectMax(range, (p:Int) => holes(p))
-      val holeMin:(Int)=selectMin(range, (p:Int) => holes(p), (p:Int) => p != holeMax )
+      val holeMin:(Int)=selectMin(range)(p => holes(p), (p:Int) => p != holeMax )
 
       holes(holeMax).setValue(holes(holeMax).toInt-1)
       holes(holeMin).setValue(holes(holeMin).toInt+1)
