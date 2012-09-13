@@ -26,13 +26,13 @@ import oscar.cp.core._
 class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store,"objective") with Objective {
   
     def this(x: CPVarInt) = this(Array(x):_*)
+    
+    val bestObjs = Array.fill(objVars.size)(0)
 	protected val bounds = Array.fill(objVars.size)(0)
 	
+	protected val tightenedOnce = Array.fill(objVars.size)(false)
 	
-  
-    // relax
-    //val objConstr : CPObjectiveConstraint = createObjectiveConstraint(objVars:_*)
-    
+   
     private var currObj = 0
     
     def currentObjectiveIdx = currObj
@@ -43,13 +43,22 @@ class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store,"o
       if (i > objVars.size || i < 0) {
         throw new IllegalArgumentException("objective index between " + 0 + " and "+(objVars.size-1))
       }
+      restoreBest()
       currObj = i
       
+      
+      if (tightenedOnce(i)) {
+        reTighten()
+      }
     }
 	
   	def tighten() = { }
+  	
+  	def reTighten() = { }
 	
 	def relax() = { }
+	
+	def restoreBest() = { }
 	
 	def isOptimum() = false
 	
@@ -64,6 +73,18 @@ class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store,"o
      * get the bound of the current objective
      */
 	def bound = bounds(currentObjectiveIdx)
+	
+	/**
+	 * set the current best objective found so far
+	 */
+    def bestObj_=(value: Int) = {
+	  bestObjs(currentObjectiveIdx) = value
+	}
+
+    /**
+     * get the current best objective found so far
+     */
+	def bestObj = bestObjs(currentObjectiveIdx)	
     
     def isOK() = s.propagate(this) != CPOutcome.Failure
 	

@@ -61,7 +61,7 @@ public class Store extends ReversibleSearchNode {
 	
 	private boolean inPropagate = false;
 	
-	protected CPObjective objective = new CPObjective(CPVarInt.apply(this, 0));
+	public CPObjective objective = new CPObjective(CPVarInt.apply(this, 0));
 
 	
 	@SuppressWarnings("unchecked")

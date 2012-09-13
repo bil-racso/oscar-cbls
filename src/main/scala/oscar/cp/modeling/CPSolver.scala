@@ -32,11 +32,10 @@ class NoSol(msg : String) extends Exception(msg)
 
 class CPSolver() extends Store() {
     
-  
     case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
     var lns: Option[LNS] = None
     
-    protected var lastLNSRestartCompleted = false
+    private var lastLNSRestartCompleted = false
   
     /**
      * @return true if the last lns restart was caused because of completed exploration of search tree, 
@@ -44,8 +43,8 @@ class CPSolver() extends Store() {
      */
     def isLastLNSRestartCompleted = lastLNSRestartCompleted
     
-    def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
-	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+    def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
+	  lns = Option(new LNS(nbRestarts,nbFailures,() => restart))
 	}
 
 	/**
@@ -73,6 +72,21 @@ class CPSolver() extends Store() {
 		solveAll()
 		this
 	}
+	
+	
+	//(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
+	
+	def minimize(objectives: CPVarInt*): CPSolver = {
+	  stateObjective = Unit => {
+		  val o = new CPObjectiveMinimize(objectives:_*)
+		  objective = o
+		  post(o)
+	  }
+	  solveAll()
+	  this
+	}
+	
+	
 
 	def maximize(obj : CPVarInt) : CPSolver = {
 		stateObjective = Unit => {

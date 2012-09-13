@@ -7,6 +7,7 @@ class CPObjectiveMaximize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
   
 	for (i <- 0 until bounds.size) {
       bounds(i) = Int.MinValue
+      bestObjs(i) = Int.MinValue
     }
 	
 	private val upperBounds = Array.tabulate(objVars.size)(i => objVars(i).min)
@@ -16,11 +17,22 @@ class CPObjectiveMaximize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
   	    throw new RuntimeException("objective not bound:" + currentObjective)
   	  }
   	  println("objective "+currentObjectiveIdx+" tightened to "+(bound).max(currentObjective.value)+" ub:"+upperBounds(currentObjectiveIdx))
-  	  bound = (bound+1).max(currentObjective.value + 1)
+  	  for (i <- 0 until objVars.size) {
+  	    bestObjs(i) = objVars(i).value
+  	    bounds(i) = bestObjs(i)
+  	  }
+  	  bestObj = currentObjective.value
+  	  bound = bestObj+1
+  	  tightenedOnce(currentObjectiveIdx) = true
   	}
+	
+  	override def reTighten() = {
+  	  bound = bestObj+1
+  	}  	
 	
 	override def relax() = {
 	  bound = Int.MinValue
+	  bestObj = Int.MinValue
 	}
 	
 	override def isOptimum() = {
@@ -35,5 +47,9 @@ class CPObjectiveMaximize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
 		}
 		CPOutcome.Suspend;
 	}
+	
+	override def restoreBest() = {
+	  bound = bestObj
+	}	
 
 }
