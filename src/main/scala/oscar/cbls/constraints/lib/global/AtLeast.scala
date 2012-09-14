@@ -30,7 +30,7 @@ import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.IntConst
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.lib.logic.IntITE
 
 /**Implement the AtLeast constraint on IntVars.
@@ -74,7 +74,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) exten
 
   private val ViolationByVal:Array[IntVar] = (for(i <- -offset to N0) yield {
     if(bounds.contains(i)){
-      IntITE(ValueCount(i+offset) minus IntConst(bounds.getOrElse(i,-1)),Violation, 0).toIntVar
+      IntITE(ValueCount(i+offset) - IntConst(bounds.getOrElse(i,-1)),Violation, 0).toIntVar
     }else{
       Violation
     }}).toArray
@@ -82,7 +82,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) exten
   for(v <- variables){
     val varval = v.getValue()
     ValueCount(varval + offset) :+= 1
-    Violations(v) <== IntElement(v plus offset, ViolationByVal)
+    Violations(v) <== IntElement(v + offset, ViolationByVal)
   }
 
   for(i <- range){

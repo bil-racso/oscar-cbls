@@ -58,10 +58,9 @@ object Reagan {
     val Boire = new Task(3, planning, "drink")
     Boire.addResource(Reagan, 2)
 
-    Boire.addStaticPredecessor(Reflechir)
-
-    Dormir.addStaticPredecessor(Manger)
-    Parler.addStaticPredecessor(Chiquer)
+    Reflechir precedes  Boire
+    Manger precedes Dormir
+    Chiquer precedes Parler
 
     planning.close()
     model.close(false)

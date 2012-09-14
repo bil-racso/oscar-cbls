@@ -41,7 +41,7 @@ import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import javax.swing.border.LineBorder
 
 class NQueensApplet extends Applet {
@@ -167,8 +167,8 @@ class NQueensApplet extends Applet {
 
       val c: ConstraintSystem = new ConstraintSystem(m)
       //c.post(AllDiff(Queens)) handled trough permutations
-      c.post(AllDiff(for (q <- range) yield (q plus Queens(q)).toIntVar))
-      c.post(AllDiff(for (q <- range) yield (q minus Queens(q)).toIntVar))
+      c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
+      c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
       for (q <- range) { c.registerForViolation(Queens(q)) }
       c.close()

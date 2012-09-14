@@ -27,7 +27,7 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{BulkLoad, Variable, IntVar}
 ;
@@ -76,11 +76,11 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
   {
     val listedVars:List[IntVar] = variables.toList
-    val accesses:List[IntElement] = listedVars.map((i:IntVar) => IntElement(i plus offset, null))
+    val accesses:List[IntElement] = listedVars.map((i:IntVar) => IntElement(i + offset, null))
 
     BulkLoad(accesses,ValueCount)
     for(varsaccess:((IntVar, IntElement)) <- listedVars.zipAll(accesses,null,null)){
-      Violations(varsaccess._1) <== (varsaccess._2 minus 1)
+      Violations(varsaccess._1) <== (varsaccess._2 - 1)
     }
   }
 

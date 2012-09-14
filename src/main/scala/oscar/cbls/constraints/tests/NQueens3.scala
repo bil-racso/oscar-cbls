@@ -27,7 +27,7 @@ import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
 import oscar.cbls.invariants.core.computation.Implicits._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
@@ -62,8 +62,8 @@ object NQueens3 extends SearchEngine with StopWatch{
     val c:ConstraintSystem = new ConstraintSystem(m)
     
     //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always alldiff
-    c.post(AllDiff(for ( q <- range) yield (q plus Queens(q)).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
     for (q <- range){c.registerForViolation(Queens(q))}
 
@@ -94,7 +94,7 @@ object NQueens3 extends SearchEngine with StopWatch{
       
       It.++
       
-      println(It + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
+      println("" + It + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
 
       if(minviolationplateau <= c.Violation.getValue()) longueurplateau+=1 else longueurplateau = 0
       minviolationplateau = minviolationplateau.min(c.Violation.getValue())

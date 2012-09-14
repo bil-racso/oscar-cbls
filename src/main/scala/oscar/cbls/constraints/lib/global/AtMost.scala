@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement._
 import oscar.cbls.invariants.lib.logic.IntVar2IntVarFun._
 import oscar.cbls.invariants.lib.logic.{IntElement, IntVar2IntVarFun}
-import oscar.cbls.invariants.lib.numeric.Implicits._;
+import oscar.cbls.algebra.Algebra._;
 
 //TODO: check
 /**Implements the AtMost constraint on IntVar.
@@ -75,7 +75,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
     if(Bound(varval) != -1){
       ValueCount(varval + offset) :+= 1
     }
-    Violations(v) <== (IntElement(v plus offset, ValueCount) minus IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
+    Violations(v) <== (IntElement(v + offset, ValueCount) - IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
   }
 
   for(i <- range){

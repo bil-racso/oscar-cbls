@@ -24,7 +24,7 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
@@ -38,7 +38,7 @@ case class LE(left:IntVar, right:IntVar) extends Constraint {
 
   registerConstrainedVariables(left,right)
 
-  val Violation:IntVar = Max2(0,left minus right)
+  val Violation:IntVar = Max2(0,left - right)
 
   finishInitialization()
 
@@ -64,7 +64,7 @@ case class GE(override val left:IntVar, override val right:IntVar) extends LE(ri
 case class L(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
 
-  val Violation:IntVar = Max2(0, left minus right plus 1)
+  val Violation:IntVar = Max2(0, left + right + 1)
   finishInitialization(Violation.getPropagationStructure)
 
   /**the violation is Max(0,right-left + 1)

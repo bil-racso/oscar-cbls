@@ -38,6 +38,8 @@ class Task(val duration:Int, planning:Planning, val name:String = ""){
   var StaticPredecessors:List[Task]=List.empty
   def addStaticPredecessor(j:Task){StaticPredecessors = j :: StaticPredecessors}
 
+  def precedes(j:Task) {j.addStaticPredecessor(this)}
+
   var Resources:List[(Resource,Int)]=List.empty
 
   /**use this method to add resource requirement to a task.

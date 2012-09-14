@@ -106,7 +106,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    */
   def getStalls = StrognlyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
-  private var StrognlyConnexComponentsList: List[StrognlyConnexComponent] = List.empty
+  private var StrognlyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**To call when one has defined all the propagation elements on which propagation will ever be triggered.
    * It must be called before any propagation is triggered,
@@ -149,7 +149,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
         a.head
       } else {
         acyclic = false;
-        val c = new StrognlyConnexComponent(a, this, GetNextID())
+        val c = new StronglyConnectedComponent(a, this, GetNextID())
         StrognlyConnexComponentsList = c :: StrognlyConnexComponentsList
         c
       }
@@ -533,7 +533,7 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   def initialize(value:T){for (i <- storage.indices) storage.update(i,value)}
 }
 
-class StrognlyConnexComponent(val Elements: Iterable[PropagationElement],
+class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
                               val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with DAG {
 
   var ScheduledElements: List[PropagationElement] = List.empty
@@ -665,7 +665,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
   /**this refers to the propagationComponent that contains the PropagationElement.
    * it is managed by the propagation structure
    */
-  var component: StrognlyConnexComponent = null
+  var component: StronglyConnectedComponent = null
 
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
    * this is managed by the PropagationElement
