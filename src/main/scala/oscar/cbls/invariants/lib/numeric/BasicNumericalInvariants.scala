@@ -21,9 +21,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.lib.numeric
-
 
 import collection.immutable.SortedSet;
 import collection.immutable.SortedMap;
@@ -79,7 +77,6 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   //TODO: find better bound, this is far too much
   def MyMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
   def MyMin = - MyMax
-
 
   override def setOutputVar(v:IntVar){
     output = v
@@ -140,6 +137,12 @@ case class Prod2(left:IntVar, right:IntVar)
  * do not set right to zero, as usual... */
 case class Div(left:IntVar, right:IntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l:Int, r:Int) => l/r)
+
+/**left / right
+ * where left, right, and output are IntVar
+ * do not set right to zero, as usual... */
+case class Mod(left:IntVar, right:IntVar)
+  extends IntVarIntVar2IntVarFun(left, right, (l:Int, r:Int) => l - r*(l/r))
 
 /**abs(v) (absolute value)
  * where output and v are IntVar*/

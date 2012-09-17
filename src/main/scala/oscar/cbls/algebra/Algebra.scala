@@ -24,13 +24,13 @@
 
 package oscar.cbls.algebra
 
-import oscar.cbls.invariants.lib.numeric.{Div, Prod, Minus, Sum2}
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
+import oscar.cbls.invariants.lib.numeric._
 
 /**Include this object whenever you want to use concise notation
  * It provides the following ginfix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
@@ -48,7 +48,8 @@ object Algebra{
     def * (v:IntVar):IntInvariant = Prod(List(x,v))
 
     def / (v:IntVar):IntInvariant = Div(x,v)
-
+    def % (v:IntVar):IntInvariant = Mod(x, v)
+    
     def ===(v:IntVar):Constraint = new EQ(x,v)
     def !==(v:IntVar):Constraint =  new NE(x,v)
     def >>=(v:IntVar):Constraint = new G(x,v)
