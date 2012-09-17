@@ -330,11 +330,11 @@ trait Invariant extends PropagationElement{
    * @param v the variable that are registered
    * @param offset and offset applied to the position in the array when reigstering the dynamic dependency
    */
-  def registerStaticAndDynamicDependencyArrayIndex[T <: Variable](v:Array[T],offset:Int = 0){
-    for (i <- v.indices){
+  def registerStaticAndDynamicDependencyArrayIndex[T <: Variable](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] = {
+    Array.tabulate(v.size)((i:Int) => {
       registerStaticDependency(v(i))
       registerDynamicDependency(v(i),i + offset)
-    }
+    })
   }
 
   def registerStaticAndDynamicDependenciesNoID(v:Variable*){
@@ -706,15 +706,15 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       if (this.DefiningInvariant!= null && model != null){
         model.propagate(this)
         OldValue
-      }else{
+      }else if (model == null){
         Value
+      }else{
+        performPropagation()
+        //it will be propagated again by the model, but what else can you do...
+        OldValue
       }
     }
   }
-  
-
-
-  implicit def apply:Int = this.getValue()
 
   override def performPropagation(){
     if(OldValue!=Value){
