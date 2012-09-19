@@ -29,6 +29,8 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import oscar.cbls.invariants.lib.logic.{Filter, IntVar2IntVarFun, Routes, Cluster}
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.core.Constraint
+import collection.immutable.SortedMap
+import scala.math._
 
 /**
  * @param N the number of points in the problem.
@@ -38,6 +40,10 @@ import oscar.cbls.constraints.core.Constraint
 class VRP(val N: Int, val V: Int, val m: Model) {
   //successors
   val Next: Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, 0, N, 0, "next" + i))
+
+  for(v <- 1 to V){Next(v) := v}
+
+  val Nodes = 1 until N
 
   override def toString():String = {
     var toreturn = ""
@@ -51,6 +57,35 @@ class VRP(val N: Int, val V: Int, val m: Model) {
       toreturn+="\n"
     }
     toreturn
+  }
+
+  /**
+   * this flips the segment of route from "from" to "to"
+   * they are supposed to be related to each other
+   */
+  def flipSegment(BeforeSegmentStart:Int, SegmentEnd:Int){
+    var nodestack:List[Int] = List.empty
+    //register the list of nodes
+    var current:Int = BeforeSegmentStart
+    while(current != SegmentEnd) {
+      nodestack = current :: nodestack
+      current = Next(current).value
+    }
+    while(!nodestack.isEmpty){
+      Next(current) := nodestack.head
+      current = nodestack.head
+      nodestack = nodestack.tail
+    }
+  }
+
+  def moveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int){
+    val SegmentStart:Int = Next(BeforeSegmentStart).value
+    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).value
+    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).value
+
+    Next(BeforeSegmentStart) := oldNextOfSegmentEnd
+    Next(SegmentEnd) := oldNextOfInsertionPoint
+    Next(InsertionPoint) := SegmentStart
   }
 }
 
@@ -75,6 +110,18 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   val PositionInRoute = routes.PositionInRoute
   val RouteNr = routes.RouteNr
+
+  def isASegment(fromNode:Int,toNode:Int):Boolean = {
+    RouteNr(fromNode).value == RouteNr(toNode).value &&
+      PositionInRoute(fromNode).value < PositionInRoute(toNode).value
+  }
+
+  /**assuming fromNode,toNOde form a segment*/
+  def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
+    RouteNr(fromNode).value == RouteNr(node).value &&
+      PositionInRoute(fromNode).value < PositionInRoute(node).value && //Todo: check this
+      PositionInRoute(node).value <= PositionInRoute(node).value
+  }
 }
 
 /**declares an objective function, attached to the VRP. */
@@ -83,12 +130,13 @@ trait ObjectiveFunction extends VRP {
   m.registerForPartialPropagation(objective)
 }
 
-/**maintains the hop distance in the VRP, based either on a matrix, or on another mechanism. */
+/**maintains the hop distance in the VRP, based either on a matrix, or on another mechanism. *
+ * We conside rtht a hopdistance of Int.MaxVal is unreacheable
+ */
 trait HopDistance extends VRP {
   val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, N, 0, "hopDistanceForLeaving" + i)}
 
   val overallDistance: IntVar = Sum(hopDistance)
-
 
   /**This method sets the distance to use for the hop between points.
    * If a more complex function is to be used, set a controlling invariant to the hopDistances yourself
@@ -126,5 +174,34 @@ trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
 trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction {
   def recordAddedFunction(AddedValue: IntVar) {
     objective <== overallDistance + AddedValue
+  }
+}
+
+/**finds the nearest neighbor of each point
+ * used by some neigborhood searches
+ */
+trait ClosestNeigborPoints extends VRP with HopDistance{
+  
+  private var closestNeigbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+
+  def saveKNearestPoints(k:Int){
+    val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
+    closestNeigbors += ((k,neighbors))
+  }
+  
+  def computeKNearestNeighbors(node:Int, k:Int):List[Int] = {
+    val reachableneigbors = Nodes.filter((next:Int)
+      => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
+    //TODO: this is deeply inefficient. use a lazy quicksort instead.
+    val sortedneighbors = reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor)))
+    sortedneighbors.toList.take(k)
+  }
+
+  def getKNearestNeighbors(k:Int, node:Int):Iterable[Int] = {
+    if (k >= N-1) return Nodes
+    if(!closestNeigbors.isDefinedAt(k)){
+      saveKNearestPoints(k:Int)
+    }
+    closestNeigbors(k)(node)
   }
 }

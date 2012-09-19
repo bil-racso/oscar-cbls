@@ -44,33 +44,21 @@ case class Routes(V: Int,
   for(v <- PositionInRoute){v.setDefiningInvariant(this)}
   for(v <- RouteNr){v.setDefiningInvariant(this)}
 
-  for (v <- 1 until V) DecorateVehicleRoute(V)
+  for (v <- 1 to V) DecorateVehicleRoute(V)
   PositionInRoute(0) := 0
   RouteNr(0) := 0
 
   def DecorateVehicleRoute(V:Int){
     var currentID = Next(V).value
     var currentPosition = 1
+    PositionInRoute(V) := 0
+    RouteNr(V) := V
     while(currentID !=V){
       assert(currentID>V)
       PositionInRoute(currentID) := currentPosition
       RouteNr(currentID) := V
       currentID = Next(currentID).value
       currentPosition +=1
-    }
-  }
-
-  /**
-   *
-   * @param nodeID est le noeud dont on a changé le next.
-   */
-  def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
-    var currentNode = nodeID
-    while(!isUpToDate(currentNode) && Next(currentNode).value > V){
-      val nextID = Next(currentNode).value
-      PositionInRoute(nextID) := PositionInRoute(currentNode).value + 1
-      RouteNr(nextID) := RouteNr(currentNode).value
-      currentNode = nextID
     }
   }
 
@@ -82,23 +70,28 @@ case class Routes(V: Int,
     ArrayOfUnregisterKeys(i) = null
     ToUpdate = i :: ToUpdate
     ToUpdateCount +=1
-    this.scheduleForPropagation()
+    scheduleForPropagation()
   }
 
   @inline
   final def isUpToDate(node:Int):Boolean = {
     ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
-      && (PositionInRoute(node).getValue(true) == PositionInRoute(Next(node).value).getValue(true)))
+      && (PositionInRoute(node).getValue(true) + 1 == PositionInRoute(Next(node).value).getValue(true)))
   }
 
   override def performPropagation(){
     //le numéro de noeud, son ancienne position dans le circuit
     val heap = new BinomialHeap[(Int,Int)]((a:(Int,Int)) => a._2, ToUpdateCount)
     for (node <- ToUpdate){
-      if(isUpToDate(node)){
+      if(Next(node).value == 0){
+        //node is unrouted now
+        RouteNr(node) := 0
+        PositionInRoute(node) := 0
+        ArrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(Next(node),node)
+      }else if(isUpToDate(node)){
         ArrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(Next(node),node)
       }else{
-        heap.insert((node,PositionInRoute(node).value))
+        heap.insert((node,PositionInRoute(node).getValue(true)))
       }
     }
     ToUpdate = List.empty
@@ -109,6 +102,36 @@ case class Routes(V: Int,
       DecorateRouteStartingFromAndUntilConformOrEnd(currentNodeForUpdate)
       ArrayOfUnregisterKeys(currentNodeForUpdate)
         = registerDynamicallyListenedElement(Next(currentNodeForUpdate),currentNodeForUpdate)
+    }
+  }
+
+  /**
+   * @param nodeID est le noeud dont on a changé le next.
+   */
+  def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
+    var currentNode = nodeID
+    while(!isUpToDate(currentNode) && Next(currentNode).value > V){
+      val nextID = Next(currentNode).value
+      PositionInRoute(nextID) := (PositionInRoute(currentNode).getValue(true)+ 1)
+      RouteNr(nextID) := RouteNr(currentNode).getValue(true)
+      currentNode = nextID
+    }
+  }
+
+  override def checkInternals(){
+    for(n <- Next.indices){
+      val next = Next(n).value
+      if (next !=0 && n!=0){
+        assert(RouteNr(next).value == RouteNr(n).value)
+        assert(PositionInRoute(next).value == PositionInRoute(n).value +1)
+      }else{
+        assert(RouteNr(n) ==0)
+        assert(PositionInRoute(n) == 0)
+      }
+      if(n <=V && n!=0){
+        assert(RouteNr(n).value == n)
+        assert(PositionInRoute(n).value == 0)
+      }
     }
   }
 }

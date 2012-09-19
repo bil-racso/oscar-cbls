@@ -32,6 +32,7 @@ import oscar.cbls.invariants.lib.logic.{Cluster, IntVar2IntVarFun, Routes}
 import oscar.cbls.invariants.lib.set.TakeAny._
 import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
+import scala.math._
 
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
@@ -48,15 +49,17 @@ object tspsolver extends SearchEngine with StopWatch with App{
     val coordX = Array.tabulate(N)(_ => random.nextInt(1000))
     val coordY = Array.tabulate(N)(_ => random.nextInt(1000))
     Array.tabulate(N,N)((i,j) => if (i==0 ||j == 0) 0 else
-      math.round(math.sqrt((   math.pow(coordX(i) - coordX(j), 2)
-                             + math.pow(coordY(i) - coordY(j), 2) ).toFloat)).toInt)
+      round(sqrt((   pow(coordX(i) - coordX(j), 2)
+                   + pow(coordY(i) - coordY(j), 2) ).toFloat)).toInt)
   }
 
   val DistanceMatrix = getPlanarDistanceMatrix(N)
 
   val m: Model = new Model(false,false,false,false)
-  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
+  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeigborPoints
   vrp.installCostMatrix(DistanceMatrix)
+
+  vrp.saveKNearestPoints(20)
 
   m.close()
 
@@ -68,16 +71,17 @@ object tspsolver extends SearchEngine with StopWatch with App{
   println("start val: " + vrp.objective)
 
   var saturated = false
-  var move:OnePointMove = null
+  var move:Neighbor = null
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.objective.value
-    move = OnePointMove.getFirstImprovingMove(vrp,move)
+    //move = OnePointMove.getFirstImprovingMove(vrp,move)
+    move = ThreeOptMove.getFirstImprovingMove(vrp,20)
     if (move != null && move.getObjAfter < oldobj){
-      vrp.objective.value
-      println("it: " + it + " " + move + " " + vrp.objective)
       it +=1
       move.comit
+      vrp.objective.value
+      println("it: " + it + " " + move + " " + vrp.objective)
     }else saturated = true
   }
 

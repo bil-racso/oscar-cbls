@@ -26,7 +26,10 @@ package oscar.cbls.routing
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{Snapshot, IntVar}
 
-object OnePointMove extends SearchEngine with BasicMoves{
+/**moves a point in a circuit to another place.
+ * size if O(n²)
+ */
+object OnePointMove extends SearchEngine{
   def getBestMove(vrp:VRP with ObjectiveFunction, startFrom:OnePointMove = null):OnePointMove = findMove(false, vrp, startFrom)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction, startFrom:OnePointMove = null):OnePointMove = findMove(true,vrp, startFrom)
   def justMove(vrp:VRP with ObjectiveFunction, startFrom:OnePointMove = null) {getFirstImprovingMove(vrp, startFrom).comit}
@@ -75,7 +78,7 @@ object OnePointMove extends SearchEngine with BasicMoves{
       vrp.m.saveValues(vrp.Next(predOfMovedPoint), vrp.Next(vrp.Next(predOfMovedPoint).value), vrp.Next(PutAfter))
     else null
 
-    moveSegment(predOfMovedPoint,  vrp.Next(predOfMovedPoint).value,  PutAfter, vrp)
+    vrp.moveSegment(predOfMovedPoint,  vrp.Next(predOfMovedPoint).value,  PutAfter)
 
     oldstate
   }
@@ -95,3 +98,4 @@ case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int
   def getObjAfter = objAfter
   override def toString():String = "moved " + vrp.Next(predOfMovedPoint).value + " after " + PutAfter
 }
+

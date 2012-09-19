@@ -28,31 +28,3 @@ abstract class Neighbor{
   def comit
 }
 
-trait BasicMoves{
-  /**
-   * this flips the segment of route from "from" to "to"
-   * they are supposed to be related to each other
-   */
-  def flipSegment(BeforeSegmentStart:Int, SegmentEnd:Int, vrp:VRP){
-    var nodestack:List[Int] = List.empty
-    //register the list of nodes
-    var current:Int = BeforeSegmentStart
-    while(current != SegmentEnd) nodestack = current :: nodestack
-    while(!nodestack.isEmpty){
-      vrp.Next(current) := nodestack.head
-      current = nodestack.head
-      nodestack = nodestack.tail
-    }
-  }
-
-  def moveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int, vrp:VRP){
-    val SegmentStart:Int = vrp.Next(BeforeSegmentStart).value
-    val oldNextOfSegmentEnd:Int = vrp.Next(SegmentEnd).value
-    val oldNextOfInsertionPoint:Int = vrp.Next(InsertionPoint).value
-
-    vrp.Next(BeforeSegmentStart) := oldNextOfSegmentEnd
-    vrp.Next(SegmentEnd) := oldNextOfInsertionPoint
-    vrp.Next(InsertionPoint) := SegmentStart
-  }
-}
-
