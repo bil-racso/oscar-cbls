@@ -205,3 +205,6 @@ trait ClosestNeigborPoints extends VRP with HopDistance{
     closestNeigbors(k)(node)
   }
 }
+
+//TODO: add something for the most interesting next to change eg: the lognest distance or something smarter (since the lognest distance might e a useful distance, actually)
+//or the distance to next / avg distance to k closest

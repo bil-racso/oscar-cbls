@@ -75,8 +75,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.objective.value
-    //move = OnePointMove.getFirstImprovingMove(vrp,move)
-    move = ThreeOptMove.getFirstImprovingMove(vrp,20)
+//    move = OnePointMove.getFirstImprovingMove(vrp,move)
+    move = ThreeOptMove.getFirstImprovingMove(vrp, 20, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit

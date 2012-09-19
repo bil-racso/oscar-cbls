@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.computation.Snapshot
  */
 object ThreeOptMove extends SearchEngine{
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor= findMove(true,vrp, k)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
   /**search for the proper One point move
    *
@@ -40,11 +40,18 @@ object ThreeOptMove extends SearchEngine{
    */
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr,
-               k:Int):ThreeOptMove = {
+               k:Int, prevmove:Neighbor = null):ThreeOptMove = {
     var BestObj:Int = vrp.objective.value
     var move:((Int, Int, Int)) = null
 
-    for (insertionPoint <- 1 until vrp.N){
+    def nextModulo(n:Int):Int = {
+      if (n+1 >= vrp.N) 1
+      else n+1
+    }
+
+    var startInsertionPoint = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
+    var insertionPoint = startInsertionPoint
+    do{
       //we search for a segment,
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point
@@ -53,6 +60,7 @@ object ThreeOptMove extends SearchEngine{
            if insertionPoint != beforeSegmentStart){
         for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
              if beforeSegmentStart != segmentEnd &&
+               segmentEnd != insertionPoint &&
                vrp.isASegment(beforeSegmentStart, segmentEnd) &&
                !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd)){
           val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
@@ -65,10 +73,10 @@ object ThreeOptMove extends SearchEngine{
           }
         }
       }
-    }
+      insertionPoint = nextModulo(insertionPoint)
+    }while(insertionPoint != startInsertionPoint)
     if (move == null) null
-    else ThreeOptMove(move._1,move._2,move._3, BestObj, vrp)
-    null
+    else ThreeOptMove(move._1, move._2, move._3, BestObj, vrp)
   }
 
   /*Performs the three-opt move without flip
@@ -107,5 +115,7 @@ case class ThreeOptMove(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:I
   def comit {ThreeOptMove.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
   override def toString():String = "moved " + beforeSegmentStart + "-...->" + segmentEnd + " after "+ insertionPoint
+
+  def startNodeForNextExploration: Int = insertionPoint
 }
 
