@@ -183,7 +183,7 @@ trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction 
  */
 trait ClosestNeighborPoints extends VRP with HopDistance{
   
-  private var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+  var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
 
   def saveKNearestPoints(k:Int){
     val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
@@ -200,7 +200,7 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
 
   def getKNearestNeighbors(k:Int, node:Int):Iterable[Int] = {
     if (k >= N-1) return Nodes
-    if(!closestNeigbors.isDefinedAt(k)){
+    if(!closestNeighbors.isDefinedAt(k)){
       saveKNearestPoints(k:Int)
     }
     closestNeighbors(k)(node)

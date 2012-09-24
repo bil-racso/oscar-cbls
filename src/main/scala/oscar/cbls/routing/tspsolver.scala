@@ -37,7 +37,7 @@ import scala.math._
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
 
-  val N:Int = 250
+  val N:Int = 1000
 
   this.startWatch()
   
