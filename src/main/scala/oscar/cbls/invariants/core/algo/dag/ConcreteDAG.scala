@@ -53,6 +53,6 @@ class ConcreteDAGNode(val _UniqueID:Int) extends DAGNode{
 
 class ConcreteDAG(Nodes:Iterable[DAGNode]) extends DAG{
 //  var Nodes:List[DAGNode] = List.empty
-  def getNodes:Iterable[DAGNode] = Nodes
+  def nodes:Iterable[DAGNode] = Nodes
 }
 

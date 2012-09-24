@@ -44,7 +44,7 @@ import scala.collection.mutable.HashSet
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.invariants.lib.set.MakeSet
 import collection.immutable.SortedSet
-import oscar.cbls.objective.core.Objective
+import oscar.cbls.objective.Objective
 
 /**
  * Sudoku generator on NxN grids where N is a Square
@@ -138,7 +138,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       }
     }
     showGrid(grid,N)
-            
+
     // constraint system
     val c:ConstraintSystem = new ConstraintSystem(m)
     
