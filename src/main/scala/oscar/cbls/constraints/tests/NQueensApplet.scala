@@ -183,7 +183,7 @@ class NQueensApplet extends Applet {
       while ((c.Violation.getValue() > 0) && (it < MaxIT) && !stopRequested) {
         val oldviolation: Int = c.Violation.value
         val allowedqueens = range.filter(q => Tabu(q) < it)
-        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.swapDelta(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
+        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
 
         swapQueens(q1, q2)
         Tabu(q1) = it + tabulength
