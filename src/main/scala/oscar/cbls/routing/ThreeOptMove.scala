@@ -30,8 +30,8 @@ import oscar.cbls.invariants.core.computation.Snapshot
  * size is O(n³)
  */
 object ThreeOptMove extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
   /**search for the proper One point move
    *
@@ -39,7 +39,7 @@ object ThreeOptMove extends SearchEngine{
    * @param vrp the model of the problem
    */
   def findMove(FirstImprove:Boolean,
-               vrp:VRP with ObjectiveFunction with ClosestNeigborPoints with PositionInRouteAndRouteNr,
+               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
                k:Int, prevmove:Neighbor = null):ThreeOptMove = {
     var BestObj:Int = vrp.objective.value
     var move:((Int, Int, Int)) = null
@@ -49,6 +49,8 @@ object ThreeOptMove extends SearchEngine{
       else n+1
     }
 
+    //TODO: BUG here: it sometimes generates a cycle.
+
     var startInsertionPoint = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
     var insertionPoint = startInsertionPoint
     do{
@@ -57,7 +59,7 @@ object ThreeOptMove extends SearchEngine{
       //its end should be close to the next of the insertion point
       //begin and end should be on the same route and in this order
       for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)
-           if insertionPoint != beforeSegmentStart){
+           if insertionPoint != beforeSegmentStart ){
         for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
              if beforeSegmentStart != segmentEnd &&
                segmentEnd != insertionPoint &&
@@ -99,6 +101,7 @@ object ThreeOptMove extends SearchEngine{
     oldstate
   }
 
+  //TODO: use the objective.core.ObjectiveTrait trait
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
 
     val oldstate = doMove(beforeFrom, to, insertPoint, vrp, true)

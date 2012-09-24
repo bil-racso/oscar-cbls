@@ -82,6 +82,7 @@ object OnePointMove extends SearchEngine{
     oldstate
   }
 
+  //TODO: use the objective.core.ObjectiveTrait trait
   def getObjAfterMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with ObjectiveFunction):Int = {
 
     val snapshot = doMove(predOfMovedPoint, PutAfter, vrp, true)

@@ -37,7 +37,7 @@ import scala.math._
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
 
-  val N:Int = 1000
+  val N:Int = 250
 
   this.startWatch()
   
@@ -56,7 +56,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   val DistanceMatrix = getPlanarDistanceMatrix(N)
 
   val m: Model = new Model(false,false,false,false)
-  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeigborPoints
+  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
   vrp.installCostMatrix(DistanceMatrix)
 
   vrp.saveKNearestPoints(20)
@@ -70,19 +70,27 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   println("start val: " + vrp.objective)
 
+  var nsize = 20
   var saturated = false
   var move:Neighbor = null
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.objective.value
 //    move = OnePointMove.getFirstImprovingMove(vrp,move)
-    move = ThreeOptMove.getFirstImprovingMove(vrp, 20, move)
+    move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
       vrp.objective.value
       println("it: " + it + " " + move + " " + vrp.objective)
-    }else saturated = true
+    }else{
+//      if (nsize == 40){
+        saturated = true
+//      }else{
+//        nsize = 40
+//        println("GOING TO k=40")
+//      }
+    }
   }
 
   println("done " + getWatchString)

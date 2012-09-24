@@ -68,10 +68,10 @@ trait ObjectiveTrait{
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getAssignVal(a:SortedMap[IntVar,Int]):Int = {
+  def getAssignVal(a:Iterable[(IntVar,Int)]):Int = {
     //memorize
-    val oldvals:Map[IntVar,Int] = a.foldLeft(SortedMap.empty[IntVar,Int])(
-      (acc,IntVarAndInt) => acc + ((IntVarAndInt._1,IntVarAndInt._1.getValue())))
+    val oldvals:List[(IntVar,Int)] = a.foldLeft(List.empty[(IntVar, Int)])((acc:List[(IntVar, Int)], IntVarAndInt:(IntVar, Int))
+      => ((IntVarAndInt._1,IntVarAndInt._1.value)) :: acc)
 
     //excurse
     for(assign <- a){assign._1 := assign._2}

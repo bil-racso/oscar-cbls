@@ -79,9 +79,9 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   }
 
   def moveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int){
-    val SegmentStart:Int = Next(BeforeSegmentStart).value
-    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).value
-    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).value
+    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
+    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
+    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
 
     Next(BeforeSegmentStart) := oldNextOfSegmentEnd
     Next(SegmentEnd) := oldNextOfInsertionPoint
@@ -119,8 +119,8 @@ trait PositionInRouteAndRouteNr extends VRP {
   /**assuming fromNode,toNOde form a segment*/
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
     RouteNr(fromNode).value == RouteNr(node).value &&
-      PositionInRoute(fromNode).value < PositionInRoute(node).value && //Todo: check this
-      PositionInRoute(node).value <= PositionInRoute(node).value
+      PositionInRoute(fromNode).value <= PositionInRoute(node).value && //Todo: check this
+      PositionInRoute(node).value <= PositionInRoute(toNode).value
   }
 }
 
@@ -128,10 +128,11 @@ trait PositionInRouteAndRouteNr extends VRP {
 trait ObjectiveFunction extends VRP {
   val objective: IntVar = new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objective)
+  //TODO: use the objective.core.ObjectiveTrait trait
 }
 
 /**maintains the hop distance in the VRP, based either on a matrix, or on another mechanism. *
- * We conside rtht a hopdistance of Int.MaxVal is unreacheable
+ * We consider that a hop distance of Int.MaxVal is unreachable
  */
 trait HopDistance extends VRP {
   val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, N, 0, "hopDistanceForLeaving" + i)}
@@ -178,21 +179,21 @@ trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction 
 }
 
 /**finds the nearest neighbor of each point
- * used by some neigborhood searches
+ * used by some neighborhood searches
  */
-trait ClosestNeigborPoints extends VRP with HopDistance{
+trait ClosestNeighborPoints extends VRP with HopDistance{
   
-  private var closestNeigbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+  private var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
 
   def saveKNearestPoints(k:Int){
     val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
-    closestNeigbors += ((k,neighbors))
+    closestNeighbors += ((k,neighbors))
   }
   
   def computeKNearestNeighbors(node:Int, k:Int):List[Int] = {
     val reachableneigbors = Nodes.filter((next:Int)
       => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
-    //TODO: this is deeply inefficient. use a lazy quicksort instead.
+    //TODO: this is deeply inefficient. use a lazy quicksort instead, orr a partial sort based on a heap?
     val sortedneighbors = reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor)))
     sortedneighbors.toList.take(k)
   }
@@ -202,9 +203,6 @@ trait ClosestNeigborPoints extends VRP with HopDistance{
     if(!closestNeigbors.isDefinedAt(k)){
       saveKNearestPoints(k:Int)
     }
-    closestNeigbors(k)(node)
+    closestNeighbors(k)(node)
   }
 }
-
-//TODO: add something for the most interesting next to change eg: the lognest distance or something smarter (since the lognest distance might e a useful distance, actually)
-//or the distance to next / avg distance to k closest
