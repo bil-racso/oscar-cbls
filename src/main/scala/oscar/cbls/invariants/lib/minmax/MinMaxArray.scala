@@ -66,48 +66,33 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
  * @param cond is the condition, cannot be null
  * update is O(log(n))
  * */
-abstract case class MiaxArray(var vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar,(Int,Int)]{
+abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int,Int)]{
 
-  var keyForRemoval: Array[KeyForElementRemoval] = null
-  var h: BinomialHeapWithMoveExtMem[Int] = null
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
   var output: IntVar = null
 
   if(cond != null){ 
     registerStaticDependency(cond)
     registerDeterminingDependency(cond)
   }
-  
-  if(vars != null){
-    for (v <- vars) registerStaticDependency(v)
+
+  val bcr = bulkRegister(vars)
+  val MyMin = bcr._1
+  val MyMax = bcr._2
+
+  if(cond != null){
+      for (i <- cond.getValue()) {
+      h.insert(i)
+      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+    }
   }
 
   finishInitialization()
 
-  if(vars != null) BulkLoad(vars,performBulkComputation(vars))
-
   override def performBulkComputation(bulkedVar: Array[IntVar])={
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.MinVal < acc) intvar.MinVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.MaxVal > acc) intvar.MaxVal else acc))
-  }
-
-  var MyMin = 0
-  var MyMax = 0
-
-  override def BulkLoad(bulkedVar: Array[IntVar],bcr: (Int,Int)){
-    vars = bulkedVar
-    keyForRemoval = new Array(vars.size)
-    h = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-    if (cond == null){
-
-    }else{
-    for (i <- cond.getValue()) {
-      h.insert(i)
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-    }
-    }
-    MyMin = bcr._1
-    MyMax = bcr._2
-
   }
 
   def name: String

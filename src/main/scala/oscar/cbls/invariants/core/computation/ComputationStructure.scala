@@ -39,7 +39,8 @@ class Model(override val Verbose:Boolean = false,
             override val DebugMode:Boolean = false,
             override val NoCycle:Boolean = false,
             override val TopologicalSort:Boolean = false)
-  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort){
+  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort)
+  with Bulker{
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
@@ -257,18 +258,25 @@ trait Invariant extends PropagationElement{
 
   def getPropagationStructure = this.model
 
+  final def preFinishInitialization(model:Model = null):Model = {
+    if (this.model== null){
+      if (model == null){
+        this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
+      }else{
+        this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
+      }
+    }
+    this.model
+  }
+
   /**Must be called by all invariant after they complete their initialization
    * that is: before they get their output variable.
    * This performs some registration to the model, which is discovered by exploring the variables that are statically registered to the model
    * no more variable can be registered statically after this method has been called.
    * @param model; if specified, it only checks that the model is coherent, and registers to it for the ordering
    */
-  def finishInitialization(model:Model = null){
-    if (model == null){
-      this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
-    }else{
-      this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
-    }
+  final def finishInitialization(model:Model = null){
+    preFinishInitialization(model)
     if (this.model!= null){
       UniqueID = this.model.registerInvariant(this)
     }else{

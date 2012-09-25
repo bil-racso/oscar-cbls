@@ -34,70 +34,68 @@ import oscar.cbls.jobshop.{JobShopSolver, Task, Resource, Planning}
  * http://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/jobshop1.txt
  * one problem per file
  */
-object GenericJobShopTest extends StopWatch {
-  def main(args: Array[String]) {
+object GenericJobShopTest extends StopWatch with App {
 
-    if (args.size == 0) {
-      println("usage: GenericJobShopTest fileName maxit stable")
-      sys.exit()
-    }
-
-    val file = Source.fromFile(args(0))
-
-    val MaxIt = args(1).toInt
-    val Stable = args(2).toInt
-
-    val src: Array[String] = file.mkString.split("\\s+")
-    file.close()
-
-    println("JobShop(" + args(0) + ")")
-    val WordReader = src.iterator
-
-    val JobCount = WordReader.next().toInt
-    val MachineCount = WordReader.next().toInt
-
-    println("MaxIt: " + MaxIt)
-    println("Stable: " + Stable)
-    println("Jobs: " + JobCount)
-    println("Machines: " + MachineCount)
-    println("Tasks: " + JobCount * MachineCount + "\n")
-
-    val model = new Model(false, false, false)
-    val planning = new Planning(model, 6500)
-
-    val MachineArray: Array[Resource] = new Array[Resource](MachineCount)
-
-    for (MachineID <- MachineArray.indices) {
-      MachineArray(MachineID) = new Resource(planning, 1, "Machine" + MachineID)
-    }
-
-    for (JobID <- 0 until JobCount) {
-      var PreviousTask: Task = null
-      for (TaskID <- MachineArray.indices) {
-        val MachineID = WordReader.next().toInt
-        val Duration = WordReader.next().toInt
-
-        val NewTask = new Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
-        NewTask.addResource(MachineArray(MachineID), 1)
-
-        if (PreviousTask != null)
-          NewTask.addStaticPredecessor(PreviousTask)
-
-        PreviousTask = NewTask
-      }
-    }
-    startWatch()
-    planning.close()
-
-    val solver = new JobShopSolver(planning, false)
-
-    model.close()
-
-    println("start search")
-    //println(model.dumpToDot(true,true))
-    solver.Solve(MaxIt, Stable, solver.WorseFirst(), 8, 50)
-
-    println("run time: " + getWatch)
-    println(planning.toAsciiArt)
+  if (args.size == 0) {
+    println("usage: GenericJobShopTest fileName maxit stable")
+    sys.exit()
   }
+
+  val file = Source.fromFile(args(0))
+
+  val MaxIt = args(1).toInt
+  val Stable = args(2).toInt
+
+  val src: Array[String] = file.mkString.split("\\s+")
+  file.close()
+
+  println("JobShop(" + args(0) + ")")
+  val WordReader = src.iterator
+
+  val JobCount = WordReader.next().toInt
+  val MachineCount = WordReader.next().toInt
+
+  println("MaxIt: " + MaxIt)
+  println("Stable: " + Stable)
+  println("Jobs: " + JobCount)
+  println("Machines: " + MachineCount)
+  println("Tasks: " + JobCount * MachineCount + "\n")
+
+  val model = new Model(false, false, false)
+  val planning = new Planning(model, 6500)
+
+  val MachineArray: Array[Resource] = new Array[Resource](MachineCount)
+
+  for (MachineID <- MachineArray.indices) {
+    MachineArray(MachineID) = new Resource(planning, 1, "Machine" + MachineID)
+  }
+
+  for (JobID <- 0 until JobCount) {
+    var PreviousTask: Task = null
+    for (TaskID <- MachineArray.indices) {
+      val MachineID = WordReader.next().toInt
+      val Duration = WordReader.next().toInt
+
+      val NewTask = new Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      NewTask.addResource(MachineArray(MachineID), 1)
+
+      if (PreviousTask != null)
+        PreviousTask precedes NewTask
+
+      PreviousTask = NewTask
+    }
+  }
+  startWatch()
+  planning.close()
+
+  val solver = new JobShopSolver(planning, false)
+
+  model.close()
+
+  println("start search")
+  //println(model.dumpToDot(true,true))
+  solver.Solve(MaxIt, Stable, solver.WorseFirst(), 8, 50)
+
+  println("run time: " + getWatch)
+  println(planning.toAsciiArt)
 }

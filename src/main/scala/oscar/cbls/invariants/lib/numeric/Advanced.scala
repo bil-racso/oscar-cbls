@@ -48,19 +48,11 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)
 
-  if(vars != null){
-    for(v <- vars)registerStaticDependency(v)
-    BulkLoad(vars, null)
+  bulkRegister(vars)
+  for(i <- cond.getValue()){
+    keyForRemoval(i) = registerDynamicDependency(vars(i),i)
   }
-
   finishInitialization()
-
-  override def BulkLoad(bulkedVar: Array[IntVar], bcr: Unit){
-    vars = bulkedVar
-    for(i <- cond.getValue()){
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-    }
-  }
 
   override def setOutputVar(v: IntVar) {
       output = v
@@ -106,7 +98,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones.
  */
-case class ProdElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   def MyMin = Int.MinValue
@@ -118,21 +110,14 @@ case class ProdElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInv
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)
 
-  if(vars != null){
-    for(v <- vars)registerStaticDependency(v)
-    BulkLoad(vars, null)
+  bulkRegister(vars)
+  for(i <- cond.getValue()){
+    keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
   }
 
   finishInitialization()
   var NullVarCount:Int = 0
   var NonNullProd:Int = 0
-
-  override def BulkLoad(bulkedVar: Array[IntVar], bcr: Unit){
-    vars = bulkedVar
-    for(i <- cond.getValue()){
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-    }
-  }
 
   override def setOutputVar(v: IntVar) {
     output = v

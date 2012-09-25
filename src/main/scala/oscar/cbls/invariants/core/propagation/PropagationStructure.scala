@@ -23,7 +23,6 @@
 
 package oscar.cbls.invariants.core.propagation
 
-
 import oscar.cbls.invariants.core.algo.dag._;
 import oscar.cbls.invariants.core.algo.tarjan._
 import oscar.cbls.invariants.core.algo.dll._;
@@ -927,4 +926,3 @@ trait PropagationElement extends DAGNode with TarjanNode{
 /**This is the node type to be used for bulking
  **/
 trait BulkPropagator extends PropagationElement
-

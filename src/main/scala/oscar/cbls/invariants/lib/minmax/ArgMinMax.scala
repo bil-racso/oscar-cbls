@@ -79,10 +79,10 @@ case class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override va
  * @param cond is the condition, can be null
  * update is O(log(n))
  * */
-abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,default:Int) extends IntSetInvariant with Bulked[IntVar,(Int,Int)]{
+abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,default:Int) extends IntSetInvariant with Bulked[IntVar, (Int,Int)]{
 
-  var keyForRemoval: Array[KeyForElementRemoval] = null
-  var h: BinomialHeapWithMoveExtMem[Int] = null
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
   var output: IntSetVar = null
   var Miax: IntVar = null
 
@@ -91,39 +91,30 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     registerDeterminingDependency(cond)
   }
 
-  if(vars != null){
-    registerStaticDependencyAll(vars)
-  }
+  val (minOfMiax,maxOfMiax) = bulkRegister(vars)
 
   finishInitialization()
 
-  if(vars != null) BulkLoad(vars,performBulkComputation(vars))
+  if(cond != null){
+    for (i <- cond.getValue()) {
+      h.insert(i)
+      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+    }
+  }else{
+    for (i <- vars.indices) {
+      h.insert(i)
+      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+    }
+  }
+
+  Miax = new IntVar(model,minOfMiax,maxOfMiax,
+    if (cond != null && cond.getValue().isEmpty) default else vars(h.getFirst).getValue(), ExtremumName)
+
+  Miax.setDefiningInvariant(this)
 
   override def performBulkComputation(bulkedVar: Array[IntVar])={
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.MinVal < acc) intvar.MinVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.MaxVal > acc) intvar.MaxVal else acc))
-  }
-
-  override def BulkLoad(bulkedVar: Array[IntVar],bcr: (Int,Int)){
-    vars = bulkedVar
-    keyForRemoval = new Array(vars.size)
-    h = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-    if(cond != null){
-      for (i <- cond.getValue()) {
-        h.insert(i)
-        keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-      }
-    }else{
-      for (i <- vars.indices) {
-        h.insert(i)
-        keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-      }      
-    }
-
-    Miax = new IntVar(model,bcr._1,bcr._2,
-      if (cond != null && cond.getValue().isEmpty) default else vars(h.getFirst).getValue(), ExtremumName)
-
-    Miax.setDefiningInvariant(this)
   }
 
   def name: String
