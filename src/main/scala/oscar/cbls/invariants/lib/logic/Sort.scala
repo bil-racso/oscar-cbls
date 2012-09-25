@@ -46,7 +46,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
 
   {
     //initial sort of the variables, this is in brackets to free Sorting asap
-    val Sorting:Array[Int] = values.indices.toArray.sortBy(indice => values(indice).getValue())
+    val Sorting:Array[Int] = values.indices.toArray.sortBy(indice => values(indice).value)
     for(i <- values.indices){
       ReversePerm(i) := Sorting(i)
       ForwardPerm(Sorting(i)) := i
@@ -68,8 +68,8 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     while(true){
       val PositionInSorting:Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if(PositionInSorting == values.indices.last) return //last position
-      val ValueAbove:Int=values(ReversePerm(PositionInSorting+1).getValue(true)).getValue()
-      if(ValueAbove<v.getValue()) swap(PositionInSorting,PositionInSorting+1)
+      val ValueAbove:Int=values(ReversePerm(PositionInSorting+1).getValue(true)).value
+      if(ValueAbove<v.value) swap(PositionInSorting,PositionInSorting+1)
       else return
     }
   }
@@ -80,8 +80,8 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     while(true){
       val PositionInSorting:Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if(PositionInSorting == 0) return //first position
-      val ValueBelow:Int=values(ReversePerm(PositionInSorting-1).getValue(true)).getValue()
-      if(ValueBelow>v.getValue()) swap(PositionInSorting,PositionInSorting-1)
+      val ValueBelow:Int=values(ReversePerm(PositionInSorting-1).getValue(true)).value
+      if(ValueBelow>v.value) swap(PositionInSorting,PositionInSorting-1)
       else return
     }
   }
@@ -103,7 +103,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     }
     for(i <- range){
       for(j <- range){
-        assert(!(i < j) || (values(ReversePerm(i).getValue(true)).getValue() <= values(ReversePerm(j).getValue(true)).getValue()), "Sort error: " + values.toList + " ReversePerm: " + ReversePerm.toList)
+        assert(!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value), "Sort error: " + values.toList + " ReversePerm: " + ReversePerm.toList)
       }
     }
   }

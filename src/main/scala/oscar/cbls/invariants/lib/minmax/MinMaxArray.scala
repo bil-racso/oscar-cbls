@@ -40,7 +40,7 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
 
   override def name: String = "MaxArray"
 
-  override def Ord(v: IntVar): Int = -v.getValue()
+  override def Ord(v: IntVar): Int = -v.value
 
   override def ExtremumName: String = "Max"
 }
@@ -55,7 +55,7 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
 
   override def name: String = "MinArray"
 
-  override def Ord(v: IntVar): Int = v.getValue()
+  override def Ord(v: IntVar): Int = v.value
 
   override def ExtremumName: String = "Min"
 }
@@ -77,14 +77,17 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
     registerDeterminingDependency(cond)
   }
 
-  val bcr = bulkRegister(vars)
-  val MyMin = bcr._1
-  val MyMax = bcr._2
+  val (myMin,myMax) = bulkRegister(vars)
 
   if(cond != null){
-      for (i <- cond.getValue()) {
+    for (i <- cond.value) {
       h.insert(i)
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
+    }
+  }else{
+    for (i <- vars.indices) {
+      h.insert(i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
     }
   }
 
@@ -105,7 +108,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
     if(h.isEmpty){
       output := default
     }else{
-      output := vars(h.getFirst).getValue()
+      output := vars(h.getFirst).value
     }
   }
 
@@ -113,7 +116,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
   override def notifyIntChanged(v: IntVar, index:Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
-    output := vars(h.getFirst).getValue()
+    output := vars(h.getFirst).value
   }
 
   @inline
@@ -123,7 +126,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
 
     //mettre a jour le heap
     h.insert(value)
-    output :=  vars(h.getFirst).getValue()
+    output :=  vars(h.getFirst).value
   }
 
   @inline
@@ -138,7 +141,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
     if(h.isEmpty){
       output := default
     }else{
-      output := vars(h.getFirst).getValue()
+      output := vars(h.getFirst).value
     }
   }
 }

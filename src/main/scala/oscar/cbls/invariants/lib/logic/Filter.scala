@@ -40,8 +40,8 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
   finishInitialization()
 
-  def MyMin = values.indices.start
-  def MyMax = values.indices.end
+  def myMin = values.indices.start
+  def myMax = values.indices.end
 
   override def setOutputVar(v:IntSetVar){
     output = v
@@ -59,8 +59,8 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
 
   override def checkInternals(){
     for(i <- values.indices){
-      assert(!cond(values(i).getValue()) ||output.getValue().contains(i))
-      assert(cond(values(i).getValue()) || !output.getValue().contains(i))
+      assert(!cond(values(i).value) ||output.value.contains(i))
+      assert(cond(values(i).value) || !output.value.contains(i))
     }
   }
 }

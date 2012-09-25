@@ -42,8 +42,8 @@ abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
   for(v <- vars)registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def MyMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
-  override def MyMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
+  override def myMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
+  override def myMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
 
   var MiaxCount: Int = 0
 
@@ -116,8 +116,8 @@ case class MinLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
 abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
   def name: String
 
-  override def MyMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
-  override def MyMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
+  override def myMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
+  override def myMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
 
   for(v <- vars)registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -157,7 +157,7 @@ case class Min(vars: SortedSet[IntVar]) extends Miax(vars) {
 
   override def name = "Min"
 
-  override def Ord(v: IntVar): Int = v.getValue()
+  override def Ord(v: IntVar): Int = v.value
 
   override def Better(a:Int,b:Int):Boolean = a < b
 }
@@ -173,7 +173,7 @@ case class Max(vars: SortedSet[IntVar]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Max declared with zero vars to max")
   override def name = "Max"
 
-  override def Ord(v: IntVar): Int = -v.getValue()
+  override def Ord(v: IntVar): Int = -v.value
 
   override def Better(a:Int,b:Int):Boolean = a > b
 }

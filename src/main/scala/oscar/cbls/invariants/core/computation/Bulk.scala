@@ -31,26 +31,25 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant{
 
   /**registers a static dependency to all variables mentioned in the bulkedVars.
    * @param bulkedVars: an iterable of variables to bulk together
-   * @param name a reference name to identify to which bulk in the invariant this belongs to. Several bulks can be done with a single invariants
+   * @param id a reference name to identify to which bulk in the invariant this belongs to. Several bulks can be done with a single invariants
    * @param noBulk set to false if you want to bypass the bulk mechanism actually
    * @return the result of performBulkComputation(bulkedVars),  possibly computed by co-bulking invariants
    */
-  final def bulkRegister(bulkedVars: Array[VarType], name:String = "", noBulk:Boolean = false): BulkedComputationResult = {
+  final def bulkRegister(bulkedVars: Array[VarType], id:Int= 0, noBulk:Boolean = false): BulkedComputationResult = {
 
     if (noBulk){
       this.registerStaticDependencyAll(bulkedVars)
       return performBulkComputation(bulkedVars)
     }
 
-    val m:Model = this.preFinishInitialization()
+    val m:Model = this.preFinishInitialization(bulkedVars(0).model)
     if (m == null){
       //no bulking possible
-      println("no model found, so no bulk")
       this.registerStaticDependencyAll(bulkedVars)
-      performBulkComputation(bulkedVars)
+      performBulkComputationID(bulkedVars,id)
     }else{
       //check for existing bulk
-      val identifyingString = this.getClass.getName + "/" + name
+      val identifyingString = this.getClass.getName + "/" + id
 
       val incredibleBulk = m.getBulk(identifyingString, bulkedVars.asInstanceOf[Array[Variable]])
 
@@ -70,6 +69,7 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant{
     }
   }
 
+  def performBulkComputationID(vars: Array[VarType], id:Int): BulkedComputationResult = performBulkComputation(vars)
   def performBulkComputation(vars: Array[VarType]): BulkedComputationResult = null.asInstanceOf[BulkedComputationResult]
 }
 

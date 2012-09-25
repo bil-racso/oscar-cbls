@@ -21,14 +21,10 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.lib.numeric
 
 import oscar.cbls.invariants.core.computation._;
 import oscar.cbls.invariants.core.propagation._;
-import oscar.cbls.invariants.core.computation.Invariant._
-import collection.immutable.{SortedMap, SortedSet}
-import oscar.cbls.invariants.core.computation.IntVar._
 
 /** sum(i in cond) vars(i)
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
@@ -39,8 +35,8 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
-  def MyMin = Int.MinValue
-  def MyMax = Int.MaxValue
+  def myMin = Int.MinValue
+  def myMax = Int.MaxValue
   var output: IntVar = null
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
@@ -49,7 +45,8 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   registerDeterminingDependency(cond)
 
   bulkRegister(vars)
-  for(i <- cond.getValue()){
+
+  for(i <- cond.value){
     keyForRemoval(i) = registerDynamicDependency(vars(i),i)
   }
   finishInitialization()
@@ -58,7 +55,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
       output = v
       //collecter les counts et le max
       output.setDefiningInvariant(this)
-      output := cond.getValue().foldLeft(0)((acc, i) => acc + vars(i).value)
+      output := cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)
   }
 
   @inline
@@ -66,7 +63,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     //it is always a listened one, but we could check this here
     assert(vars(index)==v)
     assert(keyForRemoval(index)!=null)
-    output := output.getValue() - OldVal + NewVal
+    output := output.value - OldVal + NewVal
   }
 
   @inline
@@ -75,7 +72,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     assert(keyForRemoval(value) == null)
     keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
 
-    output := output.getValue() + vars(value).getValue()
+    output := output.value + vars(value).value
   }
 
   @inline
@@ -85,11 +82,11 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     unregisterDynamicDependency(keyForRemoval(value))
     keyForRemoval.update(value, null)
 
-    output := output.getValue() - vars(value).getValue()
+    output := output.value - vars(value).value
   }
 
   override def checkInternals() {
-    assert(output.getValue() == cond.getValue().foldLeft(0)((acc, i) => acc + vars(i).value))
+    assert(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
   }
 }
 
@@ -101,8 +98,8 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
 case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(cond != null, "cond cannot be null for ProdElements")
 
-  def MyMin = Int.MinValue
-  def MyMax = Int.MaxValue
+  def myMin = Int.MinValue
+  def myMax = Int.MaxValue
   var output: IntVar = null
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
@@ -111,8 +108,9 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   registerDeterminingDependency(cond)
 
   bulkRegister(vars)
-  for(i <- cond.getValue()){
-    keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+
+  for(i <- cond.value){
+    keyForRemoval(i) = registerDynamicDependency(vars(i),i)
   }
 
   finishInitialization()
@@ -122,8 +120,8 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   override def setOutputVar(v: IntVar) {
     output = v
     output.setDefiningInvariant(this)
-    NullVarCount = cond.getValue().count(i => vars(i).getValue() == 0)
-    NonNullProd = cond.getValue().foldLeft(1)((acc,i) => if(vars(i).getValue() == 0){acc}else{acc*vars(i).getValue()})
+    NullVarCount = cond.value.count(i => vars(i).value == 0)
+    NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i).value == 0){acc}else{acc*vars(i).value})
     if (NullVarCount != 0){
       output := 0
     }else{
@@ -159,10 +157,10 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     assert(keyForRemoval(value) == null)
     keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
 
-    if(vars(value).getValue() == 0){
+    if(vars(value).value == 0){
       NullVarCount +=1
     }else{
-      NonNullProd *=vars(value).getValue()
+      NonNullProd *=vars(value).value
     }
     if (NullVarCount == 0){
       output := NonNullProd
@@ -179,10 +177,10 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     unregisterDynamicDependency(keyForRemoval(value))
     keyForRemoval.update(value, null)
 
-    if(vars(value).getValue() == 0){
+    if(vars(value).value == 0){
       NullVarCount -=1
     }else{
-      NonNullProd =NonNullProd / vars(value).getValue()
+      NonNullProd =NonNullProd / vars(value).value
     }
     if (NullVarCount == 0){
       output := NonNullProd
@@ -192,6 +190,6 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   }
 
   override def checkInternals() {
-    assert(output.getValue() == cond.getValue().foldLeft(1)((acc, i) => acc * vars(i).value))
+    assert(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value))
   }
 }

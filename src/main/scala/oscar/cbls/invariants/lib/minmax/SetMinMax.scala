@@ -34,8 +34,8 @@ abstract case class MiaxSet(v: IntSetVar) extends IntInvariant{
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMax = v.getMaxVal
-  def MyMin = v.getMinVal
+  def myMax = v.getMaxVal
+  def myMin = v.getMinVal
 
   def Better(a: Int, b:Int): Boolean
 
@@ -65,7 +65,7 @@ abstract case class MiaxSet(v: IntSetVar) extends IntInvariant{
 
   @inline
   override def notifyDeleteOn(v: IntSetVar, value: Int) {
-    if (v.getValue().isEmpty){ //TODO: avoid querying this directly on the intsetvar!
+    if (v.value.isEmpty){ //TODO: avoid querying this directly on the intsetvar!
       wasEmpty = true
       output := Default
     } else if(!this.isScheduled && value == output.getValue(true)){
@@ -94,15 +94,15 @@ case class MinSet(override val v: IntSetVar, Default: Int = Int.MaxValue) extend
     if (v.value.isEmpty){
       output := Default
     }else{
-      output := v.getValue().firstKey
+      output := v.value.firstKey
     }
   }
 
   override def checkInternals(){
-    if (v.getValue().isEmpty){
-      assert(output.getValue() == Default)
+    if (v.value.isEmpty){
+      assert(output.value == Default)
     }else{
-      assert(output.getValue() == v.getValue().foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      assert(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
     }
   }
 }
@@ -123,15 +123,15 @@ case class MaxSet(override val v: IntSetVar, Default: Int = Int.MinValue) extend
     if (v.value.isEmpty){
       output := Default
     }else{
-      output := v.getValue().lastKey
+      output := v.value.lastKey
     }
   }
 
   override def checkInternals(){
-    if (v.getValue().isEmpty){
-      assert(output.getValue() == Default)
+    if (v.value.isEmpty){
+      assert(output.value == Default)
     }else{
-      assert(output.getValue() == v.getValue().foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      assert(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
     }
   }
 }

@@ -1000,10 +1000,10 @@ object Implicits{
 }
 
 abstract class IntInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntVar:IntVar = {
-    val a = new IntVar(model,MyMin,MyMax,0,this.getClass.getSimpleName)
+    val a = new IntVar(model,myMin,myMax,0,this.getClass.getSimpleName)
     a <== this //ca invoque setOutputVar en fait.
     a
   }
@@ -1023,10 +1023,10 @@ object IntInvariant{
 }
 
 abstract class IntSetInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntSetVar:IntSetVar = {
-    val a = new IntSetVar(model,MyMin,MyMax,this.getClass.getSimpleName,SortedSet.empty)
+    val a = new IntSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
     a <== this //the variable calls setoutputVar
     a
   }
@@ -1050,8 +1050,8 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMax = v.MaxVal
-  def MyMin = v.MinVal
+  def myMax = v.MaxVal
+  def myMin = v.MinVal
 
   override def checkInternals(){
     assert(output.getValue(true) == v.getValue())
@@ -1076,8 +1076,8 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  val MyMin = v.getMinVal
-  val MyMax = v.getMaxVal
+  val myMin = v.getMinVal
+  val myMax = v.getMaxVal
 
   override def checkInternals(){
     assert(output.getValue(true).intersect(v.getValue()).size == v.getValue().size)
@@ -1106,8 +1106,8 @@ case class Singleton(v:IntVar) extends IntSetInvariant  {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMin=v.MinVal
-  def MyMax = v.MaxVal
+  def myMin=v.MinVal
+  def myMax = v.MaxVal
 
   override def checkInternals(){
     assert(output.getValue(true).size == 1)

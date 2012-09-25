@@ -42,7 +42,7 @@ case class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override va
 
   override def name: String = "ArgMaxArray"
 
-  override def Ord(v: IntVar): Int = -v.getValue()
+  override def Ord(v: IntVar): Int = -v.value
 
   override def ExtremumName: String = "Max of ArgMax"
 
@@ -63,7 +63,7 @@ case class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override va
 
   override def name: String = "ArgMinArray"
 
-  override def Ord(v: IntVar): Int = v.getValue()
+  override def Ord(v: IntVar): Int = v.value
 
   override def ExtremumName: String = "Min of ArgMin"
 
@@ -96,7 +96,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   finishInitialization()
 
   if(cond != null){
-    for (i <- cond.getValue()) {
+    for (i <- cond.value) {
       h.insert(i)
       keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
     }
@@ -108,7 +108,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   }
 
   Miax = new IntVar(model,minOfMiax,maxOfMiax,
-    if (cond != null && cond.getValue().isEmpty) default else vars(h.getFirst).getValue(), ExtremumName)
+    if (cond != null && cond.value.isEmpty) default else vars(h.getFirst).value, ExtremumName)
 
   Miax.setDefiningInvariant(this)
 
@@ -121,8 +121,8 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   def ExtremumName: String
   def Ord(v: IntVar): Int
 
-  def MyMin = vars.indices.start
-  def MyMax = vars.indices.end
+  def myMin = vars.indices.start
+  def myMax = vars.indices.end
 
   var cost:Long = 0;
   
@@ -132,7 +132,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     output.setDefiningInvariant(this)
     val firsts = h.getFirsts
     output := firsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    Miax := (if (firsts.isEmpty) default else vars(h.getFirst).getValue())
+    Miax := (if (firsts.isEmpty) default else vars(h.getFirst).value)
   }
 
   @inline
@@ -141,8 +141,8 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     //mettre a jour le heap
     h.notifyChange(index)
 
-    if (vars(h.getFirst).getValue() != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).getValue()
+    if (vars(h.getFirst).value != Miax.getValue(true)) {
+      Miax := vars(h.getFirst).value
       output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (OldVal == Miax.getValue(true)) {
       output.deleteValue(index)
@@ -151,7 +151,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
         if (output.getValue(true).isEmpty){
           Miax := default
         }else {
-          Miax := vars(h.getFirst).getValue()
+          Miax := vars(h.getFirst).value
         }
       }
     } else if (NewVal == Miax.getValue(true)) {
@@ -169,12 +169,12 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     //mettre a jour le heap
     h.insert(value)
 
-    if (vars(h.getFirst).getValue() != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).getValue()
+    if (vars(h.getFirst).value != Miax.getValue(true)) {
+      Miax := vars(h.getFirst).value
       output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    } else if (vars(value).getValue() == Miax.getValue(true)) {
+    } else if (vars(value).value == Miax.getValue(true)) {
       output.insertValue(value)
-      Miax := vars(h.getFirst).getValue()
+      Miax := vars(h.getFirst).value
     }
     cost = cost + System.currentTimeMillis()
   }
@@ -193,14 +193,14 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     if (h.isEmpty){
       Miax := default
       output := SortedSet.empty[Int]
-    } else if (vars(h.getFirst).getValue() != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).getValue()
+    } else if (vars(h.getFirst).value != Miax.getValue(true)) {
+      Miax := vars(h.getFirst).value
       output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    } else if (vars(value).getValue() == Miax.getValue(true)) {
+    } else if (vars(value).value == Miax.getValue(true)) {
       output.deleteValue(value)
       if (output.getValue(true).isEmpty) {
         output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-        Miax := vars(h.getFirst).getValue()
+        Miax := vars(h.getFirst).value
       }
     }
     cost = cost + System.currentTimeMillis()
@@ -209,18 +209,18 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   override def checkInternals() {
     var count: Int = 0;
     for (i <- vars.indices) {
-      if (cond == null || (cond != null && cond.getValue().contains(i))) {
-        if (vars(i).getValue() == this.Miax.getValue()) {
-          assert(output.getValue().contains(i))
+      if (cond == null || (cond != null && cond.value.contains(i))) {
+        if (vars(i).value == this.Miax.value) {
+          assert(output.value.contains(i))
           count += 1
         } else {
-          assert(Ord(Miax.getValue()) < Ord(vars(i).getValue()))
+          assert(Ord(Miax.value) < Ord(vars(i).value))
         }
       }
     }
-    assert(output.getValue().size == count)
+    assert(output.value.size == count)
     h.checkInternals()
-    assert(h.getFirsts.length == output.getValue().size)
+    assert(h.getFirsts.length == output.value.size)
     if (cond != null)
       assert(output.getValue(true).subsetOf(cond.getValue(true)))
   }
