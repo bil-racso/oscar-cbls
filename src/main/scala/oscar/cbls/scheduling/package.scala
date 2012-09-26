@@ -25,6 +25,6 @@
 /** This package proposes a cumulatove jobshop library
  * and the iFlatiRelax metaheuristics.
  * */
-package object jobshop{
+package object scheduling{
 }
 

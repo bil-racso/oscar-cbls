@@ -32,10 +32,10 @@ import oscar.cbls.invariants.core.computation.{Variable, IntInvariant, IntVar}
  * it maintains output = fun(a)
  * @param a the parameter of the function
  * @param fun the function to maintain, it is supposed not to listen to any variable in the model
- * @param MyMin the min value of the output
- * @param MyMax the max value of the output
+ * @param myMin the min value of the output
+ * @param myMax the max value of the output
  */
-case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val MyMin:Int = Int.MinValue, override val MyMax:Int=Int.MaxValue) extends IntInvariant {
+case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
   var output:IntVar=null
 
   registerStaticAndDynamicDependency(a)
@@ -56,7 +56,7 @@ case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val MyMin:Int = I
   }
 
   override def checkInternals(){
-    assert(output.getValue() == fun(a.value))
+    assert(output.value == fun(a.value))
   }
 }
 
@@ -66,10 +66,10 @@ case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val MyMin:Int = I
  * @param a the first parameter of the function
  * @param b the second parameter of the function
  * @param fun the function to maintain, it is supposed not to listen to any variable in the model
- * @param MyMin the min value of the output
- * @param MyMax the max value of the output
+ * @param myMin the min value of the output
+ * @param myMax the max value of the output
  */
-case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val MyMin:Int = Int.MinValue, override val MyMax:Int=Int.MaxValue) extends IntInvariant {
+case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
@@ -87,7 +87,7 @@ case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), o
   }
 
   override def checkInternals(){
-    assert(output.getValue() == fun(a.getValue(),b.getValue()))
+    assert(output.value == fun(a.value,b.value))
   }
 }
 
@@ -97,10 +97,10 @@ case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), o
  * @param a the first parameter of the function
  * @param b the second parameter of the function
  * @param fun the function to maintain, it is supposed not to listen to any variable in the model
- * @param MyMin the min value of the output
- * @param MyMax the max value of the output
+ * @param myMin the min value of the output
+ * @param myMax the max value of the output
  */
-case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val MyMin:Int = Int.MinValue, override val MyMax:Int=Int.MaxValue) extends IntInvariant {
+case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)

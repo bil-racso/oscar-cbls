@@ -39,7 +39,8 @@ class Model(override val Verbose:Boolean = false,
             override val DebugMode:Boolean = false,
             override val NoCycle:Boolean = false,
             override val TopologicalSort:Boolean = false)
-  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort){
+  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort)
+  with Bulker{
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
@@ -257,18 +258,25 @@ trait Invariant extends PropagationElement{
 
   def getPropagationStructure = this.model
 
+  final def preFinishInitialization(model:Model = null):Model = {
+    if (this.model== null){
+      if (model == null){
+        this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
+      }else{
+        this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
+      }
+    }
+    this.model
+  }
+
   /**Must be called by all invariant after they complete their initialization
    * that is: before they get their output variable.
    * This performs some registration to the model, which is discovered by exploring the variables that are statically registered to the model
    * no more variable can be registered statically after this method has been called.
    * @param model; if specified, it only checks that the model is coherent, and registers to it for the ordering
    */
-  def finishInitialization(model:Model = null){
-    if (model == null){
-      this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
-    }else{
-      this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
-    }
+  final def finishInitialization(model:Model = null){
+    preFinishInitialization(model)
     if (this.model!= null){
       UniqueID = this.model.registerInvariant(this)
     }else{
@@ -330,11 +338,11 @@ trait Invariant extends PropagationElement{
    * @param v the variable that are registered
    * @param offset and offset applied to the position in the array when reigstering the dynamic dependency
    */
-  def registerStaticAndDynamicDependencyArrayIndex[T <: Variable](v:Array[T],offset:Int = 0){
-    for (i <- v.indices){
+  def registerStaticAndDynamicDependencyArrayIndex[T <: Variable](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] = {
+    Array.tabulate(v.size)((i:Int) => {
       registerStaticDependency(v(i))
       registerDynamicDependency(v(i),i + offset)
-    }
+    })
   }
 
   def registerStaticAndDynamicDependenciesNoID(v:Variable*){
@@ -706,15 +714,15 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       if (this.DefiningInvariant!= null && model != null){
         model.propagate(this)
         OldValue
-      }else{
+      }else if (model == null){
         Value
+      }else{
+        performPropagation()
+        //it will be propagated again by the model, but what else can you do...
+        OldValue
       }
     }
   }
-  
-
-
-  implicit def apply:Int = this.getValue()
 
   override def performPropagation(){
     if(OldValue!=Value){
@@ -992,10 +1000,10 @@ object Implicits{
 }
 
 abstract class IntInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntVar:IntVar = {
-    val a = new IntVar(model,MyMin,MyMax,0,this.getClass.getSimpleName)
+    val a = new IntVar(model,myMin,myMax,0,this.getClass.getSimpleName)
     a <== this //ca invoque setOutputVar en fait.
     a
   }
@@ -1015,10 +1023,10 @@ object IntInvariant{
 }
 
 abstract class IntSetInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntSetVar:IntSetVar = {
-    val a = new IntSetVar(model,MyMin,MyMax,this.getClass.getSimpleName,SortedSet.empty)
+    val a = new IntSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
     a <== this //the variable calls setoutputVar
     a
   }
@@ -1042,8 +1050,8 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMax = v.MaxVal
-  def MyMin = v.MinVal
+  def myMax = v.MaxVal
+  def myMin = v.MinVal
 
   override def checkInternals(){
     assert(output.getValue(true) == v.getValue())
@@ -1068,8 +1076,8 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  val MyMin = v.getMinVal
-  val MyMax = v.getMaxVal
+  val myMin = v.getMinVal
+  val myMax = v.getMaxVal
 
   override def checkInternals(){
     assert(output.getValue(true).intersect(v.getValue()).size == v.getValue().size)
@@ -1098,8 +1106,8 @@ case class Singleton(v:IntVar) extends IntSetInvariant  {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMin=v.MinVal
-  def MyMax = v.MaxVal
+  def myMin=v.MinVal
+  def myMax = v.MaxVal
 
   override def checkInternals(){
     assert(output.getValue(true).size == 1)

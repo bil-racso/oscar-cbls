@@ -44,7 +44,7 @@ import scala.collection.mutable.HashSet
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.invariants.lib.set.MakeSet
 import collection.immutable.SortedSet
-import oscar.cbls.objective.core.Objective
+import oscar.cbls.objective.Objective
 
 /**
  * Sudoku generator on NxN grids where N is a Square
@@ -138,7 +138,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       }
     }
     showGrid(grid,N)
-            
+
     // constraint system
     val c:ConstraintSystem = new ConstraintSystem(m)
     
@@ -162,7 +162,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     var it:Int=1
     while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
       val allowed = LinearIndexes.filter(v => Tabu(v).value < it)
-      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.swapDelta(grid(v1),grid(v2)),
+      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.getSwapVal(grid(v1),grid(v2)),
                                                 (v1,v2) => (v1 < v2) && (SquareOf(v1) == SquareOf(v2))) // swap on the same line
       
 //      require(SquareOf(v1)==SquareOf(v2))

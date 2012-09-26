@@ -25,7 +25,7 @@
 package oscar.cbls.constraints.core
 
 import oscar.cbls.invariants.core.computation.{Variable, IntVar, Model}
-import oscar.cbls.objective.core.ObjectiveTrait
+import oscar.cbls.objective.ObjectiveTrait
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
 
