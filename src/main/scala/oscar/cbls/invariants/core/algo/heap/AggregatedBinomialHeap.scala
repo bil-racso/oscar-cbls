@@ -35,14 +35,13 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
 
   val b= new BinomialHeap[Int](a => a, MaxPosition)
 
-  val a:Array[List[T]] = new Array[List[T]](MaxPosition)
-  for (i <- a.indices) a.update(i,List.empty[T])
+  val a:Array[List[T]] = Array.tabulate (MaxPosition)(_ => List.empty[T])
 
   private var msize:Int = 0
 
   /**makes the datastruct empty*/
   override def dropAll{
-    for (i <- b) a.update(i,List.empty[T])
+    for (i <- b) a(i) = List.empty[T]
     msize = 0
     b.dropAll
   }
@@ -51,11 +50,11 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
     val position = GetKey(elem)
     val otherWithSamePosition = a(position)
     if (otherWithSamePosition.isEmpty){
-      a.update(position,List(elem))
+      a(position) = List(elem)
       b.insert(position)
     }else{
       //this is the desired branch, as it is O(1)
-      a.update(position, elem :: otherWithSamePosition)
+      a(position) = elem :: otherWithSamePosition
     }
     msize+=1
   }
@@ -83,7 +82,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
     val position = b.getFirst
     val liste = a(position)
     val toreturn = liste.head
-    a.update(position,liste.tail)
+    a(position) = liste.tail
     if (liste.tail.isEmpty){
       b.popFirst()
     }

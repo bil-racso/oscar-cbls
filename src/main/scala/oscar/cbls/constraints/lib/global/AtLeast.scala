@@ -70,7 +70,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) exten
     ).toArray
 
   private val Bound:Array[Int]= new Array[Int](N)
-  for(v <- range){Bound.update(v,bounds.getOrElse(v,-1))}
+  for(v <- range){Bound(v) = bounds.getOrElse(v,-1)}
 
   private val ViolationByVal:Array[IntVar] = (for(i <- -offset to N0) yield {
     if(bounds.contains(i)){
@@ -80,7 +80,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) exten
     }}).toArray
 
   for(v <- variables){
-    val varval = v.getValue()
+    val varval = v.value
     ValueCount(varval + offset) :+= 1
     Violations(v) <== IntElement(v + offset, ViolationByVal)
   }
@@ -129,19 +129,19 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) exten
 
   override def checkInternals(){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
-    for(v <- variables){MyValueCount(v.getValue() + offset) += 1}
+    for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v),"" + ValueCount + MyValueCount)
 
     var MyViol:Int = 0
     for(v <- bounds.keys){
       MyViol += 0.max(bounds(v) - MyValueCount(v+offset))
     }
-    assert(Violation.getValue() == MyViol)
+    assert(Violation.value == MyViol)
     for(v <- variables){
-      if(bounds.contains(v.getValue()) && (MyValueCount(v.getValue() + offset) <= bounds(v.getValue()))){
-        assert(getViolation(v).getValue() == 0)
+      if(bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value))){
+        assert(getViolation(v).value == 0)
       }else{
-        assert(getViolation(v).getValue() == Violation.getValue())
+        assert(getViolation(v).value == Violation.value)
       }
     }
   }

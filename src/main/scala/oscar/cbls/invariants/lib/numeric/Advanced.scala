@@ -70,7 +70,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
-    keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
+    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     output := output.value + vars(value).value
   }
@@ -80,7 +80,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     assert(v == cond)
     assert(keyForRemoval(value) != null)
     unregisterDynamicDependency(keyForRemoval(value))
-    keyForRemoval.update(value, null)
+    keyForRemoval(value) = null
 
     output := output.value - vars(value).value
   }
@@ -155,7 +155,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
-    keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
+    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     if(vars(value).value == 0){
       NullVarCount +=1
@@ -175,7 +175,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     assert(keyForRemoval(value) != null)
 
     unregisterDynamicDependency(keyForRemoval(value))
-    keyForRemoval.update(value, null)
+    keyForRemoval(value) = null
 
     if(vars(value).value == 0){
       NullVarCount -=1

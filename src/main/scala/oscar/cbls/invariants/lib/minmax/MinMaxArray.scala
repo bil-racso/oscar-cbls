@@ -122,7 +122,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     assert(v == cond)
-    keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
+    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     //mettre a jour le heap
     h.insert(value)
@@ -134,7 +134,7 @@ abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int
     assert(v == cond)
 
     unregisterDynamicDependency(keyForRemoval(value))
-    keyForRemoval.update(value, null)
+    keyForRemoval(value) = null
 
     //mettre a jour le heap
     h.delete(value)

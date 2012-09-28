@@ -291,7 +291,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    */
   final def propagate(UpTo: PropagationElement = null) {
     if (!Propagating) {
-      if (UpTo != null) {
+      if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
         val SameAsBefore = (Track != null && (PreviousPropagationTarget == UpTo))
         propagateOnTrack(Track, SameAsBefore)
@@ -524,12 +524,12 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   private val storage:Array[T] = new Array[T](MaxNodeID-1)
 
   def update(elem:PropagationElement,value:T){
-    storage.update(elem.UniqueID,value)
+    storage(elem.UniqueID)=value
   }
 
   def get(elem:PropagationElement):T = storage(elem.UniqueID)
   
-  def initialize(value:T){for (i <- storage.indices) storage.update(i,value)}
+  def initialize(value:T){for (i <- storage.indices) storage(i) = value}
 }
 
 class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],

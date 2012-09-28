@@ -30,7 +30,7 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.algebra.Algebra._
 
 class SuperTask(start:Task, end:Task, planning:Planning,  override val name:String = "")
-  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.getValue(), "duration of " + name),
+  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.value, "duration of " + name),
     planning, name){
 
   override def post(){

@@ -103,12 +103,12 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     print(", " + getWatch)
 
-    while((c.Violation.getValue() > 0) && (It.getValue() < N)){
+    while((c.Violation.value > 0) && (It.value < N)){
       val oldviolation:Int = c.Violation.value
 
       // to ensure that the set of tabu queens is no too restrictive
       // (but you'd better tune the tabu better)
-      while(NonTabuMaxViolQueens.getValue().isEmpty){
+      while(NonTabuMaxViolQueens.value.isEmpty){
         It ++;
         println("Warning: Tabu it too big compared to queens count")
       }
@@ -128,4 +128,3 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     println(", " + getWatch + ", " + It)
   }
 }
-

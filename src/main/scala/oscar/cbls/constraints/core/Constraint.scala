@@ -48,7 +48,7 @@ abstract class Constraint extends IntInvariant{
   def getViolation:IntVar
 
   /**facility to check that the constraint is enforced*/
-  final def isTrue:Boolean = (getViolation.getValue() == 0)
+  final def isTrue:Boolean = (getViolation.value == 0)
 
   def myMin = 0
   def myMax = 1

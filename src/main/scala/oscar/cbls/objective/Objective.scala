@@ -69,7 +69,7 @@ trait ObjectiveTrait {
   def getAssignVal(a: SortedMap[IntVar, Int]): Int = {
     //memorize
     val oldvals: Map[IntVar, Int] = a.foldLeft(SortedMap.empty[IntVar, Int])(
-      (acc, IntVarAndInt) => acc + ((IntVarAndInt._1, IntVarAndInt._1.getValue())))
+      (acc, IntVarAndInt) => acc + ((IntVarAndInt._1, IntVarAndInt._1.value)))
 
     //excurse
     for (assign <- a) {

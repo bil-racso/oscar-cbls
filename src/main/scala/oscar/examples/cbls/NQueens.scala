@@ -94,7 +94,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
 
     var It = 0
 
-    while((c.Violation.getValue() > 0) && (It < N)){
+    while((c.Violation.value > 0) && (It < N)){
       val oldviolation:Int = c.Violation.value
 
       val q1 = selectFirst(MaxViolQueens.value)

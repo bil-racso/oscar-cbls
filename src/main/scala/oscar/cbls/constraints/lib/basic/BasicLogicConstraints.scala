@@ -95,7 +95,7 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    Violation := (if(left.getValue() == right.getValue()) 1 else 0)
+    Violation := (if(left.value == right.value) 1 else 0)
   }
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/

@@ -101,8 +101,8 @@ class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   def Relax(PKill: Int) {
     //takes one node from the determining predecessors.
     def PrecedingNode(j: Task): Task = {
-      if (j.DefiningPredecessors.getValue() isEmpty) null
-      else p.TaskArray(selectFrom(j.DefiningPredecessors.getValue()))
+      if (j.DefiningPredecessors.value isEmpty) null
+      else p.TaskArray(selectFrom(j.DefiningPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }
 
@@ -110,7 +110,7 @@ class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     var PotentiallykilledNodes: List[(Task, Task)] = List.empty
     while (CurrentTask != null) {
       val Predecessor = PrecedingNode(CurrentTask)
-      if (Predecessor != null && CurrentTask.AdditionalPredecessors.getValue().contains(Predecessor.TaskID)) {
+      if (Predecessor != null && CurrentTask.AdditionalPredecessors.value.contains(Predecessor.TaskID)) {
         PotentiallykilledNodes = (Predecessor, CurrentTask) :: PotentiallykilledNodes
       }
       CurrentTask = Predecessor
@@ -123,7 +123,7 @@ class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   }
 
   def RandomFlatten() {
-    while (!p.EarliestOvershotResources.getValue().isEmpty) {
+    while (!p.EarliestOvershotResources.value.isEmpty) {
       val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
@@ -140,7 +140,7 @@ class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
-    while (!p.WorseOvershotResource.getValue().isEmpty) {
+    while (!p.WorseOvershotResource.value.isEmpty) {
       val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
       val t: Int = selectFirst(r.HighestUsePositions.value)
 
@@ -168,7 +168,7 @@ class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   }
 
   def FlattenEarliestFirst() {
-    while (!p.EarliestOvershotResources.getValue().isEmpty) {
+    while (!p.EarliestOvershotResources.value.isEmpty) {
       val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
