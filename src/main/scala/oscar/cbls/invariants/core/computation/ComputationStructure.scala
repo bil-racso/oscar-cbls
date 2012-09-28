@@ -57,9 +57,9 @@ class Model(override val Verbose:Boolean = false,
     var assignationIntSet:SortedMap[IntSetVar,SortedSet[Int]] = SortedMap.empty
     for (v:Variable <- Variables if !OnlyPrimitive || v.getDefiningInvariant == null){
       if(v.isInstanceOf[IntVar]){
-        assignationInt += ((v.asInstanceOf[IntVar], v.asInstanceOf[IntVar].getValue()))
+        assignationInt += ((v.asInstanceOf[IntVar], v.asInstanceOf[IntVar].value))
       }else if(v.isInstanceOf[IntSetVar]){
-        assignationIntSet += ((v.asInstanceOf[IntSetVar], v.asInstanceOf[IntSetVar].getValue()))
+        assignationIntSet += ((v.asInstanceOf[IntSetVar], v.asInstanceOf[IntSetVar].value))
       }
     }
     Solution(assignationInt,assignationIntSet,this)
@@ -588,7 +588,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   }
   def setIntAction(action: Int=>Unit){
     this.actionIntParam = action
-    oldIntv = v.asInstanceOf[IntVar].getValue()
+    oldIntv = v.asInstanceOf[IntVar].value
   }
   def setIntSetAction(action: SortedSet[Int] => Unit){
     this.actionIntSetParam = action
@@ -597,8 +597,8 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
 
   def setintintaction(intintaction: (Int,Int)=>Unit){
     this.intintaction = intintaction
-    this.oldIntv = v.asInstanceOf[IntVar].getValue()
-    this.oldIntw = w.asInstanceOf[IntVar].getValue()
+    this.oldIntv = v.asInstanceOf[IntVar].value
+    this.oldIntw = w.asInstanceOf[IntVar].value
   }
 
   def setintsetintsetaction(intsetintsetaction:(SortedSet[Int],SortedSet[Int]) => Unit){
@@ -610,12 +610,12 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   def setintsetintaction(intsetintaction:(SortedSet[Int],Int) => Unit){
     this.intsetintaction = intsetintaction
     this.oldIntSetv = v.asInstanceOf[IntSetVar].value
-    this.oldIntw = w.asInstanceOf[IntVar].getValue()
+    this.oldIntw = w.asInstanceOf[IntVar].value
   }
 
   def setintintsetaction(intintsetaction:(Int,SortedSet[Int]) => Unit){
     this.intintsetaction = intintsetaction
-    this.oldIntv = v.asInstanceOf[IntVar].getValue()
+    this.oldIntv = v.asInstanceOf[IntVar].value
     this.oldIntSetw = w.asInstanceOf[IntSetVar].value
   }
 
@@ -654,14 +654,14 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     //updating internal vars
 
     if (actionIntParam!= null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
     }
     if (actionIntSetParam != null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
     }
     if(intintaction!=null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
-      oldIntw = w.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
+      oldIntw = w.asInstanceOf[IntVar].value
     }
     if (intsetintsetaction!=null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
@@ -669,10 +669,10 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     }
     if (intsetintaction!=null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
-      oldIntw = w.asInstanceOf[IntVar].getValue()
+      oldIntw = w.asInstanceOf[IntVar].value
     }
     if (intintsetaction != null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
       oldIntSetw = w.asInstanceOf[IntSetVar].value
     }
   }
@@ -694,7 +694,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def getDomain:Range = new Range(MinVal,MaxVal,1)
 
-  override def toString:String = name + ":=" + Value //getValue()
+  override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
@@ -711,15 +711,11 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
-      if (this.DefiningInvariant!= null && model != null){
+      if (this.DefiningInvariant!= null && model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
         model.propagate(this)
         OldValue
-      }else if (model == null){
-        Value
       }else{
-        performPropagation()
-        //it will be propagated again by the model, but what else can you do...
-        OldValue
+        Value
       }
     }
   }
@@ -745,8 +741,8 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   /**this operators swaps the value of two IntVar*/
   def :=:(v:IntVar){
-    val a:Int = v.getValue()
-    v:=this.getValue()
+    val a:Int = v.value
+    v:=this.value
     this := a
   }
 
@@ -969,7 +965,7 @@ class IntSetVar(override val model:Model,
 
 object IntSetVar{
   //this conversion is forbidden because we inserted the new grammar.
-  //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.getValue()
+  //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
 
   implicit val ord:Ordering[IntSetVar] = new Ordering[IntSetVar]{
     def compare(o1: IntSetVar, o2: IntSetVar) = o1.compare(o2)
@@ -1054,13 +1050,13 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   def myMin = v.MinVal
 
   override def checkInternals(){
-    assert(output.getValue(true) == v.getValue())
+    assert(output.getValue(true) == v.value)
   }
 
   override def setOutputVar(vv:IntVar){
     output = vv
     output.setDefiningInvariant(this)
-    output := v.getValue()
+    output := v.value
   }
 
   override def notifyIntChanged(v:IntVar,i:Int,OldVal:Int,NewVal:Int){
@@ -1080,7 +1076,7 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   val myMax = v.getMaxVal
 
   override def checkInternals(){
-    assert(output.getValue(true).intersect(v.getValue()).size == v.getValue().size)
+    assert(output.getValue(true).intersect(v.value).size == v.value.size)
   }
 
   override def setOutputVar(vv:IntSetVar){
@@ -1111,12 +1107,12 @@ case class Singleton(v:IntVar) extends IntSetInvariant  {
 
   override def checkInternals(){
     assert(output.getValue(true).size == 1)
-    assert(output.getValue(true).head == v.getValue())
+    assert(output.getValue(true).head == v.value)
   }
 
   override def setOutputVar(vv:IntSetVar){
     output = vv
-    output.setValue(SortedSet(v.getValue()))
+    output.setValue(SortedSet(v.value))
   }
 
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){

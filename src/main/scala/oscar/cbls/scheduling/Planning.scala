@@ -113,8 +113,8 @@ class Planning(val model:Model,val maxduration:Int){
   
   override def toString:String = {
     var toreturn:String = ""
-    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
-      toreturn += "" + j.name + "[" + j.EarliestStartDate.getValue() + ";" + j.EarliestEndDate.getValue() + "]" + "\n"
+    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask){
+      toreturn += "" + j.name + "[" + j.EarliestStartDate.value + ";" + j.EarliestEndDate.value + "]" + "\n"
     }
     toreturn += MakeSpan
     toreturn
@@ -124,9 +124,9 @@ class Planning(val model:Model,val maxduration:Int){
     var toreturn:String = ""
     def nStrings(N:Int,C:String):String = (if (N <= 0) "" else "" + C + nStrings(N-1,C))
     def padToLength(s:String, l:Int) = (s + nStrings(l," ")).substring(0,l)
-    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
+    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask){
       toreturn += "" + padToLength(j.name,20) + ":" +"[" +
-        padToLength("" + j.EarliestStartDate.getValue(),4) + ";" + padToLength("" + j.EarliestEndDate.getValue(),4) + "] "+
+        padToLength("" + j.EarliestStartDate.value,4) + ";" + padToLength("" + j.EarliestEndDate.value,4) + "] "+
         (if (j.duration == 1)  nStrings(j.EarliestStartDate.value," ") + "#\n"
          else nStrings(j.EarliestStartDate.value," ") + "#" + nStrings(j.duration-2,"=") + "#\n")
     }

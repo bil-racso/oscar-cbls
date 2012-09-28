@@ -98,12 +98,12 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   if(cond != null){
     for (i <- cond.value) {
       h.insert(i)
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
     }
   }else{
     for (i <- vars.indices) {
       h.insert(i)
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
     }
   }
 
@@ -164,7 +164,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
-    keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
+    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     //mettre a jour le heap
     h.insert(value)
@@ -185,7 +185,7 @@ abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,defaul
     assert(v == cond && cond != null)
 
     unregisterDynamicDependency(keyForRemoval(value))
-    keyForRemoval.update(value, null)
+    keyForRemoval(value) = null
 
     //mettre a jour le heap
     h.delete(value)

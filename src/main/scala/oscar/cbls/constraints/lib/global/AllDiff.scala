@@ -69,7 +69,7 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
   })
 
   for(v <- variables){
-    val varval = v.getValue()
+    val varval = v.value
     ValueCount(varval + offset) :+= 1
   }
 
@@ -109,16 +109,16 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
   override def checkInternals(){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
-    for(v <- variables){MyValueCount(v.getValue() + offset) += 1}
+    for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
 
     for (v <- variables)
-      assert(getViolation(v).getValue() == MyValueCount(v.getValue()+offset)-1
-        ,"error on " + v + " " + getViolation(v).getValue() + " " + MyValueCount(v.getValue()+offset))
+      assert(getViolation(v).value == MyValueCount(v.value+offset)-1
+        ,"error on " + v + " " + getViolation(v).value + " " + MyValueCount(v.value+offset))
 
     var MyViol:Int = 0
     for(v <- range)MyViol += 0.max(MyValueCount(v) -1)
-    assert(MyViol == Violation.getValue())
+    assert(MyViol == Violation.value)
   }
 }
 

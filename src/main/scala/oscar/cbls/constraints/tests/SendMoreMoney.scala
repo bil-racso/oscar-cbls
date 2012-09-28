@@ -114,22 +114,22 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     m.close()
 
     // search
-    while((c.Violation.getValue() > 0) && (It.getValue() < MAX_IT)){
+    while((c.Violation.value > 0) && (It.value < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter.value)
       val l2 = selectMin(NonTabuLetter.value)(i => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation.toString +" "+c.Violation.getValue()+" "+c.getSwapVal(d(l1),d(l2)))
+      println(c.Violation.toString +" "+c.Violation.value+" "+c.getSwapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
-      //r(Carry.c1.id).setValue((d(Letter.D.id).getValue()+d(Letter.E.id).getValue()) / 10)
-      //r(Carry.c2.id).setValue((d(Letter.N.id).getValue()+d(Letter.R.id).getValue()+r(Carry.c1.id).getValue()) / 10)
-      //r(Carry.c3.id).setValue((d(Letter.E.id).getValue()+d(Letter.O.id).getValue()+r(Carry.c2.id).getValue()) / 10)
-      //r(Carry.c4.id).setValue((d(Letter.S.id).getValue()+d(Letter.M.id).getValue()+r(Carry.c3.id).getValue()) / 10)
+      //r(Carry.c1.id).setValue((d(Letter.D.id).value+d(Letter.E.id).value) / 10)
+      //r(Carry.c2.id).setValue((d(Letter.N.id).value+d(Letter.R.id).value+r(Carry.c1.id).value) / 10)
+      //r(Carry.c3.id).setValue((d(Letter.E.id).value+d(Letter.O.id).value+r(Carry.c2.id).value) / 10)
+      //r(Carry.c4.id).setValue((d(Letter.S.id).value+d(Letter.M.id).value+r(Carry.c3.id).value) / 10)
 
-      Tabu(l1) := It.getValue() + TABU_LENGTH
-      // Tabu(l2) := It.getValue() + TABU_LENGTH // not a good idea to tabu the second variable
+      Tabu(l1) := It.value + TABU_LENGTH
+      // Tabu(l2) := It.value + TABU_LENGTH // not a good idea to tabu the second variable
       
       It.++ // try without the dot (strange line behavior)
       println(It.toString + " " + c.Violation+" switching "+d(l1).name+" "+d(l2).name)

@@ -81,27 +81,27 @@ object NQueens3 extends SearchEngine with StopWatch with App{
   println("run time after model close: "+ getWatchString)
 
   var longueurplateau = 0;
-  var minviolationplateau = c.Violation.getValue()
-  while((c.Violation.getValue() > 0) && (It.getValue() < MaxIT)){
+  var minviolationplateau = c.Violation.value
+  while((c.Violation.value > 0) && (It.value < MaxIT)){
 
     val q1 = selectFrom(NonTabuMaxViolQueens.value)
     val q2 = selectMin(NonTabuQueens.value)(q => c.getSwapVal(Queens(q1),Queens(q)), (q:Int) => q!=q1)
 
     Queens(q1) :=: Queens(q2)
-    Tabu(q1) := It.getValue() + tabulength
-    Tabu(q2) := It.getValue() + tabulength
+    Tabu(q1) := It.value + tabulength
+    Tabu(q2) := It.value + tabulength
 
-    It.++
+    It ++
 
     println("" + It + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
 
-    if(minviolationplateau <= c.Violation.getValue()) longueurplateau+=1 else longueurplateau = 0
-    minviolationplateau = minviolationplateau.min(c.Violation.getValue())
+    if(minviolationplateau <= c.Violation.value) longueurplateau+=1 else longueurplateau = 0
+    minviolationplateau = minviolationplateau.min(c.Violation.value)
     if (longueurplateau > 5000){
       println("jump away")
       for (i <- 1 to N/5)Queens(selectFrom(range)) :=: Queens(selectFrom(range))
       longueurplateau = 0
-      minviolationplateau = c.Violation.getValue()
+      minviolationplateau = c.Violation.value
     }
   }
   println(c.Violation)
