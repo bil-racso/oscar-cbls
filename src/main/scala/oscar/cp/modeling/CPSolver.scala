@@ -210,6 +210,7 @@ class CPSolver() extends Store() {
 	  var nbRestart = 0
 	  var maxRestart = 1
 	  
+	  // LNS Relaxation
 	  val relax = lns match {
 		   case None => () => Unit
 		   case Some(LNS(nbRestart,nbFailures,restar)) => {

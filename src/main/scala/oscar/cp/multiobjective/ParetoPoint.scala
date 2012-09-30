@@ -5,6 +5,8 @@ class ParetoPoint(values : Array[Int]) {
 	val size = values.size
 	val Size = 0 until size
 	
+	val sol : MOSolution = null
+	
 	def apply(i : Int) = values(i)
 
 	/** A point p1 dominates an other point p2 if for all i, p1(i) >= p2(i) and
