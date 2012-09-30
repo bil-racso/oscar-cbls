@@ -21,16 +21,20 @@ package oscar.cp.constraints
 import oscar.search._
 import oscar.cp.core._
 
-/** @author Pierre Schaus pschaus@gmail.com
+/** @author Pierre Schaus  pschaus@gmail.com
+  * @author Renaud Hartert ren.hartert@gmail.com
   */
 class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store, "objective") with Objective {
 
 	def this(x: CPVarInt) = this(Array(x): _*)
 
-	val bestObjs = Array.fill(objVars.size)(0)
-	protected val bounds = Array.fill(objVars.size)(0)
+	val nObjs = objVars.size
+	val Objs  = 0 until nObjs  
 
-	protected val tightenedOnce = Array.fill(objVars.size)(false)
+	val bestObjs = Array.fill(nObjs)(0)
+	val bounds   = Array.fill(nObjs)(0)
+
+	protected val tightenedOnce = Array.fill(nObjs)(false)
 
 	private var currObj = 0
 
@@ -39,9 +43,10 @@ class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store, "
 	def currentObjective = objVars(currentObjectiveIdx)
 
 	def currentObjective_=(i: Int) = {
-		if (i > objVars.size || i < 0) {
+		
+		if (i > objVars.size || i < 0)
 			throw new IllegalArgumentException("objective index between " + 0 + " and " + (objVars.size - 1))
-		}
+
 		restoreBest()
 		currObj = i
 
@@ -55,6 +60,8 @@ class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store, "
 	def reTighten() = {}
 
 	def relax() = {}
+	
+	def relaxAll() = {}
 
 	def restoreBest() = {}
 

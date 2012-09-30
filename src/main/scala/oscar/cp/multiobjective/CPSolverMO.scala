@@ -29,21 +29,61 @@ import oscar.reversible._
 
 class NoSol(msg: String) extends Exception(msg)
 
-class CPSolverMO() extends Store() {
+class CPSolverMO(val nObjs : Int) extends Store() {
+	
+	// Approximation of the pareto set
+	val paretoSet    : ParetoSet   = ParetoSet(nObjs)
+	var currentPoint : ParetoPoint = null
+	
+	var objProcessed = 0
 
-	case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit)
-	var lns: Option[LNS] = None
+	// DEFINE THE MO LNS FRAME WORK
+	// -------------------------------------------------
+
+	// Relaxation factor
+	val e = 0.2
+
+	case class MOLNS(nbFailures: Int, sol: MOSolution, restart: () => Unit)
+	var moLns : () => Unit = null
 
 	private var lastLNSRestartCompleted = false
 
-	/** @return true if the last lns restart was caused because of completed exploration of search tree,
+	def moLns(nbFailures: Int, nbRestart : Int)(restart: => Unit) {
+		failLimit = nbFailures	
+		//maxRestart = nbRestart
+		moLns = () => restart
+	}
+
+	/** Select the next point to process
+	  */
+	def selectPoint: ParetoPoint = null
+
+	/** Select next objective to improve
+	  */
+	def selectObjective = (objective.currentObjectiveIdx + 1) % nObjs
+
+	def objRelax(p : ParetoPoint) = {
+
+		for (i <- 0 until nObjs) {
+			if (i == objective.currentObjectiveIdx) {
+
+				// Current objective must be improved
+				objective.bounds(i) = p(i)
+			}
+			else {
+
+				// Relax other objectives e
+				objective.bounds(i) = ((1+e)*p(i)).toInt
+			}
+		}
+	}
+
+	/** @return true if the last LNS restart was caused because of completed exploration of search tree,
 	  * false otherwise (i.e. limit on the number failure reached)
 	  */
 	def isLastLNSRestartCompleted = lastLNSRestartCompleted
 
-	def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
-		lns = Option(new LNS(nbRestarts, nbFailures, () => restart))
-	}
+	// -------------------------------------------------
 
 	/** @param block a code block
 	  * @return the time (ms) to execute the block
@@ -60,34 +100,13 @@ class CPSolverMO() extends Store() {
 
 	var stateObjective: Unit => Unit = Unit => Unit
 
-	def minimize(obj: CPVarInt): CPSolverMO = {
-		stateObjective = Unit => {
-			val o = new CPObjectiveMinimize(obj)
-			objective = o
-			post(o)
-		}
-		solveAll()
-		this
-	}
-
 	//(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
-
+	
 	def minimize(objectives: CPVarInt*): CPSolverMO = {
 		stateObjective = Unit => {
 			val o = new CPObjectiveMinimize(objectives: _*)
 			objective = o
 			post(o)
-		}
-		solveAll()
-		this
-	}
-
-	def maximize(obj: CPVarInt): CPSolverMO = {
-		stateObjective = Unit => {
-			val o = new CPObjectiveMaximize(obj)
-			objective = o
-			post(o)
-
 		}
 		solveAll()
 		this
@@ -191,22 +210,12 @@ class CPSolverMO() extends Store() {
 	}
 
 	override def exploration(block: => Unit @suspendable): Unit = {
-		
+
 		val t1 = System.currentTimeMillis()
-		
+
 		stateObjective()
 		var nbRestart = 0
 		var maxRestart = 1
-
-		// LNS Relaxation
-		val relax = lns match {
-			case None => () => Unit
-			case Some(LNS(nbRestart, nbFailures, restar)) => {
-				maxRestart = nbRestart
-				failLimit = nbFailures
-				restar
-			}
-		}
 
 		reset {
 			shift { k1: (Unit => Unit) =>
@@ -222,26 +231,73 @@ class CPSolverMO() extends Store() {
 				}
 
 				def restart(relaxation: Boolean = false) {
+
+					
+					val f : Int => Int = (i : Int) => i+i
 					popAll()
 					pushState()
-					if (relaxation) {
-						sc.reset()
-						relax()
 
+					// Relaxation part
+					if (relaxation) {						
+						// Reset the search controller
+						sc.reset()					
+						// MO LNS Relaxation
+						moLns
 					}
+
 					if (!isFailed()) {
+						
 						sc.reset()
 						nbRestart += 1
-						reset {
+						
+						reset {							
+							// Exploration
 							b()
-							if (!isFailed()) objective.tighten()
+							
+							// Solution found
+							if (!isFailed()) {
+								
+								objective.tighten()
+								
+								// Build the new point
+								val newPoint = ParetoPoint(objective)									
+								// Add the point to the set
+								paretoSet.add(newPoint)								
+								// Process a new point
+								currentPoint = selectPoint								
+								// Reset the number of considered objectives
+								objProcessed = 0
+							} 
+							
+							// No solution
+							else {
+								
+								// Next objective
+								objective.currentObjective = selectObjective
+								objProcessed = objProcessed + 1
+					
+								if (objProcessed >= nObjs) {
+					
+									currentPoint = selectPoint
+									objProcessed = 0
+								}
+							}
 						}
-						if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+						
+						// Let's go, unless the user decided to stop
+						if (!sc.exit) 
+							sc.explore()
 					}
 				}
-				restart(false) // first restart, find a feasible solution so no limit
+				
+				// First restart, find a feasible solution so no limit
+				restart(false) 
+				
 				for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
+					
+					// Second (or more) restart : relaxation is allowed
 					restart(true)
+					
 					if (sc.isLimitReached) {
 						lastLNSRestartCompleted = false
 						print("!")
@@ -263,8 +319,8 @@ object CPSolverMO {
 
 	/** Creates a new CP Solver
 	  */
-	def apply(): CPSolverMO = {
-		new CPSolverMO()
+	def apply(nObjs : Int): CPSolverMO = {
+		new CPSolverMO(nObjs)
 	}
 }
 

@@ -1,6 +1,8 @@
 package oscar.cp.multiobjective
 
-class ParetoPoint(values : Array[Int]) {
+import oscar.cp.constraints.CPObjective
+
+class ParetoPoint(private val values : Array[Int]) {
 
 	val size = values.size
 	val Size = 0 until size
@@ -8,6 +10,8 @@ class ParetoPoint(values : Array[Int]) {
 	val sol : MOSolution = null
 	
 	def apply(i : Int) = values(i)
+	
+	def update(i : Int, x : Int) = { values(i) = x }
 
 	/** A point p1 dominates an other point p2 if for all i, p1(i) >= p2(i) and
 	 *  there is a i for which p1(i) > p2(i). 
@@ -33,4 +37,11 @@ class ParetoPoint(values : Array[Int]) {
 object ParetoPoint {
 	
 	def apply(size : Int) : ParetoPoint = new ParetoPoint(new Array[Int](size))
+	
+	def apply(obj : CPObjective) : ParetoPoint = {
+		
+		val p = ParetoPoint(obj.nObjs)
+		for (i <- obj.Objs) p(i) = obj.bestObjs(i)
+		p
+	}
 }

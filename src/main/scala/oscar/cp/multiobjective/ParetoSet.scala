@@ -3,27 +3,16 @@ package oscar.cp.multiobjective
 import scala.collection.mutable.Queue
 
 class ParetoSet(nDimension : Int) {
-
 	
-	/* DominatingDirection must be an array of position self-aware heap. Indeed,
-	 * each solution of the pareto set must know its position in each heap in order
-	 * to be removed if necessary. In the other way, solution should be able to be 
-	 * added. Finally, we don't know the size of the heap. This imply to use a dynamic
-	 * array.
-	 *
-	 */
-	val dominatingDirection : Array[SelfHeap] = null
-	
-	val set : Queue[ParetoPoint] = null
+	val set : Queue[ParetoPoint] = Queue()
 	
 
 	def nextPoint : ParetoPoint = {
-		val p = set.dequeue
+		val p = set.dequeue()
 		set enqueue p
 		p
 	}
 	
-	//TODO
 	/** This method add a new point in the approximation of the pareto set.
 	 * 
 	 *  First, we check the validity of the point in term of dimension.
@@ -31,10 +20,29 @@ class ParetoSet(nDimension : Int) {
 	 *  If this point is dominating some point of the approximation, those points 
 	 *  are removed from the set.
 	 */
-	def add(p : ParetoPoint) = { 
+	def add(point : ParetoPoint) = { 
 		
-		checkPoint(p)
-		set.enqueue(p)
+		checkPoint(point)
+		
+		var b = false
+		
+		for (i <- 0 until set.size) {
+			
+			val p = set.dequeue() 
+			
+			if (p isDominating point)
+				set enqueue p
+			
+			else {
+				
+				b = true
+				
+				if(!(point isDominating p)) 
+					set enqueue p
+			}
+		}
+		
+		if (b) set enqueue point
 	}
 	
 	/** True if the point is checked

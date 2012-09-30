@@ -136,8 +136,6 @@ object CumulativeJobShopLNS extends App {
 
 		for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
 			activities(i) endsBeforeStartOf activities(i + 1)
-		
-		cp.add(makespan >= 666)
 
 	} exploration {
 

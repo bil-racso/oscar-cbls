@@ -1,5 +1,7 @@
 package oscar.cp.multiobjective
 
-class MOSolution {
+abstract class MOSolution {
+	
+	def buildSolution
 
 }
