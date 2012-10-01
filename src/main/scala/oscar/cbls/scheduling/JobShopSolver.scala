@@ -1,16 +1,18 @@
+package oscar.cbls.scheduling
+
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
@@ -21,55 +23,58 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.jobshop
-
-import oscar.cbls.jobshop.algo.QuickXplain
+import oscar.cbls.jobshop.algo.ConflictSearch
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{Solution, Model}
 
-class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
-  val model:Model = p.model
+class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
+  val model: Model = p.model
 
   class FlatteningHeuristics()
+
   case class EarliestFirst() extends FlatteningHeuristics
+
   case class WorseFirst() extends FlatteningHeuristics
+
   case class Random() extends FlatteningHeuristics
 
   /**This solves the jobshop by iterative relaxation and flattening
    * @param MaxIt the max number of iterations of the search
-   * @param Stable the number of no successing noimprove that will cause the search to stop
+   * @param Stable the number of no successice noimprove that will cause the search to stop
    */
-  def Solve(MaxIt:Int, Stable:Int,flatteningheursitics:FlatteningHeuristics = WorseFirst(), NbRelax:Int = 4, PkillPerRelax:Int = 50) {
+  def Solve(MaxIt: Int, Stable: Int, flatteningheursitics: FlatteningHeuristics = WorseFirst(), NbRelax: Int = 4, PkillPerRelax: Int = 50) {
 
-    var it:Int = 0
+    var it: Int = 0
 
-    flatteningheursitics match{
+    flatteningheursitics match {
       case EarliestFirst() => FlattenEarliestFirst();
       case WorseFirst() => FlattenWorseFirst();
       case Random() => RandomFlatten();
     }
 
     var BestSolution: Solution = model.getSolution(true)
-    if (Verbose){
+    if (Verbose) {
       println(p.MakeSpan)
       println("----------------")
     }
 
     var plateaulength = 0
-    var BestMakeSpan:Int = p.MakeSpan.value
+    var BestMakeSpan = p.MakeSpan.value
 
     while (it < MaxIt && plateaulength < Stable) {
       //iterative weakening and flattening
-      it+=1
+      it += 1
 
-     // if(plateaulength == 20){
-       // for (i <- 0 until NbRelax*2){Relax(75);}
-       // println("jumping****************")
+      // if(plateaulength == 20){
+      // for (i <- 0 until NbRelax*2){Relax(75);}
+      // println("jumping****************")
       //}else{
-        for (i <- 0 until NbRelax){Relax(PkillPerRelax);}
+      for (i <- 0 until NbRelax) {
+        Relax(PkillPerRelax);
+      }
       //}
-      
-      flatteningheursitics match{
+
+      flatteningheursitics match {
         case EarliestFirst() => FlattenEarliestFirst();
         case WorseFirst() => FlattenWorseFirst();
         case Random() => RandomFlatten();
@@ -83,8 +88,8 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
-      }else{
-        plateaulength +=1
+      } else {
+        plateaulength += 1
       }
       println("----------------")
     }
@@ -96,28 +101,28 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
    * This N is our contribution; not found in iFlatiRelax papers.
    * relaxes N additional dependencies on a critical path (if n are found)
    */
-  def Relax(PKill:Int) {
+  def Relax(PKill: Int) {
     //takes one node from the determining predecessors.
-    def PrecedingNode(j:Task):Task = {
-      if (j.DefiningPredecessors.value.isEmpty) null
+    def PrecedingNode(j: Task): Task = {
+      if (j.DefiningPredecessors.value isEmpty) null
       else p.TaskArray(selectFrom(j.DefiningPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }
 
-    var CurrentTask:Task = PrecedingNode(p.SentinelTask)
-    var PotentiallykilledNodes:List[(Task, Task)] = List.empty
-    while(CurrentTask!= null){
+    var CurrentTask: Task = PrecedingNode(p.SentinelTask)
+    var PotentiallykilledNodes: List[(Task, Task)] = List.empty
+    while (CurrentTask != null) {
       val Predecessor = PrecedingNode(CurrentTask)
-      if (Predecessor!= null && CurrentTask.AdditionalPredecessors.value.contains(Predecessor.TaskID)){
-        PotentiallykilledNodes = (Predecessor,CurrentTask) :: PotentiallykilledNodes
+      if (Predecessor != null && CurrentTask.AdditionalPredecessors.value.contains(Predecessor.TaskID)) {
+        PotentiallykilledNodes = (Predecessor, CurrentTask) :: PotentiallykilledNodes
       }
       CurrentTask = Predecessor
     }
     if (PotentiallykilledNodes.isEmpty) return
 
-    val (from,to) = selectFrom (PotentiallykilledNodes)
+    val (from, to) = selectFrom(PotentiallykilledNodes)
     if (Verbose) println("killed " + from + "->" + to)
-    to.AdditionalPredecessors :-= from.TaskID
+    to.removeDynamicPredecessor(from)
   }
 
   def RandomFlatten() {
@@ -125,43 +130,43 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
-      val TasksAndUse = r.TasksAndUse.filter((taksAndamount:(Task, Int)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
-      val Tasks:List[Task] = TasksAndUse.map((taskAndamount:(Task, Int)) => taskAndamount._1)
+      val TasksAndUse = r.TasksAndUse.filter((taksAndamount: (Task, Int)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
+      val Tasks: List[Task] = TasksAndUse.map((taskAndamount: (Task, Int)) => taskAndamount._1)
 
       val a = selectFrom(Tasks)
-      val b = selectFrom(Tasks,(j:Task) => j != a)
+      val b = selectFrom(Tasks, (j: Task) => j != a)
 
       if (Verbose) println("added " + a + "->" + b)
-      b.AdditionalPredecessors.insertValue(a.TaskID)
+      b.addDynamicPredecessor(a)
     }
   }
 
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
     while (!p.WorseOvershotResource.value.isEmpty) {
-      val r:Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
+      val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
       val t: Int = selectFirst(r.HighestUsePositions.value)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
+      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount: (Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
 
-      val conflictSet:List[(Task,Int)] = QuickXplain(
+      val conflictSet: List[(Task, Int)] = ConflictSearch(
         0,
         TaskssAndUse,
-        (use:Int, taskAndamount:(Task, Int)) =>  use+taskAndamount._2,
-        (use:Int, taskAndamount:(Task, Int)) =>  use-taskAndamount._2,
-        (use:Int) => use > r.MaxAmount
+        (use: Int, taskAndamount: (Task, Int)) => use + taskAndamount._2,
+        (use: Int, taskAndamount: (Task, Int)) => use - taskAndamount._2,
+        (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks:List[Task] = conflictSet.map((takAndamount:(Task, Int)) => takAndamount._1)
+      val conflictTasks: List[Task] = conflictSet.map((takAndamount: (Task, Int)) => takAndamount._1)
 
       //println("flatten length: " + TaskssAndUse.length)
 
-      val (a,b) = selectMax2(conflictTasks,conflictTasks,
-        (a:Task,b:Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
-        (a:Task,b:Task) => a!=b)
+      val (a, b) = selectMax2(conflictTasks, conflictTasks,
+        (a: Task, b: Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
+        (a: Task, b: Task) => a != b)
 
       if (Verbose) println("added " + a + "->" + b)
-      b.AdditionalPredecessors.insertValue(a.TaskID)
+      b.addDynamicPredecessor(a)
     }
   }
 
@@ -178,25 +183,27 @@ class JobShopSolver(p: Planning,Verbose:Boolean = true) extends SearchEngine {
       //uniquement b doit appartenir au conflict set.
       //et on maximise led(b) - esd(a)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount:(Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
-      val Tasks:List[Task] = TaskssAndUse.map((taskAndamount:(Task, Int)) => taskAndamount._1)
+      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount: (Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
+      val Tasks: List[Task] = TaskssAndUse.map((taskAndamount: (Task, Int)) => taskAndamount._1)
 
-      val conflictSet:List[(Task,Int)] = QuickXplain(
+      val conflictSet: List[(Task, Int)] = ConflictSearch(
         0,
         TaskssAndUse,
-        (use:Int, taskAndamount:(Task, Int)) =>  use+taskAndamount._2,
-        (use:Int, taskAndamount:(Task, Int)) =>  use-taskAndamount._2,
-        (use:Int) => use > r.MaxAmount
+        (use: Int, taskAndamount: (Task, Int)) => use + taskAndamount._2,
+        (use: Int, taskAndamount: (Task, Int)) => use - taskAndamount._2,
+        (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks:List[Task] = conflictSet.map((taskAndamount:(Task, Int)) => taskAndamount._1)
+      val conflictTasks: List[Task] = conflictSet.map((taskAndamount: (Task, Int)) => taskAndamount._1)
 
-      val (a,b) = selectMax2(Tasks,conflictTasks,
-        (a:Task,b:Task) => (b.LatestStartDate.value - a.EarliestEndDate.value), //c'est pas l'inverse?
-        (a:Task,b:Task) => a!=b)
+      val (a, b) = selectMax2(Tasks, conflictTasks,
+        (a: Task, b: Task) => (b.LatestStartDate.value - a.EarliestEndDate.value), //c'est pas l'inverse?
+        (a: Task, b: Task) => a != b)
 
       if (Verbose) println("added " + a + "->" + b)
-      b.AdditionalPredecessors.insertValue(a.TaskID)
+      b.addDynamicPredecessor(a)
     }
   }
 }
+
+

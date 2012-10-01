@@ -23,9 +23,8 @@ package oscar.examples.cbls
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.jobshop.{Task, Resource, JobShopSolver, Planning}
+import oscar.cbls.scheduling.{Task, Resource, JobShopSolver, Planning}
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -63,7 +62,7 @@ object Reagan extends App {
 
   planning.close()
   model.close(false)
-  println(model.dumpToDot(true, true))
+ // println(model.dumpToDot(true, true))
   solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
 
   println(planning.toAsciiArt)

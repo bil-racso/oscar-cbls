@@ -26,7 +26,7 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
-import oscar.cbls.jobshop.{JobShopSolver, Task, Resource, Planning}
+import oscar.cbls.scheduling.{JobShopSolver, Task, Resource, Planning}
 
 //TODO: get MT10 and solve it.
 
