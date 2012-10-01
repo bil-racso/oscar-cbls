@@ -21,7 +21,6 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.algebra
 
 import oscar.cbls.constraints.core.Constraint
@@ -72,8 +71,8 @@ object Algebra{
     = new InstrumentedArrayOfIntVar(inputarray)
 
   class InstrumentedArrayOfIntVar(inputarray:Array[IntVar]){
-    def apply(index:IntVar):IntVar = IntElement(index, inputarray)
-    def apply(index:IntSetVar):IntSetVar = IntElements(index,inputarray)
+    def element(index:IntVar):IntVar = IntElement(index, inputarray)
+    def elements(index:IntSetVar):IntSetVar = IntElements(index,inputarray)
   }
 
   implicit def InstrumentArrayOfIntSetVar(inputarray:Array[IntSetVar]):InstrumentedArrayOfIntSetVar

@@ -48,20 +48,13 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
   finishInitialization()
 
   val bincontents:Array[IntSetVar] = Cluster.MakeDense(items).clusters
-  val binfilling:Array[IntVar] = {
-    val tmp = bincontents.map(bincontent => SumElements(null,bincontent))
-    BulkLoad(tmp,itemsizes)
-    tmp.map(sumelement => sumelement.toIntVar)
-  }
+  val binfilling:Array[IntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
+
   val binviolations:Array[IntVar] = (
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).getViolation).toArray
 
-  val itemviolations:Array[IntVar] = {
-    val tmp = items.map(itemval => IntElement(itemval,null))
-    BulkLoad(tmp,binviolations)
-    tmp.map(intelement => intelement.toIntVar)
-  }
+  val itemviolations:Array[IntVar] = items.map(itemval => IntElement(itemval,binviolations).toIntVar)
 
   val Violation:IntVar = Sum(binviolations).toIntVar
 

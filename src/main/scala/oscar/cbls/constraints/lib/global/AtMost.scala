@@ -68,10 +68,10 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
     ).toArray
 
   private val Bound:Array[Int]= new Array[Int](N)
-  for(v <- range){Bound.update(v,bounds.getOrElse(v,-1))}
+  for(v <- range){Bound(v) = bounds.getOrElse(v,-1)}
 
   for(v <- variables){
-    val varval = v.getValue()
+    val varval = v.value
     if(Bound(varval) != -1){
       ValueCount(varval + offset) :+= 1
     }

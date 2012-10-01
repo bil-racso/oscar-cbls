@@ -317,12 +317,12 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   def iterator: Iterator[(Int, Int)] = {throw new Exception("enumeration not supported"); null}
 
   def +=(kv: (Int, Int)): this.type = {
-    array.update(kv._1,kv._2.asInstanceOf[Int])
+    array(kv._1) = kv._2.asInstanceOf[Int]
     this
   }
 
   def -=(key: Int): this.type = {
-    array.update(key,null.asInstanceOf[Int])
+    array(key) = null.asInstanceOf[Int]
     this
   }
 }

@@ -39,7 +39,8 @@ class Model(override val Verbose:Boolean = false,
             override val DebugMode:Boolean = false,
             override val NoCycle:Boolean = false,
             override val TopologicalSort:Boolean = false)
-  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort){
+  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort)
+  with Bulker{
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
@@ -56,9 +57,9 @@ class Model(override val Verbose:Boolean = false,
     var assignationIntSet:SortedMap[IntSetVar,SortedSet[Int]] = SortedMap.empty
     for (v:Variable <- Variables if !OnlyPrimitive || v.getDefiningInvariant == null){
       if(v.isInstanceOf[IntVar]){
-        assignationInt += ((v.asInstanceOf[IntVar], v.asInstanceOf[IntVar].getValue()))
+        assignationInt += ((v.asInstanceOf[IntVar], v.asInstanceOf[IntVar].value))
       }else if(v.isInstanceOf[IntSetVar]){
-        assignationIntSet += ((v.asInstanceOf[IntSetVar], v.asInstanceOf[IntSetVar].getValue()))
+        assignationIntSet += ((v.asInstanceOf[IntSetVar], v.asInstanceOf[IntSetVar].value))
       }
     }
     Solution(assignationInt,assignationIntSet,this)
@@ -257,18 +258,25 @@ trait Invariant extends PropagationElement{
 
   def getPropagationStructure = this.model
 
+  final def preFinishInitialization(model:Model = null):Model = {
+    if (this.model== null){
+      if (model == null){
+        this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
+      }else{
+        this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
+      }
+    }
+    this.model
+  }
+
   /**Must be called by all invariant after they complete their initialization
    * that is: before they get their output variable.
    * This performs some registration to the model, which is discovered by exploring the variables that are statically registered to the model
    * no more variable can be registered statically after this method has been called.
    * @param model; if specified, it only checks that the model is coherent, and registers to it for the ordering
    */
-  def finishInitialization(model:Model = null){
-    if (model == null){
-      this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
-    }else{
-      this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
-    }
+  final def finishInitialization(model:Model = null){
+    preFinishInitialization(model)
     if (this.model!= null){
       UniqueID = this.model.registerInvariant(this)
     }else{
@@ -580,7 +588,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   }
   def setIntAction(action: Int=>Unit){
     this.actionIntParam = action
-    oldIntv = v.asInstanceOf[IntVar].getValue()
+    oldIntv = v.asInstanceOf[IntVar].value
   }
   def setIntSetAction(action: SortedSet[Int] => Unit){
     this.actionIntSetParam = action
@@ -589,8 +597,8 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
 
   def setintintaction(intintaction: (Int,Int)=>Unit){
     this.intintaction = intintaction
-    this.oldIntv = v.asInstanceOf[IntVar].getValue()
-    this.oldIntw = w.asInstanceOf[IntVar].getValue()
+    this.oldIntv = v.asInstanceOf[IntVar].value
+    this.oldIntw = w.asInstanceOf[IntVar].value
   }
 
   def setintsetintsetaction(intsetintsetaction:(SortedSet[Int],SortedSet[Int]) => Unit){
@@ -602,12 +610,12 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   def setintsetintaction(intsetintaction:(SortedSet[Int],Int) => Unit){
     this.intsetintaction = intsetintaction
     this.oldIntSetv = v.asInstanceOf[IntSetVar].value
-    this.oldIntw = w.asInstanceOf[IntVar].getValue()
+    this.oldIntw = w.asInstanceOf[IntVar].value
   }
 
   def setintintsetaction(intintsetaction:(Int,SortedSet[Int]) => Unit){
     this.intintsetaction = intintsetaction
-    this.oldIntv = v.asInstanceOf[IntVar].getValue()
+    this.oldIntv = v.asInstanceOf[IntVar].value
     this.oldIntSetw = w.asInstanceOf[IntSetVar].value
   }
 
@@ -646,14 +654,14 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     //updating internal vars
 
     if (actionIntParam!= null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
     }
     if (actionIntSetParam != null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
     }
     if(intintaction!=null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
-      oldIntw = w.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
+      oldIntw = w.asInstanceOf[IntVar].value
     }
     if (intsetintsetaction!=null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
@@ -661,10 +669,10 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     }
     if (intsetintaction!=null){
       oldIntSetv = v.asInstanceOf[IntSetVar].value
-      oldIntw = w.asInstanceOf[IntVar].getValue()
+      oldIntw = w.asInstanceOf[IntVar].value
     }
     if (intintsetaction != null){
-      oldIntv = v.asInstanceOf[IntVar].getValue()
+      oldIntv = v.asInstanceOf[IntVar].value
       oldIntSetw = w.asInstanceOf[IntSetVar].value
     }
   }
@@ -686,7 +694,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def getDomain:Range = new Range(MinVal,MaxVal,1)
 
-  override def toString:String = name + ":=" + Value //getValue()
+  override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
@@ -703,15 +711,11 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
-      if (this.DefiningInvariant!= null && model != null){
+      if (this.DefiningInvariant!= null && model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
         model.propagate(this)
         OldValue
-      }else if (model == null){
-        Value
       }else{
-        performPropagation()
-        //it will be propagated again by the model, but what else can you do...
-        OldValue
+        Value
       }
     }
   }
@@ -737,8 +741,8 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   /**this operators swaps the value of two IntVar*/
   def :=:(v:IntVar){
-    val a:Int = v.getValue()
-    v:=this.getValue()
+    val a:Int = v.value
+    v:=this.value
     this := a
   }
 
@@ -961,7 +965,7 @@ class IntSetVar(override val model:Model,
 
 object IntSetVar{
   //this conversion is forbidden because we inserted the new grammar.
-  //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.getValue()
+  //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
 
   implicit val ord:Ordering[IntSetVar] = new Ordering[IntSetVar]{
     def compare(o1: IntSetVar, o2: IntSetVar) = o1.compare(o2)
@@ -992,10 +996,10 @@ object Implicits{
 }
 
 abstract class IntInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntVar:IntVar = {
-    val a = new IntVar(model,MyMin,MyMax,0,this.getClass.getSimpleName)
+    val a = new IntVar(model,myMin,myMax,0,this.getClass.getSimpleName)
     a <== this //ca invoque setOutputVar en fait.
     a
   }
@@ -1015,10 +1019,10 @@ object IntInvariant{
 }
 
 abstract class IntSetInvariant extends Invariant{
-  def MyMin:Int
-  def MyMax:Int
+  def myMin:Int
+  def myMax:Int
   implicit def toIntSetVar:IntSetVar = {
-    val a = new IntSetVar(model,MyMin,MyMax,this.getClass.getSimpleName,SortedSet.empty)
+    val a = new IntSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
     a <== this //the variable calls setoutputVar
     a
   }
@@ -1042,17 +1046,17 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMax = v.MaxVal
-  def MyMin = v.MinVal
+  def myMax = v.MaxVal
+  def myMin = v.MinVal
 
   override def checkInternals(){
-    assert(output.getValue(true) == v.getValue())
+    assert(output.getValue(true) == v.value)
   }
 
   override def setOutputVar(vv:IntVar){
     output = vv
     output.setDefiningInvariant(this)
-    output := v.getValue()
+    output := v.value
   }
 
   override def notifyIntChanged(v:IntVar,i:Int,OldVal:Int,NewVal:Int){
@@ -1068,11 +1072,11 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  val MyMin = v.getMinVal
-  val MyMax = v.getMaxVal
+  val myMin = v.getMinVal
+  val myMax = v.getMaxVal
 
   override def checkInternals(){
-    assert(output.getValue(true).intersect(v.getValue()).size == v.getValue().size)
+    assert(output.getValue(true).intersect(v.value).size == v.value.size)
   }
 
   override def setOutputVar(vv:IntSetVar){
@@ -1098,17 +1102,17 @@ case class Singleton(v:IntVar) extends IntSetInvariant  {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMin=v.MinVal
-  def MyMax = v.MaxVal
+  def myMin=v.MinVal
+  def myMax = v.MaxVal
 
   override def checkInternals(){
     assert(output.getValue(true).size == 1)
-    assert(output.getValue(true).head == v.getValue())
+    assert(output.getValue(true).head == v.value)
   }
 
   override def setOutputVar(vv:IntSetVar){
     output = vv
-    output.setValue(SortedSet(v.getValue()))
+    output.setValue(SortedSet(v.value))
   }
 
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){

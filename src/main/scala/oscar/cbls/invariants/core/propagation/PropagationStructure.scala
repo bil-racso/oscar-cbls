@@ -23,7 +23,6 @@
 
 package oscar.cbls.invariants.core.propagation
 
-
 import oscar.cbls.invariants.core.algo.dag._;
 import oscar.cbls.invariants.core.algo.tarjan._
 import oscar.cbls.invariants.core.algo.dll._;
@@ -292,7 +291,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    */
   final def propagate(UpTo: PropagationElement = null) {
     if (!Propagating) {
-      if (UpTo != null) {
+      if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
         val SameAsBefore = (Track != null && (PreviousPropagationTarget == UpTo))
         propagateOnTrack(Track, SameAsBefore)
@@ -525,12 +524,12 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   private val storage:Array[T] = new Array[T](MaxNodeID-1)
 
   def update(elem:PropagationElement,value:T){
-    storage.update(elem.UniqueID,value)
+    storage(elem.UniqueID)=value
   }
 
   def get(elem:PropagationElement):T = storage(elem.UniqueID)
   
-  def initialize(value:T){for (i <- storage.indices) storage.update(i,value)}
+  def initialize(value:T){for (i <- storage.indices) storage(i) = value}
 }
 
 class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
@@ -547,7 +546,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override def getPropagationStructure: PropagationStructure = core
 
   //for the DAG
-  override def getNodes = Elements.asInstanceOf[Iterable[DAGNode]]
+  override def nodes = Elements.asInstanceOf[Iterable[DAGNode]]
 
   override def determineBoundary() {
     for (e <- Elements) {
@@ -574,7 +573,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
         //This can happen if we perform heavy changes to the dependencies in a careless way,
         // eg: reloading a previous model.
         // We wait for the dependencies to be stable, when the propagation is performed.
-        this.setAutoSort(false)
+
+        autoSort = false
         Stalls +=1
       }
     }
@@ -585,7 +585,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override def performPropagation() {
     //setting autosort to true will not perform any operation unless it was set to false. This happens in two cases:
     //at the initial propagation, and when a stall just occurred. In these case, a non-incremental sort takes place
-    this.setAutoSort(true)
+    autoSort = true
 
     for (e <- ScheduledElements) {
       h.insert(e)
@@ -926,4 +926,3 @@ trait PropagationElement extends DAGNode with TarjanNode{
 /**This is the node type to be used for bulking
  **/
 trait BulkPropagator extends PropagationElement
-

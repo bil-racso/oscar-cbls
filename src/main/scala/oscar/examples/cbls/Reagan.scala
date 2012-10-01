@@ -32,42 +32,39 @@ import oscar.cbls.jobshop.{Task, Resource, JobShopSolver, Planning}
  * he needs to sleep 2H, eat 30', chew 45' and think 3H
  * he cannot sleep before having eaten
  */
-object Reagan {
-  def main(args: Array[String]) {
-    val model = new Model(false, true, false)
-    val planning = new Planning(model, 31)
-    val solver = new JobShopSolver(planning)
+object Reagan extends App {
+  val model = new Model(false, true, false)
+  val planning = new Planning(model, 31)
+  val solver = new JobShopSolver(planning)
 
-    val Reagan = new Resource(planning, 3, "Reagan")
+  val Reagan = new Resource(planning, 3, "Reagan")
 
-    val Manger = new Task(2, planning, "eat")
-    Manger.addResource(Reagan, 2)
+  val Manger = new Task(2, planning, "eat")
+  Manger.addResource(Reagan, 2)
 
-    val Dormir = new Task(8, planning, "sleep")
-    Dormir.addResource(Reagan, 1)
+  val Dormir = new Task(8, planning, "sleep")
+  Dormir.addResource(Reagan, 1)
 
-    val Reflechir = new Task(12, planning, "think")
-    Reflechir.addResource(Reagan, 1)
+  val Reflechir = new Task(12, planning, "think")
+  Reflechir.addResource(Reagan, 1)
 
-    val Chiquer = new Task(3, planning, "chew")
-    Chiquer.addResource(Reagan, 1)
+  val Chiquer = new Task(3, planning, "chew")
+  Chiquer.addResource(Reagan, 1)
 
-    val Parler = new Task(3, planning, "speak")
-    Parler.addResource(Reagan, 2)
+  val Parler = new Task(3, planning, "speak")
+  Parler.addResource(Reagan, 2)
 
-    val Boire = new Task(3, planning, "drink")
-    Boire.addResource(Reagan, 2)
+  val Boire = new Task(3, planning, "drink")
+  Boire.addResource(Reagan, 2)
 
-    Reflechir precedes  Boire
-    Manger precedes Dormir
-    Chiquer precedes Parler
+  Reflechir precedes Boire
+  Manger precedes Dormir
+  Chiquer precedes Parler
 
-    planning.close()
-    model.close(false)
-    println(model.dumpToDot(true, true))
-    solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
+  planning.close()
+  model.close(false)
+  println(model.dumpToDot(true, true))
+  solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
 
-    println(planning.toAsciiArt)
-
-  }
+  println(planning.toAsciiArt)
 }

@@ -28,9 +28,8 @@ import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.algebra.Algebra._
+import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.core.computation.IntVar._
-import oscar.cbls.invariants.core.computation.{BulkLoad, Variable, IntVar}
-;
 
 /**Implement the AllDiff constraint on IntVars: all variables must have a different value.
  * @param variables the variable whose values should all be different.
@@ -70,18 +69,12 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
   })
 
   for(v <- variables){
-    val varval = v.getValue()
+    val varval = v.value
     ValueCount(varval + offset) :+= 1
   }
 
-  {
-    val listedVars:List[IntVar] = variables.toList
-    val accesses:List[IntElement] = listedVars.map((i:IntVar) => IntElement(i + offset, null))
-
-    BulkLoad(accesses,ValueCount)
-    for(varsaccess:((IntVar, IntElement)) <- listedVars.zipAll(accesses,null,null)){
-      Violations(varsaccess._1) <== (varsaccess._2 - 1)
-    }
+  for(v <- variables){
+    Violations(v) <== ValueCount.element((v + offset).toIntVar) - 1
   }
 
   for(i <- range){
@@ -116,16 +109,16 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
   override def checkInternals(){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
-    for(v <- variables){MyValueCount(v.getValue() + offset) += 1}
+    for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
 
     for (v <- variables)
-      assert(getViolation(v).getValue() == MyValueCount(v.getValue()+offset)-1
-        ,"error on " + v + " " + getViolation(v).getValue() + " " + MyValueCount(v.getValue()+offset))
+      assert(getViolation(v).value == MyValueCount(v.value+offset)-1
+        ,"error on " + v + " " + getViolation(v).value + " " + MyValueCount(v.value+offset))
 
     var MyViol:Int = 0
     for(v <- range)MyViol += 0.max(MyValueCount(v) -1)
-    assert(MyViol == Violation.getValue())
+    assert(MyViol == Violation.value)
   }
 }
 

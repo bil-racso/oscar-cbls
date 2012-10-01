@@ -28,9 +28,12 @@ import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.algebra.Algebra._
+import oscar.cbls.invariants.lib.minmax.ArgMaxArray._
+import oscar.cbls.invariants.lib.minmax.MinArray._
+import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
 class SuperTask(start:Task, end:Task, planning:Planning,  override val name:String = "")
-  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.getValue(), "duration of " + name),
+  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.value, "duration of " + name),
     planning, name){
 
   override def post(){
@@ -73,6 +76,7 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
 
   val LatestEndDate: IntVar = new IntVar(planning.model, 0,
     planning.maxduration, planning.maxduration, "led(" + name + ")")
+
   val LatestStartDate: IntVar = LatestEndDate - duration
   var AllSucceedingTasks: IntSetVar = null
 
@@ -85,23 +89,29 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
   def addDynamicPredecessor(t:Task){
     AdditionalPredecessors :+= t.getEndTask.TaskID
   }
+
   def getEndTask:Task = this
 
   /**This method is called by the planning when all tasks are created*/
   def post() {
+
     AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
       "added predecessors of " + name, SortedSet.empty)
 
-    val PredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
-    AllPrecedingTasks = Union(PredecessorsID, AdditionalPredecessors)
+    val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
+    AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-    DefiningPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "defining predecessors of " + name, SortedSet.empty)
+    val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+    EarliestStartDate = argMax.getMax
+    EarliestEndDate <== EarliestStartDate + duration
 
-    PotentiallyKilledPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "tokill predecessors of " + name, SortedSet.empty)
+    DefiningPredecessors = argmax
 
-    PotentiallyKilledPredecessors <== Inter(DefiningPredecessors, AdditionalPredecessors)
+    PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
+
+    AllSucceedingTasks = new IntSetVar(model, 0, planning.taskcount - 1, "succeeding_jobs")
+
+    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, maxduration)
   }
 }
 

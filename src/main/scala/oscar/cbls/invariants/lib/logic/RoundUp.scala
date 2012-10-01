@@ -46,8 +46,8 @@ case class RoundUpModulo(from:IntVar, length:IntVar, period:Int, zone:Int, shift
 
 case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) extends IntInvariant {
 
-  def MyMax = Zone.maxBy(_._2)._2+1
-  def MyMin = from.MinVal
+  def myMax = Zone.maxBy(_._2)._2+1
+  def myMin = from.MinVal
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(from,length)
@@ -76,7 +76,7 @@ case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) exte
         //problème de type 1
         NewStart = ForbiddenEnds(LastZoneBeforeNewStart) + 1
         LastZoneBeforeNewStart += 1
-      }else if((LastZoneBeforeNewStart+1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart+1) > from.getValue() + length.getValue ())){
+      }else if((LastZoneBeforeNewStart+1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart+1) > from.value + length.getValue ())){
         //problème de type 2
         NewStart = ForbiddenEnds(LastZoneBeforeNewStart+1) + 1
         LastZoneBeforeNewStart += 1

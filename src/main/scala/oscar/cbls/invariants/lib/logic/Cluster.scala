@@ -43,7 +43,7 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
   for(c <- Clusters.values){c.setDefiningInvariant(this); c.setValue(SortedSet.empty)}
 
   for(v <- values.indices){
-    val x:IntSetVar = Clusters.getOrElse(values(v).getValue(),null)
+    val x:IntSetVar = Clusters.getOrElse(values(v).value,null)
     if(x != null) x.insertValue(v)
   }
 
@@ -61,7 +61,7 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
-        assert(values(indices).getValue() == value)
+        assert(values(indices).value == value)
       }
     }
   }
@@ -90,7 +90,7 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
 
   //We then complete the initialization the output variables to the value they should have
   for(v <- values.indices){
-    clusters(values(v).getValue()).insertValue(v)
+    clusters(values(v).value).insertValue(v)
   }
 
   //This method is called by each IntVar that is registered to the dynamic dependency graph.
@@ -110,7 +110,7 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
-        assert(values(indices).getValue() == value)
+        assert(values(indices).value == value)
       }
     }
   }

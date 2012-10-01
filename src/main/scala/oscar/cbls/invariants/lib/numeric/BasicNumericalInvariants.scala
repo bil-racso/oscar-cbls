@@ -39,8 +39,8 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.MinVal)
-  def MyMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.MaxVal)
+  def myMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.MinVal)
+  def myMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.MaxVal)
 
   var output:IntVar = null
 
@@ -52,11 +52,11 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    output := output.getValue(true) + NewVal - OldVal
+    output :+= NewVal - OldVal
   }
 
   override def checkInternals(){
-    assert(output.getValue() == vars.foldLeft(0)((acc,intvar) => acc+intvar.getValue()))
+    assert(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
   }
 }
 
@@ -69,14 +69,14 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  var NullVarCount:Int=vars.count(v => v.getValue() == 0)
-  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.getValue() == 0){acc}else{acc*intvar.value})
+  var NullVarCount:Int=vars.count(v => v.value == 0)
+  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.value == 0){acc}else{acc*intvar.value})
 
   var output:IntVar = null
 
   //TODO: find better bound, this is far too much
-  def MyMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
-  def MyMin = - MyMax
+  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
+  def myMin = - myMax
 
   override def setOutputVar(v:IntVar){
     output = v
@@ -110,8 +110,8 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
 
   override def checkInternals(){
     var prod = 1;
-    for (v <- vars) prod *= v.getValue()
-    assert(output.getValue() == prod)
+    for (v <- vars) prod *= v.value
+    assert(output.value == prod)
   }
 }
 

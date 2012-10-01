@@ -24,7 +24,7 @@
 
 package oscar.cbls.jobshop
 
-import oscar.cbls.invariants.core.computation.{BulkLoad, IntSetVar, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.cbls.algebra.Algebra._;
@@ -71,13 +71,11 @@ class Planning(val model:Model,val maxduration:Int){
       j.post()
     }
 
-    //to compute the EarliesStartdates and the detemining jobs
-    val ArrayOfArgMax:Array[ArgMaxArray] = new Array[ArgMaxArray](taskcount)
-    for (i <- TaskArray.indices) ArrayOfArgMax(i) = ArgMaxArray(null, TaskArray(i).AllPrecedingTasks,0)
-    BulkLoad(ArrayOfArgMax,EndDates)
-    for (i <- TaskArray.indices) {
-      TaskArray(i).EarliestStartDate = ArrayOfArgMax(i).getMax
-      TaskArray(i).DefiningPredecessors <== ArrayOfArgMax(i)
+    //TODO: put this in tasks
+    for (i <- TaskArray.indices){
+      val argMax = ArgMaxArray(EndDates, TaskArray(i).AllPrecedingTasks,0)
+      TaskArray(i).DefiningPredecessors <== argMax
+      TaskArray(i).EarliestStartDate = argMax.getMax
     }
 
     for (i <- TaskArray.indices) {
@@ -93,13 +91,11 @@ class Planning(val model:Model,val maxduration:Int){
 
     DenseRef(TaskArray.map(job => job.AllPrecedingTasks),TaskArray.map(job => job.AllSucceedingTasks))
 
-    val ArrayOfMin:Array[MinArray] = new Array[MinArray](taskcount)
-    for (i <- TaskArray.indices) ArrayOfMin(i) = MinArray(null, TaskArray(i).AllSucceedingTasks, maxduration) //TODO: problème ici!!
+    var latestStartDates = TaskArray.map(job => job.LatestStartDate)
 
-    BulkLoad(ArrayOfMin,TaskArray.map(job => job.LatestStartDate))
-
-    for (i <- TaskArray.indices) {
-      TaskArray(i).LatestEndDate <== ArrayOfMin(i)
+    //TODO: put this into tasks
+    for (i <- TaskArray.indices){
+      TaskArray(i).LatestEndDate <== MinArray(latestStartDates, TaskArray(i).AllSucceedingTasks, maxduration)
     }
 
     ResourceArray = new Array[Resource](ResourceCount)
@@ -117,8 +113,8 @@ class Planning(val model:Model,val maxduration:Int){
   
   override def toString:String = {
     var toreturn:String = ""
-    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
-      toreturn += "" + j.name + "[" + j.EarliestStartDate.getValue() + ";" + j.EarliestEndDate.getValue() + "]" + "\n"
+    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask){
+      toreturn += "" + j.name + "[" + j.EarliestStartDate.value + ";" + j.EarliestEndDate.value + "]" + "\n"
     }
     toreturn += MakeSpan
     toreturn
@@ -128,9 +124,9 @@ class Planning(val model:Model,val maxduration:Int){
     var toreturn:String = ""
     def nStrings(N:Int,C:String):String = (if (N <= 0) "" else "" + C + nStrings(N-1,C))
     def padToLength(s:String, l:Int) = (s + nStrings(l," ")).substring(0,l)
-    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.getValue() < b.EarliestStartDate.getValue()) if j != SentinelTask){
+    for (j <- Tasks.sortWith((a,b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask){
       toreturn += "" + padToLength(j.name,20) + ":" +"[" +
-        padToLength("" + j.EarliestStartDate.getValue(),4) + ";" + padToLength("" + j.EarliestEndDate.getValue(),4) + "] "+
+        padToLength("" + j.EarliestStartDate.value,4) + ";" + padToLength("" + j.EarliestEndDate.value,4) + "] "+
         (if (j.duration == 1)  nStrings(j.EarliestStartDate.value," ") + "#\n"
          else nStrings(j.EarliestStartDate.value," ") + "#" + nStrings(j.duration-2,"=") + "#\n")
     }

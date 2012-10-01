@@ -48,25 +48,22 @@ import oscar.cbls.invariants.core.computation.IntSetVar._
  * The program accepts an argument which is the problem size
  * Otherwise it performs a benchmarking over a range of sizes (this takes time)
  */
-object NQueens extends SearchEngine(true) with StopWatch{
+object NQueens extends SearchEngine(true) with StopWatch with App{
 
-  def main(args: Array[String]) {
+  if (args.length<1) {
+    println("Benchmarking NQueen - this takes time");
 
-    if (args.length<1) {
-      println("Benchmarking NQueen - this takes time");
+    // first run could have some overhead so ignoring it
+    SolveNQueen(1000)
 
-      // first run could have some overhead so ignoring it
-      SolveNQueen(1000)
-
-      // multiple runs
-      for (N <- Range(1000, 11000, 1000)){
-        SolveNQueen(N)
-        System.gc()
-      }
-    } else {
-      val N:Int=args(0).toInt
+    // multiple runs
+    for (N <- Range(1000, 11000, 1000)){
       SolveNQueen(N)
+      System.gc()
     }
+  } else {
+    val N:Int=args(0).toInt
+    SolveNQueen(N)
   }
 
   def SolveNQueen(N:Int){
@@ -97,7 +94,7 @@ object NQueens extends SearchEngine(true) with StopWatch{
 
     var It = 0
 
-    while((c.Violation.getValue() > 0) && (It < N)){
+    while((c.Violation.value > 0) && (It < N)){
       val oldviolation:Int = c.Violation.value
 
       val q1 = selectFirst(MaxViolQueens.value)
