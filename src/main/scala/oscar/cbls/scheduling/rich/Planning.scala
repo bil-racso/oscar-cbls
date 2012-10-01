@@ -23,7 +23,6 @@ package oscar.cbls.jobshop.rich
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
@@ -45,8 +44,9 @@ class Planning(val model: Model, val maxduration: Int) {
     Tasks = j :: Tasks; taskcount += 1; taskcount - 1
   }
 
-  var StartDates: Array[IntVar] = null
-  var EndDates: Array[IntVar] = null
+  var EarliestStartDates: Array[IntVar] = null
+  var EarliestEndDates: Array[IntVar] = null
+  var LatestStartDates: Array[IntVar] = null
 
   val MakeSpan: IntVar = new IntVar(model, 0, maxduration, 0, "MakeSpan")
   var EarliestOvershotResources: IntSetVar = null
@@ -67,42 +67,20 @@ class Planning(val model: Model, val maxduration: Int) {
     }
 
     TaskArray = new Array[Task](taskcount)
-    EndDates = new Array[IntVar](taskcount)
-    StartDates = new Array[IntVar](taskcount)
+    EarliestEndDates = new Array[IntVar](taskcount)
+    EarliestStartDates = new Array[IntVar](taskcount)
 
     for (j <- Tasks) {
       TaskArray(j.TaskID) = j
-      StartDates(j.TaskID) = j.EarliestStartDate
-      EndDates(j.TaskID) = j.EarliestEndDate
-      j.post()
+      EarliestStartDates(j.TaskID) = j.EarliestStartDate
+      EarliestEndDates(j.TaskID) = j.EarliestEndDate
+      LatestStartDates(j.TaskID) = j.LatestStartDate
     }
 
-    //to compute the EarliesStartdates and the detemining jobs
-    //TODO: put this into tasks
-    for (i <- TaskArray.indices){
-      val argMax = ArgMaxArray(EndDates, TaskArray(i).AllPrecedingTasks, 0)
-      TaskArray(i).EarliestStartDate = argMax.getMax
-      TaskArray(i).DefiningPredecessors <== argMax
-    }
-
-    for (i <- TaskArray.indices) {
-      TaskArray(i).EarliestEndDate <== (TaskArray(i).EarliestStartDate + TaskArray(i).duration)
-    }
-
-    MakeSpan <== SentinelTask.EarliestStartDate
-
-    //to compute the LatestStartDates
-    for (j <- Tasks) {
-      j.AllSucceedingTasks = new IntSetVar(model, 0, taskcount - 1, "succeeding_jobs")
-    }
-
+    for (j <- Tasks) {j.post()}
     DenseRef(TaskArray.map(job => job.AllPrecedingTasks), TaskArray.map(job => job.AllSucceedingTasks))
 
-    //TODO: put this into tasks
-    val latestStartDates = TaskArray.map(job => job.LatestStartDate)
-    for (i <- TaskArray.indices){
-      TaskArray(i).LatestEndDate <== MinArray(latestStartDates, TaskArray(i).AllSucceedingTasks, maxduration)
-    }
+    MakeSpan <== SentinelTask.EarliestStartDate
 
     ResourceArray = new Array[Resource](ResourceCount)
     for (r <- Ressources) {

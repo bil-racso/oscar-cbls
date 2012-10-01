@@ -74,7 +74,7 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
   }
 
   for(v <- variables){
-    Violations(v) <== ValueCount.apply((v + offset).toIntVar) - 1
+    Violations(v) <== ValueCount.element((v + offset).toIntVar) - 1
   }
 
   for(i <- range){
