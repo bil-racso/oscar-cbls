@@ -105,13 +105,13 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     EarliestStartDate = argMax.getMax
     EarliestEndDate <== EarliestStartDate + duration
 
-    DefiningPredecessors = argmax
+    DefiningPredecessors = argMax
 
     PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-    AllSucceedingTasks = new IntSetVar(model, 0, planning.taskcount - 1, "succeeding_jobs")
+    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
 
-    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, maxduration)
+    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
   }
 }
 
