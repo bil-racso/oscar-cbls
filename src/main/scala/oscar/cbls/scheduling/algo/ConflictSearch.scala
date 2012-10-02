@@ -22,7 +22,7 @@
  ******************************************************************************/
 
 
-package oscar.cbls.jobshop.algo
+package oscar.cbls.scheduling.algo
 
 /**
  *Implements the famous quickXplain algorithm in a generic way

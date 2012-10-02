@@ -24,7 +24,6 @@
 
 package oscar.cbls.constraints.core
 
-import oscar.cbls.invariants.core.computation.Implicits._
 import oscar.cbls.invariants.core.computation.{Variable, IntVar, IntInvariant}
 import oscar.cbls.invariants.lib.numeric.Step
 

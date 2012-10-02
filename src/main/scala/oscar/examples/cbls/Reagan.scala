@@ -24,7 +24,7 @@ package oscar.examples.cbls
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.scheduling.{Task, Resource, JobShopSolver, Planning}
+import oscar.cbls.scheduling.{Task, Resource, IFlatIRelax, Planning}
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -34,7 +34,7 @@ import oscar.cbls.scheduling.{Task, Resource, JobShopSolver, Planning}
 object Reagan extends App {
   val model = new Model(false, true, false)
   val planning = new Planning(model, 31)
-  val solver = new JobShopSolver(planning)
+  val solver = new IFlatIRelax(planning)
 
   val Reagan = new Resource(planning, 3, "Reagan")
 

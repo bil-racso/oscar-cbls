@@ -23,11 +23,11 @@ package oscar.cbls.scheduling
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.jobshop.algo.ConflictSearch
+import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{Solution, Model}
 
-class JobShopSolver(p: Planning, Verbose: Boolean = true) extends SearchEngine {
+class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
 
   class FlatteningHeuristics()

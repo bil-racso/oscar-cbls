@@ -21,9 +21,14 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
+package oscar.cbls
 
-/** This package proposes a cumulatove jobshop library
- * and the iFlatiRelax metaheuristics.
+/** This package is a scheduling library.
+ * it supports
+ - cumulative [[oscar.cbls.scheduling.Resource]] constraints
+ - [[oscar.cbls.scheduling.Task]] with varying durations and precedence constraints
+ - super tasks [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks
+ * It features the [[oscar.cbls.scheduling.IFlatIRelax]] searh heuristics with various tunings
  * */
 package object scheduling{
 }

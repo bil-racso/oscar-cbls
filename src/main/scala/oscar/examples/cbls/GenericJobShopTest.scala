@@ -26,7 +26,7 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
-import oscar.cbls.scheduling.{JobShopSolver, Task, Resource, Planning}
+import oscar.cbls.scheduling.{IFlatIRelax, Task, Resource, Planning}
 
 //TODO: get MT10 and solve it.
 
@@ -88,7 +88,7 @@ object GenericJobShopTest extends StopWatch with App {
   startWatch()
   planning.close()
 
-  val solver = new JobShopSolver(planning, false)
+  val solver = new IFlatIRelax(planning, false)
 
   model.close()
 
