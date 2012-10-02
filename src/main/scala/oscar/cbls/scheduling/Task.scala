@@ -36,7 +36,7 @@ class SuperTask(start: Task, end: Task, planning: Planning, override val name: S
 
   override def post() {
     super.post()
-    this.duration <== start.EarliestStartDate - end.EarliestEndDate
+    this.duration <== end.EarliestEndDate - start.EarliestStartDate
   }
 
   override def addDynamicPredecessor(t: Task) {
@@ -80,9 +80,11 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     r.notifyUsedBy(this, amount)
   }
 
-  var EarliestStartDate: IntVar = null
+  var EarliestStartDate: IntVar = new IntVar(planning.model, 0,
+    planning.maxduration, duration.value, "esd(" + name + ")")
   val EarliestEndDate: IntVar = new IntVar(planning.model, 0,
     planning.maxduration, duration.value, "eed(" + name + ")")
+  EarliestEndDate <== EarliestStartDate + duration
 
   val LatestEndDate: IntVar = new IntVar(planning.model, 0,
     planning.maxduration, planning.maxduration, "led(" + name + ")")
@@ -116,8 +118,7 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
     val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
-    EarliestStartDate = argMax.getMax
-    EarliestEndDate <== EarliestStartDate + duration
+    EarliestStartDate <== argMax.getMax
 
     DefiningPredecessors = argMax
 

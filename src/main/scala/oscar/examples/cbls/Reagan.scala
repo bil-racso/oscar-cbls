@@ -24,7 +24,7 @@ package oscar.examples.cbls
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.scheduling.{Task, Resource, IFlatIRelax, Planning}
+import oscar.cbls.scheduling._
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -55,6 +55,8 @@ object Reagan extends App {
 
   val Boire = new Task(3, planning, "drink")
   Boire.addResource(Reagan, 2)
+
+  val Digérer = new SuperTask(Manger, Dormir, planning, "digest")
 
   Reflechir precedes Boire
   Manger precedes Dormir
