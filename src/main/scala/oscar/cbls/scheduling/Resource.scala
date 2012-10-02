@@ -23,7 +23,6 @@ package oscar.cbls.scheduling
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 import oscar.cbls.invariants.core.computation.{IntVar, IntSetVar}
 import scala.Array
 import oscar.cbls.invariants.lib.logic.{Cumulative, Filter}

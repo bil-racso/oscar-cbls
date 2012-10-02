@@ -28,7 +28,6 @@ import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.invariants.lib.minmax._
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.Implicits._
 import oscar.cbls.algebra.Algebra._
 
 

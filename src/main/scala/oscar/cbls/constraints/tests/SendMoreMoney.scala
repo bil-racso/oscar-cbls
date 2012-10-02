@@ -29,7 +29,6 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.computation.Implicits._
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._

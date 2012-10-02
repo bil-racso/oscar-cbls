@@ -989,12 +989,6 @@ case class IntSetConst(ConstValue:SortedSet[Int],override val model:Model = null
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
 }
 
-object Implicits{
-  implicit def ToIntVar(i:IntInvariant):IntVar = i.toIntVar
-  implicit def ToIntSetVar(i:IntSetInvariant):IntSetVar = i.toIntSetVar
-  implicit def Int2IntVar(a:Int):IntVar = IntConst(a)
-}
-
 abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
