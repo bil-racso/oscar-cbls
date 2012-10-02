@@ -21,39 +21,40 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.algebra
 
-import oscar.cbls.invariants.lib.numeric.{Div, Prod, Minus, Sum2}
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
 import collection.immutable.SortedSet
+import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
+import oscar.cbls.invariants.lib.numeric._
 
 /**Include this object whenever you want to use concise notation
  * It provides the following ginfix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
  */
-object Implicits{
+object Algebra{
 
   implicit def InstrumentIntVar(v:IntVar):InstrumentedIntVar = new InstrumentedIntVar(v)
   implicit def InstrumentIntInvariant(i:IntInvariant):InstrumentedIntVar = InstrumentIntVar(i.toIntVar)
   implicit def InstrumentInt(a:Int):InstrumentedIntVar = InstrumentIntVar(IntConst(a))
 
   class InstrumentedIntVar(x:IntVar){
-    def plus (v:IntVar):IntInvariant = Sum2(x,v)
+    def + (v:IntVar):IntInvariant = Sum2(x,v)
 
-    def minus (v:IntVar):IntInvariant = Minus(x,v)
-    def times (v:IntVar):IntInvariant = Prod(List(x,v))
+    def - (v:IntVar):IntInvariant = Minus(x,v)
+    def * (v:IntVar):IntInvariant = Prod(List(x,v))
 
-    def div (v:IntVar):IntInvariant = Div(x,v)
+    def / (v:IntVar):IntInvariant = Div(x,v)
+    def % (v:IntVar):IntInvariant = Mod(x, v)
     
-    def ==:(v:IntVar):Constraint = EQ(x,v)
-    def !=:(v:IntVar):Constraint = NE(x,v)
-    def >>:(v:IntVar):Constraint = G(x,v)
-    def <<:(v:IntVar):Constraint = L(x,v)
-    def >=:(v:IntVar):Constraint = GE(x,v)
-    def <=:(v:IntVar):Constraint = LE(x,v)
+    def ===(v:IntVar):Constraint = new EQ(x,v)
+    def !==(v:IntVar):Constraint =  new NE(x,v)
+    def >>=(v:IntVar):Constraint = new G(x,v)
+    def <<=(v:IntVar):Constraint = new L(x,v)
+    def >==(v:IntVar):Constraint = new GE(x,v)
+    def le(v:IntVar):Constraint = new LE(x,v)
   }
 
   implicit def InstrumentIntSetVar(v:IntSetVar):InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
@@ -65,4 +66,20 @@ object Implicits{
     def inter (v:IntSetVar):IntSetInvariant = Inter(x,v)
     def minus (v:IntSetVar):IntSetInvariant = Diff(x,v)
   }
+  
+  implicit def InstrumentArrayOfIntVar(inputarray:Array[IntVar]):InstrumentedArrayOfIntVar
+    = new InstrumentedArrayOfIntVar(inputarray)
+
+  class InstrumentedArrayOfIntVar(inputarray:Array[IntVar]){
+    def element(index:IntVar):IntVar = IntElement(index, inputarray)
+    def elements(index:IntSetVar):IntSetVar = IntElements(index,inputarray)
+  }
+
+  implicit def InstrumentArrayOfIntSetVar(inputarray:Array[IntSetVar]):InstrumentedArrayOfIntSetVar
+  = new InstrumentedArrayOfIntSetVar(inputarray)
+
+  class InstrumentedArrayOfIntSetVar(inputarray:Array[IntSetVar]){
+    def apply(index:IntVar):IntSetVar = IntSetElement(index, inputarray)
+  }
 }
+

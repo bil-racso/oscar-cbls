@@ -1,4 +1,4 @@
-package oscar.cbls.jobshop.rich
+package oscar.cbls.scheduling
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -27,22 +27,30 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
+import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-class SuperTask(start:Task, end:Task, planning:Planning,  override val name:String = "")
-  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.getValue(), "duration of " + name),
-    planning, name){
+class SuperTask(start: Task, end: Task, planning: Planning, override val name: String = "")
+  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.value, "duration of " + name),
+    planning, name) {
 
-  override def post(){
+  override def post() {
     super.post()
-    this.duration <== start.EarliestStartDate minus end.EarliestEndDate
+    this.duration <== end.EarliestEndDate - start.EarliestStartDate
   }
 
-  override def addDynamicPredecessor(t:Task){
+  override def addDynamicPredecessor(t: Task) {
     start.addDynamicPredecessor(t)
   }
-  
-  override def getEndTask:Task = end.getEndTask
+
+  override def removeDynamicPredecessor(t:Task){
+    start.removeDynamicPredecessor(t)
+  }
+  override def getEndTask: Task = end.getEndTask
+
+  override def addStaticPredecessor(j: Task) {
+    start.addStaticPredecessor(j)
+  }
 }
 
 class Task(val duration: IntVar, planning: Planning, val name: String = "") {
@@ -54,6 +62,10 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
 
   def addStaticPredecessor(j: Task) {
     StaticPredecessors = j :: StaticPredecessors
+  }
+
+  def precedes(j: Task) {
+    j.addStaticPredecessor(this)
   }
 
   var Resources: List[(Resource, Int)] = List.empty
@@ -68,12 +80,16 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     r.notifyUsedBy(this, amount)
   }
 
-  var EarliestStartDate: IntVar = null
-  val EarliestEndDate: IntVar = new IntVar(planning.model, 0, planning.maxduration, duration, "eed(" + name + ")")
+  var EarliestStartDate: IntVar = new IntVar(planning.model, 0,
+    planning.maxduration, duration.value, "esd(" + name + ")")
+  val EarliestEndDate: IntVar = new IntVar(planning.model, 0,
+    planning.maxduration, duration.value, "eed(" + name + ")")
+  EarliestEndDate <== EarliestStartDate + duration
 
   val LatestEndDate: IntVar = new IntVar(planning.model, 0,
     planning.maxduration, planning.maxduration, "led(" + name + ")")
-  val LatestStartDate: IntVar = LatestEndDate minus duration
+
+  val LatestStartDate: IntVar = LatestEndDate - duration
   var AllSucceedingTasks: IntSetVar = null
 
   var AdditionalPredecessors: IntSetVar = null
@@ -82,27 +98,34 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
   var DefiningPredecessors: IntSetVar = null
   var PotentiallyKilledPredecessors: IntSetVar = null
 
-  def addDynamicPredecessor(t:Task){
+  def addDynamicPredecessor(t: Task) {
     AdditionalPredecessors :+= t.getEndTask.TaskID
   }
-  def getEndTask:Task = this
+
+  def removeDynamicPredecessor(t:Task){
+    AdditionalPredecessors :-= t.getEndTask.TaskID
+  }
+
+  def getEndTask: Task = this
 
   /**This method is called by the planning when all tasks are created*/
   def post() {
+
     AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
       "added predecessors of " + name, SortedSet.empty)
 
-    val PredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
-    AllPrecedingTasks = Union(PredecessorsID, AdditionalPredecessors)
+    val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
+    AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-    DefiningPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "defining predecessors of " + name, SortedSet.empty)
+    val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+    EarliestStartDate <== argMax.getMax
 
-    PotentiallyKilledPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "tokill predecessors of " + name, SortedSet.empty)
+    DefiningPredecessors = argMax
 
-    PotentiallyKilledPredecessors <== Inter(DefiningPredecessors, AdditionalPredecessors)
+    PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
+
+    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+
+    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
   }
 }
-
-

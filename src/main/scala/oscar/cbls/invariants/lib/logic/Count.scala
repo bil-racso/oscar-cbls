@@ -37,7 +37,7 @@ case class DenseCount(var values:Array[IntVar], counts:Array[IntVar]) extends In
   for (count <- counts){count := 0}
 
   for(v <- values.indices){
-    counts(values(v).getValue()) := counts(values(v).getValue()).getValue(true) + 1
+    counts(values(v).value) :+= 1
   }
 
   finishInitialization()
@@ -47,8 +47,8 @@ case class DenseCount(var values:Array[IntVar], counts:Array[IntVar]) extends In
   @inline
   override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
     assert(values(index) == v)
-    counts(OldVal) := counts(OldVal).getValue(true) -1
-    counts(NewVal) := counts(NewVal).getValue(true) +1
+    counts(OldVal) :-= 1
+    counts(NewVal) :+= 1
   }
 }
 

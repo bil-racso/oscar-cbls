@@ -41,7 +41,7 @@ import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import javax.swing.border.LineBorder
 
 class NQueensApplet extends Applet {
@@ -51,12 +51,12 @@ class NQueensApplet extends Applet {
   var N: Int = 15
   var Dim = Range(0, N)
   var PAUSE: Int = 50 + 1000 / N
-
   // UI stuff
   val cl = Thread.currentThread().getContextClassLoader()
-  val QUEEN = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ok.png"))
-  val CONFLICT = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ko.png"))
-  val EMPTY = new ImageIcon(cl.getResource("constraints/tests/resources/queen-no.png"))
+  val QUEEN = new ImageIcon(   cl.getResource("src/main/scala/oscar/cbls/constraints/tests/resources/queen-ok.png"))
+  val CONFLICT = new ImageIcon(cl.getResource("src/main/scala/oscar/cbls/constraints/tests/resources/queen-ko.png"))
+  val EMPTY = new ImageIcon(   cl.getResource("src/main/scala/oscar/cbls/constraints/tests/resources/queen-no.png"))
+
   var gridPanel: GridPanel = null
   var tab: Array[Array[Label]] = null
   var lNQueen: Label = null
@@ -167,8 +167,8 @@ class NQueensApplet extends Applet {
 
       val c: ConstraintSystem = new ConstraintSystem(m)
       //c.post(AllDiff(Queens)) handled trough permutations
-      c.post(AllDiff(for (q <- range) yield (q plus Queens(q)).toIntVar))
-      c.post(AllDiff(for (q <- range) yield (q minus Queens(q)).toIntVar))
+      c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
+      c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
       for (q <- range) { c.registerForViolation(Queens(q)) }
       c.close()
@@ -180,10 +180,10 @@ class NQueensApplet extends Applet {
       val Tabu = (for (q <- range) yield -1).toArray
 
       var longueurplateau = 0;
-      while ((c.Violation.getValue() > 0) && (it < MaxIT) && !stopRequested) {
-        val oldviolation: Int = c.Violation
+      while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
+        val oldviolation: Int = c.Violation.value
         val allowedqueens = range.filter(q => Tabu(q) < it)
-        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.swapDelta(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
+        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
 
         swapQueens(q1, q2)
         Tabu(q1) = it + tabulength
@@ -191,7 +191,7 @@ class NQueensApplet extends Applet {
 
         it += 1
         println("it: " + it + " " + c.Violation + " (swapped " + q1 + " and " + q2 + ")")
-        if (oldviolation <= c.Violation.getValue()) longueurplateau += 1 else longueurplateau = 0
+        if (oldviolation <= c.Violation.value) longueurplateau += 1 else longueurplateau = 0
 
         if (longueurplateau > 5) {
           println("jump away")
@@ -208,24 +208,24 @@ class NQueensApplet extends Applet {
       // subprocedure with also update the UI
       // TODO use Event to separate model from view and update more efficiently
       def swapQueens(q1: Int, q2: Int) {
-        tab(q1)(Queens(q1)).icon = EMPTY
-        tab(q2)(Queens(q2)).icon = EMPTY
+        tab(q1)(Queens(q1).value).icon = EMPTY
+        tab(q2)(Queens(q2).value).icon = EMPTY
         Queens(q1) :=: Queens(q2)
-        if (viol(q1) > 0)
-          tab(q1)(Queens(q1)).icon = CONFLICT
+        if (viol(q1).value > 0)
+          tab(q1)(Queens(q1).value).icon = CONFLICT
         else
-          tab(q1)(Queens(q1)).icon = QUEEN
-        if (viol(q2) > 0)
-          tab(q2)(Queens(q2)).icon = CONFLICT
+          tab(q1)(Queens(q1).value).icon = QUEEN
+        if (viol(q2).value > 0)
+          tab(q2)(Queens(q2).value).icon = CONFLICT
         else
-          tab(q2)(Queens(q2)).icon = QUEEN
+          tab(q2)(Queens(q2).value).icon = QUEEN
 
         // updating possible violations
         for (q <- range) {
-          if (viol(Queens(q)) > 0) {
-            tab(q)(Queens(q)).icon = CONFLICT
+          if (viol(Queens(q).value).value > 0) {
+            tab(q)(Queens(q).value).icon = CONFLICT
           } else {
-            tab(q)(Queens(q)).icon = QUEEN
+            tab(q)(Queens(q).value).icon = QUEEN
           }
         }
       }

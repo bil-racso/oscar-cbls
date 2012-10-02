@@ -25,7 +25,7 @@
 package oscar.cbls.constraints.core
 
 import oscar.cbls.invariants.core.computation.{Variable, IntVar, Model}
-import oscar.cbls.objective.core.ObjectiveTrait
+import oscar.cbls.objective.ObjectiveTrait
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
 
@@ -103,6 +103,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     for(VarOflocalviol <- LocalViolations.keys){
       //TODO: this is deeply inefficient: we query GetSourceVariables so many times, and this procedure is not focused
       val sources = model.getSourceVariables(VarOflocalviol).intersect(WatchedVariables)
+
       for(source <- sources){
         //TODO: no such expensive operations please!!!
         AccViol += ((source,LocalViolations(VarOflocalviol) :: AccViol.getOrElse(source,List.empty)))
@@ -111,6 +112,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     AccViol.foreach(ViolAndElements => Violations(ViolAndElements._1) <== Sum(ViolAndElements._2))
   }
 
+  var acc:Long = 0
+  
   /**Call this method to notify that the variable should have a violation degree computed for the whole constraint system.
    * it is not compulsory that the variable is directly involved in the constraints. It can be involved indirectly, even through invariants.
    * The variables registered here are the ones and only ones that are considered as constrained by the constraint system, and returned by the method getConstrainedVariables

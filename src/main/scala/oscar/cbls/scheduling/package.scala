@@ -21,24 +21,15 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
+package oscar.cbls
 
-package oscar.cbls.invariants.lib.numeric
-
-import oscar.cbls.invariants.core.computation._;
-
-object Implicits{
-
-  implicit def InstrumentIntVar(v:IntVar):InstrumentedIntVar = new InstrumentedIntVar(v)
-  implicit def InstrumentIntInvariant(i:IntInvariant):InstrumentedIntVar = InstrumentIntVar(i.toIntVar)
-  implicit def InstrumentInt(a:Int):InstrumentedIntVar = InstrumentIntVar(IntConst(a))
-
-  class InstrumentedIntVar(x:IntVar){
-    def plus (v:IntVar):IntInvariant = Sum2(x,v)
-
-    def minus (v:IntVar):IntInvariant = Minus(x,v)
-    def times (v:IntVar):IntInvariant = Prod(List(x,v))
-
-    def div (v:IntVar):IntInvariant = Div(x,v)
-  }
+/** This package is a scheduling library.
+ * it supports
+ - cumulative [[oscar.cbls.scheduling.Resource]] constraints
+ - [[oscar.cbls.scheduling.Task]] with varying durations and precedence constraints
+ - super tasks [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks
+ * It features the [[oscar.cbls.scheduling.IFlatIRelax]] searh heuristics with various tunings
+ * */
+package object scheduling{
 }
 

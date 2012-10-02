@@ -22,14 +22,14 @@
  ******************************************************************************/
 
 
-package oscar.cbls.jobshop.algo
+package oscar.cbls.scheduling.algo
 
 /**
  *Implements the famous quickXplain algorithm in a generic way
  * [Ulrich Junker and F- Valbonne, QuickXPlain: Conflict Detection for Arbitrary Constraint Propagation Algorithms, 2001]
  * and proposes a faster implementation in case additional operation can be performed on the state
  */
-object QuickXplain {
+object ConflictSearch {
 
   /**Computes a minimal conflict over a list of thinks.
    * @param init the initial S, typically empty

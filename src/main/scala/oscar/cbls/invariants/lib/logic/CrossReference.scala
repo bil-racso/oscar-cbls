@@ -41,7 +41,7 @@ case class DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) e
   for(c <- referencing){c.setDefiningInvariant(this); c.setValue(SortedSet.empty)}
 
   for(v <- references.indices){
-    for (r <- references(v).getValue()){
+    for (r <- references(v).value){
       referencing(r).insertValue(v)
     }
   }

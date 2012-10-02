@@ -135,11 +135,10 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     m.close()
       
     // search
-    while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
-      val allowed = openCells.filter(v => Tabu(v) < it)
-      val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.swapDelta(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
-      require(squareOf(v1)==squareOf(v2))
-            
+    while((c.Violation.value > 0) && (it < MAX_IT)){
+      val allowed = openCells.filter(v => Tabu(v).value < it)
+      val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.getSwapVal(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
+
       grid(v1) :=: grid(v2)
       Tabu(v1) := it + TABU_LENGTH
       Tabu(v2) := it + TABU_LENGTH
@@ -150,7 +149,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
 
     println("Solution: "+m.getSolution(true))
 
-    if (c.Violation.getValue()==0) {    	
+    if (c.Violation.value==0) {
       showGrid(grid,N)    
     } else {
       println("Not found after "+MAX_IT+" iterations")
@@ -163,7 +162,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
   def showGrid(tab:Array[IntVar],N:Int) {
     for (i <- Range(0,tab.length)) {
       if ((i%N)==0) println
-      print(tab(i).getValue()+" ")
+      print(tab(i).value+" ")
     }
     println
   }

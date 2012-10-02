@@ -33,11 +33,11 @@ import oscar.cbls.invariants.core.computation.{IntSetVar, IntInvariant, IntSetIn
  */
 case class RoundUpModulo(from:IntVar, length:IntVar, period:Int, zone:Int, shift:Int)
   extends LazyIntVarIntVar2IntVarFun(from, length,(from:Int, to:Int) => {
-    assert(length < period - zone)
+    assert(length.value < period - zone)
     val reducedfrom = (from - shift) % period
     if (reducedfrom < zone)
       from + (zone - reducedfrom) //to restore the modulo, we must compute this
-    else if (reducedfrom + length > period)
+    else if (reducedfrom + length.value > period)
       from + (period + zone - reducedfrom)
     else
       from
@@ -46,8 +46,8 @@ case class RoundUpModulo(from:IntVar, length:IntVar, period:Int, zone:Int, shift
 
 case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) extends IntInvariant {
 
-  def MyMax = Zone.maxBy(_._2)._2+1
-  def MyMin = from.MinVal
+  def myMax = Zone.maxBy(_._2)._2+1
+  def myMin = from.MinVal
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(from,length)
@@ -69,14 +69,14 @@ case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) exte
   }
 
   def roundup():Int = {
-    var NewStart = from
-    var LastZoneBeforeNewStart = FindLastStartBefore(from)
+    var NewStart:Int = from.value
+    var LastZoneBeforeNewStart = FindLastStartBefore(from.value)
     while(true){
       if (!(LastZoneBeforeNewStart == -1 || ForbiddenEnds(LastZoneBeforeNewStart) < from)){
         //problème de type 1
         NewStart = ForbiddenEnds(LastZoneBeforeNewStart) + 1
         LastZoneBeforeNewStart += 1
-      }else if((LastZoneBeforeNewStart+1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart+1) > from.getValue() + length.getValue ())){
+      }else if((LastZoneBeforeNewStart+1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart+1) > from.value + length.getValue ())){
         //problème de type 2
         NewStart = ForbiddenEnds(LastZoneBeforeNewStart+1) + 1
         LastZoneBeforeNewStart += 1

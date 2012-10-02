@@ -33,8 +33,7 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.core.computation.Implicits._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
@@ -68,11 +67,13 @@ object NQueens extends SearchEngine with StopWatch{
     val c:ConstraintSystem = new ConstraintSystem(m)
 
     //c.post(AllDiff(Queens)) handled trough permutations
-    c.post(AllDiff(for ( q <- range) yield (q plus Queens(q)).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
     c.close()
-    m.close()
+//    m.close()
+     m.close(false)
+    println(m.dumpToDot(true,true))
 
     println("run time after model close: "+ getWatchString)
 
@@ -81,8 +82,8 @@ object NQueens extends SearchEngine with StopWatch{
     val Tabu = (for(q <- range)yield -1).toArray
 
     var longueurplateau = 0;
-    while((c.Violation.getValue() > 0) && (it < MaxIT)){
-      val oldviolation:Int = c.Violation
+    while((c.Violation.value > 0) && (it < MaxIT)){
+      val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
       val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
@@ -92,7 +93,7 @@ object NQueens extends SearchEngine with StopWatch{
 
       it += 1
       println("it: " + it + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
-      if(oldviolation <= c.Violation.getValue()) longueurplateau+=1 else longueurplateau = 0
+      if(oldviolation <= c.Violation.value) longueurplateau+=1 else longueurplateau = 0
 
       if (longueurplateau > 5){
         println("jump away")

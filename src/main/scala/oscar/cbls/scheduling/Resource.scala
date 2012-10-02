@@ -1,4 +1,4 @@
-package oscar.cbls.jobshop.rich
+package oscar.cbls.scheduling
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -22,7 +22,6 @@ package oscar.cbls.jobshop.rich
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
-
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntSetVar}
 import scala.Array

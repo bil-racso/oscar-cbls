@@ -27,13 +27,12 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.core.computation.Implicits._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic pigeon hole problem
@@ -78,7 +77,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     // requiring all holes to have less that a pigeon
     //val ONE=new IntVar(m,0,N,1, "ONE")
     for (i <- range) {
-      c.post(holes(i) <=: 1 )
+      c.post(holes(i) le 1)
     }
     // enforcing sum (not required if transfer is used during search)
     
@@ -90,12 +89,12 @@ object PigeonHoles extends SearchEngine with StopWatch {
     var it:Int =0
     val MaxIT = 2*N
 
-    while((c.Violation.getValue() > 0) && (it < MaxIT)){
-      val holeMax:(Int)=selectMax(range, (p:Int) => holes(p))
-      val holeMin:(Int)=selectMin(range)(p => holes(p), (p:Int) => p != holeMax )
+    while((c.Violation.value > 0) && (it < MaxIT)){
+      val holeMax:(Int)=selectMax(range, (p:Int) => holes(p).value)
+      val holeMin:(Int)=selectMin(range)(p => holes(p).value, (p:Int) => p != holeMax )
 
-      holes(holeMax).setValue(holes(holeMax).toInt-1)
-      holes(holeMin).setValue(holes(holeMin).toInt+1)
+      holes(holeMax).setValue(holes(holeMax).value-1)
+      holes(holeMin).setValue(holes(holeMin).value+1)
       
       it += 1
       println("it: " + it + " " + c.Violation + " (moved from "+ holeMax + " to " + holeMin + ")")

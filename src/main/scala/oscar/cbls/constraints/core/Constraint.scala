@@ -24,7 +24,6 @@
 
 package oscar.cbls.constraints.core
 
-import oscar.cbls.invariants.core.computation.Implicits._
 import oscar.cbls.invariants.core.computation.{Variable, IntVar, IntInvariant}
 import oscar.cbls.invariants.lib.numeric.Step
 
@@ -48,10 +47,10 @@ abstract class Constraint extends IntInvariant{
   def getViolation:IntVar
 
   /**facility to check that the constraint is enforced*/
-  final def isTrue:Boolean = (getViolation.getValue() == 0)
+  final def isTrue:Boolean = (getViolation.value == 0)
 
-  def MyMin = 0
-  def MyMax = 1
+  def myMin = 0
+  def myMax = 1
 
   /**the output var of a constraint is whether the constraint is true or not; it is not the violation degree*/
   override def setOutputVar(v: IntVar) {v <== Step(getViolation,0,0,1)}
