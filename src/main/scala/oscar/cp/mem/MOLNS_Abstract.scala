@@ -1,4 +1,4 @@
-package oscar.cp.multiobjective
+package oscar.cp.mem
 
 abstract class MOLNS_Abstract(val nObjective : Int) {
 

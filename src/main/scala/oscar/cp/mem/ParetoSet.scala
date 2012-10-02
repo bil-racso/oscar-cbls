@@ -1,4 +1,4 @@
-package oscar.cp.multiobjective
+package oscar.cp.mem
 
 import scala.collection.mutable.Queue
 

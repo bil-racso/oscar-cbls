@@ -16,7 +16,7 @@
   * ****************************************************************************
   */
 
-package oscar.cp.multiobjective
+package oscar.cp.mem
 
 import oscar.search._
 import oscar.cp._

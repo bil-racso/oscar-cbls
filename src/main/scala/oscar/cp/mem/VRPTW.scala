@@ -1,10 +1,10 @@
-package oscar.cp.multiobjective
+package oscar.cp.mem
 
 import scala.Math.max
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.multiobjective.VRPTWParser.parse
+import oscar.cp.mem.VRPTWParser.parse
 
 import oscar.algo.Select.selectMin
 
