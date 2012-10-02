@@ -133,7 +133,7 @@ object VRPTW extends App {
 			cp.branch(cp.post(x == v))(cp.post(x != v))
 		}
 		
-		//cp.binaryFirstFail(prev)
+		cp.binaryFirstFail(prev)
 		
 		cp.printStats
 		
