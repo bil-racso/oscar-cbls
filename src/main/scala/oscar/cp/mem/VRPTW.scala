@@ -123,14 +123,11 @@ object VRPTW extends App {
 	} exploration {
 		
 		while (!allBounds(prev)) {
-				
-			val res = minDomNotbound(prev)
-			val (x, i) = res.head
-			
-			// Get the closest successor in the domain of x
-			val v = argMin((x.min to x.max).filter(x.hasValue(_)))(dist(i)(_)).head
-			
-			cp.branch(cp.post(x == v))(cp.post(x != v))
+	
+			val i = selectMin(3)(Sites, i => !prev(i).isBound)    (i => prev(i).size)			
+			val j = selectMin(1)(Sites, j => prev(i).hasValue(j)) (j => dist(i)(j))
+
+			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 		}
 		
 		cp.binaryFirstFail(prev)
