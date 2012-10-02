@@ -49,7 +49,7 @@ object FlexibleJobShop extends App {
 	val jobs = 
 	for (j <- 1 to nJobs) yield {
 	  println("=>line"+j+":"+lines(j).trim().split(" +").mkString("  "))
-	  //  the first number is the number of operations of that job
+	  // the first number is the number of operations of that job
 	  // the second number (let's say k>=1) is the number of machines that can process the first operation; 
 	  // then according to k, there are k pairs of numbers (machine,processing time) 
 	  var acts = lines(j).trim().split(" +").map(_.toInt)

@@ -17,7 +17,7 @@ class CPObjectiveMinimize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
   	  if (!currentObjective.isBound) {
   	    throw new RuntimeException("objective not bound:" + currentObjective)
   	  }
-  	  println("objective "+currentObjectiveIdx+" tightened to "+(bound).min(currentObjective.value)+" lb:"+lowerBounds(currentObjectiveIdx))
+  	  if (!s.silent) println("objective "+currentObjectiveIdx+" tightened to "+(bound).min(currentObjective.value)+" lb:"+lowerBounds(currentObjectiveIdx))
   	  for (i <- 0 until objVars.size) {
   	    bestObjs(i) = objVars(i).value
   	    bounds(i) = bestObjs(i)

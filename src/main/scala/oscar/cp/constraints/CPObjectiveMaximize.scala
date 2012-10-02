@@ -16,7 +16,7 @@ class CPObjectiveMaximize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
   	  if (!currentObjective.isBound) {
   	    throw new RuntimeException("objective not bound:" + currentObjective)
   	  }
-  	  println("objective "+currentObjectiveIdx+" tightened to "+(bound).max(currentObjective.value)+" ub:"+upperBounds(currentObjectiveIdx))
+  	  if (!s.silent) println("objective "+currentObjectiveIdx+" tightened to "+(bound).max(currentObjective.value)+" ub:"+upperBounds(currentObjectiveIdx))
   	  for (i <- 0 until objVars.size) {
   	    bestObjs(i) = objVars(i).value
   	    bounds(i) = bestObjs(i)

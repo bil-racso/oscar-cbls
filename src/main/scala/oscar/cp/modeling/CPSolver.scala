@@ -255,11 +255,11 @@ class CPSolver() extends Store() {
              restart(true)
              if (sc.isLimitReached) {
                lastLNSRestartCompleted = false
-               print("!") 
+               if (!silent) print("!") 
              }
              else {
                lastLNSRestartCompleted = true
-               print("R") 
+               if (!silent) print("R") 
              }
           }
           k1() // exit the exploration block       
