@@ -4,6 +4,11 @@ import scala.Math.max
 
 import oscar.cp.modeling._
 import oscar.cp.core._
+import oscar.cp.multiobjective.VRPTWParser.parse
+
+import oscar.algo.Select.selectMin
+
+import oscar.visual.VisualTour
 
 /** VRPTW
  * 
@@ -12,11 +17,11 @@ import oscar.cp.core._
 
 object VRPTW extends App {
 	
-	val instance = VRPTWParser.parse("data/VRPTW/Solomon/C101.txt")
+	val instance = parse("data/VRPTW/Solomon/C101.txt")
 	
 	// Data
 	val nCustomers = instance.n	
-	val nVehicles  = instance.k	
+	val nVehicles  = 10//instance.k	
 	val nSites     = nCustomers + nVehicles	
 	val capacity   = instance.c	
 	
@@ -29,13 +34,18 @@ object VRPTW extends App {
 	val twStart = new Array[Int](nSites) // Earliest delivery time of each customer
 	val twEnd   = new Array[Int](nSites) // Latest delivery time of each customer
 	val servDur = new Array[Int](nSites) // Duration needed to serve each customer
+	
+	val coord   = new Array[(Int, Int)](nSites)
 
 	for(s <- Sites) {
-		val i = if (s > nCustomers) 0 else s
+		val i = if (s >= nCustomers) 0 else s+1
+		
 		demand(s)  = instance.demand(i) 
 		twStart(s) = instance.twStart(i)
 		twEnd(s)   = instance.twEnd(i)
 		servDur(s) = instance.servDur(i)
+		
+		coord(s)   = instance.coord(i)
 	}
 	
 	// Distance matrix between sites
@@ -52,17 +62,30 @@ object VRPTW extends App {
 	// Model
 	val cp = CPSolver()
 	
-	val prev      : Array[CPVarInt] = for(i <- Sites) yield CPVarInt(cp, Sites)	   // Previously visited site
-	val routeOf   : Array[CPVarInt] = for(i <- Sites) yield CPVarInt(cp, Vehicles) // Route of each vehicle
-	val service   : Array[CPVarInt] = for(i <- Sites) yield CPVarInt(cp, Horizon)  // Date of service of each site
-	val departure : Array[CPVarInt] = for(i <- Sites) yield CPVarInt(cp, Horizon)  // Departure from each site
+	val prev      = Array.fill(nSites)(CPVarInt(cp, Sites))		// Previously visited site
+	val routeOf   = Array.fill(nSites)(CPVarInt(cp, Vehicles))	// Route of each vehicle
+	val service   = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Date of service of each site
+	val departure = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Departure from each site
+	
+	val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
 	
 	val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
+	
+	// Visualization
+	// --------------------------------------------------
+	
+	val visu = new VisualTour(coord, prev, totDist, "VRPTW", 12, 8, routeOf)
 	
 	cp.minimize(totDist) subjectTo {
 		
 		// TSP constraint
 		cp.add(circuit(prev), Strong)
+		
+		// Length of the cycle
+		cp.add(sum(Sites)(i => dist(i)(prev(i))) == totDist)
+		
+		// TODO : Check pruning of this constraint
+		// route(i) != route(j) => prev(i) != j
 		
 		// Route consistency
 		for(i <- Customers) 
@@ -73,14 +96,15 @@ object VRPTW extends App {
 			cp.add(routeOf(i) == i - nCustomers)
 			
 		// Capacity of vehicles
-		cp.add(binpacking(routeOf, demand, Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))))
+		cp.add(binpacking(routeOf, demand, load))
 			
 		// Delivery time
 		for (i <- Sites) {
 			
 			// A vehicle can arrived before starting time 
-			cp.add(service(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(prev(i))(CPVarInt(cp,i)))))
+			cp.add(service(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
 			
+			// TODO : Relax this constraint
 			// A vehicle must finish before end of the time-window
 			cp.add(service(i) <= twEnd(i))
 			
@@ -89,7 +113,7 @@ object VRPTW extends App {
 		}
 		
 		// A vehicle starts immediately after service
-		for(i <- Customers)
+	    for(i <- Customers)
 			cp.add(departure(i) == service(i) + servDur(i))
 			
 		// All vehicle start on the morning 
@@ -98,6 +122,21 @@ object VRPTW extends App {
 		
 	} exploration {
 		
-		cp.binaryFirstFail(prev)
+		while (!allBounds(prev)) {
+				
+			val res = minDomNotbound(prev)
+			val (x, i) = res.head
+			
+			// Get the closest successor in the domain of x
+			val v = argMin((x.min to x.max).filter(x.hasValue(_)))(dist(i)(_)).head
+			
+			cp.branch(cp.post(x == v))(cp.post(x != v))
+		}
+		
+		//cp.binaryFirstFail(prev)
+		
+		cp.printStats
+		
+		visu.update
 	}
 }

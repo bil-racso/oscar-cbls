@@ -6,6 +6,7 @@ class ParetoSet(nDimension : Int) {
 	
 	val set : Queue[ParetoPoint] = Queue()
 	
+	def size = set.size
 
 	def nextPoint : ParetoPoint = {
 		val p = set.dequeue()

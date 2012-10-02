@@ -35,6 +35,10 @@ class CPSolverMO(val nObjs : Int) extends Store() {
 	val paretoSet    : ParetoSet   = ParetoSet(nObjs)
 	var currentPoint : ParetoPoint = null
 	
+	var solutionVector : Array[CPVarInt] = null
+	def setSolutionVector(sol : Array[CPVarInt]) { solutionVector = sol }
+	def buildSolution : Array[Int] = solutionVector.map(v => v.value)
+	
 	var objProcessed = 0
 
 	// DEFINE THE MO LNS FRAME WORK
@@ -73,7 +77,7 @@ class CPSolverMO(val nObjs : Int) extends Store() {
 			else {
 
 				// Relax other objectives e
-				objective.bounds(i) = ((1+e)*p(i)).toInt
+				objective.bounds(i) = ((1+e) * p(i)).toInt
 			}
 		}
 	}
@@ -231,9 +235,7 @@ class CPSolverMO(val nObjs : Int) extends Store() {
 				}
 
 				def restart(relaxation: Boolean = false) {
-
 					
-					val f : Int => Int = (i : Int) => i+i
 					popAll()
 					pushState()
 
