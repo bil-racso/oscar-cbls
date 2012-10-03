@@ -36,25 +36,25 @@ object Reagan extends App {
   val planning = new Planning(model, 31)
   val solver = new IFlatIRelax(planning)
 
-  val Reagan = new Resource(planning, 3, "Reagan")
+  val Reagan = new CumulativeResource(planning, 3, "Reagan")
 
   val Manger = new Task(2, planning, "eat")
-  Manger.addResource(Reagan, 2)
+  Manger.usesCumulativeResource(Reagan, 2)
 
   val Dormir = new Task(8, planning, "sleep")
-  Dormir.addResource(Reagan, 1)
+  Dormir.usesCumulativeResource(Reagan, 1)
 
   val Reflechir = new Task(12, planning, "think")
-  Reflechir.addResource(Reagan, 1)
+  Reflechir.usesCumulativeResource(Reagan, 1)
 
   val Chiquer = new Task(3, planning, "chew")
-  Chiquer.addResource(Reagan, 1)
+  Chiquer.usesCumulativeResource(Reagan, 1)
 
   val Parler = new Task(3, planning, "speak")
-  Parler.addResource(Reagan, 2)
+  Parler.usesCumulativeResource(Reagan, 2)
 
   val Boire = new Task(3, planning, "drink")
-  Boire.addResource(Reagan, 2)
+  Boire.usesCumulativeResource(Reagan, 2)
 
   val Digérer = new SuperTask(Manger, Dormir, planning, "digest")
 

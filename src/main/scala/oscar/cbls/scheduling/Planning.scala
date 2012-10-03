@@ -30,10 +30,10 @@ import oscar.cbls.algebra.Algebra._;
 
 class Planning(val model: Model, val maxduration: Int) {
 
-  var Ressources: List[Resource] = List.empty
+  var Ressources: List[CumulativeResource] = List.empty
   var ResourceCount: Int = 0
   /**called by resources registers it in the planning, returns an ID, which is the one of the resource*/
-  def AddRessource(r: Resource): Int = {
+  def AddRessource(r: CumulativeResource): Int = {
     Ressources = r :: Ressources;
     ResourceCount += 1;
     ResourceCount - 1
@@ -56,7 +56,7 @@ class Planning(val model: Model, val maxduration: Int) {
   var EarliestOvershotResources: IntSetVar = null
   var WorseOvershotResource: IntSetVar = null
 
-  var ResourceArray: Array[Resource] = null
+  var ResourceArray: Array[CumulativeResource] = null
   var TaskArray: Array[Task] = null
 
   var SentinelTask: Task = null //a taks that is added after all taskss, to simplify algorithm construction
@@ -88,7 +88,7 @@ class Planning(val model: Model, val maxduration: Int) {
 
     MakeSpan <== SentinelTask.EarliestStartDate
 
-    ResourceArray = new Array[Resource](ResourceCount)
+    ResourceArray = new Array[CumulativeResource](ResourceCount)
     for (r <- Ressources) {
       ResourceArray(r.ResourceID) = r; r.close()
     }

@@ -68,14 +68,14 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     j.addStaticPredecessor(this)
   }
 
-  var Resources: List[(Resource, Int)] = List.empty
+  var Resources: List[(CumulativeResource, Int)] = List.empty
 
   /**use this method to add resource requirement to a task.
    * the task and the resource must be registered to the same planning
    * @param r a resource that the task uses
    * @param amount the amount of this resource that the task uses
    */
-  def addResource(r: Resource, amount: Int) {
+  def usesCumulativeResource(r: CumulativeResource, amount: Int) {
     Resources = (r, amount) :: Resources
     r.notifyUsedBy(this, amount)
   }

@@ -25,10 +25,13 @@ package oscar.cbls
 
 /** This package is a scheduling library.
  * it supports
- - cumulative [[oscar.cbls.scheduling.Resource]] constraints
+ - [[oscar.cbls.scheduling.CumulativeResource]]
  - [[oscar.cbls.scheduling.Task]] with varying durations and precedence constraints
- - super tasks [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks
- * It features the [[oscar.cbls.scheduling.IFlatIRelax]] searh heuristics with various tunings
+ - [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks.
+ *   This is useful to model that a resource is not released between tasks.
+ *
+ * In this package, Tasks are grouped into [[oscar.cbls.scheduling.Planning]] that keeps references to all tasks and resources.
+ * This package features the [[oscar.cbls.scheduling.IFlatIRelax]] search heuristics with various tunings
  * */
 package object scheduling{
 }

@@ -127,7 +127,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
   def RandomFlatten() {
     while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
+      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
       val TasksAndUse = r.TasksAndUse.filter((taksAndamount: (Task, Int)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
@@ -144,20 +144,20 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
     while (!p.WorseOvershotResource.value.isEmpty) {
-      val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
+      val r: CumulativeResource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
       val t: Int = selectFirst(r.HighestUsePositions.value)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount: (Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
+      val TasksAndUse = r.getTasksAndUse(t)
 
       val conflictSet: List[(Task, Int)] = ConflictSearch(
         0,
-        TaskssAndUse,
+        TasksAndUse,
         (use: Int, taskAndamount: (Task, Int)) => use + taskAndamount._2,
         (use: Int, taskAndamount: (Task, Int)) => use - taskAndamount._2,
         (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks: List[Task] = conflictSet.map((takAndamount: (Task, Int)) => takAndamount._1)
+      val conflictTasks: List[Task] = conflictSet.map(_._1)
 
       //println("flatten length: " + TaskssAndUse.length)
 
@@ -172,7 +172,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
   def FlattenEarliestFirst() {
     while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: Resource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
+      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
       //the two selected tasks a,b must belong to a minimal conflict set
@@ -183,8 +183,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //uniquement b doit appartenir au conflict set.
       //et on maximise led(b) - esd(a)
 
-      val TaskssAndUse = r.TasksAndUse.filter((taskAndamount: (Task, Int)) => r.Use(t).value.contains(taskAndamount._1.TaskID))
-      val Tasks: List[Task] = TaskssAndUse.map((taskAndamount: (Task, Int)) => taskAndamount._1)
+      val TaskssAndUse = r.getTasksAndUse(t)
 
       val conflictSet: List[(Task, Int)] = ConflictSearch(
         0,
@@ -194,10 +193,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks: List[Task] = conflictSet.map((taskAndamount: (Task, Int)) => taskAndamount._1)
+      val conflictTasks: List[Task] = conflictSet.map(_._1)
+
+      val Tasks: List[Task] = TaskssAndUse.map(_._1)
 
       val (a, b) = selectMax2(Tasks, conflictTasks,
-        (a: Task, b: Task) => (b.LatestStartDate.value - a.EarliestEndDate.value), //c'est pas l'inverse?
+        (a: Task, b: Task) => (b.LatestStartDate.value - a.EarliestEndDate.value),
         (a: Task, b: Task) => a != b)
 
       if (Verbose) println("added " + a + "->" + b)
@@ -205,5 +206,3 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     }
   }
 }
-
-

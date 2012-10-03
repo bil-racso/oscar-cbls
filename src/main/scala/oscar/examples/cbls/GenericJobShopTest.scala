@@ -26,7 +26,7 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
-import oscar.cbls.scheduling.{IFlatIRelax, Task, Resource, Planning}
+import oscar.cbls.scheduling.{IFlatIRelax, Task, CumulativeResource, Planning}
 
 //TODO: get MT10 and solve it.
 
@@ -64,11 +64,8 @@ object GenericJobShopTest extends StopWatch with App {
   val model = new Model(false, false, false)
   val planning = new Planning(model, 6500)
 
-  val MachineArray: Array[Resource] = new Array[Resource](MachineCount)
-
-  for (MachineID <- MachineArray.indices) {
-    MachineArray(MachineID) = new Resource(planning, 1, "Machine" + MachineID)
-  }
+  val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
+    => new CumulativeResource(planning, 1, "Machine" + MachineID))
 
   for (JobID <- 0 until JobCount) {
     var PreviousTask: Task = null
@@ -77,7 +74,7 @@ object GenericJobShopTest extends StopWatch with App {
       val Duration = WordReader.next().toInt
 
       val NewTask = new Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
-      NewTask.addResource(MachineArray(MachineID), 1)
+      NewTask.usesCumulativeResource(MachineArray(MachineID), 1)
 
       if (PreviousTask != null)
         PreviousTask precedes NewTask
