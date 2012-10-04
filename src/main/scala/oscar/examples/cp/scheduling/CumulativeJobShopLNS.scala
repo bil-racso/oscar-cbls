@@ -110,7 +110,6 @@ object CumulativeJobShopLNS extends App {
 
 	cp.lns(2000, 2000) {
 		
-		println("\n#fail: " + cp.nFail)
 		val temp = cp.failLimit
 		
 		// Adaptative LNS
@@ -119,9 +118,6 @@ object CumulativeJobShopLNS extends App {
 		} else {
 			cp.failLimit = max(10, (cp.failLimit * 90)/100)
 		}
-		
-		println("old: " + temp)
-		println("new: " + cp.failLimit)
 
 		val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
 
@@ -140,8 +136,6 @@ object CumulativeJobShopLNS extends App {
 
 		for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
 			activities(i) endsBeforeStartOf activities(i + 1)
-		
-		cp.add(makespan >= 666)
 
 	} exploration {
 
