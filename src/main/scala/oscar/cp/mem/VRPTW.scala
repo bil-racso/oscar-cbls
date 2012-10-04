@@ -6,8 +6,6 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
 
-import oscar.algo.Select.selectMin
-
 import oscar.visual.VisualTour
 
 /** VRPTW
@@ -121,8 +119,7 @@ object VRPTW extends App {
 		
 		while (!allBounds(prev)) {
 	
-			val i = selectMin(3)(Sites, i => !prev(i).isBound)    (i => prev(i).size)			
-			val j = selectMin(1)(Sites, j => prev(i).hasValue(j)) (j => dist(i)(j))
+			selectMin
 
 			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 		}
