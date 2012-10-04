@@ -2,6 +2,8 @@ package oscar.cp.mem
 
 import scala.Math.max
 
+import oscar.util._
+
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
@@ -119,12 +121,15 @@ object VRPTW extends App {
 		
 		while (!allBounds(prev)) {
 	
-			selectMin
-
-			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
+			/*selectMin[Int](Sites, i => !prev(i).isBound)(i => prev(i).size)(i => {
+				selectMin[Int](Sites, j => prev(i).hasValue(j))(j => dist(i)(j))(j => {
+					
+					cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
+				})		
+			})*/
+			
+			cp.binaryFirstFail(prev)
 		}
-		
-		cp.binaryFirstFail(prev)
 		
 		cp.printStats
 		

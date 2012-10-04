@@ -56,7 +56,7 @@ object Reagan extends App {
   val Boire = new Task(3, planning, "drink")
   Boire.addResource(Reagan, 2)
 
-  val Digérer = new SuperTask(Manger, Dormir, planning, "digest")
+  val Digerer = new SuperTask(Manger, Dormir, planning, "digest")
 
   Reflechir precedes Boire
   Manger precedes Dormir
