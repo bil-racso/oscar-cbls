@@ -119,17 +119,15 @@ object VRPTW extends App {
 		
 	} exploration {
 		
-		while (!allBounds(prev)) {
+		/*while (!allBounds(prev)) {
 	
-			/*selectMin[Int](Sites, i => !prev(i).isBound)(i => prev(i).size)(i => {
+			selectMin[Int](Sites, i => !prev(i).isBound)(i => prev(i).size)(i => {
 				selectMin[Int](Sites, j => prev(i).hasValue(j))(j => dist(i)(j))(j => {
 					
 					cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 				})		
-			})*/
-			
-			cp.binaryFirstFail(prev)
-		}
+			})
+		}*/
 		
 		cp.printStats
 		

@@ -1,8 +1,7 @@
 package oscar.cp.mem
 
-import oscar.cp.mem.ParetoFront.ParetoSet
-
-import oscar.cp.mem.ParetoFront.ParetoPoint
+import oscar.cp.mem.paretoFront.ParetoSet
+import oscar.cp.mem.paretoFront.ParetoPoint
 
 abstract class MOLNS_Abstract(val nObjective : Int) {
 
