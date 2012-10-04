@@ -26,6 +26,8 @@ import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
+import oscar.cp.mem.ParetoFront.ParetoSet
+import oscar.cp.mem.ParetoFront.ParetoPoint
 
 class NoSol(msg: String) extends Exception(msg)
 

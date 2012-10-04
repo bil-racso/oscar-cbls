@@ -1,4 +1,4 @@
-package oscar.cp.mem
+package oscar.cp.mem.ParetoFront
 
 import scala.collection.mutable.Queue
 

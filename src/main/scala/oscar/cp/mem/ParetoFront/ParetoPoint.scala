@@ -1,6 +1,7 @@
-package oscar.cp.mem
+package oscar.cp.mem.ParetoFront
 
 import oscar.cp.constraints.CPObjective
+import oscar.cp.mem.MOSolution
 
 class ParetoPoint(private val values : Array[Int]) {
 

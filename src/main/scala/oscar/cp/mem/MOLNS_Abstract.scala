@@ -1,5 +1,9 @@
 package oscar.cp.mem
 
+import oscar.cp.mem.ParetoFront.ParetoSet
+
+import oscar.cp.mem.ParetoFront.ParetoPoint
+
 abstract class MOLNS_Abstract(val nObjective : Int) {
 
 	// Approximation of the pareto set

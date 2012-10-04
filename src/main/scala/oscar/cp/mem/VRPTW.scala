@@ -17,11 +17,11 @@ import oscar.visual.VisualTour
 
 object VRPTW extends App {
 	
-	val instance = parse("data/VRPTW/Solomon/C101.txt")
+	val instance = parse("data/VRPTW/Solomon/C105.txt")
 	
 	// Data
 	val nCustomers = instance.n	
-	val nVehicles  = 10//instance.k	
+	val nVehicles  = instance.k	
 	val nSites     = nCustomers + nVehicles	
 	val capacity   = instance.c	
 	
@@ -83,9 +83,6 @@ object VRPTW extends App {
 		
 		// Length of the cycle
 		cp.add(sum(Sites)(i => dist(i)(prev(i))) == totDist)
-		
-		// TODO : Check pruning of this constraint
-		// route(i) != route(j) => prev(i) != j
 		
 		// Route consistency
 		for(i <- Customers) 
