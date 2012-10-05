@@ -31,11 +31,8 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
 
   class FlatteningHeuristics()
-
   case class EarliestFirst() extends FlatteningHeuristics
-
   case class WorseFirst() extends FlatteningHeuristics
-
   case class Random() extends FlatteningHeuristics
 
   /**This solves the jobshop by iterative relaxation and flattening

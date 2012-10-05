@@ -226,4 +226,19 @@ trait SearchEngineTrait{
     }
     intarray.iterator
   }
+
+  /**choses an laternative among a list of them, ponderated with their associated probability
+   * the returned pair includes the probability, divided by the total priority, so if it is not one, things get corrected*/
+  def PonderatedChoose[T](alternatives:Iterable[(T, Float)]):(T, Float) = {
+    var Ptot:Float = alternatives.map(tAndP => tAndP._2).foldLeft[Float](0)((a:Float, b:Float) => a+b)
+    var choice = Ptot*RandomGenerator.nextFloat()
+    for (a <- alternatives){
+      if (choice <= a._2){
+        return (a._1,a._2/Ptot)
+      }else{
+        choice -= a._2
+      }
+    }
+    return null //should not happen
+  }
 }

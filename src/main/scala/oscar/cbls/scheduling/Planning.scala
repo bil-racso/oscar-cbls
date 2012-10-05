@@ -24,7 +24,7 @@ package oscar.cbls.scheduling
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
-import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMinArray, ArgMaxArray}
+import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.cbls.algebra.Algebra._;
 
@@ -117,7 +117,6 @@ class Planning(val model: Model, val maxduration: Int) {
   }
 
   def toAsciiArt: String = {
-    //TODO: duration is not an IntVAR
     var toreturn: String = ""
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
