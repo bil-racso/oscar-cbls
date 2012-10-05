@@ -74,7 +74,7 @@ object GenericJobShopTest extends StopWatch with App {
       val Duration = WordReader.next().toInt
 
       val NewTask = Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
-      NewTask uses 2 ofResource MachineArray(MachineID)
+      NewTask uses 1 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
         PreviousTask precedes NewTask
