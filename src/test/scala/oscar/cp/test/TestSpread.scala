@@ -57,7 +57,7 @@ class TestSpread extends FunSuite with ShouldMatchers  {
     
     s2.min should be(6)
   }
-  
+ 
   test("Spread 4") {
     val cp = CPSolver()
     var x = Array(CPVarInt(cp, -1 to 0),
@@ -67,8 +67,26 @@ class TestSpread extends FunSuite with ShouldMatchers  {
     var s2 = CPVarInt(cp, 0 to 1000)
     cp.add(new Spread(x,-5,s2))
     s2.min should be(9)
-  }  
-  	
+  } 
+  
+  test("Spread 5") {
+    val cp = CPSolver()
+    
+    var x = Array(CPVarInt(cp, 103),
+                  CPVarInt(cp, 99),
+                  CPVarInt(cp, 90 to 98),
+                  CPVarInt(cp, 72 to 82),
+                  CPVarInt(cp, 78),
+                  CPVarInt(cp, 65),
+                  CPVarInt(cp, 73))
+                       
+    var s2 = CPVarInt(cp, 0 to Int.MaxValue)
+    cp.add(new Spread(x,591,s2))
+    println(s2)
+    cp.isFailed should be(false)
+    //s2.min should be(9)
+  } 
+    	
  
 
 }

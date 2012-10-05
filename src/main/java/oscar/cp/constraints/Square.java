@@ -39,7 +39,6 @@ public class Square extends Constraint {
 	 */
 	public Square(CPVarInt x, CPVarInt y) {
 		super(x.s(),"Square");
-		System.out.println("square");
 		this.x = x;
 		this.y = y;
 	}
