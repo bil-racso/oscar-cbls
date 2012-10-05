@@ -200,7 +200,7 @@ trait DAG {
     def dfsF(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
       var newlist = n :: acc
-      //est-ce bien correct de faire une DFS?
+      //TODO: a heap could be used here to get a sorted region at once.
       n.getDAGSucceedingNodes.foreach(p => {
         if (p.Position == ub) {
           nodes.foreach(q => q.visited = false)
@@ -219,6 +219,7 @@ trait DAG {
     def dfsB(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
       var newlist = n :: acc
+      //TODO: a heap could be used here to get a sorted region at once.
       n.getDAGPrecedingNodes.foreach(p => {
         if (!p.visited && p.Position > lb) {
           newlist = dfsB(p, newlist)

@@ -30,9 +30,9 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-class SuperTask(start: Task, end: Task, planning: Planning, override val name: String = "")
-  extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.value, "duration of " + name),
-    planning, name) {
+case class SuperTask(start: Task, end: Task, override val name: String = "")
+  extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
+    start.planning, name) {
 
   override def post() {
     super.post()
@@ -53,7 +53,7 @@ class SuperTask(start: Task, end: Task, planning: Planning, override val name: S
   }
 }
 
-class Task(val duration: IntVar, planning: Planning, val name: String = "") {
+case class Task(val duration: IntVar, val planning: Planning, val name: String = "") {
   val TaskID: Int = planning.AddTask(this)
 
   override def toString: String = name
@@ -68,14 +68,24 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
     j.addStaticPredecessor(this)
   }
 
-  var Resources: List[(CumulativeResource, Int)] = List.empty
+  def uses(n:IntVar):TaskAndAmount = TaskAndAmount(this,n)
+
+  case class TaskAndAmount(t:Task, amount:IntVar){
+    def ofResource(r:CumulativeResource){t.usesCumulativeResource(r, amount)}
+
+    def ofResources(rr:CumulativeResource*){
+      for (r <- rr){t.usesCumulativeResource(r, amount)}
+    }
+  }
+
+  var Resources: List[(CumulativeResource, IntVar)] = List.empty
 
   /**use this method to add resource requirement to a task.
    * the task and the resource must be registered to the same planning
    * @param r a resource that the task uses
    * @param amount the amount of this resource that the task uses
    */
-  def usesCumulativeResource(r: CumulativeResource, amount: Int) {
+  def usesCumulativeResource(r: CumulativeResource, amount: IntVar) {
     Resources = (r, amount) :: Resources
     r.notifyUsedBy(this, amount)
   }

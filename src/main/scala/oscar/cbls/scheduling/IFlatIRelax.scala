@@ -25,7 +25,7 @@ package oscar.cbls.scheduling
 
 import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{Solution, Model}
+import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
@@ -130,8 +130,8 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
-      val TasksAndUse = r.TasksAndUse.filter((taksAndamount: (Task, Int)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
-      val Tasks: List[Task] = TasksAndUse.map((taskAndamount: (Task, Int)) => taskAndamount._1)
+      val TasksAndUse = r.TasksAndUse.filter((taksAndamount: (Task, IntVar)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
+      val Tasks: List[Task] = TasksAndUse.map((taskAndamount: (Task, IntVar)) => taskAndamount._1)
 
       val a = selectFrom(Tasks)
       val b = selectFrom(Tasks, (j: Task) => j != a)
@@ -149,11 +149,11 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       val TasksAndUse = r.getTasksAndUse(t)
 
-      val conflictSet: List[(Task, Int)] = ConflictSearch(
+      val conflictSet: List[(Task, IntVar)] = ConflictSearch(
         0,
         TasksAndUse,
-        (use: Int, taskAndamount: (Task, Int)) => use + taskAndamount._2,
-        (use: Int, taskAndamount: (Task, Int)) => use - taskAndamount._2,
+        (use: Int, taskAndamount: (Task, IntVar)) => use + taskAndamount._2.value,
+        (use: Int, taskAndamount: (Task, IntVar)) => use - taskAndamount._2.value,
         (use: Int) => use > r.MaxAmount
       )
 
@@ -185,11 +185,11 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       val TaskssAndUse = r.getTasksAndUse(t)
 
-      val conflictSet: List[(Task, Int)] = ConflictSearch(
+      val conflictSet: List[(Task, IntVar)] = ConflictSearch(
         0,
         TaskssAndUse,
-        (use: Int, taskAndamount: (Task, Int)) => use + taskAndamount._2,
-        (use: Int, taskAndamount: (Task, Int)) => use - taskAndamount._2,
+        (use: Int, taskAndamount: (Task, IntVar)) => use + taskAndamount._2.value,
+        (use: Int, taskAndamount: (Task, IntVar)) => use - taskAndamount._2.value,
         (use: Int) => use > r.MaxAmount
       )
 

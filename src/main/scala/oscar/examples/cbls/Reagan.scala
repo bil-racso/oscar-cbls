@@ -36,27 +36,27 @@ object Reagan extends App {
   val planning = new Planning(model, 31)
   val solver = new IFlatIRelax(planning)
 
-  val Reagan = new CumulativeResource(planning, 3, "Reagan")
+  val Reagan = CumulativeResource(planning, 3, "Reagan")
 
-  val Manger = new Task(2, planning, "eat")
-  Manger.usesCumulativeResource(Reagan, 2)
+  val Manger = Task(2, planning, "eat")
+  Manger uses 2 ofResource Reagan
 
-  val Dormir = new Task(8, planning, "sleep")
-  Dormir.usesCumulativeResource(Reagan, 1)
+  val Dormir = Task(8, planning, "sleep")
+  Dormir uses 1 ofResource Reagan
 
-  val Reflechir = new Task(12, planning, "think")
-  Reflechir.usesCumulativeResource(Reagan, 1)
+  val Reflechir = Task(12, planning, "think")
+  Reflechir uses 1 ofResource Reagan
 
-  val Chiquer = new Task(3, planning, "chew")
-  Chiquer.usesCumulativeResource(Reagan, 1)
+  val Chiquer = Task(3, planning, "chew")
+  Chiquer uses 1 ofResource Reagan
 
-  val Parler = new Task(3, planning, "speak")
-  Parler.usesCumulativeResource(Reagan, 2)
+  val Parler = Task(3, planning, "speak")
+  Parler uses 3 ofResource Reagan
 
-  val Boire = new Task(3, planning, "drink")
-  Boire.usesCumulativeResource(Reagan, 2)
+  val Boire = Task(3, planning, "drink")
+  Boire uses 3 ofResource Reagan
 
-  val Digérer = new SuperTask(Manger, Dormir, planning, "digest")
+  val Digérer = SuperTask(Manger, Dormir, "digest")
 
   Reflechir precedes Boire
   Manger precedes Dormir

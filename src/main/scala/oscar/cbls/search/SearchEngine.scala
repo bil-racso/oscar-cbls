@@ -80,8 +80,7 @@ trait SearchEngineTrait{
    * @param st is optional and set to true if not specified
     */
   def selectMinNR2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-    val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
-    selectMinNR[(R,S)](flattened , (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+    selectMaxNR2[R,S](r , s, -f(_,_), st)
   }
 
   /**return an element r that is allowed: st(r) is true, and minimizing f(r) among the allowed couples
@@ -89,20 +88,7 @@ trait SearchEngineTrait{
    * @param st is optional and set to true if not specified
    */
   def selectMinNR[R](r: Iterable[R] , f: R => Int, st: (R => Boolean) = ((r:R) => true)): R = {
-    var GotOne: Boolean = false
-    var MinSoFar = Int.MaxValue
-    var Val:R = null.asInstanceOf[R]
-    for (i <- r) {
-      if (st(i)) {
-        val v:Int = f(i)
-        if (v < MinSoFar || !GotOne) {
-          GotOne = true
-          Val = i
-          MinSoFar = v
-        }
-      }
-    }
-    if(GotOne)Val else null.asInstanceOf[R]
+    selectMaxNR[R](r , -f(_), st)
   }
 
   /**return a couple (r,s) that is allowed: st(r,s) is true, and maximizing f(r,s) among the allowed couples
@@ -146,9 +132,6 @@ trait SearchEngineTrait{
     selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => filter(rands._1,rands._2))
   }
 
-  
-  
-  
   /**return an element r that is allowed: st(r) is true, and minimizing f(r) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified

@@ -33,6 +33,7 @@ import collection.Iterator
  */
 class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
 
+
   val b= new BinomialHeap[Int](a => a, MaxPosition)
 
   val a:Array[List[T]] = Array.tabulate (MaxPosition)(_ => List.empty[T])

@@ -65,7 +65,7 @@ object GenericJobShopTest extends StopWatch with App {
   val planning = new Planning(model, 6500)
 
   val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
-    => new CumulativeResource(planning, 1, "Machine" + MachineID))
+    => CumulativeResource(planning, 1, "Machine" + MachineID))
 
   for (JobID <- 0 until JobCount) {
     var PreviousTask: Task = null
@@ -73,8 +73,8 @@ object GenericJobShopTest extends StopWatch with App {
       val MachineID = WordReader.next().toInt
       val Duration = WordReader.next().toInt
 
-      val NewTask = new Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
-      NewTask.usesCumulativeResource(MachineArray(MachineID), 1)
+      val NewTask = Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      NewTask uses 2 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
         PreviousTask precedes NewTask
