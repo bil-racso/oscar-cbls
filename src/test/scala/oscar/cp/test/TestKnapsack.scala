@@ -22,7 +22,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
 import oscar.cp.core._
-import oscar.cp.search._
+
 import oscar.cp.modeling._
 
 import org.scalacheck._
@@ -42,15 +42,23 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	  val W = CPVarInt(cp,0 to (n/2 * u/2))
 	  val X = Array.fill(profit.size)(new CPVarBool(cp))
 	  var obj = 0
+	  //println("W:"+W)
+	  //println("weight:"+weight.mkString(","))
+	  //println("profit:"+profit.mkString(","))
 	  cp.maximize(P) subjectTo {
 	    cp.add(binaryknapsack(X,profit,P))
 	    cp.add(binaryknapsack(X,weight,W))
-	    if (cons) cp.add(new Knapsack(X,profit,weight,P,W,true))
+	    if (cons) {
+	      //println("with knapsack")
+	      cp.add(new Knapsack(X,profit,weight,P,W,true))
+	    } 
 	  } exploration {
+	    
 	    while(!cp.allBounds(X)) {
 	      val (x,i) = X.zipWithIndex.filter{case (x,i) => !x.isBound}.maxBy{case (x,i) => weight(i)}
 	      cp.branch(cp.post(x == 1))(cp.post(x == 0))
 	    }
+	    //println(P.value+" "+X.mkString(","))
 	    obj = P.value
 	  }
 	  obj
@@ -58,11 +66,18 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 
 
   test("Knapsack 1") {
-    for (i <- 0 to 20) {
+    val res1 = solve(5,false,54)
+	val res2 = solve(5,true,54)
+    res1 should be (res2)
+	
+    
+    for (i <- 0 to 100) {
+     println("---i:"+i)
 	 val res1 = solve(20,false,i)
 	 val res2 = solve(20,true,i)
 	 res1 should be (res2)
 	}
+	
   }
   
   test("Knapsack 2") {

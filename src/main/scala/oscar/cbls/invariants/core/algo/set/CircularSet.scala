@@ -65,13 +65,13 @@ class CircularIntSet(maxsize:Int) extends Set[Int]{
 
   def +=(elem: Int):this.type = {
     if (sizevar == 0){
-      containsvar.update(elem,true)
+      containsvar(elem) = true
       next(elem) = elem
       prev(elem) = elem
       sizevar = 1
       handle = elem
     }else if (!containsvar(elem)){
-      containsvar.update(elem,true)
+      containsvar(elem) = true
       insertAfter(elem,handle)
     }
   this

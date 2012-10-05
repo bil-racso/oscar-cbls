@@ -34,7 +34,7 @@ object Queens  {
 		
       val cp = CPSolver()
       
-      val n = 12 //number of queens
+      val n = 8 //number of queens
       val Queens = 0 until n
       //variables
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)

@@ -97,10 +97,9 @@ object MagicSquare extends SearchEngine with StopWatch {
     m.close()
       
     // search
-    while((c.Violation.getValue() > 0) && (it < MAX_IT)){      
-      val allowed = Dim2.filter(v => Tabu(v) < it)
-      val (v1,v2)=selectMin2(allowed, allowed, 
-          (v1:Int, v2:Int) => c.getSwapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1:Int,v2:Int) => v1 < v2)
+    while((c.Violation.value > 0) && (it < MAX_IT)){
+      val allowed = Dim2.filter(v => Tabu(v).value < it)
+      val (v1,v2)=selectMin(allowed, allowed) ((v1,v2) => c.getSwapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1,v2) => v1 < v2)
 
       val i1=v1/N
       val j1=v1%N
@@ -118,7 +117,7 @@ object MagicSquare extends SearchEngine with StopWatch {
      
     println("Solution: "+m.getSolution(true))
 
-    if (c.Violation.getValue()==0) {    	
+    if (c.Violation.value==0) {
       showSquare(magic)    
     } else {
       println("Not found after "+MAX_IT+" iterations")
@@ -131,7 +130,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     println
     for (i <- Range(0,tab.length)) {
       for (j <-Range(0,tab(i).length)) {
-        print(tab(i)(j).getValue()+" ")
+        print(tab(i)(j).value+" ")
       }
       println
     }

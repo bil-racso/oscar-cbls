@@ -99,12 +99,12 @@ object CumulativeJobShop extends App {
 	
 	cp.minimize(makespan) subjectTo {
 		
-		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
+		for (i <- Activities; if (jobs(i) == jobs(i + 1)))
 			activities(i) precedes activities(i + 1)	
 			
 	} exploration {
 
-		cp.setTimes(activities)
+		cp.binaryFirstFail(activities)
 
 		for (p <- profiles) p.update(1, 20)
 		gantt.update(1, 20)

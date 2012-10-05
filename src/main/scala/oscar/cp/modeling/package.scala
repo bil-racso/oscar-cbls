@@ -5,12 +5,10 @@ import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
 
-import oscar.cp.search._
 import oscar.search._
 import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPVarBool
-import oscar.search.Branching._
 import oscar.cp.modeling._
 import oscar.cp.core._
 
@@ -41,7 +39,7 @@ package object modeling extends Constraints {
 	
 	implicit def matrix2ElementConstraintBuilder(a : Array[Array[Int]]) = new ElementIntMatrixConstraintBuilderLine(a)
 
-	trait ElementConstraintBuilder {
+	abstract class ElementConstraintBuilder {
 		def apply(i :CPVarInt) : CPVarInt
 	}
 	
@@ -293,11 +291,11 @@ package object modeling extends Constraints {
 	 *         having the smallest domain size. an empty array if every variable is bound
 	 */
 	def minDomNotbound(vars : Iterable[CPVarInt]) : Iterable[(CPVarInt, Int)] = {
-		val notbound = vars.filterNot(_.isBound)
+		val notbound = vars.zipWithIndex.filterNot(_._1.isBound)
 		if (notbound.nonEmpty) {
-			val sizeMin = notbound.map(_.getSize).min
-			notbound.zipWithIndex.filter {
-				_._1.getSize == sizeMin
+			val sizeMin = notbound.map(_._1.size).min
+			notbound.filter {
+				_._1.size == sizeMin
 			}
 		} else {
 			Iterable()

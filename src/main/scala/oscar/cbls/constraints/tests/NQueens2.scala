@@ -26,12 +26,11 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.core.computation.Implicits._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntSetVar._
 ;
 
@@ -56,6 +55,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     if (args.length<1) {
       println("Benchmarking NQueen - this takes time");
+      println("TClose, Ttotal, It")
     
       // first run could have some overhead so ignoring it
       SolveNQueen(1000)
@@ -83,10 +83,10 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
     val c:ConstraintSystem = new ConstraintSystem(m)
-    
+
     //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always alldiff
-    c.post(AllDiff(for ( q <- range) yield (q plus Queens(q)).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (Queens(q) + q).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
     for (q <- range){c.registerForViolation(Queens(q))}
 
@@ -99,23 +99,23 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val NonTabuMaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray, NonTabuQueens)
 
     m.close(false)
+
     print(", " + getWatch)
 
-    while((c.Violation.getValue() > 0) && (It.getValue() < N)){
-      val oldviolation:Int = c.Violation
+    while((c.Violation.value > 0) && (It.value < N)){
+      val oldviolation:Int = c.Violation.value
 
       // to ensure that the set of tabu queens is no too restrictive
       // (but you'd better tune the tabu better)
-      while(NonTabuMaxViolQueens.getValue().isEmpty){
+      while(NonTabuMaxViolQueens.value.isEmpty){
         It ++;
         println("Warning: Tabu it too big compared to queens count")
       }
 
-      val q1 = selectFirst(NonTabuMaxViolQueens)
-      val q2 = selectFirst(NonTabuQueens, (q:Int) => {
+      val q1 = selectFirst(NonTabuMaxViolQueens.value)
+      val q2 = selectFirst(NonTabuQueens.value, (q:Int) => {
         q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
       })
-     // println("viol: " + oldviolation + " swapped: " + q1 + " and " + q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) := It.getValue(true) + tabulength

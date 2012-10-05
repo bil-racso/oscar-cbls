@@ -18,7 +18,7 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._

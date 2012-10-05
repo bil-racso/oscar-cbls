@@ -22,7 +22,6 @@ import java.util.Arrays;
 
 import oscar.cp.constraints.*;
 import oscar.cp.core.*;
-import oscar.cp.search.*;
 import oscar.cp.util.*;
 import oscar.reversible.*;
 import oscar.search.*;
@@ -264,27 +263,7 @@ public class TestMul extends TestCase {
     	
     }  
     
-    public void testMul17() {
-    	
-    	Store cp = new Store();
-    	final CPVarInt x = CPVarInt.apply(cp,-10,10);
-    	final CPVarInt y = CPVarInt.apply(cp,new int[]{-70,-50,50,70});
-    	CPVarInt z = CPVarInt.apply(cp,100,100);
-    	
-    	cp.post(new MulVar(x,y,z)); // should post a MulCteRes because z is fixed
-    	
-    	final Counter c = new Counter();
-    	
-    	Search search = new Search(cp, new BinaryFirstFail(x,y));
-    	search.addSolutionObserver(new SolutionObserver() {
-			public void solutionFound() {
-				assertTrue((x.isBoundTo(-2) && y.isBoundTo(-50)) || (x.isBoundTo(2) && y.isBoundTo(50)));
-				c.incr();
-			}
-		});
-    	search.solveAll();
-    	assertEquals(2,c.getValue());
-    } 
+ 
     
     public void testMul18() {  
     	Store s = new Store();

@@ -36,7 +36,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 import scala.swing.Component
 import scala.swing.Swing
 import javax.swing.ImageIcon
@@ -57,9 +57,9 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
       
   // UI stuff
   val cl=Thread.currentThread().getContextClassLoader()
-  val QUEEN = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ok.png"))
-  val CONFLICT = new ImageIcon(cl.getResource("constraints/tests/resources/queen-ko.png"))
-  val EMPTY = new ImageIcon(cl.getResource("constraints/tests/resources/queen-no.png"))
+  val QUEEN = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-ok.png"))
+  val CONFLICT = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-ko.png"))
+  val EMPTY = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resources/queen-no.png"))
   var boxPanel:BoxPanel=null
   var tab:Array[Array[Label]]=null
   var lNQueen:Label=null
@@ -162,8 +162,8 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
     val c:ConstraintSystem = new ConstraintSystem(m)
     //c.post(AllDiff(Queens)) handled trough permutations
-    c.post(AllDiff(for ( q <- range) yield (q plus Queens(q)).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q minus Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
     
     for (q <- range){c.registerForViolation(Queens(q))}
     c.close()
@@ -173,10 +173,10 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     for (q<-range){
       Event(Queens(q),viol(q),(oldqueenposition:Int) => {
         tab(q)(oldqueenposition).icon=EMPTY
-        if (viol(q)>0){
-          tab(q)(Queens(q)).icon=CONFLICT
+        if (viol(q).value>0){
+          tab(q)(Queens(q).value).icon=CONFLICT
         }else{
-          tab(q)(Queens(q)).icon=QUEEN
+          tab(q)(Queens(q).value).icon=QUEEN
         }
       })
     }
@@ -187,11 +187,10 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     val Tabu = (for(q <- range)yield -1).toArray
 
     var longueurplateau = 0;
-    while((c.Violation.getValue() > 0) && (it < MaxIT) && !stopRequested){
-      val oldviolation:Int = c.Violation
+    while((c.Violation.value > 0) && (it < MaxIT) && !stopRequested){
+      val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
-      val (q1,q2) = selectMin2(allowedqueens, allowedqueens,
-        (q1:Int, q2:Int) => c.getSwapVal(Queens(q1),Queens(q2)), (q1:Int,q2:Int) => q1 < q2)
+      val (q1,q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) = it + tabulength
@@ -199,7 +198,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
       m.propagate() //we need to do this because only partial propagation are performed otherwise, and events are not propagated
       it += 1
       println("it: " + it + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
-      if(oldviolation <= c.Violation.getValue()) longueurplateau+=1 else longueurplateau = 0
+      if(oldviolation <= c.Violation.value) longueurplateau+=1 else longueurplateau = 0
 
       if (longueurplateau > 5){
         println("jump away")

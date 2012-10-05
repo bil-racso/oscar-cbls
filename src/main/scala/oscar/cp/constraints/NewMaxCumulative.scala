@@ -21,15 +21,15 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	val Tasks  = 0 until nTasks
 
 	// The events to process (min heap on date)
-	val hEvents = new EfficientEventHeap(nTasks*4)
+	val hEvents = new EfficientEventHeap(4*nTasks)
 	
 	// The tasks to check (max heap on resource)
-	val hCheck = new EfficientHeap[Tuple2[Int, Int]](nTasks, (a, b) => a._1 > b._1)
+	val hCheck = new EfficientHeap[(Int, Int)](nTasks, (a, b) => a._1 > b._1)
 	// This array is used to know if a task is in hCheck
 	val hCheckContent = new Array[Boolean](nTasks)
 	
 	// The tasks in conflict with the sweep line (min heap on resource)
-	val hConflict = new EfficientHeap[Tuple2[Int, Int]](nTasks, (a, b) => a._1 < b._1)
+	val hConflict = new EfficientHeap[(Int, Int)](nTasks, (a, b) => a._1 < b._1)
 	// This array is used to know if a task is in hConflict
 	val hConflictContent = new Array[Boolean](nTasks)
 
@@ -37,10 +37,11 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	val mins = new Array[Int](nTasks)
 	
 	// Sweep line parameters
-	val newActiveTasks : Queue[Int] = Queue()
-	var delta    = 0
-	var deltaBis = 0	
-	var gap	     = 0
+	val newActiveTasks = new Array[Int](nTasks)
+	var nActiveTasks = 0
+	var delta        = 0
+	var deltaBis     = 0	
+	var gap	         = 0
 	
 	// Events are preprocessed to speed-up the propagation
 	val eventList = Array.tabulate(nTasks){e => new EventList(e)}
@@ -90,7 +91,8 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 		hConflict.clear
 		for (i <- Tasks) hConflictContent(i) = false
 			
-		newActiveTasks.clear
+		//newActiveTasks.clear
+		nActiveTasks = 0
 		
 		delta = hEvents.head.date
 		deltaBis = hEvents.head.date
@@ -105,12 +107,14 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 				// Those events represent the compulsory part
 				hEvents enqueue eventList(i).getSCP(tasks)
-				hEvents enqueue eventList(i).getECPD(tasks)}
+				hEvents enqueue eventList(i).getECPD(tasks)
+			}
 
 			if (tasks(i).lst >= tasks(i).ect) {
 				
 				// Reevaluation of the compulsory part
-				hEvents enqueue eventList(i).getCCP(tasks)}
+				hEvents enqueue eventList(i).getCCP(tasks)
+			}
 			
 			if (tasks(i).est != tasks(i).lst) {
 				
@@ -130,9 +134,10 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			// HANDLING THE SWEEP-LINE MOVE
 			if (delta != deltaBis) {
 				
-				while (!newActiveTasks.isEmpty) {
+				var i = 0
+				while (i < nActiveTasks) {
 				
-					val t = newActiveTasks.dequeue
+					val t = newActiveTasks(i)
 					
 					if (tasks(t).minHeight > gap) {
 						
@@ -148,7 +153,11 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 					} else {
 						evup(t) = true
 					}
+					
+					i += 1
 				}
+				// All the active tasks have be processed
+				nActiveTasks = 0
 				
 				if (!filterMin(tasks, delta, deltaBis)) return CPOutcome.Failure
 					
@@ -166,7 +175,8 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 			} else if (event.isPR) {
 				
-				newActiveTasks.enqueue(event.task)
+				newActiveTasks(nActiveTasks) = event.task
+				nActiveTasks += 1
 			}
 			
 			// GETTING NEXT EVENT
@@ -245,7 +255,6 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			}
 		}
 		
-			
 		true
 	}
 	
@@ -322,8 +331,6 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			}
 		}
 	}
-	
-	import EventType._
 	
 	class Event(e : Int, t : Int, private var d : Int, private var inc : Int) extends Enumeration {
 

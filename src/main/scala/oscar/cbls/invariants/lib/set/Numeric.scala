@@ -34,33 +34,33 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
 
   var output:IntVar = null
 
-  def MyMax = Int.MaxValue
-  def MyMin = Int.MinValue
+  def myMax = Int.MaxValue
+  def myMin = Int.MinValue
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
   override def setOutputVar(v:IntVar){
     output = v.asInstanceOf[IntVar]
     output.setDefiningInvariant(this)
-    output := on.getValue().foldLeft(0)((a,b) => a+fun(b))
+    output := on.value.foldLeft(0)((a,b) => a+fun(b))
   }
 
   @inline
   override def notifyInsertOn(v:IntSetVar,value:Int){
     assert(v == on)
-    output := output.getValue(true) + fun(value)
+    output :+= fun(value)
   }
 
   @inline
   override def notifyDeleteOn(v:IntSetVar,value:Int){
     assert(v == on)
-    output := output.getValue(true) - fun(value)
+    output :-= fun(value)
   }
 
   override def checkInternals(){
     var count = 0;
-    for (v <- on) count += fun(v)
-    assert(output.getValue() == count)
+    for (v <- on.value) count += fun(v)
+    assert(output.value == count)
   }
 }
 
@@ -76,14 +76,14 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
-  def MyMax = Int.MaxValue
-  def MyMin = Int.MinValue
+  def myMax = Int.MaxValue
+  def myMin = Int.MinValue
 
   override def setOutputVar(v:IntVar){
     output = v.asInstanceOf[IntVar]
     output.setDefiningInvariant(this)
-    NonZeroProduct = on.foldLeft(1)((acc,value) => if(value==0){acc}else{acc*fun(value)})
-    if(on.contains(0)){
+    NonZeroProduct = on.value.foldLeft(1)((acc,value) => if(value==0){acc}else{acc*fun(value)})
+    if(on.value.contains(0)){
       output := 0
     }else{
       output := NonZeroProduct
@@ -96,7 +96,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
     if(value != 0){
       NonZeroProduct*=fun(value)
     }
-    if(on.getValue().contains(0)){
+    if(on.value.contains(0)){
       output := 0
     }else{
       output := NonZeroProduct
@@ -109,7 +109,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
     if(value != 0){
       NonZeroProduct/=fun(value)
     }
-    if(on.getValue().contains(0)){
+    if(on.value.contains(0)){
       //rien a faire parce-que la valeur est deja 0 dans output
       assert(output.getValue(true) == 0)
     }else{
@@ -119,7 +119,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
 
   override def checkInternals(){
     var count = 1;
-    for (v <- on) count *= v
-    assert(output.getValue() == count)
+    for (v <- on.value) count *= v
+    assert(output.value == count)
   }
 }

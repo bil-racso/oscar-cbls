@@ -47,7 +47,7 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   for(v <- profile){v.setDefiningInvariant(this); v := 0}
   for(v <- active ){v.setDefiningInvariant(this); v := SortedSet.empty}
   
-  for(i <- start.indices)insert(start(i), duration(i), amount(i), i)
+  for(i <- start.indices)insert(start(i).value, duration(i).value, amount(i).value, i)
 
   def remove(start:Int, duration:Int, amount:Int,index:Int){
     for (t <- start until (start + duration)){
@@ -67,19 +67,19 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
     if (start(index) == v){
       //start
-      remove(OldVal, duration(index), amount(index), index)
-      insert(NewVal, duration(index), amount(index), index)
+      remove(OldVal, duration(index).value, amount(index).value, index)
+      insert(NewVal, duration(index).value, amount(index).value, index)
     }else if (duration(index) == v){
       //duration
       if (OldVal > NewVal){
-        remove(NewVal + start(index), OldVal - NewVal, amount(index), index)
+        remove(NewVal + start(index).value, OldVal - NewVal, amount(index).value, index)
       }else{
-        insert(OldVal + start(index), NewVal - OldVal, amount(index), index)
+        insert(OldVal + start(index).value, NewVal - OldVal, amount(index).value, index)
       }
     }else{
       //amount
       val Delta = NewVal - OldVal
-      for (t <- start(index).getValue() until (start(index).getValue() + duration(index))){
+      for (t <- start(index).value until (start(index).value + duration(index).value)){
         profile(t) :+= Delta
       }
     }

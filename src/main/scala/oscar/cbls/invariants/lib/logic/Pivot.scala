@@ -41,22 +41,22 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
   registerStaticAndDynamicDependency(boundary)
   finishInitialization()
 
-  def MyMin = values.indices.start
-  def MyMax = values.indices.end
+  def myMin = values.indices.start
+  def myMax = values.indices.end
 
-  val HeapAbove:BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i:Int) => values(i).getValue(),values.size)
-  val HeapBelowOrEqual:BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i:Int) => -(values(i).getValue()),values.size)
+  val HeapAbove:BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i:Int) => values(i).value,values.size)
+  val HeapBelowOrEqual:BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i:Int) => -(values(i).value),values.size)
 
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]
     for(v <- values.indices){
-      if(values(v).getValue() <= boundary){
-        HeapBelowOrEqual.insert(values(v))
+      if(values(v).value <= boundary){
+        HeapBelowOrEqual.insert(values(v).value)
         output.insertValue(v)
       }else{
-        HeapAbove.insert(values(v))
+        HeapAbove.insert(values(v).value)
       }
     }
   }
@@ -64,7 +64,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
   //pomper des elements de Above et les mettre dans Below et dans output
   @inline
   def TransferToBelow(){
-    while(!HeapAbove.isEmpty && values(HeapAbove.getFirst).getValue() <= boundary.getValue()){
+    while(!HeapAbove.isEmpty && values(HeapAbove.getFirst).value <= boundary.value){
       val v = HeapAbove.removeFirst()
       HeapBelowOrEqual.insert(v)
       output.insertValue(v)
@@ -75,7 +75,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
   @inline
   def TransferToAbove(){
     //pomper des elements de beloworequal et les mettre dans above
-    while(!HeapBelowOrEqual.isEmpty && values(HeapBelowOrEqual.getFirst).getValue() > boundary.getValue()){
+    while(!HeapBelowOrEqual.isEmpty && values(HeapBelowOrEqual.getFirst).value > boundary.value){
       val v = HeapBelowOrEqual.removeFirst()
       HeapAbove.insert(v)
       output.deleteValue(v)
@@ -89,7 +89,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
       if(NewVal > OldVal){TransferToBelow()
       }else{TransferToAbove()}
     }else{
-      if(OldVal <= boundary.getValue()){
+      if(OldVal <= boundary.value){
         //il est dans BelowOrEqual
         HeapBelowOrEqual.notifyChange(i)
         TransferToAbove()
@@ -101,15 +101,15 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
   }
 
   override def checkInternals(){
-    for(v <- output.getValue()){
-      assert(values(v).getValue() <= boundary.getValue())
+    for(v <- output.value){
+      assert(values(v).value <= boundary.value)
     }
     var count:Int = 0
     for(v <- values){
-      if(v.getValue() <= boundary.getValue())
+      if(v.value <= boundary.value)
         count +=1
     }
-    assert(count == output.getValue().size)
+    assert(count == output.value.size)
     assert(HeapAbove.size + HeapBelowOrEqual.size == values.size)
   }
 }
@@ -125,8 +125,8 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
 case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
-  def MyMin = values.indices.start
-  def MyMax = values.indices.end
+  def myMin = values.indices.start
+  def myMax = values.indices.end
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
   registerStaticAndDynamicDependency(boundary)
@@ -138,16 +138,16 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
       output = v
       output.setDefiningInvariant(this)
       output := SortedSet.empty[Int]
-      val HeapAbove:BinomialHeap[Int] = new BinomialHeap((i:Int) => values(i).getValue(),values.size)
+      val HeapAbove:BinomialHeap[Int] = new BinomialHeap((i:Int) => values(i).value,values.size)
       for(v <- values.indices){
-        if(values(v).getValue() <= boundary){
+        if(values(v).value <= boundary){
           output.insertValue(v)
         }else{
           HeapAbove.insert(v)
         }
       }
       while(!HeapAbove.isEmpty){
-        QueueAbove.enqueue(HeapAbove.removeFirst())
+        QueueAbove.enqueue(HeapAbove.popFirst())
       }
   }
 
@@ -156,14 +156,14 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
     if(v == boundary){
       //c'est le boundary
       assert(NewVal > OldVal,"SelectLESetQueue does not allow boundary to decrease")
-      while(!QueueAbove.isEmpty && values(QueueAbove.head).getValue() <= boundary.getValue()){
+      while(!QueueAbove.isEmpty && values(QueueAbove.head).value <= boundary.value){
         val v = QueueAbove.dequeue()
         output.insertValue(v)
       }
     }else{//il est dans BelowOrEqual
 //     println("SelectLEnotify " + v + " index: " + index +  " OldVal: " + OldVal + " NewVal: " + NewVal + " boundary: " + boundary + " output " + output)
-      assert(OldVal <= boundary.getValue(),"SelectLESetQueue does not allow elements above boundary to change")
-      assert(QueueAbove.isEmpty || values(QueueAbove.last).getValue() <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one")
+      assert(OldVal <= boundary.value,"SelectLESetQueue does not allow elements above boundary to change")
+      assert(QueueAbove.isEmpty || values(QueueAbove.last).value <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one")
       QueueAbove.enqueue(index)
       output.deleteValue(index)
     }
@@ -172,11 +172,11 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
   override def checkInternals(){
     var count:Int = 0
     for(i <- values.indices){
-      if(values(i).getValue() <= boundary.getValue()){
-        assert(output.contains(i))
+      if(values(i).value <= boundary.value){
+        assert(output.value.contains(i))
         count +=1
       }
     }
-    assert(output.getValue().size == count)
+    assert(output.value.size == count)
   }
 }

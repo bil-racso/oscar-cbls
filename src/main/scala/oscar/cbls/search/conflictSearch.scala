@@ -42,8 +42,8 @@ object conflictSearch extends SearchEngine{
     val Variables:Array[IntVar] = c.getConstrainedVariables.asInstanceOf[Iterable[IntVar]].toArray;
     val Violations:Array[IntVar] = Variables.clone().map(c.getViolation)
     while (!c.isTrue && it < MaxIt) {
-      val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int))
-      val NewVal = selectMin(Variables(MaxViolVarID).getDomain,c.getAssignVal(Variables(MaxViolVarID),_:Int))
+      val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
+      val NewVal = selectMin(Variables(MaxViolVarID).getDomain)(c.getAssignVal(Variables(MaxViolVarID),_:Int),i => true)
       Variables(MaxViolVarID) := NewVal
       it = it + 1;
     }

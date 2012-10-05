@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.scheduling._
 import oscar.cp.core._
 import oscar.cp.constraints._
@@ -87,7 +87,6 @@ object FurnitureMovingScheduling {
 
       println("makespan : " + makespan)
       println("capacity : " + resource.capacity)
-      println("criticality: " + resource.criticality)
       // some different ways of obtaining detailed info about activities
       println("resource.activities:\n" + resource.activities.mkString("\n"))
       println("cp.activities:\n" + cp.activities.mkString("\n"))

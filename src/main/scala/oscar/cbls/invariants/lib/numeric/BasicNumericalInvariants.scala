@@ -21,14 +21,10 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
-
 package oscar.cbls.invariants.lib.numeric
-
 
 import collection.immutable.SortedSet;
 import collection.immutable.SortedMap;
-import oscar.cbls.invariants.core.computation.Implicits._;
 import oscar.cbls.invariants.core.computation._;
 
 import oscar.cbls.invariants.lib.logic._;
@@ -37,29 +33,29 @@ import oscar.cbls.invariants.lib.logic._;
  * @param vars is an iterable of IntVars
  * */
 case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
-  assert(vars.size>0,"Invariant plus declared with zero vars to sum up")
+  assert(vars.size>0,"Invariant + declared with zero vars to sum up")
 
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def MyMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.MinVal)
-  def MyMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.MaxVal)
+  def myMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.MinVal)
+  def myMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.MaxVal)
 
   var output:IntVar = null
 
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := vars.foldLeft(0)((a,b) => a+b)
+    output := vars.foldLeft(0)((a,b) => a+b.value)
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    output := output.getValue(true) + NewVal - OldVal
+    output :+= NewVal - OldVal
   }
 
   override def checkInternals(){
-    assert(output.getValue() == vars.foldLeft(0)((acc,intvar) => acc+intvar.getValue()))
+    assert(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
   }
 }
 
@@ -72,15 +68,14 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  var NullVarCount:Int=vars.count(v => v.getValue() == 0)
-  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.getValue() == 0){acc}else{acc*intvar})
+  var NullVarCount:Int=vars.count(v => v.value == 0)
+  var NonNullProd:Int = vars.foldLeft(1)((acc,intvar) => if(intvar.value == 0){acc}else{acc*intvar.value})
 
   var output:IntVar = null
 
   //TODO: find better bound, this is far too much
-  def MyMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
-  def MyMin = - MyMax
-
+  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
+  def myMin = - myMax
 
   override def setOutputVar(v:IntVar){
     output = v
@@ -114,8 +109,8 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
 
   override def checkInternals(){
     var prod = 1;
-    for (v <- vars) prod *= v.getValue()
-    assert(output.getValue() == prod)
+    for (v <- vars) prod *= v.value
+    assert(output.value == prod)
   }
 }
 
@@ -141,6 +136,12 @@ case class Prod2(left:IntVar, right:IntVar)
  * do not set right to zero, as usual... */
 case class Div(left:IntVar, right:IntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l:Int, r:Int) => l/r)
+
+/**left / right
+ * where left, right, and output are IntVar
+ * do not set right to zero, as usual... */
+case class Mod(left:IntVar, right:IntVar)
+  extends IntVarIntVar2IntVarFun(left, right, (l:Int, r:Int) => l - r*(l/r))
 
 /**abs(v) (absolute value)
  * where output and v are IntVar*/
