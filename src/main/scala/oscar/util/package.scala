@@ -47,10 +47,10 @@ package object util {
    * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
    * @author pschaus
    */
-  def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))(f: R => Int)(block: R => Unit) = {
+  def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))(f: R => Double)(block: R => Unit) = {
     var cpt = 1
     var result: Option[R] = None
-    var best = Int.MaxValue
+    var best = Double.MaxValue
     for (o <- r; if st(o)) {
       val eval = f(o)
       if (eval < best) {
@@ -76,7 +76,7 @@ package object util {
    * @author pschaus
    */
   def selectMax[R](r: Iterable[R], st: (R => Boolean) = 
-        ((r: R) => true))(f: R => Int)(block: R => Unit) = selectMin(r,st)(-f(_))(block)
+        ((r: R) => true))(f: R => Double)(block: R => Unit) = selectMin(r,st)(-f(_))(block)
     
   
 

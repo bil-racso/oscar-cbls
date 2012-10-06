@@ -55,7 +55,7 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 }
 
 
-testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
+//testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
 
 //mainClass in (Compile, run) := Some("main.scala.oscar	.dfo.examples.Rosenbrock2D")

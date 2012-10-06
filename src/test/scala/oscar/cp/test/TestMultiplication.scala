@@ -47,6 +47,31 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     }
     nbSol should be(2)
 
+  }
+  
+  test("Multiplication 2") {
+    val cp = CPSolver()
+
+    val x = CPVarInt(cp,-1 to 0)
+    val y = CPVarInt(cp,0 to 1)
+    cp.post(x*x == y)
+    	
+    cp.isFailed should be(false)
+
+  }
+  
+    test("Multiplication 3") {
+    val cp = CPSolver()
+
+    val x = CPVarInt(cp,-10 to -1)
+    val y = CPVarInt(cp,3 to 9)
+    cp.post(x*x == y)
+    	
+    cp.isFailed should be(false)
+
+    x.min should be (-3)
+    x.max should be (-2)
+    
   }  
   
 

@@ -36,10 +36,27 @@ import collection.Iterator
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
  */
-class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
+class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   var HeapArray:Array[T] = new Array[T](maxsize)
   private var msize:Int=0
 
+  var GetKey:T => Int = initialGetKey
+
+  /**changes the key getter according to which the heap is sorted.
+   * Can be costly if the heap is not empty.
+   * @param KeyGetter the new key getter
+   */
+  def keyGetter_=(KeyGetter:T => Int){
+    if(msize>0){
+      val content:List[T] = this.toList
+      dropAll
+      GetKey = KeyGetter
+      content map insert
+    }else{
+      GetKey = KeyGetter
+    }
+  }
+  
   override def size = msize
   override def isEmpty:Boolean = (msize == 0)
 
@@ -129,10 +146,15 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
   /**O(log(n))*/
   override def popFirst():T={
     val toreturn:T = HeapArray(0)
-    swapPositions(0,msize-1)
-    msize -=1
-    HeapArray(msize)=null.asInstanceOf[T]
-    pushDown(0)
+    if(msize == 1){
+      HeapArray(0)=null.asInstanceOf[T]
+      msize = 0
+    }else{
+      swapPositions(0,msize-1)
+      msize -=1
+      HeapArray(msize)=null.asInstanceOf[T]
+      pushDown(0)
+    }
     toreturn
   }
 

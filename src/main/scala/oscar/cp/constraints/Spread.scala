@@ -33,13 +33,14 @@ import oscar.cp.core.CPOutcome
  * @author Pierre Schaus pschaus@gmail.com
  */
 class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Constraint(x(0).s, "Spread") {
-  println("nbbar n:"+x.size)
   val n = x.size
   val xmin = Array.fill(n)(0)
   val xmax = Array.fill(n)(0)
   val bnds = Array.fill(2*n)((0,0)) // will contain the lower and upper bounds of the n domains + bounds type (1 = lower, 0 = upper)
  
-  override def setup(l: CPPropagStrength): CPOutcome = {    
+  override def setup(l: CPPropagStrength): CPOutcome = { 
+    if (s.post(new Sum(x.map(i => i*i),S2)) == CPOutcome.Failure) return CPOutcome.Failure
+    if (s.post(new Sum(x,S)) == CPOutcome.Failure) return CPOutcome.Failure
     x.foreach(_.callPropagateWhenBoundsChange(this))
     S2.callPropagateWhenBoundsChange(this)
     propagate()
@@ -47,27 +48,27 @@ class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Const
 
  
   override def propagate(): CPOutcome = {
-    println("===========>sum:"+S)
-	for (i <- 0 until n) {
-	  xmin(i) = x(i).min
-	  xmax(i) = x(i).max
-	}
-	println("xmax:"+xmax.mkString(","))
-	println("xmin:"+xmin.mkString(","))
-	val summin = xmin.sum
-	val summax = xmax.sum
+    //println("===========>sum:"+S)
+    //println(x.mkString(","))
+
+	var summin = x.map(_.min).sum
+	var summax = x.map(_.max).sum
 
 	// check that sum constraint is feasible and prune it (fix point on it)
 	for (i <- 0 until n) {
-		println("setting min to:"+(S - (summax-xmax(i)))+" summax:"+summax)
-		if (x(i).updateMin(S - (summax-xmax(i))) == CPOutcome.Failure) {
-		  println("fail 1")
+		//println("setting min to:"+(S - (summax-xmax(i)))+" summax:"+summax)
+		if (x(i).updateMin(S - (summax - x(i).max)) == CPOutcome.Failure) {
+		  //println("fail 1")
 		  return CPOutcome.Failure
 		}	
-		if (x(i).updateMax(S - (summin-xmin(i))) == CPOutcome.Failure) {
-		  println("fail 2")
+		if (x(i).updateMax(S - (summin - x(i).min)) == CPOutcome.Failure) {
+		  //println("fail 2")
 		  return CPOutcome.Failure
 		}
+	}
+	for (i <- 0 until n) {
+	  xmin(i) = x(i).min
+	  xmax(i) = x(i).max
 	}
 
 	for(i <- 0 until n) {
@@ -124,8 +125,8 @@ class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Const
 	}
 		
 	//compute ES and ES2 in O(n)
-	val ES = Array.fill(n)(0)
-	val ES2 = Array.fill(n)(0)
+	val ES = Array.fill(Isize)(0)
+	val ES2 = Array.fill(Isize)(0)
 	// compute ES(0) and ES2(0) with a sweep like algo
 	for (i <- 0 until n) {		
 	    val xm = if (xmin(i) >= Imax(0)) xmin(i) else 0
@@ -149,23 +150,23 @@ class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Const
 		} 
 	}
 	
-	for (i <- 0 until Isize) {
-	  println("I:"+Imin(i)+"-"+Imax(i)+" m:"+m(i)+" l:"+l(i)+" r:"+r(i)+" ES:"+ ES(i)+" ES2:"+ES2(i))
-	}
+	//for (i <- 0 until Isize) {
+	  //println("I:"+Imin(i)+"-"+Imax(i)+" m:"+m(i)+" l:"+l(i)+" r:"+r(i)+" ES:"+ ES(i)+" ES2:"+ES2(i))
+	//}
 	
 	//compute minimal spread in O(n)
 	var minopt = 
 	   if (m(Iopt) == 0) {
 		   ES2(Iopt)
 	   } else{
-	       println("m(Iopt):"+m(Iopt))
+	       //println("m(Iopt):"+m(Iopt))
 		   val vinf:  Int = ((S - ES(Iopt)) - ((S - ES(Iopt)) % m(Iopt))) / m(Iopt)
 		   val vsup = vinf + (if ((S - ES(Iopt)) % m(Iopt) > 0) 1 else 0)
 		   val y = (S - ES(Iopt)) % m(Iopt)
-		   println("y:"+y+" vsup:"+vsup+" vinf:"+vinf)
+		   //println("y:"+y+" vsup:"+vsup+" vinf:"+vinf)
 		   (ES2(Iopt) + y * (vsup * vsup) + (m(Iopt) - y) * (vinf * vinf))
 	   }
-	println("minopt:"+minopt)
+	//println("minopt:"+minopt)
 	if (S2.updateMin(minopt) == CPOutcome.Failure) {
 	  return CPOutcome.Failure 
 	}
