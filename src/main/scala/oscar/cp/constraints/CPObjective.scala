@@ -37,6 +37,12 @@ class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store, "
 	protected val tightenedOnce = Array.fill(nObjs)(false)
 
 	private var currObj = 0
+	
+	def nextObjective() : Boolean = {
+		
+		currObj = (currObj + 1) % nObjs
+		currObj == 0
+	}
 
 	def currentObjectiveIdx = currObj
 
