@@ -1,20 +1,15 @@
 package oscar.cp.mem.paretoFront
 
 import oscar.cp.constraints.CPObjective
+import oscar.cp.core.CPVarInt
 import oscar.cp.mem.MOSolution
 
-class ParetoPoint(private val values : Array[Int]) {
+class ParetoPoint(private val sol : Array[CPVarInt], private val neighbourhood : Array[LinkedNode]) {
 	
+	def size = sol.size
+	private val Size = 0 until size
 	
-
-	val size = values.size
-	val Size = 0 until size
-	
-	val sol : MOSolution = null
-	
-	def apply(i : Int) = values(i)
-	
-	def update(i : Int, x : Int) = { values(i) = x }
+	def apply(i : Int) : Int = neighbourhood(i).value
 
 	/** A point p1 dominates an other point p2 if for all i, p1(i) >= p2(i) and
 	 *  there is a i for which p1(i) > p2(i). 
@@ -34,17 +29,5 @@ class ParetoPoint(private val values : Array[Int]) {
 		}	
 		
 		dom
-	}
-}
-
-object ParetoPoint {
-	
-	def apply(size : Int) : ParetoPoint = new ParetoPoint(new Array[Int](size))
-	
-	def apply(obj : CPObjective) : ParetoPoint = {
-		
-		val p = ParetoPoint(obj.nObjs)
-		for (i <- obj.Objs) p(i) = obj.bestObjs(i)
-		p
 	}
 }

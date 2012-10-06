@@ -6,6 +6,10 @@ class ParetoSet(nDimension : Int) {
 	
 	val set : Queue[ParetoPoint] = Queue()
 	
+	type moSol = Array[Queue[Int]]
+	
+	val m = new moSol(4)
+	
 	def size = set.size
 
 	def nextPoint : ParetoPoint = {

@@ -47,7 +47,7 @@ abstract class MOLNS_Abstract(val nObjective : Int) {
 		relax
 		
 		//Perform LNS relaxation 
-		val newPoint = LNS(currentPoint.sol, currentObjective)
+		val newPoint = null//LNS(currentPoint.sol, currentObjective)
 		
 		if (newPoint != null) {
 			
