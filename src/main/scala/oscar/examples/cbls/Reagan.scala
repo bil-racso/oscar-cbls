@@ -36,7 +36,7 @@ object Reagan extends App {
   val planning = new Planning(model, 31)
   val solver = new IFlatIRelax(planning)
 
-  val Reagan = new Resource(planning, 3, "Reagan")
+  /*val Reagan = new Resource(planning, 3, "Reagan")
 
   val Manger = new Task(2, planning, "eat")
   Manger.addResource(Reagan, 2)
@@ -67,5 +67,5 @@ object Reagan extends App {
  // println(model.dumpToDot(true, true))
   solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
 
-  println(planning.toAsciiArt)
+  println(planning.toAsciiArt)*/
 }

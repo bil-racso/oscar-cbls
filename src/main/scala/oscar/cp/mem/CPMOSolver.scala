@@ -310,7 +310,6 @@ class CPMOSolver(nObj : Int) extends Store() {
 				// First restart, find a feasible solution so no limit
 				restart(false)
 				
-				
 				for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
 					
 					// Exploration with relaxation

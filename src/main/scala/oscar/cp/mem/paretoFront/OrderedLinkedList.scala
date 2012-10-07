@@ -67,7 +67,7 @@ class OrderedLinkedList {
 			throw new NoSuchElementException("This list is empty")
 		else {
 			if (n.isFirst) first = n.next else n.prev.next = n.next
-			if (n.isLast)  last = n.prev else n.next.prev = n.prev
+			if (n.isLast) last = n.prev else n.next.prev = n.prev
 		}
 		
 		s -= 1
