@@ -30,7 +30,9 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
+/*
 case class SuperTask(start: Task, end: Task, override val name: String = "")
+
   extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
@@ -52,7 +54,7 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
     start.addStaticPredecessor(j)
   }
 }
-
+*/
 case class Task(val duration: IntVar, val planning: Planning, val name: String = "") {
   val TaskID: Int = planning.AddTask(this)
 
