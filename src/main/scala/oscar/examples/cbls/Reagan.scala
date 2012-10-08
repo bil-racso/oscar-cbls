@@ -56,8 +56,8 @@ object Reagan extends App {
   val Boire = Task(3, planning, "drink")
   Boire uses 3 ofResource Reagan
 
-//  val Digerer = SuperTask(Manger, Dormir, "digest")
-//  Digerer uses 1 ofResource Reagan
+  val Digerer = SuperTask(Manger, Dormir, "digest")
+  Digerer uses 1 ofResource Reagan
 
   Reflechir precedes Boire
   Manger precedes Dormir
