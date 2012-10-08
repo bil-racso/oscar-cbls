@@ -18,7 +18,7 @@
 
 package oscar.cp.test
 
-import oscar.cp.mem.paretoFront.ParetoPoint
+import oscar.cp.mem.pareto.ParetoPoint
 
 import org.scalacheck._
 import org.scalatest.FunSuite

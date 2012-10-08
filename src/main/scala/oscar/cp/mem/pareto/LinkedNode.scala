@@ -1,4 +1,4 @@
-package oscar.cp.mem.paretoFront
+package oscar.cp.mem.pareto
 
 class LinkedNode(v : Int, l : OrderedLinkedList) {
 	

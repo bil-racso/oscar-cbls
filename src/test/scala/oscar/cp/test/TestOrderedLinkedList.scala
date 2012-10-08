@@ -4,8 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalacheck._
 
-import oscar.cp.mem.paretoFront.OrderedLinkedList
-import oscar.cp.mem.paretoFront.LinkedNode
+import oscar.cp.mem.pareto.OrderedLinkedList
+import oscar.cp.mem.pareto.LinkedNode
 
 
 class TestOrderedLinkedList extends FunSuite with ShouldMatchers {

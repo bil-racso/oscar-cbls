@@ -18,7 +18,7 @@ import oscar.search.IDSSearchController
 
 object VRPTW extends App {
 	
-	val instance = parse("data/VRPTW/Solomon/C105.txt")
+	val instance = parse("data/VRPTW/Solomon/R105.txt")
 	
 	// Data
 	val nCustomers = instance.n	
@@ -64,6 +64,7 @@ object VRPTW extends App {
 	val cp = CPSolver()
 	
 	val prev      = Array.fill(nSites)(CPVarInt(cp, Sites))		// Previously visited site
+	val next      = Array.fill(nSites)(CPVarInt(cp, Sites))		// Previously visited site
 	val routeOf   = Array.fill(nSites)(CPVarInt(cp, Vehicles))	// Route of each vehicle
 	val service   = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Date of service of each site
 	val departure = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Departure from each site
@@ -109,12 +110,12 @@ object VRPTW extends App {
 			if (stagnation >= 20) {
 				stagnation = 0
 				p += 1
-				if (p > 40) p = 40
+				if (p > 30) p = 30
 				println("\np : "+p)
 			}
 		}
 		else {
-			p = 20
+			p = 15
 			prevSol = bestSol
 			stagnation = 0
 		}
@@ -156,11 +157,18 @@ object VRPTW extends App {
 	
 	cp.minimize(totDist) subjectTo {
 		
+		for (i <- Sites) {
+			cp.add(next(prev(i)) == i)
+			cp.add(prev(next(i)) == i)
+		}
+		
 		// TSP constraint
 		cp.add(circuit(prev), Strong)
+		cp.add(circuit(next), Strong)
 		
 		// Length of the cycle
 		cp.add(sum(Sites)(i => dist(i)(prev(i))) == totDist)
+		cp.add(sum(Sites)(i => dist(i)(next(i))) == totDist)
 		
 		// Route consistency
 		for(i <- Customers) 
@@ -187,8 +195,9 @@ object VRPTW extends App {
 		}
 		
 		// A vehicle starts immediately after service
-	    for(i <- Customers)
+	    for(i <- Customers) {
 			cp.add(departure(i) == service(i) + servDur(i))
+	    }
 			
 		// All vehicle start on the morning 
 		for(i <- Depots)

@@ -1,6 +1,7 @@
-package oscar.cp.mem.paretoFront
+package oscar.cp.mem.pareto
 
 import java.util.NoSuchElementException
+import oscar.cp.mem.pareto.LinkedNode
 
 class OrderedLinkedList {
 	

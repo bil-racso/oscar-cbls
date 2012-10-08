@@ -1,7 +1,7 @@
-package oscar.cp.mem.paretoFront
+package oscar.cp.mem.pareto
 
-import oscar.cp.constraints.CPObjective
-import oscar.cp.core.CPVarInt
+import oscar.cp.mem.paretoFront.LinkedNode
+import oscar.cp.mem.pareto.LinkedNode
 
 class ParetoPoint(private val sol : Array[Int], val neighbourhood : Array[LinkedNode]) {
 	
