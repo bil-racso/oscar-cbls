@@ -62,11 +62,11 @@ class Planning(val model: Model, val maxduration: Int) {
   var SentinelTask: Task = null //a taks that is added after all taskss, to simplify algorithm construction
 
   def close() {
-    val TaskssNoSentinel = Tasks
+    val TasksNoSentinel = Tasks
     SentinelTask = new Task(0, this, "SentinelTask")
     SentinelTask.LatestEndDate := maxduration
 
-    for (task <- TaskssNoSentinel) {
+    for (task <- TasksNoSentinel) {
       SentinelTask.addStaticPredecessor(task)
     }
 
@@ -129,4 +129,62 @@ class Planning(val model: Model, val maxduration: Int) {
     toreturn += MakeSpan
     toreturn + "\n"
   }
+
+  def dependencies: String = {
+    var toreturn: String = ""
+    for (task <- Tasks if task != SentinelTask){
+      for (t2 <- task.StaticPredecessors){
+        toreturn += t2.name + " ->> " + task.name + "\n"
+      }
+      for (t2 <- task.AdditionalPredecessors.value){
+        toreturn += TaskArray(t2).name + " -> " + task.name + "\n"
+      }
+    }
+    toreturn
+  }
+
+
+  /**
+   * Checks taht a dependence from --> to can be added to the graph,
+   * assuming that there is a resource conflict involving them
+   * @param from
+   * @param to
+   * @return true if a dependence can be addd, false otherwise.
+   */
+  def canAddPrecedenceAssumingResourceConflict(from:Task,  to:Task):Boolean = {
+    from != to && !isThereDependency(to,from)
+  }
+
+  /**Checks if there is a path leading from one task to another one
+   * @param from
+   * @param to
+   * @return true if there is a path from 'from' to 'to', false otherwise
+   */
+  def isThereDependency(from:Task, to:Task):Boolean = {
+    val target = to.getEndTask
+
+    var Reached:List[Task] = List.empty
+
+    /**PRE: from is a ground task. */
+    def Search(from:Task):Boolean = {
+      if (from == target) return true
+      if (from.EarliestEndDate.value > to.EarliestStartDate.value){
+        return false
+      }
+
+      if(from.Mark){return false}
+      from.Mark = true
+      Reached = from :: Reached
+      for(next <- from.getStartTask.AllSucceedingTasks.value){
+        val nextTask:Task = TaskArray(next)
+        if (Search(nextTask)) return true
+      }
+      false
+    }
+
+    val toreturn = Search(from.getStartTask)
+    for (task <- Reached) task.Mark = false
+    toreturn
+  }
 }
+

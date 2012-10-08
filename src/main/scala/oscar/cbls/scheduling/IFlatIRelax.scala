@@ -39,7 +39,11 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
    * @param MaxIt the max number of iterations of the search
    * @param Stable the number of no successice noimprove that will cause the search to stop
    */
-  def Solve(MaxIt: Int, Stable: Int, flatteningheursitics: FlatteningHeuristics = WorseFirst(), NbRelax: Int = 4, PkillPerRelax: Int = 50) {
+  def Solve(MaxIt: Int,
+            Stable: Int,
+            flatteningheursitics: FlatteningHeuristics = WorseFirst(),
+            NbRelax: Int = 4,
+            PkillPerRelax: Int = 50) {
 
     var it: Int = 0
 
@@ -88,6 +92,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       } else {
         plateaulength += 1
       }
+
       println("----------------")
     }
     model.restoreSolution(BestSolution)
@@ -157,10 +162,11 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val conflictTasks: List[Task] = conflictSet.map(_._1)
 
       //println("flatten length: " + TaskssAndUse.length)
+      //TODO: cannot take a task and a supertask
 
       val (a, b) = selectMax2(conflictTasks, conflictTasks,
         (a: Task, b: Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
-        (a: Task, b: Task) => a != b)
+        (a: Task, b: Task) => p.canAddPrecedenceAssumingResourceConflict(a,b))
 
       if (Verbose) println("added " + a + "->" + b)
       b.addDynamicPredecessor(a)
