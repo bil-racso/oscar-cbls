@@ -1,14 +1,15 @@
 package oscar.cp.mem
 
 import scala.Math.max
-
+import scala.util.Random.nextFloat
+import scala.util.Random.nextInt
+import scala.Math.pow
 import oscar.util._
-
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
-
 import oscar.visual.VisualTour
+import oscar.search.IDSSearchController
 
 /** VRPTW
  * 
@@ -74,7 +75,84 @@ object VRPTW extends App {
 	// Visualization
 	// --------------------------------------------------
 	
-	val visu = new VisualTour(coord, prev, totDist, "VRPTW", 12, 8, routeOf)
+	val visu = new VisualTour(coord, prev, totDist, "VRPTW", 8, 6, routeOf, twStart, twEnd)
+	
+	// LNS
+	// --------------------------------------------------
+	
+	//cp.sc = new IDSSearchController(cp, 4)
+	
+	// Normalized distances
+	val maxDist = dist.map(_.max).max
+	val nDist   = dist.map(_.map(_ / (0.0 +maxDist)))
+	
+	def relatedness(i : Int, j :Int) = {		
+		val v = if (bestRouteOf(i) == bestRouteOf(j)) 0 else 1
+		1 / (nDist(i)(j) + v)
+	}
+	
+	val bestPrev    = new Array[Int](nSites)
+	val bestRouteOf = new Array[Int](nSites)
+	val selected    = new Array[Boolean](nSites)
+	var bestSol     = Int.MaxValue
+	var prevSol		= Int.MaxValue
+	
+	var stagnation  = 0
+	
+	val beta = 1
+	var p = 15
+	
+	cp.lns(10000, 2000) {
+		
+		if (bestSol == prevSol) {
+			stagnation += 1
+			if (stagnation >= 20) {
+				stagnation = 0
+				p += 1
+				if (p > 40) p = 40
+				println("\np : "+p)
+			}
+		}
+		else {
+			p = 20
+			prevSol = bestSol
+			stagnation = 0
+		}
+		
+		// Adaptable LNS
+		if (!cp.isLastLNSRestartCompleted) {
+			cp.failLimit = (cp.failLimit * 110)/100
+		} else {
+			cp.failLimit = max(10, (cp.failLimit * 90)/100)
+		}
+		
+		// Random selection of customers		
+		val S = Array.fill(nSites)(false)
+		S(nextInt(nSites)) = true
+		
+		for (k <- 1 until p) {
+			
+			val selectedC  = Sites.filter(S(_))
+			val remainingC = Sites.filter(!S(_))
+			
+			// Selects randomly a customer in S
+			val c = selectedC(nextInt(selectedC.size))
+			
+			// Order by relatedness with c
+			val sortedC = remainingC.sortWith((i,j) => relatedness(c, i) <= relatedness(c, j))
+			
+			val r = sortedC((pow(nextFloat, beta) * sortedC.size).floor.toInt)
+			S(r) = true
+		}
+		
+		val filtered = Sites.filter(i => !S(i))
+		
+		val constraints1 : Array[Constraint] = filtered.map(i => prev(i) == bestPrev(i)).toArray
+		val constraints2 : Array[Constraint] = filtered.map(i => routeOf(i) == bestRouteOf(i)).toArray
+
+		cp.post(constraints1)
+		cp.post(constraints2)
+	}
 	
 	cp.minimize(totDist) subjectTo {
 		
@@ -101,7 +179,6 @@ object VRPTW extends App {
 			// A vehicle can arrived before starting time 
 			cp.add(service(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
 			
-			// TODO : Relax this constraint
 			// A vehicle must finish before end of the time-window
 			cp.add(service(i) <= twEnd(i))
 			
@@ -119,18 +196,61 @@ object VRPTW extends App {
 		
 	} exploration {
 		
+		var c = Depots.min
+		
 		/*while (!allBounds(prev)) {
-	
-			selectMin[Int](Sites, i => !prev(i).isBound)(i => prev(i).size)(i => {
-				selectMin[Int](Sites, j => prev(i).hasValue(j))(j => dist(i)(j))(j => {
-					
-					cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
-				})		
-			})
+			
+			while(prev(c).isBound)
+				c = prev(c).value
+				
+			if (prev(c).min >= Depots.min)
+				cp.branch(cp.post(prev(c) == prev(c).min))(cp.post(prev(c) != prev(c).min))
+									
+			else {				
+				val i = selectMin(Customers, j => prev(c).hasValue(j) )(j => dist(c)(j))
+				cp.branch(cp.post(prev(c) == i))(cp.post(prev(c) != i))
+			}
 		}*/
 		
-		cp.printStats
+		while (!allBounds(prev)) {
+		
+			val firstDepot = max(Depots.min, maxVal(prev))
+			
+			val i = selectMin(Sites, i => !prev(i).isBound)(i => prev(i).size)
+			val j = selectMin(Sites, j => prev(i).hasValue(j) && j <= firstDepot + 1)(j => dist(i)(j))
+	
+			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
+		}
+					
+		for(i <- Sites) {
+			bestPrev(i) = prev(i).value
+			bestRouteOf(i) = routeOf(i).value
+		}
+		
+		bestSol = totDist.value
 		
 		visu.update
+	}
+	
+	println("Finished !")
+	cp.printStats
+	
+	def selectMin(x : Range, b : (Int => Boolean))(f : (Int => Int)) : Int = {
+                        
+	    val filtered = x.filter(i => b(i))
+	    val sorted   = filtered.sortBy(f)
+	          
+	    if (sorted.size == 0) {
+	    	cp.fail()
+	    	-1
+	    } else sorted(0)
+	}
+	
+	def maxVal(x : Array[CPVarInt]) = {
+		var max = Int.MinValue
+		for (i <- 0 until x.size)
+			if (x(i).isBound && x(i).value > max)
+				max = x(i).value
+		max
 	}
 }

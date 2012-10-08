@@ -3,7 +3,7 @@ package oscar.visual
 import oscar.cp.core.CPVarInt
 import java.awt.Color
 
-class VisualTour(coord: Array[(Int, Int)], succ : Array[CPVarInt], dist : CPVarInt, name: String = "Tour", xScale : Int = 1, yScale : Int = 1, route : Array[CPVarInt] = null) {
+class VisualTour(coord: Array[(Int, Int)], succ : Array[CPVarInt], dist : CPVarInt, name: String = "Tour", xScale : Int = 1, yScale : Int = 1, route : Array[CPVarInt] = null, twStart : Array[Int] = null, twEnd : Array[Int] = null) {
 
 	// Initialize
 	// ----------------------------------------------------
@@ -32,9 +32,23 @@ class VisualTour(coord: Array[(Int, Int)], succ : Array[CPVarInt], dist : CPVarI
 	frame.pack()
 
 	var nbSol = 0
+	
+	val tMin = twStart.min
+	val tWidth = twEnd.max - tMin
 
 	// Draws sites
-	coord.foreach(c => new VisualCircle(drawing, c._1*xScale, c._2*yScale, 2, Color.blue))
+	Array.tabulate(nSites)(i => {
+		
+		val degStart = ((twStart(i) - tMin) / (tWidth+0.0)).toFloat
+		val degEnd   = ((twEnd(i) - tMin) / (tWidth+0.0)).toFloat
+		
+		val c1 = new Color(degStart, 1-degStart, 0)
+		val c2 = new Color(degEnd, 1-degEnd, 0)
+		
+		val (x, y) = coord(i)		
+		new VisualCircle(drawing, x*xScale, y*yScale, 5, c2)
+		new VisualCircle(drawing, x*xScale, y*yScale, 2, c1)
+	})
 
 	def update {
 		
