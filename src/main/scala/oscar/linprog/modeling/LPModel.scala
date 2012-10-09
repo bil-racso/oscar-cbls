@@ -53,7 +53,7 @@ case class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Dou
 		  case LPSolverLib.lp_solve => new LPSolve()
 		  case LPSolverLib.glpk => new GlpkLP()
 		  case LPSolverLib.cplex => new CplexLP()
-		  case LPSolverLib.gurobi => new GurobiLP()
+          case LPSolverLib.gurobi => new GurobiLP()
 		  case _  => new LPSolve()              
 		}
 

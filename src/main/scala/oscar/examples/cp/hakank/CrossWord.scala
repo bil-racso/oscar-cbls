@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import oscar.cp.constraints._
 import collection.mutable._
@@ -69,7 +69,7 @@ object CrossWord {
     //
     // data
     // 
-    val alpha = Array("_","a","b","c","d","e","f",
+    val alpha = Array(" ","a","b","c","d","e","f",
                       "g","h","i","j","k","l","m",
                       "n","o","p","q","r","s","t",
                       "u","v","w","x","y","z")
@@ -135,10 +135,9 @@ object CrossWord {
 
       cp.add(alldifferent(E), Strong)
 
-      for(I <- 0 until num_words) {
-        for(J <- 0 until word_len) {
+      for(I <- 0 until num_words;
+          J <- 0 until word_len) {
           cp.add(A(I)(J) == AA(I)(J));
-        }
       }
 
 
@@ -152,9 +151,9 @@ object CrossWord {
       // 
       for(I <- 0 until num_overlapping) {
            cp.add(
-                  element(A_flatten,E(overlapping(I)(0))*word_len+overlapping(I)(1))
+                  A_flatten(E(overlapping(I)(0))*word_len+overlapping(I)(1))
                   ==
-                  element(A_flatten,E(overlapping(I)(2))*word_len+overlapping(I)(3)),
+                  A_flatten(E(overlapping(I)(2))*word_len+overlapping(I)(3)),
                   Strong
                   )
       }

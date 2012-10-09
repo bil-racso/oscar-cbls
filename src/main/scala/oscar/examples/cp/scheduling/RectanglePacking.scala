@@ -15,11 +15,11 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.examples.cp.scheduling
+/*package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.search._
+
 import oscar.visual._
 import scala.math
 import java.awt.Color
@@ -130,4 +130,4 @@ object RectanglePacking {
 	    	}
 	    }
 	}
-}
+}*/

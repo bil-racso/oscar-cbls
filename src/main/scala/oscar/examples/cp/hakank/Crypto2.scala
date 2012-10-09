@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -53,7 +53,7 @@ object Crypto2 {
     //
     val num = 26
 
-    val ht = "abcdefghijklmnopqrstuvwxyz".zipWithIndex.toMap // char -> index
+    val ht = ('a' to 'z').zipWithIndex.toMap // char -> index
 
     //
     // variables

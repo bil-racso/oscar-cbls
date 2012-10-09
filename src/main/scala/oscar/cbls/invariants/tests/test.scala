@@ -21,7 +21,6 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
@@ -29,8 +28,7 @@ import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.invariants.lib.minmax._
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.Implicits._
-import oscar.cbls.invariants.lib.numeric.Implicits._
+import oscar.cbls.algebra.Algebra._
 
 
 object test extends SearchEngine {
@@ -48,14 +46,14 @@ object test extends SearchEngine {
     val d:IntVar = new IntVar(m, min, max, 6, "d")
     val e:IntSetVar = new IntSetVar(m, min, max, "e", SortedSet.empty[Int])
 
-    d <== (5 plus c plus 5 plus (b times (4 minus 3)))
-    c <== a plus  b //Sum(SortedSet(a, b))
+    d <== (5 + c + 5 + (b * (4 - 3)))
+    c <== a + b //Sum(SortedSet(a, b))
     e <== Inter(MakeSet(SortedSet(a, b)), MakeSet(SortedSet(b, c)))
     val Const5 = IntConst(5,m)
-    val f:IntVar = Max(SortedSet(a,b,c,d)) plus MinLin(SortedSet(Abs(a),b,Const5,d))
+    val f:IntVar = Max(SortedSet(a,b,c,d)) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:IntVar = MaxLin(SortedSet(a,b,c,d))
 
-    val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d minus 1))
+    val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))
   
     Event(h,{println("Trigger: h changed: " + h)})
     val k:IntVar = Cardinality(h)

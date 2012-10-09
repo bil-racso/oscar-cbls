@@ -36,22 +36,27 @@ import oscar.search._
  */
 class ReversibleSearchNode {
 	
+	var silent = false
+  
 	var magic = 0	
 	var trail = new Trail();
 	val pointerStack = new Stack[TrailEntry]()
-	var objective: Objective = new DummyObjective() 	
+
 	val random: Random = new Random(0)
 	val failed = new ReversibleBool(this,false)
-	var stateObjective : Unit => Unit = Unit => Unit
+
 	var sc: SearchController = new DFSSearchController(this)
-    case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
-    var lns: Option[LNS] = None
+
     var time : Long = 0
     var solveOne = false
+    private var limit = Int.MaxValue
     
-    def lns(nbRestarts: Int, nbFailues: Int)(restart: => Unit) {
-	  lns = Option(new LNS(nbRestarts,nbFailues,() => restart))
+    def failLimit = limit
+    def failLimit_= (lim: Int) {
+	  sc.failLimit_=(lim)
+	  limit = lim
 	}
+    
 	
 	/**
 	 * 
@@ -66,9 +71,17 @@ class ReversibleSearchNode {
 	def isFailed(): Boolean = failed.value
 	
 
+	/**
+	 * Set the node in a failed state
+	 */
 	def fail() {
 		failed.setValue(true)
 	}
+	
+	/**
+	 * @return the number of fail
+	 */
+	def nFail() = sc.nFail()
 	
 	/**
 	 * Exit the search in progress and/or the LNS if any
@@ -76,24 +89,13 @@ class ReversibleSearchNode {
 	def stop() {
 	  sc.stop()
 	}
-
-    /**
-     *
-     * @return an objective if any, null otherwise
-     */
-	def getObjective() = objective
-
-    /**
-     * Set the objective to optimize
-     * @param obj
-     */
-	def setObjective(obj: Objective) {
-		this.objective = obj;
-	}
 	
 	def getMagic() = magic
 	
 	def getTrail() = trail
+	
+	
+	def solFound() = {}
 
     /**
      * Store the current state of the node on a stack.
@@ -125,16 +127,34 @@ class ReversibleSearchNode {
 		"ReversibleSearchNode: nbPushed"+pointerStack.size()+" currentTrailSize:"+trail.getSize();
 	}
 	
+	var nb = 0
 	
+	/**
+	 * executed just before the actual branch action
+	 */
+	def beforeBranch() = {}
+	
+	/**
+	 * executed just after the actual branch action
+	 */
+	def afterBranch() = {}
 	
 	def branch(left: => Unit)(right: => Unit) = {
       shift { k: (Unit => Unit) =>
         if (!isFailed) {
-        sc.addChoice(new MyContinuation("right", {
-          if (!isFailed) right
-          if (!isFailed()) k()}))
+          sc.addChoice(new MyContinuation("right", {
+                           if (!isFailed) {
+                             beforeBranch()
+                             right
+                             afterBranch()
+                           }
+                           if (!isFailed()) k()}))
         }
-        if (!isFailed()) left
+        if (!isFailed()) {
+          beforeBranch()
+          left 
+          afterBranch()
+        }
         if (!isFailed()) k()
       }
     }
@@ -145,11 +165,15 @@ class ReversibleSearchNode {
         val first = indexes.first
         for (i <- indexes.reverse; if (i != first)) {
            sc.addChoice(new MyContinuation("i", {
-        	   f(i)
+        	   beforeBranch()
+               f(i)
+               afterBranch()
           	   if (!isFailed()) k()}))
             
         }
+        beforeBranch()
         f(first)
+        afterBranch()
         if (!isFailed()) k()
       }
     }	
@@ -167,56 +191,24 @@ class ReversibleSearchNode {
     
 	def exploration(block: => Unit @suspendable ): Unit  =  {
 	  val t1 = System.currentTimeMillis()
-	  stateObjective()
-	  var nbRestart = 0
-	  var maxRestart = 1
-	  var limit = sc.failLimit
-	  
-	  val relax = lns match {
-		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => {
-		     maxRestart = nbRestart
-		     limit = nbFailures
-		     restar
-		   }
-	  }  
-
-
 	  reset {
         shift { k1: (Unit => Unit ) =>
           val b = () => {
         	  	sc.start()
                 block
                 if (!isFailed()) {
-                	sc.failLimit = limit
                 	if (solveOne) {
-                	  val nbFail = sc.nbFail
                 	  sc.reset()
-                	  sc.nbFail = nbFail
                 	  k1() // exit the exploration block
                 	}
                 }
           }
-
-          def restart(relaxation: Boolean = false) {
-             popAll()
-             pushState()
-             if (relaxation) relax()
-             sc.reset()
-             nbRestart += 1 
-             reset {
-               b()  	  
-               if (!isFailed()) getObjective().tighten()
-      	     }
-             if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-          }
-          sc.failLimit = limit
-          restart(false) // first restart, find a feasible solution so no limit
-          for (r <- 2 to maxRestart; if (!getObjective().isOptimum() && !sc.exit)) {
-             restart(true)
-             if (sc.limitReached) print("!")
-             else print("R")
-          }
+          sc.reset()
+          reset {
+             b()  	  
+             if (!isFailed()) solFound()
+      	  }
+          if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
           k1() // exit the exploration block       
         } 
       }

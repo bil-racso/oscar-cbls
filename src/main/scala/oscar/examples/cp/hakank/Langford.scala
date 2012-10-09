@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -57,11 +57,8 @@ object Langford {
     //
     // data
     //
-
-    var k = 4
-    if (args.length > 0) {
-      k = args(0).toInt
-    }
+    val k = if (args.length > 0) args(0).toInt else 4;
+    val num_to_show = if (args.length > 1) args(1).toInt else 0;
 
     //
     // variables
@@ -81,22 +78,25 @@ object Langford {
   
       for(i <- 1 to k) {
         cp.add(position(i+k-1) == (position(i-1) + i+1))
-        cp.add(element(solution, position(i-1)) == i)
-        cp.add(element(solution, position(k+i-1)) == i)
+        cp.add(solution(position(i-1)) == i)
+        cp.add(solution(position(k+i-1)) == i)
       }
 
       // symmetry breaking
       cp.add(solution(0) < solution(2*k-1))
 
-
     } exploration {
        
-      cp.binaryFirstFail(position)
+      cp.binary(position, _.size, _.min)
 
       print("solution:" + solution.mkString("") + " ")
       println("position:" + position.mkString(""))
 
       numSols += 1
+
+      if (num_to_show > 0 && numSols >= num_to_show) {
+        cp.stop()
+      }
 
    }
 

@@ -22,9 +22,9 @@ package oscar.visual;
  */
 public class MapLine {
 	double lt1, lg1, lt2, lg2;
-	Map map;
+	VisualMap map;
 
-	public MapLine(Map map,double lt1, double lg1, double lt2, double lg2) {
+	public MapLine(VisualMap map,double lt1, double lg1, double lt2, double lg2) {
 		this.map = map;
 		this.lt1 = lt1;
 		this.lg1 = lg1;

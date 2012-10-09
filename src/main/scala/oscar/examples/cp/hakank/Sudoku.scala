@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.math.pow
 
@@ -41,6 +41,9 @@ object Sudoku {
     val n = 9
     val reg = 3
 
+    val NRANGE = 0 until n
+    val RRANGE = 0 until reg
+
     // 
     // data
     //
@@ -48,18 +51,19 @@ object Sudoku {
     // Gecode's sudoku.cpp
     // http://www.gecode.org/gecode-doc-latest/sudoku_8cpp-source.html
     //
-    val problem = List(List(0, 0, 0, 2, 0, 5, 0, 0, 0),
-                       List(0, 9, 0, 0, 0, 0, 7, 3, 0),
-                       List(0, 0, 2, 0, 0, 9, 0, 6, 0),
-                       List(2, 0, 0, 0, 0, 0, 4, 0, 9),
-                       List(0, 0, 0, 0, 7, 0, 0, 0, 0),
-                       List(6, 0, 9, 0, 0, 0, 0, 0, 1),
-                       List(0, 8, 0, 4, 0, 0, 1, 0, 0),
-                       List(0, 6, 3, 0, 0, 0, 0, 8, 0),
-                       List(0, 0, 0, 6, 0, 8, 0, 0, 0))
+    val problem = Array(Array(0, 0, 0, 2, 0, 5, 0, 0, 0),
+                        Array(0, 9, 0, 0, 0, 0, 7, 3, 0),
+                        Array(0, 0, 2, 0, 0, 9, 0, 6, 0),
+                        Array(2, 0, 0, 0, 0, 0, 4, 0, 9),
+                        Array(0, 0, 0, 0, 7, 0, 0, 0, 0),
+                        Array(6, 0, 9, 0, 0, 0, 0, 0, 1),
+                        Array(0, 8, 0, 4, 0, 0, 1, 0, 0),
+                        Array(0, 6, 3, 0, 0, 0, 0, 8, 0),
+                        Array(0, 0, 0, 6, 0, 8, 0, 0, 0))
 
     // variables
     val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
+    val x_t = x.transpose
 
     //
     // constraints
@@ -69,24 +73,21 @@ object Sudoku {
     cp.solveAll subjectTo {
 
       // fill with the hints
-      for(i <- 0 until n;
-          j <- 0 until n if problem(i)(j) > 0) {
-            cp.add(x(i)(j) == problem(i)(j))
-      }
-      
+      NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0) cp.add(x(i)(j) == problem(i)(j))))
+
       // rows and columns
-      for(i <- 0 until n) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
-      }
+      NRANGE.foreach(i=>cp.add(alldifferent(x(i)), Strong))
+      NRANGE.foreach(j=>cp.add(alldifferent(x_t(j)), Strong))
       
+
       // blocks
-      for(i <- 0 until reg; j <- 0 until reg) {
-        cp.add(alldifferent(  (for{ r <- i*reg until i*reg+reg;
-                                    c <- j*reg until j*reg+reg
-              } yield x(r)(c)).toArray), Strong)
+      for(i <- RRANGE; 
+          j <- RRANGE) {
+        cp.add(alldifferent((for{ r <- i*reg until i*reg+reg;
+                                  c <- j*reg until j*reg+reg
+              } yield x(r)(c))), Strong)
       }
-      
+
 
     } exploration {
        
@@ -94,10 +95,7 @@ object Sudoku {
 
        println("\nSolution:")
        for(i <- 0 until n) {
-         for(j <- 0 until n) {
-           print(x(i)(j) + " ")
-         }
-         println()
+         println(x(i).mkString(" "))
        }
        println()
 

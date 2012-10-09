@@ -44,7 +44,7 @@ import scala.collection.mutable.HashSet
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.invariants.lib.set.MakeSet
 import collection.immutable.SortedSet
-import oscar.cbls.objective.core.Objective
+import oscar.cbls.objective.Objective
 
 /**
  * Sudoku generator on NxN grids where N is a Square
@@ -138,7 +138,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       }
     }
     showGrid(grid,N)
-            
+
     // constraint system
     val c:ConstraintSystem = new ConstraintSystem(m)
     
@@ -160,20 +160,20 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     
     // search
     var it:Int=1
-    while((c.Violation.getValue() > 0) && (it < MAX_IT)){          
-      val allowed = LinearIndexes.filter(v => Tabu(v) < it)
-      val (v1,v2)=selectMin2(allowed, allowed, 
-          (v1:Int, v2:Int) => c.getSwapVal(grid(v1),grid(v2)), 
-          (v1:Int,v2:Int) => (v1 < v2) && (SquareOf(v1)==SquareOf(v2))) // swap on the same line
-      require(SquareOf(v1)==SquareOf(v2))
+    while((c.Violation.value > 0) && (it < MAX_IT)){
+      val allowed = LinearIndexes.filter(v => Tabu(v).value < it)
+      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.getSwapVal(grid(v1),grid(v2)),
+                                                (v1,v2) => (v1 < v2) && (SquareOf(v1) == SquareOf(v2))) // swap on the same line
+      
+//      require(SquareOf(v1)==SquareOf(v2))
            
       grid(v1) :=: grid(v2)
       
       // UI update
-      tab(v1/N)(v1%N).text=grid(v1).getValue()+""
-      tab(v2/N)(v2%N).text=grid(v2).getValue()+""
+      tab(v1/N)(v1%N).text=grid(v1).value+""
+      tab(v2/N)(v2%N).text=grid(v2).value+""
       for(v <- 0 to LinearIndexes.length-1) {
-        if (c.getViolation(grid(v)).getValue()>0) 
+        if (c.getViolation(grid(v)).value>0)
           tab(v/N)(v%N).foreground=Color.RED
         else
           tab(v/N)(v%N).foreground=Color.BLACK
@@ -190,7 +190,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
 
     println("Solution: "+m.getSolution(true))
 
-    if (c.Violation.getValue()==0) {    	
+    if (c.Violation.value==0) {
       showGrid(grid,N)    
     } else {
       println("Not found after "+MAX_IT+" iterations")
@@ -204,7 +204,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
   def showGrid(tab:Array[IntVar],N:Int) {
     for (i <- Range(0,tab.length)) {
       if ((i%N)==0) println
-      print(tab(i).getValue()+" ")
+      print(tab(i).value+" ")
     }
     println
   }

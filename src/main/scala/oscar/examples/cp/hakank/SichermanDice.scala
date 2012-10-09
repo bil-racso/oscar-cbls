@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -118,7 +118,7 @@ object SichermanDice {
 
     } exploration {
        
-      cp.binaryFirstFail(x1 ++ x2)
+      cp.binary(x1 ++ x2, _.min, _.min)
 
       println("x1: " + x1.mkString(""))
       println("x2: " + x2.mkString(""))

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -72,15 +72,8 @@ object QuasigroupCompletion {
     val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
     n = lines(0).toInt
     println("n:" + n)
-    var this_problem = List[List[Int]]()
-    for (t <- 1 to n) {
-      println(lines(t))
-      val t2: List[Int] = lines(t).split(" ").toList.map(i=>if (i == ".") X else i.toInt)
-      this_problem = this_problem ::: List(t2)
-    }
-    println()
+    problem = lines.tail.map(_.split(" ").toList.map(i=>if (i == ".") X else i.toInt))
 
-    problem = this_problem
   }
   
 

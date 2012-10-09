@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 /**
@@ -65,7 +65,7 @@ object Seseman {
      val cp = CPSolver()
 
      // data
-     val n = 3
+     val n = if (args.length > 0) args(0).toInt else 3;
      val border_sum = n*n
 
      // variables

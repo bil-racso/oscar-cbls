@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import oscar.cp.constraints._
 import collection.mutable._
@@ -51,7 +51,7 @@ import scala.collection.JavaConversions._
 object ContiguityRegular {
 
 
-  def MyContiguity(cp: CPSolver, x: Array[CPVarInt]) {
+  def MyContiguity(x: Array[CPVarInt]) : Constraint = {
 
     // all states are accepting states
     val accepting_states: Set[java.lang.Integer] = Set(0,1,2)
@@ -71,10 +71,9 @@ object ContiguityRegular {
     val num_letters = 2
 
     val automaton = new Automaton(num_states, num_letters, initial_state, accepting_states)
-
     transition_tuples.foreach(a => automaton.addTransition(a(0), a(1), a(2)))
 
-    cp.add(regular(x, automaton))
+    regular(x, automaton)
 
   }
 
@@ -82,11 +81,10 @@ object ContiguityRegular {
 
     val cp = CPSolver()
 
-    var n = 7
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
-
+    //
+    // data
+    //
+    val n = if (args.length > 0) args(0).toInt else 7;
     println("n:" + n)
 
     //
@@ -101,7 +99,7 @@ object ContiguityRegular {
 
     cp.solveAll subjectTo {
 
-      MyContiguity(cp, reg_input)
+      cp.add(MyContiguity(reg_input))
 
     } exploration {
        

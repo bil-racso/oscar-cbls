@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 /**
@@ -33,6 +33,9 @@ import oscar.cp.core._
  * Chocolate ice cream (1 scoop)  200           2            2      4
  * Cola (1 bottle)                150           0            4      1
  * Pineapple cheesecake (1 piece) 500           0            4      5
+ *
+ *
+ * Note: A slightly different approach is in Diet2.scala
  *
  * 
  * @author Hakan Kjellerstrand hakank@gmail.com
@@ -58,15 +61,15 @@ object Diet {
 
      // variables
      val x = Array.fill(n)(CPVarInt(cp, 0 to 10))
-     val cost = sum(Array.tabulate(n)(i => x(i)*price(i)).toList)
+     val cost = weightedSum(price, x)
 
      // constraints
      cp.minimize(cost) subjectTo {
 
-       cp.add(sum(Array.tabulate(n)(i => x(i) * calories(i)))  >= limits(0))
-       cp.add(sum(Array.tabulate(n)(i => x(i) * chocolate(i))) >= limits(1))
-       cp.add(sum(Array.tabulate(n)(i => x(i) * sugar(i)))     >= limits(2))
-       cp.add(sum(Array.tabulate(n)(i => x(i) * fat(i)))       >= limits(3))
+       cp.add(weightedSum(calories, x) >= limits(0))
+       cp.add(weightedSum(chocolate, x) >= limits(1))
+       cp.add(weightedSum(sugar, x) >= limits(2))
+       cp.add(weightedSum(fat, x) >= limits(3))
 
      } exploration {
        

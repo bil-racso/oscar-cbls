@@ -24,7 +24,6 @@ import java.util.Random;
 import oscar.cp.constraints.*;
 import oscar.cp.core.*;
 import oscar.cp.scheduling.Activity;
-import oscar.cp.search.*;
 import oscar.cp.util.*;
 import oscar.reversible.*;
 import oscar.search.*;

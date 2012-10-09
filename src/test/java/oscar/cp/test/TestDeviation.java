@@ -34,12 +34,9 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Store;
-import oscar.cp.search.*;
 import oscar.cp.util.ArrayUtils;
 import oscar.cp.util.Counter;
 import oscar.reversible.SetIndexedArray;
-import oscar.search.Search;
-import oscar.search.SolutionObserver;
 
 
 
@@ -218,53 +215,8 @@ public class TestDeviation extends TestCase {
         assertEquals(nd.getMin(),24);
     }
 
-     public void testDeviation10() {
-    	 int nbDevi = nbSol(false);
-    	 int nbDecomp = nbSol(true);
-         assertEquals(nbDevi,nbDecomp);
-    }
 
-
-    private int nbSol(boolean decomp) {
-        Store cp = new Store();
-
-
-        int s = 74;
-    	CPVarInt [] x = new CPVarInt[6];
-        x[0] = CPVarInt.apply(cp,11,16);
-        x[1] = CPVarInt.apply(cp,9,11);
-        x[2] = CPVarInt.apply(cp,12,14);
-        x[3] = CPVarInt.apply(cp,13,14);
-        x[4] = CPVarInt.apply(cp,10,12);
-        x[5] = CPVarInt.apply(cp,12,15);
-    	CPVarInt nd = CPVarInt.apply(cp,0,34);
-
-        if (decomp)
-        	deviationDecomp(x,s,nd);
-        else
-        	cp.add(new Deviation(x, s, nd));
-
-        Search search = new Search(cp,new BinaryFirstFail(x));
-        final Counter cnt = new Counter();
-        search.addSolutionObserver(new SolutionObserver() {
-            public void solutionFound() {
-                cnt.incr();
-            }
-        });
-        search.solveAll();
-        return  cnt.getValue();
-    }
-
-    private void deviationDecomp(CPVarInt [] x, int s, CPVarInt nd) {
-        Store cp = x[0].s();
-        CPVarInt [] dev = new CPVarInt[x.length];
-		for (int i = 0; i < dev.length; i++) {
-			dev[i] = x[i].mul(x.length).minus(s).abs();
-		}
-		cp.add(new Sum(dev, nd));
-        cp.add(new Sum(x,s));
-    }
-    
+  
     
     public void testDeviation11(){
         Store cp = new Store();

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 /**
@@ -114,7 +114,7 @@ object ABCEndview {
       val n = a.length
       if (c > 0) {
         val i = CPVarInt(cp, 0 until d)
-        cp.add(element(a,i) == c)
+        cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i >>= j) ==> (a(j) === 0))
         }
@@ -129,7 +129,7 @@ object ABCEndview {
       val n = a.length
       if (c > 0) {
         val i = CPVarInt(cp, n-d until n)
-        cp.add(element(a,i) == c)
+        cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i <<= j) ==> (a(j) === 0))
         }
@@ -351,8 +351,8 @@ object ABCEndview {
       // for global cardinality (Latin square)
       val counts = Array(n-max_letter) ++ Array.fill(max_letter)(1)
 
-      println("dist: " + dist)
-      println("counts: " + counts.mkString(" "))
+      // println("dist: " + dist)
+      // println("counts: " + counts.mkString(" "))
 
 
       //
@@ -400,12 +400,14 @@ object ABCEndview {
 
 
       } exploration {
-        
+
+        /*
         println("\nBefore labeling: ")
         for(i <- RANGE) {
            println(x(i).mkString(""))
         }
         println()
+        */
   
         while (!allBounds(x_flat)) {
 

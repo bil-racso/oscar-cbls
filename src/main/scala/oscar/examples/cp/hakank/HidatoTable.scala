@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -52,10 +52,10 @@ object HidatoTable {
     //  6 7 9
     //  5 2 8
     //  1 4 3
-    // val problem = Array(Array(6,0,9),
-    //                     Array(0,2,8),
-    //                     Array(1,0,0))
-
+    val problem1 = Array(Array(6,0,9),
+                         Array(0,2,8),
+                         Array(1,0,0))
+      
     // solution :
     // 
     // 45 44 41 40 39 30 31
@@ -65,13 +65,13 @@ object HidatoTable {
     // 49 16 24 23 5 6 8
     // 17 19 15 22 12 7 9
     // 18 20 21 14 13 11 10
-    // val problem = Array(Array( 0,44,41, 0, 0, 0, 0),
-    //                     Array( 0,43, 0,28,29, 0, 0),
-    //                     Array( 0, 1, 0, 0, 0,33, 0),
-    //                     Array( 0, 2,25, 4,34, 0,36),
-    //                     Array(49,16, 0,23, 0, 0, 0),
-    //                     Array( 0,19, 0, 0,12, 7, 0),
-    //                     Array( 0, 0, 0,14, 0, 0, 0))
+    val problem2 = Array(Array( 0,44,41, 0, 0, 0, 0),
+                         Array( 0,43, 0,28,29, 0, 0),
+                         Array( 0, 1, 0, 0, 0,33, 0),
+                         Array( 0, 2,25, 4,34, 0,36),
+                         Array(49,16, 0,23, 0, 0, 0),
+                         Array( 0,19, 0, 0,12, 7, 0),
+                         Array( 0, 0, 0,14, 0, 0, 0))
 
 
 
@@ -79,45 +79,48 @@ object HidatoTable {
     // Gyora Bededek: "Hidato: 2000 Pure Logic Puzzles"
 
     // Problem 15 (Intermediate)
-    // val problem = Array(Array(64, 0, 0, 0, 0, 0, 0, 0),
-    //                     Array( 1,63, 0,59,15,57,53, 0),
-    //                     Array( 0, 4, 0,14, 0, 0, 0, 0),
-    //                     Array( 3, 0,11, 0,20,19, 0,50),
-    //                     Array( 0, 0, 0, 0,22, 0,48,40),
-    //                     Array( 9, 0, 0,32,23, 0, 0,41),
-    //                     Array(27, 0, 0, 0,36, 0,46, 0),
-    //                     Array(28,30, 0,35, 0, 0, 0, 0))
+    val problem3 = Array(Array(64, 0, 0, 0, 0, 0, 0, 0),
+                         Array( 1,63, 0,59,15,57,53, 0),
+                         Array( 0, 4, 0,14, 0, 0, 0, 0),
+                         Array( 3, 0,11, 0,20,19, 0,50),
+                         Array( 0, 0, 0, 0,22, 0,48,40),
+                         Array( 9, 0, 0,32,23, 0, 0,41),
+                         Array(27, 0, 0, 0,36, 0,46, 0),
+                         Array(28,30, 0,35, 0, 0, 0, 0))
 
 
     // Problem 156 (Master)
-    // (This seems to be harder to solve than the 12x12 prolem 188 below...)
-    // val problem = Array(Array(88, 0, 0,100, 0, 0,37,0, 0,34),
-    //                     Array( 0,86, 0,96,41, 0, 0,36, 0, 0),
-    //                     Array( 0,93,95,83, 0, 0, 0,31,47, 0),
-    //                     Array( 0,91, 0, 0, 0, 0, 0,29, 0, 0),
-    //                     Array(11, 0, 0, 0, 0, 0, 0,45,51, 0),
-    //                     Array( 0, 9, 5, 3, 1, 0, 0, 0, 0, 0),
-    //                     Array( 0,13, 4, 0, 0, 0, 0, 0, 0, 0),
-    //                     Array(15, 0, 0,25, 0, 0,54,67, 0, 0),
-    //                     Array( 0,17, 0,23, 0,60,59, 0,69, 0),
-    //                     Array(19,0,21,62,63, 0, 0, 0, 0, 0))
-
+    val problem4 = Array(Array(88, 0, 0,100, 0, 0,37,0, 0,34),
+                         Array( 0,86, 0,96,41, 0, 0,36, 0, 0),
+                         Array( 0,93,95,83, 0, 0, 0,31,47, 0),
+                         Array( 0,91, 0, 0, 0, 0, 0,29, 0, 0),
+                         Array(11, 0, 0, 0, 0, 0, 0,45,51, 0),
+                         Array( 0, 9, 5, 3, 1, 0, 0, 0, 0, 0),
+                         Array( 0,13, 4, 0, 0, 0, 0, 0, 0, 0),
+                         Array(15, 0, 0,25, 0, 0,54,67, 0, 0),
+                         Array( 0,17, 0,23, 0,60,59, 0,69, 0),
+                         Array(19,0,21,62,63, 0, 0, 0, 0, 0))
+      
 
     // Problem 188 (Genius)
-    val problem = Array(Array(  0,  0,134,  2,  4,  0,  0,  0,  0,  0,  0,  0),
-                        Array(136,  0,  0,  1,  0,  5,  6, 10,115,106,  0,  0),
-                        Array(139,  0,  0,124,  0,122,117,  0,  0,107,  0,  0),
-                        Array(  0,131,126,  0,123,  0,  0, 12,  0,  0,  0,103),
-                        Array(  0,  0,144,  0,  0,  0,  0,  0, 14,  0, 99,101),
-                        Array(  0,  0,129,  0, 23, 21,  0, 16, 65, 97, 96,  0),
-                        Array( 30, 29, 25,  0,  0, 19,  0,  0,  0, 66, 94,  0),
-                        Array( 32,  0,  0, 27, 57, 59, 60,  0,  0,  0,  0, 92),
-                        Array(  0, 40, 42,  0, 56, 58,  0,  0, 72,  0,  0,  0),
-                        Array(  0, 39,  0,  0,  0,  0, 78, 73, 71, 85, 69,  0),
-                        Array( 35,  0,  0, 46, 53,  0,  0,  0, 80, 84,  0,  0),
-                        Array( 36,  0, 45,  0,  0, 52, 51,  0,  0,  0,  0, 88))
-  
+    val problem5 = Array(Array(  0,  0,134,  2,  4,  0,  0,  0,  0,  0,  0,  0),
+                         Array(136,  0,  0,  1,  0,  5,  6, 10,115,106,  0,  0),
+                         Array(139,  0,  0,124,  0,122,117,  0,  0,107,  0,  0),
+                         Array(  0,131,126,  0,123,  0,  0, 12,  0,  0,  0,103),
+                         Array(  0,  0,144,  0,  0,  0,  0,  0, 14,  0, 99,101),
+                         Array(  0,  0,129,  0, 23, 21,  0, 16, 65, 97, 96,  0),
+                         Array( 30, 29, 25,  0,  0, 19,  0,  0,  0, 66, 94,  0),
+                         Array( 32,  0,  0, 27, 57, 59, 60,  0,  0,  0,  0, 92),
+                         Array(  0, 40, 42,  0, 56, 58,  0,  0, 72,  0,  0,  0),
+                         Array(  0, 39,  0,  0,  0,  0, 78, 73, 71, 85, 69,  0),
+                         Array( 35,  0,  0, 46, 53,  0,  0,  0, 80, 84,  0,  0),
+                         Array( 36,  0, 45,  0,  0, 52, 51,  0,  0,  0,  0, 88))
 
+    val problems = Array(problem1, problem2, problem3, problem4, problem5)
+
+    val p = if (args.length > 0) args(0).toInt else problems.length-1;
+
+    val problem = problems(p)  
     val n = problem.length
 
     //
@@ -167,17 +170,7 @@ object HidatoTable {
 
     } exploration {
        
-      // cp.binaryFirstFail(positions)
-
-      while (!allBounds(positions)) {
-        val (y,i) = minDomNotbound(positions).head
-          val v = y.min
-          cp.branch {
-          cp.post(y == v)
-        } {
-          cp.post(y !=v)
-        }
-      }
+      cp.binaryFirstFail(positions)
 
       println("\nSolution:")
 
@@ -200,7 +193,7 @@ object HidatoTable {
 
       numSols += 1
 
-   }
+    }
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

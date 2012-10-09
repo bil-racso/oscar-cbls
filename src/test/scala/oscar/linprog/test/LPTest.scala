@@ -44,7 +44,7 @@ class LPTest extends FunSuite with ShouldMatchers {
     		x.value should equal (Some(100))
     		y.value should equal (Some(170))
     		lp.getObjectiveValue() should equal(650)
-    		lp.getStatus() should equal (LPStatus.OPTIMAL)
+    		lp.status should equal (LPStatus.OPTIMAL)
     		lp.checkConstraints() should be (true)
     		lp.release()
     	}
@@ -63,7 +63,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 			x.value should equal (Some(200))
 			y.value should equal (Some(80))
 			lp.getObjectiveValue() should equal(0)
-			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.status should equal (LPStatus.OPTIMAL)
 			lp.checkConstraints() should be (true)
 			lp.release()
 		}
@@ -79,7 +79,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 				lp.add(y >= -x + 200)
 			}
 			// the solution is infeasible but some solver consider it dual infeasible
-			lp.getStatus() should (equal (LPStatus.UNBOUNDED) or equal (LPStatus.INFEASIBLE))
+			lp.status should (equal (LPStatus.UNBOUNDED) or equal (LPStatus.INFEASIBLE))
 			lp.release()
 		}
     }	
@@ -100,7 +100,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 			y.value should equal (Some(80))
 			z.value should equal (Some(170))
 			lp.getObjectiveValue() should equal(0)
-			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.status should equal (LPStatus.OPTIMAL)
 			lp.release()
 		}
     } 
@@ -117,7 +117,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 			x.value should equal (Some(200))
 			y.value should equal (Some(80))
 			lp.getObjectiveValue() should equal(0)
-			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.status should equal (LPStatus.OPTIMAL)
 			lp.release()
 		}
     } 
@@ -134,7 +134,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 			x.value should equal (Some(10))
 			y.value should equal (Some(10))
 			lp.getObjectiveValue() should equal(20)
-			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.status should equal (LPStatus.OPTIMAL)
 			
 			x.setBounds(0,11,true) // change bounds and reoptimize 
 			y.setBounds(0,11,true)
@@ -142,7 +142,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 		    x.value should equal (Some(11))
 			y.value should equal (Some(11))
 			lp.getObjectiveValue() should equal(22)
-			lp.getStatus() should equal (LPStatus.OPTIMAL)
+			lp.status should equal (LPStatus.OPTIMAL)
 			
 			lp.release()
 		}

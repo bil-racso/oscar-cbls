@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -52,6 +52,7 @@ import scala.math._
   Simple problems, the crypto-arithmetic puzzle ALPHACIPHER.
   """
 
+  For another approach see Crypto2.scala.
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/

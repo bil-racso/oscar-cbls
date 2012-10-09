@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -107,7 +107,7 @@ object ARoundOfGolf {
       // 2. Mr. Clubb, who isn't Paul, hit several balls into the woods and
       //    scored ten strokes more than the pro-shop clerk.
       cp.add(clubb != Paul);
-      cp.add(element(score, clubb) == element(score, clerk) + 10);
+      cp.add(score(clubb) == score(clerk) + 10);
       
       // 3. In some order, Frank and the caddy scored four and seven more
       //    strokes than Mr. Sands.
@@ -117,13 +117,13 @@ object ARoundOfGolf {
 
       cp.add(
              (
-              (score(Frank)         === element(score,sands) + 4) &&
-              (element(score,caddy) === element(score,sands) + 7 )
+              (score(Frank) === score(sands) + 4) &&
+              (score(caddy) === score(sands) + 7 )
               )
              ||
              (
-              (score(Frank)         === element(score,sands) + 7)   &&
-              (element(score,caddy) === element(score,sands) + 4)
+              (score(Frank) === score(sands) + 7)   &&
+              (score(caddy) === score(sands) + 4)
               )
              )
 
@@ -131,8 +131,8 @@ object ARoundOfGolf {
       // 4. Mr. Carter thought his score of 78 was one of his better games,
       //    even though Frank's score was lower.
       cp.add(carter != Frank);
-      cp.add(element(score, carter) == 78);
-      cp.add(score(Frank) < element(score, carter));
+      cp.add(score(carter) == 78);
+      cp.add(score(Frank) < score(carter));
       
       // 5. None of the four scored exactly 81 strokes.
       for(i <- 0 until n) {

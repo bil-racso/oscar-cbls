@@ -18,7 +18,7 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -66,6 +66,16 @@ object QuadraticAssignmentLNS {
     
     
     cp.lns(20,50) {
+      println("----------restart---------------nFail:"+cp.nFail())
+      println(cp.isLastLNSRestartCompleted)
+      
+      if (cp.isLastLNSRestartCompleted) {
+        println("set limit to "+(cp.failLimit/2))
+        cp.failLimit /= 2
+      } else {
+        println("set limit to "+(cp.failLimit*2))
+        cp.failLimit *= 2
+      }
       // relax 50% of the variables
       cp.post((0 until n).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
     }

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -61,11 +61,8 @@ object AllIntervals {
     //
     // data
     //
-    var n = 11
-
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
+    val n = if (args.length > 0) args(0).toInt else 11;
+    val num_to_show = if (args.length > 1) args(1).toInt else 0;
 
     println("n: " + n)
 
@@ -103,6 +100,9 @@ object AllIntervals {
       println()
 
       numSols += 1
+      if (num_to_show > 0 && numSols >= num_to_show) {
+        cp.stop()
+      }
 
    }
 

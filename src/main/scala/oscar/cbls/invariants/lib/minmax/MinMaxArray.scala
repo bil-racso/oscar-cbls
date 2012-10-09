@@ -40,7 +40,7 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
 
   override def name: String = "MaxArray"
 
-  override def Ord(v: IntVar): Int = -v.getValue()
+  override def Ord(v: IntVar): Int = -v.value
 
   override def ExtremumName: String = "Max"
 }
@@ -55,7 +55,7 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
 
   override def name: String = "MinArray"
 
-  override def Ord(v: IntVar): Int = v.getValue()
+  override def Ord(v: IntVar): Int = v.value
 
   override def ExtremumName: String = "Min"
 }
@@ -66,48 +66,36 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
  * @param cond is the condition, cannot be null
  * update is O(log(n))
  * */
-abstract case class MiaxArray(var vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar,(Int,Int)]{
+abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int,Int)]{
 
-  var keyForRemoval: Array[KeyForElementRemoval] = null
-  var h: BinomialHeapWithMoveExtMem[Int] = null
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
   var output: IntVar = null
 
   if(cond != null){ 
     registerStaticDependency(cond)
     registerDeterminingDependency(cond)
   }
-  
-  if(vars != null){
-    for (v <- vars) registerStaticDependency(v)
+
+  val (myMin,myMax) = bulkRegister(vars)
+
+  if(cond != null){
+    for (i <- cond.value) {
+      h.insert(i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
+    }
+  }else{
+    for (i <- vars.indices) {
+      h.insert(i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
+    }
   }
 
   finishInitialization()
 
-  if(vars != null) BulkLoad(vars,performBulkComputation(vars))
-
   override def performBulkComputation(bulkedVar: Array[IntVar])={
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.MinVal < acc) intvar.MinVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.MaxVal > acc) intvar.MaxVal else acc))
-  }
-
-  var MyMin = 0
-  var MyMax = 0
-
-  override def BulkLoad(bulkedVar: Array[IntVar],bcr: (Int,Int)){
-    vars = bulkedVar
-    keyForRemoval = new Array(vars.size)
-    h = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-    if (cond == null){
-
-    }else{
-    for (i <- cond.getValue()) {
-      h.insert(i)
-      keyForRemoval.update(i, registerDynamicDependency(vars(i),i))
-    }
-    }
-    MyMin = bcr._1
-    MyMax = bcr._2
-
   }
 
   def name: String
@@ -120,7 +108,7 @@ abstract case class MiaxArray(var vars: Array[IntVar], cond: IntSetVar, default:
     if(h.isEmpty){
       output := default
     }else{
-      output := vars(h.getFirst).getValue()
+      output := vars(h.getFirst).value
     }
   }
 
@@ -128,17 +116,17 @@ abstract case class MiaxArray(var vars: Array[IntVar], cond: IntSetVar, default:
   override def notifyIntChanged(v: IntVar, index:Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
-    output := vars(h.getFirst).getValue()
+    output := vars(h.getFirst).value
   }
 
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     assert(v == cond)
-    keyForRemoval.update(value, registerDynamicDependency(vars(value),value))
+    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     //mettre a jour le heap
     h.insert(value)
-    output :=  vars(h.getFirst).getValue()
+    output :=  vars(h.getFirst).value
   }
 
   @inline
@@ -146,14 +134,14 @@ abstract case class MiaxArray(var vars: Array[IntVar], cond: IntSetVar, default:
     assert(v == cond)
 
     unregisterDynamicDependency(keyForRemoval(value))
-    keyForRemoval.update(value, null)
+    keyForRemoval(value) = null
 
     //mettre a jour le heap
     h.delete(value)
     if(h.isEmpty){
       output := default
     }else{
-      output := vars(h.getFirst).getValue()
+      output := vars(h.getFirst).value
     }
   }
 }

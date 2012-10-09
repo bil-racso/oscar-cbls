@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -66,23 +66,34 @@ object Tomography {
 
     // data
     // 
-    // These following three examples are from the ECLiPSe program cited above.
+
+    //
+    // The following three examples are from the ECLiPSe program cited above.
     // 
-    // val row_sums = List(0,0,8,2,6,4,5,3,7,0,0)
-    // val col_sums = List(0,0,7,1,6,3,4,5,2,7,0,0)
+    val p1 = Array(Array(0,0,8,2,6,4,5,3,7,0,0),
+                   Array(0,0,7,1,6,3,4,5,2,7,0,0))
  
-    // val row_sums = List(10,4,8,5,6)
-    // val col_sums = List(5,3,4,0,5,0,5,2,2,0,1,5,1)
+    val p2 = Array(Array(10,4,8,5,6),
+                   Array(5,3,4,0,5,0,5,2,2,0,1,5,1))
 
 
     // This give three slightly different solutions.
-    // val row_sums = List(11,5,4)
-    // val col_sums = List(3,2,3,1,1,1,1,2,3,2,1)
+    val p3 = Array(Array(11,5,4),
+                   Array(3,2,3,1,1,1,1,2,3,2,1))
                  
 
     // This is my (hakank's) own problem.
-    val row_sums = List(0,2,2,2,2,2,8,8,4,4,4,4,4,0)
-    val col_sums = List(0,0,0,12,12,2,2,2,2,7,7,0,0,0)
+    val p4 = Array(Array(0,2,2,2,2,2,8,8,4,4,4,4,4,0),
+                   Array(0,0,0,12,12,2,2,2,2,7,7,0,0,0))
+
+    val problems = Array(p1,p2,p3,p4)
+
+
+    val p = if (args.length > 0) args(0).toInt else 3;
+
+    val problem = problems(p)
+    val row_sums = problem(0)
+    val col_sums = problem(1)
 
     val r = row_sums.length
     val c = col_sums.length
@@ -91,7 +102,7 @@ object Tomography {
     // decicion variables
     //
     val x = Array.fill(r,c)(CPVarInt(cp, 0 to 1))
-
+    val x_t = x.transpose
 
     //
     // constraints
@@ -100,14 +111,12 @@ object Tomography {
 
     cp.solveAll subjectTo {
 
-      // rows
       for(i <- 0 until r) {
-        cp.add(sum( Array.tabulate(c)(j=> x(i)(j)) ) == row_sums(i))
+        cp.add(sum( x(i) ) == row_sums(i))
       }
-      
-      // columns
+
       for(j <- 0 until c) {
-        cp.add(sum( Array.tabulate(r)(i=> x(i)(j)) ) == col_sums(j))
+        cp.add(sum( x_t(j) ) == col_sums(j))
       }
 
 
@@ -124,11 +133,7 @@ object Tomography {
        for(i <- 0 until r) {
          print(" " + "%2d".format(row_sums(i)) + "   ")
            for(j <- 0 until c) {
-             if (x(i)(j).value == 1) {
-               print("X ") 
-             } else {
-               print("  ")
-             }
+             print(if (x(i)(j).value == 1) "X " else "  ")
            }
            println()
        }

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core.CPVarInt
 import scala.io.Source._
 import scala.math._
@@ -102,7 +102,7 @@ object CircuitTest {
 
     // then put the orbit of x(0) in z(1..n-1)
     for(i <- 1 until len) {
-      cp.add(element(x, z(i-1), z(i)), Strong)
+      cp.add(x(z(i-1)) == z(i), Strong)
     }
 
     // for(i <- lb until len-1) {
@@ -128,7 +128,7 @@ object CircuitTest {
     cp.add(alldifferent(p), Strong)
     cp.add(p(0) == 0) // path always starts with 1
     for(i <- 1 until len) {
-      cp.add(element(x, p(i-1), p(i)), Strong) 
+      cp.add(x(p(i-1)) == p(i), Strong) 
     }
 
   } // end circuit_path

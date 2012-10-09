@@ -43,7 +43,7 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
   for(c <- Clusters.values){c.setDefiningInvariant(this); c.setValue(SortedSet.empty)}
 
   for(v <- values.indices){
-    val x:IntSetVar = Clusters.getOrElse(values(v).getValue(),null)
+    val x:IntSetVar = Clusters.getOrElse(values(v).value,null)
     if(x != null) x.insertValue(v)
   }
 
@@ -57,11 +57,11 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
 
   override def checkInternals(){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v))){assert(Clusters(values(v)).contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)){assert(Clusters(values(v).value).value.contains(v))}
     }
     for(value <- Clusters.keys){
-      for (indices <- Clusters(value)){
-        assert(values(indices).getValue() == value)
+      for (indices <- Clusters(value).value){
+        assert(values(indices).value == value)
       }
     }
   }
@@ -90,7 +90,7 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
 
   //We then complete the initialization the output variables to the value they should have
   for(v <- values.indices){
-    clusters(values(v).getValue()).insertValue(v)
+    clusters(values(v).value).insertValue(v)
   }
 
   //This method is called by each IntVar that is registered to the dynamic dependency graph.
@@ -106,11 +106,11 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
   //In this method, we check that the outputs are correct, based on non-incremental code
   override def checkInternals(){
     for(v <- values.indices){
-      assert(clusters(values(v)).contains(v))
+      assert(clusters(values(v).value).value.contains(v))
     }
     for(value <- clusters.indices){
-      for (indices <- clusters(value)){
-        assert(values(indices).getValue() == value)
+      for (indices <- clusters(value).value){
+        assert(values(indices).value == value)
       }
     }
   }

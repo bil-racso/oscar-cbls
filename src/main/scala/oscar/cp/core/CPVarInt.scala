@@ -63,8 +63,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	def valueBefore(value: Int): Int
 	
 	/**
-	 * Return a random value in the domain of the variable (uniform distribution)
-	 * @return
+	 * @return A random value in the domain of the variable (uniform distribution)
 	 */
 	def randomValue: Int = {
 		val ind = s.getRandom().nextInt(size);
@@ -77,6 +76,15 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 		}
 		min
 	}	
+    
+    /**
+     * @return The median value of the domain of the variable
+	 */
+    def median : Int = {
+    	
+    	val vals = this.toArray
+    	return vals(vals.size/2)
+    }
 	
 	def foreach[U](f: Int => U) = {
 	  for (v <- min to max; if (hasValue(v))) {
@@ -350,11 +358,16 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
      * @param y
      * @return a variable in the same store representing: x + y
      */
-	def plus(y: CPVarInt) = {
-		val	c = new CPVarIntImpl(s,min + y.min, max + y.max);
-		val ok = s.post(new oscar.cp.constraints.Sum(Array(this,y),c));
-        assert (ok != CPOutcome.Failure);
-		c
+	def plus(y: CPVarInt): CPVarInt = {
+	    if (y.isBound) { 
+	      this.plus(y.value)
+	    }
+	    else {
+	     val	c = new CPVarIntImpl(s,min + y.min, max + y.max);
+		 val ok = s.post(new oscar.cp.constraints.Sum(Array(this,y),c));
+         assert (ok != CPOutcome.Failure);
+		 c
+	    }
 	}
 
     /**
@@ -363,13 +376,13 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
      */
 	def mul(c: Int): CPVarInt = {
 		if (c == 1) {
-			return this;
+			return this
 		}
-		val a = if (c > 0) min*c else max*c;
-		val b = if (c > 0) max*c else min*c;
-		val y = new CPVarIntImpl(s,a,b);
-		val ok = s.post(new oscar.cp.constraints.MulCte(this,c,y));
-		assert(ok != CPOutcome.Failure);
+		val a = if (c > 0) min*c else max*c
+		val b = if (c > 0) max*c else min*c
+		val y = new CPVarIntImpl(s,a,b)
+		val ok = s.post(new oscar.cp.constraints.MulCte(this,c,y))
+		assert(ok != CPOutcome.Failure)
 		return y;
 	}
 
@@ -378,14 +391,14 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
      * @return a variable in the same store representing: x * y
      */
 	def mul(y: CPVarInt): CPVarInt = {
-		val a = min;
-		val b = max;
-		val c = y.min;
-		val d = y.max;
+		val a = min
+		val b = max
+		val c = y.min
+		val d = y.max
 		import oscar.cp.util.NumberUtils
 		val t = Array(NumberUtils.safeMul(a,c),NumberUtils.safeMul(a,d),NumberUtils.safeMul(b,c),NumberUtils.safeMul(b,d)); 
-		val z = new CPVarIntImpl(s,t.min,t.max);
-		val ok = s.post(new oscar.cp.constraints.MulVar(this,y,z));
+		val z = new CPVarIntImpl(s,t.min,t.max)
+		val ok = s.post(new oscar.cp.constraints.MulVar(this,y,z))
         assert(ok != CPOutcome.Failure);
 		z
 	}

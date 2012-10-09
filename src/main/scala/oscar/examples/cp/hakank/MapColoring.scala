@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -39,15 +39,16 @@ object MapColoring {
 
     // data
     val num_colors = 4
-    val num_countries = 6
 
     // Belgium, Denmark, France, Germany, Netherlands, Luxembourg
-    val connections = List(List(0, 0, 1, 1, 1, 1),
-                           List(0, 0, 0, 1, 0, 0),
-                           List(1, 0, 0, 1, 1, 0),
-                           List(1, 1, 1, 0, 1, 1),
-                           List(1, 0, 1, 1, 0, 0),
-                           List(1, 0, 0, 1, 0, 0))
+    val connections = Array(Array(0, 0, 1, 1, 1, 1),
+                            Array(0, 0, 0, 1, 0, 0),
+                            Array(1, 0, 0, 1, 1, 0),
+                            Array(1, 1, 1, 0, 1, 1),
+                            Array(1, 0, 1, 1, 0, 0),
+                            Array(1, 0, 0, 1, 0, 0))
+
+    val num_countries = connections.length
       
     // variables
     val color = Array.fill(num_countries)(CPVarInt(cp, 1 to num_colors))
@@ -59,10 +60,9 @@ object MapColoring {
 
     cp.solveAll subjectTo {
 
-      for (c1 <- 0 until num_countries; c2 <- 0 until c1) {
-        if (connections(c1)(c2)==1) {
+      for (c1 <- 0 until num_countries; 
+           c2 <- 0 until c1 if connections(c1)(c2)==1) {
           cp.add(color(c1) != color(c2))
-        }
       }
 
       // Symmetry breaking: Belgium has color 1
@@ -73,7 +73,7 @@ object MapColoring {
        
        cp.binaryFirstFail(color)
 
-       println("color:" + color.mkString(" "))
+       println("color:" + color.mkString(""))
 
        numSols += 1
        

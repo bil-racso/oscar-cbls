@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import oscar.cp.constraints._
 import collection.mutable._
@@ -178,7 +178,7 @@ object NurseRosteringRegular {
 
      } exploration {
 
-      cp.binary(all)
+      cp.binary(all, _.size, _.min)
 
       for(n <- nurses) {
         print("Nurse " + n + ": ")

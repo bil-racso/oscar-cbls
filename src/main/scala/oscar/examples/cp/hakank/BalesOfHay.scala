@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -85,7 +85,7 @@ object BalesOfHay {
         val i = CPVarInt(cp, 0 until n) 
         val j = CPVarInt(cp, 0 until n)
         
-        cp.add(element(bales,i) + element(bales,j) == weights(w))
+        cp.add(bales(i) + bales(j) == weights(w))
         cp.add(i < j) // symmetry breaking
 
       }
@@ -95,7 +95,7 @@ object BalesOfHay {
       
     } exploration {
        
-      cp.binaryMaxDegree(bales)
+      cp.binary(bales, -_.constraintDegree, _.max)
 
       println("bales:" + bales.mkString(""))
 

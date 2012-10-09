@@ -21,14 +21,11 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
-import oscar.cbls.invariants.core.computation.IntVar._
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -42,29 +39,28 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
 
   registerStaticDependencies(ifVar, thenVar, elseVar)
   registerDeterminingDependency(ifVar)
-  KeyToCurrentVar = registerDynamicDependency((if(ifVar.getValue() > 0) thenVar else elseVar))
+  KeyToCurrentVar = registerDynamicDependency((if(ifVar.value > 0) thenVar else elseVar))
   finishInitialization()
 
-  def MyMax = thenVar.MaxVal.max(elseVar.MaxVal)
-  def MyMin = thenVar.MinVal.min(elseVar.MinVal)
-
+  def myMax = thenVar.MaxVal.max(elseVar.MaxVal)
+  def myMin = thenVar.MinVal.min(elseVar.MinVal)
 
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := (if(ifVar.getValue() > 0) thenVar else elseVar)
+    output := (if(ifVar.value > 0) thenVar else elseVar).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == ifVar){
       if(NewVal > 0 && OldVal <= 0){
-        output := thenVar
+        output := thenVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(thenVar)
       }else if(NewVal <= 0 && OldVal > 0){
-        output := elseVar
+        output := elseVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(elseVar)
@@ -79,17 +75,15 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
   }
 
   override def checkInternals(){
-    assert(output.getValue() == (if(ifVar.getValue() <= 0) elseVar.getValue() else thenVar.getValue()),this)
+    assert(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value),this)
   }
 }
 
 /** inputarray[index]
  * @param inputarray is an array of IntVar
  * @param index is the index accessing the array*/
-case class IntElement(index:IntVar, var inputarray:Array[IntVar])
-  extends IntInvariant with Bulked[IntVar,((Int,Int))]{
-  var MyMax = 0
-  var MyMin = 0
+case class IntElement(index:IntVar, inputarray:Array[IntVar])
+  extends IntInvariant with Bulked[IntVar, ((Int,Int))]{
 
   var output:IntVar = null
   var KeyToCurrentVar:KeyForElementRemoval = null
@@ -97,47 +91,43 @@ case class IntElement(index:IntVar, var inputarray:Array[IntVar])
   registerStaticDependency(index)
   registerDeterminingDependency(index)
 
-  if(inputarray != null){
-    registerStaticDependencyAll(inputarray)
-    BulkLoad(inputarray,performBulkComputation(inputarray))
-  }
+  val (myMin,myMax) = bulkRegister(inputarray)
+
+  KeyToCurrentVar = registerDynamicDependency(inputarray(index.value))
 
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntVar]):(Int,Int) = {
-    val MyMax = bulkedVar.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.MaxVal) intvar.MaxVal else acc)
-    val MyMin = bulkedVar.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.MinVal) intvar.MinVal else acc)
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- bulkedVar){
+      if (MyMax < v.MaxVal) MyMax = v.MaxVal
+      if (MyMin > v.MinVal) MyMin = v.MinVal
+    }
     (MyMin,MyMax)
-  }
-
-  override def BulkLoad(bulkedVar: Array[IntVar],bcr:(Int,Int)){
-    inputarray = bulkedVar
-    KeyToCurrentVar = registerDynamicDependency(inputarray(index))
-    MyMin = bcr._1
-    MyMax = bcr._2
   }
 
   override def setOutputVar(v:IntVar){
     output = v
     output.setDefiningInvariant(this)
-    output := inputarray.apply(index)
+    output := inputarray.apply(index.value).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == index){
-      output := inputarray(NewVal)
+      output := inputarray(NewVal).value
       //modifier le graphe de dependances
       unregisterDynamicDependency(KeyToCurrentVar)
       KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
     }else{//si c'est justement celui qui est affiche.
-      assert(v == inputarray.apply(index),"access notified for non listened var")
+      assert(v == inputarray.apply(index.value),"access notified for non listened var")
       output := NewVal
     }
   }
 
   override def checkInternals(){
-    assert(output.getValue() == inputarray(index).getValue(), this)
+    assert(output.value == inputarray(index.value).value, this)
   }
 
   override def toString:String= {
@@ -150,88 +140,107 @@ case class IntElement(index:IntVar, var inputarray:Array[IntVar])
  * @param inputarray is the array of intvar that can be selected by the index
  */
 case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
-  extends IntSetInvariant with Bulked[IntVar,((Int,Int))]{
-  var MyMax = 0
-  var MyMin = 0
+  extends IntSetInvariant with Bulked[IntVar, ((Int,Int))]{
 
   var output:IntSetVar = null
   val KeysToInputArray:Array[KeyForElementRemoval] = new Array(inputarray.size)
 
-  //TODO: this could be exchanged for an array.
-  var ValueCount:SortedMap[Int,Int] = index.foldLeft(SortedMap.empty[Int,Int])((acc,i)
-  => acc+((inputarray(i).getValue(),acc.getOrElse(inputarray(i),0)+1)))
+  //this array is the number of elements with value i-myMin
+  var ValueCount:Array[Int] = null
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
 
-  if(inputarray != null){
-    registerStaticDependencyAll(inputarray)
-    BulkLoad(inputarray,performBulkComputation(inputarray))
-  }
+  val (myMin,myMax) = bulkRegister(inputarray)
+  for(v <- index.value) KeysToInputArray(v) = registerDynamicDependency(inputarray(v),v)
 
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntVar]):(Int,Int) = {
-    val MyMax = bulkedVar.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.MaxVal) intvar.MaxVal else acc)
-    val MyMin = bulkedVar.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.MinVal) intvar.MinVal else acc)
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- bulkedVar){
+      if (MyMax < v.MaxVal) MyMax = v.MaxVal
+      if (MyMin > v.MinVal) MyMin = v.MinVal
+    }
     (MyMin,MyMax)
-  }
-
-  override def BulkLoad(bulkedVar: Array[IntVar],bcr:(Int,Int)){
-    inputarray = bulkedVar
-    for(v <- index.getValue()) KeysToInputArray.update(v,registerDynamicDependency(inputarray(v),v))
-    MyMin = bcr._1
-    MyMax = bcr._2
   }
 
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := index.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => acc+inputarray(indice))
+
+    ValueCount = Array.tabulate(myMax - myMin + 1)( _=>0)
+    
+    output := SortedSet.empty
+    for (arrayPosition <- index.value){
+      val value = inputarray(arrayPosition).value
+      if (ValueCount(value -myMin) == 0){
+        ValueCount(value - myMin) = 1
+        output :+= value
+      }else{
+        ValueCount(value - myMin) +=1
+      }
+    }
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,indice:Int,OldVal:Int,NewVal:Int){
     assert(inputarray(indice) == v)
-    if(KeysToInputArray(indice) != null){
-      //il etait dans le truc, il faut changer la valeur
-      val NewCount = ValueCount(OldVal)-1
-      ValueCount+=((OldVal,NewCount))
-      if(NewCount == 0) output.deleteValue(OldVal)
+    assert(KeysToInputArray(indice) != null)
+    assert(KeysToInputArray(indice) == v)
 
-      val OtherNewCount = ValueCount.getOrElse(NewVal,0)+1
-      ValueCount+=((NewVal,OtherNewCount))
-      if(OtherNewCount == 1) output.insertValue(NewVal)
+    if (ValueCount(OldVal - myMin) == 1){
+      ValueCount(OldVal - myMin) = 0
+      output :-= OldVal
+    }else{
+      ValueCount(OldVal - myMin) -= 1
+    }
+
+    if (ValueCount(NewVal - myMin) == 0){
+      ValueCount(NewVal - myMin) = 1
+      output :+= NewVal
+    }else{
+      ValueCount(NewVal - myMin) += 1
     }
   }
 
   @inline
   override def notifyInsertOn(v:IntSetVar,value:Int){
     assert(index == v)
-    KeysToInputArray.update(value,registerDynamicDependency(inputarray(value)))
-    val NewVal:Int = inputarray(value)
-    val NewCount:Int = ValueCount.getOrElse(NewVal,0)+1
-    ValueCount += ((NewVal,NewCount))
-    if(NewCount==1){output.insertValue(inputarray(value))}
+    KeysToInputArray(value) = registerDynamicDependency(inputarray(value))
+    val NewVal:Int = inputarray(value).value
+
+    if (ValueCount(NewVal - myMin) == 0){
+      ValueCount(NewVal - myMin) = 1
+      output :+= NewVal
+    }else{
+      ValueCount(NewVal - myMin) += 1
+    }
   }
 
   @inline
   override def notifyDeleteOn(v:IntSetVar,value:Int){
     assert(index == v)
     assert(KeysToInputArray(value) != null)
+
     unregisterDynamicDependency(KeysToInputArray(value))
-    KeysToInputArray.update(value,null)
-    val OldVal:Int = inputarray(value)
-    val NewCount:Int = ValueCount.getOrElse(OldVal,0)-1 //le orelse c'est pour compiler.
-    ValueCount+=((OldVal,NewCount))
-    if(NewCount==0) output.deleteValue(inputarray(value))
+    KeysToInputArray(value) = null
+
+    val OldVal:Int = inputarray(value).value
+    if (ValueCount(OldVal - myMin) == 1){
+      ValueCount(OldVal - myMin) = 0
+      output :-= OldVal
+    }else{
+      ValueCount(OldVal - myMin) -= 1
+    }
   }
 
   override def checkInternals(){
-    assert(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.getValue().contains(i))))
-    assert(index.getValue().forall((i:Int) =>
-      output.getValue().contains(inputarray(i).getValue())), "" + index + inputarray.toList + output)
-    assert(output.getValue().size == index.getValue().size)
+    assert(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
+    assert(index.value.forall((i:Int) =>
+      output.value.contains(inputarray(i).value)), "" + index + inputarray.toList + output)
+    assert(output.value.size == index.value.size)
   }
 }
 
@@ -240,10 +249,7 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
  * @param index is the index of the array access
  **/
 case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
-  extends IntSetInvariant with Bulked[IntSetVar,((Int,Int))]{
-
-  var MyMax = 0
-  var MyMin = 0
+  extends IntSetInvariant with Bulked[IntSetVar, ((Int,Int))]{
 
   var output:IntSetVar = null
   var KeyToCurrentVar:KeyForElementRemoval = null
@@ -251,37 +257,32 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
   registerStaticDependency(index)
   registerDeterminingDependency(index)
 
-  if(inputarray != null){
-    registerStaticDependencyAll(inputarray)
-    BulkLoad(inputarray,performBulkComputation(inputarray))
-  }
+  val (myMin,myMax) = bulkRegister(inputarray)
+
+  KeyToCurrentVar = registerDynamicDependency(inputarray(index.value))
 
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntSetVar]):(Int,Int) = {
-    val MyMax = bulkedVar.foldLeft(Int.MinValue)((acc,intsetvar) => if (acc < intsetvar.getMaxVal) intsetvar.getMaxVal else acc)
-    val MyMin = bulkedVar.foldLeft(Int.MaxValue)((acc,intsetvar) => if (acc > intsetvar.getMinVal) intsetvar.getMinVal else acc)
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- bulkedVar){
+      if (MyMax < v.getMaxVal) MyMax = v.getMaxVal
+      if (MyMin > v.getMinVal) MyMin = v.getMinVal
+    }
     (MyMin,MyMax)
   }
-
-  override def BulkLoad(bulkedVar: Array[IntSetVar],bcr:(Int,Int)){
-    inputarray = bulkedVar
-    KeyToCurrentVar = registerDynamicDependency(inputarray(index))
-    MyMin = bcr._1
-    MyMax = bcr._2
-  }
-
 
   override def setOutputVar(v:IntSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := inputarray.apply(index)
+    output := inputarray.apply(index.value).value
   }
 
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     assert(v == index)
-    output := inputarray(NewVal)
+    output := inputarray(NewVal).value
     //modifier le graphe de dependances
     unregisterDynamicDependency(KeyToCurrentVar)
     KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
@@ -289,17 +290,17 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
 
   @inline
   override def notifyDeleteOn(v: IntSetVar, value: Int){
-    assert(v == inputarray.apply(index))
+    assert(v == inputarray.apply(index.value))
     output.deleteValue(value)
   }
 
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int){
-    assert(v == inputarray.apply(index))
+    assert(v == inputarray.apply(index.value))
     output.insertValue(value)
   }
 
   override def checkInternals(){
-    assert(output.getValue().intersect(inputarray(index.getValue()).getValue()).size == output.getValue().size)
+    assert(output.value.intersect(inputarray(index.value).value).size == output.value.size)
   }
 }

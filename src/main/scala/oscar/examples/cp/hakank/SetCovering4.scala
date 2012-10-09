@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -87,13 +87,11 @@ object SetCovering4 {
       for(j <- 0 until num_objects) {       
         val b = sum(for{i <- 0 until num_alternatives} yield x(i) * a(i)(j))
 
-        if (set_partition == 1) {
-          cp.add(b >= 1)
-        } else {
-          cp.add(b == 1)
+        set_partition match {
+          case 1 => cp.add(b >= 1)
+          case _ => cp.add(b == 1)
         }
       }
-
 
     } exploration {
        

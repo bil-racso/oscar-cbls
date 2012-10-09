@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -191,10 +191,10 @@ object Rogo2 {
       for(s <- STEPS) {
 
         // calculate the points (to maximize)
-        cp.add(points(s) == element(problem_flatten, path(s)))
+        cp.add(points(s) == problem_flatten(path(s)))
         
         // ensure that there are no black cells in the path
-        cp.add(element(problem_flatten, path(s)) != B)
+        cp.add(problem_flatten(path(s)) != B)
       }
       
       cp.add(alldifferent(path), Strong)

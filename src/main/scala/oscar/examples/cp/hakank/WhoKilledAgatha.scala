@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -66,6 +66,8 @@ object WhoKilledAgatha {
     val butler  = 1
     val charles = 2
 
+    val agathacp  = CPVarInt(cp, agatha)
+
     val names = Array("Agatha", "Butler", "Charles")
 
     // variables
@@ -90,8 +92,9 @@ object WhoKilledAgatha {
       val hates_t = hates.transpose
       val richer_t = richer.transpose
       
-      cp.add(element(hates_t(agatha),the_killer, true))
-      cp.add(element(richer_t(agatha), the_killer, false))
+      cp.add(hates_t(agatha)(the_killer) == 1)
+      cp.add(richer_t(agatha)(the_killer) == 0)
+
 
       //  define the concept of richer: no one is richer than him-/herself
       NRANGE.foreach(i=>cp.add(!richer(i)(i)))

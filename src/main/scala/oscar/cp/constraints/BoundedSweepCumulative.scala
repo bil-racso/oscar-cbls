@@ -14,7 +14,7 @@ class BoundedSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb
 	
 	override def generateCheck(i : Int) {
 		
-		if (tasks(i).maxResource < lb) {
+		if (tasks(i).maxHeight < lb) {
 					
 			eventPointSeries(nEvents) = eventList(i).sCheck
 			nEvents += 1
@@ -25,8 +25,8 @@ class BoundedSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb
 	
 	override def generateProfileBad(i : Int) : Boolean = {
 		
-		val capaInc = max(0, tasks(i).minResource)
-		val consInc = min(0, tasks(i).maxResource)
+		val capaInc = max(0, tasks(i).minHeight)
+		val consInc = min(0, tasks(i).maxHeight)
 		
 		if (capaInc != 0 || consInc != 0) {
 			
@@ -43,8 +43,8 @@ class BoundedSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb
 	
 	override def generateProfileGood(i : Int) : Boolean = {
 		
-		val capaInc = min(0, tasks(i).minResource)
-		val consInc = max(0, tasks(i).maxResource)
+		val capaInc = min(0, tasks(i).minHeight)
+		val consInc = max(0, tasks(i).maxHeight)
 		
 		if (capaInc != 0 || consInc != 0) {
 			
@@ -64,6 +64,6 @@ class BoundedSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], lb
 
 	override def mandatoryCheck(t: Int) : Boolean = (nCurrentTasks != 0 && (consSumHeight - consContrib(t)) < lb) || (capaSumHeight - capaContrib(t) > ub)		
 	
-	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxResource < lb) || 
-			   										(capaSumHeight - capaContrib(t) + tasks(t).minResource > ub)
+	override def forbidenCheck(t : Int) : Boolean = (consSumHeight - consContrib(t) + tasks(t).maxHeight < lb) || 
+			   										(capaSumHeight - capaContrib(t) + tasks(t).minHeight > ub)
 }

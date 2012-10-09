@@ -28,7 +28,7 @@ import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.{Cluster, IntElement}
 import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
-import oscar.cbls.algebra.Implicits._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation._
 ;
 
@@ -59,7 +59,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   val Violation = new IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
 
   for(i <- variables.indices){
-    if(predicate(variables(i))){
+    if(predicate(variables(i).value)){
       for(j <- i until min(variables.length-1,i+length)){
         count(j) :+= 1
         if(count(j).getValue(true) > Max){
@@ -84,7 +84,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
         }
       }
     }else{
-      if(predicate(variables(i))){
+      if(predicate(variables(i).value)){
         //increase the count
         for(j <- i until min(variables.length-1,i+length)){
           count(j) :+= 1

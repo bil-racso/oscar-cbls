@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -59,8 +59,6 @@ import scala.math._
   A pure brute force solution would have to try over 30 billion solutions.
   I wrote code to solve this in J. I'll post that separately.
   """
-
-
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
@@ -166,7 +164,7 @@ object EinavPuzzle {
       
       for(i <- ROWS) {
         for(j <- COLS) {
-          print("%3d".format(x(i)(j).value))
+          print("%4d".format(x(i)(j).value))
         }
         println()
       }

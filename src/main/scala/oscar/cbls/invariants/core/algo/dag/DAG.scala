@@ -53,16 +53,16 @@ class CycleException(n: DAGNode) extends Exception
  *
  * the topological sort is lower before
  *
- * The incremental topological sort in setAutoSort(mAutoSort: Boolean){
+ * The incremental topological sort in _autoSort(mAutoSort: Boolean){
  */
 trait DAG {
   private var AutoSort: Boolean = false;
-  def getNodes:Iterable[DAGNode]
+  def nodes:Iterable[DAGNode]
 
 
   /**performs a self-check on the ordering, use for testing*/
   def checkSort(){
-    for (to <- getNodes){
+    for (to <- nodes){
       for(from <- to.getDAGPrecedingNodes){
         assert(from.Position < to.Position,"topological sort is wrong at " + from + "->" + to)
       }
@@ -73,7 +73,7 @@ trait DAG {
    * This is expected to be consistent between several nodes.
    */
   def checkGraph(){
-     getNodes.foreach(n => {
+     nodes.foreach(n => {
       n.getDAGPrecedingNodes.foreach(p=> {
         if(!p.getDAGSucceedingNodes.exists(p => p == n)){
             throw new Exception("graph is incoherent at nodes [" + p + "] -> [" + n +"]")
@@ -92,7 +92,7 @@ trait DAG {
    * Incremental sort is then applied at each edge insert. node insert and delete is prohibited when autosort is activated
    * in case a cycle is detected, does not pass in autosort model, but throws an exception  
    */
-  def setAutoSort(mAutoSort: Boolean){
+  def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
       //on passe en eautosort
       doDAGSort();
@@ -106,7 +106,7 @@ trait DAG {
   }
 
   /**@return the autosort status*/
-  def getAutoSort:Boolean = AutoSort
+  def autoSort:Boolean = AutoSort
 
   /**to notify that an edge has been added between two nodes.
    * this will trigger a re-ordering of the nodes in the topological sort if it is activated.
@@ -148,7 +148,7 @@ trait DAG {
         ExploredStack = (n :: ExploredStack).reverse
         n.visited=true
         while(!ExploredStack.head.visited){ExploredStack = ExploredStack.tail}
-        getNodes.foreach(p => {p.visited = false; p.visited2 = false})
+        nodes.foreach(p => {p.visited = false; p.visited2 = false})
         true
       }else{ //not yet
         n.visited2 = true
@@ -164,11 +164,11 @@ trait DAG {
     if(Start != null){
       if(DFS(Start)){ return ExploredStack }
     }
-    getNodes.foreach(n => {
+    nodes.foreach(n => {
       if (!n.visited)
         if (DFS(n)){return ExploredStack}
     })
-    getNodes.foreach(p => {p.visited = false; p.visited2 = false})
+    nodes.foreach(p => {p.visited = false; p.visited2 = false})
     null
   }
 
@@ -178,8 +178,8 @@ trait DAG {
    */
   def doDAGSort() {
     //on utilise les positions pour stocker le nombre de noeuds predecesseurs non visites, puis on met l'autre valeur apres.
-    getNodes.foreach(n => n.Position = n.getDAGPrecedingNodes.size)
-    var Front: List[DAGNode] = getNodes.toList.filter(n => (n.Position == 0))
+    nodes.foreach(n => n.Position = n.getDAGPrecedingNodes.size)
+    var Front: List[DAGNode] = nodes.toList.filter(n => (n.Position == 0))
     var Position = 0 //la position du prochain noeud place.
     while (!Front.isEmpty) {
       val n = Front.head
@@ -191,7 +191,7 @@ trait DAG {
         if (p.Position == 0) Front = (p::Front) //une stack, en fait, mais c'est insensitif, puis c'est plus rapide. 
       })
     }
-    if (Position != getNodes.size) {
+    if (Position != nodes.size) {
       throw new CycleException(null)
     }
   }
@@ -200,10 +200,10 @@ trait DAG {
     def dfsF(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
       var newlist = n :: acc
-      //est-ce bien correct de faire une DFS?
+      //TODO: a heap could be used here to get a sorted region at once.
       n.getDAGSucceedingNodes.foreach(p => {
         if (p.Position == ub) {
-          getNodes.foreach(q => q.visited = false)
+          nodes.foreach(q => q.visited = false)
           throw new CycleException(p)
         }
         if (!p.visited && p.Position < ub) {
@@ -219,6 +219,7 @@ trait DAG {
     def dfsB(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
       var newlist = n :: acc
+      //TODO: a heap could be used here to get a sorted region at once.
       n.getDAGPrecedingNodes.foreach(p => {
         if (!p.visited && p.Position > lb) {
           newlist = dfsB(p, newlist)

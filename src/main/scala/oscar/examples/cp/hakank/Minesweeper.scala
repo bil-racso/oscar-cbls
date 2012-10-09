@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 import scala.io.Source._
@@ -92,13 +92,10 @@ object Minesweeper {
       c = lines(1).toInt
       println("r:" + r)
       println("c:" + c)
-      var this_game = List[List[Int]]()
-      for (t <- 2 to r+1) {
-        println(lines(t))
-        val t2:List[Int] = lines(t).split("").tail.toList.map(i=>if (i == ".") X else i.toInt)
-        this_game = this_game ::: List(t2)
-      }
-      game = this_game
+
+      game = (2 to r+1).map(t=>lines(t).split("").tail.toList.
+                            map(i=>if (i == ".") X else i.toInt)).toList
+
     }
 
 
@@ -114,8 +111,8 @@ object Minesweeper {
 
       val tmp = List(-1,0,1)
 
-      for(i <- 0 until r) {
-        for(j <- 0 until c if game(i)(j) >= 0) {
+      for(i <- 0 until r;
+          j <- 0 until c if game(i)(j) >= 0) {
 
           cp.add(sum( for{ a <- tmp; b <- tmp 
                       if ( (i+a >= 0) && (j+b  >= 0) &&
@@ -126,7 +123,6 @@ object Minesweeper {
           if (game(i)(j) > X) {
             cp.add(mines(i)(j) == 0)
           }
-        }
       }
 
 

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -56,12 +56,7 @@ object CostasArray {
     //
     // data
     //
-    var n = 6
-
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
-
+    val n = if (args.length > 0) args(0).toInt else 6;
 
     //
     // variables
@@ -138,11 +133,7 @@ object CostasArray {
       for(i <- 0 until n) {
         for(j <- 0 until n) {
           val v = differences(i)(j).value
-          if (v == -n+1) {
-            print("   ");
-          } else {
-            print("%3d".format(v))
-          }
+          print(if (v == -n+1) "   " else "%3d".format(v))
         }
         println()
       }

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -90,11 +90,11 @@ object NontransitiveDice {
     val gap = Array.fill(m)(CPVarInt(cp, 0 to n*n))
     val gap_sum = sum(gap)
 
-    val max_val = CPVarInt(cp, 0 to n*2) // max of dice_flat
-    val max_win = CPVarInt(cp, 0 to n*n)   // max of comp_flat
+    val max_val = maximum(dice_flat) // CPVarInt(cp, 0 to n*2) // max of dice_flat
+    val max_win = maximum(comp_flat) // CPVarInt(cp, 0 to n*n)   // max of comp_flat
 
     // number of occurrences of each value of the dice
-    val counts  = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
+    // val counts  = Array.tabulate(n*2+1)(i => (CPVarInt(cp, 0 to n*m), i))
 
     // for labeling
     val all = dice_flat ++ Array(max_val, max_win)
@@ -106,18 +106,13 @@ object NontransitiveDice {
 
     cp.solveAll subjectTo {
 
-      cp.add(maximum(dice_flat) == max_val)
-      cp.add(maximum(comp_flat) == max_win)
-
-
       // Number of occurrences for each number
-      cp.add(gcc(dice_flat, counts))
+      // cp.add(gcc(dice_flat, counts))
 
       // Order of the number of each die, lowest first
-      for(i <- MRANGE) {
-        for(j <- 0 until n-1) {
+      for(i <- MRANGE;
+          j <- 0 until n-1) {
           cp.add(dice(i)(j) <= dice(i)(j+1))
-        }
       }
 
       // Nontransitivity

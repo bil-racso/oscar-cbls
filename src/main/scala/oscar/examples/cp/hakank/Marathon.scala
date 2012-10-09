@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 /**
@@ -69,6 +69,16 @@ object Marathon {
       }
    }
 
+   // Same as inverse() but returns the y Array
+   def inverse2(cp: CPSolver, x: Array[CPVarInt]) : Array[CPVarInt] = {
+      val len = x.length
+      val y = Array.fill(len)(CPVarInt(cp, 0 to len-1))
+      for(i <- 0 until len;
+          j <- 0 until len) {
+        cp.add( (y(j) === i) == (x(i) === j) )
+      }
+      y
+   }
 
 
    def main(args: Array[String]) {
@@ -88,8 +98,8 @@ object Marathon {
 
       // Note: in order to use inverse(), the runners and places are in the domain 0..n-1
       val runners = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-      val places = Array.fill(n)(CPVarInt(cp, 0 to n-1))
       val Array(dominique, ignace, naren, olivier, philippe, pascal) = runners
+      val places = inverse2(cp, runners)
 
       var numSols = 0
       cp.solveAll() subjectTo {
@@ -100,12 +110,10 @@ object Marathon {
         cp.add(olivier != n)
         
         // b: Dominique, Pascal and Ignace before Naren and Olivier
-        cp.add(dominique  < naren)
-        cp.add(dominique  < olivier)
-        cp.add(pascal     < naren)
-        cp.add(pascal     < olivier)
-        cp.add(ignace     < naren)
-        cp.add(ignace     < olivier)
+        for(a <- Array(dominique, pascal, ignace);
+            b <- Array(naren, olivier)) {
+           cp.add(a < b)
+        }
 
         // c: Dominique better than third
         cp.add(dominique  < 2)
@@ -123,8 +131,6 @@ object Marathon {
         // g: Neither Ignace nor Dominique on fourth position
         cp.add(ignace     != 3)
         cp.add(dominique  != 3)
-
-        inverse(cp, runners, places)
 
       } exploration {
 

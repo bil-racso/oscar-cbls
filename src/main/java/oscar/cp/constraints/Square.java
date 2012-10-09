@@ -73,14 +73,14 @@ public class Square extends Constraint {
 			int Mx2 = Mx*Mx;
 
 			//propagate y (which is not bound)
-			if (mx >=0) {
+			if (mx >= 0) { // x will be positive
 				if (y.updateMin(mx2) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 				if (y.updateMax(Mx2) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
-			} else if (Mx <= 0) {
+			} else if (Mx <= 0) { // x is non positive
 				if (y.updateMin(Mx2) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
@@ -110,7 +110,7 @@ public class Square extends Constraint {
 			int my2 = my*my;
 			int My2 = My*My;
 
-			int rootm = (int) Math.sqrt(my);
+			int rootm = (int) (Mx <= 0 ? Math.ceil(Math.sqrt(my)) : Math.sqrt(my));
 			int rootM = (int) Math.sqrt(My);
 
 			if (mx >= 0) {
@@ -121,10 +121,10 @@ public class Square extends Constraint {
 					return CPOutcome.Failure;
 				}
 			} else if (Mx <= 0) {
-				if (x.updateMax(rootm) == CPOutcome.Failure) {
+				if (x.updateMax(-rootm) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
-				if (x.updateMin(rootM) == CPOutcome.Failure) {
+				if (x.updateMin(-rootM) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			} else {

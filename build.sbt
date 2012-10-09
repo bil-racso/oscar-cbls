@@ -44,10 +44,15 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->defau
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
+//libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
 
 libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
 
+excludedJars in assembly <<= (fullClasspath in assembly) map { cp => 
+  cp filter {x => 
+             val v = x.data.getName 
+             v == "cplex.jar" || v == "gurobi.jar" || v == "junit-4.10.jar" || v == "scalacheck_2.9.0-1-1.9.jar" || v == "scalatest-1.6.1.jar" }  
+}
 //testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
 
 

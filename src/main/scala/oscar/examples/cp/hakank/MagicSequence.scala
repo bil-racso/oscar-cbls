@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -48,12 +48,7 @@ object MagicSequence {
     //
     // data
     //
-    var n = 10
-
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
-
+    val n = if (args.length > 0) args(0).toInt else 10;
     val all_values = Array.tabulate(n)(i=> (CPVarInt(cp, 0 to n-1),i))
 
     //
@@ -67,7 +62,7 @@ object MagicSequence {
     var numSols = 0
     cp.solveAll subjectTo {
 
-      cp.add(weightedSum(Array.tabulate(n)(i=>i), x) == n)
+      cp.add(weightedSum(0 to n, x) == n)
 
       cp.add(sum(x) == n)
 
@@ -78,7 +73,7 @@ object MagicSequence {
 
     } exploration {
        
-      cp.binaryMaxDegree(x)
+      cp.binary(x, -_.constraintDegree, _.min)
 
       println("\nSolution:")
       println("x: " + x.mkString(" "))

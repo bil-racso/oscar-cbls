@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -49,6 +49,7 @@ import scala.math._
   Who owns a zebra and who drinks water?
   """
    
+  Note: A different (and simpler) approach is shown in Zebra2.scala.
 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/

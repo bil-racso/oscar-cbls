@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 /**
@@ -58,14 +58,15 @@ object LeastDiff {
       // constraints
       cp.minimize(Diff) subjectTo {
 
+	cp.add(alldifferent(all), Strong)
         cp.add(A > 0)
         cp.add(F > 0)
         cp.add(Diff > 0)
-	cp.add(alldifferent(all), Strong)
 
       } exploration {
 
-        cp.binaryFirstFail(all ++ Array(X,Y,Diff))
+        // cp.binaryFirstFail(all ++ Array(X,Y,Diff))
+        cp.binary(all ++ Array(X,Y,Diff), -_.constraintDegree, _.min)
 
         println(Array(A,B,C,D,E).mkString("") + " -" +
                 Array(F,G,H,I,J).mkString("") + " =" +

@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
@@ -75,10 +75,7 @@ object SecretSanta {
     // data
     //
 
-    var num_to_show = 1
-    if (args.length > 0) {
-      num_to_show = args(0).toInt
-    }
+    val num_to_show = if (args.length > 0) args(0).toInt else 1;
 
     val family = Array(1,1,1,1, 2, 3,3,3,3,3, 4,4)
     val n = family.length
@@ -105,10 +102,8 @@ object SecretSanta {
 
       // No Secret Santa to a person in the same family
       for(i <- 0 until n) {
-        cp.add(element(family, x(i)) != family(i));
+        cp.add(family(x(i)) != family(i))
       }
-
-
       
     } exploration {
        

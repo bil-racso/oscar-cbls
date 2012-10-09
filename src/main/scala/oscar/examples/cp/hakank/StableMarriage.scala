@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 
 
@@ -30,6 +30,12 @@ import oscar.cp.core._
 
   Also, see 
   http://www.comp.rgu.ac.uk/staff/ha/ZCSP/additional_problems/stable_marriage/stable_marriage.pdf
+
+  Note: There is a better (and nicer) implementation of the constraints in
+        Pierre Schaus' improved version:
+          oscar/examples/cp/StableMariage.scala
+        which I copied to my own variant (randomizing the preferences)
+          StableMarriageRandom.scala
 
 
   @author Hakan Kjellerstrand hakank@gmail.com
@@ -166,8 +172,8 @@ object StableMarriage {
 
       
     // variables
-    val wife    = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
-    val husband = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
+    val wife    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val husband = Array.fill(n)(CPVarInt(cp, 0 to n-1))
 
     //
     // constraints
@@ -182,41 +188,40 @@ object StableMarriage {
       //   forall(m in Men)
       //      cp.post(husband[wife[m]] == m);
       for(m <- 0 until n) {
-        cp.add(element(husband, wife(m)) == m);
+        cp.add(husband(wife(m)) == m);
       }
       
       //   forall(w in Women)
       //     cp.post(wife[husband[w]] == w);
       for(w <- 0 until n) {
-        cp.add(element(wife, husband(w)) == w);
+        cp.add(wife(husband(w)) == w);
       }
       
       
-      //   forall(m in Men, o in Women)
-      //       cp.post(rankMen[m,o] < rankMen[m, wife[m]] =>
-      //               rankWomen[o,husband[o]] < rankWomen[o,m]);
+      // forall(m in Men, o in Women)
+      //    cp.post(rankMen[m,o] < rankMen[m, wife[m]] =>
+      //            rankWomen[o,husband[o]] < rankWomen[o,m]);
       for(m <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
-                 (element(rankMen(m),wife(m)) >>= rankMen(m)(o))
+                 (rankMen(m)(wife(m)) >>= rankMen(m)(o))
                  ==> 
-                 (element(rankWomen(o), husband(o)) <<= rankWomen(o)(m))
+                 (rankWomen(o)(husband(o)) <<= rankWomen(o)(m))
                  )
         }
         
       }
       
-      //   forall(w in Women, o in Men)
-      //      cp.post(rankWomen[w,o] < rankWomen[w,husband[w]] =>
-      //              rankMen[o,wife[o]] < rankMen[o,w]);
+      // forall(w in Women, o in Men)
+      //   cp.post(rankWomen[w,o] < rankWomen[w,husband[w]] =>
+      //           rankMen[o,wife[o]] < rankMen[o,w]);
       for(w <- 0 until n) {
         for(o <- 0 until n) {
           cp.add(
-                 (element(rankWomen(w),husband(w)) >>= rankWomen(w)(o))
+                 (rankWomen(w)(husband(w)) >>= rankWomen(w)(o))
                  ==>
-                 (element(rankMen(o), wife(o)) <<= rankMen(o)(w))
+                 (rankMen(o)(wife(o)) <<= rankMen(o)(w))
                  )
-
         }
       }
 

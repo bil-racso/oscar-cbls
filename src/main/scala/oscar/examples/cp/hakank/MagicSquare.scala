@@ -17,7 +17,7 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
-import oscar.cp.search._
+
 import oscar.cp.core._
 import scala.math._
 
@@ -37,18 +37,18 @@ object MagicSquare {
 
     val cp = CPSolver()
 
-    var n = 4
-    if (args.length > 0) {
-      n = args(0).toInt
-    }
+    val n = if (args.length > 0) args(0).toInt else 4;
+    val num_to_show = if (args.length > 1) args(1).toInt else 0;
+
     val n2 = n*n
 
-    println("n:" + n)
+    println("n:" + n + " num_to_show: " + num_to_show)
 
     //
     // variables
     //
     val x = Array.fill(n,n)(CPVarInt(cp, 1 to n2))
+    val x_t = x.transpose
 
     // val total = CPVarInt(cp, 1 to n*n*n)
     val total = (n * (n*n + 1) / 2)
@@ -60,17 +60,17 @@ object MagicSquare {
 
     cp.solveAll subjectTo {
 
-       cp.add(alldifferent(x.flatten))
+       cp.add(alldifferent(x.flatten), Strong)
 
        // rows and columns
        for(i <- 0 until n) {
-         cp.add(sum( Array.tabulate(n)(j=> x(i)(j)) ) == total)
-         cp.add(sum( Array.tabulate(n)(j=> x(j)(i)) ) == total)
+         cp.add(sum(x(i)) == total)
+         cp.add(sum(x_t(i)) == total)
        }
   
        // diagonals
-       cp.add(sum( Array.tabulate(n)(i=> x(i)(i)) ) == total)
-       cp.add(sum( Array.tabulate(n)(i=> x(i)(n-i-1)) ) == total)
+       cp.add(sum( for(i <- 0 until n) yield x(i)(i)) == total)
+       cp.add(sum( for(i <- 0 until n) yield x(i)(n-i-1) ) == total)
 
        // symmetry breaking
        cp.add(x(0)(0)   < x(0)(n-1))
@@ -80,19 +80,20 @@ object MagicSquare {
 
      } exploration {
        
-      cp.binaryFirstFail(x.flatten)
+       cp.binary(x.flatten, _.size, _.min)
 
        println("\nSolution:\ntotal " + total)
        for(i <- 0 until n) {
-         for(j <- 0 until n) {
-           print(x(i)(j))
-         }
-         println()
+         println(x(i).map(j=>"%3d".format(j.value)).mkString(""))
        }
        println()
 
 
        numSols += 1
+
+       if (num_to_show > 0 && numSols >= num_to_show) {
+         cp.stop()
+       }
        
      }
      println("\nIt was " + numSols + " solutions.")

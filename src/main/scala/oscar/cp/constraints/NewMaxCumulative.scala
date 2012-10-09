@@ -1,10 +1,8 @@
 package oscar.cp.constraints
 
-import oscar.algo.EfficientHeap
-
-import scala.collection.mutable.Set
 import scala.collection.mutable.Queue
 
+import oscar.algo.EfficientHeap
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.MirrorCumulativeActivity
 import oscar.cp.modeling.CPSolver
@@ -16,22 +14,22 @@ import oscar.cp.core.CPPropagStrength
 class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit : Int, r : Int)  extends Constraint(cp, "NewMaxCumulative") {
 	
 	// The tasks (one array by direction of the sweep)
-	val lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.machine.hasValue(r))
+	val lToRTasks : Array[CumulativeActivity] = allTasks.filter(_.resource.hasValue(r))
 	val rToLTasks : Array[CumulativeActivity] = lToRTasks.map(new MirrorCumulativeActivity(_))
 	
 	val nTasks = lToRTasks.size
 	val Tasks  = 0 until nTasks
 
 	// The events to process (min heap on date)
-	val hEvents = new EfficientEventHeap(nTasks*4)
+	val hEvents = new EfficientEventHeap(4*nTasks)
 	
 	// The tasks to check (max heap on resource)
-	val hCheck = new EfficientHeap[Tuple2[Int, Int]](nTasks, (a, b) => a._1 > b._1)
+	val hCheck = new EfficientHeap[(Int, Int)](nTasks, (a, b) => a._1 > b._1)
 	// This array is used to know if a task is in hCheck
 	val hCheckContent = new Array[Boolean](nTasks)
 	
 	// The tasks in conflict with the sweep line (min heap on resource)
-	val hConflict = new EfficientHeap[Tuple2[Int, Int]](nTasks, (a, b) => a._1 < b._1)
+	val hConflict = new EfficientHeap[(Int, Int)](nTasks, (a, b) => a._1 < b._1)
 	// This array is used to know if a task is in hConflict
 	val hConflictContent = new Array[Boolean](nTasks)
 
@@ -39,10 +37,11 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	val mins = new Array[Int](nTasks)
 	
 	// Sweep line parameters
-	val newActiveTasks : Queue[Int] = Queue()
-	var delta    = 0
-	var deltaBis = 0	
-	var gap	     = 0
+	val newActiveTasks = new Array[Int](nTasks)
+	var nActiveTasks = 0
+	var delta        = 0
+	var deltaBis     = 0	
+	var gap	         = 0
 	
 	// Events are preprocessed to speed-up the propagation
 	val eventList = Array.tabulate(nTasks){e => new EventList(e)}
@@ -62,8 +61,8 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
         		if (!lToRTasks(i).start.isBound) lToRTasks(i).start.callPropagateWhenBoundsChange(this)
 	        	if (!lToRTasks(i).dur.isBound) lToRTasks(i).dur.callPropagateWhenBoundsChange(this)
 	        	if (!lToRTasks(i).end.isBound) lToRTasks(i).end.callPropagateWhenBoundsChange(this)
-	        	if (!lToRTasks(i).resource.isBound) lToRTasks(i).resource.callPropagateWhenBoundsChange(this)
-	        	if (!lToRTasks(i).machine.isBound) lToRTasks(i).machine.callPropagateWhenDomainChanges(this)
+	        	if (!lToRTasks(i).height.isBound) lToRTasks(i).height.callPropagateWhenBoundsChange(this)
+	        	if (!lToRTasks(i).resource.isBound) lToRTasks(i).resource.callPropagateWhenDomainChanges(this)
         	}
         }
         
@@ -92,7 +91,8 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 		hConflict.clear
 		for (i <- Tasks) hConflictContent(i) = false
 			
-		newActiveTasks.clear
+		//newActiveTasks.clear
+		nActiveTasks = 0
 		
 		delta = hEvents.head.date
 		deltaBis = hEvents.head.date
@@ -101,18 +101,20 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	
 	def generateEvents(tasks : Array[CumulativeActivity]) {
 		
-		for (i <- Tasks; if (tasks(i).machine.isBoundTo(r))) {
+		for (i <- Tasks; if (tasks(i).resource.isBoundTo(r))) {
 			
 			if (tasks(i).lst < tasks(i).ect) {
 				
 				// Those events represent the compulsory part
 				hEvents enqueue eventList(i).getSCP(tasks)
-				hEvents enqueue eventList(i).getECPD(tasks)}
+				hEvents enqueue eventList(i).getECPD(tasks)
+			}
 
 			if (tasks(i).lst >= tasks(i).ect) {
 				
 				// Reevaluation of the compulsory part
-				hEvents enqueue eventList(i).getCCP(tasks)}
+				hEvents enqueue eventList(i).getCCP(tasks)
+			}
 			
 			if (tasks(i).est != tasks(i).lst) {
 				
@@ -132,25 +134,30 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			// HANDLING THE SWEEP-LINE MOVE
 			if (delta != deltaBis) {
 				
-				while (!newActiveTasks.isEmpty) {
+				var i = 0
+				while (i < nActiveTasks) {
 				
-					val t = newActiveTasks.dequeue
+					val t = newActiveTasks(i)
 					
-					if (tasks(t).minResource > gap) {
+					if (tasks(t).minHeight > gap) {
 						
-						hConflict.enqueue((tasks(t).minResource, t))
+						hConflict.enqueue((tasks(t).minHeight, t))
 						hConflictContent(t) = true
 
 					} else if (tasks(t).minDuration > deltaBis - delta) {
 
-						hCheck.enqueue((tasks(t).minResource, t))			
+						hCheck.enqueue((tasks(t).minHeight, t))			
 						hCheckContent(t) = true
 						mins(t) = delta
 						
 					} else {
 						evup(t) = true
 					}
+					
+					i += 1
 				}
+				// All the active tasks have be processed
+				nActiveTasks = 0
 				
 				if (!filterMin(tasks, delta, deltaBis)) return CPOutcome.Failure
 					
@@ -168,7 +175,8 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 			} else if (event.isPR) {
 				
-				newActiveTasks.enqueue(event.task)
+				newActiveTasks(nActiveTasks) = event.task
+				nActiveTasks += 1
 			}
 			
 			// GETTING NEXT EVENT
@@ -247,7 +255,6 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 			}
 		}
 		
-			
 		true
 	}
 	
@@ -287,13 +294,13 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 				
 				if (hCheckContent(event.task) && mins(event.task) + tasks(event.task).minDuration > delta) {
 				
-					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).minResource))
-					hEvents.enqueue(new Event(EventType.ECPD, event.task, mins(event.task) + tasks(event.task).minDuration, tasks(event.task).minResource))
+					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).minHeight))
+					hEvents.enqueue(new Event(EventType.ECPD, event.task, mins(event.task) + tasks(event.task).minDuration, tasks(event.task).minHeight))
 						
 				} else if (hConflictContent(event.task)) {	
 					
-					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).minResource))
-					hEvents.enqueue(new Event(EventType.ECPD, event.task, tasks(event.task).lct, tasks(event.task).minResource))	
+					hEvents.enqueue(new Event(EventType.SCP, event.task, delta, -tasks(event.task).minHeight))
+					hEvents.enqueue(new Event(EventType.ECPD, event.task, tasks(event.task).lct, tasks(event.task).minHeight))	
 				}
 			
 				evup(event.task) = true
@@ -307,19 +314,25 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 
 	/** The Event
 	 */
-	object EventType extends Enumeration {
+	protected object EventType {
 		
-		type EventType = Value
+		val SCP  = 0
+		val ECPD = 1
+		val CCP  = 2
+		val PR   = 3
 		
-		val SCP  = Value("SCP")
-		val ECPD = Value("ECPD")
-		val CCP  = Value("CCP")
-		val PR   = Value("PR")
+		def eventToString(i : Int) = {
+			i match {
+				case 0 => "SCP"
+				case 1 => "ECPD"
+				case 2 => "CCP"
+				case 3 => "PR"
+				case _ => "unknown event"
+			}
+		}
 	}
 	
-	import EventType._
-	
-	class Event(e : EventType, t : Int, private var d : Int, private var inc : Int) extends Enumeration {
+	class Event(e : Int, t : Int, private var d : Int, private var inc : Int) extends Enumeration {
 
 		def isSCP  = { e == EventType.SCP }
 		def isECPD = { e == EventType.ECPD }
@@ -346,13 +359,13 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 		
 		def getSCP(tasks : Array[CumulativeActivity]) : Event = {
 			SCP.date = tasks(t).lst
-			SCP.dec  = -tasks(t).minResource
+			SCP.dec  = -tasks(t).minHeight
 			return SCP
 		}
 		
 		def getECPD(tasks : Array[CumulativeActivity]) : Event = {
 			ECPD.date = tasks(t).ect
-			ECPD.dec  = tasks(t).minResource
+			ECPD.dec  = tasks(t).minHeight
 			return ECPD
 		}
 		
