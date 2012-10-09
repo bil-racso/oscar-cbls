@@ -25,15 +25,16 @@ import scala.util.continuations._
 /**
  * @author Sebastien Mouthuy
  */
-class PQCounter(v: Double) extends Signal[Double](v){
+class PQCounter[A<%Ordered[A]](v: A) extends Signal[A](v){
 	
-  val pq = new PriorityQueue[WaitEvent[Double]]
+  val pq = new PriorityQueue[WaitEvent[A]]
   
-  def addEvent(ev: WaitEvent[Double]) {
+  def addEvent(ev: WaitEvent[A]) {
+    require(ev.time >= this())
     pq.add(ev)
   }
-  def removeEvent(ev: WaitEvent[Double]) { pq.remove(ev)}
-  override def ===(i:Double) = {
+  def removeEvent(ev: WaitEvent[A]) { pq.remove(ev)}
+  override def ===(i:A) = {
     new PQCounterCond(this,i)
   }
   def nonEmpty = pq.size() > 0
@@ -54,16 +55,16 @@ class PQCounter(v: Double) extends Signal[Double](v){
   }
 }
 
-class PQCounterCond(pqc: PQCounter, v: Double) extends Occuring[Double]{
-  def foreach(f2:Double=>Boolean) = {
-    val a = new WaitEvent[Double](v,f2)
+class PQCounterCond[A<%Ordered[A]](pqc: PQCounter[A], v: A) extends Occuring[A]{
+  def foreach(f2:A=>Boolean) = {
+    val a = new WaitEvent[A](v,f2)
     pqc addEvent(a)
     new PQEventBlock(pqc,a)
   }
 }
 
 
-class PQEventBlock[A](pqc: PQCounter, ev: WaitEvent[Double]) extends Reaction[Double]({_=>false}, pqc){
+class PQEventBlock[A<%Ordered[A]](pqc: PQCounter[A], ev: WaitEvent[A]) extends Reaction[A]({_=>false}, pqc){
   
   def dispose(){
     pqc.removeEvent(ev)
@@ -85,7 +86,7 @@ object Counter{
       println("500")
     }
     
-    whenever ( c === 5 ){w:Double =>
+    whenever ( c === 5 ){w:Int =>
       println("super")
     }
     println("here")

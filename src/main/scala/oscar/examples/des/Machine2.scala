@@ -19,23 +19,29 @@ package oscar.examples.des
 
 
 
+import oscar.des.engine
+import oscar.stochastic._
 import oscar.des.engine._
+import oscar.invariants._
 import scala.util.continuations._
+import akka.util.Duration
+	import akka.util.duration._
+
 
 /**
  * Two machines can be broken, there is only one repair person that can fix it at a time,
  * so one of the machines must wait if the two machines are broken at the same time
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Process(m,name) {
+class Machine2(m : Model, name: String, repairPerson: Resource) extends Process(name)(m) {
 	
-	val liveDur = new scala.util.Random(0)
-	val repairDur = new scala.util.Random(0)
+	val liveDur = new UniformDiscrete(1 minutes, 10 minutes)
+	val repairDur = new UniformDiscrete(1 minutes, 3 minutes)
 	
 	
 	def alive(): Unit @suspendable = {
 		println(name+" is alive")
-		m.wait(liveDur.nextInt(10).max(1));
+		waitDuring( liveDur(m));
 		broken()
 	}
 	
@@ -49,7 +55,7 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 	
 	def repair(): Unit @ suspendable ={
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(1));
+		m.wait(repairDur(m) );
 		//m.release(repairPerson)
 		repairPerson.release
 		alive()
@@ -63,7 +69,7 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 object Machine2 {
 	def main(args: Array[String]){
   		val mod = new Model()
-  		val repairPerson = new UnaryResource(mod)
+  		val repairPerson = Resource.unary(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
 		val m2 = new Machine2(mod,"machine2",repairPerson)
 		mod.simulate(100,true)

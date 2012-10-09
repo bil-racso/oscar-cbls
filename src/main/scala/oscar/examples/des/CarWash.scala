@@ -18,6 +18,7 @@
 package oscar.examples.des
 
 import oscar.des.engine._
+import oscar.des.engine
 import oscar.invariants._
 import scala.util.continuations._
 import JSci.maths.statistics._
@@ -39,7 +40,7 @@ object CarWash {
 
   def main(args: Array[String]) {
 
-    val m = new Model()
+    implicit val m = new Model()
 
     // one day = 8 hours
     val endOfDay = m.clock === 480
@@ -69,14 +70,14 @@ object CarWash {
 
     } // end of CarWash
 
-    class CarWasher(m: Model, carWash: CarWash) extends Process(m, "Washer") {
+    class CarWasher(m: Model, carWash: CarWash) extends Process("Washer")(m) {
 
       var eod = false
       once(endOfDay){ _=>eod = true }
       def atTearoom(): Unit @suspendable = {
         m print("washer at tea room")
         println(carWash.queue.isEmpty())
-        val opt = waitFor( carWash.queue.isEmpty === false | endOfDay)
+        val opt = waitFor( carWash.queue.isEmpty === false | endOfDay )
         if (opt == 1) atEndOfDay()
         else {
           atCarWash()
@@ -86,7 +87,7 @@ object CarWash {
       def atCarWash(): Unit @suspendable = {
         m print("washer at car wash")
         carWash.open()
-        waitFor(carWash.queue.isEmpty === true)
+        waitFor( carWash.queue.isEmpty === true )
         carWash.close()
         if ( eod ) atEndOfDay()
         else atTearoom()
@@ -103,7 +104,7 @@ object CarWash {
 
     }   
     
-    class Car(m: Model, carWash: CarWash, id: String) extends Process(m, id) {
+    class Car(m: Model, carWash: CarWash, id: String) extends Process(id)(m) {
       def start(): Unit @suspendable = {
         m print(id + ": arrives")
         if (!carWash.request()) {
@@ -117,12 +118,12 @@ object CarWash {
 
     val carWash = new CarWash(m)
 
-    val carWasher = new CarWasher(m, carWash)
+    val carWasher = new CarWasher(m,carWash)
 
     var i = 0
 
     
-    val carGenerator = Generator(m, new ExponentialDistribution(1.0 / 11)) {
+    val carGenerator = Generator(new ExponentialDistribution(1.0 / 11)) {
       val c = new Car(m, carWash, "car:" + i)
       i += 1
       c.simulate()

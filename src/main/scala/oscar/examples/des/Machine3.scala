@@ -27,11 +27,11 @@ import scala.util.continuations._
  * but this person must wait that the two machines are broken to start repairing any of them
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine3(m : Model, name: String, machineList : MachineList) extends Process(m,name) {
+class Machine3(m : Model, name: String, machineList : MachineList) extends Process(name)(m) {
 	
 	val liveDur = new scala.util.Random(0)
 	val repairDur = new scala.util.Random(0)
-	val repairPerson = new UnaryResource(m)
+	val repairPerson = Resource.unary(m)
 	private var broken = false
 	private var repairInProgress = false
 	machineList + this //add this to the list of machines
@@ -53,25 +53,25 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		broken = true
 		
 		if (machineList.notAllBroken()) {
-			m.suspend(this) 
+			suspend 
 			//we wait because some of the machines are not yet broken
 			repair() 
 			
 		} else {
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
-			machineList.notBeingRepaired().foreach(ma => if(ma != this) m.resume(ma))
+			machineList.notBeingRepaired().foreach(ma => if(ma != this) ma.resume)
 			repair() 
 		}
 	}
 	
 	def repair()  : Unit @ suspendable ={
 		println(name+" is asking to be repaired")
-		m.request(repairPerson) 
+		request(repairPerson) 
 		
 		println(name+" being repaired")
 		m.wait(repairDur.nextInt(3).max(0))
-		m.release(repairPerson)
+		release(repairPerson)
 		alive()
 	}
 	
