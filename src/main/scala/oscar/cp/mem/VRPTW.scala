@@ -18,11 +18,11 @@ import oscar.search.IDSSearchController
 
 object VRPTW extends App {
 	
-	val instance = parse("data/VRPTW/Solomon/R105.txt")
+	val instance = parse("data/VRPTW/Solomon/R101.txt")
 	
 	// Data
 	val nCustomers = instance.n	
-	val nVehicles  = instance.k	
+	val nVehicles  = 20//instance.k	
 	val nSites     = nCustomers + nVehicles	
 	val capacity   = instance.c	
 	
@@ -66,7 +66,7 @@ object VRPTW extends App {
 	val prev      = Array.fill(nSites)(CPVarInt(cp, Sites))		// Previously visited site
 	val next      = Array.fill(nSites)(CPVarInt(cp, Sites))		// Previously visited site
 	val routeOf   = Array.fill(nSites)(CPVarInt(cp, Vehicles))	// Route of each vehicle
-	val service   = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Date of service of each site
+	val arrival   = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Date of service of each site
 	val departure = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Departure from each site
 	
 	val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
@@ -81,7 +81,7 @@ object VRPTW extends App {
 	// LNS
 	// --------------------------------------------------
 	
-	//cp.sc = new IDSSearchController(cp, 4)
+	cp.sc = new IDSSearchController(cp, 6)
 	
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -101,31 +101,31 @@ object VRPTW extends App {
 	var stagnation  = 0
 	
 	val beta = 1
-	var p = 15
+	var p = 20
 	
-	cp.lns(10000, 2000) {
+	cp.lns(2000, 5000) {
 		
 		if (bestSol == prevSol) {
 			stagnation += 1
 			if (stagnation >= 20) {
 				stagnation = 0
 				p += 1
-				if (p > 30) p = 30
+				if (p > 40) p = 40
 				println("\np : "+p)
 			}
 		}
 		else {
-			p = 15
+			p = 20
 			prevSol = bestSol
 			stagnation = 0
 		}
 		
 		// Adaptable LNS
-		if (!cp.isLastLNSRestartCompleted) {
+		/*if (!cp.isLastLNSRestartCompleted) {
 			cp.failLimit = (cp.failLimit * 110)/100
 		} else {
 			cp.failLimit = max(10, (cp.failLimit * 90)/100)
-		}
+		}*/
 		
 		// Random selection of customers		
 		val S = Array.fill(nSites)(false)
@@ -185,18 +185,19 @@ object VRPTW extends App {
 		for (i <- Sites) {
 			
 			// A vehicle can arrived before starting time 
-			cp.add(service(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
+			cp.add(arrival(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
+			cp.add(new TimeWindow(cp, prev(i), arrival(i), departure, dist(i), twStart(i)))
 			
 			// A vehicle must finish before end of the time-window
-			cp.add(service(i) <= twEnd(i))
+			cp.add(arrival(i) <= twEnd(i))
 			
 			// A vehicle must wait for start of the time-window before starting the service
-			cp.add(service(i) >= twStart(i))
+			cp.add(arrival(i) >= twStart(i))
 		}
 		
 		// A vehicle starts immediately after service
 	    for(i <- Customers) {
-			cp.add(departure(i) == service(i) + servDur(i))
+			cp.add(departure(i) == arrival(i) + servDur(i))
 	    }
 			
 		// All vehicle start on the morning 
@@ -241,7 +242,7 @@ object VRPTW extends App {
 		visu.update
 	}
 	
-	println("Finished !")
+	println("\nFinished ! : " + bestSol)
 	cp.printStats
 	
 	def selectMin(x : Range, b : (Int => Boolean))(f : (Int => Int)) : Int = {

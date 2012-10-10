@@ -1,97 +1,32 @@
 package oscar.cp.mem.pareto
 
-import scala.collection.mutable.Queue
-import oscar.cp.mem.paretoFront.OrderedLinkedList
-import oscar.cp.mem.paretoFront.ParetoPoint
-import oscar.cp.mem.pareto.ParetoPoint
-import oscar.cp.mem.pareto.OrderedLinkedList
-
-class ParetoSet(n : Int) {
+class ParetoSet[S](n : Int) extends Pareto[S](n) {
 	
-	// The queue of point
-	private val set : Queue[ParetoPoint] = Queue()
-	
-	// Sorted list of objective values
-	private val sortedPoint = Array.fill(nObjs)(new OrderedLinkedList)
-	
-	def currentPoint : ParetoPoint = {
+	override def currentPoint : ParetoPoint[S] = {
 		
-		null
+		// Checks if the list is empty
+		if (set.isEmpty) throw new NoSuchElementException("set is empty")		
+		// First point of the set
+		else set.head
 	}
 	
-	def currentSol : Array[Int] = {
+	override def nextPoint() : ParetoPoint[S] = {
 		
-		null
-	}
-	
-	
-	// Size of the queue
-	def size = set.size
-	def isEmpty = size == 0
-	
-	//Number of objectives
-	def nObjs = n	
-	private val Objs = 0 until n
-	
-	/** Return the first point of the queue (this point is then reinserted in the queue)
-	 * 
-	 */
-	def nextPoint : ParetoPoint = {
-		
-		if (isEmpty) throw new NoSuchElementException("Pareto set is empty")
-	
-		set enqueue set.dequeue()
+		set.enqueue(set.dequeue())
 		currentPoint
 	}
 	
-	/** This method add a new point in the approximation of the pareto set.
-	 * 
-	 *  First, we check the validity of the point in term of dimension.
-	 * 
-	 *  If this point is dominating some point of the approximation, those points 
-	 *  are removed from the set.
-	 */
-	def insert(newPoint : ParetoPoint) = { 
+	def removeCurrentPoint() : ParetoPoint[S] = {
 		
-		for (i <- Objs) {
-			
-			val p = set.dequeue() 
-			val dom = p dominating newPoint
-			
-			if (dom == ParetoPoint.NEITHER) {		
-				set enqueue p
-				set enqueue newPoint
-			}
-			
-			else if (dom == ParetoPoint.DOMINATED) {
-				set enqueue newPoint
-				delete(p)	
-			}	
-				
-			else {
-				set enqueue p
-				delete(newPoint)
-			}
-		}
+		// Checks if the list is empty
+		if (set.isEmpty) throw new NoSuchElementException("set is empty")
+		// Remove the point from the set
+		else set.dequeue()
 	}
 	
-	def buildNewPoint(values : Array[Int], sol : Array[Int]) : ParetoPoint = {
-		
-		val neighbourhood = Array.tabulate(nObjs)(i => sortedPoint(i) insert values(i))
-		new ParetoPoint(sol, neighbourhood)
-	}
-	
-	def hypervolume = 0.0
-	
-	private def delete(p : ParetoPoint) {
-		
-		for(i <- Objs) {
-			sortedPoint(i) remove p.neighbourhood(i)
-		}
-	}
+	override def hypervolume(ref : Array[Int]) : Double = 0
 }
 
 object ParetoSet {
-	
-	def apply(nDimension : Int) = new ParetoSet(nDimension)
+	def apply[S](nObjs : Int) = new ParetoSet[S](nObjs)
 }
