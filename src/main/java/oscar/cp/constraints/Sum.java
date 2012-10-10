@@ -34,7 +34,6 @@ public class Sum extends Constraint {
 		super(x[0].s(),"Sum");
 		this.x = x;
 		this.y = y;
-		//setIdempotent();
 	}
 
     /**

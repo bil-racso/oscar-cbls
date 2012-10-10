@@ -101,7 +101,7 @@ object Nurses extends App  {
    
    
    val cp = CPSolver()
-   val spreadAcuity = CPVarInt(cp,0 to Int.MaxValue)
+   val spreadAcuity = CPVarInt(cp,0 to 1000000)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
    
@@ -116,7 +116,7 @@ object Nurses extends App  {
      while (!allBounds(x)) {
 		    val bound = x.filter(_.isBound)
 		    val maxUsed = if (bound.isEmpty) -1 else bound.map(_.value).max
-		    val (y,o) = minDomNotbound(x).first // retrieve the var and its index in x with smallest domain
+		    val (y,o) = minDomNotbound(x).head // retrieve the var and its index in x with smallest domain
 		    val v = y.min
 		    if (v > maxUsed) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
 		      cp.branchOne(cp.post(y == v))
@@ -130,6 +130,7 @@ object Nurses extends App  {
      best = spreadAcuity.value
    }
    println("spread zone:"+i+"="+best)
+   cp.printStats
   
  }
  
