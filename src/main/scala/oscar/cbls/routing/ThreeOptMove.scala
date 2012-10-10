@@ -91,17 +91,19 @@ object ThreeOptMove extends SearchEngine{
    * @param insertPoint is the point where after the segment is inserted
    * @param vrp
    */
-  //TODO: on risque de créer des tas de spurious cycles. ça va coûter cher vu que le topological sort sera non-incrémental du coup.
+
   def doMove(BeforeSegment: Int, EndOfSegment: Int, InsertionPoint: Int, vrp:VRP){
-      vrp.moveSegment(BeforeSegment, EndOfSegment, InsertionPoint)
+      val toUpdate = vrp.moveSegmentVariablesToUpdate(BeforeSegment,EndOfSegment,InsertionPoint)
+      toUpdate.foreach(t => t._1 := t._2)
   }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-    vrp.evaluateObjectiveAfterMoveSegment(beforeFrom,to,insertPoint)
-   }
+    val toUpdate = vrp.moveSegmentVariablesToUpdate(beforeFrom,to,insertPoint)
+    vrp.getAssignVal(toUpdate)
+  }
 }
 
 case class ThreeOptMove(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,

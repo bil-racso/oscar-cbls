@@ -74,14 +74,16 @@ object OnePointMove extends SearchEngine{
   }
 
   def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP){
-     vrp.moveSegment(predOfMovedPoint,  vrp.Next(predOfMovedPoint).value,  PutAfter)
+     val toUpdate =vrp.moveSegmentVariablesToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+     toUpdate.foreach(t => t._1 := t._2)
    }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with ObjectiveFunction):Int = {
-      vrp.evaluateObjectiveAfterMoveSegment(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+    val toUpdate = vrp.moveSegmentVariablesToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+    vrp.getAssignVal(toUpdate)
   }
 }
 

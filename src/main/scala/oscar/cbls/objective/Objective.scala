@@ -23,8 +23,6 @@ package oscar.cbls.objective
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
-import collection.immutable.SortedMap;
 import oscar.cbls.invariants.core.computation._;
 
 import oscar.cbls.invariants.core.computation.IntVar._
@@ -59,18 +57,18 @@ trait ObjectiveTrait {
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getAssignVal(a: IntVar, v: Int): Int = getAssignVal(SortedMap(a -> v))
+  def getAssignVal(a: IntVar, v: Int): Int = getAssignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getAssignVal(a: SortedMap[IntVar, Int]): Int = {
+  def getAssignVal(a: Iterable[(IntVar, Int)]): Int = {
     //memorize
 
-    val oldvals: Map[IntVar, Int] = a.foldLeft(SortedMap.empty[IntVar, Int])(
-      (acc, IntVarAndInt) => acc + ((IntVarAndInt._1, IntVarAndInt._1.value)))
+    val oldvals: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
+      (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
 
     //excurse
     for (assign <- a) {

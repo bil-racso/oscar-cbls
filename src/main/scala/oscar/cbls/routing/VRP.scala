@@ -90,27 +90,21 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     }
   }
 
-  def moveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int){
+  /** Return an iterable that contains tuple (Intvar,Int) corresponding to the IntVar
+   * to update after a move segment.
+   * @param BeforeSegmentStart
+   * @param SegmentEnd
+   * @param InsertionPoint
+   * @return
+   */
+  def moveSegmentVariablesToUpdate(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):Iterable[(IntVar,Int)] = {
     val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
     val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
     val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
 
-    Next(BeforeSegmentStart) := oldNextOfSegmentEnd
-    Next(SegmentEnd) := oldNextOfInsertionPoint
-    Next(InsertionPoint) := SegmentStart
+    List((Next(BeforeSegmentStart),oldNextOfSegmentEnd),(Next(SegmentEnd),oldNextOfInsertionPoint),
+     (Next(InsertionPoint),SegmentStart))
   }
-
-  def moveSegmentMap(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):SortedMap[IntVar,Int] = {
-    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
-    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
-    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
-
-    SortedMap(Next(BeforeSegmentStart)->oldNextOfSegmentEnd,Next(SegmentEnd)->oldNextOfInsertionPoint,
-      Next(InsertionPoint)->SegmentStart)
-   }
-
-
-
 
 }
 
@@ -158,22 +152,6 @@ trait PositionInRouteAndRouteNr extends VRP {
 trait ObjectiveFunction extends VRP with ObjectiveTrait{
   // Initialize the objective function with 0 as value
   setObjectiveVar(new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP"))
-
-  /** Evaluate the objective after a temporarily move segment, using the features of ObjectiveTrait*/
-  def evaluateObjectiveAfterMoveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):Int ={
-    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
-    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
-    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
-
-    val map = SortedMap(Next(BeforeSegmentStart)->oldNextOfSegmentEnd,Next(SegmentEnd)->oldNextOfInsertionPoint,
-      Next(InsertionPoint)->SegmentStart)
-    getAssignVal(map)
-  }
-
-  //val objective:ObjectiveVar = new ObjectiveVar( new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP"))
-  //val objective: IntVar = new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP")
-  //m.registerForPartialPropagation(objective.ObjectiveVar)
-  //TODO: use the objective.core.ObjectiveTrait trait
 }
 
 /**maintains the hop distance in the VRP, based either on a matrix, or on another mechanism. *
