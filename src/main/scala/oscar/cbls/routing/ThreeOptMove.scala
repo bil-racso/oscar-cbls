@@ -41,15 +41,16 @@ object ThreeOptMove extends SearchEngine{
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
                k:Int, prevmove:Neighbor = null):ThreeOptMove = {
-    var BestObj:Int = vrp.objective.value
+    var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
     def nextModulo(n:Int):Int = {
-      if (n+1 >= vrp.N) 1
+      if (n+1 >= vrp.N) 0
       else n+1
     }
 
     //TODO: BUG here: it sometimes generates a cycle.
+    // no more cycle
 
     var startInsertionPoint = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
     var insertionPoint = startInsertionPoint
@@ -59,7 +60,7 @@ object ThreeOptMove extends SearchEngine{
       //its end should be close to the next of the insertion point
       //begin and end should be on the same route and in this order
       for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)
-           if insertionPoint != beforeSegmentStart ){
+        if insertionPoint != beforeSegmentStart ){
         for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
              if beforeSegmentStart != segmentEnd &&
                segmentEnd != insertionPoint &&
@@ -91,33 +92,23 @@ object ThreeOptMove extends SearchEngine{
    * @param vrp
    */
   //TODO: on risque de créer des tas de spurious cycles. ça va coûter cher vu que le topological sort sera non-incrémental du coup.
-  def doMove(BeforeSegment: Int, EndOfSegment: Int, InsertionPoint: Int, vrp:VRP, withBackTrack:Boolean = false):Snapshot = {
-    val oldstate = if(withBackTrack)
-      vrp.m.saveValues(vrp.Next(BeforeSegment), vrp.Next(EndOfSegment), vrp.Next(InsertionPoint))
-    else null
-
-    vrp.moveSegment(BeforeSegment, EndOfSegment, InsertionPoint)
-
-    oldstate
+  def doMove(BeforeSegment: Int, EndOfSegment: Int, InsertionPoint: Int, vrp:VRP){
+      vrp.moveSegment(BeforeSegment, EndOfSegment, InsertionPoint)
   }
 
-  //TODO: use the objective.core.ObjectiveTrait trait
+  /*
+    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+   */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-
-    val oldstate = doMove(beforeFrom, to, insertPoint, vrp, true)
-
-    val toReturn:Int = vrp.objective.value
-    vrp.m.restoreSnapshot(oldstate)
-
-    return toReturn
-  }
+    vrp.evaluateObjectiveAfterMoveSegment(beforeFrom,to,insertPoint)
+   }
 }
 
 case class ThreeOptMove(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
                         objAfter:Int, vrp:VRP) extends Neighbor{
   def comit {ThreeOptMove.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "moved " + beforeSegmentStart + "-...->" + segmentEnd + " after "+ insertionPoint
+  override def toString():String = "moved " + vrp.Next(beforeSegmentStart).value + "-...->" + segmentEnd + " after "+ insertionPoint
 
   def startNodeForNextExploration: Int = insertionPoint
 }

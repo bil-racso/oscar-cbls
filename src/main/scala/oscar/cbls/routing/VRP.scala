@@ -31,23 +31,35 @@ import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.core.Constraint
 import collection.immutable.SortedMap
 import scala.math._
+import oscar.cbls.objective.{ObjectiveTrait, Objective}
 
 /**
  * @param N the number of points in the problem.
- * @param V the number of vehicles, assumed to start from points 1 to V
+ * @param V the number of vehicles, assumed to start from points 0 to V-1
  * @param m the model
  */
 class VRP(val N: Int, val V: Int, val m: Model) {
+
   //successors
-  val Next: Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, 0, N, 0, "next" + i))
-
+  /*
+  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<=V) new IntVar(m, i, N-1, i, "next" + i)
+  else new IntVar(m, 0, N-1, 0, "next" + i))
+  */
+  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) new IntVar(m, i, N-1, i, "next" + i)
+    else new IntVar(m, 0, N, i, "next" + i))
+  /*
   for(v <- 1 to V){Next(v) := v}
+  */
+  for(v <- 0 until V){Next(v) := v}
 
+  /*
   val Nodes = 1 until N
+   */
+  val Nodes = 0 until N
 
   override def toString():String = {
     var toreturn = ""
-    for ( v <- 1 to V){
+    for ( v <- 0 until V){
       toreturn += "Vehicle" + v + ":"
       var current = Next(v).value
       while(current != v){
@@ -64,7 +76,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * they are supposed to be related to each other
    */
   def flipSegment(BeforeSegmentStart:Int, SegmentEnd:Int){
-    var nodestack:List[Int] = List.empty
+     var nodestack:List[Int] = List.empty
     //register the list of nodes
     var current:Int = BeforeSegmentStart
     while(current != SegmentEnd) {
@@ -87,26 +99,44 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     Next(SegmentEnd) := oldNextOfInsertionPoint
     Next(InsertionPoint) := SegmentStart
   }
+
+  def moveSegmentMap(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):SortedMap[IntVar,Int] = {
+    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
+    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
+    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
+
+    SortedMap(Next(BeforeSegmentStart)->oldNextOfSegmentEnd,Next(SegmentEnd)->oldNextOfInsertionPoint,
+      Next(InsertionPoint)->SegmentStart)
+   }
+
+
+
+
 }
 
 /**Maintains the set of unrouted nodes, those whose next is zero*/
 trait Unrouted extends VRP {
-  val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == 0)
+  //val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == 0)
+  val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == N)
 }
 
 /**add this trait if you want to maintain the predecessor of each node in the routing.
  * It also maintains the set of unrouted nodes.
  * This other feature is integrated with the mechanics for maintaining the predecessors, so it comes at cost zero.
  */
+//TODO regarder à la structure de donné tableau.
 trait PredAndUnrouted extends Unrouted {
   private val Preds: Array[IntSetVar] = Cluster.MakeDense(Next).clusters
   val Pred: Array[IntVar] = Preds.map((i: IntSetVar) => TakeAny(i, 0).toIntVar)
   override val Unrouted: IntSetVar = Preds(0)
 }
 
+
+
+
 /**maintains the position of nodes in the routes and the route number of each node*/
 trait PositionInRouteAndRouteNr extends VRP {
-  private val routes = Routes.buildRoutes(Next, V)
+  /*private*/ val routes = Routes.buildRoutes(Next, V)
 
   val PositionInRoute = routes.PositionInRoute
   val RouteNr = routes.RouteNr
@@ -118,16 +148,31 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   /**assuming fromNode,toNOde form a segment*/
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
-    RouteNr(fromNode).value == RouteNr(node).value &&
-      PositionInRoute(fromNode).value <= PositionInRoute(node).value && //Todo: check this
-      PositionInRoute(node).value <= PositionInRoute(toNode).value
+    RouteNr(fromNode).value == RouteNr(node).value  &&
+    PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
+    PositionInRoute(node).value <= PositionInRoute(toNode).value
   }
 }
 
 /**declares an objective function, attached to the VRP. */
-trait ObjectiveFunction extends VRP {
-  val objective: IntVar = new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP")
-  m.registerForPartialPropagation(objective)
+trait ObjectiveFunction extends VRP with ObjectiveTrait{
+  // Initialize the objective function with 0 as value
+  setObjectiveVar(new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP"))
+
+  /** Evaluate the objective after a temporarily move segment, using the features of ObjectiveTrait*/
+  def evaluateObjectiveAfterMoveSegment(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):Int ={
+    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
+    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
+    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
+
+    val map = SortedMap(Next(BeforeSegmentStart)->oldNextOfSegmentEnd,Next(SegmentEnd)->oldNextOfInsertionPoint,
+      Next(InsertionPoint)->SegmentStart)
+    getAssignVal(map)
+  }
+
+  //val objective:ObjectiveVar = new ObjectiveVar( new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP"))
+  //val objective: IntVar = new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP")
+  //m.registerForPartialPropagation(objective.ObjectiveVar)
   //TODO: use the objective.core.ObjectiveTrait trait
 }
 
@@ -145,15 +190,11 @@ trait HopDistance extends VRP {
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => DistanceMatrix(i)(j))
-    for (i <- 0 until N) {
-      DistanceMatrix(i)(0) = 0
-      DistanceMatrix(0)(i) = 0
-    }
+    for (i <- 0 until N if Next(i).value != N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => DistanceMatrix(i)(j))
   }
   def installCostFunction(fun:(Int, Int) => Int){
     distanceFunction = fun
-    for (i <- 1 to N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => fun(i,j))
+    for (i <- 0 until N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => fun(i,j))
   }
   
   var distanceFunction:((Int, Int) => Int) = null
@@ -165,7 +206,7 @@ trait HopDistance extends VRP {
  * based either on a matrix, or on another mechanism.
 */
 trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
-  objective <== overallDistance
+  ObjectiveVar <== overallDistance
 }
 
 /**declares an objective function, attached to the VRP.
@@ -174,7 +215,7 @@ trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
 */
 trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction {
   def recordAddedFunction(AddedValue: IntVar) {
-    objective <== overallDistance + AddedValue
+    ObjectiveVar<== overallDistance + AddedValue
   }
 }
 

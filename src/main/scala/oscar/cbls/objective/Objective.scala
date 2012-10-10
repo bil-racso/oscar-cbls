@@ -29,13 +29,13 @@ import oscar.cbls.invariants.core.computation._;
 
 import oscar.cbls.invariants.core.computation.IntVar._
 
-case class Objective(ObjectiveVar: IntVar) extends ObjectiveTrait {
-  setObjectiveVar(ObjectiveVar)
+case class Objective(Objective: IntVar) extends ObjectiveTrait {
+  setObjectiveVar(Objective)
 }
 
 trait ObjectiveTrait {
 
-  private var ObjectiveVar: IntVar = null
+  var ObjectiveVar: IntVar = null
 
   def setObjectiveVar(v: IntVar) {
     ObjectiveVar = v
@@ -68,6 +68,7 @@ trait ObjectiveTrait {
    */
   def getAssignVal(a: SortedMap[IntVar, Int]): Int = {
     //memorize
+
     val oldvals: Map[IntVar, Int] = a.foldLeft(SortedMap.empty[IntVar, Int])(
       (acc, IntVarAndInt) => acc + ((IntVarAndInt._1, IntVarAndInt._1.value)))
 

@@ -25,6 +25,7 @@ package oscar.cbls.routing
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{Snapshot, IntVar}
+import collection.immutable.SortedMap;
 
 /**moves a point in a circuit to another place.
  * size if O(n²)
@@ -32,7 +33,7 @@ import oscar.cbls.invariants.core.computation.{Snapshot, IntVar}
 object OnePointMove extends SearchEngine{
   def getBestMove(vrp:VRP with ObjectiveFunction):OnePointMove = findMove(false, vrp)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null):OnePointMove = findMove(true,vrp, startFrom)
-  def justMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null) {getFirstImprovingMove(vrp, startFrom).comit}
+  //def justMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null) {getFirstImprovingMove(vrp, startFrom).comit}
 
   /**Search for the proper One point move
    *
@@ -40,18 +41,18 @@ object OnePointMove extends SearchEngine{
    * @param vrp the model of the problem
    */
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null):OnePointMove = {
-    var BestObj:Int = vrp.objective.value
+    var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
-    val StartBeforeMovedPoint = if (startFrom == null) 1 else startFrom.startNodeForNextExploration
+    val StartBeforeMovedPoint = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
     def nextModulo(n:Int):Int = {
-      if (n+1 >= vrp.N) 1
+      if (n+1 >= (vrp.N)) 0
       else n+1
     }
     var beforeMovedPoint = StartBeforeMovedPoint
 
     do{
-      if (vrp.Next(beforeMovedPoint).value > vrp.V){
-        var putAfter = 1
+      if (vrp.Next(beforeMovedPoint).value >= vrp.V){
+        var putAfter = 0
         do{
           if (beforeMovedPoint != putAfter && vrp.Next(beforeMovedPoint).value != putAfter && vrp.Next(putAfter).value != 0){
             val newObj = getObjAfterMove(beforeMovedPoint,putAfter, vrp)
@@ -64,39 +65,30 @@ object OnePointMove extends SearchEngine{
             }
           }
           putAfter = nextModulo(putAfter)
-        }while(putAfter != 1)
+         }while(putAfter != 0)
       }
       beforeMovedPoint = nextModulo(beforeMovedPoint)
-    }while(beforeMovedPoint != StartBeforeMovedPoint)
+      }while(beforeMovedPoint != StartBeforeMovedPoint)
     if (move == null) null
     else OnePointMove(move._1,move._2, BestObj, vrp)
   }
 
-  def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP, withBackTrack:Boolean = false):Snapshot = {
-    val oldstate = if(withBackTrack)
-      vrp.m.saveValues(vrp.Next(predOfMovedPoint), vrp.Next(vrp.Next(predOfMovedPoint).value), vrp.Next(PutAfter))
-    else null
+  def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP){
+     vrp.moveSegment(predOfMovedPoint,  vrp.Next(predOfMovedPoint).value,  PutAfter)
+   }
 
-    vrp.moveSegment(predOfMovedPoint,  vrp.Next(predOfMovedPoint).value,  PutAfter)
-
-    oldstate
-  }
-
-  //TODO: use the objective.core.ObjectiveTrait trait
+  /*
+    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+   */
   def getObjAfterMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with ObjectiveFunction):Int = {
-
-    val snapshot = doMove(predOfMovedPoint, PutAfter, vrp, true)
-    val toReturn:Int = vrp.objective.value
-    vrp.m.restoreSnapshot(snapshot)
-
-    return toReturn
+      vrp.evaluateObjectiveAfterMoveSegment(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
   }
 }
 
 case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "moved " + vrp.Next(predOfMovedPoint).value + " after " + PutAfter
+  override def toString():String = "moved point " + vrp.Next(predOfMovedPoint).value + " after " + PutAfter
 
   def startNodeForNextExploration: Int = predOfMovedPoint
 }

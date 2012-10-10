@@ -45,6 +45,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   val random = new Random(0)
   
   def getRandomDistanceMatrix(N:Int):Array[Array[Int]]= Array.tabulate(N,N)((i,j) => if (i==0 ||j == 0) 0 else random.nextInt(1000)+1)
+
   def getPlanarDistanceMatrix(N:Int):Array[Array[Int]] = {
     val coordX = Array.tabulate(N)(_ => random.nextInt(1000))
     val coordY = Array.tabulate(N)(_ => random.nextInt(1000))
@@ -63,26 +64,28 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   m.close()
 
-  println("closed " + getWatchString)
 
+
+  println("closed " + getWatchString)
+  println(vrp)
   NearestNeighbor(vrp)
   m.propagate()
 
-  println("start val: " + vrp.objective)
-
+  println("start val: " + vrp.ObjectiveVar.value)
+  println(vrp)
   var nsize = 20
   var saturated = false
   var move:Neighbor = null
   var it = 0
   while(!saturated){
-    val oldobj:Int = vrp.objective.value
+    val oldobj:Int = vrp.ObjectiveVar.value
 //    move = OnePointMove.getFirstImprovingMove(vrp,move)
     move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
-      vrp.objective.value
-      println("it: " + it + " " + move + " " + vrp.objective)
+      vrp.ObjectiveVar.value
+      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
     }else{
 //      if (nsize == 40){
         saturated = true

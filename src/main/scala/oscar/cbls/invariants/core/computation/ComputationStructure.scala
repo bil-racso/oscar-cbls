@@ -691,16 +691,19 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   {assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
-
-  def getDomain:Range = new Range(MinVal,MaxVal,1)
+  // val instead of method getDomain to get the range of the variable
+  val getDomain:Range = if(MaxVal==Int.MaxValue) Range(MinVal,MaxVal,1) else Range(MinVal,MaxVal+1,1)
 
   override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
-      Value = v
-      notifyChanged()
-    }
+      assert(getDomain.contains(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+        "domain : ["+getDomain.min+ ";"+getDomain.max+"]\n" +
+        "value :"+ v +"\n" ))
+        Value = v
+        notifyChanged()
+      }
   }
   
   def value:Int = getValue(false)
