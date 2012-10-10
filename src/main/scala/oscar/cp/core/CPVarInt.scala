@@ -99,6 +99,11 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	
 	def getSize = size
 	
+	/**
+	 * @return true is the domain is full
+	 */
+	def isFull = (max-min+1) == size
+	
     /**
 	 * Number of values in common in both domains
 	 * @param other

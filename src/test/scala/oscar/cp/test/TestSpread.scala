@@ -82,10 +82,101 @@ class TestSpread extends FunSuite with ShouldMatchers  {
                        
     var s2 = CPVarInt(cp, 0 to Int.MaxValue)
     cp.add(new Spread(x,591,s2))
-    println(s2)
     cp.isFailed should be(false)
-    //s2.min should be(9)
   } 
+  
+  test("Spread 6") {
+    val cp = CPSolver()
+    
+    // 4 vars, with dom 0 to 100
+    // sum should be 8 (2 on average)
+    
+    var x = Array(CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+                       
+    var s2 = CPVarInt(cp, 0 to 16)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(16)
+    for (y <- x) {
+      y.max should be(2)
+    }
+  }
+  
+  test("Spread 7") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,3,3                   
+    var s2 = CPVarInt(cp, 0 to 22)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(22)
+    x(1).max should be(3)
+    x(2).max should be(3)
+    x(3).max should be(3)
+    
+  } 
+  
+  test("Spread 8") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,3,3                   
+    var s2 = CPVarInt(cp, 0 to 22)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(22)
+    x(1).min should be(2)
+    x(2).min should be(3)
+    x(3).min should be(3)
+    x(2).max should be(3)
+    x(3).max should be(3)
+  }
+  
+  test("Spread 9") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,4,2                   
+    var s2 = CPVarInt(cp, 0 to 24)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(24)
+    x(1).min should be(2)
+    x(2).min should be(4)
+    x(3).min should be(2)
+    x(2).max should be(4)
+    x(3).max should be(2)
+  }
+  
+  test("Spread 10") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,4,2 => let's allow this one 0,1,4,3 with s2=26                   
+    var s2 = CPVarInt(cp, 0 to 26)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(24)
+    x(1).min should be(1)
+    x(2).max should be(4)
+    x(3).max should be(3)
+  }
     	
  
 
