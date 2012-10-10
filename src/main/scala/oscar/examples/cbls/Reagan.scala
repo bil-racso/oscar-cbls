@@ -57,6 +57,7 @@ object Reagan extends App {
   Boire uses 3 ofResource Reagan
 
   val Digerer = SuperTask(Manger, Dormir, "digest")
+  Digerer uses 1 ofResource Reagan
 
   Reflechir precedes Boire
   Manger precedes Dormir
@@ -65,7 +66,7 @@ object Reagan extends App {
   planning.close()
   model.close(false)
  // println(model.dumpToDot(true, true))
-  solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
+  solver.Solve(15, 10, solver.WorseFirst(), 2, 50)
 
   println(planning.toAsciiArt)
 }

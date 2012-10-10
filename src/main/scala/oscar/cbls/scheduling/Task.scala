@@ -34,9 +34,29 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
   extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
+  start precedes end
+
   override def post() {
-    super.post()
+
+    start.post()
+    end.post()
+
+    AdditionalPredecessors = start.AdditionalPredecessors
+
+    AllPrecedingTasks = start.AllPrecedingTasks
+
+    EarliestStartDate <== start.EarliestStartDate
+
+    DefiningPredecessors = start.DefiningPredecessors
+
+    PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
+
+    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+
+    LatestEndDate <== end.LatestEndDate
+
     this.duration <== end.EarliestEndDate - start.EarliestStartDate
+
   }
 
   override def addDynamicPredecessor(t: Task) {
@@ -47,6 +67,7 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
     start.removeDynamicPredecessor(t)
   }
   override def getEndTask: Task = end.getEndTask
+  override def getStartTask: Task = start.getStartTask
 
   override def addStaticPredecessor(j: Task) {
     start.addStaticPredecessor(j)
@@ -55,6 +76,9 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
 
 case class Task(val duration: IntVar, val planning: Planning, val name: String = "") {
   val TaskID: Int = planning.AddTask(this)
+
+  /**Used for marking algorithm. Must always be set to false between algorithm execution*/
+  var Mark:Boolean =  false;
 
   override def toString: String = name
 
@@ -117,25 +141,27 @@ case class Task(val duration: IntVar, val planning: Planning, val name: String =
   }
 
   def getEndTask: Task = this
+  def getStartTask: Task = this
 
   /**This method is called by the planning when all tasks are created*/
   def post() {
+    if (AdditionalPredecessors == null){
+      AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
+        "added predecessors of " + name, SortedSet.empty)
 
-    AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "added predecessors of " + name, SortedSet.empty)
+      val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
+      AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-    val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
-    AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
+      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      EarliestStartDate <== argMax.getMax
 
-    val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
-    EarliestStartDate <== argMax.getMax
+      DefiningPredecessors = argMax
 
-    DefiningPredecessors = argMax
+      PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-    PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
+      AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
 
-    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
-
-    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
+      LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
+    }
   }
 }
