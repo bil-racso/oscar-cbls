@@ -573,6 +573,28 @@ trait Constraints {
 		cp.add(minimum(x, m))
 		m
 	}
+	
+    /**
+     * Constraint enforcing n * sum,,i,, |x[i]-s/n| <= nd and sum,,i,, x[i] = s <br> 
+     * Note that this constraint is very similar spread.
+     * @param x
+     * @param s
+     * @param nd
+     */
+    def deviation(x : Iterable[CPVarInt], s: Int, nd: CPVarInt): Constraint = {
+      new Deviation(x.toArray,s,nd)
+    }
+    
+    /**
+     * Constraint enforcing sum,,i,, x[i]^2^ <= s2 and sum,,i,, x[i] = s <br> 
+     * Note that this constraint is very similar deviation.
+     * @param x
+     * @param s
+     * @param s2
+     */
+    def spread(x : Iterable[CPVarInt], s: Int, s2 : CPVarInt): Constraint = {
+      new Spread(x.toArray,s,s2,true)
+    }
 
 	def sortedness(x : IndexedSeq[CPVarInt], s : IndexedSeq[CPVarInt], p : IndexedSeq[CPVarInt]) : LinkedList[Constraint] = {
 		val cp = x(0).store

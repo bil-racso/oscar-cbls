@@ -76,12 +76,8 @@ object Nurses extends App  {
  val nurses = 0 until nbNurses
  val patients = 0 until nbPatients
  
- val minNbPatientsByZone = Array.tabulate(nbZones) {
-   i => Array.fill(nbNursesInZone(i))(1)
- }
- val maxNbPatientsByZone = Array.tabulate(nbZones) {
-   i => Array.fill(nbNursesInZone(i))(3)
- }
+ val minNbPatientsByZone = Array.tabulate(nbZones) { i => Array.fill(nbNursesInZone(i))(1) }
+ val maxNbPatientsByZone = Array.tabulate(nbZones) { i => Array.fill(nbNursesInZone(i))(3) }
  
  // --- model ---
  
@@ -105,7 +101,7 @@ object Nurses extends App  {
    var best = Int.MaxValue
    // each nurse can have at most 3 and at least one patient
    cp.minimize(spreadAcuity) subjectTo {
-     cp.add(new oscar.cp.constraints.Spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
+     cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
    } exploration {
