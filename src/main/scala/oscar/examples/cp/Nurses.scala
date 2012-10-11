@@ -95,11 +95,8 @@ object Nurses extends App  {
  for (i <- 0 until nbZones) {
      
    val items = Array.tabulate(nbPatientsInZone(i))(j => drawing.addItem(i,scale*acuityByZone(i)(j)))
+   items.foreach(_.setInnerCol(colors(i)))
  
-
-   
-   
-   
    val cp = CPSolver()
    val spreadAcuity = CPVarInt(cp,0 to 1000000)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
@@ -132,12 +129,6 @@ object Nurses extends App  {
    println("spread zone:"+i+"="+best)
    cp.printStats
   
- }
- 
-
-
- 
- 	
-      
+ }   
 	
 }
