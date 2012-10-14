@@ -25,42 +25,69 @@ object DummyProblem extends App {
 	// LNS
 	// -------------------------
 	
-	cp.lns(100, 100) {
+	var nObjRestart = 0
+	
+	cp.lns(400, 100) {
 		
-		// Next not optimal objective 
-		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
-		cp.objective.currentObjective = obj
+		// Next objective 
+		val obj = nextObj		
 		
-		// Relaxation of the objectives (diversification)
-		objRelax(obj)
-		
+		// Objective relaxation (diversification)
+		objRelax(obj)		
 		// Problem relaxation is objRelax in this example
+		probRelax(obj)
+	}
+	
+	def nextObj = {
 		
+		// Next point if no amelioration from the previous point
+		if (nObjRestart == nObjs) {
+			pareto.nextPoint()
+			nObjRestart = 0
+		}
+			
+		nObjRestart += 1
+		
+		val obj = (cp.objective.currentObjectiveIdx+1)%nObjs
+		cp.objective.currentObjective = obj
+		obj
 	}
 	
 	def objRelax(obj : Int, intensification : Boolean = false) {
 		
-		for (o <- Objs) {
-			// The -1 avoids to find an already found solution
-			if (intensification || o == obj) 
-				cp.objective.bestObjs(o) = pareto.currentSol(o) - 1
-			else 
-				cp.objective.bestObjs(o) = pareto.currentPoint.upperValue(o) - 1
+		for (o <- Objs) {		
+			if (intensification || o == obj) {
+				cp.objective.bounds(o)   = pareto.objValue(o)
+				cp.objective.bestObjs(o) = pareto.objValue(o)
+			}
+			else {
+				// The -1 avoid to find an already found solution
+				cp.objective.bounds(o)   = pareto.upperValue(o) - 1
+				cp.objective.bestObjs(o) = pareto.upperValue(o) - 1
+			}
 		}
+		
+		// Better solution
+		cp.objective.bounds(obj)   -= 1
+		cp.objective.bestObjs(obj) -= 1
 	}
+	
+	def probRelax(o : Int) {}
 	
 	def solFound {
 		
 		val objs = buildSol
 		val sol  = buildSol
 		
-		// This could be false (framework)
+		// Always true in this framework
 		pareto insert (objs, sol)
 		
-		// Consider the first objective
-		cp.objective.currentObjective = 0
+		// Reset the number of considered objectives
+		nObjRestart = 0
 		// Consider the next point in the set
-		pareto.nextPoint
+		pareto.nextPoint()
+		
+		println("Hypervolume : " + pareto.hypervolume(Array(20,20)))
 	}
 	
 	def buildSol : Sol = Array(obj1.value, obj2.value)
@@ -70,17 +97,16 @@ object DummyProblem extends App {
 	
 	cp.minimize(obj1, obj2) subjectTo {
 		
-		cp.post(obj2 - obj1 == 20)
+		cp.post(obj2 + obj1 == 20)
 		
 	} exploration {
 		
 		cp.binaryFirstFail(obj1)
 		
 		solFound
-		
-		println(obj1.value + " " + obj2.value)
 	}
 	
+	println
 	for (i <- 1 to pareto.size) {
 		val p = pareto.nextPoint()
 		println("sol n¡ " + i + " : " + p(0) + " " + p(1))

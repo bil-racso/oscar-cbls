@@ -189,7 +189,7 @@ object VRPTW extends App {
 			cp.add(new TimeWindow(cp, prev(i), arrival(i), departure, dist(i), twStart(i)))
 			
 			// A vehicle must finish before end of the time-window
-			cp.add(arrival(i) <= twEnd(i))
+			cp.add(arrival(i) <= twEnd(i) + 20)
 			
 			// A vehicle must wait for start of the time-window before starting the service
 			cp.add(arrival(i) >= twStart(i))
