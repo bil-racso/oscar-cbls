@@ -97,10 +97,6 @@ abstract class Pareto[S](n : Int) {
 	 */
 	def currentPoint : ParetoPoint[S]
 	
-	def objValue(o : Int) = currentPoint(o)
-	def upperValue(o : Int) = currentPoint.upperValue(o)
-	def lowerValue(o : Int) = currentPoint.lowerValue(o)
-	
 	/** Changes the current point with the next one.
 	 * 
 	 *  @return the next point
