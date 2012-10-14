@@ -31,7 +31,7 @@ import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray._
 import oscar.cbls.invariants.lib.minmax.MinArray._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
-
+/*
 class SuperTask(start:Task, end:Task, planning:Planning,  override val name:String = "")
   extends Task(new IntVar(planning.model, 0, planning.maxduration, start.duration.value, "duration of " + name),
     planning, name){
@@ -113,6 +113,6 @@ class Task(val duration: IntVar, planning: Planning, val name: String = "") {
 
     LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
   }
-}
+}*/
 
 
