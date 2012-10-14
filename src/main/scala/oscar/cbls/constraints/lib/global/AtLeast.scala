@@ -21,7 +21,9 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
+
 package oscar.cbls.constraints.lib.global
+
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
@@ -39,8 +41,9 @@ import oscar.cbls.invariants.lib.logic.IntITE
  * @param bounds map(value,minbound) specifying the minimal number of occurrence of ''value'' among the variables.
  * We use a map to ensure that there is no two bounds on the same value.
  */
-case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) extends Constraint{
+case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint{
 
+  assert(variables.size < Int.MaxValue)
   registerConstrainedVariablesAll(variables)
   registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()
@@ -66,16 +69,12 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
   }
     ).toArray
 
-  private val BoundArray:Array[IntVar]= Array.tabulate(N)(v =>
-    if(bounds.contains(v-offset)){
-      bounds(v)
-    }else{
-      0
-    })
+  private val Bound:Array[Int]= new Array[Int](N)
+  for(v <- range){Bound(v) = bounds.getOrElse(v,-1)}
 
   private val ViolationByVal:Array[IntVar] = (for(i <- -offset to N0) yield {
     if(bounds.contains(i)){
-      IntITE(ValueCount(i+offset) - BoundArray(i+offset),Violation, 0).toIntVar
+      IntITE(ValueCount(i+offset) - IntConst(bounds.getOrElse(i,-1)),Violation, 0).toIntVar
     }else{
       Violation
     }}).toArray
@@ -87,7 +86,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
   }
 
   for(i <- range){
-    Violation :+= 0.max(BoundArray(i).getValue(true) - ValueCount(i).getValue(true))
+    Violation :+= 0.max(Bound(i) - ValueCount(i).getValue(true))
   }
 
   @inline
@@ -100,16 +99,16 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
 
     if(NewBounded){
       if (OldBounded){
-        val DeltaOldVal = if(BoundArray(OldVal+offset).getValue(true) > ValueCount(OldVal+offset).getValue(true)) 1 else 0
-        val DeltaNewVal = if(BoundArray(NewVal+offset).getValue(true) >= ValueCount(NewVal+offset).getValue(true)) -1 else 0
+        val DeltaOldVal = if(Bound(OldVal+offset) > ValueCount(OldVal+offset).getValue(true)) 1 else 0
+        val DeltaNewVal = if(Bound(NewVal+offset) >= ValueCount(NewVal+offset).getValue(true)) -1 else 0
         Violation :+= (DeltaNewVal + DeltaOldVal)
       }else{
-        val DeltaNewVal = if(BoundArray(NewVal+offset).getValue(true) >= ValueCount(NewVal+offset).getValue(true)) -1 else 0
+        val DeltaNewVal = if(Bound(NewVal+offset) >= ValueCount(NewVal+offset).getValue(true)) -1 else 0
         Violation :+= DeltaNewVal
       }
     }else{
       if (OldBounded){
-        val DeltaOldVal = if(BoundArray(OldVal+offset).getValue(true) > ValueCount(OldVal+offset).getValue(true)) 1 else 0
+        val DeltaOldVal = if(Bound(OldVal+offset) > ValueCount(OldVal+offset).getValue(true)) 1 else 0
         Violation :+= DeltaOldVal
       }
     }
@@ -135,7 +134,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
 
     var MyViol:Int = 0
     for(v <- bounds.keys){
-      MyViol += 0.max(bounds(v).value - MyValueCount(v+offset))
+      MyViol += 0.max(bounds(v) - MyValueCount(v+offset))
     }
     assert(Violation.value == MyViol)
     for(v <- variables){
