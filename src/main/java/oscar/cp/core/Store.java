@@ -295,7 +295,7 @@ public class Store extends ReversibleSearchNode {
      * Fix Point algorithm
      * @return Failure is the fix point detects a failure that is one of the domain became empty, Suspend otherwise
      */
-	private CPOutcome propagate() {
+	protected CPOutcome propagate() {
 		assert(status.getValue() != CPOutcome.Failure);
 		
 		long t0 = System.currentTimeMillis();

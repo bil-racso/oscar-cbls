@@ -162,7 +162,7 @@ class ReversibleSearchNode {
 	def branchAll[A](indexes: Seq[A])(f: A => Unit) = {
 	  
       shift { k: (Unit => Unit) =>
-        val first = indexes.first
+        val first = indexes.head
         for (i <- indexes.reverse; if (i != first)) {
            sc.addChoice(new MyContinuation("i", {
         	   beforeBranch()
