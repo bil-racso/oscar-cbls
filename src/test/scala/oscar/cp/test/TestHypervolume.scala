@@ -109,5 +109,5 @@ class TestHypervolume extends FunSuite with ShouldMatchers {
 			
 			vol should be(0.0)
 		}
-	}	
+	}
 }

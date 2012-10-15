@@ -94,8 +94,6 @@ object DummyProblem extends App {
 	// Visu
 	// -------------------------
 	
-	val visu = new VisualPareto(pareto, 10, 10)
-	
 	// Search
 	// -------------------------
 	
@@ -108,8 +106,6 @@ object DummyProblem extends App {
 		cp.binaryFirstFail(obj1)
 		
 		solFound
-		
-		visu.update
 	}
 	
 	println

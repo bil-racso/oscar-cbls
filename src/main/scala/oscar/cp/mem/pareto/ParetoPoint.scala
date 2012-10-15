@@ -40,6 +40,8 @@ class ParetoPoint[S](private val sol : S, val neighbourhood : Array[LinkedNode])
 		
 		else dominating0(p, d+1, s)
 	}
+	
+	override def toString : String = "[" + neighbourhood.map(_.value).mkString(", ") + "]"
 }
 
 object ParetoPoint {

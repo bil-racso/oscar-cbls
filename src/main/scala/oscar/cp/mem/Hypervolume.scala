@@ -15,12 +15,11 @@ object Hypervolume {
 	def simple2DHypervolume(ps : ParetoSet, ref : ParetoPoint) : Double = {
 		
 		if(ps.isEmpty)
-			0.0
-			
+			0		
 		else if(ps(0).size > 2 || ref.size > 2)
-			throw new IllegalArgumentException("This algorithm only works with two dimensional points.")
-		
-		else simple2DHypervolume0(ps.sortWith(nonDecreasing(0)), ref, 0, 0.0)
+			throw new IllegalArgumentException("This algorithm only works with two dimensional points.")		
+		else 
+			simple2DHypervolume0(ps.sortWith(nonDecreasing(0)), ref, 0, 0)
 	}
 	
 	private def simple2DHypervolume0(ps : ParetoSet, ref : ParetoPoint, i : Int, vol : Double) : Double = {
@@ -29,7 +28,8 @@ object Hypervolume {
 			vol
 		else {
 			val x = ps(i)(0) - (if(i == 0) ref(0) else ps(i-1)(0))
-			val y = ps(i)(1) - ref(1)
+			val y = ps(i)(1) - ref(1)		
+			
 			simple2DHypervolume0(ps, ref, i+1, vol + x*y)
 		}
 	}

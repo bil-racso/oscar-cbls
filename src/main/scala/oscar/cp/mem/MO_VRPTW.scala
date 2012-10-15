@@ -22,6 +22,8 @@ object MO_VRPTW extends App {
 	
 	val instance = parse("data/VRPTW/Solomon/R101.txt")
 	
+	val hyp = scala.collection.mutable.Queue[Double]()
+	
 	// Data
 	val nCustomers = instance.n	
 	val nVehicles  = instance.k	
@@ -93,9 +95,9 @@ object MO_VRPTW extends App {
 	val beta = 1
 	var p = 20
 	
-	cp.lns(2000, 5000) {
+	cp.lns(500, 5000) {
 		
-		// Next not optimal objective 
+		// Next objective 
 		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
 		cp.objective.currentObjective = obj
 		
@@ -150,7 +152,7 @@ object MO_VRPTW extends App {
 		sol
 	}
 	
-	cp.sc = new IDSSearchController(cp, 4)
+	//cp.sc = new IDSSearchController(cp, 4)
 	
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -172,11 +174,11 @@ object MO_VRPTW extends App {
 		}
 		
 		// Adaptable LNS
-		/*if (!cp.isLastLNSRestartCompleted) {
+		if (!cp.isLastLNSRestartCompleted) {
 			cp.failLimit = (cp.failLimit * 110)/100
 		} else {
 			cp.failLimit = max(10, (cp.failLimit * 90)/100)
-		}*/
+		}
 		
 		// Random selection of customers		
 		val S = Array.fill(nSites)(false)
@@ -260,7 +262,7 @@ object MO_VRPTW extends App {
 			cp.add(new TimeWindow(cp, prev(i), arrival(i), departure, dist(i), twStart(i)))
 			
 			// A vehicle must finish before end of the time-window
-			cp.add(arrival(i) <= twEnd(i) + 20)
+			//cp.add(arrival(i) <= twEnd(i))
 			
 			// A vehicle must wait for start of the time-window before starting the service
 			cp.add(arrival(i) >= twStart(i))
@@ -275,7 +277,12 @@ object MO_VRPTW extends App {
 		for(i <- Depots)
 			cp.add(departure(i) == 0)
 		
-	} exploration {
+	} 
+	
+	val upDist = totDist.max
+	val upTard = totTard.max
+	
+	cp.exploration {
 		
 		while (!allBounds(prev)) {
 		
@@ -288,6 +295,9 @@ object MO_VRPTW extends App {
 		}
 		
 		solFound
+		
+		hyp enqueue pareto.hypervolume(Array(upDist, upTard))
+		
 		visu.update
 	}
 	
@@ -298,6 +308,8 @@ object MO_VRPTW extends App {
 		val p = pareto.nextPoint()
 		println("sol n " + i + " : " + p(0) + " " + p(1))
 	}
+	
+	println(hyp.mkString("\n"))
 	
 	def selectMin(x : Range, b : (Int => Boolean))(f : (Int => Int)) : Int = {
                         

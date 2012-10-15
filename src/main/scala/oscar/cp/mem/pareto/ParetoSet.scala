@@ -1,5 +1,7 @@
 package oscar.cp.mem.pareto
 
+import oscar.cp.mem.Hypervolume
+
 class ParetoSet[S](n : Int) extends Pareto[S](n) {
 	
 	override def currentPoint : ParetoPoint[S] = {
@@ -24,7 +26,19 @@ class ParetoSet[S](n : Int) extends Pareto[S](n) {
 		else set.dequeue()
 	}
 	
-	override def hypervolume(ref : Array[Int]) : Double = 0
+	override def hypervolume(ref : Array[Int]) : Double = {
+		
+		val points = set.toArray
+		val formatedPoints = points.map(p => Array((ref(0) - p(0))/ref(0).toDouble, (ref(1) - p(1))/ref(1).toDouble))
+		
+		val vol = Hypervolume.simple2DHypervolume(formatedPoints, Array(0,0))
+		
+		if (vol < 0) throw new Exception("Hypervolume is negative")
+		
+		vol
+	}
+	
+	override def toString : String = "{" + set.mkString(", ") + "}"
 }
 
 object ParetoSet {
