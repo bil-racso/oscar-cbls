@@ -10,6 +10,8 @@ import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
 import oscar.visual.VisualTour
 import oscar.search.IDSSearchController
+import oscar.cp.mem.pareto.ParetoSet
+import oscar.visual.VisualPareto
 
 /** VRPTW
  * 
@@ -22,7 +24,7 @@ object MO_VRPTW extends App {
 	
 	// Data
 	val nCustomers = instance.n	
-	val nVehicles  = 20//instance.k	
+	val nVehicles  = instance.k	
 	val nSites     = nCustomers + nVehicles	
 	val capacity   = instance.c	
 	
@@ -70,33 +72,21 @@ object MO_VRPTW extends App {
 	val departure = Array.fill(nSites)(CPVarInt(cp, Horizon)) 	// Departure from each site
 	
 	val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
+	val tardiness = Array.fill(nCustomers)(CPVarInt(cp, Horizon))
 	
 	val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
+	val totTard = CPVarInt(cp, Horizon)
 	
-	// Visualization
-	// --------------------------------------------------
+	// ------------------------------------------------------------------------
+	// MOLNS BLOCK
+	// ------------------------------------------------------------------------
 	
-	val visu = new VisualTour(coord, prev, totDist, "VRPTW", 8, 6, routeOf, twStart, twEnd)
+	type Sol   = Array[Array[Int]]	
+	val nObjs  = 2
+	val Objs   = 0 until nObjs	
+	val pareto = ParetoSet[Sol](nObjs)
 	
-	// LNS
-	// --------------------------------------------------
-	
-	cp.sc = new IDSSearchController(cp, 6)
-	
-	// Normalized distances
-	val maxDist = dist.map(_.max).max
-	val nDist   = dist.map(_.map(_ / (0.0 +maxDist)))
-	
-	def relatedness(i : Int, j :Int) = {		
-		val v = if (bestRouteOf(i) == bestRouteOf(j)) 0 else 1
-		1 / (nDist(i)(j) + v)
-	}
-	
-	val bestPrev    = new Array[Int](nSites)
-	val bestRouteOf = new Array[Int](nSites)
 	val selected    = new Array[Boolean](nSites)
-	var bestSol     = Int.MaxValue
-	var prevSol		= Int.MaxValue
 	
 	var stagnation  = 0
 	
@@ -105,19 +95,80 @@ object MO_VRPTW extends App {
 	
 	cp.lns(2000, 5000) {
 		
-		if (bestSol == prevSol) {
-			stagnation += 1
-			if (stagnation >= 20) {
-				stagnation = 0
-				p += 1
-				if (p > 40) p = 40
-				println("\np : "+p)
+		// Next not optimal objective 
+		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
+		cp.objective.currentObjective = obj
+		
+		// Relaxation of the objectives (diversification)
+		objRelax(obj)
+		
+		// Problem relaxation is objRelax in this example
+		probRelax(obj)
+	}
+	
+	def objRelax(obj : Int, intensification : Boolean = false) {
+		
+		for (o <- Objs) {		
+			if (intensification || o == obj) {
+				cp.objective.bounds(o)   = pareto.currentPoint(o)
+				cp.objective.bestObjs(o) = pareto.currentPoint(o)
+			}
+			else {
+				// The -1 avoid to find an already found solution
+				cp.objective.bounds(o)   = pareto.currentPoint.upperValue(o) - 1
+				cp.objective.bestObjs(o) = pareto.currentPoint.upperValue(o) - 1
 			}
 		}
-		else {
-			p = 20
-			prevSol = bestSol
+		
+		// Better solution
+		cp.objective.bounds(obj)   -= 1
+		cp.objective.bestObjs(obj) -= 1
+	}
+	
+	def solFound {
+		
+		val objs = Array(totDist.value, totTard.value)
+		val sol  = buildSol
+		
+		p = 20
+		stagnation = 0
+		
+		// This could be false (framework)
+		pareto insert (objs, sol)
+		
+		// Consider the first objective
+		cp.objective.currentObjective = 0
+		// Consider the next point in the set
+		pareto.nextPoint
+	}
+	
+	def buildSol : Sol = {
+		
+		val sol = new Array[Array[Int]](2, nSites)
+		sol(0) = prev.map(_.value)
+		sol(1) = routeOf.map(_.value)	
+		sol
+	}
+	
+	cp.sc = new IDSSearchController(cp, 4)
+	
+	// Normalized distances
+	val maxDist = dist.map(_.max).max
+	val nDist   = dist.map(_.map(_ / (0.0 +maxDist)))
+	
+	def relatedness(i : Int, j :Int) = {		
+		val v = if (pareto.currentSol(1)(i) == pareto.currentSol(1)(j)) 0 else 1
+		1 / (nDist(i)(j) + v)
+	}
+	
+	def probRelax(obj : Int) {
+		
+		stagnation += 1
+		if (stagnation >= 20) {
 			stagnation = 0
+			p += 1
+			if (p > 40) p = 40
+			println("\np : "+p)
 		}
 		
 		// Adaptable LNS
@@ -148,15 +199,28 @@ object MO_VRPTW extends App {
 		
 		val filtered = Sites.filter(i => !S(i))
 		
-		val constraints1 : Array[Constraint] = filtered.map(i => prev(i) == bestPrev(i)).toArray
-		val constraints2 : Array[Constraint] = filtered.map(i => routeOf(i) == bestRouteOf(i)).toArray
+		val prevSol  = pareto.currentSol(0)
+		val routeSol = pareto.currentSol(1)
+		
+		val constraints1 : Array[Constraint] = filtered.map(i => prev(i) == prevSol(i)).toArray
+		val constraints2 : Array[Constraint] = filtered.map(i => routeOf(i) == routeSol(i)).toArray
 
 		cp.post(constraints1)
 		cp.post(constraints2)
 	}
 	
-	cp.minimize(totDist) subjectTo {
+	// Visualization
+	// --------------------------------------------------
+	
+	val visu = new VisualTour(coord, prev, totDist, "VRPTW", 8, 6, routeOf, twStart, twEnd)
+	
+	// ------------------------------------------------------------------------
+	// EXPLORATION BLOCK
+	// ------------------------------------------------------------------------
+	
+	cp.minimize(totDist, totTard) subjectTo {
 		
+		// Channeling
 		for (i <- Sites) {
 			cp.add(next(prev(i)) == i)
 			cp.add(prev(next(i)) == i)
@@ -170,12 +234,19 @@ object MO_VRPTW extends App {
 		cp.add(sum(Sites)(i => dist(i)(prev(i))) == totDist)
 		cp.add(sum(Sites)(i => dist(i)(next(i))) == totDist)
 		
+		// Tardiness
+		for (i <- Customers) 
+			cp.add(tardiness(i) == maximum(Array(CPVarInt(cp, 0), arrival(i) - twEnd(i))))
+			
+		// Total tardiness
+		cp.add(sum(Customers)(i => tardiness(i)) == totTard)
+		
 		// Route consistency
-		for(i <- Customers) 
+		for (i <- Customers) 
 			cp.add(routeOf(i) == routeOf(prev(i)))
 			
 		// All vehicle start in different depots
-		for(i <- Depots)
+		for (i <- Depots)
 			cp.add(routeOf(i) == i - nCustomers)
 			
 		// Capacity of vehicles
@@ -206,22 +277,6 @@ object MO_VRPTW extends App {
 		
 	} exploration {
 		
-		var c = Depots.min
-		
-		/*while (!allBounds(prev)) {
-			
-			while(prev(c).isBound)
-				c = prev(c).value
-				
-			if (prev(c).min >= Depots.min)
-				cp.branch(cp.post(prev(c) == prev(c).min))(cp.post(prev(c) != prev(c).min))
-									
-			else {				
-				val i = selectMin(Customers, j => prev(c).hasValue(j) )(j => dist(c)(j))
-				cp.branch(cp.post(prev(c) == i))(cp.post(prev(c) != i))
-			}
-		}*/
-		
 		while (!allBounds(prev)) {
 		
 			val firstDepot = max(Depots.min, maxVal(prev))
@@ -231,19 +286,18 @@ object MO_VRPTW extends App {
 	
 			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 		}
-					
-		for(i <- Sites) {
-			bestPrev(i) = prev(i).value
-			bestRouteOf(i) = routeOf(i).value
-		}
 		
-		bestSol = totDist.value
-		
+		solFound
 		visu.update
 	}
 	
-	println("\nFinished ! : " + bestSol)
+	println("\nFinished !")
 	cp.printStats
+	
+	for (i <- 1 to pareto.size) {
+		val p = pareto.nextPoint()
+		println("sol n " + i + " : " + p(0) + " " + p(1))
+	}
 	
 	def selectMin(x : Range, b : (Int => Boolean))(f : (Int => Int)) : Int = {
                         

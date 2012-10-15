@@ -28,12 +28,12 @@ class ParetoPoint[S](private val sol : S, val neighbourhood : Array[LinkedNode])
 		
 		if (d == size) s
 		
-		else if (this(d) < p(d)) {
+		else if (this(d) > p(d)) {
 			if (s == ParetoPoint.DOMINATING) ParetoPoint.NEITHER
 			else dominating0(p, d+1, ParetoPoint.DOMINATED)
 		}
 			
-		else if (this(d) > p(d)) {
+		else if (this(d) < p(d)) {
 			if (s == ParetoPoint.DOMINATED) ParetoPoint.NEITHER
 			else dominating0(p, d+1, ParetoPoint.DOMINATING)
 		} 
