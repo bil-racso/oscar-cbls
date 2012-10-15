@@ -97,7 +97,7 @@ object MO_VRPTW extends App {
 	
 	var nObjRestart = 0
 	
-	cp.lns(2000, 5000) {
+	cp.lns(200, 5000) {
 		
 		// Next objective 
 		val obj = nextObj
@@ -165,7 +165,7 @@ object MO_VRPTW extends App {
 		sol
 	}
 	
-	cp.sc = new IDSSearchController(cp, 10)
+	cp.sc = new IDSSearchController(cp, 3)
 	
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -232,10 +232,8 @@ object MO_VRPTW extends App {
 	// ------------------------------------------------------------------------
 	// EXPLORATION BLOCK
 	// ------------------------------------------------------------------------
-	println(cp.objective.toString)
+
 	cp.minimize(totDist, totTard) subjectTo {
-		
-		println(cp.objective.toString)
 		
 		// Channeling
 		for (i <- Sites) {
@@ -300,8 +298,6 @@ object MO_VRPTW extends App {
 	cp.exploration {
 		
 		while (!allBounds(prev)) {
-			
-			println(cp.objective.toString)
 		
 			val firstDepot = max(Depots.min, maxVal(prev))
 			
@@ -311,9 +307,8 @@ object MO_VRPTW extends App {
 			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 		}
 		
-		println(cp.objective.toString)
 		solFound
-		println(cp.objective.toString)
+		
 		hyp enqueue pareto.hypervolume(Array(upDist, upTard))
 		
 		visu.update

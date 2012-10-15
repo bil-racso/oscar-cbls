@@ -76,12 +76,8 @@ object Nurses extends App  {
  val nurses = 0 until nbNurses
  val patients = 0 until nbPatients
  
- val minNbPatientsByZone = Array.tabulate(nbZones) {
-   i => Array.fill(nbNursesInZone(i))(1)
- }
- val maxNbPatientsByZone = Array.tabulate(nbZones) {
-   i => Array.fill(nbNursesInZone(i))(3)
- }
+ val minNbPatientsByZone = Array.tabulate(nbZones) { i => Array.fill(nbNursesInZone(i))(1) }
+ val maxNbPatientsByZone = Array.tabulate(nbZones) { i => Array.fill(nbNursesInZone(i))(3) }
  
  // --- model ---
  
@@ -95,11 +91,8 @@ object Nurses extends App  {
  for (i <- 0 until nbZones) {
      
    val items = Array.tabulate(nbPatientsInZone(i))(j => drawing.addItem(i,scale*acuityByZone(i)(j)))
+   items.foreach(_.setInnerCol(colors(i)))
  
-
-   
-   
-   
    val cp = CPSolver()
    val spreadAcuity = CPVarInt(cp,0 to 1000000)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
@@ -108,7 +101,7 @@ object Nurses extends App  {
    var best = Int.MaxValue
    // each nurse can have at most 3 and at least one patient
    cp.minimize(spreadAcuity) subjectTo {
-     cp.add(new oscar.cp.constraints.Spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
+     cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
    } exploration {
@@ -132,12 +125,6 @@ object Nurses extends App  {
    println("spread zone:"+i+"="+best)
    cp.printStats
   
- }
- 
-
-
- 
- 	
-      
+ }   
 	
 }
