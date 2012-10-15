@@ -39,6 +39,8 @@ class ParetoSet[S](n : Int) extends Pareto[S](n) {
 	}
 	
 	override def toString : String = "{" + set.mkString(", ") + "}"
+	
+	def points = set.toArray.sortBy(_(0))
 }
 
 object ParetoSet {

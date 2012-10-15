@@ -21,12 +21,18 @@ package oscar.cp.constraints
 import oscar.search._
 import oscar.cp.core._
 
+import scala.util.Random.nextInt
+
 /** @author Pierre Schaus  pschaus@gmail.com
   * @author Renaud Hartert ren.hartert@gmail.com
   */
 class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store, "objective") with Objective {
 
 	def this(x: CPVarInt) = this(Array(x): _*)
+	
+	val id = nextInt(10000000)
+	
+	override def toString : String = "objective : " + id
 
 	val nObjs = objVars.size
 	val Objs  = 0 until nObjs  

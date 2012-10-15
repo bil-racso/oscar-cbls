@@ -20,7 +20,7 @@ import oscar.visual.VisualPareto
 
 object MO_VRPTW extends App {
 	
-	val instance = parse("data/VRPTW/Solomon/R101.txt")
+	val instance = parse("data/VRPTW/Solomon/moTest.txt")
 	
 	val hyp = scala.collection.mutable.Queue[Double]()
 	
@@ -93,19 +93,35 @@ object MO_VRPTW extends App {
 	var stagnation  = 0
 	
 	val beta = 1
-	var p = 20
+	var p = 4
 	
-	cp.lns(500, 5000) {
+	var nObjRestart = 0
+	
+	cp.lns(2000, 5000) {
 		
 		// Next objective 
-		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
-		cp.objective.currentObjective = obj
+		val obj = nextObj
 		
 		// Relaxation of the objectives (diversification)
 		objRelax(obj)
 		
 		// Problem relaxation is objRelax in this example
 		probRelax(obj)
+	}
+	
+	def nextObj : Int = {
+		
+		nObjRestart += 1
+		
+		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
+		cp.objective.currentObjective = obj
+		
+		if (nObjRestart > nObjs) {
+			pareto.nextPoint	
+			nObjRestart = 0
+		}
+			
+		obj
 	}
 	
 	def objRelax(obj : Int, intensification : Boolean = false) {
@@ -132,16 +148,13 @@ object MO_VRPTW extends App {
 		val objs = Array(totDist.value, totTard.value)
 		val sol  = buildSol
 		
-		p = 20
+		p = 4
 		stagnation = 0
+		
+		nObjRestart = 0
 		
 		// This could be false (framework)
 		pareto insert (objs, sol)
-		
-		// Consider the first objective
-		cp.objective.currentObjective = 0
-		// Consider the next point in the set
-		pareto.nextPoint
 	}
 	
 	def buildSol : Sol = {
@@ -152,7 +165,7 @@ object MO_VRPTW extends App {
 		sol
 	}
 	
-	//cp.sc = new IDSSearchController(cp, 4)
+	cp.sc = new IDSSearchController(cp, 10)
 	
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -165,13 +178,13 @@ object MO_VRPTW extends App {
 	
 	def probRelax(obj : Int) {
 		
-		stagnation += 1
+		/*stagnation += 1
 		if (stagnation >= 20) {
 			stagnation = 0
 			p += 1
 			if (p > 40) p = 40
 			println("\np : "+p)
-		}
+		}*/
 		
 		// Adaptable LNS
 		if (!cp.isLastLNSRestartCompleted) {
@@ -219,8 +232,10 @@ object MO_VRPTW extends App {
 	// ------------------------------------------------------------------------
 	// EXPLORATION BLOCK
 	// ------------------------------------------------------------------------
-	
+	println(cp.objective.toString)
 	cp.minimize(totDist, totTard) subjectTo {
+		
+		println(cp.objective.toString)
 		
 		// Channeling
 		for (i <- Sites) {
@@ -285,6 +300,8 @@ object MO_VRPTW extends App {
 	cp.exploration {
 		
 		while (!allBounds(prev)) {
+			
+			println(cp.objective.toString)
 		
 			val firstDepot = max(Depots.min, maxVal(prev))
 			
@@ -294,8 +311,9 @@ object MO_VRPTW extends App {
 			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
 		}
 		
+		println(cp.objective.toString)
 		solFound
-		
+		println(cp.objective.toString)
 		hyp enqueue pareto.hypervolume(Array(upDist, upTard))
 		
 		visu.update
@@ -304,11 +322,13 @@ object MO_VRPTW extends App {
 	println("\nFinished !")
 	cp.printStats
 	
-	for (i <- 1 to pareto.size) {
-		val p = pareto.nextPoint()
-		println("sol n " + i + " : " + p(0) + " " + p(1))
+	println("Front :")
+	val sortedPoints = pareto.points
+	for (i <- 0 until sortedPoints.size) {
+		println("sol n " + (i+1) + " : " + sortedPoints(i)(0) + " " + sortedPoints(i)(1))
 	}
 	
+	println("Hypervolume :")
 	println(hyp.mkString("\n"))
 	
 	def selectMin(x : Range, b : (Int => Boolean))(f : (Int => Int)) : Int = {
