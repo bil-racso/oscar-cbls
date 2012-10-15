@@ -51,7 +51,6 @@ class IDSSearchController(node: ReversibleSearchNode, val maxDiscrepency: Int) e
     node.branchAll(0 to maxDiscrepency) {i =>
       discr.setValue(0)
       maxDiscr = i // max discrepancy of this DFS search = i
-      println("discrepency = "+i)
     }
     inDFS.setValue(true)
   }
