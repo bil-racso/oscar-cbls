@@ -223,7 +223,8 @@ class CPSolver() extends Store() {
         shift { k1: (Unit => Unit ) =>
           val b = () => {
         	  	sc.start()
-        	  	if (propagate() != CPOutcome.Failure) {
+        	  	propagate()
+        	  	if (!isFailed()) {
         	  		block
         	  	} else {
         	  	  shift { k: (Unit => Unit) => k() }

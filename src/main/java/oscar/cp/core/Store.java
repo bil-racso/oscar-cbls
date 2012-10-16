@@ -326,7 +326,8 @@ public class Store extends ReversibleSearchNode {
 		}
 		inPropagate = false;
 		timeInFixPoint += System.currentTimeMillis()-t0;
-		return ok==CPOutcome.Failure ? ok : CPOutcome.Suspend;
+		status.setValue( ok == CPOutcome.Failure ? ok : CPOutcome.Suspend);
+		return ok == CPOutcome.Failure ? ok : CPOutcome.Suspend;
 	}
 	
 	private boolean isL1QueueEmpty() {
