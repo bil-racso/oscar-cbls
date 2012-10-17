@@ -112,7 +112,7 @@ class Planning(val model: Model, val maxduration: Int) {
   var gantt:Gantt = null
   var plot:Plot2D = null
   def getVisual{
-    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 2)
+    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,1000,400)
     gantt = new Gantt(this)
     frame.createFrame("Gantt chart").add(gantt)
@@ -120,10 +120,11 @@ class Planning(val model: Model, val maxduration: Int) {
  //   frame.createFrame("progress").add(plot)
 
     frame.pack
+    frame.setSize(1000,1000)
   }
 
   def updateVisual{
-    if (gantt!=null) gantt.update(0.1f, 5)
+    if (gantt!=null) gantt.update(0.3f, 15)
   }
 
   override def toString: String = {

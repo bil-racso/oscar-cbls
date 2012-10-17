@@ -58,6 +58,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("----------------")
     }
+    p.updateVisual
 
     var plateaulength = 0
     var BestMakeSpan = p.MakeSpan.value
@@ -66,14 +67,14 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //iterative weakening and flattening
       it += 1
 
-      // if(plateaulength == 20){
-      // for (i <- 0 until NbRelax*2){Relax(75);}
-      // println("jumping****************")
-      //}else{
+//       if(plateaulength > 10 && (plateaulength % 50) == 0){
+//       for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
+//       println("jumping****************")
+//      }else{
       for (i <- 0 until NbRelax) {
         Relax(PkillPerRelax);
       }
-      //}
+//      }
 
       flatteningheursitics match {
         case EarliestFirst() => FlattenEarliestFirst();
