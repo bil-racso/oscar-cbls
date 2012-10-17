@@ -27,5 +27,6 @@ abstract class Neighbor{
   def getObjAfter:Int
   def comit
   def startNodeForNextExploration:Int
+
 }
 

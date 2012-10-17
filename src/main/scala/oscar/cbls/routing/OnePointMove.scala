@@ -43,38 +43,26 @@ object OnePointMove extends SearchEngine{
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null):OnePointMove = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
-    val StartBeforeMovedPoint = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
-    def nextModulo(n:Int):Int = {
-      if (n+1 >= (vrp.N)) 0
-      else n+1
-    }
-    var beforeMovedPoint = StartBeforeMovedPoint
+    val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    do{
-      if (vrp.Next(beforeMovedPoint).value >= vrp.V){
-        var putAfter = 0
-        do{
-          if (beforeMovedPoint != putAfter && vrp.Next(beforeMovedPoint).value != putAfter && vrp.Next(putAfter).value != 0){
-            val newObj = getObjAfterMove(beforeMovedPoint,putAfter, vrp)
-            if (newObj < BestObj){
-              if (FirstImprove){
-                return OnePointMove(beforeMovedPoint,putAfter, newObj, vrp)
-              }
-              BestObj = newObj
-              move = ((beforeMovedPoint, putAfter))
-            }
+    for (beforeMovedPoint <- RangeHotRestart(hotRestart,hotRestart+vrp.N) if vrp.Next(beforeMovedPoint).value >= vrp.V){
+      for(putAfter <- Range(0,vrp.N)){
+        if (beforeMovedPoint != putAfter && vrp.Next(beforeMovedPoint).value != putAfter && vrp.Next(putAfter).value != 0){
+          val newObj = getObjAfterMove(beforeMovedPoint,putAfter, vrp)
+          if (newObj < BestObj){
+            if (FirstImprove) return OnePointMove(beforeMovedPoint,putAfter, newObj, vrp)
+            BestObj = newObj
+            move = ((beforeMovedPoint, putAfter))
           }
-          putAfter = nextModulo(putAfter)
-         }while(putAfter != 0)
+        }
       }
-      beforeMovedPoint = nextModulo(beforeMovedPoint)
-      }while(beforeMovedPoint != StartBeforeMovedPoint)
+    }
     if (move == null) null
     else OnePointMove(move._1,move._2, BestObj, vrp)
   }
 
   def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP){
-     val toUpdate =vrp.moveSegmentVariablesToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+     val toUpdate =vrp.moveSegmentListToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
      toUpdate.foreach(t => t._1 := t._2)
    }
 
@@ -82,7 +70,7 @@ object OnePointMove extends SearchEngine{
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with ObjectiveFunction):Int = {
-    val toUpdate = vrp.moveSegmentVariablesToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+    val toUpdate = vrp.moveSegmentListToUpdate(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
     vrp.getAssignVal(toUpdate)
   }
 }

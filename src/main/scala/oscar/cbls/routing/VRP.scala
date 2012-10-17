@@ -35,76 +35,97 @@ import oscar.cbls.objective.{ObjectiveTrait, Objective}
 
 /**
  * @param N the number of points in the problem.
- * @param V the number of vehicles, assumed to start from points 0 to V-1
- * @param m the model
+ * @param V the number of vehicles, assumed to start from points 0 to V-1.
+ * @param m the model.
  */
 class VRP(val N: Int, val V: Int, val m: Model) {
 
   //successors
-  /*
-  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<=V) new IntVar(m, i, N-1, i, "next" + i)
-  else new IntVar(m, 0, N-1, 0, "next" + i))
-  */
   val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) new IntVar(m, i, N-1, i, "next" + i)
     else new IntVar(m, 0, N, i, "next" + i))
-  /*
-  for(v <- 1 to V){Next(v) := v}
-  */
   for(v <- 0 until V){Next(v) := v}
-
-  /*
-  val Nodes = 1 until N
-   */
   val Nodes = 0 until N
 
+
+  /**
+   * Redefine the toString method.
+   * @return The VRP as a String
+   */
   override def toString():String = {
-    var toreturn = ""
+    var toReturn = ""
     for ( v <- 0 until V){
-      toreturn += "Vehicle" + v + ":"
+      toReturn += "Vehicle" + v + ":"
       var current = Next(v).value
       while(current != v){
-        toreturn += " " + current
+        toReturn += " " + current
         current = Next(current).getValue(true)
       }
-      toreturn+="\n"
+      toReturn+="\n"
     }
-    toreturn
+    toReturn
+  }
+
+
+  /**
+   * Returns the list of variables to update with theirs new values in order to reverse
+   * a segment of route.
+   *
+   * @param from the start of segment to reverse.
+   * @param to the end of segment to reverse.
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+   */
+  def reverseSegmentListToUpdate(from:Int, to:Int):List[(IntVar,Int)]={
+     var listToUpdate:List[(IntVar,Int)] = List.empty
+     var nodeStack:List[Int] = List.empty
+    //register the list of nodes
+    var current:Int = from
+    while(current != to) {
+      nodeStack = current :: nodeStack
+      current = Next(current).value
+    }
+    while(!nodeStack.isEmpty){
+      listToUpdate =(Next(current),nodeStack.head)::listToUpdate
+      current = nodeStack.head
+      nodeStack = nodeStack.tail
+    }
+    listToUpdate
   }
 
   /**
-   * this flips the segment of route from "from" to "to"
-   * they are supposed to be related to each other
+   * Returns the list of variables to update with theirs new values in order to
+   * move a segment and reinsert it after a given point.
+   * @param beforeSegmentStart the predecessor of segment's start.
+   * @param segmentEnd the segment's end.
+   * @param insertionPoint the point after which insert the segment.
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-  def flipSegment(BeforeSegmentStart:Int, SegmentEnd:Int){
-     var nodestack:List[Int] = List.empty
-    //register the list of nodes
-    var current:Int = BeforeSegmentStart
-    while(current != SegmentEnd) {
-      nodestack = current :: nodestack
-      current = Next(current).value
-    }
-    while(!nodestack.isEmpty){
-      Next(current) := nodestack.head
-      current = nodestack.head
-      nodestack = nodestack.tail
-    }
+   def moveSegmentListToUpdate(beforeSegmentStart:Int, segmentEnd:Int,  insertionPoint:Int):List[(IntVar,Int)] = {
+    val segmentStart:Int = Next(beforeSegmentStart).getValue(true)
+    val oldNextOfSegmentEnd:Int = Next(segmentEnd).getValue(true)
+    val oldNextOfInsertionPoint:Int = Next(insertionPoint).getValue(true)
+
+    (Next(beforeSegmentStart),oldNextOfSegmentEnd)::(Next(segmentEnd),oldNextOfInsertionPoint)::
+      (Next(insertionPoint),segmentStart)::List.empty
   }
 
-  /** Return an iterable that contains tuple (Intvar,Int) corresponding to the IntVar
-   * to update after a move segment.
-   * @param BeforeSegmentStart
-   * @param SegmentEnd
-   * @param InsertionPoint
-   * @return
+  /**
+   * Returns the list of variables to update with theirs new values in order to
+   * update a route by replacing the edges (a,b) and (c,d) by the
+   * edges (b,c) and (a,c), and reverse the route's segment [a;c]. This assumes that a = Next(b) and d = Next(c).
+   *
+   * @param a the start of edge (a,b).
+   * @param b the end of edge (a,b).
+   * @param c the start of edge (c,d).
+   * @param d the end of edge (c,d).
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-  def moveSegmentVariablesToUpdate(BeforeSegmentStart:Int, SegmentEnd:Int,  InsertionPoint:Int):Iterable[(IntVar,Int)] = {
-    val SegmentStart:Int = Next(BeforeSegmentStart).getValue(true)
-    val oldNextOfSegmentEnd:Int = Next(SegmentEnd).getValue(true)
-    val oldNextOfInsertionPoint:Int = Next(InsertionPoint).getValue(true)
-
-    List((Next(BeforeSegmentStart),oldNextOfSegmentEnd),(Next(SegmentEnd),oldNextOfInsertionPoint),
-     (Next(InsertionPoint),SegmentStart))
+  def flipVariablesToUpdate(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
+    assert(Next(b).value==a && Next(c).value==d)
+    assert(c != a) // else useless to flip
+    (Next(b),c)::(Next(a),d)::reverseSegmentListToUpdate(a,c)
   }
+
+
 
 }
 
@@ -119,10 +140,11 @@ trait Unrouted extends VRP {
  * This other feature is integrated with the mechanics for maintaining the predecessors, so it comes at cost zero.
  */
 //TODO regarder à la structure de donné tableau.
+
 trait PredAndUnrouted extends Unrouted {
   private val Preds: Array[IntSetVar] = Cluster.MakeDense(Next).clusters
   val Pred: Array[IntVar] = Preds.map((i: IntSetVar) => TakeAny(i, 0).toIntVar)
-  override val Unrouted: IntSetVar = Preds(0)
+  override val Unrouted: IntSetVar = Preds(N)
 }
 
 
@@ -144,8 +166,12 @@ trait PositionInRouteAndRouteNr extends VRP {
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
     RouteNr(fromNode).value == RouteNr(node).value  &&
     PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
-    PositionInRoute(node).value <= PositionInRoute(toNode).value
+    PositionInRoute(node).value < PositionInRoute(toNode).value
   }
+
+
+
+
 }
 
 /**declares an objective function, attached to the VRP. */
@@ -158,7 +184,8 @@ trait ObjectiveFunction extends VRP with ObjectiveTrait{
  * We consider that a hop distance of Int.MaxVal is unreachable
  */
 trait HopDistance extends VRP {
-  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, N, 0, "hopDistanceForLeaving" + i)}
+  // 40 000 is hard code for the circumference of the earth.
+  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, 40000, 0, "hopDistanceForLeaving" + i)}
 
   val overallDistance: IntVar = Sum(hopDistance)
 
@@ -170,6 +197,7 @@ trait HopDistance extends VRP {
     distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
     for (i <- 0 until N if Next(i).value != N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => DistanceMatrix(i)(j))
   }
+
   def installCostFunction(fun:(Int, Int) => Int){
     distanceFunction = fun
     for (i <- 0 until N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => fun(i,j))
@@ -201,7 +229,6 @@ trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction 
  * used by some neighborhood searches
  */
 trait ClosestNeighborPoints extends VRP with HopDistance{
-  
   var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
 
   def saveKNearestPoints(k:Int){

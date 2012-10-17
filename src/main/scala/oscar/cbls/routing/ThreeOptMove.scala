@@ -52,9 +52,8 @@ object ThreeOptMove extends SearchEngine{
     //TODO: BUG here: it sometimes generates a cycle.
     // no more cycle
 
-    var startInsertionPoint = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
-    var insertionPoint = startInsertionPoint
-    do{
+    val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
+    for (insertionPoint <- RangeHotRestart(hotRestart,hotRestart+vrp.N)){
       //we search for a segment,
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point
@@ -76,8 +75,7 @@ object ThreeOptMove extends SearchEngine{
           }
         }
       }
-      insertionPoint = nextModulo(insertionPoint)
-    }while(insertionPoint != startInsertionPoint)
+    }
     if (move == null) null
     else ThreeOptMove(move._1, move._2, move._3, BestObj, vrp)
   }
@@ -93,7 +91,7 @@ object ThreeOptMove extends SearchEngine{
    */
 
   def doMove(BeforeSegment: Int, EndOfSegment: Int, InsertionPoint: Int, vrp:VRP){
-      val toUpdate = vrp.moveSegmentVariablesToUpdate(BeforeSegment,EndOfSegment,InsertionPoint)
+      val toUpdate = vrp.moveSegmentListToUpdate(BeforeSegment,EndOfSegment,InsertionPoint)
       toUpdate.foreach(t => t._1 := t._2)
   }
 
@@ -101,7 +99,7 @@ object ThreeOptMove extends SearchEngine{
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-    val toUpdate = vrp.moveSegmentVariablesToUpdate(beforeFrom,to,insertPoint)
+    val toUpdate = vrp.moveSegmentListToUpdate(beforeFrom,to,insertPoint)
     vrp.getAssignVal(toUpdate)
   }
 }

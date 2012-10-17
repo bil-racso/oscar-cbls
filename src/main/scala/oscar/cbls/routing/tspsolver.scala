@@ -37,6 +37,16 @@ import scala.math._
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
 
+  // tester si l'objectif est bien la distance réel via la matrice de base des distances.
+  def realSum(vrp:VRP,matrice:Array[Array[Int]])={
+    var sum:Int = 0
+    for(i<- 0 until vrp.Next.length){
+      val j = vrp.Next(i).value
+
+      sum += matrice(i)(j)
+    }
+    sum
+  }
   val N:Int = 1000
 
   this.startWatch()
@@ -49,9 +59,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
   def getPlanarDistanceMatrix(N:Int):Array[Array[Int]] = {
     val coordX = Array.tabulate(N)(_ => random.nextInt(1000))
     val coordY = Array.tabulate(N)(_ => random.nextInt(1000))
-    Array.tabulate(N,N)((i,j) => if (i==0 ||j == 0) 0 else
-      round(sqrt((   pow(coordX(i) - coordX(j), 2)
-                   + pow(coordY(i) - coordY(j), 2) ).toFloat)).toInt)
+    Array.tabulate(N,N)((i,j) => round(sqrt((   pow(coordX(i) - coordX(j), 2)
+                   + pow(coordY(i) - coordY(j), 2) ).toFloat)).toInt )
   }
 
   val DistanceMatrix = getPlanarDistanceMatrix(N)
@@ -69,6 +78,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   println("closed " + getWatchString)
   println(vrp)
   NearestNeighbor(vrp)
+  //RandomNeighboor(vrp)
   m.propagate()
 
   println("start val: " + vrp.ObjectiveVar.value)
@@ -79,7 +89,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
-//    move = OnePointMove.getFirstImprovingMove(vrp,move)
+    //move = OnePointMove_2.getFirstImprovingMove(vrp,move)
+    //move = OnePointMove.getFirstImprovingMove(vrp,move)
     move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
@@ -89,6 +100,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
     }else{
 //      if (nsize == 40){
         saturated = true
+        println("done " + getWatchString)
+        if(realSum(vrp,DistanceMatrix).equals(oldobj)) println("Youpie!!") else println("Ohhh :'(")
 //      }else{
 //        nsize = 40
 //        println("GOING TO k=40")
@@ -96,7 +109,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
     }
   }
 
-  println("done " + getWatchString)
+
+
 
   println(vrp)
 }

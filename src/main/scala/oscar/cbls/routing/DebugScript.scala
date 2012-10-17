@@ -24,8 +24,6 @@ object DebugScript extends SearchEngine with App{
 
 
   val V:Int = 1
-
-
   val random = new Random(0)
 
   def getRandomDistanceMatrix(N:Int):Array[Array[Int]]= Array.tabulate(N,N)((i,j) => if (i==0 ||j == 0) 0 else random.nextInt(1000)+1)
@@ -44,7 +42,7 @@ object DebugScript extends SearchEngine with App{
   val line2 =  getPlanarDistanceMatrix(Array(1,2,3,4,5,6,-1),Array(0,0,0,0,0,0,0))
   val N2:Int = 7
   var m: Model = new Model(false,true,false,false)
-  var vrp = new VRP(N2, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
+  var vrp = new VRP(N2, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PredAndUnrouted
   vrp.installCostMatrix(line2)
   println("matrix done")
   m.close()
@@ -54,15 +52,17 @@ object DebugScript extends SearchEngine with App{
   println(vrp.routes)
   println(vrp)
   m.propagate()
-  println("Debug route(" + N2 + "points,"+V+"cars)")
+  println("Debug route(" + N2 + "points,"+V+"cars)"+"\n Pred:")
+  for (i<- vrp.Pred) println(i)
 
+  println(vrp.Unrouted)
   // changement 1 vers 7
   // recherche
 
   var z = 0
   do{
     m = new Model(false,true,false,false)
-    vrp = new VRP(N2, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
+    vrp = new VRP(N2, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PredAndUnrouted
     vrp.installCostMatrix(line2)
     m.close()
     //println("Debug route(" + N2 + "points,"+V+"cars)")
@@ -79,7 +79,7 @@ object DebugScript extends SearchEngine with App{
     var it = 0
     while(!saturated){
       val oldobj:Int = vrp.ObjectiveVar.value
-      //move = OnePointMove.getFirstImprovingMove(vrp,move)
+      //move = OnePointMove_2.getFirstImprovingMove(vrp,move)
       move = ThreeOptMove.getFirstImprovingMove(vrp,nsize, move)
       if (move != null && move.getObjAfter < oldobj){
         it +=1
