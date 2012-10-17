@@ -35,18 +35,18 @@ object VRPTWParser {
 	
 			coord(i)   = (l(1), l(2))
 			demand(i)  = l(3)
-			twStart(i) = l(4)*100
-			twEnd(i)   = l(5)*100
-			servDur(i) = l(6)*100
+			twStart(i) = l(4)
+			twEnd(i)   = l(5)
+			servDur(i) = l(6)
 			
 			lines = lines.drop(1)
 		}
 		
-		val dist = new Array[Array[Int]](n+1, n+1)
+		val dist = new Array[Array[Double]](n+1, n+1)
 		
 		for(c1 <- 0 to n; c2 <- 0 until c1) {
 			
-			dist(c1)(c2) = (sqrt( pow(coord(c1)._1 - coord(c2)._1,2) + pow(coord(c1)._2 - coord(c2)._2,2) ) * 100).toInt 
+			dist(c1)(c2) = (sqrt( pow(coord(c1)._1 - coord(c2)._1,2) + pow(coord(c1)._2 - coord(c2)._2,2) ))
 			dist(c2)(c1) = dist(c1)(c2)
 			dist(c1)(c1) = 0
 			dist(c2)(c2) = 0
@@ -56,5 +56,5 @@ object VRPTWParser {
 	}
 }
 
-case class InstanceVRPTW(n : Int, k : Int, c : Int, demand : Array[Int], twStart : Array[Int], twEnd : Array[Int], servDur : Array[Int], dist : Array[Array[Int]], coord : Array[(Int, Int)])
+case class InstanceVRPTW(n : Int, k : Int, c : Int, demand : Array[Int], twStart : Array[Int], twEnd : Array[Int], servDur : Array[Int], dist : Array[Array[Double]], coord : Array[(Int, Int)])
 						 

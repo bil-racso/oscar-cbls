@@ -20,7 +20,7 @@ import oscar.visual.VisualPareto
 
 object MO_VRPTW extends App {
 	
-	val instance = parse("data/VRPTW/Solomon/moTest.txt")
+	val instance = parse("data/VRPTW/Solomon/R104.txt")
 	
 	val hyp = scala.collection.mutable.Queue[Double]()
 	
@@ -59,7 +59,7 @@ object MO_VRPTW extends App {
 	for(c1 <- Sites; c2 <- Sites) {
 		val i = if (c1 >= nCustomers) 0 else c1+1
 		val j = if (c2 >= nCustomers) 0 else c2+1
-		dist(c1)(c2) = instance.dist(i)(j)
+		dist(c1)(c2) = (instance.dist(i)(j)*100).toInt
 	}
 	
 	val Horizon = twStart(Depots.min) to twEnd(Depots.min)
@@ -92,36 +92,59 @@ object MO_VRPTW extends App {
 	
 	var stagnation  = 0
 	
-	val beta = 1
-	var p = 4
+	var beta = 1
+	var p = 20
 	
 	var nObjRestart = 0
+	var nExtrem = 0
 	
-	cp.lns(200, 5000) {
+	cp.lns(4000, 5000) {
 		
 		// Next objective 
 		val obj = nextObj
 		
-		// Relaxation of the objectives (diversification)
-		objRelax(obj)
+		// Relaxation of the objectives
+		if (nextFloat < 0.3)
+			objRelax(obj, true) 
+		else 
+			objRelax(obj, false)
 		
-		// Problem relaxation is objRelax in this example
-		probRelax(obj)
+		// Distance relaxation
+		if (obj == 0) {
+			distRelax()
+		} 		
+		// Time relaxation
+		else {
+			timeRelax()
+		}
 	}
+	
 	
 	def nextObj : Int = {
 		
-		nObjRestart += 1
-		
-		val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
-		cp.objective.currentObjective = obj
-		
-		if (nObjRestart > nObjs) {
-			pareto.nextPoint	
-			nObjRestart = 0
-		}
+		if (nExtrem < 10) {
+			nExtrem += 1
+			cp.objective.currentObjective = 1
+			1
+		} 
+		else if (nExtrem < 20){
+			nExtrem += 1
+			cp.objective.currentObjective = 0
+			0
+		} 
+		else {
+			nObjRestart += 1
 			
-		obj
+			val obj = (cp.objective.currentObjectiveIdx + 1)%nObjs
+					
+			if (nObjRestart > nObjs) {
+				pareto.nextPoint	
+				nObjRestart = 0
+			}
+			
+			cp.objective.currentObjective = obj		
+			obj
+		}
 	}
 	
 	def objRelax(obj : Int, intensification : Boolean = false) {
@@ -129,18 +152,15 @@ object MO_VRPTW extends App {
 		for (o <- Objs) {		
 			if (intensification || o == obj) {
 				cp.objective.bounds(o)   = pareto.currentPoint(o)
-				cp.objective.bestObjs(o) = pareto.currentPoint(o)
 			}
 			else {
 				// The -1 avoid to find an already found solution
 				cp.objective.bounds(o)   = pareto.currentPoint.upperValue(o) - 1
-				cp.objective.bestObjs(o) = pareto.currentPoint.upperValue(o) - 1
 			}
 		}
 		
 		// Better solution
 		cp.objective.bounds(obj)   -= 1
-		cp.objective.bestObjs(obj) -= 1
 	}
 	
 	def solFound {
@@ -148,7 +168,7 @@ object MO_VRPTW extends App {
 		val objs = Array(totDist.value, totTard.value)
 		val sol  = buildSol
 		
-		p = 4
+		p = 20
 		stagnation = 0
 		
 		nObjRestart = 0
@@ -165,7 +185,7 @@ object MO_VRPTW extends App {
 		sol
 	}
 	
-	cp.sc = new IDSSearchController(cp, 3)
+	cp.sc = new IDSSearchController(cp, 4)
 	
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -176,15 +196,17 @@ object MO_VRPTW extends App {
 		1 / (nDist(i)(j) + v)
 	}
 	
-	def probRelax(obj : Int) {
+	def distRelax() {
 		
-		/*stagnation += 1
-		if (stagnation >= 20) {
+		beta = 1
+		
+		stagnation += 1
+		if (stagnation >= 30) {
 			stagnation = 0
 			p += 1
 			if (p > 40) p = 40
 			println("\np : "+p)
-		}*/
+		}
 		
 		// Adaptable LNS
 		if (!cp.isLastLNSRestartCompleted) {
@@ -211,6 +233,38 @@ object MO_VRPTW extends App {
 			val r = sortedC((pow(nextFloat, beta) * sortedC.size).floor.toInt)
 			S(r) = true
 		}
+		
+		val filtered = Sites.filter(i => !S(i))
+		
+		val prevSol  = pareto.currentSol(0)
+		val routeSol = pareto.currentSol(1)
+		
+		val constraints1 : Array[Constraint] = filtered.map(i => prev(i) == prevSol(i)).toArray
+		val constraints2 : Array[Constraint] = filtered.map(i => routeOf(i) == routeSol(i)).toArray
+
+		cp.post(constraints1)
+		cp.post(constraints2)
+	}
+	
+	def timeRelax() {
+		
+		p = 20
+		
+		var alpha = nextInt(Horizon.max)
+		var beta = alpha+1
+		
+		def count : Int = {
+			var n = 0
+			for (i <- Sites)
+				if (twStart(i) >= alpha && twStart(i) <= beta) 
+					n += 1
+			n
+		} 
+		
+		// Adjust alpha and beta
+		while (count < p && beta < Horizon.max) beta += 1
+		
+		val S = Sites.map(i => twStart(i) >= alpha && twStart(i) <= beta)
 		
 		val filtered = Sites.filter(i => !S(i))
 		
@@ -294,6 +348,8 @@ object MO_VRPTW extends App {
 	
 	val upDist = totDist.max
 	val upTard = totTard.max
+		
+	val visu2 = new VisualPareto(pareto, Array(upDist, upTard), 800)
 	
 	cp.exploration {
 		
@@ -312,6 +368,7 @@ object MO_VRPTW extends App {
 		hyp enqueue pareto.hypervolume(Array(upDist, upTard))
 		
 		visu.update
+		visu2.update
 	}
 	
 	println("\nFinished !")
