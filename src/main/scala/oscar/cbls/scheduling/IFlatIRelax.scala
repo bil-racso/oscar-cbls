@@ -58,6 +58,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("----------------")
     }
+    p.updateVisual
 
     var plateaulength = 0
     var BestMakeSpan = p.MakeSpan.value
@@ -66,14 +67,14 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //iterative weakening and flattening
       it += 1
 
-      // if(plateaulength == 20){
-      // for (i <- 0 until NbRelax*2){Relax(75);}
-      // println("jumping****************")
-      //}else{
+//       if(plateaulength > 10 && (plateaulength % 50) == 0){
+//       for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
+//       println("jumping****************")
+//      }else{
       for (i <- 0 until NbRelax) {
         Relax(PkillPerRelax);
       }
-      //}
+//      }
 
       flatteningheursitics match {
         case EarliestFirst() => FlattenEarliestFirst();
@@ -89,6 +90,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
+        p.updateVisual
       } else {
         plateaulength += 1
       }
@@ -122,9 +124,16 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     }
     if (PotentiallykilledNodes.isEmpty) return
 
-    val (from, to) = selectFrom(PotentiallykilledNodes)
-    if (Verbose) println("killed " + from + "->" + to)
-    to.removeDynamicPredecessor(from)
+    //val (from, to) = selectFrom(PotentiallykilledNodes)
+    //if (Verbose) println("killed " + from + "->" + to)
+    //to.removeDynamicPredecessor(from)
+    
+    for ((from,to) <- PotentiallykilledNodes){
+      if (flip(PKill)){
+        if (Verbose) println("killed " + from + "->" + to)
+        to.removeDynamicPredecessor(from)
+      }
+    }
   }
 
   def RandomFlatten() {
@@ -161,9 +170,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       val conflictTasks: List[Task] = conflictSet.map(_._1)
 
-      //println("flatten length: " + TaskssAndUse.length)
-      //TODO: cannot take a task and a supertask
-
+      //TODO: it could be the case tat no pair of task is available here.
       val (a, b) = selectMax2(conflictTasks, conflictTasks,
         (a: Task, b: Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
         (a: Task, b: Task) => p.canAddPrecedenceAssumingResourceConflict(a,b))
@@ -208,4 +215,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       b.addDynamicPredecessor(a)
     }
   }
+
 }
+
+

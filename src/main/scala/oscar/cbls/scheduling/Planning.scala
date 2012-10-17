@@ -26,7 +26,9 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.algebra.Algebra._;
+import oscar.cbls.algebra.Algebra._
+import oscar.visual.{Plot2D, VisualFrame}
+;
 
 class Planning(val model: Model, val maxduration: Int) {
 
@@ -107,6 +109,24 @@ class Planning(val model: Model, val maxduration: Int) {
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
+  var gantt:Gantt = null
+  var plot:Plot2D = null
+  def getVisual{
+    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
+    frame.setBounds(0,0,1000,400)
+    gantt = new Gantt(this)
+    frame.createFrame("Gantt chart").add(gantt)
+ //   plot = new Plot2D("makespan", "iterations", "makespan");
+ //   frame.createFrame("progress").add(plot)
+
+    frame.pack
+    frame.setSize(1000,1000)
+  }
+
+  def updateVisual{
+    if (gantt!=null) gantt.update(0.3f, 15)
+  }
+
   override def toString: String = {
     var toreturn: String = ""
     for (j <- Tasks.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask) {
@@ -132,12 +152,14 @@ class Planning(val model: Model, val maxduration: Int) {
 
   def dependencies: String = {
     var toreturn: String = ""
-    for (task <- Tasks if task != SentinelTask){
-      for (t2 <- task.StaticPredecessors){
-        toreturn += t2.name + " ->> " + task.name + "\n"
-      }
-      for (t2 <- task.AdditionalPredecessors.value){
-        toreturn += TaskArray(t2).name + " -> " + task.name + "\n"
+    for (task <- Tasks.sortBy(t => t.EarliestStartDate.value)){
+      for (t2 <- task.AllSucceedingTasks.value if t2 != task.TaskID && t2 != SentinelTask.TaskID){
+        val task2 = TaskArray(t2)
+        if (task2.AdditionalPredecessors.value.contains(task.TaskID)){
+          toreturn += task.name + " -> " + task2.name + "\n"
+        }else{
+          toreturn += task.name + " ->> " + task2.name + "\n"
+        }
       }
     }
     toreturn
@@ -185,6 +207,81 @@ class Planning(val model: Model, val maxduration: Int) {
     val toreturn = Search(from.getStartTask)
     for (task <- Reached) task.Mark = false
     toreturn
+  }
+
+  /**returns a list of pair of task; precedences to kill to make it possible to add the new dependency
+   * 
+   * @param from
+   * @param to
+   * @return
+   */
+  def getDependencyToKillToAvoidCycle(from:Task, to:Task):DependencyCleaner = {
+    var MarkedTasks:List[Task] = List.empty
+    var DependenciesToKill:List[(Task, Task)] = List.empty
+    /**marks all tasks on the path linking From to To
+     * all market tasks are also added to MArketTasks*/ 
+    def MarkPathes(from:Task, to:Task):Boolean = {
+      if (from == to) return true;
+      if (from.EarliestEndDate.value > to.EarliestStartDate.value){
+        return false
+      }
+      if(from.Mark){return true}
+      for(next <- from.getStartTask.AllSucceedingTasks.value){
+        val nextTask:Task = TaskArray(next)
+        if (MarkPathes(nextTask, to)) from.Mark = true
+      }
+      if (from.Mark){
+        MarkedTasks = from :: MarkedTasks
+      }
+      from.Mark
+    }
+
+    /**returns false if hard rock dependency, true if can be killed*/
+    def FindDependenciesToKill(from:Task, to:Task) :Boolean = {
+      if (from == to) return false
+      if(!from.Mark){return true}
+      for(next <- from.getStartTask.AdditionalPredecessors.value){
+        val nextTask:Task = TaskArray(next)
+        if (nextTask.Mark){
+          DependenciesToKill = (from,nextTask) :: DependenciesToKill
+          nextTask.Mark = false
+        }
+      }
+      for(nextTask <- from.getStartTask.StaticPredecessors){
+        if (nextTask.Mark){
+          if (FindDependenciesToKill(nextTask, to)){
+            nextTask.Mark = false
+          }else{
+            return false
+          }
+        }
+      }
+      return true
+    }
+
+    MarkPathes(from.getStartTask, to.getEndTask)
+    if(FindDependenciesToKill(from.getStartTask, to.getEndTask)){
+      for (t <- MarkedTasks) t.Mark = false
+      return HardRockDependency()
+    }else{
+      for (t <- MarkedTasks) t.Mark = false
+      return DependenciesCanBeKilled(DependenciesToKill)
+    }
+  }
+  
+  abstract case class DependencyCleaner()
+  case class HardRockDependency() extends DependencyCleaner
+  case class DependenciesCanBeKilled(d:List[(Task, Task)]) extends DependencyCleaner{
+    def killDependencies{
+      for ((a,b) <- d){
+        b.removeDynamicPredecessor(a)
+      }
+    }
+    def restoreDependencies{
+      for ((a,b) <- d){
+        b.addDynamicPredecessor(a)
+      }
+    }
   }
 }
 

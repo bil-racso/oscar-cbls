@@ -22,23 +22,24 @@ package object util {
   val rand = new scala.util.Random(0)
   
   /**
-   * Random selector: 
+   * Random selector:
    * @return some randomly selected value i in r satisfying st(i)
    * @author pschaus
    */
-  def select[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))(block: R => Unit) = {
-    var cpt = 1
+  def select[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
+               (block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in select")}) = {
+    var cpt = r.count(st)
     var result: Option[R] = None 
     for (o <- r; if st(o)) {
       val proba = 1.0/cpt
       if (rand.nextDouble() <= proba) {
         result = Some(o)
       }
-      cpt += 1
+      cpt += 1 //I'm not quite sure, but I believe it should be multiplied by two at each round.
     }
     result match {
     	case Some(r) => block(r)
-    	case None => println("no elemen satisfying condition in select")
+    	case None => {defaultBlock}
     }
   }
   
@@ -47,7 +48,8 @@ package object util {
    * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
    * @author pschaus
    */
-  def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))(f: R => Double)(block: R => Unit) = {
+  def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
+                  (f: R => Double)(block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in selectMin")}) = {
     var cpt = 1
     var result: Option[R] = None
     var best = Double.MaxValue
@@ -67,7 +69,7 @@ package object util {
     }
     result match {
     	case Some(r) => block(r)
-    	case None => println("no elemen satisfying condition in selectMin")
+    	case None => {defaultBlock}
     }
   }
   

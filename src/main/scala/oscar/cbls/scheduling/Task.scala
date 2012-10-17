@@ -57,6 +57,7 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
 
     this.duration <== end.EarliestEndDate - start.EarliestStartDate
 
+    //ParasiticPrecedences = SortedSet.empty[Int]
   }
 
   override def addDynamicPredecessor(t: Task) {
@@ -143,6 +144,7 @@ case class Task(val duration: IntVar, val planning: Planning, val name: String =
   def getEndTask: Task = this
   def getStartTask: Task = this
 
+ // var ParasiticPrecedences:IntSetVar = null
   /**This method is called by the planning when all tasks are created*/
   def post() {
     if (AdditionalPredecessors == null){
@@ -162,6 +164,9 @@ case class Task(val duration: IntVar, val planning: Planning, val name: String =
       AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
 
       LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
+
+     // ParasiticPrecedences = AdditionalPredecessors minus PotentiallyKilledPredecessors
     }
   }
 }
+
