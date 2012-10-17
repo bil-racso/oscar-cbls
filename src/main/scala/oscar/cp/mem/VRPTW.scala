@@ -93,60 +93,72 @@ object VRPTW extends App {
 	
 	type Sol = Array[Int]
 	
-	var minP = 10
-	
-	var stagnation  = 0	
-	var beta = 10
-	var p = minP
-	
-	var nObjRestart = 0
-	var nExtrem = 0
-	
 	var bestPrev  : Sol = new Sol(nSites)
 	var bestNext  : Sol = new Sol(nSites)
 	var bestRoute : Sol = new Sol(nSites)
 	var bestDist  = 0
 	
-	cp.lns(1000, 3000) { 
-		
-		val nextRelax = nextInt(3)
-		
-		relaxVariables(nextRelax match {
-			case 0 => {
-				p = 30
-				shaw
-			}
-			case 1 => {
-				p = 20
-				casd
-			}
-			case 2 => {
-				p = 10
-				catd
-			}
-		})
-	}
-
 	cp.sc = new IDSSearchController(cp, 4)
 	
+	cp.lns(500, 3000) { 
+		
+		val nextRelax = nextInt(2) // Not Shaw
+		
+		relaxVariables(nextRelax match {
+			case 0 => catd(10)
+			case 1 => casd(20)
+			case 2 => shaw(30, 10)
+		})
+	}
+	
+	// ------------------------------------------------------------------------
+	// PREPROCESSING AND USEFUL FUNCTIONS
+	// ------------------------------------------------------------------------
+	
+	val sortedCustomersByTwStart = Customers.sortBy(tw => tw)
+	
+	val angles = Array.tabulate(nCustomers)(i => {
+		
+		val x = coord(i)._1 - coord(Depots.min)._1
+		val y = coord(i)._2 - coord(Depots.min)._2
+		
+		val theta = (atan2(x, y)*180/Pi).toInt
+		if (theta < 0) (theta + 360) else theta	
+	})
+		
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
 	val nDist   = dist.map(_.map(_ / maxDist.toDouble))
 	
-	def relatedness(i : Int, j :Int) = {		
+	def relatedness(i : Int, j :Int) = {
+		
 		val v = if (bestPrev(i) == bestPrev(j)) 0 else 1
 		1 / (nDist(i)(j) + v)
 	}
-	
-	def shaw : Array[Boolean] = {
 		
-		// Increases the number of relaxed customer in case of stagnation
-		stagnation += 1
-		if (stagnation >= 5) {
-			stagnation = 0
-			p += 1
-			if (p > 35) p = 35
-		}
+	def adaptedAngle(angle : Int, alpha : Int) = {	
+		
+		val newAngle = angle - alpha 
+		if (newAngle < 0) 360-(alpha-angle) else newAngle
+	}
+	
+	def solFound {		
+		
+		bestPrev  = buildPrev
+		bestRoute = buildRoute	
+		bestNext  = buildNext
+		bestDist  = totDist.value
+	}
+	
+	def buildPrev  : Sol = prev.map(_.value)
+	def buildNext  : Sol = next.map(_.value)
+	def buildRoute : Sol = routeOf.map(_.value)
+	
+	// ------------------------------------------------------------------------
+	// RELAXATION PROCEDURES
+	// ------------------------------------------------------------------------
+	
+	def shaw(p : Int, beta : Int) : Array[Boolean] = {
 		
 		// Random selection of a customer	
 		val selected = Array.fill(nSites)(false)
@@ -170,16 +182,7 @@ object VRPTW extends App {
 		selected
 	}
 	
-	val angles = Array.tabulate(nCustomers)(i => {
-		
-		val x = coord(i)._1 - coord(Depots.min)._1
-		val y = coord(i)._2 - coord(Depots.min)._2
-		
-		val theta = (atan2(x, y)*180/Pi).toInt
-		if (theta < 0) (theta + 360) else theta	
-	})
-	
-	def casd : Array[Boolean] = {
+	def casd(p : Int) : Array[Boolean] = {
 		
 		val routes   = Array.fill(nVehicles)(false)
 		val selected = Array.fill(nSites)(false)
@@ -197,29 +200,28 @@ object VRPTW extends App {
 		selected
 	}
 	
-	def catd : Array[Boolean] = {
+	def catd(p : Int) : Array[Boolean] = {
 		
 		val routes   = Array.fill(nVehicles)(false)
 		val selected = Array.fill(nSites)(false)
 		
-		val alpha = nextInt(nCustomers - p)
-		
-		val sortedTW = Customers.sortBy(i => twStart(i))
+		// Ensures the relaxation of p customers (not depots)
+		val max = nCustomers - p - 1
+		val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
+
+		// Keeps relevant customers
+		val filteredC = Customers.filter(i => twStart(i) >= alpha)
+		// Sorts relevant customers in order to select the p first
+		val sortedC = filteredC.sortBy(i => twEnd(i))
 		
 		for (i <- 0 until p)
-			routes(bestRoute(sortedTW(alpha + i))) = true
+			routes(bestRoute(sortedC(i))) = true
 				
 		for (i <- Customers) 
 			if (routes(bestRoute(i))) 
 				selected(i) = true
 			
 		selected
-	}
-	
-	def adaptedAngle(angle : Int, alpha : Int) = {
-		
-		val newAngle = angle - alpha 
-		if (newAngle < 0) 360-(alpha-angle) else newAngle
 	}
 	
 	def relaxVariables(selected : Array[Boolean]) {
@@ -242,23 +244,6 @@ object VRPTW extends App {
 		cp.post(constraints.toArray)
 	}
 	
-	def solFound {		
-		
-		// Get solution
-		bestPrev  = buildPrev
-		bestRoute = buildRoute	
-		bestNext  = buildNext
-		bestDist  = totDist.value
-		
-		// Reset adaptable values
-		p = minP
-		stagnation = 0
-	}
-	
-	def buildPrev  : Sol = prev.map(_.value)
-	def buildNext  : Sol = next.map(_.value)
-	def buildRoute : Sol = routeOf.map(_.value)
-	
 	// ------------------------------------------------------------------------
 	// VISUALIZATION
 	// ------------------------------------------------------------------------
@@ -266,7 +251,7 @@ object VRPTW extends App {
 	val visu = new VisualRelax(coord, realDist)
 	
 	// ------------------------------------------------------------------------
-	// EXPLORATION BLOCK
+	// CONSTRAINTS BLOCK
 	// ------------------------------------------------------------------------
 
 	cp.minimize(totDist, totTard) subjectTo {
@@ -326,9 +311,15 @@ object VRPTW extends App {
 		for(i <- Depots)
 			cp.add(departure(i) == 0)
 		
-	} exploration {
+	} 
 		
-		/*while (!allBounds(prev)) {
+	// ------------------------------------------------------------------------
+	// EXPLORATION BLOCK
+	// ------------------------------------------------------------------------
+	
+	cp.exploration {
+		
+		while (!allBounds(prev)) {
 		
 			val firstDepot = max(Depots.min, maxVal(prev))
 			
@@ -336,9 +327,9 @@ object VRPTW extends App {
 			val j = selectMin(Sites, j => prev(i).hasValue(j) && j <= firstDepot + 1)(j => dist(i)(j))
 	
 			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
-		}*/
+		}
 		
-		while (!allBounds(prev)) {
+		/*while (!allBounds(prev)) {
 			
 			var x = -1
 			var v = -1
@@ -364,7 +355,7 @@ object VRPTW extends App {
 			}
 			
 			cp.branch(cp.post(prev(x) == v))(cp.post(prev(x) != v))
-		}
+		}*/
 		
 		/*while (!allBounds(prev)) {
 			
@@ -405,7 +396,6 @@ object VRPTW extends App {
 	
 	println("\nFinished !")
 	cp.printStats
-	
 	
 	def selectMin(x : IndexedSeq[Int], b : (Int => Boolean))(f : (Int => Int)) : Int = {
                         
