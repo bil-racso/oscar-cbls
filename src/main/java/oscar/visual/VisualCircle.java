@@ -37,7 +37,7 @@ public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
 
 	public VisualCircle(VisualDrawing d,double x, double y, double radius) {
 		super(d, new Ellipse2D.Double(x-radius,y-radius,2*radius,2*radius));
-		ellipse = shape;
+		ellipse = shape();
 		this.radius = radius;
 		this.centerx = x;
 		this.centery = y;
@@ -74,7 +74,7 @@ public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
 	
 	private void update() {
 		ellipse.setFrame(centerx-radius,centery-radius,2*radius,2*radius);
-		drawing.repaint();
+		drawing().repaint();
 	}
 
 	
