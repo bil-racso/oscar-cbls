@@ -22,7 +22,7 @@ import java.awt.Shape;
 import java.awt.geom.Point2D;
 import oscar.visual._
 
-class ColoredShape[E <: Shape](drawing:VisualDrawing, _shape:E) {
+class ColoredShape[E <: Shape](_drawing:VisualDrawing, _shape:E) {
 
 
 	var _innerCol = Color.white
@@ -50,6 +50,7 @@ class ColoredShape[E <: Shape](drawing:VisualDrawing, _shape:E) {
 	def outerCol = _innerCol
 	def visible = _visible
 	
+	def drawing = _drawing;
 	def shape = _shape;
 	
 	def visible_= (visible:Boolean) : Unit = {

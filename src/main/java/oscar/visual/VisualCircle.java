@@ -45,7 +45,7 @@ public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
 	
 	public VisualCircle(VisualDrawing d,double x, double y, double radius, Color col) {
 		this(d,x,y,radius);
-		setInnerCol(col);
+		innerCol_$eq(col);
 	}
 	
 	/**
@@ -109,7 +109,7 @@ public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
 
 			VisualCircle circ = new VisualCircle(d, 100, 100, 50);
 			Thread.sleep(1000);
-			circ.setInnerCol(Color.blue);
+			circ.innerCol_$eq(Color.blue);
 			Thread.sleep(1000);
 			circ.setRadius(100);
 			Thread.sleep(1000);

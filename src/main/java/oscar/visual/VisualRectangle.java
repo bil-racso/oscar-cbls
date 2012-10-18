@@ -108,11 +108,11 @@ public class VisualRectangle extends ColoredShape<Rectangle2D.Double>{
 			f.pack();
 
 			VisualRectangle rect = new VisualRectangle(d, 50, 50, 100, 50);
-			rect.setToolTip("Hello");
+			rect.toolTip_$eq("Hello");
 			
 			
 			Thread.sleep(1000);
-			rect.setInnerCol(Color.red);
+			rect.innerCol_$eq(Color.red);
 			Thread.sleep(1000);
 			rect.setWidth(200);
 			Thread.sleep(1000);

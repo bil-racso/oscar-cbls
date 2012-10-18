@@ -44,7 +44,7 @@ public class VisualBinPacking extends VisualDrawing {
 	
 	public VisualBinPackingItem addItem(int bin, int height) {
 		VisualBinPackingItem item = new VisualBinPackingItem(this, bin, height);
-		item.setInnerCol(VisualUtil.getRandomColor());
+		item.innerCol_$eq(VisualUtil.getRandomColor());
 		items.add(item);
 		item.setBin(bin);
 		return item;

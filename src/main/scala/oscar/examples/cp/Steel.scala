@@ -99,9 +99,9 @@ object Steel {
 		// creates the tour visu and place it into the frame
 		val drawing: VisualBinPacking = new VisualBinPacking(nbSlab,12)
 		val items = Slabs.map(i => drawing.addItem(i,scale*weight(i))).toArray
-		Slabs.foreach(o => items(o).setInnerCol(colors(col(o))))
+		Slabs.foreach(o => items(o).innerCol = colors(col(o) ))
 		f.createFrame("Steel Mill Slab").add(drawing)
-		capa.foreach(c => new VisualLine(drawing,0,c*scale,nbSlab*12,c*scale).setOuterCol(Color.red))
+		capa.foreach(c => new VisualLine(drawing,0,c*scale,nbSlab*12,c*scale).outerCol = Color.red)
 		f.pack()
 		// ------------------------------------------
 
