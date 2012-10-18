@@ -31,7 +31,7 @@ public class VisualLine extends ColoredShape<Line2D.Double>{
 	
 	public VisualLine(VisualDrawing d,double xorig, double yorig, double xdest, double ydest) {
 		super(d, new Line2D.Double(xorig,yorig,xdest,ydest));
-		line = shape;
+		line = shape();
 	}
 	
 	/**
@@ -41,7 +41,7 @@ public class VisualLine extends ColoredShape<Line2D.Double>{
 	 */
 	public void setDest(double x, double y) {
 		line.setLine(line.getX1(),line.getY1(),x,y);
-		drawing.repaint();
+		drawing().repaint();
 	}
 	
 	/**
@@ -51,7 +51,7 @@ public class VisualLine extends ColoredShape<Line2D.Double>{
 	 */
 	public void setOrig(double x, double y) {
 		line.setLine(x,y,line.getX2(),line.getY2());
-		drawing.repaint();
+		drawing().repaint();
 	}
 	
 	

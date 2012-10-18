@@ -57,7 +57,7 @@ import java.awt.Shape;
 class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new BorderLayout()) {
 
 	var drawingPanel:JPanel = new JPanel() {
-			def paintComponent(g:Graphics) {
+			override def paintComponent(g:Graphics) {
 				if (flipped) {
 					g.translate(0,getHeight()); 
 					(g.asInstanceOf[Graphics2D]).scale(1, -1);
@@ -70,7 +70,7 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 		}
 
 
-	var shapes:List[ColoredShape[Shape]];
+	var shapes:List[ColoredShape[Shape]] = Nil;
 		
 	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
 		override def mouseMoved(e:MouseEvent) {
@@ -112,7 +112,7 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 
 }
 
-object VisualDrawing{
+object VisualDrawingTest{
   def main(args : Array[String]) {
 		
 		val f = new VisualFrame("toto");

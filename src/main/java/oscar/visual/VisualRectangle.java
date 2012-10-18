@@ -33,7 +33,7 @@ public class VisualRectangle extends ColoredShape<Rectangle2D.Double>{
 
 	public VisualRectangle(VisualDrawing d,double x, double y, double w, double h) {
 		super(d, new Rectangle2D.Double(x,y,w,h));
-		rect = shape;
+		rect = shape();
 	}
 	
 	/**
@@ -75,7 +75,7 @@ public class VisualRectangle extends ColoredShape<Rectangle2D.Double>{
 	 */
 	public void move(double x, double y) {
 		rect.setRect(x, y, rect.getWidth(), rect.getHeight());
-		drawing.repaint();
+		drawing().repaint();
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class VisualRectangle extends ColoredShape<Rectangle2D.Double>{
 	 */
 	public void setWidth(double w) {
 		rect.setRect(rect.getX(), rect.getY(), w, rect.getHeight());
-		drawing.repaint();
+		drawing().repaint();
 	}
 
 
@@ -94,7 +94,7 @@ public class VisualRectangle extends ColoredShape<Rectangle2D.Double>{
 	 */
 	public void setHeight(double h) {
 		rect.setRect(rect.getX(), rect.getY(), rect.getWidth(), h);
-		drawing.repaint();
+		drawing().repaint();
 	}
 
 	public static void main(String[] args) {
