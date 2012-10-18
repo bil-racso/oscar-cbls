@@ -20,63 +20,55 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
+import oscar.visual._
 
-public class ColoredShape<E extends Shape> {
+class ColoredShape[E <: Shape](drawing:VisualDrawing, _shape:E) {
 
 
-	private Color innerCol = Color.white;
-	private Color outerCol = Color.black;
+	var _innerCol = Color.white
+	var _outerCol = Color.black
 	
-	protected VisualDrawing drawing;
-	public E shape;
-	private boolean visible = true;
+
 	
-	public String toolTip = null;
+	var _visible = true
+	
+	var toolTip : String = null
+	
+	drawing.addShape(this);
 	
 	
-	public ColoredShape(VisualDrawing d, E shape) {
-		this.drawing = d;
-		this.shape = shape;
-		d.addShape(this);
-	}	
-	
-	public void draw(Graphics2D g) {
+	def draw(g:Graphics2D) {
 		if (visible) {
-			g.setColor(getInnerCol());
+			g.setColor(innerCol);
 			g.fill(shape);
-			g.setColor(getOuterCol());
+			g.setColor(outerCol);
 			g.draw(shape);
 		}
 	}
 	
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-		drawing.repaint();
-	}
-
-	public Color getInnerCol() {
-		return innerCol;
-	}
-
-	public void setInnerCol(Color innerCol) {
-		this.innerCol = innerCol;
-		drawing.repaint();
-	}
-
-	public Color getOuterCol() {
-		return outerCol;
-	}
-
-	public void setOuterCol(Color outerCol) {
-		this.outerCol = outerCol;
-		drawing.repaint();
-	}
+	def innerCol = _innerCol
+	def outerCol = _innerCol
+	def visible = _visible
 	
-	public void setToolTip(String text) {
-		this.toolTip = text;
-	}
+	def shape = _shape;
 	
-	protected void showToolTip(Point2D mousePoint) {
+	def visible_= (visible:Boolean) : Unit = {
+		_visible = visible;
+		drawing.repaint();
+	}
+
+
+	def innerCol_= (innerCol:Color): Unit = {
+		_innerCol = innerCol;
+		drawing.repaint();
+	}
+
+	 def outerCol_= (outerCol:Color): Unit = {
+		_outerCol = outerCol;
+		drawing.repaint();
+	}
+
+	def showToolTip( mousePoint : Point2D) = {
 		if (toolTip != null && shape.contains(mousePoint)) {
 			drawing.showToolTip(toolTip);
 		}
