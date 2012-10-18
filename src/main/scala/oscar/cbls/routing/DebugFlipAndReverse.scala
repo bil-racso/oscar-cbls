@@ -28,7 +28,7 @@ object DebugFlipAndReverse extends App{
   vrp.Next(0):=6
   */
 
-  vrp.flipVariablesToUpdate(3,2,5,6).foreach(t => t._1 := t._2)
+  vrp.flipListToUpdate(3,2,5,6).foreach(t => t._1 := t._2)
   println("VRP after flip:\n"+vrp)
 
 

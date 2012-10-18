@@ -66,7 +66,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   val DistanceMatrix = getPlanarDistanceMatrix(N)
 
   val m: Model = new Model(false,false,false,false)
-  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
+  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PredAndUnrouted
   vrp.installCostMatrix(DistanceMatrix)
 
   vrp.saveKNearestPoints(20)
@@ -89,7 +89,6 @@ object tspsolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
-    //move = OnePointMove_2.getFirstImprovingMove(vrp,move)
     //move = OnePointMove.getFirstImprovingMove(vrp,move)
     move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){

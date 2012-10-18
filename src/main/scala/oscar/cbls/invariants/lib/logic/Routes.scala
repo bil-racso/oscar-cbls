@@ -96,8 +96,7 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
   @inline
   final def isUpToDate(node:Int):Boolean = {
-
-    ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
+      ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
       && ((PositionInRoute(node).getValue(true) + 1)%Next.length == PositionInRoute(Next(node).value).getValue(true)))
   }
 
@@ -131,6 +130,7 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
    * @param nodeID est le noeud dont on a changé le next.
    */ //TODO: there is a bug somewhere, this does sometime get into a cycle.
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
+
 
     var currentNode = nodeID
     while(!isUpToDate(currentNode) && Next(currentNode).value >= V){

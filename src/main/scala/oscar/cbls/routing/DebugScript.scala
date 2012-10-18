@@ -52,13 +52,34 @@ object DebugScript extends SearchEngine with App{
   println(vrp.routes)
   println(vrp)
   m.propagate()
+  println(vrp.routes)
+  println(vrp)
   println("Debug route(" + N2 + "points,"+V+"cars)"+"\n Pred:")
-  for (i<- vrp.Pred) println(i)
-
+  println(vrp.preds)
   println(vrp.Unrouted)
   // changement 1 vers 7
   // recherche
 
+  // unroute the point 2
+  //vrp.unrouteListToUpdate(List((vrp.preds(2).value,2))).foreach({t => t._1 := t._2})
+  vrp.unrouteListToUpdate(List( (vrp.preds(2).value,3) , (  vrp.preds(5).value ,5) )).foreach({t => t._1 := t._2})
+  m.propagate()
+
+  println(vrp.routes)
+  println(vrp.preds)
+  println(vrp.Unrouted)
+
+  // unroute the point 3 and 4
+ /* vrp.unrouteListToUpdate(List(1,3)).foreach({t => t._1 := t._2})
+  m.propagate()
+
+  println(vrp.routes)
+  println(vrp.preds)
+  println(vrp.Unrouted)
+
+*/
+
+  /*
   var z = 0
   do{
     m = new Model(false,true,false,false)
@@ -79,7 +100,6 @@ object DebugScript extends SearchEngine with App{
     var it = 0
     while(!saturated){
       val oldobj:Int = vrp.ObjectiveVar.value
-      //move = OnePointMove_2.getFirstImprovingMove(vrp,move)
       move = ThreeOptMove.getFirstImprovingMove(vrp,nsize, move)
       if (move != null && move.getObjAfter < oldobj){
         it +=1
@@ -104,6 +124,6 @@ object DebugScript extends SearchEngine with App{
   }
   while(z<100 && vrp.ObjectiveVar.value == 14)
 
-
+  */
 
 }

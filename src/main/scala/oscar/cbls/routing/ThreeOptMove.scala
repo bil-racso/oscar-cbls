@@ -24,6 +24,7 @@ package oscar.cbls.routing
  ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.Snapshot
 
 /**moves a segment to another place, without flipping it.
@@ -44,16 +45,11 @@ object ThreeOptMove extends SearchEngine{
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
-    def nextModulo(n:Int):Int = {
-      if (n+1 >= vrp.N) 0
-      else n+1
-    }
-
     //TODO: BUG here: it sometimes generates a cycle.
     // no more cycle
 
     val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
-    for (insertionPoint <- RangeHotRestart(hotRestart,hotRestart+vrp.N)){
+    for (insertionPoint <- 0 until vrp.N startBy hotRestart ){
       //we search for a segment,
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point

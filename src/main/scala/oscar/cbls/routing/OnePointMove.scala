@@ -24,8 +24,8 @@ package oscar.cbls.routing
  ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{Snapshot, IntVar}
-import collection.immutable.SortedMap;
+import oscar.cbls.algebra.Algebra._
+
 
 /**moves a point in a circuit to another place.
  * size if O(n²)
@@ -45,7 +45,7 @@ object OnePointMove extends SearchEngine{
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    for (beforeMovedPoint <- RangeHotRestart(hotRestart,hotRestart+vrp.N) if vrp.Next(beforeMovedPoint).value >= vrp.V){
+    for (beforeMovedPoint <- 0 until vrp.N startBy hotRestart if vrp.Next(beforeMovedPoint).value >= vrp.V){
       for(putAfter <- Range(0,vrp.N)){
         if (beforeMovedPoint != putAfter && vrp.Next(beforeMovedPoint).value != putAfter && vrp.Next(putAfter).value != 0){
           val newObj = getObjAfterMove(beforeMovedPoint,putAfter, vrp)

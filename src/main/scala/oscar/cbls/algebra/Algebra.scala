@@ -31,10 +31,41 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
 
+
 /**Include this object whenever you want to use concise notation
  * It provides the following ginfix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
  */
 object Algebra{
+
+  // implicit conversion of Range towards a RangeHotRestart
+  /**
+   * Allow an easy way to do an hot restart while we are exploring solutions in the search procedure.
+   */
+
+  /*
+  Info:
+  start: the index of the hot restart
+  end: start + length of original range
+  step: same as in range
+   */
+
+
+  class RangeHotRestart(start:Int,end:Int,step:Int) extends IndexedSeq[Int]{
+    // over write constructor
+    def this(start:Int,end:Int) = this(start,end,1)
+    val length = end - start
+    def apply(n:Int) = (start + step*n)%length
+  }
+
+  object RangeHotRestart{
+    def apply(start:Int,end:Int,step:Int) = new RangeHotRestart(start,end,step)
+    def apply(start:Int,end:Int) = new RangeHotRestart(start,end)
+  }
+
+  implicit def InstrumentedRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
+  class InstrumentedRange(r:Range){
+    def startBy (start:Int)  = RangeHotRestart(start,start+r.length)
+  }
 
   implicit def InstrumentIntVar(v:IntVar):InstrumentedIntVar = new InstrumentedIntVar(v)
   implicit def InstrumentIntInvariant(i:IntInvariant):InstrumentedIntVar = InstrumentIntVar(i.toIntVar)

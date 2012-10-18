@@ -26,7 +26,7 @@ import scala.util.Random;
 
 /**Provides a set of selectors to ease the development of search engines
  * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine*/
-class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait with HotRestart{
+class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
   setRandomized(isRandomized)
 }
 
@@ -245,29 +245,9 @@ trait SearchEngineTrait{
   }
 }
 
-/**
- * Allow an easy way to do an hot restart while we are exploring solutions in the search procedure.
- */
-trait HotRestart{
-  /*
-  Info:
-  start: the index of the hot restart
-  end: start + length of original range
-  step:
-   */
-  class RangeHotRestart(start:Int,end:Int,step:Int) extends IndexedSeq[Int]{
-    // over write constructor
-    def this(start:Int,end:Int) = this(start,end,1)
-    val length = end - start
-    def apply(n:Int) = (start + step*n)%length
-  }
 
-  object RangeHotRestart{
-    def apply(start:Int,end:Int,step:Int) = new RangeHotRestart(start,end,step)
-    def apply(start:Int,end:Int) = new RangeHotRestart(start,end)
-  }
 
-}
+
 
 
 

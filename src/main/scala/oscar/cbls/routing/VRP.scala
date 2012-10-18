@@ -23,8 +23,9 @@ package oscar.cbls.routing
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.TakeAny
 import oscar.cbls.invariants.lib.logic.{Filter, IntVar2IntVarFun, Routes, Cluster}
 import oscar.cbls.algebra.Algebra._
@@ -119,11 +120,19 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param d the end of edge (c,d).
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-  def flipVariablesToUpdate(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
+  def flipListToUpdate(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
     assert(Next(b).value==a && Next(c).value==d)
     assert(c != a) // else useless to flip
     (Next(b),c)::(Next(a),d)::reverseSegmentListToUpdate(a,c)
   }
+
+
+  def flipListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    assert(Next(b).value==a && Next(c).value==d)
+    assert(c != a) // else useless to flip
+    (Next(b),c)::(Next(a),d)::reverseSegmentListToUpdate(a,c)
+  }
+
 
 
 
@@ -142,9 +151,18 @@ trait Unrouted extends VRP {
 //TODO regarder à la structure de donné tableau.
 
 trait PredAndUnrouted extends Unrouted {
+
+
+  /*
   private val Preds: Array[IntSetVar] = Cluster.MakeDense(Next).clusters
   val Pred: Array[IntVar] = Preds.map((i: IntSetVar) => TakeAny(i, 0).toIntVar)
   override val Unrouted: IntSetVar = Preds(N)
+  */
+  // new invariant Predecessor
+  val preds = Predecessor(Next)
+  // use SparseCluster for unrouted node
+  override val Unrouted: IntSetVar = Cluster.MakeSparse(Next,List(N)).Clusters(N)
+  // or we can use Filter invariant.
 }
 
 
@@ -170,8 +188,29 @@ trait PositionInRouteAndRouteNr extends VRP {
   }
 
 
+  /** Returns the list of variables to update with theirs new values in order to
+   * remove points or segments of a route. The points or segments to remove
+    * are given in an iterable list of tuple (first,second) of Integer. The first Integer
+    * is the predecessor of the first point to remove, and the second is the last
+    * point to remove. This assumes that (first,second) is a segment, and
+    * the segments formed by the tuples of the list must be disjoint.
+   * @param l iterable list of tuple of Integer.
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+   */
+  def unrouteListToUpdate(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
 
-
+    l.foldLeft(List.empty[(IntVar,Int)])((acc:List[(IntVar,Int)],prec:(Int,Int)) =>
+    {
+      assert(isASegment(prec._1,prec._2))
+      val end = prec._2
+      val insertion = Next(end).value
+      val beforeStart = prec._1
+      var list = (Next(beforeStart),insertion)::(Next(end),N) ::acc
+      var start = Next(beforeStart).value
+      while(start != end) {list = (Next(start),N)::list;start = Next(start).value}
+      list
+    })
+  }
 }
 
 /**declares an objective function, attached to the VRP. */
@@ -195,7 +234,7 @@ trait HopDistance extends VRP {
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N if Next(i).value != N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => DistanceMatrix(i)(j))
+    for (i <- 0 until N ) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => {if (j!= N) DistanceMatrix(i)(j) else 0})
   }
 
   def installCostFunction(fun:(Int, Int) => Int){
