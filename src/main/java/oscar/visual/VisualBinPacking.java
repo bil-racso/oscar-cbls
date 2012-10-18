@@ -24,7 +24,7 @@ import java.util.Random;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
-
+import oscar.visual.VisualRectangle;
 /**
  * 
  * @author Pierre Schaus
@@ -55,7 +55,7 @@ public class VisualBinPacking extends VisualDrawing {
 		for (VisualBinPackingItem item: items) {
 			if (item.bin == bin) {
 				item.move(bin*binWidth, y);
-				y+= item.getHeight();
+				y+= item.height();
 			}
 		}
 	}
@@ -106,13 +106,6 @@ public class VisualBinPacking extends VisualDrawing {
 				} catch (InterruptedException e) {
 				}
 			}
-			
-			
-
-			
-			
-
-
 	}	
 
 }
