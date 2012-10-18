@@ -22,7 +22,7 @@ import java.awt.Shape;
 import java.awt.geom.Point2D;
 import oscar.visual._
 
-class ColoredShape[E <: Shape](_drawing:VisualDrawing, _shape:E) {
+class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 
 
 	var _innerCol = Color.white
