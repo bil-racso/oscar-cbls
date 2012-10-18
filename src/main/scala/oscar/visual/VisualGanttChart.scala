@@ -11,18 +11,18 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	
 	private val rectangles : Array[VisualRectangle] = Array.tabulate(activities.size)(a => {
 		val rect = new VisualRectangle(this, 0, 0, 0, 0)
-	   	rect.setInnerCol(colors(a))
+	   	rect.innerCol = colors(a)
 	   	rect 
 	})
 	   												                       
 	private val max = (0 until activities.size).map(i => f(i)).max
 	
 	private val text : VisualText = new VisualText(this, 50, 50, "")
-	text.setInnerCol(Color.RED)
+	text.innerCol = Color.RED
 	text.setCentered(true)
 	   												               
 	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	makespanLine.setOuterCol(Color.RED);
+	makespanLine.outerCol = Color.RED;
 	
 	def update(xScale : Int, yScale: Int) {
 		
@@ -33,7 +33,7 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 			
 			rectangles(i).move(activities(i).est*xScale, f(i)*yScale)
 			
-			rectangles(i).setInnerCol(colors(i))
+			rectangles(i).innerCol = colors(i)
 		}
 		
 		val makespan = activities.map(_.lct).max
