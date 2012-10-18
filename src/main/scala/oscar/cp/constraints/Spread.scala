@@ -27,45 +27,78 @@ import oscar.cp.core.CPOutcome
 /**
  * Implementation Spread Constraint
  * A Spread Constraint is the conjunction of two constraints
- * 1) Sum(i) x(i) == S (a constant)
- * 2) Sum(i) x(i)*x(i) = S2 (a variable)
- * And you generally want to maximize to minimize S2 knowing the sum
+ * 1) Sum(i) x(i) == sum (a constant)
+ * 2) Sum(i) x(i)*x(i) = sum2 (a variable)
+ * And you generally want to maximize to minimize sum2 variable knowing the sum
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Constraint(x(0).s, "Spread") {
+class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val reverse: Boolean = true) extends Constraint(x(0).s, "Spread") {
   val n = x.size
   val xmin = Array.fill(n)(0)
   val xmax = Array.fill(n)(0)
   val bnds = Array.fill(2*n)((0,0)) // will contain the lower and upper bounds of the n domains + bounds type (1 = lower, 0 = upper)
  
   override def setup(l: CPPropagStrength): CPOutcome = { 
-    if (s.post(new Sum(x.map(i => i*i),S2)) == CPOutcome.Failure) return CPOutcome.Failure
-    if (s.post(new Sum(x,S)) == CPOutcome.Failure) return CPOutcome.Failure
+    
+    if (reverse) {
+      
+      if (s.post(new Spread(x.map(-_),-sum,sum2,false)) == CPOutcome.Failure) {
+    	  return CPOutcome.Failure
+      } 
+      
+      if (decomposition() == CPOutcome.Failure) {
+         return CPOutcome.Failure
+      }
+    }
+    
     x.foreach(_.callPropagateWhenBoundsChange(this))
-    S2.callPropagateWhenBoundsChange(this)
+    sum2.callPropagateWhenBoundsChange(this)
     propagate()
+    
+    CPOutcome.Suspend
+  }
+  
+  def decomposition(): CPOutcome = {
+    if (s.post(new Sum(x.map(i => i*i),sum2)) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    }
+    else if (s.post(new Sum(x,sum)) == CPOutcome.Failure) {
+      CPOutcome.Failure 
+    } else {
+      CPOutcome.Suspend 
+    }
+  }
+  
+  def propagateSum(): CPOutcome = {
+    val summin = x.map(_.min).sum
+	val summax = x.map(_.max).sum
+	// check that sum constraint is feasible and prune it (fix point on it)
+	for (i <- 0 until n) {
+		if (x(i).updateMin(sum - (summax - x(i).max)) == CPOutcome.Failure) {
+		  return CPOutcome.Failure
+		}	
+		if (x(i).updateMax(sum - (summin - x(i).min)) == CPOutcome.Failure) {
+		  return CPOutcome.Failure
+		}
+	}
+    CPOutcome.Suspend
   }
 
  
   override def propagate(): CPOutcome = {
-    //println("===========>sum:"+S)
-    //println(x.mkString(","))
-
-	var summin = x.map(_.min).sum
-	var summax = x.map(_.max).sum
-
-	// check that sum constraint is feasible and prune it (fix point on it)
-	for (i <- 0 until n) {
-		//println("setting min to:"+(S - (summax-xmax(i)))+" summax:"+summax)
-		if (x(i).updateMin(S - (summax - x(i).max)) == CPOutcome.Failure) {
-		  //println("fail 1")
-		  return CPOutcome.Failure
-		}	
-		if (x(i).updateMax(S - (summin - x(i).min)) == CPOutcome.Failure) {
-		  //println("fail 2")
-		  return CPOutcome.Failure
-		}
-	}
+    // first make sure the the sum is consistent
+    if (propagateSum() == CPOutcome.Failure) {
+      return CPOutcome.Failure
+    }
+    // check that not every variable is bound otherwise we can assign the sum of square directly
+    if (x.forall(_.isBound)) {
+      return sum2.assign(x.map(i => i.value*i.value).sum)
+    }
+    
+    // let's go ...
+    
+    // --- step1: compute some useful values like extrema sums, intervals ... required by the algo ---
+    
 	for (i <- 0 until n) {
 	  xmin(i) = x(i).min
 	  xmax(i) = x(i).max
@@ -124,51 +157,98 @@ class Spread(val x: Array[CPVarInt], val S: Int, val S2: CPVarInt) extends Const
 	  rc -= bndCptMin(i)
 	}
 		
-	//compute ES and ES2 in O(n)
-	val ES = Array.fill(Isize)(0)
-	val ES2 = Array.fill(Isize)(0)
-	// compute ES(0) and ES2(0) with a sweep like algo
-	for (i <- 0 until n) {		
+	//compute es and es2 in O(n) with a sweep like algo
+	val es = Array.fill(Isize)(0)
+	val es2 = Array.fill(Isize)(0)
+	for (i <- 0 until n) {	    
 	    val xm = if (xmin(i) >= Imax(0)) xmin(i) else 0
 		val xM = if (xmax(i) <= Imin(0)) xmax(i) else 0
-		ES(0) += xm + xM
-		ES2(0) += xm*xm + xM*xM
+		es(0) += xm + xM
+		es2(0) += xm*xm + xM*xM
 	}
 	for (k <- 1 until Isize) {
 		val pk = l(k) - l(k-1)
 		val qk = r(k-1) - r(k)
-		ES(k) = ES(k-1) + (pk-qk) * Imax(k-1)
-		ES2(k) = ES2(k-1) + (pk-qk) * Imax(k-1) * Imax(k-1)
+		es(k) = es(k-1) + (pk-qk) * Imax(k-1)
+		es2(k) = es2(k-1) + (pk-qk) * Imax(k-1) * Imax(k-1)
 	}
 
 	var Iopt = -1
 	for (i <- 0 until Isize) {
-		val minSi=ES(i)+m(i)*Imin(i)
-		val maxSi=ES(i)+m(i)*Imax(i)
-		if (S >= minSi && S <= maxSi) {
+		val minSi = es(i)+m(i)*Imin(i)
+		val maxSi = es(i)+m(i)*Imax(i)
+		if (sum >= minSi && sum <= maxSi) {
 			Iopt = i
 		} 
 	}
 	
-	//for (i <- 0 until Isize) {
-	  //println("I:"+Imin(i)+"-"+Imax(i)+" m:"+m(i)+" l:"+l(i)+" r:"+r(i)+" ES:"+ ES(i)+" ES2:"+ES2(i))
-	//}
+	// --- step2: compute minimal spread in O(n) and filter es2 ---
 	
-	//compute minimal spread in O(n)
 	var minopt = 
 	   if (m(Iopt) == 0) {
-		   ES2(Iopt)
+		   es2(Iopt)
 	   } else{
-	       //println("m(Iopt):"+m(Iopt))
-		   val vinf:  Int = ((S - ES(Iopt)) - ((S - ES(Iopt)) % m(Iopt))) / m(Iopt)
-		   val vsup = vinf + (if ((S - ES(Iopt)) % m(Iopt) > 0) 1 else 0)
-		   val y = (S - ES(Iopt)) % m(Iopt)
-		   //println("y:"+y+" vsup:"+vsup+" vinf:"+vinf)
-		   (ES2(Iopt) + y * (vsup * vsup) + (m(Iopt) - y) * (vinf * vinf))
+	       val y = (sum - es(Iopt)) % m(Iopt)
+		   val vinf:  Int = ((sum - es(Iopt)) - y) / m(Iopt)
+		   val vsup = vinf + (if (y > 0) 1 else 0)
+		   (es2(Iopt) + y * (vsup * vsup) + (m(Iopt) - y) * (vinf * vinf))
 	   }
-	//println("minopt:"+minopt)
-	if (S2.updateMin(minopt) == CPOutcome.Failure) {
+	if (sum2.updateMin(minopt) == CPOutcome.Failure) {
 	  return CPOutcome.Failure 
+	}
+	val v: Double = (sum - es(Iopt)) / m(Iopt)
+		
+	// --- step3: filtering of x(i)'s max ---
+	
+	// return true if and only if Dom(x(i)) subsumes interval I
+	def inDomain(I: Int, i: Int): Boolean = xmin(i) <= Imin(I) && xmax(i) >= Imax(I)
+		
+	// assuming x(i) now is assigned to xi compute the updated values (m*, es*, es2*)
+	def updateValues(i: Int, xi: Double, I: Int): (Int,Double,Double) = {
+	    val d: Double = xi - xmin(i)
+	    val mStar: Int = if (inDomain(I,i)) m(I)-1 else m(I)
+	    val esStar: Double = if (inDomain(I,i)) es(I)+xi else es(I)+d;
+	    val es2Star: Double = if (inDomain(I,i)) es2(I)+xi*xi else es2(I)+d*d+2*d*xmin(i)
+	    (mStar,esStar,es2Star)
+	}
+	
+    def pruneMax(i: Int, xiq: Double, I: Int): CPOutcome = {
+	    if (I >= 0 && xiq < xmax(i)) {
+	      val (mStar,esStar,es2Star) = updateValues(i,xiq,I)
+	      val isStar = esStar + mStar * Imin(I)
+	      if (mStar > 0) {    
+	    	  	val vStar = (sum - esStar) / mStar
+                val deltaQ = (es2Star + mStar * vStar * vStar)
+                val d1 = sum - isStar
+                val a= (1.0 + 1.0 / mStar)
+                val b= (xiq - vStar)
+                val c = deltaQ - sum2.max
+                val d2 = (-b + scala.math.sqrt(b*b-a*c))/a
+                if(d2 <= d1) {
+                  var xiZ = scala.math.floor(xiq+d2).toInt
+                  
+                  // Z-bound consistent pruning
+                  val (mStar,esStar,es2Star) = updateValues(i,xiZ,I)
+                  val y = (sum-esStar) % mStar
+                  val vinf = ((sum-esStar) - y) / mStar
+                  val vsup = if (y > 0) vinf+1 else vinf
+                  var deltaZ = es2Star + y * (vsup*vsup) + (mStar-y) * (vinf*vinf)
+                  while (deltaZ > sum2.max) {
+                    deltaZ += 2 * (vsup-xiZ);
+                    xiZ -= 1
+                  }
+                  x(i).updateMax(xiZ)
+                } 
+                else pruneMax(i,xiq+ d1, I-1)	        
+	      } else pruneMax(i,xiq, I-1)
+	    } else CPOutcome.Suspend
+	}
+
+	
+	for (i <- 0 until n; if xmax(i) > Imin(Iopt)) {
+	  if (pruneMax(i,if (inDomain(Iopt,i)) v else xmin(i), Iopt) == CPOutcome.Failure) {
+	    return CPOutcome.Failure
+	  }
 	}
     return CPOutcome.Suspend
   }

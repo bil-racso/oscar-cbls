@@ -82,10 +82,208 @@ class TestSpread extends FunSuite with ShouldMatchers  {
                        
     var s2 = CPVarInt(cp, 0 to Int.MaxValue)
     cp.add(new Spread(x,591,s2))
-    println(s2)
     cp.isFailed should be(false)
-    //s2.min should be(9)
   } 
+  
+  test("Spread 6") {
+    val cp = CPSolver()
+    
+    // 4 vars, with dom 0 to 100
+    // sum should be 8 (2 on average)
+    
+    var x = Array(CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+                       
+    var s2 = CPVarInt(cp, 0 to 16)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(16)
+    for (y <- x) {
+      y.max should be(2)
+    }
+  }
+  
+  test("Spread 7") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,3,3                   
+    var s2 = CPVarInt(cp, 0 to 22)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(22)
+    x(1).max should be(3)
+    x(2).max should be(3)
+    x(3).max should be(3)
+    
+  } 
+  
+  test("Spread 8") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 0 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,3,3                   
+    var s2 = CPVarInt(cp, 0 to 22)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(22)
+    x(1).min should be(2)
+    x(2).min should be(3)
+    x(3).min should be(3)
+    x(2).max should be(3)
+    x(3).max should be(3)
+  }
+  
+  test("Spread 9") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,4,2                   
+    var s2 = CPVarInt(cp, 0 to 24)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(24)
+    x(1).min should be(2)
+    x(2).min should be(4)
+    x(3).min should be(2)
+    x(2).max should be(4)
+    x(3).max should be(2)
+  }
+  
+  test("Spread 10") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 2),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,2,4,2 => let's allow this one 0,1,4,3 with s2=26                   
+    var s2 = CPVarInt(cp, 0 to 26)
+    cp.add(new Spread(x,8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(24)
+    x(1).min should be(1)
+    x(2).max should be(4)
+    x(3).max should be(3)
+  }
+  
+  test("Spread 11") {
+   val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, -2 to -1),
+                  CPVarInt(cp, -100 to -4),
+                  CPVarInt(cp, -100 to 0))
+    // optimal assignment will be 0,-2,-4,-2 => let's allow this one 0,-1,-4,-3 with s2=26                   
+    var s2 = CPVarInt(cp, 0 to 26)
+    cp.add(new Spread(x,-8,s2))
+    cp.isFailed should be(false)
+    s2.min should be(24)
+    x(1).min should be(-2)
+    x(2).min should be(-4)
+    x(3).min should be(-3)
+  } 
+  
+  
+  test("Spread 12") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 3),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,3,4,3 s2=18+16=34                    
+    var s2 = CPVarInt(cp, 0 to 34)
+    cp.add(new Spread(x,10,s2))
+    cp.isFailed should be(false)
+    s2.min should be(34)
+    
+    x(1).min should be(3)
+    x(2).max should be(4)
+    x(3).min should be(3)
+    x(3).max should be(3)
+  }
+  
+  test("Spread 13") {
+    val cp = CPSolver()
+            
+    var x = Array(CPVarInt(cp, 0 to 0),
+                  CPVarInt(cp, 1 to 3),
+                  CPVarInt(cp, 4 to 100),
+                  CPVarInt(cp, 0 to 100))
+    // optimal assignment will be 0,3,4,3, we want to allow this one 0,2,4,4 with s2 = 36                     
+    var s2 = CPVarInt(cp, 0 to 36)
+    cp.add(new Spread(x,10,s2))
+    cp.isFailed should be(false)
+    s2.min should be(34)
+    
+    x(1).min should be(2)
+    x(2).max should be(4)
+    x(3).min should be(3)
+    x(3).max should be(4)
+  }
+
+  test("Spread 14") {
+
+    val doms = Array((1,3),(4,100),(0,2),(-2,-2),(10,20))
+
+    nbSol(doms,16,130,false) should be(nbSol(doms,16,130,true))
+    nbSol(doms,16,140,false) should be(nbSol(doms,16,140,true))
+    nbSol(doms,16,150,false) should be(nbSol(doms,16,150,true))
+    
+    nbSol(doms,14,130,false) should be(nbSol(doms,14,130,true))
+    nbSol(doms,14,140,false) should be(nbSol(doms,14,140,true))
+    nbSol(doms,14,150,false) should be(nbSol(doms,14,150,true))
+    
+    nbSol(doms,13,130,false) should be(nbSol(doms,13,130,true))
+    nbSol(doms,13,140,false) should be(nbSol(doms,13,140,true))
+    nbSol(doms,13,150,false) should be(nbSol(doms,13,150,true))
+  }
+  
+  
+  
+  
+  def decomposition(x: Array[CPVarInt], sum: Int, sum2: CPVarInt): CPOutcome = {
+    if (sum2.store.post(new Sum(x.map(i => i*i),sum2)) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    }
+    else if (sum2.store.post(new Sum(x,sum)) == CPOutcome.Failure) {
+      CPOutcome.Failure 
+    } else {
+      CPOutcome.Suspend 
+    }
+  }
+  
+  
+  def nbSol(doms: Array[(Int,Int)], sum: Int, sum2Max: Int, decomp: Boolean): Int = {
+    var nbSol = 0
+    val cp = CPSolver()
+    
+    val x = doms.map{case(min,max) => CPVarInt(cp,min to max)}
+    val sum2 = CPVarInt(cp,0 to sum2Max)
+    
+    if (decomp) {
+      decomposition(x,sum,sum2)
+    } else {
+      cp.add(new Spread(x,sum,sum2))
+    }
+    cp.exploration {
+      cp.binaryFirstFail(x)
+      nbSol += 1
+    }
+    nbSol
+  }
     	
  
 

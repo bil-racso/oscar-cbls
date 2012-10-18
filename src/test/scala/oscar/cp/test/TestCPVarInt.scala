@@ -31,4 +31,18 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	  val (y: CPVarInt,i: Int) = minDomNotbound(x).head
 	  i should be(1)
 	}
+	
+	test("Test is full") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(0,1,3,2))
+	  x.isFull should be(true)
+	  cp.add(x!=3)
+	  x.isFull should be(true)
+	  cp.add(x!=1)
+	  x.isFull should be(false)
+	  val y = CPVarInt(cp,Set(0,1,3))
+	  x.isFull should be(false)
+	  
+	}	
+	
 }
