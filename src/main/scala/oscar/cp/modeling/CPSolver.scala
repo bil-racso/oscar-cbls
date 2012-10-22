@@ -284,4 +284,3 @@ object CPSolver {
 		new CPSolver()
 	}
 }
-
