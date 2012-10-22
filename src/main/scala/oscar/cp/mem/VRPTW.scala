@@ -28,8 +28,6 @@ object VRPTW extends App {
 	
 	val instance = parse("data/VRPTW/Solomon/R101.txt")
 	
-	val hyp = scala.collection.mutable.Queue[Double]()
-	
 	// Data
 	val nCustomers = instance.n	
 	val nVehicles  = 20//instance.k	
@@ -96,26 +94,48 @@ object VRPTW extends App {
 	var bestPrev  : Sol = new Sol(nSites)
 	var bestNext  : Sol = new Sol(nSites)
 	var bestRoute : Sol = new Sol(nSites)
+	var bestDep   : Sol = new Sol(nSites)
 	var bestDist  = 0
+	var nRestart  = 1
 	
-	cp.sc = new IDSSearchController(cp, 4)
+	//cp.sc = new IDSSearchController(cp, 6)
 	
-	cp.lns(500, 3000) { 
+	var firstLns = true
+	val adaptable = true
+	
+	/*cp.lns(100, 2000) { 
 		
-		val nextRelax = nextInt(2) // Not Shaw
+		nRestart += 1
+		
+		if (firstLns) {
+			println("Start LNS")
+			firstLns = false
+		}
+		
+		if (adaptable) adaptFailure()
+		
+		val nextRelax = 1//nextInt(3) // Not Shaw
 		
 		relaxVariables(nextRelax match {
+			// Customer-based Adaptive Temporal Decomposition
 			case 0 => catd(10)
-			case 1 => casd(20)
-			case 2 => shaw(30, 10)
+			// Customer-based Adaptive Spatial Decomposition
+			case 1 => casd(10)
+			// Customer-based Adaptive Random Decomposition
+			case 2 => card(15)
+			// Relatedness Shaw relaxation
+			case 3 => shaw(15, 10)
 		})
-	}
+	}*/
+	
+	cp.failLimit = 10000
 	
 	// ------------------------------------------------------------------------
 	// PREPROCESSING AND USEFUL FUNCTIONS
 	// ------------------------------------------------------------------------
 	
-	val sortedCustomersByTwStart = Customers.sortBy(tw => tw)
+	val sortedCustomersByTwStart = Customers.sortBy(i => twStart(i))
+	val sortedCustomersByTwEnd = Customers.sortBy(i => twEnd(i))
 	
 	val angles = Array.tabulate(nCustomers)(i => {
 		
@@ -125,6 +145,8 @@ object VRPTW extends App {
 		val theta = (atan2(x, y)*180/Pi).toInt
 		if (theta < 0) (theta + 360) else theta	
 	})
+	
+	val sortedCustomersByAngle = Customers.sortBy(i => angles(i))
 		
 	// Normalized distances
 	val maxDist = dist.map(_.max).max
@@ -145,18 +167,29 @@ object VRPTW extends App {
 	def solFound {		
 		
 		bestPrev  = buildPrev
-		bestRoute = buildRoute	
 		bestNext  = buildNext
+		bestRoute = buildRoute	
+		bestDep   = buildDep
 		bestDist  = totDist.value
 	}
 	
 	def buildPrev  : Sol = prev.map(_.value)
 	def buildNext  : Sol = next.map(_.value)
 	def buildRoute : Sol = routeOf.map(_.value)
+	def buildDep   : Sol = departure.map(_.value)
 	
 	// ------------------------------------------------------------------------
 	// RELAXATION PROCEDURES
 	// ------------------------------------------------------------------------
+	
+	def adaptFailure() {
+
+		if (!cp.isLastLNSRestartCompleted) {
+			cp.failLimit = (cp.failLimit * 110)/100
+		} else {
+			cp.failLimit = max(10, (cp.failLimit * 90)/100)
+		}
+	}
 	
 	def shaw(p : Int, beta : Int) : Array[Boolean] = {
 		
@@ -188,10 +221,22 @@ object VRPTW extends App {
 		val selected = Array.fill(nSites)(false)
 		
 		val alpha = nextInt(360)
-		val sortedC = Customers.sortBy(i => adaptedAngle(angles(i), alpha))
 		
-		for (i <- 0 until p)
-			routes(bestRoute(sortedC(i))) = true
+		var first = 0
+		var min = Int.MaxValue
+		
+		for (i <- sortedCustomersByAngle) {			
+			val angle = if (angles(i) - alpha < 0) 360-(alpha-angles(i)) else angles(i) - alpha
+			if (angle < min) {
+				first = i
+				min = angle
+			}
+		}
+		
+		for (i <- first until first+p) {
+			val c = if (i < nCustomers) i else i - nCustomers 
+			routes(bestRoute(sortedCustomersByAngle(c))) = true
+		}
 				
 		for (i <- Customers) 
 			if (routes(bestRoute(i))) 
@@ -209,13 +254,54 @@ object VRPTW extends App {
 		val max = nCustomers - p - 1
 		val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
 
-		// Keeps relevant customers
-		val filteredC = Customers.filter(i => twStart(i) >= alpha)
-		// Sorts relevant customers in order to select the p first
-		val sortedC = filteredC.sortBy(i => twEnd(i))
+		var nSelected = 0
+		var i = 0
 		
-		for (i <- 0 until p)
-			routes(bestRoute(sortedC(i))) = true
+		// Keeps relevant customers
+		while (nSelected < p) {
+			
+			val c = sortedCustomersByTwEnd(i)
+			
+			if (twStart(c) >= alpha) {
+				routes(bestRoute(c)) = true
+				nSelected += 1
+			}
+			
+			i += 1
+		}
+	
+		for (i <- Customers) 
+			if (routes(bestRoute(i))) 
+				selected(i) = true
+			
+		selected
+	}
+	
+	def card(p : Int) : Array[Boolean] = {
+		
+		val routes   = Array.fill(nVehicles)(false)
+		val selected = Array.fill(nSites)(false)
+		
+		var nSelected = 0
+		
+		while (nSelected < p) {
+			
+			// Not selected customers
+			val remainingC = Customers.filter(!selected(_))			
+			// Random selection of a not already selected customers
+			val alpha = remainingC(nextInt(remainingC.size))
+			
+			for (i <- remainingC) {
+				
+				val beta = nextInt(remainingC.size)
+				
+				if (bestRoute(i) == bestRoute(alpha) && bestDep(i) > bestDep(alpha) && bestDep(i) <= bestDep(beta)) {
+					selected(i) = true
+					routes(bestRoute(i)) = true
+					nSelected += 1
+				}
+			}		
+		}		
 				
 		for (i <- Customers) 
 			if (routes(bestRoute(i))) 
@@ -227,6 +313,8 @@ object VRPTW extends App {
 	def relaxVariables(selected : Array[Boolean]) {
 		
 		visu.update(bestPrev, bestNext, selected)
+		visu.updateDist()
+		visu.updateRestart(nRestart)
 		
 		val constraints : Queue[Constraint] = Queue()
 		
@@ -293,7 +381,6 @@ object VRPTW extends App {
 			
 			// A vehicle can arrived before starting time 
 			cp.add(arrival(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
-			cp.add(new TimeWindow(cp, prev(i), arrival(i), departure, dist(i), twStart(i)))
 			
 			// A vehicle must finish before end of the time-window
 			cp.add(arrival(i) <= twEnd(i))
@@ -317,7 +404,29 @@ object VRPTW extends App {
 	// EXPLORATION BLOCK
 	// ------------------------------------------------------------------------
 	
+	var s = 0
+	for (i <- Customers)
+		s += prev(i).size
+		
+	println(s)
+	
 	cp.exploration {
+		
+		/*val prevCustomers = prev.slice(0, nCustomers)
+		
+		// Customers
+		while (!allBounds(prevCustomers)) {
+		
+			val firstDepot = max(Depots.min, maxVal(prev))
+			
+			val i = selectMin(Sites, i => !prev(i).isBound)(i => prev(i).size)
+			val j = selectMin(Sites, j => prev(i).hasValue(j) && j <= firstDepot + 1)(j => dist(i)(j))
+	
+			cp.branch(cp.post(prev(i) == j))(cp.post(prev(i) != j))
+		}
+		
+		// Depots
+		cp.binary(prev)*/
 		
 		while (!allBounds(prev)) {
 		
@@ -407,6 +516,8 @@ object VRPTW extends App {
 	    	-1
 	    } else sorted(0)
 	}
+	
+	def customersBound(prev : Array[CPVarInt]) = Array.tabulate(nCustomers)(i => prev(i).isBound)
 	
 	def maxVal(x : Array[CPVarInt]) = {
 		var max = Int.MinValue

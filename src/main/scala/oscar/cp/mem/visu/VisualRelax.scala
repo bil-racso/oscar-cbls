@@ -23,24 +23,16 @@ class VisualRelax(val coord : Array[(Int, Int)], distances : Array[Array[Double]
 	setPreferredSize(new Dimension(400, 400))
 	val drawing = new VisualDrawing(false)
 	
-	val xScale = 0
-	val yScale = 0
-	
 	var prev : Array[Int] = Array.tabulate(nSites)(i => i)
 	var next : Array[Int] = Array.tabulate(nSites)(i => i)
 	var dist = 0.0
+	var nRestart = 0
 		
 	// Routes
-	val lines = Array.tabulate(nSites)(i => {
-		val (x, y) = coord(i)
-		new VisualLine(drawing, x*xScale + zero, y*yScale + zero, x*xScale + zero, y*yScale + zero)
-	})
+	val lines = Array.tabulate(nSites)(i => new VisualLine(drawing, 0, 0, 0, 0))
 
 	// Sites
-	val circles = Array.tabulate(nSites)(i => {
-		val (x, y) = coord(i)
-		new VisualCircle(drawing, x*xScale + zero, y*yScale + zero, 5, normalCol)
-	})
+	val circles = Array.tabulate(nSites)(i => new VisualCircle(drawing, 0, 0, 5, normalCol))
 	
 	// Distance
 	val text : VisualText = new VisualText(drawing, 20, 20, "")
@@ -69,7 +61,7 @@ class VisualRelax(val coord : Array[(Int, Int)], distances : Array[Array[Double]
 			lines(i).setDest(pX*xScale + zero, pY*yScale + zero)
 		}
 		
-		text.setText("Distance : " + dist)
+		text.setText("#Restarts: " + nRestart + ", Distance: " + dist)
 		
 		drawing.repaint()
 	}
@@ -78,7 +70,6 @@ class VisualRelax(val coord : Array[(Int, Int)], distances : Array[Array[Double]
 		
 		prev = newPrev
 		next = newNext
-		dist = sumDistances 
 
 		for (i <- Sites) {
 			
@@ -93,6 +84,16 @@ class VisualRelax(val coord : Array[(Int, Int)], distances : Array[Array[Double]
 				lines(i).setOuterCol(normalCol)
 		}
 		
+		repaint()
+	}
+	
+	def updateDist() {
+		dist = sumDistances 
+		repaint()
+	}
+	
+	def updateRestart(n : Int) {
+		nRestart = n
 		repaint()
 	}
 	

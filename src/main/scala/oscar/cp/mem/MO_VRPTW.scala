@@ -326,7 +326,6 @@ object MO_VRPTW extends App {
 			
 			// A vehicle can arrived before starting time 
 			cp.add(arrival(i) == maximum(Array(CPVarInt(cp, twStart(i)), departure(prev(i)) + dist(i)(prev(i)))))
-			cp.add(new TimeWindow(cp, prev(i), arrival(i), departure, dist(i), twStart(i)))
 			
 			// A vehicle must finish before end of the time-window
 			//cp.add(arrival(i) <= twEnd(i))
