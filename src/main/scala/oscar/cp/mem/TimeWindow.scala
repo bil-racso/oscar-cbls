@@ -3,124 +3,107 @@ package oscar.cp.mem
 import oscar.cp.core._
 import scala.math.max
 
-class TimeWindow(cp: Store, c : Int, pred: Array[CPVarInt], succ: Array[CPVarInt], arrival: Array[CPVarInt], dist: Array[Array[Int]], service: Array[Int]) extends Constraint(cp, "TimeWindow") {
-
-	val nCustomers = pred.size
-	val Customers = 0 until nCustomers
+class TimeWindow(cp: Store, c: Int, pred: Array[CPVarInt], succ: Array[CPVarInt], arrival: Array[CPVarInt], dist: Array[Array[Int]], service: Array[Int]) extends Constraint(cp, "TimeWindow") {
 
 	override def setup(l: CPPropagStrength): CPOutcome = {
 
-		if (predPropagate(c) == CPOutcome.Failure)
-			CPOutcome.Failure
-		if (succPropagate(c) == CPOutcome.Failure)
-			CPOutcome.Failure
+		val oc = propagate
 
-		if (!pred(c).isBound)
-			pred(c).callPropagateWhenDomainChanges(this)
+		if (oc != CPOutcome.Failure) {
 
-		if (!arrival(c).isBound) {
-			arrival(c).callUpdateMaxIdxWhenMaxChanges(this, c)
-			arrival(c).callUpdateMinIdxWhenMinChanges(this, c)
+			if (!pred(c).isBound)
+				pred(c).callPropagateWhenDomainChanges(this)
+
+			if (!arrival(c).isBound) {
+				arrival(c).callUpdateMaxWhenMaxChanges(this)
+				arrival(c).callUpdateMinWhenMinChanges(this)
+			}
 		}
 
-		CPOutcome.Suspend
+		return oc
 	}
 
-	override def updateMinIdx(cvar: CPVarInt, c: Int, v: Int): CPOutcome = {
+	override def updateMin(cvar: CPVarInt, v: Int): CPOutcome = {
 
 		for (j <- succ(c)) {
 
 			if (arrival(c).min + service(c) + dist(c)(j) > arrival(j).max) {
 
 				if (succ(c).removeValue(j) == CPOutcome.Failure)
-					CPOutcome.Failure
+					return CPOutcome.Failure
 			}
 		}
 
-		CPOutcome.Suspend
+		return CPOutcome.Suspend
 	}
 
-	override def updateMaxIdx(cvar: CPVarInt, c: Int, v: Int): CPOutcome = {
+	override def updateMax(cvar: CPVarInt, v: Int): CPOutcome = {
 
 		for (j <- pred(c)) {
 
 			if (arrival(j).min + service(j) + dist(j)(c) > arrival(c).max) {
 
 				if (pred(c).removeValue(j) == CPOutcome.Failure)
-					CPOutcome.Failure
+					return CPOutcome.Failure
 			}
 		}
 
-		CPOutcome.Suspend
+		return CPOutcome.Suspend
 	}
 
 	override def propagate(): CPOutcome = {
 
 		if (predPropagate(c) == CPOutcome.Failure)
-			CPOutcome.Failure
+			return CPOutcome.Failure
 
 		if (succPropagate(c) == CPOutcome.Failure)
-			CPOutcome.Failure
+			return CPOutcome.Failure
 
-		CPOutcome.Suspend
+		return CPOutcome.Suspend
 	}
 
 	def predPropagate(c: Int): CPOutcome = {
 
-		val timesMin = Array.fill(nCustomers)(Int.MaxValue)
-		val timesMax = Array.fill(nCustomers)(Int.MaxValue)
+		if (pred(c).isBound)
+			return CPOutcome.Suspend
 
-		var minV = Int.MaxValue
-		var maxV = Int.MinValue
+		else {
 
-		for (j <- pred(c)) {
+			var minV = Int.MaxValue
 
-			val tauMin = arrival(j).min + service(j) + dist(j)(c)
-			val tauMax = arrival(j).max + service(j) + dist(j)(c)
+			for (j <- pred(c).min to pred(c).max; if (pred(c).hasValue(j))) {
+				val tauMin = arrival(j).min + service(j) + dist(j)(c)
+				if (tauMin < minV)
+					minV = tauMin
+			}
 
-			if (tauMin < minV)
-				minV = tauMin
+			if (arrival(c).updateMin(minV) == CPOutcome.Failure)
+				return CPOutcome.Failure
 
-			if (tauMax > maxV)
-				maxV = tauMax
+			else return CPOutcome.Suspend
 		}
-
-		if (arrival(c).updateMin(minV) == CPOutcome.Failure)
-			CPOutcome.Failure
-
-		if (arrival(c).updateMax(maxV) == CPOutcome.Failure)
-			CPOutcome.Failure
-
-		CPOutcome.Suspend
 	}
 
 	def succPropagate(c: Int): CPOutcome = {
 
-		val timesMin = Array.fill(nCustomers)(Int.MaxValue)
-		val timesMax = Array.fill(nCustomers)(Int.MaxValue)
+		if (pred(c).isBound)
+			return CPOutcome.Suspend
 
-		var minV = Int.MaxValue
-		var maxV = Int.MinValue
+		else {
+			
+			var maxV = Int.MinValue
 
-		for (j <- succ(c)) {
+			for (j <- succ(c).min to succ(c).max; if (succ(c).hasValue(j))) {
+				val tauMax = arrival(j).max - service(c) - dist(c)(j)
+				if (tauMax > maxV)
+					maxV = tauMax
+			}
 
-			val tauMin = arrival(j).min - service(c) - dist(c)(j)
-			val tauMax = arrival(j).max - service(c) - dist(c)(j)
+			if (arrival(c).updateMax(maxV) == CPOutcome.Failure)
+				return CPOutcome.Failure
 
-			if (tauMin < minV)
-				minV = tauMin
-
-			if (tauMax > maxV)
-				maxV = tauMax
+			else return CPOutcome.Suspend
 		}
-
-		if (arrival(c).updateMin(minV) == CPOutcome.Failure)
-			CPOutcome.Failure
-
-		if (arrival(c).updateMax(maxV) == CPOutcome.Failure)
-			CPOutcome.Failure
-
-		CPOutcome.Suspend
 	}
 }
 
