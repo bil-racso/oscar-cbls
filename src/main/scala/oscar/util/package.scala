@@ -27,15 +27,15 @@ package object util {
    * @author pschaus
    */
   def select[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
-               (block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in select")}) = {
-    var cpt = r.count(st)
+               (block: R => Unit, defaultBlock: => Unit = {println("no elemen satisfying condition in select")}) = {
+    var cpt = 1
     var result: Option[R] = None 
     for (o <- r; if st(o)) {
       val proba = 1.0/cpt
       if (rand.nextDouble() <= proba) {
         result = Some(o)
       }
-      cpt += 1 //I'm not quite sure, but I believe it should be multiplied by two at each round.
+      cpt += 1
     }
     result match {
     	case Some(r) => block(r)
@@ -49,7 +49,7 @@ package object util {
    * @author pschaus
    */
   def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
-                  (f: R => Double)(block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in selectMin")}) = {
+                  (f: R => Double)(block: R => Unit, defaultBlock: => Unit = {println("no elemen satisfying condition in selectMin")}) = {
     var cpt = 1
     var result: Option[R] = None
     var best = Double.MaxValue
@@ -77,8 +77,7 @@ package object util {
    * Random max selector
    * @author pschaus
    */
-  def selectMax[R](r: Iterable[R], st: (R => Boolean) = 
-        ((r: R) => true))(f: R => Double)(block: R => Unit) = selectMin(r,st)(-f(_))(block)
+  def selectMax[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))(f: R => Double)(block: R => Unit,defaultBlock: => Unit = {println("no elemen satisfying condition in selectMin")}) = selectMin(r,st)(-f(_))(block,defaultBlock)
     
   
 
