@@ -101,21 +101,21 @@ object tspsolver extends SearchEngine with StopWatch with App{
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
-      vrp.ObjectiveVar.value
-      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value )
+      //vrp.ObjectiveVar.value
+      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
 
     }
     else{
         saturated = true
         println("done " + getWatchString)
         println("Nb Reverse = "+vrp.reverseNb)
-        if(realSum(vrp,DistanceMatrix).equals(oldobj)) println("Youpie!!") else println("Ohhh :'(")
+        if(realSum(vrp,DistanceMatrix).equals(vrp.ObjectiveVar.value)) println("Youpie!!") else println("Ohhh :'(")
     }
   }
 
 
 
 
-  println(vrp)
+  println(vrp.ObjectiveVar.value)
 }
 

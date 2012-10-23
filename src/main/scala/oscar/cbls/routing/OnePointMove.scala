@@ -78,7 +78,7 @@ object OnePointMove extends SearchEngine{
 case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "moved point " + vrp.Next(predOfMovedPoint).value + " after " + PutAfter
+  override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
 
   def startNodeForNextExploration: Int = predOfMovedPoint
 }

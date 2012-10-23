@@ -107,7 +107,7 @@ case class ThreeOptMove(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:I
                         objAfter:Int, vrp:VRP) extends Neighbor{
   def comit {ThreeOptMove.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "moved " + beforeSegmentStart + "-...->" + segmentEnd + " after "+ insertionPoint
+  override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 
   def startNodeForNextExploration: Int = insertionPoint
 }

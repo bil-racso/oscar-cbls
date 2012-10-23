@@ -79,7 +79,8 @@ case class ThreeOptOneReverseMove(startOfFirstEdge:Int, startOfSecondEdge:Int, s
                                   objAfter:Int, vrp:VRP) extends Neighbor{
   def comit {ThreeOptTwoReverseMove.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "moved " + startOfFirstEdge + "..." + startOfSecondEdge + "..."+ startOfThirdEdge
+  override def toString():String = "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
+    "thirdEdge = "+ startOfThirdEdge+" )"
   def startNodeForNextExploration: Int = startOfFirstEdge
 }
 
