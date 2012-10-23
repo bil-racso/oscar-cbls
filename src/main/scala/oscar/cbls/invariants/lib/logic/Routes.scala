@@ -97,7 +97,7 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
   @inline
   final def isUpToDate(node:Int):Boolean = {
       ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
-      && ((PositionInRoute(node).getValue(true) + 1)%Next.length == PositionInRoute(Next(node).value).getValue(true)))
+      && ((PositionInRoute(node).getValue(true) + 1)% Next.length == PositionInRoute(Next(node).value).getValue(true)))
   }
 
   override def performPropagation(){
@@ -135,10 +135,14 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
     var currentNode = nodeID
     while(!isUpToDate(currentNode) && Next(currentNode).value >= V){
       // if cycle appears without start point (V), it loops (dont loop anymore thanks to domain IntVar)
+      //println("boucle " + !isUpToDate(currentNode) + " et "+ (Next(currentNode).value >= V) )
       val nextID = Next(currentNode).value
+      //println("position current = "+ PositionInRoute(currentNode).getValue(true)+" \n " +
+       // "position nextID = "+ PositionInRoute(nextID).getValue(true))
       PositionInRoute(nextID) := (PositionInRoute(currentNode).getValue(true)+ 1)
       RouteNr(nextID) := RouteNr(currentNode).getValue(true)
       currentNode = nextID
+
     }
   }
 
@@ -147,23 +151,21 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
       val next = Next(n).value
       if (next != UNROUTED){
         assert(RouteNr(next).value == RouteNr(n).value)
-        // debug: added case next<= V, works better
-        if(next< V)
-          assert(PositionInRoute(next).value == 0)
-        else
-          assert(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(Next.length))
+        if(n < V){
+          assert(PositionInRoute(n).value == n)
+          assert(RouteNr(n).value == n)
         }
+        else{
+          PositionInRoute(n).value
+          assert(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(Next.length))
+          assert(RouteNr(n).value == RouteNr(next).value)
+        }
+      }
       else{
-        // debug: added .value to IntVar, works better
-
         assert(RouteNr(n).value == UNROUTED)
         assert(PositionInRoute(n).value == UNROUTED)
       }
-      if(n < V){
-        assert(RouteNr(n).value == n)
-        assert(PositionInRoute(n).value == 0)
-      }
-    }
+     }
   }
 }
 

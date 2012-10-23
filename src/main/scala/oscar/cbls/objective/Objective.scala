@@ -80,7 +80,6 @@ trait ObjectiveTrait {
     for (assign <- oldvals) {
       assign._1 := assign._2
     }
-
     NewVal
   }
 }

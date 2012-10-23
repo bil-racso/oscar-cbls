@@ -40,13 +40,14 @@ import oscar.cbls.objective.{ObjectiveTrait, Objective}
  * @param m the model.
  */
 class VRP(val N: Int, val V: Int, val m: Model) {
+  // nb of reverse segment
+  var reverseNb = 0 //TODO to del, only there as information
 
   //successors
   val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) new IntVar(m, i, N-1, i, "next" + i)
     else new IntVar(m, 0, N, i, "next" + i))
   for(v <- 0 until V){Next(v) := v}
   val Nodes = 0 until N
-
 
   /**
    * Redefine the toString method.
@@ -75,16 +76,18 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param to the end of segment to reverse.
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
+
   def reverseSegmentListToUpdate(from:Int, to:Int):List[(IntVar,Int)]={
-     var listToUpdate:List[(IntVar,Int)] = List.empty
-     var nodeStack:List[Int] = List.empty
+    var listToUpdate:List[(IntVar,Int)] = List.empty
+    var nodeStack:List[Int] = List.empty
     //register the list of nodes
     var current:Int = from
-    while(current != to) {
+    while(current != to){
       nodeStack = current :: nodeStack
       current = Next(current).value
     }
     while(!nodeStack.isEmpty){
+      reverseNb += 1 //TODO to del, only there as information
       listToUpdate =(Next(current),nodeStack.head)::listToUpdate
       current = nodeStack.head
       nodeStack = nodeStack.tail
@@ -109,10 +112,38 @@ class VRP(val N: Int, val V: Int, val m: Model) {
       (Next(insertionPoint),segmentStart)::List.empty
   }
 
+  /** Returns the list of variables to update with theirs new values in order to
+    * remove points or segments of a route. The points or segments to remove
+    * are given in an iterable list of tuple (first,second) of Integer. The first Integer
+    * is the predecessor of the first point to remove, and the second is the last
+    * point to remove. This assumes that (first,second) is a segment, and
+    * the segments formed by the tuples of the list must be disjoint.
+    * @param l iterable list of tuple of Integer.
+    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+    */
+  def unrouteListToUpdate(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
+
+    l.foldLeft(List.empty[(IntVar,Int)])((acc:List[(IntVar,Int)],prec:(Int,Int)) =>
+    {
+      val beforeStart = prec._1
+      val end = prec._2
+      val insertion = Next(end).value
+      var list = (Next(beforeStart),insertion)::(Next(end),N) ::acc
+      var start = Next(beforeStart).value
+      while(start != end) {
+        list = (Next(start),N)::list
+        start = Next(start).value
+      }
+      list
+    })
+  }
+
+
   /**
    * Returns the list of variables to update with theirs new values in order to
    * update a route by replacing the edges (a,b) and (c,d) by the
-   * edges (b,c) and (a,c), and reverse the route's segment [a;c]. This assumes that a = Next(b) and d = Next(c).
+   * edges (a,c) and (b,d), and reverse the route's segment [b;c]. This assumes that b = Next(a) and d = Next(c).
+   * (This is a 2-OPT move.)
    *
    * @param a the start of edge (a,b).
    * @param b the end of edge (a,b).
@@ -121,20 +152,64 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
   def flipListToUpdate(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
-    assert(Next(b).value==a && Next(c).value==d)
-    assert(c != a) // else useless to flip
-    (Next(b),c)::(Next(a),d)::reverseSegmentListToUpdate(a,c)
+    assert(Next(a).value==b && Next(c).value==d)
+    assert(c != b) // else useless to flip
+    (Next(a),c)::(Next(b),d)::reverseSegmentListToUpdate(b,c)
   }
 
+  /**
+   * Returns the list of variables to update with theirs new values in order to
+   * update a route by replacing the edges (a,b), (c,d) and (e,f) by the
+   * edges (a,c), (b,e),(d,f), and reverse the route's segment [b;c] and [e;d]
+   * This assumes that b = Next(a), d = Next(c), f = Next(e) and the order of segment's route
+   * is fixed as (a,b) appears first, (c,d) appears second, and finally meets the segment (e,f) in the tour.
+   * (This is a 3-OPT move)
+   *
+   * @param a the start of edge (a,b).
+   * @param b the end of edge (a,b).
+   * @param c the start of edge (c,d).
+   * @param d the end of edge (c,d).
+   * @param e the start of edge (e,f).
+   * @param f the end of edge (e,f).
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+   */
 
-  def flipListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
-    assert(Next(b).value==a && Next(c).value==d)
-    assert(c != a) // else useless to flip
-    (Next(b),c)::(Next(a),d)::reverseSegmentListToUpdate(a,c)
+  def flipWith2ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    //assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    var listToUpdate:List[(IntVar,Int)] = List.empty
+    listToUpdate = (Next(a),c)::listToUpdate
+    listToUpdate = reverseSegmentListToUpdate(b,c):::listToUpdate
+    listToUpdate = (Next(b),e)::listToUpdate
+    listToUpdate = reverseSegmentListToUpdate(d,e):::listToUpdate
+    listToUpdate = (Next(d),f)::listToUpdate
+    listToUpdate
   }
 
-
-
+/**
+ * Returns the list of variables to update with theirs new values in order to
+ * update a route by replacing the edges (a,b), (c,d) and (e,f) by the
+ * edges (a,e), (d,b),(c,f), and reverse the route's segment [d;e].
+ * This assumes that b = Next(a), d = Next(c), f = Next(e) and the order of segment's route
+ * is fixed as (a,b) appears first, (c,d) appears second, and finally meets the segment (e,f) in the tour.
+ * (This is a 3-OPT move)
+ *
+ * @param a the start of edge (a,b).
+ * @param b the end of edge (a,b).
+ * @param c the start of edge (c,d).
+ * @param d the end of edge (c,d).
+ * @param e the start of edge (e,f).
+ * @param f the end of edge (e,f).
+ * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+ */
+  def flipWith1ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    var listToUpdate:List[(IntVar,Int)] = List.empty
+    listToUpdate = (Next(a),e)::listToUpdate
+    listToUpdate = reverseSegmentListToUpdate(d,e):::listToUpdate
+    listToUpdate = (Next(d),b)::listToUpdate
+    listToUpdate = (Next(c),f)::listToUpdate
+    listToUpdate
+  }
 
 }
 
@@ -175,10 +250,15 @@ trait PositionInRouteAndRouteNr extends VRP {
   val PositionInRoute = routes.PositionInRoute
   val RouteNr = routes.RouteNr
 
-  def isASegment(fromNode:Int,toNode:Int):Boolean = {
+  def isAtLeastAsFarAs(fromNode:Int, toNode:Int, n:Int):Boolean = {
     RouteNr(fromNode).value == RouteNr(toNode).value &&
-      PositionInRoute(fromNode).value < PositionInRoute(toNode).value
+      PositionInRoute(fromNode).value + n  <= PositionInRoute(toNode).value
   }
+
+  def isASegment(fromNode:Int,toNode:Int):Boolean = {
+    isAtLeastAsFarAs(fromNode,toNode,1)
+  }
+
 
   /**assuming fromNode,toNOde form a segment*/
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
@@ -188,30 +268,25 @@ trait PositionInRouteAndRouteNr extends VRP {
   }
 
 
-  /** Returns the list of variables to update with theirs new values in order to
-   * remove points or segments of a route. The points or segments to remove
-    * are given in an iterable list of tuple (first,second) of Integer. The first Integer
-    * is the predecessor of the first point to remove, and the second is the last
-    * point to remove. This assumes that (first,second) is a segment, and
-    * the segments formed by the tuples of the list must be disjoint.
-   * @param l iterable list of tuple of Integer.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def unrouteListToUpdate(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
 
-    l.foldLeft(List.empty[(IntVar,Int)])((acc:List[(IntVar,Int)],prec:(Int,Int)) =>
-    {
-      assert(isASegment(prec._1,prec._2))
-      val end = prec._2
-      val insertion = Next(end).value
-      val beforeStart = prec._1
-      var list = (Next(beforeStart),insertion)::(Next(end),N) ::acc
-      var start = Next(beforeStart).value
-      while(start != end) {list = (Next(start),N)::list;start = Next(start).value}
-      list
-    })
-  }
 }
+
+trait OptimizeThreeOptWithReverse extends VRP with HopDistanceAsObjective{
+
+  def getEffectivenessFlipWith1ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Int = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    val delta = - (hopDistance(a).value + hopDistance(c).value + hopDistance(e).value)
+    distanceFunction(a,e) + distanceFunction(d,b) + distanceFunction(c,f) + delta
+  }
+
+  def getEffectivenessFlipWith2ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Int = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    val delta = - (hopDistance(a).value + hopDistance(c).value + hopDistance(e).value)
+    distanceFunction(a,c) + distanceFunction(b,e) + distanceFunction(d,f) + delta
+   }
+}
+
+
 
 /**declares an objective function, attached to the VRP. */
 trait ObjectiveFunction extends VRP with ObjectiveTrait{

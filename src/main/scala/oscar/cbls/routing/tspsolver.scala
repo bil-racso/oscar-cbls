@@ -33,6 +33,7 @@ import oscar.cbls.invariants.lib.set.TakeAny._
 import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
+import oscar.cbls.algebra.Algebra._
 
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
@@ -66,7 +67,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   val DistanceMatrix = getPlanarDistanceMatrix(N)
 
   val m: Model = new Model(false,false,false,false)
-  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PredAndUnrouted
+  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with OptimizeThreeOptWithReverse
   vrp.installCostMatrix(DistanceMatrix)
 
   vrp.saveKNearestPoints(20)
@@ -76,35 +77,39 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
 
   println("closed " + getWatchString)
-  println(vrp)
   NearestNeighbor(vrp)
   //RandomNeighboor(vrp)
   m.propagate()
 
   println("start val: " + vrp.ObjectiveVar.value)
   println(vrp)
-  var nsize = 20
-  var saturated = false
+  println(vrp.routes)
+  var nsize = 50
+  // 20 for the ThreeOpt withtout reverse
+  // 20-100 for the ThreeOpt with 1 or 2 reverse works well
+
+  var Neighbor = false
   var move:Neighbor = null
+  var saturated = false
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
     //move = OnePointMove.getFirstImprovingMove(vrp,move)
-    move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
+   // move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
+    move = ThreeOptTwoReverseMove.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptOneReverseMove.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
       vrp.ObjectiveVar.value
-      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
-    }else{
-//      if (nsize == 40){
+      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value )
+
+    }
+    else{
         saturated = true
         println("done " + getWatchString)
+        println("Nb Reverse = "+vrp.reverseNb)
         if(realSum(vrp,DistanceMatrix).equals(oldobj)) println("Youpie!!") else println("Ohhh :'(")
-//      }else{
-//        nsize = 40
-//        println("GOING TO k=40")
-//      }
     }
   }
 

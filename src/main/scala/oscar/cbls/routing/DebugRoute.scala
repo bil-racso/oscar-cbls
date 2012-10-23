@@ -109,7 +109,7 @@ object DebugRoute extends App{
   // insert a cycle 3->4 4->3
   try{
     Next(4):=3
-    Next(3):=4
+
     m.propagate()
   }
   catch{
