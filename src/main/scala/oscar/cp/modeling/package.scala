@@ -11,6 +11,7 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPVarBool
 import oscar.cp.modeling._
 import oscar.cp.core._
+import oscar.util._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -276,10 +277,28 @@ package object modeling extends Constraints {
 	 * @param block a code block
 	 * @return the time (ms) to execute the block
 	 */
-	def getTime(block : => Unit) : Long = {
+	def time(block : => Unit) : Long = {
 		val t0 = System.currentTimeMillis();
 		block
 		System.currentTimeMillis - t0;
+	}
+	
+	
+	
+	implicit def cpVarSeq2EnrichedCPVarSeq(s : IndexedSeq[CPVarInt]) = new EnrichedCPVarSeq(s)
+	
+	class EnrichedCPVarSeq(val seq : IndexedSeq[CPVarInt]) {
+	  /**
+	   * return one unbound variable with minimum domain (randomly chosen is several of them)
+	   */
+	  def minDomNotBound: CPVarInt = {
+	    val res: Option[CPVarInt] = selectMin(seq)(!_.isBound)(_.size)
+	    res match {
+	      case Some(x) => x
+	      case None => throw new java.util.NoSuchElementException("no unbound var")
+	    }
+	  }
+	  
 	}
 
 	//helper functions

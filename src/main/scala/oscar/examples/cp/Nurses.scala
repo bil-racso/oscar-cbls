@@ -33,7 +33,7 @@ object Nurses extends App  {
   
   // --- reading the data ---
 
-  val lines = Source.fromFile("data/nurses/bench2/instance0.txt").getLines.reduceLeft(_ + " " + _)
+  val lines = Source.fromFile("data/nurses/20zones.txt").getLines.reduceLeft(_ + " " + _)
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
   var index = 0
   def next() = {
@@ -60,15 +60,44 @@ object Nurses extends App  {
  val nbNursesInZone = Array.fill(nbZones)(1)
  
  def H(i: Int): Double = totAcuityInZone(i)*totAcuityInZone(i)
- def delta(i: Int) = H(i)/nbNursesInZone(i) - H(i)/(nbNursesInZone(i)+1)
+ def delta(i: Int,delta: Int = 1) = H(i)/nbNursesInZone(i) - H(i)/(nbNursesInZone(i)+1)
+ 
+ // compute lower bound to prove our decomposition will eventually be optimal
+ def deltaSwap(i: Int,j: Int) = {
+    if (nbNursesInZone(i) > 1) {
+    	delta(i,1)+delta(j,-1)
+    } else {
+      Int.MaxValue
+    }	
+  }
  
  // progressively increase the number of nurses
  for (k <- nbZones until nbNurses) { 
-   selectMax(0 until nbZones)(delta) {
-     i => nbNursesInZone(i) += 1
-   }
+   val r: IndexedSeq[Int] = 0 until nbZones
+   val i = selectMax(r)()(delta(_,1)).get
+   nbNursesInZone(i) += 1
+   
  }
+ println("---------------------------------------------")
+ val lb = (0 until nbZones).map(z => (totAcuityInZone(z).toDouble*totAcuityInZone(z)/nbNursesInZone(z))).sum
+ var lb2 = 0.0
+ val couples = for (z1 <- 0 until nbZones; z2 <- 0 until nbZones; if (z1 != z2)) yield (z1,z2);
+ def swap(t:(Int,Int)) = deltaSwap(t._1,t._2)
+ val (i,j) = selectMin(couples)()(swap).get
+ println("===============>"+(i,j))
+ nbNursesInZone(i) += 1
+ nbNursesInZone(j) -= 1
+ lb2 = (0 until nbZones).map(z => (totAcuityInZone(z).toDouble*totAcuityInZone(z)/nbNursesInZone(z))).sum
+ nbNursesInZone(i) -= 1
+ nbNursesInZone(j) += 1
+     
+   
+ 
+ 
  println("#nurses in each zones:"+nbNursesInZone.mkString(","))
+ 
+ //nbNursesInZone(0) = 3
+ //nbNursesInZone(1) = 3
  
  
  // --- ---
@@ -83,17 +112,20 @@ object Nurses extends App  {
  
  val f = new VisualFrame("Steel Mill Slab")
  val colors = VisualUtil.getRandomColorArray(nbZones)
+ colors(0) = java.awt.Color.GREEN
+ colors(1) = java.awt.Color.RED
  val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,40)    
  f.createFrame("Nurses").add(drawing)
  
- val scale = 2
- 
+ val scale = 3
+ var totSpread = 0
  for (i <- 0 until nbZones) {
      
    val items = Array.tabulate(nbPatientsInZone(i))(j => drawing.addItem(i,scale*acuityByZone(i)(j)))
    items.foreach(_.setInnerCol(colors(i)))
  
    val cp = CPSolver()
+   cp.silent = true
    val spreadAcuity = CPVarInt(cp,0 to 1000000)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
@@ -107,8 +139,7 @@ object Nurses extends App  {
    } exploration {
      val x = nurseOfPatient
      while (!allBounds(x)) {
-		    val bound = x.filter(_.isBound)
-		    val maxUsed = if (bound.isEmpty) -1 else bound.map(_.value).max
+		    val maxUsed = x.filter(_.isBound).map(_.value) :+ -1 max
 		    val (y,o) = minDomNotbound(x).head // retrieve the var and its index in x with smallest domain
 		    val v = y.min
 		    if (v > maxUsed) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
@@ -122,9 +153,15 @@ object Nurses extends App  {
      
      best = spreadAcuity.value
    }
+   totSpread += best
    println("spread zone:"+i+"="+best)
    cp.printStats
   
- }   
+ }
+ println("---------------------------")
+ println("tot spread:"+totSpread+" ?>=? "+lb2 + "optimal:?"+(totSpread < lb2))
+ println("lower bound:"+lb)
+ 
+
 	
 }

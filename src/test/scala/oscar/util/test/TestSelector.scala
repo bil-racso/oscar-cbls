@@ -35,9 +35,8 @@ class TestSelector extends FunSuite with ShouldMatchers {
  
   
     	for (i <- 0 until 1000) {
-    	  select[Int](indices,i => i != 2) {
-    	    i => count(i) += 1
-    	  }
+    	  val j = select(indices)(_ != 2).get
+    	  count(i) += 1
     	}
     	count(0) should be >= (200)
     	count(1) should be >= (200)
@@ -55,9 +54,9 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	val count = Array.fill(indices.size)(0)
  
     	for (i <- 0 until 1000) {
-    	  selectMin[Int](indices,i => i != 2)(i => f(i)) {
-    	    i => count(i) += 1
-    	  }
+    	  val i = selectMin(indices)(_ != 2)(f(_)).get
+    	  count(i) += 1
+    	  
     	}
     	println(count.mkString(","))
     	count(0) should be >= (300)
