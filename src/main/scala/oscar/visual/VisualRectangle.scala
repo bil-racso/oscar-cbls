@@ -32,7 +32,9 @@ class VisualRectangle(d:VisualDrawing, shape:Rectangle2D.Double) extends Colored
 	def rect:Rectangle2D.Double = shape
 
 	def this( d:VisualDrawing, x:Double, y:Double, w:Double, h:Double) {
+	  
 		this(d, new Rectangle2D.Double(x,y,w,h))
+		println(d + " " + new Rectangle2D.Double(x,y,w,h))
 	}
 	
 	/**
@@ -112,6 +114,7 @@ object VisualRectangle{
 		
 		Thread.sleep(1000);
 		rect.innerCol_$eq(Color.red);
+		rect.outerCol_$eq(Color.black);
 		Thread.sleep(1000);
 		rect.width = 200;
 		Thread.sleep(1000);
