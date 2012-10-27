@@ -139,15 +139,9 @@ object Nurses extends App  {
    } exploration {
      val x = nurseOfPatient
      while (!allBounds(x)) {
-		    val maxUsed = x.filter(_.isBound).map(_.value) :+ -1 max
-		    val (y,o) = minDomNotbound(x).head // retrieve the var and its index in x with smallest domain
-		    val v = y.min
-		    if (v > maxUsed) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
-		      cp.branchOne(cp.post(y == v))
-		    }
-		    else  {
-		      cp.branch(cp.post(y == v))(cp.post(y != v))
-		    }
+		    val maxUsed = x.maxBoundOrElse(-1)
+		    val y = x.minDomNotBound
+		    cp.branchAll(0 to maxUsed+1)(v => cp.post(y == v))
      }
      x.zipWithIndex.foreach{case(n,j) => items(j).setBin(n.value + nbNursesInZone.take(i).sum)}
      

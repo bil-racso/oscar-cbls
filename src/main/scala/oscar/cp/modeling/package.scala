@@ -273,23 +273,17 @@ package object modeling extends Constraints {
 		}
 	}
 
-	/**
-	 * @param block a code block
-	 * @return the time (ms) to execute the block
-	 */
-	def time(block : => Unit) : Long = {
-		val t0 = System.currentTimeMillis();
-		block
-		System.currentTimeMillis - t0;
-	}
+
 	
 	
 	
-	implicit def cpVarSeq2EnrichedCPVarSeq(s : IndexedSeq[CPVarInt]) = new EnrichedCPVarSeq(s)
+	implicit def cpVarSeq2EnrichedCPVarSeq(s : Iterable[CPVarInt]) = new EnrichedCPVarSeq(s)
+
+	implicit def cpVarArray2EnrichedCPVarSeq(s : Array[CPVarInt]) = new EnrichedCPVarSeq(s)
 	
-	class EnrichedCPVarSeq(val seq : IndexedSeq[CPVarInt]) {
+	class EnrichedCPVarSeq(val seq : Iterable[CPVarInt]) {
 	  /**
-	   * return one unbound variable with minimum domain (randomly chosen is several of them)
+	   * @return one unbound variable with minimum domain (randomly chosen is several of them)
 	   */
 	  def minDomNotBound: CPVarInt = {
 	    val res: Option[CPVarInt] = selectMin(seq)(!_.isBound)(_.size)
@@ -299,27 +293,23 @@ package object modeling extends Constraints {
 	    }
 	  }
 	  
+	  /**
+	   * @return the maximum value taken a bound variable or v if no variable is bound
+	   */
+	  def maxBoundOrElse(v: Int): Int = {
+	    val res: Option[CPVarInt] = selectMax(seq)(_.isBound)(_.value)
+	    res match {
+	      case Some(x) => x.value
+	      case None => v
+	    }
+	  }
+	  
+	  
+	  
+	  
 	}
 
 	//helper functions
-
-	/**
-	 * @param vars an array of CPVarInt
-	 * @return an array of tuple (variable,index of variables in vars) composed
-	 *         of the not-bound variables (at least two values in the domain)
-	 *         having the smallest domain size. an empty array if every variable is bound
-	 */
-	def minDomNotbound(vars : Iterable[CPVarInt]) : Iterable[(CPVarInt, Int)] = {
-		val notbound = vars.zipWithIndex.filterNot(_._1.isBound)
-		if (notbound.nonEmpty) {
-			val sizeMin = notbound.map(_._1.size).min
-			notbound.filter {
-				_._1.size == sizeMin
-			}
-		} else {
-			Iterable()
-		}
-	}
 
 	def allBounds(vars : Iterable[CPVarInt]) = vars.forall(_.isBound)
 

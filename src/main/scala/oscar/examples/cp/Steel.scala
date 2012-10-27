@@ -21,6 +21,7 @@ import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import oscar.visual._
+import oscar.util._
 
 import scala.collection.JavaConversions._
 import scala.io.Source
@@ -28,6 +29,7 @@ import scala.util.Random
 
 import java.lang._
 import java.awt.Color
+
 
 
 /**
@@ -49,7 +51,7 @@ object Steel {
 
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlab.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)
@@ -85,6 +87,7 @@ object Steel {
 
 		val cp = new CPSolver
 		val x = (for(s <- Slabs) yield CPVarInt(cp,0 until nbSlab))
+		val weightMap = (for(s <- Slabs) yield (x(s) -> weight(s))).toMap
 		val l = for(s <- Slabs) yield CPVarInt(cp,0 to capa.max)
 		val xsol = Array.fill(nbSlab)(0) //current best solution
 		
@@ -108,7 +111,8 @@ object Steel {
 
 		val rnd = new Random(0)
 		var nbSol = 0
-		cp.lns(100,200) {
+		
+		cp.lns(100,300) {
 		  for (s <- Slabs; if rnd.nextInt(100) > 70) {
 		    cp.post(x(s) == xsol(s))
 		  }
@@ -122,20 +126,10 @@ object Steel {
 			}
 		} exploration {
 		  while (!allBounds(x)) {
-		    val bound = x.filter(_.isBound)
-		    val maxUsedSlab = if (bound.isEmpty) -1 else bound.map(_.value).max
-		    //delta on the loss if you place order o in slab s
-		    val (y,o) = minDomNotbound(x).first // retrieve the var and its index in x with smallest domain
-		    val v = y.min
-		    if (v > maxUsedSlab) { // o can only be placed in an empty slab (=> dynamic break of symmetries)
-		      cp.branchOne(cp.post(y == v))
-		    }
-		    else  {
-		      cp.branch(cp.post(y == v))(cp.post(y != v))
-		    }
+			val maxUsed = x.maxBoundOrElse(-1)
+			val y = selectMin(x)(!_.isBound)(x => 10000*x.size-weightMap(x)).get
+		    cp.branchAll((0 to maxUsed+1).filter(y.hasValue(_)))(v => cp.post(y == v))
 		  }
-		  
-		  println("failed:"+cp.isFailed())
 		  Slabs.foreach(o => {xsol(o) = x(o).value
 		                     items(o).setBin(xsol(o))})
 		  plot.addPoint(nbSol,obj.value)                   

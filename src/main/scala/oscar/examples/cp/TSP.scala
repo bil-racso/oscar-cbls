@@ -20,6 +20,7 @@ package oscar.examples.cp
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
+import oscar.util._
 import oscar.visual._
 import scala.collection.JavaConversions._
 import scala.io.Source
@@ -56,8 +57,7 @@ object TSP {
     } exploration {
       //exploration of the search tree
       while (!allBounds(succ)) {
-         val res = minDomNotbound(succ)
-         val (x, i) = res.first
+         val (x,i) = selectMin(succ.zipWithIndex)(!_._1.isBound)(_._1.size).get
          // get the closest successor in the domain of x
          val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
          cp.branch(cp.post(x == v)) (cp.post(x != v))

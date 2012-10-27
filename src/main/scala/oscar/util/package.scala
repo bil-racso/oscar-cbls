@@ -71,7 +71,15 @@ package object util {
    * @author pschaus
    */
   def selectMax[R](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true))(f: R => Double) = selectMin(r)(st)(-f(_))
-    
-  
+
+  /**
+   * @param block a code block
+   * @return the time (ms) to execute the block
+   */
+  def time(block: => Unit): Long = {
+    val t0 = System.currentTimeMillis();
+    block
+    System.currentTimeMillis - t0;
+  }
 
 }
