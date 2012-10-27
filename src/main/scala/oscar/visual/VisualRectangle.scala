@@ -114,7 +114,6 @@ object VisualRectangle{
 		
 		Thread.sleep(1000);
 		rect.innerCol_$eq(Color.red);
-		rect.outerCol_$eq(Color.black);
 		Thread.sleep(1000);
 		rect.width = 200;
 		Thread.sleep(1000);

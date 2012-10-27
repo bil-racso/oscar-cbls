@@ -47,7 +47,7 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 	}
 	
 	def innerCol = _innerCol
-	def outerCol = _innerCol
+	def outerCol = _outerCol
 	def visible = _visible
 	
 	def drawing = _drawing;

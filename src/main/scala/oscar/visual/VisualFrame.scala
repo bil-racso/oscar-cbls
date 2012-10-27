@@ -18,8 +18,10 @@ package oscar.visual;
 
 import java.awt._
 import java.awt.event._
-
 import javax.swing._
+import scala.swing.BoxPanel
+import scala.swing.Orientation
+
 
 class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 
@@ -33,6 +35,7 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	var w = screenSize.width/nbCols
 	var h = screenSize.height/nbLines	
 
+	
 	val content = getContentPane()
 	content.setBackground(Color.white)
 	content.add(new JScrollPane(desktop))
@@ -83,7 +86,13 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		frame
 	}	
 
-
+	def  createToolBar():VisualToolBar = {
+		val toolbar = new VisualToolBar()
+		content.add(toolbar,BorderLayout.NORTH)
+		toolbar
+	}
+	  
+	  
 
 
 }
