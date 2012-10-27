@@ -31,6 +31,8 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 
 	
 	var _visible = true
+	var _fill = true
+	var _border = true
 	
 	var toolTip : String = null
 	
@@ -39,22 +41,38 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 	
 	def draw(g:Graphics2D) {
 		if (visible) {
-			g.setColor(innerCol);
-			g.fill(shape);
-			g.setColor(outerCol);
-			g.draw(shape);
+		  if(fill){
+			g.setColor(innerCol)
+			g.fill(shape)
+		  }
+		  if(border){
+			g.setColor(outerCol)
+			g.draw(shape)
+		  }
 		}
 	}
 	
 	def innerCol = _innerCol
 	def outerCol = _outerCol
 	def visible = _visible
+	def fill = _fill
+	def border = _border
 	
 	def drawing = _drawing;
 	def shape = _shape;
 	
 	def visible_= (visible:Boolean) : Unit = {
 		_visible = visible;
+		drawing.repaint();
+	}
+	
+	def border_= (border:Boolean) : Unit = {
+		_border = border;
+		drawing.repaint();
+	}
+	
+	def fill_= (fill:Boolean) : Unit = {
+		_fill = fill;
 		drawing.repaint();
 	}
 
