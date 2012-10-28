@@ -35,9 +35,8 @@ class TestSelector extends FunSuite with ShouldMatchers {
  
   
     	for (i <- 0 until 1000) {
-    	  select[Int](indices,i => i != 2) {
-    	    i => count(i) += 1
-    	  }
+    	  val j = select(indices)(_ != 2).get
+    	  count(j) += 1
     	}
     	count(0) should be >= (200)
     	count(1) should be >= (200)
@@ -55,9 +54,9 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	val count = Array.fill(indices.size)(0)
  
     	for (i <- 0 until 1000) {
-    	  selectMin[Int](indices,i => i != 2)(i => f(i)) {
-    	    i => count(i) += 1
-    	  }
+    	  val j = selectMin(indices)(_ != 2)(f(_)).get
+    	  count(j) += 1
+    	  
     	}
     	println(count.mkString(","))
     	count(0) should be >= (300)
@@ -65,7 +64,16 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	count(4) should be >= (300)
     	count(0)+count(1)+count(4) should be(1000)
 
-    }    
+    }  
+    
+    test("test random min selector on tuples") {
+    			
+    	val indices: Array[Int] = Array(0,1,2,3,4)
+    	val f1: Array[Int] = Array(0,1,1,0,0)
+    	val f2: Array[Int] = Array(2,1,1,1,-1)
+    	val res = selectMin(indices)(_ < 4)(i => (f1(i),f2(i))).get
+    	res should be(3)
+    }
 
 }
 

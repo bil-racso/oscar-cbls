@@ -64,7 +64,7 @@ object QuadraticAssignment {
       cp.add(alldifferent(x), Strong)
     } exploration {
         while (!allBounds(x)) {
-           val (y,i) = minDomNotbound(x).first
+           val y = x.minDomNotBound
            val v = y.min
     	   cp.branch {
              cp.post(y == v)

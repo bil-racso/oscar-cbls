@@ -140,7 +140,7 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
       output := SortedSet.empty[Int]
       val HeapAbove:BinomialHeap[Int] = new BinomialHeap((i:Int) => values(i).value,values.size)
       for(v <- values.indices){
-        if(values(v).value <= boundary){
+        if(values(v).value <= boundary.value){
           output.insertValue(v)
         }else{
           HeapAbove.insert(v)

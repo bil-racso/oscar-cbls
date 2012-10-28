@@ -212,10 +212,11 @@ class CPSolver() extends Store() {
 	  
 	  val relax = lns match {
 		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => {
+		   case Some(LNS(nbRestart,nbFailures,restar)) => 
 		     maxRestart = nbRestart
 		     failLimit = nbFailures
-		     restar
+		     () => {
+		     restar()
 		   }
 	  }  
 
@@ -243,19 +244,23 @@ class CPSolver() extends Store() {
              if (relaxation) {
                sc.reset()
                relax()
-               
              }
              if (!isFailed()) {
                  sc.reset()
                  nbRestart += 1 
                  reset {
                    b()  	  
-                   if (!isFailed()) objective.tighten()
+                   if (!isFailed()) {
+                     objective.tighten()
+                     sc.limitActivated = true
+                   }
       	         }
                  if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
              }
           }
+          sc.limitActivated = false
           restart(false) // first restart, find a feasible solution so no limit
+          sc.limitActivated = true
           for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
              restart(true)
              if (sc.isLimitReached) {

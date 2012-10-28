@@ -26,484 +26,484 @@ import oscar.cp.constraints.TONOTCOMMIT
 
 object VRPTW extends App {
 
-	val instance = parse("data/VRPTW/Solomon/R101.txt")
+  val instance = parse("data/VRPTW/Solomon/R101.txt")
 
-	// Distance scaling
-	val scale = 1000
+  // Distance scaling
+  val scale = 1000
 
-	// Data
-	val nCustomers = instance.n
-	val nVehicles  = 19//instance.k	
-	val nSites     = nCustomers + 2 * nVehicles
-	val capacity   = instance.c
+  // Data
+  val nCustomers = instance.n
+  val nVehicles = 19 //instance.k	
+  val nSites = nCustomers + 2 * nVehicles
+  val capacity = instance.c
 
-	val Vehicles    = 0 until nVehicles
-	val Customers   = 0 until nCustomers
-	val Sites       = 0 until nCustomers + 2 * nVehicles
-	val FirstDepots = nCustomers until nCustomers + nVehicles
-	val LastDepots  = nCustomers + nVehicles until nCustomers + 2 * nVehicles
+  val Vehicles = 0 until nVehicles
+  val Customers = 0 until nCustomers
+  val Sites = 0 until nCustomers + 2 * nVehicles
+  val FirstDepots = nCustomers until nCustomers + nVehicles
+  val LastDepots = nCustomers + nVehicles until nCustomers + 2 * nVehicles
 
-	val demand  = new Array[Int](nSites) // Demand of each customer
-	val twStart = new Array[Int](nSites) // Earliest delivery time of each customer
-	val twEnd   = new Array[Int](nSites) // Latest delivery time of each customer
-	val servDur = new Array[Int](nSites) // Duration needed to serve each customer
+  val demand = new Array[Int](nSites) // Demand of each customer
+  val twStart = new Array[Int](nSites) // Earliest delivery time of each customer
+  val twEnd = new Array[Int](nSites) // Latest delivery time of each customer
+  val servDur = new Array[Int](nSites) // Duration needed to serve each customer
 
-	val coord = new Array[(Int, Int)](nSites)
+  val coord = new Array[(Int, Int)](nSites)
 
-	for (s <- Sites) {
-		val i = if (s >= nCustomers) 0 else s + 1
+  for (s <- Sites) {
+    val i = if (s >= nCustomers) 0 else s + 1
 
-		demand(s)  = instance.demand(i)
-		twStart(s) = instance.twStart(i) * scale
-		twEnd(s)   = instance.twEnd(i) * scale
-		servDur(s) = instance.servDur(i) * scale
+    demand(s) = instance.demand(i)
+    twStart(s) = instance.twStart(i) * scale
+    twEnd(s) = instance.twEnd(i) * scale
+    servDur(s) = instance.servDur(i) * scale
 
-		coord(s) = instance.coord(i)
-	}
+    coord(s) = instance.coord(i)
+  }
 
-	// Distance matrix between sites
-	val dist = new Array[Array[Int]](nSites, nSites)
-	val realDist = new Array[Array[Double]](nSites, nSites)
+  // Distance matrix between sites
+  val dist = new Array[Array[Int]](nSites, nSites)
+  val realDist = new Array[Array[Double]](nSites, nSites)
 
-	for (c1 <- Sites; c2 <- Sites) {
-		val i = if (c1 >= nCustomers) 0 else c1 + 1
-		val j = if (c2 >= nCustomers) 0 else c2 + 1
-		dist(c1)(c2) = (instance.dist(i)(j) * scale).toInt
-		realDist(c1)(c2) = (instance.dist(i)(j))
-	}
+  for (c1 <- Sites; c2 <- Sites) {
+    val i = if (c1 >= nCustomers) 0 else c1 + 1
+    val j = if (c2 >= nCustomers) 0 else c2 + 1
+    dist(c1)(c2) = (instance.dist(i)(j) * scale).toInt
+    realDist(c1)(c2) = (instance.dist(i)(j))
+  }
 
-	val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
+  val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
 
-	// Model
-	val cp = CPSolver()
+  // Model
+  val cp = CPSolver()
 
-	val pred    = Array.fill(nSites)(CPVarInt(cp, Sites)) // Predecessor
-	val succ    = Array.fill(nSites)(CPVarInt(cp, Sites)) // Successor 
-	val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles)) // Route of each vehicle
-	val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon)) // Date of service of each site
+  val pred = Array.fill(nSites)(CPVarInt(cp, Sites)) // Predecessor
+  val succ = Array.fill(nSites)(CPVarInt(cp, Sites)) // Successor 
+  val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles)) // Route of each vehicle
+  val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon)) // Date of service of each site
 
-	val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
+  val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
 
-	val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
-	val totTard = CPVarInt(cp, Horizon)
+  val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
+  val totTard = CPVarInt(cp, Horizon)
 
-	// ------------------------------------------------------------------------
-	// LNS BLOCK
-	// ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // LNS BLOCK
+  // ------------------------------------------------------------------------
 
-	type Sol = Array[Int]
+  type Sol = Array[Int]
 
-	var bestPrev  : Sol = new Sol(nSites)
-	var bestNext  : Sol = new Sol(nSites)
-	var bestRoute : Sol = new Sol(nSites)
-	var bestDep   : Sol = new Sol(nSites)
-	var bestDist  = 0
-	var nRestart  = 1
+  var bestPrev: Sol = new Sol(nSites)
+  var bestNext: Sol = new Sol(nSites)
+  var bestRoute: Sol = new Sol(nSites)
+  var bestDep: Sol = new Sol(nSites)
+  var bestDist = 0
+  var nRestart = 1
 
-	var firstLns = true
+  var firstLns = true
 
-	cp.sc = new IDSSearchController(cp, 6)
-	var regretSearch = true
-	var adaptable = true
+  cp.sc = new IDSSearchController(cp, 6)
+  var regretSearch = true
+  var adaptable = true
 
-	cp.lns(100, 1000) {
+  cp.lns(100, 1000) {
 
-		nRestart += 1
+    nRestart += 1
 
-		if (firstLns) {
-			println("Start LNS")
-			firstLns = false
-		}
+    if (firstLns) {
+      println("Start LNS")
+      firstLns = false
+    }
 
-		if (adaptable) adaptFailure()
+    if (adaptable) adaptFailure()
 
-		val nextRelax = if (nextFloat < 0.3) 0 else 1
+    val nextRelax = if (nextFloat < 0.3) 0 else 1
 
-		relaxVariables(nextRelax match {
-			// Customer-based Adaptive Temporal Decomposition
-			case 0 => catd(15)
-			// Customer-based Adaptive Spatial Decomposition
-			case 1 => casd(25)
-			// Customer-based Adaptive Random Decomposition
-			case 2 => card(15)
-			// Relatedness Shaw relaxation
-			case 3 => shaw(15, 10)
-		})
-	}
+    relaxVariables(nextRelax match {
+      // Customer-based Adaptive Temporal Decomposition
+      case 0 => catd(15)
+      // Customer-based Adaptive Spatial Decomposition
+      case 1 => casd(25)
+      // Customer-based Adaptive Random Decomposition
+      case 2 => card(15)
+      // Relatedness Shaw relaxation
+      case 3 => shaw(15, 10)
+    })
+  }
 
-	cp.failLimit = 10000
+  cp.failLimit = 10000
 
-	// ------------------------------------------------------------------------
-	// PREPROCESSING AND USEFUL FUNCTIONS
-	// ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // PREPROCESSING AND USEFUL FUNCTIONS
+  // ------------------------------------------------------------------------
 
-	val sortedCustomersByTwStart = Customers.sortBy(i => twStart(i))
-	val sortedCustomersByTwEnd = Customers.sortBy(i => twEnd(i))
+  val sortedCustomersByTwStart = Customers.sortBy(i => twStart(i))
+  val sortedCustomersByTwEnd = Customers.sortBy(i => twEnd(i))
 
-	val angles = Array.tabulate(nCustomers)(i => {
+  val angles = Array.tabulate(nCustomers)(i => {
 
-		val x = coord(i)._1 - coord(FirstDepots.min)._1
-		val y = coord(i)._2 - coord(FirstDepots.min)._2
+    val x = coord(i)._1 - coord(FirstDepots.min)._1
+    val y = coord(i)._2 - coord(FirstDepots.min)._2
 
-		val theta = (atan2(x, y) * 180 / Pi).toInt
-		if (theta < 0) (theta + 360) else theta
-	})
+    val theta = (atan2(x, y) * 180 / Pi).toInt
+    if (theta < 0) (theta + 360) else theta
+  })
 
-	val sortedCustomersByAngle = Customers.sortBy(i => angles(i))
+  val sortedCustomersByAngle = Customers.sortBy(i => angles(i))
 
-	// Normalized distances
-	val maxDist = dist.map(_.max).max
-	val nDist = dist.map(_.map(_ / maxDist.toDouble))
+  // Normalized distances
+  val maxDist = dist.map(_.max).max
+  val nDist = dist.map(_.map(_ / maxDist.toDouble))
 
-	def relatedness(i: Int, j: Int) = {
+  def relatedness(i: Int, j: Int) = {
 
-		val v = if (bestPrev(i) == bestPrev(j)) 0 else 1
-		1 / (nDist(i)(j) + v)
-	}
+    val v = if (bestPrev(i) == bestPrev(j)) 0 else 1
+    1 / (nDist(i)(j) + v)
+  }
 
-	def adaptedAngle(angle: Int, alpha: Int) = {
+  def adaptedAngle(angle: Int, alpha: Int) = {
 
-		val newAngle = angle - alpha
-		if (newAngle < 0) 360 - (alpha - angle) else newAngle
-	}
+    val newAngle = angle - alpha
+    if (newAngle < 0) 360 - (alpha - angle) else newAngle
+  }
 
-	def solFound {
+  def solFound {
 
-		bestPrev = buildPrev
-		bestNext = buildNext
-		bestRoute = buildRoute
-		bestDist = totDist.value
-	}
+    bestPrev = buildPrev
+    bestNext = buildNext
+    bestRoute = buildRoute
+    bestDist = totDist.value
+  }
 
-	def buildPrev  : Sol = pred.map(_.value)
-	def buildNext  : Sol = succ.map(_.value)
-	def buildRoute : Sol = vehicle.map(_.value)
+  def buildPrev: Sol = pred.map(_.value)
+  def buildNext: Sol = succ.map(_.value)
+  def buildRoute: Sol = vehicle.map(_.value)
 
-	// ------------------------------------------------------------------------
-	// RELAXATION PROCEDURES
-	// ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // RELAXATION PROCEDURES
+  // ------------------------------------------------------------------------
 
-	def adaptFailure() {
+  def adaptFailure() {
 
-		if (!cp.isLastLNSRestartCompleted)
-			cp.failLimit = (cp.failLimit * 110) / 100
-		else
-			cp.failLimit = max(10, (cp.failLimit * 90) / 100)
-	}
+    if (!cp.isLastLNSRestartCompleted)
+      cp.failLimit = (cp.failLimit * 110) / 100
+    else
+      cp.failLimit = max(10, (cp.failLimit * 90) / 100)
+  }
 
-	def shaw(p: Int, beta: Int): Array[Boolean] = {
+  def shaw(p: Int, beta: Int): Array[Boolean] = {
 
-		// Random selection of a customer	
-		val selected = Array.fill(nSites)(false)
-		selected(nextInt(nCustomers)) = true
+    // Random selection of a customer	
+    val selected = Array.fill(nSites)(false)
+    selected(nextInt(nCustomers)) = true
 
-		for (k <- 1 until p) {
+    for (k <- 1 until p) {
 
-			val selectedC  = Customers.filter(selected(_))
-			val remainingC = Customers.filter(!selected(_))
+      val selectedC = Customers.filter(selected(_))
+      val remainingC = Customers.filter(!selected(_))
 
-			// Selects randomly a customer in S
-			val c = selectedC(nextInt(selectedC.size))
+      // Selects randomly a customer in S
+      val c = selectedC(nextInt(selectedC.size))
 
-			// Order by relatedness with c
-			val sortedC = remainingC.sortWith((i, j) => relatedness(c, i) > relatedness(c, j))
+      // Order by relatedness with c
+      val sortedC = remainingC.sortWith((i, j) => relatedness(c, i) > relatedness(c, j))
 
-			val r = sortedC((pow(nextFloat, beta) * sortedC.size).floor.toInt)
-			selected(r) = true
-		}
+      val r = sortedC((pow(nextFloat, beta) * sortedC.size).floor.toInt)
+      selected(r) = true
+    }
 
-		selected
-	}
+    selected
+  }
 
-	def casd(p: Int): Array[Boolean] = {
+  def casd(p: Int): Array[Boolean] = {
 
-		val routes = Array.fill(nVehicles)(false)
-		val selected = Array.fill(nSites)(false)
+    val routes = Array.fill(nVehicles)(false)
+    val selected = Array.fill(nSites)(false)
 
-		val alpha = nextInt(360)
+    val alpha = nextInt(360)
 
-		var first = 0
-		var min = Int.MaxValue
+    var first = 0
+    var min = Int.MaxValue
 
-		for (i <- sortedCustomersByAngle) {
-			val angle = if (angles(i) - alpha < 0) 360 - (alpha - angles(i)) else angles(i) - alpha
-			if (angle < min) {
-				first = i
-				min = angle
-			}
-		}
+    for (i <- sortedCustomersByAngle) {
+      val angle = if (angles(i) - alpha < 0) 360 - (alpha - angles(i)) else angles(i) - alpha
+      if (angle < min) {
+        first = i
+        min = angle
+      }
+    }
 
-		for (i <- first until first + p) {
-			val c = if (i < nCustomers) i else i - nCustomers
-			routes(bestRoute(sortedCustomersByAngle(c))) = true
-		}
+    for (i <- first until first + p) {
+      val c = if (i < nCustomers) i else i - nCustomers
+      routes(bestRoute(sortedCustomersByAngle(c))) = true
+    }
 
-		for (i <- Customers)
-			if (routes(bestRoute(i)))
-				selected(i) = true
+    for (i <- Customers)
+      if (routes(bestRoute(i)))
+        selected(i) = true
 
-		selected
-	}
+    selected
+  }
 
-	def catd(p: Int): Array[Boolean] = {
+  def catd(p: Int): Array[Boolean] = {
 
-		val routes = Array.fill(nVehicles)(false)
-		val selected = Array.fill(nSites)(false)
+    val routes = Array.fill(nVehicles)(false)
+    val selected = Array.fill(nSites)(false)
 
-		// Ensures the relaxation of p customers (not depots)
-		val max = nCustomers - p - 1
-		val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
+    // Ensures the relaxation of p customers (not depots)
+    val max = nCustomers - p - 1
+    val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
 
-		var nSelected = 0
-		var i = 0
+    var nSelected = 0
+    var i = 0
 
-		// Keeps relevant customers
-		while (nSelected < p) {
+    // Keeps relevant customers
+    while (nSelected < p) {
 
-			val c = sortedCustomersByTwEnd(i)
+      val c = sortedCustomersByTwEnd(i)
 
-			if (twStart(c) >= alpha) {
-				routes(bestRoute(c)) = true
-				nSelected += 1
-			}
+      if (twStart(c) >= alpha) {
+        routes(bestRoute(c)) = true
+        nSelected += 1
+      }
 
-			i += 1
-		}
+      i += 1
+    }
 
-		for (i <- Customers)
-			if (routes(bestRoute(i)))
-				selected(i) = true
+    for (i <- Customers)
+      if (routes(bestRoute(i)))
+        selected(i) = true
 
-		selected
-	}
+    selected
+  }
 
-	def card(p: Int): Array[Boolean] = {
+  def card(p: Int): Array[Boolean] = {
 
-		val routes = Array.fill(nVehicles)(false)
-		val selected = Array.fill(nSites)(false)
+    val routes = Array.fill(nVehicles)(false)
+    val selected = Array.fill(nSites)(false)
 
-		var nSelected = 0
+    var nSelected = 0
 
-		while (nSelected < p) {
+    while (nSelected < p) {
 
-			// Not selected customers
-			val remainingC = Customers.filter(!selected(_))
-			// Random selection of a not already selected customers
-			val alpha = remainingC(nextInt(remainingC.size))
+      // Not selected customers
+      val remainingC = Customers.filter(!selected(_))
+      // Random selection of a not already selected customers
+      val alpha = remainingC(nextInt(remainingC.size))
 
-			for (i <- remainingC) {
+      for (i <- remainingC) {
 
-				val beta = nextInt(remainingC.size)
+        val beta = nextInt(remainingC.size)
 
-				if (bestRoute(i) == bestRoute(alpha) && bestDep(i) > bestDep(alpha) && bestDep(i) <= bestDep(beta)) {
-					selected(i) = true
-					routes(bestRoute(i)) = true
-					nSelected += 1
-				}
-			}
-		}
+        if (bestRoute(i) == bestRoute(alpha) && bestDep(i) > bestDep(alpha) && bestDep(i) <= bestDep(beta)) {
+          selected(i) = true
+          routes(bestRoute(i)) = true
+          nSelected += 1
+        }
+      }
+    }
 
-		for (i <- Customers)
-			if (routes(bestRoute(i)))
-				selected(i) = true
+    for (i <- Customers)
+      if (routes(bestRoute(i)))
+        selected(i) = true
 
-		selected
-	}
+    selected
+  }
 
-	def relaxVariables(selected: Array[Boolean]) {
+  def relaxVariables(selected: Array[Boolean]) {
 
-		visu.update(bestPrev, bestNext, selected)
-		visu.updateDist()
-		visu.updateRestart(nRestart)
+    visu.update(bestPrev, bestNext, selected)
+    visu.updateDist()
+    visu.updateRestart(nRestart)
 
-		val constraints: Queue[Constraint] = Queue()
+    val constraints: Queue[Constraint] = Queue()
 
-		for (i <- Sites) {
-			if (!selected(i)) {
+    for (i <- Sites) {
+      if (!selected(i)) {
 
-				constraints enqueue (vehicle(i) == bestRoute(i))
+        constraints enqueue (vehicle(i) == bestRoute(i))
 
-				if (!selected(bestPrev(i)))
-					constraints enqueue (pred(i) == bestPrev(i))
-				if (!selected(bestNext(i)))
-					constraints enqueue (succ(i) == bestNext(i))
-			}
-		}
-		cp.post(constraints.toArray)
-	}
+        if (!selected(bestPrev(i)))
+          constraints enqueue (pred(i) == bestPrev(i))
+        if (!selected(bestNext(i)))
+          constraints enqueue (succ(i) == bestNext(i))
+      }
+    }
+    cp.post(constraints.toArray)
+  }
 
-	// ------------------------------------------------------------------------
-	// VISUALIZATION
-	// ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // VISUALIZATION
+  // ------------------------------------------------------------------------
 
-	val visu = new VisualRelax(coord, realDist)
+  val visu = new VisualRelax(coord, realDist)
 
-	// ------------------------------------------------------------------------
-	// CONSTRAINTS BLOCK
-	// ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // CONSTRAINTS BLOCK
+  // ------------------------------------------------------------------------
 
-	cp.minimize(totDist, totTard) subjectTo {
+  cp.minimize(totDist, totTard) subjectTo {
 
-		// Successor and Predecessor
-		for (i <- Customers) {
-			cp.add(succ(pred(i)) == i)
-			cp.add(pred(succ(i)) == i)
-		}
+    // Successor and Predecessor
+    for (i <- Customers) {
+      cp.add(succ(pred(i)) == i)
+      cp.add(pred(succ(i)) == i)
+    }
 
-		for (i <- FirstDepots) {
-			cp.add(pred(succ(i)) == i)
-			cp.add(pred(i) == i + nVehicles)
-		}
+    for (i <- FirstDepots) {
+      cp.add(pred(succ(i)) == i)
+      cp.add(pred(i) == i + nVehicles)
+    }
 
-		for (i <- LastDepots) {
-			cp.add(succ(pred(i)) == i)
-			cp.add(succ(i) == i - nVehicles)
-		}
+    for (i <- LastDepots) {
+      cp.add(succ(pred(i)) == i)
+      cp.add(succ(i) == i - nVehicles)
+    }
 
-		// Vehicle
-		for (i <- Customers) {
-			cp.add(vehicle(i) == vehicle(pred(i)))
-			cp.add(vehicle(i) == vehicle(succ(i)))
-		}
+    // Vehicle
+    for (i <- Customers) {
+      cp.add(vehicle(i) == vehicle(pred(i)))
+      cp.add(vehicle(i) == vehicle(succ(i)))
+    }
 
-		for (i <- FirstDepots) {
-			cp.add(vehicle(i) == vehicle(succ(i)))
-		}
+    for (i <- FirstDepots) {
+      cp.add(vehicle(i) == vehicle(succ(i)))
+    }
 
-		for (i <- LastDepots) {
-			cp.add(vehicle(i) == vehicle(pred(i)))
-		}
+    for (i <- LastDepots) {
+      cp.add(vehicle(i) == vehicle(pred(i)))
+    }
 
-		for (i <- 0 until nVehicles - 1) {
-			cp.add(vehicle(FirstDepots.min + i) == i)
-			cp.add(vehicle(LastDepots.min + 1 + i) == i)
-		}
+    for (i <- 0 until nVehicles - 1) {
+      cp.add(vehicle(FirstDepots.min + i) == i)
+      cp.add(vehicle(LastDepots.min + 1 + i) == i)
+    }
 
-		cp.add(vehicle(FirstDepots.max) == Vehicles.max)
-		cp.add(vehicle(LastDepots.min) == Vehicles.max)
+    cp.add(vehicle(FirstDepots.max) == Vehicles.max)
+    cp.add(vehicle(LastDepots.min) == Vehicles.max)
 
-		// Capacity of vehicles
-		cp.add(binpacking(vehicle, demand, load))
+    // Capacity of vehicles
+    cp.add(binpacking(vehicle, demand, load))
 
-		// No cycles
-		cp.add(circuit(pred), Strong)
-		cp.add(circuit(succ), Strong)
+    // No cycles
+    cp.add(circuit(pred), Strong)
+    cp.add(circuit(succ), Strong)
 
-		// Length of the circuit
-		cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
-		cp.add(sum(Sites)(i => dist(i)(succ(i))) == totDist)
+    // Length of the circuit
+    cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
+    cp.add(sum(Sites)(i => dist(i)(succ(i))) == totDist)
 
-		// Time 
-		for (i <- Customers) {
+    // Time 
+    for (i <- Customers) {
 
-			cp.add(new TimeWindow(cp, i, pred, succ, arrival, dist, servDur))
+      cp.add(new TimeWindow(cp, i, pred, succ, arrival, dist, servDur))
 
-			cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
-			cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
+      cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
+      cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
 
-			cp.add(arrival(i) <= twEnd(i))
-			cp.add(arrival(i) >= twStart(i))
-		}
+      cp.add(arrival(i) <= twEnd(i))
+      cp.add(arrival(i) >= twStart(i))
+    }
 
-		for (i <- FirstDepots) {
-			cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
-			cp.add(arrival(i) == 0)
-		}
+    for (i <- FirstDepots) {
+      cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
+      cp.add(arrival(i) == 0)
+    }
 
-		for (i <- LastDepots) {
-			cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
-			cp.add(arrival(i) <= twEnd(i))
-		}
-		
-		cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-		cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
-	}
+    for (i <- LastDepots) {
+      cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
+      cp.add(arrival(i) <= twEnd(i))
+    }
 
-	// ------------------------------------------------------------------------
-	// EXPLORATION BLOCK
-	// ------------------------------------------------------------------------
+    cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
+    cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+  }
 
-	cp.exploration {
+  // ------------------------------------------------------------------------
+  // EXPLORATION BLOCK
+  // ------------------------------------------------------------------------
 
-		if (regretSearch) {
+  cp.exploration {
 
-			while (!allBounds(pred)) {
+    if (regretSearch) {
 
-				var x = -1
-				var maxRegret = Int.MinValue
+      while (!allBounds(pred)) {
 
-				for (i <- Sites; if (!pred(i).isBound)) {
+        var x = -1
+        var maxRegret = Int.MinValue
 
-					var distK1 = Int.MaxValue
-					var distK2 = Int.MaxValue
+        for (i <- Sites; if (!pred(i).isBound)) {
 
-					for (j <- Sites; if (pred(i).hasValue(j))) {
+          var distK1 = Int.MaxValue
+          var distK2 = Int.MaxValue
 
-						if (dist(i)(j) < distK1) {
-							distK2 = distK1
-							distK1 = dist(i)(j)
-						}
-						else if (dist(i)(j) < distK2) {
-							distK2 = dist(i)(j)
-						}
-					}
+          for (j <- Sites; if (pred(i).hasValue(j))) {
 
-					val regret = distK2 - distK1
+            if (dist(i)(j) < distK1) {
+              distK2 = distK1
+              distK1 = dist(i)(j)
+            }
+            else if (dist(i)(j) < distK2) {
+              distK2 = dist(i)(j)
+            }
+          }
 
-					if (regret > maxRegret) {
-						x = i
-						maxRegret = regret
-					}
-				}
+          val regret = distK2 - distK1
 
-				val v = selectMin(Sites, v => pred(x).hasValue(v))(v => dist(x)(v))
+          if (regret > maxRegret) {
+            x = i
+            maxRegret = regret
+          }
+        }
 
-				cp.branch(cp.post(pred(x) == v))(cp.post(pred(x) != v))
-			}
-		}
-		else {
+        val v = selectMin(Sites, v => pred(x).hasValue(v))(v => dist(x)(v))
 
-			while (!allBounds(pred)) {
+        cp.branch(cp.post(pred(x) == v))(cp.post(pred(x) != v))
+      }
+    }
+    else {
 
-				val i = selectMin(Sites, i => !pred(i).isBound)(i => pred(i).size)
-				val j = selectMin(Sites, j => pred(i).hasValue(j))(j => dist(i)(j))
+      while (!allBounds(pred)) {
 
-				cp.branch(cp.post(pred(i) == j))(cp.post(pred(i) != j))
-			}
-		}
+        val i = selectMin(Sites, i => !pred(i).isBound)(i => pred(i).size)
+        val j = selectMin(Sites, j => pred(i).hasValue(j))(j => dist(i)(j))
 
-		solFound
-	}
+        cp.branch(cp.post(pred(i) == j))(cp.post(pred(i) != j))
+      }
+    }
 
-	println("\nFinished !")
-	cp.printStats
+    solFound
+  }
 
-	def selectMin(x: IndexedSeq[Int], b: (Int => Boolean))(f: (Int => Int)): Int = {
+  println("\nFinished !")
+  cp.printStats
 
-		val filtered = x.filter(i => b(i))
+  def selectMin(x: IndexedSeq[Int], b: (Int => Boolean))(f: (Int => Int)): Int = {
 
-		var cpt = 1
-		var min = Int.MaxValue
-		var minId = -1
+    val filtered = x.filter(i => b(i))
 
-		for (i <- x; if (b(i))) {
-			val v = f(i)
+    var cpt = 1
+    var min = Int.MaxValue
+    var minId = -1
 
-			if (v < min) {
-				min = v
-				minId = i
-				cpt = 2
-			}
-			else if (v == min) {
-				val proba = 1.0 / cpt
-				if (nextFloat < proba) {
-					min = v
-					minId = i
-				}
-				cpt += 1
-			}
-		}
+    for (i <- x; if (b(i))) {
+      val v = f(i)
 
-		minId
-	}
+      if (v < min) {
+        min = v
+        minId = i
+        cpt = 2
+      }
+      else if (v == min) {
+        val proba = 1.0 / cpt
+        if (nextFloat < proba) {
+          min = v
+          minId = i
+        }
+        cpt += 1
+      }
+    }
+
+    minId
+  }
 }
