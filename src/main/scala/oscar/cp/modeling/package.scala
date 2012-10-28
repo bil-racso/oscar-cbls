@@ -297,7 +297,7 @@ package object modeling extends Constraints {
 	   * @return the maximum value taken a bound variable or v if no variable is bound
 	   */
 	  def maxBoundOrElse(v: Int): Int = {
-	    val res: Option[CPVarInt] = selectMax(seq)(_.isBound)(_.value)
+	    val res: Option[CPVarInt] = selectMin(seq)(_.isBound)(-_.value)
 	    res match {
 	      case Some(x) => x.value
 	      case None => v

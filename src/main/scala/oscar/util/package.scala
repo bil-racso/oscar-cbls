@@ -39,39 +39,38 @@ package object util {
     result
   }
 
-  
   /**
    * Random min selector
    * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
    * @author pschaus
    */
-  def selectMin[R](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true))(f: R => Double): Option[R] = {
-    var cpt = 1
-    var result: Option[R] = None
-    var best = Double.MaxValue
-    for (o <- r; if st(o)) {
-      val eval = f(o)
-      if (eval < best) {
-        result = Some(o)
-        cpt = 2
-        best = eval
-      } else if (eval == best) {
-        val proba = 1.0/cpt
-        if (rand.nextDouble() <= proba) {
-          result = Some(o)
+  def selectMin[R, T](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true))(f: R => T)(implicit orderer: T => Ordered[T]): Option[R] = {
+    r.find(st) match {
+      case Some(v) => {
+        var cpt = 1
+        var result = v
+        var best: T = f(v)
+        for (o <- r; if st(o)) {
+          val eval: T = f(o)
+          if (orderer(eval) < best) {
+            result = o
+            cpt = 2
+            best = eval
+          } else if (eval == best) {
+            val proba = 1.0 / cpt
+            if (rand.nextDouble() <= proba) {
+              result = o
+            }
+            cpt += 1
+          }
         }
-        cpt += 1
+        Some(result)
       }
+      case None => None
     }
-    result
   }
   
-  /**
-   * Random max selector
-   * @author pschaus
-   */
-  def selectMax[R](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true))(f: R => Double) = selectMin(r)(st)(-f(_))
-
+ 
   /**
    * @param block a code block
    * @return the time (ms) to execute the block

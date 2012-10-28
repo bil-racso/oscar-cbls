@@ -33,7 +33,7 @@ object Nurses extends App  {
   
   // --- reading the data ---
 
-  val lines = Source.fromFile("data/nurses/20zones.txt").getLines.reduceLeft(_ + " " + _)
+  val lines = Source.fromFile("data/nurses/bench3/instance0.txt").getLines.reduceLeft(_ + " " + _)
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
   var index = 0
   def next() = {
@@ -60,12 +60,13 @@ object Nurses extends App  {
  val nbNursesInZone = Array.fill(nbZones)(1)
  
  def H(i: Int): Double = totAcuityInZone(i)*totAcuityInZone(i)
- def delta(i: Int,delta: Int = 1) = H(i)/nbNursesInZone(i) - H(i)/(nbNursesInZone(i)+1)
+ // how much does it increase if we add delta nurses in zone i ?
+ def delta(i: Int,delta: Int = 1) =     H(i)/(nbNursesInZone(i)+delta) - H(i)/nbNursesInZone(i)
  
  // compute lower bound to prove our decomposition will eventually be optimal
  def deltaSwap(i: Int,j: Int) = {
     if (nbNursesInZone(i) > 1) {
-    	delta(i,1)+delta(j,-1)
+    	delta(i,-1)+delta(j,+1)
     } else {
       Int.MaxValue
     }	
@@ -74,7 +75,7 @@ object Nurses extends App  {
  // progressively increase the number of nurses
  for (k <- nbZones until nbNurses) { 
    val r: IndexedSeq[Int] = 0 until nbZones
-   val i = selectMax(r)()(delta(_,1)).get
+   val i = selectMin(r)()(delta(_,1)).get 
    nbNursesInZone(i) += 1
    
  }
@@ -85,11 +86,11 @@ object Nurses extends App  {
  def swap(t:(Int,Int)) = deltaSwap(t._1,t._2)
  val (i,j) = selectMin(couples)()(swap).get
  println("===============>"+(i,j))
- nbNursesInZone(i) += 1
- nbNursesInZone(j) -= 1
- lb2 = (0 until nbZones).map(z => (totAcuityInZone(z).toDouble*totAcuityInZone(z)/nbNursesInZone(z))).sum
  nbNursesInZone(i) -= 1
  nbNursesInZone(j) += 1
+ lb2 = (0 until nbZones).map(z => (totAcuityInZone(z).toDouble*totAcuityInZone(z)/nbNursesInZone(z))).sum
+ nbNursesInZone(i) += 1
+ nbNursesInZone(j) -= 1
      
    
  
@@ -114,7 +115,7 @@ object Nurses extends App  {
  val colors = VisualUtil.getRandomColorArray(nbZones)
  colors(0) = java.awt.Color.GREEN
  colors(1) = java.awt.Color.RED
- val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,40)    
+ val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,10)    
  f.createFrame("Nurses").add(drawing)
  
  val scale = 3
