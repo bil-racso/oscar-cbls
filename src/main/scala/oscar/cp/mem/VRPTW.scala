@@ -19,21 +19,22 @@ import oscar.visual.VisualPareto
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
 
-/** VRPTW
-  *
-  * @author Renaud Hartert - ren.hartert@gmail.com
-  */
+/**
+ * VRPTW
+ *
+ * @author Renaud Hartert - ren.hartert@gmail.com
+ */
 
 object VRPTW extends App {
 
-  val instance = parse("data/VRPTW/Solomon/R101.txt")
+  val instance = parse("data/VRPTW/Solomon/R104.txt")
 
   // Distance scaling
   val scale = 1000
 
   // Data
   val nCustomers = instance.n
-  val nVehicles = 19 //instance.k	
+  val nVehicles = instance.k	
   val nSites = nCustomers + 2 * nVehicles
   val capacity = instance.c
 
@@ -104,7 +105,7 @@ object VRPTW extends App {
 
   cp.sc = new IDSSearchController(cp, 6)
   var regretSearch = true
-  var adaptable = true
+  var adaptable = false
 
   cp.lns(100, 1000) {
 
@@ -121,17 +122,15 @@ object VRPTW extends App {
 
     relaxVariables(nextRelax match {
       // Customer-based Adaptive Temporal Decomposition
-      case 0 => catd(15)
+      case 0 => catd((0.15*nCustomers).toInt)
       // Customer-based Adaptive Spatial Decomposition
-      case 1 => casd(25)
+      case 1 => casd((0.25*nCustomers).toInt)
       // Customer-based Adaptive Random Decomposition
-      case 2 => card(15)
+      case 2 => card((0.15*nCustomers).toInt)
       // Relatedness Shaw relaxation
-      case 3 => shaw(15, 10)
+      case 3 => shaw((0.15*nCustomers).toInt, 10)
     })
   }
-
-  cp.failLimit = 10000
 
   // ------------------------------------------------------------------------
   // PREPROCESSING AND USEFUL FUNCTIONS
@@ -427,23 +426,22 @@ object VRPTW extends App {
 
     if (regretSearch) {
 
-      while (!allBounds(pred)) {
+      while (!allBounds(succ)) {
 
         var x = -1
         var maxRegret = Int.MinValue
 
-        for (i <- Sites; if (!pred(i).isBound)) {
+        for (i <- Sites; if (!succ(i).isBound)) {
 
           var distK1 = Int.MaxValue
           var distK2 = Int.MaxValue
 
-          for (j <- Sites; if (pred(i).hasValue(j))) {
+          for (j <- Sites; if (succ(i).hasValue(j))) {
 
             if (dist(i)(j) < distK1) {
               distK2 = distK1
               distK1 = dist(i)(j)
-            }
-            else if (dist(i)(j) < distK2) {
+            } else if (dist(i)(j) < distK2) {
               distK2 = dist(i)(j)
             }
           }
@@ -456,17 +454,17 @@ object VRPTW extends App {
           }
         }
 
-        val v = selectMin(Sites, v => pred(x).hasValue(v))(v => dist(x)(v))
+        val v = selectMin(Sites)(succ(x).hasValue(_))(dist(x)(_)).get
 
-        cp.branch(cp.post(pred(x) == v))(cp.post(pred(x) != v))
+        cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
       }
-    }
+    } 
     else {
 
       while (!allBounds(pred)) {
 
-        val i = selectMin(Sites, i => !pred(i).isBound)(i => pred(i).size)
-        val j = selectMin(Sites, j => pred(i).hasValue(j))(j => dist(i)(j))
+        val i = selectMin(Sites)(!pred(_).isBound)(pred(_).size).get
+        val j = selectMin(Sites)(pred(i).hasValue(_))(dist(i)(_)).get
 
         cp.branch(cp.post(pred(i) == j))(cp.post(pred(i) != j))
       }
@@ -477,33 +475,4 @@ object VRPTW extends App {
 
   println("\nFinished !")
   cp.printStats
-
-  def selectMin(x: IndexedSeq[Int], b: (Int => Boolean))(f: (Int => Int)): Int = {
-
-    val filtered = x.filter(i => b(i))
-
-    var cpt = 1
-    var min = Int.MaxValue
-    var minId = -1
-
-    for (i <- x; if (b(i))) {
-      val v = f(i)
-
-      if (v < min) {
-        min = v
-        minId = i
-        cpt = 2
-      }
-      else if (v == min) {
-        val proba = 1.0 / cpt
-        if (nextFloat < proba) {
-          min = v
-          minId = i
-        }
-        cpt += 1
-      }
-    }
-
-    minId
-  }
 }
