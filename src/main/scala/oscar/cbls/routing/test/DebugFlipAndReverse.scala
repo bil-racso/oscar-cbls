@@ -1,3 +1,5 @@
+package oscar.cbls.routing.test
+
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing.VRP
 /**
@@ -5,8 +7,9 @@ import oscar.cbls.routing.VRP
  * User: Florent
  * Date: 17/10/12
  * Time: 14:12
- * To change this template use File | Settings | File Templates.
+ * To change this template use InstanceVRP | Settings | InstanceVRP Templates.
  */
+
 
 object DebugFlipAndReverse extends App{
   val m: Model = new Model(false,true,false,false)
@@ -26,16 +29,16 @@ object DebugFlipAndReverse extends App{
 
   //easy flip the circle
   /*
-  vrp.reverseSegmentListToUpdate(0,6).foreach(t => t._1 := t._2)
+  vrp.reverse(0,6).foreach(t => t._1 := t._2)
   vrp.Next(0):=6
   */
 
-  //vrp.flipListToUpdate(2,3,5,6).foreach(t => t._1 := t._2)
+  //vrp.flip(2,3,5,6).foreach(t => t._1 := t._2)
   //println("VRP after flip:\n"+vrp)
 
 
-  //vrp.flipWith2ReverseListToUpdate(1,2,4,5,7,8).foreach(t => t._1 := t._2)
-  vrp.flipWith1ReverseListToUpdate(1,2,4,5,7,8).foreach(t => t._1 := t._2)
+  //vrp.threeOptC(1,2,4,5,7,8).foreach(t => t._1 := t._2)
+  vrp.threeOptB(1,2,4,5,7,8).foreach(t => t._1 := t._2)
   println("VRP after flip:\n"+vrp)
 
 }

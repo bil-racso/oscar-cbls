@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.routing.{ThreeOptMove, Neighbor}
 
 
 /**Include this object whenever you want to use concise notation
@@ -38,24 +37,6 @@ import oscar.cbls.routing.{ThreeOptMove, Neighbor}
  */
 object Algebra{
 
-
-
-  implicit def InstrumentNeighbor(n:Neighbor):InstrumentedNeighbor = new InstrumentedNeighbor(n)
-
-  class InstrumentedNeighbor(n:Neighbor){
-
-
-    def segmentEnd:Int = n.asInstanceOf[ThreeOptMove].segmentEnd
-    def beforeSegmentStart:Int = n.asInstanceOf[ThreeOptMove].beforeSegmentStart
-  }
-
-
-  /*
-  Info:
-  start: the index of the hot restart
-  end: start + length of original range
-  step: same as in range
-   */
   class RangeHotRestart(start:Int,end:Int,step:Int) extends IndexedSeq[Int]{
     def this(start:Int,end:Int) = this(start,end,1)
     val length = end - start
@@ -67,8 +48,12 @@ object Algebra{
   }
   // implicit conversion of Range towards a RangeHotRestart
   implicit def InstrumentedRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
+
   class InstrumentedRange(r:Range){
-    def startBy (start:Int)  = RangeHotRestart(start,start+r.length)
+    def startBy (start:Int)  = {
+      if(r.contains(start)) RangeHotRestart(start,start+r.length)
+      else throw new IllegalArgumentException("Only values between "+r.start+" and "+(r.end-1))
+    }
   }
 
   implicit def InstrumentIntVar(v:IntVar):InstrumentedIntVar = new InstrumentedIntVar(v)

@@ -24,9 +24,9 @@ package oscar.cbls.routing
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar, Model}
-import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.numeric.{SumElements, ProdElements, Sum}
 import oscar.cbls.invariants.lib.logic.Predecessor
-import oscar.cbls.invariants.lib.set.TakeAny
+import oscar.cbls.invariants.lib.set.{Cardinality, TakeAny}
 import oscar.cbls.invariants.lib.logic.{Filter, IntVar2IntVarFun, Routes, Cluster}
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.core.Constraint
@@ -76,8 +76,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param to the end of segment to reverse.
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-
-  def reverseSegmentListToUpdate(from:Int, to:Int):List[(IntVar,Int)]={
+  def reverse(from:Int, to:Int):List[(IntVar,Int)]={
     var listToUpdate:List[(IntVar,Int)] = List.empty
     var nodeStack:List[Int] = List.empty
     //register the list of nodes
@@ -100,16 +99,16 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * move a segment and reinsert it after a given point.
    * @param beforeSegmentStart the predecessor of segment's start.
    * @param segmentEnd the segment's end.
-   * @param insertionPoint the point after which insert the segment.
+   * @param beforeSecondSwapPoint the point after which insert the segment.
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-   def moveSegmentListToUpdate(beforeSegmentStart:Int, segmentEnd:Int,  insertionPoint:Int):List[(IntVar,Int)] = {
+   def moveTo(beforeSegmentStart:Int, segmentEnd:Int,  beforeSecondSwapPoint:Int):List[(IntVar,Int)] = {
     val segmentStart:Int = Next(beforeSegmentStart).getValue(true)
     val oldNextOfSegmentEnd:Int = Next(segmentEnd).getValue(true)
-    val oldNextOfInsertionPoint:Int = Next(insertionPoint).getValue(true)
+    val oldNextOfbeforeSecondSwapPoint:Int = Next(beforeSecondSwapPoint).getValue(true)
 
-    (Next(beforeSegmentStart),oldNextOfSegmentEnd)::(Next(segmentEnd),oldNextOfInsertionPoint)::
-      (Next(insertionPoint),segmentStart)::List.empty
+    (Next(beforeSegmentStart),oldNextOfSegmentEnd)::(Next(segmentEnd),oldNextOfbeforeSecondSwapPoint)::
+      (Next(beforeSecondSwapPoint),segmentStart)::List.empty
   }
 
   /** Returns the list of variables to update with theirs new values in order to
@@ -121,8 +120,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     * @param l iterable list of tuple of Integer.
     * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
     */
-  def unrouteListToUpdate(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
-
+  def remove(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
     l.foldLeft(List.empty[(IntVar,Int)])((acc:List[(IntVar,Int)],prec:(Int,Int)) =>
     {
       val beforeStart = prec._1
@@ -138,6 +136,32 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     })
   }
 
+  /*
+  Adds an unrouted point in a route at a given insertion point.
+  Assumes that point is an unrouted one.
+   */
+  def add(insertion:Int,point:Int):Iterable[(IntVar,Int)] = {
+    val next = Next(insertion).value
+    List((Next(insertion),point),(Next(point),next))
+  }
+
+
+
+
+  /**
+   * Returns the list of variables to update with theirs new values in order to
+   * update routes by swapping two nodes, a and b.
+   *
+   * @param before_a the node before a node.
+   * @param a the node which one swap with b node.
+   * @param before_b the node before b node.
+   * @param b the node which one swap with a node.
+   */
+   def swap(before_a:Int,a:Int,before_b:Int,b:Int):List[(IntVar,Int)] = {
+    val next_a:Int = Next(a).value
+    val next_b:Int = Next(b).value
+    (Next(before_a),b)::(Next(b),next_a)::(Next(before_b),a)::(Next(a),next_b)::List.empty
+   }
 
   /**
    * Returns the list of variables to update with theirs new values in order to
@@ -151,20 +175,23 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param d the end of edge (c,d).
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-  def flipListToUpdate(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
-    assert(Next(a).value==b && Next(c).value==d)
+  def flip(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
     assert(c != b) // else useless to flip
-    (Next(a),c)::(Next(b),d)::reverseSegmentListToUpdate(b,c)
+    (Next(a),c)::(Next(b),d)::reverse(b,c)
   }
 
   /**
-   * Returns the list of variables to update with theirs new values in order to
-   * update a route by replacing the edges (a,b), (c,d) and (e,f) by the
-   * edges (a,c), (b,e),(d,f), and reverse the route's segment [b;c] and [e;d]
-   * This assumes that b = Next(a), d = Next(c), f = Next(e) and the order of segment's route
-   * is fixed as (a,b) appears first, (c,d) appears second, and finally meets the segment (e,f) in the tour.
-   * (This is a 3-OPT move)
-   *
+   * Override the two-opt move.
+   * @param a the start of edge (a,b).
+   * @param b the end of edge (a,b).
+   * @param c the start of edge (c,d).
+   * @param d the end of edge (c,d).
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+   */
+  def twoOpt(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = flip(a,b,c,d)
+
+  /**
+   * Override the three-opt move without reverse.
    * @param a the start of edge (a,b).
    * @param b the end of edge (a,b).
    * @param c the start of edge (c,d).
@@ -173,16 +200,9 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param f the end of edge (e,f).
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
-
-  def flipWith2ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
-    //assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
-    var listToUpdate:List[(IntVar,Int)] = List.empty
-    listToUpdate = (Next(a),c)::listToUpdate
-    listToUpdate = reverseSegmentListToUpdate(b,c):::listToUpdate
-    listToUpdate = (Next(b),e)::listToUpdate
-    listToUpdate = reverseSegmentListToUpdate(d,e):::listToUpdate
-    listToUpdate = (Next(d),f)::listToUpdate
-    listToUpdate
+  def threeOptA(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    moveTo(c,e,a)
   }
 
 /**
@@ -201,105 +221,184 @@ class VRP(val N: Int, val V: Int, val m: Model) {
  * @param f the end of edge (e,f).
  * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
  */
-  def flipWith1ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+  def threeOptB(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
     assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
     var listToUpdate:List[(IntVar,Int)] = List.empty
     listToUpdate = (Next(a),e)::listToUpdate
-    listToUpdate = reverseSegmentListToUpdate(d,e):::listToUpdate
+    listToUpdate = reverse(d,e):::listToUpdate
     listToUpdate = (Next(d),b)::listToUpdate
     listToUpdate = (Next(c),f)::listToUpdate
     listToUpdate
+    // version using flip (make cycle in propagation cause of overlapping reverse)
+    // must commit the first flip to avoid problem.
+    //flip(a,b,e,f)::flip(d,c,b,f)
   }
 
+  /**
+   * Returns the list of variables to update with theirs new values in order to
+   * update a route by replacing the edges (a,b), (c,d) and (e,f) by the
+   * edges (a,c), (b,e),(d,f), and reverse the route's segment [b;c] and [e;d]
+   * This assumes that b = Next(a), d = Next(c), f = Next(e) and the order of segment's route
+   * is fixed as (a,b) appears first, (c,d) appears second, and finally meets the segment (e,f) in the tour.
+   * (This is a 3-OPT move)
+   *
+   * @param a the start of edge (a,b).
+   * @param b the end of edge (a,b).
+   * @param c the start of edge (c,d).
+   * @param d the end of edge (c,d).
+   * @param e the start of edge (e,f).
+   * @param f the end of edge (e,f).
+   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
+   */
+  def threeOptC(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    /*
+      var listToUpdate:List[(IntVar,Int)] = List.empty
+      listToUpdate = (Next(a),c)::listToUpdate
+      listToUpdate = reverse(b,c):::listToUpdate
+      listToUpdate = (Next(b),e)::listToUpdate
+      listToUpdate = reverse(d,e):::listToUpdate
+      listToUpdate = (Next(d),f)::listToUpdate
+      listToUpdate
+    */
+    // using flip
+    flip(a,b,c,d):::flip(b,d,e,f)
+  }
 }
 
-/**Maintains the set of unrouted nodes, those whose next is zero*/
+/**
+ * Maintains a penalty weight for unrouted nodes.
+ */
+trait PenaltyForUnrouted extends Unrouted {
+  val weightPenalty : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
+    "penality of node " + i))
+  val Penalty : IntVar = SumElements(weightPenalty,Unrouted)
+
+  def fixPenaltyWeight(i:Int,w:Int) { weightPenalty(i) := w}
+  def fixPenaltyWeight(w:Int) {weightPenalty.foreach(p => p := w)}
+}
+
+/**
+ * Maintains the set of unrouted nodes, those whose next is N.
+*/
 trait Unrouted extends VRP {
-  //val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == 0)
   val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == N)
 }
 
-/**add this trait if you want to maintain the predecessor of each node in the routing.
- * It also maintains the set of unrouted nodes.
- * This other feature is integrated with the mechanics for maintaining the predecessors, so it comes at cost zero.
+/**
+ * Add this trait if you want to maintain the predecessors of each node in the routing.
  */
-//TODO regarder à la structure de donné tableau.
-
-trait PredAndUnrouted extends Unrouted {
-
-
-  /*
-  private val Preds: Array[IntSetVar] = Cluster.MakeDense(Next).clusters
-  val Pred: Array[IntVar] = Preds.map((i: IntSetVar) => TakeAny(i, 0).toIntVar)
-  override val Unrouted: IntSetVar = Preds(N)
-  */
-  // new invariant Predecessor
+trait Predecessors extends VRP{
   val preds = Predecessor(Next)
-  // use SparseCluster for unrouted node
-  override val Unrouted: IntSetVar = Cluster.MakeSparse(Next,List(N)).Clusters(N)
-  // or we can use Filter invariant.
 }
 
 
-
-
-/**maintains the position of nodes in the routes and the route number of each node*/
+/**
+ * Maintains the position of nodes in the routes, the route number of each node,
+ * the length of each route and their last node.
+*/
 trait PositionInRouteAndRouteNr extends VRP {
-  /*private*/ val routes = Routes.buildRoutes(Next, V)
-
+  val routes = Routes.buildRoutes(Next, V)
   val PositionInRoute = routes.PositionInRoute
   val RouteNr = routes.RouteNr
+  val RouteLength = routes.RouteLength
 
+  /**
+   * Tells if fromNode to toNode forms a segment of route of n minimum length.
+   * @param fromNode the start of route.
+   * @param toNode the end of route.
+   * @param n the minimum length of route.
+   * @return if fromNode to toNode forms a segment of route of n minimum length.
+   */
   def isAtLeastAsFarAs(fromNode:Int, toNode:Int, n:Int):Boolean = {
     RouteNr(fromNode).value == RouteNr(toNode).value &&
       PositionInRoute(fromNode).value + n  <= PositionInRoute(toNode).value
   }
 
+  /**
+   * Tells if fromNode to toNode form a segment of route.
+   * @param fromNode the start of segment.
+   * @param toNode the end of segment.
+   * @return Tells if fromNode to toNode form a segment of route.
+   */
   def isASegment(fromNode:Int,toNode:Int):Boolean = {
     isAtLeastAsFarAs(fromNode,toNode,1)
   }
 
-
-  /**assuming fromNode,toNOde form a segment*/
+  /**
+   * Tells if node is in a segment of route between fromNode and toNode.
+   * @param node a node.
+   * @param fromNode the start of the segment of route.
+   * @param toNode the end of the segment of route.
+   * @return if node is in a segment of route between fromNode and toNode.
+   */
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
+    assert(isASegment(fromNode,toNode))
     RouteNr(fromNode).value == RouteNr(node).value  &&
     PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
     PositionInRoute(node).value < PositionInRoute(toNode).value
   }
-
-
-
 }
 
-trait OptimizeThreeOptWithReverse extends VRP with HopDistanceAsObjective{
+/**
+ * In case of symmetric instance of VRP, it helps evaluate faster some operators
+ * of neighborhood as the two-opt and the three-opt.
+ */
+trait SymmetricVRP extends HopDistanceAsObjective{
 
-  def getEffectivenessFlipWith1ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Int = {
+  def isEffectiveThreeOptB(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Boolean = {
     assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
     val delta = - (hopDistance(a).value + hopDistance(c).value + hopDistance(e).value)
-    distanceFunction(a,e) + distanceFunction(d,b) + distanceFunction(c,f) + delta
+    (distanceFunction(a,e) + distanceFunction(d,b) + distanceFunction(c,f) + delta)<0
   }
 
-  def getEffectivenessFlipWith2ReverseListToUpdate(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Int = {
+  def isEffectiveThreeOptC(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Boolean = {
     assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
     val delta = - (hopDistance(a).value + hopDistance(c).value + hopDistance(e).value)
-    distanceFunction(a,c) + distanceFunction(b,e) + distanceFunction(d,f) + delta
+    (distanceFunction(a,c) + distanceFunction(b,e) + distanceFunction(d,f) + delta)<0
    }
+
+  def isEffectiveTwoOpt(a:Int,b:Int,c:Int,d:Int):Boolean = {
+    val delta = - (hopDistance(a).value + hopDistance(c).value)
+    (distanceFunction(a,c) + distanceFunction(b,d) + delta)<0
+  }
+
+  override def twoOpt(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)]= {
+    if(isEffectiveTwoOpt(a,b,c,d)) super.twoOpt(a,b,c,d)
+    else List.empty
+  }
+
+  override def threeOptC(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    if (isEffectiveThreeOptC(a,b,c,d,e,f))
+      super.threeOptC(a,b,c,d,e,f)
+    else List.empty
+  }
+  override def threeOptB(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    if (isEffectiveThreeOptB(a,b,c,d,e,f))
+      super.threeOptB(a,b,c,d,e,f)
+    else List.empty
+  }
 }
 
 
 
-/**declares an objective function, attached to the VRP. */
+
+/**
+ * Declares an objective function, attached to the VRP.
+*/
 trait ObjectiveFunction extends VRP with ObjectiveTrait{
   // Initialize the objective function with 0 as value
-  setObjectiveVar(new IntVar(m, 0, Int.MaxValue, 0, "objective of VRP"))
+  // allow negative objective value
+  setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
 }
 
-/**maintains the hop distance in the VRP, based either on a matrix, or on another mechanism. *
+/**
+ * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
  * We consider that a hop distance of Int.MaxVal is unreachable
  */
 trait HopDistance extends VRP {
-  // 40 000 is hard code for the circumference of the earth.
-  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, 40000, 0, "hopDistanceForLeaving" + i)}
+  // Int.MaxValue / N allow us to use sum invariant, else MaxValue of this invariant is over Integer.MaxValue.
+  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i)}
 
   val overallDistance: IntVar = Sum(hopDistance)
 
@@ -335,7 +434,7 @@ trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
 */
 trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction {
   def recordAddedFunction(AddedValue: IntVar) {
-    ObjectiveVar<== overallDistance + AddedValue
+    ObjectiveVar <== overallDistance + AddedValue
   }
 }
 
@@ -346,8 +445,10 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
   var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
 
   def saveKNearestPoints(k:Int){
-    val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
-    closestNeighbors += ((k,neighbors))
+    if (k < N-1){
+      val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
+      closestNeighbors += ((k,neighbors))
+    }
   }
   
   def computeKNearestNeighbors(node:Int, k:Int):List[Int] = {

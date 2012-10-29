@@ -7,7 +7,14 @@ import oscar.cbls.invariants.core.computation.{InvariantHelper, Invariant, IntVa
  * User: Florent
  * Date: 18/10/12
  * Time: 14:44
- * To change this template use File | Settings | File Templates.
+ * To change this template use InstanceVRP | Settings | InstanceVRP Templates.
+ */
+
+/*
+  Maintains the predecessors of nodes.
+  Convention:
+    - 0 to N-1 for routed node.
+    - N for unrouted node.
  */
 case class Predecessor(next:Array[IntVar]) extends Invariant{
 

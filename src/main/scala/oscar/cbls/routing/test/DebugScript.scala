@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
-package oscar.cbls.routing
+package oscar.cbls.routing.test
 
 import oscar.cbls.search.StopWatch
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -18,6 +18,9 @@ import oscar.cbls.invariants.lib.set.TakeAny._
 import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
+import oscar.cbls.routing._
+import heuristic.NearestNeighbor
+import neighborhood.{Neighbor, RemovePointMove}
 
 /**supports only a single vehicle*/
 object DebugScript extends SearchEngine with App{
@@ -39,11 +42,15 @@ object DebugScript extends SearchEngine with App{
   //val line = getPlanarDistanceMatrix(Array(1,2,3,4,5,6),Array(0,0,0,0,0,0))
   //val N:Int = 6
 
-  val line2 =  getPlanarDistanceMatrix(Array(1,2,3,4,5,6,-1),Array(0,0,0,0,0,0,0))
-  val N2:Int = 7
-  var m: Model = new Model(false,true,false,false)
-  var vrp = new VRP(N2, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PredAndUnrouted
-  vrp.installCostMatrix(line2)
+  //val line2 =  getPlanarDistanceMatrix(Array(1,2,3,4,5,6,-1),Array(0,0,0,0,0,0,0))
+  val matrix = getPlanarDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
+  val N2:Int = 9
+  var m: Model = new Model(false,false,false,false)
+  var vrp = new VRP(N2, 1, m) with HopDistanceAndOtherAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PenaltyForUnrouted
+
+  vrp.installCostMatrix(matrix)
+  vrp.fixPenaltyWeight(8,-100)
+  vrp.recordAddedFunction(vrp.Penalty)
   println("matrix done")
   m.close()
   println("model close")
@@ -54,23 +61,41 @@ object DebugScript extends SearchEngine with App{
   m.propagate()
   println(vrp.routes)
   println(vrp)
-  println("Debug route(" + N2 + "points,"+V+"cars)"+"\n Pred:")
-  println(vrp.preds)
-  println(vrp.Unrouted)
+
+  println("Objective = "+ vrp.ObjectiveVar.value)
+
+  var move:Neighbor = null
+  move = RemovePointMove.getFirstImprovingMove(vrp, move)
+  if(move.getObjAfter < vrp.ObjectiveVar.value)
+    move.comit
+
+  println(vrp.routes)
+  println(vrp)
+
+  println("Objective = "+ vrp.ObjectiveVar.value)
+
+
+
+
+  //println("Debug route(" + N2 + "points,"+V+"cars)"+"\n Pred:")
+ // println(vrp.preds)
+ // println(vrp.Unrouted)
   // changement 1 vers 7
   // recherche
 
   // unroute the point 2
-  //vrp.unrouteListToUpdate(List((vrp.preds(2).value,2))).foreach({t => t._1 := t._2})
-  vrp.unrouteListToUpdate(List( (vrp.preds(2).value,3) , (  vrp.preds(5).value ,5) )).foreach({t => t._1 := t._2})
-  m.propagate()
+  //vrp.remove(List((vrp.preds(2).value,2))).foreach({t => t._1 := t._2})
 
-  println(vrp.routes)
-  println(vrp.preds)
-  println(vrp.Unrouted)
+  //vrp.remove(List( (vrp.preds(2).value,3) , (  vrp.preds(5).value ,5) )).foreach({t => t._1 := t._2})
+  //vrp.threeOptB(0,1,2,3,5,6).foreach(t => t._1 := t._2)
+  //m.propagate()
+
+  //println(vrp.routes)
+  //println(vrp.preds)
+  //println(vrp.Unrouted)
 
   // unroute the point 3 and 4
- /* vrp.unrouteListToUpdate(List(1,3)).foreach({t => t._1 := t._2})
+ /* vrp.remove(List(1,3)).foreach({t => t._1 := t._2})
   m.propagate()
 
   println(vrp.routes)
@@ -100,7 +125,7 @@ object DebugScript extends SearchEngine with App{
     var it = 0
     while(!saturated){
       val oldobj:Int = vrp.ObjectiveVar.value
-      move = ThreeOptMove.getFirstImprovingMove(vrp,nsize, move)
+      move = ThreeOptMoveA.getFirstImprovingMove(vrp,nsize, move)
       if (move != null && move.getObjAfter < oldobj){
         it +=1
         println("it: " + it + " " + move + " " + vrp.ObjectiveVar)

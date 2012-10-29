@@ -1,4 +1,4 @@
-package oscar.cbls.routing
+package oscar.cbls.routing.neighborhood
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -29,4 +29,5 @@ abstract class Neighbor{
   def startNodeForNextExploration:Int
 
 }
+
 

@@ -1,4 +1,4 @@
-package oscar.cbls.routing
+package oscar.cbls.routing.neighborhood
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -25,12 +25,14 @@ package oscar.cbls.routing
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.invariants.core.computation.{IntVar, Snapshot}
+import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, ObjectiveFunction, VRP}
 
 /**moves a segment to another place, without flipping it.
  * size is O(n³)
  */
-object ThreeOptMove extends SearchEngine{
+
+object ThreeOptMoveA extends SearchEngine{
   var toUpdate:List[(IntVar,Int)] = List.empty //list of variables to update if we get an intersting move
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
@@ -42,12 +44,9 @@ object ThreeOptMove extends SearchEngine{
    */
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, prevmove:Neighbor = null):ThreeOptMove = {
+               k:Int, prevmove:Neighbor = null):ThreeOptMoveA = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
-
-    //TODO: BUG here: it sometimes generates a cycle.
-    // no more cycle
 
     val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
     for (insertionPoint <- 0 until vrp.N startBy hotRestart ){
@@ -58,17 +57,15 @@ object ThreeOptMove extends SearchEngine{
       for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)  if (insertionPoint != beforeSegmentStart))
       {
         for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
-             if (beforeSegmentStart != segmentEnd &&
-               vrp.Next(beforeSegmentStart).value != segmentEnd && // on bouge minimum un segment
-               segmentEnd != insertionPoint &&
-               vrp.isASegment(beforeSegmentStart, segmentEnd) &&
+             if(segmentEnd != insertionPoint &&
+               vrp.isAtLeastAsFarAs(beforeSegmentStart, segmentEnd,2) &&
                !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd)))
         {
           val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
           if (newObj < BestObj){
             println("beforeSeg: "+beforeSegmentStart +" et endSeg: "+segmentEnd)
             if (FirstImprove){
-              return ThreeOptMove(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
+              return ThreeOptMoveA(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
             }
             BestObj = newObj
             move = ((beforeSegmentStart ,segmentEnd, insertionPoint))
@@ -77,7 +74,7 @@ object ThreeOptMove extends SearchEngine{
       }
     }
     if (move == null) null
-    else ThreeOptMove(move._1, move._2, move._3, BestObj, vrp)
+    else ThreeOptMoveA(move._1, move._2, move._3, BestObj, vrp)
   }
 
   /*Performs the three-opt move without flip
@@ -98,14 +95,15 @@ object ThreeOptMove extends SearchEngine{
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-    toUpdate = vrp.moveSegmentListToUpdate(beforeFrom,to,insertPoint)
+    toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
+      vrp.Next(beforeFrom).value,to,vrp.Next(to).value)
     vrp.getAssignVal(toUpdate)
   }
 }
 
-case class ThreeOptMove(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
+case class ThreeOptMoveA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
                         objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {ThreeOptMove.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
+  def comit {ThreeOptMoveA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
   override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 

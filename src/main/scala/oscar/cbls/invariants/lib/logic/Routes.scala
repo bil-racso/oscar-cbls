@@ -25,12 +25,16 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.routing.VRP
+import javax.swing.JOptionPane
 
-/**this invariants maintains data structures representing vrp of vehicles.
- * for use in TSP, VRP, etc.
- * arrays start at one until N
- * position N is to denote an unrouted node.
- * The nodes from 1 to V are the starting points of vehicles.
+/**
+ * This invariants maintains data structures representing vrp of vehicles.
+ * (usable in VRP, TSP, etc..)
+ * Arrays start at 0 until N-1 for Next, PositionInRoute and RouteNr.
+ * Arrays start at 0 until V-1 for RouteLenght and LastInRoute.
+ * N value is to denote an unrouted node.
+ * The nodes from 0 to V-1 are the starting points of vehicles.
  *
  * @param V the number of vrp to consider V>=1 and V<=N
  */
@@ -38,19 +42,18 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
   case class Routes(V: Int,
                     Next:Array[IntVar],
                     PositionInRoute:Array[IntVar],
-                    RouteNr:Array[IntVar]) extends Invariant {
+                    RouteNr:Array[IntVar],
+                    RouteLength:Array[IntVar],
+                    LastInRoute:Array[IntVar]) extends Invariant {
   val UNROUTED = Next.length
   val ArrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(Next)
   finishInitialization()
   for(v <- PositionInRoute){v.setDefiningInvariant(this)}
   for(v <- RouteNr){v.setDefiningInvariant(this)}
-  // DecorateVehicleRoute with little v works better.
-  //for (v <- 1 to V) DecorateVehicleRoute(v)
+  for(v <- RouteLength){v.setDefiningInvariant(this)}
+  for(v <- LastInRoute){v.setDefiningInvariant(this)}
 
   for (v <- 0 until V) DecorateVehicleRoute(v)
-
-  //PositionInRoute(0) := 0
-  //RouteNr(0) := 0
 
 
   override def toString():String ={
@@ -64,23 +67,30 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
     toReturn +="RouteNr array: ["
     for (v <- RouteNr){toReturn += (""+v.getValue(true) +",")}
     toReturn = toReturn.substring(0, toReturn.length - 1)+"]\n"
-
+    toReturn +="RouteLength array: ["
+    for (v <- RouteLength){toReturn += (""+v.getValue(true) +",")}
+    toReturn = toReturn.substring(0, toReturn.length - 1)+"]\n"
+    toReturn +="LastInRoute array: ["
+    for (v <- LastInRoute){toReturn += (""+v.getValue(true) +",")}
+    toReturn = toReturn.substring(0, toReturn.length - 1)+"]\n"
     toReturn
   }
 
   def DecorateVehicleRoute(V:Int){
-
-    var currentID = Next(V).value
+    var currentID = V
     var currentPosition = 1
     PositionInRoute(V) := 0
     RouteNr(V) := V
-    while(currentID !=V){
-      assert(currentID>V)
+    while(Next(currentID).value !=V){
+      assert(Next(currentID).value>V)
+
+      currentID = Next(currentID).value
       PositionInRoute(currentID) := currentPosition
       RouteNr(currentID) := V
-      currentID = Next(currentID).value
       currentPosition +=1
     }
+    LastInRoute(V) := currentID
+    RouteLength(V) := PositionInRoute(currentID).getValue(true)+1
   }
 
   var ToUpdate:List[Int] = List.empty
@@ -131,18 +141,17 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
    */ //TODO: there is a bug somewhere, this does sometime get into a cycle.
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
 
-
     var currentNode = nodeID
-    while(!isUpToDate(currentNode) && Next(currentNode).value >= V){
-      // if cycle appears without start point (V), it loops (dont loop anymore thanks to domain IntVar)
-      //println("boucle " + !isUpToDate(currentNode) + " et "+ (Next(currentNode).value >= V) )
-      val nextID = Next(currentNode).value
-      //println("position current = "+ PositionInRoute(currentNode).getValue(true)+" \n " +
-       // "position nextID = "+ PositionInRoute(nextID).getValue(true))
-      PositionInRoute(nextID) := (PositionInRoute(currentNode).getValue(true)+ 1)
-      RouteNr(nextID) := RouteNr(currentNode).getValue(true)
-      currentNode = nextID
-
+    var nextNode = Next(currentNode).value
+    while(!isUpToDate(currentNode) && nextNode >= V){
+      PositionInRoute(nextNode) := (PositionInRoute(currentNode).getValue(true)+ 1)
+      RouteNr(nextNode) := RouteNr(currentNode).getValue(true)
+      currentNode = nextNode
+      nextNode = Next(currentNode).value
+    }
+    if (nextNode<V){
+     LastInRoute(nextNode) := currentNode
+     RouteLength(nextNode) := PositionInRoute(currentNode).getValue(true) + 1
     }
   }
 
@@ -151,13 +160,12 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
       val next = Next(n).value
       if (next != UNROUTED){
         assert(RouteNr(next).value == RouteNr(n).value)
-        if(n < V){
-          assert(PositionInRoute(n).value == n)
-          assert(RouteNr(n).value == n)
+        if(next < V){
+          assert(PositionInRoute(next).value == 0)
+          assert(RouteNr(next).value == next)
         }
         else{
-          PositionInRoute(n).value
-          assert(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(Next.length))
+          assert(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value))
           assert(RouteNr(n).value == RouteNr(next).value)
         }
       }
@@ -168,14 +176,15 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
      }
   }
 }
-
 object Routes{
   def buildRoutes(Next:Array[IntVar], V:Int):Routes = {
     val m:Model = InvariantHelper.FindModel(Next)
     // max bounds equal Next.length-2 instead of V
-    val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length, Next.length, "PositionInRouteOfPt" + i))
+    val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,0, "PositionInRouteOfPt" + i))
     val RouteNr = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,Next.length, "RouteNrOfPt" + i))
+    val RouteLength = Array.tabulate(V)(i => new IntVar(m,0,Next.length,0,"Route "+i+"-Lenght"))
+    val lastInRoute = Array.tabulate(V)(i => new IntVar(m,0,Next.length,i,"LastInRoute "+i))
 
-    Routes(V, Next, PositionInRoute, RouteNr)
+    Routes(V, Next, PositionInRoute, RouteNr, RouteLength,lastInRoute)
   }
 }

@@ -1,18 +1,24 @@
+package oscar.cbls.routing.visual
+
 /**
  * Created with IntelliJ IDEA.
  * User: Florent
  * Date: 23/10/12
  * Time: 21:01
- * To change this template use File | Settings | File Templates.
+ * To change this template use InstanceVRP | Settings | InstanceVRP Templates.
  */
 
 
 import java.io.File
+import java.util.concurrent.Semaphore
 import javax.swing.JOptionPane
 import org.jdesktop.swingx.JXMapViewer
 import org.jdesktop.swingx.mapviewer.{WaypointPainter, WaypointRenderer, Waypoint, GeoPosition}
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing._
+import heuristic.{NearestNeighbor, RandomNeighboor}
+
+import neighborhood._
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
@@ -22,8 +28,11 @@ import scala.Double
 import scala.io._
 import java.awt.{Graphics2D, Dimension, Color}
 import util.Random
+import vrp.Dashboard
 
 object VisualDebug extends App{
+
+  var sem: Semaphore = new Semaphore(0)
 
   // frame
   val frame = new VisualFrame("VRP")
@@ -45,27 +54,16 @@ object VisualDebug extends App{
   val obj = frame.createFrame("TSP Objective Function")
   //plot.setPreferredSize(new Dimension(400,400))
   obj.add(plot)
-  //obj.pack()
+  obj.pack()
 
+  //dashboard
+  val board = new Dashboard()
+  val dashboard = frame.createFrame("Dashboard")
+  dashboard.setLocation(800,450)
+  dashboard.setPreferredSize(new Dimension(600,400))
+  dashboard.add(board)
+  dashboard.pack()
 
-  // towns of belgium
-  val path = new File("").getAbsolutePath
-  var file = Source.fromFile(path+"\\src\\main\\scala\\oscar\\cbls\\routing\\villesbelgique")
-  var townsList:List[(String,Double,Double)] = List.empty
-  for(line <- file.getLines()){
-    val words = line.split(" ")
-    if(words.length == 8)
-      townsList = (words(1).toString,words(6).toDouble,words(7).toDouble) :: townsList
-  }
-  def getRandomTowns(n:Int,towns:List[(String,Double,Double)]):Array[(String,Double,Double)]={
-    val townsArray = towns.toArray
-    val myTowns:Array[(String,Double,Double)] = new Array(N)
-    for(i <- 0 until N){
-      val j = new Random().nextInt(townsArray.length)
-      myTowns(i) = townsArray(j)
-    }
-    myTowns
-  }
 
   // to redefine color and shape
   val waypointPainter =  new WaypointPainter
@@ -90,31 +88,36 @@ object VisualDebug extends App{
 
   // get easier the neighbor
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with OptimizeThreeOptWithReverse,
+    with PositionInRouteAndRouteNr with SymmetricVRP,
     closeNeighbors:Int, previousMove:Neighbor,moveOp :Int):Neighbor ={
     if(moveOp == 0)
-      OnePointMove.getFirstImprovingMove(vrp,previousMove)
+      OnePointMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
     else if(moveOp == 1)
-      ThreeOptMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+      ThreeOptMoveA.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
     else if(moveOp == 11)
-      ThreeOptOneReverseMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+      ThreeOptMoveB.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+    else if(moveOp == 12)
+      ThreeOptMoveC.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+    else if(moveOp == 2)
+      TwoOptMove.getFirstImprovingMove(vrp,closeNeighbor,previousMove)
     else
-      ThreeOptTwoReverseMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+      SwapMove.getFirstImprovingMove(vrp,closeNeighbor,previousMove)
   }
 
   // model's problem definition
 
   val V = 1 // nb of vehicles
-  val N:Int = 10 // random nb of towns
-  val closeNeighbor = 50 // save close neighbors
+  val N:Int = 1000 // random nb of towns
+  val closeNeighbor = 30// save close neighbors
+
   println("VRP problem of "+ N + "clients and "+V+ " vehicle(s)")
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-    with ClosestNeighborPoints with OptimizeThreeOptWithReverse
+    with ClosestNeighborPoints with SymmetricVRP with Predecessors
 
-  val arrayTowns = getRandomTowns(N,townsList)
-  val locationTowns = arrayTowns.map(t => new Location(t._2,t._3))
+  val arrayTowns = InstanceVRP.random(N)
+  val locationTowns = arrayTowns.map(t => new Location(t.long,t.lat))
   displayTowns(locationTowns,vrp) //display feature
 
   val distMatrix = Array.tabulate(N,N)((i,j) => (locationTowns(i).distance(locationTowns(j))).toInt)
@@ -131,24 +134,44 @@ object VisualDebug extends App{
   val lines = Array.tabulate(N)(i => map.createLine(locationTowns(i).lat,locationTowns(i).lon,
     locationTowns(vrp.Next(i).value).lat,locationTowns(vrp.Next(i).value).lon))
 
+  def getActualRoute(vrp:VRP):String={
+    var route = ""
+    route += arrayTowns(0).name
+    var next = vrp.Next(0).getValue(true)
+    while(next != 0){
+      route += " -> "+arrayTowns(next).name
+      next = vrp.Next(next).getValue(true)
+    }
+    route
+  }
+
+
   def updateVisualisation(ite:Int) {
     def update(i: Int) = lines(i).setDest(locationTowns(vrp.Next(i).value).lat,
       locationTowns(vrp.Next(i).value).lon)
       (0 until N).foreach(update)
       plot.addPoint(ite,vrp.ObjectiveVar.value)
+      if(board.writeRoute())
+        board.updateRouteLabel(getActualRoute(vrp))
   }
 
   // strategy's search definition
 
-  //operator ; 1 for OnePointMove ; 2 for ThreeOpt ; 21 for ThreeOpt with 1 flip ; 22 for ThreeOpt with 2 flips
-  val op = 21
-  val time = 500 // time in millisecond between iterations
+  //operator ; 0 for OnePointMove ; 1 for ThreeOpt ; 11 for ThreeOpt with 1 flip ; 12 for ThreeOpt with 2 flips
+  // 2 for twoOpt and 3 for SwapMove
+  val op = 12
+  val time = 0 // time in millisecond between iterations
   var Neighbor = false
   var previousMove:Neighbor = null
   var ended = false
   var it = 0
   val startObjective = vrp.ObjectiveVar.value
+
   while(!ended){
+    if(board.inPause || board.inIteration()) // visual interface
+       board.lock()
+    if (it==0)
+      updateVisualisation(it)
     val oldObj:Int = startObjective
     previousMove = getFirstImprovingMove(vrp,closeNeighbor,previousMove,op)
     if (previousMove != null && previousMove.getObjAfter < oldObj){
@@ -156,14 +179,20 @@ object VisualDebug extends App{
       previousMove.comit
       updateVisualisation(it)
       println("it: " + it + " | objective: "+ vrp.ObjectiveVar.value + " | move: "+previousMove)
-      Thread.sleep(time)
+      //Thread.sleep(time)
     }
     else ended = true
   }
   println("VRP ended.")
   JOptionPane.showMessageDialog(frame,"Search's strategy is finished. \n" +
     "StartObjective = " +startObjective + "\n" +
-    "EndObjective = "+ vrp.ObjectiveVar.value
-    )
-
+    "EndObjective = "+ vrp.ObjectiveVar.value)
+  // anypoint unroute ?
+  var p = 0
+  var next = vrp.Next(p).value
+  while(next != 0){
+    p += 1
+    next = vrp.Next(next).value
+   }
+  println("Towns routed =" + (p+1))
 }

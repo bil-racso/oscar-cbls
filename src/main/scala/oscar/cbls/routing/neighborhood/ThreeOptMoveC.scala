@@ -1,32 +1,32 @@
 /**
  * Created with IntelliJ IDEA.
  * User: Florent
- * Date: 20/10/12
- * Time: 16:36
+ * Date: 23/10/12
+ * Time: 16:17
  * To change this template use File | Settings | File Templates.
  */
 
-package oscar.cbls.routing
+package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.{IntVar, Snapshot}
+import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, ObjectiveFunction, VRP}
 
 /*
 
  */
-object ThreeOptOneReverseMove extends SearchEngine{
+object ThreeOptMoveC extends SearchEngine{
 
 
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    with OptimizeThreeOptWithReverse, k:Int):Neighbor = findMove(false, vrp, k)
+    , k:Int):Neighbor = findMove(false, vrp, k)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    with OptimizeThreeOptWithReverse, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
-
+    , k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
   def findMove(FirstImprove:Boolean,
-               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with OptimizeThreeOptWithReverse,
-               k:Int, previousMove:Neighbor = null):ThreeOptTwoReverseMove = {
+               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+               k:Int, previousMove:Neighbor = null):ThreeOptMoveC = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
@@ -37,18 +37,18 @@ object ThreeOptOneReverseMove extends SearchEngine{
     for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart){
       endOfFirstEdge = vrp.Next(startOfFirstEdge).value
 
-      for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,startOfFirstEdge)
+      for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,endOfFirstEdge)
            if (vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
              vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3))){// filter
 
-        for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfThirdEdge).value)
+        for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfFirstEdge).value)
              if((vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value))&&
                vrp.isBetween(vrp.Next(startOfSecondEdge).value,startOfFirstEdge,startOfThirdEdge))){
 
           val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
           if (newObj < BestObj){
             if(FirstImprove)
-              return ThreeOptTwoReverseMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
+              return ThreeOptMoveC(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
             BestObj = newObj
             move = ((startOfFirstEdge, startOfSecondEdge ,startOfThirdEdge ))
           }
@@ -56,30 +56,29 @@ object ThreeOptOneReverseMove extends SearchEngine{
       }
     }
     if (move == null) null
-    else ThreeOptTwoReverseMove(move._1, move._2, move._3, BestObj, vrp)
+    else ThreeOptMoveC(move._1, move._2, move._3, BestObj, vrp)
   }
 
-  /*Performs the three-opt move with one reverse segment. */
+  /*Performs the three-opt move with two reverse segment. */
 
   def doMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,vrp:VRP)  {
-    val toUpdate = vrp.flipWith1ReverseListToUpdate(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
+    val toUpdate = vrp.threeOptC(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
       startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  def getObjAfterMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with ObjectiveFunction
-    with OptimizeThreeOptWithReverse):Int = {
-    val delta = vrp.getEffectivenessFlipWith1ReverseListToUpdate(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
+  def getObjAfterMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with ObjectiveFunction):Int = {
+    val toUpdate = vrp.threeOptC(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
       startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
-    vrp.ObjectiveVar.value + delta
+    vrp.getAssignVal(toUpdate)
   }
 }
 
-case class ThreeOptOneReverseMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
+case class ThreeOptMoveC(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
                                   objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {ThreeOptTwoReverseMove.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
+  def comit {ThreeOptMoveC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
+  override def toString():String =  "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
     "thirdEdge = "+ startOfThirdEdge+" )"
   def startNodeForNextExploration: Int = startOfFirstEdge
 }

@@ -691,16 +691,16 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   {assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
-  // val instead of method getDomain to get the range of the variable
-  val getDomain:Range = if(MaxVal==Int.MaxValue) Range(MinVal,MaxVal,1) else Range(MinVal,MaxVal+1,1)
 
+  def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
+  def domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
   override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
-      assert(getDomain.contains(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
-        "domain : ["+getDomain.min+ ";"+getDomain.max+"]\n" +
-        "value :"+ v +"\n" ))
+      assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+          "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
+          "value :"+ v +"\n" ))
         Value = v
         notifyChanged()
       }
@@ -738,6 +738,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def :=(v:Int) {setValue(v)}
   def :+=(v:Int) {setValue(v+getValue(true))}
+  def :*=(v:Int) {setValue(v*getValue(true))}
   def :-=(v:Int) {setValue(getValue(true) - v)}
 
   def ++ {this := this.getValue(true) +1}

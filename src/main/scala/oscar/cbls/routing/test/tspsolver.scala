@@ -21,7 +21,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.routing
+package oscar.cbls.routing.test
 
 import oscar.cbls.search.StopWatch
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -34,6 +34,9 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
 import oscar.cbls.algebra.Algebra._
+import oscar.cbls.routing._
+import heuristic.{RandomNeighboor, NearestNeighbor}
+import neighborhood._
 
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
@@ -67,7 +70,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
   val DistanceMatrix = getPlanarDistanceMatrix(N)
 
   val m: Model = new Model(false,false,false,false)
-  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with OptimizeThreeOptWithReverse
+  val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
+  with SymmetricVRP
   vrp.installCostMatrix(DistanceMatrix)
 
   vrp.saveKNearestPoints(20)
@@ -84,7 +88,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
   println("start val: " + vrp.ObjectiveVar.value)
   println(vrp)
   println(vrp.routes)
-  var nsize = 50
+  var nsize = 20
   // 20 for the ThreeOpt withtout reverse
   // 20-100 for the ThreeOpt with 1 or 2 reverse works well
 
@@ -94,14 +98,14 @@ object tspsolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
-    //move = OnePointMove.getFirstImprovingMove(vrp,move)
-   // move = ThreeOptMove.getFirstImprovingMove(vrp, nsize, move)
-    move = ThreeOptTwoReverseMove.getFirstImprovingMove(vrp, nsize, move)
-    //move = ThreeOptOneReverseMove.getFirstImprovingMove(vrp, nsize, move)
+    move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
+    //move = ThreeOptMoveA.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptMoveC.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptMoveB.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
-      //vrp.ObjectiveVar.value
+      vrp.ObjectiveVar.value
       println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
 
     }

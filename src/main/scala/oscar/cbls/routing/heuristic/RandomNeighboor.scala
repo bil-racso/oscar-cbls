@@ -1,11 +1,13 @@
-package oscar.cbls.routing
+package oscar.cbls.routing.heuristic
 
 import oscar.cbls.search.SearchEngine
 import scala.util.Random
+import oscar.cbls.routing.{HopDistance, VRP}
 
 /**
  * only works for singe vehicle
  */
+
 object RandomNeighboor extends SearchEngine{
   def apply(problem:VRP with HopDistance){
     var current:Int = 0

@@ -1,12 +1,12 @@
-package oscar.cbls.routing
+package oscar.cbls.routing.heuristic
 
-import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.search.SearchEngine
-
+import oscar.cbls.routing.{VRP, HopDistance}
 
 /**
  * only works for singe vehicle
  */
+
 object NearestNeighbor extends SearchEngine{
   def apply(problem:VRP with HopDistance){
     var current:Int = 0

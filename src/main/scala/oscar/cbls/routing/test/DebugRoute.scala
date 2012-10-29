@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
-package oscar.cbls.routing
+package oscar.cbls.routing.test
 
 import oscar.cbls.search.StopWatch
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -19,9 +19,11 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
 
+
 object DebugRoute extends App{
   // code debug
   val UNROUTED = 6
+  val UNROUTED2 = 12
   var NbPoints = 6
   var NbCars = 1
 
@@ -48,6 +50,14 @@ object DebugRoute extends App{
    */
   def initModel(){
     m = new Model(false,true,false,false)
+    Next = Array.tabulate(NbPoints)(i => if(i<NbCars) new IntVar(m, i, NbPoints-1, i, "next" + i)
+    else new IntVar(m, 0, NbPoints, i, "next" + i))
+    init
+    routes = Routes.buildRoutes(Next,NbCars)
+    m.close()
+  }
+  def initModel(b:Boolean){
+    m = new Model(false,b,false,false)
     Next = Array.tabulate(NbPoints)(i => if(i<NbCars) new IntVar(m, i, NbPoints-1, i, "next" + i)
     else new IntVar(m, 0, NbPoints, i, "next" + i))
     init
@@ -83,6 +93,12 @@ object DebugRoute extends App{
 
   println("Route state 3:"+routes)
 
+  initModel(false)
+  Next(5) := 1
+  Next(1) := 0
+  Next(0) := 2
+  m.propagate()
+  println("Route state 3bis:" + routes)
 
   initModel
   // swap 1->2 with 4->5
@@ -190,7 +206,8 @@ object DebugRoute extends App{
     routes = Routes.buildRoutes(Next,NbCars)
     m.close()
   }
-  // 2 cars now and 2 rounds
+  // 2 cars now and 2 routes
+  println("2 cars and 2 routes:")
   println(routes)
 
   // move a point to another round done by other car
@@ -212,22 +229,20 @@ object DebugRoute extends App{
   println("Route state 9:"+routes)
 
 
+  initModel2()
+  // change the last elements of both route (6 and 11 by default) with some unrouted node
 
+  Next(6) := 5
+  Next(4) := 6
+  Next(5) := 0
 
+  Next(8) := 1
+  Next(11) := 8
+  Next(7) := 11
+  Next(9) := UNROUTED2
+  Next(10) := UNROUTED2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  m.propagate()
+  println("Route state 10:"+routes)
 
 }
