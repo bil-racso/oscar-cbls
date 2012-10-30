@@ -70,7 +70,7 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 		}
 
 
-	var shapes:List[ColoredShape[Shape]] = Nil;
+	var shapes:Array[ColoredShape[Shape]] = Array();
 		
 	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
 		override def mouseMoved(e:MouseEvent) {
@@ -106,7 +106,7 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 
 
 	def addShape(s:ColoredShape[Shape]) {
-		shapes ::= s
+		shapes :+= s
 		repaint();
 	}
 
@@ -121,9 +121,12 @@ object VisualDrawingTest{
 		inf.add(d);
 		f.pack();
 		val r = new Rectangle2D.Double(0, 0,100,100);
+		
 		val rect = new ColoredShape[Rectangle2D](d,r);
-
-	    val l = new ColoredShape[Line2D](d,new Line2D.Double(0, 0, 100, 100));
+		
+	    
+		val l = new ColoredShape[Line2D](d,new Line2D.Double(0, 0, 100, 100));
+		
 		
 		try {
 			Thread.sleep(1000);

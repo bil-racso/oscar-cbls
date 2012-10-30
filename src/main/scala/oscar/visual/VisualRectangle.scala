@@ -34,7 +34,6 @@ class VisualRectangle(d:VisualDrawing, shape:Rectangle2D.Double) extends Colored
 	def this( d:VisualDrawing, x:Double, y:Double, w:Double, h:Double) {
 	  
 		this(d, new Rectangle2D.Double(x,y,w,h))
-		println(d + " " + new Rectangle2D.Double(x,y,w,h))
 	}
 	
 	/**
