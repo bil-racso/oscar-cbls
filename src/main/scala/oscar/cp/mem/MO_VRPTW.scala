@@ -202,6 +202,9 @@ object MO_VRPTW extends App {
   }
 
   def solFound {
+    
+    visu.updateRoute(bestPrev)
+    visu.updateDist()
 
     val objs = Array(totDist.value, totTard.value)
     val sol = new Sol(buildPred, buildSucc, buildRoute, buildDist)
@@ -369,7 +372,7 @@ object MO_VRPTW extends App {
 
   def relaxVariables(selected: Array[Boolean]) {
 
-    visu.update(bestPrev, bestNext, selected)
+    visu.updateSelected(selected)
     visu.updateDist()
     visu.updateRestart(nRestart)
 

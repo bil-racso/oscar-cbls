@@ -27,14 +27,14 @@ import oscar.cp.constraints.TONOTCOMMIT
 
 object VRPTW extends App {
 
-  val instance = parse("data/VRPTW/Solomon/R104.txt")
+  val instance = parse("data/VRPTW/Solomon/R101.txt")
 
   // Distance scaling
   val scale = 1000
 
   // Data
   val nCustomers = instance.n
-  val nVehicles = instance.k	
+  val nVehicles = 19//instance.k	
   val nSites = nCustomers + 2 * nVehicles
   val capacity = instance.c
 
@@ -103,11 +103,11 @@ object VRPTW extends App {
 
   var firstLns = true
 
-  cp.sc = new IDSSearchController(cp, 6)
+  //cp.sc = new IDSSearchController(cp, 6)
   var regretSearch = true
   var adaptable = false
 
-  cp.lns(100, 1000) {
+  /*cp.lns(100, 1000) {
 
     nRestart += 1
 
@@ -130,7 +130,7 @@ object VRPTW extends App {
       // Relatedness Shaw relaxation
       case 3 => shaw((0.15*nCustomers).toInt, 10)
     })
-  }
+  }*/
 
   // ------------------------------------------------------------------------
   // PREPROCESSING AND USEFUL FUNCTIONS
@@ -172,6 +172,9 @@ object VRPTW extends App {
     bestNext = buildNext
     bestRoute = buildRoute
     bestDist = totDist.value
+    
+    visu.updateRoute(bestPrev)
+    visu.updateDist()
   }
 
   def buildPrev: Sol = pred.map(_.value)
@@ -311,8 +314,7 @@ object VRPTW extends App {
 
   def relaxVariables(selected: Array[Boolean]) {
 
-    visu.update(bestPrev, bestNext, selected)
-    visu.updateDist()
+    visu.updateSelected(selected)
     visu.updateRestart(nRestart)
 
     val constraints: Queue[Constraint] = Queue()
@@ -336,6 +338,8 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
 
   val visu = new VisualRelax(coord, realDist)
+  
+  cp.failLimit = 100000
 
   // ------------------------------------------------------------------------
   // CONSTRAINTS BLOCK
@@ -349,15 +353,17 @@ object VRPTW extends App {
       cp.add(pred(succ(i)) == i)
     }
 
-    for (i <- FirstDepots) {
-      cp.add(pred(succ(i)) == i)
-      cp.add(pred(i) == i + nVehicles)
+    for (i <- FirstDepots.min+1 to FirstDepots.max) {
+      cp.add(pred(i) == i+nVehicles-1)
+      cp.add(succ(i+nVehicles-1) == i)
     }
-
-    for (i <- LastDepots) {
-      cp.add(succ(pred(i)) == i)
-      cp.add(succ(i) == i - nVehicles)
-    }
+    
+    cp.add(pred(FirstDepots.min) == LastDepots.max)
+    cp.add(succ(LastDepots.max) == FirstDepots.min)
+    
+    // No cycles
+    cp.add(circuit(pred), Strong)
+    cp.add(circuit(succ), Strong)
 
     // Vehicle
     for (i <- Customers) {
@@ -365,28 +371,13 @@ object VRPTW extends App {
       cp.add(vehicle(i) == vehicle(succ(i)))
     }
 
-    for (i <- FirstDepots) {
-      cp.add(vehicle(i) == vehicle(succ(i)))
-    }
-
-    for (i <- LastDepots) {
-      cp.add(vehicle(i) == vehicle(pred(i)))
-    }
-
-    for (i <- 0 until nVehicles - 1) {
+    for (i <- Vehicles) {
       cp.add(vehicle(FirstDepots.min + i) == i)
-      cp.add(vehicle(LastDepots.min + 1 + i) == i)
+      cp.add(vehicle(LastDepots.min + i) == i)
     }
-
-    cp.add(vehicle(FirstDepots.max) == Vehicles.max)
-    cp.add(vehicle(LastDepots.min) == Vehicles.max)
 
     // Capacity of vehicles
     cp.add(binpacking(vehicle, demand, load))
-
-    // No cycles
-    cp.add(circuit(pred), Strong)
-    cp.add(circuit(succ), Strong)
 
     // Length of the circuit
     cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
@@ -395,23 +386,23 @@ object VRPTW extends App {
     // Time 
     for (i <- Customers) {
 
-      cp.add(new TimeWindow(cp, i, pred, succ, arrival, dist, servDur))
-
+      cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
+      cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
+      
       cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
       cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
-
+      
       cp.add(arrival(i) <= twEnd(i))
       cp.add(arrival(i) >= twStart(i))
     }
 
     for (i <- FirstDepots) {
-      cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
       cp.add(arrival(i) == 0)
     }
 
-    for (i <- LastDepots) {
-      cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
+    for (i <- LastDepots) {  
       cp.add(arrival(i) <= twEnd(i))
+      
     }
 
     cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
@@ -471,6 +462,8 @@ object VRPTW extends App {
     }
 
     solFound
+    
+    if (totDist.value == 1650755) cp.stop
   }
 
   println("\nFinished !")
