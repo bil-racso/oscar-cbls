@@ -113,18 +113,18 @@ class Planning(val model: Model, val maxduration: Int) {
   var plot:Plot2D = null
   def getVisual{
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
-    frame.setBounds(0,0,1000,400)
+    frame.setBounds(0,0,500,800)
     gantt = new Gantt(this)
     frame.createFrame("Gantt chart").add(gantt)
  //   plot = new Plot2D("makespan", "iterations", "makespan");
  //   frame.createFrame("progress").add(plot)
 
     frame.pack
-    frame.setSize(1000,1000)
+    frame.setSize(1500,500)
   }
 
   def updateVisual{
-    if (gantt!=null) gantt.update(0.3f, 15)
+    if (gantt!=null) gantt.update(1.0f, 30)
   }
 
   override def toString: String = {
@@ -174,7 +174,7 @@ class Planning(val model: Model, val maxduration: Int) {
    * @return true if a dependence can be addd, false otherwise.
    */
   def canAddPrecedenceAssumingResourceConflict(from:Task,  to:Task):Boolean = {
-    from != to && !isThereDependency(to,from)
+    (from != to) & !isThereDependency(to,from)
   }
 
   /**Checks if there is a path leading from one task to another one

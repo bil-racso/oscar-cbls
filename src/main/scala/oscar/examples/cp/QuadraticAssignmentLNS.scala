@@ -65,8 +65,8 @@ object QuadraticAssignmentLNS {
     val bestSol = Array.fill(n)(0)
     
     
-    cp.lns(20,50) {
-      println("----------restart---------------nFail:"+cp.nFail())
+    cp.lns(20,100) {
+      println("----------restart---------------")
       println(cp.isLastLNSRestartCompleted)
       
       if (cp.isLastLNSRestartCompleted) {
