@@ -24,14 +24,15 @@ import java.awt.geom.Line2D;
  * @author Pierre Schaus
  *
  */
-public class VisualLine extends ColoredShape<Line2D.Double>{
-	
-	public Line2D.Double line;
+class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line2D.Double](d,shape){
 	
 	
-	public VisualLine(VisualDrawing d,double xorig, double yorig, double xdest, double ydest) {
-		super(d, new Line2D.Double(xorig,yorig,xdest,ydest));
-		line = shape;
+	
+	def line:Line2D.Double = shape
+	
+	def this(d:VisualDrawing,xorig:Double, yorig:Double, xdest:Double, ydest:Double) {
+		this(d, new Line2D.Double(xorig,yorig,xdest,ydest))
+		
 	}
 	
 	/**
@@ -39,9 +40,9 @@ public class VisualLine extends ColoredShape<Line2D.Double>{
 	 * @param x
 	 * @param y
 	 */
-	public void setDest(double x, double y) {
-		line.setLine(line.getX1(),line.getY1(),x,y);
-		drawing.repaint();
+	def setDest(x:Double, y:Double) : Unit = {
+		line.setLine(line.getX1(),line.getY1(),x,y)
+		drawing.repaint()
 	}
 	
 	/**
@@ -49,9 +50,9 @@ public class VisualLine extends ColoredShape<Line2D.Double>{
 	 * @param x
 	 * @param y
 	 */
-	public void setOrig(double x, double y) {
-		line.setLine(x,y,line.getX2(),line.getY2());
-		drawing.repaint();
+	def setOrig(x:Double, y:Double) : Unit = {
+		line.setLine(x,y,line.getX2(),line.getY2())
+		drawing.repaint()
 	}
 	
 	

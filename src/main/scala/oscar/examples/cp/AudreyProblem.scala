@@ -68,15 +68,15 @@ object AudreyProblem  {
 		for (i <- 0 until 10; j <- 0 until 10) {
 		  val rect = new VisualRectangle(drawing,i*scale,j*scale,scale,scale)
 		  if (i % 2 == 0) {
-		    if (j % 2 == 0) rect.setInnerCol(Color.gray)
+		    if (j % 2 == 0) rect.innerCol = Color.gray
 		  } else {
-		    if (j % 2 == 1) rect.setInnerCol(Color.gray)
+		    if (j % 2 == 1) rect.innerCol = Color.gray
 		  }	
 		}		
 		for (i <- 0 until 100) {
 		  val v = x(i).value
 		  val (c,l) = (v/10, v%10)
-		  new VisualCircle(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,3).setInnerCol(Color.RED)
+		  new VisualCircle(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,3).innerCol = Color.RED
 		  new VisualLine(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,scale/2+c*scale,scale/2+l*scale)
 		}
 		var curr = 0

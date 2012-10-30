@@ -58,13 +58,13 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 	public void move(int x, int y) {
 		this.x = x;
 		this.y = y;
-		drawing.repaint();
+		drawing().repaint();
 	}
 	
 	@Override
 	public void draw(Graphics2D g) {
 		
-		g.setColor(getInnerCol());
+		g.setColor(innerCol());
 		
 		if (centered) 
 			drawCenteredString(text, x, y, g);
