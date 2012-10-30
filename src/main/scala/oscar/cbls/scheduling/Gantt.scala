@@ -39,26 +39,26 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
   
   private val rectangles : Array[VisualRectangle] = Array.tabulate(p.TaskArray.size)(a => {
     val rect = new VisualRectangle(this, 0, 0, 0, 0)
-    rect.setInnerCol(colors(a))
-    rect.setToolTip(p.TaskArray(a).name)
+    rect.innerCol = colors(a)
+    rect.toolTip = p.TaskArray(a).name
     rect
   })
 
   private val text : VisualText = new VisualText(this, 50, 50, "")
-  text.setInnerCol(Color.RED)
+  text.innerCol = Color.RED
   text.setCentered(true)
 
   private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-  makespanLine.setOuterCol(Color.RED);
+  makespanLine.outerCol = Color.RED;
 
   def update(xScale : Float, yScale: Int) {
 
     for (task <- p.Tasks) {
 
       val i = task.TaskID
-      rectangles(i).setWidth(((task.duration.value)*xScale).ceil)
-      rectangles(i).setHeight(yScale)
-      rectangles(i).setInnerCol(colors(i))
+      rectangles(i).width = ((task.duration.value)*xScale).ceil
+      rectangles(i).height = yScale
+      rectangles(i).innerCol = colors(i)
       rectangles(i).move((task.EarliestStartDate.value*xScale).ceil, LineArray(task.TaskID)*yScale)
     }
 

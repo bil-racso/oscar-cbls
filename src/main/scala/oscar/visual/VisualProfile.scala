@@ -11,15 +11,15 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 	
 	// The profile is represented by a polygon
 	private val polygon : VisualPolygon = new VisualPolygon(this)
-	polygon.setInnerCol(color)
+	polygon.innerCol = color
 	
 	// The capacity limit
 	private val capaLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	capaLine.setOuterCol(Color.RED);
+	capaLine.outerCol = Color.RED;
 	
 	// The zero line
 	private val zeroLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	zeroLine.setOuterCol(Color.BLUE);
+	zeroLine.outerCol = Color.BLUE;
 	
 	def resource = res
 	

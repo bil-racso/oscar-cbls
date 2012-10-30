@@ -123,7 +123,7 @@ object Nurses extends App  {
  for (i <- 0 until nbZones) {
      
    val items = Array.tabulate(nbPatientsInZone(i))(j => drawing.addItem(i,scale*acuityByZone(i)(j)))
-   items.foreach(_.setInnerCol(colors(i)))
+   items.foreach(_.innerCol = colors(i))
  
    val cp = CPSolver()
    cp.silent = true

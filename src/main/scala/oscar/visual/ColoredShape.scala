@@ -20,63 +20,74 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
+import oscar.visual._
 
-public class ColoredShape<E extends Shape> {
+class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 
 
-	private Color innerCol = Color.white;
-	private Color outerCol = Color.black;
+	var _innerCol = Color.white
+	var _outerCol = Color.black
 	
-	protected VisualDrawing drawing;
-	public E shape;
-	private boolean visible = true;
+
 	
-	public String toolTip = null;
+	var _visible = true
+	var _fill = true
+	var _border = true
+	
+	var toolTip : String = null
+	
+	drawing.addShape(this);
 	
 	
-	public ColoredShape(VisualDrawing d, E shape) {
-		this.drawing = d;
-		this.shape = shape;
-		d.addShape(this);
-	}	
-	
-	public void draw(Graphics2D g) {
+	def draw(g:Graphics2D) {
 		if (visible) {
-			g.setColor(getInnerCol());
-			g.fill(shape);
-			g.setColor(getOuterCol());
-			g.draw(shape);
+		  if(fill){
+			g.setColor(innerCol)
+			g.fill(shape)
+		  }
+		  if(border){
+			g.setColor(outerCol)
+			g.draw(shape)
+		  }
 		}
 	}
 	
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-		drawing.repaint();
-	}
-
-	public Color getInnerCol() {
-		return innerCol;
-	}
-
-	public void setInnerCol(Color innerCol) {
-		this.innerCol = innerCol;
-		drawing.repaint();
-	}
-
-	public Color getOuterCol() {
-		return outerCol;
-	}
-
-	public void setOuterCol(Color outerCol) {
-		this.outerCol = outerCol;
+	def innerCol = _innerCol
+	def outerCol = _outerCol
+	def visible = _visible
+	def fill = _fill
+	def border = _border
+	
+	def drawing = _drawing;
+	def shape = _shape;
+	
+	def visible_= (visible:Boolean) : Unit = {
+		_visible = visible;
 		drawing.repaint();
 	}
 	
-	public void setToolTip(String text) {
-		this.toolTip = text;
+	def border_= (border:Boolean) : Unit = {
+		_border = border;
+		drawing.repaint();
 	}
 	
-	protected void showToolTip(Point2D mousePoint) {
+	def fill_= (fill:Boolean) : Unit = {
+		_fill = fill;
+		drawing.repaint();
+	}
+
+
+	def innerCol_= (innerCol:Color): Unit = {
+		_innerCol = innerCol;
+		drawing.repaint();
+	}
+
+	 def outerCol_= (outerCol:Color): Unit = {
+		_outerCol = outerCol;
+		drawing.repaint();
+	}
+
+	def showToolTip( mousePoint : Point2D) = {
 		if (toolTip != null && shape.contains(mousePoint)) {
 			drawing.showToolTip(toolTip);
 		}

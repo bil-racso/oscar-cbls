@@ -52,104 +52,87 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import java.awt.Shape;
 
+class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new BorderLayout()) {
 
-public class VisualDrawing extends JPanel  {
-
-	JPanel drawingPanel;
-
-
-	LinkedList<ColoredShape> shapes;
-	
-	public VisualDrawing(boolean saveButton) {
-		this(saveButton,false);
-	}
-
-	public VisualDrawing(boolean saveButton, final boolean flipped) {
-		super(new BorderLayout());
-		shapes = new LinkedList<ColoredShape>();
-		
-		drawingPanel = new JPanel() {
-			
-			public void paintComponent(Graphics g) {
-				
+	var drawingPanel:JPanel = new JPanel() {
+			override def paintComponent(g:Graphics) {
 				if (flipped) {
 					g.translate(0,getHeight()); 
-					((Graphics2D)g).scale(1, -1);
+					(g.asInstanceOf[Graphics2D]).scale(1, -1);
 				}
 				super.paintComponent(g);
-				for (ColoredShape s: shapes) {
-					s.draw((Graphics2D)g);
+				for (s <- shapes) {
+					s.draw(g.asInstanceOf[Graphics2D]);
 				}
 			}
-		};
+		}
+
+
+	var shapes:List[ColoredShape[Shape]] = Nil;
 		
-		drawingPanel.addMouseMotionListener(new MouseMotionListener() {
-			
-			@Override
-			public void mouseMoved(MouseEvent e) {
-				drawingPanel.setToolTipText("");
-				for (ColoredShape s: shapes) {
-					s.showToolTip(e.getPoint());
-				}
+	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
+		override def mouseMoved(e:MouseEvent) {
+			drawingPanel.setToolTipText("");
+			for (s <- shapes) {
+				s.showToolTip(e.getPoint());
 			}
-			@Override
-			public void mouseDragged(MouseEvent arg0) {
-			}
-		});
+		}
 		
-		
-		drawingPanel.setBackground(Color.white);
+		override def mouseDragged(arg0:MouseEvent) {
+		}
+	})
+	
+	
+	drawingPanel.setBackground(Color.white)
 
-		add(drawingPanel, BorderLayout.CENTER);
+	add(drawingPanel, BorderLayout.CENTER)
 
 
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		
-		buttonPanel.setBackground(Color.white);
+	val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
+	
+	buttonPanel.setBackground(Color.white)
 
-
+	
+	def this(saveButton:Boolean) {
+		this(saveButton,false);
 	}
 	
-	public void showToolTip(String text) {
+	
+	def showToolTip(text:String) {
 		drawingPanel.setToolTipText(text);
 	}
 
 
-	public void addShape(ColoredShape s) {
-		shapes.add(s);
+	def addShape(s:ColoredShape[Shape]) {
+		shapes ::= s
 		repaint();
 	}
-	
-	
-	
-	public static void main(String[] args) {
+
+}
+
+object VisualDrawingTest{
+  def main(args : Array[String]) {
 		
-		VisualFrame f = new VisualFrame("toto");
-		VisualDrawing d = new VisualDrawing(false);
-		JInternalFrame inf = f.createFrame("Drawing");
+		val f = new VisualFrame("toto");
+		val d = new VisualDrawing(false);
+		val inf = f.createFrame("Drawing");
 		inf.add(d);
 		f.pack();
-		Rectangle2D r = new Rectangle2D.Double(0, 0,100,100);
-		ColoredShape<Rectangle2D> rect = new ColoredShape<Rectangle2D>(d,r);
+		val r = new Rectangle2D.Double(0, 0,100,100);
+		val rect = new ColoredShape[Rectangle2D](d,r);
 
-	    ColoredShape<Line2D> l = new ColoredShape<Line2D>(d,new Line2D.Double(0, 0, 100, 100));
+	    val l = new ColoredShape[Line2D](d,new Line2D.Double(0, 0, 100, 100));
 		
 		try {
 			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch{
+			case e : InterruptedException => e.printStackTrace();
 		}
-		rect.setInnerCol(Color.red);
+		rect.innerCol=Color.red;
 		
 		
 		
 	}
-
-
-
-
-
-
 }
