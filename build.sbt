@@ -35,11 +35,9 @@ jarName in assembly := "oscar.jar"
 test in assembly := {}
 
 
-//libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
 //testOptions in Test += Tests.Argument("-oDF")
 
-libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->default"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
@@ -55,7 +53,13 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 }
 
 
-//testListeners <<= target.map(t => Seq(new eu.henkelmann.sbt.JUnitXmlTestsListener(t.getAbsolutePath)))
+
+
+testOptions in Test <+= (target in Test) map {
+  t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports"))
+}
+
+
 
 
 //mainClass in (Compile, run) := Some("main.scala.oscar	.dfo.examples.Rosenbrock2D")
