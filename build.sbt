@@ -49,7 +49,7 @@ libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
 excludedJars in assembly <<= (fullClasspath in assembly) map { cp => 
   cp filter {x => 
              val v = x.data.getName 
-             v == "cplex.jar" || v == "gurobi.jar" || v == "junit-4.10.jar" || v == "scalacheck_2.9.0-1-1.9.jar" || v == "scalatest-1.6.1.jar" }  
+             v == "cplex.jar" || v == "gurobi.jar" || v == "junit-4.10.jar" || v == "scalacheck_2.9.0-1-1.9.jar" || v == "scalatest_2.9.0-2.0.M4.jar" }  
 }
 
 
