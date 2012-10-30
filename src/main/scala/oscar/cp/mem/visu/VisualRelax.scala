@@ -33,13 +33,13 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
   // Sites
   val circles = Array.tabulate(nSites)(i => {
     val c = new VisualCircle(drawing, 0, 0, 5, normalCol)
-    c.setInnerCol(notSelectCol)
+    c.innerCol = notSelectCol
     c
   })
 
   // Distance
   val text: VisualText = new VisualText(drawing, 20, 20, "")
-  text.setInnerCol(normalCol)
+  text.innerCol = normalCol
 
   // Frame
   add(drawing)
@@ -74,14 +74,14 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
     for (i <- Sites) {
 
       if (selected(i))
-        circles(i).setInnerCol(selectCol)
+        circles(i).innerCol = selectCol
       else
-        circles(i).setInnerCol(notSelectCol)
+        circles(i).innerCol = notSelectCol
 
       if (selected(i) || selected(prev(i)))
-        lines(i).setOuterCol(selectCol)
+        lines(i).outerCol = selectCol
       else
-        lines(i).setOuterCol(normalCol)
+        lines(i).outerCol = normalCol
     }
   }
 

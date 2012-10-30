@@ -1,24 +1,24 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
- *   
+ *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.visual;
 
-
 import java.awt.Color;
-
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -54,85 +54,77 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.Shape;
 
-class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new BorderLayout()) {
+class VisualDrawing(saveButton: Boolean, flipped: Boolean) extends JPanel(new BorderLayout()) {
 
-	var drawingPanel:JPanel = new JPanel() {
-			override def paintComponent(g:Graphics) {
-				if (flipped) {
-					g.translate(0,getHeight()); 
-					(g.asInstanceOf[Graphics2D]).scale(1, -1);
-				}
-				super.paintComponent(g);
-				for (s <- shapes) {
-					s.draw(g.asInstanceOf[Graphics2D]);
-				}
-			}
-		}
+  var drawingPanel: JPanel = new JPanel() {
+    override def paintComponent(g: Graphics) {
+      if (flipped) {
+        g.translate(0, getHeight());
+        (g.asInstanceOf[Graphics2D]).scale(1, -1);
+      }
+      super.paintComponent(g);
+      for (s <- shapes) {
+        s.draw(g.asInstanceOf[Graphics2D]);
+      }
+    }
+  }
 
+  var shapes: List[ColoredShape[Shape]] = Nil;
 
-	var shapes:List[ColoredShape[Shape]] = Nil;
-		
-	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
-		override def mouseMoved(e:MouseEvent) {
-			drawingPanel.setToolTipText("");
-			for (s <- shapes) {
-				s.showToolTip(e.getPoint());
-			}
-		}
-		
-		override def mouseDragged(arg0:MouseEvent) {
-		}
-	})
-	
-	
-	drawingPanel.setBackground(Color.white)
+  drawingPanel.addMouseMotionListener(new MouseMotionListener() {
+    override def mouseMoved(e: MouseEvent) {
+      drawingPanel.setToolTipText("");
+      for (s <- shapes) {
+        s.showToolTip(e.getPoint());
+      }
+    }
 
-	add(drawingPanel, BorderLayout.CENTER)
+    override def mouseDragged(arg0: MouseEvent) {
+    }
+  })
 
+  drawingPanel.setBackground(Color.white)
 
-	val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
-	
-	buttonPanel.setBackground(Color.white)
+  add(drawingPanel, BorderLayout.CENTER)
 
-	
-	def this(saveButton:Boolean) {
-		this(saveButton,false);
-	}
-	
-	
-	def showToolTip(text:String) {
-		drawingPanel.setToolTipText(text);
-	}
+  val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
 
+  buttonPanel.setBackground(Color.white)
 
-	def addShape(s:ColoredShape[Shape]) {
-		shapes ::= s
-		repaint();
-	}
+  def this(saveButton: Boolean) {
+    this(saveButton, false);
+  }
+
+  def showToolTip(text: String) {
+    drawingPanel.setToolTipText(text);
+  }
+
+  def addShape(s: ColoredShape[Shape]) {
+    shapes ::= s
+    repaint();
+  }
 
 }
 
-object VisualDrawingTest{
-  def main(args : Array[String]) {
-		
-		val f = new VisualFrame("toto");
-		val d = new VisualDrawing(false);
-		val inf = f.createFrame("Drawing");
-		inf.add(d);
-		f.pack();
-		val r = new Rectangle2D.Double(0, 0,100,100);
-		val rect = new ColoredShape[Rectangle2D](d,r);
+object VisualDrawingTest {
+  def main(args: Array[String]) {
 
-	    val l = new ColoredShape[Line2D](d,new Line2D.Double(0, 0, 100, 100));
-		
-		try {
-			Thread.sleep(1000);
-		} catch{
-			case e : InterruptedException => e.printStackTrace();
-		}
-		rect.innerCol=Color.red;
-		
-		
-		
-	}
+    val f = new VisualFrame("toto");
+    val d = new VisualDrawing(false);
+    val inf = f.createFrame("Drawing");
+    inf.add(d);
+    f.pack();
+    val r = new Rectangle2D.Double(0, 0, 100, 100);
+    val rect = new ColoredShape[Rectangle2D](d, r);
+
+    val l = new ColoredShape[Line2D](d, new Line2D.Double(0, 0, 100, 100));
+
+    try {
+      Thread.sleep(1000);
+    } catch {
+      case e: InterruptedException => e.printStackTrace();
+    }
+    rect.innerCol = Color.red;
+
+  }
 }

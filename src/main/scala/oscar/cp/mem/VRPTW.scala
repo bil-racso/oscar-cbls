@@ -11,7 +11,6 @@ import oscar.util._
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
-import oscar.visual.VisualTour
 import oscar.search.IDSSearchController
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.visu.VisualRelax
