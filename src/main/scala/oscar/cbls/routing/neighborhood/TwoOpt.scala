@@ -5,7 +5,27 @@
  * Time: 14:44
  * To change this template use File | Settings | File Templates.
  */
+/*******************************************************************************
+  * This file is part of OscaR (Scala in OR).
+  *
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+  ******************************************************************************/
 
+/*******************************************************************************
+  * Contributors:
+  *     This code has been initially developed by Ghilain Florent.
+  ******************************************************************************/
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
@@ -18,33 +38,35 @@ import oscar.cbls.invariants.core.computation.IntVar
   * size if O(n²)
   */
 
-object TwoOptMove extends SearchEngine{
+object TwoOpt extends SearchEngine{
   var toUpdate:List[(IntVar,Int)] = List.empty //list of variables to update if we get an intersting move
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-                  ,k:Int):TwoOptMove = findMove(false, vrp,k)
+                  ,k:Int):TwoOpt = findMove(false, vrp,k)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-    k:Int,startFrom:Neighbor = null):TwoOptMove = findMove(true,vrp,k,startFrom)
+    k:Int,startFrom:Neighbor = null):TwoOpt = findMove(true,vrp,k,startFrom)
 
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOptMove = {
+    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOpt = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    for (firstEdge <- 0 until vrp.N startBy hotRestart){
+    for (firstEdge <- 0 until vrp.N startBy hotRestart if vrp.isRouted(firstEdge)){
       for(secondEdge <- vrp.getKNearestNeighbors(k,firstEdge)
-        if (vrp.Next(secondEdge).value>=vrp.V && vrp.isASegment(vrp.Next(firstEdge).value,secondEdge))){
+        if (vrp.isRouted(secondEdge) &&
+          vrp.Next(secondEdge).value>=vrp.V &&
+          vrp.isASegment(vrp.Next(firstEdge).value,secondEdge))){
           val newObj = getObjAfterMove(firstEdge,secondEdge, vrp)
           if (newObj < BestObj){
-            if (FirstImprove) return TwoOptMove(firstEdge,secondEdge, newObj, vrp)
+            if (FirstImprove) return TwoOpt(firstEdge,secondEdge, newObj, vrp)
             BestObj = newObj
             move = ((firstEdge, secondEdge))
           }
       }
     }
     if (move == null) null
-    else TwoOptMove(move._1,move._2, BestObj, vrp)
+    else TwoOpt(move._1,move._2, BestObj, vrp)
 
   }
 
@@ -62,8 +84,8 @@ object TwoOptMove extends SearchEngine{
   }
 }
 
-case class TwoOptMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {TwoOptMove.doMove(predOfMovedPoint, PutAfter, vrp)}
+case class TwoOpt(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  def comit {TwoOpt.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
 

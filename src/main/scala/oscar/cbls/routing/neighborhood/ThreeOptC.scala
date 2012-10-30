@@ -5,7 +5,27 @@
  * Time: 16:17
  * To change this template use File | Settings | File Templates.
  */
+/*******************************************************************************
+  * This file is part of OscaR (Scala in OR).
+  *
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+  ******************************************************************************/
 
+/*******************************************************************************
+  * Contributors:
+  *     This code has been initially developed by Ghilain Florent.
+  ******************************************************************************/
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
@@ -16,7 +36,7 @@ import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, Obj
 /*
 
  */
-object ThreeOptMoveC extends SearchEngine{
+object ThreeOptC extends SearchEngine{
 
 
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
@@ -26,7 +46,7 @@ object ThreeOptMoveC extends SearchEngine{
 
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, previousMove:Neighbor = null):ThreeOptMoveC = {
+               k:Int, previousMove:Neighbor = null):ThreeOptC = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
@@ -34,21 +54,23 @@ object ThreeOptMoveC extends SearchEngine{
     val hotRestart = if (previousMove == null) 0 else previousMove.startNodeForNextExploration
     var endOfFirstEdge:Int = 0
 
-    for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart){
+    for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart if (vrp.isRouted(startOfFirstEdge))){
       endOfFirstEdge = vrp.Next(startOfFirstEdge).value
 
       for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,endOfFirstEdge)
-           if (vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
+           if ( vrp.isRouted(startOfThirdEdge)&&
+             vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
              vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3))){// filter
 
         for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfFirstEdge).value)
-             if((vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value))&&
+             if (vrp.isRouted(startOfSecondEdge) &&
+               (vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value))&&
                vrp.isBetween(vrp.Next(startOfSecondEdge).value,startOfFirstEdge,startOfThirdEdge))){
 
           val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
           if (newObj < BestObj){
             if(FirstImprove)
-              return ThreeOptMoveC(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
+              return ThreeOptC(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
             BestObj = newObj
             move = ((startOfFirstEdge, startOfSecondEdge ,startOfThirdEdge ))
           }
@@ -56,7 +78,7 @@ object ThreeOptMoveC extends SearchEngine{
       }
     }
     if (move == null) null
-    else ThreeOptMoveC(move._1, move._2, move._3, BestObj, vrp)
+    else ThreeOptC(move._1, move._2, move._3, BestObj, vrp)
   }
 
   /*Performs the three-opt move with two reverse segment. */
@@ -74,9 +96,9 @@ object ThreeOptMoveC extends SearchEngine{
   }
 }
 
-case class ThreeOptMoveC(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
+case class ThreeOptC(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
                                   objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {ThreeOptMoveC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
+  def comit {ThreeOptC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
   override def toString():String =  "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
     "thirdEdge = "+ startOfThirdEdge+" )"

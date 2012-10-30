@@ -35,8 +35,8 @@ import util.Random
 import scala.math._
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing._
-import heuristic.{RandomNeighboor, NearestNeighbor}
-import neighborhood._
+import oscar.cbls.routing.heuristic.{RandomNeighbor, NearestNeighbor}
+import oscar.cbls.routing.neighborhood._
 
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
@@ -71,7 +71,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-  with SymmetricVRP
+  with SymmetricVRP  with Predecessors with PenaltyForUnrouted
   vrp.installCostMatrix(DistanceMatrix)
 
   vrp.saveKNearestPoints(20)
@@ -82,7 +82,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   println("closed " + getWatchString)
   NearestNeighbor(vrp)
-  //RandomNeighboor(vrp)
+  //RandomNeighbor(vrp)
   m.propagate()
 
   println("start val: " + vrp.ObjectiveVar.value)
@@ -99,9 +99,9 @@ object tspsolver extends SearchEngine with StopWatch with App{
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
     move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
-    //move = ThreeOptMoveA.getFirstImprovingMove(vrp, nsize, move)
-    //move = ThreeOptMoveC.getFirstImprovingMove(vrp, nsize, move)
-    //move = ThreeOptMoveB.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptA.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptC.getFirstImprovingMove(vrp, nsize, move)
+    //move = ThreeOptB.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit

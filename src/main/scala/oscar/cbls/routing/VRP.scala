@@ -20,7 +20,7 @@ package oscar.cbls.routing
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
+ *         by Renaud De Landtsheer and Florent Ghilain
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar, Model}
@@ -66,6 +66,12 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     }
     toReturn
   }
+
+
+  /*
+  Returns if a point p is still routed.
+   */
+  def isRouted(p:Int):Boolean = {Next(p).value != N}
 
 
   /**
@@ -144,9 +150,6 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     val next = Next(insertion).value
     List((Next(insertion),point),(Next(point),next))
   }
-
-
-
 
   /**
    * Returns the list of variables to update with theirs new values in order to
@@ -264,6 +267,8 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     // using flip
     flip(a,b,c,d):::flip(b,d,e,f)
   }
+
+
 }
 
 /**
@@ -443,27 +448,40 @@ trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction 
  */
 trait ClosestNeighborPoints extends VRP with HopDistance{
   var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+  var maxAvgUnrouted:Double = 0
 
-  def saveKNearestPoints(k:Int){
+  def saveKNearestPoints(k:Int,filter:(Int => Boolean) = ( _ => true)){
     if (k < N-1){
-      val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k))
+      val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k,filter))
       closestNeighbors += ((k,neighbors))
     }
   }
   
-  def computeKNearestNeighbors(node:Int, k:Int):List[Int] = {
+  def computeNearestNeighbors(node:Int):List[Int] = {
     val reachableneigbors = Nodes.filter((next:Int)
       => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
     //TODO: this is deeply inefficient. use a lazy quicksort instead, orr a partial sort based on a heap?
-    val sortedneighbors = reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor)))
-    sortedneighbors.toList.take(k)
+    reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor))).toList
   }
 
-  def getKNearestNeighbors(k:Int, node:Int):Iterable[Int] = {
+  def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean)):List[Int]= {
+    computeNearestNeighbors(node).filter(filter).take(k)
+  }
+
+  def getKNearestNeighbors(k:Int, node:Int,filter:(Int => Boolean) = ( _ => true)):Iterable[Int] = {
     if (k >= N-1) return Nodes
     if(!closestNeighbors.isDefinedAt(k)){
-      saveKNearestPoints(k:Int)
+      saveKNearestPoints(k:Int,filter)
     }
+    updateMaxAvgUnrouted(k,node)
     closestNeighbors(k)(node)
   }
+
+  def updateMaxAvgUnrouted(k:Int,node:Int){
+    var avg : Double = 0
+    closestNeighbors(k)(node).foreach(n => if(!isRouted(n)) avg += 1)
+    if (avg/k >maxAvgUnrouted) maxAvgUnrouted = avg/k
+  }
+
+
 }

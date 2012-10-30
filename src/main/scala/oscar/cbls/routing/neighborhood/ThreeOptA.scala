@@ -32,7 +32,7 @@ import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, Obj
  * size is O(n³)
  */
 
-object ThreeOptMoveA extends SearchEngine{
+object ThreeOptA extends SearchEngine{
   var toUpdate:List[(IntVar,Int)] = List.empty //list of variables to update if we get an intersting move
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
@@ -44,20 +44,22 @@ object ThreeOptMoveA extends SearchEngine{
    */
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, prevmove:Neighbor = null):ThreeOptMoveA = {
+               k:Int, prevmove:Neighbor = null):ThreeOptA = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
     val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
-    for (insertionPoint <- 0 until vrp.N startBy hotRestart ){
+    for (insertionPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(insertionPoint) ){
       //we search for a segment,
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point
       //begin and end should be on the same route and in this order
-      for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)  if (insertionPoint != beforeSegmentStart))
+      for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)  if (insertionPoint != beforeSegmentStart)
+        && vrp.isRouted(beforeSegmentStart))
       {
         for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
-             if(segmentEnd != insertionPoint &&
+             if(vrp.isRouted(segmentEnd) &&
+               segmentEnd != insertionPoint &&
                vrp.isAtLeastAsFarAs(beforeSegmentStart, segmentEnd,2) &&
                !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd)))
         {
@@ -65,7 +67,7 @@ object ThreeOptMoveA extends SearchEngine{
           if (newObj < BestObj){
             println("beforeSeg: "+beforeSegmentStart +" et endSeg: "+segmentEnd)
             if (FirstImprove){
-              return ThreeOptMoveA(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
+              return ThreeOptA(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
             }
             BestObj = newObj
             move = ((beforeSegmentStart ,segmentEnd, insertionPoint))
@@ -74,7 +76,7 @@ object ThreeOptMoveA extends SearchEngine{
       }
     }
     if (move == null) null
-    else ThreeOptMoveA(move._1, move._2, move._3, BestObj, vrp)
+    else ThreeOptA(move._1, move._2, move._3, BestObj, vrp)
   }
 
   /*Performs the three-opt move without flip
@@ -101,9 +103,9 @@ object ThreeOptMoveA extends SearchEngine{
   }
 }
 
-case class ThreeOptMoveA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
+case class ThreeOptA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
                         objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {ThreeOptMoveA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
+  def comit {ThreeOptA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
   override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 

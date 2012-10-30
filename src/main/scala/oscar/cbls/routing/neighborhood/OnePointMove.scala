@@ -25,7 +25,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing.{ClosestNeighborPoints, VRP, ObjectiveFunction}
+import oscar.cbls.routing.{ClosestNeighborPoints,  VRP, ObjectiveFunction}
 
 
 /**moves a point in a circuit to another place.
@@ -48,24 +48,24 @@ object OnePointMove extends SearchEngine{
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    for (beforeMovedPoint <- 0 until vrp.N startBy hotRestart if vrp.Next(beforeMovedPoint).value >= vrp.V){
-      for(insertionPoint <- vrp.getKNearestNeighbors(k,beforeMovedPoint))
+    for (beforeMovedPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeMovedPoint)){
+      for(insertionPoint <- vrp.getKNearestNeighbors(k,beforeMovedPoint) if vrp.isRouted(insertionPoint))
         if (beforeMovedPoint != insertionPoint && vrp.Next(beforeMovedPoint).value != insertionPoint){
           val newObj = getObjAfterMove(beforeMovedPoint,insertionPoint, vrp)
           if (newObj < BestObj){
+            println("Obj = "+newObj)
             if (FirstImprove) return OnePointMove(beforeMovedPoint,insertionPoint, newObj, vrp)
             BestObj = newObj
             move = ((beforeMovedPoint, insertionPoint))
           }
         }
-
     }
     if (move == null) null
     else OnePointMove(move._1,move._2, BestObj, vrp)
   }
 
   def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP){
-     val toUpdate =vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
+     val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
      toUpdate.foreach(t => t._1 := t._2)
    }
 

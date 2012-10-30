@@ -4,13 +4,28 @@ import io._
 import java.io._
 import util.Random
 
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 23/10/12
- * Time: 21:55
- * To change this template use InstanceVRP | Settings | InstanceVRP Templates.
- */
+/*******************************************************************************
+  * This file is part of OscaR (Scala in OR).
+  *
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+  ******************************************************************************/
+
+/*******************************************************************************
+  * Contributors:
+  *     This code has been initially developed by Ghilain Florent.
+  ******************************************************************************/
+
 class Town(val name:String,val long:Double,val lat:Double)
 
 class InstanceVRP {
@@ -38,40 +53,40 @@ object InstanceVRP{
     assert(n<towns.length/2)
     val seed = 0
     val instanceTowns = new Array[Town](n)
-    val range = (seed until n).map(x => 2*x)
-    for (i <- seed until seed+n) instanceTowns(i) = towns(range(i))
+    val range = (seed until seed+n).map(x => 2*x)
+    for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
   def instance_2(n:Int):Array[Town] = {
     assert(n<(towns.length-1000)/2)
     val seed = 1000
     val instanceTowns = new Array[Town](n)
-    val range = (seed until n).map(x => 2*x)
-    for (i <- seed until seed+n) instanceTowns(i) = towns(range(i))
+    val range = (seed until seed +n).map(x => 2*x)
+    for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
    }
   def instance_3(n:Int):Array[Town] = {
     assert(n<(towns.length-500)/3)
     val seed = 500
     val instanceTowns = new Array[Town](n)
-    val range = (seed until n).map(x => 3*x)
-    for (i <- seed until seed+n) instanceTowns(i) = towns(range(i))
+    val range = (seed until seed+n).map(x => 3*x)
+    for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
   def instance_4(n:Int):Array[Town] = {
     assert(n<(towns.length-500)/4)
     val seed = 500
     val instanceTowns = new Array[Town](n)
-    val range = (seed until n).map(x => 4*x)
-    for (i <- seed until seed+n) instanceTowns(i) = towns(range(i))
+    val range = (seed until seed+n).map(x => 4*x)
+    for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
   def instance_5(n:Int):Array[Town] = {
-    assert(n<towns.length/(n*n))
+    assert(towns.length> (n*n))
     val seed = 0
     val instanceTowns = new Array[Town](n)
-    val range = (seed until n).map(x => x*x)
-    for (i <- seed until seed+n) instanceTowns(i) = towns(range(i))
+    val range = (seed until seed+n).map(x => x*x)
+    for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
 

@@ -7,7 +7,6 @@
  */
 
 
-
 package oscar.cbls.routing.neighborhood
 
 /*******************************************************************************
@@ -29,8 +28,7 @@ package oscar.cbls.routing.neighborhood
 
 /*******************************************************************************
   * Contributors:
-  *     This code has been initially developed by CETIC www.cetic.be
-  *         by Renaud De Landtsheer
+  *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
@@ -42,31 +40,30 @@ import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP
   * size if O(n²)
   */
 
-object SwapMove extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int):SwapMove = findMove(false, vrp,k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int , startFrom:Neighbor = null):SwapMove
+object Swap extends SearchEngine{
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int):Swap = findMove(false, vrp,k)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int , startFrom:Neighbor = null):Swap
   = findMove(true,vrp,k,startFrom)
   //def justMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null) {getFirstImprovingMove(vrp, startFrom).comit}
 
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-                       with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):SwapMove = {
+                       with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):Swap = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    for (beforeFirstSwapPoint <- 0 until vrp.N startBy hotRestart){
+    for (beforeFirstSwapPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeFirstSwapPoint)){
       val firstSwapPoint = vrp.Next(beforeFirstSwapPoint).value
-      for(beforeSecondSwapPoint <- vrp.getKNearestNeighbors(k,firstSwapPoint))
+      for(beforeSecondSwapPoint <- vrp.getKNearestNeighbors(k,firstSwapPoint) if vrp.isRouted(beforeSecondSwapPoint))
       {
-        val secondSwapPoint = vrp.Next(beforeSecondSwapPoint).value
         if (vrp.isASegment(beforeFirstSwapPoint,vrp.Next(firstSwapPoint).value) &&
           vrp.isASegment(beforeSecondSwapPoint,vrp.Next(beforeSecondSwapPoint).value) &&
           vrp.isASegment(vrp.Next(firstSwapPoint).value,beforeSecondSwapPoint))
         {
           val newObj = getObjAfterMove(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)
           if (newObj < BestObj){
-            if (FirstImprove) return SwapMove(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
+            if (FirstImprove) return Swap(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
             BestObj = newObj
             move = ((beforeFirstSwapPoint, beforeSecondSwapPoint))
           }
@@ -74,7 +71,7 @@ object SwapMove extends SearchEngine{
       }
     }
     if (move == null) null
-    else SwapMove(move._1,move._2, BestObj, vrp)
+    else Swap(move._1,move._2, BestObj, vrp)
   }
 
   def doMove(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP){
@@ -93,8 +90,8 @@ object SwapMove extends SearchEngine{
   }
 }
 
-case class SwapMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {SwapMove.doMove(predOfMovedPoint, PutAfter, vrp)}
+case class Swap(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  def comit {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   override def toString():String = "(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
 
