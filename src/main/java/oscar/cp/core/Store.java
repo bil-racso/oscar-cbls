@@ -295,7 +295,7 @@ public class Store extends ReversibleSearchNode {
      * Fix Point algorithm
      * @return Failure is the fix point detects a failure that is one of the domain became empty, Suspend otherwise
      */
-	private CPOutcome propagate() {
+	protected CPOutcome propagate() {
 		assert(status.getValue() != CPOutcome.Failure);
 		
 		long t0 = System.currentTimeMillis();
@@ -326,7 +326,8 @@ public class Store extends ReversibleSearchNode {
 		}
 		inPropagate = false;
 		timeInFixPoint += System.currentTimeMillis()-t0;
-		return ok==CPOutcome.Failure ? ok : CPOutcome.Suspend;
+		status.setValue( ok == CPOutcome.Failure ? ok : CPOutcome.Suspend);
+		return ok == CPOutcome.Failure ? ok : CPOutcome.Suspend;
 	}
 	
 	private boolean isL1QueueEmpty() {

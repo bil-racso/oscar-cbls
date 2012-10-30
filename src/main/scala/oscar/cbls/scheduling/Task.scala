@@ -81,7 +81,7 @@ case class Task(val duration: IntVar, val planning: Planning, val name: String =
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false;
 
-  override def toString: String = name
+  override def toString(): String = name
 
   var StaticPredecessors: List[Task] = List.empty
 

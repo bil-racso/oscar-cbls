@@ -33,7 +33,7 @@ object Sudoku {
 
 			val N = 0 until n
 
-			val mip = MIPSolver(LPSolverLib.glpk)
+			val mip = MIPSolver()
 
 			val x = Array.tabulate(n,n,n) ((l,c,n) => MIPVar(mip,"x"+(l,c,n), 0 to 1))
 
