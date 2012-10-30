@@ -708,14 +708,14 @@ trait PropagationElement extends DAGNode with TarjanNode{
 
   var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
-  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[(PropagationElement, Any)] = null
+  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
   def InitiateDynamicGraphFromSameComponent() {
     assert(component != null)
     DynamicallyListenedElementsFromSameComponent
        = DynamicallyListenedElements.PermaFilter((e: PropagationElement) => e.component == component)
     DynamicallyListeningElementsFromSameComponent
-      = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component)
+      = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component, (e) => e._1)
   }
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
@@ -816,7 +816,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
     = DynamicallyListenedElementsFromSameComponent
 
   final def getDAGSucceedingNodes: Iterable[DAGNode]
-    = DynamicallyListeningElementsFromSameComponent.mapToList(f => f._1)
+    = DynamicallyListeningElementsFromSameComponent
 
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
