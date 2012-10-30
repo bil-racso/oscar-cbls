@@ -67,14 +67,16 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //iterative weakening and flattening
       it += 1
 
-//       if(plateaulength > 10 && (plateaulength % 50) == 0){
-//       for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
-//       println("jumping****************")
-//      }else{
+       if(plateaulength > 10 && (plateaulength % 50) == 0){
+       for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
+       println("jumping****************")
+      }else{
+      val m = p.MakeSpan.value
       for (i <- 0 until NbRelax) {
         Relax(PkillPerRelax);
       }
-//      }
+      if(p.MakeSpan.value == m)println("skip")
+      }
 
       flatteningheursitics match {
         case EarliestFirst() => FlattenEarliestFirst();
@@ -98,6 +100,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println("----------------")
     }
     model.restoreSolution(BestSolution)
+    p.updateVisual
   }
 
   /**
