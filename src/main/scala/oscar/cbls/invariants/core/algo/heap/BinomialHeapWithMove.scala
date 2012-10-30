@@ -21,12 +21,10 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.core.algo.heap
 
-import collection.immutable.{Map, SortedMap}
+import collection.immutable.SortedMap
 import collection.Iterator
-
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
@@ -173,7 +171,6 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
     acc
   }
 }
-
 
 class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
   var current:Int = size

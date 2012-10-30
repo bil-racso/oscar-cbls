@@ -99,7 +99,6 @@ trait DAG {
    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
-      //on passe en eautosort
       doDAGSort();
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
