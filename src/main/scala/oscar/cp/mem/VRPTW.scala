@@ -3,6 +3,7 @@ package oscar.cp.mem
 import scala.collection.mutable.Queue
 import scala.util.Random.nextFloat
 import scala.util.Random.nextInt
+import scala.util.Random.nextBoolean
 import scala.Math.max
 import scala.Math.pow
 import scala.Math.atan2
@@ -33,7 +34,7 @@ object VRPTW extends App {
 
   // Data
   val nCustomers = instance.n
-  val nVehicles = 19//instance.k	
+  val nVehicles = instance.k
   val nSites = nCustomers + 2 * nVehicles
   val capacity = instance.c
 
@@ -102,11 +103,11 @@ object VRPTW extends App {
 
   var firstLns = true
 
-  //cp.sc = new IDSSearchController(cp, 6)
+  cp.sc = new IDSSearchController(cp, 6)
   var regretSearch = true
   var adaptable = false
 
-  /*cp.lns(100, 1000) {
+  cp.lns(50, 2000) {
 
     nRestart += 1
 
@@ -121,15 +122,15 @@ object VRPTW extends App {
 
     relaxVariables(nextRelax match {
       // Customer-based Adaptive Temporal Decomposition
-      case 0 => catd((0.15*nCustomers).toInt)
+      case 0 => catd((0.15 * nCustomers).toInt)
       // Customer-based Adaptive Spatial Decomposition
-      case 1 => casd((0.25*nCustomers).toInt)
+      case 1 => casd((0.25 * nCustomers).toInt)
       // Customer-based Adaptive Random Decomposition
-      case 2 => card((0.15*nCustomers).toInt)
+      case 2 => card((0.15 * nCustomers).toInt)
       // Relatedness Shaw relaxation
-      case 3 => shaw((0.15*nCustomers).toInt, 10)
+      case 3 => shaw((0.15 * nCustomers).toInt, 10)
     })
-  }*/
+  }
 
   // ------------------------------------------------------------------------
   // PREPROCESSING AND USEFUL FUNCTIONS
@@ -171,7 +172,7 @@ object VRPTW extends App {
     bestNext = buildNext
     bestRoute = buildRoute
     bestDist = totDist.value
-    
+
     visu.updateRoute(bestPrev)
     visu.updateDist()
   }
@@ -253,7 +254,7 @@ object VRPTW extends App {
 
     // Ensures the relaxation of p customers (not depots)
     val max = nCustomers - p - 1
-    val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
+    val alpha = if (twStart(sortedCustomersByTwStart(max)) > 0) nextInt(twStart(sortedCustomersByTwStart(max))) else 0
 
     var nSelected = 0
     var i = 0
@@ -337,8 +338,6 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
 
   val visu = new VisualRelax(coord, realDist)
-  
-  cp.failLimit = 100000
 
   // ------------------------------------------------------------------------
   // CONSTRAINTS BLOCK
@@ -352,14 +351,14 @@ object VRPTW extends App {
       cp.add(pred(succ(i)) == i)
     }
 
-    for (i <- FirstDepots.min+1 to FirstDepots.max) {
-      cp.add(pred(i) == i+nVehicles-1)
-      cp.add(succ(i+nVehicles-1) == i)
+    for (i <- FirstDepots.min + 1 to FirstDepots.max) {
+      cp.add(pred(i) == i + nVehicles - 1)
+      cp.add(succ(i + nVehicles - 1) == i)
     }
-    
+
     cp.add(pred(FirstDepots.min) == LastDepots.max)
     cp.add(succ(LastDepots.max) == FirstDepots.min)
-    
+
     // No cycles
     cp.add(circuit(pred), Strong)
     cp.add(circuit(succ), Strong)
@@ -385,12 +384,13 @@ object VRPTW extends App {
     // Time 
     for (i <- Customers) {
 
+      //cp.add(new TimeWindow(cp, i, pred, succ, arrival, dist, servDur))
       cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
       cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
-      
+
       cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
       cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
-      
+
       cp.add(arrival(i) <= twEnd(i))
       cp.add(arrival(i) >= twStart(i))
     }
@@ -399,9 +399,9 @@ object VRPTW extends App {
       cp.add(arrival(i) == 0)
     }
 
-    for (i <- LastDepots) {  
+    for (i <- LastDepots) {
       cp.add(arrival(i) <= twEnd(i))
-      
+
     }
 
     cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
@@ -411,6 +411,8 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
   // EXPLORATION BLOCK
   // ------------------------------------------------------------------------
+
+  println(pred.map(_.size).sum + succ.map(_.size).sum)
 
   cp.exploration {
 
@@ -448,8 +450,7 @@ object VRPTW extends App {
 
         cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
       }
-    } 
-    else {
+    } else {
 
       while (!allBounds(pred)) {
 
@@ -461,7 +462,7 @@ object VRPTW extends App {
     }
 
     solFound
-    
+
     if (totDist.value == 1650755) cp.stop
   }
 

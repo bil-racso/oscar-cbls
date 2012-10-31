@@ -5,57 +5,67 @@ import scala.math.max
 
 class TimeWindowPred(cp: Store, c: Int, pred: Array[CPVarInt], arrival: Array[CPVarInt], dist: Array[Array[Int]], service: Array[Int]) extends Constraint(cp, "TimeWindow") {
 
+  var minPred = -1
+  var minTime = Int.MaxValue
+
   override def setup(l: CPPropagStrength): CPOutcome = {
 
-    val oc = propagate
-
-    if (oc != CPOutcome.Failure) {
-      if (!pred(c).isBound) pred(c).callPropagateWhenDomainChanges(this)
-      if (!arrival(c).isBound) arrival(c).callPropagateWhenMaxChanges(this)
-      for (i <- pred(c)) {
-         if (!arrival(i).isBound) arrival(i).callPropagateWhenMinChanges(this)
-      }
+    if (checkAllPred() == CPOutcome.Failure) CPOutcome.Failure
+    else if (predPropagate() == CPOutcome.Failure) CPOutcome.Failure
+    else  {
+      // Predecessors
+      if (!pred(c).isBound) pred(c).callValRemoveWhenValueIsRemoved(this)
+      // Maximal arrival of this
+      if (!arrival(c).isBound) arrival(c).callUpdateMaxWhenMaxChanges(this)
+      // Minimal arrival of predecessors
+      for (i <- pred(c)) if (!arrival(i).isBound) arrival(i).callUpdateMinIdxWhenMinChanges(this, i)
+      
+      CPOutcome.Suspend
     }
-
-    return oc
   }
 
-  def prune(): CPOutcome = {
+  override def updateMax(cpvar: CPVarInt, v: Int): CPOutcome = checkAllPred
 
-    for (j <- pred(c)) {
-      if (arrival(j).min + service(j) + dist(j)(c) > arrival(c).max) {
-        if (pred(c).removeValue(j) == CPOutcome.Failure)
-          return CPOutcome.Failure
-      }
-    }
+  override def updateMinIdx(cpvar: CPVarInt, id: Int, v: Int): CPOutcome = {
+    if (pred(c) hasValue id) {
+      if (checkPred(id) == CPOutcome.Failure) CPOutcome.Failure
+      else predPropagate()
+    } else CPOutcome.Suspend
+  }
 
+  def checkAllPred() : CPOutcome = {
+    for (j <- pred(c)) if (pred(c).exists(j => checkPred(j) == CPOutcome.Failure))
+      return CPOutcome.Failure
     return CPOutcome.Suspend
   }
 
-  override def propagate(): CPOutcome = {
-
-    if (prune == CPOutcome.Failure) CPOutcome.Failure
-    else if (predPropagate(c) == CPOutcome.Failure) CPOutcome.Failure
+  def checkPred(j: Int): CPOutcome = {
+    if (arrival(j).min + timeDist(j, c) > arrival(c).max) pred(c).removeValue(j)
     else CPOutcome.Suspend
   }
 
-  def predPropagate(c: Int): CPOutcome = {
-
-    var minV = Int.MaxValue
-
-    for (j <- pred(c)) {
-      val tauMin = arrival(j).min + service(j) + dist(j)(c)
-
-      if (tauMin < minV)
-        minV = tauMin
-    }
-
-    if (arrival(c).updateMin(minV) == CPOutcome.Failure) CPOutcome.Failure
-    else CPOutcome.Suspend
-  }
+  def timeDist(from: Int, to: Int) = service(from) + dist(from)(to)
   
-  def adjustMin: CPOutcome = {
-    null
+  override def valRemove(cpvar : CPVarInt, id : Int) : CPOutcome = {
+    predPropagate()
+  }
+
+  def predPropagate(): CPOutcome = {
+
+    updateMinTime()
+    if (arrival(c).updateMin(minTime) == CPOutcome.Failure) CPOutcome.Failure
+    else CPOutcome.Suspend
+  }
+
+  def updateMinTime() {
+    minTime = Int.MaxValue
+    for (j <- pred(c)) {
+      val tauMin = arrival(j).min + timeDist(j, c)
+      if (tauMin < minTime) {
+        minTime = tauMin
+        minPred = j
+      }
+    }
   }
 }
 

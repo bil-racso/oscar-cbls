@@ -26,10 +26,10 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
   var prev: Array[Int] = Array.tabulate(nSites)(i => i)
   var dist = 0.0
   var nRestart = 1
-
+  
   // Routes
   val lines = Array.tabulate(nSites)(i => new VisualLine(drawing, 0, 0, 0, 0))
-
+    
   // Sites
   val circles = Array.tabulate(nSites)(i => {
     val c = new VisualCircle(drawing, 0, 0, 5, normalCol)
