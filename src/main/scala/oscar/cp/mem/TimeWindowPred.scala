@@ -9,7 +9,7 @@ class TimeWindowPred(cp: Store, c: Int, pred: Array[CPVarInt], arrival: Array[CP
   var minTime = Int.MaxValue
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-
+		  
     if (checkAllPred() == CPOutcome.Failure) CPOutcome.Failure
     else if (predPropagate() == CPOutcome.Failure) CPOutcome.Failure
     else  {

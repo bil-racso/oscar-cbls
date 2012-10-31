@@ -202,82 +202,80 @@ class CPSolver() extends Store() {
 		println("time in trail restore(ms)", getTrail().getTimeInRestore())
 		println("max trail size", getTrail().getMaxSize())
 	}
-	
-	
-	override def exploration(block: => Unit @suspendable ): Unit  =  {
-	  val t1 = System.currentTimeMillis()
-	  stateObjective()
-	  var nbRestart = 0
-	  var maxRestart = 1
-	  
-	  val relax = lns match {
-		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => 
-		     maxRestart = nbRestart
-		     failLimit = nbFailures
-		     () => {
-		     restar()
-		   }
-	  }  
 
-	  reset {
-        shift { k1: (Unit => Unit ) =>
-          val b = () => {
-        	  	sc.start()
-        	  	propagate()
-        	  	if (!isFailed()) {
-        	  		block
-        	  	} else {
-        	  	  shift { k: (Unit => Unit) => k() }
-        	  	}
-                if (!isFailed()) {
-                	if (solveOne) {
-                	  sc.reset()
-                	  k1() // exit the exploration block
-                	}
-                }
-          }
+  override def exploration(block: => Unit @suspendable): Unit = {
+    val t1 = System.currentTimeMillis()
+    stateObjective()
+    var nbRestart = 0
+    var maxRestart = 1
 
-          def restart(relaxation: Boolean = false) {
-             popAll()
-             pushState()
-             if (relaxation) {
-               sc.reset()
-               relax()
-             }
-             if (!isFailed()) {
-                 sc.reset()
-                 nbRestart += 1 
-                 reset {
-                   b()  	  
-                   if (!isFailed()) {
-                     objective.tighten()
-                     sc.limitActivated = true
-                   }
-      	         }
-                 if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-             }
+    val relax = lns match {
+      case None => () => Unit
+      case Some(LNS(nbRestart, nbFailures, restar)) =>
+        maxRestart = nbRestart
+        failLimit = nbFailures
+        () => {
+          restar()
+        }
+    }
+
+    reset {
+      shift { k1: (Unit => Unit) =>
+        val b = () => {
+          sc.start()
+          propagate()
+          if (!isFailed()) {
+            block
+          } else {
+            shift { k: (Unit => Unit) => k() }
           }
-          sc.limitActivated = false
-          restart(false) // first restart, find a feasible solution so no limit
-          sc.limitActivated = true
-          for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
-             restart(true)
-             if (sc.isLimitReached) {
-               lastLNSRestartCompleted = false
-               if (!silent) print("!") 
-             }
-             else {
-               lastLNSRestartCompleted = true
-               if (!silent) print("R") 
-             }
+          if (!isFailed()) {
+            if (solveOne) {
+              sc.reset()
+              k1() // exit the exploration block
+            }
           }
-          k1() // exit the exploration block       
-        } 
+        }
+
+        def restart(relaxation: Boolean = false) {
+          popAll()
+          pushState()
+          if (relaxation) {
+            sc.reset()
+            relax()
+          }
+          if (!isFailed()) {
+            sc.reset()
+            nbRestart += 1
+            reset {
+              b()
+              if (!isFailed()) {
+                objective.tighten()
+                sc.limitActivated = true
+              }
+            }
+            if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+          }
+        }
+        sc.limitActivated = false
+        restart(false) // first restart, find a feasible solution so no limit
+        sc.limitActivated = true
+        for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
+          restart(true)
+          if (sc.isLimitReached) {
+            lastLNSRestartCompleted = false
+            if (!silent) print("!")
+          } else {
+            lastLNSRestartCompleted = true
+            if (!silent) print("R")
+          }
+        }
+        k1() // exit the exploration block       
       }
-	  time = System.currentTimeMillis() - t1
-    }	
-	
+    }
+    time = System.currentTimeMillis() - t1
+  }
+
 }
 
 object CPSolver {

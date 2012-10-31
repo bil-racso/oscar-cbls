@@ -3,7 +3,6 @@ package oscar.cp.mem
 import scala.collection.mutable.Queue
 import scala.util.Random.nextFloat
 import scala.util.Random.nextInt
-import scala.util.Random.nextBoolean
 import scala.Math.max
 import scala.Math.pow
 import scala.Math.atan2
@@ -27,7 +26,7 @@ import oscar.cp.constraints.TONOTCOMMIT
 
 object VRPTW extends App {
 
-  val instance = parse("data/VRPTW/Solomon/R101.txt")
+  val instance = parse("data/VRPTW/Solomon/R104.txt")
 
   // Distance scaling
   val scale = 1000
@@ -103,17 +102,18 @@ object VRPTW extends App {
 
   var firstLns = true
 
-  cp.sc = new IDSSearchController(cp, 6)
-  var regretSearch = true
-  var adaptable = false
+  //cp.sc = new IDSSearchController(cp, 6)
+  var adaptable = true
+  var regretSearch = false
 
-  cp.lns(50, 2000) {
+  cp.lns(100, 1000) {
 
     nRestart += 1
 
     if (firstLns) {
       println("Start LNS")
       firstLns = false
+      regretSearch = true
     }
 
     if (adaptable) adaptFailure()
@@ -122,13 +122,13 @@ object VRPTW extends App {
 
     relaxVariables(nextRelax match {
       // Customer-based Adaptive Temporal Decomposition
-      case 0 => catd((0.15 * nCustomers).toInt)
+      case 0 => catd(5)
       // Customer-based Adaptive Spatial Decomposition
-      case 1 => casd((0.25 * nCustomers).toInt)
+      case 1 => casd(10)
       // Customer-based Adaptive Random Decomposition
-      case 2 => card((0.15 * nCustomers).toInt)
+      case 2 => card(15)
       // Relatedness Shaw relaxation
-      case 3 => shaw((0.15 * nCustomers).toInt, 10)
+      case 3 => shaw(15, 10)
     })
   }
 
@@ -254,7 +254,7 @@ object VRPTW extends App {
 
     // Ensures the relaxation of p customers (not depots)
     val max = nCustomers - p - 1
-    val alpha = if (twStart(sortedCustomersByTwStart(max)) > 0) nextInt(twStart(sortedCustomersByTwStart(max))) else 0
+    val alpha = nextInt(twStart(sortedCustomersByTwStart(max)))
 
     var nSelected = 0
     var i = 0
@@ -346,14 +346,14 @@ object VRPTW extends App {
   cp.minimize(totDist, totTard) subjectTo {
 
     // Successor and Predecessor
-    for (i <- Customers) {
+    for (i <- Sites) {
       cp.add(succ(pred(i)) == i)
       cp.add(pred(succ(i)) == i)
     }
 
-    for (i <- FirstDepots.min + 1 to FirstDepots.max) {
-      cp.add(pred(i) == i + nVehicles - 1)
-      cp.add(succ(i + nVehicles - 1) == i)
+    for (i <- 1 to Vehicles.max) {
+      cp.add(pred(FirstDepots.min + i) == LastDepots.min + i - 1)
+      cp.add(succ(LastDepots.min + i - 1) == FirstDepots.min + i)
     }
 
     cp.add(pred(FirstDepots.min) == LastDepots.max)
@@ -370,6 +370,11 @@ object VRPTW extends App {
     }
 
     for (i <- Vehicles) {
+      cp.add(vehicle(FirstDepots.min + i) == vehicle(succ(FirstDepots.min + i)))
+      cp.add(vehicle(LastDepots.min + i) == vehicle(pred(LastDepots.min + i)))
+    }
+
+    for (i <- Vehicles) {
       cp.add(vehicle(FirstDepots.min + i) == i)
       cp.add(vehicle(LastDepots.min + i) == i)
     }
@@ -381,10 +386,12 @@ object VRPTW extends App {
     cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
     cp.add(sum(Sites)(i => dist(i)(succ(i))) == totDist)
 
+    cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
+    cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+
     // Time 
     for (i <- Customers) {
 
-      //cp.add(new TimeWindow(cp, i, pred, succ, arrival, dist, servDur))
       cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
       cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
 
@@ -395,24 +402,14 @@ object VRPTW extends App {
       cp.add(arrival(i) >= twStart(i))
     }
 
-    for (i <- FirstDepots) {
-      cp.add(arrival(i) == 0)
-    }
+    for (i <- FirstDepots) cp.add(arrival(i) == 0)
 
-    for (i <- LastDepots) {
-      cp.add(arrival(i) <= twEnd(i))
-
-    }
-
-    cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-    cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+    for (i <- LastDepots) cp.add(arrival(i) <= twEnd(i))
   }
 
   // ------------------------------------------------------------------------
   // EXPLORATION BLOCK
   // ------------------------------------------------------------------------
-
-  println(pred.map(_.size).sum + succ.map(_.size).sum)
 
   cp.exploration {
 
@@ -462,8 +459,6 @@ object VRPTW extends App {
     }
 
     solFound
-
-    if (totDist.value == 1650755) cp.stop
   }
 
   println("\nFinished !")
