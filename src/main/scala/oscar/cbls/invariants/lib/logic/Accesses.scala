@@ -25,7 +25,10 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.computation.IntVar._
+import oscar.cbls.routing.ObjectiveFunction
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
