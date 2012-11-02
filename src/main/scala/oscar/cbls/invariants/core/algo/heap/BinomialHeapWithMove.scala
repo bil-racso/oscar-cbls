@@ -129,9 +129,12 @@ class BinomialHeap[T](GetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T
   /**O(log(n))*/
   override def popFirst():T={
     val toreturn:T = HeapArray(0)
-    swapPositions(0,msize-1)
+
+      swapPositions(0,msize-1)
+
     msize -=1
-    HeapArray(msize)=null.asInstanceOf[T]
+      HeapArray(msize)=null.asInstanceOf[T]
+
     pushDown(0)
     toreturn
   }

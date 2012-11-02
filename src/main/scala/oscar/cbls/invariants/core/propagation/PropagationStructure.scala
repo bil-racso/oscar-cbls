@@ -29,6 +29,10 @@ import oscar.cbls.invariants.core.algo.dll._;
 import collection.immutable.{SortedMap}
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
+import sun.org.mozilla.javascript.internal.ast.WhileLoop
+import java.util.concurrent.Semaphore
+
+//import sun.rmi.server.Dispatcher
 ;
 
 /**
@@ -268,8 +272,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     for (p <- getPropagationElements) p.dropStaticGraph()
   }
 
-  private var ScheduledElements: List[PropagationElement] = List.empty
-  private var ExecutionQueue: AbstractHeap[PropagationElement] = null
+  var ScheduledElements: List[PropagationElement] = List.empty
+  var ExecutionQueue: AbstractHeap[PropagationElement] = null
   private var FastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
@@ -342,7 +346,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     Track
   }
 
-  private var PostponedComponents: List[PropagationElement] = List.empty
+  var PostponedComponents: List[PropagationElement] = List.empty
 
   /**
    * performs a propagation on a propagation track
@@ -350,7 +354,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    * @param Track the propagation track, an array indices_of_propagation_element -> should it be propagated now
    * @param SameAsBefore the previous propagation was on the same track, so that the postponed element are still postponed
    */
-  private def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
+  def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
     if (Propagating) return
     Propagating = true
 
@@ -384,7 +388,14 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     ScheduledElements = List.empty
 
     while (!ExecutionQueue.isEmpty) {
-      ExecutionQueue.popFirst().propagate()
+      //ExecutionQueue.popFirst().propagate()
+      var l:List[PropagationElement] = ExecutionQueue.popFirsts
+
+      while(!l.isEmpty) {
+        l.head.propagate()
+        l = l.tail
+      }
+
       for (e <- ScheduledElements) {
         if (Track == null || Track(e.UniqueID)) {
           ExecutionQueue.insert(e)
@@ -392,6 +403,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
           PostponedComponents = e :: PostponedComponents
         }
       }
+
       ScheduledElements = List.empty
     }
 
@@ -414,7 +426,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    * initially true to avoid spurious propagation during the construction of the data structure;
    * set to false by setupPropagationStructure
    */
-  private var Propagating: Boolean = true
+  var Propagating: Boolean = true
 
   /**this variable is set by the propagation element to notify that they are propagating.
    * it is used to ensure that no propagation element perform illegal operation
@@ -508,6 +520,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    * @return a dictionary over the PE that are registered in the propagation structure.
    */
   def getNodeStorage[T](implicit X:Manifest[T]):NodeDictionary[T] = new NodeDictionary[T](this.MaxID)
+
+  def endPropagation() {}
 }
 
 /**This is a O(1) dictionary for propagation elements.
@@ -758,6 +772,14 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * these are propagated first to constitute the dynamic propagation graph*/
   def getDeterminingElements: Iterable[PropagationElement] = DeterminingElements
 
+
+  //TODO
+
+
+  //TODO
+  var sem = new Semaphore(1)
+  def lockDynListElement() {sem.acquire()}
+  def unlockDynListElement() {sem.release()}
   /**this registers to the element in the dynamic propagation graph.
    * this element must have been registered o the static propagation graph before, or be accessible through a bulk
    * @param p the element that we register to
@@ -766,6 +788,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * @return a key that is needed to unregister the element in the dynamic propagation graph
    */
   protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
+    lockDynListElement()
     assert(isStaticPropagationGraphOrBulked(p, 1),
       "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
     val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
@@ -778,6 +801,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
       component.addDependency(p, this)
     }
 
+    unlockDynListElement()
     KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
   }
 
@@ -798,13 +822,20 @@ trait PropagationElement extends DAGNode with TarjanNode{
     false;
   }
 
+
+  //TODO
+
+
+  //TODO
   /**
    * unregisters an element in the dynamic propagation graph.
    * @param p the key that was given when the eement was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
+    lockDynListElement()
     DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
     p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
+    unlockDynListElement()
   }
 
   def dropStaticGraph() {

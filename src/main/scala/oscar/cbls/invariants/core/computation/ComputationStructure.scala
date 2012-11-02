@@ -26,7 +26,10 @@ package oscar.cbls.invariants.core.computation
 
 import collection.immutable.{SortedSet, SortedMap};
 import oscar.cbls.invariants.core.algo.dag._;
-import oscar.cbls.invariants.core.propagation._;
+import oscar.cbls.invariants.core.propagation._
+import oscar.cbls.concurrent.PropagationStructureSynch
+import java.util.concurrent.Semaphore
+;
 
 /**This class contains the model, namely, the invariants and variables
  * They are all modeled as propagation Elements, which are handled by the inherited propagationstructure class.
@@ -40,7 +43,7 @@ class Model(override val Verbose:Boolean = false,
             override val NoCycle:Boolean = false,
             override val TopologicalSort:Boolean = false)
   extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort)
-  with Bulker{
+  with PropagationStructureSynch with Bulker{
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
@@ -378,6 +381,9 @@ trait Invariant extends PropagationElement{
     unregisterDynamicallyListenedElement(k)
   }
 
+  private val semNotify = new Semaphore(1)
+  def lockNotify() {semNotify.acquire()}
+  def unlockNotify() {semNotify.release()}
   //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
   def notifyIntChangedAny(v:IntVar,i:Any,OldVal:Int,NewVal:Int){notifyIntChanged(v,i.asInstanceOf[Int], OldVal,NewVal)}
 
@@ -720,18 +726,36 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
     }
   }
 
+  var cpt = 0
   override def performPropagation(){
+    if(cpt%100 == 0)
+      println(cpt)
+    cpt+=1
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
       for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
-        val inv:Invariant = e._1.asInstanceOf[Invariant]
-        assert({this.model.NotifiedInvariant=inv; true})
-        inv.notifyIntChangedAny(this,e._2,old,Value)
-        assert({this.model.NotifiedInvariant=null; true})
+        if(e == null)println("|e est null|")
+        else {
+          val inv:Invariant = e._1.asInstanceOf[Invariant]
+          assert({this.model.NotifiedInvariant=inv; true})
+          inv.lockNotify()
+          inv.notifyIntChangedAny(this,e._2,old,Value)
+          inv.unlockNotify()
+          assert({this.model.NotifiedInvariant=null; true})
+        }
       }
     }
   }
+
+  /** this registers to the element in the dynamic propagation graph.
+    * this element must have been registered o the static propagation graph before, or be accessible through a bulk
+    * @param p the element that we register to
+    * @param i a value that can be exploited by the element to notify its updates. normally, this value should be an int,
+    *          if other type is used, the invariant should override a dedicated notification method.
+    * @return a key that is needed to unregister the element in the dynamic propagation graph
+    */
+  override protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any) = super.registerDynamicallyListenedElement(p, i)
 
   def :=(v:Int) {setValue(v)}
   def :+=(v:Int) {setValue(v+getValue(true))}
@@ -880,7 +904,9 @@ class IntSetVar(override val model:Model,
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.getModel.NotifiedInvariant=inv; true})
+            inv.lockNotify()
             inv.notifyDeleteOnAny(this,e._2,v)
+            inv.unlockNotify()
             assert({this.getModel.NotifiedInvariant=null; true})
           }
         })
@@ -890,7 +916,9 @@ class IntSetVar(override val model:Model,
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.getModel.NotifiedInvariant=inv; true})
+            inv.lockNotify()
             inv.notifyInsertOnAny(this,e._2,v)
+            inv.unlockNotify()
             assert({this.getModel.NotifiedInvariant=null; true})
           }
         })

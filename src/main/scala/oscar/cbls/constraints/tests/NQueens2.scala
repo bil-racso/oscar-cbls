@@ -77,7 +77,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     startWatch()
     val range:Range = Range(0,N)
-    val tabulength = 10
+    val tabulength = 1
 
     val m: Model = new Model(false,false,true)
     val it:Iterator[Int] = getRandomPermutation(N)
@@ -123,8 +123,9 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
       Tabu(q2) := It.getValue(true) + tabulength
       
       It.++
+      println("itération réalisée : " + It)
     }
-
+    m.endPropagation()
     println(", " + getWatch + ", " + It)
   }
 }

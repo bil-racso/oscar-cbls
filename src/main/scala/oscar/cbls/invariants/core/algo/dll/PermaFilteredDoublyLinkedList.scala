@@ -23,6 +23,7 @@
 
 
 package oscar.cbls.invariants.core.algo.dll
+import java.util.concurrent.Semaphore
 
 /**this is a mutable data strcuture that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
  * and to update in parallell another set that is a filter of the first one through a specified function
@@ -139,10 +140,15 @@ class PFDLLStorageElement[T](val elem:T){
 }
 
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T], val endfantom:PFDLLStorageElement[T]) extends Iterator[T]{
+  var sem = new Semaphore(1)
   def next():T = {
     CurrentKey = CurrentKey.next
-    CurrentKey.elem
+    var tmp = CurrentKey.elem
+    sem.release()
+    tmp
   }
 
-  def hasNext:Boolean = {CurrentKey.next != endfantom}
+  def hasNext:Boolean = {
+    sem.acquire()
+    CurrentKey.next != endfantom && CurrentKey.next != null}
 }
