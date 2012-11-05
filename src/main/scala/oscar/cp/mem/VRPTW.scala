@@ -1,6 +1,7 @@
 package oscar.cp.mem
 
 import scala.collection.mutable.Queue
+import scala.collection.mutable.Set
 import scala.util.Random.nextFloat
 import scala.util.Random.nextInt
 import scala.Math.max
@@ -26,14 +27,14 @@ import oscar.cp.constraints.TONOTCOMMIT
 
 object VRPTW extends App {
 
-  val instance = parse("data/VRPTW/Solomon/R104.txt")
+  val instance = parse("data/VRPTW/Solomon/C101.txt")
 
   // Distance scaling
   val scale = 1000
 
   // Data
   val nCustomers = instance.n
-  val nVehicles = instance.k
+  val nVehicles = 10 //instance.k
   val nSites = nCustomers + 2 * nVehicles
   val capacity = instance.c
 
@@ -91,22 +92,29 @@ object VRPTW extends App {
   // LNS BLOCK
   // ------------------------------------------------------------------------
 
-  type Sol = Array[Int]
+  case class Sol(pred: Array[Int], succ: Array[Int], vehicle: Array[Int], dist: Int)
+  
+  var currentSol: Sol = null
 
-  var bestPrev: Sol = new Sol(nSites)
-  var bestNext: Sol = new Sol(nSites)
-  var bestRoute: Sol = new Sol(nSites)
-  var bestDep: Sol = new Sol(nSites)
-  var bestDist = 0
   var nRestart = 1
+  var nStagnation = 0
+  var stagnation = false
+
+  val pMin = 15
+  val pMax = 35
+  var p = pMin
+
+  val tabuRelax = Set[Array[Boolean]]()
+  var relaxOk = false
 
   var firstLns = true
 
-  //cp.sc = new IDSSearchController(cp, 6)
-  var adaptable = true
+  //cp.sc = new IDSSearchController(cp, 4)
+  var adaptable = false
   var regretSearch = false
 
-  cp.lns(100, 1000) {
+  cp.failLimit = 5
+  /*cp.lns(500, 1000) {
 
     nRestart += 1
 
@@ -116,21 +124,52 @@ object VRPTW extends App {
       regretSearch = true
     }
 
+    if (stagnation) {
+      nStagnation += 1
+    } else {
+      // Reset stagnation
+      stagnation = true
+      nStagnation = 0
+      p = pMin + (p-pMin)/2
+      // Reset Tabu relax
+      tabuRelax.clear()
+    }
+
+    if (nStagnation == 10) {
+      nStagnation = 0
+      p += 1
+      if (p > pMax) p = pMax
+      // If p increase, tabuRelax is not relevant
+      tabuRelax.clear
+    }
+
     if (adaptable) adaptFailure()
 
-    val nextRelax = if (nextFloat < 0.3) 0 else 1
+    val nextRelax = 2
 
-    relaxVariables(nextRelax match {
-      // Customer-based Adaptive Temporal Decomposition
-      case 0 => catd(5)
-      // Customer-based Adaptive Spatial Decomposition
-      case 1 => casd(10)
-      // Customer-based Adaptive Random Decomposition
-      case 2 => card(15)
-      // Relatedness Shaw relaxation
-      case 3 => shaw(15, 10)
-    })
-  }
+    var sel: Array[Boolean] = null
+    
+    relaxOk = false
+    while (!relaxOk) {
+      
+      sel = nextRelax match {
+        // Customer-based Adaptive Temporal Decomposition
+        case 0 => catd(p)
+        // Customer-based Adaptive Spatial Decomposition
+        case 1 => casd(p)
+        // Relatedness Shaw relaxation
+        case 2 => shaw(p, 15)
+      }
+      
+      if (!tabuRelax.contains(sel)) {
+        relaxOk = true
+        // Warning ! must be added only if R (not !) in order to consider random exploration 
+        tabuRelax add sel
+      }
+    }
+    
+    relaxVariables(sel)
+  }*/
 
   // ------------------------------------------------------------------------
   // PREPROCESSING AND USEFUL FUNCTIONS
@@ -156,7 +195,7 @@ object VRPTW extends App {
 
   def relatedness(i: Int, j: Int) = {
 
-    val v = if (bestPrev(i) == bestPrev(j)) 0 else 1
+    val v = if (currentSol.vehicle(i) == currentSol.vehicle(j)) 0 else 1
     1 / (nDist(i)(j) + v)
   }
 
@@ -168,18 +207,13 @@ object VRPTW extends App {
 
   def solFound {
 
-    bestPrev = buildPrev
-    bestNext = buildNext
-    bestRoute = buildRoute
-    bestDist = totDist.value
+    stagnation = false
+    
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value), vehicle.map(_.value), totDist.value)
 
-    visu.updateRoute(bestPrev)
+    visu.updateRoute(currentSol.pred)
     visu.updateDist()
   }
-
-  def buildPrev: Sol = pred.map(_.value)
-  def buildNext: Sol = succ.map(_.value)
-  def buildRoute: Sol = vehicle.map(_.value)
 
   // ------------------------------------------------------------------------
   // RELAXATION PROCEDURES
@@ -237,11 +271,11 @@ object VRPTW extends App {
 
     for (i <- first until first + p) {
       val c = if (i < nCustomers) i else i - nCustomers
-      routes(bestRoute(sortedCustomersByAngle(c))) = true
+      routes(currentSol.vehicle(sortedCustomersByAngle(c))) = true
     }
 
     for (i <- Customers)
-      if (routes(bestRoute(i)))
+      if (routes(currentSol.vehicle(i)))
         selected(i) = true
 
     selected
@@ -265,7 +299,7 @@ object VRPTW extends App {
       val c = sortedCustomersByTwEnd(i)
 
       if (twStart(c) >= alpha) {
-        routes(bestRoute(c)) = true
+        routes(currentSol.vehicle(c)) = true
         nSelected += 1
       }
 
@@ -273,40 +307,7 @@ object VRPTW extends App {
     }
 
     for (i <- Customers)
-      if (routes(bestRoute(i)))
-        selected(i) = true
-
-    selected
-  }
-
-  def card(p: Int): Array[Boolean] = {
-
-    val routes = Array.fill(nVehicles)(false)
-    val selected = Array.fill(nSites)(false)
-
-    var nSelected = 0
-
-    while (nSelected < p) {
-
-      // Not selected customers
-      val remainingC = Customers.filter(!selected(_))
-      // Random selection of a not already selected customers
-      val alpha = remainingC(nextInt(remainingC.size))
-
-      for (i <- remainingC) {
-
-        val beta = nextInt(remainingC.size)
-
-        if (bestRoute(i) == bestRoute(alpha) && bestDep(i) > bestDep(alpha) && bestDep(i) <= bestDep(beta)) {
-          selected(i) = true
-          routes(bestRoute(i)) = true
-          nSelected += 1
-        }
-      }
-    }
-
-    for (i <- Customers)
-      if (routes(bestRoute(i)))
+      if (routes(currentSol.vehicle(i)))
         selected(i) = true
 
     selected
@@ -322,12 +323,13 @@ object VRPTW extends App {
     for (i <- Sites) {
       if (!selected(i)) {
 
-        constraints enqueue (vehicle(i) == bestRoute(i))
+        constraints enqueue (vehicle(i) == currentSol.vehicle(i))
 
-        if (!selected(bestPrev(i)))
-          constraints enqueue (pred(i) == bestPrev(i))
-        if (!selected(bestNext(i)))
-          constraints enqueue (succ(i) == bestNext(i))
+        if (!selected(currentSol.pred(i))) {
+          constraints enqueue (pred(i) == currentSol.pred(i))
+        }
+        if (!selected(currentSol.succ(i)))
+          constraints enqueue (succ(i) == currentSol.succ(i))
       }
     }
     cp.post(constraints.toArray)
@@ -347,8 +349,8 @@ object VRPTW extends App {
 
     // Successor and Predecessor
     for (i <- Sites) {
-      cp.add(succ(pred(i)) == i)
-      cp.add(pred(succ(i)) == i)
+      cp.add(element(succ, pred(i)) == i)
+      cp.add(element(pred, succ(i)) == i)
     }
 
     for (i <- 1 to Vehicles.max) {
@@ -449,17 +451,20 @@ object VRPTW extends App {
       }
     } else {
 
-      while (!allBounds(pred)) {
+      while (!allBounds(succ)) {
+        
+        println(pred.map(_.size).sum + succ.map(_.size).sum + vehicle.map(_.size).sum)
 
-        val i = selectMin(Sites)(!pred(_).isBound)(pred(_).size).get
-        val j = selectMin(Sites)(pred(i).hasValue(_))(dist(i)(_)).get
+        val i = selectMin(Sites)(!succ(_).isBound)(succ(_).size).get
+        val j = selectMin(Sites)(succ(i).hasValue(_))(dist(i)(_)).get
 
-        cp.branch(cp.post(pred(i) == j))(cp.post(pred(i) != j))
+        cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
       }
     }
 
     solFound
   }
+  
 
   println("\nFinished !")
   cp.printStats
