@@ -25,7 +25,9 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.computation.IntVar._
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -116,10 +118,10 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == index){
-      output := inputarray(NewVal).value
       //modifier le graphe de dependances
       unregisterDynamicDependency(KeyToCurrentVar)
       KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
+      output := inputarray(NewVal).value
     }else{//si c'est justement celui qui est affiche.
       assert(v == inputarray.apply(index.value),"access notified for non listened var")
       output := NewVal
