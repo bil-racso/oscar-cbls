@@ -17,16 +17,19 @@
  * ****************************************************************************
  */
 
-package oscar.examples.cp
+package oscar.cp.mem.tsp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.util._
+import oscar.cp.constraints._
+import oscar.cp.mem.visu.VisualRelax
 
 
-object TSP extends App {
+object myTSP extends App {
 
-  val nCities = 20
+  val scale = 100
+  val nCities = 200
   val Cities = 0 until nCities
 
   // Data parsing
@@ -34,17 +37,18 @@ object TSP extends App {
   val rand = new scala.util.Random(0)
 
   // Random coordinates
-  val coord = Array.tabulate(nCities)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
+  val coord = Array.tabulate(nCities)(i => (rand.nextInt(500), rand.nextInt(500)))
 
   // Computes the distance between two cities
-  def getDist(p1: (Int, Int), p2: (Int, Int)): Int = {
+  def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
     val dx = p2._1 - p1._1
     val dy = p2._2 - p1._2
-    math.sqrt(dx * dx + dy * dy).toInt
+    math.sqrt(dx * dx + dy * dy)
   }
 
   // Builds the distance matrix
-  val distMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
+  val distMatrix = Array.tabulate(nCities, nCities)((i, j) => (getDist(coord(i), coord(j))*scale).toInt)
+  val realDistMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
 
   // Model
   // -----
@@ -56,9 +60,15 @@ object TSP extends App {
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
   val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
+  
+      
+  // Visualization
+  // -------------
+  val visu = new VisualRelax(coord, realDistMatrix)
 
   // Constraints + Search
   // --------------------
+  var nSol = 0
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
@@ -74,6 +84,9 @@ object TSP extends App {
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
+    
+    cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
+    cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
 
   } exploration {
 
@@ -87,6 +100,13 @@ object TSP extends App {
 
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
+    
+    nSol += 1
+    
+    visu.updateDist
+    visu.updateRoute(pred.map(_.value))
+    
+    if (nSol == 40) cp.stop
   }
 
   cp.printStats()
