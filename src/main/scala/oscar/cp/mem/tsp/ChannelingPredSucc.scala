@@ -1,71 +1,70 @@
 package oscar.cp.mem.tsp
 
 import oscar.cp.core._
-import scala.math.max
+import oscar.reversible.ReversibleSetIndexedArray
 
-class ChannelingPredSucc(cp: Store, c: Int, pred: Array[CPVarInt], arrival: Array[CPVarInt], dist: Array[Array[Int]], service: Array[Int]) extends Constraint(cp, "TimeWindow") {
+class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(cp, "TimeWindow") {
 
-  var minPred = -1
-  var minTime = Int.MaxValue
+  private val FAIL = CPOutcome.Failure
+  private val SUSPEND = CPOutcome.Suspend
+
+  private val nSites = pred.size
+  private val Sites = 0 until nSites
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-		  
-    if (checkAllPred() == CPOutcome.Failure) CPOutcome.Failure
-    else if (predPropagate() == CPOutcome.Failure) CPOutcome.Failure
-    else  {
-      // Predecessors
-      if (!pred(c).isBound) pred(c).callValRemoveWhenValueIsRemoved(this)
-      // Maximal arrival of this
-      if (!arrival(c).isBound) arrival(c).callUpdateMaxWhenMaxChanges(this)
-      // Minimal arrival of predecessors
-      for (i <- pred(c)) if (!arrival(i).isBound) arrival(i).callUpdateMinIdxWhenMinChanges(this, i)
-      
-      CPOutcome.Suspend
+
+    if (propagate() == FAIL) return FAIL
+
+    for (s <- Sites) {
+
+      if (!pred(s).isBound) pred(s).callValBindIdxWhenBind(this, s)
+      if (!pred(s).isBound) pred(s).callValRemoveIdxWhenValueIsRemoved(this, s)
+
+      if (!succ(s).isBound) succ(s).callValBindIdxWhenBind(this, s + nSites)
+      if (!succ(s).isBound) succ(s).callValRemoveIdxWhenValueIsRemoved(this, s + nSites)
     }
+
+    SUSPEND
   }
 
-  override def updateMax(cpvar: CPVarInt, v: Int): CPOutcome = checkAllPred
+  override def propagate(): CPOutcome = {
 
-  override def updateMinIdx(cpvar: CPVarInt, id: Int, v: Int): CPOutcome = {
-    if (pred(c) hasValue id) {
-      if (checkPred(id) == CPOutcome.Failure) CPOutcome.Failure
-      else predPropagate()
-    } else CPOutcome.Suspend
-  }
+    for (i <- Sites; j <- Sites) {
 
-  def checkAllPred() : CPOutcome = {
-    for (j <- pred(c)) if (pred(c).exists(j => checkPred(j) == CPOutcome.Failure))
-      return CPOutcome.Failure
-    return CPOutcome.Suspend
-  }
+      if (pred(i).hasValue(j)) {
+        if (pred(i).isBound) {
+          if (succ(j).assign(i) == FAIL) return FAIL
+        } else if (!succ(j).hasValue(i)) {
+          if (pred(i).removeValue(j) == FAIL) return FAIL
+        }
+      }
 
-  def checkPred(j: Int): CPOutcome = {
-    if (arrival(j).min + timeDist(j, c) > arrival(c).max) pred(c).removeValue(j)
-    else CPOutcome.Suspend
-  }
-
-  def timeDist(from: Int, to: Int) = service(from) + dist(from)(to)
-  
-  override def valRemove(cpvar : CPVarInt, id : Int) : CPOutcome = {
-    predPropagate()
-  }
-
-  def predPropagate(): CPOutcome = {
-
-    updateMinTime()
-    if (arrival(c).updateMin(minTime) == CPOutcome.Failure) CPOutcome.Failure
-    else CPOutcome.Suspend
-  }
-
-  def updateMinTime() {
-    minTime = Int.MaxValue
-    for (j <- pred(c)) {
-      val tauMin = arrival(j).min + timeDist(j, c)
-      if (tauMin < minTime) {
-        minTime = tauMin
-        minPred = j
+      if (succ(i).hasValue(j)) {       
+        if (succ(i).isBound) {
+          if (pred(j).assign(i) == FAIL) return FAIL
+        } else if (!pred(j).hasValue(i)) {
+          if (succ(i).removeValue(j) == FAIL) return FAIL
+        }
       }
     }
+
+    return SUSPEND
   }
+
+  override def valRemoveIdx(cpvar: CPVarInt, i: Int, j: Int): CPOutcome =
+    if (i < nSites) removePred(i, j)
+    else removeSucc(i - nSites, j)
+
+  override def valBindIdx(cpvar: CPVarInt, i: Int): CPOutcome =
+    if (i < nSites) bindPred(i)
+    else bindSucc(i - nSites)
+
+  def removePred(i: Int, j: Int): CPOutcome = succ(j).removeValue(i)
+
+  def removeSucc(i: Int, j: Int): CPOutcome = pred(j).removeValue(i)
+
+  def bindPred(i: Int): CPOutcome = succ(pred(i).value).assign(i)
+
+  def bindSucc(i: Int): CPOutcome = pred(succ(i).value).assign(i)
 }
 

@@ -29,7 +29,7 @@ import oscar.cp.mem.visu.VisualRelax
 object myTSP extends App {
 
   val scale = 100
-  val nCities = 200
+  val nCities = 20
   val Cities = 0 until nCities
 
   // Data parsing
@@ -61,21 +61,16 @@ object myTSP extends App {
   // Total distance
   val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
   
-      
   // Visualization
   // -------------
   val visu = new VisualRelax(coord, realDistMatrix)
 
   // Constraints + Search
   // --------------------
-  var nSol = 0
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
-    for (i <- Cities) {
-      cp.add(pred(succ(i)) == i)
-      cp.add(succ(pred(i)) == i)
-    }
+    cp.add(new ChannelingPredSucc(cp, pred, succ))
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
@@ -101,12 +96,8 @@ object myTSP extends App {
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
     
-    nSol += 1
-    
     visu.updateDist
     visu.updateRoute(pred.map(_.value))
-    
-    if (nSol == 40) cp.stop
   }
 
   cp.printStats()
