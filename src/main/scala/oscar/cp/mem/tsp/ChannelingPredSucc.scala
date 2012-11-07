@@ -3,13 +3,22 @@ package oscar.cp.mem.tsp
 import oscar.cp.core._
 import oscar.reversible.ReversibleSetIndexedArray
 
-class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(cp, "TimeWindow") {
+/**
+ *  ChannelingPredSucc
+ *
+ *  This constraint aims to links predecessors and successors of visits
+ *  in symmetric routing problems.
+ *
+ *  @author Renaud Hartert - ren.hartert@gmail.com
+ */
 
-  private val FAIL = CPOutcome.Failure
+class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(cp, "ChannelingPredSucc") {
+
+  private val FAIL    = CPOutcome.Failure
   private val SUSPEND = CPOutcome.Suspend
 
   private val nSites = pred.size
-  private val Sites = 0 until nSites
+  private val Sites  = 0 until nSites
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -19,7 +28,8 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
 
       if (!pred(s).isBound) pred(s).callValBindIdxWhenBind(this, s)
       if (!pred(s).isBound) pred(s).callValRemoveIdxWhenValueIsRemoved(this, s)
-
+      
+      // Differentiates calls from pred with +nSites
       if (!succ(s).isBound) succ(s).callValBindIdxWhenBind(this, s + nSites)
       if (!succ(s).isBound) succ(s).callValRemoveIdxWhenValueIsRemoved(this, s + nSites)
     }
@@ -31,6 +41,7 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
 
     for (i <- Sites; j <- Sites) {
 
+      // Predecessor
       if (pred(i).hasValue(j)) {
         if (pred(i).isBound) {
           if (succ(j).assign(i) == FAIL) return FAIL
@@ -39,7 +50,8 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
         }
       }
 
-      if (succ(i).hasValue(j)) {       
+      // Successor
+      if (succ(i).hasValue(j)) {
         if (succ(i).isBound) {
           if (pred(j).assign(i) == FAIL) return FAIL
         } else if (!pred(j).hasValue(i)) {
@@ -59,12 +71,10 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
     if (i < nSites) bindPred(i)
     else bindSucc(i - nSites)
 
-  def removePred(i: Int, j: Int): CPOutcome = succ(j).removeValue(i)
+  private def removePred(i: Int, j: Int): CPOutcome = succ(j).removeValue(i)
+  private def removeSucc(i: Int, j: Int): CPOutcome = pred(j).removeValue(i)
 
-  def removeSucc(i: Int, j: Int): CPOutcome = pred(j).removeValue(i)
-
-  def bindPred(i: Int): CPOutcome = succ(pred(i).value).assign(i)
-
-  def bindSucc(i: Int): CPOutcome = pred(succ(i).value).assign(i)
+  private def bindPred(i: Int): CPOutcome = succ(pred(i).value).assign(i)
+  private def bindSucc(i: Int): CPOutcome = pred(succ(i).value).assign(i)
 }
 

@@ -19,25 +19,25 @@
 
 package oscar.cp.mem.tsp
 
+import oscar.cp.mem.tsp.TSPParser.parseCoordinates
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.util._
 import oscar.cp.constraints._
 import oscar.cp.mem.visu.VisualRelax
-
+import scala.collection.mutable.Queue
+import scala.util.Random.nextInt
+import scala.math.round
+import oscar.search.IDSSearchController
 
 object myTSP extends App {
 
-  val scale = 100
-  val nCities = 20
-  val Cities = 0 until nCities
-
   // Data parsing
   // ------------
-  val rand = new scala.util.Random(0)
-
-  // Random coordinates
-  val coord = Array.tabulate(nCities)(i => (rand.nextInt(500), rand.nextInt(500)))
+  val coord = parseCoordinates("data/TSP/kroB100.tsp")
+  
+  val nCities = coord.size
+  val Cities = 0 until nCities
 
   // Computes the distance between two cities
   def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
@@ -47,8 +47,8 @@ object myTSP extends App {
   }
 
   // Builds the distance matrix
-  val distMatrix = Array.tabulate(nCities, nCities)((i, j) => (getDist(coord(i), coord(j))*scale).toInt)
   val realDistMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
+  val distMatrix = realDistMatrix.map(_.map(round(_).toInt))
 
   // Model
   // -----
@@ -60,13 +60,95 @@ object myTSP extends App {
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
   val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
-  
+
   // Visualization
   // -------------
   val visu = new VisualRelax(coord, realDistMatrix)
 
-  // Constraints + Search
-  // --------------------
+  // LNS
+  // ---
+  case class Sol(pred: Array[Int], succ: Array[Int], dist: Int)
+
+  var currentSol: Sol = null
+
+  var nRestart = 1
+  var nStagnation = 0
+  var stagnation = false
+
+  val pMin = 20
+  val pMax = 60
+  var p = pMin
+
+  var firstLns = true
+
+  cp.lns(500, 2000) {
+
+    nRestart += 1
+
+    if (firstLns) {
+      println("Start LNS")
+      firstLns = false
+    }
+
+    handleStagnation()
+
+    relaxVariables(clusterRelax(p))
+  }
+
+  def handleStagnation() {
+
+    if (stagnation) nStagnation += 1
+    else {
+      stagnation = true
+      nStagnation = 0
+      p = pMin + (p - pMin) / 2
+    }
+
+    if (nStagnation == 100) {
+      nStagnation = 0
+      if (p < pMax) p += 1
+    }
+  }
+
+  def clusterRelax(p: Int): Array[Boolean] = {
+
+    val c = nextInt(nCities)
+    val sortedByDist = Cities.sortBy(i => distMatrix(c)(i))
+    val dist = distMatrix(c)(sortedByDist(p))
+
+    Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
+  }
+
+  def solFound() = {
+    stagnation = false
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
+    visu.updateRoute(currentSol.pred)
+    visu.updateDist()
+  }
+
+  def relaxVariables(selected: Array[Boolean]) {
+
+    visu.updateSelected(selected)
+    visu.updateRestart(nRestart)
+
+    val constraints: Queue[Constraint] = Queue()
+
+    for (c <- Cities) {
+      if (!selected(c)) {
+
+        if (!selected(currentSol.pred(c)))
+          constraints enqueue (pred(c) == currentSol.pred(c))
+
+        if (!selected(currentSol.succ(c)))
+          constraints enqueue (succ(c) == currentSol.succ(c))
+      }
+    }
+
+    cp.post(constraints.toArray)
+  }
+
+  // Constraints
+  // -----------
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
@@ -79,14 +161,52 @@ object myTSP extends App {
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
-    
+
     cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
     cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
 
-  } exploration {
+  }
+
+  // Search
+  // ------
+  println("Searching...")
+  cp.exploration {
 
     // Greedy heuristic
+
     while (!allBounds(succ)) {
+
+      var x = -1
+      var maxRegret = Int.MinValue
+
+      for (i <- Cities; if (!succ(i).isBound)) {
+
+        var distK1 = Int.MaxValue
+        var distK2 = Int.MaxValue
+
+        for (j <- Cities; if (succ(i).hasValue(j))) {
+
+          if (distMatrix(i)(j) < distK1) {
+            distK2 = distK1
+            distK1 = distMatrix(i)(j)
+          } else if (distMatrix(i)(j) < distK2) {
+            distK2 = distMatrix(i)(j)
+          }
+        }
+
+        val regret = distK2 - distK1
+
+        if (regret > maxRegret) {
+          x = i
+          maxRegret = regret
+        }
+      }
+
+      val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
+
+      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
+    }
+    /*while (!allBounds(succ)) {
 
       // Selects the not yet bound city with the smallest number of possible successors
       val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
@@ -94,10 +214,9 @@ object myTSP extends App {
       val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
 
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }
-    
-    visu.updateDist
-    visu.updateRoute(pred.map(_.value))
+    }*/
+
+    solFound()
   }
 
   cp.printStats()
