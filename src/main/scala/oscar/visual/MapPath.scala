@@ -114,7 +114,8 @@ object MapPath {
   
   def main(args : Array[String]) {
     val mp = new MapPath(new VisualMap(), 50.466246,4.869278,50.708634,4.572647)
-    println(mp.lines.map(lin => "["+lin.lt1+","+lin.lg1+" to "+lin.lt2+","+lin.lg2+"]"))
+    println(mp.lines.map(lin => "["+lin.lt1+","+lin.lg1+" to "+lin.lt2+","+lin.lg2+"]")) 
+    
   }
 }
 
