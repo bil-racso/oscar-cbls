@@ -1,12 +1,10 @@
 package oscar.cp.mem.tsp
 
 import oscar.cp.core._
-import oscar.reversible.ReversibleSetIndexedArray
 
-/**
- *  ChannelingPredSucc
+/** ChannelingPredSucc
  *
- *  This constraint aims to links predecessors and successors of visits
+ *  This constraint aims to link predecessors and successors of visits
  *  in symmetric routing problems.
  *
  *  @author Renaud Hartert - ren.hartert@gmail.com
