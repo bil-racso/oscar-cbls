@@ -74,13 +74,16 @@ class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
   /*
    * get mapquest path from orig to dest
    */
-  def refreshLines() = {
+  private def refreshLines() = {
  	val waypoints = MapQuest.getPath(orig, dest)
- 	lines = (for(i <- 0 until waypoints.length-2) yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long)).toList
+ 	//build lines ignoring "empty" shapes
+ 	lines = (for(i <- 0 until waypoints.length-2 if waypoints(i).lat != waypoints(i+1).lat || waypoints(i).long != waypoints(i+1).long) 
+ 	  yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long)).toList
   }
   
   // constructor without using MapPoint structure
-  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double) = this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong)) 
+  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double) = 
+    this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong)) 
 
   /*
    *  change destination
@@ -104,6 +107,15 @@ class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
     }      
   }
   
+}
+
+
+object MapPath {
+  
+  def main(args : Array[String]) {
+    val mp = new MapPath(new VisualMap(), 50.466246,4.869278,50.708634,4.572647)
+    println(mp.lines.map(lin => "["+lin.lt1+","+lin.lg1+" to "+lin.lt2+","+lin.lg2+"]"))
+  }
 }
 
 
