@@ -154,7 +154,7 @@ class Model(override val Verbose:Boolean = false,
    * used to check that invariants have declared all their controling links to the model
    * */
   def checkExecutingInvariantOK(i:Invariant):Boolean = {
-    if(i != null){
+    /*if(i != null){
       if (NotifiedInvariant != null && NotifiedInvariant != i){
         return false
       }
@@ -165,7 +165,7 @@ class Model(override val Verbose:Boolean = false,
       if (NotifiedInvariant != null || getPropagatingElement != null){
         return false
       }
-    }
+    }*/
     true
   }
 
@@ -726,36 +726,40 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
     }
   }
 
-  var cpt = 0
   override def performPropagation(){
-    if(cpt%100 == 0)
-      println(cpt)
-    cpt+=1
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
+
+      //printf("perfProp acquire I; th : %d\n", Thread.currentThread().getId())
+      semLockRegister.acquire()
+      semDynElements.acquire()
+      isProp = true
+      semLockRegister.release()
+      //printf("perfProp acquire O; pe : %d, th : %d\n", this.UniqueID,  Thread.currentThread().getId())
+
       for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
-        if(e == null)println("|e est null|")
-        else {
-          val inv:Invariant = e._1.asInstanceOf[Invariant]
-          assert({this.model.NotifiedInvariant=inv; true})
-          inv.lockNotify()
-          inv.notifyIntChangedAny(this,e._2,old,Value)
-          inv.unlockNotify()
-          assert({this.model.NotifiedInvariant=null; true})
-        }
+        val inv:Invariant = e._1.asInstanceOf[Invariant]
+        assert({this.model.NotifiedInvariant=inv; true})
+
+        //printf("notify lock I; inv = %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
+        inv.lockNotify()
+        //printf("notify lock O; inv : %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
+        inv.notifyIntChangedAny(this,e._2,old,Value)
+        inv.unlockNotify()
+        //printf("notify end; inv : %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
+
+        assert({this.model.NotifiedInvariant=null; true})
       }
+
+      //semLockRegister.acquire()
+      isProp = false
+      semDynElements.release()//
+      //semLockRegister.release()
+      //printf("perfProp end; th : %d\n", Thread.currentThread().getId())
+
     }
   }
-
-  /** this registers to the element in the dynamic propagation graph.
-    * this element must have been registered o the static propagation graph before, or be accessible through a bulk
-    * @param p the element that we register to
-    * @param i a value that can be exploited by the element to notify its updates. normally, this value should be an int,
-    *          if other type is used, the invariant should override a dedicated notification method.
-    * @return a key that is needed to unregister the element in the dynamic propagation graph
-    */
-  override protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any) = super.registerDynamicallyListenedElement(p, i)
 
   def :=(v:Int) {setValue(v)}
   def :+=(v:Int) {setValue(v+getValue(true))}
@@ -783,7 +787,6 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 }
 
 object IntVar{
-  
   def apply(model: Model, minVal:Int, maxVal:Int, value:Int, name:String) = {
     new IntVar(model,minVal,maxVal,value,name)
   }
@@ -893,6 +896,10 @@ class IntSetVar(override val model:Model,
   }
 
   override def performPropagation(){
+    semLockRegister.acquire()
+    semDynElements.acquire()//
+    isProp = true
+    semLockRegister.release()
     if(getDynamicallyListeningElements.isEmpty){
       //no need to do it gradually
       OldValue=Value
@@ -956,6 +963,11 @@ class IntSetVar(override val model:Model,
       }
     }
     TouchedValues = List.empty
+
+    //semLockRegister.acquire()
+    isProp = false
+    semDynElements.release()
+    //semLockRegister.release()
   }
 
   def value:SortedSet[Int] = getValue(false)

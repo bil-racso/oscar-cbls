@@ -655,8 +655,14 @@ object PropagationElement {
 
 /**This class is used in Asteroid as a handle to register and unregister dynamically to variables*/
 case class KeyForElementRemoval(element: PropagationElement
-                                , KeyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)]
-                                , KeyForListeningElement: PFDLLStorageElement[PropagationElement])
+                                , var KeyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)]
+                                , var KeyForListeningElement: PFDLLStorageElement[PropagationElement]) {
+  def setKeyForElementRemovaleRef(keyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)],
+                                  keyForListeningElement: PFDLLStorageElement[PropagationElement]) {
+    this.KeyForListenedElement = keyForListenedElement
+    this.KeyForListeningElement = keyForListeningElement
+  }
+}
 
 /**this is a propagation element. It mainly defines:
  * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
@@ -669,6 +675,17 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
  */
 trait PropagationElement extends DAGNode with TarjanNode{
+  val semDynElements = new Semaphore(1)
+  val semLockRegister = new Semaphore(1)
+  var isProp = false///Add
+  def isPropagating:Boolean = {///Add
+    if(isProp)///Add
+      true///Add
+    else {///Add
+      semDynElements.acquire()///Add
+      false///Add
+    }///Add
+  }///Add
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -788,21 +805,31 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * @return a key that is needed to unregister the element in the dynamic propagation graph
    */
   protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
-    lockDynListElement()
-    assert(isStaticPropagationGraphOrBulked(p, 1),
-      "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
-    val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
-    val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
+    p.semLockRegister.acquire()///Add
+    if(p.isPropagating) {///Add
+      print("je met dans le liste")///Add
+      p.semLockRegister.release()
+      KeyForElementRemoval(p, null, null)
+    }///Add
+    else {///Add
+      /*printf("registerDynamicallyListenedElement(%d) by thread I%d\n", p.UniqueID, Thread.currentThread().getId)///Rm
+      p.semDynElements.acquire()///Rm
+      printf("registerDynamicallyListenedElement(%d) by thread O%d\n", p.UniqueID, Thread.currentThread().getId)*////Rm
+      assert(isStaticPropagationGraphOrBulked(p, 1),
+        "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
+      val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
+      val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
 
-    //We need to check for boundary here Because other elemenbts might indeed change their dependencies,
-    // but since they are not boundary, this would require resorting the SCC during the propagation
-    if (IsBoundary && p.component == this.component) {
-      //this is only called once the component is established, so no worries.
-      component.addDependency(p, this)
-    }
-
-    unlockDynListElement()
-    KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+      //We need to check for boundary here Because other elemenbts might indeed change their dependencies,
+      // but since they are not boundary, this would require resorting the SCC during the propagation
+      if (IsBoundary && p.component == this.component) {
+        //this is only called once the component is established, so no worries.
+        component.addDependency(p, this)
+      }
+      p.semDynElements.release()
+      p.semLockRegister.release()///Add
+      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+    }///Add
   }
 
   /**checks that the propagation element is statically listened to, possibly
@@ -832,10 +859,19 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * @param p the key that was given when the eement was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
-    lockDynListElement()
-    DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
-    p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
-    unlockDynListElement()
+    p.element.semLockRegister.acquire()///Add
+    if(p.element.isPropagating) {///Add
+      print("je met dans le liste")///Add
+    }///Add
+    else {///Add
+      //printf("unregisterDynamicallyListenedElement(%d) by thread %d I\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
+      //p.element.semDynElements.acquire()///Rm
+      //printf("unregisterDynamicallyListenedElement(%d) by thread %d O\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
+      DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
+      p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
+      p.element.semDynElements.release()
+    }///Add
+    p.element.semLockRegister.release()///Add
   }
 
   def dropStaticGraph() {

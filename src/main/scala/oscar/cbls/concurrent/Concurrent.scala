@@ -24,7 +24,6 @@ package oscar.cbls.concurrent
 
 import java.util.concurrent.Semaphore
 import scala.annotation.tailrec
-import oscar.cbls.invariants.core.algo.heap.AbstractHeap
 import oscar.cbls.invariants.core.propagation.{PropagationStructure, PropagationElement}
 
 class Worker(val index:Int, val pool:ThreadPool) extends Runnable {
@@ -125,74 +124,7 @@ trait Job {
 }
 
 class NodePropagator(pe:PropagationElement) extends Job {
-  def execute() {pe.propagate}
-}
-
-class DistributedJob(pSS:PropagationStructureSynch,
-                     executionQueue:AbstractHeap[PropagationElement],
-                     var ScheduledElements:List[PropagationElement],
-                     var PostponedComponents:List[PropagationElement],
-                     Track: Array[Boolean],
-                     nbThread:Int) extends Job {
-  private val semAccess = new Semaphore(1)
-  private val barrierSem = new Semaphore(nbThread)
-  private var end = false
-  private var l:List[PropagationElement] = List.empty
-  private def lock() {semAccess.acquire()}
-  private def unlock() {semAccess.release()}
-  private def lockBarrier() {barrierSem.acquire()}
-  private def unlockBarrier() {barrierSem.release()}
-
-  private def barrier() {
-    barrierSem.acquire(nbThread)
-    barrierSem.release(nbThread)
-  }
-
-  @tailrec final def execute() {
-    var nodeToPropagate:PropagationElement = null
-
-    lock() // This lock is use to prevent two threads to access lists at the same time
-    if(l.isEmpty && !end) {
-      barrier() // the purpose of this barrier is waiting each thread finishes to propagate the lasts PEs of the current level
-
-      for (e <- ScheduledElements) {
-        if (Track == null || Track(e.UniqueID)) {
-          executionQueue.insert(e)
-        } else {
-          PostponedComponents = e :: PostponedComponents
-        }
-      }
-      emptyScheduledElement()//ScheduledElements = List.empty
-
-      if(executionQueue.isEmpty)
-        end = true
-      else
-        l = executionQueue.popFirsts
-    }
-
-    if(!end) {
-      nodeToPropagate = l.head
-      l = l.tail
-    }
-    unlock()
-
-    if(nodeToPropagate != null) {
-      lockBarrier()
-      nodeToPropagate.propagate()
-      unlockBarrier()
-
-      execute()
-    }
-  }
-
-  def scheduleElement(pe:PropagationElement) {
-    ScheduledElements = pe :: ScheduledElements
-  }
-  def emptyScheduledElement() {
-    ScheduledElements = List.empty
-    pSS.emptyScheduledElements()
-  }
-  def getPostponedComponents:List[PropagationElement] = PostponedComponents
+  def execute() {pe.propagate()}
 }
 
 class Dispatcher(nbThread:Int=2) {
@@ -235,7 +167,7 @@ class Dispatcher(nbThread:Int=2) {
    */
   def doJob(job:Job, toNbThread:Int=nbThread) {
     for (i <- 1 to toNbThread) {
-      var availableThreadIndex = pool.getIndexOfAvailableThread
+      val availableThreadIndex = pool.getIndexOfAvailableThread
       workers(availableThreadIndex).setJob(job)
       workers(availableThreadIndex).doJob()
     }
@@ -255,8 +187,8 @@ class Dispatcher(nbThread:Int=2) {
 
 trait PropagationStructureSynch  extends PropagationStructure with Job {
   private val availableProcessors = Runtime.getRuntime.availableProcessors()
-  private val nbThread = 1//availableProcessors * 2
-  private val dispatcher = new Dispatcher(nbThread)
+  private val nbThread = availableProcessors
+  private val dispatcher = new Dispatcher(nbThread * 2)
   private var Track:Array[Boolean] = null
 
   private val semAccess = new Semaphore(1)
@@ -266,7 +198,6 @@ trait PropagationStructureSynch  extends PropagationStructure with Job {
   private def unlock() {semAccess.release()}
   private def lockBarrier() {barrierSem.acquire()}
   private def unlockBarrier() {barrierSem.release()}
-  //private var job:DistributedJob = null
 
   def getDispatcher = dispatcher
 
@@ -345,14 +276,8 @@ trait PropagationStructureSynch  extends PropagationStructure with Job {
     }
     ScheduledElements = List.empty
 
-    //TODO
-    //TODO
-    //job = new DistributedJob(this, ExecutionQueue, ScheduledElements, PostponedComponents, Track, nbThread)
-    dispatcher.doJob(this)
+    dispatcher.doJob(this, 2) //TODO
     dispatcher.waitIdleStatus()
-    //ScheduledElements = List.empty
-    //PostponedComponents = job.getPostponedComponents
-    //TODO
 
     if (Verbose) println("PropagationStruture: end propagation")
 
@@ -372,7 +297,6 @@ trait PropagationStructureSynch  extends PropagationStructure with Job {
   override def scheduleForPropagation(p: PropagationElement) {
     semSchedule.acquire()
     ScheduledElements = p :: ScheduledElements
-    //job.scheduleElement(p)
     semSchedule.release()
   }
 

@@ -123,7 +123,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
       Tabu(q2) := It.getValue(true) + tabulength
       
       It.++
-      println("itération réalisée : " + It)
+      println("Nombre d'itérations réalisées : " + It)
     }
     m.endPropagation()
     println(", " + getWatch + ", " + It)

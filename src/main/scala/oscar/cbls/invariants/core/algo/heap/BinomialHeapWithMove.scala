@@ -26,6 +26,7 @@ package oscar.cbls.invariants.core.algo.heap
 
 import collection.immutable.{Map, SortedMap}
 import collection.Iterator
+import java.util.concurrent.Semaphore
 
 
 /**
@@ -334,6 +335,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
 
+  //val sem = new Semaphore(1)////////////////////
   def checkInternals(){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
@@ -354,11 +356,13 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   }
 
   def insert(elem:T){
+    //sem.acquire()////////////////////
     //insert en derniere position, puis bubble up
     HeapArray(size)=elem
     position +=((elem,size))
     size +=1
     pushUp(size-1)
+    //sem.release()////////////////////
   }
 
   def getElements:Iterable[T] = {
@@ -433,12 +437,14 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   def getFirst:T=HeapArray(0)
 
   def removeFirst():T={
+    //sem.acquire()////////////////////
     val toreturn:T = HeapArray(0)
     swapPositions(0,size-1)
     size -=1
     position -= toreturn
     HeapArray(size)=null.asInstanceOf[T]
     pushDown(0)
+    //sem.release()////////////////////
     toreturn
   }
 
@@ -448,6 +454,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   }
 
   def delete(elem:T){
+    //sem.acquire()////////////////////
     val startposition:Int = position(elem)
     if (startposition == size-1){
       size -=1
@@ -460,6 +467,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
       HeapArray(size)=null.asInstanceOf[T]
       pushDown(pushUp(startposition))
     }
+    //sem.release()////////////////////
   }
 }
 

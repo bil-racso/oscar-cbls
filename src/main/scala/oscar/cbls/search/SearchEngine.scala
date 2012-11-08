@@ -235,12 +235,12 @@ trait SearchEngineTrait{
   def getRandomPermutation(N:Int):Iterator[Int] = {
     val intarray:Array[Int] = new Array(N)
     for(i <- 0 to N-1) intarray(i)=i
-    /*for(i <- 0 to N-1){
+    for(i <- 0 to N-1){
       val other = selectFromRange(0 to N-1)
       val old = intarray(i)
       intarray(i) = intarray(other)
       intarray(other) = old
-    }*/
+    }
     intarray.iterator
   }
 }
