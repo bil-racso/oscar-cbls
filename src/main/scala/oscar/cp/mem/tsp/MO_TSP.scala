@@ -26,11 +26,11 @@ import oscar.util._
 import oscar.cp.constraints._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.pareto.ParetoSet
-
 import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
 import scala.util.Random.nextFloat
 import scala.math.round
+import oscar.search.IDSSearchController
 
 object MO_TSP extends App {
 
@@ -95,14 +95,13 @@ object MO_TSP extends App {
 
   var firstLns = true
 
-  cp.lns(500, 2000) {
-    
-    println("pareto size : "+ pareto.size)
+  cp.lns(500, 5000) {
     
     if (newSol) {
       newSol = false     
       val obj = Array(currentSol.dist1, currentSol.dist2)
       pareto.insert(obj, currentSol)
+      pareto.nextPoint
     }
     
     nRestart += 1
@@ -110,6 +109,7 @@ object MO_TSP extends App {
     if (firstLns) {
       println("Start LNS")
       firstLns = false
+      cp.failLimit = 2000
     }
 
     handleObjectives()   
@@ -124,7 +124,10 @@ object MO_TSP extends App {
     relaxVariables(clusterRelax(p))
   }
 
-  def handleObjectives() = objRelax(nextObj(), nextFloat < 0.2)
+  def handleObjectives() = {
+    if (nextFloat > 0.1) objRelax(nextObj(), false)
+    else objRelax(nextObj(), true)
+  }
 
   def nextObj(): Int = {
 
@@ -134,7 +137,7 @@ object MO_TSP extends App {
 
     if (nObjRestart > nObjs) {
       pareto.nextPoint
-      nObjRestart = 0
+      nObjRestart = 1
     }
 
     cp.objective.currentObjective = obj
@@ -266,5 +269,7 @@ object MO_TSP extends App {
     solFound()
   }
 
+  println("pareto size : "+ pareto.size)  
+  println(pareto.points.mkString("\n"))
   cp.printStats()
 }
