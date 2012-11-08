@@ -34,18 +34,20 @@ case class MapPoint(lat : Double, long : Double) {
  */
 object MapQuest {
   val baseUrl = "http://open.mapquestapi.com/directions/v1/route?outFormat=xml&shapeFormat=raw&generalize=200"
-  //private val cache = new HashMap[(MapPoint, MapPoint), List[MapPoint]] with SynchronizedMap[(MapPoint, MapPoint), List[MapPoint]]
+  private val cache = new HashMap[(MapPoint, MapPoint), List[MapPoint]] with SynchronizedMap[(MapPoint, MapPoint), List[MapPoint]]
   
 	/*
 	 * Perform the http request and extract path from response
 	 */
     def getPath(orig: MapPoint, dest : MapPoint) : List[MapPoint] = 
     {
+		  cache.getOrElseUpdate((orig, dest), {
 		  val xmldata = getRoute(orig, dest)
-		  if((xmldata \ "statusCode").text != "0") throw new IOException ("Error retrieving path from mapquest");
+		  if((xmldata \ "info" \ "statusCode").text != "0") throw new IOException ("Error retrieving path from mapquest");
 		  else {
 		    (xmldata \ "route" \ "shape" \ "shapePoints" \ "latLng").map(node => new MapPoint((node \ "lat").text.toDouble, (node \ "lng").text.toDouble)).toList
-		  }
+		  }}
+		  )
     }
   	
   	/*
@@ -61,19 +63,20 @@ object MapQuest {
 /*
  * Represent a path from orig to dest as a list of MapLines
  */
-class MapPath(map : VisualMap, o: MapPoint, d : MapPoint) {
-  
+class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
+  val map = m
   var orig = o
   var dest = d
-  var lines = getLines()
+  var lines = List[MapLine]()
+    refreshLines()
   
   
   /*
    * get mapquest path from orig to dest
    */
-  def getLines() : List[MapLine] = {
+  def refreshLines() = {
  	val waypoints = MapQuest.getPath(orig, dest)
- 	(for(i <- 0 until waypoints.length-2) yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long)).toList
+ 	lines = (for(i <- 0 until waypoints.length-2) yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long)).toList
   }
   
   // constructor without using MapPoint structure
@@ -85,7 +88,8 @@ class MapPath(map : VisualMap, o: MapPoint, d : MapPoint) {
   def setDest(dlat : Double, dlong : Double) = {
     if(dlat != dest.lat || dlong != dest.long) {
       dest = new MapPoint(dlat, dlong)
-      lines = getLines()
+      refreshLines()
+      map.viewer.repaint();
     }      
   }
   
@@ -95,18 +99,11 @@ class MapPath(map : VisualMap, o: MapPoint, d : MapPoint) {
   def setOrig(olat : Double, olong : Double) =  {
     if(olat != orig.lat || olong != orig.long) {
       orig = new MapPoint(olat, olong)
-      lines = getLines()
+      refreshLines()
+      map.viewer.repaint();
     }      
   }
   
 }
 
-object MapPath {
-  
-  def main(args : Array[String]) = 
-  {
-    println("hello test")
-  }
-  
-}
 
