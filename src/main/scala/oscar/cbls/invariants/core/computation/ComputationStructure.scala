@@ -749,12 +749,15 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
         inv.unlockNotify()
         //printf("notify end; inv : %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
 
+        //doActionList()
+
         assert({this.model.NotifiedInvariant=null; true})
       }
 
       //semLockRegister.acquire()
       isProp = false
       semDynElements.release()//
+      doActionList()
       //semLockRegister.release()
       //printf("perfProp end; th : %d\n", Thread.currentThread().getId())
 
@@ -914,6 +917,9 @@ class IntSetVar(override val model:Model,
             inv.lockNotify()
             inv.notifyDeleteOnAny(this,e._2,v)
             inv.unlockNotify()
+
+            //doActionList()
+
             assert({this.getModel.NotifiedInvariant=null; true})
           }
         })
@@ -926,6 +932,9 @@ class IntSetVar(override val model:Model,
             inv.lockNotify()
             inv.notifyInsertOnAny(this,e._2,v)
             inv.unlockNotify()
+
+            //doActionList()
+
             assert({this.getModel.NotifiedInvariant=null; true})
           }
         })
@@ -945,6 +954,9 @@ class IntSetVar(override val model:Model,
               val inv:Invariant = e._1.asInstanceOf[Invariant]
               assert({this.getModel.NotifiedInvariant=inv;true})
               inv.notifyInsertOnAny(this,e._2,v)
+
+              //doActionList()
+
               assert({this.getModel.NotifiedInvariant=null;true})
             }
           }else{
@@ -954,6 +966,9 @@ class IntSetVar(override val model:Model,
               val inv:Invariant = e._1.asInstanceOf[Invariant]
               assert({this.getModel.NotifiedInvariant=inv;true})
               inv.notifyDeleteOnAny(this,e._2,v)
+
+              //doActionList()
+
               assert({this.getModel.NotifiedInvariant=null;true})
             }
           }
@@ -967,6 +982,7 @@ class IntSetVar(override val model:Model,
     //semLockRegister.acquire()
     isProp = false
     semDynElements.release()
+    doActionList()
     //semLockRegister.release()
   }
 

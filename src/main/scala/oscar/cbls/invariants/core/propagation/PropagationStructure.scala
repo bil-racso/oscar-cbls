@@ -797,6 +797,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
   var sem = new Semaphore(1)
   def lockDynListElement() {sem.acquire()}
   def unlockDynListElement() {sem.release()}
+
   /**this registers to the element in the dynamic propagation graph.
    * this element must have been registered o the static propagation graph before, or be accessible through a bulk
    * @param p the element that we register to
@@ -804,12 +805,15 @@ trait PropagationElement extends DAGNode with TarjanNode{
    *            if other type is used, the invariant should override a dedicated notification method.
    * @return a key that is needed to unregister the element in the dynamic propagation graph
    */
-  protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
+  protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any, key:KeyForElementRemoval = null, test:Boolean = true): KeyForElementRemoval = {
     p.semLockRegister.acquire()///Add
-    if(p.isPropagating) {///Add
-      print("je met dans le liste")///Add
+    if(test && p.isPropagating) {///Add
+      p.semDoList.acquire()
+      val key = KeyForElementRemoval(p, null, null)
+      p.doList = new p.RegisterAction(this, i, key) :: p.doList
+      p.semDoList.release()
       p.semLockRegister.release()
-      KeyForElementRemoval(p, null, null)
+      key
     }///Add
     else {///Add
       /*printf("registerDynamicallyListenedElement(%d) by thread I%d\n", p.UniqueID, Thread.currentThread().getId)///Rm
@@ -826,9 +830,15 @@ trait PropagationElement extends DAGNode with TarjanNode{
         //this is only called once the component is established, so no worries.
         component.addDependency(p, this)
       }
-      p.semDynElements.release()
+      if(test)
+        p.semDynElements.release()
       p.semLockRegister.release()///Add
-      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+      if(key == null)
+        KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+      else {
+        key.setKeyForElementRemovaleRef(KeyForListenedElement, KeyForListeningElement)
+        null
+      }
     }///Add
   }
 
@@ -858,10 +868,12 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * unregisters an element in the dynamic propagation graph.
    * @param p the key that was given when the eement was registered in the dynamic propagation graph
    */
-  protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
+  protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval, test:Boolean = true) {
     p.element.semLockRegister.acquire()///Add
-    if(p.element.isPropagating) {///Add
-      print("je met dans le liste")///Add
+    if(test && p.element.isPropagating) {///Add
+      p.element.semDoList.acquire()
+      p.element.doList = new p.element.UnregisterAction(p, this) :: p.element.doList
+      p.element.semDoList.release()
     }///Add
     else {///Add
       //printf("unregisterDynamicallyListenedElement(%d) by thread %d I\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
@@ -869,8 +881,10 @@ trait PropagationElement extends DAGNode with TarjanNode{
       //printf("unregisterDynamicallyListenedElement(%d) by thread %d O\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
       DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
       p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
-      p.element.semDynElements.release()
+      if(test)
+        p.element.semDynElements.release()
     }///Add
+
     p.element.semLockRegister.release()///Add
   }
 
@@ -988,6 +1002,33 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * */
   def getDotNode: String
 
+  abstract class RegistrationAction {
+    def doAction()
+  }
+
+  //e = this propagationElemnet
+  class RegisterAction(source:PropagationElement, i:Any, emptyKey:KeyForElementRemoval) extends RegistrationAction {
+    def doAction() {
+      source.registerDynamicallyListenedElement(emptyKey.element, i, emptyKey, false)
+    }
+  }
+  //source = this propagationElement
+  class UnregisterAction(key: KeyForElementRemoval, source:PropagationElement) extends RegistrationAction {
+    def doAction() {
+      source.unregisterDynamicallyListenedElement(key, false)
+    }
+  }
+  var doList = List[RegistrationAction]()
+  val semDoList = new Semaphore(1)
+  def doActionList() {
+    while(! doList.isEmpty) {
+      println("coucou")
+      semDoList.acquire()
+      doList.head.doAction()
+      doList = doList.tail
+      semDoList.release()
+    }
+  }
 }
 
 /**This is the node type to be used for bulking
