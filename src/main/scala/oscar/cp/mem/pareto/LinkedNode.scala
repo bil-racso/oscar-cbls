@@ -1,19 +1,21 @@
 package oscar.cp.mem.pareto
 
-class LinkedNode(v : Int, l : OrderedLinkedList) {
-	
-	private var p : LinkedNode = null
-	private var n : LinkedNode = null
-	
-	def list  = l
-	def value = v
-	
-	def prev = p
-	def next = n
-	
-	def prev_= (x : LinkedNode) { p = x }
-	def next_= (x : LinkedNode) { n = x }
+class LinkedNode[S](v: Int, pp: ParetoPoint[S], l: OrderedLinkedList[S]) {
 
-	def isFirst = p == null
-	def isLast  = n == null
+  private var p: LinkedNode[S] = null
+  private var n: LinkedNode[S] = null
+
+  def list = l
+  def value = v
+
+  def prev = p
+  def next = n
+
+  def point = pp
+
+  def prev_=(x: LinkedNode[S]) { p = x }
+  def next_=(x: LinkedNode[S]) { n = x }
+
+  def isFirst = p == null
+  def isLast = n == null
 }

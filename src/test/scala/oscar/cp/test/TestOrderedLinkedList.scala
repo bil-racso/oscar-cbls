@@ -9,7 +9,7 @@ import oscar.cp.mem.pareto.LinkedNode
 
 
 class TestOrderedLinkedList extends FunSuite with ShouldMatchers {
-
+/*
 	test("Insert 1 : simple insert") {
 
 		val list = new OrderedLinkedList
@@ -140,5 +140,5 @@ class TestOrderedLinkedList extends FunSuite with ShouldMatchers {
 		dummy.last should be(n1)
 		
 		dummy.size should be(1)
-	}
+	}*/
 }

@@ -1,54 +1,39 @@
 package oscar.cp.mem.pareto
 
-class ParetoPoint[S](private val sol : S, val neighbourhood : Array[LinkedNode]) {
-	
-	def size = neighbourhood.size
-	private val Size = 0 until size
-	
-	def solution : S = sol
-	
-	def apply(i : Int) : Int = neighbourhood(i).value
-	
-	def upperValue(d : Int) = {
-		if (!neighbourhood(d).isLast) 
-			neighbourhood(d).next.value
-		else
-			Int.MaxValue
-	}
-	
-	def lowerValue(d : Int) = {
-		if (!neighbourhood(d).isFirst) 
-			neighbourhood(d).prev.value
-		else
-			Int.MinValue
-	}
+class ParetoPoint[S](val sol: S, val nodeObj1: LinkedNode[S], val nodeObj2: LinkedNode[S]) {
 
-	def dominating(objs : Array[Int]) : Int = dominating0(objs, 0, ParetoPoint.NEITHER)
-	private def dominating0(p : Array[Int], d : Int, s : Int) : Int = {
-		
-		if (d == size) s
-		
-		else if (this(d) > p(d)) {
-			if (s == ParetoPoint.DOMINATING) ParetoPoint.NEITHER
-			else dominating0(p, d+1, ParetoPoint.DOMINATED)
-		}
-			
-		else if (this(d) < p(d)) {
-			if (s == ParetoPoint.DOMINATED) ParetoPoint.NEITHER
-			else dominating0(p, d+1, ParetoPoint.DOMINATING)
-		} 
-		
-		else dominating0(p, d+1, s)
-	}
-	
-	override def toString : String = "[" + neighbourhood.map(_.value).mkString(", ") + "]"
+  private val nObjs = 2
+  private val Objs = 0 until 2
+  
+  def obj1 = nodeObj1.value
+  def obj2 = nodeObj2.value
+
+  def apply(i: Int) = if (i == 0) obj1 else obj2
+  
+  private def objNode(obj: Int) = if (obj == 0) nodeObj1 else nodeObj2
+
+  def upperValue(obj: Int) = {
+    val node = objNode(obj)
+    if (!node.isLast) node.next.value
+    else Int.MaxValue
+  }
+
+  def lowerValue(obj: Int) = {
+    val node = objNode(obj)
+    if (!node.isFirst) node.prev.value
+    else Int.MinValue
+  }
+
+  def isDominating(point: ParetoPoint[S]): Boolean = {
+    if (obj1 < point.obj1) false
+    else if (obj2 < point.obj2) false
+    else true
+  }
+
+  override def toString: String = "[" + obj1 + ", " + obj2 + "]"
 }
 
 object ParetoPoint {
-	
-	val NEITHER    = 0
-	val DOMINATED  = -1
-	val DOMINATING = 1
-	
-	def apply[S](s : S, n : Array[LinkedNode]) : ParetoPoint[S] = new ParetoPoint[S](s, n) 
+  
+  def apply[S](sol: S, nodeObj1: LinkedNode[S], nodeObj2: LinkedNode[S]) = new ParetoPoint[S](sol, nodeObj1, nodeObj2)
 }
