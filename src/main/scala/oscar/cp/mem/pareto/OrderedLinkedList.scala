@@ -18,9 +18,9 @@ class OrderedLinkedList[S] {
   def first_=(x: LinkedNode[S]) { fNode = x }
   def last_=(x: LinkedNode[S]) { lNode = x }
 
-  def insert(obj: Int, point: ParetoPoint[S]): LinkedNode[S] = {
+  def insert(value: Int): LinkedNode[S] = {
 
-    val node = new LinkedNode[S](point(obj), point, this)
+    val node = new LinkedNode[S](value, this)
 
     if (isEmpty) {
       first = node

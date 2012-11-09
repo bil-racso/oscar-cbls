@@ -1,5 +1,10 @@
 package oscar.cp.mem.pareto
 
+/** ParetoPoint
+ * 
+ *  @author Renaud Hartert - ren.hartert@gmail.com
+ */
+
 class ParetoPoint[S](val sol: S, val nodeObj1: LinkedNode[S], val nodeObj2: LinkedNode[S]) {
 
   private val nObjs = 2
@@ -10,7 +15,11 @@ class ParetoPoint[S](val sol: S, val nodeObj1: LinkedNode[S], val nodeObj2: Link
 
   def apply(i: Int) = if (i == 0) obj1 else obj2
   
-  private def objNode(obj: Int) = if (obj == 0) nodeObj1 else nodeObj2
+  def objNode(obj: Int) = {
+    if (obj == 0) nodeObj1 
+    else if (obj == 1) nodeObj2
+    else throw new NoSuchElementException("biobjective point")
+  }
 
   def upperValue(obj: Int) = {
     val node = objNode(obj)
