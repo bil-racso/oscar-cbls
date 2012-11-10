@@ -29,10 +29,10 @@ import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.{Cardinality, TakeAny}
 import oscar.cbls.invariants.lib.logic.{Filter, IntVar2IntVarFun, Routes, Cluster}
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.constraints.core.Constraint
+import oscar.cbls.constraints.core.{ConstraintSystem, Constraint}
 import collection.immutable.SortedMap
 import scala.math._
-import oscar.cbls.objective.{ObjectiveTrait, Objective}
+import oscar.cbls.objective.{Objective, ObjectiveTrait}
 
 /**
  * @param N the number of points in the problem.
@@ -46,7 +46,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   //successors
   val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) new IntVar(m, i, N-1, i, "next" + i)
     else new IntVar(m, 0, N, i, "next" + i))
-  for(v <- 0 until V){Next(v) := v}
+  //for(v <- 0 until V){Next(v) := v}
   val Nodes = 0 until N
 
   /**
@@ -67,11 +67,15 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     toReturn
   }
 
+  /*
+  Returns if a point n is a depot.
+   */
+  def isADepot(n:Int):Boolean = { n<V }
 
   /*
-  Returns if a point p is still routed.
+  Returns if a point n is still routed.
    */
-  def isRouted(p:Int):Boolean = {Next(p).value != N}
+  def isRouted(n:Int):Boolean = {Next(n).value != N}
 
 
   /**
@@ -131,6 +135,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     {
       val beforeStart = prec._1
       val end = prec._2
+
       val insertion = Next(end).value
       var list = (Next(beforeStart),insertion)::(Next(end),N) ::acc
       var start = Next(beforeStart).value
@@ -192,6 +197,9 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
    */
   def twoOpt(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = flip(a,b,c,d)
+
+
+
 
   /**
    * Override the three-opt move without reverse.
@@ -267,20 +275,29 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     // using flip
     flip(a,b,c,d):::flip(b,d,e,f)
   }
-
-
 }
+
+/*
+ *  Maintains a weight on each node to help to form constraints.
+ */
+trait WeightedNode extends VRP {
+  val weightNode : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
+    "weight of node " + i))
+
+  def fixWeightNode(i:Int,w:Int) { weightNode(i) := w}
+  def fixWeightNode(w:Int) {weightNode.foreach(p => p := w)}
+}
+
 
 /**
  * Maintains a penalty weight for unrouted nodes.
  */
 trait PenaltyForUnrouted extends Unrouted {
-  val weightPenalty : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
+  val weightUnroutedPenalty : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
     "penality of node " + i))
-  val Penalty : IntVar = SumElements(weightPenalty,Unrouted)
-
-  def fixPenaltyWeight(i:Int,w:Int) { weightPenalty(i) := w}
-  def fixPenaltyWeight(w:Int) {weightPenalty.foreach(p => p := w)}
+  val UnroutedPenalty : IntVar = SumElements(weightUnroutedPenalty,Unrouted)
+  def fixUnroutedPenaltyWeight(i:Int,w:Int) { weightUnroutedPenalty(i) := w}
+  def fixUnroutedPenaltyWeight(w:Int) {weightUnroutedPenalty.foreach(p => p := w)}
 }
 
 /**
@@ -338,19 +355,36 @@ trait PositionInRouteAndRouteNr extends VRP {
    * @return if node is in a segment of route between fromNode and toNode.
    */
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
-    assert(isASegment(fromNode,toNode))
-    RouteNr(fromNode).value == RouteNr(node).value  &&
-    PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
-    PositionInRoute(node).value < PositionInRoute(toNode).value
+    if(isASegment(fromNode,toNode)){
+      return RouteNr(fromNode).value == RouteNr(node).value  &&
+        PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
+          PositionInRoute(node).value < PositionInRoute(toNode).value
+    }
+    else false
   }
+
+  /**
+   * Tells if node n and m are on the same route ( i.e. they have the same route number).
+   * @param n a given node.
+   * @param m another given node.
+   */
+  def onTheSameRoute(n:Int,m:Int):Boolean = {
+    RouteNr(n).value == RouteNr(m).value
+  }
+
+
+
+
 }
 
 /**
  * In case of symmetric instance of VRP, it helps evaluate faster some operators
  * of neighborhood as the two-opt and the three-opt.
+ * To use with precaution, only if VRP is HopDistanceAsObjective, and no added functions.
  */
-trait SymmetricVRP extends HopDistanceAsObjective{
+trait SymmetricVRP extends HopDistance{
 
+  def isEffectiveThreeOptA(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Boolean = isEffectiveThreeOptB(a,b,c,d,e,f)
   def isEffectiveThreeOptB(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):Boolean = {
     assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
     val delta = - (hopDistance(a).value + hopDistance(c).value + hopDistance(e).value)
@@ -370,6 +404,12 @@ trait SymmetricVRP extends HopDistanceAsObjective{
 
   override def twoOpt(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)]= {
     if(isEffectiveTwoOpt(a,b,c,d)) super.twoOpt(a,b,c,d)
+    else List.empty
+  }
+
+  override def threeOptA(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    if (isEffectiveThreeOptA(a,b,c,d,e,f))
+      super.threeOptA(a,b,c,d,e,f)
     else List.empty
   }
 
@@ -395,6 +435,7 @@ trait ObjectiveFunction extends VRP with ObjectiveTrait{
   // Initialize the objective function with 0 as value
   // allow negative objective value
   setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
+
 }
 
 /**
@@ -431,19 +472,72 @@ trait HopDistance extends VRP {
 */
 trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
   ObjectiveVar <== overallDistance
+
 }
 
-/**declares an objective function, attached to the VRP.
- * And maintains it equal to an AddedValue plus the hop distance in the VRP,
- * based either on a matrix, or on another mechanism.
+/**
+ * Add functions cost to the actual objective of the VRP.
 */
-trait HopDistanceAndOtherAsObjective extends HopDistance with ObjectiveFunction {
-  def recordAddedFunction(AddedValue: IntVar) {
-    ObjectiveVar <== overallDistance + AddedValue
-  }
+
+trait OtherFunctionToObjective extends ObjectiveFunction {
+  var AddedObjectiveFunctions:IntVar = new IntVar(m,Int.MinValue,Int.MaxValue,0,"added functions Objective")
+
+  def recordAddedFunctions(functions: Iterable[IntVar]){
+    assert(!functions.isEmpty && ObjectiveVar!= null)
+
+    var objAdd = AddedObjectiveFunctions
+    functions.foreach(f => { objAdd = objAdd + f })
+    AddedObjectiveFunctions = objAdd
+    objAdd = ObjectiveVar + objAdd
+    setObjectiveVar(objAdd)
+   }
+
+  def recordAddedFunction(function : IntVar) = recordAddedFunctions(Array[IntVar](function))
 }
 
-/**finds the nearest neighbor of each point
+/**
+ * Trait maintains the weak and strong constraints systems.
+ * Helps to build correctly departure's heuristics.
+ */
+trait Constraints extends VRP with ObjectiveTrait with OtherFunctionToObjective{
+  var strongConstraints:ConstraintSystem = null
+  var weakConstraints:ConstraintSystem = null
+  var violatedStrongConstraints = false
+
+  def setStrongConstraints(sc:ConstraintSystem) {strongConstraints = sc; recordAddedFunction(strongConstraints.violation)}
+  def setWeakConstraints(wc:ConstraintSystem) {weakConstraints = wc;recordAddedFunction(weakConstraints.violation)}
+
+  def isViolatedStrongConstraints(a: IntVar, v: Int):Boolean = isViolatedStrongConstraints(Array[(IntVar,Int)]((a,v)))
+  def isViolatedStrongConstraints(a: Iterable[(IntVar, Int)]):Boolean = {
+    propagateStrongConstraints(a)
+    violatedStrongConstraints
+  }
+
+  def propagateStrongConstraints(a: IntVar, v: Int) {propagateStrongConstraints(Array[(IntVar,Int)]((a,v)))}
+  def propagateStrongConstraints(a: Iterable[(IntVar, Int)]) {
+    def updateViolatedStrongConstraints {
+      if(strongConstraints == null) violatedStrongConstraints  = false
+      else
+        violatedStrongConstraints = !strongConstraints.isTrue
+    }
+    val oldValues: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
+      (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
+    for (assign <- a) {
+      assign._1 := assign._2
+    }
+    // update only the violation of constraints (partial propagation)
+    updateViolatedStrongConstraints
+    //undo
+    for (assign <- oldValues) {
+      assign._1 := assign._2
+    }
+   }
+
+}
+
+
+/**
+ * Finds the nearest neighbor of each point
  * used by some neighborhood searches
  */
 trait ClosestNeighborPoints extends VRP with HopDistance{
@@ -483,5 +577,5 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
     if (avg/k >maxAvgUnrouted) maxAvgUnrouted = avg/k
   }
 
-
 }
+

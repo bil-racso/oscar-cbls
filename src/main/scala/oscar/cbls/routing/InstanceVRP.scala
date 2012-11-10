@@ -3,6 +3,7 @@ package oscar.cbls.routing
 import io._
 import java.io._
 import util.Random
+import math._
 
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
@@ -38,6 +39,21 @@ class InstanceVRP {
       towns = new Town(words(1).toString,words(6).toDouble,words(7).toDouble) :: towns
   }
 }
+
+object InstanceVisualVRP{
+
+  def random(n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Town]={
+    var gen = new Random()
+    if (seed != 0) {gen = new Random(seed)}
+    val randomTowns = new Array[Town](n)
+    for (i <- 0 until n){
+      randomTowns(i) = new Town(""+i,gen.nextInt(xMax)+50,gen.nextInt(yMax)+50)
+    }
+    randomTowns
+}
+}
+
+
 
 object InstanceVRP{
   val towns:Array[Town] = new InstanceVRP().towns.toArray

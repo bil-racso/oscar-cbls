@@ -37,6 +37,8 @@ import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing._
 import oscar.cbls.routing.heuristic.{RandomNeighbor, NearestNeighbor}
 import oscar.cbls.routing.neighborhood._
+import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.constraints.lib.basic.{GE, LE}
 
 /**supports only a single vehicle*/
 object tspsolver extends SearchEngine with StopWatch with App{
@@ -71,10 +73,37 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-  with SymmetricVRP  with Predecessors with PenaltyForUnrouted
+  /*with SymmetricVRP*/  with Predecessors with PenaltyForUnrouted with Constraints with OtherFunctionToObjective
   vrp.installCostMatrix(DistanceMatrix)
-
   vrp.saveKNearestPoints(20)
+
+  val strongConstraintSystem = new ConstraintSystem(m)
+  val weakConstraintSystem = new ConstraintSystem(m)
+  val maxNodes = 20
+  val minNodes = 10
+  val strongPenalty = new IntVar(m,Int.MinValue,Int.MaxValue,1000,"StrongC. penality")
+  val weakPenalty = new IntVar(m,Int.MinValue,Int.MaxValue,1000,"WeakC. penality")
+
+  for(i <- 0 until vrp.V){
+    strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)),strongPenalty)
+    strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
+  }
+
+  for(i <- 0 until vrp.V){
+    weakConstraintSystem.post(GE(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
+    weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
+  }
+  val withConstraints = false
+  if(withConstraints)
+    vrp.setStrongConstraints(strongConstraintSystem)
+  if (withConstraints)
+    vrp.setWeakConstraints(weakConstraintSystem)
+
+
+  strongConstraintSystem.close()
+  weakConstraintSystem.close()
+  //vrp.recordAddedFunctions(Array(strongConstraintSystem.violation,weakConstraintSystem.violation))
+
 
   m.close()
 
@@ -98,8 +127,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
-    move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
-    //move = ThreeOptA.getFirstImprovingMove(vrp, nsize, move)
+    //move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
+    move = ThreeOptA.getFirstImprovingMove(vrp, nsize, move)
     //move = ThreeOptC.getFirstImprovingMove(vrp, nsize, move)
     //move = ThreeOptB.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){

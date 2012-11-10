@@ -30,7 +30,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP, ObjectiveFunction}
+import oscar.cbls.routing._
 
 /*
 
@@ -38,14 +38,14 @@ import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP
 object ThreeOptB extends SearchEngine{
 
 
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
      k:Int):Neighbor = findMove(false, vrp, k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
     k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
 
   def findMove(FirstImprove:Boolean,
-               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
                k:Int, previousMove:Neighbor = null):ThreeOptB = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
@@ -58,21 +58,28 @@ object ThreeOptB extends SearchEngine{
       endOfFirstEdge = vrp.Next(startOfFirstEdge).value
 
       for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,startOfFirstEdge)
-           if (vrp.isRouted(startOfThirdEdge) &&
-             vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
-             vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3))){// filter
-
+           if vrp.isRouted(startOfThirdEdge))// filter
+      {
         for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfThirdEdge).value)
-             if(vrp.isRouted(startOfSecondEdge) &&
-               (vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value))&&
-               vrp.isBetween(vrp.Next(startOfSecondEdge).value,startOfFirstEdge,startOfThirdEdge))){
-
-          val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
-          if (newObj < BestObj){
-            if(FirstImprove)
-              return ThreeOptB(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
-            BestObj = newObj
-            move = ((startOfFirstEdge, startOfSecondEdge ,startOfThirdEdge ))
+             if vrp.isRouted(startOfSecondEdge))
+        {
+          if ((vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
+            vrp.isBetween(vrp.Next(startOfSecondEdge).value,startOfFirstEdge,startOfThirdEdge) &&
+            vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value) &&
+            vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3)) ||
+            (!vrp.onTheSameRoute(startOfFirstEdge,startOfSecondEdge) &&
+              vrp.onTheSameRoute(startOfSecondEdge,startOfThirdEdge) &&
+              vrp.isAtLeastAsFarAs(startOfSecondEdge, vrp.Next(startOfThirdEdge).value,3)))
+          {
+            if(!isStrongConstraintsViolated(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)){
+              val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
+              if (newObj < BestObj){
+                if(FirstImprove)
+                  return ThreeOptB(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
+                BestObj = newObj
+                move = ((startOfFirstEdge, startOfSecondEdge ,startOfThirdEdge ))
+              }
+            }
           }
         }
       }
@@ -89,7 +96,13 @@ object ThreeOptB extends SearchEngine{
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  def getObjAfterMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with ObjectiveFunction):Int = {
+  def isStrongConstraintsViolated(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with Constraints):Boolean = {
+    val toUpdate = vrp.threeOptB(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
+      startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
+    vrp.isViolatedStrongConstraints(toUpdate)
+  }
+
+  def getObjAfterMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with ObjectiveFunction with Constraints):Int = {
     val toUpdate = vrp.threeOptB(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
       startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
     vrp.getAssignVal(toUpdate)

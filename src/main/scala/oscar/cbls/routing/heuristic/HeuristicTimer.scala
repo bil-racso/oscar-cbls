@@ -1,5 +1,7 @@
 package oscar.cbls.routing.heuristic
 
+import java.util.concurrent.Semaphore
+
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -21,17 +23,26 @@ package oscar.cbls.routing.heuristic
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
-import oscar.cbls.search.SearchEngine
-import scala.util.Random
-import oscar.cbls.routing.{HopDistance, VRP}
-
 /**
- * only works for singe vehicle
+ * Created with IntelliJ IDEA.
+ * User: Florent
+ * Date: 8/11/12
+ * Time: 22:36
+ * To change this template use File | Settings | File Templates.
  */
 
-object StaticNeighbor extends SearchEngine{
-  def apply(problem:VRP with HopDistance,next:Array[Int]){
-    for (i <- 0 until problem.N)
-      problem.Next(i) := next(i)
-  }
+object HeuristicTimer{
+  val heuristicTimer = new TimerAverage
+
+  def getPercentComplete = { heuristicTimer.getPercentComplete }
+  def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p}
+  def lock {heuristicTimer.lock.acquire()}
+  def unlock {heuristicTimer.lock.release()}
+}
+
+class TimerAverage {
+  var lock:Semaphore = new Semaphore(0)
+  var actualPercentComplete:Int = 0
+  def setPercentComplete(p:Int) {actualPercentComplete=p}
+  def getPercentComplete:Int = actualPercentComplete
 }

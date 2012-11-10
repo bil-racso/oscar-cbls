@@ -33,7 +33,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP, ObjectiveFunction}
+import oscar.cbls.routing._
 
 
 /**moves a point in a circuit to another place.
@@ -41,31 +41,35 @@ import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP
   */
 
 object Swap extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int):Swap = findMove(false, vrp,k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,k:Int , startFrom:Neighbor = null):Swap
-  = findMove(true,vrp,k,startFrom)
-  //def justMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null) {getFirstImprovingMove(vrp, startFrom).comit}
-
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
+    with Constraints,k:Int):Swap = findMove(false, vrp,k)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
+    with Constraints,k:Int , startFrom:Neighbor = null):Swap = findMove(true,vrp,k,startFrom)
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-                       with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):Swap = {
+                       with PositionInRouteAndRouteNr with Constraints, k:Int,startFrom:Neighbor = null):Swap = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
-    for (beforeFirstSwapPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeFirstSwapPoint)){
+    for (beforeFirstSwapPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeFirstSwapPoint) &&
+      !vrp.isADepot(vrp.Next(beforeFirstSwapPoint).value)){
       val firstSwapPoint = vrp.Next(beforeFirstSwapPoint).value
-      for(beforeSecondSwapPoint <- vrp.getKNearestNeighbors(k,firstSwapPoint) if vrp.isRouted(beforeSecondSwapPoint))
+      for(beforeSecondSwapPoint <- vrp.getKNearestNeighbors(k,firstSwapPoint) if vrp.isRouted(beforeSecondSwapPoint) &&
+        !vrp.isADepot(vrp.Next(beforeSecondSwapPoint).value))
       {
-        if (vrp.isASegment(beforeFirstSwapPoint,vrp.Next(firstSwapPoint).value) &&
+        if (!vrp.onTheSameRoute(beforeFirstSwapPoint,beforeSecondSwapPoint) ||
+          (vrp.isASegment(beforeFirstSwapPoint,vrp.Next(firstSwapPoint).value) &&
           vrp.isASegment(beforeSecondSwapPoint,vrp.Next(beforeSecondSwapPoint).value) &&
-          vrp.isASegment(vrp.Next(firstSwapPoint).value,beforeSecondSwapPoint))
+          vrp.isASegment(vrp.Next(firstSwapPoint).value,beforeSecondSwapPoint)))
         {
-          val newObj = getObjAfterMove(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)
-          if (newObj < BestObj){
-            if (FirstImprove) return Swap(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
-            BestObj = newObj
-            move = ((beforeFirstSwapPoint, beforeSecondSwapPoint))
+          if(!isStrongConstraintsViolated(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)){
+            val newObj = getObjAfterMove(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)
+            if (newObj < BestObj){
+              if (FirstImprove) return Swap(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
+              BestObj = newObj
+              move = ((beforeFirstSwapPoint, beforeSecondSwapPoint))
+            }
           }
         }
       }
@@ -80,10 +84,16 @@ object Swap extends SearchEngine{
     toUpdate.foreach(t => t._1 := t._2)
   }
 
+  def isStrongConstraintsViolated(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP with Constraints):Boolean = {
+    val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
+      vrp.Next(predOfSecondSwappedPoint).value)
+    vrp.isViolatedStrongConstraints(toUpdate)
+  }
+
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
-  def getObjAfterMove(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
+  def getObjAfterMove(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP with ObjectiveFunction ):Int = {
     val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
       vrp.Next(predOfSecondSwappedPoint).value)
     vrp.getAssignVal(toUpdate)

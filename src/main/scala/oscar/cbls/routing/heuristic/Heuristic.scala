@@ -1,5 +1,12 @@
 package oscar.cbls.routing.heuristic
 
+/**
+ * Created with IntelliJ IDEA.
+ * User: Florent
+ * Date: 9/11/12
+ * Time: 10:45
+ * To change this template use File | Settings | File Templates.
+ */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -22,39 +29,7 @@ package oscar.cbls.routing.heuristic
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-import oscar.cbls.search.SearchEngine
-import scala.util.Random
-import oscar.cbls.routing._
-import neighborhood.{ReinsertPoint, Neighbor}
-
-/**
- * Works for many vehicles.
- */
-
-object RandomNeighbor extends Heuristic{
-  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints with PositionInRouteAndRouteNr
-    with HopDistance){
-
-    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
-    for (v <- 0 until vrp.V)
-      vrp.Next(v) := v
-    for (p <- vrp.V until vrp.N)
-      vrp.Next(p) := vrp.N
-    vrp.m.propagate()
-
-    var vehicle = 0
-    val nodeToRoute = vrp.N-vrp.V
-    for (p <- 0 until nodeToRoute){
-      current(vehicle) = ReinsertPoint.getRandomMove(vrp,current(vehicle),vehicle)
-      heuristicTimer.setPercentComplete((100*p)/(nodeToRoute-1))
-      if (current(vehicle)!= null)
-        current(vehicle).comit
-      vehicle=(vehicle+1) % vrp.V
-      heuristicTimer.unlock
-    }
-    heuristicTimer.setPercentComplete(100)
-    if (nodeToRoute == 0) heuristicTimer.unlock
-
-  }
+abstract trait Heuristic {
+  val heuristicTimer = HeuristicTimer
 
 }

@@ -31,6 +31,7 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing._
+import scala.util.Random
 
 
 /**moves a point in a circuit to another place.
@@ -38,48 +39,69 @@ import oscar.cbls.routing._
   */
 
 object ReinsertPoint extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):ReinsertPoint = findMove(false, vrp)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):ReinsertPoint
-  = findMove(true,vrp,startFrom)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints, startFrom:Neighbor = null):ReinsertPoint
+  = findMove(true,false,vrp,startFrom)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):ReinsertPoint = findMove(false,true,vrp)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+    = findMove(false,true,vrp,startFrom,vehicle,true)
+
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):ReinsertPoint = findMove(false,false, vrp)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+    = findMove(false,false, vrp,startFrom,vehicle,true)
 
 
-  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
-                       startFrom:Neighbor = null):ReinsertPoint = {
-    var BestObj:Int = vrp.ObjectiveVar.value
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,
+                       startFrom:Neighbor = null, vehicle:Int =0, onlyFrom:Boolean=false):ReinsertPoint = {
     var move:((Int, Int)) = null
-    val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
-
-    for(reinsertedPoint <- vrp.Unrouted.value){
-      for (beforeReinsertedPoint <- 0 until vrp.N startBy hotRestart if vrp.Next(beforeReinsertedPoint).value != vrp.N ){
-        val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
-        if (newObj < BestObj){
-          if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
-          BestObj = newObj
-          move = ((beforeReinsertedPoint, reinsertedPoint))
-        }
+    val hotRestart = if (startFrom == null) vehicle else startFrom.startNodeForNextExploration
+    if(random){
+      val beforeReinsertedPoint = if (onlyFrom) Range(hotRestart,hotRestart+1) else Random.shuffle(Range(0,vrp.N))
+      for(p <- beforeReinsertedPoint if vrp.isRouted(p)){
+        val toRoute = Random.shuffle(vrp.Unrouted.value)
+        toRoute.foreach(i =>
+          {
+            if(!isStrongConstraintsViolated(p,i, vrp)){
+              move = (p,i)
+              return ReinsertPoint(move._1,move._2,getObjAfterMove(move._1,move._2,vrp),vrp)
+            }
+          })
       }
+      return null
     }
-    if(move != null) ReinsertPoint(move._1,move._2,BestObj,vrp)
-    // if nothing improve objective, find the smallest increase of objective.
-    BestObj = Int.MaxValue
-    for(reinsertedPoint <- vrp.Unrouted.value){
-      for (beforeReinsertedPoint <- 0 until vrp.N startBy hotRestart if vrp.Next(beforeReinsertedPoint).value != vrp.N ){
-        val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
-        if (newObj < BestObj){
-          if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
-          BestObj = newObj
-          move = ((beforeReinsertedPoint, reinsertedPoint))
-        }
-      }
-    }
+    else{
+      var BestObj:Int = vrp.ObjectiveVar.value
+      var LeastWorstObj:Int = Int.MaxValue
 
-    if (move == null) null
-    else ReinsertPoint(move._1,move._2, BestObj, vrp)
+      for (beforeReinsertedPoint <- if (!onlyFrom) (0 until vrp.N startBy hotRestart) else Range(hotRestart,hotRestart+1)
+        if vrp.isRouted(beforeReinsertedPoint)){
+          for(reinsertedPoint <- vrp.Unrouted.value){
+            if(!isStrongConstraintsViolated(beforeReinsertedPoint,reinsertedPoint, vrp)){
+              val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
+              if (newObj < BestObj){
+                if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
+                BestObj = newObj
+                move = (beforeReinsertedPoint, reinsertedPoint)
+              }
+              else if (!FirstImprove && newObj < LeastWorstObj && BestObj == vrp.ObjectiveVar.value){
+                LeastWorstObj = newObj
+                move = (beforeReinsertedPoint, reinsertedPoint)
+              }
+            }
+          }
+        }
+      if (move == null) null
+      else ReinsertPoint(move._1,move._2, if(BestObj!= vrp.ObjectiveVar.value) BestObj else LeastWorstObj, vrp)
+   }
   }
 
     def doMove(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP){
     val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
     toUpdate.foreach(t => t._1 := t._2)
+  }
+
+  def isStrongConstraintsViolated(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP with Constraints):Boolean = {
+    val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
+    vrp.isViolatedStrongConstraints(toUpdate)
   }
 
   /*
@@ -96,6 +118,8 @@ case class ReinsertPoint(val beforeReinsertedPoint:Int, val reinsertedPoint:Int,
   def getObjAfter = objAfter
   override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 
-  def startNodeForNextExploration: Int = beforeReinsertedPoint
+  def startNodeForNextExploration: Int = reinsertedPoint
+
+
 }
 

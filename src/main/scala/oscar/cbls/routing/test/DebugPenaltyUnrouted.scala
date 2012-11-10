@@ -46,12 +46,13 @@ object DebugPenaltyUnrouted extends App{
 
   val matrix = getPlanarDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
   val m: Model = new Model(false,false,false,false)
-  val vrp= new VRP(N, 1, m) with HopDistanceAndOtherAsObjective with PositionInRouteAndRouteNr with PenaltyForUnrouted
+  val vrp= new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with PenaltyForUnrouted
+    with OtherFunctionToObjective with Constraints
 
   vrp.installCostMatrix(matrix)
-  //vrp.fixPenaltyWeight(100)
-  vrp.fixPenaltyWeight(2,100)
-  vrp.recordAddedFunction(vrp.Penalty)
+  //vrp.fixUnroutedPenaltyWeight(100)
+  vrp.fixUnroutedPenaltyWeight(2,100)
+  vrp.recordAddedFunctions(Array(vrp.UnroutedPenalty))
   m.close()
 
   NearestNeighbor(vrp)
@@ -60,7 +61,7 @@ object DebugPenaltyUnrouted extends App{
   println(vrp)
   println(vrp.routes)
   println("Objective = "+vrp.ObjectiveVar)
-  println("Pénalité = " +vrp.Penalty.value)
+  println("Pénalité = " +vrp.UnroutedPenalty.value)
 
   // unroute one point
   vrp.Next(1) := 3
@@ -70,6 +71,6 @@ object DebugPenaltyUnrouted extends App{
   println(vrp)
   println(vrp.routes)
   println("Objective = "+vrp.ObjectiveVar)
-  println("Pénalité = "+vrp.Penalty.value)
+  println("Pénalité = "+vrp.UnroutedPenalty.value)
 
 }

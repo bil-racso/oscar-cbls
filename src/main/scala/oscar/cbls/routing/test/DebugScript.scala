@@ -67,11 +67,12 @@ object DebugScript extends SearchEngine with App{
   val matrix = getPlanarDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
   val N2:Int = 9
   var m: Model = new Model(false,false,false,false)
-  var vrp = new VRP(N2, 1, m) with HopDistanceAndOtherAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints with PenaltyForUnrouted
+  var vrp = new VRP(N2, 1, m) with HopDistance with PositionInRouteAndRouteNr with ClosestNeighborPoints with PenaltyForUnrouted
+    with OtherFunctionToObjective with Constraints
 
   vrp.installCostMatrix(matrix)
-  vrp.fixPenaltyWeight(8,-100)
-  vrp.recordAddedFunction(vrp.Penalty)
+  vrp.fixUnroutedPenaltyWeight(8,-100)
+  vrp.recordAddedFunctions(Array(vrp.UnroutedPenalty))
   println("matrix done")
   m.close()
   println("model close")

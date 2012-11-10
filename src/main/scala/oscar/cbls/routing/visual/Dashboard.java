@@ -1,6 +1,6 @@
-package oscar.visual.vrp;
+package oscar.cbls.routing.visual;
 
-import oscar.cbls.routing.visual.VisualDebug;
+import oscar.cbls.routing.heuristic.HeuristicTimer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,9 +47,46 @@ public class Dashboard extends JPanel {
 
     JCheckBox writeRoute = null;
     public Boolean pause = true;
-    Boolean iteration = false;
+    public Boolean iteration = false;
     Semaphore semPause = new Semaphore(0);
+    Semaphore semSyncPause = new Semaphore(0);
     public Boolean firstIte = true;
+    JPanel neighborhoodPanel = null;
+    JLabel neighborLabel = null;
+    JPanel constraintsPanel = null;
+    JRadioButton strongCButton = null;
+    JRadioButton weakCButton = null;
+    JTextField strongCField = null;
+    JTextField weakCField = null;
+    JTextField penaltySCField = null;
+    JTextField penaltyWCField = null;
+
+
+    JProgressBar progressBar = new JProgressBar(0, 100);;
+    JFrame frameProgressBar;
+
+    /**
+     * Thread bounded to the progress bar.
+     */
+    private class ProgressThread implements Runnable {
+       public void run(){
+           frameProgressBar.setVisible(true);
+           frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
+
+            while(HeuristicTimer.getPercentComplete() != 100){
+                   try{
+                       HeuristicTimer.lock();
+                       progressBar.setValue(HeuristicTimer.getPercentComplete());
+                       progressBar.repaint();
+                   }
+                   catch(Exception e){}
+               }
+               progressBar.setValue(0);
+               HeuristicTimer.setPercentComplete(0);
+               frameProgressBar.setVisible(false);
+       }
+
+    }
 
     public Dashboard(){
 
@@ -66,7 +103,59 @@ public class Dashboard extends JPanel {
         setRouteLabel();
 
         setNeighborhood();
+        setProgressBar();
+        setConstraintsPanel();
+    }
 
+    public void setConstraintsPanel(){
+        constraintsPanel = new JPanel();
+        constraintsPanel.setBackground(Color.white);
+        constraintsPanel.setPreferredSize(new Dimension(350,100));
+        JLabel strongC = new JLabel("Strong constraints");
+        strongCButton = new JRadioButton();
+        strongCButton.setBackground(Color.white);
+        strongCButton.setSelected(false);
+        strongCField = new JTextField("0");
+        strongCField.setPreferredSize(new Dimension(30,20));
+        JLabel maxNodeC = new JLabel("Max nodes:");
+        JLabel penaltyStrongC = new JLabel("Penalty:");
+        penaltySCField = new JTextField("0");
+        penaltySCField.setPreferredSize(new Dimension(30,20));
+
+        JLabel weakC = new JLabel("Weak constraints");
+        weakCButton = new JRadioButton();
+        weakCButton.setSelected(false);
+        weakCButton.setBackground(Color.white);
+        weakCField = new JTextField("0");
+        weakCField.setPreferredSize(new Dimension(30,20));
+        JLabel minNodeC = new JLabel("Min nodes:");
+        JLabel penaltyWeakC = new JLabel("Penalty:");
+        penaltyWCField = new JTextField("0");
+        penaltyWCField.setPreferredSize(new Dimension(30,20));
+
+        constraintsPanel.add(strongC);
+        constraintsPanel.add(strongCButton);
+        constraintsPanel.add(maxNodeC);
+        constraintsPanel.add(strongCField);
+        constraintsPanel.add(penaltyStrongC);
+        constraintsPanel.add(penaltySCField);
+        constraintsPanel.add(weakC);
+        constraintsPanel.add(weakCButton);
+        constraintsPanel.add(minNodeC);
+        constraintsPanel.add(weakCField);
+        constraintsPanel.add(penaltyWeakC);
+        constraintsPanel.add(penaltyWCField);
+
+        add(constraintsPanel);
+    }
+
+    public void setProgressBar(){
+        frameProgressBar = new JFrame();
+        progressBar.setOpaque(true);
+        frameProgressBar.setContentPane(progressBar);
+        frameProgressBar.setUndecorated(true);
+        frameProgressBar.pack();
+        frameProgressBar.setVisible(false);
      }
 
     public void setNextIteButton(){
@@ -75,8 +164,11 @@ public class Dashboard extends JPanel {
         nextIte.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if(firstIte){
-                    new Thread(new VisualDebug.Search()).start();
+                    //new Thread(new VisualMapVRP.Search()).start();
                     firstIte = false;
+                    iteration = true;
+                    PanelVRP.startSearching();
+
                 }
                 if(pause){
                     iteration = true;
@@ -89,12 +181,11 @@ public class Dashboard extends JPanel {
 
     public void setNeighborhood(){
 
-        //TODO ajouter pénalité
-        JLabel neighborLabel = new JLabel();
+        neighborLabel = new JLabel();
         neighborLabel.setText("Neighbor : ");
         neighborLabel.setBackground(Color.white);
-        neighborhood = new JComboBox(new String[]{"OnePointMove","ReinsertPoint","RemovePoint","Swap","ThreeOptA"
-        ,"ThreeOptB","ThreeOptC","TwoOpt"});
+        neighborhood = new JComboBox(new String[]{"OnePointMove","ReinsertPoint","RemovePoint","Swap","ThreeOpt (no reverse)"
+                ,"ThreeOpt (one reverse)","ThreeOpt (two reverse)","TwoOpt"});
         neighborhood.setBackground(Color.white);
 
         JLabel klimitedLabel = new JLabel();
@@ -105,7 +196,7 @@ public class Dashboard extends JPanel {
         klimited.setPreferredSize(new Dimension(35,25));
         klimited.setBackground(Color.white);
 
-        JPanel neighborhoodPanel = new JPanel();
+        neighborhoodPanel = new JPanel();
 
         neighborhoodPanel.add(neighborLabel);
         neighborhoodPanel.add(neighborhood);
@@ -114,23 +205,30 @@ public class Dashboard extends JPanel {
 
         neighborhoodPanel.setBackground(Color.white);
         neighborhoodPanel.setBorder(BorderFactory.createTitledBorder("Neighborhood Options"));
-        neighborhoodPanel.setPreferredSize(new Dimension(400,100));
+
         add(neighborhoodPanel);
     }
 
     public void setResetInstance(){
+        makeInstance = new JButton("Make instance");
+        makeInstance.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                new Thread(new ProgressThread()).start();
+                PanelVRP.makeInstance(false);
+            }
+        });
+
+        makeInstance.setBackground(Color.white);
+        add(makeInstance);
         resetInstance = new JButton("Reset instance");
         resetInstance.setBackground(Color.white);
         resetInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                //firstIte = true;
-                VisualDebug.initModel(true);
-
-            }
-        });
+                firstIte = true;
+                PanelVRP.makeInstance(true);
+            }});
         add(resetInstance);
     }
-
 
     public void lock(){
         try {
@@ -141,23 +239,36 @@ public class Dashboard extends JPanel {
     }
 
     public void unlock() {
-        semPause.release();
+       semPause.release();
+    }
+
+    public void lock2(){
+        try {
+            semSyncPause.acquire();
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void unlock2() {
+        semSyncPause.release();
     }
 
     public void setRouteLabel(){
 
         route = new JTextArea("Route:\n");
-        route.setSize(new Dimension(500, 100));
+        route.setSize(new Dimension(400, 100));
 
         routeScroll = new JScrollPane();
-        routeScroll.setPreferredSize(new Dimension(500, 100));
+        routeScroll.setPreferredSize(new Dimension(300, 50));
         routeScroll.getViewport().add(route);
         add(routeScroll);
     }
 
     public void updateRouteLabel(String line){
-       route.append(line + "\n");
-     }
+        route.append(line + "\n");
+        route.setCaretPosition(route.getDocument().getLength());
+    }
 
     public void setStartButton(){
         start = new JButton("Start");
@@ -166,8 +277,9 @@ public class Dashboard extends JPanel {
         start.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if(firstIte){
-                    new Thread(new VisualDebug.Search()).start();
                     firstIte = false;
+                    PanelVRP.startSearching();
+                    lock2();
                 }
                 pause = !pause;
                 if (pause)
@@ -177,6 +289,7 @@ public class Dashboard extends JPanel {
                     start.setText("Pause");
                     unlock();
                 }
+
             }
         });
         add(start);
@@ -190,7 +303,7 @@ public class Dashboard extends JPanel {
     }
 
     public void setHeuristic(){
-        heuristic = new JComboBox(new String[]{"RandomNeighbor","NearestNeighbor"});
+        heuristic = new JComboBox(new String[]{"RandomNeighbor","NearestNeighbor","Unrouted"});
         heuristic.setName("Heuristic");
         heuristic.setBackground(Color.white);
         JPanel heuristicPanel = new JPanel();
@@ -231,15 +344,6 @@ public class Dashboard extends JPanel {
 
         add(instancesPanel);
 
-        makeInstance = new JButton("Make instance");
-        makeInstance.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                VisualDebug.initModel(false);
-            }
-        });
-
-        makeInstance.setBackground(Color.white);
-        add(makeInstance);
     }
 
 

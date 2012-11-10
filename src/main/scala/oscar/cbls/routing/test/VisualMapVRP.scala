@@ -1,4 +1,4 @@
-package oscar.cbls.routing.visual
+package oscar.cbls.routing.test
 
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
@@ -22,19 +22,18 @@ package oscar.cbls.routing.visual
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-
 import javax.swing.JOptionPane
-import org.jdesktop.swingx.mapviewer.{WaypointPainter, WaypointRenderer, Waypoint, GeoPosition}
-import oscar.cbls.invariants.core.computation.{IntVar, Model}
+import org.jdesktop.swingx.mapviewer.{Waypoint, GeoPosition}
+import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing._
-import heuristic.{StaticNeighbor, NearestNeighbor, RandomNeighbor}
+import heuristic.{NearestNeighbor}
 import neighborhood._
 import oscar.visual._
-import java.awt.{Graphics2D, Dimension, Color}
-import vrp.Dashboard
+import java.awt.Dimension
+import visual.Dashboard
 
-object VisualDebug extends App{
 
+object VisualMapVRP extends App{
 
   // frame
   val frame = new VisualFrame("VRP")
@@ -45,6 +44,7 @@ object VisualDebug extends App{
   map.viewer.setZoom(9)
   map.viewer.setPreferredSize(new java.awt.Dimension(800, 800));
   map.viewer.setVisible(true)
+
   val route = frame.createFrame("Route")
   route.add(map)
   route.pack()
@@ -75,7 +75,7 @@ object VisualDebug extends App{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr
-    with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted = null
+    with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted with Constraints = null
   var arrayTowns:Array[Town] = null
   var wayPoints :Array[Location] = null
   var lines :Array[MapLine]= null
@@ -119,7 +119,7 @@ object VisualDebug extends App{
 
   // get easier the neighborhood selected
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with SymmetricVRP with PenaltyForUnrouted,
+    with PositionInRouteAndRouteNr with SymmetricVRP with PenaltyForUnrouted with Constraints,
                             closeNeighbors:Int, previousMove:Neighbor):Neighbor = {
     board.neighborhood.getSelectedIndex match{
       case 0 => OnePointMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
@@ -141,7 +141,7 @@ object VisualDebug extends App{
     closeNeighbor = board.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted
+      with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted with Constraints
     try{
       arrayTowns = {
         board.instances.getSelectedIndex match {
@@ -161,10 +161,11 @@ object VisualDebug extends App{
     vrp.saveKNearestPoints(closeNeighbor)
     m.close()
     if (reset)
-      StaticNeighbor(vrp,clonedNext)
+      for (i <- 0 until clonedNext.length)
+        vrp.Next(i) := clonedNext(i)
     else{
       board.heuristic.getSelectedIndex match {
-        case 0 => RandomNeighbor(vrp)
+       // case 0 => RandomNeighbor(vrp)
         case 1 => NearestNeighbor(vrp)
       }
     }

@@ -26,16 +26,16 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, ObjectiveFunction, VRP}
+import oscar.cbls.routing._
 
 /**moves a segment to another place, without flipping it.
  * size is O(n³)
  */
 
 object ThreeOptA extends SearchEngine{
-  var toUpdate:List[(IntVar,Int)] = List.empty //list of variables to update if we get an intersting move
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int):Neighbor = findMove(false, vrp, k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
+
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints, k:Int):Neighbor = findMove(false, vrp, k)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints, k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
   /**search for the proper One point move
    *
@@ -43,13 +43,13 @@ object ThreeOptA extends SearchEngine{
    * @param vrp the model of the problem
    */
   def findMove(FirstImprove:Boolean,
-               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
                k:Int, prevmove:Neighbor = null):ThreeOptA = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
     val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
-    for (insertionPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(insertionPoint) ){
+    for (insertionPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(insertionPoint)){
       //we search for a segment,
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point
@@ -63,14 +63,16 @@ object ThreeOptA extends SearchEngine{
                vrp.isAtLeastAsFarAs(beforeSegmentStart, segmentEnd,2) &&
                !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd)))
         {
-          val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
-          if (newObj < BestObj){
-            println("beforeSeg: "+beforeSegmentStart +" et endSeg: "+segmentEnd)
-            if (FirstImprove){
-              return ThreeOptA(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
+          val toUpdate = vrp.threeOptA(insertionPoint,vrp.Next(insertionPoint).value,beforeSegmentStart,
+            vrp.Next(beforeSegmentStart).value,segmentEnd,vrp.Next(segmentEnd).value)
+          if(!isStrongConstraintsViolated(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)){
+            val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
+            if (newObj < BestObj){
+              if (FirstImprove)
+                return ThreeOptA(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
+              BestObj = newObj
+              move = ((beforeSegmentStart ,segmentEnd, insertionPoint))
             }
-            BestObj = newObj
-            move = ((beforeSegmentStart ,segmentEnd, insertionPoint))
           }
         }
       }
@@ -89,15 +91,23 @@ object ThreeOptA extends SearchEngine{
    * @param vrp
    */
 
-  def doMove(BeforeSegment: Int, EndOfSegment: Int, InsertionPoint: Int, vrp:VRP){
-     toUpdate.foreach(t => t._1 := t._2)
+  def doMove(beforeFrom: Int, to: Int, insertPoint: Int, vrp:VRP){
+    val toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
+      vrp.Next(beforeFrom).value,to,vrp.Next(to).value)
+    toUpdate.foreach(t => t._1 := t._2)
+  }
+
+  def isStrongConstraintsViolated(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with Constraints):Boolean = {
+    val toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
+      vrp.Next(beforeFrom).value,to,vrp.Next(to).value)
+    vrp.isViolatedStrongConstraints(toUpdate)
   }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-    toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
+    val toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
       vrp.Next(beforeFrom).value,to,vrp.Next(to).value)
     vrp.getAssignVal(toUpdate)
   }

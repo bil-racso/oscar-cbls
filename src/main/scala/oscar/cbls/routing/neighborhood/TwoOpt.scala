@@ -30,58 +30,62 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing.{PositionInRouteAndRouteNr, ClosestNeighborPoints, VRP, ObjectiveFunction}
+import oscar.cbls.routing._
 import oscar.cbls.invariants.core.computation.IntVar
 
 
-/**moves a point in a circuit to another place.
-  * size if O(n²)
+/**
   */
 
 object TwoOpt extends SearchEngine{
-  var toUpdate:List[(IntVar,Int)] = List.empty //list of variables to update if we get an intersting move
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints
                   ,k:Int):TwoOpt = findMove(false, vrp,k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
     k:Int,startFrom:Neighbor = null):TwoOpt = findMove(true,vrp,k,startFrom)
 
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOpt = {
+    with PositionInRouteAndRouteNr with Constraints, k:Int,startFrom:Neighbor = null):TwoOpt = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
     for (firstEdge <- 0 until vrp.N startBy hotRestart if vrp.isRouted(firstEdge)){
-      for(secondEdge <- vrp.getKNearestNeighbors(k,firstEdge)
-        if (vrp.isRouted(secondEdge) &&
-          vrp.Next(secondEdge).value>=vrp.V &&
-          vrp.isASegment(vrp.Next(firstEdge).value,secondEdge))){
+      for(secondEdge <- vrp.getKNearestNeighbors(k,firstEdge) if ((secondEdge!= firstEdge)
+          && firstEdge!=vrp.Next(secondEdge).value &&  secondEdge!=vrp.Next(firstEdge).value)
+          && vrp.onTheSameRoute(firstEdge,secondEdge))
+      {
+        if (!isStrongConstraintsViolated(firstEdge,secondEdge, vrp)){
           val newObj = getObjAfterMove(firstEdge,secondEdge, vrp)
           if (newObj < BestObj){
             if (FirstImprove) return TwoOpt(firstEdge,secondEdge, newObj, vrp)
-            BestObj = newObj
+              BestObj = newObj
             move = ((firstEdge, secondEdge))
           }
+        }
       }
     }
     if (move == null) null
     else TwoOpt(move._1,move._2, BestObj, vrp)
-
   }
 
   def doMove(firstEdge:Int, secondEdge:Int, vrp:VRP){
-    toUpdate =vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
+    val toUpdate =vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
     toUpdate.foreach(t => t._1 := t._2)
+  }
+
+  def isStrongConstraintsViolated(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction with Constraints):Boolean = {
+    val toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
+    vrp.isViolatedStrongConstraints(toUpdate)
   }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
-  def getObjAfterMove(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction):Int = {
-    toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
+  def getObjAfterMove(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction with Constraints):Int = {
+    val toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
     vrp.getAssignVal(toUpdate)
-  }
+   }
 }
 
 case class TwoOpt(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{

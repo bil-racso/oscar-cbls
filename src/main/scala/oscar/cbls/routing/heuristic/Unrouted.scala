@@ -1,3 +1,11 @@
+/**
+ * Created with IntelliJ IDEA.
+ * User: Florent
+ * Date: 10/11/12
+ * Time: 15:07
+ * To change this template use File | Settings | File Templates.
+ */
+
 package oscar.cbls.routing.heuristic
 
 /*******************************************************************************
@@ -19,22 +27,20 @@ package oscar.cbls.routing.heuristic
 
 /*******************************************************************************
   * Contributors:
-  *     This code has been initially developed by De Landtsheer Renaud and Ghilain Florent.
+  *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-
 import oscar.cbls.routing._
-import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
+import neighborhood.{ReinsertPoint, Neighbor}
 
 /**
  * Works for many vehicles.
  */
 
-object NearestNeighbor extends Heuristic{
-
-
+object Unrouted extends Heuristic{
   def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints with PositionInRouteAndRouteNr
-             with HopDistance){
+    with HopDistance){
+
     val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
     for (v <- 0 until vrp.V)
       vrp.Next(v) := v
@@ -42,18 +48,8 @@ object NearestNeighbor extends Heuristic{
       vrp.Next(p) := vrp.N
     vrp.m.propagate()
 
-    var vehicle = 0
-    val nodeToRoute = vrp.N-vrp.V
-    for (p <- 0 until nodeToRoute){
-      current(vehicle) = ReinsertPoint.getBestMove(vrp,current(vehicle),vehicle)
-      heuristicTimer.setPercentComplete((100*p)/(nodeToRoute-1))
-      if (current(vehicle)!= null)
-        current(vehicle).comit
-      vehicle=(vehicle+1) % vrp.V
-      heuristicTimer.unlock
-    }
     heuristicTimer.setPercentComplete(100)
-    if (nodeToRoute == 0) heuristicTimer.unlock
-
+    heuristicTimer.unlock
   }
+
 }

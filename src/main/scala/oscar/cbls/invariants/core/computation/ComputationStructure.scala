@@ -446,7 +446,7 @@ abstract class Variable(val model:Model,val name:String) extends PropagationElem
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one defining invariant")
+      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
   def getDefiningInvariant:Invariant = DefiningInvariant
@@ -688,19 +688,19 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
  */
 class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override val name:String="")
   extends Variable(model,name) {
-
-  {assert(MinVal <= MaxVal)}
+  //println(MinVal + " et " + MaxVal)
+  //{assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
 
   def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
-  def domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
+  val domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
   override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
-      assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+ /*    assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
           "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
-          "value :"+ v +"\n" ))
+          "value :"+ v +"\n" ))*/
         Value = v
         notifyChanged()
       }

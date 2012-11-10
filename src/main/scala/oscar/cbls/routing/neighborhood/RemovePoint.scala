@@ -32,6 +32,7 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing._
+import scala.util.Random
 
 
 /**moves a point in a circuit to another place.
@@ -39,30 +40,44 @@ import oscar.cbls.routing._
   */
 
 object RemovePoint extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):RemovePoint = findMove(false, vrp)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):RemovePoint
-  = findMove(true,vrp,startFrom)
-  //def justMove(vrp:VRP with ObjectiveFunction, startFrom:Neighbor = null) {getFirstImprovingMove(vrp, startFrom).comit}
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):RemovePoint = findMove(false,false, vrp)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints, startFrom:Neighbor = null):RemovePoint
+  = findMove(true,false,vrp,startFrom)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):RemovePoint = findMove(false,true,vrp)
 
 
-  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,
                        startFrom:Neighbor = null):RemovePoint = {
-    var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
-    val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
-
-    for (beforeRemovedPoint <- 0 until vrp.N startBy hotRestart if (vrp.Next(beforeRemovedPoint).value >= vrp.V)
-      && vrp.isRouted(beforeRemovedPoint)){
-      val removedPoint = vrp.Next(beforeRemovedPoint).value
-      val newObj = getObjAfterMove(beforeRemovedPoint,removedPoint, vrp)
+    if(random){
+      val toUnroute = Random.shuffle(Range(vrp.V,vrp.N))
+      for (beforeRemovePoint <- toUnroute if(vrp.isRouted(beforeRemovePoint))){
+        if(!isStrongConstraintsViolated(beforeRemovePoint,vrp.Next(beforeRemovePoint).value, vrp)){
+          move = (beforeRemovePoint,vrp.Next(beforeRemovePoint).value)
+          return RemovePoint(move._1,move._2,getObjAfterMove(move._1,move._2,vrp),vrp)
+        }
+      }
+      return null
+    }
+    else{
+      var BestObj:Int = vrp.ObjectiveVar.value
+      val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
+      for (beforeRemovedPoint <- 0 until vrp.N startBy hotRestart if(vrp.isRouted(beforeRemovedPoint) &&
+        !vrp.isADepot(vrp.Next(beforeRemovedPoint).value)))
+      {
+        val removedPoint = vrp.Next(beforeRemovedPoint).value
+        if(!isStrongConstraintsViolated(beforeRemovedPoint,removedPoint, vrp)){
+          val newObj = getObjAfterMove(beforeRemovedPoint,removedPoint, vrp)
           if (newObj < BestObj){
             if (FirstImprove) return RemovePoint(beforeRemovedPoint,removedPoint, newObj, vrp)
             BestObj = newObj
             move = ((beforeRemovedPoint, removedPoint))
           }
+        }
       }
-    if (move == null) null
-    else RemovePoint(move._1,move._2, BestObj, vrp)
+      if (move == null) null
+      else RemovePoint(move._1,move._2, BestObj, vrp)
+    }
   }
 
   def doMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP){
@@ -70,13 +85,18 @@ object RemovePoint extends SearchEngine{
     toUpdate.foreach(t => t._1 := t._2)
   }
 
+  def isStrongConstraintsViolated(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with Constraints):Boolean = {
+    val toUpdate = vrp.remove(List((beforeRemovedPoint,removedPoint)))
+    vrp.isViolatedStrongConstraints(toUpdate)
+  }
+
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
-  def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
-    val toUpdate =vrp.remove(List((beforeRemovedPoint,removedPoint)))
+  def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):Int = {
+    val toUpdate = vrp.remove(List((beforeRemovedPoint,removedPoint)))
     vrp.getAssignVal(toUpdate)
-  }
+ }
 }
 
 case class RemovePoint(val beforeRemovedPoint:Int, val removedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
