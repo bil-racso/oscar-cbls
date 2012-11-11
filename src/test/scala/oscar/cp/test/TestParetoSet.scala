@@ -19,7 +19,6 @@
 package oscar.cp.test
 
 import oscar.cp.mem.pareto.ParetoPoint
-import oscar.cp.mem.pareto.ParetoSet
 
 import org.scalacheck._
 import org.scalatest.FunSuite
@@ -27,7 +26,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 class TestParetoSet extends FunSuite with ShouldMatchers {
 	
-	trait Data {
+	/*trait Data {
 		
 		type Sol = Array[Int]
 		
@@ -121,5 +120,5 @@ class TestParetoSet extends FunSuite with ShouldMatchers {
 			
 			pareto.currentSol should be(obj6)
 		}		
-	}
+	}*/
 }

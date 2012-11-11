@@ -12,10 +12,9 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
 import oscar.search.IDSSearchController
-import oscar.cp.mem.pareto.ParetoSet
-import oscar.visual.VisualPareto
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
+import oscar.cp.mem.pareto.ParetoMinSet
 
 /**
  * VRPTW
@@ -24,7 +23,7 @@ import oscar.cp.constraints.TONOTCOMMIT
  */
 
 object MO_VRPTW extends App {
-
+/*
   val instance = parse("data/VRPTW/Solomon/R101.txt")
 
   // Distance scaling
@@ -94,7 +93,7 @@ object MO_VRPTW extends App {
 
   val nObjs = 2
   val Objs = 0 until nObjs
-  val pareto = ParetoSet[Sol](nObjs)
+  val pareto = ParetoMinSet[Sol]
 
   var bestPrev: Array[Int] = new Array(nSites)
   var bestNext: Array[Int] = new Array(nSites)
@@ -534,5 +533,5 @@ object MO_VRPTW extends App {
   }
 
   println("\nFinished !")
-  cp.printStats
+  cp.printStats*/
 }

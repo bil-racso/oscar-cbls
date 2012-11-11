@@ -34,12 +34,12 @@ class ParetoPoint[S](val sol: S, val nodeObj1: LinkedNode[S], val nodeObj2: Link
   }
 
   def isDominating(point: ParetoPoint[S]): Boolean = {
-    if (obj1 < point.obj1) false
-    else if (obj2 < point.obj2) false
-    else true
+    if (obj1 <= point.obj1 && obj2 < point.obj2) true
+    else if (obj1 < point.obj1 && obj2 <= point.obj2) true
+    else false
   }
 
-  override def toString: String = "[" + obj1 + ", " + obj2 + "]"
+  override def toString: String = "(" + obj1 + ", " + obj2 + ")"
 }
 
 object ParetoPoint {

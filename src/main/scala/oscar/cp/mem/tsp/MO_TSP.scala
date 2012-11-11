@@ -25,251 +25,353 @@ import oscar.cp.core._
 import oscar.util._
 import oscar.cp.constraints._
 import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.mem.pareto.ParetoSet
 import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
 import scala.util.Random.nextFloat
 import scala.math.round
 import oscar.search.IDSSearchController
+import oscar.cp.mem.pareto.ParetoMinSet
 
-object MO_TSP extends App {
+import java.io._
 
-  // Data parsing
-  // ------------
-  val coord1 = parseCoordinates("data/TSP/kroA100.tsp")
-  val coord2 = parseCoordinates("data/TSP/kroB100.tsp")
-
-  val nCities = coord1.size
-  val Cities = 0 until nCities
-
-  // Computes the distance between two cities
-  def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
-    val dx = p2._1 - p1._1
-    val dy = p2._2 - p1._2
-    math.sqrt(dx * dx + dy * dy)
-  }
-
-  // Builds the distance matrix
-  val realDistMatrix1 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord1(i), coord1(j)))
-  val realDistMatrix2 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord2(i), coord2(j)))
-
-  val distMatrix1 = realDistMatrix1.map(_.map(round(_).toInt))
-  val distMatrix2 = realDistMatrix2.map(_.map(round(_).toInt))
-
-  // Model
-  // -----
-  val cp = new CPSolver()
-
-  // Successors
-  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  // Predecessors
-  val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
-  // Total distance
-  val totDist1 = CPVarInt(cp, 0 to distMatrix1.flatten.sum)
-  val totDist2 = CPVarInt(cp, 0 to distMatrix2.flatten.sum)
-
-  // Visualization
-  // -------------
-  val visu1 = new VisualRelax(coord1, realDistMatrix1)
-  val visu2 = new VisualRelax(coord2, realDistMatrix2)
-
-  // MOLNS
-  // -----
-
-  val nObjs = 2
-  val Objs = 0 until nObjs
-  val pareto = ParetoSet[Sol](nObjs)
-
-  case class Sol(pred: Array[Int], succ: Array[Int], dist1: Int, dist2: Int)
+object MO_TSP {
   
-  var currentSol: Sol = null
+  val visuOn = true
 
-  var nRestart = 1
-  var nObjRestart = 0
-  var nStagnation = 0
-  var newSol = true
-
-  val pMin = 20
-  val pMax = 60
-  var p = pMin
-
-  var firstLns = true
-
-  cp.lns(500, 5000) {
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
+  }
+  
+  def main(args : Array[String]) {
     
-    if (newSol) {
-      newSol = false     
-      val obj = Array(currentSol.dist1, currentSol.dist2)
-      pareto.insert(obj, currentSol)
-      pareto.nextPoint
+    for (i <- 1 to 1) {         
+      val results = solveTSP(2500, 4000)      
+      printToFile(new File("ids_results"+i+".txt"))(p => {
+        results.foreach(p.println)
+      })      
     }
-    
-    nRestart += 1
-
-    if (firstLns) {
-      println("Start LNS")
-      firstLns = false
-      cp.failLimit = 2000
-    }
-
-    handleObjectives()   
-    currentSol = pareto.currentSol
-    
-    visu1.updateRoute(currentSol.pred)
-    visu1.updateDist()
-
-    visu2.updateRoute(currentSol.pred)
-    visu2.updateDist()
-
-    relaxVariables(clusterRelax(p))
   }
 
-  def handleObjectives() = {
-    if (nextFloat > 0.1) objRelax(nextObj(), false)
-    else objRelax(nextObj(), true)
-  }
+  def solveTSP(maxRestart: Int, maxFail: Int): Array[(Int, Int)] = {
 
-  def nextObj(): Int = {
+    // Data parsing
+    // ------------
+    val coord1 = parseCoordinates("data/TSP/kroA100.tsp")
+    val coord2 = parseCoordinates("data/TSP/kroB100.tsp")
 
-    nObjRestart += 1
+    val nCities = coord1.size
+    val Cities = 0 until nCities
 
-    val obj = (cp.objective.currentObjectiveIdx + 1) % nObjs
-
-    if (nObjRestart > nObjs) {
-      pareto.nextPoint
-      nObjRestart = 1
+    // Computes the distance between two cities
+    def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
+      val dx = p2._1 - p1._1
+      val dy = p2._2 - p1._2
+      math.sqrt(dx * dx + dy * dy)
     }
 
-    cp.objective.currentObjective = obj
-    obj
-  }
+    // Builds the distance matrix
+    val realDistMatrix1 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord1(i), coord1(j)))
+    val realDistMatrix2 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord2(i), coord2(j)))
 
-  def objRelax(obj: Int, intensification: Boolean = false) {
+    val distMatrix1 = realDistMatrix1.map(_.map(round(_).toInt))
+    val distMatrix2 = realDistMatrix2.map(_.map(round(_).toInt))
 
-    for (o <- Objs) {
-      if (intensification || o == obj) {
-        cp.objective.bounds(o) = pareto.currentPoint(o) - 1
-      } else {
-        // The -1 avoid to find an already found solution
-        cp.objective.bounds(o) = pareto.currentPoint.upperValue(o) - 1
+    // Model
+    // -----
+    val cp = new CPSolver()
+
+    // Successors
+    val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
+    // Predecessors
+    val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+    // Total distance
+    val totDist1 = CPVarInt(cp, 0 to distMatrix1.flatten.sum)
+    val totDist2 = CPVarInt(cp, 0 to distMatrix2.flatten.sum)
+
+    // Visualization
+    // -------------
+    val visu1 : VisualRelax = if (visuOn) new VisualRelax(coord1, realDistMatrix1) else null
+    val visu2 : VisualRelax = if (visuOn) new VisualRelax(coord2, realDistMatrix2) else null
+
+    // MOLNS
+    // -----
+
+    val nObjs = 2
+    val Objs = 0 until nObjs
+    val pareto = ParetoMinSet[Sol]()
+
+    case class Sol(pred: Array[Int], succ: Array[Int], dist1: Int, dist2: Int)
+
+    var newSols: List[Sol] = List()
+
+    var nRestart = 1
+    var nObjRestart = 0
+    var nStagnation = 0
+
+    val pMin = 15
+    val pMax = 60
+    var p = 25
+
+    var firstLns = true
+
+    //cp.sc = new IDSSearchController(cp, 100)
+    cp.lns(maxRestart, maxFail) {
+
+      // First LNS
+      if (firstLns) {
+        println("Start LNS");
+        firstLns = false
       }
+
+      nRestart += 1
+
+      // Adds new solutions    
+      if (handleNewSols(newSols, false)) nObjRestart = 0
+      newSols = List()
+
+      println("PARETO SIZE " + pareto.size)
+
+      if (nRestart < 100) improveObj(0)
+      else if (nRestart < 200) improveObj(1)
+      else {
+        cp.failLimit = 3000
+        p = pMin
+        val obj = nextObj()
+        objRelax(obj, false)
+      }
+
+      if (visuOn) {
+        visu1.updateRoute(pareto.currentSol.pred)
+        visu1.updateDist()
+        visu2.updateRoute(pareto.currentSol.pred)
+        visu2.updateDist()
+      }
+
+      relaxVariables(clusterRelax(p))
     }
-  }
 
-  def clusterRelax(p: Int): Array[Boolean] = {
-    if (cp.objective.currentObjectiveIdx == 0) clusterRelax1(p)
-    else clusterRelax2(p)
-  }
-
-  def clusterRelax1(p: Int): Array[Boolean] = {
-    
-    val c = nextInt(nCities)
-    val sortedByDist = Cities.sortBy(i => distMatrix1(c)(i))
-    val dist = distMatrix1(c)(sortedByDist(p))
-
-    Array.tabulate(nCities)(i => distMatrix1(c)(i) <= dist)
-  }
-
-  def clusterRelax2(p: Int): Array[Boolean] = {
-
-    val c = nextInt(nCities)
-    val sortedByDist = Cities.sortBy(i => distMatrix2(c)(i))
-    val dist = distMatrix2(c)(sortedByDist(p))
-
-    Array.tabulate(nCities)(i => distMatrix2(c)(i) <= dist)
-  }
-
-  def solFound() {
-     
-    newSol = true
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist1.value, totDist2.value)
-    
-    visu1.updateRoute(currentSol.pred)
-    visu1.updateDist()
-
-    visu2.updateRoute(currentSol.pred)
-    visu2.updateDist()
-  }
-
-  def relaxVariables(selected: Array[Boolean]) {
-
-    visu1.updateSelected(selected)
-    visu1.updateRestart(nRestart)
-
-    visu2.updateSelected(selected)
-    visu2.updateRestart(nRestart)
-
-    val constraints: Queue[Constraint] = Queue()
-
-    for (c <- Cities) {
-      if (!selected(c)) {
-
-        if (!selected(currentSol.pred(c)))
-          constraints enqueue (pred(c) == currentSol.pred(c))
-
-        if (!selected(currentSol.succ(c)))
-          constraints enqueue (succ(c) == currentSol.succ(c))
+    def handleNewSols(newSols: List[Sol], removed: Boolean): Boolean = newSols match {
+      case Nil => removed
+      case s :: rest => {
+        val r = pareto insert ((s.dist1, s.dist2), s)
+        handleNewSols(rest, r || removed)
       }
     }
 
-    cp.post(constraints.toArray)
-  }
+    def nextObj(): Int = {
 
-  // Constraints
-  // -----------
-  cp.minimize(totDist1, totDist2) subjectTo {
+      nObjRestart += 1
 
-    // Channeling between predecessors and successors
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+      val obj = (cp.objective.currentObjectiveIdx + 1) % nObjs
 
-    // Consistency of the circuit with Strong filtering
-    cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
+      if (nObjRestart > nObjs) {
+        pareto.nextSol(0)
+        nObjRestart = 1
+      }
 
-    // Total distance 1
-    cp.add(sum(Cities)(i => distMatrix1(i)(succ(i))) == totDist1)
-    cp.add(sum(Cities)(i => distMatrix1(i)(pred(i))) == totDist1)
+      cp.objective.currentObjective = obj
+      obj
+    }
 
-    cp.add(new TONOTCOMMIT(cp, pred, distMatrix1, totDist1))
-    cp.add(new TONOTCOMMIT(cp, succ, distMatrix1, totDist1))
+    def objRelax(obj: Int, intensification: Boolean) {
+      for (o <- Objs) {
+        if (intensification || o == obj) cp.objective.bounds(o) = pareto.currentVal(o) - 1
+        else cp.objective.bounds(o) = pareto.currentUB(o) - 1
+      }
+    }
 
-    // Total distance 2
-    cp.add(sum(Cities)(i => distMatrix2(i)(succ(i))) == totDist2)
-    cp.add(sum(Cities)(i => distMatrix2(i)(pred(i))) == totDist2)
+    def improveObj(obj: Int) {
+      pareto.bestSol(obj)
+      nObjRestart = 0
+      cp.objective.currentObjective = obj
+      objRelax(obj, false)
+    }
 
-    cp.add(new TONOTCOMMIT(cp, pred, distMatrix2, totDist2))
-    cp.add(new TONOTCOMMIT(cp, succ, distMatrix2, totDist2))
-  }
+    def clusterRelax(p: Int): Array[Boolean] = {
+      if (cp.objective.currentObjectiveIdx == 0) clusterRelax1(p)
+      else clusterRelax2(p)
+    }
 
-  // Search
-  // ------
-  println("Searching...")
-  cp.exploration {
+    def clusterRelax1(p: Int): Array[Boolean] = {
 
-    // Greedy heuristic
-    if (cp.objective.currentObjectiveIdx == 0) {
-      while (!allBounds(succ)) {
+      val c = nextInt(nCities)
+      val sortedByDist = Cities.sortBy(i => distMatrix1(c)(i))
+      val dist = distMatrix1(c)(sortedByDist(p))
+
+      Array.tabulate(nCities)(i => distMatrix1(c)(i) <= dist)
+    }
+
+    def clusterRelax2(p: Int): Array[Boolean] = {
+
+      val c = nextInt(nCities)
+      val sortedByDist = Cities.sortBy(i => distMatrix2(c)(i))
+      val dist = distMatrix2(c)(sortedByDist(p))
+
+      Array.tabulate(nCities)(i => distMatrix2(c)(i) <= dist)
+    }
+
+    def solFound() {
+      val sol = new Sol(pred.map(_.value), succ.map(_.value), totDist1.value, totDist2.value)
+      newSols = List(sol) // :: newSols
+
+      if (visuOn) {
+        visu1.updateRoute(sol.pred)
+        visu1.updateDist()
+
+        visu2.updateRoute(sol.pred)
+        visu2.updateDist()
+      }
+    }
+
+    def relaxVariables(selected: Array[Boolean]) {
+
+      if (visuOn) {
+        visu1.updateSelected(selected)
+        visu1.updateRestart(nRestart)
+
+        visu2.updateSelected(selected)
+        visu2.updateRestart(nRestart)
+      }
+
+      val constraints: Queue[Constraint] = Queue()
+
+      for (c <- Cities) {
+        if (!selected(c)) {
+
+          if (!selected(pareto.currentSol.pred(c)))
+            constraints enqueue (pred(c) == pareto.currentSol.pred(c))
+
+          if (!selected(pareto.currentSol.succ(c)))
+            constraints enqueue (succ(c) == pareto.currentSol.succ(c))
+        }
+      }
+
+      cp.post(constraints.toArray)
+    }
+
+    // Constraints
+    // -----------
+    cp.minimize(totDist1, totDist2) subjectTo {
+
+      // Channeling between predecessors and successors
+      cp.add(new ChannelingPredSucc(cp, pred, succ))
+
+      // Consistency of the circuit with Strong filtering
+      cp.add(circuit(succ), Strong)
+      cp.add(circuit(pred), Strong)
+
+      // Total distance 1
+      cp.add(sum(Cities)(i => distMatrix1(i)(succ(i))) == totDist1)
+      cp.add(sum(Cities)(i => distMatrix1(i)(pred(i))) == totDist1)
+
+      cp.add(new TONOTCOMMIT(cp, pred, distMatrix1, totDist1))
+      cp.add(new TONOTCOMMIT(cp, succ, distMatrix1, totDist1))
+
+      // Total distance 2
+      cp.add(sum(Cities)(i => distMatrix2(i)(succ(i))) == totDist2)
+      cp.add(sum(Cities)(i => distMatrix2(i)(pred(i))) == totDist2)
+
+      cp.add(new TONOTCOMMIT(cp, pred, distMatrix2, totDist2))
+      cp.add(new TONOTCOMMIT(cp, succ, distMatrix2, totDist2))
+    }
+
+    // Search
+    // ------
+    println("Searching...")
+    cp.exploration {
+
+      // Greedy heuristic
+      if (cp.objective.currentObjectiveIdx == 0) {
+        regret1
+        /*while (!allBounds(succ)) {
 
         val i = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
         val j = selectMin(Cities)(succ(i).hasValue(_))(distMatrix1(i)(_)).get
 
         cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
-      }
-    } 
-    else {
-      while (!allBounds(succ)) {
+      }*/
+      } else {
+        regret2
+        /*while (!allBounds(succ)) {
 
         val i = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
         val j = selectMin(Cities)(succ(i).hasValue(_))(distMatrix2(i)(_)).get
 
         cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
+      }*/
+      }
+
+      solFound()
+    }
+
+    def regret1 = {
+      while (!allBounds(succ)) {
+
+        val regrets = getRegrets(succ, distMatrix1)
+              
+        /*def sort(i:Int, j:Int) = {
+          if (succ(i).size < succ(j).size) true
+          else if (succ(i).size == succ(j).size) {
+            if (regrets(i) < regrets(j)) true
+            else false
+          }
+          else false
+        }*/
+        
+        //val x = Cities.filter(i => !succ(i).isBound).sortWith((i, j) => sort(i, j)).head     
+        val x = selectMin(Cities)(!succ(_).isBound)(-regrets(_)).get
+        val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix1(x)(_)).get
+
+        cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
       }
     }
 
-    solFound()
+    def regret2 = {
+      while (!allBounds(succ)) {
+
+        val regrets = getRegrets(succ, distMatrix2)
+               
+        def sort(i:Int, j:Int) = {
+          if (succ(i).size < succ(j).size) true
+          else if (succ(i).size == succ(j).size) {
+            if (regrets(i) > regrets(j)) true
+            else false
+          }
+          else false
+        }
+        
+        val x = Cities.filter(i => !succ(i).isBound).sortWith((i, j) => sort(i, j)).head     
+        val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix2(x)(_)).get
+
+        cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
+      }
+    }
+        
+    return pareto.points.map(p => (p.obj1,p.obj2))
   }
 
-  println("pareto size : "+ pareto.size)  
-  println(pareto.points.mkString("\n"))
-  cp.printStats()
+  def getRegrets(succ: Array[CPVarInt], distMatrix: Array[Array[Int]]) = {
+
+    Array.tabulate(succ.size)(i => {
+      if (succ(i).isBound) -1
+      else {
+        
+        var distK1 = Int.MaxValue
+        var distK2 = Int.MaxValue
+
+        for (j <- 0 until succ.size; if (succ(i).hasValue(j))) {
+
+          if (distMatrix(i)(j) < distK1) {
+            distK2 = distK1
+            distK1 = distMatrix(i)(j)
+          } else if (distMatrix(i)(j) < distK2) {
+            distK2 = distMatrix(i)(j)
+          }
+        }
+
+        distK2 - distK1
+      }
+    })
+  }
 }

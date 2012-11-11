@@ -13,9 +13,7 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.VRPTWParser.parse
 import oscar.search.IDSSearchController
-import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.visu.VisualRelax
-import oscar.visual.VisualPareto
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
 
