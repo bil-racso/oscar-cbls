@@ -806,7 +806,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * @return a key that is needed to unregister the element in the dynamic propagation graph
    */
   protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any, key:KeyForElementRemoval = null, test:Boolean = true): KeyForElementRemoval = {
-    p.semLockRegister.acquire()///Add
+    /*p.semLockRegister.acquire()///Add
     if(test && p.isPropagating) {///Add
       p.semDoList.acquire()
       val key = KeyForElementRemoval(p, null, null)
@@ -815,7 +815,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
       p.semLockRegister.release()
       key
     }///Add
-    else {///Add
+    else {///Add*/
       /*printf("registerDynamicallyListenedElement(%d) by thread I%d\n", p.UniqueID, Thread.currentThread().getId)///Rm
       p.semDynElements.acquire()///Rm
       printf("registerDynamicallyListenedElement(%d) by thread O%d\n", p.UniqueID, Thread.currentThread().getId)*////Rm
@@ -833,13 +833,13 @@ trait PropagationElement extends DAGNode with TarjanNode{
       if(test)
         p.semDynElements.release()
       p.semLockRegister.release()///Add
-      if(key == null)
+      //if(key == null)
         KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
-      else {
+      /*else {
         key.setKeyForElementRemovaleRef(KeyForListenedElement, KeyForListeningElement)
         null
       }
-    }///Add
+    }*/
   }
 
   /**checks that the propagation element is statically listened to, possibly
@@ -869,23 +869,23 @@ trait PropagationElement extends DAGNode with TarjanNode{
    * @param p the key that was given when the eement was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval, test:Boolean = true) {
-    p.element.semLockRegister.acquire()///Add
+    /*p.element.semLockRegister.acquire()///Add
     if(test && p.element.isPropagating) {///Add
       p.element.semDoList.acquire()
       p.element.doList = new p.element.UnregisterAction(p, this) :: p.element.doList
       p.element.semDoList.release()
-    }///Add
-    else {///Add
+    }
+    else {*/
       //printf("unregisterDynamicallyListenedElement(%d) by thread %d I\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
       //p.element.semDynElements.acquire()///Rm
       //printf("unregisterDynamicallyListenedElement(%d) by thread %d O\n", p.element.UniqueID, Thread.currentThread().getId)///Rm
       DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
       p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
-      if(test)
+      /*if(test)
         p.element.semDynElements.release()
-    }///Add
+    }
 
-    p.element.semLockRegister.release()///Add
+    p.element.semLockRegister.release()*/
   }
 
   def dropStaticGraph() {

@@ -276,7 +276,7 @@ trait PropagationStructureSynch  extends PropagationStructure with Job {
     }
     ScheduledElements = List.empty
 
-    dispatcher.doJob(this, 2) //TODO
+    dispatcher.doJob(this, nbThread) //TODO
     dispatcher.waitIdleStatus()
 
     if (Verbose) println("PropagationStruture: end propagation")

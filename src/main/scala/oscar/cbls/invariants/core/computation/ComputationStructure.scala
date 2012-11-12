@@ -731,36 +731,27 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       val old=OldValue
       OldValue=Value
 
-      //printf("perfProp acquire I; th : %d\n", Thread.currentThread().getId())
-      semLockRegister.acquire()
+      /*semLockRegister.acquire()
       semDynElements.acquire()
       isProp = true
-      semLockRegister.release()
-      //printf("perfProp acquire O; pe : %d, th : %d\n", this.UniqueID,  Thread.currentThread().getId())
+      semLockRegister.release()*/
 
       for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
         val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
 
-        //printf("notify lock I; inv = %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
         inv.lockNotify()
-        //printf("notify lock O; inv : %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
         inv.notifyIntChangedAny(this,e._2,old,Value)
         inv.unlockNotify()
-        //printf("notify end; inv : %d; th : %d\n", inv.UniqueID, Thread.currentThread().getId())
-
-        //doActionList()
 
         assert({this.model.NotifiedInvariant=null; true})
       }
 
-      //semLockRegister.acquire()
+      /*//semLockRegister.acquire()
       isProp = false
       semDynElements.release()//
       doActionList()
-      //semLockRegister.release()
-      //printf("perfProp end; th : %d\n", Thread.currentThread().getId())
-
+      //semLockRegister.release()*/
     }
   }
 
@@ -899,10 +890,11 @@ class IntSetVar(override val model:Model,
   }
 
   override def performPropagation(){
-    semLockRegister.acquire()
+    /*semLockRegister.acquire()
     semDynElements.acquire()//
     isProp = true
-    semLockRegister.release()
+    semLockRegister.release()*/
+
     if(getDynamicallyListeningElements.isEmpty){
       //no need to do it gradually
       OldValue=Value
@@ -918,8 +910,6 @@ class IntSetVar(override val model:Model,
             inv.notifyDeleteOnAny(this,e._2,v)
             inv.unlockNotify()
 
-            //doActionList()
-
             assert({this.getModel.NotifiedInvariant=null; true})
           }
         })
@@ -932,8 +922,6 @@ class IntSetVar(override val model:Model,
             inv.lockNotify()
             inv.notifyInsertOnAny(this,e._2,v)
             inv.unlockNotify()
-
-            //doActionList()
 
             assert({this.getModel.NotifiedInvariant=null; true})
           }
@@ -955,8 +943,6 @@ class IntSetVar(override val model:Model,
               assert({this.getModel.NotifiedInvariant=inv;true})
               inv.notifyInsertOnAny(this,e._2,v)
 
-              //doActionList()
-
               assert({this.getModel.NotifiedInvariant=null;true})
             }
           }else{
@@ -966,8 +952,6 @@ class IntSetVar(override val model:Model,
               val inv:Invariant = e._1.asInstanceOf[Invariant]
               assert({this.getModel.NotifiedInvariant=inv;true})
               inv.notifyDeleteOnAny(this,e._2,v)
-
-              //doActionList()
 
               assert({this.getModel.NotifiedInvariant=null;true})
             }
@@ -979,11 +963,11 @@ class IntSetVar(override val model:Model,
     }
     TouchedValues = List.empty
 
-    //semLockRegister.acquire()
+    /*//semLockRegister.acquire()
     isProp = false
     semDynElements.release()
     doActionList()
-    //semLockRegister.release()
+    //semLockRegister.release()*/
   }
 
   def value:SortedSet[Int] = getValue(false)

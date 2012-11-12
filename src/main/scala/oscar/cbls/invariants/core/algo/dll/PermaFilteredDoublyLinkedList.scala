@@ -23,7 +23,7 @@
 
 
 package oscar.cbls.invariants.core.algo.dll
-//import java.util.concurrent.Semaphore////////////////////
+import java.util.concurrent.Semaphore////////////////////
 
 /**this is a mutable data strcuture that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
  * and to update in parallell another set that is a filter of the first one through a specified function
@@ -37,13 +37,11 @@ package oscar.cbls.invariants.core.algo.dll
  * Beware that this is a mutable data structure, hence you should not perform delete on it while iterating on it. 
  * */
  class PermaFilteredDoublyLinkedList[T](val slave:Boolean = false) extends Iterable[T]{
+  val sem = new Semaphore(1)
 
   private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
-  //val sem = new Semaphore(1)////////////////////
-  //sem.acquire()////////////////////
   headfantom.setNext(endfantom)
-  //sem.release()////////////////////
 
   private var mfilter:T => Boolean = null
   private var Filtered: PermaFilteredDoublyLinkedList[T] = null
@@ -59,7 +57,6 @@ package oscar.cbls.invariants.core.algo.dll
     * returns a reference that should be used to remove the item from all those structures at once.
     */
   def addElem(elem:T):PFDLLStorageElement[T] = {
-    //sem.acquire()////////////////////
     val d = new PFDLLStorageElement[T](elem)
     d.setNext(headfantom.next)
     headfantom.setNext(d)
@@ -67,7 +64,6 @@ package oscar.cbls.invariants.core.algo.dll
     if(mfilter != null && mfilter(elem)){
       d.filtered = Filtered.addElem(elem)
     }
-    //sem.release()////////////////////
     d
   }
 
@@ -81,33 +77,40 @@ package oscar.cbls.invariants.core.algo.dll
     * the item is specified through the reference given when it was inserted in the first place.
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
-    //sem.acquire()////////////////////
+    //println("delete : acquire I")
+    sem.acquire() ////
+    //println("delete : acquire O")
     elemkey.prev.setNext(elemkey.next)
     msize -=1
     if(mfilter != null && elemkey.filtered != null){
       Filtered.deleteElem(elemkey.filtered)
     }
-    //sem.release()////////////////////
-    elemkey.elem
+    //println("delete : release I")
+    sem.release()
+    //println("delete : release O")
+    elemkey.elem ////
   }
 
    /**makes the DLL empty, and all its filtered DLL as well*/
   def dropAll(){
-    //sem.acquire()////////////////////
+    //println("drop : acquire I")
+    sem.acquire()////
+    //println("drop : acquire 0")
     headfantom.setNext(endfantom)
     msize = 0
     if(mfilter != null){
       Filtered.dropAll()
     }
-    //sem.release()////////////////////
+    //println("drop : release I")
+    sem.release()////
+    //println("drop : release O")
   }
 
   override def isEmpty:Boolean = (size == 0)
 
-  override def iterator = new PFDLLIterator[T](headfantom,endfantom)
+  override def iterator = new PFDLLIterator[T](headfantom,endfantom, sem)
 
   def PermaFilter(filter:T => Boolean):PermaFilteredDoublyLinkedList[T] = {
-    //sem.acquire()////////////////////
     assert(mfilter == null,"PermaFilteredDoublyLinkedList can only accept a single filter")
     mfilter = filter
     Filtered = new PermaFilteredDoublyLinkedList[T](true)
@@ -119,7 +122,6 @@ package oscar.cbls.invariants.core.algo.dll
       }
       currentstorageElement = currentstorageElement.next
     }
-    ////////////////////sem.release()//
     Filtered
   }
 
@@ -142,33 +144,41 @@ class PFDLLStorageElement[T](val elem:T){
   var next:PFDLLStorageElement[T] = null
   var prev:PFDLLStorageElement[T] = null
   var filtered: PFDLLStorageElement[T] = null
-  //var sem = new Semaphore(1)////////////////////
 
   def setNext(d:PFDLLStorageElement[T]){
-    //sem.acquire()////////////////////
     if(d == null)
       println("d est null")
     this.next = d
     d.prev = this
-    //sem.release()////////////////////
   }
 }
 
-class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T], val endfantom:PFDLLStorageElement[T]) extends Iterator[T]{
-  //var sem = new Semaphore(1)////////////////////
+class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T], val endfantom:PFDLLStorageElement[T], sem:Semaphore=null) extends Iterator[T]{
   def next():T = {
-    //sem.acquire()////////////////////
     CurrentKey = CurrentKey.next
     var tmp = CurrentKey.elem
     if(tmp == null) println("tmp est null")
-    //sem.release()////////////////////
+    if (sem != null) {
+      //println("iterator : release I")
+      sem.release()
+      //println("iterator : release O")
+    }
     tmp
   }
 
   def hasNext:Boolean = {
-    //sem.acquire()////////////////////
+    if(sem != null) {
+      //println("iterator : acquire I : " + sem)
+      sem.acquire()
+      //println("iterator : acquire O")
+    }
     val tmp = CurrentKey.next != endfantom && CurrentKey.next != null
-    //sem.release()////////////////////
-    tmp
+    if(tmp)
+      true
+    else {
+      sem.release()
+      false
+    }
+    //tmp
   }
 }
