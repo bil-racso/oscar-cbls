@@ -193,10 +193,15 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
 		   val vsup = vinf + (if (y > 0) 1 else 0)
 		   (es2(Iopt) + y * (vsup * vsup) + (m(Iopt) - y) * (vinf * vinf))
 	   }
+	
+	val v: Double = (sum - es(Iopt)) / m(Iopt)
+	
+	//minopt = scala.math.ceil(es2(Iopt) + m(Iopt) * v * v).toInt
+	
 	if (sum2.updateMin(minopt) == CPOutcome.Failure) {
 	  return CPOutcome.Failure 
 	}
-	val v: Double = (sum - es(Iopt)) / m(Iopt)
+	
 		
 	// --- step3: filtering of x(i)'s max ---
 	
@@ -228,6 +233,7 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
                   var xiZ = scala.math.floor(xiq+d2).toInt
                   
                   // Z-bound consistent pruning
+                  
                   val (mStar,esStar,es2Star) = updateValues(i,xiZ,I)
                   val y = (sum-esStar) % mStar
                   val vinf = ((sum-esStar) - y) / mStar
@@ -237,6 +243,7 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
                     deltaZ += 2 * (vsup-xiZ);
                     xiZ -= 1
                   }
+                  
                   x(i).updateMax(xiZ)
                 } 
                 else pruneMax(i,xiq+ d1, I-1)	        
