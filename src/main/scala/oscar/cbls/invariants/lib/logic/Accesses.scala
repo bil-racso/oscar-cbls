@@ -57,15 +57,15 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     if (v == ifVar){
       if(NewVal > 0 && OldVal <= 0){
-        output := thenVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(thenVar)
+        output := thenVar.value
       }else if(NewVal <= 0 && OldVal > 0){
-        output := elseVar.value
         //modifier le graphe de dependances
         unregisterDynamicDependency(KeyToCurrentVar)
         KeyToCurrentVar = registerDynamicDependency(elseVar)
+        output := elseVar.value
       }
     }else{//si c'est justement celui qui est affiche.
       output := NewVal
@@ -284,10 +284,10 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
   @inline
   override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
     assert(v == index)
-    output := inputarray(NewVal).value
     //modifier le graphe de dependances
     unregisterDynamicDependency(KeyToCurrentVar)
     KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
+    output := inputarray(NewVal).value
   }
 
   @inline
