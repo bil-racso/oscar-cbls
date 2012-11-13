@@ -1,5 +1,7 @@
 package oscar.cbls.routing.heuristic
 
+import oscar.cbls.routing.VRP
+
 /**
  * Created with IntelliJ IDEA.
  * User: Florent

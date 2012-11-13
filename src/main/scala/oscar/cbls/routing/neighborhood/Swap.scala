@@ -42,12 +42,12 @@ import oscar.cbls.routing._
 
 object Swap extends SearchEngine{
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    with Constraints,k:Int):Swap = findMove(false, vrp,k)
+    ,k:Int):Swap = findMove(false, vrp,k)
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    with Constraints,k:Int , startFrom:Neighbor = null):Swap = findMove(true,vrp,k,startFrom)
+   ,k:Int , startFrom:Neighbor = null):Swap = findMove(true,vrp,k,startFrom)
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-                       with PositionInRouteAndRouteNr with Constraints, k:Int,startFrom:Neighbor = null):Swap = {
+                       with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):Swap = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
@@ -63,13 +63,11 @@ object Swap extends SearchEngine{
           vrp.isASegment(beforeSecondSwapPoint,vrp.Next(beforeSecondSwapPoint).value) &&
           vrp.isASegment(vrp.Next(firstSwapPoint).value,beforeSecondSwapPoint)))
         {
-          if(!isStrongConstraintsViolated(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)){
-            val newObj = getObjAfterMove(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)
-            if (newObj < BestObj){
-              if (FirstImprove) return Swap(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
-              BestObj = newObj
-              move = ((beforeFirstSwapPoint, beforeSecondSwapPoint))
-            }
+          val newObj = getObjAfterMove(beforeFirstSwapPoint,beforeSecondSwapPoint, vrp)
+          if (newObj < BestObj){
+            if (FirstImprove) return Swap(beforeFirstSwapPoint,beforeSecondSwapPoint, newObj, vrp)
+            BestObj = newObj
+            move = ((beforeFirstSwapPoint, beforeSecondSwapPoint))
           }
         }
       }
@@ -82,12 +80,6 @@ object Swap extends SearchEngine{
     val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
       vrp.Next(predOfSecondSwappedPoint).value)
     toUpdate.foreach(t => t._1 := t._2)
-  }
-
-  def isStrongConstraintsViolated(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP with Constraints):Boolean = {
-    val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
-      vrp.Next(predOfSecondSwappedPoint).value)
-    vrp.isViolatedStrongConstraints(toUpdate)
   }
 
   /*

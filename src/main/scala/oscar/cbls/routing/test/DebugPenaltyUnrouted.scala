@@ -47,7 +47,7 @@ object DebugPenaltyUnrouted extends App{
   val matrix = getPlanarDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
   val m: Model = new Model(false,false,false,false)
   val vrp= new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with PenaltyForUnrouted
-    with OtherFunctionToObjective with Constraints
+    with OtherFunctionToObjective
 
   vrp.installCostMatrix(matrix)
   //vrp.fixUnroutedPenaltyWeight(100)

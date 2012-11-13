@@ -27,80 +27,102 @@ import math._
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-class Town(val name:String,val long:Double,val lat:Double)
+class Point(val name:String,val long:Double,val lat:Double)
 
 class InstanceVRP {
-  var towns:List[Town] = List.empty
+  var towns:List[Point] = List.empty
   val path = new File("").getAbsolutePath
   var file = Source.fromFile(path+"\\src\\main\\scala\\oscar\\cbls\\routing\\villesbelgique")
   for(line <- file.getLines()){
     val words = line.split(" ")
     if(words.length == 8)
-      towns = new Town(words(1).toString,words(6).toDouble,words(7).toDouble) :: towns
+      towns = new Point(words(1).toString,words(6).toDouble,words(7).toDouble) :: towns
   }
 }
 
 object InstanceVisualVRP{
 
-  def random(n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Town]={
+  def getInstance(vrp:VRP,n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point]=
+    n match {
+      case 0 => random(vrp.N,xMax,yMax)
+      case 1 => randomSameDepot(vrp.N,vrp.V,xMax,yMax)
+    }
+
+
+  def random(n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point]={
     var gen = new Random()
     if (seed != 0) {gen = new Random(seed)}
-    val randomTowns = new Array[Town](n)
+    val randomTowns = new Array[Point](n)
     for (i <- 0 until n){
-      randomTowns(i) = new Town(""+i,gen.nextInt(xMax)+50,gen.nextInt(yMax)+50)
+      randomTowns(i) = new Point(""+i,gen.nextInt(xMax)+50,gen.nextInt(yMax)+50)
     }
     randomTowns
-}
+  }
+
+  def randomSameDepot(n:Int,v:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point] = {
+    var gen = new Random()
+    if (seed != 0) {gen = new Random(seed)}
+    val randomTowns = new Array[Point](n)
+    val depot = new Point("Dépot",gen.nextInt(xMax)+50,gen.nextInt(yMax)+50)
+    for (i <- 0 until v) randomTowns(i) = depot
+    for (i <- v until n){
+      randomTowns(i) = new Point(""+i,gen.nextInt(xMax)+50,gen.nextInt(yMax)+50)
+    }
+    randomTowns
+  }
+
+
+
 }
 
 
 
 object InstanceVRP{
-  val towns:Array[Town] = new InstanceVRP().towns.toArray
+  val towns:Array[Point] = new InstanceVRP().towns.toArray
 
-  def random(n:Int):Array[Town]={
+  def random(n:Int):Array[Point]={
     val random = Random.shuffle(Range(0,towns.length))
-    val randomTowns:Array[Town] = new Array[Town](n)
+    val randomTowns:Array[Point] = new Array[Point](n)
     for(i <- Range(0,n)) randomTowns(i) = towns(random(i))
     randomTowns
   }
 
-  def instance_1(n:Int):Array[Town] = {
+  def instance_1(n:Int):Array[Point] = {
     assert(n<towns.length/2)
     val seed = 0
-    val instanceTowns = new Array[Town](n)
+    val instanceTowns = new Array[Point](n)
     val range = (seed until seed+n).map(x => 2*x)
     for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
-  def instance_2(n:Int):Array[Town] = {
+  def instance_2(n:Int):Array[Point] = {
     assert(n<(towns.length-1000)/2)
     val seed = 1000
-    val instanceTowns = new Array[Town](n)
+    val instanceTowns = new Array[Point](n)
     val range = (seed until seed +n).map(x => 2*x)
     for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
    }
-  def instance_3(n:Int):Array[Town] = {
+  def instance_3(n:Int):Array[Point] = {
     assert(n<(towns.length-500)/3)
     val seed = 500
-    val instanceTowns = new Array[Town](n)
+    val instanceTowns = new Array[Point](n)
     val range = (seed until seed+n).map(x => 3*x)
     for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
-  def instance_4(n:Int):Array[Town] = {
+  def instance_4(n:Int):Array[Point] = {
     assert(n<(towns.length-500)/4)
     val seed = 500
-    val instanceTowns = new Array[Town](n)
+    val instanceTowns = new Array[Point](n)
     val range = (seed until seed+n).map(x => 4*x)
     for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns
   }
-  def instance_5(n:Int):Array[Town] = {
+  def instance_5(n:Int):Array[Point] = {
     assert(towns.length> (n*n))
     val seed = 0
-    val instanceTowns = new Array[Town](n)
+    val instanceTowns = new Array[Point](n)
     val range = (seed until seed+n).map(x => x*x)
     for (i <- 0 until n) instanceTowns(i) = towns(range(i))
     instanceTowns

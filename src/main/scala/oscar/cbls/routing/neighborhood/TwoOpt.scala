@@ -38,14 +38,14 @@ import oscar.cbls.invariants.core.computation.IntVar
   */
 
 object TwoOpt extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
                   ,k:Int):TwoOpt = findMove(false, vrp,k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int,startFrom:Neighbor = null):TwoOpt = findMove(true,vrp,k,startFrom)
 
 
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with Constraints, k:Int,startFrom:Neighbor = null):TwoOpt = {
+    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOpt = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
@@ -55,13 +55,11 @@ object TwoOpt extends SearchEngine{
           && firstEdge!=vrp.Next(secondEdge).value &&  secondEdge!=vrp.Next(firstEdge).value)
           && vrp.onTheSameRoute(firstEdge,secondEdge))
       {
-        if (!isStrongConstraintsViolated(firstEdge,secondEdge, vrp)){
-          val newObj = getObjAfterMove(firstEdge,secondEdge, vrp)
-          if (newObj < BestObj){
-            if (FirstImprove) return TwoOpt(firstEdge,secondEdge, newObj, vrp)
-              BestObj = newObj
-            move = ((firstEdge, secondEdge))
-          }
+        val newObj = getObjAfterMove(firstEdge,secondEdge, vrp)
+        if (newObj < BestObj){
+          if (FirstImprove) return TwoOpt(firstEdge,secondEdge, newObj, vrp)
+          BestObj = newObj
+          move = ((firstEdge, secondEdge))
         }
       }
     }
@@ -74,15 +72,11 @@ object TwoOpt extends SearchEngine{
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  def isStrongConstraintsViolated(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction with Constraints):Boolean = {
-    val toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
-    vrp.isViolatedStrongConstraints(toUpdate)
-  }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
-  def getObjAfterMove(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction with Constraints):Int = {
+  def getObjAfterMove(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction ):Int = {
     val toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
     vrp.getAssignVal(toUpdate)
    }

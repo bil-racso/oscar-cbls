@@ -34,9 +34,9 @@ import oscar.cbls.routing._
  */
 
 object OnePointMove extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
+  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int):OnePointMove = findMove(false, vrp,k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr with Constraints,
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int , startFrom:Neighbor = null):OnePointMove = findMove(true,vrp,k,startFrom)
 
 
@@ -46,7 +46,7 @@ object OnePointMove extends SearchEngine{
    * @param vrp the model of the problem
    */
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with Constraints, k:Int,startFrom:Neighbor = null):OnePointMove = {
+    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):OnePointMove = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
@@ -56,14 +56,12 @@ object OnePointMove extends SearchEngine{
       for(insertionPoint <- vrp.getKNearestNeighbors(k,beforeMovedPoint) if (vrp.isRouted(insertionPoint)
         && beforeMovedPoint != insertionPoint && movedPoint != insertionPoint)){
           if(!vrp.isADepot(movedPoint) || (vrp.isADepot(movedPoint) && vrp.onTheSameRoute(movedPoint,insertionPoint))){
-            if(!isStrongConstraintsViolated(beforeMovedPoint,insertionPoint, vrp)){
-              val newObj = getObjAfterMove(beforeMovedPoint,insertionPoint, vrp)
-              if (newObj < BestObj){
-                if (FirstImprove) return OnePointMove(beforeMovedPoint,insertionPoint, newObj, vrp)
-                BestObj = newObj
-                move = ((beforeMovedPoint, insertionPoint))
-              }
-             }
+            val newObj = getObjAfterMove(beforeMovedPoint,insertionPoint, vrp)
+            if (newObj < BestObj){
+              if (FirstImprove) return OnePointMove(beforeMovedPoint,insertionPoint, newObj, vrp)
+              BestObj = newObj
+              move = ((beforeMovedPoint, insertionPoint))
+            }
           }
         }
     }
@@ -75,11 +73,6 @@ object OnePointMove extends SearchEngine{
      val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
      toUpdate.foreach(t => t._1 := t._2)
    }
-
-  def isStrongConstraintsViolated(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with Constraints):Boolean = {
-    val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
-    vrp.isViolatedStrongConstraints(toUpdate)
-  }
 
   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.

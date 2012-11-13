@@ -50,11 +50,11 @@ object DebugRoute extends App{
 
   var m: Model = new Model(false,true,false,false)
   var Next: Array[IntVar] = Array.tabulate(NbPoints)(i => if(i<NbCars) new IntVar(m, i, NbPoints-1, i, "next" + i)
-    else new IntVar(m, 0, NbPoints, i, "next" + i))
-   /**
+  else new IntVar(m, 0, NbPoints, i, "next" + i))
+  /**
    * Initialisation des variables Next modélisant le cycle actuel
    */
-   def init{
+  def init{
     // 0->1->2->3->4->5->0
     Next(0):= 1
     Next(1):= 2
@@ -191,7 +191,7 @@ object DebugRoute extends App{
   NbCars = 2
   m = new Model(false,true,false,false)
   Next = Array.tabulate(NbPoints)(i => if(i<NbCars) new IntVar(m, i, NbPoints-1, i, "next" + i)
-    else new IntVar(m, 0, NbPoints, i, "next" + i))
+  else new IntVar(m, 0, NbPoints, i, "next" + i))
 
   /**
    * Initialisation des variables Next modélisant le cycle actuel

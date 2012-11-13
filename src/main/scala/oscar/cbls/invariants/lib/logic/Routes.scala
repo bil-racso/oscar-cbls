@@ -1,27 +1,27 @@
 package oscar.cbls.invariants.lib.logic
 
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+  * This file is part of OscaR (Scala in OR).
+  *
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+  ******************************************************************************/
 
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
@@ -39,12 +39,12 @@ import javax.swing.JOptionPane
  * @param V the number of vrp to consider V>=1 and V<=N
  */
 
-  case class Routes(V: Int,
-                    Next:Array[IntVar],
-                    PositionInRoute:Array[IntVar],
-                    RouteNr:Array[IntVar],
-                    RouteLength:Array[IntVar],
-                    LastInRoute:Array[IntVar]) extends Invariant {
+case class Routes(V: Int,
+                  Next:Array[IntVar],
+                  PositionInRoute:Array[IntVar],
+                  RouteNr:Array[IntVar],
+                  RouteLength:Array[IntVar],
+                  LastInRoute:Array[IntVar]) extends Invariant {
   val UNROUTED = Next.length
   val ArrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(Next)
   finishInitialization()
@@ -106,7 +106,7 @@ import javax.swing.JOptionPane
 
   @inline
   final def isUpToDate(node:Int):Boolean = {
-      ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
+    ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
       && ((PositionInRoute(node).getValue(true) + 1)% Next.length == PositionInRoute(Next(node).value).getValue(true)))
   }
 
@@ -150,8 +150,8 @@ import javax.swing.JOptionPane
       nextNode = Next(currentNode).value
     }
     if (nextNode<V){
-     LastInRoute(nextNode) := currentNode
-     RouteLength(nextNode) := PositionInRoute(currentNode).getValue(true) + 1
+      LastInRoute(nextNode) := currentNode
+      RouteLength(nextNode) := PositionInRoute(currentNode).getValue(true) + 1
     }
   }
 
@@ -173,7 +173,7 @@ import javax.swing.JOptionPane
         assert(RouteNr(n).value == UNROUTED)
         assert(PositionInRoute(n).value == UNROUTED)
       }
-     }
+    }
   }
 }
 object Routes{

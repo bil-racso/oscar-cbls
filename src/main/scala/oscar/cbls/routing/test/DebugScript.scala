@@ -68,7 +68,7 @@ object DebugScript extends SearchEngine with App{
   val N2:Int = 9
   var m: Model = new Model(false,false,false,false)
   var vrp = new VRP(N2, 1, m) with HopDistance with PositionInRouteAndRouteNr with ClosestNeighborPoints with PenaltyForUnrouted
-    with OtherFunctionToObjective with Constraints
+    with OtherFunctionToObjective
 
   vrp.installCostMatrix(matrix)
   vrp.fixUnroutedPenaltyWeight(8,-100)

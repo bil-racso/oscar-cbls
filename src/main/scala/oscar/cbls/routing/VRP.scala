@@ -48,6 +48,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     else new IntVar(m, 0, N, i, "next" + i))
   //for(v <- 0 until V){Next(v) := v}
   val Nodes = 0 until N
+  val Vehicles = 0 until V
 
   /**
    * Redefine the toString method.
@@ -289,6 +290,8 @@ trait WeightedNode extends VRP {
 }
 
 
+
+
 /**
  * Maintains a penalty weight for unrouted nodes.
  */
@@ -314,7 +317,6 @@ trait Predecessors extends VRP{
   val preds = Predecessor(Next)
 }
 
-
 /**
  * Maintains the position of nodes in the routes, the route number of each node,
  * the length of each route and their last node.
@@ -335,6 +337,18 @@ trait PositionInRouteAndRouteNr extends VRP {
   def isAtLeastAsFarAs(fromNode:Int, toNode:Int, n:Int):Boolean = {
     RouteNr(fromNode).value == RouteNr(toNode).value &&
       PositionInRoute(fromNode).value + n  <= PositionInRoute(toNode).value
+  }
+
+  /**
+   * Tells if fromNode to toNode forms a segment of route of n maximum length.
+   * @param fromNode the start of route.
+   * @param toNode the end of route.
+   * @param n the maximum length of route.
+   * @return if fromNode to toNode forms a segment of route of n maximum length.
+   */
+  def isAtMostAsFarAs(fromNode:Int,toNode:Int,n:Int):Boolean = {
+    RouteNr(fromNode).value == RouteNr(toNode).value &&
+      PositionInRoute(fromNode).value + n  >= PositionInRoute(toNode).value
   }
 
   /**
@@ -426,8 +440,6 @@ trait SymmetricVRP extends HopDistance{
 }
 
 
-
-
 /**
  * Declares an objective function, attached to the VRP.
 */
@@ -435,7 +447,6 @@ trait ObjectiveFunction extends VRP with ObjectiveTrait{
   // Initialize the objective function with 0 as value
   // allow negative objective value
   setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
-
 }
 
 /**
@@ -472,7 +483,6 @@ trait HopDistance extends VRP {
 */
 trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
   ObjectiveVar <== overallDistance
-
 }
 
 /**
@@ -499,40 +509,26 @@ trait OtherFunctionToObjective extends ObjectiveFunction {
  * Trait maintains the weak and strong constraints systems.
  * Helps to build correctly departure's heuristics.
  */
-trait Constraints extends VRP with ObjectiveTrait with OtherFunctionToObjective{
+trait StrongConstraints extends ObjectiveFunction {
   var strongConstraints:ConstraintSystem = null
-  var weakConstraints:ConstraintSystem = null
   var violatedStrongConstraints = false
 
-  def setStrongConstraints(sc:ConstraintSystem) {strongConstraints = sc; recordAddedFunction(strongConstraints.violation)}
-  def setWeakConstraints(wc:ConstraintSystem) {weakConstraints = wc;recordAddedFunction(weakConstraints.violation)}
-
-  def isViolatedStrongConstraints(a: IntVar, v: Int):Boolean = isViolatedStrongConstraints(Array[(IntVar,Int)]((a,v)))
-  def isViolatedStrongConstraints(a: Iterable[(IntVar, Int)]):Boolean = {
-    propagateStrongConstraints(a)
-    violatedStrongConstraints
+  def setStrongConstraints(sc:ConstraintSystem) {strongConstraints = sc}
+  def updateViolatedStrongConstraints {
+    if(strongConstraints == null) violatedStrongConstraints  = false
+    else
+      violatedStrongConstraints = !strongConstraints.isTrue
   }
-
-  def propagateStrongConstraints(a: IntVar, v: Int) {propagateStrongConstraints(Array[(IntVar,Int)]((a,v)))}
-  def propagateStrongConstraints(a: Iterable[(IntVar, Int)]) {
-    def updateViolatedStrongConstraints {
-      if(strongConstraints == null) violatedStrongConstraints  = false
-      else
-        violatedStrongConstraints = !strongConstraints.isTrue
-    }
-    val oldValues: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
-      (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
-    for (assign <- a) {
-      assign._1 := assign._2
-    }
-    // update only the violation of constraints (partial propagation)
+  override def propagateObjective:Int = {
     updateViolatedStrongConstraints
-    //undo
-    for (assign <- oldValues) {
-      assign._1 := assign._2
-    }
-   }
+    if (violatedStrongConstraints) Int.MaxValue else ObjectiveVar.value
+  }
+}
 
+trait WeakConstraints extends OtherFunctionToObjective {
+  var weakConstraints:ConstraintSystem = null
+
+  def setWeakConstraints(wc:ConstraintSystem) {weakConstraints = wc;recordAddedFunction(weakConstraints.violation)}
 }
 
 

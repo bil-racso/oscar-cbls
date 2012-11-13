@@ -40,21 +40,22 @@ import scala.util.Random
   */
 
 object RemovePoint extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):RemovePoint = findMove(false,false, vrp)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints, startFrom:Neighbor = null):RemovePoint
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):RemovePoint = findMove(false,false, vrp)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):RemovePoint
   = findMove(true,false,vrp,startFrom)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):RemovePoint = findMove(false,true,vrp)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):RemovePoint = findMove(false,true,vrp)
 
 
-  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
     if(random){
       val toUnroute = Random.shuffle(Range(vrp.V,vrp.N))
       for (beforeRemovePoint <- toUnroute if(vrp.isRouted(beforeRemovePoint))){
-        if(!isStrongConstraintsViolated(beforeRemovePoint,vrp.Next(beforeRemovePoint).value, vrp)){
+        val obj = getObjAfterMove(beforeRemovePoint,vrp.Next(beforeRemovePoint).value,vrp)
+        if(obj != Int.MaxValue){
           move = (beforeRemovePoint,vrp.Next(beforeRemovePoint).value)
-          return RemovePoint(move._1,move._2,getObjAfterMove(move._1,move._2,vrp),vrp)
+          return RemovePoint(move._1,move._2,obj,vrp)
         }
       }
       return null
@@ -66,13 +67,11 @@ object RemovePoint extends SearchEngine{
         !vrp.isADepot(vrp.Next(beforeRemovedPoint).value)))
       {
         val removedPoint = vrp.Next(beforeRemovedPoint).value
-        if(!isStrongConstraintsViolated(beforeRemovedPoint,removedPoint, vrp)){
-          val newObj = getObjAfterMove(beforeRemovedPoint,removedPoint, vrp)
-          if (newObj < BestObj){
-            if (FirstImprove) return RemovePoint(beforeRemovedPoint,removedPoint, newObj, vrp)
-            BestObj = newObj
-            move = ((beforeRemovedPoint, removedPoint))
-          }
+        val newObj = getObjAfterMove(beforeRemovedPoint,removedPoint, vrp)
+        if (newObj < BestObj){
+          if (FirstImprove) return RemovePoint(beforeRemovedPoint,removedPoint, newObj, vrp)
+          BestObj = newObj
+          move = ((beforeRemovedPoint, removedPoint))
         }
       }
       if (move == null) null
@@ -85,12 +84,7 @@ object RemovePoint extends SearchEngine{
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  def isStrongConstraintsViolated(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with Constraints):Boolean = {
-    val toUpdate = vrp.remove(List((beforeRemovedPoint,removedPoint)))
-    vrp.isViolatedStrongConstraints(toUpdate)
-  }
-
-  /*
+   /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
   def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):Int = {

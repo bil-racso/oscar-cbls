@@ -39,18 +39,18 @@ import scala.util.Random
   */
 
 object ReinsertPoint extends SearchEngine{
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints, startFrom:Neighbor = null):ReinsertPoint
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):ReinsertPoint
   = findMove(true,false,vrp,startFrom)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):ReinsertPoint = findMove(false,true,vrp)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):ReinsertPoint = findMove(false,true,vrp)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,true,vrp,startFrom,vehicle,true)
 
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints):ReinsertPoint = findMove(false,false, vrp)
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):ReinsertPoint = findMove(false,false, vrp)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,false, vrp,startFrom,vehicle,true)
 
 
-  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints,
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
                        startFrom:Neighbor = null, vehicle:Int =0, onlyFrom:Boolean=false):ReinsertPoint = {
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) vehicle else startFrom.startNodeForNextExploration
@@ -60,9 +60,12 @@ object ReinsertPoint extends SearchEngine{
         val toRoute = Random.shuffle(vrp.Unrouted.value)
         toRoute.foreach(i =>
           {
-            if(!isStrongConstraintsViolated(p,i, vrp)){
+            val obj = getObjAfterMove(p,i,vrp)
+            if(obj != Int.MaxValue){
+              println(obj)
+              println(Int.MaxValue)
               move = (p,i)
-              return ReinsertPoint(move._1,move._2,getObjAfterMove(move._1,move._2,vrp),vrp)
+              return ReinsertPoint(move._1,move._2,obj,vrp)
             }
           })
       }
@@ -75,18 +78,16 @@ object ReinsertPoint extends SearchEngine{
       for (beforeReinsertedPoint <- if (!onlyFrom) (0 until vrp.N startBy hotRestart) else Range(hotRestart,hotRestart+1)
         if vrp.isRouted(beforeReinsertedPoint)){
           for(reinsertedPoint <- vrp.Unrouted.value){
-            if(!isStrongConstraintsViolated(beforeReinsertedPoint,reinsertedPoint, vrp)){
-              val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
-              if (newObj < BestObj){
-                if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
-                BestObj = newObj
-                move = (beforeReinsertedPoint, reinsertedPoint)
-              }
-              else if (!FirstImprove && newObj < LeastWorstObj && BestObj == vrp.ObjectiveVar.value){
-                LeastWorstObj = newObj
-                move = (beforeReinsertedPoint, reinsertedPoint)
-              }
+            val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
+            if (newObj < BestObj){
+              if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
+              BestObj = newObj
+              move = (beforeReinsertedPoint, reinsertedPoint)
             }
+            else if (!FirstImprove && newObj < LeastWorstObj && BestObj == vrp.ObjectiveVar.value){
+              LeastWorstObj = newObj
+              move = (beforeReinsertedPoint, reinsertedPoint)
+             }
           }
         }
       if (move == null) null
@@ -97,11 +98,6 @@ object ReinsertPoint extends SearchEngine{
     def doMove(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP){
     val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
     toUpdate.foreach(t => t._1 := t._2)
-  }
-
-  def isStrongConstraintsViolated(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP with Constraints):Boolean = {
-    val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
-    vrp.isViolatedStrongConstraints(toUpdate)
   }
 
   /*

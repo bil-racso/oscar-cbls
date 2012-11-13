@@ -33,7 +33,7 @@ import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
 object NearestNeighbor extends Heuristic{
 
 
-  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with Constraints with PositionInRouteAndRouteNr
+  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with PositionInRouteAndRouteNr
              with HopDistance){
     val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
     for (v <- 0 until vrp.V)

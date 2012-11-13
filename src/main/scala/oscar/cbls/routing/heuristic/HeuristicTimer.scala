@@ -34,7 +34,7 @@ import java.util.concurrent.Semaphore
 object HeuristicTimer{
   val heuristicTimer = new TimerAverage
 
-  def getPercentComplete = { heuristicTimer.getPercentComplete }
+  def getPercentComplete = {heuristicTimer.getPercentComplete}
   def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p}
   def lock {heuristicTimer.lock.acquire()}
   def unlock {heuristicTimer.lock.release()}

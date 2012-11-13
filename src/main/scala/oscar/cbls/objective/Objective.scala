@@ -47,7 +47,7 @@ trait ObjectiveTrait {
    */
   def getSwapVal(a: IntVar, b: IntVar): Int = {
     a :=: b
-    val NewVal = ObjectiveVar.value
+    val NewVal = propagateObjective
     a :=: b
     NewVal
   }
@@ -69,20 +69,17 @@ trait ObjectiveTrait {
    */
   def getAssignVal(a: Iterable[(IntVar, Int)]): Int = {
     //memorize
-
     val oldvals: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
       (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
-
     //excurse
-    for (assign <- a) {
+    for (assign <- a)
       assign._1 := assign._2
-    }
-    val NewVal = ObjectiveVar.value
-
+    val newObj = propagateObjective
     //undo
-    for (assign <- oldvals) {
+    for (assign <- oldvals)
       assign._1 := assign._2
-    }
-    NewVal
+    newObj
   }
+
+  def propagateObjective = ObjectiveVar.value
 }

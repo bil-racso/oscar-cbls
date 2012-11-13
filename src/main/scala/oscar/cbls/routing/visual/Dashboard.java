@@ -335,7 +335,7 @@ public class Dashboard extends JPanel {
     }
 
     public void setInstances(){
-        instances = new JComboBox(new String[]{"Random","Fixed-1","Fixed-2","Fixed-3","Fixed-4","Fixed-5"});
+        instances = new JComboBox(new String[]{"Random (several deposits)","Random (single deposit)"});
         instances.setBackground(Color.white);
         JPanel instancesPanel = new JPanel();
         instancesPanel.add(instances);

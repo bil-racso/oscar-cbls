@@ -52,9 +52,10 @@ class ModelVRP() extends StopWatch{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-    /*with SymmetricVRP*/ with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective with Constraints
-    with WeightedNode = null
-  var towns:Array[Town] = null
+    with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective  with WeightedNode with WeakConstraints
+    with StrongConstraints = null
+
+  var towns:Array[Point] = null
   var distMatrix : Array[Array[Int]]= null
   var arrows :Array[VisualArrow]=  null
   var strongConstraintSystem:ConstraintSystem = null
@@ -87,13 +88,13 @@ class ModelVRP() extends StopWatch{
       clonedNext(i) = vrp.Next(i).value
   }
 
-  def getInstance(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Town] = {
+  def getInstance(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Point] = {
     boardPanel.instances.getSelectedIndex match{
-      case n => {InstanceVisualVRP.random(N,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
+      case n => {InstanceVisualVRP.getInstance(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
     }
   }
 
-  def getDistMatrix(towns : Array[Town]):Array[Array[Int]] = {
+  def getDistMatrix(towns : Array[Point]):Array[Array[Int]] = {
     Array.tabulate(N,N)((i,j) => round(sqrt((pow(towns(i).long - towns(j).long, 2)
       + pow(towns(i).lat - towns(j).lat, 2) ).toFloat)).toInt )
   }
@@ -111,8 +112,8 @@ class ModelVRP() extends StopWatch{
     closeNeighbor = boardPanel.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints /*with SymmetricVRP*/ with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective
-      with WeightedNode with Constraints
+      with ClosestNeighborPoints with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective
+      with WeightedNode with WeakConstraints with StrongConstraints
 
     // constraints definition
     strongConstraintSystem = new ConstraintSystem(m)
@@ -131,16 +132,6 @@ class ModelVRP() extends StopWatch{
       weakConstraintSystem.post(EQ(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
       weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
     }
-
-    // Example of constraint on no routed nodes (penalty of 1000 for each unrouted node).
-    /*
-    val penaltyUnrouted = 1000
-    vrp.fixUnroutedPenaltyWeight(penaltyUnrouted)
-    // easy to fix another penalty on given nodes.
-    //val givenNode =
-    //vrp.fixUnroutedPenaltyWeight(2*penaltyUnrouted,givenNode)
-    vrp.recordAddedFunction(vrp.UnroutedPenalty)
-    */
 
     if(boardPanel.strongCButton.isSelected)
       vrp.setStrongConstraints(strongConstraintSystem)

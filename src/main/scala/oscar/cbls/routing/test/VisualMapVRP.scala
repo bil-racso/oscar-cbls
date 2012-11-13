@@ -75,8 +75,8 @@ object VisualMapVRP extends App{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr
-    with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted with Constraints = null
-  var arrayTowns:Array[Town] = null
+    with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted = null
+  var arrayTowns:Array[Point] = null
   var wayPoints :Array[Location] = null
   var lines :Array[MapLine]= null
   var distMatrix :Array[Array[Int]]= null
@@ -119,7 +119,7 @@ object VisualMapVRP extends App{
 
   // get easier the neighborhood selected
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with SymmetricVRP with PenaltyForUnrouted with Constraints,
+    with PositionInRouteAndRouteNr with SymmetricVRP with PenaltyForUnrouted ,
                             closeNeighbors:Int, previousMove:Neighbor):Neighbor = {
     board.neighborhood.getSelectedIndex match{
       case 0 => OnePointMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
@@ -141,7 +141,7 @@ object VisualMapVRP extends App{
     closeNeighbor = board.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted with Constraints
+      with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted
     try{
       arrayTowns = {
         board.instances.getSelectedIndex match {

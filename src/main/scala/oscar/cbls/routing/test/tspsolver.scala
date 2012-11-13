@@ -73,7 +73,8 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-  /*with SymmetricVRP*/  with Predecessors with PenaltyForUnrouted with Constraints with OtherFunctionToObjective
+  /*with SymmetricVRP*/  with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective with WeakConstraints
+    with StrongConstraints
   vrp.installCostMatrix(DistanceMatrix)
   vrp.saveKNearestPoints(20)
 
