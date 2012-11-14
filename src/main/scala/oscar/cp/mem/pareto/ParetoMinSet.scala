@@ -2,7 +2,11 @@ package oscar.cp.mem.pareto
 
 class ParetoMinSet[S] {
 
-  private val sortedPoint = Array.fill(2)(new OrderedLinkedList[S])  
+  private val objVals = Array.fill(2)(new OrderedLinkedList[ParetoPoint[S]])  
+  
+  private val divSurf = new OrderedLinkedList[ParetoPoint[S]]
+  private val intSurf = new OrderedLinkedList[ParetoPoint[S]]
+  
   private var currentPoint : ParetoPoint[S] = null
   
   def currentSol = currentPoint.sol
@@ -10,37 +14,36 @@ class ParetoMinSet[S] {
   def currentUB(obj: Int)  = currentPoint.upperValue(obj)
   def currentLB(obj: Int)  = currentPoint.lowerValue(obj)
 
-  def size: Int = sortedPoint(0).size
-
+  def size = objVals(0).size
   def isEmpty = (size == 0)
   
   def nextSol(obj : Int): Boolean = {
     
     if (currentPoint.objNode(obj).isLast) {
-      currentPoint = sortedPoint(obj).first.point
+      currentPoint = objVals(obj).first.value
       true
     }
     else {
-      currentPoint = currentPoint.objNode(obj).next.point
+      currentPoint = currentPoint.objNode(obj).next.value
       false
     }
   }
   
-  def bestSol(obj : Int) { currentPoint = sortedPoint(obj).first.point }
+  def bestSol(obj : Int) { currentPoint = objVals(obj).first.value }
   
-  def worstSol(obj : Int) { currentPoint = sortedPoint(obj).last.point }
+  def worstSol(obj : Int) { currentPoint = objVals(obj).last.value }
 
   def insert(objs: (Int, Int), sol: S): Boolean = {
     
     val wasEmpty = isEmpty
 
-    val nodeObj1 = sortedPoint(0) insert objs._1
-    val nodeObj2 = sortedPoint(1) insert objs._2
+    val nodeObj1 = objVals(0) insert (objs._1, null)
+    val nodeObj2 = objVals(1) insert (objs._2, null)
 
-    val newPoint = ParetoPoint(sol, nodeObj1, nodeObj2)
+    val newPoint = ParetoPoint[S](sol, nodeObj1, nodeObj2)
     
-    nodeObj1.point = newPoint
-    nodeObj2.point = newPoint
+    nodeObj1.value = newPoint
+    nodeObj2.value = newPoint
 
     if (wasEmpty) {
       currentPoint = newPoint
@@ -49,17 +52,17 @@ class ParetoMinSet[S] {
     else clean(newPoint)
   }
 
-  private def clean(newPoint: ParetoPoint[S]): Boolean = clean0(newPoint, sortedPoint(0).first, false)
-  private def clean0(newPoint: ParetoPoint[S], node: LinkedNode[S], change: Boolean): Boolean = {
+  private def clean(newPoint: ParetoPoint[S]): Boolean = clean0(newPoint, objVals(0).first, false)
+  private def clean0(newPoint: ParetoPoint[S], node: LinkedNode[ParetoPoint[S]], change: Boolean): Boolean = {
 
     if (node == null) change
-    else if (!newPoint.isDominating(node.point)) clean0(newPoint, node.next, change)
+    else if (!newPoint.isDominating(node.value)) clean0(newPoint, node.next, change)
     else {
       val nextNode = node.next  
       
       currentPoint = newPoint
-      sortedPoint(0).remove(node.point.objNode(0))
-      sortedPoint(1).remove(node.point.objNode(1))    
+      objVals(0).remove(node.value.objNode(0))
+      objVals(1).remove(node.value.objNode(1))    
       
       clean0(newPoint, nextNode, true)
     }
@@ -72,6 +75,16 @@ class ParetoMinSet[S] {
       p
     })
     points.sortBy(_.obj1)
+  }
+  
+  def bestDivSurf = {
+    val points = Array.fill(size)({
+      val p = currentPoint
+      nextSol(0)
+      p
+    }).sortBy(-_.divSurf)
+    
+    currentPoint = points(0)
   }
 }
 

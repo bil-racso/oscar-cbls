@@ -36,7 +36,17 @@ import java.io._
 
 object MO_TSP {
   
-  val visuOn = true
+  val bestPred0 = Array(46, 43, 42, 96, 51, 62, 8, 91, 56, 83, 14, 26, 75, 2, 16, 93, 58, 78, 89, 11, 71, 69, 97, 17, 80, 64, 85, 66, 33, 47, 88, 10, 36, 82, 61, 98, 4, 23, 29, 53, 70, 7, 45, 49, 31, 28, 92, 99, 5, 72, 86, 77, 87, 1, 6, 79, 19, 60, 73, 76, 50, 59, 0, 39, 3, 25, 57, 84, 63, 65, 13, 9, 67, 20, 18, 32, 22, 95, 52, 30, 68, 94, 54, 35, 81, 34, 24, 15, 41, 48, 44, 74, 27, 21, 12, 38, 55, 90, 37, 40)
+  val bestSucc0 = Array(62, 53, 13, 64, 36, 48, 54, 41, 6, 71, 31, 19, 94, 70, 10, 87, 14, 23, 74, 56, 73, 93, 76, 37, 86, 65, 11, 92, 45, 38, 79, 44, 75, 28, 85, 83, 32, 98, 95, 63, 99, 88, 2, 1, 90, 42, 0, 29, 89, 43, 60, 4, 78, 39, 82, 96, 8, 66, 16, 61, 57, 34, 5, 68, 25, 69, 27, 72, 80, 21, 40, 20, 49, 58, 91, 12, 59, 51, 17, 55, 24, 84, 33, 9, 67, 26, 50, 52, 30, 18, 97, 7, 46, 15, 81, 77, 3, 22, 35, 47)
+  val bestDist01 = 21282
+  val bestDist02 = 178446
+  
+  val bestPred1 = Array(94, 15, 10, 82, 61, 3, 83, 98, 33, 20, 92, 0, 62, 41, 5, 49, 77, 44, 43, 79, 89, 54, 21, 17, 8, 99, 70, 2, 7, 48, 47, 58, 14, 6, 60, 95, 71, 19, 39, 66, 16, 1, 88, 40, 35, 24, 64, 50, 85, 42, 81, 53, 69, 87, 76, 80, 93, 51, 75, 56, 26, 68, 30, 13, 36, 73, 4, 9, 25, 38, 11, 37, 52, 59, 29, 28, 23, 12, 46, 74, 78, 32, 63, 57, 72, 67, 65, 22, 86, 45, 27, 18, 84, 34, 97, 91, 90, 31, 96, 55)
+  val bestSucc1 = Array(11, 41, 27, 5, 66, 14, 33, 28, 24, 67, 2, 70, 77, 63, 32, 1, 40, 23, 91, 37, 9, 22, 87, 76, 45, 68, 60, 90, 75, 74, 62, 97, 81, 8, 93, 44, 64, 71, 69, 38, 43, 13, 49, 18, 17, 89, 78, 30, 29, 15, 47, 57, 72, 51, 21, 99, 59, 83, 31, 73, 34, 4, 12, 82, 46, 86, 39, 85, 61, 52, 26, 36, 84, 65, 79, 58, 54, 16, 80, 19, 55, 50, 3, 6, 92, 48, 88, 53, 42, 20, 96, 95, 10, 56, 0, 35, 98, 94, 7, 25)
+  val bestDist11 = 176436
+  val bestDist12 = 22141
+  
+  val visuOn = false
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
@@ -45,10 +55,11 @@ object MO_TSP {
   
   def main(args : Array[String]) {
     
-    for (i <- 1 to 1) {         
-      val results = solveTSP(2500, 4000)      
-      printToFile(new File("ids_results"+i+".txt"))(p => {
-        results.foreach(p.println)
+    for (i <- 2 to 3) {         
+      val results = solveTSP(200, 4000)  
+      val rPrint = results.map(e => e._1 + " " + e._2)
+      printToFile(new File("test_new"+i+".txt"))(p => {
+        rPrint.foreach(p.println)
       })      
     }
   }
@@ -111,7 +122,7 @@ object MO_TSP {
 
     val pMin = 15
     val pMax = 60
-    var p = 25
+    var p = 15
 
     var firstLns = true
 
@@ -122,6 +133,11 @@ object MO_TSP {
       if (firstLns) {
         println("Start LNS");
         firstLns = false
+              
+        val bestSol0 = new Sol(bestPred0, bestSucc0, bestDist01, bestDist02)
+        val bestSol1 = new Sol(bestPred1, bestSucc1, bestDist11, bestDist12)       
+        pareto insert ((bestSol0.dist1, bestSol0.dist2), bestSol0)
+        pareto insert ((bestSol1.dist1, bestSol1.dist2), bestSol1)
       }
 
       nRestart += 1
@@ -132,14 +148,15 @@ object MO_TSP {
 
       println("PARETO SIZE " + pareto.size)
 
-      if (nRestart < 100) improveObj(0)
-      else if (nRestart < 200) improveObj(1)
-      else {
+      //if (nRestart < 100) improveObj(0)
+      //else if (nRestart < 200) improveObj(1)
+      //else {
         cp.failLimit = 3000
         p = pMin
-        val obj = nextObj()
-        objRelax(obj, false)
-      }
+        diversif()
+        //val obj = nextObj()
+        //objRelax(obj, false)
+      //}
 
       if (visuOn) {
         visu1.updateRoute(pareto.currentSol.pred)
@@ -148,7 +165,7 @@ object MO_TSP {
         visu2.updateDist()
       }
 
-      relaxVariables(clusterRelax(p))
+      relaxVariables(pathRelax(p))
     }
 
     def handleNewSols(newSols: List[Sol], removed: Boolean): Boolean = newSols match {
@@ -187,6 +204,12 @@ object MO_TSP {
       cp.objective.currentObjective = obj
       objRelax(obj, false)
     }
+    
+    def diversif() {
+      pareto.bestDivSurf
+      val obj = nextObj()
+      objRelax(obj, false)
+    }
 
     def clusterRelax(p: Int): Array[Boolean] = {
       if (cp.objective.currentObjectiveIdx == 0) clusterRelax1(p)
@@ -200,6 +223,26 @@ object MO_TSP {
       val dist = distMatrix1(c)(sortedByDist(p))
 
       Array.tabulate(nCities)(i => distMatrix1(c)(i) <= dist)
+    }
+    
+    def pathRelax(p : Int): Array[Boolean] = {
+      
+      val c = nextInt(nCities)
+      val selected = Array.fill(nCities)(false)
+      selected(c) = true
+      
+      for (i <- 1 until p) {
+        
+        val sel = Cities.filter(i => selected(i))
+        val rem = Cities.filter(i => !selected(i))
+        
+        val c  = sel(nextInt(sel.size))
+        val cc = if (cp.objective.currentObjectiveIdx == 0) rem.sortBy(i => distMatrix1(c)(i)).head
+        else rem.sortBy(i => distMatrix2(c)(i)).head
+       
+        selected(cc) = true
+      }      
+      selected
     }
 
     def clusterRelax2(p: Int): Array[Boolean] = {

@@ -2,20 +2,27 @@ package oscar.cp.mem
 
 import scala.collection.mutable.Queue
 import scala.collection.mutable.Set
+import scala.Math.Pi
+
+import oscar.cp.modeling._
+import oscar.cp.core._
+import oscar.search.IDSSearchController
+import oscar.cp.mem.visu.VisualRelax
+import oscar.cp.mem.visu.VisualRelax
+import oscar.cp.constraints.TONOTCOMMIT
+import oscar.cp.mem.tsp.ChannelingPredSucc
+import oscar.cp.mem.tsp.VehicleChanneling
+
+// Imported functions
+import oscar.cp.mem.RoutingUtils.regretHeuristic
+import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
+import oscar.cp.mem.VRPTWParser.parse
+import oscar.util.selectMin
 import scala.util.Random.nextFloat
 import scala.util.Random.nextInt
 import scala.Math.max
 import scala.Math.pow
 import scala.Math.atan2
-import scala.Math.Pi
-import oscar.util._
-import oscar.cp.modeling._
-import oscar.cp.core._
-import oscar.cp.mem.VRPTWParser.parse
-import oscar.search.IDSSearchController
-import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.constraints.TONOTCOMMIT
 
 /**
  * VRPTW
@@ -24,11 +31,15 @@ import oscar.cp.constraints.TONOTCOMMIT
  */
 
 object VRPTW extends App {
+  
+  // ------------------------------------------------------------------------
+  // DATA AND PARSING
+  // ------------------------------------------------------------------------
 
   val instance = parse("data/VRPTW/Solomon/C101.txt")
 
   // Distance scaling
-  val scale = 1000
+  val scale = 100
 
   // Data
   val nCustomers = instance.n
@@ -42,10 +53,10 @@ object VRPTW extends App {
   val FirstDepots = nCustomers until nCustomers + nVehicles
   val LastDepots = nCustomers + nVehicles until nCustomers + 2 * nVehicles
 
-  val demand = new Array[Int](nSites) // Demand of each customer
-  val twStart = new Array[Int](nSites) // Earliest delivery time of each customer
-  val twEnd = new Array[Int](nSites) // Latest delivery time of each customer
-  val servDur = new Array[Int](nSites) // Duration needed to serve each customer
+  val demand = new Array[Int](nSites) 
+  val twStart = new Array[Int](nSites) 
+  val twEnd = new Array[Int](nSites)
+  val servDur = new Array[Int](nSites)
 
   val coord = new Array[(Int, Int)](nSites)
 
@@ -67,24 +78,24 @@ object VRPTW extends App {
   for (c1 <- Sites; c2 <- Sites) {
     val i = if (c1 >= nCustomers) 0 else c1 + 1
     val j = if (c2 >= nCustomers) 0 else c2 + 1
-    dist(c1)(c2) = (instance.dist(i)(j) * scale).toInt
+    dist(c1)(c2) = (instance.dist(i)(j) * scale).round.toInt
     realDist(c1)(c2) = (instance.dist(i)(j))
   }
 
   val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
 
-  // Model
+  // ------------------------------------------------------------------------
+  // MODEL
+  // ------------------------------------------------------------------------
+
   val cp = CPSolver()
 
-  val pred = Array.fill(nSites)(CPVarInt(cp, Sites)) // Predecessor
-  val succ = Array.fill(nSites)(CPVarInt(cp, Sites)) // Successor 
-  val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles)) // Route of each vehicle
-  val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon)) // Date of service of each site
-
+  val pred = Array.fill(nSites)(CPVarInt(cp, Sites)) 
+  val succ = Array.fill(nSites)(CPVarInt(cp, Sites))  
+  val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles))
+  val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon))
   val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
-
   val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
-  val totTard = CPVarInt(cp, Horizon)
 
   // ------------------------------------------------------------------------
   // LNS BLOCK
@@ -102,72 +113,42 @@ object VRPTW extends App {
   val pMax = 35
   var p = pMin
 
-  val tabuRelax = Set[Array[Boolean]]()
-  var relaxOk = false
-
   var firstLns = true
-
   //cp.sc = new IDSSearchController(cp, 4)
   var adaptable = false
-  var regretSearch = false
+  var regretOn = true
 
-  cp.failLimit = 5
-  /*cp.lns(500, 1000) {
+  cp.lns(500, 100) {
 
     nRestart += 1
 
+    // First LNS
     if (firstLns) {
       println("Start LNS")
       firstLns = false
-      regretSearch = true
+      regretOn = true
     }
 
+    // Stagnation
     if (stagnation) {
       nStagnation += 1
     } else {
-      // Reset stagnation
       stagnation = true
       nStagnation = 0
       p = pMin + (p-pMin)/2
-      // Reset Tabu relax
-      tabuRelax.clear()
     }
-
-    if (nStagnation == 10) {
-      nStagnation = 0
-      p += 1
-      if (p > pMax) p = pMax
-      // If p increase, tabuRelax is not relevant
-      tabuRelax.clear
-    }
-
-    if (adaptable) adaptFailure()
 
     val nextRelax = 2
 
-    var sel: Array[Boolean] = null
-    
-    relaxOk = false
-    while (!relaxOk) {
-      
-      sel = nextRelax match {
-        // Customer-based Adaptive Temporal Decomposition
-        case 0 => catd(p)
-        // Customer-based Adaptive Spatial Decomposition
-        case 1 => casd(p)
-        // Relatedness Shaw relaxation
-        case 2 => shaw(p, 15)
-      }
-      
-      if (!tabuRelax.contains(sel)) {
-        relaxOk = true
-        // Warning ! must be added only if R (not !) in order to consider random exploration 
-        tabuRelax add sel
-      }
-    }
-    
-    relaxVariables(sel)
-  }*/
+    relaxVariables(nextRelax match {
+      // Customer-based Adaptive Temporal Decomposition
+      case 0 => catd(p)
+      // Customer-based Adaptive Spatial Decomposition
+      case 1 => casd(p)
+      // Relatedness Shaw relaxation
+      case 2 => shaw(p, 15)
+    })
+  }
 
   // ------------------------------------------------------------------------
   // PREPROCESSING AND USEFUL FUNCTIONS
@@ -203,27 +184,9 @@ object VRPTW extends App {
     if (newAngle < 0) 360 - (alpha - angle) else newAngle
   }
 
-  def solFound {
-
-    stagnation = false
-    
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value), vehicle.map(_.value), totDist.value)
-
-    visu.updateRoute(currentSol.pred)
-    visu.updateDist()
-  }
-
   // ------------------------------------------------------------------------
   // RELAXATION PROCEDURES
   // ------------------------------------------------------------------------
-
-  def adaptFailure() {
-
-    if (!cp.isLastLNSRestartCompleted)
-      cp.failLimit = (cp.failLimit * 110) / 100
-    else
-      cp.failLimit = max(10, (cp.failLimit * 90) / 100)
-  }
 
   def shaw(p: Int, beta: Int): Array[Boolean] = {
 
@@ -315,22 +278,26 @@ object VRPTW extends App {
 
     visu.updateSelected(selected)
     visu.updateRestart(nRestart)
-
     val constraints: Queue[Constraint] = Queue()
 
-    for (i <- Sites) {
-      if (!selected(i)) {
+    for (i <- Sites; if !selected(i)) {
+      
+      constraints enqueue (vehicle(i) == currentSol.vehicle(i))
+      
+      if (!selected(currentSol.pred(i))) 
+        constraints enqueue (pred(i) == currentSol.pred(i))
 
-        constraints enqueue (vehicle(i) == currentSol.vehicle(i))
-
-        if (!selected(currentSol.pred(i))) {
-          constraints enqueue (pred(i) == currentSol.pred(i))
-        }
-        if (!selected(currentSol.succ(i)))
-          constraints enqueue (succ(i) == currentSol.succ(i))
-      }
+      if (!selected(currentSol.succ(i)))
+        constraints enqueue (succ(i) == currentSol.succ(i))
     }
     cp.post(constraints.toArray)
+  }
+  
+  def solFound() {
+    stagnation = false    
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value), vehicle.map(_.value), totDist.value)
+    visu.updateRoute(currentSol.pred)
+    visu.updateDist()
   }
 
   // ------------------------------------------------------------------------
@@ -342,14 +309,11 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
   // CONSTRAINTS BLOCK
   // ------------------------------------------------------------------------
-
-  cp.minimize(totDist, totTard) subjectTo {
+  
+  cp.minimize(totDist) subjectTo {
 
     // Successor and Predecessor
-    for (i <- Sites) {
-      cp.add(element(succ, pred(i)) == i)
-      cp.add(element(pred, succ(i)) == i)
-    }
+    cp.add(new ChannelingPredSucc(cp, pred, succ))
 
     for (i <- 1 to Vehicles.max) {
       cp.add(pred(FirstDepots.min + i) == LastDepots.min + i - 1)
@@ -368,6 +332,8 @@ object VRPTW extends App {
       cp.add(vehicle(i) == vehicle(pred(i)))
       cp.add(vehicle(i) == vehicle(succ(i)))
     }
+    
+    cp.add(new VehicleChanneling(cp, pred, succ, vehicle, nVehicles))
 
     for (i <- Vehicles) {
       cp.add(vehicle(FirstDepots.min + i) == vehicle(succ(FirstDepots.min + i)))
@@ -402,9 +368,15 @@ object VRPTW extends App {
       cp.add(arrival(i) >= twStart(i))
     }
 
-    for (i <- FirstDepots) cp.add(arrival(i) == 0)
+    for (i <- FirstDepots) {      
+      cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
+      cp.add(arrival(i) == 0)
+    }
 
-    for (i <- LastDepots) cp.add(arrival(i) <= twEnd(i))
+    for (i <- LastDepots) {
+      cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
+      cp.add(arrival(i) <= twEnd(i))
+    }
   }
 
   // ------------------------------------------------------------------------
@@ -412,58 +384,11 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
 
   cp.exploration {
-
-    if (regretSearch) {
-
-      while (!allBounds(succ)) {
-
-        var x = -1
-        var maxRegret = Int.MinValue
-
-        for (i <- Sites; if (!succ(i).isBound)) {
-
-          var distK1 = Int.MaxValue
-          var distK2 = Int.MaxValue
-
-          for (j <- Sites; if (succ(i).hasValue(j))) {
-
-            if (dist(i)(j) < distK1) {
-              distK2 = distK1
-              distK1 = dist(i)(j)
-            } else if (dist(i)(j) < distK2) {
-              distK2 = dist(i)(j)
-            }
-          }
-
-          val regret = distK2 - distK1
-
-          if (regret > maxRegret) {
-            x = i
-            maxRegret = regret
-          }
-        }
-
-        val v = selectMin(Sites)(succ(x).hasValue(_))(dist(x)(_)).get
-
-        cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-      }
-    } else {
-
-      while (!allBounds(succ)) {
-        
-        println(pred.map(_.size).sum + succ.map(_.size).sum + vehicle.map(_.size).sum)
-
-        val i = selectMin(Sites)(!succ(_).isBound)(succ(_).size).get
-        val j = selectMin(Sites)(succ(i).hasValue(_))(dist(i)(_)).get
-
-        cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
-      }
-    }
-
-    solFound
-  }
+    if (regretOn) regretHeuristic(cp, succ, dist)
+    else minDomDistHeuristic(cp, succ, dist)
+    solFound()
+  } 
   
-
   println("\nFinished !")
   cp.printStats
 }
