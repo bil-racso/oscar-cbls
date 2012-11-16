@@ -29,18 +29,18 @@ import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
 import scala.math.round
 import oscar.search.IDSSearchController
-//import oscar.cp.mem.MyElement
+import oscar.cp.mem.ACElement
 import oscar.cp.mem.RoutingUtils
 
 object myTSP extends App {
 
   // Data parsing
   // ------------
-  //val coord = parseCoordinates("data/TSP/kroA100.tsp")
+  val coord = parseCoordinates("data/TSP/kroA100.tsp")
   val rand = new scala.util.Random(0)
 
   // Random coordinates
-  val coord = Array.tabulate(30)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
+  //val coord = Array.tabulate(20)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
 
   
   val nCities = coord.size
@@ -88,7 +88,7 @@ object myTSP extends App {
 
   var firstLns = true
 
-  /*cp.lns(500, 2000) {
+  cp.lns(500, 2000) {
 
     nRestart += 1
 
@@ -100,7 +100,7 @@ object myTSP extends App {
     handleStagnation()
 
     relaxVariables(clusterRelax(p))
-  }*/
+  }
 
   def handleStagnation() {
 
@@ -134,23 +134,18 @@ object myTSP extends App {
   }
 
   def relaxVariables(selected: Array[Boolean]) {
-
+    
     visu.updateSelected(selected)
     visu.updateRestart(nRestart)
-
+    
     val constraints: Queue[Constraint] = Queue()
-
-    for (c <- Cities) {
-      if (!selected(c)) {
-
-        if (!selected(currentSol.pred(c)))
-          constraints enqueue (pred(c) == currentSol.pred(c))
-
-        if (!selected(currentSol.succ(c)))
-          constraints enqueue (succ(c) == currentSol.succ(c))
-      }
+    
+    for (c <- Cities; if !selected(c)) {
+      if (!selected(currentSol.pred(c)))
+        constraints enqueue (pred(c) == currentSol.pred(c))
+      if (!selected(currentSol.succ(c)))
+        constraints enqueue (succ(c) == currentSol.succ(c))
     }
-
     cp.post(constraints.toArray)
   }
 
@@ -159,14 +154,12 @@ object myTSP extends App {
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+    //cp.add(new ChannelingPredSucc(cp, pred, succ))
     
     for (i <- Cities) {
-      //cp.add(element(pred, succ(i)) == i)
-      //cp.add(element(succ, pred(i)) == i)
-      //cp.add(MyElement(pred, succ(i)) == i)
-      //cp.add(MyElement(succ, pred(i)) == i)     
-    } 
+      cp.add(ACElement(pred, succ(i)) == i)
+      cp.add(ACElement(succ, pred(i)) == i)
+    }
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
@@ -178,7 +171,6 @@ object myTSP extends App {
 
     cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
     cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
-
   }
 
   // Search
