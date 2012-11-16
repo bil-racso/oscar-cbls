@@ -29,12 +29,19 @@ import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
 import scala.math.round
 import oscar.search.IDSSearchController
+//import oscar.cp.mem.MyElement
+import oscar.cp.mem.RoutingUtils
 
 object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroB100.tsp")
+  //val coord = parseCoordinates("data/TSP/kroA100.tsp")
+  val rand = new scala.util.Random(0)
+
+  // Random coordinates
+  val coord = Array.tabulate(30)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
+
   
   val nCities = coord.size
   val Cities = 0 until nCities
@@ -81,7 +88,7 @@ object myTSP extends App {
 
   var firstLns = true
 
-  cp.lns(500, 2000) {
+  /*cp.lns(500, 2000) {
 
     nRestart += 1
 
@@ -93,7 +100,7 @@ object myTSP extends App {
     handleStagnation()
 
     relaxVariables(clusterRelax(p))
-  }
+  }*/
 
   def handleStagnation() {
 
@@ -153,6 +160,13 @@ object myTSP extends App {
 
     // Channeling between predecessors and successors
     cp.add(new ChannelingPredSucc(cp, pred, succ))
+    
+    for (i <- Cities) {
+      //cp.add(element(pred, succ(i)) == i)
+      //cp.add(element(succ, pred(i)) == i)
+      //cp.add(MyElement(pred, succ(i)) == i)
+      //cp.add(MyElement(succ, pred(i)) == i)     
+    } 
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
@@ -171,51 +185,7 @@ object myTSP extends App {
   // ------
   println("Searching...")
   cp.exploration {
-
-    // Greedy heuristic
-
-    while (!allBounds(succ)) {
-
-      var x = -1
-      var maxRegret = Int.MinValue
-
-      for (i <- Cities; if (!succ(i).isBound)) {
-
-        var distK1 = Int.MaxValue
-        var distK2 = Int.MaxValue
-
-        for (j <- Cities; if (succ(i).hasValue(j))) {
-
-          if (distMatrix(i)(j) < distK1) {
-            distK2 = distK1
-            distK1 = distMatrix(i)(j)
-          } else if (distMatrix(i)(j) < distK2) {
-            distK2 = distMatrix(i)(j)
-          }
-        }
-
-        val regret = distK2 - distK1
-
-        if (regret > maxRegret) {
-          x = i
-          maxRegret = regret
-        }
-      }
-
-      val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-
-      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }
-    /*while (!allBounds(succ)) {
-
-      // Selects the not yet bound city with the smallest number of possible successors
-      val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
-      // Selects the closest successors of the city x
-      val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-
-      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }*/
-
+    RoutingUtils.regretHeuristic(cp, succ, distMatrix)
     solFound()
   }
 

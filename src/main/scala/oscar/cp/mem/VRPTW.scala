@@ -3,7 +3,6 @@ package oscar.cp.mem
 import scala.collection.mutable.Queue
 import scala.collection.mutable.Set
 import scala.Math.Pi
-
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search.IDSSearchController
@@ -12,8 +11,6 @@ import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
 import oscar.cp.mem.tsp.ChannelingPredSucc
 import oscar.cp.mem.tsp.VehicleChanneling
-
-// Imported functions
 import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
 import oscar.cp.mem.VRPTWParser.parse
@@ -36,7 +33,7 @@ object VRPTW extends App {
   // DATA AND PARSING
   // ------------------------------------------------------------------------
 
-  val instance = parse("data/VRPTW/Solomon/C101.txt")
+  val instance = parse("data/VRPTW/Solomon/C103.txt")
 
   // Distance scaling
   val scale = 100
@@ -85,7 +82,7 @@ object VRPTW extends App {
   val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
 
   // ------------------------------------------------------------------------
-  // MODEL
+  // VARIABLES
   // ------------------------------------------------------------------------
 
   val cp = CPSolver()
@@ -94,6 +91,7 @@ object VRPTW extends App {
   val succ = Array.fill(nSites)(CPVarInt(cp, Sites))  
   val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles))
   val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon))
+  val departure = Array.fill(nSites)(CPVarInt(cp, Horizon))
   val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
   val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
 
@@ -109,16 +107,14 @@ object VRPTW extends App {
   var nStagnation = 0
   var stagnation = false
 
-  val pMin = 15
+  /*val pMin = 15
   val pMax = 35
   var p = pMin
 
   var firstLns = true
-  //cp.sc = new IDSSearchController(cp, 4)
-  var adaptable = false
-  var regretOn = true
+  var regretOn = false
 
-  cp.lns(500, 100) {
+  cp.lns(500, 1000) {
 
     nRestart += 1
 
@@ -126,12 +122,15 @@ object VRPTW extends App {
     if (firstLns) {
       println("Start LNS")
       firstLns = false
-      regretOn = true
     }
 
-    // Stagnation
+    // Adaptive
     if (stagnation) {
       nStagnation += 1
+      if (nStagnation == 20) {
+        nStagnation = 0
+        p +=1
+      }
     } else {
       stagnation = true
       nStagnation = 0
@@ -280,18 +279,15 @@ object VRPTW extends App {
     visu.updateRestart(nRestart)
     val constraints: Queue[Constraint] = Queue()
 
-    for (i <- Sites; if !selected(i)) {
-      
-      constraints enqueue (vehicle(i) == currentSol.vehicle(i))
-      
+    for (i <- Sites; if !selected(i)) {     
+      constraints enqueue (vehicle(i) == currentSol.vehicle(i))      
       if (!selected(currentSol.pred(i))) 
         constraints enqueue (pred(i) == currentSol.pred(i))
-
       if (!selected(currentSol.succ(i)))
         constraints enqueue (succ(i) == currentSol.succ(i))
     }
     cp.post(constraints.toArray)
-  }
+  }*/
   
   def solFound() {
     stagnation = false    
@@ -329,18 +325,14 @@ object VRPTW extends App {
 
     // Vehicle
     for (i <- Customers) {
-      cp.add(vehicle(i) == vehicle(pred(i)))
-      cp.add(vehicle(i) == vehicle(succ(i)))
+      cp.add(vehicle(succ(i)) == vehicle(i))
+      cp.add(vehicle(pred(i)) == vehicle(i))
     }
-    
-    cp.add(new VehicleChanneling(cp, pred, succ, vehicle, nVehicles))
 
     for (i <- Vehicles) {
       cp.add(vehicle(FirstDepots.min + i) == vehicle(succ(FirstDepots.min + i)))
       cp.add(vehicle(LastDepots.min + i) == vehicle(pred(LastDepots.min + i)))
-    }
-
-    for (i <- Vehicles) {
+      
       cp.add(vehicle(FirstDepots.min + i) == i)
       cp.add(vehicle(LastDepots.min + i) == i)
     }
@@ -384,8 +376,8 @@ object VRPTW extends App {
   // ------------------------------------------------------------------------
 
   cp.exploration {
-    if (regretOn) regretHeuristic(cp, succ, dist)
-    else minDomDistHeuristic(cp, succ, dist)
+    //regretHeuristic(cp, succ, dist)
+    minDomDistHeuristic(cp, pred, succ, dist)
     solFound()
   } 
   
