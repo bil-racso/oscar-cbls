@@ -8,6 +8,10 @@ import java.awt.Color
 import oscar.visual.VisualBinPacking
 import scala.util.Random
 import oscar.visual.Plot2D
+import oscar.visual.VisualMap
+import oscar.visual.Geocoder
+import oscar.visual.Location
+import java.io.IOException
 
 
 
@@ -92,5 +96,42 @@ object DemoVisu {
     
   }
   def demoMap = {
+        val m = new VisualMap();
+		val inf = f.createFrame("VisualMap");
+		inf.add(m.peer);
+		f.pack();
+		
+		try {
+			val citiesNames = List("Namur", "Bruxelles", "Antwerp", "Arlon", "Mons", "Ottignies", "London")
+			var citiesCoord = List[Location]()
+	        for ( c <-  citiesNames) {
+	        	
+	        	val loc = Geocoder.getLocation(c)
+	        	citiesCoord = citiesCoord :+ loc
+	        	m.createWaypoint(loc.lat,loc.lon);
+	        	try {
+					Thread.sleep(100)
+				} catch  {
+				case e :InterruptedException => e.printStackTrace()
+				}
+	        }
+			
+			
+
+		
+			val l = m.createLine(citiesCoord(6).lat,citiesCoord(6).lon,citiesCoord(1).lat,citiesCoord(1).lon);
+			
+			citiesCoord.zipWithIndex.filter(p => p._2 != 1 && p._2 != 6).map(_._1).foreach(lo => m.createPath(lo.lat,lo.lon,citiesCoord(1).lat,citiesCoord(1).lon))
+
+			
+		} catch  {
+		  case e1: IOException => e1.printStackTrace()
+		}
+		
+		
+		
+
+		m.refresh()
+
   }
 }
