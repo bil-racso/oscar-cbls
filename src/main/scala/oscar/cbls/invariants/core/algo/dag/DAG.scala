@@ -23,6 +23,9 @@
 
 package oscar.cbls.invariants.core.algo.dag
 
+import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, AbstractHeap}
+
+
 trait DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
@@ -59,6 +62,7 @@ trait DAG {
   private var AutoSort: Boolean = false;
   def nodes:Iterable[DAGNode]
 
+  var HeapSort = true
 
   /**performs a self-check on the ordering, use for testing*/
   def checkSort(){
@@ -69,7 +73,8 @@ trait DAG {
     }
   }
 
-  /**Checks that node have correct reference to each othe. Nodes are expected to know their successors and predecessors.
+  /**Checks that node have correct reference to each other.
+   * Nodes are expected to know their successors and predecessors.
    * This is expected to be consistent between several nodes.
    */
   def checkGraph(){
@@ -94,7 +99,6 @@ trait DAG {
    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
-      //on passe en eautosort
       doDAGSort();
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
@@ -119,9 +123,16 @@ trait DAG {
     if (AutoSort && (from.Position > to.Position)) {
       //refaire le sort
       //discovery
-      val SortedForwardRegion = findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position)
 
-      val SortedBackwardsRegion = findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position)
+      val SortedForwardRegion =
+        (if(HeapSort) findSortedForwardRegion(to, from.Position)
+         else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
+
+
+      val SortedBackwardsRegion =
+        (if (HeapSort) findSortedBackwardRegion(from, to.Position)
+         else findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position))
+
       //reassignment
 
       val FreePositionsToDistribute: List[Int] = mergeNodeLists(SortedForwardRegion, SortedBackwardsRegion)
@@ -215,6 +226,38 @@ trait DAG {
     dfsF(n, List.empty)
   }
 
+  val HeapForRegionDiscovery:BinomialHeap[DAGNode] = new BinomialHeap((n:DAGNode) => n.Position,nodes.size)
+
+  /**@return forward region, sorted by increasing position*/
+  private def findSortedForwardRegion(n: DAGNode, ub: Int): List[DAGNode] = {
+
+    val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
+    h.dropAll
+    h.keyGetter = ((n:DAGNode) => n.Position)
+
+    var toreturn:List[DAGNode] = List.empty
+
+    h.insert(n)
+    n.visited = true
+
+    while(!h.isEmpty){
+      val first:DAGNode = h.popFirst()
+      toreturn = first :: toreturn
+      first.getDAGSucceedingNodes.foreach((p:DAGNode) => {
+        if (p.Position == ub) {
+          toreturn.foreach(q => q.visited = false)
+          h.foreach(q => q.visited = false)
+          throw new CycleException(p)
+        }
+        if (!p.visited && p.Position < ub) {
+          h.insert(p)
+          p.visited = true
+        }
+      })
+    }
+    toreturn.reverse
+  }
+
   private def findBackwardsRegion(n: DAGNode, lb: Int): List[DAGNode] = {
     def dfsB(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
@@ -229,6 +272,33 @@ trait DAG {
     }
     dfsB(n, List.empty)
   }
+
+  /**@return forward region, sorted by increasing position*/
+  private def findSortedBackwardRegion(n: DAGNode, lb: Int): List[DAGNode] = {
+
+    val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
+    h.dropAll
+    h.keyGetter = ((n:DAGNode) => -n.Position)
+
+    var toreturn:List[DAGNode] = List.empty
+
+    h.insert(n)
+    n.visited = true
+
+    while(!h.isEmpty){
+      val first = h.popFirst()
+      toreturn = first :: toreturn
+
+      first.getDAGPrecedingNodes.foreach(p => {
+        if (!p.visited && p.Position > lb) {
+          h.insert(p)
+          p.visited = true
+        }
+      })
+    }
+    toreturn
+  }
+
 
   //merge deux listes de noeuds triee par position, donne la position triee de ces noeuds
   private def mergeNodeLists(a: List[DAGNode], b: List[DAGNode]): List[Int] = {
