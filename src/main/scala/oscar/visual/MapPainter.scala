@@ -72,8 +72,6 @@ class MapPainter(map : VisualMap) extends Painter[JXMapViewer] {
 		
 		//paths
 		g.setColor(Color.BLACK)
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-		g.setStroke(new BasicStroke(2))
 		
 
 		for ( l <- mymap.paths.map(_.lines).flatten) {
