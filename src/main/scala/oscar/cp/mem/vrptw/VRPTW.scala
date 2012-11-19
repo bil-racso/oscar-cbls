@@ -1,14 +1,14 @@
 package oscar.cp.mem.vrptw
+
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
-import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.regretHeuristic
-import oscar.cp.mem.constraints.TimeWindowPred
-import oconstraints.scar.cp.mem.TimeWindowSucc
-import scala.Array.canBuildFrom
+import oscar.cp.mem.TimeWindowPred
+import oscar.cp.mem.constraints.TimeWindowSuala.Array.canBuildFrom
 
 /**
  * VRPTW
@@ -22,7 +22,7 @@ object VRPTW extends App {
   // DATA AND PARSING
   // ------------------------------------------------------------------------
 
-  val instance = parse("data/VRPTW/Solomon/C105.txt")
+  val instance = VRPTWParser.parse("data/VRPTW/Solomon/C105.txt")
 
   // Distance scaling
   val scale = 100

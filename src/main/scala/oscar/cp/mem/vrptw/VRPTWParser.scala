@@ -1,7 +1,8 @@
 package oscar.cp.mem.vrptw
 
 import scala.io.Source
-import scala.Array.canBuildFrom
+import scala.math.sqrt
+import scala.math.pow
 
 object VRPTWParser {
 

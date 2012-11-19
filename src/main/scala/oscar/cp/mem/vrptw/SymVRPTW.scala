@@ -1,15 +1,15 @@
 package oscar.cp.mem.vrptw
+
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
-import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
-import oscar.cp.mem.VRPTWParser.parse
-import oscar.cp.mem.constraints.TimeWindowPred
-import oconstraints.scar.cp.mem.TimeWindowSucc
-import scala.Array.canBuildFrom
+import oscar.cp.mem.vrptw.VRPTWParser.parse
+import oscar.cp.mem.TimeWindowPred
+import oscar.cp.mem.constraints.TimeWindowSuala.Array.canBuildFrom
 
 /**
  * VRPTW

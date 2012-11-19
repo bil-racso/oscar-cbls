@@ -29,9 +29,8 @@ import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
 import scala.math.round
 import oscar.search.IDSSearchController
-import oscar.cp.mem.ACElement
 import oscar.cp.mem.RoutingUtils
-import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.ChannelingPredSucc
 
 object myTSP extends App {
 

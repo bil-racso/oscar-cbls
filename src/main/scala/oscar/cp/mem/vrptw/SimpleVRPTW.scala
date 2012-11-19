@@ -1,11 +1,14 @@
 package oscar.cp.mem.vrptw
+
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
-import oscar.cp.mem.VRPTWParser.parse
+import oscar.cp.mem.vrptw.VRPTWParser.parse
+import oscar.cp.constraints.TONOTCOMMIT
 import scala.Array.canBuildFrom
+import oscar.cp.mem.TimeWindowPred
 
 /**
  * VRPTW
@@ -105,7 +108,7 @@ object SimpleVRPTW extends App {
 
     // Vehicle
     for (i <- Customers) 
-      cp.add(MyElement(vehicle, pred(i)) == vehicle(i))
+      cp.add(vehicle(pred(i)) == vehicle(i))
 
     for (i <- Vehicles) 
       cp.add(vehicle(nCustomers+i) == i)
