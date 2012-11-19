@@ -177,7 +177,7 @@ trait Constraints {
 		val minval = (for (x <- tab) yield x.getMin) min
 		val maxval = (for (x <- tab) yield x.getMax) max
 		val z = CPVarInt(x.store, minval, maxval)
-		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
+		x.store.add(new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
 		z
 	}
 
@@ -189,7 +189,7 @@ trait Constraints {
 	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
 	 */
 	def element(tab : Array[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
-		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
+		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
 	}
 
 	/**
@@ -200,7 +200,7 @@ trait Constraints {
 	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
 	 */
 	def element(tab : Array[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
-		new ElementVar(tab.toArray, x, z)
+		new ElementVarAC(tab.toArray, x, CPVarInt(x.s,z))
 	}
 
 	/**
@@ -212,7 +212,7 @@ trait Constraints {
 	 */
 	def element(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
 		val z_ = new CPVarBool(x.store, z)
-		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
+		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
 	}
 
 	/**

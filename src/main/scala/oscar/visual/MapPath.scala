@@ -96,6 +96,11 @@ class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
     }      
   }
   
+  def dest_=(latlong: (Double,Double)) {
+    setDest(latlong._1,latlong._2)
+  }
+  
+  
   /*
    *  change origin
    */
@@ -105,6 +110,10 @@ class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
       refreshLines()
       map.viewer.repaint();
     }      
+  }
+  
+  def orig_=(latlong: (Double,Double)) {
+    setOrig(latlong._1,latlong._2)
   }
   
 }
