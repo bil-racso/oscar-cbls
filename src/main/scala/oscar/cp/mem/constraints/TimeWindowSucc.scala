@@ -1,7 +1,6 @@
-package oscar.cp.mem
+package oscar.cp.mem.constraints
 
 import oscar.cp.core._
-import scala.math.max
 
 class TimeWindowSucc(cp: Store, c: Int, succ: Array[CPVarInt], arrival: Array[CPVarInt], dist: Array[Array[Int]], service: Array[Int]) extends Constraint(cp, "TimeWindow") {
 

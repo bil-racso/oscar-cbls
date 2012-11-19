@@ -31,8 +31,8 @@ import scala.util.Random.nextFloat
 import scala.math.round
 import oscar.search.IDSSearchController
 import oscar.cp.mem.pareto.ParetoMinSet
-
 import java.io._
+import oscar.cp.mem.constraints.ChannelingPredSucc
 
 object MO_TSP {
   

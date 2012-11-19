@@ -1,25 +1,14 @@
-package oscar.cp.mem
-
-import scala.collection.mutable.Queue
-import scala.collection.mutable.Set
-import scala.Math.Pi
+package oscar.cp.mem.vrptw
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.search.IDSSearchController
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.constraints.TONOTCOMMIT
-import oscar.cp.mem.tsp.ChannelingPredSucc
-import oscar.cp.mem.tsp.VehicleChanneling
+import oscar.cp.mem.constraints.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.regretHeuristic
-import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
-import oscar.cp.mem.VRPTWParser.parse
-import oscar.util.selectMin
-import scala.util.Random.nextFloat
-import scala.util.Random.nextInt
-import scala.Math.max
-import scala.Math.pow
-import scala.Math.atan2
+import oscar.cp.mem.constraints.TimeWindowPred
+import oconstraints.scar.cp.mem.TimeWindowSucc
+import scala.Array.canBuildFrom
 
 /**
  * VRPTW

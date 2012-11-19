@@ -31,18 +31,18 @@ import scala.math.round
 import oscar.search.IDSSearchController
 import oscar.cp.mem.ACElement
 import oscar.cp.mem.RoutingUtils
+import oscar.cp.mem.constraints.ChannelingPredSucc
 
 object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroA100.tsp")
+  val coord = parseCoordinates("data/TSP/kroA200.tsp")
   val rand = new scala.util.Random(0)
 
   // Random coordinates
   //val coord = Array.tabulate(20)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
 
-  
   val nCities = coord.size
   val Cities = 0 until nCities
 
@@ -82,13 +82,13 @@ object myTSP extends App {
   var nStagnation = 0
   var stagnation = false
 
-  val pMin = 20
+  val pMin = 10
   val pMax = 60
   var p = pMin
 
   var firstLns = true
 
-  cp.lns(500, 2000) {
+  cp.lns(5000000, 1000) {
 
     nRestart += 1
 
@@ -99,7 +99,7 @@ object myTSP extends App {
 
     handleStagnation()
 
-    relaxVariables(clusterRelax(p))
+    relaxVariables(pathRelax(p))
   }
 
   def handleStagnation() {
@@ -111,12 +111,27 @@ object myTSP extends App {
       p = pMin + (p - pMin) / 2
     }
 
-    if (nStagnation == 100) {
+    if (nStagnation == 20) {
       nStagnation = 0
       if (p < pMax) p += 1
     }
   }
 
+  def randomRelax(p: Int): Array[Boolean] = {
+    
+    val c = nextInt(nCities)
+    val selected = Array.fill(nCities)(false)
+    selected(c) = true
+
+    for (i <- 1 until p) {
+      val rem = Cities.filter(i => !selected(i))
+      val c = rem(nextInt(rem.size))
+      selected(c) = true
+    }
+    
+    selected
+  }
+  
   def clusterRelax(p: Int): Array[Boolean] = {
 
     val c = nextInt(nCities)
@@ -124,6 +139,25 @@ object myTSP extends App {
     val dist = distMatrix(c)(sortedByDist(p))
 
     Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
+  }
+
+  def pathRelax(p: Int): Array[Boolean] = {
+
+    val c = nextInt(nCities)
+    val selected = Array.fill(nCities)(false)
+    selected(c) = true
+
+    for (i <- 1 until p) {
+
+      val sel = Cities.filter(i => selected(i))
+      val rem = Cities.filter(i => !selected(i))
+
+      val c = sel(nextInt(sel.size))
+      val cc = rem.sortBy(i => distMatrix(c)(i)).head
+
+      selected(cc) = true
+    }
+    selected
   }
 
   def solFound() = {
@@ -134,12 +168,12 @@ object myTSP extends App {
   }
 
   def relaxVariables(selected: Array[Boolean]) {
-    
+
     visu.updateSelected(selected)
     visu.updateRestart(nRestart)
-    
+
     val constraints: Queue[Constraint] = Queue()
-    
+
     for (c <- Cities; if !selected(c)) {
       if (!selected(currentSol.pred(c)))
         constraints enqueue (pred(c) == currentSol.pred(c))
@@ -154,12 +188,7 @@ object myTSP extends App {
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
-    //cp.add(new ChannelingPredSucc(cp, pred, succ))
-    
-    for (i <- Cities) {
-      cp.add(ACElement(pred, succ(i)) == i)
-      cp.add(ACElement(succ, pred(i)) == i)
-    }
+    cp.add(new ChannelingPredSucc(cp, pred, succ))
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
@@ -169,15 +198,16 @@ object myTSP extends App {
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
-    cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
-    cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
+    //cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
+    //cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
   }
 
   // Search
   // ------
   println("Searching...")
   cp.exploration {
-    RoutingUtils.regretHeuristic(cp, succ, distMatrix)
+    RoutingUtils.regretHeuristic(cp, pred, distMatrix)
+    //RoutingUtils.minDomDistHeuristic(cp, pred, succ, distMatrix)
     solFound()
   }
 

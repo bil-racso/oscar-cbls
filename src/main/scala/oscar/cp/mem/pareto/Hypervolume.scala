@@ -1,8 +1,6 @@
-package oscar.cp.mem
-
-import scala.collection.mutable.Set
-import scala.collection.mutable.Queue
+package oscar.cp.mem.pareto
 import scala.io.Source
+import scala.Array.canBuildFrom
 
 /** Hypervolume
  *

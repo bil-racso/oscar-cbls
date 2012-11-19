@@ -1,4 +1,4 @@
-package oscar.cp.mem.tsp
+package oscar.cp.mem.constraints
 
 import oscar.cp.core._
 import oscar.reversible.ReversibleSetIndexedArray
