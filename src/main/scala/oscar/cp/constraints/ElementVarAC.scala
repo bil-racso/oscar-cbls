@@ -45,7 +45,6 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
-  println("zrange:"+zRange)
   
   // Number of supports for the value v i.e number of indices i such that v is in y(i)
   private val _nSupports = Array.fill(zRange.size)(new ReversibleInt(s, 0))

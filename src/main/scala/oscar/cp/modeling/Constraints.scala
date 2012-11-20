@@ -538,7 +538,7 @@ trait Constraints {
 	def maximum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).max, vars.map(_.max).max)
 		cp.add(maximum(x, m))
 		m
 	}
@@ -569,7 +569,7 @@ trait Constraints {
 	def minimum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).min, vars.map(_.max).min)
 		cp.add(minimum(x, m))
 		m
 	}
