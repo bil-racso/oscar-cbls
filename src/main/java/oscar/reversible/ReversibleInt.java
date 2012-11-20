@@ -39,17 +39,21 @@ public class ReversibleInt extends ReversiblePointer<Integer> {
     /**
      * increment the reversible integer by one
      */
-	public void incr(){
+	public int incr(){
 		assert(hasValue());
-		setValue(getValue()+1);
+		int v = getValue() + 1;
+		setValue(v);
+		return v;
 	}
 
     /**
      * decrement the reversible integer by one
      */
-	public void decr(){
+	public int decr(){
 		assert(hasValue());
-		setValue(getValue()-1);
+		int v = getValue() - 1;
+		setValue(v);
+		return v;
 	}
 
 }

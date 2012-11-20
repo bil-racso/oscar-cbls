@@ -118,8 +118,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
 
   // Reduces the number of supports of the value v
   private def reduceSupports(v: Int): CPOutcome = {
-    nSupports(v).decr()
-    if (nSupports(v).value == 0) z.removeValue(v)
+    if (zRange.contains(v) && nSupports(v).decr() == 0) z.removeValue(v)
     else Suspend
   }
 
@@ -151,8 +150,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
     }
   }
 
-  // If y(i) has an intersection with z, the number of supports of the 
-  // value v is reduced by 1
+  // If y(i) has an intersection with z, the number of supports of the  value v is reduced by 1
   private def removeFromY(i: Int, v: Int): CPOutcome = {
     if (reduceSupports(v) == Failure) Failure
     else reduceIntersect(i, v)
