@@ -44,8 +44,9 @@ import oscar.reversible.ReversibleSetIndexedArray
 class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constraint(y(0).s, "ACElement") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
-  private val zRange = z.min to z.max
-
+  private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
+  println("zrange:"+zRange)
+  
   // Number of supports for the value v i.e number of indices i such that v is in y(i)
   private val _nSupports = Array.fill(zRange.size)(new ReversibleInt(s, 0))
   // For all indices i in x: intersect(i) is the size of the intersection between y(i) and z
@@ -56,6 +57,11 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   private def intersect(i: Int) = _intersect(i-xRange.min)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
+    if (z.updateMax((y.map(_.max).max)) == Failure) return Failure
+    if (z.updateMin((y.map(_.min).min)) == Failure) return Failure
+    if (x.updateMin(0) == Failure) return Failure
+    if (x.updateMax(y.size-1) == Failure) return Failure
+    
     if (adjustX() == Failure) Failure
     else {
       val out = propagateInitial()
@@ -132,7 +138,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   // Removes v from all the intersections
   private def removeFromZ(v: Int): CPOutcome = {
     nSupports(v) setValue 0
-    for (i <- x.min to x.max; if x hasValue i; if intersect(i) hasValue v) {
+    for (i <- x.min to x.max; if x hasValue i) {
       if (reduceIntersect(i, v) == Failure) return Failure
     }
     Suspend
