@@ -62,8 +62,8 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
       rectangles(i).move((task.EarliestStartDate.value*xScale).ceil, LineArray(task.TaskID)*yScale)
     }
 
-    makespanLine.setOrig((p.MakeSpan.value*xScale).ceil, 0)
-    makespanLine.setDest((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
+    makespanLine.orig = ((p.MakeSpan.value*xScale).ceil, 0)
+    makespanLine.dest = ((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
 
     text.setText(p.MakeSpan.value.toString)
     text.move((p.MakeSpan.value*xScale).ceil.toInt, (LineCount+2)*yScale);

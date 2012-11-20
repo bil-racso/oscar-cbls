@@ -40,8 +40,8 @@ class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line
 	 * @param x
 	 * @param y
 	 */
-	def setDest(x:Double, y:Double) : Unit = {
-		line.setLine(line.getX1(),line.getY1(),x,y)
+	def dest_=(d:(Double,Double)) : Unit = {
+		line.setLine(line.getX1(),line.getY1(),d._1,d._2)
 		drawing.repaint()
 	}
 	
@@ -50,11 +50,12 @@ class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line
 	 * @param x
 	 * @param y
 	 */
-	def setOrig(x:Double, y:Double) : Unit = {
-		line.setLine(x,y,line.getX2(),line.getY2())
+	def orig_=(d:(Double,Double)) : Unit = {
+		line.setLine(d._1,d._2,line.getX2(),line.getY2())
 		drawing.repaint()
 	}
 	
-	
+	def orig = (line.getX2(),line.getY2())
+	def dest = (line.getX1(),line.getY1())
 	
 }

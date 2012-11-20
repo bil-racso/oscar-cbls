@@ -33,17 +33,17 @@ object DemoVisu {
 	
 	tb.addButton("rectangles",{runInThread(demoRectangles)})
 	tb.addButton("plot",{runInThread(demoPlot)})	
-	tb.addButton("bin bucket",{runInThread(demoBinBucket)})
+	tb.addButton("bin packing",{runInThread(demoBinPacking)})
 	tb.addButton("map",{runInThread(demoMap)})	
 	f.pack()
     
   }
   
-  def demoBinBucket() = {
+  def demoBinPacking = {
 
 		val bp = new VisualBinPacking(10, 50);
 		
-		val inf = f.createFrame("Drawing")
+		val inf = f.createFrame("Bin Packing")
 		inf.add(bp)
 		f.pack()
 		
