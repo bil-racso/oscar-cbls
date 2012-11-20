@@ -50,12 +50,19 @@ class ReversibleSearchNode {
     var time : Long = 0
     var solveOne = false
     private var limit = Int.MaxValue
+    private var tLimit = Int.MaxValue
     
     def failLimit = limit
     def failLimit_= (lim: Int) {
 	  sc.failLimit_=(lim)
 	  limit = lim
 	}
+	
+    def timeLimit = tLimit
+    def timeLimit_= (lim: Int) {
+	  sc.timeLimit_=(lim)
+	  tLimit = lim
+	}	
     
 	
 	/**

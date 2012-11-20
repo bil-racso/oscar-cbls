@@ -33,7 +33,7 @@ object Nurses extends App  {
   
   // --- reading the data ---
 
-  val lines = Source.fromFile("data/nurses/bench3/instance0.txt").getLines.reduceLeft(_ + " " + _)
+  val lines = Source.fromFile("data/nurses/6zones.txt").getLines.reduceLeft(_ + " " + _)
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
   var index = 0
   def next() = {
@@ -127,7 +127,7 @@ object Nurses extends App  {
  
    val cp = CPSolver()
    cp.silent = true
-   val spreadAcuity = CPVarInt(cp,0 to 1000000)
+   val spreadAcuity = CPVarInt(cp,0 to Int.MaxValue)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
    

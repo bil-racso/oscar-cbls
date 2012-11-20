@@ -224,7 +224,7 @@ trait Constraints {
 	 */
 	def element(matrix : Array[Array[Int]], i : CPVarInt, j : CPVarInt) : CPVarInt = {
 		val z = CPVarInt(i.store, matrix.flatten.min to matrix.flatten.max)
-		val ok = i.store.post(ElementCst2D(matrix, i, j, z))
+		val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
 		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
 		return z
 	}

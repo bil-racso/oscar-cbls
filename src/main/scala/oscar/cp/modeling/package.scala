@@ -286,9 +286,9 @@ package object modeling extends Constraints {
 	   * @return one unbound variable with minimum domain (randomly chosen is several of them)
 	   */
 	  def minDomNotBound: CPVarInt = {
-	    val res: Option[CPVarInt] = selectMin(seq)(!_.isBound)(_.size)
+	    val res: Option[(CPVarInt,Int)] = selectMin(seq.zipWithIndex)(x => !x._1.isBound)(y => (y._1.size,y._2))
 	    res match {
-	      case Some(x) => x
+	      case Some((x,i)) => x
 	      case None => throw new java.util.NoSuchElementException("no unbound var")
 	    }
 	  }

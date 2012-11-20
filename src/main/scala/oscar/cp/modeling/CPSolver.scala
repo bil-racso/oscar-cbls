@@ -47,16 +47,6 @@ class CPSolver() extends Store() {
 	  lns = Option(new LNS(nbRestarts,nbFailures,() => restart))
 	}
 
-	/**
-	 * @param block a code block
-	 * @return the time (ms) to execute the block
-	 */
-	def getTime(block : => Unit) : Long = {
-		val t0 = System.currentTimeMillis()
-		block
-		System.currentTimeMillis - t0
-	}
-
 	def +=(cons : Constraint, propagStrength : CPPropagStrength = CPPropagStrength.Weak) : Unit = {
 		this.add(cons, propagStrength)
 	}
@@ -258,7 +248,10 @@ class CPSolver() extends Store() {
                  if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
              }
           }
-          sc.limitActivated = false
+          lns match {
+		   case None => () => sc.limitActivated = true
+		   case _ =>  sc.limitActivated = false // don't want to activate the limit in case of lns until first solution is found
+          }
           restart(false) // first restart, find a feasible solution so no limit
           sc.limitActivated = true
           for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {

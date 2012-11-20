@@ -44,8 +44,10 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   protected var nbFail = 0
   def nFail() = nbFail
   
+  protected var tLimit = Int.MaxValue
   protected var nFailLimit = Int.MaxValue
   var limitActivated = false
+  var t0 = System.currentTimeMillis()
   
   /**
    * set the failure limit for this controller
@@ -55,10 +57,20 @@ abstract class SearchController(val node: ReversibleSearchNode) {
     limitActivated = true
   }
   
+  /**
+   * set the time limit for this controller (in seconds)
+   */
+  def timeLimit_= (limit: Int) {
+    tLimit = limit
+    limitActivated = true
+  }  
+  
   protected var limitReached = false
   def isLimitReached = limitReached
   
   var exit = false
+  
+  def timeElapsed() = (System.currentTimeMillis() - t0)/1000
   
   def stop() {
     exit = true
@@ -66,11 +78,13 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   
   def addChoice(e: MyContinuation)
   
-  def start(): Unit@suspendable = {}
+  def start(): Unit@suspendable = {
+    t0 = System.currentTimeMillis()
+  }
   
   def fail() { 
       nbFail += 1
-      if (limitActivated && nbFail > nFailLimit) {
+      if (limitActivated && (nbFail > nFailLimit || timeElapsed >= tLimit)) {
         limitReached = true
       }
   }
@@ -78,6 +92,7 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   def reset() {
     limitReached = false
     nbFail = 0
+    t0 = System.currentTimeMillis()
   }
   
   
