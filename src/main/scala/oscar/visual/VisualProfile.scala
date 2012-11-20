@@ -35,11 +35,11 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 		
 		polygon.update(points.map(p => (p._1*xScale, (p._2 + min)*yScale)))
 
-		capaLine.setOrig(0, (resource.capacity + min)*yScale)
-		capaLine.setDest(xScale*makespan.getMax, (resource.capacity + min)*yScale)
+		capaLine.orig = (0, (resource.capacity + min)*yScale)
+		capaLine.dest = (xScale*makespan.getMax, (resource.capacity + min)*yScale)
 		
-		zeroLine.setOrig(0, (min)*yScale)
-		zeroLine.setDest(xScale*makespan.getMax, (min)*yScale)
+		zeroLine.orig = (0, (min)*yScale)
+		zeroLine.dest = (xScale*makespan.getMax, (min)*yScale)
 		
 		repaint()
 	}

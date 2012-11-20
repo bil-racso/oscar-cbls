@@ -49,7 +49,7 @@ object TSPDemo {
     f.createFrame("TSP Objective Function").add(plot)
     // creates the tour visu and place it into the frame
     val map = new VisualMap();
-    f.createFrame("TSP Tour").add(map)
+    f.createFrame("TSP Tour").add(map.peer)
     f.pack()
     // ------------------------------------------
     
