@@ -25,8 +25,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.routing._
+import oscar.cbls.routing.model._
 
 /**moves a segment to another place, without flipping it.
  * size is O(n³)

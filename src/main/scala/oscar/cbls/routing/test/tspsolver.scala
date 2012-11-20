@@ -34,8 +34,9 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing._
-import oscar.cbls.routing.heuristic.{RandomNeighbor, NearestNeighbor}
+
+import oscar.cbls.routing.model._
+import oscar.cbls.routing.initialSolution.{RandomNeighbor, NearestNeighbor}
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{GE, LE}

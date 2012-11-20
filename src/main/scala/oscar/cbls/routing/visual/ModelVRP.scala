@@ -2,12 +2,13 @@ package oscar.cbls.routing.visual
 
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
-import heuristic.{Unrouted, NearestNeighbor, RandomNeighbor}
+import initialSolution.{Unrouted, NearestNeighbor, RandomNeighbor}
 import oscar.visual.{VisualDrawing, VisualArrow}
 import oscar.cbls.constraints.core.ConstraintSystem
 import math._
 import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
 import oscar.cbls.search.StopWatch
+import model._
 
 /**
  * Created with IntelliJ IDEA.
@@ -124,14 +125,14 @@ class ModelVRP() extends StopWatch{
     weakPenalty = new IntVar(m,Int.MinValue,Int.MaxValue,boardPanel.penaltyWCField.getText.toInt,"WeakC. penality")
     // Example of constraint (with ConstraintSystem) on length of route.
     // It's also easy to fix a different penalty according to route number.
-    for(i <- 0 until V){
+    for(i <- 0 until V)
       strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)),strongPenalty)
-      strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
-    }
     for(i <- 0 until V){
       weakConstraintSystem.post(EQ(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
-      weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
+      //weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
+      //pas utilisé pour le moment.
     }
+
 
     if(boardPanel.strongCButton.isSelected)
       vrp.setStrongConstraints(strongConstraintSystem)

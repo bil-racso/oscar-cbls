@@ -1,38 +1,17 @@
-package oscar.cbls.routing
-
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
-
-/*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer and Florent Ghilain
- ******************************************************************************/
-
-import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar, Model}
-import oscar.cbls.invariants.lib.numeric.{SumElements, ProdElements, Sum}
-import oscar.cbls.invariants.lib.logic.Predecessor
-import oscar.cbls.invariants.lib.set.{Cardinality, TakeAny}
-import oscar.cbls.invariants.lib.logic.{Filter, IntVar2IntVarFun, Routes, Cluster}
-import oscar.cbls.algebra.Algebra._
-import oscar.cbls.constraints.core.{ConstraintSystem, Constraint}
+package oscar.cbls.routing.model
 import collection.immutable.SortedMap
-import scala.math._
-import oscar.cbls.objective.{Objective, ObjectiveTrait}
+import math._
+import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.invariants.core.computation.{IntSetVar, Model, IntVar}
+import oscar.cbls.invariants.lib.logic.{Filter, Predecessor, Routes, IntVar2IntVarFun}
+import oscar.cbls.invariants.lib.numeric.{SumElements, Sum}
+import oscar.cbls.objective.ObjectiveTrait
+import oscar.cbls.algebra.Algebra._
+
+
+
+
+
 
 /**
  * @param N the number of points in the problem.
@@ -279,8 +258,8 @@ class VRP(val N: Int, val V: Int, val m: Model) {
 }
 
 /*
- *  Maintains a weight on each node to help to form constraints.
- */
+*  Maintains a weight on each node to help to form constraints.
+*/
 trait WeightedNode extends VRP {
   val weightNode : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
     "weight of node " + i))
@@ -288,9 +267,6 @@ trait WeightedNode extends VRP {
   def fixWeightNode(i:Int,w:Int) { weightNode(i) := w}
   def fixWeightNode(w:Int) {weightNode.foreach(p => p := w)}
 }
-
-
-
 
 /**
  * Maintains a penalty weight for unrouted nodes.
@@ -311,10 +287,111 @@ trait Unrouted extends VRP {
 }
 
 /**
- * Add this trait if you want to maintain the predecessors of each node in the routing.
+ * Finds the nearest neighbor of each point
+ * used by some neighborhood searches
  */
-trait Predecessors extends VRP{
-  val preds = Predecessor(Next)
+trait ClosestNeighborPoints extends VRP with HopDistance{
+  var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+  var maxAvgUnrouted:Double = 0
+
+  def saveKNearestPoints(k:Int,filter:(Int => Boolean) = ( _ => true)){
+    if (k < N-1){
+      val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k,filter))
+      closestNeighbors += ((k,neighbors))
+    }
+  }
+
+  def computeNearestNeighbors(node:Int):List[Int] = {
+    val reachableneigbors = Nodes.filter((next:Int)
+      => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
+    //TODO: this is deeply inefficient. use a lazy quicksort instead, orr a partial sort based on a heap?
+    reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor))).toList
+  }
+
+  def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean)):List[Int]= {
+    computeNearestNeighbors(node).filter(filter).take(k)
+  }
+
+  def getKNearestNeighbors(k:Int, node:Int,filter:(Int => Boolean) = ( _ => true)):Iterable[Int] = {
+    if (k >= N-1) return Nodes
+    if(!closestNeighbors.isDefinedAt(k)){
+      saveKNearestPoints(k:Int,filter)
+    }
+    updateMaxAvgUnrouted(k,node)
+    closestNeighbors(k)(node)
+  }
+
+  def updateMaxAvgUnrouted(k:Int,node:Int){
+    var avg : Double = 0
+    closestNeighbors(k)(node).foreach(n => if(!isRouted(n)) avg += 1)
+    if (avg/k >maxAvgUnrouted) maxAvgUnrouted = avg/k
+  }
+
+}
+
+/**
+ * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
+ * We consider that a hop distance of Int.MaxVal is unreachable
+ */
+trait HopDistance extends VRP {
+  // Int.MaxValue / N allow us to use sum invariant, else MaxValue of this invariant is over Integer.MaxValue.
+  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i)}
+
+  val overallDistance: IntVar = Sum(hopDistance)
+
+  /**This method sets the distance to use for the hop between points.
+   * If a more complex function is to be used, set a controlling invariant to the hopDistances yourself
+   * @param DistanceMatrix is the distance between each point. All distance involving point 0 must be zero (they are corrected anyway by the engine)
+   */
+  def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
+    distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
+    for (i <- 0 until N ) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => {if (j!= N) DistanceMatrix(i)(j) else 0})
+  }
+
+  def installCostFunction(fun:(Int, Int) => Int){
+    distanceFunction = fun
+    for (i <- 0 until N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => fun(i,j))
+  }
+
+  var distanceFunction:((Int, Int) => Int) = null
+  def getHop(from:Int, to:Int):Int = distanceFunction(from,to)
+}
+
+/**declares an objective function, attached to the VRP.
+ * And maintains it equal to the hop distance in the VRP,
+ * based either on a matrix, or on another mechanism.
+*/
+trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
+  ObjectiveVar <== overallDistance
+}
+
+/**
+ * Declares an objective function, attached to the VRP.
+*/
+trait ObjectiveFunction extends VRP with ObjectiveTrait{
+  // Initialize the objective function with 0 as value
+  // allow negative objective value
+  setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
+}
+
+/**
+ * Add functions cost to the actual objective of the VRP.
+*/
+
+trait OtherFunctionToObjective extends ObjectiveFunction {
+  var AddedObjectiveFunctions:IntVar = new IntVar(m,Int.MinValue,Int.MaxValue,0,"added functions Objective")
+
+  def recordAddedFunctions(functions: Iterable[IntVar]){
+    assert(!functions.isEmpty && ObjectiveVar!= null)
+
+    var objAdd = AddedObjectiveFunctions
+    functions.foreach(f => { objAdd = objAdd + f })
+    AddedObjectiveFunctions = objAdd
+    objAdd = ObjectiveVar + objAdd
+    setObjectiveVar(objAdd)
+   }
+
+  def recordAddedFunction(function : IntVar) = recordAddedFunctions(Array[IntVar](function))
 }
 
 /**
@@ -392,6 +469,40 @@ trait PositionInRouteAndRouteNr extends VRP {
 }
 
 /**
+ * Add this trait if you want to maintain the predecessors of each node in the routing.
+ */
+trait Predecessors extends VRP{
+  val preds = Predecessor(Next)
+}
+
+/**
+ * Trait maintains the weak and strong constraints systems.
+ * Helps to build correctly departure's heuristics.
+ */
+trait StrongConstraints extends ObjectiveFunction {
+  var strongConstraints:ConstraintSystem = null
+  var violatedStrongConstraints = false
+
+  def setStrongConstraints(sc:ConstraintSystem) {strongConstraints = sc}
+  def updateViolatedStrongConstraints {
+    if(strongConstraints == null) violatedStrongConstraints  = false
+    else
+      violatedStrongConstraints = !strongConstraints.isTrue
+  }
+  override def propagateObjective:Int = {
+    updateViolatedStrongConstraints
+    if (violatedStrongConstraints) Int.MaxValue else ObjectiveVar.value
+  }
+}
+
+trait WeakConstraints extends OtherFunctionToObjective {
+  var weakConstraints:ConstraintSystem = null
+
+  def setWeakConstraints(wc:ConstraintSystem) {weakConstraints = wc;recordAddedFunction(weakConstraints.violation)}
+}
+
+
+/**
  * In case of symmetric instance of VRP, it helps evaluate faster some operators
  * of neighborhood as the two-opt and the three-opt.
  * To use with precaution, only if VRP is HopDistanceAsObjective, and no added functions.
@@ -437,141 +548,5 @@ trait SymmetricVRP extends HopDistance{
       super.threeOptB(a,b,c,d,e,f)
     else List.empty
   }
-}
-
-
-/**
- * Declares an objective function, attached to the VRP.
-*/
-trait ObjectiveFunction extends VRP with ObjectiveTrait{
-  // Initialize the objective function with 0 as value
-  // allow negative objective value
-  setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
-}
-
-/**
- * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
- * We consider that a hop distance of Int.MaxVal is unreachable
- */
-trait HopDistance extends VRP {
-  // Int.MaxValue / N allow us to use sum invariant, else MaxValue of this invariant is over Integer.MaxValue.
-  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i)}
-
-  val overallDistance: IntVar = Sum(hopDistance)
-
-  /**This method sets the distance to use for the hop between points.
-   * If a more complex function is to be used, set a controlling invariant to the hopDistances yourself
-   * @param DistanceMatrix is the distance between each point. All distance involving point 0 must be zero (they are corrected anyway by the engine)
-   */
-  def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
-    distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N ) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => {if (j!= N) DistanceMatrix(i)(j) else 0})
-  }
-
-  def installCostFunction(fun:(Int, Int) => Int){
-    distanceFunction = fun
-    for (i <- 0 until N) hopDistance(i) <== IntVar2IntVarFun(Next(i), j => fun(i,j))
-  }
-  
-  var distanceFunction:((Int, Int) => Int) = null
-  def getHop(from:Int, to:Int):Int = distanceFunction(from,to)
-}
-
-/**declares an objective function, attached to the VRP.
- * And maintains it equal to the hop distance in the VRP,
- * based either on a matrix, or on another mechanism.
-*/
-trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
-  ObjectiveVar <== overallDistance
-}
-
-/**
- * Add functions cost to the actual objective of the VRP.
-*/
-
-trait OtherFunctionToObjective extends ObjectiveFunction {
-  var AddedObjectiveFunctions:IntVar = new IntVar(m,Int.MinValue,Int.MaxValue,0,"added functions Objective")
-
-  def recordAddedFunctions(functions: Iterable[IntVar]){
-    assert(!functions.isEmpty && ObjectiveVar!= null)
-
-    var objAdd = AddedObjectiveFunctions
-    functions.foreach(f => { objAdd = objAdd + f })
-    AddedObjectiveFunctions = objAdd
-    objAdd = ObjectiveVar + objAdd
-    setObjectiveVar(objAdd)
-   }
-
-  def recordAddedFunction(function : IntVar) = recordAddedFunctions(Array[IntVar](function))
-}
-
-/**
- * Trait maintains the weak and strong constraints systems.
- * Helps to build correctly departure's heuristics.
- */
-trait StrongConstraints extends ObjectiveFunction {
-  var strongConstraints:ConstraintSystem = null
-  var violatedStrongConstraints = false
-
-  def setStrongConstraints(sc:ConstraintSystem) {strongConstraints = sc}
-  def updateViolatedStrongConstraints {
-    if(strongConstraints == null) violatedStrongConstraints  = false
-    else
-      violatedStrongConstraints = !strongConstraints.isTrue
-  }
-  override def propagateObjective:Int = {
-    updateViolatedStrongConstraints
-    if (violatedStrongConstraints) Int.MaxValue else ObjectiveVar.value
-  }
-}
-
-trait WeakConstraints extends OtherFunctionToObjective {
-  var weakConstraints:ConstraintSystem = null
-
-  def setWeakConstraints(wc:ConstraintSystem) {weakConstraints = wc;recordAddedFunction(weakConstraints.violation)}
-}
-
-
-/**
- * Finds the nearest neighbor of each point
- * used by some neighborhood searches
- */
-trait ClosestNeighborPoints extends VRP with HopDistance{
-  var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
-  var maxAvgUnrouted:Double = 0
-
-  def saveKNearestPoints(k:Int,filter:(Int => Boolean) = ( _ => true)){
-    if (k < N-1){
-      val neighbors = Array.tabulate(N)((node:Int) => computeKNearestNeighbors(node, k,filter))
-      closestNeighbors += ((k,neighbors))
-    }
-  }
-  
-  def computeNearestNeighbors(node:Int):List[Int] = {
-    val reachableneigbors = Nodes.filter((next:Int)
-      => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
-    //TODO: this is deeply inefficient. use a lazy quicksort instead, orr a partial sort based on a heap?
-    reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor))).toList
-  }
-
-  def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean)):List[Int]= {
-    computeNearestNeighbors(node).filter(filter).take(k)
-  }
-
-  def getKNearestNeighbors(k:Int, node:Int,filter:(Int => Boolean) = ( _ => true)):Iterable[Int] = {
-    if (k >= N-1) return Nodes
-    if(!closestNeighbors.isDefinedAt(k)){
-      saveKNearestPoints(k:Int,filter)
-    }
-    updateMaxAvgUnrouted(k,node)
-    closestNeighbors(k)(node)
-  }
-
-  def updateMaxAvgUnrouted(k:Int,node:Int){
-    var avg : Double = 0
-    closestNeighbors(k)(node).foreach(n => if(!isRouted(n)) avg += 1)
-    if (avg/k >maxAvgUnrouted) maxAvgUnrouted = avg/k
-  }
-
 }
 

@@ -1,13 +1,12 @@
+package oscar.cbls.routing.initialSolution
+
 /**
  * Created with IntelliJ IDEA.
  * User: Florent
- * Date: 10/11/12
- * Time: 15:07
+ * Date: 9/11/12
+ * Time: 10:45
  * To change this template use File | Settings | File Templates.
  */
-
-package oscar.cbls.routing.heuristic
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -30,31 +29,7 @@ package oscar.cbls.routing.heuristic
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-import oscar.cbls.routing._
-import neighborhood.{ReinsertPoint, Neighbor}
-
-/**
- * Works for many vehicles.
- */
-
-object Unrouted extends Heuristic{
-
-  def addPoint {}
-  def addPoints = addPoint
-  def start {}
-
-  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with PositionInRouteAndRouteNr
-    with HopDistance){
-
-    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
-    for (v <- 0 until vrp.V)
-      vrp.Next(v) := v
-    for (p <- vrp.V until vrp.N)
-      vrp.Next(p) := vrp.N
-    vrp.m.propagate()
-
-    heuristicTimer.setPercentComplete(100)
-    heuristicTimer.unlock
-  }
+abstract trait Heuristic {
+  val heuristicTimer = HeuristicTimer
 
 }

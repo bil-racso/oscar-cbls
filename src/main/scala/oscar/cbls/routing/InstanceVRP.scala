@@ -3,7 +3,7 @@ package oscar.cbls.routing
 import io._
 import java.io._
 import util.Random
-import math._
+import oscar.cbls.routing.model._
 
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
@@ -44,8 +44,10 @@ object InstanceVisualVRP{
 
   def getInstance(vrp:VRP,n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point]=
     n match {
-      case 0 => random(vrp.N,xMax,yMax)
-      case 1 => randomSameDepot(vrp.N,vrp.V,xMax,yMax)
+      case 0 => random(vrp.N,xMax,yMax,1)
+      case 1 =>  random(vrp.N,xMax,yMax,1)
+      case 2 =>  random(vrp.N,xMax,yMax,2)
+      case n => randomSameDepot(vrp.N,vrp.V,xMax,yMax,n+1)
     }
 
 

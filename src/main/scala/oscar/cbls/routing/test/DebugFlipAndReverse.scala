@@ -23,7 +23,7 @@
 package oscar.cbls.routing.test
 
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
-import oscar.cbls.routing.VRP
+import oscar.cbls.routing.model._
 /**
  * Created with IntelliJ IDEA.
  * User: Florent

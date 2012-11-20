@@ -24,16 +24,21 @@
 package oscar.cbls.invariants.lib.numeric
 
 import oscar.cbls.invariants.core.computation._;
-import oscar.cbls.invariants.core.propagation._;
+import oscar.cbls.invariants.core.propagation._
+import oscar.cbls.invariants.lib.logic.Filter
+;
 
 /** sum(i in cond) vars(i)
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
  */
-case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInvariant {
+
+
+case class SumElements(var vars: Array[IntVar], cond: IntSetVar=null) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
-  assert(cond != null, "cond cannot be null for SumElements")
+  //assert(cond != null, "cond cannot be null for SumElements")
+
 
   def myMin = Int.MinValue
   def myMax = Int.MaxValue
@@ -44,6 +49,10 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)
 
+  bulkRegister(vars)
+  def init(v:Array[IntVar]) = {
+    SumElements(v,Filter(v,(Int => true)))
+  }
 
   for(i <- cond.value){
     keyForRemoval(i) = registerDynamicDependency(vars(i),i)

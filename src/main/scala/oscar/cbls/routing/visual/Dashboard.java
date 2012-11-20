@@ -1,11 +1,13 @@
 package oscar.cbls.routing.visual;
 
-import oscar.cbls.routing.heuristic.HeuristicTimer;
+import oscar.cbls.routing.initialSolution.HeuristicTimer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.concurrent.Semaphore;
 
 /*******************************************************************************
@@ -88,26 +90,44 @@ public class Dashboard extends JPanel {
 
     }
 
-    public Dashboard(){
+    public Dashboard(boolean easyMode){
 
-        setBackground(Color.white);
-        setLayout(new FlowLayout());
-        setPointsAndVehicles();
-        setHeuristic();
-        setInstances();
+        if(easyMode){
+            setBackground(Color.white);
+            setLayout(new FlowLayout());
+            //setPointsAndVehicles();
+            //setHeuristic();
+            setInstances(easyMode);
+            setMakeInstance();
+            //setResetInstance();
+            setStartButton();
+            setNextIteButton();
+            //setLogRoute();
+            //setRouteLabel();
+            setNeighborhood(easyMode);
+            setProgressBar();
+            //setConstraintsPanel(easyMode);
+        }
+        else{
+            setBackground(Color.white);
+            setLayout(new FlowLayout());
+            setPointsAndVehicles();
+            setHeuristic();
+            setInstances(easyMode);
+            setMakeInstance();
+            setResetInstance();
+            setStartButton();
+            setNextIteButton();
+            setLogRoute();
+            setRouteLabel();
 
-        setResetInstance();
-        setStartButton();
-        setNextIteButton();
-        setLogRoute();
-        setRouteLabel();
-
-        setNeighborhood();
-        setProgressBar();
-        setConstraintsPanel();
+            setNeighborhood(easyMode);
+            setProgressBar();
+            setConstraintsPanel(easyMode);
+        }
     }
 
-    public void setConstraintsPanel(){
+    public void setConstraintsPanel(boolean easyMode){
         constraintsPanel = new JPanel();
         constraintsPanel.setBackground(Color.white);
         constraintsPanel.setPreferredSize(new Dimension(350,100));
@@ -179,7 +199,7 @@ public class Dashboard extends JPanel {
         add(nextIte);
     }
 
-    public void setNeighborhood(){
+    public void setNeighborhood(boolean easyMode){
 
         neighborLabel = new JLabel();
         neighborLabel.setText("Neighbor : ");
@@ -196,12 +216,16 @@ public class Dashboard extends JPanel {
         klimited.setPreferredSize(new Dimension(35,25));
         klimited.setBackground(Color.white);
 
+
         neighborhoodPanel = new JPanel();
+
 
         neighborhoodPanel.add(neighborLabel);
         neighborhoodPanel.add(neighborhood);
+        if(!easyMode){
         neighborhoodPanel.add(klimitedLabel);
         neighborhoodPanel.add(klimited);
+        }
 
         neighborhoodPanel.setBackground(Color.white);
         neighborhoodPanel.setBorder(BorderFactory.createTitledBorder("Neighborhood Options"));
@@ -209,7 +233,7 @@ public class Dashboard extends JPanel {
         add(neighborhoodPanel);
     }
 
-    public void setResetInstance(){
+    public void setMakeInstance(){
         makeInstance = new JButton("Make instance");
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -218,8 +242,12 @@ public class Dashboard extends JPanel {
             }
         });
 
-        makeInstance.setBackground(Color.white);
+        makeInstance.setBackground(Color.green);
         add(makeInstance);
+    }
+
+    public void setResetInstance(){
+
         resetInstance = new JButton("Reset instance");
         resetInstance.setBackground(Color.white);
         resetInstance.addActionListener(new ActionListener() {
@@ -272,7 +300,7 @@ public class Dashboard extends JPanel {
 
     public void setStartButton(){
         start = new JButton("Start");
-        start.setBackground(Color.white);
+        start.setBackground(Color.green);
         start.setMaximumSize(new Dimension(100, 50));
         start.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -334,13 +362,51 @@ public class Dashboard extends JPanel {
         add(nbInput);
     }
 
-    public void setInstances(){
-        instances = new JComboBox(new String[]{"Random (several deposits)","Random (single deposit)"});
+    public void setInstances(Boolean easyMode){
+
+        if(!easyMode)
+            instances = new JComboBox(new String[]{"Random (several deposits)","Random (single deposit)"});
+        else{
+
+            strongCButton = new JRadioButton();
+            strongCButton.setSelected(false);
+            strongCField = new JTextField("0");
+            penaltySCField = new JTextField("1");
+
+
+            weakCButton = new JRadioButton();
+            weakCButton.setSelected(true);
+            weakCField = new JTextField("10");
+            penaltyWCField = new JTextField("100");
+
+
+            nbNodes = new JTextField("50");
+            nbVehicle = new JTextField("2");
+            heuristic = new JComboBox(new String[]{"RandomNeighbor","NearestNeighbor","Unrouted"});
+            heuristic.setSelectedIndex(0);
+            writeRoute = new JCheckBox();
+
+            instances = new JComboBox(new String[]{"2D-2V-50P","4D-4V-100P","6D-6V-150P","1D-8V-200P","1D-8V-250P"});
+            instances.setPreferredSize(new Dimension(100,30));
+            instances.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    int i = instances.getSelectedIndex();
+
+                    nbVehicle.setText("" + (2*(i+1)));
+                    nbNodes.setText(""+ ((i+1)*50));
+                }
+            });
+            instances.setSelectedIndex(0);
+        }
+
         instances.setBackground(Color.white);
         JPanel instancesPanel = new JPanel();
         instancesPanel.add(instances);
         instancesPanel.setBackground(Color.white);
         instancesPanel.setBorder(BorderFactory.createTitledBorder("Instances"));
+
+        instances.setBackground(Color.white);
+
 
         add(instancesPanel);
 

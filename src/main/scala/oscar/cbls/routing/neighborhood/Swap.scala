@@ -33,7 +33,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing._
+import oscar.cbls.routing.model._
 
 
 /**moves a point in a circuit to another place.

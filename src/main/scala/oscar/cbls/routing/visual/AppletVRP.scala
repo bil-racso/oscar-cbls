@@ -38,7 +38,7 @@ class AppletVRP extends JApplet {
 
   override def init() {
 
-    setSize(new Dimension(1000,600))
+    setSize(new Dimension(800,500))
     setContentPane(PanelVRP.PanelVRP)
     setName("VRP Routing")
     setVisible(false)

@@ -30,8 +30,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.invariants.core.computation.{IntVar, Snapshot}
-import oscar.cbls.routing._
+import oscar.cbls.routing.model._
 
 /*
 

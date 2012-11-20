@@ -30,7 +30,7 @@
 package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
-import oscar.cbls.routing._
+import oscar.cbls.routing.model._
 import scala.util.Random
 
 
@@ -57,13 +57,11 @@ object ReinsertPoint extends SearchEngine{
     if(random){
       val beforeReinsertedPoint = if (onlyFrom) Range(hotRestart,hotRestart+1) else Random.shuffle(Range(0,vrp.N))
       for(p <- beforeReinsertedPoint if vrp.isRouted(p)){
-        val toRoute = Random.shuffle(vrp.Unrouted.value)
+        val toRoute = Random.shuffle(vrp.Unrouted.value.toList)
         toRoute.foreach(i =>
           {
             val obj = getObjAfterMove(p,i,vrp)
             if(obj != Int.MaxValue){
-              println(obj)
-              println(Int.MaxValue)
               move = (p,i)
               return ReinsertPoint(move._1,move._2,obj,vrp)
             }

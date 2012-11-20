@@ -33,7 +33,8 @@ import javax.swing.JOptionPane
  * (usable in VRP, TSP, etc..)
  * Arrays start at 0 until N-1 for Next, PositionInRoute and RouteNr.
  * Arrays start at 0 until V-1 for RouteLenght and LastInRoute.
- * N value is to denote an unrouted node.
+ * N value is to denote an unrouted node and the positionInRoute of an unrouted node.
+ * V value is to denote the route number of an unrouted node.
  * The nodes from 0 to V-1 are the starting points of vehicles.
  *
  * @param V the number of vrp to consider V>=1 and V<=N
@@ -76,21 +77,21 @@ case class Routes(V: Int,
     toReturn
   }
 
-  def DecorateVehicleRoute(V:Int){
-    var currentID = V
+  def DecorateVehicleRoute(v:Int){
+    var currentID = v
     var currentPosition = 1
-    PositionInRoute(V) := 0
-    RouteNr(V) := V
-    while(Next(currentID).value !=V){
-      assert(Next(currentID).value>V)
+    PositionInRoute(v) := 0
+    RouteNr(v) := v
+    while(Next(currentID).value !=v){
+      assert(Next(currentID).value>v)
 
       currentID = Next(currentID).value
       PositionInRoute(currentID) := currentPosition
-      RouteNr(currentID) := V
+      RouteNr(currentID) := v
       currentPosition +=1
     }
-    LastInRoute(V) := currentID
-    RouteLength(V) := PositionInRoute(currentID).getValue(true)+1
+    LastInRoute(v) := currentID
+    RouteLength(v) := PositionInRoute(currentID).getValue(true)+1
   }
 
   var ToUpdate:List[Int] = List.empty
@@ -116,7 +117,7 @@ case class Routes(V: Int,
     for (node <- ToUpdate){
       if(Next(node).value == UNROUTED){
         //node is unrouted now
-        RouteNr(node) := UNROUTED
+        RouteNr(node) := V
         PositionInRoute(node) := UNROUTED
         ArrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(Next(node),node)
       }else if(isUpToDate(node)){
@@ -170,7 +171,7 @@ case class Routes(V: Int,
         }
       }
       else{
-        assert(RouteNr(n).value == UNROUTED)
+        assert(RouteNr(n).value == V)
         assert(PositionInRoute(n).value == UNROUTED)
       }
     }
@@ -181,7 +182,7 @@ object Routes{
     val m:Model = InvariantHelper.FindModel(Next)
     // max bounds equal Next.length-2 instead of V
     val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,0, "PositionInRouteOfPt" + i))
-    val RouteNr = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,Next.length, "RouteNrOfPt" + i))
+    val RouteNr = Array.tabulate(Next.length)(i => new IntVar(m, 0, V,V, "RouteNrOfPt" + i))
     val RouteLength = Array.tabulate(V)(i => new IntVar(m,0,Next.length,0,"Route "+i+"-Lenght"))
     val lastInRoute = Array.tabulate(V)(i => new IntVar(m,0,Next.length,i,"LastInRoute "+i))
 

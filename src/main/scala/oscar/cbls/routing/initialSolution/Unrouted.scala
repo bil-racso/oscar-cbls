@@ -1,6 +1,12 @@
-package oscar.cbls.routing.heuristic
+/**
+ * Created with IntelliJ IDEA.
+ * User: Florent
+ * Date: 10/11/12
+ * Time: 15:07
+ * To change this template use File | Settings | File Templates.
+ */
 
-import java.util.concurrent.Semaphore
+package oscar.cbls.routing.initialSolution
 
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
@@ -23,26 +29,32 @@ import java.util.concurrent.Semaphore
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
+
+import oscar.cbls.routing.model._
+import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
+
 /**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 8/11/12
- * Time: 22:36
- * To change this template use File | Settings | File Templates.
+ * Works for many vehicles.
  */
 
-object HeuristicTimer{
-  val heuristicTimer = new TimerAverage
+object Unrouted extends Heuristic{
 
-  def getPercentComplete = {heuristicTimer.getPercentComplete}
-  def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p}
-  def lock {heuristicTimer.lock.acquire()}
-  def unlock {heuristicTimer.lock.release()}
-}
+  def addPoint {}
+  def addPoints = addPoint
+  def start {}
 
-class TimerAverage {
-  var lock:Semaphore = new Semaphore(0)
-  var actualPercentComplete:Int = 0
-  def setPercentComplete(p:Int) {actualPercentComplete=p}
-  def getPercentComplete:Int = actualPercentComplete
+  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with PositionInRouteAndRouteNr
+    with HopDistance){
+
+    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
+    for (v <- 0 until vrp.V)
+      vrp.Next(v) := v
+    for (p <- vrp.V until vrp.N)
+      vrp.Next(p) := vrp.N
+    vrp.m.propagate()
+
+    heuristicTimer.setPercentComplete(100)
+    heuristicTimer.unlock
+  }
+
 }

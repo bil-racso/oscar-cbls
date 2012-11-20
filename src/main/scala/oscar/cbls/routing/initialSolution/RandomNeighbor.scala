@@ -1,5 +1,6 @@
-package oscar.cbls.routing.heuristic
+package oscar.cbls.routing.initialSolution
 
+import oscar.cbls.routing.model._
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *

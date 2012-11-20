@@ -1,3 +1,4 @@
+package oscar.cbls.routing.test
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -21,8 +22,8 @@
   ******************************************************************************/
 import math._
 import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.routing._
-import heuristic.NearestNeighbor
+import oscar.cbls.routing.model._
+import oscar.cbls.routing.initialSolution.NearestNeighbor
 
 /**
  * Created with IntelliJ IDEA.

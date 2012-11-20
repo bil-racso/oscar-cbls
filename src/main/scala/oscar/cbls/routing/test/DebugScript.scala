@@ -40,8 +40,9 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import util.Random
 import scala.math._
 import oscar.cbls.routing._
-import heuristic.NearestNeighbor
+import initialSolution.NearestNeighbor
 import neighborhood.{Neighbor, RemovePoint}
+import oscar.cbls.routing.model._
 
 /**supports only a single vehicle*/
 object DebugScript extends SearchEngine with App{

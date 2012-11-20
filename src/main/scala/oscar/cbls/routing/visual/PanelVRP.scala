@@ -81,7 +81,7 @@ class PanelVRP extends JPanel{
 
   val mapPanel:VisualDrawing = newMapPanel
   val plotPanel:Plot2D = newPlotPanel
-  val boardPanel:Dashboard = newBoardPanel
+  val boardPanel:Dashboard = newBoardPanel(true)
 
   val vrpModel = ModelVRP.model
   val colorsManagement = new ColorManagement()
@@ -90,7 +90,7 @@ class PanelVRP extends JPanel{
     Setup the GridBagLayout.
    */
   def initialize(){
-    setGridBagLayout
+    setGridBagLayout(true)
     setBackground(Color.white)
   }
 
@@ -179,7 +179,7 @@ class PanelVRP extends JPanel{
 
   def newMapPanel:VisualDrawing = {
     val mapPanel : VisualDrawing = new VisualDrawing(false);
-    mapPanel.setPreferredSize(new Dimension(500,500))
+    mapPanel.setPreferredSize(new Dimension(700,700))
     mapPanel.setMinimumSize(new Dimension(500,500))
     mapPanel.setBorder(BorderFactory.createTitledBorder("Map"))
     mapPanel.setBackground(Color.white)
@@ -188,8 +188,8 @@ class PanelVRP extends JPanel{
 
   def newPlotPanel:Plot2D = {
     val plotPanel = new Plot2D("","Iteration nbr","Distance")
-    plotPanel.setPreferredSize(new Dimension(400,400))
-    plotPanel.setMinimumSize(new Dimension(400,400))
+    plotPanel.setPreferredSize(new Dimension(350,300))
+    plotPanel.setMinimumSize(new Dimension(250,200))
     plotPanel.setBorder(BorderFactory.createTitledBorder("Plot"))
     plotPanel.setBackground(Color.white)
     plotPanel
@@ -203,16 +203,19 @@ class PanelVRP extends JPanel{
     mapPanel.getShapes.clear()
   }
 
-  def newBoardPanel:Dashboard = {
-    val boardPanel = new Dashboard()
+  def newBoardPanel(easyMode:Boolean):Dashboard = {
+    val boardPanel = new Dashboard(easyMode)
     boardPanel.setBorder(BorderFactory.createTitledBorder("Board option"))
     boardPanel.setBackground(Color.white)
-    boardPanel.setPreferredSize(new Dimension(400, 800));
-    //boardPanel.setMinimumSize(new Dimension(400,400))
+    if(!easyMode)
+      boardPanel.setPreferredSize(new Dimension(400, 500));
+    else
+      boardPanel.setPreferredSize(new Dimension(250, 230));
+    boardPanel.setMinimumSize(new Dimension(250,230))
     boardPanel
   }
 
-  def setGridBagLayout() {
+  def setGridBagLayout(easyMode:Boolean) {
     setLayout(myLayout)
     // constraints of board panel
     myConstraints = new GridBagConstraints
@@ -222,10 +225,14 @@ class PanelVRP extends JPanel{
     myConstraints.anchor = GridBagConstraints.PAGE_START
     myConstraints.fill = GridBagConstraints.BOTH;
     val scrollBoard:JScrollPane = new JScrollPane(boardPanel,ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      if(easyMode) ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER else ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollBoard.setViewportView(boardPanel)
-    scrollBoard.setMinimumSize(new Dimension(400,400))
-    scrollBoard.setPreferredSize(new Dimension(400,400))
+    scrollBoard.setMinimumSize(new Dimension(280,250))
+
+    if(!easyMode)
+      scrollBoard.setPreferredSize(new Dimension(400,400))
+    else
+      scrollBoard.setPreferredSize(new Dimension(250,250))
     scrollBoard.getVerticalScrollBar().setBackground(Color.white)
     myLayout.setConstraints(scrollBoard,myConstraints)
     //add the board panel scrolled.

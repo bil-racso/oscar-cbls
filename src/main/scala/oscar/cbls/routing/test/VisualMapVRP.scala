@@ -25,8 +25,9 @@ package oscar.cbls.routing.test
 import javax.swing.JOptionPane
 import org.jdesktop.swingx.mapviewer.{Waypoint, GeoPosition}
 import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.routing.model._
 import oscar.cbls.routing._
-import heuristic.{NearestNeighbor}
+import initialSolution.{NearestNeighbor}
 import neighborhood._
 import oscar.visual._
 import java.awt.Dimension
@@ -60,7 +61,7 @@ object VisualMapVRP extends App{
   }
 
   //dashboard
-  val board = new Dashboard()
+  val board = new Dashboard(false)
   val dashboard = frame.createFrame("Dashboard")
   dashboard.setLocation(800,450)
   dashboard.setPreferredSize(new Dimension(600,400))

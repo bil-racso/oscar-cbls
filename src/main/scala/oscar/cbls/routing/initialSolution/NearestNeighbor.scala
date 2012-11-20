@@ -1,4 +1,4 @@
-package oscar.cbls.routing.heuristic
+package oscar.cbls.routing.initialSolution
 
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
@@ -23,7 +23,7 @@ package oscar.cbls.routing.heuristic
   ******************************************************************************/
 
 
-import oscar.cbls.routing._
+import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
 
 /**

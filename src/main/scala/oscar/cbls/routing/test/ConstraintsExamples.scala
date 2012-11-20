@@ -1,12 +1,19 @@
+package oscar.cbls.routing.test
+
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
+import oscar.cbls.invariants.lib.logic.Cluster
+import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
+import initialSolution.RandomNeighbor
+import model._
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,15 +23,15 @@ import oscar.cbls.routing._
  * To change this template use File | Settings | File Templates.
  */
 
-object ConstraintsExamples {
+object ConstraintsExamples extends App{
 
-  val N = 500
+  val N = 20
   val vehicles = 2
   val kLimited = 20
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, vehicles, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-    with PenaltyForUnrouted with OtherFunctionToObjective with WeakConstraints with StrongConstraints
+    with PenaltyForUnrouted with OtherFunctionToObjective with WeightedNode with WeakConstraints with StrongConstraints
 
   def distanceMatrix(towns : Array[Point]):Array[Array[Int]] =
     Array.tabulate(N,N)((i,j) => round(sqrt((pow(towns(i).long - towns(j).long, 2)
@@ -32,6 +39,7 @@ object ConstraintsExamples {
 
   vrp.installCostMatrix(distanceMatrix(InstanceVRP.random(N)))
   vrp.saveKNearestPoints(kLimited)
+
 
   val strongConstraintSystem = new ConstraintSystem(m)
   val weakConstraintSystem = new ConstraintSystem(m)
@@ -81,11 +89,16 @@ object ConstraintsExamples {
 
    */
 
+  val cluster = Cluster.MakeDense(vrp.RouteNr)
+  val capacityOfRoute = new IntVar(m,0,Int.MaxValue,100,"Capacity of vehicle")
+  vrp.fixWeightNode(50)
 
 
-
-
-
+  for (i <- 0 until vrp.V){
+    val actualCapacityOfRoute = SumElements(vrp.weightNode,cluster.clusters(i)).toIntVar
+    strongConstraintSystem.post(LE(actualCapacityOfRoute,capacityOfRoute),penalty)
+    strongConstraintSystem.registerForViolation(actualCapacityOfRoute)
+  }
 
 
   vrp.setStrongConstraints(strongConstraintSystem)
@@ -93,4 +106,12 @@ object ConstraintsExamples {
   strongConstraintSystem.close()
   weakConstraintSystem.close()
   m.close()
+
+  RandomNeighbor(vrp)
+  m.propagate()
+
+
+  val a = Array[IntVar](10)
+  val sum = Sum(a)
+
 }
