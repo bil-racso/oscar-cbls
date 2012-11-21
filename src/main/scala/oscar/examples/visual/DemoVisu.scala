@@ -98,7 +98,7 @@ object DemoVisu {
   def demoMap = {
         val m = new VisualMap();
 		val inf = f.createFrame("VisualMap");
-		inf.add(m.peer);
+		inf.add(m);
 		f.pack();
 		
 		try {
@@ -119,9 +119,9 @@ object DemoVisu {
 			
 
 		
-			val l = m.createLine(citiesCoord(6).lat,citiesCoord(6).lon,citiesCoord(1).lat,citiesCoord(1).lon);
+			val l = m.createLine((citiesCoord(6).lat,citiesCoord(6).lon),(citiesCoord(1).lat,citiesCoord(1).lon));
 			
-			citiesCoord.zipWithIndex.filter(p => p._2 != 1 && p._2 != 6).map(_._1).foreach(lo => m.createPath(lo.lat,lo.lon,citiesCoord(1).lat,citiesCoord(1).lon))
+			citiesCoord.zipWithIndex.filter(p => p._2 != 1 && p._2 != 6).map(_._1).foreach(lo => m.createPath((lo.lat,lo.lon),(citiesCoord(1).lat,citiesCoord(1).lon)))
 
 			
 		} catch  {

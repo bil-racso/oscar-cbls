@@ -16,26 +16,35 @@
  ******************************************************************************/
 package oscar.visual;
 
+import java.awt.Color
+
 
 /**
  * @author Pierre Schaus
  */
-class MapLine(map : VisualMap,  lat1 : Double, long1 : Double, lat2 : Double, long2 : Double) {
-	var lt1 = lat1
-	var lg1 = long1
-	var lt2 = lat2
-	var lg2 = long2
-
+class MapLine(map : VisualMap,  lat1 : Double, long1 : Double, lat2 : Double, long2 : Double, col : Color = Color.RED) {
+	private var olat = lat1
+	private var olong = long1
+	private var dlat = lat2
+	private var dlong = long2
 	
-	def setDest(lt2 : Double, lg2 : Double) {
-		this.lt2 = lt2;
-		this.lg2 = lg2;
+	var color = col
+
+	def this(map : VisualMap, o: (Double, Double), d: (Double, Double), col : Color = Color.RED) = this(map, o._1, o._2, d._1, d._2, col)
+	def remove = map.removeLine(this)
+	
+	def dest_=(d:(Double,Double)) : Unit = {
+		this.dlat = d._1;
+		this.dlong = d._2;
 		map.viewer.repaint();
 	}
 
-	def setOrig(lt1 : Double ,lg1 : Double ) {
-		this.lt1 = lt1;
-		this.lg1 = lg1;
+	def orig_=(o:(Double,Double) ) : Unit =  {
+		this.olat = o._1;
+		this.olong = o._2;
 		map.viewer.repaint();
 	}		
+	
+	def dest = (dlat, dlong)
+	def orig = (olat, olong)
 }

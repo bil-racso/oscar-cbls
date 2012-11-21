@@ -63,8 +63,10 @@ class MapPainter(map : VisualMap) extends Painter[JXMapViewer] {
 		for ( l <- mymap.lines) {
 
 			//convert geo to world bitmap pixel 
-			val pt1 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.lt1, l.lg1), mymap.viewer.getZoom())
-			val pt2 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.lt2, l.lg2), mymap.viewer.getZoom())
+			val pt1 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.orig._1, l.orig._2), mymap.viewer.getZoom())
+			val pt2 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.dest._1, l.dest._2), mymap.viewer.getZoom())
+			
+			g.setColor(l.color)
 
 			g.drawLine( pt1.getX().toInt, pt1.getY().toInt,  pt2.getX().toInt,  pt2.getY().toInt) 
 
@@ -77,8 +79,10 @@ class MapPainter(map : VisualMap) extends Painter[JXMapViewer] {
 		for ( l <- mymap.paths.map(_.lines).flatten) {
 
 			//convert geo to world bitmap pixel 
-			val pt1 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.lt1, l.lg1), mymap.viewer.getZoom())
-			val pt2 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.lt2, l.lg2), mymap.viewer.getZoom())
+			val pt1 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.orig._1, l.orig._2), mymap.viewer.getZoom())
+			val pt2 = mymap.viewer.getTileFactory().geoToPixel(new GeoPosition(l.dest._1, l.dest._2), mymap.viewer.getZoom())
+			
+			g.setColor(l.color)
 
 			g.drawLine( pt1.getX().toInt, pt1.getY().toInt,  pt2.getX().toInt,  pt2.getY().toInt) 
 

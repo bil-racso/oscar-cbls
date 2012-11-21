@@ -49,7 +49,7 @@ object TSPDemo {
     f.createFrame("TSP Objective Function").add(plot)
     // creates the tour visu and place it into the frame
     val map = new VisualMap();
-    f.createFrame("TSP Tour").add(map.peer)
+    f.createFrame("TSP Tour").add(map)
     f.pack()
     // ------------------------------------------
     
@@ -83,7 +83,7 @@ object TSPDemo {
     val coord = Array.tabulate(n)(i => (100+rand.nextInt(400),rand.nextInt(400)))
     
     
-    val lines = Array.tabulate(n)(i => map.createLine(countries(i).lat,countries(i).lon,0,0))
+    val lines = Array.tabulate(n)(i => map.createLine((countries(i).lat,countries(i).lon),(0,0)))
 
     
 
@@ -103,7 +103,7 @@ object TSPDemo {
     var nbSol = 0
     countries.foreach(c => map.createWaypoint(c.lat,c.lon))
     def updateVisu() {
-      def update(i: Int) = lines(i).setDest(countries((succ(i).value)).lat,countries((succ(i).value)).lon)
+      def update(i: Int) = lines(i).dest = (countries((succ(i).value)).lat,countries((succ(i).value)).lon)
       nbSol += 1
       (0 until n).foreach(update(_))
       plot.addPoint(nbSol,dist.value)
