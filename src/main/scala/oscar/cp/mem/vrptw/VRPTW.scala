@@ -8,7 +8,7 @@ import oscar.cp.constraints.TONOTCOMMIT
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.mem.TimeWindowPred
-import oscar.cp.mem.constraints.TimeWindowSuala.Array.canBuildFrom
+import oscar.cp.mem.TimeWindowSucc
 
 /**
  * VRPTW

@@ -9,7 +9,7 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
 import oscar.cp.mem.vrptw.VRPTWParser.parse
 import oscar.cp.mem.TimeWindowPred
-import oscar.cp.mem.constraints.TimeWindowSuala.Array.canBuildFrom
+import oscar.cp.mem.TimeWindowSucc
 
 /**
  * VRPTW

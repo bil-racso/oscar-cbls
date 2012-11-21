@@ -36,7 +36,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroA200.tsp")
+  val coord = parseCoordinates("data/TSP/kroA100.tsp")
   val rand = new scala.util.Random(0)
 
   // Random coordinates
@@ -54,7 +54,7 @@ object myTSP extends App {
 
   // Builds the distance matrix
   val realDistMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
-  val distMatrix = realDistMatrix.map(_.map(round(_).toInt))
+  val distMatrix = realDistMatrix.map(_.map(i => round(i*10).toInt))
 
   // Model
   // -----
@@ -81,13 +81,13 @@ object myTSP extends App {
   var nStagnation = 0
   var stagnation = false
 
-  val pMin = 10
+  val pMin = 20
   val pMax = 60
   var p = pMin
 
   var firstLns = true
 
-  cp.lns(5000000, 1000) {
+  cp.lns(5000000, 4000) {
 
     nRestart += 1
 
