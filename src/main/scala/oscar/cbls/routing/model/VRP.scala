@@ -224,6 +224,18 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     // must commit the first flip to avoid problem.
     //flip(a,b,e,f)::flip(d,c,b,f)
   }
+  def threeOptBOld(a:Int,b:Int,c:Int,d:Int,e:Int,f:Int):List[(IntVar,Int)] = {
+    assert(Next(a).value==b && Next(c).value==d && Next(e).value==f)
+    var listToUpdate:List[(IntVar,Int)] = List.empty
+    listToUpdate = (Next(a),d)::listToUpdate
+    listToUpdate = (Next(e),c)::listToUpdate
+    listToUpdate = reverse(b,c):::listToUpdate
+    listToUpdate = (Next(b),f)::listToUpdate
+    listToUpdate
+    // version using flip (make cycle in propagation cause of overlapping reverse)
+    // must commit the first flip to avoid problem.
+    //flip(a,b,e,f)::flip(d,c,b,f)
+  }
 
   /**
    * Returns the list of variables to update with theirs new values in order to

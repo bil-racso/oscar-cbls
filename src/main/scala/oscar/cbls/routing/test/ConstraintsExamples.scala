@@ -73,11 +73,11 @@ object ConstraintsExamples extends App{
 
    */
   // fix a penalty (use node weight, or a penalty fixed by route or for all route, or anything else) and a length max.
-  val penalty = new IntVar(m,0,N,1000,"penalty for too long route")
+
   val lengthMax = new IntVar(m,0,N,50,"length max for route")
   // post and register the constraint
   for(i <- 0 until vrp.V){
-    strongConstraintSystem.post(LE(vrp.RouteLength(i),lengthMax),penalty)
+    strongConstraintSystem.post(LE(vrp.RouteLength(i),lengthMax))
     strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
     // once more it could be a weakConstraint, it depends only of the problem's definition.
   }
@@ -96,10 +96,9 @@ object ConstraintsExamples extends App{
 
   for (i <- 0 until vrp.V){
     val actualCapacityOfRoute = SumElements(vrp.weightNode,cluster.clusters(i)).toIntVar
-    strongConstraintSystem.post(LE(actualCapacityOfRoute,capacityOfRoute),penalty)
-    strongConstraintSystem.registerForViolation(actualCapacityOfRoute)
+    strongConstraintSystem.post(LE(actualCapacityOfRoute,capacityOfRoute))
+    //strongConstraintSystem.registerForViolation(actualCapacityOfRoute)
   }
-
 
   vrp.setStrongConstraints(strongConstraintSystem)
   vrp.setWeakConstraints(weakConstraintSystem)
@@ -109,9 +108,5 @@ object ConstraintsExamples extends App{
 
   RandomNeighbor(vrp)
   m.propagate()
-
-
-  val a = Array[IntVar](10)
-  val sum = Sum(a)
 
 }

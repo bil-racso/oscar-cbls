@@ -44,6 +44,12 @@ object InstanceVisualVRP{
 
   def getInstance(vrp:VRP,n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point]=
     n match {
+      case 0 => random(vrp.N,xMax,yMax,seed)
+      case n => randomSameDepot(vrp.N,vrp.V,xMax,yMax,seed)
+    }
+
+  def getInstanceEasy(vrp:VRP,n:Int,xMax:Int,yMax:Int,seed:Int = 0):Array[Point]=
+    n match {
       case 0 => random(vrp.N,xMax,yMax,1)
       case 1 =>  random(vrp.N,xMax,yMax,1)
       case 2 =>  random(vrp.N,xMax,yMax,2)

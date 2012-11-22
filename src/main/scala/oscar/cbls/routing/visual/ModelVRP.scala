@@ -53,7 +53,7 @@ class ModelVRP() extends StopWatch{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-    with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective  with WeightedNode with WeakConstraints
+    with Predecessors with PenaltyForUnrouted with WeightedNode with WeakConstraints
     with StrongConstraints = null
 
   var towns:Array[Point] = null
@@ -89,6 +89,13 @@ class ModelVRP() extends StopWatch{
       clonedNext(i) = vrp.Next(i).value
   }
 
+
+  def getInstanceEasy(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Point] = {
+    boardPanel.instances.getSelectedIndex match{
+      case n => {InstanceVisualVRP.getInstanceEasy(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
+    }
+  }
+
   def getInstance(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Point] = {
     boardPanel.instances.getSelectedIndex match{
       case n => {InstanceVisualVRP.getInstance(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
@@ -107,13 +114,15 @@ class ModelVRP() extends StopWatch{
     startWatch()
     val boardPanel = panelVRP.boardPanel
     val mapPanel = panelVRP.mapPanel
+
+    // model
     V = boardPanel.nbVehicle.getText.toInt
     N = boardPanel.nbNodes.getText.toInt
 
     closeNeighbor = boardPanel.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective
+      with ClosestNeighborPoints with Predecessors with PenaltyForUnrouted
       with WeightedNode with WeakConstraints with StrongConstraints
 
     // constraints definition
@@ -126,7 +135,7 @@ class ModelVRP() extends StopWatch{
     // Example of constraint (with ConstraintSystem) on length of route.
     // It's also easy to fix a different penalty according to route number.
     for(i <- 0 until V)
-      strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)),strongPenalty)
+      strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)))
     for(i <- 0 until V){
       weakConstraintSystem.post(EQ(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
       //weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
@@ -139,7 +148,10 @@ class ModelVRP() extends StopWatch{
     if (boardPanel.weakCButton.isSelected)
       vrp.setWeakConstraints(weakConstraintSystem)
 
-    towns = getInstance(boardPanel,mapPanel)
+    if(panelVRP.isEasyMode)
+      towns = getInstanceEasy(boardPanel,mapPanel)
+    else
+      towns = getInstance(boardPanel,mapPanel)
 
     distMatrix = getDistMatrix(towns)
     vrp.installCostMatrix(distMatrix)

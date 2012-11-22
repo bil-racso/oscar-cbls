@@ -74,8 +74,8 @@ object ThreeOptB extends SearchEngine{
             vrp.isAtMostAsFarAs(endOfFirstEdge,startOfThirdEdge,limitLength+1)) ||
             (!vrp.onTheSameRoute(startOfFirstEdge,startOfSecondEdge) &&
               vrp.onTheSameRoute(startOfSecondEdge,startOfThirdEdge) &&
-              vrp.isAtLeastAsFarAs(startOfSecondEdge, vrp.Next(startOfThirdEdge).value,3) &&
-              vrp.isAtMostAsFarAs(endOfFirstEdge,startOfThirdEdge,limitLength+1)))
+              vrp.isAtLeastAsFarAs(startOfSecondEdge, startOfThirdEdge,2) &&
+              vrp.isAtMostAsFarAs(vrp.Next(startOfSecondEdge).value,startOfThirdEdge,limitLength+1)))
           {
             val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
             if (newObj < BestObj){

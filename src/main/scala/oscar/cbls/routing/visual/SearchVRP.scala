@@ -57,10 +57,11 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
       val startObjective = vrp.ObjectiveVar.value - vrp.AddedObjectiveFunctions.value
       startWatch() // timer
       while(!ended){
-        if(boardPanel.inPause || boardPanel.inIteration()){ // visual interface
+        if(boardPanel.inPause || boardPanel.inIteration() ){ // visual interface
           boardPanel.unlock2()
           boardPanel.lock()
         }
+
 
         val oldObj:Int = vrp.ObjectiveVar.value
         previousMove = getSelectedNeighborhood(panelVRP.vrpModel.closeNeighbor,previousMove)
@@ -79,11 +80,15 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
         " and is now "+ (vrp.ObjectiveVar.value - vrp.AddedObjectiveFunctions.value) + " in "+time/1000 +" sec "+ time%1000 + " ms."
         +"\n Total number of iteration is "+it)
 
+
+
+
       boardPanel.firstIte = true
       boardPanel.pause = true
       boardPanel.iteration = false
       boardPanel.start.setText("Start")
       panelVRP.vrpModel.it = it
+
     }
 
 

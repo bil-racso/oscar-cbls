@@ -71,22 +71,22 @@ public class Dashboard extends JPanel {
      * Thread bounded to the progress bar.
      */
     private class ProgressThread implements Runnable {
-       public void run(){
-           frameProgressBar.setVisible(true);
-           frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
+        public void run(){
+            frameProgressBar.setVisible(true);
+            frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
 
             while(HeuristicTimer.getPercentComplete() != 100){
-                   try{
-                       HeuristicTimer.lock();
-                       progressBar.setValue(HeuristicTimer.getPercentComplete());
-                       progressBar.repaint();
-                   }
-                   catch(Exception e){}
-               }
-               progressBar.setValue(0);
-               HeuristicTimer.setPercentComplete(0);
-               frameProgressBar.setVisible(false);
-       }
+                try{
+                    HeuristicTimer.lock();
+                    progressBar.setValue(HeuristicTimer.getPercentComplete());
+                    progressBar.repaint();
+                }
+                catch(Exception e){}
+            }
+            progressBar.setValue(0);
+            HeuristicTimer.setPercentComplete(0);
+            frameProgressBar.setVisible(false);
+        }
 
     }
 
@@ -157,8 +157,12 @@ public class Dashboard extends JPanel {
         constraintsPanel.add(strongCButton);
         constraintsPanel.add(maxNodeC);
         constraintsPanel.add(strongCField);
-        constraintsPanel.add(penaltyStrongC);
-        constraintsPanel.add(penaltySCField);
+
+        JLabel blanc = new JLabel("");
+        blanc.setPreferredSize(new Dimension(50,20));
+        constraintsPanel.add(blanc);
+        //constraintsPanel.add(penaltyStrongC);
+        //constraintsPanel.add(penaltySCField);
         constraintsPanel.add(weakC);
         constraintsPanel.add(weakCButton);
         constraintsPanel.add(minNodeC);
@@ -176,7 +180,7 @@ public class Dashboard extends JPanel {
         frameProgressBar.setUndecorated(true);
         frameProgressBar.pack();
         frameProgressBar.setVisible(false);
-     }
+    }
 
     public void setNextIteButton(){
         nextIte = new JButton("Next iteration");
@@ -223,8 +227,8 @@ public class Dashboard extends JPanel {
         neighborhoodPanel.add(neighborLabel);
         neighborhoodPanel.add(neighborhood);
         if(!easyMode){
-        neighborhoodPanel.add(klimitedLabel);
-        neighborhoodPanel.add(klimited);
+            neighborhoodPanel.add(klimitedLabel);
+            neighborhoodPanel.add(klimited);
         }
 
         neighborhoodPanel.setBackground(Color.white);
@@ -267,7 +271,7 @@ public class Dashboard extends JPanel {
     }
 
     public void unlock() {
-       semPause.release();
+        semPause.release();
     }
 
     public void lock2(){
