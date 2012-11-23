@@ -28,11 +28,9 @@ object DemoMap {
   
   //display components
   
-  val f = new VisualFrame("Map visualization demo");
-  val m = new VisualMap();
-  val inf = f.createFrame("VisualMap");
-  
-  
+  val f = new VisualFrame("Map visualization demo")
+  val m = new VisualMap()
+  val inf = f.createFrame("VisualMap")
   
   inf.add(m)
 
@@ -48,7 +46,7 @@ object DemoMap {
   def main(args: Array[String]): Unit = {
     val tb = f.createToolBar()
 
-    tb.addButton("run demo", { runInThread(demoMap) })
+    tb.addButton("routes from capitals to bxl", { runInThread(demoMap) })
     tb.addButton("add Bruxelles-Paris", { runInThread(bxlparis) })
     tb.addButton("remove Bruxelles-Paris", { runInThread(removebxlparis) })
     tb.addButton("mark capitals", { runInThread(wp) })
@@ -96,23 +94,10 @@ object DemoMap {
   def demoMap = {
 
     try {
-      val citiesNames = List("Namur", "Bruxelles", "Antwerp", "Arlon", "Mons", "Ottignies", "London")
-      var citiesCoord = List[Location]()
-      for (c: String <- citiesNames) {
 
-        val loc = Geocoder.getLocation(c)
-        citiesCoord = citiesCoord :+ loc
-        m.createWaypoint(loc.lat, loc.lon);
-        try {
-          Thread.sleep(200)
-        } catch {
-          case e: InterruptedException => e.printStackTrace()
-        }
-      }
+      val l = m.createLine(capitals(0), capitals(2));
 
-      val l = m.createLine((citiesCoord(6).lat, citiesCoord(6).lon), (citiesCoord(1).lat, citiesCoord(1).lon));
-
-      citiesCoord.zipWithIndex.filter(p => p._2 != 1 && p._2 != 6).map(_._1).foreach(lo => m.createPath((lo.lat, lo.lon), (citiesCoord(1).lat, citiesCoord(1).lon)))
+      capitals.zipWithIndex.filter(p => p._2 != 0 && p._2 != 2).map(_._1).foreach(lo => m.createPath(lo, capitals(0)))
 
     } catch {
       case e1: IOException => e1.printStackTrace()
