@@ -31,6 +31,7 @@ import scala.math.round
 import oscar.search.IDSSearchController
 import oscar.cp.mem.RoutingUtils
 import oscar.cp.mem.ChannelingPredSucc
+import oscar.cp.mem.MyCircuit
 
 object myTSP extends App {
 
@@ -38,9 +39,6 @@ object myTSP extends App {
   // ------------
   val coord = parseCoordinates("data/TSP/kroB100.tsp")
   val rand = new scala.util.Random(0)
-
-  // Random coordinates
-  //val coord = Array.tabulate(20)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
 
   val nCities = coord.size
   val Cities = 0 until nCities
@@ -59,9 +57,9 @@ object myTSP extends App {
   // Model
   // -----
   val cp = new CPSolver()
-
+  
   // Successors
-  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
+  //val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Predecessors
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
@@ -76,45 +74,18 @@ object myTSP extends App {
   case class Sol(pred: Array[Int], succ: Array[Int], dist: Int)
 
   var currentSol: Sol = null
+  var nStarts = 1
+  var p = 15
 
-  var nRestart = 1
-  var nStagnation = 0
-  var stagnation = false
-
-  val pMin = 15
-  val pMax = 60
-  var p = pMin
-
-  var firstLns = true
-
-  cp.lns(5000000, 500) {
-
-    nRestart += 1
-
-    if (firstLns) {
+  cp.lns(500, 500) {
+       
+    nStarts += 1
+    if (nStarts == 2) {
       println("Start LNS")
-      firstLns = false
-      cp.failLimit = 50000
+      cp.failLimit = 2004310016 // 15! : UB on #possibilities
     }
-
-    handleStagnation()
 
     relaxVariables(pathRelax(p))
-  }
-
-  def handleStagnation() {
-
-    if (stagnation) nStagnation += 1
-    else {
-      stagnation = true
-      nStagnation = 0
-      p = pMin + (p - pMin) / 2
-    }
-
-    if (nStagnation == 20) {
-      nStagnation = 0
-      if (p < pMax) p += 1
-    }
   }
 
   def randomRelax(p: Int): Array[Boolean] = {
@@ -161,8 +132,8 @@ object myTSP extends App {
   }
 
   def solFound() = {
-    stagnation = false
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
+    //currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
+    currentSol = new Sol(pred.map(_.value), pred.map(_.value), totDist.value)
     visu.updateRoute(currentSol.pred)
     visu.updateDist()
   }
@@ -170,15 +141,15 @@ object myTSP extends App {
   def relaxVariables(selected: Array[Boolean]) {
 
     visu.updateSelected(selected)
-    visu.updateRestart(nRestart)
+    visu.updateRestart(nStarts)
 
     val constraints: Queue[Constraint] = Queue()
 
     for (c <- Cities; if !selected(c)) {
       if (!selected(currentSol.pred(c)))
         constraints enqueue (pred(c) == currentSol.pred(c))
-      if (!selected(currentSol.succ(c)))
-        constraints enqueue (succ(c) == currentSol.succ(c))
+      //if (!selected(currentSol.succ(c)))
+        //constraints enqueue (succ(c) == currentSol.succ(c))
     }
     cp.post(constraints.toArray)
   }
@@ -188,14 +159,17 @@ object myTSP extends App {
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+    //cp.add(new ChannelingPredSucc(cp, pred, succ))
 
     // Consistency of the circuit with Strong filtering
-    cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
+    //cp.add(circuit(succ), Strong)
+    //cp.add(circuit(pred), Strong)
+    
+    //cp.add(new MyCircuit(cp, succ), Strong)
+    cp.add(new MyCircuit(cp, pred), Strong)
 
     // Total distance
-    cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
+    //cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
     //cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
@@ -206,6 +180,7 @@ object myTSP extends App {
   // ------
   println("Searching...")
   cp.exploration {
+    
     RoutingUtils.regretHeuristic(cp, pred, distMatrix)
     //RoutingUtils.minDomDistHeuristic(cp, pred, succ, distMatrix)
     solFound()

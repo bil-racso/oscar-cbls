@@ -14,15 +14,15 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
 
   val xMargin = 20
   val yMargin = 20
-  
+
   val selectCol = Color.RED
   val notSelectCol = Color.WHITE
   val normalCol = Color.BLACK
 
   val maxX = coord.map(_._1).max
   val maxY = coord.map(_._2).max
-  
-  val ratio = maxX.toDouble/maxY
+
+  val ratio = maxX.toDouble / maxY
 
   setPreferredSize(new Dimension(400, 400))
   val drawing = new VisualDrawing(false)
@@ -30,13 +30,13 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
   var prev: Array[Int] = Array.tabulate(nSites)(i => i)
   var dist = 0.0
   var nRestart = 1
-  
+
   // Routes
   val lines = Array.tabulate(nSites)(i => new VisualLine(drawing, 0, 0, 0, 0))
-    
+
   // Sites
   val circles = Array.tabulate(nSites)(i => {
-    val c = new VisualCircle(drawing, 0, 0, 5, normalCol)
+    val c = new VisualCircle(drawing, 0, 0, 3, normalCol)
     c.innerCol = notSelectCol
     c
   })
@@ -50,31 +50,28 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
   pack
 
   override def repaint() {
-    
-    val xPanel : Double = drawing.getWidth - xMargin*2
-    val yPanel : Double = drawing.getHeight - yMargin*2
+
+    val xPanel: Double = drawing.getWidth - xMargin * 2
+    val yPanel: Double = drawing.getHeight - yMargin * 2
     
     val panelRatio = xPanel / yPanel
-    
+
     val scale = if (panelRatio > ratio) yPanel / maxY
     else xPanel / maxX
-    
-    val xPadding = xMargin + (xPanel - maxX*scale)/2
-    val yPadding = yMargin + (yPanel - maxY*scale)/2
+
+    val xPadding = xMargin + (xPanel - maxX * scale) / 2
+    val yPadding = yMargin + (yPanel - maxY * scale) / 2
 
     for (i <- Sites) {
-
       val (x, y) = coord(i)
       val (pX, pY) = coord(prev(i))
-
+      
       circles(i).move(x * scale + xPadding, y * scale + yPadding)
-
       lines(i).setOrig(x * scale + xPadding, y * scale + yPadding)
       lines(i).setDest(pX * scale + xPadding, pY * scale + yPadding)
     }
-
+    
     text.setText("#Starts: " + nRestart + ", Distance: " + dist)
-
     drawing.repaint()
   }
 
