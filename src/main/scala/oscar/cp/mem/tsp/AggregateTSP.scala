@@ -24,6 +24,8 @@ object AggregateTSP {
   val nObjs = 2
   val Objs = 0 until nObjs
   val pareto = ParetoMinSet[MOSol]()
+  
+  val used = Array.fill(100)(Array.fill(100)(false))
 
   def main(args: Array[String]) {
 
@@ -35,10 +37,17 @@ object AggregateTSP {
     }*/
 
     insertScull()
-
+    getUsedEdges(pareto.points.map(_.sol.pred))
+    
     solveMO("data/TSP/kroA100.tsp", "data/TSP/kroB100.tsp")
-
     println(pareto.points.map(p => p.obj1 + " " + p.obj2).mkString("\n"))
+  }
+  
+  def getUsedEdges(points: Array[Array[Int]]) { 
+    for (p <- points; i <- 0 until p.size) {
+      used(i)(p(i)) = true
+      used(p(i))(i) = true
+    } 
   }
 
   def solve(alpha: Int, instance1: String, instance2: String): MOSol = {
@@ -228,10 +237,13 @@ object AggregateTSP {
     // -----
     val cp = new CPSolver()
 
-    // Successors
-    val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-    // Predecessors
-    val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+    // Successors & Predecessors
+    //val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
+    //val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+    
+    val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => used(i)(j))))
+    val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => used(i)(j))))
+    
     // Total distance
     val totDist1 = CPVarInt(cp, 0 to distMatrix1.flatten.sum)
     val totDist2 = CPVarInt(cp, 0 to distMatrix2.flatten.sum)
@@ -250,12 +262,12 @@ object AggregateTSP {
     var nStagnation = 0
 
     val pMin = 15
-    val pMax = 60
+    val pMax = 30
     var p = pMin
 
     var firstLns = true
-
-    cp.lns(2000, 2000) {
+    cp.silent = true
+    cp.lns(2000000, 2000) {
 
       // First LNS
       if (firstLns) {
@@ -271,15 +283,14 @@ object AggregateTSP {
         newSol = null
         nStagnation = 0
         p = pMin + (p - pMin) / 2
+        println("PARETO SIZE " + pareto.size)
       } else {
         nStagnation += 1
-        if (nStagnation == 20) {
-          nStagnation = 0
-          if (p < pMax) p += 2
+        if (nStagnation != 0 && nStagnation % 20 == 0) p += 1
+        if (nStagnation == 2500) {
+          cp.stop
         }
       }
-
-      println("PARETO SIZE " + pareto.size)
 
       diversif()
 
@@ -321,6 +332,7 @@ object AggregateTSP {
     }
 
     def diversif() {
+      pareto.bestDivSurf
       val obj = nextObj()
       objRelax(obj, false)
     }

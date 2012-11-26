@@ -36,7 +36,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroA100.tsp")
+  val coord = parseCoordinates("data/TSP/kroB100.tsp")
   val rand = new scala.util.Random(0)
 
   // Random coordinates
@@ -81,19 +81,20 @@ object myTSP extends App {
   var nStagnation = 0
   var stagnation = false
 
-  val pMin = 20
+  val pMin = 15
   val pMax = 60
   var p = pMin
 
   var firstLns = true
 
-  cp.lns(5000000, 4000) {
+  cp.lns(5000000, 500) {
 
     nRestart += 1
 
     if (firstLns) {
       println("Start LNS")
       firstLns = false
+      cp.failLimit = 50000
     }
 
     handleStagnation()

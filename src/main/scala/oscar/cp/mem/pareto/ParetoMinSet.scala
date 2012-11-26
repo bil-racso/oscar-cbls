@@ -1,5 +1,8 @@
 package oscar.cp.mem.pareto
 
+import scala.util.Random.nextFloat
+import scala.math.pow
+
 class ParetoMinSet[S] {
 
   private val objVals = Array.fill(2)(new OrderedLinkedList[ParetoPoint[S]])  
@@ -82,9 +85,24 @@ class ParetoMinSet[S] {
       val p = currentPoint
       nextSol(0)
       p
-    }).sortBy(-_.divSurf)
+    })
     
-    currentPoint = points(0)
+    val i = selectPr(points.map(_.divSurf))   
+    currentPoint = points(i)
+  }
+  
+  def selectPr(v : Array[Int]): Int = {
+    
+    val prob = Array.fill(v.size)(0)
+    
+    for (i <- 0 until prob.size) 
+      if (i == 0) prob(i) = v(i) 
+      else prob(i) = prob(i-1)+v(i)
+      
+    val r = scala.util.Random.nextInt(prob.last)
+    
+    val i = (0 until prob.size).filter(prob(_) > r)(0)
+    i
   }
 }
 
