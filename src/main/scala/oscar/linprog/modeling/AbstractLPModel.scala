@@ -267,7 +267,7 @@ abstract class AbstractLPSolver {
          
     // map from the index of variables to their implementation
     protected val vars = mutable.HashMap.empty[Int,AbstractLPVar]
-    private val cons = mutable.HashMap.empty[Int,LPConstraint]
+    protected val cons = mutable.HashMap.empty[Int,LPConstraint]
     private val solution = mutable.HashMap.empty[Int,Double]
     protected var objective: LinearExpression = 0
     protected var minimize = true
@@ -363,6 +363,7 @@ abstract class AbstractLPSolver {
 		
 		println("Setting variable bounds...")
 		setVarProperties() //set the the var bounds correctly
+		
 		val e = objective.coef.toList
  		val coef : Array[Double] = e.map(_._2).toArray
 		val varIds : Array[Int] =  e.map(_._1.index).toArray
