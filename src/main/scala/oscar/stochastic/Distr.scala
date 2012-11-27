@@ -15,15 +15,14 @@ object Distr{
   def apply[A](v: A) = new ValueDistr(v)
 }
 
-trait Distr[A] {
-  def apply[B](implicit m: DistrSolver):A @ cpsParam[Unit,B] 
-  def getNextStochasticRealization(): A
+trait Distr[B] {
+  def apply[A](implicit m: DistrSolver[A]):B @ cpsParam[A,A] 
+  def getNextStochasticRealization(): B
  // def map[B](g: A => B) = new DistrComposition(this, g)
 }
 
-trait NumericalDistr[B] extends Distr[B] {
-
-  override def apply(implicit m: DistrSolver) = m.getNextStochasticRealizationN(this)
+trait ContinuousDistr[B] extends Distr[B] {
+  override def apply[A](implicit m: DistrSolver[A]):B @cpsParam[A,A] = m.getNextStochasticRealization(this)
   def min: B
   def max: B
   def mean: B
@@ -32,21 +31,21 @@ trait NumericalDistr[B] extends Distr[B] {
 //class DistrComposition[A, B](d: Distr[A], g: A => B) extends Distr[B] {
 //  def getNextStochasticRealization() = g(d())
 //}
-class ValueDistr[A](value: A) extends Distr[A] {
+class ValueDistr[B](val value: B) extends Distr[B] {
   def getNextStochasticRealization = value
-  override def apply(implicit m: DistrSolver) = value
+  override def apply[A](implicit m: DistrSolver[A]):B @cpsParam[A,A] = value
 }
 
-class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with NumericalDistr[Double]{
-  def min = value
-  def max = value
-  def mean = value
-  def std = 0
+class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with ContinuousDistr[Double]{
+  override def min = value
+  override def max = value
+  override def mean = value
+  override def std = 0
 }
 
-trait DiscreteDistr[A] extends Distr[A]{
-  def list: Traversable[(Double, A)]
-  def apply(implicit m: DistrSolver) = m.getNextStochasticRealization(this)
+trait DiscreteDistr[B] extends Distr[B]{
+  def list: Traversable[(Double, B)]
+  def apply[A](implicit m: DistrSolver[A]):B @cpsParam[A,A]  = m.getNextStochasticRealization(this)
 }
 
 
@@ -68,7 +67,7 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
 object UniformDiscrete{
   def apply(a: Long, b: Long) = new UniformDiscrete(a,b)
 }
-class UniformDiscrete(val min: Long, val max: Long) extends NumericalDistr[Long]{
+class UniformDiscrete(val min: Long, val max: Long) extends ContinuousDistr[Long]{
   require(max >= min)
   require(max-min < Int.MaxValue)
   val interval = (max-min).toInt
@@ -80,7 +79,7 @@ class UniformDiscrete(val min: Long, val max: Long) extends NumericalDistr[Long]
   
 }
 
-class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operationable[Double]) extends Choice[Double](list) with NumericalDistr[Double] {
+class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operationable[Double]) extends Choice[Double](list) with ContinuousDistr[Double] {
   def mean = (for ((p, v) <- list) yield (op.*(p, v))).sum
   def min = list.map(_._2).min(op)
   def max = list.map(_._2).max(op)
@@ -105,7 +104,7 @@ object Distribution{
   def apply(d: ProbabilityDistribution) = new Distribution(d)
 }
 
-class Distribution(d: ProbabilityDistribution) extends NumericalDistr[Double] {
+class Distribution(d: ProbabilityDistribution) extends ContinuousDistr[Double] {
   val generator = new Random()
 
   def getNextStochasticRealization(): Double = d.inverse(generator.nextDouble)

@@ -32,7 +32,7 @@ class SimQueue {
     else {
       isEmpty := false
       if ( isBusy() )
-        waitFor(serve) 
+        waitFor[Unit,Unit](serve) 
       else
         cpsunit
       isBusy := true

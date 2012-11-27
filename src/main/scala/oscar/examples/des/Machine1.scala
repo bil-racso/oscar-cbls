@@ -27,7 +27,7 @@ import scala.util.continuations._
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine1(m : Model, name: String) extends Process(name)(m) {
+class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 	
 	val liveDur = new scala.util.Random(0)
 	val breakDur = new scala.util.Random(0)
@@ -52,7 +52,7 @@ class Machine1(m : Model, name: String) extends Process(name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new Model()
+  		val mod = new Model[Unit]()
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
 		mod.simulate(100,true);

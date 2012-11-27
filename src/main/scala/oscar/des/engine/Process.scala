@@ -19,14 +19,14 @@ package oscar.des.engine
 import scala.util.continuations._
 import akka.util.Duration
 import akka.util.FiniteDuration
-import akka.util.duration._
+//import akka.util.duration.
 import oscar.invariants._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class Process(name : String = "Process")(implicit m: Model){
+abstract class Process[T](name : String = "Process")(implicit m: Model[T]){
 
   implicit val model = m
 	m.addProcess(this)
@@ -54,7 +54,7 @@ abstract class Process(name : String = "Process")(implicit m: Model){
 	/**
 	 * Entry point of the simulation for this process
 	 */
-	def start(): Unit @ suspendable
+	def start(): T @cpsParam[T,T]
 	
 	/**
 	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
@@ -69,13 +69,14 @@ abstract class Process(name : String = "Process")(implicit m: Model){
     r.request
   }
 
-  def release(r: Resource) {
+  def release(r: Resource) ={
     r.release()
   }
   def waitDuring(d: Long) = {
-    m.waitDuration(d)
+    require(d > 0)
+    w(m.clock === m.clock() + d)
   }
-  
+  def w[A](occ: Occuring[A]) = waitFor[A,T](occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 	
 }

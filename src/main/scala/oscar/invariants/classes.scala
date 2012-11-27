@@ -215,9 +215,10 @@ object invariants {
     perform (r) until x(6)
     
     
-    whenever ( y.filter(_==5) ){w:Int=>
-      println("super")
-    }
+    for ( w <- y if w<100 ){
+      println("y changed to " + w)
+      true
+    } 
      
     for ( msg <- y; if ( msg==5 ) ){
       println(msg)

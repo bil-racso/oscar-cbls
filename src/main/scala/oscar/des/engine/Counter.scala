@@ -82,7 +82,7 @@ object Counter{
     
     
     reset{    
-      val a = waitFor(x)
+      waitFor[Int,Unit](x)
       println("500")
     }
     

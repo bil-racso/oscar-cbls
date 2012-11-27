@@ -26,7 +26,7 @@ import scala.util.continuations._
 import JSci.maths.statistics._
 import oscar.invariants._
 
-class Generator(m: Model, var dist: Distr[Double], block: => Unit){
+class Generator(m: Model[Unit], var dist: Distr[Double], block: => Unit){
 
   start()
 
@@ -35,13 +35,15 @@ class Generator(m: Model, var dist: Distr[Double], block: => Unit){
       start()
     }
   }
-  def start() {
+  def start() = {
     generating = true
     reset {
       while (generating) {
         val t = floor(dist(m)).toLong
-        waitFor(m.clock === m.clock() + t)
-        if (generating) block
+        val a = waitFor[Long,Unit](m.clock === m.clock() + t)
+        if (generating){
+          block
+        }
       }
     }
   }
@@ -54,5 +56,5 @@ class Generator(m: Model, var dist: Distr[Double], block: => Unit){
   }
 }
 object Generator {
-  def apply(dist: Distr[Double])(block: => Unit)(implicit m: Model) = new Generator(m, dist, block)
+  def apply(dist: Distr[Double])(block: => Unit)(implicit m: Model[Unit]) = new Generator(m, dist, block)
 }

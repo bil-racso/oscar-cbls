@@ -40,12 +40,12 @@ object CarWash {
 
   def main(args: Array[String]) {
 
-    implicit val m = new Model()
+    implicit val m = new Model[Unit]()
 
     // one day = 8 hours
     val endOfDay = m.clock === 480
 
-    class CarWash(m: Model) {
+    class CarWash(m: Model[Unit]){
       val queue = new SimQueue()
       once(endOfDay) { _ => queue.close() }
 
@@ -54,8 +54,8 @@ object CarWash {
       def request(): Boolean @suspendable = {
         if ( !queue.enter ) cpsfalse
         else {
-           waitFor(isWorking === true)
-           waitFor(m.clock === m.clock() + 10)
+           waitFor[Boolean,Unit](isWorking === true)
+           waitFor[Long,Unit](m.clock === m.clock() + 10)
            cpstrue
         }
       }
@@ -70,14 +70,14 @@ object CarWash {
 
     } // end of CarWash
 
-    class CarWasher(m: Model, carWash: CarWash) extends Process("Washer")(m) {
+    class CarWasher(m: Model[Unit], carWash: CarWash) extends Process[Unit]("Washer")(m) {
 
       var eod = false
       once(endOfDay){ _=>eod = true }
       def atTearoom(): Unit @suspendable = {
         m print("washer at tea room")
         println(carWash.queue.isEmpty())
-        val opt = waitFor( carWash.queue.isEmpty === false | endOfDay )
+        val opt = w( carWash.queue.isEmpty === false | endOfDay )
         if (opt == 1) atEndOfDay()
         else {
           atCarWash()
@@ -87,7 +87,7 @@ object CarWash {
       def atCarWash(): Unit @suspendable = {
         m print("washer at car wash")
         carWash.open()
-        waitFor( carWash.queue.isEmpty === true )
+        waitFor[Boolean,Unit]( carWash.queue.isEmpty === true )
         carWash.close()
         if ( eod ) atEndOfDay()
         else atTearoom()
@@ -104,7 +104,7 @@ object CarWash {
 
     }   
     
-    class Car(m: Model, carWash: CarWash, id: String) extends Process(id)(m) {
+    class Car(m: Model[Unit], carWash: CarWash, id: String) extends Process(id)(m) {
       def start(): Unit @suspendable = {
         m print(id + ": arrives")
         if (!carWash.request()) {

@@ -3,28 +3,24 @@ package oscar.stochastic
 import oscar.stochastic._
 import scala.util.continuations._
 
-trait CanBeMultipliedWithDouble{
-  def *(d: Double): this.type
-}
+abstract class DistrSolver[T] {
 
-abstract class DistrSolver {
-
-  def getNextStochasticRealizationN[B](distr: NumericalDistr[B]): B
+  def getNextStochasticRealization[B](distr: ContinuousDistr[B]): B
   //def apply[B](distr: Choice[B]): B
-  
-  def getNextStochasticRealization[A,B](ch: DiscreteDistr[B]): B @ cpsParam[Unit,A]
+
+  def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[T,T]
 }
 
-class StochasticSolver extends DistrSolver{
-  def getNextStochasticRealizationN[B](distr: NumericalDistr[B]) = distr.getNextStochasticRealization()
-  
-  def getNextStochasticRealization[A,B](ch: DiscreteDistr[B]) = ch.getNextStochasticRealization()  
+class StochasticSolver[T] extends DistrSolver[T] {
+  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.getNextStochasticRealization()
+//  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]): B @cpsParam[Unit, A] = ch.getNextStochasticRealization()
+  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[T, T] = ch.getNextStochasticRealization()
 }
 
-class EsperanceSolver extends DistrSolver{
-  def getNextStochasticRealizationN[B](distr: NumericalDistr[B]) = distr.mean
-		  
-  def getNextStochasticRealization[A,B](ch: DiscreteDistr[B])(implicit op: Operationable[B]) = {
-	  shift { k: (B => A) => ch.list.foldLeft(op.zero){ (a,b) => op.+(a,op.**(b._2,b._1))}}  
-  }
-}
+//class EsperanceSolver[T] extends DistrSolver[Double] {
+//
+//  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.mean
+//  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]) = {    
+//	  shift { k: (B => Double) => ch.list.foldLeft( 0.0 ) { (r, b) => r+(b._1*k(b._2)) } }
+//  }
+//}

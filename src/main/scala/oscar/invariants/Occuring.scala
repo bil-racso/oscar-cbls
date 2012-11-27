@@ -20,7 +20,7 @@ package oscar.invariants
 import scala.collection.immutable._
 
 trait Depending{
-   def dispose()
+  def dispose()
   def until(d: Occuring[_]){
     once (d){_ => 
       dispose() 
@@ -36,8 +36,7 @@ abstract class Reaction[A](val f: A => Boolean, occuring: Occuring[A]) extends D
     	false
     }else
       true
-  }
- 
+  } 
 }
 
 trait Occuring[A]{
@@ -116,23 +115,20 @@ class ReactionDescription[A](val e: Occuring[A], val f: A => Boolean) {
     res | this | eb
     res
   }
-  def & (eb: ReactionDescription[_]) = {
+  def &(eb: ReactionDescription[_]) = {
     val res = new AndEvent
     res & this & eb
     res
   }  
-  
   def post() = occuring.foreach(f)
 }
 
 class Signal[A](private var value: A) extends Event[A]{
-  
   override def emit(msg: A){
     val old = value
     value = msg
     if ( msg != old ) super.emit(msg)
-  }
-  
+  }  
   def apply() = value
   override def filter(f: A => Boolean) = new EventFromNow(this, f)
 }

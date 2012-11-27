@@ -25,7 +25,7 @@ import annotation._
 import annotation.elidable._
 import scala.util.continuations._
 import java.util.LinkedList
-import scala.collection.JavaConversions._
+//import scala.collection.JavaConversions._
 import oscar.invariants._
 
 /**
@@ -33,13 +33,13 @@ import oscar.invariants._
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
  * @author pschaus
  */
-class Model extends EsperanceSolver{
+class Model[T] extends StochasticSolver[T]{
 
   val clock = new PQCounter[Long](0)
 
-  private val processes = new LinkedList[Process]()
+  private val processes = new LinkedList[Process[T]]()
 
-  def addProcess(p: Process) {
+  def addProcess(p: Process[T]) {
     processes.addLast(p)
   }
 
@@ -73,15 +73,15 @@ class Model extends EsperanceSolver{
   }
   def frequency[_](state: State[_]) = new Frequency(this, state)
 
-  def waitDuration(duration: Long): Long @suspendable = {
+  def waitDuration[T](duration: Long) = {
     require(duration > 0)
-    waitFor(clock === clock() + duration)
+    waitFor[Long,T](clock === clock() + duration)
 
   }
-  def waitDuration(duration: Int): Long @suspendable = {
-	  require(duration > 0)
-    waitFor(clock === clock() + duration)
-  }
+//  def waitDuration[T](duration: Int) = {
+//	  require(duration > 0)
+//    waitFor[Long,T](clock === clock() + duration)
+//  }
 
   //  def waitFor[A](ev: Signal[A], f: A => Boolean): Unit @suspendable = {
   //    if ( !f(ev())){ 

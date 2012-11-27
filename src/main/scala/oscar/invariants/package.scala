@@ -20,6 +20,16 @@ package oscar
 import scala.collection.mutable._
 import scala.util.continuations._
 
+class SuspendableIterable[T](iter: scala.collection.immutable.Iterable[T]){
+  def foreach[U](f: T => Unit @cpsParam[U,U]): Unit @cpsParam[U,U] = {
+    val i = iter.iterator
+    while (i.hasNext){
+      f(i.next)
+    }
+  }
+  def suspendable = this
+}
+
 package object invariants {
   def cpsunit: Unit @cps[Unit] = ()
   def cpsfalse: Boolean @cps[Unit] = false
@@ -29,6 +39,8 @@ package object invariants {
     d.foreach(f)
   }
   
+  
+  implicit def iter2susp[T](iter: scala.collection.immutable.Iterable[T]) = new SuspendableIterable(iter)
   implicit def bl2f[A,B](block: => B) = {a:A => block}
   implicit def rd2r[A](rd: ReactionDescription[A]) = rd.post()
   implicit def occuring2desc[A](occ: Occuring[A]) = occ ~> { _ => }
@@ -45,16 +57,23 @@ package object invariants {
     }
   }
   
-  @inline def once[A](d: Occuring[A])(f: A => Unit) = {
+  @inline def once[A,T](d: Occuring[A])(f: A => T) = {
+    //var res: T
     when(d){(x:A) => 
       f(x)
       false
     }
   }
-  @inline def waitFor[A](d: Occuring[A]) = {
-    shift { k: (A => Unit) =>
-      val a = once(d) { msg: A =>
-        k(msg)
+  
+  @inline def waitFor[A,T](d: Occuring[A]) = {
+    shift{ k: (A => T) =>
+     var res:Option[T] = None
+     once(d) { msg: A =>
+        res = Some(k(msg))
+      }
+      res match{
+        case None => throw new RuntimeException("sould be impossible to get here")
+        case Some(x) => x
       }
     }
   }

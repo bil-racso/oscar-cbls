@@ -42,7 +42,7 @@ object LongOp extends Operationable[Long] {
   override def +(a: Long, b: Long) = a + b
   override def *(a: Long, b: Long) = a * b
   override def *#(a: Long, b: Double) = a.toDouble * b
-  def **(a: Int, b: Double) = (a*b).toLong
+  override def **(a: Long, b: Double) = (a * b).toLong
   override def /(a: Long, b: Long) = a / b
   //override def *(d: Double, b: Long) = b*d
   override def >(a: Long, b: Long) = a > b
@@ -54,8 +54,8 @@ object DoubleOp extends Operationable[Double] {
   override def +(a: Double, b: Double) = a + b
   override def *(a: Double, b: Double) = a * b
   override def *#(a: Double, b: Double) = a * b
+  override def **(a: Double, b: Double) = a * b
   override def /(a: Double, b: Double) = a / b
-  def **(a: Int, b: Double) = (a*b)
   //override def *(d: Double, b: Double) = b*d
   override def >(a: Double, b: Double) = a > b
   override def <(a: Double, b: Double) = a < b
