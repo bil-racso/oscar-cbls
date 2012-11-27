@@ -14,10 +14,11 @@ class CPObjectiveMinimize(objVars: CPVarInt*) extends CPObjective(objVars:_*) {
     private val lowerBounds = Array.tabulate(objVars.size)(i => objVars(i).min)
   
   	override def tighten() = {
-  	  if (!currentObjective.isBound) {
+  	  if (!currentObjective.isBound || !tot.isBound) {
   	    throw new RuntimeException("objective not bound:" + currentObjective)
   	  }
   	  if (!s.silent) println("objective "+currentObjectiveIdx+" tightened to "+(bound).min(currentObjective.value)+" lb:"+lowerBounds(currentObjectiveIdx))
+  	  
   	  for (i <- 0 until objVars.size) {
   	    bestObjs(i) = objVars(i).value
   	    bounds(i) = bestObjs(i)

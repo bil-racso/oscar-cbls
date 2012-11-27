@@ -19,16 +19,21 @@ package oscar.cp.constraints
 
 import oscar.search._
 import oscar.cp.core._
+import oscar.cp.modeling._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
 class CPObjective(val objVars: CPVarInt*) extends Constraint(objVars(0).store,"objective") with Objective {
   
+	val tot = sum(objVars)
+  
     def this(x: CPVarInt) = this(Array(x):_*)
     
     val bestObjs = Array.fill(objVars.size)(0)
 	protected val bounds = Array.fill(objVars.size)(0)
+	
+
 	
 	protected val tightenedOnce = Array.fill(objVars.size)(false)
 	
