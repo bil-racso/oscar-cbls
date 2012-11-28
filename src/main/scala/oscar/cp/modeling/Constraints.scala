@@ -595,6 +595,19 @@ trait Constraints {
     def spread(x : Iterable[CPVarInt], s: Int, s2 : CPVarInt): Constraint = {
       new Spread(x.toArray,s,s2,true)
     }
+    
+    /**
+     * Let n = x.size-1 = y.size-1
+     * This constraint enforces that x and y are permutations over {0, ... , n}
+     * with y(i) giving the position of number i in x. It means that x(y(i)) = i
+     * Note that this constraint could be enforced with element constraints but it is less efficient
+     * Weak and Strong consistency can be used acting on the filtering of alldifferent constraints
+     * @param x
+     * @param y of same size as x 
+     */
+    def permutation(x : IndexedSeq[CPVarInt], y : IndexedSeq[CPVarInt]): Constraint = {
+      new Permutation(x,y)
+    }    
 
 	def sortedness(x : IndexedSeq[CPVarInt], s : IndexedSeq[CPVarInt], p : IndexedSeq[CPVarInt]) : LinkedList[Constraint] = {
 		val cp = x(0).store
