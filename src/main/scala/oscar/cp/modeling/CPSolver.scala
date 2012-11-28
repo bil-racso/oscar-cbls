@@ -52,12 +52,20 @@ class CPSolver() extends Store() {
 	}
 	
 	var stateObjective: Unit => Unit = Unit => Unit
+	
+	def optimize(obj : CPObjective) : CPSolver = {
+		stateObjective = Unit => {
+		  objective = obj
+		  post(obj)
+		}
+		solveAll()
+		this
+	}
 
 	def minimize(obj : CPVarInt) : CPSolver = {
 		stateObjective = Unit => {
-		  val o = new CPObjectiveMinimize(obj)
-		  objective = o
-		  post(o)
+		  objective = new CPObjective(this,new CPObjectiveUnitMinimize(obj))
+		  post(objective)
 		}
 		solveAll()
 		this
@@ -68,9 +76,8 @@ class CPSolver() extends Store() {
 	
 	def minimize(objectives: CPVarInt*): CPSolver = {
 	  stateObjective = Unit => {
-		  val o = new CPObjectiveMinimize(objectives:_*)
-		  objective = o
-		  post(o)
+		  objective = new CPObjective(this,objectives.map(new CPObjectiveUnitMinimize(_)):_*)
+		  post(objective)
 	  }
 	  solveAll()
 	  this
@@ -80,10 +87,8 @@ class CPSolver() extends Store() {
 
 	def maximize(obj : CPVarInt) : CPSolver = {
 		stateObjective = Unit => {
-		  val o = new CPObjectiveMaximize(obj)
-		  objective = o
-		  post(o)
-
+		  objective = new CPObjective(this,new CPObjectiveUnitMaximize(obj)) // must be maximize
+		  post(objective)
 		}
 		solveAll()
 		this

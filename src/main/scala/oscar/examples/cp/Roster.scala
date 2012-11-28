@@ -111,7 +111,7 @@ object Roster extends App {
 
         val obj = (0 until viol.size).filter(tabu(_) <= restartNb).maxBy(i => (bestSolViol(i),rand.nextInt(n)))
         tabu(obj) = restartNb + rand.nextInt(3)+2
-        if (config == 2) cp.objective.currentObjective = obj
+        //if (config == 2) cp.objective.currentObjective = obj
         for (x <- vars; if (!relaxedVar(obj).contains(x) && rand.nextInt(100) < 90)) {
             cp.post(x == bestSol(x))
         }

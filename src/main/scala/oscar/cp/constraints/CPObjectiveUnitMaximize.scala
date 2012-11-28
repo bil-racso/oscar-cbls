@@ -26,30 +26,21 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
+class CPObjectiveUnitMaximize(objVar: CPVarInt) extends CPObjectiveUnit(objVar) {
 
-  def this(s: Store, o: Array[CPObjectiveUnit]) = this(s, o: _*)
-  def tighten() = objs.foreach(_.tighten())
-
-  def isOptimum() = objs.forall(_.isOptimum())
-
-  def isOK() = {
-    val objCons: Array[Constraint] = objs.toArray
-    s.propagate(objCons: _*) != CPOutcome.Failure
-  }
-
-  // constraint methods
-
-  override def propagate(): CPOutcome = {
-    if (objs.forall(_.filter() != CPOutcome.Failure)) CPOutcome.Suspend
-    else CPOutcome.Failure
-  }
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
-    objs.foreach(s.post(_))
-    propagate()
-  }
+  best = Int.MinValue
   
-  override def toString = objs.mkString(" , ")
+  override def isOptimum = (best == ub)
+  
+  // constraint methods
+  import TightenType._
+  override def propagate(): CPOutcome = {
+    if (tightenType == NoTighten) return CPOutcome.Suspend
+    def delta = if (tightenType == StrongTighten) 1 else 0
+    if (objVar.updateMin(best + delta) == CPOutcome.Failure) {
+        return CPOutcome.Failure
+    }
+    CPOutcome.Suspend
+  }
 
 }

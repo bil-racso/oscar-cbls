@@ -37,11 +37,7 @@ trait Objective {
 	
 	def tighten(): Unit
 	
-	def relax(): Unit
-
-	def bound_=(value: Int): Unit
-
-	def bound : Int
+	//def relax(): Unit
 	
 	def isOptimum(): Boolean
 		
