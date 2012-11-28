@@ -63,7 +63,7 @@ object ParcelShipment {
 	      
 	      cp.add(load(start) == 0) // start initially empty
 	      for (i <- 0 until n) {
-	        cp.add(element(load,succ(i)) == (load(i) + element(toLoad,succ(i))))
+	        cp.add(elementVar(load,succ(i),load(i) + toLoad(succ(i))))
 	      }
 	      cp.add(sum(0 until n)(i => element(distance(i),succ(i))) == totDist)
 	      cp.add(circuit(succ),Strong)

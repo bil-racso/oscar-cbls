@@ -6,7 +6,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.constraints.Permutation
 
-class TestOpposite extends FunSuite with ShouldMatchers {
+class TestPermutation extends FunSuite with ShouldMatchers {
 
 	test("Test Permutation 1") {
 		val cp = CPSolver()

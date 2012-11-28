@@ -69,11 +69,11 @@ object LostAtSeaCircuit  {
        val path = Array.fill(10)(CPVarInt(cp,0 until 64)) // represent the path of length ten which is the solution
        
        val sol = Array.fill(10)(0) 
-       
-       cp.maximize(sum(0 until 10)(i => element(proba.flatten,path(i)))) subjectTo {
+       val prob = proba.flatten
+       cp.maximize(sum(0 until 10)(i => element(prob,path(i)))) subjectTo {
                 
     	  		for (i <- 0 until 9) {
-                  cp.add(element(succ,path(i),path(i+1))) 
+                  cp.add(elementVar(succ,path(i),path(i+1))) 
                 }
                 cp.add(circuit(succ),Strong)
        } exploration {

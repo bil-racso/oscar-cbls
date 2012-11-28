@@ -45,14 +45,14 @@ object MagicNumber  {
       var x = Array.fill(8)(CPVarInt(cp,1 to 4))
       
       cp.solveAll subjectTo {
-    	  cp.add(element(x,one,1))
-    	  cp.add(element(x,one+2,1))
-    	  cp.add(element(x,two,2))
-    	  cp.add(element(x,two+3,2))
-    	  cp.add(element(x,three,3))
-    	  cp.add(element(x,three+4,3))
-    	  cp.add(element(x,four,4))
-    	  cp.add(element(x,four+5,4))
+    	  cp.add(x(one) == 1)
+    	  cp.add(x(one+2) == 1)
+    	  cp.add(x(two) == 2)
+    	  cp.add(x(two+3) == 2)
+    	  cp.add(x(three) == 3)
+    	  cp.add(x(three+4) == 3)
+    	  cp.add(x(four) == 4)
+    	  cp.add(x(four+5) == 4)
     	  cp.add(gcc(x,1 to 4,2,2))
     	  cp.add(one < two)
       } exploration {        

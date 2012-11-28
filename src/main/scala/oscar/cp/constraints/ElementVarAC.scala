@@ -41,7 +41,7 @@ import oscar.reversible.ReversibleSetIndexedArray
  *
  * @author Renaud Hartert - ren.hartert@gmail.com, Pierre Schaus - pschaus@gmail.com
  */
-class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constraint(y(0).s, "ACElement") {
+class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constraint(y(0).s, "ACElementVar") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))

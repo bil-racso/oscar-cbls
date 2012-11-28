@@ -57,8 +57,8 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
        val path = Array.fill(10)(CPVarInt(cp,0 until 64))
        
        val sol = Array.fill(10)(0) 
-       
-       val obj = sum(0 until 10)(i => element(proba.flatten,path(i)))
+       val prob = proba.flatten
+       val obj = sum(0 until 10)(i => element(prob,path(i)))
        
        cp.maximize(obj) subjectTo {
                 for (i <- 0 until 9) {
@@ -85,13 +85,13 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
        val sol = Array.fill(10)(0) 
        
        var best = 1000
-       
-       val obj = sum(0 until 10)(i => element(proba.flatten,path(i)))
+       val prob = proba.flatten
+       val obj = sum(0 until 10)(i => element(prob,path(i)))
        
        cp.maximize(obj) subjectTo {
                 
     	  		for (i <- 0 until 9) {
-                  cp.add(element(succ,path(i),path(i+1))) 
+                  cp.add(elementVar(succ,path(i),path(i+1))) 
                 }
                 cp.add(circuit(succ),Strong)
        } exploration {

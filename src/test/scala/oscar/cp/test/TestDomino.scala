@@ -78,7 +78,7 @@ class TestDomino extends FunSuite with ShouldMatchers  {
 		    cp.add(table(matchedNeighbor(i)(j),id(i)(j),validTuples))    
 		    //  an entry is matched to another neighbor entry iff the other is also matched with it (reciprocity)
 		    //  This translates as x[i] == j <=> x[j] == i or with element constraint x[x[i]] = i		 
-		    cp.add(element(matchedNeighbor.flatten, matchedNeighbor(i)(j) ,toIndex(i,j)))		    
+		    cp.add(elementVar(matchedNeighbor.flatten, matchedNeighbor(i)(j) ,toIndex(i,j)),Strong)		    
 		  }
 		  // each domino can appear at most once so each domino id can appear at most twice
 		  cp.add(gcc(id.flatten,0 to 9*9,0,2))

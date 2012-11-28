@@ -38,6 +38,41 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	  val y = CPVarInt(cp,Set(0,1,3))
 	  x.isFull should be(false)
 	  
+	}
+	
+	
+	test("Iterator1") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(0,1,3,2))
+	  x.toSet should be(Set(0,1,2,3))
+	}	
+	
+	test("Iterator2") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(0,1,3,2))+1
+	  x.toSet should be(Set(1,2,3,4))
+	}	
+	
+	test("Iterator3") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(1,3))-1
+	  x.toSet should be(Set(0,2))
+	}
+	
+	test("Iterator4") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(1,3,5))-1
+	  cp.add(x != 2)
+	  x.toSet should be(Set(0,4))
+	}
+	
+	test("Iterator5") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,1 to 5) -1
+	  
+	  x.toSet should be(Set(0,1,2,3,4))
+	  cp.add(x != 2)
+	  x.toSet should be(Set(0,1,3,4))
 	}	
 	
 }

@@ -18,7 +18,7 @@
 package oscar.cp.core
 
 
-abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[Int] {
+abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int] {
 
     def store = s
   
@@ -82,15 +82,9 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	 */
     def median : Int = {
     	
-    	val vals = this.toArray
+    	val vals = this.toArray.sortBy(i => i)
     	return vals(vals.size/2)
     }
-	
-	def foreach[U](f: Int => U) = {
-	  for (v <- min to max; if (hasValue(v))) {
-	    f(v)
-	  }
-	}
 
 	/**
      * @return  the size of the domain

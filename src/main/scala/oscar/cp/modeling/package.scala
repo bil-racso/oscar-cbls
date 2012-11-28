@@ -53,27 +53,27 @@ package object modeling extends Constraints {
   }
 
   class ArrayIntElementConstraintBuilder(a: Array[Int]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(a, i)
+    override def apply(i: CPVarInt): CPVarInt = element(a, i,Weak)
   }
 
   class ArrayCPVarIntElementConstraintBuilder(a: Array[CPVarInt]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(a, i)
+    override def apply(i: CPVarInt): CPVarInt = elementVar(a, i,Weak)
   }
 
   class ArrayCPVarBoolElementConstraintBuilder(a: Array[CPVarBool]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(a, i)
+    override def apply(i: CPVarInt): CPVarInt = elementVar(a, i,Weak)
   }
 
   class IdSeqIntElementConstraintBuilder(s: IndexedSeq[Int]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(s, i)
+    override def apply(i: CPVarInt): CPVarInt = element(s, i,Weak)
   }
 
   class IdSeqCPVarIntElementConstraintBuilder(s: IndexedSeq[CPVarInt]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(s, i)
+    override def apply(i: CPVarInt): CPVarInt = elementVar(s, i,Weak)
   }
 
   class IdSeqCPVarBoolElementConstraintBuilder(s: IndexedSeq[CPVarBool]) extends ElementConstraintBuilder {
-    override def apply(i: CPVarInt): CPVarInt = element(s, i)
+    override def apply(i: CPVarInt): CPVarInt = elementVar(s, i,Weak)
   }
 
   class ElementIntMatrixConstraintBuilderLine(a: Array[Array[Int]]) {

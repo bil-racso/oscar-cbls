@@ -166,55 +166,7 @@ trait Constraints {
 	def element(tab : IndexedSeq[Int], x : CPVarInt, z : Int) : Constraint = {
 		new ElementCst(tab.toArray, x, CPVarInt(x.store, z, z))
 	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : IndexedSeq[CPVarInt], x : CPVarInt) : CPVarInt = {
-		val minval = (for (x <- tab) yield x.getMin) min
-		val maxval = (for (x <- tab) yield x.getMax) max
-		val z = CPVarInt(x.store, minval, maxval)
-		x.store.add(new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
-		z
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer variable
-	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
-		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer
-	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
-		new ElementVarAC(tab.toArray, x, CPVarInt(x.s,z))
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer
-	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
-		val z_ = new CPVarBool(x.store, z)
-		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
-	}
-
+	
 	/**
 	 * Element 2D Constraint, indexing an integer matrix by two index variables
 	 * @param matrix rectangle matrix of sizes n x m
@@ -227,7 +179,57 @@ trait Constraints {
 		val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
 		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
 		return z
+	}	
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt,l: CPPropagStrength = Weak) : CPVarInt = {
+		val minval = (for (x <- tab) yield x.getMin) min
+		val maxval = (for (x <- tab) yield x.getMax) max
+		val z = CPVarInt(x.store, minval, maxval)
+		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z),l)
+		z
 	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer variable
+	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
+		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
+	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer
+	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
+		new ElementVar(tab.toArray, x, CPVarInt(x.s,z))
+	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer
+	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
+		val z_ = new CPVarBool(x.store, z)
+		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
+	}
+
+
 
 	/**
 	 * Sum Constraint
@@ -614,11 +616,11 @@ trait Constraints {
 		val n = x.size
 		val cons = new LinkedList[Constraint]
 		for (i <- 0 until n - 1) {
-			cons.add(element(x, p(i)) <= element(x, p(i + 1)))
+			cons.add(elementVar(x, p(i)) <= elementVar(x, p(i + 1)))
 			cons.add(s(i) <= s(i + 1))
 		}
 		for (i <- 0 until n) {
-			cons.add(element(x.toArray, p(i), s(i)))
+			cons.add(elementVar(x, p(i), s(i)))
 		}
 
 		val minVal : Int = x.map(_.min).min
@@ -636,7 +638,7 @@ trait Constraints {
 
 		for (i <- 1 until n) {
 			// there are less than i values smaller than s(i) 
-			cons.add(element(nbBefore, s(i) - minVal) <= i)
+			cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
 		}
 		cons
 	}
