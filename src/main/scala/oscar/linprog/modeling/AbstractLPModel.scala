@@ -248,8 +248,8 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
 
 class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
 
- 	val e = cstr.linExpr.coef.toList
- 	val perm = (0 until e.size).sortBy(i => e(i)._1.index)
+ 	private val e = Vector() ++ cstr.linExpr.coef.toList 
+ 	private val perm = (0 until e.size).sortBy(i => e(i)._1.index)
  	
     val coef : Array[Double] = perm.map(i => e(i)._2).toArray
     val varIds : Array[Int] =  perm.map(i => e(i)._1.index).toArray
