@@ -56,34 +56,28 @@ object ThreeOptB extends SearchEngine{
     var move:((Int, Int, Int)) = null
 
     val hotRestart = if (previousMove == null) 0 else previousMove.startNodeForNextExploration
-    var endOfFirstEdge:Int = 0
 
-    for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart if vrp.isRouted(startOfFirstEdge)){
-      endOfFirstEdge = vrp.Next(startOfFirstEdge).value
-
-      for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,startOfFirstEdge)
-           if vrp.isRouted(startOfThirdEdge))// filter
+    for (insertionPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(insertionPoint)){
+      //we search for a segment,
+      // its start should be "close" to the insertion point
+      //its end should be close to the next of the insertion point
+      //begin and end should be on the same route and in this order
+      for (beforeSegmentStart <- vrp.getKNearestNeighbors(k,insertionPoint)  if (insertionPoint != beforeSegmentStart)
+        && vrp.isRouted(beforeSegmentStart))
       {
-        for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfThirdEdge).value)
-             if vrp.isRouted(startOfSecondEdge))
+        for (segmentEnd <- vrp.getKNearestNeighbors(k,vrp.Next(insertionPoint).value)
+             if(vrp.isRouted(segmentEnd) &&
+               segmentEnd != insertionPoint &&
+               vrp.isAtLeastAsFarAs(beforeSegmentStart, segmentEnd,2) &&
+               !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd) &&
+               vrp.isAtMostAsFarAs(beforeSegmentStart,segmentEnd,limitLength+1)))
         {
-          if ((vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
-            vrp.isBetween(vrp.Next(startOfSecondEdge).value,startOfFirstEdge,startOfThirdEdge) &&
-            vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value) &&
-            vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3) &&
-            vrp.isAtMostAsFarAs(endOfFirstEdge,startOfThirdEdge,limitLength+1)) ||
-            (!vrp.onTheSameRoute(startOfFirstEdge,startOfSecondEdge) &&
-              vrp.onTheSameRoute(startOfSecondEdge,startOfThirdEdge) &&
-              vrp.isAtLeastAsFarAs(startOfSecondEdge, startOfThirdEdge,2) &&
-              vrp.isAtMostAsFarAs(vrp.Next(startOfSecondEdge).value,startOfThirdEdge,limitLength+1)))
-          {
-            val newObj = getObjAfterMove(startOfFirstEdge,startOfSecondEdge ,startOfThirdEdge,vrp)
-            if (newObj < BestObj){
-              if(FirstImprove)
-                return ThreeOptB(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,newObj, vrp)
-              BestObj = newObj
-              move = ((startOfFirstEdge, startOfSecondEdge ,startOfThirdEdge ))
-            }
+          val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
+          if (newObj < BestObj){
+            if (FirstImprove)
+              return ThreeOptB(beforeSegmentStart ,segmentEnd, insertionPoint, newObj, vrp)
+            BestObj = newObj
+            move = ((beforeSegmentStart ,segmentEnd, insertionPoint))
           }
         }
       }

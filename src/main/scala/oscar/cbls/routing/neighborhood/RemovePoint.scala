@@ -40,13 +40,13 @@ import scala.util.Random
   */
 
 object RemovePoint extends SearchEngine{
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):RemovePoint = findMove(false,false, vrp)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):RemovePoint
+  def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted):RemovePoint = findMove(false,false, vrp)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with Unrouted, startFrom:Neighbor = null):RemovePoint
   = findMove(true,false,vrp,startFrom)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):RemovePoint = findMove(false,true,vrp)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted):RemovePoint = findMove(false,true,vrp)
 
 
-  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with Unrouted,
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
     if(random){
@@ -87,7 +87,7 @@ object RemovePoint extends SearchEngine{
    /*
     Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
    */
-  def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):Int = {
+  def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction with Unrouted):Int = {
     val toUpdate = vrp.remove(List((beforeRemovedPoint,removedPoint)))
     vrp.getAssignVal(toUpdate)
  }

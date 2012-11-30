@@ -46,7 +46,7 @@ object FrameVRP extends App {
 }
 
 object PanelVRP {
-  val easyMode = true
+  val easyMode = false
   val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v}
 
   val boardPanel = PanelVRP.boardPanel

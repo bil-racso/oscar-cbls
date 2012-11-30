@@ -1,12 +1,3 @@
-package oscar.cbls.routing.initialSolution
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 9/11/12
- * Time: 10:45
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -29,7 +20,58 @@ package oscar.cbls.routing.initialSolution
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.initialSolution
+
+
+/**
+ * Class to inherit to create a new heuristic initial solution.
+ */
 abstract trait Heuristic {
   val heuristicTimer = HeuristicTimer
+}
 
+import java.util.concurrent.Semaphore
+
+/**
+ * Timer to monitor the creation of the initial solutions.
+ *
+ * Info : It can be used by a graphical interface to display a progressBar.
+ */
+object HeuristicTimer{
+  /**
+   * Maintains the progression of an heuristic.
+   */
+  val heuristicTimer = new TimerAverage
+
+  /**
+   * Returns the actual progression of an heuristic in percent.
+   * @return the progression in percent
+   */
+  def getPercentComplete = {heuristicTimer.getPercentComplete}
+
+  /**
+   * Set the actual progression of an heuristic.
+   * @param p the actual progression.
+   */
+  def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p;unlock}
+
+  /**
+   * Lock the semaphore which is associated to the timer.
+   */
+  def lock {heuristicTimer.lock.acquire()}
+
+  /**
+   * Unlock the semaphore which is associated to the timer.
+   */
+  def unlock {heuristicTimer.lock.release()}
+}
+
+/**
+ * Maintains a progression in percent.
+ */
+class TimerAverage {
+  var lock:Semaphore = new Semaphore(0)
+  var actualPercentComplete:Int = 0
+  def setPercentComplete(p:Int) {actualPercentComplete=p}
+  def getPercentComplete:Int = actualPercentComplete
 }

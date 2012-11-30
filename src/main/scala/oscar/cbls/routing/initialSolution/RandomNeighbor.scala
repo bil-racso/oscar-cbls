@@ -1,6 +1,3 @@
-package oscar.cbls.routing.initialSolution
-
-import oscar.cbls.routing.model._
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -23,17 +20,23 @@ import oscar.cbls.routing.model._
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-import oscar.cbls.search.SearchEngine
-import scala.util.Random
+package oscar.cbls.routing.initialSolution
+
+import oscar.cbls.routing.model._
 import oscar.cbls.routing._
 import neighborhood.{ReinsertPoint, Neighbor}
 
 /**
- * Works for many vehicles.
+ * Constructs an initial solution randomly.
  */
 
 object RandomNeighbor extends Heuristic{
-  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with PositionInRouteAndRouteNr
+
+  /**
+   * It applies the initial solution to a given vrp problem.
+   * @param vrp : the vrp problem that we want to apply the initial solution.
+   */
+  def apply(vrp:VRP with ObjectiveFunction with Unrouted with PositionInRouteAndRouteNr
     with HopDistance){
 
     val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
@@ -47,15 +50,14 @@ object RandomNeighbor extends Heuristic{
     val nodeToRoute = vrp.N-vrp.V
     for (p <- 0 until nodeToRoute){
       current(vehicle) = ReinsertPoint.getRandomMove(vrp,current(vehicle),vehicle)
+      // update the timer (linked to progressBar)
       heuristicTimer.setPercentComplete((100*p)/(nodeToRoute-1))
       if (current(vehicle)!= null)
         current(vehicle).comit
       vehicle=(vehicle+1) % vrp.V
-      heuristicTimer.unlock
     }
+    // update the timer (linked to progressBar)
     heuristicTimer.setPercentComplete(100)
-    if (nodeToRoute == 0) heuristicTimer.unlock
-
   }
 
 }

@@ -688,8 +688,6 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
  */
 class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override val name:String="")
   extends Variable(model,name) {
-  //println(MinVal + " et " + MaxVal)
-  //{assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
 
   def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
@@ -698,9 +696,10 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def setValue(v:Int){
     if (v != Value){
- /*    assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
-          "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
-          "value :"+ v +"\n" ))*/
+      /*
+     assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+         "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
+          "new value :"+ v +"\n" ))*/
         Value = v
         notifyChanged()
       }

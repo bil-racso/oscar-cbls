@@ -76,7 +76,7 @@ object VisualMapVRP extends App{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr
-    with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted = null
+    with ClosestNeighborPoints with SymmetricVRP with Predecessors with Unrouted = null
   var arrayTowns:Array[Point] = null
   var wayPoints :Array[Location] = null
   var lines :Array[MapLine]= null
@@ -120,7 +120,7 @@ object VisualMapVRP extends App{
 
   // get easier the neighborhood selected
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr with SymmetricVRP with PenaltyForUnrouted ,
+    with PositionInRouteAndRouteNr with SymmetricVRP with Unrouted ,
                             closeNeighbors:Int, previousMove:Neighbor):Neighbor = {
     board.neighborhood.getSelectedIndex match{
       case 0 => OnePointMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
@@ -142,16 +142,16 @@ object VisualMapVRP extends App{
     closeNeighbor = board.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints with SymmetricVRP with Predecessors with PenaltyForUnrouted
+      with ClosestNeighborPoints with SymmetricVRP with Predecessors with Unrouted
     try{
       arrayTowns = {
         board.instances.getSelectedIndex match {
-          case 0 => InstanceVRP.random(N)
-          case 1 => InstanceVRP.instance_1(N)
-          case 2 => InstanceVRP.instance_2(N)
-          case 3 => InstanceVRP.instance_3(N)
-          case 4 => InstanceVRP.instance_4(N)
-          case 5 => InstanceVRP.instance_5(N)
+          case 0 => BelgiumInstance.random(N)
+          case 1 => BelgiumInstance.instance_1(N)
+          case 2 => BelgiumInstance.instance_2(N)
+          case 3 => BelgiumInstance.instance_3(N)
+          case 4 => BelgiumInstance.instance_4(N)
+          case 5 => BelgiumInstance.instance_5(N)
         }}}
     catch {
       case e:AssertionError => println("Number of towns is too big.")

@@ -39,18 +39,18 @@ import scala.util.Random
   */
 
 object ReinsertPoint extends SearchEngine{
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted, startFrom:Neighbor = null):ReinsertPoint
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with Unrouted, startFrom:Neighbor = null):ReinsertPoint
   = findMove(true,false,vrp,startFrom)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):ReinsertPoint = findMove(false,true,vrp)
-  def getRandomMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+  def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted):ReinsertPoint = findMove(false,true,vrp)
+  def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,true,vrp,startFrom,vehicle,true)
 
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted):ReinsertPoint = findMove(false,false, vrp)
-  def getBestMove(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+  def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted):ReinsertPoint = findMove(false,false, vrp)
+  def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,false, vrp,startFrom,vehicle,true)
 
 
-  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with PenaltyForUnrouted,
+  private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with Unrouted,
                        startFrom:Neighbor = null, vehicle:Int =0, onlyFrom:Boolean=false):ReinsertPoint = {
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) vehicle else startFrom.startNodeForNextExploration

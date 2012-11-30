@@ -102,7 +102,7 @@ object DebugScript extends SearchEngine with App{
 
   //println("Debug route(" + N2 + "points,"+V+"cars)"+"\n Pred:")
  // println(vrp.preds)
- // println(vrp.Unrouted)
+ // println(vrp.AllUnrouted)
   // changement 1 vers 7
   // recherche
 
@@ -115,7 +115,7 @@ object DebugScript extends SearchEngine with App{
 
   //println(vrp.routes)
   //println(vrp.preds)
-  //println(vrp.Unrouted)
+  //println(vrp.AllUnrouted)
 
   // unroute the point 3 and 4
  /* vrp.remove(List(1,3)).foreach({t => t._1 := t._2})
@@ -123,7 +123,7 @@ object DebugScript extends SearchEngine with App{
 
   println(vrp.routes)
   println(vrp.preds)
-  println(vrp.Unrouted)
+  println(vrp.AllUnrouted)
 
 */
 

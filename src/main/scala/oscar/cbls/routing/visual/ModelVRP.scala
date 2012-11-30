@@ -2,7 +2,7 @@ package oscar.cbls.routing.visual
 
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
-import initialSolution.{Unrouted, NearestNeighbor, RandomNeighbor}
+import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
 import oscar.visual.{VisualDrawing, VisualArrow}
 import oscar.cbls.constraints.core.ConstraintSystem
 import math._
@@ -53,7 +53,7 @@ class ModelVRP() extends StopWatch{
   var closeNeighbor:Int =  0// save close neighbors
   var m: Model = null
   var vrp: VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-    with Predecessors with PenaltyForUnrouted with WeightedNode with WeakConstraints
+    with Predecessors with Unrouted with WeightedNode with WeakConstraints
     with StrongConstraints = null
 
   var towns:Array[Point] = null
@@ -122,7 +122,7 @@ class ModelVRP() extends StopWatch{
     closeNeighbor = boardPanel.klimited.getText.toInt
     m = new Model(false,false,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
-      with ClosestNeighborPoints with Predecessors with PenaltyForUnrouted
+      with ClosestNeighborPoints with Predecessors with Unrouted
       with WeightedNode with WeakConstraints with StrongConstraints
 
     // constraints definition
@@ -169,7 +169,7 @@ class ModelVRP() extends StopWatch{
       boardPanel.heuristic.getSelectedIndex match {
         case 0 => RandomNeighbor(vrp)
         case 1 => NearestNeighbor(vrp)
-        case 2 => Unrouted(vrp)
+        case 2 => AllUnrouted(vrp)
       }
     }
     m.propagate()

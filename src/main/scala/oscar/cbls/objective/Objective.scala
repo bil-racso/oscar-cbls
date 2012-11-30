@@ -81,5 +81,10 @@ trait ObjectiveTrait {
     newObj
   }
 
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
   def propagateObjective = ObjectiveVar.value
 }

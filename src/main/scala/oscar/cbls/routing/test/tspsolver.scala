@@ -74,7 +74,7 @@ object tspsolver extends SearchEngine with StopWatch with App{
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-  /*with SymmetricVRP*/  with Predecessors with PenaltyForUnrouted with OtherFunctionToObjective with WeakConstraints
+  /*with SymmetricVRP*/  with Predecessors with Unrouted with OtherFunctionToObjective with WeakConstraints
     with StrongConstraints
   vrp.installCostMatrix(DistanceMatrix)
   vrp.saveKNearestPoints(20)
@@ -143,7 +143,6 @@ object tspsolver extends SearchEngine with StopWatch with App{
     else{
         saturated = true
         println("done " + getWatchString)
-        println("Nb Reverse = "+vrp.reverseNb)
         if(realSum(vrp,DistanceMatrix).equals(vrp.ObjectiveVar.value)) println("Youpie!!") else println("Ohhh :'(")
     }
   }

@@ -1,13 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 10/11/12
- * Time: 15:07
- * To change this template use File | Settings | File Templates.
- */
-
-package oscar.cbls.routing.initialSolution
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -30,31 +20,32 @@ package oscar.cbls.routing.initialSolution
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.initialSolution
+
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
 
 /**
- * Works for many vehicles.
+ * The simplest initial solution consists to start from all unrouted points.
+ *
+ * Info : This heuristic does not take into account the possible constraints
+ * the problem, such as a number of unrouted maximum node.
  */
-
-object Unrouted extends Heuristic{
-
-  def addPoint {}
-  def addPoints = addPoint
-  def start {}
-
-  def apply(vrp:VRP with ObjectiveFunction with PenaltyForUnrouted with PositionInRouteAndRouteNr
+object AllUnrouted extends Heuristic{
+  /**
+    * It applies the initial solution to a given vrp problem.
+    * @param vrp : the vrp problem that we want to apply the initial solution.
+    */
+  def apply(vrp:VRP with ObjectiveFunction with Unrouted with PositionInRouteAndRouteNr
     with HopDistance){
 
-    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
     for (v <- 0 until vrp.V)
       vrp.Next(v) := v
     for (p <- vrp.V until vrp.N)
       vrp.Next(p) := vrp.N
     vrp.m.propagate()
 
+    // update the timer (linked to progressBar)
     heuristicTimer.setPercentComplete(100)
-    heuristicTimer.unlock
   }
 
 }

@@ -7,8 +7,7 @@ import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.invariants.lib.logic.Cluster
-import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
-import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
 import initialSolution.RandomNeighbor
@@ -37,7 +36,7 @@ object ConstraintsExamples extends App{
     Array.tabulate(N,N)((i,j) => round(sqrt((pow(towns(i).long - towns(j).long, 2)
       + pow(towns(i).lat - towns(j).lat, 2) ).toFloat)).toInt )
 
-  vrp.installCostMatrix(distanceMatrix(InstanceVRP.random(N)))
+  vrp.installCostMatrix(distanceMatrix(BelgiumInstance.random(N)))
   vrp.saveKNearestPoints(kLimited)
 
 
