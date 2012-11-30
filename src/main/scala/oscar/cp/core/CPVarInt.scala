@@ -67,6 +67,8 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
 	 */
 	def randomValue: Int = {
 		val ind = s.getRandom().nextInt(size);
+		this.toArray.apply(ind)
+		/*
 		var cpt = 0;
 		for (v: Int <- this) {
 			if (cpt == ind) {
@@ -75,6 +77,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
 			cpt += 1
 		}
 		min
+		*/
 	}	
     
     /**

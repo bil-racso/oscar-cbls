@@ -94,7 +94,9 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
     Suspend
   }
 
-  override def valRemoveIdx(cpvar: CPVarInt, i: Int, v: Int): CPOutcome = removeFromY(i, v)
+  override def valRemoveIdx(cpvar: CPVarInt, i: Int, v: Int): CPOutcome = {
+    removeFromY(i, v)
+  }
 
   override def valRemove(cpvar: CPVarInt, v: Int): CPOutcome = {
     if (cpvar == x) removeFromX(v)
@@ -123,14 +125,18 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
 
   // Reduces the number of supports of the value v
   private def reduceSupports(v: Int): CPOutcome = {
-    if (zRange.contains(v) && nSupports(v).decr() == 0) z.removeValue(v)
+    if (zRange.contains(v) && nSupports(v).decr() == 0) {
+      z.removeValue(v) 
+    }
     else Suspend
   }
 
   // Removes the value v from the intersection between y(i) and z
   private def reduceIntersect(i: Int, v: Int): CPOutcome = {
     intersect(i).removeValue(v)
-    if (intersect(i).isEmpty()) x.removeValue(i)
+    if (intersect(i).isEmpty()) {
+      x.removeValue(i) 
+    }
     else Suspend
   }
 
@@ -157,7 +163,9 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
 
   // If y(i) has an intersection with z, the number of supports of the  value v is reduced by 1
   private def removeFromY(i: Int, v: Int): CPOutcome = {
-    if (reduceSupports(v) == Failure) Failure
+    // we must check that x has value to avoid reducing twice for the same removal
+    // y(i) might loose the value and i is also removed ...
+    if (x.hasValue(i) && reduceSupports(v) == Failure) Failure 
     else reduceIntersect(i, v)
   }
 

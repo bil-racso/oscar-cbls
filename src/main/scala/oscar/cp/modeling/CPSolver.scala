@@ -150,7 +150,7 @@ class CPSolver() extends Store() {
 		while (!allBounds(vars)) {
 			val unbound = vars.filter(!_.isBound)
 			val heuris = unbound.map(varHeuris(_)).min
-			val x = unbound.filter(varHeuris(_) == heuris).first
+			val x = unbound.filter(varHeuris(_) == heuris).head
 			val v = valHeuris(x)
 			branch(post(x == v))(post(x != v)) // right alternative
 		}

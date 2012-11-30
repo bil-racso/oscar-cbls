@@ -85,6 +85,8 @@ object TSP extends App {
 
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
+    
+    //println("best sol")
   }
 
   cp.printStats()

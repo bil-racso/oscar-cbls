@@ -63,7 +63,7 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
       y(i).callUpdateBoundsIdxWhenBoundsChange(this, i)
     }
     x.callValRemoveWhenValueIsRemoved(this)
-    z.callValBindWhenBind(this)
+    x.callValBindWhenBind(this)
     z.callUpdateBoundsWhenBoundsChange(this)
     Suspend
     
@@ -101,6 +101,7 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
   }
 
   override def updateBoundsIdx(cpvar: CPVarInt, i: Int): CPOutcome = {
+    // bound of y(i) changed
     if (y(i).max < z.min || y(i).min > z.max) {
       if (x.removeValue(i) == Failure) return Failure
     }

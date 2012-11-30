@@ -92,6 +92,7 @@ object PMedian extends App {
   // ---------------------------
 
   val rnd = new scala.util.Random(0)
+  
   cp.lns(400, 100) {
     val usedMedians = xsol.toSet.toArray
     val medians =  (for (i <- 0 until 2) yield  usedMedians(rand.nextInt(nbMed))).toSet
@@ -100,6 +101,7 @@ object PMedian extends App {
       cp.post(x(c) == xsol(c))
     }
   }
+  
   val costs = Array.tabulate(nbCust)(i => cost(i)(x(i)))
   val totCost = sum(costs) 
 

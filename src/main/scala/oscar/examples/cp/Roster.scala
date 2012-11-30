@@ -39,7 +39,7 @@ class Calculator(){
       }
       sum/numbers.length;
   }
-   // Thanks to Christopher Martin
+
   def avg_short:Double = numbers.reduceLeft(_ + _) / numbers.length
 
   def stdDev():Double = {
