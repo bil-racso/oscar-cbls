@@ -15,6 +15,7 @@ import oscar.search.IDSSearchController
 import oscar.cp.mem.pareto.ParetoMinSet
 import java.io._
 import oscar.cp.mem.ChannelingPredSucc
+import oscar.cp.mem.InSet
 
 object AggregateTSP {
 
@@ -267,7 +268,13 @@ object AggregateTSP {
 
     var firstLns = true
     cp.silent = true
-    cp.lns(2000000, 2000) {
+    
+    val t0 = System.currentTimeMillis()
+    
+    cp.lns(1000000, 2000) {
+      
+      val t1 = System.currentTimeMillis()
+      if (t1-t0 > 3600000) cp.stop()
 
       // First LNS
       if (firstLns) {
@@ -282,13 +289,13 @@ object AggregateTSP {
         if (pareto insert ((newSol.dist1, newSol.dist2), newSol)) nObjRestart = 0
         newSol = null
         nStagnation = 0
-        p = pMin + (p - pMin) / 2
-        println("PARETO SIZE " + pareto.size)
+        //p = pMin + (p - pMin) / 2
+        println("PARETO SIZE " + pareto.size + " P " + p)
       } else {
         nStagnation += 1
-        if (nStagnation != 0 && nStagnation % 20 == 0) p += 1
-        if (nStagnation == 2500) {
-          cp.stop
+        if (nStagnation == 100) {
+          nStagnation = 0
+          p += 1
         }
       }
 
@@ -299,7 +306,7 @@ object AggregateTSP {
       //visu2.updateRoute(pareto.currentSol.pred)
       //visu2.updateDist()
 
-      relaxVariables(pathRelax(p))
+      relaxVariables(clusterRelax(p))
     }
 
     def nextObj(): Int = {
@@ -332,7 +339,7 @@ object AggregateTSP {
     }
 
     def diversif() {
-      pareto.bestDivSurf
+      //pareto.bestDivSurf
       val obj = nextObj()
       objRelax(obj, false)
     }
@@ -402,15 +409,16 @@ object AggregateTSP {
 
       val constraints: Queue[Constraint] = Queue()
 
-      for (c <- Cities) {
-        if (!selected(c)) {
+      for (c <- Cities; if !selected(c)) {
 
-          if (!selected(pareto.currentSol.pred(c)))
-            constraints enqueue (pred(c) == pareto.currentSol.pred(c))
+        val p = pareto.currentSol.pred(c)
+        val s = pareto.currentSol.succ(c)
 
-          if (!selected(pareto.currentSol.succ(c)))
-            constraints enqueue (succ(c) == pareto.currentSol.succ(c))
+        if (!selected(pareto.currentSol.pred(c)) && !selected(pareto.currentSol.succ(c))) {
+          constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+          constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
         }
+
       }
 
       cp.post(constraints.toArray)

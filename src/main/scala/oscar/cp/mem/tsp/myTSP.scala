@@ -27,18 +27,20 @@ import oscar.cp.constraints._
 import oscar.cp.mem.visu.VisualRelax
 import scala.collection.mutable.Queue
 import scala.util.Random.nextInt
+import scala.util.Random.nextFloat
 import scala.math.round
+import scala.math.pow
 import oscar.search.IDSSearchController
 import oscar.cp.mem.RoutingUtils
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.MyCircuit
+import oscar.cp.mem.InSet
 
 object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroB100.tsp")
-  val rand = new scala.util.Random(0)
+  val coord = parseCoordinates("data/TSP/kroA100.tsp")
 
   val nCities = coord.size
   val Cities = 0 until nCities
@@ -52,14 +54,14 @@ object myTSP extends App {
 
   // Builds the distance matrix
   val realDistMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
-  val distMatrix = realDistMatrix.map(_.map(i => round(i*10).toInt))
+  val distMatrix = realDistMatrix.map(_.map(i => round(i).toInt))
 
   // Model
   // -----
   val cp = new CPSolver()
   
   // Successors
-  //val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
+  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Predecessors
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
@@ -75,34 +77,18 @@ object myTSP extends App {
 
   var currentSol: Sol = null
   var nStarts = 1
-  var p = 15
+  var p = 20
 
-  cp.lns(500, 500) {
+  cp.lns(100, 3000) {
        
     nStarts += 1
     if (nStarts == 2) {
       println("Start LNS")
-      cp.failLimit = 2004310016 // 15! : UB on #possibilities
     }
 
-    relaxVariables(pathRelax(p))
+    relaxVariables(clusterRelax(p))
   }
 
-  def randomRelax(p: Int): Array[Boolean] = {
-    
-    val c = nextInt(nCities)
-    val selected = Array.fill(nCities)(false)
-    selected(c) = true
-
-    for (i <- 1 until p) {
-      val rem = Cities.filter(i => !selected(i))
-      val c = rem(nextInt(rem.size))
-      selected(c) = true
-    }
-    
-    selected
-  }
-  
   def clusterRelax(p: Int): Array[Boolean] = {
 
     val c = nextInt(nCities)
@@ -119,21 +105,22 @@ object myTSP extends App {
     selected(c) = true
 
     for (i <- 1 until p) {
-
+      
       val sel = Cities.filter(i => selected(i))
       val rem = Cities.filter(i => !selected(i))
-
+      
       val c = sel(nextInt(sel.size))
-      val cc = rem.sortBy(i => distMatrix(c)(i)).head
-
-      selected(cc) = true
+      val sorted = rem.sortBy(i => distMatrix(c)(i)).head
+      
+      //val r = pow(nextFloat, 15)*sorted.size   
+      //selected(sorted(r.floor.toInt)) = true
+      selected(sorted) = true
     }
     selected
   }
 
   def solFound() = {
-    //currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
-    currentSol = new Sol(pred.map(_.value), pred.map(_.value), totDist.value)
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
     visu.updateRoute(currentSol.pred)
     visu.updateDist()
   }
@@ -146,10 +133,21 @@ object myTSP extends App {
     val constraints: Queue[Constraint] = Queue()
 
     for (c <- Cities; if !selected(c)) {
-      if (!selected(currentSol.pred(c)))
-        constraints enqueue (pred(c) == currentSol.pred(c))
-      //if (!selected(currentSol.succ(c)))
-        //constraints enqueue (succ(c) == currentSol.succ(c))
+           
+      val p = currentSol.pred(c)
+      val s = currentSol.succ(c)
+      
+      if (true) {    
+	    if (!selected(currentSol.pred(c)) && !selected(currentSol.succ(c))) {
+	      constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+	      constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+	    }
+      } else {
+        if (!selected(currentSol.pred(c)))
+          constraints enqueue (pred(c) == currentSol.pred(c))
+        if (!selected(currentSol.succ(c)))
+          constraints enqueue (succ(c) == currentSol.succ(c))
+      }   
     }
     cp.post(constraints.toArray)
   }
@@ -158,22 +156,19 @@ object myTSP extends App {
   // -----------
   cp.minimize(totDist) subjectTo {
 
-    // Channeling between predecessors and successors
-    //cp.add(new ChannelingPredSucc(cp, pred, succ))
+    cp.add(new ChannelingPredSucc(cp, pred, succ))
 
-    // Consistency of the circuit with Strong filtering
-    //cp.add(circuit(succ), Strong)
-    //cp.add(circuit(pred), Strong)
+    cp.add(circuit(succ), Strong)
+    cp.add(circuit(pred), Strong)
     
     //cp.add(new MyCircuit(cp, succ), Strong)
-    cp.add(new MyCircuit(cp, pred), Strong)
+    //cp.add(new MyCircuit(cp, pred), Strong)
 
-    // Total distance
-    //cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
+    cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
-    //cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
-    //cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
+    cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
+    cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
   }
 
   // Search
