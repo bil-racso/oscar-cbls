@@ -49,8 +49,8 @@ trait Constraints {
 	 * @param c with c(j) is the cardinality of bin j (number of items)
 	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i and 
 	 */	
-	def binpackingCardinality(x : Array[CPVarInt], w : Array[Int], l : Array[CPVarInt], c: Array[CPVarInt]) : Constraint = {
-		return new BinPackingFlow(x, w, l, c)
+	def binpackingCardinality(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt], c: IndexedSeq[CPVarInt]) : Constraint = {
+		return new BinPackingFlow(x.toArray, w.toArray, l.toArray, c.toArray)
 	}
 
 	/**

@@ -165,7 +165,121 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     cp.isFailed() should be(false)
 
   }
+  
+  // some test from renaud
 
+  
+  test("Test Element Var AC9") {
+
+    val cp = CPSolver()
+
+    val z = CPVarInt(cp, 1, 2)
+    val x = CPVarInt(cp, 0 to 3)
+    val tab = Array(CPVarInt(cp, 1 to 2), CPVarInt(cp, 2 to 3))
+
+    cp.add(elementVar(tab, x, z),Strong)
+
+    x.min should be(0)
+    x.max should be(1)
+
+    cp.add(z != 2)
+
+    x.isBound should be(true)
+    tab(1).value should be(2)
+  }
+
+  test("Test Element Var AC10") {
+
+    val cp = CPSolver()
+
+    val z = CPVarInt(cp, 0 to 2)
+    val x = CPVarInt(cp, 0 to 2)
+    val tab = Array(CPVarInt(cp, 0 to 2), CPVarInt(cp, 0 to 2), CPVarInt(cp, 0 to 2))
+
+    cp.add(elementVar(tab, x, z),Strong)
+
+    x.min should be(0)
+    x.max should be(2)
+
+    cp.add(tab(0) != 0)
+    cp.add(tab(1) != 1)
+    cp.add(tab(2) != 2)
+
+    x.min should be(0)
+    x.max should be(2)
+
+    cp.add(tab(0) == 1)
+    cp.add(tab(2) != 1)
+
+    x.min should be(0)
+    x.max should be(2)
+
+    cp.add(z != 1)
+
+    x.min should be(1)
+    x.max should be(2)
+
+    cp.add(z != 2)
+
+    x.min should be(1)
+    x.max should be(2)
+
+    cp.add(tab(1) != 0)
+
+    x.isBound should be(true)
+  }
+  
+  test("Test Element Var AC11") {
+
+    val cp = CPSolver()
+
+    val z = CPVarInt(cp, 1 to 3)
+    val x = CPVarInt(cp, 0 to 3)
+    val tab = Array(CPVarInt(cp, 1 to 2), CPVarInt(cp, 2 to 3), CPVarInt(cp, 2 to 3))
+
+    cp.add(elementVar(tab, x, z),Strong)
+
+    x.min should be(0)
+    x.max should be(2)
+    
+    cp.add(x != 2)
+    
+    x.min should be(0)
+    x.max should be(1)
+    z.min should be(1)
+    z.max should be(3)
+    
+    cp.add(tab(2) != 3)
+    
+    x.min should be(0)
+    x.max should be(1)
+    z.min should be(1)
+    z.max should be(3)
+  }
+  
+  test("Test Element Var AC12") {
+
+    val cp = CPSolver()
+
+    val z = CPVarInt(cp, 1 to 3)
+    val x = CPVarInt(cp, 0 to 1)
+    val tab = Array(CPVarInt(cp, 1 to 2), CPVarInt(cp, 3))
+
+    cp.add(elementVar(tab, x, z),Strong)
+    
+    x.min should be(0)
+    x.max should be(1)
+    z.min should be(1)
+    z.max should be(3)
+    
+    cp.add(tab(0) != 1)
+    
+    x.min should be(0)
+    x.max should be(1)
+  }
+  
+
+  
   // --------- bound consistent elementVar var ----------
 
   test("Test Element Var BC 1") {

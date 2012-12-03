@@ -89,7 +89,10 @@ public class TestBinPackingFlow extends TestCase {
     	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,9),
     									CPVarInt.apply(cp, 0,6)};
     	
-    	cp.post(new BinPackingFlow(x, w, l));
+    	CPVarInt c [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,3),
+				CPVarInt.apply(cp, 0,3)};
+    	
+    	cp.post(new BinPackingFlow(x, w, l,c));
     	cp.post(new Eq(x[0], 0));
     	
     	assertTrue(cp.isFailed());	
