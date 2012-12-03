@@ -177,7 +177,7 @@ trait Constraints {
 		val minval = (for (x <- tab) yield x.getMin) min
 		val maxval = (for (x <- tab) yield x.getMax) max
 		val z = CPVarInt(x.store, minval, maxval)
-		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
+		x.store.add(new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
 		z
 	}
 
@@ -189,7 +189,7 @@ trait Constraints {
 	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
 	 */
 	def element(tab : Array[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
-		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
+		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
 	}
 
 	/**
@@ -200,7 +200,7 @@ trait Constraints {
 	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
 	 */
 	def element(tab : Array[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
-		new ElementVar(tab.toArray, x, z)
+		new ElementVarAC(tab.toArray, x, CPVarInt(x.s,z))
 	}
 
 	/**
@@ -212,7 +212,7 @@ trait Constraints {
 	 */
 	def element(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
 		val z_ = new CPVarBool(x.store, z)
-		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
+		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
 	}
 
 	/**
@@ -224,7 +224,7 @@ trait Constraints {
 	 */
 	def element(matrix : Array[Array[Int]], i : CPVarInt, j : CPVarInt) : CPVarInt = {
 		val z = CPVarInt(i.store, matrix.flatten.min to matrix.flatten.max)
-		val ok = i.store.post(ElementCst2D(matrix, i, j, z))
+		val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
 		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
 		return z
 	}
@@ -538,7 +538,7 @@ trait Constraints {
 	def maximum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).max, vars.map(_.max).max)
 		cp.add(maximum(x, m))
 		m
 	}
@@ -569,7 +569,7 @@ trait Constraints {
 	def minimum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).min, vars.map(_.max).min)
 		cp.add(minimum(x, m))
 		m
 	}

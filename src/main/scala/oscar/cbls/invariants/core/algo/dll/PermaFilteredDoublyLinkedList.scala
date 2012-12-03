@@ -21,31 +21,26 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.core.algo.dll
 
 /**this is a mutable data strcuture that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
  * and to update in parallell another set that is a filter of the first one through a specified function
  * the filter can be specified anytime and filtering can be cascated, but a PermaFilteresDLL can have only one filter
  *
- * @param slave says whether this is the master or the slave (filtered) DLL.
- *
  * You should not perform any operation on the slave DLL,
  * although this will not be detected and reported as an error
  *
  * Beware that this is a mutable data structure, hence you should not perform delete on it while iterating on it. 
  * */
- class PermaFilteredDoublyLinkedList[T](val slave:Boolean = false) extends Iterable[T]{
+ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
   private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   headfantom.setNext(endfantom)
 
   private var mfilter:T => Boolean = null
-  private var Filtered: PermaFilteredDoublyLinkedList[T] = null
-
-   /**returns the perma filtered DLL from this one, null if none has been specified (yet)*/
-   def getFiltered:PermaFilteredDoublyLinkedList[T] = Filtered
+  private var mmap:T => AnyRef = null
+  private var Filtered: PermaFilteredDoublyLinkedList[AnyRef] = null
 
    /**returns the size of the PermaFilteredDLL*/
   override def size = msize
@@ -61,10 +56,16 @@ package oscar.cbls.invariants.core.algo.dll
     headfantom.setNext(d)
     msize +=1
     if(mfilter != null && mfilter(elem)){
-      d.filtered = Filtered.addElem(elem)
+      if(mmap == null){
+        d.filtered = Filtered.addAny(elem)
+      }else{
+        d.filtered = Filtered.addAny(mmap(elem))
+      }
     }
     d
   }
+   
+  def addAny(elem:AnyRef):AnyRef =  addElem(elem.asInstanceOf[T])
 
   /**adds an element to the data structure, cfr. method addElem*/
   def +(elem:T){addElem(elem)}
@@ -79,10 +80,12 @@ package oscar.cbls.invariants.core.algo.dll
     elemkey.prev.setNext(elemkey.next)
     msize -=1
     if(mfilter != null && elemkey.filtered != null){
-      Filtered.deleteElem(elemkey.filtered)
+      Filtered.deleteAny(elemkey.filtered)
     }
     elemkey.elem
   }
+
+   def deleteAny(elemkey:AnyRef):AnyRef = deleteElem(elemkey.asInstanceOf[PFDLLStorageElement[T]])
 
    /**makes the DLL empty, and all its filtered DLL as well*/
   def dropAll(){
@@ -97,19 +100,25 @@ package oscar.cbls.invariants.core.algo.dll
 
   override def iterator = new PFDLLIterator[T](headfantom,endfantom)
 
-  def PermaFilter(filter:T => Boolean):PermaFilteredDoublyLinkedList[T] = {
+  def PermaFilter[X <: AnyRef](filter:T => Boolean, map:T => X = null):PermaFilteredDoublyLinkedList[X] = {
     assert(mfilter == null,"PermaFilteredDoublyLinkedList can only accept a single filter")
     mfilter = filter
-    Filtered = new PermaFilteredDoublyLinkedList[T](true)
-    
+    val newlist = new PermaFilteredDoublyLinkedList[X]
+    Filtered = newlist.asInstanceOf[PermaFilteredDoublyLinkedList[AnyRef]]
+    mmap = map
+
     var currentstorageElement:PFDLLStorageElement[T]=headfantom.next
     while(currentstorageElement!=endfantom){
       if(mfilter(currentstorageElement.elem)){
-        currentstorageElement.filtered = Filtered.addElem(currentstorageElement.elem)
+        if(map == null){
+          currentstorageElement.filtered = Filtered.addAny(currentstorageElement.elem)
+        }else{
+          currentstorageElement.filtered = Filtered.addAny(map(currentstorageElement.elem))
+        }
       }
       currentstorageElement = currentstorageElement.next
     }
-    Filtered
+    newlist
   }
 
    /**
@@ -130,7 +139,7 @@ package oscar.cbls.invariants.core.algo.dll
 class PFDLLStorageElement[T](val elem:T){
   var next:PFDLLStorageElement[T] = null
   var prev:PFDLLStorageElement[T] = null
-  var filtered: PFDLLStorageElement[T] = null
+  var filtered: AnyRef = null
 
   def setNext(d:PFDLLStorageElement[T]){
     this.next = d

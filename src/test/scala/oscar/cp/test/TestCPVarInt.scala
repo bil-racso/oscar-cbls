@@ -25,12 +25,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 		a.median should be(2)
 	}
 	
-	test("Test min dom not bound") {
-	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp, 1 to 1),CPVarInt(cp, 1 to 2),CPVarInt(cp, 1 to 3))
-	  val (y: CPVarInt,i: Int) = minDomNotbound(x).head
-	  i should be(1)
-	}
+
 	
 	test("Test is full") {
 	  val cp = CPSolver()

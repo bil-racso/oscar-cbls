@@ -56,8 +56,8 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
     for (task <- p.Tasks) {
 
       val i = task.TaskID
-      rectangles(i).setWidth(((task.duration.value)*xScale).ceil)
-      rectangles(i).setHeight(yScale)
+      rectangles(i).width = ((task.duration.value)*xScale).ceil
+      rectangles(i).height = yScale
       rectangles(i).innerCol = colors(i)
       rectangles(i).move((task.EarliestStartDate.value*xScale).ceil, LineArray(task.TaskID)*yScale)
     }

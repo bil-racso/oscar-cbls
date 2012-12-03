@@ -16,32 +16,45 @@
  ******************************************************************************/
 package oscar.visual;
 
+import java.awt.geom.Line2D;
+
 
 /**
+ * 
  * @author Pierre Schaus
+ *
  */
-public class MapLine {
-	double lt1, lg1, lt2, lg2;
-	VisualMap map;
-
-	public MapLine(VisualMap map,double lt1, double lg1, double lt2, double lg2) {
-		this.map = map;
-		this.lt1 = lt1;
-		this.lg1 = lg1;
-		this.lt2 = lt2;
-		this.lg2 = lg2;
+class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line2D.Double](d,shape){
+	
+	
+	
+	def line:Line2D.Double = shape
+	
+	def this(d:VisualDrawing,xorig:Double, yorig:Double, xdest:Double, ydest:Double) {
+		this(d, new Line2D.Double(xorig,yorig,xdest,ydest))
+		
 	}
-
-	public void setDest(double lt2, double lg2) {
-		this.lt2 = lt2;
-		this.lg2 = lg2;
-		map.viewer.repaint();
-
+	
+	/**
+	 * Move the destination point
+	 * @param x
+	 * @param y
+	 */
+	def setDest(x:Double, y:Double) : Unit = {
+		line.setLine(line.getX1(),line.getY1(),x,y)
+		drawing.repaint()
 	}
-
-	public void setOrig(double lt1, double lg1) {
-		this.lt1 = lt1;
-		this.lg1 = lg1;
-		map.viewer.repaint();
-	}		
+	
+	/**
+	 * Move the origin point
+	 * @param x
+	 * @param y
+	 */
+	def setOrig(x:Double, y:Double) : Unit = {
+		line.setLine(x,y,line.getX2(),line.getY2())
+		drawing.repaint()
+	}
+	
+	
+	
 }

@@ -21,17 +21,15 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.core.algo.heap
 
-import collection.immutable.{Map, SortedMap}
+import collection.immutable.SortedMap
 import collection.Iterator
-
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
  * smallest first
- * @param GetKey a function that returns an integer for each element inserted i nthe heap this value is used to sort the heap content
+ * @param initialGetKey a function that returns an integer for each element inserted i nthe heap this value is used to sort the heap content
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
@@ -56,7 +54,9 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
       GetKey = KeyGetter
     }
   }
-  
+
+  def keyGetter:(T => Int) = GetKey
+
   override def size = msize
   override def isEmpty:Boolean = (msize == 0)
 
@@ -171,7 +171,6 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
     acc
   }
 }
-
 
 class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
   var current:Int = size

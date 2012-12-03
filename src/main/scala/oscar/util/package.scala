@@ -26,60 +26,59 @@ package object util {
    * @return some randomly selected value i in r satisfying st(i)
    * @author pschaus
    */
-  def select[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
-               (block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in select")}) = {
-    var cpt = r.count(st)
+  def select[R](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true)): Option[R] = {      
+    var cpt = 1
     var result: Option[R] = None 
     for (o <- r; if st(o)) {
       val proba = 1.0/cpt
       if (rand.nextDouble() <= proba) {
         result = Some(o)
       }
-      cpt += 1 //I'm not quite sure, but I believe it should be multiplied by two at each round.
+      cpt += 1
     }
-    result match {
-    	case Some(r) => block(r)
-    	case None => {defaultBlock}
-    }
+    result
   }
-  
+
   /**
    * Random min selector
    * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
    * @author pschaus
    */
-  def selectMin[R](r: Iterable[R], st: (R => Boolean) = ((r: R) => true))
-                  (f: R => Double)(block: R => Unit, defaultBlock: Unit = {println("no elemen satisfying condition in selectMin")}) = {
-    var cpt = 1
-    var result: Option[R] = None
-    var best = Double.MaxValue
-    for (o <- r; if st(o)) {
-      val eval = f(o)
-      if (eval < best) {
-        result = Some(o)
-        cpt = 2
-        best = eval
-      } else if (eval == best) {
-        val proba = 1.0/cpt
-        if (rand.nextDouble() <= proba) {
-          result = Some(o)
+  def selectMin[R, T](r: Iterable[R])(st: (R => Boolean) = ((r: R) => true))(f: R => T)(implicit orderer: T => Ordered[T]): Option[R] = {
+    r.find(st) match {
+      case Some(v) => {
+        var cpt = 1
+        var result = v
+        var best: T = f(v)
+        for (o <- r; if st(o)) {
+          val eval: T = f(o)
+          if (orderer(eval) < best) {
+            result = o
+            cpt = 2
+            best = eval
+          } else if (eval == best) {
+            val proba = 1.0 / cpt
+            if (rand.nextDouble() <= proba) {
+              result = o
+            }
+            cpt += 1
+          }
         }
-        cpt += 1
+        Some(result)
       }
-    }
-    result match {
-    	case Some(r) => block(r)
-    	case None => {defaultBlock}
+      case None => None
     }
   }
   
+ 
   /**
-   * Random max selector
-   * @author pschaus
+   * @param block a code block
+   * @return the time (ms) to execute the block
    */
-  def selectMax[R](r: Iterable[R], st: (R => Boolean) = 
-        ((r: R) => true))(f: R => Double)(block: R => Unit) = selectMin(r,st)(-f(_))(block)
-    
-  
+  def time(block: => Unit): Long = {
+    val t0 = System.currentTimeMillis();
+    block
+    System.currentTimeMillis - t0;
+  }
 
 }
