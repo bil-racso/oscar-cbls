@@ -39,7 +39,10 @@ class GurobiLP extends AbstractLP {
   var Obj = 0.0
 
   var env = new GRBEnv()
-  env.readParams("gurobi_option.txt")
+  val file = new java.io.File("gurobiOption.txt")
+  if (file.exists()) {
+    env.readParams("gurobiOption.txt")
+  }
   var model = new GRBModel(env)
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
@@ -103,7 +106,6 @@ class GurobiLP extends AbstractLP {
 
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double]) {
     if (!closed) {
-      println("cannot add a column in a non closed solver")
     } else {
       nbCols += 1
       val col = new GRBColumn()
@@ -136,7 +138,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def solveModel(): LPStatus.Value = {
-    model.write("gurobi.lp")
+    // model.write("gurobi.lp")
     model.getEnv().set(GRB.IntParam.Presolve, -1)
     model.optimize()
 
@@ -186,9 +188,12 @@ class GurobiLP extends AbstractLP {
   }
 
   def setBounds(colId: Int, low: Double, up: Double) {
-    var ntot = new GRBLinExpr()
+
+    model.set(GRB.DoubleAttr.UB, Array(model.getVar(colId)), Array(up))
+    model.set(GRB.DoubleAttr.LB, Array(model.getVar(colId)), Array(low))
+    /*var ntot = new GRBLinExpr()
     ntot.addTerm(1, model.getVar(colId))
-    model.addRange(ntot, low, up, "")
+    model.addRange(ntot, low, up, "")*/
     model.update()
   }
 
