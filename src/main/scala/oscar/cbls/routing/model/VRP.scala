@@ -635,7 +635,7 @@ trait Predecessors extends VRP{
   /**
    * the data structure array which maintains the predecessors of each node.
    */
-  val preds = Predecessor(Next)
+  val preds = Predecessor(Next,V)
 }
 
 /**

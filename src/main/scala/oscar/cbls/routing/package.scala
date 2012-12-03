@@ -40,3 +40,14 @@ package object model{}
    * Contains the actual unit tests of the routing package.
  */
 package object test{}
+
+/**
+ * Contains components of the demo.
+ * Components are divided in search, model and panel branch.
+ */
+package object visual{}
+
+/**
+ * Contains all neighborhoods, like three-opt, two-opt, 1-0 exchange, etc..
+ */
+package object neighborhood{}

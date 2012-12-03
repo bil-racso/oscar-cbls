@@ -1,22 +1,3 @@
-package oscar.cbls.routing.visual
-
-import oscar.cbls.invariants.core.computation.{IntVar, Model}
-import oscar.cbls.routing._
-import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
-import oscar.visual.{VisualDrawing, VisualArrow}
-import oscar.cbls.constraints.core.ConstraintSystem
-import math._
-import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
-import oscar.cbls.search.StopWatch
-import model._
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 8/11/12
- * Time: 16:50
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -39,6 +20,17 @@ import model._
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.visual
+
+import oscar.cbls.invariants.core.computation.{IntVar, Model}
+import oscar.cbls.routing._
+import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
+import oscar.visual.{VisualDrawing, VisualArrow}
+import oscar.cbls.constraints.core.ConstraintSystem
+import math._
+import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
+import oscar.cbls.search.StopWatch
+import model._
 
 object ModelVRP {
   val model = new ModelVRP()
@@ -108,8 +100,12 @@ class ModelVRP() extends StopWatch{
   }
 
 
-
-
+  /**
+   * Concrete modeling of the VRP with interaction of the GUI interface.
+   * @param panelVRP the set of graphic components of the application.
+   * @param reset true if we want to reconstruct the last instance
+   * @return the model of the VRP.
+   */
   def initModel(panelVRP:PanelVRP,reset:Boolean=false):ModelVRP ={
     startWatch()
     val boardPanel = panelVRP.boardPanel

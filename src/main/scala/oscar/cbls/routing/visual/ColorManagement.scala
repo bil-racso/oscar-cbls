@@ -1,16 +1,3 @@
-package oscar.cbls.routing.visual
-
-import java.awt.Color
-import util.Random
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 8/11/12
- * Time: 16:04
- * To change this template use File | Settings | File Templates.
- */
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -32,6 +19,11 @@ import util.Random
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
+
+package oscar.cbls.routing.visual
+
+import java.awt.Color
+import util.Random
 
 /**
  * This class allows the generation of random colors separate.
@@ -64,6 +56,11 @@ class ColorManagement {
     Set n colors enough different.
    */
   def setDifferentColors(n:Int)= {
+    var enoughColor:Boolean =  false
+    if(n<=21)
+      enoughColor =true
+
+
     def diff(c1:Color,i:Int):Boolean = {
       var j =0
       while(j<i){
@@ -86,7 +83,7 @@ class ColorManagement {
           math.abs(gen.nextInt(1000)) % 256,
           math.abs(gen.nextInt(1000)) % 256)
       }
-      while(!diff(c,i))
+      while(enoughColor && !diff(c,i))
       colors(i) = c
       i += 1
     }

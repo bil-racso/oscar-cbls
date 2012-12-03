@@ -1,5 +1,3 @@
-package oscar.cbls.routing.neighborhood
-
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
@@ -20,8 +18,10 @@ package oscar.cbls.routing.neighborhood
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
+ *         by Renaud De Landtsheer and Florent Ghilain.
  ******************************************************************************/
+
+package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
@@ -30,21 +30,47 @@ import oscar.cbls.routing.model._
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
- * size if O(n²)
+ * The search complexity is O(n²).
  */
-
 object OnePointMove extends SearchEngine{
+
+  /**
+   * Returns the best one-point-move operator, i.e. which decreases the most the objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return the best one-point-move operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int):OnePointMove = findMove(false, vrp,k)
+
+  /**
+   * Returns the first one-point-move operator which decreases the actual objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return a one-point-move operator improving objective.
+   */
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int , startFrom:Neighbor = null):OnePointMove = findMove(true,vrp,k,startFrom)
 
-
-  /**Search for the proper One point move
-   *
-   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one
-   * @param vrp the model of the problem
-   */
+  /**
+   * Search procedure of a proper one-point-move operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return the proper one-point-move specified by the parameters.
+    */
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
     with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):OnePointMove = {
     var BestObj:Int = vrp.ObjectiveVar.value
@@ -69,13 +95,24 @@ object OnePointMove extends SearchEngine{
     else OnePointMove(move._1,move._2, BestObj, vrp)
   }
 
+  /**
+   * Performs a one-point-move operator on a given VRP problem.
+   * @param predOfMovedPoint the predecessor of the point that moves.
+   * @param PutAfter the place where insert the moving point.
+   * @param vrp the given VRP problem.
+   */
   def doMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP){
      val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
      toUpdate.foreach(t => t._1 := t._2)
    }
 
-  /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+  /**
+   * Evaluates and returns the objective after a temporary one-point-move operator
+   * thanks to ObjectiveFunction's features.
+   * @param predOfMovedPoint the predecessor of the point that moves.
+   * @param PutAfter the place where insert the moving point.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this one-point-move operator.
    */
   def getObjAfterMove(predOfMovedPoint:Int, PutAfter:Int, vrp:VRP with ObjectiveFunction):Int = {
     val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
@@ -83,11 +120,19 @@ object OnePointMove extends SearchEngine{
   }
 }
 
+/**
+ * Models a one-point-move operator of a given VRP problem.
+ * @param predOfMovedPoint the predecessor of the point that moves.
+ * @param PutAfter the place where insert the moving point.
+ * @param objAfter the objective value if we performed this one-point-move operator.
+ * @param vrp the given VRP problem.
+ */
 case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
-
   def startNodeForNextExploration: Int = predOfMovedPoint
+
+  override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
 }
 

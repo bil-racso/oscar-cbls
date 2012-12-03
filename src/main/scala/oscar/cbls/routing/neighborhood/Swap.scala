@@ -1,14 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 26/10/12
- * Time: 13:50
- * To change this template use File | Settings | File Templates.
- */
-
-
-package oscar.cbls.routing.neighborhood
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -31,21 +20,57 @@ package oscar.cbls.routing.neighborhood
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 
 
-/**moves a point in a circuit to another place.
-  * size if O(n²)
-  */
-
+/**
+ * Swap the place of two points of the same or different route.
+ * The search complexity is O(n²).
+ */
 object Swap extends SearchEngine{
+
+  /**
+   * Returns the best swap move, i.e. which decreases the most the objective value
+   * of a given VRP problem.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return the best swap move.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
     ,k:Int):Swap = findMove(false, vrp,k)
+
+  /**
+   * Returns the first swap move which decreases the actual objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a swap move improving objective.
+   */
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
    ,k:Int , startFrom:Neighbor = null):Swap = findMove(true,vrp,k,startFrom)
 
+  /**
+   * Search procedure of a proper swap move in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return the proper swap move specified by the parameters.
+   */
   private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
                        with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):Swap = {
     var BestObj:Int = vrp.ObjectiveVar.value
@@ -76,14 +101,25 @@ object Swap extends SearchEngine{
     else Swap(move._1,move._2, BestObj, vrp)
   }
 
+  /**
+   * Performs a one-point-move operator on a given VRP problem.
+   * @param predOfFirstSwapedPoint the predecessor of the first point that will be swapped.
+   * @param predOfSecondSwappedPoint the predecessor of the second point that will be swapped.
+   * @param vrp the given VRP problem.
+   */
   def doMove(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP){
     val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
       vrp.Next(predOfSecondSwappedPoint).value)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+  /**
+   * Evaluates and returns the objective after a temporary swap move
+   * thanks to ObjectiveFunction's features.
+   * @param predOfFirstSwapedPoint the predecessor of the first point that will be swapped.
+   * @param predOfSecondSwappedPoint the predecessor of the second point that will be swapped.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this swap move operator.
    */
   def getObjAfterMove(predOfFirstSwapedPoint:Int, predOfSecondSwappedPoint:Int, vrp:VRP with ObjectiveFunction ):Int = {
     val toUpdate =vrp.swap(predOfFirstSwapedPoint,vrp.Next(predOfFirstSwapedPoint).value,predOfSecondSwappedPoint,
@@ -92,11 +128,19 @@ object Swap extends SearchEngine{
   }
 }
 
+/**
+ * Models a swap move of a given VRP problem.
+ * @param predOfMovedPoint the predecessor of the first point that will be swapped.
+ * @param PutAfter the predecessor of the second point that will be swapped.
+ * @param objAfter the objective value if we performed this swap move.
+ * @param vrp the given VRP problem.
+ */
 case class Swap(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
-
   def startNodeForNextExploration: Int = predOfMovedPoint
+
+  override def toString():String = "(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
 }
 

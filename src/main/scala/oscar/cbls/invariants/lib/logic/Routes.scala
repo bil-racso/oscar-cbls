@@ -1,5 +1,3 @@
-package oscar.cbls.invariants.lib.logic
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -20,26 +18,28 @@ package oscar.cbls.invariants.lib.logic
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by CETIC www.cetic.be
-  *         by Renaud De Landtsheer
+  *         by Renaud De Landtsheer and Florent Ghilain.
   ******************************************************************************/
+
+package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
-import oscar.cbls.routing.VRP
-import javax.swing.JOptionPane
+
 
 /**
- * This invariants maintains data structures representing vrp of vehicles.
- * (usable in VRP, TSP, etc..)
- * Arrays start at 0 until N-1 for Next, PositionInRoute and RouteNr.
- * Arrays start at 0 until V-1 for RouteLenght and LastInRoute.
- * N value is to denote an unrouted node and the positionInRoute of an unrouted node.
- * V value is to denote the route number of an unrouted node.
- * The nodes from 0 to V-1 are the starting points of vehicles.
+ * This invariants maintains data structures representing a VRP and his
+ * characteristics like the length of route, the position of points in route, etc.. .
  *
- * @param V the number of vrp to consider V>=1 and V<=N
+ * Info : the indices from 0 to V-1 (in the Next, PositionInRoute and RouteNr array) are the starting
+ * points of vehicles.
+ * @param V the number of vehicles.
+ * @param Next the array of successors of each points (deposits and customers) of the VRP.
+ * @param PositionInRoute the position in route of each points, N is the value of unrouted node.
+ * @param RouteNr the route number of each points, V is the value of unrouted node.
+ * @param RouteLength the length of each route.
+ * @param LastInRoute the last point in each route.
  */
-
 case class Routes(V: Int,
                   Next:Array[IntVar],
                   PositionInRoute:Array[IntVar],
@@ -83,6 +83,7 @@ case class Routes(V: Int,
     PositionInRoute(v) := 0
     RouteNr(v) := v
     while(Next(currentID).value !=v){
+
       assert(Next(currentID).value>v)
 
       currentID = Next(currentID).value
@@ -141,7 +142,6 @@ case class Routes(V: Int,
    * @param nodeID est le noeud dont on a changé le next.
    */ //TODO: there is a bug somewhere, this does sometime get into a cycle.
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
-
     var currentNode = nodeID
     var nextNode = Next(currentNode).value
     while(!isUpToDate(currentNode) && nextNode >= V){
@@ -180,8 +180,8 @@ case class Routes(V: Int,
 object Routes{
   def buildRoutes(Next:Array[IntVar], V:Int):Routes = {
     val m:Model = InvariantHelper.FindModel(Next)
-    // max bounds equal Next.length-2 instead of V
-    val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,0, "PositionInRouteOfPt" + i))
+
+    val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,Next.length, "PositionInRouteOfPt" + i))
     val RouteNr = Array.tabulate(Next.length)(i => new IntVar(m, 0, V,V, "RouteNrOfPt" + i))
     val RouteLength = Array.tabulate(V)(i => new IntVar(m,0,Next.length,0,"Route "+i+"-Lenght"))
     val lastInRoute = Array.tabulate(V)(i => new IntVar(m,0,Next.length,i,"LastInRoute "+i))

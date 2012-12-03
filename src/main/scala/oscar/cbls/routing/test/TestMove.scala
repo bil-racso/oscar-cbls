@@ -34,6 +34,7 @@ import oscar.cbls.routing.initialSolution.NearestNeighbor
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
  * verifies the domain of a variable variable.
+ * These tests (with star) show the lack of robustness of the current framework.
  */
 class TestMove extends FunSuite with ShouldMatchers{
 

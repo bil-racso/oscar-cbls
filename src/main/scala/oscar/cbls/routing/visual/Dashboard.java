@@ -188,7 +188,7 @@ public class Dashboard extends JPanel {
         nextIte.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if(firstIte){
-                    //new Thread(new VisualMapVRP.Search()).start();
+                    //new Thread(new OldVisualMap.Search()).start();
                     firstIte = false;
                     iteration = true;
                     PanelVRP.startSearching();

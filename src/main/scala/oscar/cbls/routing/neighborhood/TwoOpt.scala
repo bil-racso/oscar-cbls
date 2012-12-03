@@ -1,10 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 25/10/12
- * Time: 14:44
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -26,24 +19,61 @@
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
+
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 
-
 /**
-  */
-
+ * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
+ *
+ * The search complexity is O(n²).
+ */
 object TwoOpt extends SearchEngine{
+
+  /**
+   * Returns the best two-opt-move operator, i.e. which decreases the most the objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return the best two-opt-move operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-                  ,k:Int):TwoOpt = findMove(false, vrp,k)
+    ,k:Int):TwoOpt = findMove(false, vrp,k)
+
+  /**
+   * Returns the first two-opt-move operator which decreases the actual objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a two-opt-move operator improving objective.
+   */
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int,startFrom:Neighbor = null):TwoOpt = findMove(true,vrp,k,startFrom)
 
 
-  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
+  /**
+   * Search procedure of a proper two-opt-move operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return the proper two-opt-move operator specified by the parameters.
+   */
+  def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
     with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOpt = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
@@ -66,26 +96,44 @@ object TwoOpt extends SearchEngine{
     else TwoOpt(move._1,move._2, BestObj, vrp)
   }
 
+  /**
+   * Performs a two-opt-move operator on a given VRP problem.
+   * @param firstEdge the start of first edge that we remove.
+   * @param secondEdge the start of second edge that we remove.
+   * @param vrp the given VRP problem.
+   */
   def doMove(firstEdge:Int, secondEdge:Int, vrp:VRP){
     val toUpdate =vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
 
-  /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+  /**
+   * Evaluates and returns the objective after a temporary two-opt-move operator
+   * thanks to ObjectiveFunction's features.
+   * @param firstEdge the start of first edge that we remove.
+   * @param secondEdge the start of second edge that we remove.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this two-opt-move operator.
    */
   def getObjAfterMove(firstEdge:Int, secondEdge:Int, vrp:VRP with ObjectiveFunction ):Int = {
     val toUpdate = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
     vrp.getAssignVal(toUpdate)
    }
 }
-
-case class TwoOpt(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
-  def comit {TwoOpt.doMove(predOfMovedPoint, PutAfter, vrp)}
+/**
+ * Models a two-opt-move operator of a given VRP problem. *
+ * @param firstEdge the start of first edge that we remove.
+ * @param secondEdge the start of second edge that we remove.
+  * @param objAfter the objective value if we performed this two-opt-move operator.
+ * @param vrp the given VRP problem.
+ */
+case class TwoOpt(val firstEdge:Int, val secondEdge:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
+  def comit {TwoOpt.doMove(firstEdge, secondEdge, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
+  def startNodeForNextExploration: Int = firstEdge
 
-  def startNodeForNextExploration: Int = predOfMovedPoint
+  override def toString():String = "(point = " + vrp.Next(firstEdge).value + ", insertion = " + secondEdge+" )"
 }
 

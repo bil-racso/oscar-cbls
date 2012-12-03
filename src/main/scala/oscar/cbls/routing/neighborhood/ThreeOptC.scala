@@ -1,10 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 23/10/12
- * Time: 16:17
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -26,31 +19,67 @@
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
+
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 
-/*
-
+/**
+ * Removes three edges of routes, and rebuilds routes from the segments. (with two reverses allowed)
+ *
+ * The search complexity is O(n³).
  */
 object ThreeOptC extends SearchEngine{
 
-
+  /**
+   * Returns the best three-opt-move operator, i.e. which decreases the most the objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk²)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return the best three-opt-move operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
     , k:Int):Neighbor = findMove(false, vrp, k)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    , k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove)
 
+  /**
+   * Returns the first three-opt-move operator which decreases the actual objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk²)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a three-opt-move operator improving objective.
+   */
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
+    , k:Int, startFrom:Neighbor = null):Neighbor= findMove(true,vrp, k, startFrom)
+
+  /**
+   * Search procedure of a proper three-opt-move operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return the proper three-opt-move operator specified by the parameters.
+   */
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, previousMove:Neighbor = null):ThreeOptC = {
+               k:Int, startFrom:Neighbor = null):ThreeOptC = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
 
-    val hotRestart = if (previousMove == null) 0 else previousMove.startNodeForNextExploration
+    val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
     var endOfFirstEdge:Int = 0
 
     for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart if (vrp.isRouted(startOfFirstEdge))){
@@ -81,16 +110,28 @@ object ThreeOptC extends SearchEngine{
     else ThreeOptC(move._1, move._2, move._3, BestObj, vrp)
   }
 
-  /*Performs the three-opt move with two reverse segment. */
-
+  /**
+   * Performs a three-opt-move operator on a given VRP problem.
+   * @param startOfFirstEdge the start of first edge that we remove.
+   * @param startOfSecondEdge the start of second edge that we remove.
+   * @param startOfThirdEdge the start of third edge that we remove.
+   * @param vrp the given VRP problem.
+   */
   def doMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,vrp:VRP)  {
     val toUpdate = vrp.threeOptC(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
       startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-
-
+  /**
+   * Evaluates and returns the objective after a temporary three-opt-move operator
+   * thanks to ObjectiveFunction's features.
+   * @param startOfFirstEdge the start of first edge that we remove.
+   * @param startOfSecondEdge the start of second edge that we remove.
+   * @param startOfThirdEdge the start of third edge that we remove.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this three-opt-move operator.
+   */
   def getObjAfterMove(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int, vrp:VRP with ObjectiveFunction):Int = {
     val toUpdate = vrp.threeOptC(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
       startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
@@ -98,13 +139,23 @@ object ThreeOptC extends SearchEngine{
   }
 }
 
+/**
+ * Models a three-opt-move operator of a given VRP problem. *
+ * @param startOfFirstEdge the start of first edge that we remove.
+ * @param startOfSecondEdge the start of second edge that we remove.
+ * @param startOfThirdEdge the start of third edge that we remove.
+ * @param objAfter the objective value if we performed this three-opt-move operator.
+ * @param vrp the given VRP problem.
+ */
 case class ThreeOptC(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
                                   objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {ThreeOptC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
+  def startNodeForNextExploration: Int = startOfFirstEdge
+
   override def toString():String =  "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
     "thirdEdge = "+ startOfThirdEdge+" )"
-  def startNodeForNextExploration: Int = startOfFirstEdge
 }
 
 

@@ -1,11 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 26/10/12
- * Time: 13:50
- * To change this template use File | Settings | File Templates.
- */
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -34,18 +26,48 @@ import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 import scala.util.Random
 
-
-/**moves a point in a circuit to another place.
-  * size if O(n²)
-  */
-
+/**
+ * Removes a point of route.
+ * The search complexity is O(n).
+ */
 object RemovePoint extends SearchEngine{
+  /**
+   * Returns the best remove-point operator, i.e. which decreases the most the objective value
+   * of a given VRP problem.
+   * @param vrp the given VRP problem.
+   * @return the best remove-point operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted):RemovePoint = findMove(false,false, vrp)
+
+  /**
+   * Returns the first remove-point operator which decreases the actual objective value
+   * of a given VRP problem. It allows us to specify a start point for the search procedure.
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a remove-point operator improving objective
+   */
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with Unrouted, startFrom:Neighbor = null):RemovePoint
-  = findMove(true,false,vrp,startFrom)
+    = findMove(true,false,vrp,startFrom)
+
+  /**
+   * Returns a random remove-point operator of a give VRP problem.
+   *
+   * Info : the move could increase or decrease the objective value as it's a random move.
+   * The complexity of this move is 0(1)
+   * @param vrp the given VRP.
+   * @return a random remove-point move.
+   */
   def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted):RemovePoint = findMove(false,true,vrp)
 
-
+  /**
+   * Search procedure of a proper remove-point operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param random if true, returns a random move.
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return the proper remove-point specified by the parameters.
+   */
   private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with Unrouted,
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
@@ -79,13 +101,25 @@ object RemovePoint extends SearchEngine{
     }
   }
 
+  /**
+   * Performs a reinsert-point operator on a given VRP problem.
+   * @param beforeRemovedPoint the predecessor of the point that will be removed.
+   * @param removedPoint the point that will be removed.
+   * @param vrp the given VRP problem.
+   */
   def doMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP){
     val toUpdate =vrp.remove(List((beforeRemovedPoint,removedPoint)))
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-   /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+
+  /**
+   * Evaluates and returns the objective after a temporary remove-point operator
+   * thanks to ObjectiveFunction's features.
+   * @param beforeRemovedPoint the predecessor of the point that will be removed.
+   * @param removedPoint the point that will be removed.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this remove-point operator.
    */
   def getObjAfterMove(beforeRemovedPoint:Int, removedPoint:Int, vrp:VRP with ObjectiveFunction with Unrouted):Int = {
     val toUpdate = vrp.remove(List((beforeRemovedPoint,removedPoint)))
@@ -93,11 +127,19 @@ object RemovePoint extends SearchEngine{
  }
 }
 
+/**
+ * Models a remove-point operator of a given VRP problem.
+ * @param beforeRemovedPoint the predecessor of the point that will be removed.
+ * @param removedPoint the point that will be removed.
+ * @param objAfter the objective value if we performed this remove-point operator.
+ * @param vrp the given VRP problem.
+ */
 case class RemovePoint(val beforeRemovedPoint:Int, val removedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {RemovePoint.doMove(beforeRemovedPoint, removedPoint, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
-
   def startNodeForNextExploration: Int = beforeRemovedPoint
+
+  override def toString():String = "(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
 }
 

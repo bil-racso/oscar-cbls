@@ -1,5 +1,3 @@
-package oscar.cbls.routing.neighborhood
-
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
@@ -22,10 +20,30 @@ package oscar.cbls.routing.neighborhood
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
+package oscar.cbls.routing.neighborhood
 
+/**
+ * Describes a particular neighbor.
+ *
+ * Info : a neighbor could be saw as a move operator.
+ */
 abstract class Neighbor{
+
+  /**
+   * Returns the objective value in case if we perform the move. (choose this neighbor)
+   * @return the objective value if we choose this neighbor.
+   */
   def getObjAfter:Int
+
+  /**
+   * It performs the move (which consist to choose this neighbor) on the VRP problem.
+   */
   def comit
+
+  /**
+   * Returns the node on which we restart the search procedure.
+   * @return the node on which we restart the search procedure.
+   */
   def startNodeForNextExploration:Int
 
 }

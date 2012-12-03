@@ -1,25 +1,3 @@
-package oscar.cbls.routing.visual
-
-import oscar.cbls.routing._
-import neighborhood._
-import javax.swing.JOptionPane
-import oscar.cbls.search.StopWatch
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 8/11/12
- * Time: 16:57
- * To change this template use File | Settings | File Templates.
- */
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 31/10/12
- * Time: 10:38
- * To change this template use File | Settings | File Templates.
- */
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -41,6 +19,14 @@ import oscar.cbls.search.StopWatch
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
+
+package oscar.cbls.routing.visual
+
+import oscar.cbls.routing._
+import neighborhood._
+import javax.swing.JOptionPane
+import oscar.cbls.search.StopWatch
+
 class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
 
 
@@ -73,15 +59,12 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
         }
         else ended = true
       }
-      println("VRP ended.")
+      println("Search ended.")
       val time = getWatch
       JOptionPane.showMessageDialog(null,"Search's strategy is finished. \n" +
         "Objective at start was "+startObjective+
         " and is now "+ (vrp.ObjectiveVar.value - vrp.AddedObjectiveFunctions.value) + " in "+time/1000 +" sec "+ time%1000 + " ms."
         +"\n Total number of iteration is "+it)
-
-
-
 
       boardPanel.firstIte = true
       boardPanel.pause = true

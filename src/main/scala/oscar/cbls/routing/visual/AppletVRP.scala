@@ -1,16 +1,3 @@
-package oscar.cbls.routing.visual
-
-import javax.swing.{JLabel, JFrame, JApplet}
-import java.awt.Dimension
-
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 8/11/12
- * Time: 9:11
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -33,13 +20,17 @@ import java.awt.Dimension
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.visual
+
+import javax.swing.{JLabel, JFrame, JApplet}
+import java.awt.Dimension
 
 class AppletVRP extends JApplet {
 
   override def init() {
 
     setSize(new Dimension(800,500))
-    //setSize(new Dimension(1000,800))
+    //setSize(new Dimension(1000,800)) // if easy mode is disable (in panel VRP)
     setContentPane(PanelVRP.PanelVRP)
     setName("VRP Routing")
     setVisible(false)

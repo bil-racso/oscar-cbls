@@ -696,10 +696,11 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def setValue(v:Int){
     if (v != Value){
-      /*
+     //TODO: disable assert while domain of invariant are buggy, this assert is needed in UNIT TEST.
+     // or comment this assert and use it only to throw unit test.
      assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
          "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
-          "new value :"+ v +"\n" ))*/
+          "new value :"+ v +"\n" ))
         Value = v
         notifyChanged()
       }

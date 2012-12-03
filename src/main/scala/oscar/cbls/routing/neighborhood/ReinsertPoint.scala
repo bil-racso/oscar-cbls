@@ -1,10 +1,3 @@
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 28/10/12
- * Time: 15:31
- * To change this template use File | Settings | File Templates.
- */
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -28,32 +21,88 @@
   ******************************************************************************/
 
 package oscar.cbls.routing.neighborhood
+
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 import scala.util.Random
 
 
-/**moves a point in a circuit to another place.
-  * size if O(n²)
-  */
-
+/**
+ * Inserts an unrouted point in a route.
+ * The search complexity is O(n²).
+ */
 object ReinsertPoint extends SearchEngine{
+
+  /**
+   * Returns the first reinsert-point operator which decreases the actual objective value
+   * of a given VRP problem.
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a reinsert-point operator improving objective
+   */
   def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with Unrouted, startFrom:Neighbor = null):ReinsertPoint
   = findMove(true,false,vrp,startFrom)
+
+  /**
+   * Returns a random reinsert-point operator of a give VRP problem.
+   *
+   * Info : the move could increase or decrease the objective value as it's a random move.
+   * The complexity of this move is 0(1).
+   * @param vrp the given VRP problem.
+   * @return a random reinsert-point move.
+   */
   def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted):ReinsertPoint = findMove(false,true,vrp)
+
+  /**
+   * Returns a random reinsert-point operator with a specified place where reinsert in a given VRP problem.
+   *
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @param vehicle allows us to specify on which route we want to add a point (if startFrom is null).
+   *
+   * Info : the move could increase or decrease the objective value as it's a random move.
+   * The complexity of this move is 0(1).
+   * @return a random reinsert-point operator of a given VRP problem.
+   */
   def getRandomMove(vrp:VRP with ObjectiveFunction with Unrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,true,vrp,startFrom,vehicle,true)
 
+  /**
+   * Returns the best reinsert-point operator, i.e. which decreases the most the objective value
+   * of a given VRP problem.
+   * @param vrp the given VRP problem.
+   * @return the best reinsert-point operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted):ReinsertPoint = findMove(false,false, vrp)
-  def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
+
+  /**
+   * Returns the best reinsert-point operator with a specified place where reinsert, i.e. which decreases the most
+   * the objective value of a given VRP problem.
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @param vehicle allows us to specify on which route we want to add a point (if startFrom is null).
+   * @return the best reinsert-point operator.
+   */
+   def getBestMove(vrp:VRP with ObjectiveFunction with Unrouted,startFrom:Neighbor,vehicle:Int):ReinsertPoint
     = findMove(false,false, vrp,startFrom,vehicle,true)
 
-
+  /**
+   * Search procedure of a proper reinsert-point operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param random if true, returns a random move.
+   * @param vrp the given VRP problem.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @param vehicle allows us to specify on which route we want to add a point (if startFrom is null).
+   * @param onlyFrom if true, reduces the insertion place to a single element.
+   * @return the proper reinsert-point specified by the parameters.
+   */
   private def findMove(FirstImprove:Boolean,random:Boolean,vrp:VRP with ObjectiveFunction with Unrouted,
                        startFrom:Neighbor = null, vehicle:Int =0, onlyFrom:Boolean=false):ReinsertPoint = {
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) vehicle else startFrom.startNodeForNextExploration
+    // if we want a random reinsert-move.
     if(random){
       val beforeReinsertedPoint = if (onlyFrom) Range(hotRestart,hotRestart+1) else Random.shuffle(Range(0,vrp.N))
       for(p <- beforeReinsertedPoint if vrp.isRouted(p)){
@@ -93,13 +142,24 @@ object ReinsertPoint extends SearchEngine{
    }
   }
 
-    def doMove(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP){
+  /**
+   * Performs a reinsert-point operator on a given VRP problem.
+   * @param beforeReinsertedPoint the place where insert an unrouted point.
+   * @param reinsertedPoint an unrouted point.
+   * @param vrp the given VRP problem.
+   */
+  def doMove(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP){
     val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+  /**
+   *  Evaluates and returns the objective after a temporary reinsert-point operator
+   * thanks to ObjectiveFunction's features.
+   * @param beforeReinsertedPoint the place where insert an unrouted point.
+   * @param reinsertedPoint an unrouted point.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this reinsert-point operator.
    */
   def getObjAfterMove(beforeReinsertedPoint:Int, reinsertedPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
     val toUpdate = vrp.add(beforeReinsertedPoint,reinsertedPoint)
@@ -107,13 +167,19 @@ object ReinsertPoint extends SearchEngine{
   }
 }
 
+/**
+ * Models a reinsert-point operator of a given VRP problem.
+ * @param beforeReinsertedPoint the place where insert an unrouted point.
+ * @param reinsertedPoint an unrouted point.
+ * @param objAfter the objective value if we performed this reinsert-point operator.
+ * @param vrp the given VRP problem.
+ */
 case class ReinsertPoint(val beforeReinsertedPoint:Int, val reinsertedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
-
   def startNodeForNextExploration: Int = reinsertedPoint
 
-
+  override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 }
 

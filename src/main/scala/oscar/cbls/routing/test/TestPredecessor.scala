@@ -24,7 +24,66 @@ package oscar.cbls.routing.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
+import math._
+import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.routing.model._
+import oscar.cbls.routing.initialSolution.{RandomNeighbor, NearestNeighbor}
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
+
+  def fixture(n:Int,v:Int) =
+    new {
+      val UNROUTED = n
+      val ROUTE_ARRAY_UNROUTED = v
+      val V:Int = v
+      val N:Int = n
+      // model with check internal
+      val model: Model = new Model(false,true,false,false)
+      val vrp = new VRP(N, V, model) with ObjectiveFunction with HopDistance with PositionInRouteAndRouteNr
+        with Unrouted with Predecessors
+      model.close()
+
+      RandomNeighbor(vrp)
+      model.propagate()
+    }
+
+  test("check internal of 50 points and 1 vehicle"){
+    fixture(50,1)
+  }
+
+  test("check internal of 50 points and 2 vehicle"){
+    fixture(50,2)
+  }
+
+  test("check internal of 50 points and 5 vehicle"){
+    fixture(50,5)
+  }
+
+  test("check internal of 100 points and 1 vehicle"){
+    fixture(100,1)
+  }
+
+  test("check internal of 100 points and 2 vehicle"){
+    fixture(100,2)
+  }
+
+  test("check internal of 100 points and 5 vehicle"){
+    fixture(100,5)
+  }
+
+  test("check internal of 500 points and 1 vehicle"){
+    fixture(500,1)
+  }
+
+  test("check internal of 500 points and 2 vehicle"){
+    fixture(500,2)
+  }
+
+  test("check internal of 500 points and 5 vehicle"){
+    fixture(500,5)
+  }
+
+
+
 
 }

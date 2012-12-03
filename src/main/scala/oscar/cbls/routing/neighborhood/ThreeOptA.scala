@@ -1,5 +1,3 @@
-package oscar.cbls.routing.neighborhood
-
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
@@ -20,42 +18,105 @@ package oscar.cbls.routing.neighborhood
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
+ *         by Renaud De Landtsheer and Florent Ghilain.
  ******************************************************************************/
+
+package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.algebra.Algebra._
 import oscar.cbls.routing.model._
 
-/**moves a segment to another place, without flipping it.
- * size is O(n³)
+/**
+ * Removes three edges of routes, and rebuilds routes from the segments. (without any reverse)
+ *
+ * Info : it also could be saw as the move of a route's segment to another place.
+ * The search complexity is O(n³).
  */
-
 object ThreeOptA extends SearchEngine{
 
+  /**
+   * Returns the best three-opt-move operator, i.e. which decreases the most the objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk²)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @return the best three-opt-move operator.
+   */
   def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
     k:Int):Neighbor = findMove(false, vrp, k,null,vrp.N)
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-    k:Int, prevmove:Neighbor = null):Neighbor= findMove(true,vrp, k, prevmove,vrp.N)
 
+  /**
+   * Returns the first three-opt-move operator which decreases the actual objective value
+   * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk²)
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @return a three-opt-move operator improving objective.
+   */
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
+    k:Int, startFrom:Neighbor = null):Neighbor= findMove(true,vrp, k, startFrom,vrp.N)
+
+  /**
+   * Returns the best three-opt-move operator with a restriction on the length of the moved segment,
+   * i.e. which decreases the most the objective value of a given VRP problem.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * Info: The search complexity is then O(nk²)
+   * Put lengthRestricted to 3, or 4 to get a OR-opt move.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param lengthRestricted the length restriction on the moved segment.
+   * @return the best three-opt-move operator.
+   */
   def getBestMoveRestricted(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
     , k:Int,lengthRestricted:Int):Neighbor = findMove(false, vrp, k,null,lengthRestricted)
-  def getFirstImprovingMoveRestricted(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr, k:Int, prevmove:Neighbor = null,lengthRestricted:Int):Neighbor =
-    findMove(true,vrp, k, prevmove,lengthRestricted)
 
-  /**search for the proper One point move
+
+  /**
+   * Returns the first three-opt-move operator with a restriction on the length of the moved segment,
+   * i.e. which decreases the actual objective value of a given VRP problem.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
    *
-   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one
-   * @param vrp the model of the problem
+   * Info: The search complexity is then O(nk²)
+   * Put lengthRestricted to 3, or 4 to get a OR-opt move.
+   * @param vrp the given VRP problem.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @param lengthRestricted the length restriction on the moved segment.
+   * @return a three-opt-move operator improving objective.
+   */
+  def getFirstImprovingMoveRestricted(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
+    with PositionInRouteAndRouteNr, k:Int, startFrom:Neighbor = null,lengthRestricted:Int):Neighbor =
+    findMove(true,vrp, k, startFrom,lengthRestricted)
+
+  /**
+   * Search procedure of a proper three-opt-move operator in a given VRP problem.
+   * Desired characteristics of the operator are given as parameter.
+   * The search 's complexity can be improve by restricting the search procedure
+   * to the k nearest neighbors of each points.
+   *
+   * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
+   * @param vrp the parameter of the restricting of the nearest neighbors.
+   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param startFrom specifies the starting point of the search procedure.
+   * @param limitLength the length restriction on the moved segment.
+   * @return the proper three-opt-move operator specified by the parameters.
    */
   def findMove(FirstImprove:Boolean,
                vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, prevmove:Neighbor = null,limitLength:Int):ThreeOptA = {
+               k:Int, startFrom:Neighbor = null,limitLength:Int):ThreeOptA = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
-    val hotRestart = if (prevmove == null) 0 else prevmove.startNodeForNextExploration
+    val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
     for (insertionPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(insertionPoint)){
       //we search for a segment,
       // its start should be "close" to the insertion point
@@ -85,24 +146,27 @@ object ThreeOptA extends SearchEngine{
     else ThreeOptA(move._1, move._2, move._3, BestObj, vrp)
   }
 
-  /*Performs the three-opt move without flip
-   *
-   * insert the segment Next(beforeFrom)--to after the insert point.
-   * Next(beforeFrom)--to must be a segment of the same vehicle and cannot involve the starting point of the vehicle
-   * @param beforeFrom is the starting point ofo the moved segment
-   * @param to is the end point of the moved segment
-   * @param insertPoint is the point where after the segment is inserted
-   * @param vrp
+  /**
+   * Performs a three-opt-move operator on a given VRP problem.
+   * @param beforeFrom the predecessor of the moved segment.
+   * @param to the end of the moved segment.
+   * @param insertPoint the place where to insert the moved segment.
+   * @param vrp the given VRP problem.
    */
-
   def doMove(beforeFrom: Int, to: Int, insertPoint: Int, vrp:VRP){
     val toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
       vrp.Next(beforeFrom).value,to,vrp.Next(to).value)
     toUpdate.foreach(t => t._1 := t._2)
   }
 
-  /*
-    Evaluate the objective after a temporary one-point-move action thanks to ObjectiveFunction's features.
+  /**
+   * Evaluates and returns the objective after a temporary three-opt-move operator
+   * thanks to ObjectiveFunction's features.
+   * @param beforeFrom the predecessor of the moved segment.
+   * @param to the end of the moved segment.
+   * @param insertPoint the place where to insert the moved segment.
+   * @param vrp the given VRP problem.
+   * @return the objective value if we performed this three-opt-move operator.
    */
   def getObjAfterMove(beforeFrom:Int, to:Int, insertPoint:Int, vrp:VRP with ObjectiveFunction):Int = {
     val toUpdate = vrp.threeOptA(insertPoint,vrp.Next(insertPoint).value,beforeFrom,
@@ -111,12 +175,22 @@ object ThreeOptA extends SearchEngine{
   }
 }
 
+/**
+ * Models a three-opt-move operator of a given VRP problem.
+ * @param beforeSegmentStart the predecessor of the moved segment.
+ * @param segmentEnd the end of the moved segment.
+ * @param insertionPoint the place where to insert the moved segment.
+ * @param objAfter the objective value if we performed this three-opt-move operator.
+ * @param vrp the given VRP problem.
+ */
 case class ThreeOptA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
                         objAfter:Int, vrp:VRP) extends Neighbor{
+  // overriding methods
   def comit {ThreeOptA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
-  override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
-
   def startNodeForNextExploration: Int = insertionPoint
+
+
+  override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 }
 

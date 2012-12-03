@@ -1,5 +1,3 @@
-package oscar.cbls.routing.test
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -22,6 +20,7 @@ package oscar.cbls.routing.test
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
+package oscar.cbls.routing.test
 import javax.swing.JOptionPane
 import org.jdesktop.swingx.mapviewer.{Waypoint, GeoPosition}
 import oscar.cbls.invariants.core.computation.Model
@@ -33,8 +32,11 @@ import oscar.visual._
 import java.awt.Dimension
 import visual.Dashboard
 
+/**
+ * Don't work anymore. New visual applet is available in package Visual.
+ */
 
-object VisualMapVRP extends App{
+object OldVisualMap extends App{
 
   // frame
   val frame = new VisualFrame("VRP")
@@ -233,22 +235,4 @@ object VisualMapVRP extends App{
       board.start.setText("Start")
     }
   }
-
-
-  /*
-  // to redefine color and shape
-  val waypointPainter =  new WaypointPainter
-  class MyWaypointRenderer extends WaypointRenderer{
-    override def paintWaypoint(g:Graphics2D, map:JXMapViewer , wp:Waypoint ) = {
-        g.setColor(Color.RED)
-        g.fillRect(0,0,10,10)
-        g.setColor(Color.BLACK)
-        g.fillRect(0,0,10,10)
-        true
-    }
-  }
-  waypointPainter.setRenderer(new MyWaypointRenderer())
-  //map.viewer.setOverlayPainter(waypointPainter)
-*/
-
 }

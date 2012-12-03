@@ -42,7 +42,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{GE, LE}
 
 /**supports only a single vehicle*/
-object tspsolver extends SearchEngine with StopWatch with App{
+object ExSolver extends SearchEngine with StopWatch with App{
 
   // tester si l'objectif est bien la distance réel via la matrice de base des distances.
   def realSum(vrp:VRP,matrice:Array[Array[Int]])={

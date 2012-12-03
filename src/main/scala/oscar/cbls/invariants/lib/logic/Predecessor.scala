@@ -24,18 +24,24 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
 
-/*
-  Maintains the predecessors of nodes.
-  Convention:
-    - 0 to N-1 for routed node.
-    - N for unrouted node.
+/**
+ * This invariant maintains the predecessors of each node.
+ *
+ * Info :
+ *  Convention:
+      - value 0 to N-1 for routed node in preds array.
+      - value N for unrouted node in preds array.
+ * @param next the array of successors of each points (deposits and customers) of the VRP.
+ * @param V the number of vehicles.
  */
-case class Predecessor(next:Array[IntVar]) extends Invariant{
+case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization();
-  val preds = for(i<- 0 until N) yield new IntVar(model, 0, N, i, "preds" + i)
+  val preds = for(i<- 0 until N) yield if (i<V) new IntVar(model, 0, N, i, "preds" + i)
+    else new IntVar(model, 0, N, N, "preds" + i)
+
   for(p <- preds) p.setDefiningInvariant(this)
 
   def length = N

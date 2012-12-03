@@ -1,20 +1,3 @@
-package oscar.cbls.routing.visual
-import java.awt._
-import javax.swing._
-import oscar.cbls.routing._
-import neighborhood._
-import oscar.visual._
-import swing.ScrollBar
-
-
-/**
- * Created with IntelliJ IDEA.
- * User: Florent
- * Date: 31/10/12
- * Time: 10:38
- * To change this template use File | Settings | File Templates.
- */
-
 /*******************************************************************************
   * This file is part of OscaR (Scala in OR).
   *
@@ -37,42 +20,41 @@ import swing.ScrollBar
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-object FrameVRP extends App {
-  val f = new JFrame()
-  f.setContentPane(PanelVRP.PanelVRP)
-  f.setVisible(true)
-  f.pack
-  f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-}
+package oscar.cbls.routing.visual
+import java.awt._
+import javax.swing._
+import oscar.cbls.routing._
+import neighborhood._
+import oscar.visual._
+import swing.ScrollBar
+
 
 object PanelVRP {
-  val easyMode = false
-  val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v}
+  val easyMode = false // to modify to change the user's GUI in a easier panel.
 
-  val boardPanel = PanelVRP.boardPanel
-  val mapPanel = PanelVRP.mapPanel
+  val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v} // management of all GUI component.
+  val boardPanel = PanelVRP.boardPanel // board panel
+  val mapPanel = PanelVRP.mapPanel // map panel
 
-  val vrpModel = PanelVRP.vrpModel
-  val vrpSearch = new SearchVRP(PanelVRP)
+  val vrpModel = PanelVRP.vrpModel // vrp model
+  val vrpSearch = new SearchVRP(PanelVRP) // vrp search strategy
 
   //actions of board panel
-
   def makeInstance(b:Boolean) = {
+    class InstanceInThread(b:Boolean) extends Thread{
+      override  def run(){
+        vrpModel.initModel(PanelVRP,b)
+        PanelVRP.cleanMapPanel()
+        PanelVRP.cleanPlotPanel()
+        PanelVRP.displayNodes()
+        PanelVRP.displayArrows()
+      }
+    }
     new InstanceInThread(b).start()
   }
 
   def startSearching() = new Thread(vrpSearch).start()
 
-  class InstanceInThread(b:Boolean) extends Thread{
-    override  def run(){
-      vrpModel.initModel(PanelVRP,b)
-      PanelVRP.cleanMapPanel()
-      PanelVRP.cleanPlotPanel()
-      PanelVRP.displayNodes()
-      PanelVRP.displayArrows()
-
-    }
-  }
 }
 
 class PanelVRP(easyMode:Boolean) extends JPanel{
