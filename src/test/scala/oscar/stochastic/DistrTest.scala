@@ -16,7 +16,7 @@ class DistrTest extends FunSuite with ShouldMatchers {
 
   implicit def intOp = IntOp
   implicit def doubleOp = DoubleOp
-  implicit val m = new StochasticSolver[Unit]
+  implicit val m = new StochasticSolver
 
   //implicit def cont2Fix[A](c: A @suspendable) = reset(c)
 

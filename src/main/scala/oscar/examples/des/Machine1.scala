@@ -20,6 +20,7 @@ package oscar.examples.des
 
 
 import oscar.des.engine._
+import oscar.stochastic._
 import scala.util.continuations._
 
 
@@ -27,21 +28,21 @@ import scala.util.continuations._
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
+class Machine1(m : Model, name: String) extends Process[Unit](name)(m) {
 	
-	val liveDur = new scala.util.Random(0)
-	val breakDur = new scala.util.Random(0)
+	val liveDur = UniformDiscrete(1, 9)
+	val breakDur = UniformDiscrete(3, 4)
 	
 	def beAlive(): Unit @ suspendable = {
 		println(name+" is alive");
-		m.wait (liveDur.nextInt(10).max(0))
+		waitDuring (liveDur(m))
 		beBroken()
 		
 	}
 	
 	def beBroken(): Unit @ suspendable =  {
 		println(name+" is broken");
-		m.wait(breakDur.nextInt(2).max(0))
+		waitDuring(breakDur(m))
 		beAlive()
 	}
 	
@@ -52,7 +53,8 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new Model[Unit]()
+  		val mod = new Model()
+  		mod.setTime("5/1/2012 5:00pm")
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
 		mod.simulate(100,true);

@@ -26,7 +26,7 @@ import oscar.invariants._
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class Process[T](name : String = "Process")(implicit m: Model[T]){
+abstract class Process[T](name : String = "Process")(implicit m: Model){
 
   implicit val model = m
 	m.addProcess(this)
@@ -54,18 +54,18 @@ abstract class Process[T](name : String = "Process")(implicit m: Model[T]){
 	/**
 	 * Entry point of the simulation for this process
 	 */
-	def start(): T @cpsParam[T,T]
+	def start(): T @suspendable
 	
 	/**
 	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
 	 */
-	def simulate(){
+	def simulate(f: T => Unit = () ){
 	  reset {
-	    start()
+	    f(start())
 	  }
 	}
 	
-  def request(r: Resource): Unit @suspendable = {
+  def request(r: Resource) = {
     r.request
   }
 
@@ -76,7 +76,7 @@ abstract class Process[T](name : String = "Process")(implicit m: Model[T]){
     require(d > 0)
     w(m.clock === m.clock() + d)
   }
-  def w[A](occ: Occuring[A]) = waitFor[A,T](occ)
+  def w[A](occ: Occuring[A]) = waitFor(occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 	
 }

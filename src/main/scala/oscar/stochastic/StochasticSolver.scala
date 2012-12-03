@@ -3,18 +3,18 @@ package oscar.stochastic
 import oscar.stochastic._
 import scala.util.continuations._
 
-abstract class DistrSolver[T] {
+abstract class DistrSolver {
 
   def getNextStochasticRealization[B](distr: ContinuousDistr[B]): B
   //def apply[B](distr: Choice[B]): B
 
-  def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[T,T]
+  def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @suspendable
 }
 
-class StochasticSolver[T] extends DistrSolver[T] {
+class StochasticSolver extends DistrSolver {
   override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.getNextStochasticRealization()
 //  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]): B @cpsParam[Unit, A] = ch.getNextStochasticRealization()
-  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[T, T] = ch.getNextStochasticRealization()
+  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @suspendable = ch.getNextStochasticRealization()
 }
 
 //class EsperanceSolver[T] extends DistrSolver[Double] {

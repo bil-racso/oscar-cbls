@@ -33,16 +33,19 @@ import oscar.invariants._
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
  * @author pschaus
  */
-class Model[T] extends StochasticSolver[T]{
+class Model extends StochasticSolver{
 
   val clock = new PQCounter[Long](0)
 
-  private val processes = new LinkedList[Process[T]]()
+  private val processes = new LinkedList[Process[_]]()
 
-  def addProcess(p: Process[T]) {
+  def addProcess(p: Process[_]) {
     processes.addLast(p)
   }
 
+  def setTime(l: Long){clock.emit(l)}
+  def setTime(d: String){clock.emit((new java.util.Date(d)).getTime())}
+  
   def simulate(horizon: Long, verbose: Boolean = true) {
     // make all the process alive
     //reset{
@@ -75,7 +78,7 @@ class Model[T] extends StochasticSolver[T]{
 
   def waitDuration[T](duration: Long) = {
     require(duration > 0)
-    waitFor[Long,T](clock === clock() + duration)
+    waitFor(clock === clock() + duration)
 
   }
 //  def waitDuration[T](duration: Int) = {

@@ -82,7 +82,7 @@ object Counter{
     
     
     reset{    
-      waitFor[Int,Unit](x)
+      waitFor(x)
       println("500")
     }
     
