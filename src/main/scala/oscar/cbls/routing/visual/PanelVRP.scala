@@ -30,7 +30,7 @@ import swing.ScrollBar
 
 
 object PanelVRP {
-  val easyMode = false // to modify to change the user's GUI in a easier panel.
+  val easyMode = true // to modify to change the user's GUI in a easier panel.
 
   val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v} // management of all GUI component.
   val boardPanel = PanelVRP.boardPanel // board panel

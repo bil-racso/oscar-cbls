@@ -19,15 +19,19 @@
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
-
 package oscar.cbls.routing.visual
+import javax.swing.JApplet
+import java.awt.Dimension
 
-import javax.swing.{JApplet, JFrame}
 
-object FrameVRP extends JApplet with App{
-  val f = new JFrame()
-  f.setContentPane(PanelVRP.PanelVRP)
-  f.setVisible(true)
-  f.pack
-  f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+class Applet extends JApplet with App {
+
+  override def init(){
+    setContentPane(PanelVRP.PanelVRP)
+    setSize(new Dimension(800,500))
+
+    setName("VRP Routing")
+    setVisible(false)
+  }
 }
+
