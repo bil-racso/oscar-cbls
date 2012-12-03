@@ -34,14 +34,23 @@ trait Constraints {
 	 * @param x with x(i) is the bin where the item i is placed
 	 * @param w with w(i) is the size of item i
 	 * @param l with l(j) is the load of bin j
-	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*x[i] for all bins i
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
 	 */
 	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
 		return new BinPacking(x.toArray, w.toArray, l.toArray)
 	}
 
-	def binpackingflow(x : Array[CPVarInt], w : Array[Int], l : Array[CPVarInt]) : Constraint = {
-		return new BinPackingFlow(x, w, l)
+	/**
+	 * Bin-Packing Constraint linking the placement variables of sized items into bins with
+	 * the total size of the bins
+	 * @param x with x(i) is the bin where the item i is placed
+	 * @param w with w(i) is the size of item i
+	 * @param l with l(j) is the load of bin j
+	 * @param c with c(j) is the cardinality of bin j (number of items)
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i and 
+	 */	
+	def binpackingCardinality(x : Array[CPVarInt], w : Array[Int], l : Array[CPVarInt], c: Array[CPVarInt]) : Constraint = {
+		return new BinPackingFlow(x, w, l, c)
 	}
 
 	/**
