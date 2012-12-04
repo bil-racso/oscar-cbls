@@ -12,11 +12,13 @@ import org.junit.runner.RunWith
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
 
+class Solver extends StochasticSolver[Unit]
+
 class DistrTest extends FunSuite with ShouldMatchers {
 
   implicit def intOp = IntOp
   implicit def doubleOp = DoubleOp
-  implicit val m = new StochasticSolver
+  implicit val m = new Solver
 
   //implicit def cont2Fix[A](c: A @suspendable) = reset(c)
 

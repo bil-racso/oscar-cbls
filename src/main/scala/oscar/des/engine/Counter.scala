@@ -82,8 +82,9 @@ object Counter{
     
     
     reset{    
-      waitFor(x)
+      waitFor[Int,Unit](x)
       println("500")
+      None
     }
     
     whenever ( c === 5 ){w:Int =>
@@ -94,5 +95,6 @@ object Counter{
     
     
     c.generate()
+    None
   }
 }

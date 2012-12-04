@@ -33,7 +33,10 @@ import oscar.invariants._
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
  * @author pschaus
  */
-class Model extends StochasticSolver{
+
+class StochasticModel[+T] extends Model[T] with StochasticSolver[T] 
+
+abstract class Model[+T] extends DistrSolver[T]{
 
   val clock = new PQCounter[Long](0)
 
@@ -74,7 +77,7 @@ class Model extends StochasticSolver{
   def time(o: Any): Long = {
     clock()
   }
-  def frequency[_](state: State[_]) = new Frequency(this, state)
+  def frequency(state: State[_]) = new Frequency(this, state)
 
   def waitDuration[T](duration: Long) = {
     require(duration > 0)

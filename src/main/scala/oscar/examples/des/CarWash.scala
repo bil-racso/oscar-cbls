@@ -46,7 +46,7 @@ object CarWash {
   val efficiency = new LearnedNumerical[Double]()(DoubleOp)
   def main(args: Array[String]) {
 
-    val nbIter = 10
+    val nbIter = 1
     
     for (i <- 1 to nbIter) {
       sim()
@@ -57,27 +57,27 @@ object CarWash {
   }
   def sim() {
 
-    implicit val m = new Model()
+    implicit val m = new StochasticModel[Nothing]
 
     // one day = 8 hours
     val endOfDay = m.clock === 8.hour
 
     
-    class CarWash(val m: Model) {
+    class CarWash(val m: Model[Unit]) {
     	var nbCarsWashed = 0
       val queue = new SimQueue()
       once(endOfDay) { _ => queue.close() }
 
       val isOpened = new Var[Boolean](false)
 
-      def request(): Boolean @suspendable = {
-        if (!queue.enter) cpsfalse
-        else {
-          waitFor(isOpened === true)
-          waitFor(m.clock === m.clock() + 10.minute)
+      def request[T](): Boolean @cpsParam[Option[T],Option[T]] = {
+        val res = if (queue.enter[T]) {
+          waitFor[Boolean,T](isOpened === true)
+          waitFor[Long,T](m.clock === m.clock() + 10.minute)
           nbCarsWashed += 1
-          cpstrue
-        }
+          true
+        }else false
+        res
       }
 
       def release() { queue.leave }
@@ -94,8 +94,10 @@ object CarWash {
     case class AtCarWash(i: Int)
     case class AtHome()
     case class ToCarWash()
-    class CarWasher(val m: Model, carWash: CarWash) extends ProcessWithStates[Int]("Washer", ToCarWash)(m) with MonitorState[Int] with Precomputation[Int] {
+    class CarWasher(val m: Model[Double], carWash: CarWash) extends ProcessWithStates[Double]("Washer", ToCarWash)(m) with MonitorState[Double] with Precomputation[Double] {
 
+      val getSick = new Flip(0.05)
+      
       var eod = false
       once(endOfDay) { _ => eod = true }
 
@@ -113,21 +115,22 @@ object CarWash {
             println(carWash.queue.isEmpty())
             val opt = w(carWash.queue.isEmpty === false | endOfDay)
             beenAtTeaRoom.emit(m.clock() - t0)
-            if (opt == 1) Iam(AtHome)
+            if (opt == 1) this.Iam(AtHome)
             else          Iam(AtCarWash(i+1))
           }
           case AtCarWash(i) => {
             m print ("washer at car wash")
             val n0 = carWash.nbCarsWashed
             carWash.open()
-            waitFor(carWash.queue.isEmpty === true)
+            w(carWash.queue.isEmpty === true)
             carWash.close()
-            if (eod) Iam(AtHome)
-            else     Iam(AtTeaRoom(i)) + carWash.nbCarsWashed - n0
+            if(  getSick(m)) Iam(AtHome)
+            else if (eod)    Iam(AtHome)
+            else             Iam(AtTeaRoom(i)) + carWash.nbCarsWashed - n0
           }
           case AtHome => {
             m print ("...finally")
-            0
+            0.0
           }
           case _ => {
             println(state)
@@ -137,10 +140,10 @@ object CarWash {
       }
     }
 
-    class Car(m: Model, carWash: CarWash, id: String) extends Process[Unit](id)(m) {
-      def start(): Unit @suspendable = {
+    class Car(m: Model[Unit], carWash: CarWash, id: String) extends Process[Unit](id)(m) {
+      def start(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
         m print (id + ": arrives")
-        if (!carWash.request()) {
+        if (!carWash.request[Unit]()) {
           m print (id + ": Hoooo, I've been refused")
         } else {
           m print (id + ": I'm clean!")
@@ -186,6 +189,7 @@ object CarWash {
     m.simulate(10.hour, false)
 
     efficiency observe ((8.hour - obs2.totalTimeSpentAtTeaRoom) * 1.0 / 8.hour)
+    for ( en <- carWasher.results){println(en)}
   }
 
 }

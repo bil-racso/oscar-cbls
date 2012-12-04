@@ -66,12 +66,12 @@ package object invariants {
     }
   }
 
-  @inline def waitFor[A](d: Occuring[A]) = {
-    shift { k: (A => Unit) =>
+  @inline def waitFor[A,T](d: Occuring[A]): A @cpsParam[Option[T],Option[T]] = {
+    shift { k: (A => Option[T]) =>
       once(d) { msg: A =>
         k(msg)
       }
-      () 
+      None
     }
   }
 

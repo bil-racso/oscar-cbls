@@ -16,13 +16,13 @@ object Distr{
 }
 
 trait Distr[B] {
-  def apply[A](implicit m: DistrSolver):B @suspendable
+  def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]]
   def getNextStochasticRealization(): B
  // def map[B](g: A => B) = new DistrComposition(this, g)
 }
 
 trait ContinuousDistr[B] extends Distr[B] {
-  override def apply[A](implicit m: DistrSolver):B @suspendable = m.getNextStochasticRealization(this)
+  override def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]] = m.getNextStochasticRealization(this)
   def min: B
   def max: B
   def mean: B
@@ -33,7 +33,7 @@ trait ContinuousDistr[B] extends Distr[B] {
 //}
 class ValueDistr[B](val value: B) extends Distr[B] {
   def getNextStochasticRealization = value
-  override def apply[A](implicit m: DistrSolver):B @suspendable = value
+  override def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]] = value
 }
 
 class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with ContinuousDistr[Double]{
@@ -45,7 +45,7 @@ class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with 
 
 trait DiscreteDistr[B] extends Distr[B]{
   def list: Traversable[(Double, B)]
-  def apply[A](implicit m: DistrSolver):B @suspendable = m.getNextStochasticRealization(this)
+  def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]] = m.getNextStochasticRealization(this)
 }
 
 

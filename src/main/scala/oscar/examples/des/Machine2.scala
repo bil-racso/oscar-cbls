@@ -33,27 +33,27 @@ import akka.util.Duration
  * so one of the machines must wait if the two machines are broken at the same time
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine2(m : Model, name: String, repairPerson: Resource) extends Process[Unit](name)(m) {
+class Machine2(m : Model[Unit], name: String, repairPerson: Resource) extends Process[Unit](name)(m) {
 	
 	val liveDur = new UniformDiscrete(1 minutes, 10 minutes)
 	val repairDur = new UniformDiscrete(1 minutes, 3 minutes)
 	
 	
-	def alive(): Unit @suspendable = {
+	def alive(): Unit @susp = {
 		println(name+" is alive")
 		waitDuring( liveDur(m) );
 		broken()
 	}
 	
-	def broken(): Unit @ suspendable = {
+	def broken() = {
 		println(name+" is broken waiting to be repaired")
 		//m.request(repairPerson)
-		repairPerson.request
+		request(repairPerson)
 		repair()
 		
 	}
 	
-	def repair(): Unit @ suspendable ={
+	def repair() ={
 		println(name+" being repaired")
 		waitDuring(repairDur(m) );
 		//m.release(repairPerson)
@@ -67,7 +67,7 @@ class Machine2(m : Model, name: String, repairPerson: Resource) extends Process[
 
 object Machine2 {
 	def main(args: Array[String]){
-  		val mod = new Model()
+  		val mod = new StochasticModel()
   		val repairPerson = Resource.unary(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
 		val m2 = new Machine2(mod,"machine2",repairPerson)

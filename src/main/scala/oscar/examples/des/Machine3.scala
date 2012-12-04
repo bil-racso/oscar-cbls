@@ -27,7 +27,7 @@ import scala.util.continuations._
  * but this person must wait that the two machines are broken to start repairing any of them
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine3(m : Model, name: String, machineList : MachineList) extends Process[Unit](name)(m) {
+class Machine3(m : Model[Unit], name: String, machineList : MachineList) extends Process[Unit](name)(m) {
 	
 	val liveDur = new scala.util.Random(0)
 	val repairDur = new scala.util.Random(0)
@@ -40,7 +40,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 	
 	def isRepairInProgress : Boolean =  repairInProgress 
 	
-	def alive(): Unit @ suspendable = {
+	def alive():Unit @susp = {
 		println(name+" is alive")
 		broken = false
 		repairInProgress = false
@@ -48,7 +48,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		break()
 	}
 	
-	def break() : Unit @ suspendable ={
+	def break() ={
 		println(name+" is broken waiting to be repaired")
 		broken = true
 		
@@ -65,17 +65,17 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		}
 	}
 	
-	def repair()  : Unit @suspendable ={
+	def repair()={
 		println(name+" is asking to be repaired")
 		request(repairPerson) 
 		
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(0))
+		waitDuring(repairDur.nextInt(3).max(0))
 		release(repairPerson)
 		alive()
 	}
 	
-	override def start()  = alive()
+	override def start(): Unit @susp  = alive()
 	
 }
 
@@ -99,7 +99,7 @@ class MachineList{
 
 object Machine3 {
 	def main(args: Array[String]){
-  		val mod = new Model()
+  		val mod = new StochasticModel()
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)
 		val m2 = new Machine3(mod,"machine2",mlist)

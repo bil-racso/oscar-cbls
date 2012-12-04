@@ -23,24 +23,30 @@ import akka.util.FiniteDuration
 //import akka.util.duration.
 import oscar.invariants._
 
+class Susp[T] extends cpsParam[Option[T],Option[T]]{}
+
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class Process[T](name : String = "Process")(implicit m: Model){
+abstract class Process[T](name : String = "Process")(implicit m: Model[T]){
 
+  type State = T @cpsParam[Option[T],Option[T]]
+  type susp = cpsParam[Option[T],Option[T]]
+  
   implicit val model = m
 	m.addProcess(this)
 	private var suspending = false
 	private var suspended = {}
 	
-	def suspend(): Unit @ suspendable = {
+	def suspend(): Unit @susp = {
 //		if (suspending) {
 //			//throw new RuntimeException("The process " + name + " is already suspending");
 //		}
 		suspending = true
-		shift{k:(Unit=>Unit)=>
+		shift{k:(Unit=>Option[T])=>
 		  suspended = {k()}
+		  None
 		}
 	}
 	
@@ -55,37 +61,37 @@ abstract class Process[T](name : String = "Process")(implicit m: Model){
 	/**
 	 * Entry point of the simulation for this process
 	 */
-	def start(): T @suspendable
+	def start(): T @cpsParam[Option[T],Option[T]]
 	
 	/**
 	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
 	 */
-	def simulate(f: T => Unit = () ){
+	def simulate(){
 	  reset {
-	    f(start())
+	    Some(start())
 	  }
 	}
 	
   def request(r: Resource) = {
-    r.request
+    r.request[T]
   }
 
   def release(r: Resource) ={
     r.release()
   }
-  def waitDuring(d: Long) = {
+  def waitDuring(d: Long): Long @susp = {
     require(d > 0)
-    w(m.clock === m.clock() + d)
+    waitFor[Long,T](m.clock === m.clock() + d)
   }
-  def w[A](occ: Occuring[A]) = waitFor(occ)
+  def w[A](occ: Occuring[A]) = waitFor[A,T](occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 	
 }
 
-abstract class ProcessWithStates[T](name : String = "Process", initState: Any)(implicit m: Model) extends Process[T](name)(m){
+abstract class ProcessWithStates[T](name : String = "Process", initState: Any)(implicit m: Model[T]) extends Process[T](name)(m){
   def Iam(state: Any) = deepExec(state)
-  def exec(state:Any): T @suspendable
-  def deepExec(state:Any): T @suspendable = exec(state)
+  def exec(state:Any): T @cpsParam[Option[T],Option[T]]
+  def deepExec(state:Any): T @cpsParam[Option[T],Option[T]] = exec(state)
   override def start() = deepExec(initState)
     
 }

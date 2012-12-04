@@ -27,15 +27,15 @@ import oscar.invariants._
  * @author Pierre Schaus, Sebastien Mouthuy
  */
 
-class Resource(var capacity: Int)(implicit m: Model) {
+class Resource(var capacity: Int)(implicit m: Model[_]) {
 	
 	private var n = 0
 	private val rel = new EventOne[Unit]
 	
-	def request(): Unit @suspendable = {
+	def request[T]() = {
 	  
-	  if ( n >= capacity ) waitFor(rel)
-	  else cpsunit
+	  val res = if ( n >= capacity ) waitFor[Unit,T](rel)
+	  
 	  n += 1
 	}
 	  
@@ -53,6 +53,6 @@ class Resource(var capacity: Int)(implicit m: Model) {
 }
 
 object Resource{
-  def unary(implicit m: Model) = new Resource(1)(m)
-  def apply(cap: Int)(implicit m: Model) = new Resource(cap)(m)
+  def unary(implicit m: Model[_]) = new Resource(1)(m)
+  def apply(cap: Int)(implicit m: Model[_]) = new Resource(cap)(m)
 }

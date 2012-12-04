@@ -28,19 +28,19 @@ import scala.util.continuations._
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine1(m : Model, name: String) extends Process[Unit](name)(m) {
+class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 	
 	val liveDur = UniformDiscrete(1, 9)
 	val breakDur = UniformDiscrete(3, 4)
 	
-	def beAlive(): Unit @ suspendable = {
+	def beAlive(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
 		println(name+" is alive");
-		waitDuring (liveDur(m))
+		waitDuring(liveDur(m))
 		beBroken()
 		
 	}
 	
-	def beBroken(): Unit @ suspendable =  {
+	def beBroken(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
 		println(name+" is broken");
 		waitDuring(breakDur(m))
 		beAlive()
@@ -53,7 +53,7 @@ class Machine1(m : Model, name: String) extends Process[Unit](name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new Model()
+  		val mod = new StochasticModel()
   		mod.setTime("5/1/2012 5:00pm")
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")

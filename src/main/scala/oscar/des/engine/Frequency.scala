@@ -20,7 +20,7 @@ package oscar.des.engine
 import scala.util.continuations._
 //import scala.react._
 
-class Frequency(m: Model, state: State[_]){
+class Frequency[T](m: Model[_ >: T], state: State[_]){
 
   var duration:Double = 0
   var last:Double = 0
