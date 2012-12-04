@@ -15,6 +15,6 @@ package object linprog {
   }
   
   // solvers used for test
-  val solvers = List(LPSolverLib.lp_solve, LPSolverLib.gurobi/*,LPSolverLib.cplex*/)
+  val solvers = List(LPSolverLib.lp_solve/*, LPSolverLib.gurobi*//*,LPSolverLib.cplex*/)
 
 }
