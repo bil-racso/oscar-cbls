@@ -44,7 +44,7 @@ class GurobiLP extends AbstractLP {
   var model = new GRBModel(env)
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
-
+	println("model gurobi:"+nbRows+"x"+nbCols)
     this.nbRows = nbRows
     this.nbCols = nbCols
     val cols = (1 to nbCols).toArray
@@ -126,12 +126,11 @@ class GurobiLP extends AbstractLP {
   }
 
   def solveModel(): LPStatus.Value = {
+    model.update() 
     model.write("gurobi.lp")
     model.getEnv().set(GRB.IntParam.Presolve, -1)
     model.optimize()
-
     var optimstatus = model.get(GRB.IntAttr.Status)
-
     if (optimstatus == GRB.INF_OR_UNBD) {
       model.getEnv().set(GRB.IntParam.Presolve, 0)
       model.optimize()
@@ -176,10 +175,9 @@ class GurobiLP extends AbstractLP {
   }
 
   def setBounds(colId: Int, low: Double, up: Double) {
-    var ntot = new GRBLinExpr()
-    ntot.addTerm(1, model.getVar(colId))
-    model.addRange(ntot, low, up, "")
-    model.update()
+    var grbvar = model.getVar(colId)
+    grbvar.set(GRB.DoubleAttr.LB, low)
+    grbvar.set(GRB.DoubleAttr.UB, up)
   }
 
   def setUnboundUpperBound(colId: Int) {
