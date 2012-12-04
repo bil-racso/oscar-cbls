@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 package oscar.des.engine
+import scala.collection._
 import scala.util.continuations._
 import akka.util.Duration
 import akka.util.FiniteDuration
@@ -79,4 +80,37 @@ abstract class Process[T](name : String = "Process")(implicit m: Model){
   def w[A](occ: Occuring[A]) = waitFor(occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 	
+}
+
+abstract class ProcessWithStates[T](name : String = "Process", initState: Any)(implicit m: Model) extends Process[T](name)(m){
+  def Iam(state: Any) = deepExec(state)
+  def exec(state:Any): T @suspendable
+  def deepExec(state:Any): T @suspendable = exec(state)
+  override def start() = deepExec(initState)
+    
+}
+
+trait MonitorState[T] extends ProcessWithStates[T]{
+  val entering = new Event[Any]
+  
+  override def deepExec(state: Any) = {
+    entering.emit(state)
+    super.deepExec(state)
+  }
+  
+}
+
+trait Precomputation[T] extends ProcessWithStates[T]{
+  val results = mutable.HashMap[Any,T]()
+  
+  override def deepExec(state: Any) = {
+    val res = super.deepExec(state)
+    this(state) = res
+    res
+  }
+  
+  def update(state: Any, res: T) = {
+    assert(results.get(state)==None)
+    results(state) = res
+  }
 }

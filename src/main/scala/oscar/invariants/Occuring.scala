@@ -133,7 +133,13 @@ class Signal[A](private var value: A) extends Event[A]{
   override def filter(f: A => Boolean) = new EventFromNow(this, f)
 }
 
-class Event[A] extends NotifyAllEvent[A]{}
+class Event[A] extends NotifyAllEvent[A]{
+  def toSignal(v: A) = {
+    val res = new SignalAll(v)
+    whenever(this){res.emit(_)}
+    res
+  }
+}
 class EventFromNow[A](sig: Signal[A], fil: A => Boolean) extends ConditionalOccuring[A](sig, fil){
   
   // could be improved in the case the call to f(sig()) is false;

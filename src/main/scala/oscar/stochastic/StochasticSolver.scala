@@ -7,7 +7,6 @@ abstract class DistrSolver {
 
   def getNextStochasticRealization[B](distr: ContinuousDistr[B]): B
   //def apply[B](distr: Choice[B]): B
-
   def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @suspendable
 }
 
@@ -17,10 +16,12 @@ class StochasticSolver extends DistrSolver {
   override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @suspendable = ch.getNextStochasticRealization()
 }
 
-//class EsperanceSolver[T] extends DistrSolver[Double] {
-//
-//  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.mean
-//  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]) = {    
-//	  shift { k: (B => Double) => ch.list.foldLeft( 0.0 ) { (r, b) => r+(b._1*k(b._2)) } }
-//  }
-//}
+class EsperanceSolver extends DistrSolver {
+
+  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.mean
+  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]) = {    
+//	  val a = shift { k: (B => Double) => ch.list.foldLeft( 0.0 ) { (r, b) => r+(b._1*k(b._2)) } }
+    ch.getNextStochasticRealization()
+	
+  }
+}

@@ -71,7 +71,7 @@ package object invariants {
       once(d) { msg: A =>
         k(msg)
       }
-      ()
+      () 
     }
   }
 

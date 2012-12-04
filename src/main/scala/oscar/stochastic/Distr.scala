@@ -100,20 +100,57 @@ class Flip(p: Double) extends DiscreteDistr[Boolean] {
   override def list = List( (p,true), (1-p,false))
 }
 
-object Distribution{
-  def apply(d: ProbabilityDistribution) = new Distribution(d)
+class PoissonD(decay: Double) extends ContinuousDistr[Double]{
+	val generator = new Random()
+	val ln = new ExponentialDistribution(decay) 
+	def min = ln.inverse(0.05)
+	val max = ln.inverse(0.95)
+	val std = sqrt(ln.getVariance())
+	def mean = ln.getMean()
+	def getNextStochasticRealization(): Double = ln.inverse(generator.nextDouble)
+	
+	
 }
 
-class Distribution(d: ProbabilityDistribution) extends ContinuousDistr[Double] {
-  val generator = new Random()
-
-  def getNextStochasticRealization(): Double = d.inverse(generator.nextDouble)
-  def min = d.min
-  def max = d.max
-  def std = d.std
-  def mean = d.mean
+class ExponentialD(lambda: Double) extends ContinuousDistr[Double]{
+	val generator = new Random()
+	//val ln = new ExponentialDistribution(decay) 
+	private def inverse(p: Double) = {
+	  require(0 <= p && p <= 1)
+	  -scala.Math.log(1-p)/lambda 
+	}
+	def min = inverse(0.05)
+	val max = inverse(0.95)
+	val std = 1/(lambda*lambda)
+	def mean = 1/lambda
+	def getNextStochasticRealization(): Double = inverse(generator.nextDouble) 
+	  //ln.inverse(generator.nextDouble)
+	
   
 }
+class LogNormalD(mu: Double, variance: Double) extends ContinuousDistr[Double]{
+  val ln = new LognormalDistribution(mu, variance) 
+  val generator = new Random()
+  def getNextStochasticRealization(): Double = ln.inverse(generator.nextDouble)
+  def min = ln.inverse(0.05)
+  val max = ln.inverse(0.95)
+  val std = ln.getSigmaParameter()
+  def mean = ln.getMuParameter()
+ 
+}
+
+class NormalD(mu: Double, variance: Double) extends ContinuousDistr[Double] {
+  val nd = new NormalDistribution(mu, variance) 
+  val generator = new Random()
+
+  def getNextStochasticRealization(): Double = nd.inverse(generator.nextDouble)
+  def min = nd.inverse(0.05)
+  val max = nd.inverse(0.95)
+  val std = sqrt(nd.getVariance())
+  def mean = nd.getMean()
+  
+}
+
 
 class LearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] {
   var n = 0
@@ -178,7 +215,7 @@ class LearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Opera
   }
 }
 
-class LearnedNumerical[B](implicit op: Operationable[B]) {
+class LearnedNumerical[B]()(implicit op: Operationable[B]) {
 
   var current = op.zero
   var tot = op.zero
