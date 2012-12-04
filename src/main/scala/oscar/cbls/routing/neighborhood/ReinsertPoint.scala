@@ -179,6 +179,7 @@ case class ReinsertPoint(val beforeReinsertedPoint:Int, val reinsertedPoint:Int,
   def comit {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = reinsertedPoint
+  def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)
 
   override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 }

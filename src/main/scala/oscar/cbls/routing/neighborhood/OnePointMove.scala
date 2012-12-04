@@ -139,6 +139,7 @@ case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int
   def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = predOfMovedPoint
+  def getValuesToAssign = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
 
   override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
 }

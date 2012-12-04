@@ -213,7 +213,7 @@ public class Dashboard extends JPanel {
         neighborLabel.setText("Neighbor : ");
         neighborLabel.setBackground(Color.white);
         neighborhood = new JComboBox(new String[]{"OnePointMove","ReinsertPoint","RemovePoint","Swap","ThreeOpt (no reverse)"
-                ,"ThreeOpt (one reverse)","ThreeOpt (two reverse)","TwoOpt"});
+                ,"ThreeOpt (one reverse)","ThreeOpt (two reverse)","TwoOpt","Composite"});
         neighborhood.setBackground(Color.white);
 
         JLabel klimitedLabel = new JLabel();

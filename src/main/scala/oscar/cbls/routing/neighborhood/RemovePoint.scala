@@ -139,6 +139,7 @@ case class RemovePoint(val beforeRemovedPoint:Int, val removedPoint:Int, objAfte
   def comit {RemovePoint.doMove(beforeRemovedPoint, removedPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = beforeRemovedPoint
+  def getValuesToAssign = vrp.remove(List((beforeRemovedPoint,removedPoint)))
 
   override def toString():String = "(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
 }

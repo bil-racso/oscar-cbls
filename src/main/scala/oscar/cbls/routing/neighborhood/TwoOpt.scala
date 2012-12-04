@@ -138,6 +138,7 @@ case class TwoOpt(val firstEdge:Int, val secondEdge:Int, objAfter:Int, vrp:VRP) 
   def comit {TwoOpt.doMove(firstEdge, secondEdge, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = firstEdge
+  def getValuesToAssign = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)
 
   override def toString():String = "(point = " + vrp.Next(firstEdge).value + ", insertion = " + secondEdge+" )"
 }

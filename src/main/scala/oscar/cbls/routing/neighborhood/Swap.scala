@@ -145,6 +145,8 @@ case class Swap(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VR
   def comit {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = predOfMovedPoint
+  def getValuesToAssign = vrp.swap(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter,
+    vrp.Next(PutAfter).value)
 
   override def toString():String = "(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
 }

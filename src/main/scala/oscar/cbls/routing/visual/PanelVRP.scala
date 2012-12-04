@@ -95,6 +95,13 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       case 5 => ThreeOptB.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit), previousMove)
       case 6 => ThreeOptC.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit), previousMove)
       case 7 => TwoOpt.getFirstImprovingMove(vrp,vrp.getKNearest(kLimit),previousMove)
+      case 8 => {
+        if(CompositeMove.declaration == null){
+          val declaration:CompositeDeclaration = CompositeDeclaration(vrp)
+          CompositeMove.attachDeclaration(declaration)
+        }
+        CompositeMove.getMove(vrp,previousMove)
+      }
       case _ => null
     }
   }

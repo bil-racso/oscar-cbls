@@ -195,6 +195,8 @@ case class ThreeOptB(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEd
   def comit {ThreeOptB.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = startOfFirstEdge
+  def getValuesToAssign = vrp.threeOptB(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
+    startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
 
   override def toString():String = "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
     "thirdEdge = "+ startOfThirdEdge+" )"

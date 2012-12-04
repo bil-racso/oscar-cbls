@@ -22,6 +22,8 @@
  ******************************************************************************/
 package oscar.cbls.routing.neighborhood
 
+import oscar.cbls.invariants.core.computation.IntVar
+
 /**
  * Describes a particular neighbor.
  *
@@ -45,6 +47,12 @@ abstract class Neighbor{
    * @return the node on which we restart the search procedure.
    */
   def startNodeForNextExploration:Int
+
+  /**
+   * Returns the variables and their values to update to perfom the move.
+   * @return an iterable with variables and their values to update to perfom the move.
+   */
+  def getValuesToAssign:Iterable[(IntVar,Int)]
 
 }
 

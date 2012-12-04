@@ -197,7 +197,8 @@ case class ThreeOptA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
   def comit {ThreeOptA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = insertionPoint
-
+  def getValuesToAssign = vrp.threeOptA(insertionPoint,vrp.Next(insertionPoint).value,beforeSegmentStart,
+    vrp.Next(beforeSegmentStart).value,segmentEnd,vrp.Next(segmentEnd).value)
 
   override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 }
