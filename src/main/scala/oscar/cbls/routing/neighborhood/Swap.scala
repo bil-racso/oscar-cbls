@@ -36,15 +36,17 @@ object Swap extends SearchEngine{
    * Returns the best swap move, i.e. which decreases the most the objective value
    * of a given VRP problem.
    * The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @return the best swap move.
    */
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    ,k:Int):Swap = findMove(false, vrp,k)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr
+    ,relevantNeighborhoodOfNode:Int=> Iterable[Int] = null):Swap =
+      findMove(false, vrp,if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode)
 
   /**
    * Returns the first swap move which decreases the actual objective value
@@ -53,12 +55,14 @@ object Swap extends SearchEngine{
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @param startFrom specifies the starting point of the search procedure.
    * @return a swap move improving objective.
    */
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-   ,k:Int , startFrom:Neighbor = null):Swap = findMove(true,vrp,k,startFrom)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr
+   ,relevantNeighborhoodOfNode:Int=> Iterable[Int] = null, startFrom:Neighbor = null):Swap =
+      findMove(true,vrp,if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode,startFrom)
 
   /**
    * Search procedure of a proper swap move in a given VRP problem.
@@ -67,12 +71,13 @@ object Swap extends SearchEngine{
    * to the k nearest neighbors of each points.
    * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @param startFrom specifies the starting point of the search procedure.
    * @return the proper swap move specified by the parameters.
    */
-  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-                       with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):Swap = {
+  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:Int=> Iterable[Int],startFrom:Neighbor = null):Swap = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
@@ -80,7 +85,7 @@ object Swap extends SearchEngine{
     for (beforeFirstSwapPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeFirstSwapPoint) &&
       !vrp.isADepot(vrp.Next(beforeFirstSwapPoint).value)){
       val firstSwapPoint = vrp.Next(beforeFirstSwapPoint).value
-      for(beforeSecondSwapPoint <- vrp.getKNearestNeighbors(k,firstSwapPoint) if vrp.isRouted(beforeSecondSwapPoint) &&
+      for(beforeSecondSwapPoint <- relevantNeighborhoodOfNode(firstSwapPoint) if vrp.isRouted(beforeSecondSwapPoint) &&
         !vrp.isADepot(vrp.Next(beforeSecondSwapPoint).value))
       {
         if (!vrp.onTheSameRoute(beforeFirstSwapPoint,beforeSecondSwapPoint) ||

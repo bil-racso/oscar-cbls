@@ -125,14 +125,14 @@ object OldVisualMap extends App{
     with PositionInRouteAndRouteNr with SymmetricVRP with Unrouted ,
                             closeNeighbors:Int, previousMove:Neighbor):Neighbor = {
     board.neighborhood.getSelectedIndex match{
-      case 0 => OnePointMove.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
+      case 0 => OnePointMove.getFirstImprovingMove(vrp, vrp.getKNearest(closeNeighbors), previousMove)
       case 1 => ReinsertPoint.getBestMove(vrp)
       case 2 => RemovePoint.getBestMove(vrp)
-      case 3 => Swap.getFirstImprovingMove(vrp,closeNeighbor,previousMove)
-      case 4 => ThreeOptA.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
-      case 5 => ThreeOptB.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
-      case 6 => ThreeOptC.getFirstImprovingMove(vrp, closeNeighbors, previousMove)
-      case 7 => TwoOpt.getFirstImprovingMove(vrp,closeNeighbor,previousMove)
+      case 3 => Swap.getFirstImprovingMove(vrp,vrp.getKNearest(closeNeighbors),previousMove)
+      case 4 => ThreeOptA.getFirstImprovingMove(vrp, vrp.getKNearest(closeNeighbors), previousMove)
+      case 5 => ThreeOptB.getFirstImprovingMove(vrp, vrp.getKNearest(closeNeighbors), previousMove)
+      case 6 => ThreeOptC.getFirstImprovingMove(vrp, vrp.getKNearest(closeNeighbors), previousMove)
+      case 7 => TwoOpt.getFirstImprovingMove(vrp,vrp.getKNearest(closeNeighbors),previousMove)
       case _ => null
     }
   }

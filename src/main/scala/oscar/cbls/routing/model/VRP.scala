@@ -279,6 +279,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     flip(a,b,c,d):::flip(b,d,e,f)
   }
 
+
   /**
    * Redefine the toString method.
    * @return the VRP problem as a String.
@@ -410,6 +411,25 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
    */
   def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean)):List[Int]= {
     computeNearestNeighbors(node).filter(filter).take(k)
+  }
+
+  /**
+   * Returns the k nearest nodes of a given node.
+   * It allows us to add a filter (optional) on the neighbor.
+   *
+   * Info : it uses the Currying feature.
+   * @param k the parameter k.
+   * @param filter the filter.
+   * @param node the given node.
+   * @return the k nearest neighbor as an iterable list of Int.
+   */
+  def getKNearest(k:Int,filter:(Int => Boolean)=(_=>true))(node:Int):Iterable[Int] = {
+    if(k >= N-1) return Nodes
+    if(!closestNeighbors.isDefinedAt(k)){
+      saveKNearestPoints(k:Int,filter)
+    }
+    updateMaxAvgUnrouted(k,node)
+    closestNeighbors(k)(node)
   }
 
   /**

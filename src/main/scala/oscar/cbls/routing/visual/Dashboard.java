@@ -34,8 +34,10 @@ import java.util.concurrent.Semaphore;
 
 
 public class Dashboard extends JPanel {
+
     JButton nextIte = null;
     public JButton start = null;
+    public JButton smartStart = null;
     JScrollPane routeScroll = null;
     JTextArea route = null;
     public JComboBox heuristic = null;
@@ -102,6 +104,7 @@ public class Dashboard extends JPanel {
             //setResetInstance();
             setStartButton();
             setNextIteButton();
+            setSmartButton();
             //setLogRoute();
             //setRouteLabel();
             setNeighborhood(easyMode);
@@ -118,6 +121,7 @@ public class Dashboard extends JPanel {
             setResetInstance();
             setStartButton();
             setNextIteButton();
+            setSmartButton();
             setLogRoute();
             setRouteLabel();
 
@@ -301,6 +305,30 @@ public class Dashboard extends JPanel {
         route.append(line + "\n");
         route.setCaretPosition(route.getDocument().getLength());
     }
+    public void setSmartButton(){
+        smartStart =  new JButton("Smart Search");
+        smartStart.setBackground(Color.green);
+        smartStart.setMaximumSize(new Dimension(100, 50));
+        smartStart.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (firstIte) {
+                    firstIte = false;
+                    PanelVRP.startSmartSearching();
+                    lock2();
+                }
+                pause = !pause;
+                if (pause)
+                    start.setText("Restart");
+                else {
+                    iteration = false;
+                    start.setText("Pause");
+                    unlock();
+                }
+
+            }
+        });
+        add(smartStart);
+    }
 
     public void setStartButton(){
         start = new JButton("Start");
@@ -308,7 +336,7 @@ public class Dashboard extends JPanel {
         start.setMaximumSize(new Dimension(100, 50));
         start.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(firstIte){
+                if (firstIte) {
                     firstIte = false;
                     PanelVRP.startSearching();
                     lock2();

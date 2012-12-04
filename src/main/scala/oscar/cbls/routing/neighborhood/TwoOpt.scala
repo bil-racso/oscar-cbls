@@ -36,51 +36,56 @@ object TwoOpt extends SearchEngine{
   /**
    * Returns the best two-opt-move operator, i.e. which decreases the most the objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @return the best two-opt-move operator.
    */
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    ,k:Int):TwoOpt = findMove(false, vrp,k)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr
+    ,relevantNeighborhoodOfNode:Int=> Iterable[Int] = null):TwoOpt =
+      findMove(false, vrp,if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode)
 
   /**
    * Returns the first two-opt-move operator which decreases the actual objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @param startFrom specifies the starting point of the search procedure.
    * @return a two-opt-move operator improving objective.
    */
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-    k:Int,startFrom:Neighbor = null):TwoOpt = findMove(true,vrp,k,startFrom)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:Int=> Iterable[Int] = null,startFrom:Neighbor = null):TwoOpt =
+      findMove(true,vrp,if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode,startFrom)
 
 
   /**
    * Search procedure of a proper two-opt-move operator in a given VRP problem.
    * Desired characteristics of the operator are given as parameter.
    * The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node.
    * @param startFrom specifies the starting point of the search procedure.
    * @return the proper two-opt-move operator specified by the parameters.
    */
-  def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):TwoOpt = {
+  def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:Int=> Iterable[Int],startFrom:Neighbor = null):TwoOpt = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
     for (firstEdge <- 0 until vrp.N startBy hotRestart if vrp.isRouted(firstEdge)){
-      for(secondEdge <- vrp.getKNearestNeighbors(k,firstEdge) if ((secondEdge!= firstEdge)
+      for(secondEdge <- relevantNeighborhoodOfNode(firstEdge) if ((secondEdge!= firstEdge)
           && firstEdge!=vrp.Next(secondEdge).value &&  secondEdge!=vrp.Next(firstEdge).value)
           && vrp.onTheSameRoute(firstEdge,secondEdge))
       {

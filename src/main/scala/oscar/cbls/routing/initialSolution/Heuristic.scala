@@ -34,6 +34,7 @@ import java.util.concurrent.Semaphore
 
 /**
  * Timer to monitor the creation of the initial solutions.
+ * The timer is static, and it's then shared for all heuristic.
  *
  * Info : It can be used by a graphical interface to display a progressBar.
  */

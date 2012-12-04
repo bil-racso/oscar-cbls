@@ -36,45 +36,50 @@ object ThreeOptC extends SearchEngine{
   /**
    * Returns the best three-opt-move operator, i.e. which decreases the most the objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk²)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @return the best three-opt-move operator.
    */
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    , k:Int):Neighbor = findMove(false, vrp, k)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr
+    ,relevantNeighborhoodOfNode:Int=> Iterable[Int] = null):Neighbor =
+      findMove(false, vrp, if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode)
 
   /**
    * Returns the first three-opt-move operator which decreases the actual objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk²)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @param startFrom specifies the starting point of the search procedure.
    * @return a three-opt-move operator improving objective.
    */
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr
-    , k:Int, startFrom:Neighbor = null):Neighbor= findMove(true,vrp, k, startFrom)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr
+    ,relevantNeighborhoodOfNode:Int=> Iterable[Int] = null, startFrom:Neighbor = null):Neighbor =
+      findMove(true,vrp, if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode, startFrom)
 
   /**
    * Search procedure of a proper three-opt-move operator in a given VRP problem.
    * Desired characteristics of the operator are given as parameter.
    * The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node.
    * @param startFrom specifies the starting point of the search procedure.
    * @return the proper three-opt-move operator specified by the parameters.
    */
   def findMove(FirstImprove:Boolean,
-               vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-               k:Int, startFrom:Neighbor = null):ThreeOptC = {
+               vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+               relevantNeighborhoodOfNode:Int=> Iterable[Int], startFrom:Neighbor = null):ThreeOptC = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int, Int)) = null
 
@@ -85,12 +90,12 @@ object ThreeOptC extends SearchEngine{
     for (startOfFirstEdge <- 0 until vrp.N startBy hotRestart if (vrp.isRouted(startOfFirstEdge))){
       endOfFirstEdge = vrp.Next(startOfFirstEdge).value
 
-      for (startOfThirdEdge <- vrp.getKNearestNeighbors(k,endOfFirstEdge)
+      for (startOfThirdEdge <- relevantNeighborhoodOfNode(endOfFirstEdge)
            if ( vrp.isRouted(startOfThirdEdge)&&
              vrp.isASegment(startOfFirstEdge,vrp.Next(startOfThirdEdge).value) &&
              vrp.isAtLeastAsFarAs(endOfFirstEdge,startOfThirdEdge,3))){// filter
 
-        for (startOfSecondEdge <- vrp.getKNearestNeighbors(k,vrp.Next(startOfFirstEdge).value)
+        for (startOfSecondEdge <- relevantNeighborhoodOfNode(vrp.Next(startOfFirstEdge).value)
              if ((startOfSecondEdge != endOfFirstEdge && vrp.Next(startOfSecondEdge).value != startOfThirdEdge) &&
                vrp.isRouted(startOfSecondEdge) &&
                (vrp.isASegment(endOfFirstEdge,vrp.Next(startOfSecondEdge).value))&&

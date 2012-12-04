@@ -37,49 +37,55 @@ object OnePointMove extends SearchEngine{
   /**
    * Returns the best one-point-move operator, i.e. which decreases the most the objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @return the best one-point-move operator.
    */
-  def getBestMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-    k:Int):OnePointMove = findMove(false, vrp,k)
+  def getBestMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:Int=> Iterable[Int] = null):OnePointMove =
+      findMove(false, vrp,if(relevantNeighborhoodOfNode==null) _=>vrp.Nodes else relevantNeighborhoodOfNode)
+
 
   /**
    * Returns the first one-point-move operator which decreases the actual objective value
    * of a given VRP problem. The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    *
    * Info: The search complexity is then O(nk)
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node. Initially returns the full set of points of the VRP.
    * @return a one-point-move operator improving objective.
    */
-  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with ClosestNeighborPoints with PositionInRouteAndRouteNr,
-    k:Int , startFrom:Neighbor = null):OnePointMove = findMove(true,vrp,k,startFrom)
+  def getFirstImprovingMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:(Int=> Iterable[Int])= null, startFrom:Neighbor = null):OnePointMove =
+      findMove(true,vrp,if(relevantNeighborhoodOfNode == null)_=>vrp.Nodes else relevantNeighborhoodOfNode,startFrom)
 
   /**
    * Search procedure of a proper one-point-move operator in a given VRP problem.
    * Desired characteristics of the operator are given as parameter.
    * The search 's complexity can be improve by restricting the search procedure
-   * to the k nearest neighbors of each points.
+   * to a limited number of neighbors k of each points.
    * @param FirstImprove if true, returns the first improving move, otherwise, searches for the best one.
    * @param vrp the given VRP problem.
-   * @param k the parameter of the restricting of the nearest neighbors.
+   * @param relevantNeighborhoodOfNode function that returns a list of relevant nodes to explore and restrict the search
+   *                                   for a given node.
    * @param startFrom specifies the starting point of the search procedure.
    * @return the proper one-point-move specified by the parameters.
     */
-  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with ClosestNeighborPoints
-    with PositionInRouteAndRouteNr, k:Int,startFrom:Neighbor = null):OnePointMove = {
+  private def findMove(FirstImprove:Boolean,vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr,
+    relevantNeighborhoodOfNode:Int=> Iterable[Int],startFrom:Neighbor = null):OnePointMove = {
     var BestObj:Int = vrp.ObjectiveVar.value
     var move:((Int, Int)) = null
     val hotRestart = if (startFrom == null) 0 else startFrom.startNodeForNextExploration
 
     for (beforeMovedPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeMovedPoint)){
       val movedPoint = vrp.Next(beforeMovedPoint).value
-      for(insertionPoint <- vrp.getKNearestNeighbors(k,beforeMovedPoint) if (vrp.isRouted(insertionPoint)
+      for(insertionPoint <- relevantNeighborhoodOfNode(beforeMovedPoint) if (vrp.isRouted(insertionPoint)
         && beforeMovedPoint != insertionPoint && movedPoint != insertionPoint)){
           if(!vrp.isADepot(movedPoint) || (vrp.isADepot(movedPoint) && vrp.onTheSameRoute(movedPoint,insertionPoint))){
             val newObj = getObjAfterMove(beforeMovedPoint,insertionPoint, vrp)
@@ -118,6 +124,7 @@ object OnePointMove extends SearchEngine{
     val toUpdate = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
     vrp.getAssignVal(toUpdate)
   }
+
 }
 
 /**

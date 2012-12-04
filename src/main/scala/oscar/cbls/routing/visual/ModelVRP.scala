@@ -31,6 +31,7 @@ import math._
 import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
 import oscar.cbls.search.StopWatch
 import model._
+import util.Random
 
 object ModelVRP {
   val model = new ModelVRP()
@@ -84,13 +85,13 @@ class ModelVRP() extends StopWatch{
 
   def getInstanceEasy(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Point] = {
     boardPanel.instances.getSelectedIndex match{
-      case n => {InstanceVisualVRP.getInstanceEasy(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
+      case n => {InstanceVisualVRP.getInstanceEasy(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,new Random().nextInt(1000))}
     }
   }
 
   def getInstance(boardPanel:Dashboard,mapPanel:VisualDrawing):Array[Point] = {
     boardPanel.instances.getSelectedIndex match{
-      case n => {InstanceVisualVRP.getInstance(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,n)}
+      case n => {InstanceVisualVRP.getInstance(vrp,n,(mapPanel.getSize().getWidth).toInt-100,(mapPanel.getSize().getHeight).toInt-100,new Random().nextInt(1000))}
     }
   }
 

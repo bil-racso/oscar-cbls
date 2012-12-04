@@ -130,7 +130,7 @@ object ExSolver extends SearchEngine with StopWatch with App{
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
     //move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
-    move = ThreeOptA.getFirstImprovingMove(vrp, nsize, move)
+    move = ThreeOptA.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
     //move = ThreeOptC.getFirstImprovingMove(vrp, nsize, move)
     //move = ThreeOptB.getFirstImprovingMove(vrp, nsize, move)
     if (move != null && move.getObjAfter < oldobj){

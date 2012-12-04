@@ -26,12 +26,12 @@ import oscar.cbls.routing.model._
 import oscar.cbls.routing._
 import neighborhood.{ReinsertPoint, Neighbor}
 
+
+
 /**
  * Constructs an initial solution randomly.
  */
-
 object RandomNeighbor extends Heuristic{
-
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.

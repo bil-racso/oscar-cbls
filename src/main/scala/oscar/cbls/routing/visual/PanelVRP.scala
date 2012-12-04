@@ -30,7 +30,7 @@ import swing.ScrollBar
 
 
 object PanelVRP {
-  val easyMode = true // to modify to change the user's GUI in a easier panel.
+  val easyMode = false // to modify to change the user's GUI in a easier panel.
 
   val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v} // management of all GUI component.
   val boardPanel = PanelVRP.boardPanel // board panel
@@ -38,6 +38,7 @@ object PanelVRP {
 
   val vrpModel = PanelVRP.vrpModel // vrp model
   val vrpSearch = new SearchVRP(PanelVRP) // vrp search strategy
+  val vrpSmartSearch =  new SmartSearch(PanelVRP)
 
   //actions of board panel
   def makeInstance(b:Boolean) = {
@@ -54,7 +55,7 @@ object PanelVRP {
   }
 
   def startSearching() = new Thread(vrpSearch).start()
-
+  def startSmartSearching()= new Thread(vrpSmartSearch).start()
 }
 
 class PanelVRP(easyMode:Boolean) extends JPanel{
@@ -86,14 +87,14 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     val kLimit = vrpModel.closeNeighbor
 
     boardPanel.neighborhood.getSelectedIndex match{
-      case 0 => OnePointMove.getFirstImprovingMove(vrp, kLimit, previousMove)
+      case 0 => OnePointMove.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit),previousMove)
       case 1 => ReinsertPoint.getBestMove(vrp)
       case 2 => RemovePoint.getBestMove(vrp)
-      case 3 => Swap.getFirstImprovingMove(vrp,kLimit,previousMove)
-      case 4 => ThreeOptA.getFirstImprovingMove(vrp, kLimit, previousMove)
-      case 5 => ThreeOptB.getFirstImprovingMove(vrp, kLimit, previousMove)
-      case 6 => ThreeOptC.getFirstImprovingMove(vrp, kLimit, previousMove)
-      case 7 => TwoOpt.getFirstImprovingMove(vrp,kLimit,previousMove)
+      case 3 => Swap.getFirstImprovingMove(vrp,vrp.getKNearest(kLimit),previousMove)
+      case 4 => ThreeOptA.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit), previousMove)
+      case 5 => ThreeOptB.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit), previousMove)
+      case 6 => ThreeOptC.getFirstImprovingMove(vrp, vrp.getKNearest(kLimit), previousMove)
+      case 7 => TwoOpt.getFirstImprovingMove(vrp,vrp.getKNearest(kLimit),previousMove)
       case _ => null
     }
   }
