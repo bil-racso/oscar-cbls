@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnit(val objVar: CPVarInt) extends Constraint(objVar.store, "objective") with Objective {
+class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective"+n) with Objective {
 
   import TightenType._
   
@@ -41,12 +41,14 @@ class CPObjectiveUnit(val objVar: CPVarInt) extends Constraint(objVar.store, "ob
     tightenType = t
   }
   
+  def tightenMode = tightenType
+  
   override def tighten() = {
     if (!objVar.isBound) {
-      throw new RuntimeException("objective not bound:" + objVar)
+      throw new RuntimeException(name+" not bound:" + objVar)
     }
     best = objVar.value
-    if (!s.silent && tightenType != NoTighten) println("objective tightened to " + best + " lb:"+  lb) 
+    if (!s.silent && tightenType != NoTighten) println(name+" tightened to " + best + " lb:"+  lb) 
   }
 
 

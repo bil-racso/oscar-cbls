@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnitMinimize(objVar: CPVarInt) extends CPObjectiveUnit(objVar) {
+class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
 
   best = Int.MaxValue
   
