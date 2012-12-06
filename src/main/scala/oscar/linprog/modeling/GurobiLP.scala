@@ -62,10 +62,8 @@ class GurobiLP extends AbstractLP {
   }
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
     nbRows += 1
-
     var ntot = new GRBLinExpr()
     ntot.addTerms(coef, col map (model.getVar(_)))
-
     sign match {
       case "<=" =>
         model.addConstr(ntot, GRB.LESS_EQUAL, rhs, name)
@@ -74,7 +72,6 @@ class GurobiLP extends AbstractLP {
       case "==" =>
         model.addConstr(ntot, GRB.EQUAL, rhs, name)
     }
-    model.update()
   }
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     addConstraint(coef, col, rhs, ">=", name)
