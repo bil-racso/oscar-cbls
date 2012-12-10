@@ -34,7 +34,7 @@ import scala.io.Source
 object GuessTheNumber extends App {
     val cp = CPSolver()
     
-
+    
     val digits = Array.fill(5)(CPVarInt(cp,0 to 9))
     
     // with a one after
@@ -49,5 +49,20 @@ object GuessTheNumber extends App {
       println("nb1:"+nb1.value+" nb2:"+nb2.value)
     }
     cp.printStats()
+    
+    
+    // ---------------
+    
+    // simpler model imagined by JF Puget
+    
+    val cp1 = CPSolver()
+    val x = CPVarInt(cp1,0 to 100000)
+    cp1.solve subjectTo {
+      cp1.add(x*10+1 == (x+100000)*3)
+    } exploration {
+      cp1.binary(Array(x))
+      println(x)
+    }
+    cp1.printStats()
      
 }
