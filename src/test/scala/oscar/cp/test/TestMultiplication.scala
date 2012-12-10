@@ -60,7 +60,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
 
   }
   
-    test("Multiplication 3") {
+  test("Multiplication 3") {
     val cp = CPSolver()
 
     val x = CPVarInt(cp,-10 to -1)
@@ -73,6 +73,30 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     x.max should be (-2)
     
   }  
+  
+  test("Multiplication 4: Guess the number") {
+    val cp = CPSolver()
+    
+
+    val digits = Array.fill(5)(CPVarInt(cp,0 to 9))
+    
+    // with a one after (larger one)
+    val nb1 =  digits(0)*100000 + digits(1)*10000 + digits(2)*1000 +  digits(3)*100 + digits(4)*10 + 1
+    // with a one before (smaller one)
+    val nb2 =  CPVarInt(cp,100000) + digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4)
+    var nbsol = 0
+    cp.solve subjectTo {
+      cp.add(nb1 == (nb2*3))
+    } exploration {
+      cp.binary(digits)
+      nbsol += 1
+      nb1.value should be(428571)
+      nb2.value should be(142857)
+    }
+    nbsol should be(1)
+    
+    
+  }    
   
 
 }
