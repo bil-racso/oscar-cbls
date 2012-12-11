@@ -53,6 +53,9 @@ trait ObjectiveTrait {
     a :=: b
     NewVal
   }
+  
+  // more scala like, no get in Scala
+  def swapVal(a: IntVar, b: IntVar): Int = getSwapVal(a,b)
 
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.
@@ -60,6 +63,8 @@ trait ObjectiveTrait {
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
   def getAssignVal(a: IntVar, v: Int): Int = getAssignVal(SortedMap(a -> v))
+  
+  def assignVal(a: IntVar, v: Int): Int = getAssignVal(a,v)
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
@@ -83,4 +88,6 @@ trait ObjectiveTrait {
 
     NewVal
   }
+  
+  def assignVal(a: Iterable[(IntVar, Int)]): Int = assignVal(a)
 }
