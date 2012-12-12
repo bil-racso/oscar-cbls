@@ -63,16 +63,17 @@ object NQueensEasy extends App{
 
     ls.close(false)
 
-
+    val pairs = (0 until N) x  (0 until N)
+    
     var it = 0
-
-    while((c.violation.value > 0) && (it < N)){
-      val oldviolation:Int = c.Violation.value
-
-      val q1 = select(maxViolQueens.value)().get // random select
-      val q2: Int = selectMin(0 until N)()(q => c.swapVal(queens(q1),queens(q))).get
-      
+    val tabu = Array.fill(N,N)(0)
+    val tenure = 3
+    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) >= it 
+    
+    while(c.violation.value > 0){
+      val (q1,q2) = selectMin(pairs)(q => isNotTabu(q))(q => c.swapVal(queens(q._1),queens(q._2))).get      
       queens(q1) :=: queens(q2)
+      tabu(q1)(q2) = it + tenure
       it += 1
     }
     println("number of iterations:"+it)
