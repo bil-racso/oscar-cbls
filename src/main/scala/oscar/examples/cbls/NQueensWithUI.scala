@@ -30,7 +30,7 @@ import scala.swing.GridPanel
 import scala.swing.Label
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import javax.swing.ImageIcon
 import java.awt.Color
 import oscar.cbls.search.SearchEngineTrait
@@ -161,7 +161,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     }
     c.close()
 
-    val viol: Array[IntVar] = (for (q <- range) yield c.getViolation(Queens(q))).toArray
+    val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
 
     for (q <- range) {
       Event(Queens(q), viol(q), (oldqueenposition: Int) => {

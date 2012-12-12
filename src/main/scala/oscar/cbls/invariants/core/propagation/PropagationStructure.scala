@@ -67,7 +67,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) {
+abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -654,7 +654,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a static propagation graph that does not change after the call to setupPropagationStructure
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
  */
-trait PropagationElement extends DAGNode with TarjanNode{
+trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")

@@ -141,7 +141,7 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index
  */
-case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
+case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
   extends IntSetInvariant with Bulked[IntVar, ((Int,Int))]{
 
   var output:IntSetVar = null
@@ -250,7 +250,7 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
  * @param inputarray is the array of intsetvar
  * @param index is the index of the array access
  **/
-case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
+case class IntSetElement(index:IntVar, inputarray:Array[IntSetVar])
   extends IntSetInvariant with Bulked[IntSetVar, ((Int,Int))]{
 
   var output:IntSetVar = null

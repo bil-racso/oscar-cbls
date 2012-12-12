@@ -29,10 +29,9 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -103,7 +102,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     c.close()
 
     // search variables
-    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.getViolation(d(l.id))).toArray
+    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
     val Tabu:Array[IntVar] = (for (i <- Letter.list) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = new IntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)

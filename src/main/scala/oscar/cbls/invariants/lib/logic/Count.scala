@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.computation.Invariant._
 /**Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i] == j}
  * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''
  * */
-case class DenseCount(var values:Array[IntVar], counts:Array[IntVar]) extends Invariant {
+case class DenseCount(values:Array[IntVar], counts:Array[IntVar]) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
@@ -51,8 +51,3 @@ case class DenseCount(var values:Array[IntVar], counts:Array[IntVar]) extends In
     counts(NewVal) :+= 1
   }
 }
-
-object Count {
-
-}
-

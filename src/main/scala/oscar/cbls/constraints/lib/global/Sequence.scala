@@ -28,7 +28,8 @@ import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.{Cluster, IntElement}
 import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 ;
 
@@ -99,7 +100,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
 
   private def min(a:Int, b:Int):Int = if (a>b) b else a
 
-  def getViolation(v: Variable): IntVar = Violations.getOrElse(v,null)
+  def violation(v: Variable): IntVar = Violations.getOrElse(v,null)
 
-  def getViolation: IntVar = Violation
+  def violation: IntVar = Violation
 }

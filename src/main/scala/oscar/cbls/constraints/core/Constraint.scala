@@ -28,10 +28,10 @@ import oscar.cbls.invariants.core.computation.{Variable, IntVar, IntInvariant}
 import oscar.cbls.invariants.lib.numeric.Step
 
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
- * This degree of violation is obtained through the getViolation method.
+ * This degree of violation is obtained through the violation method.
  * Furthermore, each variable involved in the constraint also gets an associated violation.
  * This variable-specific violation quantifies the involvement of the variable in the overall violation of he constraint.
- * It can be obtained through the getViolation(v:Variable) method.
+ * It can be obtained through the violation(v:Variable) method.
  * All these violation are stored as IntVar, so that they can be involved in the construction of complex formulas,
  * and managed as invariants.
  */
@@ -41,20 +41,23 @@ abstract class Constraint extends IntInvariant{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree. */
-  def getViolation(v:Variable = null):IntVar
+  def violation(v:Variable = null):IntVar
 
   /**returns the degree of violation of the constraint*/
-  def getViolation:IntVar
+  def violation:IntVar
 
   /**facility to check that the constraint is enforced*/
-  final def isTrue:Boolean = (getViolation.value == 0)
+  final def isTrue:Boolean = (violation.value == 0)
 
   def myMin = 0
   def myMax = 1
 
   /**the output var of a constraint is whether the constraint is true or not; it is not the violation degree*/
-  override def setOutputVar(v: IntVar) {v <== Step(getViolation,0,0,1)}
+  override def setOutputVar(v: IntVar) {v <== Step(violation,0,0,1)}
 
+  /**the variables that are constrained by the constraint.
+   * This should be read only. If you want to declare more constrained variables,
+   * use the registerConstrainedVariable method. */
   var constrainedVariables:List[Variable] = List.empty
 
   /**This should be called by the constraint to declare the set of constrained variables.
@@ -78,10 +81,4 @@ abstract class Constraint extends IntInvariant{
   def registerConstrainedVariablesAll(v:Iterable[Variable]){
     for (vv <- v){registerConstrainedVariable(vv)}
   }
-
-  /**returns the variables on which the constraint is posted.
-   * These variables have an associated degree of violation.
-   * this is necessary to know on which variables the constraint is posted*/
-  def getConstrainedVariables:Iterable[Variable] = constrainedVariables
-
 }

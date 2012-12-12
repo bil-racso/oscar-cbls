@@ -41,7 +41,7 @@ import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import javax.swing.border.LineBorder
 
 class NQueensApplet extends Applet {
@@ -173,7 +173,7 @@ class NQueensApplet extends Applet {
       for (q <- range) { c.registerForViolation(Queens(q)) }
       c.close()
 
-      val viol: Array[IntVar] = (for (q <- range) yield c.getViolation(Queens(q))).toArray
+      val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
       m.close()
 
       var it: Int = 0

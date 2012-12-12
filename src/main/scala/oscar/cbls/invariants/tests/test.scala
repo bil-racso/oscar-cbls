@@ -28,7 +28,7 @@ import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.invariants.lib.minmax._
 import collection.immutable.SortedSet
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 
 
 object test extends SearchEngine {
@@ -61,7 +61,7 @@ object test extends SearchEngine {
 
     Event(c,{println("Trigger: c changed: " + c)})
 
-    //TriggerOn(cstr.getViolation(d), {println("Violation change on d: " + e)})
+    //TriggerOn(cstr.violation(d), {println("Violation change on d: " + e)})
 
     m.close()
     println("closed")
@@ -76,7 +76,7 @@ object test extends SearchEngine {
     m.propagate()
     
     //while(cstr.Violation != 0){
-    //  val tochange:IntVar = selectMax(List(a,b),v => cstr.getViolation(v))
+    //  val tochange:IntVar = selectMax(List(a,b),v => cstr.violation(v))
     //  val newval = selectMin(tochange.getDomain(), i => cstr.GetAssignDelta(tochange,i))
     //  tochange := newval
     //}

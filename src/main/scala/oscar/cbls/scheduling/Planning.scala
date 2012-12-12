@@ -26,7 +26,8 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra
+import oscar.cbls.modeling.Algebra._
 import oscar.visual.{Plot2D, VisualFrame}
 ;
 

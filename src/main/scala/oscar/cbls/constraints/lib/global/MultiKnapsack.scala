@@ -28,7 +28,7 @@ import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.{Cluster, IntElement}
 import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 ;
 
@@ -52,7 +52,7 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
 
   val binviolations:Array[IntVar] = (
     for (binid <- binsizes.indices)
-    yield (binfilling(binid) le binsizes(binid)).getViolation).toArray
+    yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
   val itemviolations:Array[IntVar] = items.map(itemval => IntElement(itemval,binviolations).toIntVar)
 
@@ -72,12 +72,12 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
 
   /**The violation of the constraint is the sum on all excess in all bins.
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of an item is the excess of the bin it is located into,
    * The violation of a bin is the excess in the bin
    */
-  override def getViolation(v: Variable): IntVar = {
+  override def violation(v: Variable): IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp

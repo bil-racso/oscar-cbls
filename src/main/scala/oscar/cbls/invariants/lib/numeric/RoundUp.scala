@@ -1,3 +1,5 @@
+package oscar.cbls.invariants.lib.numeric
+
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
@@ -21,9 +23,8 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.invariants.lib.logic
-
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntInvariant, IntSetInvariant, IntVar}
+import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
 
 /**Maintains output to the smallest value such that
  * output >= from
@@ -31,8 +32,8 @@ import oscar.cbls.invariants.core.computation.{IntSetVar, IntInvariant, IntSetIn
  * (output - shift + length) MOD period > zone
  * of course, it is required that length is < period - zone, and exception is thrown otherwise.
  */
-case class RoundUpModulo(from:IntVar, length:IntVar, period:Int, zone:Int, shift:Int)
-  extends LazyIntVarIntVar2IntVarFun(from, length,(from:Int, to:Int) => {
+case class RoundUpModulo(from: IntVar, length: IntVar, period: Int, zone: Int, shift: Int)
+  extends LazyIntVarIntVar2IntVarFun(from, length, (from: Int, to: Int) => {
     assert(length.value < period - zone)
     val reducedfrom = (from - shift) % period
     if (reducedfrom < zone)
@@ -41,46 +42,47 @@ case class RoundUpModulo(from:IntVar, length:IntVar, period:Int, zone:Int, shift
       from + (period + zone - reducedfrom)
     else
       from
-  }, from.MinVal, from.MaxVal+zone)
+  }, from.MinVal, from.MaxVal + zone)
 
 
-case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) extends IntInvariant {
+case class RoundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)]) extends IntInvariant {
 
-  def myMax = Zone.maxBy(_._2)._2+1
+  def myMax = Zone.maxBy(_._2)._2 + 1
+
   def myMin = from.MinVal
 
-  var output:IntVar=null
-  registerStaticAndDynamicDependenciesNoID(from,length)
+  var output: IntVar = null
+  registerStaticAndDynamicDependenciesNoID(from, length)
   finishInitialization()
 
-  override def setOutputVar(v:IntVar){
+  override def setOutputVar(v: IntVar) {
     output = v
     output.setDefiningInvariant(this)
     output := roundup()
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
     scheduleForPropagation()
   }
 
-  override def performPropagation(){
+  override def performPropagation() {
     output := roundup()
   }
 
-  def roundup():Int = {
-    var NewStart:Int = from.value
+  def roundup(): Int = {
+    var NewStart: Int = from.value
     var LastZoneBeforeNewStart = FindLastStartBefore(from.value)
-    while(true){
-      if (!(LastZoneBeforeNewStart == -1 || ForbiddenEnds(LastZoneBeforeNewStart) < from)){
+    while (true) {
+      if (!(LastZoneBeforeNewStart == -1 || ForbiddenEnds(LastZoneBeforeNewStart) < from)) {
         //problème de type 1
         NewStart = ForbiddenEnds(LastZoneBeforeNewStart) + 1
         LastZoneBeforeNewStart += 1
-      }else if((LastZoneBeforeNewStart+1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart+1) > from.value + length.getValue ())){
+      } else if ((LastZoneBeforeNewStart + 1 < ForbiddenStarts.size) && (ForbiddenStarts(LastZoneBeforeNewStart + 1) > from.value + length.getValue())) {
         //problème de type 2
-        NewStart = ForbiddenEnds(LastZoneBeforeNewStart+1) + 1
+        NewStart = ForbiddenEnds(LastZoneBeforeNewStart + 1) + 1
         LastZoneBeforeNewStart += 1
-      }else{
+      } else {
         return NewStart
       }
     }
@@ -89,34 +91,34 @@ case class RoundUpCustom(from:IntVar, length:IntVar, Zone:List[(Int, Int)]) exte
 
   val SortedRegularizedZones = regularizeZoneList(Zone.sortWith(_._1 < _._1))
 
-  def regularizeZone(SortedZoneList:List[(Int,Int)],CurrentZoneStart:Int,CurrentZoneEnd:Int):List[(Int,Int)] =
-    SortedZoneList match{
-      case (s,e) :: tail =>
-        if (s > CurrentZoneEnd) ((CurrentZoneStart,CurrentZoneEnd)) :: regularizeZone(tail,s,e)
-        else if (e <= CurrentZoneEnd) regularizeZone(tail,CurrentZoneStart,CurrentZoneEnd)
-        else regularizeZone(tail,CurrentZoneStart,e)
-      case nil => List((CurrentZoneStart,CurrentZoneEnd))
+  def regularizeZone(SortedZoneList: List[(Int, Int)], CurrentZoneStart: Int, CurrentZoneEnd: Int): List[(Int, Int)] =
+    SortedZoneList match {
+      case (s, e) :: tail =>
+        if (s > CurrentZoneEnd) ((CurrentZoneStart, CurrentZoneEnd)) :: regularizeZone(tail, s, e)
+        else if (e <= CurrentZoneEnd) regularizeZone(tail, CurrentZoneStart, CurrentZoneEnd)
+        else regularizeZone(tail, CurrentZoneStart, e)
+      case nil => List((CurrentZoneStart, CurrentZoneEnd))
     }
 
-  def regularizeZoneList(SortedZoneList:List[(Int,Int)]):List[(Int,Int)]=
-    SortedZoneList match{
-      case (s,e) :: tail => regularizeZone(tail,s,e)
+  def regularizeZoneList(SortedZoneList: List[(Int, Int)]): List[(Int, Int)] =
+    SortedZoneList match {
+      case (s, e) :: tail => regularizeZone(tail, s, e)
       case nil => List.empty
     }
 
-  val ForbiddenStarts:Array[Int] = SortedRegularizedZones.map(_._1).toArray
-  val ForbiddenEnds:Array[Int] = SortedRegularizedZones.map(_._2).toArray
+  val ForbiddenStarts: Array[Int] = SortedRegularizedZones.map(_._1).toArray
+  val ForbiddenEnds: Array[Int] = SortedRegularizedZones.map(_._2).toArray
 
-  def FindLastStartBefore(d:Int):Int = {
-    var up = ForbiddenStarts.size-1
+  def FindLastStartBefore(d: Int): Int = {
+    var up = ForbiddenStarts.size - 1
     var down = -1
-    while(down+1 < up){
+    while (down + 1 < up) {
       val mid = (up + down) / 2
-      if (ForbiddenStarts(mid) == d){
+      if (ForbiddenStarts(mid) == d) {
         return mid
-      }else if(ForbiddenStarts(mid) < d){
+      } else if (ForbiddenStarts(mid) < d) {
         down = mid
-      }else{
+      } else {
         up = mid
       }
     }

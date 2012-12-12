@@ -28,7 +28,7 @@ import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.IntConst
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic.IntITE
 
 /**Implement the AtLeast constraint on IntVars.
@@ -117,12 +117,12 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
 
   /**the violation is the sum for all bounds of the number of missing variables to reach the bound
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of a variable is zero if the value of the variable is the one of a bound that is not reached,
    * otherwise, it is equal to the global violation degree.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp
@@ -140,9 +140,9 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
     assert(Violation.value == MyViol)
     for(v <- variables){
       if(bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value))){
-        assert(getViolation(v).value == 0)
+        assert(violation(v).value == 0)
       }else{
-        assert(getViolation(v).value == Violation.value)
+        assert(violation(v).value == Violation.value)
       }
     }
   }

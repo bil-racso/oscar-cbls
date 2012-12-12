@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
  * @param values an array of intvar
  * @param boundary the boundary for comparison
  */
-case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
@@ -122,7 +122,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
  */
-case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLESetQueue(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   def myMin = values.indices.start

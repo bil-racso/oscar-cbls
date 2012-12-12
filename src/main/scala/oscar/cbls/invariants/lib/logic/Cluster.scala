@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.computation._;
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
  * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
  * */
-case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]) extends Invariant {
+case class SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
@@ -70,7 +70,7 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
 /**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
  * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
  * */
-case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) extends Invariant {
+case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends Invariant {
 
   //We register the static and dynamic dependencies.
   //Dynamic dependencies are the ones considered for the notifications.

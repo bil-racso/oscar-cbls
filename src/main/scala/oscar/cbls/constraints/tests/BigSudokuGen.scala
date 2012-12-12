@@ -173,7 +173,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       tab(v1/N)(v1%N).text=grid(v1).value+""
       tab(v2/N)(v2%N).text=grid(v2).value+""
       for(v <- 0 to LinearIndexes.length-1) {
-        if (c.getViolation(grid(v)).value>0)
+        if (c.violation(grid(v)).value>0)
           tab(v/N)(v%N).foreground=Color.RED
         else
           tab(v/N)(v%N).foreground=Color.BLACK

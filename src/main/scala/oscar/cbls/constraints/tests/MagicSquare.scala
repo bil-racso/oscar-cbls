@@ -89,7 +89,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     // working variables - using flat arrays
     // conversion is: i=v/N, j=v%N
     // TODO - can we work with multidimensional arrays here ?
-    //val ViolationArray:Array[IntVar] = (for(i <- Dim; j <- Dim) yield c.getViolation(magic(i)(j))).toArray
+    //val ViolationArray:Array[IntVar] = (for(i <- Dim; j <- Dim) yield c.violation(magic(i)(j))).toArray
     val Tabu:Array[IntVar] = (for (i <- Dim; j <- Dim) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i+"_"+j)).toArray
     var it:Int=1
     

@@ -23,7 +23,6 @@ package oscar.cbls.objective
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 import collection.immutable.SortedMap;
 import oscar.cbls.invariants.core.computation._;
 

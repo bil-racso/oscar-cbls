@@ -23,9 +23,9 @@
 
 package oscar.examples.cbls
 
-import oscar.cbls.algebra.Algebra._
-import oscar.cbls.constraints.core._
 import oscar.cbls.modeling._
+import oscar.cbls.modeling.Algebra._
+import oscar.cbls.constraints.core._
 import oscar.util._
 
 /**
@@ -39,8 +39,6 @@ object NQueensEasy extends App{
   
     println("N-Queens(" + N + ")")
 
-
-
     val rand = new scala.util.Random()
     
     val ls = new LSSolver()
@@ -52,22 +50,16 @@ object NQueensEasy extends App{
     c.post(alldifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar))) // I would prefer not have to call toIntVar
     c.post(alldifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
-     // what is it for ? is it really useful ?
-    for (q <- 0 until N){c.registerForViolation(queens(q))}
-
-    c.close()
-
-    val violations = Array.tabulate(N)(q => c.getViolation(queens(q)))
+    val violations = Array.tabulate(N)(q => c.violation(queens(q)))
     val maxViolQueens = argMax(violations) // set of queens with highest violation
 
-
-    ls.close(false)
-
+    c.close()
+    ls.close()
 
     var it = 0
 
     while((c.violation.value > 0) && (it < N)){
-      val oldviolation:Int = c.Violation.value
+      //val oldviolation:Int = c.Violation.value
 
       val q1 = select(maxViolQueens.value)().get // random select
       val q2: Int = selectMin(0 until N)()(q => c.swapVal(queens(q1),queens(q))).get
@@ -78,5 +70,4 @@ object NQueensEasy extends App{
     println("number of iterations:"+it)
     println(queens.mkString(","))
 
-  
 }
