@@ -23,7 +23,7 @@
 
 package oscar.examples.cbls
 
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.core._
 import oscar.cbls.modeling._
 import oscar.util._
@@ -39,8 +39,6 @@ object NQueensEasy extends App{
   
     println("N-Queens(" + N + ")")
 
-
-
     val rand = new scala.util.Random()
     
     val ls = new LSSolver()
@@ -52,16 +50,15 @@ object NQueensEasy extends App{
     c.post(alldifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar))) // I would prefer not have to call toIntVar
     c.post(alldifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
-     // what is it for ? is it really useful ?
-    for (q <- 0 until N){c.registerForViolation(queens(q))}
 
-    c.close()
-
-    val violations = Array.tabulate(N)(q => c.getViolation(queens(q)))
+    val violations = Array.tabulate(N)(q => c.violation(queens(q)))
     val maxViolQueens = argMax(violations) // set of queens with highest violation
 
+    c.close()
+    ls.close()
 
-    ls.close(false)
+  //this tabu search is a bit simplistic: does not use the invariants for maintining Tabu...
+  //and max violated queens might be all tabu
 
     val pairs = (0 until N) x  (0 until N)
     
