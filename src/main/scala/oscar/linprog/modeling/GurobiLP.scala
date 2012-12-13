@@ -35,16 +35,16 @@ class GurobiLP extends AbstractLP {
   var closed = false
   var released = false
   var Obj = 0.0
-
+  var configFile = new java.io.File("gurobiOption.txt")
   var env = new GRBEnv()
-  val file = new java.io.File("gurobiOption.txt")
-  if (file.exists()) {
-    env.readParams("gurobiOption.txt")
-  }
   var model = new GRBModel(env)
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
 	println("model gurobi:"+nbRows+"x"+nbCols)
+	
+  if (configFile.exists()) {
+    model.getEnv.readParams(configFile.getAbsolutePath)
+  }
     this.nbRows = nbRows
     this.nbCols = nbCols
     val cols = (1 to nbCols).toArray
@@ -125,7 +125,6 @@ class GurobiLP extends AbstractLP {
   def solveModel(): LPStatus.Value = {
     model.update() 
     model.write("gurobi.lp")
-    model.getEnv().set(GRB.IntParam.Presolve, -1)
     model.optimize()
     var optimstatus = model.get(GRB.IntAttr.Status)
     if (optimstatus == GRB.INF_OR_UNBD) {
