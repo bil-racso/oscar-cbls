@@ -36,6 +36,25 @@ import oscar.cbls.invariants.lib.numeric._
  */
 object Algebra {
 
+  class RangeHotRestart(start:Int,end:Int,step:Int) extends IndexedSeq[Int]{
+    def this(start:Int,end:Int) = this(start,end,1)
+    val length = end - start
+    def apply(n:Int) = (start + step*n)%length
+  }
+  object RangeHotRestart{
+    def apply(start:Int,end:Int,step:Int) = new RangeHotRestart(start,end,step)
+    def apply(start:Int,end:Int) = new RangeHotRestart(start,end)
+  }
+  // implicit conversion of Range towards a RangeHotRestart
+  implicit def InstrumentedRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
+
+  class InstrumentedRange(r:Range){
+    def startBy (start:Int)  = {
+      if(r.contains(start)) RangeHotRestart(start,start+r.length)
+      else throw new IllegalArgumentException("Only values between "+r.start+" and "+(r.end-1))
+    }
+  }
+
   implicit def InstrumentIntVar(v: IntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
 
   implicit def InstrumentIntInvariant(i: IntInvariant): InstrumentedIntVar = InstrumentIntVar(i.toIntVar)

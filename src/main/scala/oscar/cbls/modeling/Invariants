@@ -111,8 +111,7 @@ trait ComplexLogicInvariants{
    *
    * @param V the number of vrp to consider V>=1 and V<=N
    */
-  def routes(V: Int, Next:Array[IntVar], PositionInRoute:Array[IntVar], RouteNr:Array[IntVar]) = Routes(V: Int, Next:Array[IntVar], PositionInRoute:Array[IntVar], RouteNr:Array[IntVar])
-
+  def routes(V: Int, Next:Array[IntVar]) = Routes.buildRoutes(Next, V)
 
   /**maintains a sorting of the ''values'' array:
    * @param ReversePerm   i < j => values(ReversePerm(i)) < values(ReversePerm(j))

@@ -114,11 +114,11 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // search
     while((c.Violation.value > 0) && (It.value < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter.value)
-      val l2 = selectMin(NonTabuLetter.value)(i => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
+      val l2 = selectMin(NonTabuLetter.value)(i => c.swapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation.toString +" "+c.Violation.value+" "+c.getSwapVal(d(l1),d(l2)))
+      println(c.Violation.toString +" "+c.Violation.value+" "+c.swapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
       //r(Carry.c1.id).setValue((d(Letter.D.id).value+d(Letter.E.id).value) / 10)

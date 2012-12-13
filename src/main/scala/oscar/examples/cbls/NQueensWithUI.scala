@@ -183,7 +183,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
       val oldviolation: Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
-      val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1, q2) => c.getSwapVal(Queens(q1), Queens(q2)), (q1, q2) => q1 < q2)
+      val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1, q2) => c.swapVal(Queens(q1), Queens(q2)), (q1, q2) => q1 < q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) = it + tabulength

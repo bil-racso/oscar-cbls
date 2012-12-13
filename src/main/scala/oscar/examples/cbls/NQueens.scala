@@ -97,7 +97,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
 
       val q1 = selectFirst(MaxViolQueens.value)
       val q2 = selectFirst(range, (q:Int) => {
-        q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
+        q!=q1 && c.swapVal(Queens(q1),Queens(q)) < oldviolation
       })
       // println("viol: " + oldviolation + " swapped: " + q1 + " and " + q2)
 

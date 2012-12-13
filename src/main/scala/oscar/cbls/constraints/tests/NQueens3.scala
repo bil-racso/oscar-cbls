@@ -85,7 +85,7 @@ object NQueens3 extends SearchEngine with StopWatch with App{
   while((c.Violation.value > 0) && (It.value < MaxIT)){
 
     val q1 = selectFrom(NonTabuMaxViolQueens.value)
-    val q2 = selectMin(NonTabuQueens.value)(q => c.getSwapVal(Queens(q1),Queens(q)), (q:Int) => q!=q1)
+    val q2 = selectMin(NonTabuQueens.value)(q => c.swapVal(Queens(q1),Queens(q)), (q:Int) => q!=q1)
 
     Queens(q1) :=: Queens(q2)
     Tabu(q1) := It.value + tabulength

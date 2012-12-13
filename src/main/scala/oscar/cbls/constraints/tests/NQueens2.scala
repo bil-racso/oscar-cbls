@@ -114,7 +114,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
       val q1 = selectFirst(NonTabuMaxViolQueens.value)
       val q2 = selectFirst(NonTabuQueens.value, (q:Int) => {
-        q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
+        q!=q1 && c.swapVal(Queens(q1),Queens(q)) < oldviolation
       })
 
       Queens(q1) :=: Queens(q2)

@@ -74,7 +74,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   var output:IntVar = null
 
   //TODO: find better bound, this is far too much
-  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
+  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(math.abs(intvar.MaxVal) > math.abs(intvar.MinVal)) math.abs(intvar.MaxVal) else math.abs(intvar.MinVal)))
   def myMin = - myMax
 
   override def setOutputVar(v:IntVar){

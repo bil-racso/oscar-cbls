@@ -446,7 +446,7 @@ abstract class Variable(val model:Model,val name:String) extends PropagationElem
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one defining invariant")
+      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
   def getDefiningInvariant:Invariant = DefiningInvariant
@@ -688,19 +688,25 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
  */
 class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override val name:String="")
   extends Variable(model,name) {
-
-  {assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
 
-  def getDomain:Range = new Range(MinVal,MaxVal,1)
-
+  def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
+  val domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
   override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
-      Value = v
-      notifyChanged()
-    }
+     //TODO: disable assert while domain of invariant are buggy, this assert is needed in UNIT TEST.
+     // (-Xdisable-assertions as argument of scala compiler)
+     // or comment this assert and use it only to throw unit test while domain bugs.
+     /*
+     assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+         "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
+          "new value :"+ v +"\n" ))
+          */
+        Value = v
+        notifyChanged()
+      }
   }
   
   def value:Int = getValue(false)
@@ -735,6 +741,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def :=(v:Int) {setValue(v)}
   def :+=(v:Int) {setValue(v+getValue(true))}
+  def :*=(v:Int) {setValue(v*getValue(true))}
   def :-=(v:Int) {setValue(getValue(true) - v)}
 
   def ++ {this := this.getValue(true) +1}
