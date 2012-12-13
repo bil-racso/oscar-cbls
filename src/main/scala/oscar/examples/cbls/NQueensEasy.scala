@@ -23,9 +23,9 @@
 
 package oscar.examples.cbls
 
-import oscar.cbls.modeling._
-import oscar.cbls.modeling.Algebra._
+import oscar.cbls.algebra.Algebra._
 import oscar.cbls.constraints.core._
+import oscar.cbls.modeling._
 import oscar.util._
 
 /**
@@ -39,6 +39,8 @@ object NQueensEasy extends App{
   
     println("N-Queens(" + N + ")")
 
+
+
     val rand = new scala.util.Random()
     
     val ls = new LSSolver()
@@ -50,24 +52,32 @@ object NQueensEasy extends App{
     c.post(alldifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar))) // I would prefer not have to call toIntVar
     c.post(alldifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
-    val violations = Array.tabulate(N)(q => c.violation(queens(q)))
-    val maxViolQueens = argMax(violations) // set of queens with highest violation
+     // what is it for ? is it really useful ?
+    for (q <- 0 until N){c.registerForViolation(queens(q))}
 
     c.close()
-    ls.close()
 
+    val violations = Array.tabulate(N)(q => c.getViolation(queens(q)))
+    val maxViolQueens = argMax(violations) // set of queens with highest violation
+
+
+    ls.close(false)
+
+    val pairs = (0 until N) x  (0 until N)
+    
     var it = 0
-
-    while((c.violation.value > 0) && (it < N)){
-      //val oldviolation:Int = c.Violation.value
-
-      val q1 = select(maxViolQueens.value)().get // random select
-      val q2: Int = selectMin(0 until N)()(q => c.swapVal(queens(q1),queens(q))).get
-      
+    val tabu = Array.fill(N,N)(0)
+    val tenure = 3
+    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) >= it 
+    
+    while(c.violation.value > 0){
+      val (q1,q2) = selectMin(pairs)(q => isNotTabu(q))(q => c.swapVal(queens(q._1),queens(q._2))).get      
       queens(q1) :=: queens(q2)
+      tabu(q1)(q2) = it + tenure
       it += 1
     }
     println("number of iterations:"+it)
     println(queens.mkString(","))
 
+  
 }

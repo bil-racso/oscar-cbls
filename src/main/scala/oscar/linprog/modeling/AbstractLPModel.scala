@@ -56,6 +56,8 @@ abstract class AbstractLP {
  	
   	
   	var released : Boolean
+  	
+  	var configFile : java.io.File 
 	
   	
 	def startModelBuilding(nbRows : Int,nbCols : Int)
