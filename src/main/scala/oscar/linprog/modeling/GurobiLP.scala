@@ -124,7 +124,7 @@ class GurobiLP extends AbstractLP {
 
   def solveModel(): LPStatus.Value = {
     model.update() 
-    model.write("gurobi.lp")
+   // model.write("gurobi.lp")
     model.optimize()
     var optimstatus = model.get(GRB.IntAttr.Status)
     if (optimstatus == GRB.INF_OR_UNBD) {
