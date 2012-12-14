@@ -29,10 +29,10 @@ import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.set._
 
 trait Invariants extends ClusterInvariants
-      with ComplexLogicInvariants
-      with AccessInvariants
-      with MinMaxInvariants
-      with NumericInvariants
+with ComplexLogicInvariants
+with AccessInvariants
+with MinMaxInvariants
+with NumericInvariants
 
 trait ClusterInvariants{
 
