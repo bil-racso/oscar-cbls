@@ -1,4 +1,4 @@
-package oscar.cbls
+package oscar.cbls.routing
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -21,13 +21,8 @@ package oscar.cbls
  * Contributors:
  *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
-/**
- *
- */
 
 /**
- * Modeling of vehicle routing problem.
+ * Contains all neighborhoods, like three-opt, two-opt, 1-0 exchange, etc..
  */
-package object routing {}
-
-
+package object neighborhood {}
