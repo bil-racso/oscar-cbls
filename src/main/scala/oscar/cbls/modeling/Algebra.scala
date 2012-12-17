@@ -21,6 +21,7 @@ package oscar.cbls.modeling
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
+ *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
 import oscar.cbls.constraints.core.Constraint
@@ -30,27 +31,49 @@ import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
+import collection.Iterator
+
+
+//object Test extends App{
+//  println((Algebra.instrumentRange (1 until 10) startBy 5).toIterator.toList)
+//}
 
 /**Include this object whenever you want to use concise notation
- * It provides the following ginfix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
+ * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
  */
 object Algebra {
 
-  class RangeHotRestart(start:Int,end:Int,step:Int) extends IndexedSeq[Int]{
-    def this(start:Int,end:Int) = this(start,end,1)
-    val length = end - start
-    def apply(n:Int) = (start + step*n)%length
+  case class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
+    extends Range(start,end,step) {
+    if(!(this.contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
+    if(! (step == 1)) throw new Exception("only step of  is supported in ShirtedRange")
+
+    //include the at Value
+    private def unfold(at:Int):List[Int] = {
+      if(at == end){
+        unfold (start)
+      }else if(at+1 == startBy){
+        List(at)
+      }else{
+        at :: unfold(at+1)
+      }
+    }
+
+    override def toIterator: Iterator[Int] = unfold(startBy).toIterator
+
+    override def toList: List[Int] = unfold(startBy)
+
+    override def toArray[B >: Int](implicit evidence$1: ClassManifest[B]): Array[B] = toList.toArray
+
+    override def toString(): String = "ShiftedRange(" + toList + ")"
   }
-  object RangeHotRestart{
-    def apply(start:Int,end:Int,step:Int) = new RangeHotRestart(start,end,step)
-    def apply(start:Int,end:Int) = new RangeHotRestart(start,end)
-  }
+
   // implicit conversion of Range towards a RangeHotRestart
-  implicit def InstrumentedRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
+  implicit def instrumentRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
 
   class InstrumentedRange(r:Range){
     def startBy (start:Int)  = {
-      if(r.contains(start)) RangeHotRestart(start,start+r.length)
+      if(r.contains(start)) ShiftedRange(r.start, r.end,start:Int, r.step)
       else throw new IllegalArgumentException("Only values between "+r.start+" and "+(r.end-1))
     }
   }
