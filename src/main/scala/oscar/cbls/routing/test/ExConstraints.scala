@@ -22,6 +22,7 @@
 
 package oscar.cbls.routing.test
 
+import data.{Point, BelgiumInstance}
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic._

@@ -43,23 +43,28 @@ import collection.Iterator
  */
 object Algebra {
 
-  case class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
+  class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
     extends Range(start,end,step) {
     if(!(this.contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
-    if(! (step == 1)) throw new Exception("only step of  is supported in ShirtedRange")
+    if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
 
     //include the at Value
     private def unfold(at:Int):List[Int] = {
       if(at == end){
         unfold (start)
-      }else if(at+1 == startBy){
+      }else if(getNextValue(at) == startBy){
         List(at)
       }else{
         at :: unfold(at+1)
       }
     }
+    
+    def getNextValue(a:Int) = {
+      if(a == end) start
+      else a+1
+    }
 
-    override def toIterator: Iterator[Int] = unfold(startBy).toIterator
+    override def toIterator: Iterator[Int] = new ShiftedRangeIterator(this)
 
     override def toList: List[Int] = unfold(startBy)
 
@@ -68,14 +73,23 @@ object Algebra {
     override def toString(): String = "ShiftedRange(" + toList + ")"
   }
 
+  class ShiftedRangeIterator(val s:ShiftedRange) extends Iterator[Int]{
+    var currentValue = s.startBy
+
+    def hasNext: Boolean = (s.getNextValue(currentValue) != s.startBy)
+
+    def next(): Int = {
+      val tmp = currentValue
+      currentValue = s.getNextValue(currentValue)
+      tmp
+    }
+  }
+
   // implicit conversion of Range towards a RangeHotRestart
   implicit def instrumentRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
 
   class InstrumentedRange(r:Range){
-    def startBy (start:Int)  = {
-      if(r.contains(start)) ShiftedRange(r.start, r.end,start:Int, r.step)
-      else throw new IllegalArgumentException("Only values between "+r.start+" and "+(r.end-1))
-    }
+    def startBy (start:Int)  =  new ShiftedRange(r.start, r.end,start:Int, r.step)
   }
 
   implicit def InstrumentIntVar(v: IntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
