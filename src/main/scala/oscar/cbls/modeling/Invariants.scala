@@ -33,6 +33,7 @@ with ComplexLogicInvariants
 with AccessInvariants
 with MinMaxInvariants
 with NumericInvariants
+with SetInvariants
 
 trait ClusterInvariants{
 
@@ -159,7 +160,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(varss, ccond,default)
+  def argMax(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(varss, ccond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -168,7 +169,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMinArray(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar
@@ -181,7 +182,6 @@ trait MinMaxInvariants{
    * use this if you only have two variables to max, otherwise, refer to log iplementations
    * */
   def min2(a: IntVar, b: IntVar) = Min2(a: IntVar, b: IntVar)
-
 
   /** Maintains Max(Var(i) | i in cond)
    * @param varss is an array of IntVar, which can be bulked

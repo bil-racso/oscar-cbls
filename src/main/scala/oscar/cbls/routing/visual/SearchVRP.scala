@@ -31,7 +31,7 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
 
 
   def getSelectedNeighborhood(kLimit:Int,n:Neighbor) = panelVRP.getSelectedNeighborhood(kLimit,n)
-  def updateVisualisation(iteration:Int) = panelVRP.updateVisualisation(iteration)
+  def updateVisualisation(iteration:Int, force:Boolean = false) = panelVRP.updateVisualisation(iteration,force)
 
   def run(){
       val boardPanel = panelVRP.boardPanel
@@ -59,6 +59,7 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
         }
         else ended = true
       }
+      updateVisualisation(it,true)
       println("Search ended.")
       val time = getWatch
       JOptionPane.showMessageDialog(null,"Search's strategy is finished. \n" +

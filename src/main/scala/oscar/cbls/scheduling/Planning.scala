@@ -257,16 +257,16 @@ class Planning(val model: Model, val maxduration: Int) {
           }
         }
       }
-      return true
+      true
     }
 
     MarkPathes(from.getStartTask, to.getEndTask)
     if(FindDependenciesToKill(from.getStartTask, to.getEndTask)){
       for (t <- MarkedTasks) t.Mark = false
-      return HardRockDependency()
+      HardRockDependency()
     }else{
       for (t <- MarkedTasks) t.Mark = false
-      return DependenciesCanBeKilled(DependenciesToKill)
+      DependenciesCanBeKilled(DependenciesToKill)
     }
   }
   

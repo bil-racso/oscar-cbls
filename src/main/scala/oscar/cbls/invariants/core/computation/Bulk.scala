@@ -97,7 +97,7 @@ trait Bulker{
         return b
       }
     }
-    return null
+    null
   }
   
   def registerBulk(identifyingName:String, bulk:Bulk){

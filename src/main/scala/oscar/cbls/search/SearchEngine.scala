@@ -239,7 +239,7 @@ trait SearchEngineTrait{
         choice -= a._2
       }
     }
-    return null //should not happen
+    null //should not happen
   }
 }
 

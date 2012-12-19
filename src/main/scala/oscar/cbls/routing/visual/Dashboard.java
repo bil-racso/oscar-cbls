@@ -35,29 +35,29 @@ import java.util.concurrent.Semaphore;
 
 public class Dashboard extends JPanel {
 
-    JButton nextIte = null;
+    private JButton nextIte = null;
     public JButton start = null;
-    public JButton smartStart = null;
-    JScrollPane routeScroll = null;
-    JTextArea route = null;
+    private JButton smartStart = null;
+    private JScrollPane routeScroll = null;
+    private JTextArea route = null;
     public JComboBox heuristic = null;
     public JTextField nbNodes = null;
     public JTextField nbVehicle = null;
     public JComboBox instances = null;
-    JButton makeInstance = null;
-    JButton resetInstance = null;
+    private JButton makeInstance = null;
+    private JButton resetInstance = null;
     public JComboBox neighborhood = null;
     public JTextField klimited = null;
 
-    JCheckBox writeRoute = null;
+    private JCheckBox writeRoute = null;
     public Boolean pause = true;
     public Boolean iteration = false;
-    Semaphore semPause = new Semaphore(0);
-    Semaphore semSyncPause = new Semaphore(0);
+    private final Semaphore semPause = new Semaphore(0);
+    private final Semaphore semSyncPause = new Semaphore(0);
     public Boolean firstIte = true;
-    JPanel neighborhoodPanel = null;
-    JLabel neighborLabel = null;
-    JPanel constraintsPanel = null;
+    private JPanel neighborhoodPanel = null;
+    private JLabel neighborLabel = null;
+    private JPanel constraintsPanel = null;
     JRadioButton strongCButton = null;
     JRadioButton weakCButton = null;
     JTextField strongCField = null;
@@ -66,8 +66,8 @@ public class Dashboard extends JPanel {
     JTextField penaltyWCField = null;
 
 
-    JProgressBar progressBar = new JProgressBar(0, 100);;
-    JFrame frameProgressBar;
+    private final JProgressBar progressBar = new JProgressBar(0, 100);
+    private JFrame frameProgressBar;
 
     /**
      * Thread bounded to the progress bar.
@@ -127,11 +127,11 @@ public class Dashboard extends JPanel {
 
             setNeighborhood(easyMode);
             setProgressBar();
-            setConstraintsPanel(easyMode);
+            setConstraintsPanel();
         }
     }
 
-    public void setConstraintsPanel(boolean easyMode){
+    void setConstraintsPanel(){
         constraintsPanel = new JPanel();
         constraintsPanel.setBackground(Color.white);
         constraintsPanel.setPreferredSize(new Dimension(350,100));
@@ -177,7 +177,7 @@ public class Dashboard extends JPanel {
         add(constraintsPanel);
     }
 
-    public void setProgressBar(){
+    void setProgressBar(){
         frameProgressBar = new JFrame();
         progressBar.setOpaque(true);
         frameProgressBar.setContentPane(progressBar);
@@ -186,7 +186,7 @@ public class Dashboard extends JPanel {
         frameProgressBar.setVisible(false);
     }
 
-    public void setNextIteButton(){
+    void setNextIteButton(){
         nextIte = new JButton("Next iteration");
         nextIte.setBackground(Color.white);
         nextIte.addActionListener(new ActionListener() {
@@ -207,7 +207,7 @@ public class Dashboard extends JPanel {
         add(nextIte);
     }
 
-    public void setNeighborhood(boolean easyMode){
+    void setNeighborhood(boolean easyMode){
 
         neighborLabel = new JLabel();
         neighborLabel.setText("Neighbor : ");
@@ -241,7 +241,7 @@ public class Dashboard extends JPanel {
         add(neighborhoodPanel);
     }
 
-    public void setMakeInstance(){
+    void setMakeInstance(){
         makeInstance = new JButton("Make instance");
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -254,7 +254,7 @@ public class Dashboard extends JPanel {
         add(makeInstance);
     }
 
-    public void setResetInstance(){
+    void setResetInstance(){
 
         resetInstance = new JButton("Reset instance");
         resetInstance.setBackground(Color.white);
@@ -274,11 +274,11 @@ public class Dashboard extends JPanel {
         }
     }
 
-    public void unlock() {
+    void unlock() {
         semPause.release();
     }
 
-    public void lock2(){
+    void lock2(){
         try {
             semSyncPause.acquire();
         }catch(Exception e) {
@@ -290,7 +290,7 @@ public class Dashboard extends JPanel {
         semSyncPause.release();
     }
 
-    public void setRouteLabel(){
+    void setRouteLabel(){
 
         route = new JTextArea("Route:\n");
         route.setSize(new Dimension(400, 100));
@@ -305,7 +305,7 @@ public class Dashboard extends JPanel {
         route.append(line + "\n");
         route.setCaretPosition(route.getDocument().getLength());
     }
-    public void setSmartButton(){
+    void setSmartButton(){
         smartStart =  new JButton("Smart Search");
         smartStart.setBackground(Color.green);
         smartStart.setMaximumSize(new Dimension(100, 50));
@@ -330,7 +330,7 @@ public class Dashboard extends JPanel {
         add(smartStart);
     }
 
-    public void setStartButton(){
+    void setStartButton(){
         start = new JButton("Start");
         start.setBackground(Color.green);
         start.setMaximumSize(new Dimension(100, 50));
@@ -355,14 +355,14 @@ public class Dashboard extends JPanel {
         add(start);
     }
 
-    public void setLogRoute(){
+    void setLogRoute(){
         writeRoute = new JCheckBox();
         writeRoute.setToolTipText("Write routes (debug mode)");
         writeRoute.setBackground(Color.white);
         add(writeRoute);
     }
 
-    public void setHeuristic(){
+    void setHeuristic(){
         heuristic = new JComboBox(new String[]{"RandomNeighbor","NearestNeighbor","Unrouted"});
         heuristic.setName("Heuristic");
         heuristic.setBackground(Color.white);
@@ -374,7 +374,7 @@ public class Dashboard extends JPanel {
         add(heuristicPanel);
     }
 
-    public void setPointsAndVehicles(){
+    void setPointsAndVehicles(){
         JLabel nodes = new JLabel("Points :");
         JLabel vehicles = new JLabel("Vehicles :");
         nbNodes = new JTextField();
@@ -394,7 +394,7 @@ public class Dashboard extends JPanel {
         add(nbInput);
     }
 
-    public void setInstances(Boolean easyMode){
+    void setInstances(Boolean easyMode){
 
         if(!easyMode)
             instances = new JComboBox(new String[]{"Random (several deposits)","Random (single deposit)"});

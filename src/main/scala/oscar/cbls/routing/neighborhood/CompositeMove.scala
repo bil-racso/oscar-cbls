@@ -29,9 +29,11 @@ import oscar.cbls.routing.model.{ClosestNeighborPoints, PositionInRouteAndRouteN
  * The search complexity depends on the complexity of the neighborhoods used.
  */
 object CompositeMove extends SearchEngine{
+  //TODO: propose a more flexible scheme for dictating the succession of neighborhood to consider.
+
   /**
    * Statement to use during the composite search procedure.
-   */
+   */ //TODO: no variable in static class! should be removed.
   var declaration:CompositeDeclaration = null
 
   /**
@@ -64,6 +66,7 @@ object CompositeMove extends SearchEngine{
 
   def nextMove(vrp:VRP with ObjectiveFunction with PositionInRouteAndRouteNr with ClosestNeighborPoints,i:Int
                 ,previousMove:Neighbor):Neighbor = {
+    //TODO: use proper pattern matching on the type of the previous neighbor.
     i match{
       case 0 => {
         val move = OnePointMove.getFirstImprovingMove(vrp,vrp.getKNearest(getkLimited),previousMove)

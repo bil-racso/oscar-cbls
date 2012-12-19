@@ -147,7 +147,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   /*
   * Update the visualisation while strategy's search.
   */
-  def updateVisualisation(iteration:Int) {
+  def updateVisualisation(iteration:Int, force:Boolean =false) {
     val vrp = vrpModel.vrp
     val nodes = vrpModel.towns
     val arrows = vrpModel.arrows
@@ -162,10 +162,12 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       else
         arrows(i).visible = false
     }
-    for (i <- 0 until vrp.N) update(i)
     plotPanel.addPoint(iteration,vrp.ObjectiveVar.value - vrp.AddedObjectiveFunctions.value)
-    if(boardPanel.writeRoute())
+    if(force || iteration%10 == 0){
+      for (i <- 0 until vrp.N) update(i)
+      if(boardPanel.writeRoute())
       boardPanel.updateRouteLabel(vrpModel.getRoute(vrp))
+    }
   }
 
 

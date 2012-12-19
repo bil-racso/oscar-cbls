@@ -22,6 +22,8 @@ package oscar.cbls.routing
  *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
 
+//TODO: a segment exchange neighbor that exchange two segments of two route (or from the same route) heavily relying on the k-nearest and route invariant of course
+
 /**
  * Contains all neighborhoods, like three-opt, two-opt, 1-0 exchange, etc..
  */

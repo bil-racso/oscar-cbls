@@ -85,7 +85,7 @@ object OnePointMove extends SearchEngine{
 
     for (beforeMovedPoint <- 0 until vrp.N startBy hotRestart if vrp.isRouted(beforeMovedPoint)){
       val movedPoint = vrp.Next(beforeMovedPoint).value
-      for(insertionPoint <- relevantNeighborhoodOfNode(beforeMovedPoint) if (vrp.isRouted(insertionPoint)
+      for(insertionPoint <- relevantNeighborhoodOfNode(movedPoint) if (vrp.isRouted(insertionPoint)
         && beforeMovedPoint != insertionPoint && movedPoint != insertionPoint)){
           if(!vrp.isADepot(movedPoint) || (vrp.isADepot(movedPoint) && vrp.onTheSameRoute(movedPoint,insertionPoint))){
             val newObj = getObjAfterMove(beforeMovedPoint,insertionPoint, vrp)
@@ -134,7 +134,7 @@ object OnePointMove extends SearchEngine{
  * @param objAfter the objective value if we performed this one-point-move operator.
  * @param vrp the given VRP problem.
  */
-case class OnePointMove(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+case class OnePointMove(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
   def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter

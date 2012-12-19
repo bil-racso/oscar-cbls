@@ -87,7 +87,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     var current:Int = from
     while(current != to){
       nodeStack = current :: nodeStack
-      current = Next(current).value
+      current = Next(current).value //TODO: out of bound exception HERE!!!
     }
     while(!nodeStack.isEmpty){
       listToUpdate =(Next(current),nodeStack.head)::listToUpdate
@@ -629,7 +629,7 @@ trait PositionInRouteAndRouteNr extends VRP {
    */
   def isBetween(node:Int,fromNode:Int,toNode:Int):Boolean = {
     if(isASegment(fromNode,toNode)){
-      return RouteNr(fromNode).value == RouteNr(node).value  &&
+      RouteNr(fromNode).value == RouteNr(node).value  &&
         PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
           PositionInRoute(node).value < PositionInRoute(toNode).value
     }

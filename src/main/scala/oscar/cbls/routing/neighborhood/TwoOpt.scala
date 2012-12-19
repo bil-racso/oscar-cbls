@@ -133,7 +133,7 @@ object TwoOpt extends SearchEngine{
   * @param objAfter the objective value if we performed this two-opt-move operator.
  * @param vrp the given VRP problem.
  */
-case class TwoOpt(val firstEdge:Int, val secondEdge:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+case class TwoOpt(firstEdge:Int, secondEdge:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
   def comit {TwoOpt.doMove(firstEdge, secondEdge, vrp)}
   def getObjAfter = objAfter

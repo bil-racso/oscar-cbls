@@ -173,7 +173,7 @@ class ModelVRP() extends StopWatch{
     m.propagate()
     cloneHeuristic
     it = 0
-    return this
+    this
   }
 
 

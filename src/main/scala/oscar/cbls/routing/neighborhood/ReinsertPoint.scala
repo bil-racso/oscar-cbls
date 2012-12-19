@@ -116,7 +116,7 @@ object ReinsertPoint extends SearchEngine{
             }
           })
       }
-      return null
+      null
     }
     else{
       var BestObj:Int = vrp.ObjectiveVar.value
@@ -174,7 +174,7 @@ object ReinsertPoint extends SearchEngine{
  * @param objAfter the objective value if we performed this reinsert-point operator.
  * @param vrp the given VRP problem.
  */
-case class ReinsertPoint(val beforeReinsertedPoint:Int, val reinsertedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
   def comit {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
   def getObjAfter = objAfter

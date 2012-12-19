@@ -746,12 +746,15 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def ++ {this := this.getValue(true) +1}
 
-  /**this operators swaps the value of two IntVar*/
+  /**this operator swaps the value of two IntVar*/
   def :=:(v:IntVar){
     val a:Int = v.value
     v:=this.value
     this := a
   }
+
+  /**this operator swaps the value of two IntVar*/
+  def swap(v:IntVar) {this :=: v}
 
   def <==(i:IntInvariant) {i.setOutputVar(this)}
   def <==(i:IntVar) {this <== i.getClone}

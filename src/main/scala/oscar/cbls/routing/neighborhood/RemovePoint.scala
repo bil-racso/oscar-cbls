@@ -80,7 +80,7 @@ object RemovePoint extends SearchEngine{
           return RemovePoint(move._1,move._2,obj,vrp)
         }
       }
-      return null
+      null
     }
     else{
       var BestObj:Int = vrp.ObjectiveVar.value
@@ -134,7 +134,7 @@ object RemovePoint extends SearchEngine{
  * @param objAfter the objective value if we performed this remove-point operator.
  * @param vrp the given VRP problem.
  */
-case class RemovePoint(val beforeRemovedPoint:Int, val removedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+case class RemovePoint(beforeRemovedPoint:Int, removedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
   def comit {RemovePoint.doMove(beforeRemovedPoint, removedPoint, vrp)}
   def getObjAfter = objAfter

@@ -140,7 +140,7 @@ object Swap extends SearchEngine{
  * @param objAfter the objective value if we performed this swap move.
  * @param vrp the given VRP problem.
  */
-case class Swap(val predOfMovedPoint:Int, val PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
+case class Swap(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
   def comit {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
