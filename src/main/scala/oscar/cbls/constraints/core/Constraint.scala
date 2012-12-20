@@ -37,11 +37,9 @@ import oscar.cbls.invariants.lib.numeric.Step
  */
 abstract class Constraint extends IntInvariant{
 
-  //TODO: set v as optional, and return the global violation if omitted
-
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree. */
-  def violation(v:Variable = null):IntVar
+  def violation(v:Variable):IntVar
 
   /**returns the degree of violation of the constraint*/
   def violation:IntVar

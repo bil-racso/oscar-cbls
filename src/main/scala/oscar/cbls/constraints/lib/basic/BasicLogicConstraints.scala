@@ -113,7 +113,6 @@ case class EQ(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
   finishInitialization()
 
-  //todo: supprimer ces invariants
   val Violation:IntVar = Abs(Minus(left,right))
 
   override def violation:IntVar = Violation

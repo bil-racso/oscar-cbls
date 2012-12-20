@@ -84,6 +84,6 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
       }
     }
   }
-  //TODO: checkInternals, attention, on n'est pas sur des indexes et alignements divers.
+  //TODO: checkInternals.
 }
 

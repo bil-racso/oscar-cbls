@@ -34,6 +34,7 @@ import oscar.cbls.invariants.core.computation._
 
 //TODO: test this
 /**This is the standard bin packing constraint
+ * WARNING: not tested!
  * @param items the items, designing the bins they are placed into
  * @param itemsizes the size of the items
  * @param binsizes the max size of the available bins

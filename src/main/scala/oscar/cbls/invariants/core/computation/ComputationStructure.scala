@@ -177,7 +177,6 @@ class Model(override val Verbose:Boolean = false,
   def getSourceVariables(v:Variable):SortedSet[Variable] = {
     var ToExplore: List[PropagationElement] = List(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty[Variable]
-    //TODO: check that this works also in case of cycle.
     while(!ToExplore.isEmpty){
       val head = ToExplore.head
       ToExplore = ToExplore.tail
@@ -481,7 +480,6 @@ object Variable{
 }
 
 object Event{
-  //TODO: on peut pas ettre des params par défaut si on fait plusieurs apply.
 
   def apply(v:Variable,
             action: =>Unit):Event = {
@@ -910,11 +908,10 @@ class IntSetVar(override val model:Model,
       }else{
         //only touched values must be looked for
         for ((v,inserted) <- TouchedValues.reverse){
-          //TODO: we simply replay the history, so if some backtrack was performed, it sucks ;
+          //We simply replay the history. If some backtrack was performed, it is suboptimal
           // eg: if something was propagated to this during a neighbourhood exploration not involving this var
           if (inserted){
             //inserted
-            //TODO: this lazy mechanics might be unnecessary if invar queries it anyway...
             ToPerform = (v, inserted) :: ToPerform
             for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
               val inv:Invariant = e._1.asInstanceOf[Invariant]

@@ -139,8 +139,9 @@ case class Routes(V: Int,
   }
 
   /**
-   * @param nodeID est le noeud dont on a changé le next.
-   */ //TODO: there is a bug somewhere, this does sometime get into a cycle.
+   *
+   * @param nodeID is the node whose next hjas changed
+   */
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID:Int){
     var currentNode = nodeID
     var nextNode = Next(currentNode).value

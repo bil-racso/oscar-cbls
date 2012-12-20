@@ -85,7 +85,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
   override def popFirst(): T = {
     val position = b.getFirst
     val liste = a(position)
-    val toreturn = liste.head //TODO: bug here;: it is possible to get the head of empty list even if !this.isEmpty
+    val toreturn = liste.head
     a(position) = liste.tail
     if (liste.tail.isEmpty){
       b.popFirst()
