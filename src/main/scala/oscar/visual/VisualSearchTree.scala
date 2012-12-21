@@ -52,6 +52,7 @@ import java.awt.Shape
 import oscar.reversible.ReversibleSearchNode
 import ie.ucc.cccc.viz.Viz
 import org.apache.batik.swing.JSVGCanvas
+import org.apache.batik.swing.JSVGScrollPane
 
 
 /**
@@ -64,7 +65,14 @@ class VisualSearchTree(node: ReversibleSearchNode) extends JPanel (new BorderLay
 	node.tree.save("tree.xml")
 	Viz.runViz("configuration.xml", "tree.xml", "res.viz")
     val c = new JSVGCanvas()
-    c.setURI(new File("tree.svg").toURL().toString)
+	//c.setEnableImageZoomInteractor(true)
+	//c.setEnablePanInteractor(true)
+	c.setEnableZoomInteractor(true)
+	//c.setEnableRotateInteractor(true)
+	//c.resetRenderingTransform()
+	c.setURI(new File("tree.svg").toURL().toString)
+	val pane = new JSVGScrollPane(c)
+	pane.setScrollbarsAlwaysVisible(true)
 	add(c)
 }
 

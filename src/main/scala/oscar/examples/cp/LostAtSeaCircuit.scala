@@ -70,6 +70,7 @@ object LostAtSeaCircuit  {
        
        val sol = Array.fill(10)(0) 
        val prob = proba.flatten
+
        cp.maximize(sum(0 until 10)(i => element(prob,path(i)))) subjectTo {
                 
     	  		for (i <- 0 until 9) {
@@ -86,7 +87,7 @@ object LostAtSeaCircuit  {
        
        // ---------------- make a small visu ---------------	
        
-       val f = new VisualFrame("Lost At Sea",1,1)
+       val f = new VisualFrame("Lost At Sea",1,2)
 	   val drawing = new VisualDrawing(true)
 	   f.createFrame("Solution").add(drawing)
 	   val scale = 60
@@ -102,6 +103,10 @@ object LostAtSeaCircuit  {
          val (li1,ci1) = getLineCol(sol(i+1))
          new VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
        }
+       
+
+       
+       
        f.pack()
        
        
