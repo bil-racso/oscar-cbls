@@ -30,6 +30,7 @@ import java.awt.Color
 
 /**
  * P-Median Problem
+ * 
  * @author Pierre Schaus pschaus@gmail.com
  */
 object PMedian extends App {
@@ -93,14 +94,7 @@ object PMedian extends App {
 
   val rnd = new scala.util.Random(0)
   
-  cp.lns(400, 100) {
-    val usedMedians = xsol.toSet.toArray
-    val medians =  (for (i <- 0 until 2) yield  usedMedians(rand.nextInt(nbMed))).toSet
-    val relaxedCust = (for (c <- 0 until nbCust; if rnd.nextInt(100) > 60 && !medians.contains(xsol(c))) yield c).toSet
-    for (c <- relaxedCust){
-      cp.post(x(c) == xsol(c))
-    }
-  }
+  
   
   val costs = Array.tabulate(nbCust)(i => cost(i)(x(i)))
   val totCost = sum(costs) 

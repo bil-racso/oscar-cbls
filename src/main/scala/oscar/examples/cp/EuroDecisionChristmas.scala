@@ -17,42 +17,40 @@
 
 package oscar.examples.cp
 
+
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
-
-
+import oscar.visual._
+import java.awt.Color
 
 /**
- * n-queens model: place n-queens on a chess-board such that they don't attack each other.
- * this program search for all the solutions
- * Using Non Deterministic Search
+ * Try to maximize the number of children receiving a gifts given the number of gifts they asked
+ * and the capacity of Santa (28 gifts).
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Queen extends App {
+object EuroDecisionChistmas {
+	def main(args: Array[String]) {
+		val names = Array("Fulkerson","Dijkstra","Benders","Dantzig","Konig")
+		val weights = Array(10,8,5,5,15) // number of gifts
+		val profit = Array(2,3,0,1,5) // number of children
 		
-      val cp = CPSolver()
-      
-      val n = 8 //number of queens
-      val Queens = 0 until n
-      //variables
-      val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
-      
-      var nbsol = 0
-      cp.solveAll subjectTo {
-    	  cp.add(alldifferent(queens),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } exploration {        
-        for (q <- Queens.suspendable) {
-          cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
-        }
-        nbsol += 1
-      }
-  
-      //print some statistics
-      println("#sol",nbsol)
-      cp.printStats()
-      
-	
+		val cp = CPSolver()
+		
+		val x = Array.fill(names.size)(CPVarBool(cp))
+		val obj = CPVarInt(cp,0 to profit.sum)
+		
+		cp.maximize(obj) subjectTo {
+		  cp.add(binaryknapsack(x, profit, weights, obj, CPVarInt(cp,0 to 28)))
+		} 
+		cp.exploration {
+		 cp.binary(x.asInstanceOf[Array[CPVarInt]])
+		  println("objective:"+obj.value)
+		  for (i <- 0 until names.size; if (x(i).value == 1)) {
+		    println(names(i))
+		  }
+		}
+
+	}
+
 }

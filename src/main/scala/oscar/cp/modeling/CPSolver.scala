@@ -246,6 +246,7 @@ class CPSolver() extends Store() {
                  reset {
                    b()  	  
                    if (!isFailed()) {
+                     solFound()
                      objective.tighten()
                      sc.limitActivated = true
                    }
