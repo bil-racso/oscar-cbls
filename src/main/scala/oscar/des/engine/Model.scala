@@ -46,8 +46,10 @@ abstract class Model[+T] extends DistrSolver[T]{
     processes.addLast(p)
   }
 
-  def setTime(l: Long){clock.emit(l)}
-  def setTime(d: String){clock.emit((new java.util.Date(d)).getTime())}
+  def setTime(l: Long){
+	clock.setTime(l)
+  }
+  def setTime(d: String){setTime((new java.util.Date(d)).getTime())}
   
   def simulate(horizon: Long, verbose: Boolean = true) {
     // make all the process alive

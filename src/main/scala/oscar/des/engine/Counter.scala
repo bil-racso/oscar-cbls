@@ -33,6 +33,20 @@ class PQCounter[A<%Ordered[A]](v: A) extends Signal[A](v){
     require(ev.time >= this())
     pq.add(ev)
   }
+  def setTime(t: A){
+    if ( !pq.isEmpty() ){
+      if ( t == nextTime ){
+    	  generateNext
+      }else if ( t < nextTime){
+    	  emit(t)
+      }else{
+        assert(false)
+      }
+    }else{
+      emit(t)
+    }
+  }
+  def nextTime = pq.peek().time
   def removeEvent(ev: WaitEvent[A]) { pq.remove(ev)}
   override def ===(i:A) = {
     new PQCounterCond(this,i)

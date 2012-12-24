@@ -53,14 +53,14 @@ class Machine3(m : Model[Unit], name: String, machineList : MachineList) extends
 		broken = true
 		
 		if (machineList.notAllBroken()) {
-			suspend 
+			//suspend 
 			//we wait because some of the machines are not yet broken
 			repair() 
 			
 		} else {
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
-			machineList.notBeingRepaired().foreach(ma => if(ma != this) ma.resume)
+			//machineList.notBeingRepaired().foreach(ma => if(ma != this) ma.resume)
 			repair() 
 		}
 	}
