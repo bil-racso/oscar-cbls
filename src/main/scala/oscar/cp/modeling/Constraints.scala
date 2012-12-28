@@ -1,6 +1,6 @@
 /**
  * *****************************************************************************
- * c * This file is part of OscaR (Scala in OR).
+ * This file is part of OscaR (Scala in OR).
  *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,14 +34,23 @@ trait Constraints {
 	 * @param x with x(i) is the bin where the item i is placed
 	 * @param w with w(i) is the size of item i
 	 * @param l with l(j) is the load of bin j
-	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*x[i] for all bins i
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
 	 */
 	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
 		return new BinPacking(x.toArray, w.toArray, l.toArray)
 	}
 
-	def binpackingflow(x : Array[CPVarInt], w : Array[Int], l : Array[CPVarInt]) : Constraint = {
-		return new BinPackingFlow(x, w, l)
+	/**
+	 * Bin-Packing Constraint linking the placement variables of sized items into bins with
+	 * the total size of the bins
+	 * @param x with x(i) is the bin where the item i is placed
+	 * @param w with w(i) is the size of item i
+	 * @param l with l(j) is the load of bin j
+	 * @param c with c(j) is the cardinality of bin j (number of items)
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i and 
+	 */	
+	def binpackingCardinality(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt], c: IndexedSeq[CPVarInt]) : Constraint = {
+		return new BinPackingFlow(x.toArray, w.toArray, l.toArray, c.toArray)
 	}
 
 	/**
@@ -166,55 +175,7 @@ trait Constraints {
 	def element(tab : IndexedSeq[Int], x : CPVarInt, z : Int) : Constraint = {
 		new ElementCst(tab.toArray, x, CPVarInt(x.store, z, z))
 	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : IndexedSeq[CPVarInt], x : CPVarInt) : CPVarInt = {
-		val minval = (for (x <- tab) yield x.getMin) min
-		val maxval = (for (x <- tab) yield x.getMax) max
-		val z = CPVarInt(x.store, minval, maxval)
-		x.store.add(new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
-		z
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer variable
-	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
-		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer
-	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
-		new ElementVarAC(tab.toArray, x, CPVarInt(x.s,z))
-	}
-
-	/**
-	 * Element Constraint, indexing an array of variables by a variable
-	 * @param tab an non empty array n variables
-	 * @param x an index variable with domain defined on (0..n-1)
-	 * @param z an integer
-	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
-	 */
-	def element(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
-		val z_ = new CPVarBool(x.store, z)
-		new ElementVarAC(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
-	}
-
+	
 	/**
 	 * Element 2D Constraint, indexing an integer matrix by two index variables
 	 * @param matrix rectangle matrix of sizes n x m
@@ -227,7 +188,57 @@ trait Constraints {
 		val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
 		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
 		return z
+	}	
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt,l: CPPropagStrength = Weak) : CPVarInt = {
+		val minval = (for (x <- tab) yield x.getMin) min
+		val maxval = (for (x <- tab) yield x.getMax) max
+		val z = CPVarInt(x.store, minval, maxval)
+		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z),l)
+		z
 	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer variable
+	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
+		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
+	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer
+	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
+		new ElementVar(tab.toArray, x, CPVarInt(x.s,z))
+	}
+
+	/**
+	 * Element Constraint, indexing an array of variables by a variable
+	 * @param tab an non empty array n variables
+	 * @param x an index variable with domain defined on (0..n-1)
+	 * @param z an integer
+	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
+	 */
+	def elementVar(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
+		val z_ = new CPVarBool(x.store, z)
+		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
+	}
+
+
 
 	/**
 	 * Sum Constraint
@@ -595,17 +606,30 @@ trait Constraints {
     def spread(x : Iterable[CPVarInt], s: Int, s2 : CPVarInt): Constraint = {
       new Spread(x.toArray,s,s2,true)
     }
+    
+    /**
+     * Let n = x.size-1 = y.size-1
+     * This constraint enforces that x and y are permutations over {0, ... , n}
+     * with y(i) giving the position of number i in x. It means that x(y(i)) = i
+     * Note that this constraint could be enforced with element constraints but it is less efficient
+     * Weak and Strong consistency can be used acting on the filtering of alldifferent constraints
+     * @param x
+     * @param y of same size as x 
+     */
+    def permutation(x : IndexedSeq[CPVarInt], y : IndexedSeq[CPVarInt]): Constraint = {
+      new Permutation(x,y)
+    }    
 
 	def sortedness(x : IndexedSeq[CPVarInt], s : IndexedSeq[CPVarInt], p : IndexedSeq[CPVarInt]) : LinkedList[Constraint] = {
 		val cp = x(0).store
 		val n = x.size
 		val cons = new LinkedList[Constraint]
 		for (i <- 0 until n - 1) {
-			cons.add(element(x, p(i)) <= element(x, p(i + 1)))
+			cons.add(elementVar(x, p(i)) <= elementVar(x, p(i + 1)))
 			cons.add(s(i) <= s(i + 1))
 		}
 		for (i <- 0 until n) {
-			cons.add(element(x.toArray, p(i), s(i)))
+			cons.add(elementVar(x, p(i), s(i)))
 		}
 
 		val minVal : Int = x.map(_.min).min
@@ -623,7 +647,7 @@ trait Constraints {
 
 		for (i <- 1 until n) {
 			// there are less than i values smaller than s(i) 
-			cons.add(element(nbBefore, s(i) - minVal) <= i)
+			cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
 		}
 		cons
 	}

@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement._
 import oscar.cbls.invariants.lib.logic.IntVar2IntVarFun._
 import oscar.cbls.invariants.lib.logic.{IntElement, IntVar2IntVarFun}
-import oscar.cbls.algebra.Algebra._;
+import oscar.cbls.modeling.Algebra._
 
 //TODO: check
 /**Implements the AtMost constraint on IntVar.
@@ -111,12 +111,12 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
    * the number of variable in excess is the max between zero and
    * (the number of variable that have the value of the bound minus the bound).
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of a variable is zero if its value is not the one of a bound.
    * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp

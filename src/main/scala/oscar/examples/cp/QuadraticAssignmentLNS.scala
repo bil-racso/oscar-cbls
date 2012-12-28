@@ -58,8 +58,8 @@ object QuadraticAssignmentLNS {
 
     // State the model and solve it
     val cp = CPSolver()
+    // for each facilities, the location chosen for it
     val x = N map (v => CPVarInt(cp, 0 until n))
-    val D = Array.tabulate(n, n)((i, j) => element(d, x(i), x(j))) //matrix of variables representing the distances
 
     val rand = new scala.util.Random(0)
     val bestSol = Array.fill(n)(0)
@@ -77,18 +77,18 @@ object QuadraticAssignmentLNS {
         cp.failLimit *= 2
       }
       // relax 50% of the variables
-      cp.post((0 until n).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
+      cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
     }
     
     var nbSol = 0
     
-    cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
+    cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
       cp.add(alldifferent(x), Strong)
     } exploration {
         cp.binaryFirstFail(x)
         println("solution"+x.mkString(","))
         // store the current best solution
-        (0 until n).foreach(i => bestSol(i) = x(i).value)
+        N.foreach(i => bestSol(i) = x(i).value)
         nbSol += 1
         if (nbSol == 100) cp.stop() // stop after the 100th solution
     }

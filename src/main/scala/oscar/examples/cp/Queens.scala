@@ -29,8 +29,7 @@ import oscar.cp.core._
  * Using Non Deterministic Search
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Queens  {
-	def main(args: Array[String]) {
+object Queen extends App {
 		
       val cp = CPSolver()
       
@@ -55,5 +54,5 @@ object Queens  {
       println("#sol",nbsol)
       cp.printStats()
       
-	}
+	
 }

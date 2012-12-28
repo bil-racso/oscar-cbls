@@ -27,7 +27,8 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
 case class SuperTask(start: Task, end: Task, override val name: String = "")
@@ -75,7 +76,7 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
   }
 }
 
-case class Task(val duration: IntVar, val planning: Planning, val name: String = "") {
+case class Task(duration: IntVar, planning: Planning, name: String = "") {
   val TaskID: Int = planning.AddTask(this)
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/

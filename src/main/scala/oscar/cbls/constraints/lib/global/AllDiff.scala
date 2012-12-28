@@ -27,7 +27,7 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.core.computation.IntVar._
 
@@ -96,12 +96,12 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
    * to ensure that the constraint is not violated.
    * @return an IntVar that can be incorporated in an invariant.
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The degree of violation of a variable is the number of other variables that have the same value
    * @return an IntVar that can be incorporated in an invariant.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp
@@ -113,8 +113,8 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
 
     for (v <- variables)
-      assert(getViolation(v).value == MyValueCount(v.value+offset)-1
-        ,"error on " + v + " " + getViolation(v).value + " " + MyValueCount(v.value+offset))
+      assert(violation(v).value == MyValueCount(v.value+offset)-1
+        ,"error on " + v + " " + violation(v).value + " " + MyValueCount(v.value+offset))
 
     var MyViol:Int = 0
     for(v <- range)MyViol += 0.max(MyValueCount(v) -1)

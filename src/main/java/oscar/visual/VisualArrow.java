@@ -16,15 +16,9 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.Shape;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-
-import javax.swing.JInternalFrame;
 
 
 /**

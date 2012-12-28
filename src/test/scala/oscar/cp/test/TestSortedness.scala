@@ -38,7 +38,7 @@ class TestSortedness extends FunSuite with ShouldMatchers  {
     val x = Array.tabulate(x_.size)(i => CPVarInt(cp,x_(i)))
     val s = Array.tabulate(x_.size)(i => CPVarInt(cp,s_(i)))
     val p = Array.tabulate(x_.size)(i => CPVarInt(cp,0 until x.size))
-    cp.add(sortedness(x,s,p))
+    cp.add(sortedness(x,s,p),Strong)
     println(p.mkString(","))
     for (i <- 0 until x.size) {
       p(i).value should be(p_(i))
@@ -54,7 +54,7 @@ class TestSortedness extends FunSuite with ShouldMatchers  {
     val x = Array.tabulate(x_.size)(i => CPVarInt(cp,x_(i)))
     val s = Array.tabulate(x_.size)(i => CPVarInt(cp,0 to 100))
     val p = Array.tabulate(x_.size)(i => CPVarInt(cp,p_(i)))
-    cp.add(sortedness(x,s,p))
+    cp.add(sortedness(x,s,p),Strong)
     println(p.mkString(","))
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))

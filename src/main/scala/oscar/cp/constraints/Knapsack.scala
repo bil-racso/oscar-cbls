@@ -21,7 +21,6 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.reversible._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
 import scala.collection.JavaConversions._
 
 
@@ -33,7 +32,7 @@ import scala.collection.JavaConversions._
  * Weights must be > 0, Profit must be non negative.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).s, "Table2") with Constraints {
+class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).s, "Table2") {
 
   def pre(): Boolean = weight.forall(_ > 0) && profit.forall(_ >= 0)
   
@@ -53,10 +52,10 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
   
   
   override def setup(l: CPPropagStrength): CPOutcome = {    
-    if (s.post(binaryknapsack(X,profit,P)) == CPOutcome.Failure) {
+    if (s.post(new BinaryKnapsack(X, profit, P)) == CPOutcome.Failure) {
       return CPOutcome.Failure;
     }
-    if (s.post(binaryknapsack(X,weight,W)) == CPOutcome.Failure) {
+    if (s.post(new BinaryKnapsack(X,weight,W)) == CPOutcome.Failure) {
     		return CPOutcome.Failure;
     }
     if (!pre) {

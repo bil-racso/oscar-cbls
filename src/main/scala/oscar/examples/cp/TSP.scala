@@ -23,28 +23,26 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.util._
 
+import scala.io.Source
 
+/**
+ * Traveling Salesman Problem
+ *
+ * Given a distance matrix between 20 cities,
+ * find the shortest tour visiting each city exactly once.
+ *
+ * @author Pierre Schaus  pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
+ */
 object TSP extends App {
 
   val nCities = 20
-  val Cities = 0 until nCities
+  val Cities  = 0 until nCities
 
   // Data parsing
   // ------------
-  val rand = new scala.util.Random(0)
-
-  // Random coordinates
-  val coord = Array.tabulate(nCities)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
-
-  // Computes the distance between two cities
-  def getDist(p1: (Int, Int), p2: (Int, Int)): Int = {
-    val dx = p2._1 - p1._1
-    val dy = p2._2 - p1._2
-    math.sqrt(dx * dx + dy * dy).toInt
-  }
-
-  // Builds the distance matrix
-  val distMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
+  val lines = Source.fromFile("data/tsp.txt").getLines.toList
+  val distMatrix = lines.grouped(nCities).map(i => i.map(j => j.toInt).toArray).toArray
 
   // Model
   // -----
@@ -80,13 +78,15 @@ object TSP extends App {
     // Greedy heuristic
     while (!allBounds(succ)) {
 
-      // Selects the not yet bound city with the smallest number of possible successors
+      // Select the not yet bound city with the smallest number of possible successors
       val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
-      // Selects the closest successors of the city x
+      // Select the closest successors of the city x
       val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
 
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
+    
+    //println("best sol")
   }
 
   cp.printStats()

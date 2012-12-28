@@ -26,12 +26,12 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntSetVar._
+import util.Random
 ;
 
 //Beware: this requires a lot of memory, so I use to put this in the command line.
@@ -79,7 +79,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val tabulength = 10
 
     val m: Model = new Model(false,false,true)
-    val it:Iterator[Int] = getRandomPermutation(N)
+    val it = Random.shuffle(range.toList).iterator
     val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
     val c:ConstraintSystem = new ConstraintSystem(m)
@@ -92,7 +92,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     c.close()
 
-    val ViolationArray:Array[IntVar] = (for(q <- range) yield c.getViolation(Queens(q))).toArray
+    val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
     val Tabu:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
     val It = new IntVar(m,0,Int.MaxValue,1,"it")
     val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
@@ -114,7 +114,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
       val q1 = selectFirst(NonTabuMaxViolQueens.value)
       val q2 = selectFirst(NonTabuQueens.value, (q:Int) => {
-        q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
+        q!=q1 && c.swapVal(Queens(q1),Queens(q)) < oldviolation
       })
 
       Queens(q1) :=: Queens(q2)

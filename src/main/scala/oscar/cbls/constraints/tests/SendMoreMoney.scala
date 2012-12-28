@@ -29,10 +29,9 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -103,7 +102,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     c.close()
 
     // search variables
-    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.getViolation(d(l.id))).toArray
+    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
     val Tabu:Array[IntVar] = (for (i <- Letter.list) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = new IntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)
@@ -115,11 +114,11 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // search
     while((c.Violation.value > 0) && (It.value < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter.value)
-      val l2 = selectMin(NonTabuLetter.value)(i => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
+      val l2 = selectMin(NonTabuLetter.value)(i => c.swapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation.toString +" "+c.Violation.value+" "+c.getSwapVal(d(l1),d(l2)))
+      println(c.Violation.toString +" "+c.Violation.value+" "+c.swapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
       //r(Carry.c1.id).setValue((d(Letter.D.id).value+d(Letter.E.id).value) / 10)

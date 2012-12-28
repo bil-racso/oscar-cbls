@@ -20,10 +20,10 @@ package oscar.examples.cp
 import oscar.cp.modeling._
 import oscar.cp.constraints._
 import oscar.cp.core._
-
-
-import scala.io.Source;
+import scala.io.Source
 import scala.collection.mutable.Map
+import oscar.visual.VisualFrame
+import oscar.visual.VisualSearchTree
 
 /** 
  * Parcel Shipment Problem (found in the examples of Jacop).
@@ -54,6 +54,7 @@ object ParcelShipment {
 	    val start = 0 // start city
 	    
 	    val cp = CPSolver()
+	    cp.recordTree
 	    val succ = Array.tabulate(n)(c => CPVarInt(cp,0 until n)) // successor
 	    val load = Array.tabulate(n)(c => CPVarInt(cp,0 to maxLoad)) // load(i) is the load in the ship when leaving city i
 	    val totDist = CPVarInt(cp,0 to distance.flatten.sum)
@@ -63,7 +64,7 @@ object ParcelShipment {
 	      
 	      cp.add(load(start) == 0) // start initially empty
 	      for (i <- 0 until n) {
-	        cp.add(element(load,succ(i)) == (load(i) + element(toLoad,succ(i))))
+	        cp.add(elementVar(load,succ(i),load(i) + toLoad(succ(i))))
 	      }
 	      cp.add(sum(0 until n)(i => element(distance(i),succ(i))) == totDist)
 	      cp.add(circuit(succ),Strong)
@@ -71,6 +72,11 @@ object ParcelShipment {
 	    } exploration {
 	      cp.binaryFirstFail(succ)
 	    }
+	    
+	    val f = new VisualFrame("ParcelShipment",1,1) 
+	    val w = f.createFrame("Tree")
+        w.add(new VisualSearchTree(cp))
+        w.pack()
 	    
 	    cp.printStats()
 

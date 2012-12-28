@@ -36,7 +36,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import scala.swing.Component
 import scala.swing.Swing
 import javax.swing.ImageIcon
@@ -168,7 +168,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     for (q <- range){c.registerForViolation(Queens(q))}
     c.close()
     
-    val viol:Array[IntVar] = (for(q <- range) yield c.getViolation(Queens(q))).toArray
+    val viol:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
 
     for (q<-range){
       Event(Queens(q),viol(q),(oldqueenposition:Int) => {
@@ -190,7 +190,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     while((c.Violation.value > 0) && (it < MaxIT) && !stopRequested){
       val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
-      val (q1,q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
+      val (q1,q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.swapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) = it + tabulength

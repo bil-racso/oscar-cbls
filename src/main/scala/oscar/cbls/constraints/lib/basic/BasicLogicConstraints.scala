@@ -24,7 +24,8 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
@@ -44,11 +45,11 @@ case class LE(left:IntVar, right:IntVar) extends Constraint {
 
   /**the violation is Max(0,right-left)
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of each variable is equal to the global violation of the constraint
    */
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
 
 /**
@@ -69,10 +70,10 @@ case class L(left:IntVar, right:IntVar) extends Constraint{
 
   /**the violation is Max(0,right-left + 1)
    */
-  override def getViolation = Violation
+  override def violation = Violation
   /**The violation of each variable is equal to the global violation of the constraint
    */
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
 
 /**
@@ -99,9 +100,9 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
   }
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def getViolation = Violation
+  override def violation = Violation
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
 
 /**constraints left == right
@@ -112,9 +113,8 @@ case class EQ(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
   finishInitialization()
 
-  //todo: supprimer ces invariants
   val Violation:IntVar = Abs(Minus(left,right))
 
-  override def getViolation:IntVar = Violation
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation:IntVar = Violation
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }

@@ -19,12 +19,11 @@ package oscar.reversible;
 
 import java.util.Random
 import java.util.Stack
-
-
 import scala.util.continuations._
-import oscar.search.DummyObjective;
-import oscar.search.Objective;
+import oscar.search.DummyObjective
+import oscar.search.Objective
 import oscar.search._
+import oscar.search.Tree
 
 
 
@@ -51,6 +50,15 @@ class ReversibleSearchNode {
     var solveOne = false
     private var limit = Int.MaxValue
     private var tLimit = Int.MaxValue
+    
+    // tree visu
+    val tree = new Tree(false)
+    var currParent = 0
+    var nodeMagic = 0
+    def recordTree() {
+	  tree.clear()
+	  tree.record = true
+	}
     
     def failLimit = limit
     def failLimit_= (lim: Int) {
@@ -102,7 +110,9 @@ class ReversibleSearchNode {
 	def getTrail() = trail
 	
 	
-	def solFound() = {}
+	def solFound() = {
+	  tree.addSuccess(currParent)
+	}
 
     /**
      * Store the current state of the node on a stack.
@@ -147,11 +157,19 @@ class ReversibleSearchNode {
 	def afterBranch() = {}
 	
 	def branch(left: => Unit)(right: => Unit) = {
+	  val idleft = nodeMagic + 1
+      val idright = nodeMagic + 2
+      nodeMagic += 2
+      tree.addBranch(currParent, idleft, "", "")
+      tree.addBranch(currParent, idright, "", "") 
+	  
+	  
       shift { k: (Unit => Unit) =>
         if (!isFailed) {
           sc.addChoice(new MyContinuation("right", {
                            if (!isFailed) {
                              beforeBranch()
+                             currParent = idright
                              right
                              afterBranch()
                            }
@@ -159,6 +177,7 @@ class ReversibleSearchNode {
         }
         if (!isFailed()) {
           beforeBranch()
+          currParent = idleft
           left 
           afterBranch()
         }

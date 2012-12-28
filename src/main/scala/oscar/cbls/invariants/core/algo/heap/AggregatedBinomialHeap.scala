@@ -72,7 +72,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
     val positionToReturn = b.popFirst()
     val toreturn = a(positionToReturn)
     a(positionToReturn) = List.empty
-    msize -= toreturn.size
+    msize -= toreturn.length
     assert(!toreturn.isEmpty)
     toreturn
   }

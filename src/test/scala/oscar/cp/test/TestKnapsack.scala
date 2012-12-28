@@ -45,6 +45,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	  //println("W:"+W)
 	  //println("weight:"+weight.mkString(","))
 	  //println("profit:"+profit.mkString(","))
+	  cp.silent = true
 	  cp.maximize(P) subjectTo {
 	    cp.add(binaryknapsack(X,profit,P))
 	    cp.add(binaryknapsack(X,weight,W))
@@ -72,7 +73,6 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	
     
     for (i <- 0 to 100) {
-     println("---i:"+i)
 	 val res1 = solve(20,false,i)
 	 val res2 = solve(20,true,i)
 	 res1 should be (res2)

@@ -26,7 +26,8 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra
+import oscar.cbls.modeling.Algebra._
 import oscar.visual.{Plot2D, VisualFrame}
 ;
 
@@ -256,16 +257,16 @@ class Planning(val model: Model, val maxduration: Int) {
           }
         }
       }
-      return true
+      true
     }
 
     MarkPathes(from.getStartTask, to.getEndTask)
     if(FindDependenciesToKill(from.getStartTask, to.getEndTask)){
       for (t <- MarkedTasks) t.Mark = false
-      return HardRockDependency()
+      HardRockDependency()
     }else{
       for (t <- MarkedTasks) t.Mark = false
-      return DependenciesCanBeKilled(DependenciesToKill)
+      DependenciesCanBeKilled(DependenciesToKill)
     }
   }
   
