@@ -19,7 +19,6 @@
 
 package oscar.cp.mem.tsp
 
-import oscar.cp.mem.tsp.TSPParser.parseCoordinates
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.util._
@@ -40,21 +39,12 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroA500.tsp")
+  val coord = TSPUtils.parseCoordinates("data/TSP/kroD100.tsp")
+  val realMatrix = TSPUtils.buildRealDistMatrix(coord)
+  val distMatrix = TSPUtils.buildDistMatrix(coord)
 
-  val nCities = coord.size
-  val Cities = 0 until nCities
-
-  // Computes the distance between two cities
-  def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
-    val dx = p2._1 - p1._1
-    val dy = p2._2 - p1._2
-    math.sqrt(dx * dx + dy * dy)
-  }
-
-  // Builds the distance matrix
-  val realDistMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
-  val distMatrix = realDistMatrix.map(_.map(i => round(i).toInt))
+  val nCities = distMatrix.size
+  val Cities  = 0 until nCities
 
   // Model
   // -----
@@ -69,22 +59,18 @@ object myTSP extends App {
 
   // Visualization
   // -------------
-  val visu = new VisualRelax(coord, realDistMatrix)
+  val visu = new VisualRelax(coord, realMatrix)
 
   // LNS
   // ---
-  case class Sol(pred: Array[Int], succ: Array[Int], dist: Int)
+  case class Sol(pred: Array[Int], succ: Array[Int])
 
   var currentSol: Sol = null
   var nStarts = 1
-  var p = 20
+  val p = 20
 
   cp.lns(100, 1000) {
-
     nStarts += 1
-    if (nStarts == 2) {
-      println("Start LNS")
-    }
     relaxVariables(clusterRelax(p))
   }
 
@@ -97,29 +83,8 @@ object myTSP extends App {
     Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
   }
 
-  def pathRelax(p: Int): Array[Boolean] = {
-
-    val c = nextInt(nCities)
-    val selected = Array.fill(nCities)(false)
-    selected(c) = true
-
-    for (i <- 1 until p) {
-
-      val sel = Cities.filter(i => selected(i))
-      val rem = Cities.filter(i => !selected(i))
-
-      val c = sel(nextInt(sel.size))
-      val sorted = rem.sortBy(i => distMatrix(c)(i))
-
-      val r = pow(nextFloat, 15)*sorted.size   
-      selected(sorted(r.floor.toInt)) = true
-      //selected(sorted) = true
-    }
-    selected
-  }
-
   def solFound() = {
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value))
     visu.updateRoute(currentSol.pred)
     visu.updateDist()
   }
@@ -136,7 +101,7 @@ object myTSP extends App {
       val p = currentSol.pred(c)
       val s = currentSol.succ(c)
 
-      if (!selected(currentSol.pred(c)) && !selected(currentSol.succ(c))) {
+      if (!selected(p) && !selected(s)) {
         constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
         constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
       }
@@ -167,7 +132,6 @@ object myTSP extends App {
   // ------
   println("Searching...")
   cp.exploration {
-
     RoutingUtils.regretHeuristic(cp, pred, distMatrix)
     solFound()
   }

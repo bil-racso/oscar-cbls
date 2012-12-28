@@ -1,6 +1,5 @@
 package oscar.cp.mem.tsp
 
-import oscar.cp.mem.tsp.TSPParser.parseCoordinates
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -16,41 +15,33 @@ import oscar.cp.mem.pareto.ParetoMinSet
 import java.io._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
+import oscar.cp.mem.pareto.NewPareto
+import oscar.cp.mem.pareto.MOSol
 
-class FirstPhaseTSP {
-  
-  case class MOSol(pred: Array[Int], succ: Array[Int], dist1: Int, dist2: Int)
-  case class Sol(pred: Array[Int], succ: Array[Int], dist: Int)
+object FirstPhaseTSP {
 
-  val nObjs = 2
-  val Objs = 0 until nObjs
-  val pareto = ParetoMinSet[MOSol]()
-  
-  val used = Array.fill(100)(Array.fill(100)(false))
-  
-  def solve(alpha: Int, instance1: String, instance2: String): MOSol = {
+  case class Sol(pred: Array[Int], succ: Array[Int])
 
-    // Data parsing
-    // ------------
-    val coord1 = parseCoordinates(instance1)
-    val coord2 = parseCoordinates(instance2)
+  def main(args: Array[String]) {
 
-    val nCities = coord1.size
-    val Cities = 0 until nCities
+    val pareto: NewPareto[Sol] = NewPareto(2)
 
-    // Computes the distance between two cities
-    def getDist(p1: (Int, Int), p2: (Int, Int)): Double = {
-      val dx = p2._1 - p1._1
-      val dy = p2._2 - p1._2
-      math.sqrt(dx * dx + dy * dy)
+    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
+    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp")
+
+    for (alpha <- 0 to 100) {
+      val x = search(alpha, distMatrix1, distMatrix2)
+      pareto.insert(x)
+      println(x.objs.mkString(" "))
     }
 
-    // Builds the distance matrix
-    val realDistMatrix1 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord1(i), coord1(j)))
-    val realDistMatrix2 = Array.tabulate(nCities, nCities)((i, j) => getDist(coord2(i), coord2(j)))
+    TSPUtils.writeSet("firstPhase.txt", pareto.map(_.sol.pred).toArray)
+  }
 
-    val distMatrix1 = realDistMatrix1.map(_.map(math.round(_).toInt))
-    val distMatrix2 = realDistMatrix2.map(_.map(math.round(_).toInt))
+  def search(alpha: Int, distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]): MOSol[Sol] = {
+
+    val nCities = distMatrix1.size
+    val Cities = 0 until nCities
 
     val dist = Array.tabulate(nCities)(i => {
       Array.tabulate(nCities)(j => {
@@ -58,9 +49,10 @@ class FirstPhaseTSP {
       })
     })
 
-    // Model
-    // -----
+    // MODEL
+    // --------------------
     val cp = new CPSolver()
+    cp.silent = true
 
     // Successors
     val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
@@ -69,45 +61,14 @@ class FirstPhaseTSP {
     // Total distance
     val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
 
-    // Visualization
-    // -------------
-    //val visu: VisualRelax = new VisualRelax(coord1, dist.map(_.map(_.toDouble)))
-
     // LNS
-    // ---
+    // --------------------
     var currentSol: Sol = null
+    val cycleBreaker = true
+    val p = 15
 
-    var nRestart = 1
-    var nStagnation = 0
-    var stagnation = false
-
-    val pMin = 15
-    val pMax = 60
-    var p = pMin
-
-    cp.silent = true
-    cp.lns(400, 3000) {
-
-      nRestart += 1
-
-      handleStagnation()
-
+    cp.lns(50, 2500) {
       relaxVariables(pathRelax(p))
-    }
-
-    def handleStagnation() {
-
-      if (stagnation) nStagnation += 1
-      else {
-        stagnation = true
-        nStagnation = 0
-        p = pMin + (p - pMin) / 2
-      }
-
-      if (nStagnation == 20) {
-        nStagnation = 0
-        if (p < pMax) p += 1
-      }
     }
 
     def pathRelax(p: Int): Array[Boolean] = {
@@ -129,27 +90,40 @@ class FirstPhaseTSP {
       selected
     }
 
+    def clusterRelax(p: Int): Array[Boolean] = {
+
+      val c = nextInt(nCities)
+      val sortedByDist = Cities.sortBy(i => dist(c)(i))
+      val threshold = dist(c)(sortedByDist(p))
+
+      Array.tabulate(nCities)(i => dist(c)(i) <= threshold)
+    }
+
     def solFound() = {
-      stagnation = false
-      currentSol = new Sol(pred.map(_.value), succ.map(_.value), totDist.value)
-      //visu.updateRoute(currentSol.pred)
-      //visu.updateDist()
+      currentSol = new Sol(pred.map(_.value), succ.map(_.value))
     }
 
     def relaxVariables(selected: Array[Boolean]) {
 
-      //visu.updateSelected(selected)
-      //visu.updateRestart(nRestart)
-
       val constraints: Queue[Constraint] = Queue()
 
       for (c <- Cities; if !selected(c)) {
-        if (!selected(currentSol.pred(c)))
-          constraints enqueue (pred(c) == currentSol.pred(c))
-        if (!selected(currentSol.succ(c)))
-          constraints enqueue (succ(c) == currentSol.succ(c))
+
+        val p = currentSol.pred(c)
+        val s = currentSol.succ(c)
+
+        if (cycleBreaker) {
+          if (!selected(p) && !selected(s)) {
+            constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+            constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+          }
+        } else {
+          if (!selected(p)) constraints enqueue (pred(c) == p)
+          if (!selected(s)) constraints enqueue (succ(c) == s)
+        }
+
+        cp.post(constraints.toArray)
       }
-      cp.post(constraints.toArray)
     }
 
     // Constraints
@@ -178,13 +152,8 @@ class FirstPhaseTSP {
       solFound()
     }
 
-    var dist1 = 0
-    for (i <- Cities) dist1 += distMatrix1(i)(currentSol.pred(i))
-
-    var dist2 = 0
-    for (i <- Cities) dist2 += distMatrix2(i)(currentSol.pred(i))
-
-    return new MOSol(currentSol.pred, currentSol.succ, dist1, dist2)
+    val dist1 = TSPUtils.computeDist(currentSol.pred, distMatrix1)
+    val dist2 = TSPUtils.computeDist(currentSol.pred, distMatrix2)
+    return MOSol(Sol(currentSol.pred, currentSol.succ), dist1, dist2)
   }
-
 }
