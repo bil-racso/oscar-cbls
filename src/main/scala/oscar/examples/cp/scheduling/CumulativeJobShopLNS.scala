@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
  * OscaR is free software: you can redistribute it and/or modify
@@ -18,6 +19,7 @@
 
 package oscar.examples.cp.scheduling
 
+import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -34,129 +36,132 @@ import scala.math.max
 
 object CumulativeJobShopLNS extends App {
 
-	// Parsing		
-	// -----------------------------------------------------------------------
+  // Parsing		
+  // -----------------------------------------------------------------------
 
-	var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
+  var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
 
-	val nJobs = lines.head.trim().split(" ")(0).toInt
-	val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-	val nResources = lines.head.trim().split(" ")(2).toInt
-	val capacity = lines.head.trim().split(" ")(3).toInt
+  val nJobs = lines.head.trim().split(" ")(0).toInt
+  val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
+  val nResources = lines.head.trim().split(" ")(2).toInt
+  val capacity = lines.head.trim().split(" ")(3).toInt
 
-	val nActivities = nJobs * nTasksPerJob
+  val nActivities = nJobs * nTasksPerJob
 
-	val Activities = 0 until nActivities
-	val Jobs = 0 until nJobs
-	val Resources = 0 until nResources
+  val Activities = 0 until nActivities
+  val Jobs = 0 until nJobs
+  val Resources = 0 until nResources
 
-	println("#Jobs       : " + nJobs)
-	println("#Activities : " + nActivities)
-	println("#Resources  : " + nResources)
-	println("Capacity    : " + capacity)
+  println("#Jobs       : " + nJobs)
+  println("#Activities : " + nActivities)
+  println("#Resources  : " + nResources)
+  println("Capacity    : " + capacity)
 
-	lines = lines.drop(1)
+  lines = lines.drop(1)
 
-	val job      = new Array[Int](nActivities)
-	val resource = new Array[Int](nActivities)
-	val duration = new Array[Int](nActivities)
+  val job = new Array[Int](nActivities)
+  val resource = new Array[Int](nActivities)
+  val duration = new Array[Int](nActivities)
 
-	for (i <- Activities) {
+  for (i <- Activities) {
 
-		val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
+    val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
 
-		job(i)      = l(0)
-		resource(i) = l(1)
-		duration(i) = l(2)
+    job(i) = l(0)
+    resource(i) = l(1)
+    duration(i) = l(2)
 
-		lines = lines.drop(1)
-	}
+    lines = lines.drop(1)
+  }
 
-	// Modeling	
-	// -----------------------------------------------------------------------
+  // Modeling	
+  // -----------------------------------------------------------------------
 
-	val horizon = duration.sum
-	val cp = new CPScheduler(horizon)
+  val horizon = duration.sum
+  val cp = new CPScheduler(horizon)
 
-	// Activities & Resources
-	val activities = Array.tabulate(nActivities)(i => Activity(cp, duration(i)))
-	val resources  = Array.tabulate(nResources)(r => MaxResource(cp, 2))
+  // Activities & Resources
+  val activities = Array.tabulate(nActivities)(i => Activity(cp, duration(i)))
+  val resources = Array.tabulate(nResources)(r => MaxResource(cp, 2))
 
-	// Resource allocation
-	for (i <- Activities)
-		activities(i) needs 1 ofResource resources(resource(i))
+  // Resource allocation
+  for (r <- Resources) {
+    val fActivities = Activities.filter(resource(_) == r)
+    val cumul = fActivities.map(i => CumulativeActivity(activities(i), r, 1)).toArray
+    cp.add(new NewMaxCumulative(cp, cumul, 2, r))
+  }
 
-	// The makespan to minimize
-	val makespan = maximum(0 until nActivities)(i => activities(i).end)
+  // The makespan to minimize
+  val makespan = maximum(0 until nActivities)(i => activities(i).end)
 
-	// Visualization  
-	// -----------------------------------------------------------------------
+  // Visualization  
+  // -----------------------------------------------------------------------
 
-	val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
-	val colors = VisualUtil.getRandomColorArray(nResources)
+  val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
+  val colors = VisualUtil.getRandomColorArray(nResources)
 
-	val gantt = new VisualGanttChart(activities, i => job(i), colors = i => colors(resource(i)))
-	val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
+  val gantt = new VisualGanttChart(activities, i => job(i), colors = i => colors(resource(i)))
+  val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
 
-	frame.createFrame("Gantt chart").add(gantt)
-	for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
-	frame.pack
+  frame.createFrame("Gantt chart").add(gantt)
+  for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
+  frame.pack
 
-	// Constraints & Search
-	// -----------------------------------------------------------------------
+  // Constraints & Search
+  // -----------------------------------------------------------------------
 
-	val bestSol : Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
-	var precedences : Array[(Int, Int)] = null
+  val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
+  var precedences: Array[(Int, Int)] = null
 
-	cp.lns(2000, 2000) {
-		
-		val temp = cp.failLimit
-		
-		// Adaptative LNS
-		if (!cp.isLastLNSRestartCompleted) {
-			cp.failLimit = (cp.failLimit * 110)/100
-		} else {
-			cp.failLimit = max(10, (cp.failLimit * 90)/100)
-		}
+  cp.lns(2000, 2000) {
 
-		val selected : Array[Boolean] = Array.fill(bestSol.size)(false)
+    val temp = cp.failLimit
 
-		// Selected are relaxed (20%)
-		for (i <- 0 until bestSol.size)
-			if (nextFloat < 0.1)
-				selected(i) = true
+    // Adaptative LNS
+    if (!cp.isLastLNSRestartCompleted) {
+      cp.failLimit = (cp.failLimit * 110) / 100
+    } else {
+      cp.failLimit = max(10, (cp.failLimit * 90) / 100)
+    }
 
-		val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
-		val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
+    val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
 
-		cp.post(constraints.asInstanceOf[Array[Constraint]])
-	}
+    // Selected are relaxed (20%)
+    for (i <- 0 until bestSol.size)
+      if (nextFloat < 0.1)
+        selected(i) = true
 
-	cp.minimize(makespan) subjectTo {
+    val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
+    val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
 
-		for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
-			activities(i) endsBeforeStartOf activities(i + 1)
+    cp.post(constraints.asInstanceOf[Array[Constraint]])
+  }
 
-	} exploration {
+  cp.minimize(makespan) subjectTo {
 
-		cp.binaryFirstFail(activities.map(_.start))
-		//cp.setTimesSearch(activities)
+    for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
+      activities(i) endsBeforeStartOf activities(i + 1)
 
-		// Best so far solution
-		for (t <- Activities) {
+  } exploration {
 
-			bestSol(t).start = activities(t).est
-			bestSol(t).end = activities(t).lct
-			bestSol(t).inc = 1
-			bestSol(t).machine = resource(t)
-		}
+    cp.binaryFirstFail(activities.map(_.start))
+    //cp.setTimesSearch(activities)
 
-		precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+    // Best so far solution
+    for (t <- Activities) {
 
-		for (p <- profiles) p.update(1, 20)
-		gantt.update(1, 20)
-	}
+      bestSol(t).start = activities(t).est
+      bestSol(t).end = activities(t).lct
+      bestSol(t).inc = 1
+      bestSol(t).machine = resource(t)
+    }
 
-	cp.printStats()
+    precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+
+    for (p <- profiles) p.update(1, 20)
+    gantt.update(1, 20)
+  }
+
+  cp.printStats()
 }
 

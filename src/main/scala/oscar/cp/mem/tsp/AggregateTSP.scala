@@ -27,6 +27,8 @@ object AggregateTSP {
   val pareto = ParetoMinSet[MOSol]()
   
   val used = Array.fill(100)(Array.fill(100)(false))
+  
+  var nR = 0
 
   def main(args: Array[String]) {
 
@@ -41,7 +43,9 @@ object AggregateTSP {
     getUsedEdges(pareto.points.map(_.sol.pred))
     
     solveMO("data/TSP/kroA100.tsp", "data/TSP/kroB100.tsp")
-    println(pareto.points.map(p => p.obj1 + " " + p.obj2).mkString("\n"))
+    //println(pareto.points.map(p => p.obj1 + " " + p.obj2).mkString("\n"))
+    
+    println("RESTART : " + nR)
   }
   
   def getUsedEdges(points: Array[Array[Int]]) { 
@@ -274,7 +278,7 @@ object AggregateTSP {
     cp.lns(1000000, 2000) {
       
       val t1 = System.currentTimeMillis()
-      if (t1-t0 > 3600000) cp.stop()
+      if (t1-t0 > 1800000) cp.stop()
 
       // First LNS
       if (firstLns) {
@@ -283,6 +287,7 @@ object AggregateTSP {
       }
 
       nRestart += 1
+      nR = nRestart
 
       // Adds new solutions    
       if (newSol != null) {

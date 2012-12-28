@@ -40,7 +40,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = parseCoordinates("data/TSP/kroA100.tsp")
+  val coord = parseCoordinates("data/TSP/kroA500.tsp")
 
   val nCities = coord.size
   val Cities = 0 until nCities
@@ -59,7 +59,7 @@ object myTSP extends App {
   // Model
   // -----
   val cp = new CPSolver()
-  
+
   // Successors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Predecessors
@@ -79,13 +79,12 @@ object myTSP extends App {
   var nStarts = 1
   var p = 20
 
-  cp.lns(100, 3000) {
-       
+  cp.lns(100, 1000) {
+
     nStarts += 1
     if (nStarts == 2) {
       println("Start LNS")
     }
-
     relaxVariables(clusterRelax(p))
   }
 
@@ -105,16 +104,16 @@ object myTSP extends App {
     selected(c) = true
 
     for (i <- 1 until p) {
-      
+
       val sel = Cities.filter(i => selected(i))
       val rem = Cities.filter(i => !selected(i))
-      
+
       val c = sel(nextInt(sel.size))
-      val sorted = rem.sortBy(i => distMatrix(c)(i)).head
-      
-      //val r = pow(nextFloat, 15)*sorted.size   
-      //selected(sorted(r.floor.toInt)) = true
-      selected(sorted) = true
+      val sorted = rem.sortBy(i => distMatrix(c)(i))
+
+      val r = pow(nextFloat, 15)*sorted.size   
+      selected(sorted(r.floor.toInt)) = true
+      //selected(sorted) = true
     }
     selected
   }
@@ -133,21 +132,14 @@ object myTSP extends App {
     val constraints: Queue[Constraint] = Queue()
 
     for (c <- Cities; if !selected(c)) {
-           
+
       val p = currentSol.pred(c)
       val s = currentSol.succ(c)
-      
-      if (true) {    
-	    if (!selected(currentSol.pred(c)) && !selected(currentSol.succ(c))) {
-	      constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
-	      constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
-	    }
-      } else {
-        if (!selected(currentSol.pred(c)))
-          constraints enqueue (pred(c) == currentSol.pred(c))
-        if (!selected(currentSol.succ(c)))
-          constraints enqueue (succ(c) == currentSol.succ(c))
-      }   
+
+      if (!selected(currentSol.pred(c)) && !selected(currentSol.succ(c))) {
+        constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+        constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+      }
     }
     cp.post(constraints.toArray)
   }
@@ -158,9 +150,9 @@ object myTSP extends App {
 
     cp.add(new ChannelingPredSucc(cp, pred, succ))
 
-    cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
-    
+    cp.add(circuit(succ))
+    cp.add(circuit(pred))
+
     //cp.add(new MyCircuit(cp, succ), Strong)
     //cp.add(new MyCircuit(cp, pred), Strong)
 
@@ -175,9 +167,8 @@ object myTSP extends App {
   // ------
   println("Searching...")
   cp.exploration {
-    
+
     RoutingUtils.regretHeuristic(cp, pred, distMatrix)
-    //RoutingUtils.minDomDistHeuristic(cp, pred, succ, distMatrix)
     solFound()
   }
 
