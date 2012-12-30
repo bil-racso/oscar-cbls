@@ -30,6 +30,7 @@ package object modeling extends Constraints {
     val WeakTighten = Value("weak tighten")
     val StrongTighten = Value("strong tighten")
     val NoTighten = Value("no tighten")
+    val MaintainTighten = Value("maintain tighten")
   }
   import TightenType._
 

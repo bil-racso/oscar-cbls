@@ -39,7 +39,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = TSPUtils.parseCoordinates("data/TSP/kroD100.tsp")
+  val coord = TSPUtils.parseCoordinates("data/TSP/kroB100.tsp")
   val realMatrix = TSPUtils.buildRealDistMatrix(coord)
   val distMatrix = TSPUtils.buildDistMatrix(coord)
 
@@ -49,6 +49,7 @@ object myTSP extends App {
   // Model
   // -----
   val cp = new CPSolver()
+  cp.startByLNS = false
 
   // Successors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
@@ -67,9 +68,9 @@ object myTSP extends App {
 
   var currentSol: Sol = null
   var nStarts = 1
-  val p = 20
-
-  cp.lns(100, 1000) {
+  val p = 15
+  
+  cp.lns(100, 3000) {
     nStarts += 1
     relaxVariables(clusterRelax(p))
   }

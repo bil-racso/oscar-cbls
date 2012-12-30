@@ -23,19 +23,16 @@ object Hypervolume {
 
   def main(args: Array[String]) {
     
-    val fullSets = (SetParser.parseMultiSet("ListNDS_2PPLS_Kroab100_2.txt", 20).map(_.sortBy(_._1)))
-    val refSet = (SetParser.parseSet("refAB100.txt")).sortBy(_._1)  
+    val rhSet1 = (SetParser.parseSet("setPointAB151.txt")).sortBy(_._1)  
+    val rhSet2 = (SetParser.parseSet("setPointAB152.txt")).sortBy(_._1) 
+    val rhSet3 = (SetParser.parseSet("setPointAB153.txt")).sortBy(_._1) 
     
-    val nadir = (180000, 180000)//(refSet.last._1, refSet.head._2)
-    val ideal = (refSet.head._1, refSet.last._2)
+    val nadir = (180000, 180000)
     val V = (180000.0, 180000.0)
-    
-    val fullH = for (i <- 0 until fullSets.size) yield {      
-      hypervolumeNadir(fullSets(i), nadir, V)
-    }
-    
-    println(hypervolumeNadir(refSet, nadir, V))
-    println(fullH.sum/fullH.size)  
+
+    println("rh\t : " + hypervolumeNadir(rhSet1, nadir, V)/100000000)   
+    println("rh\t : " + hypervolumeNadir(rhSet2, nadir, V)/100000000)
+    println("rh\t : " + hypervolumeNadir(rhSet3, nadir, V)/100000000)
   }
 }
 

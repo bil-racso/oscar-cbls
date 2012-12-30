@@ -17,20 +17,33 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.NewPareto
 import oscar.cp.mem.pareto.MOSol
+import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
 
 object MolnsTSP {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
+  var selected : Array[Array[Boolean]] = null
   
   def main(args: Array[String]) {
     
+    val inst1 = 'A'
+    val inst2 = 'B'
+    val in =  "Good" 
+    val out = "153"
+    
     val pareto: NewPareto[Sol] = NewPareto(2)
     
-    val preds = TSPUtils.readSet("firstPhase.txt")
+    val preds = TSPUtils.readSet("firstPhase"+inst1+inst2+in+".txt")
     val succs = TSPUtils.buildSuccsFromPreds(preds)
     
-    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
-    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp")
+    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst1+"100.tsp")
+    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst2+"100.tsp")
+    
+    selected = Array.fill(distMatrix1.size)(Array.fill(distMatrix1.size)(false))
+    for (pred <- preds; i <- 0 until pred.size) {
+      selected(i)(pred(i)) = true
+      selected(pred(i))(i) = true
+    }
     
     for (i <- 0 until preds.size) {
       val dist1 = TSPUtils.computeDist(preds(i), distMatrix1)
@@ -38,10 +51,14 @@ object MolnsTSP {
       val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
       pareto insert x
     }
-    
+
     solveMO(pareto, distMatrix1, distMatrix2)
 
-    TSPUtils.writeSet("firstPhase.txt", pareto.map(_.sol.pred).toArray)
+    TSPUtils.writeSet("setSol"+inst1+inst2+out+".txt", pareto.toArray.map(_.sol.pred))
+    
+    val outFile = OutFile("setPoint"+inst1+inst2+out+".txt")
+    pareto.foreach(x => outFile.writeln(x.objs.mkString(" ")))
+    outFile.close()
   }
 
   def solveMO(pareto: NewPareto[Sol], distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]) = {
@@ -53,10 +70,13 @@ object MolnsTSP {
     // -----
     val cp = new CPSolver()
     cp.silent = true
+    cp.startByLNS = true
 
     // Successors & Predecessors
-    val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-    val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+    //val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
+    //val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+    val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
+    val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
 
     // Total distance
     val totDist1 = CPVarInt(cp, 0 to distMatrix1.flatten.sum)
@@ -64,34 +84,73 @@ object MolnsTSP {
 
     // MOLNS
     // -----
-    var newSol: MOSol[Sol] = null
+    var newSols = NewPareto[Sol](2)
     var currentSol: MOSol[Sol] = null
     var currentObjective = 0
+    var iteration = 0
+    var firstLns = true
+    
     val p = 15
+    val tabuLength = 200
+    var cycleBreaker = false
+    val maxIter = 10000
 
-    cp.lns(5000, 2000) {  
-      if (!insertNewSolution() && currentObjective < pareto.Objs.max) currentObjective += 1
-      else {
+    cp.lns(2500) {  
+      println("Iteration: " + iteration + " #Set: " + pareto.size)
+      if (iteration == maxIter) cp.stop
+      else if (iteration > 8000) cycleBreaker = true
+      
+      // If first LNS, select a first solution
+      if (firstLns) {
         currentObjective = 0
-        selectSolution()        
+        selectSolution()
+        firstLns = false
+      }
+      // If the current solution is removed
+      else if (insertNewSolutions()) {
+        currentObjective = 0
+        selectSolution()
+      }
+      // If all objectives have been considered
+      else if (currentObjective == pareto.Objs.max) {
+        currentObjective = 0
+        selectSolution()
+      }
+      // Else, try next objective
+      else {       
+        currentObjective += 1      
       }
       relaxObjectives(currentObjective)
       relaxVariables(clusterRelax(p))
     }
-
-    def insertNewSolution(): Boolean = {
-      if (newSol == null) false
+    
+    def insertNewSolutions(): Boolean = {
+      if (newSols.isEmpty) {
+        false
+      }
       else {
-        val removed = newSol dominates currentSol
-        pareto insert newSol
-        newSol = null
+        var removed = false
+        newSols.foreach(x => {
+          if (x dominates currentSol) removed = true
+          println("new sol removed : " + pareto.insert(x))
+        })
+        newSols.clear()
         removed
       }
     }
 
     def selectSolution() { 
-      val r = nextInt(pareto.size)
-      currentSol = pareto(r)    
+      var filteredSol = pareto.filter(_.tabu <= iteration)  
+      if (filteredSol.isEmpty) {
+        val min = pareto.min(_.tabu).tabu
+        pareto.foreach(_.tabu -= min)
+        filteredSol = pareto.filter(_.tabu <= iteration)  
+      }
+      val r = nextInt(filteredSol.size)
+      currentSol = filteredSol(r)
+      //val r = nextInt(pareto.size)
+      //currentSol = pareto(r)
+      iteration += 1       
     }
     
     def relaxObjectives(obj: Int, intensification: Boolean = false) {
@@ -101,8 +160,8 @@ object MolnsTSP {
           cp.objective.objs(o).tightenMode = TightenType.StrongTighten
         }
         else {
-          cp.objective.objs(o).best = pareto.upper(currentSol.objs(o), o) - 1
-          cp.objective.objs(o).tightenMode = TightenType.WeakTighten
+          cp.objective.objs(o).best = pareto.upper(o, currentSol.objs(o)) - 1
+          cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
         }
       }
     }
@@ -117,9 +176,25 @@ object MolnsTSP {
 
       Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
     }
+    
+    def proximityRelax(p: Int): Array[Boolean] = {
+      
+      val dist = if (currentObjective == 0) distMatrix1 else distMatrix2
+      val selected = Array.fill(nCities)(false)
+      selected(nextInt(nCities)) = true
+
+      for (i <- 1 until p) {
+        val sel = Cities.filter(i => selected(i))
+        val rem = Cities.filter(i => !selected(i))     
+        val c = sel(nextInt(sel.size))
+        val cNew = selectMin(rem)()(dist(c)(_)).get
+        selected(cNew) = true
+      }
+      selected
+    }
 
     def solFound() {
-      newSol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDist1.value, totDist2.value)
+      newSols.insert(MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDist1.value, totDist2.value))
     }
 
     def relaxVariables(selected: Array[Boolean]) {
@@ -130,8 +205,13 @@ object MolnsTSP {
         val p = currentSol.sol.pred(c)
         val s = currentSol.sol.succ(c)
         if (!selected(p) && !selected(s)) {
-          constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
-          constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+          if (cycleBreaker) {
+            constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+            constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+          } else {
+            constraints.enqueue(pred(c) == p)
+            constraints.enqueue(succ(c) == s)
+          }
         }
       }
       cp.post(constraints.toArray)

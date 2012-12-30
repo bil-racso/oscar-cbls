@@ -47,7 +47,7 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
     if (!objVar.isBound) {
       throw new RuntimeException(name+" not bound:" + objVar)
     }
-    best = objVar.value
+    if (tightenType != MaintainTighten) best = objVar.value
     if (!s.silent && tightenType != NoTighten) println(name+" tightened to " + best + " lb:"+  lb) 
   }
 

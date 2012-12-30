@@ -23,11 +23,15 @@ object FirstPhaseTSP {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   def main(args: Array[String]) {
+    
+    val inst1 = 'A'
+    val inst2 = 'B'
+    val id = "Long2"
 
     val pareto: NewPareto[Sol] = NewPareto(2)
 
-    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
-    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp")
+    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst1+"100.tsp")
+    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst2+"100.tsp")
 
     for (alpha <- 0 to 100) {
       val x = search(alpha, distMatrix1, distMatrix2)
@@ -35,7 +39,10 @@ object FirstPhaseTSP {
       println(x.objs.mkString(" "))
     }
 
-    TSPUtils.writeSet("firstPhase.txt", pareto.map(_.sol.pred).toArray)
+    TSPUtils.writeSet("firstPhase"+inst1+inst2+id+".txt", pareto.map(_.sol.pred).toArray)
+    val out = OutFile("firstPhasePoint"+inst1+inst2+id+".txt")
+    pareto.foreach(x => out.writeln(x.objs.mkString(" ")))
+    out.close()
   }
 
   def search(alpha: Int, distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]): MOSol[Sol] = {
@@ -67,27 +74,8 @@ object FirstPhaseTSP {
     val cycleBreaker = true
     val p = 15
 
-    cp.lns(50, 2500) {
-      relaxVariables(pathRelax(p))
-    }
-
-    def pathRelax(p: Int): Array[Boolean] = {
-
-      val c = nextInt(nCities)
-      val selected = Array.fill(nCities)(false)
-      selected(c) = true
-
-      for (i <- 1 until p) {
-
-        val sel = Cities.filter(i => selected(i))
-        val rem = Cities.filter(i => !selected(i))
-
-        val c = sel(nextInt(sel.size))
-        val cc = rem.sortBy(i => dist(c)(i)).head
-
-        selected(cc) = true
-      }
-      selected
+    cp.lns(50, 3000) {
+      relaxVariables(clusterRelax(p))
     }
 
     def clusterRelax(p: Int): Array[Boolean] = {
