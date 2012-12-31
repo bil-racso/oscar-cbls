@@ -96,6 +96,15 @@ class CPSolver() extends Store() {
     this
   }
 
+  def maximize(objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*)
+      post(objective)
+    }
+    solveAll()
+    this
+  }
+    
   def solve(): CPSolver = {
     solveOne = true
     this

@@ -9,7 +9,6 @@ import scala.collection.JavaConversions._
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.pareto.NewPareto
 import scala.collection.mutable.Queue
-import scala.util.Random.nextInt
 
 /**
  * Chemical Tanker Problem:
@@ -116,15 +115,14 @@ object MolnsTAP extends App {
 
   // ------------- declare the variables of the problem ---------------
 
-  // create the bar chart with the volume to load and volume slacks		            
-  val barChart = new BarChart("", "Cargos", "Volume", Array("Volume", "Slack"), (0 until cargos.size).map("" + _).toArray, true)
-  cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Volume", i.toString, c.volume) }
-
   val cp = CPSolver()
+  
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
   val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
+  
   // for each cargo, the total cacity allocated to it (must be at least the volume to place)
   val load = Array.tabulate(cargos.size)(c => CPVarInt(cp, cargos(c).volume to totCapa))
+  
   // for each cargo, the number of tanks allocated to it
   val card = Array.tabulate(cargos.size)(c => CPVarInt(cp, 0 to tanks.size))
 
@@ -134,15 +132,13 @@ object MolnsTAP extends App {
 
   // tanks allocated to cargo c in current partial solution
   def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).getValue == c))
+  
   // volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
   val cargosol = Array.tabulate(cargo.size)(i => 0)
 
   val rnd = new scala.util.Random(0)
-  // ask to have a 100 LNS restarts every 50 backtracks
-
-  var nbSol = 0
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
   // MOLNS
@@ -205,7 +201,7 @@ object MolnsTAP extends App {
       pareto.foreach(_.tabu -= min)
       filteredSol = pareto.filter(_.tabu <= iteration)
     }
-    val r = nextInt(filteredSol.size)
+    val r = rnd.nextInt(filteredSol.size)
     currentSol = filteredSol(r)
     //val r = nextInt(pareto.size)
     //currentSol = pareto(r)
@@ -256,22 +252,15 @@ object MolnsTAP extends App {
     }
 
   } exploration {
+    
     while (!allBounds(cargo)) {
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-      // the largest tank having still no cargo assigned to it
-      //val (tankVar,tank) = cargo.zipWithIndex.filter(c => !c._1.isBound).maxBy(c => (tanks(c._2).capa,-c._1.getSize))
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
-    println("solution")
-    nbSol += 1
-    for (i <- 0 until cargo.size) {
-      cargosol(i) = cargo(i).getValue
-    }
-    val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-    println("total slack:" + (-(volumeLeft.sum - volumeLeft(0))) + " tanks capas:" + tanks.map(_.capa).mkString(","))
-    cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Slack", i.toString, -volumeLeft(i)) }
+
+    solFound()
   }
 }
