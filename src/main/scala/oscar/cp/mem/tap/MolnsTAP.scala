@@ -116,6 +116,7 @@ object MolnsTAP extends App {
   // ------------- declare the variables of the problem ---------------
 
   val cp = CPSolver()
+  cp.silent = true
   
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
   val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
@@ -136,14 +137,12 @@ object MolnsTAP extends App {
   // volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
-  val cargosol = Array.tabulate(cargo.size)(i => 0)
-
   val rnd = new scala.util.Random(0)
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
   // MOLNS
   // -----
-  case class Sol(cargos: Array[Int]) { var tabu = 0 }
+  case class Sol(cargo: Array[Int]) { var tabu = 0 }
   val pareto = NewPareto[Sol](2)
   var newSols = NewPareto[Sol](2)
   var currentSol: MOSol[Sol] = null
@@ -152,8 +151,8 @@ object MolnsTAP extends App {
   var firstLns = true
 
   val p = 50
-  val tabuLength = 200
-  val maxIter = 10000
+  val tabuLength = 0
+  val maxIter = 1000
 
   cp.lns(300) {
     println("Iteration: " + iteration + " #Set: " + pareto.size)
@@ -161,6 +160,7 @@ object MolnsTAP extends App {
 
     // If first LNS, select a first solution
     if (firstLns) {
+      if (!cp.startByLNS) insertNewSolutions()
       currentObjective = 0
       selectSolution()
       firstLns = false
@@ -203,8 +203,6 @@ object MolnsTAP extends App {
     }
     val r = rnd.nextInt(filteredSol.size)
     currentSol = filteredSol(r)
-    //val r = nextInt(pareto.size)
-    //currentSol = pareto(r)
     iteration += 1
   }
 
@@ -219,39 +217,41 @@ object MolnsTAP extends App {
       }
     }
   }
-
-  def solFound() {
-    newSols.insert(MOSol(Sol(cargo.map(_.value))))
-  }
   
   def randomRelax(p: Int): Array[Boolean] = {
-    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > 10 && !cp.isFailed())
+    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
   }
 
   def relaxVariables(selected: Array[Boolean]) {
     val constraints: Queue[Constraint] = Queue()
     for (i <- 0 until cargos.size; if selected(i)) {
-      cp.post(cargo(i) == cargosol(i))
+      cp.post(cargo(i) == currentSol.cargo(i))
     }    
     cp.post(constraints.toArray)
   }
+  
+  def solFound() {
+    newSols.insert(MOSol(Sol(cargo.map(_.value)), -freeSpace.value, -nbFreeTanks.value))
+  }
 
   // --------------- state the objective, the constraints and the search -------------
-
-  cp.maximize(freeSpace, nbFreeTanks) subjectTo {
+  
+  cp.minimize(-freeSpace, -nbFreeTanks) subjectTo {
+    
     // make the link between cargo and load vars with binpacking constraint
     cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
     cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
 
-    for (i <- 1 until cargos.size) {
-      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) // dominance rules
-    }
+    // dominance rules
+    for (i <- 1 until cargos.size)
+      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) 
+    
     // enforce that for any two neighbor tanks, they must contain compatible cargo types
-    for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id)) {
+    for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id))
       cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
-    }
-
-  } exploration {
+  } 
+  
+  cp.exploration {
     
     while (!allBounds(cargo)) {
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
@@ -261,6 +261,6 @@ object MolnsTAP extends App {
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
 
-    solFound()
+    solFound() 
   }
 }

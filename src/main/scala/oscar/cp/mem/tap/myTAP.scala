@@ -6,6 +6,7 @@ import oscar.cp.core._
 import oscar.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Queue
 
 /**
  * Chemical Tanker Problem:
@@ -157,11 +158,26 @@ object MyTAP extends App {
   val rnd = new scala.util.Random(0)
   // ask to have a 100 LNS restarts every 50 backtracks
 
-  cp.lns(100, 300) {
-    //fix randomly 90% of the slabs to the position of the current best solution
-    for (i <- 0 until cargos.size; if rnd.nextInt(100) > 10; if (!cp.isFailed)) {
-      cp.post(cargo(i) == cargosol(i))
-    }
+  case class Sol(cargo: Array[Int], freeSpace: Int, nbFreeTanks: Int)
+  var currentSol : Sol = null 
+  val p = 50
+  
+  cp.lns(100, 300) { relaxVariables(randomRelax(p)) }
+  
+  def randomRelax(p: Int): Array[Boolean] = {
+    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
+  }
+
+  def relaxVariables(selected: Array[Boolean]) {
+    val constraints: Queue[Constraint] = Queue()
+    for (i <- 0 until cargos.size; if selected(i)) {
+      cp.post(cargo(i) == currentSol.cargo(i))
+    }    
+    cp.post(constraints.toArray)
+  }
+    
+  def solFound() {
+    currentSol = Sol(cargo.map(_.value), freeSpace.value, nbFreeTanks.value)
   }
 
   var nbSol = 0
@@ -170,7 +186,7 @@ object MyTAP extends App {
 
   // --------------- state the objective, the constraints and the search -------------
 
-  cp.maximize(/*freeSpace*/ nbFreeTanks ) subjectTo {
+  cp.minimize(if (false) -freeSpace else -nbFreeTanks) subjectTo {
     // make the link between cargo and load vars with binpacking constraint
     cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
     cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
@@ -193,14 +209,17 @@ object MyTAP extends App {
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
+    
     println("solution")
+    solFound()
+    println(currentSol.freeSpace + " " + currentSol.nbFreeTanks)
     nbSol += 1
+    
+    // Visualization
     for (i <- 0 until cargo.size) {
-      cargosol(i) = cargo(i).getValue
       tanks(i).setCargo(cargos(cargo(i).value))
     }
     val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-    println("total slack:" + (-(volumeLeft.sum - volumeLeft(0))) + " tanks capas:" + tanks.map(_.capa).mkString(","))
     cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Slack", i.toString, -volumeLeft(i)) }
     plot.addPoint(nbSol, freeSpace.value)
   }

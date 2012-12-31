@@ -72,6 +72,8 @@ class NewPareto[Sol](val nObjs: Int) {
     }
     min
   }
+  
+  override def toString: String = X.toString
 }
 
 object NewPareto {

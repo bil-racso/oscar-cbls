@@ -5,7 +5,8 @@ case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
   def dominates(x: MOSol[Sol]): Boolean = dominates0(x, 0)
   
   private def dominates0(x: MOSol[Sol], i: Int): Boolean = {
-    if (i == objs.size) true
+    if (x == null) true
+    else if (i == objs.size) true
     else if (x.objs(i) < objs(i)) false
     else dominates0(x, i+1)
   }
