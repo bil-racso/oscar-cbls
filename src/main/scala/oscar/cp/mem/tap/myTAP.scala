@@ -20,91 +20,10 @@ import scala.collection.mutable.Queue
  * @author Pierre Schaus pschaus@gmail.com
  */
 object MyTAP extends App {
-
-  // -------------visual components ------------
-  val f = new VisualFrame("ChemicalTanker")
-  // creates the plot and place it into the frame
-  val plot = new Plot2D("", "Solution number", "Unused Volume")
-  f.createFrame("Objective Function: Unused Volume").add(plot)
-  // creates the tour visu and place it into the frame
-  val drawing = new VisualDrawing(false)
-  f.createFrame("Cargo-Tank Layout").add(drawing)
-
-  f.pack()
+  
+  // Data parsing
   // ------------------------------------------
-
-  /**
-   * Class representing a cargo object and its related data.
-   * The constructor parses the xml cargo node
-   */
-  class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor()) {
-    val id = (node \ "@id").text.toInt
-    val name = (node \ "@name").text
-    val volume = (node \ "@volume").text.toInt
-    override def toString = id + ""
-  }
-
-  /**
-   * Class representing a tank object and its related data.
-   * The constructor parses the xml tank node
-   */
-  class Tank(node: scala.xml.Node, cargos: Array[Cargo]) {
-    val id = (node \ "@id").text.toInt
-    val capa = (node \ "@capa").text.toInt
-    val x = (node \ "@x").text.toInt
-    val y = (node \ "@y").text.toInt
-    val w = (node \ "@w").text.toInt
-    val h = (node \ "@h").text.toInt
-    val impossibleCargos =
-      for (n <- (node \ "impossiblecargos" \ "cargo").toArray)
-        yield (n \ "@id").text.toInt
-    val neighbours =
-      for (n <- (node \ "neighbours" \ "tank").toArray)
-        yield (n \ "@id").text.toInt
-    val possibleCargos = (0 until cargos.size).filter(!impossibleCargos.contains(_)).toSet
-
-    val rect = new VisualRectangle(drawing, 100 + y * 30, 50 + x * 30, h * 30, w * 30)
-    def setCargo(c: Cargo) = {
-      rect.innerCol = c.color
-      rect.toolTip = "<html>" + c.name + "<br>capa:" + capa + "<html>"
-    }
-  }
-
-  /**
-   * Constraint Enforcing dominance rules of the Chemical Tanker Problem:
-   * Since we try to maximize the total free space, as soon as the total capacity
-   * allocated to cargo exceed the volume of this cargo to place we immediately
-   * forbid this cargo in other tanks.
-   */
-  class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPVarInt]) extends Constraint(cargos(0).s) {
-
-    val curCapa = new ReversibleInt(s, 0)
-
-    override def setup(l: CPPropagStrength) = {
-      cargos.zipWithIndex.foreach(e => e._1.callValBindIdxWhenBind(this, e._2))
-      CPOutcome.Suspend
-    }
-
-    override def valBindIdx(x: CPVarInt, tank: Int) = {
-      if (x.getValue == cargo.id) {
-        curCapa.setValue(curCapa.getValue + tanks(tank).capa)
-        if (curCapa.getValue >= cargo.volume) {
-          // the volume is reached for the cargo so we prevent any other tank to take this cargo
-          for (c <- cargos; if (!c.isBound)) {
-            c.removeValue(cargo.id) // should never fail here
-          }
-          CPOutcome.Success
-        } else {
-          CPOutcome.Suspend
-        }
-      } else {
-        CPOutcome.Suspend
-      }
-    }
-  }
-
-  // ------------- parses the data of the problem  ---------------
-
+  
   val problemNode = xml.XML.loadFile("data/chemical.xml")
   val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
   val cargos = Array(dummyCargo) ++ // dummy cargo
@@ -128,19 +47,43 @@ object MyTAP extends App {
       if (!incompatibles.contains((i, j)) &&
         !incompatibles.contains((j, i)))
     ) yield (i, j)).toSet
+    
 
-  // ------------- declare the variables of the problem ---------------
-
+  // Visualization
+  // ------------------------------------------
+  
+  val f = new VisualFrame("ChemicalTanker")
+  // creates the plot and place it into the frame
+  val plot = new Plot2D("", "Solution number", "Unused Volume")
+  f.createFrame("Objective Function: Unused Volume").add(plot)
+  // creates the tour visu and place it into the frame
+  val drawing = new VisualDrawing(false)
+  f.createFrame("Cargo-Tank Layout").add(drawing)
+  f.pack()
   // create the bar chart with the volume to load and volume slacks		            
   val barChart = new BarChart("", "Cargos", "Volume", Array("Volume", "Slack"), (0 until cargos.size).map("" + _).toArray, true)
   cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Volume", i.toString, c.volume) }
   f.createFrame("Volume Slack").add(barChart)
+  val rects = Array.tabulate(tanks.size)(t => {
+    new VisualRectangle(drawing, 100 + tanks(t).y * 30, 50 + tanks(t).x * 30, tanks(t).h * 30, tanks(t).w * 30)
+  })
+  def setCargo(t: Int, c: Cargo) = {
+    rects(t).innerCol = c.color
+    rects(t).toolTip = "<html>" + c.name + "<br>capa:" + tanks(t).capa + "<html>"
+  }
+
+
+  // Model
+  // ------------------------------------------
 
   val cp = CPSolver()
-  // for each tank, the cargo type placed into it (dummy cargo if emmty)
+  
+  // for each tank, the cargo type placed into it (dummy cargo if empty)
   val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
+  
   // for each cargo, the total cacity allocated to it (must be at least the volume to place)
   val load = Array.tabulate(cargos.size)(c => CPVarInt(cp, cargos(c).volume to totCapa))
+  
   // for each cargo, the number of tanks allocated to it
   val card = Array.tabulate(cargos.size)(c => CPVarInt(cp, 0 to tanks.size))
 
@@ -150,20 +93,23 @@ object MyTAP extends App {
 
   // tanks allocated to cargo c in current partial solution
   def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).getValue == c))
+  
   // volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
   val cargosol = Array.tabulate(cargo.size)(i => 0)
 
   val rnd = new scala.util.Random(0)
-  // ask to have a 100 LNS restarts every 50 backtracks
+
+  // LNS
+  // ------------------------------------------
 
   case class Sol(cargo: Array[Int], freeSpace: Int, nbFreeTanks: Int)
-  var currentSol : Sol = null 
+  var currentSol: Sol = null
   val p = 50
-  
+
   cp.lns(100, 300) { relaxVariables(randomRelax(p)) }
-  
+
   def randomRelax(p: Int): Array[Boolean] = {
     Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
   }
@@ -172,52 +118,56 @@ object MyTAP extends App {
     val constraints: Queue[Constraint] = Queue()
     for (i <- 0 until cargos.size; if selected(i)) {
       cp.post(cargo(i) == currentSol.cargo(i))
-    }    
+    }
     cp.post(constraints.toArray)
   }
-    
+
   def solFound() {
     currentSol = Sol(cargo.map(_.value), freeSpace.value, nbFreeTanks.value)
   }
 
+  
+  // Search + Constraints
+  // ------------------------------------------
+  
   var nbSol = 0
-
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
-  // --------------- state the objective, the constraints and the search -------------
-
-  cp.minimize(if (false) -freeSpace else -nbFreeTanks) subjectTo {
+  cp.minimize(if (false) -freeSpace else -nbFreeTanks) 
+  
+  cp.subjectTo {
     // make the link between cargo and load vars with binpacking constraint
     cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
     cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
 
-    for (i <- 1 until cargos.size) {
-      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) // dominance rules
-    }
-    // enforce that for any two neighbor tanks, they must contain compatible cargo types
-    for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id)) {
-      cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
-    }
+    // dominance rules
+    for (i <- 1 until cargos.size)
+      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) 
 
-  } exploration {
-    while (!allBounds(cargo)) {
+    // enforce that for any two neighbor tanks, they must contain compatible cargo types
+    for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id))
+      cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
+  } 
+  
+  cp.exploration {
+    
+    while (!allBounds(cargo)) {     
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-      // the largest tank having still no cargo assigned to it
-      //val (tankVar,tank) = cargo.zipWithIndex.filter(c => !c._1.isBound).maxBy(c => (tanks(c._2).capa,-c._1.getSize))
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
+      
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
-    
+
     println("solution")
     solFound()
     println(currentSol.freeSpace + " " + currentSol.nbFreeTanks)
     nbSol += 1
-    
-    // Visualization
+
+    // updates visualizations
     for (i <- 0 until cargo.size) {
-      tanks(i).setCargo(cargos(cargo(i).value))
+      setCargo(i, cargos(cargo(i).value))
     }
     val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
     cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Slack", i.toString, -volumeLeft(i)) }

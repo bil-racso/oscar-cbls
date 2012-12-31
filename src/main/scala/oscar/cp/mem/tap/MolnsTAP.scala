@@ -23,72 +23,9 @@ import scala.collection.mutable.Queue
  */
 object MolnsTAP extends App {
 
-  /**
-   * Class representing a cargo object and its related data.
-   * The constructor parses the xml cargo node
-   */
-  class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor()) {
-    val id = (node \ "@id").text.toInt
-    val name = (node \ "@name").text
-    val volume = (node \ "@volume").text.toInt
-    override def toString = id + ""
-  }
-
-  /**
-   * Class representing a tank object and its related data.
-   * The constructor parses the xml tank node
-   */
-  class Tank(node: scala.xml.Node, cargos: Array[Cargo]) {
-    val id = (node \ "@id").text.toInt
-    val capa = (node \ "@capa").text.toInt
-    val x = (node \ "@x").text.toInt
-    val y = (node \ "@y").text.toInt
-    val w = (node \ "@w").text.toInt
-    val h = (node \ "@h").text.toInt
-    val impossibleCargos =
-      for (n <- (node \ "impossiblecargos" \ "cargo").toArray)
-        yield (n \ "@id").text.toInt
-    val neighbours =
-      for (n <- (node \ "neighbours" \ "tank").toArray)
-        yield (n \ "@id").text.toInt
-    val possibleCargos = (0 until cargos.size).filter(!impossibleCargos.contains(_)).toSet
-  }
-
-  /**
-   * Constraint Enforcing dominance rules of the Chemical Tanker Problem:
-   * Since we try to maximize the total free space, as soon as the total capacity
-   * allocated to cargo exceed the volume of this cargo to place we immediately
-   * forbid this cargo in other tanks.
-   */
-  class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPVarInt]) extends Constraint(cargos(0).s) {
-
-    val curCapa = new ReversibleInt(s, 0)
-
-    override def setup(l: CPPropagStrength) = {
-      cargos.zipWithIndex.foreach(e => e._1.callValBindIdxWhenBind(this, e._2))
-      CPOutcome.Suspend
-    }
-
-    override def valBindIdx(x: CPVarInt, tank: Int) = {
-      if (x.getValue == cargo.id) {
-        curCapa.setValue(curCapa.getValue + tanks(tank).capa)
-        if (curCapa.getValue >= cargo.volume) {
-          // the volume is reached for the cargo so we prevent any other tank to take this cargo
-          for (c <- cargos; if (!c.isBound)) {
-            c.removeValue(cargo.id) // should never fail here
-          }
-          CPOutcome.Success
-        } else {
-          CPOutcome.Suspend
-        }
-      } else {
-        CPOutcome.Suspend
-      }
-    }
-  }
-
-  // ------------- parses the data of the problem  ---------------
-
+  // Data parsing
+  // ------------------------------------------
+  
   val problemNode = xml.XML.loadFile("data/chemical.xml")
   val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
   val cargos = Array(dummyCargo) ++ // dummy cargo
@@ -113,10 +50,11 @@ object MolnsTAP extends App {
         !incompatibles.contains((j, i)))
     ) yield (i, j)).toSet
 
-  // ------------- declare the variables of the problem ---------------
+
+  // Model
+  // ------------------------------------------
 
   val cp = CPSolver()
-  cp.silent = true
   
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
   val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
@@ -137,11 +75,8 @@ object MolnsTAP extends App {
   // volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
-  val rnd = new scala.util.Random(0)
-  val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
-
-  // MOLNS
-  // -----
+  // LNS
+  // ------------------------------------------
   case class Sol(cargo: Array[Int]) { var tabu = 0 }
   val pareto = NewPareto[Sol](2)
   var newSols = NewPareto[Sol](2)
@@ -176,6 +111,7 @@ object MolnsTAP extends App {
     else {
       currentObjective += 1
     }
+    
     relaxObjectives(currentObjective)
     relaxVariables(randomRelax(p))
   }
@@ -201,7 +137,7 @@ object MolnsTAP extends App {
       pareto.foreach(_.tabu -= min)
       filteredSol = pareto.filter(_.tabu <= iteration)
     }
-    val r = rnd.nextInt(filteredSol.size)
+    val r = cp.random.nextInt(filteredSol.size)
     currentSol = filteredSol(r)
     iteration += 1
   }
@@ -219,7 +155,7 @@ object MolnsTAP extends App {
   }
   
   def randomRelax(p: Int): Array[Boolean] = {
-    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
+    Array.tabulate(cargos.size)(i => cp.random.nextInt(100) > p && !cp.isFailed())
   }
 
   def relaxVariables(selected: Array[Boolean]) {
@@ -234,7 +170,9 @@ object MolnsTAP extends App {
     newSols.insert(MOSol(Sol(cargo.map(_.value)), -freeSpace.value, -nbFreeTanks.value))
   }
 
-  // --------------- state the objective, the constraints and the search -------------
+
+  // Search + Constraints
+  // ------------------------------------------
   
   cp.minimize(-freeSpace, -nbFreeTanks) subjectTo {
     
@@ -251,16 +189,17 @@ object MolnsTAP extends App {
       cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
   } 
   
-  cp.exploration {
+  cp.exploration { 
     
-    while (!allBounds(cargo)) {
+    while (!allBounds(cargo)) {      
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
+      
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
-
+    
     solFound() 
   }
 }
