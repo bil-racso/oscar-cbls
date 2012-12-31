@@ -23,9 +23,9 @@ object Hypervolume {
 
   def main(args: Array[String]) {
     
-    val rhSet1 = (SetParser.parseSet("setPointAB151.txt")).sortBy(_._1)  
-    val rhSet2 = (SetParser.parseSet("setPointAB152.txt")).sortBy(_._1) 
-    val rhSet3 = (SetParser.parseSet("setPointAB153.txt")).sortBy(_._1) 
+    val rhSet1 = (SetParser.parseSet("setPointAB10s.txt")).sortBy(_._1)  
+    val rhSet2 = (SetParser.parseSet("setPointAB15c2.txt")).sortBy(_._1) 
+    val rhSet3 = (SetParser.parseSet("setPointAB15c3.txt")).sortBy(_._1) 
     
     val nadir = (180000, 180000)
     val V = (180000.0, 180000.0)

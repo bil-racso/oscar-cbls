@@ -68,9 +68,9 @@ object myTSP extends App {
 
   var currentSol: Sol = null
   var nStarts = 1
-  val p = 15
+  val p = 15   
   
-  cp.lns(100, 3000) {
+  cp.lns(100, 4000) {
     nStarts += 1
     relaxVariables(clusterRelax(p))
   }

@@ -21,7 +21,7 @@ import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
 
 object MolnsTSP {
 
-  case class Sol(pred: Array[Int], succ: Array[Int])
+  case class Sol(pred: Array[Int], succ: Array[Int]) { var tabu = 0 }
   var selected : Array[Array[Boolean]] = null
   
   def main(args: Array[String]) {
@@ -29,7 +29,7 @@ object MolnsTSP {
     val inst1 = 'A'
     val inst2 = 'B'
     val in =  "Good" 
-    val out = "153"
+    val out = "10Bunch"
     
     val pareto: NewPareto[Sol] = NewPareto(2)
     
@@ -90,15 +90,25 @@ object MolnsTSP {
     var iteration = 0
     var firstLns = true
     
-    val p = 15
+    var p = 10
     val tabuLength = 200
-    var cycleBreaker = false
+    var cycleBreaker = true
     val maxIter = 10000
 
-    cp.lns(2500) {  
+    val t0 = System.currentTimeMillis()
+    cp.lns(500) {  
+      
       println("Iteration: " + iteration + " #Set: " + pareto.size)
-      if (iteration == maxIter) cp.stop
-      else if (iteration > 8000) cycleBreaker = true
+      
+      if (iteration == maxIter) {
+        cp.stop
+        println(System.currentTimeMillis() - t0)
+      }
+      else if (iteration > 7500) {
+        cycleBreaker = true
+        if (nextInt(5) == 0) p = 30
+        else p = 10
+      }
       
       // If first LNS, select a first solution
       if (firstLns) {
