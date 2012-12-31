@@ -19,64 +19,54 @@ import scala.collection.mutable.Queue
  * The objective it to place  all the volumes while satisfying the security constraints and maximizing the total free space (total volume of unused space).
  * The idea of the objective function is to let more freedom for future cargos and also to decrease the cleaning costs
  *
- * @author Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus  - pschaus@gmail.com
+ * @author Renaud Hartert - ren.hartert@gmail.com
  */
 object MolnsTAP extends App {
 
   // Data parsing
   // ------------------------------------------
-  
-  val problemNode = xml.XML.loadFile("data/chemical.xml")
-  val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
-  val cargos = Array(dummyCargo) ++ // dummy cargo
-    (for (node <- (problemNode \ "cargos" \ "cargo").toArray)
-      yield new Cargo(node))
-  val tanks =
-    for (node <- (problemNode \ "tanks" \ "tank").toArray)
-      yield new Tank(node, cargos)
 
-  val totCapa = (0 /: tanks)((s, t) => s + t.capa) // fold left to compute tot capa
+  val instance = TAPUtils.parseInstance("data/chemical2.xml")
+  val cargos = instance.cargos
+  val tanks = instance.tanks
+  val totCapa = instance.totCapa
+  val incompatibles = instance.incompatibles
+  val compatibles = instance.compatibles
 
-  // extract cargo that cannot be be adjacent to each others
-  val incompatibles: Set[(Int, Int)] =
-    (for (n <- (problemNode \ "incompatibles" \ "incompatible"))
-      yield ((n \ "@cargo1").text.toInt, (n \ "@cargo2").text.toInt)).toSet
-  // transform this information to get the possible adjacent pairs
-  val compatibles =
-    (for (
-      i <- 0 until cargos.size;
-      j <- 0 until cargos.size;
-      if (!incompatibles.contains((i, j)) &&
-        !incompatibles.contains((j, i)))
-    ) yield (i, j)).toSet
-
+  val nTanks = tanks.size
+  val Tanks = 0 until nTanks
+  val nCargos = cargos.size
+  val Cargos = 0 until nCargos
 
   // Model
   // ------------------------------------------
 
   val cp = CPSolver()
-  
-  // for each tank, the cargo type placed into it (dummy cargo if emmty)
-  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
-  
-  // for each cargo, the total cacity allocated to it (must be at least the volume to place)
-  val load = Array.tabulate(cargos.size)(c => CPVarInt(cp, cargos(c).volume to totCapa))
-  
-  // for each cargo, the number of tanks allocated to it
-  val card = Array.tabulate(cargos.size)(c => CPVarInt(cp, 0 to tanks.size))
+  cp.silent = true
 
-  // objective = maximize the total empty space
+  // For each tank, the cargo type placed into it (dummy cargo if empty)
+  val cargo = Array.tabulate(nTanks)(t => CPVarInt(cp, tanks(t).possibleCargos))
+
+  // For each cargo, the total capacity allocated to it (must be at least the volume to place)
+  val load = Array.tabulate(nCargos)(c => CPVarInt(cp, cargos(c).volume to totCapa))
+
+  // For each cargo, the number of tanks allocated to it
+  val card = Array.tabulate(nCargos)(c => CPVarInt(cp, 0 to tanks.size))
+
+  // Objective = maximize the total empty space
   val freeSpace = load(0)
   val nbFreeTanks = card(0)
 
-  // tanks allocated to cargo c in current partial solution
-  def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).getValue == c))
-  
-  // volume allocated to cargo c in current partial solution
+  // Tanks allocated to cargo c in current partial solution
+  def tanksAllocated(c: Int) = (Tanks).filter(t => (cargo(t).isBound && cargo(t).getValue == c))
+
+  // Volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
-  // LNS
+  // MOLNS
   // ------------------------------------------
+
   case class Sol(cargo: Array[Int]) { var tabu = 0 }
   val pareto = NewPareto[Sol](2)
   var newSols = NewPareto[Sol](2)
@@ -85,13 +75,19 @@ object MolnsTAP extends App {
   var iteration = 0
   var firstLns = true
 
-  val p = 50
-  val tabuLength = 0
-  val maxIter = 1000
+  val p = 25
+  val tabuLength = 100
+  val maxIter = 2000
 
-  cp.lns(300) {
+  val t0 = System.currentTimeMillis()
+  cp.lns(1000) {
+
     println("Iteration: " + iteration + " #Set: " + pareto.size)
-    if (iteration == maxIter) cp.stop
+
+    if (iteration == maxIter) {
+      cp.stop
+      println(System.currentTimeMillis() - t0)
+    }
 
     // If first LNS, select a first solution
     if (firstLns) {
@@ -106,12 +102,13 @@ object MolnsTAP extends App {
     } // If all objectives have been considered
     else if (currentObjective == pareto.Objs.max) {
       currentObjective = 0
+      currentSol.tabu = iteration + tabuLength
       selectSolution()
     } // Else, try next objective
     else {
       currentObjective += 1
     }
-    
+
     relaxObjectives(currentObjective)
     relaxVariables(randomRelax(p))
   }
@@ -123,7 +120,7 @@ object MolnsTAP extends App {
       var removed = false
       newSols.foreach(x => {
         if (x dominates currentSol) removed = true
-        println("new sol removed : " + pareto.insert(x))
+        println("new sol removes " + pareto.insert(x) + " sols")
       })
       newSols.clear()
       removed
@@ -133,9 +130,9 @@ object MolnsTAP extends App {
   def selectSolution() {
     var filteredSol = pareto.filter(_.tabu <= iteration)
     if (filteredSol.isEmpty) {
-      val min = pareto.min(_.tabu).tabu
-      pareto.foreach(_.tabu -= min)
-      filteredSol = pareto.filter(_.tabu <= iteration)
+      val min = pareto.min(_.tabu)
+      pareto.foreach(_.tabu -= (min.tabu - iteration))
+      filteredSol = List(min)
     }
     val r = cp.random.nextInt(filteredSol.size)
     currentSol = filteredSol(r)
@@ -153,53 +150,60 @@ object MolnsTAP extends App {
       }
     }
   }
-  
+
   def randomRelax(p: Int): Array[Boolean] = {
-    Array.tabulate(cargos.size)(i => cp.random.nextInt(100) > p && !cp.isFailed())
+    Array.tabulate(nCargos)(i => cp.random.nextInt(100) > p && !cp.isFailed())
   }
 
   def relaxVariables(selected: Array[Boolean]) {
     val constraints: Queue[Constraint] = Queue()
     for (i <- 0 until cargos.size; if selected(i)) {
       cp.post(cargo(i) == currentSol.cargo(i))
-    }    
+    }
     cp.post(constraints.toArray)
   }
-  
+
   def solFound() {
     newSols.insert(MOSol(Sol(cargo.map(_.value)), -freeSpace.value, -nbFreeTanks.value))
   }
 
-
   // Search + Constraints
   // ------------------------------------------
-  
+
   cp.minimize(-freeSpace, -nbFreeTanks) subjectTo {
-    
-    // make the link between cargo and load vars with binpacking constraint
+
+    // Make the link between cargo and load variables with binpacking constraints
     cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
     cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
 
-    // dominance rules
-    for (i <- 1 until cargos.size)
-      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) 
-    
-    // enforce that for any two neighbor tanks, they must contain compatible cargo types
+    // Dominance rules
+    for (i <- 1 until nCargos)
+      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo))
+
+    // Enforce that for any two neighbor tanks, they must contain compatible cargo types
     for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id))
       cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
-  } 
-  
-  cp.exploration { 
-    
-    while (!allBounds(cargo)) {      
+  }
+
+  cp.exploration {
+
+    while (!allBounds(cargo)) {
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-      val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
-      val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
-      val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
+      val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }    
       
+      val (tankVar, tank) = if (currentObjective == 0) {
+        unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
+      } else {
+        cargo.zipWithIndex.filter(c => !c._1.isBound).maxBy(c => (tanks(c._2).capa,-c._1.getSize))     
+      }
+      
+      val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
     }
     
-    solFound() 
+    solFound()
   }
+
+  println("PARETO : ")
+  pareto.foreach(x => println(x.objs.map(-_).mkString(" ")))
 }

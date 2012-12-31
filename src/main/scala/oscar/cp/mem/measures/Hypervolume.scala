@@ -23,7 +23,7 @@ object Hypervolume {
 
   def main(args: Array[String]) {
     
-    val rhSet1 = (SetParser.parseSet("setPointAB10s.txt")).sortBy(_._1)  
+    val rhSet1 = (SetParser.parseSet("setPointAB10Bunch.txt")).sortBy(_._1)  
     val rhSet2 = (SetParser.parseSet("setPointAB15c2.txt")).sortBy(_._1) 
     val rhSet3 = (SetParser.parseSet("setPointAB15c3.txt")).sortBy(_._1) 
     

@@ -20,33 +20,16 @@ import scala.collection.mutable.Queue
  * @author Pierre Schaus pschaus@gmail.com
  */
 object MyTAP extends App {
-  
+
   // Data parsing
   // ------------------------------------------
   
-  val problemNode = xml.XML.loadFile("data/chemical.xml")
-  val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
-  val cargos = Array(dummyCargo) ++ // dummy cargo
-    (for (node <- (problemNode \ "cargos" \ "cargo").toArray)
-      yield new Cargo(node))
-  val tanks =
-    for (node <- (problemNode \ "tanks" \ "tank").toArray)
-      yield new Tank(node, cargos)
-
-  val totCapa = (0 /: tanks)((s, t) => s + t.capa) // fold left to compute tot capa
-
-  // extract cargo that cannot be be adjacent to each others
-  val incompatibles: Set[(Int, Int)] =
-    (for (n <- (problemNode \ "incompatibles" \ "incompatible"))
-      yield ((n \ "@cargo1").text.toInt, (n \ "@cargo2").text.toInt)).toSet
-  // transform this information to get the possible adjacent pairs
-  val compatibles =
-    (for (
-      i <- 0 until cargos.size;
-      j <- 0 until cargos.size;
-      if (!incompatibles.contains((i, j)) &&
-        !incompatibles.contains((j, i)))
-    ) yield (i, j)).toSet
+  val instance = TAPUtils.parseInstance("data/chemical2.xml")  
+  val cargos = instance.cargos
+  val tanks = instance.tanks
+  val totCapa = instance.totCapa
+  val incompatibles = instance.incompatibles
+  val compatibles = instance.compatibles
     
 
   // Visualization
@@ -106,9 +89,9 @@ object MyTAP extends App {
 
   case class Sol(cargo: Array[Int], freeSpace: Int, nbFreeTanks: Int)
   var currentSol: Sol = null
-  val p = 50
+  val p = 30
 
-  cp.lns(100, 300) { relaxVariables(randomRelax(p)) }
+  cp.lns(1000, 500) { relaxVariables(randomRelax(p)) }
 
   def randomRelax(p: Int): Array[Boolean] = {
     Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
@@ -133,7 +116,7 @@ object MyTAP extends App {
   var nbSol = 0
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
-  cp.minimize(if (false) -freeSpace else -nbFreeTanks) 
+  cp.minimize(if (true) -freeSpace else -nbFreeTanks) 
   
   cp.subjectTo {
     // make the link between cargo and load vars with binpacking constraint
@@ -154,7 +137,10 @@ object MyTAP extends App {
     while (!allBounds(cargo)) {     
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
+      
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
+      //val (tankVar,tank) = cargo.zipWithIndex.filter(c => !c._1.isBound).maxBy(c => (tanks(c._2).capa,-c._1.getSize))
+      
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
       
       cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))

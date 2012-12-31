@@ -10,7 +10,7 @@ case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
     else if (x.objs(i) < objs(i)) false
     else dominates0(x, i+1)
   }
-  
+
   override def toString: String = "MOSol("+objs.mkString(", ")+")"
 }
 
