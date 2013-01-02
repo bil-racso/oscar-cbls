@@ -91,25 +91,25 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
 
 }
 
-abstract class ProcessWithStates[T](name: String = "Process", initState: Any)(implicit m: Model[T]) extends Process[T](name)(m) {
-  def exec(state: Any): T @susp
-  def deepExec(state: Any) = exec(state)
-  def Iam(state: Any) = deepExec(state)
+abstract class ProcessWithStates[S,T](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
+  def exec(state: S): T @susp
+  def deepExec(state: S) = exec(state)
+  def Iam(state: S) = deepExec(state)
   override def start() = deepExec(initState)
 }
 
-trait MonitorState[T] extends ProcessWithStates[T] {
-  val entering = new Event[Any]
-  override def deepExec(state: Any) = {
+trait MonitorState[S,T] extends ProcessWithStates[S,T] {
+  val entering = new Event[S]
+  override def deepExec(state: S) = {
     entering.emit(state)
     super.deepExec(state)
   }
 }
 
-trait Precomputation[T] extends ProcessWithStates[T] {
+trait Precomputation[S,T] extends ProcessWithStates[S,T] {
   val results = mutable.HashMap[Any, T]()
 
-  def future(state: Any) = {
+  def future(state: S) = {
     reset {
       val i = shift { k: (Int => Option[T]) =>
         {
@@ -128,7 +128,7 @@ trait Precomputation[T] extends ProcessWithStates[T] {
     }.get
   }
 
-  override def deepExec(state: Any): T @susp = {
+  override def deepExec(state: S): T @susp = {
 
     this(state) match {
       case None => future(state)

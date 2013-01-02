@@ -11,13 +11,13 @@ import scala.util.continuations._
 
 object Distr{
   private val randomGenerator = new scala.util.Random(4568)
-  def random = randomGenerator
+  //def random = randomGenerator
   def apply[A](v: A) = new ValueDistr(v)
 }
 
 trait Distr[B] {
   def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]]
-  def getNextStochasticRealization(): B
+  def getNextStochasticRealization(random: scala.util.Random): B
  // def map[B](g: A => B) = new DistrComposition(this, g)
 }
 
@@ -32,7 +32,7 @@ trait ContinuousDistr[B] extends Distr[B] {
 //  def getNextStochasticRealization() = g(d())
 //}
 class ValueDistr[B](val value: B) extends Distr[B] {
-  def getNextStochasticRealization = value
+  def getNextStochasticRealization(random: scala.util.Random) = value
   override def apply[T](implicit m: DistrSolver[T]):B @cpsParam[Option[T],Option[T]] = value
 }
 
@@ -52,8 +52,8 @@ trait DiscreteDistr[B] extends Distr[B]{
 class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
   require(list.size > 0)
   require(list.foldLeft(0.0)(_ + _._1) == 1.0)
-  def getNextStochasticRealization(): A = {
-    val target = Distr.random nextDouble
+  def getNextStochasticRealization(random: scala.util.Random): A = {
+    val target = random nextDouble
     var tot = 0.0
     for (el <- list) {
       tot += el._1
@@ -71,8 +71,8 @@ class UniformDiscrete(val min: Long, val max: Long) extends ContinuousDistr[Long
   require(max >= min)
   require(max-min < Int.MaxValue)
   val interval = (max-min).toInt
-  def getNextStochasticRealization():Long = {
-    min + Distr.random.nextInt(interval)
+  def getNextStochasticRealization(random: scala.util.Random):Long = {
+    min + random.nextInt(interval)
   }
   def mean = min + (max-min)/2
   def std = {assert(false);-1}
@@ -96,24 +96,22 @@ object Flip{
   def apply(p: Double) = new Flip(p)
 }
 class Flip(p: Double) extends DiscreteDistr[Boolean] {
-  override def getNextStochasticRealization() = Math.random < p
+  override def getNextStochasticRealization(random: scala.util.Random) = random.nextDouble() < p
   override def list = List( (p,true), (1-p,false))
 }
 
 class PoissonD(decay: Double) extends ContinuousDistr[Double]{
-	val generator = new Random()
 	val ln = new ExponentialDistribution(decay) 
 	def min = ln.inverse(0.05)
 	val max = ln.inverse(0.95)
 	val std = sqrt(ln.getVariance())
 	def mean = ln.getMean()
-	def getNextStochasticRealization(): Double = ln.inverse(generator.nextDouble)
+	def getNextStochasticRealization(random: scala.util.Random): Double = ln.inverse(random.nextDouble)
 	
 	
 }
 
 class ExponentialD(lambda: Double) extends ContinuousDistr[Double]{
-	val generator = new Random()
 	//val ln = new ExponentialDistribution(decay) 
 	private def inverse(p: Double) = {
 	  require(0 <= p && p <= 1)
@@ -123,15 +121,14 @@ class ExponentialD(lambda: Double) extends ContinuousDistr[Double]{
 	val max = inverse(0.95)
 	val std = 1/(lambda*lambda)
 	def mean = 1/lambda
-	def getNextStochasticRealization(): Double = inverse(generator.nextDouble) 
+	def getNextStochasticRealization(random: scala.util.Random): Double = inverse(random.nextDouble) 
 	  //ln.inverse(generator.nextDouble)
 	
   
 }
 class LogNormalD(mu: Double, variance: Double) extends ContinuousDistr[Double]{
   val ln = new LognormalDistribution(mu, variance) 
-  val generator = new Random()
-  def getNextStochasticRealization(): Double = ln.inverse(generator.nextDouble)
+  def getNextStochasticRealization(random: scala.util.Random): Double = ln.inverse(random.nextDouble)
   def min = ln.inverse(0.05)
   val max = ln.inverse(0.95)
   val std = ln.getSigmaParameter()
@@ -141,9 +138,8 @@ class LogNormalD(mu: Double, variance: Double) extends ContinuousDistr[Double]{
 
 class NormalD(mu: Double, variance: Double) extends ContinuousDistr[Double] {
   val nd = new NormalDistribution(mu, variance) 
-  val generator = new Random()
 
-  def getNextStochasticRealization(): Double = nd.inverse(generator.nextDouble)
+  def getNextStochasticRealization(random: scala.util.Random): Double = nd.inverse(random.nextDouble)
   def min = nd.inverse(0.05)
   val max = nd.inverse(0.95)
   val std = sqrt(nd.getVariance())

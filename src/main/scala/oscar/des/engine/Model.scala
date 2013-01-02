@@ -35,6 +35,8 @@ import oscar.invariants._
  */
 
 class StochasticModel[+T] extends Model[T] with StochasticSolver[T] 
+class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
+class DeterministicModel[+T] extends Model[T] with DeterministicSolver[T]
 
 abstract class Model[+T] extends DistrSolver[T]{
 

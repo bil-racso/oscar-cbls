@@ -11,9 +11,14 @@ trait DistrSolver[+T] {
 }
 
 trait StochasticSolver[+T] extends DistrSolver[T] {
-  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.getNextStochasticRealization()
+  val random = new scala.util.Random
+  override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.getNextStochasticRealization(random)
   //  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]): B @cpsParam[Unit, A] = ch.getNextStochasticRealization()
-  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[Option[T], Option[T]] = ch.getNextStochasticRealization()
+  override def getNextStochasticRealization[B](ch: DiscreteDistr[B]): B @cpsParam[Option[T], Option[T]] = ch.getNextStochasticRealization(random)
+}
+
+trait DeterministicSolver[+T] extends StochasticSolver[T]{
+  override val random = new scala.util.Random(123456789)
 }
 
 trait Meanalizable[T <: Meanalizable[T]] {
