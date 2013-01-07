@@ -8,6 +8,7 @@ import scala.collection.JavaConverters._
 trait Operationable[B] extends Ordering[B] with java.util.Comparator[B] {
   implicit def intOp: Operationable[Int] = IntOp
   def +(a: B, b: B): B
+  def -(a: B, b: B): B
   def *(a: B, b: B): B
   def *#(a: B, b: Double): Double
   def **(a: B, b: Double): B
@@ -28,9 +29,10 @@ trait Operationable[B] extends Ordering[B] with java.util.Comparator[B] {
 
 object IntOp extends Operationable[Int] {
   override def +(a: Int, b: Int) = a + b
+  override def -(a: Int, b: Int) = a - b
   override def *(a: Int, b: Int) = a * b
   override def *#(a: Int, b: Double) = a.toDouble * b
-  def **(a: Int, b: Double) = (a*b).toInt
+  def **(a: Int, b: Double) = (a * b).toInt
   override def /(a: Int, b: Int) = a / b
   //override def *(d: Double, b: Int) = b*d
   override def >(a: Int, b: Int) = a > b
@@ -40,6 +42,7 @@ object IntOp extends Operationable[Int] {
 
 object LongOp extends Operationable[Long] {
   override def +(a: Long, b: Long) = a + b
+		  override def -(a: Long, b: Long) = a - b
   override def *(a: Long, b: Long) = a * b
   override def *#(a: Long, b: Double) = a.toDouble * b
   override def **(a: Long, b: Double) = (a * b).toLong
@@ -52,6 +55,7 @@ object LongOp extends Operationable[Long] {
 
 object DoubleOp extends Operationable[Double] {
   override def +(a: Double, b: Double) = a + b
+		  override def -(a: Double, b: Double) = a - b
   override def *(a: Double, b: Double) = a * b
   override def *#(a: Double, b: Double) = a * b
   override def **(a: Double, b: Double) = a * b

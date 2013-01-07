@@ -30,14 +30,14 @@ class PQCounter[A<%Ordered[A]](v: A) extends Signal[A](v){
   val pq = new PriorityQueue[WaitEvent[A]]
   
   def addEvent(ev: WaitEvent[A]) {
-    require(ev.time >= this())
+    require(ev.time.compareTo(this()) >= 0)
     pq.add(ev)
   }
   def setTime(t: A){
     if ( !pq.isEmpty() ){
       if ( t == nextTime ){
     	  generateNext
-      }else if ( t < nextTime){
+      }else if ( t.compareTo(nextTime) < 0){
     	  emit(t)
       }else{
         assert(false)
@@ -69,7 +69,7 @@ class PQCounter[A<%Ordered[A]](v: A) extends Signal[A](v){
   }
 }
 
-class PQCounterCond[A<%Ordered[A]](pqc: PQCounter[A], v: A) extends Occuring[A]{
+class PQCounterCond[A<%Comparable[A]](pqc: PQCounter[A], v: A) extends Occuring[A]{
   def foreach(f2:A=>Boolean) = {
     val a = new WaitEvent[A](v,f2)
     pqc addEvent(a)
@@ -78,7 +78,7 @@ class PQCounterCond[A<%Ordered[A]](pqc: PQCounter[A], v: A) extends Occuring[A]{
 }
 
 
-class PQEventBlock[A<%Ordered[A]](pqc: PQCounter[A], ev: WaitEvent[A]) extends Reaction[A]({_=>false}, pqc){
+class PQEventBlock[A<%Comparable[A]](pqc: PQCounter[A], ev: WaitEvent[A]) extends Reaction[A]({_=>false}, pqc){
   
   def dispose(){
     pqc.removeEvent(ev)

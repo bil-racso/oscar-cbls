@@ -71,6 +71,6 @@ object Machine2 {
   		val repairPerson = Resource.unary(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
 		val m2 = new Machine2(mod,"machine2",repairPerson)
-		mod.simulate(100,true)
+		mod.simulate(mod.clock().plusDays(100),true)
 	}
 }

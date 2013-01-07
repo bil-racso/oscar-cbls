@@ -13,12 +13,13 @@ scalaVersion := "2.9.2"
 
 autoCompilerPlugins := true
 
+libraryDependencies += "org.scalaj" %% "scalaj-time" % "0.6"
+
 libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
     deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
 }
 
 unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "lib_commercial") }
-
 
 scalacOptions ++= Seq("-P:continuations:enable") //,"-optimize"
 
@@ -30,7 +31,6 @@ seq(jacoco.settings : _*)
 jacoco.reportFormats in jacoco.Config := Seq(XMLReport("utf-8"), HTMLReport("utf-8"))
 
 jarName in assembly := "oscar.jar"
-
 
 test in assembly := {}
 

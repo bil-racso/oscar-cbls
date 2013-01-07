@@ -24,6 +24,7 @@ import akka.util.Duration
 import akka.util.FiniteDuration
 //import akka.util.duration.
 import oscar.invariants._
+import org.joda.time._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
@@ -82,9 +83,8 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
     r.request[T]
   }
   //@noinline
-  def waitDuring(d: Long): Long @susp = {
-    require(d > 0)
-    waitFor[Long, T](m.clock === m.clock() + d)
+  def waitDuring(d: Period): DateTime @susp = {
+    waitFor[DateTime, T](m.clock === m.clock().plus(d))
   }
   def w[A](occ: Occuring[A]) = waitFor[A, T](occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
@@ -144,8 +144,8 @@ trait Precomputation[S,T] extends ProcessWithStates[S,T] {
     assert(results.get(state) == None)
     results(state) = res
   }
-  override def waitDuring(d: Long): Long @susp = {
-    model.setTime(model.clock() + d)
+  override def waitDuring(d: Period): DateTime @susp = {
+    model.setTime(model.clock().plus(d))
     model.clock()
   }
 

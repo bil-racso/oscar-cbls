@@ -57,6 +57,6 @@ object Machine1 {
   		mod.setTime("5/1/2012 5:00pm")
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
-		mod.simulate(100,true);
+		mod.simulate(mod.clock().plusDays(100),true);
 	}
 }

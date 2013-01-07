@@ -21,6 +21,7 @@ package oscar.examples.des
 
 import oscar.des.engine._
 import scala.util.continuations._
+import org.joda.time._
 
 /**
  * two machines can be broken, there is only one repair person that can repair it at a time
@@ -70,7 +71,7 @@ class Machine3(m : Model[Unit], name: String, machineList : MachineList) extends
 		request(repairPerson) 
 		
 		println(name+" being repaired")
-		waitDuring(repairDur.nextInt(3).max(0))
+		waitDuring(new Period(repairDur.nextInt(3).max(0)))
 		release(repairPerson)
 		alive()
 	}
@@ -103,7 +104,7 @@ object Machine3 {
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)
 		val m2 = new Machine3(mod,"machine2",mlist)
-		mod.simulate(100,true);
+		mod.simulate(mod.clock().plusDays(100),true);
   		println("done1")
 	}
 }

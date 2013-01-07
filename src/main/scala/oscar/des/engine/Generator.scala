@@ -38,8 +38,8 @@ class Generator(m: Model[Unit], var dist: Distr[Double])(block: => Unit) extends
   def start() = {
     generating = true
       while (generating) {
-        val t = floor(dist.apply(m)).toLong
-        val a = w(m.clock === m.clock() + t)
+        val t = floor(dist.apply(m)).toInt
+        val a = w(m.clock === m.clock().plusMillis(t))
         if (generating){
           block
         }

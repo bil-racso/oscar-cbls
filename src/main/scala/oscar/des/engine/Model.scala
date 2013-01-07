@@ -27,6 +27,8 @@ import scala.util.continuations._
 import java.util.LinkedList
 //import scala.collection.JavaConversions._
 import oscar.invariants._
+import org.joda.time.ReadableInstant
+import org.scala_tools.time.Imports._
 
 /**
  * This is the main engine of the simulation.
@@ -34,13 +36,38 @@ import oscar.invariants._
  * @author pschaus
  */
 
-class StochasticModel[+T] extends Model[T] with StochasticSolver[T] 
+class StochasticModel[+T] extends Model[T] with StochasticSolver[T]
 class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
 class DeterministicModel[+T] extends Model[T] with DeterministicSolver[T]
 
-abstract class Model[+T] extends DistrSolver[T]{
+class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
 
-  val clock = new PQCounter[Long](0)
+  reset {
+    var m = 0
+    while (true) {
+      waitFor[DateTime, Unit](clock === clock().plusMonths(1).withDayOfMonth(1).withMillisOfDay(0))
+      m += 1
+      emit(m)
+    }
+    None
+  }
+
+}
+
+abstract class Model[+T] extends DistrSolver[T] {
+
+  //  
+  implicit def comparable2ordered[A <: Comparable[A], B <: A](x: A): Ordered[B] =
+    new Ordered[B] with Proxy {
+      val self = x
+      def compare(y: B): Int = { x.compareTo(y) }
+    }
+  implicit def DT2Ordered(dt: DateTime) = comparable2ordered[ReadableInstant, DateTime](dt)
+  val n = DateTime.now
+  //val b = comparable2ordered[ReadableInstant,DateTime](n)
+
+  val clock = new PQCounter[DateTime](new DateTime(1970, 0, 0, 0, 0, 0, 0))
+  val month = new MonthEvent(clock)
 
   private val processes = new LinkedList[Process[_]]()
 
@@ -48,12 +75,12 @@ abstract class Model[+T] extends DistrSolver[T]{
     processes.addLast(p)
   }
 
-  def setTime(l: Long){
-	clock.setTime(l)
+  def setTime(dateTime: DateTime) {
+    clock.setTime(dateTime)
   }
-  def setTime(d: String){setTime((new java.util.Date(d)).getTime())}
-  
-  def simulate(horizon: Long, verbose: Boolean = true) {
+  def setTime(d: String) { setTime(new DateTime(d)) }
+
+  def simulate(horizon: DateTime, verbose: Boolean = true) {
     // make all the process alive
     //reset{
     val it = processes.iterator
@@ -65,9 +92,7 @@ abstract class Model[+T] extends DistrSolver[T]{
       val e = clock.next
 
       if (verbose && e.time <= horizon) {
-        val date = new java.util.Date()
-        date.setTime(e.time.toLong)
-        println("-----------> time: " + date)
+        println("-----------> time: " + e.time)
       }
       if (clock() <= horizon) {
         e.process
@@ -76,22 +101,20 @@ abstract class Model[+T] extends DistrSolver[T]{
     //}
   }
   @elidable(INFO) def print(s: String) {
-    println(clock() + ": " + s)
+    println(clock().toString() + ": " + s)
   }
-  def time(o: Any): Long = {
-    clock()
-  }
-  def frequency(state: State[_]) = new Frequency(this, state)
+  def time(o: Any) = clock()
 
-  def waitDuration[T](duration: Long) = {
-    require(duration > 0)
-    waitFor(clock === clock() + duration)
+  //def frequency(state: State[_]) = new Frequency(this, state)
+
+  def waitDuration[T](duration: Period) = {
+    waitFor(clock === (clock() + duration))
 
   }
-//  def waitDuration[T](duration: Int) = {
-//	  require(duration > 0)
-//    waitFor[Long,T](clock === clock() + duration)
-//  }
+  //  def waitDuration[T](duration: Int) = {
+  //	  require(duration > 0)
+  //    waitFor[Long,T](clock === clock() + duration)
+  //  }
 
   //  def waitFor[A](ev: Signal[A], f: A => Boolean): Unit @suspendable = {
   //    if ( !f(ev())){ 
@@ -107,7 +130,6 @@ abstract class Model[+T] extends DistrSolver[T]{
   //    obs.dispose()
   //    }
   //  }
-
 
 }
 
