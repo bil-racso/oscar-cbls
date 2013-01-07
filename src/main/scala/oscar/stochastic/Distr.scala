@@ -144,7 +144,18 @@ class NormalD(mu: Double, variance: Double) extends ContinuousDistr[Double] {
 
 }
 
-class LearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] {
+trait Observing {
+  def observe{}
+}
+
+trait CountNRealizations extends Observing {
+  var nRea = 0
+  override def observe {
+    nRea += 1
+  }
+}
+
+class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
   var n = 0
   val count = (new TreeMap[B, Int](op))
 
@@ -154,14 +165,14 @@ class LearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Opera
   require(pmax <= 1)
 
   override def equals(o: Any) = {
-    val that = o.asInstanceOf[LearnedQuantiles[B]]
+    val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
     pmin == that.pmin && pmax == that.pmax &&
       super.equals(that)
   }
 
   override def aggregate(o: Any) {
 
-    val that = o.asInstanceOf[LearnedQuantiles[B]]
+    val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
 
     require(pmin == that.pmin && that.pmax == that.pmax)
     n += that.n
@@ -210,12 +221,14 @@ class LearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Opera
   override def hasPertinentObservations = super.hasPertinentObservations || count.size != 0
 }
 
-class LearnedNumerical[B]()(implicit op: Operationable[B]) {
+class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
 
   var current = op.zero
   var tot = op.zero
   var squaredTot = op.zero
 
+  def mean(nRea: Int) = op.*#(tot, 1.0/nRea)
+  
   override def equals(o: Any) = {
     val that = o.asInstanceOf[LearnedNumerical[B]]
     tot == that.tot && that.squaredTot == squaredTot
@@ -236,20 +249,28 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) {
     squaredTot = op.+(squaredTot, op.*(v, v))
     current = op.zero
   }
-  def observe {
+  override def observe {
+    super.observe
     observe(current)
   }
   def hasPertinentObservations = tot != 0 || squaredTot != 0
 }
 
 object Learn {
-  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new LearnedNumericalFunctionWithQuantiles(pmin, pmax)
-  def apply[B]()(implicit op: Operationable[B]) = new LearnedNumericalFunctionWithMean[B]()
+
+  def number[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new AbstractLearnedQuantiles(pmin, pmax)(op) with CountNRealizations
+  def number[B](implicit op: Operationable[B]) = new LearnedNumerical()(op) with CountNRealizations
+
+  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = function(pmin, pmax)(op)
+  def apply[B]()(implicit op: Operationable[B]) = function(op)
+
+  def function[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new LearnedNumericalFunctionWithQuantiles(pmin, pmax)
+  def function[B](implicit op: Operationable[B]) = new LearnedNumericalFunctionWithMean[B]()
 }
 
-class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumericalFunction[B, LearnedQuantiles[B]] {
+class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumericalFunction[B, AbstractLearnedQuantiles[B]] {
 
-  override def createNumber = new LearnedQuantiles[B](pmin, pmax)
+  override def createNumber = new AbstractLearnedQuantiles[B](pmin, pmax)
   def quantileUp(t: Int, d: Double) = this(t) quantileUp (d, nRea)
   def quantileDown(t: Int, d: Double) = this(t) quantileDown (d, nRea)
 
@@ -260,8 +281,8 @@ class LearnedNumericalFunctionWithMean[B](implicit op: Operationable[B]) extends
 
 }
 
-abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) {
-  var nRea = 0
+abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations{
+
   implicit val numbers = new mutable.ArrayBuffer[N]
 
   def createNumber: N
@@ -289,8 +310,8 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
     this
   }
   def +=(that: LearnedNumericalFunction[B, N]) = aggregate(that)
-  def observe {
-    nRea += 1
+  override def observe {
+    super.observe
     for (n <- numbers) n observe
   }
   def observe(f: Traversable[(Int, B)]) {

@@ -111,7 +111,7 @@ class DistrTest extends FunSuite with ShouldMatchers {
 
   test("quantiles") {
 
-    val n = new LearnedQuantiles[Double](0.0, 0.0)
+    val n = new AbstractLearnedQuantiles[Double](0.0, 0.0)
 
     for (i <- 1 to 10) {
       n.observe(i)
