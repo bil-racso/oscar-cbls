@@ -41,7 +41,7 @@ trait Constraints {
   def multiknapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar]) = MultiKnapsack(items, itemsizes, binsizes)
 
 
-  /**implments the sequence constraint:
+  /**implements the sequence constraint:
    *
    * @param variables the "history variables"
    * @param length the length of the sequence

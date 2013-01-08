@@ -407,6 +407,22 @@ trait Constraints {
 		//import oscar.cp.constraints.TableAC5TCRecomp
 		//new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
 	}
+	
+	/**
+	 * Table Constraints for quadruples
+	 * @param x1 first variable
+	 * @param x2 second variable
+	 * @param x3 third variable
+	 * @param x4 fourth variable
+	 * @param x5 fifth variable
+	 * @param tuples a collection of five-tuples
+	 * @return a constraint enforcing that (x1,x2,x3,x4,x5) is one of the five-tuples given in tuples
+	 */
+	def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, x5: CPVarInt, tuples: Iterable[(Int, Int, Int, Int, Int)]) : Constraint = {
+		table(Array(x1, x2, x3, x4, x5), tuples.map(t => Array(t._1, t._2, t._3, t._4, t._5)).toArray)
+		//import oscar.cp.constraints.TableAC5TCRecomp
+		//new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
+	}	
 
 	def modulo(x : CPVarInt, v : Int, y : CPVarInt) : Constraint = {
 		return new Modulo(x, v, y)
