@@ -183,12 +183,12 @@ case class Max(vars: SortedSet[IntVar]) extends Miax(vars) {
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log iplementations
  * */
-case class Max2(override val a: IntVar, override val b: IntVar)
+case class Max2(val a: IntVar, val b: IntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.MinVal.max(b.MinVal), a.MaxVal.max(b.MaxVal))
 
 /** maintains output = Min(a,b)
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log iplementations
  * */
-case class Min2(override val a: IntVar, override val b: IntVar)
+case class Min2(val a: IntVar, val b: IntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.MinVal.min(b.MinVal), a.MaxVal.min(b.MaxVal))

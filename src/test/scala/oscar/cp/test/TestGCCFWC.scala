@@ -25,10 +25,9 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
 
 class TestGCCFWC extends FunSuite with ShouldMatchers {
-  import TestGCCFWC._
+//  import TestGCCFWC._
 
 //  test("Test 1: too few variables to satisfy the lower bounds of CC") {
 //    val cp = new CPSolver()
@@ -205,7 +204,7 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 //  }
 
 }
-
+/*
 object TestGCCFWC {
   def domainGen(yMax: Int) = for {
     lb <- Gen.choose(0, yMax)
@@ -237,4 +236,4 @@ object TestGCCFWC {
 
     new GCCFWC(X, minVal, Low, Up)
   }
-}
+}*/

@@ -160,7 +160,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMax(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(varss, ccond,default)
+  def argMax(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = new ArgMaxArray(varss, ccond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -169,7 +169,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = new ArgMinArray(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar
@@ -213,7 +213,7 @@ trait MinMaxInvariants{
    * @param default is the default value if v is empty
    * update is O(log(n))
    * */
-  def maxSet(v: IntSetVar, default: Int = Int.MinValue) = MaxSet(v, default)
+  def maxSet(v: IntSetVar, default: Int = Int.MinValue) = new MaxSet(v, default)
 }
 
 trait NumericInvariants{

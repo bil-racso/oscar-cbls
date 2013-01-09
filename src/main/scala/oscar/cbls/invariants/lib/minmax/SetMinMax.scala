@@ -29,7 +29,7 @@ import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
 import oscar.cbls.invariants.core.propagation.PropagationElement._
 
 //Log
-abstract case class MiaxSet(v: IntSetVar) extends IntInvariant{
+abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -85,7 +85,7 @@ abstract case class MiaxSet(v: IntSetVar) extends IntInvariant{
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MinSet(override val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
+case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
   override def name = "MinSet"
 
   override def Better(a:Int,b:Int):Boolean = a < b
@@ -114,7 +114,7 @@ case class MinSet(override val v: IntSetVar, Default: Int = Int.MaxValue) extend
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MaxSet(override val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
+case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
   override def name = "MaxSet"
 
   override def Better(a:Int,b:Int):Boolean = a > b

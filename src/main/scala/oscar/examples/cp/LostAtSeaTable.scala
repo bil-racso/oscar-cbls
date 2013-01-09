@@ -90,7 +90,7 @@ object LostAtSea  {
          def heuris(x : CPVarInt): Int = {
            val values = (x.min to x.max).filter(x.hasValue(_))
            val maxProba = values.map(probaFlat(_)).max
-           values.filter(probaFlat(_) == maxProba).first
+           values.filter(probaFlat(_) == maxProba).head
          }
          //cp.binaryFirstFail(path, heuris(_))
          cp.binaryFirstFail(path)

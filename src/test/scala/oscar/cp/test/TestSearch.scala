@@ -25,7 +25,7 @@ import oscar.cp.core._
 import oscar.search.IDSSearchController
 import oscar.cp.modeling._
 
-import org.scalacheck._
+
 
 class TestSearch extends FunSuite with ShouldMatchers  {
 

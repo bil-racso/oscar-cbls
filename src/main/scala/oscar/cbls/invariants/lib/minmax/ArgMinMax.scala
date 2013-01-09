@@ -37,7 +37,7 @@ import oscar.cbls.invariants.core.computation._
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  * */
-case class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MinValue)
+class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MinValue)
   extends ArgMiaxArray(varss, ccond ,default) {
 
   override def name: String = "ArgMaxArray"
@@ -58,7 +58,7 @@ case class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override va
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  * */
-case class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MaxValue)
+class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MaxValue)
   extends ArgMiaxArray(varss, ccond,default) {
 
   override def name: String = "ArgMinArray"

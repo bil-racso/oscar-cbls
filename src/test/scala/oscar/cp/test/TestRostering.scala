@@ -27,7 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

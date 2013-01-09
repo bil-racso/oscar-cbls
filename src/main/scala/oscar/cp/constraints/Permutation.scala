@@ -26,8 +26,8 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.reversible.ReversibleInt
-import scala.Math.min
-import scala.Math.max
+import scala.math.min
+import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.CPSolver

@@ -85,7 +85,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
     c.close()
 
     val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
-    val MaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray)
+    val MaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray)
 
     m.close(false)
     print(", " + getWatch)

@@ -101,13 +101,13 @@ class Planning(val model: Model, val maxduration: Int) {
       FirstOvershootArray(r.ResourceID) = r.FirstOvershoot
     }
     val ResourceWithOvershoot: IntSetVar = Filter(FirstOvershootArray, (date: Int) => date <= maxduration)
-    EarliestOvershotResources = ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
+    EarliestOvershotResources = new ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
 
     val WorseOvershootArray: Array[IntVar] = new Array[IntVar](ResourceCount)
     for (r <- Ressources) {
       WorseOvershootArray(r.ResourceID) = r.HighestUse
     }
-    WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
+    WorseOvershotResource = new ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
   var gantt:Gantt = null
@@ -270,7 +270,7 @@ class Planning(val model: Model, val maxduration: Int) {
     }
   }
   
-  abstract case class DependencyCleaner()
+  abstract class DependencyCleaner()
   case class HardRockDependency() extends DependencyCleaner
   case class DependenciesCanBeKilled(d:List[(Task, Task)]) extends DependencyCleaner{
     def killDependencies{

@@ -53,7 +53,7 @@ object test extends SearchEngine {
     val f:IntVar = Max(SortedSet(a,b,c,d)) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:IntVar = MaxLin(SortedSet(a,b,c,d))
 
-    val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))
+    val h:IntSetVar = new ArgMinArray(Array(a,d,b,d,c,d - 1))
   
     Event(h,{println("Trigger: h changed: " + h)})
     val k:IntVar = Cardinality(h)

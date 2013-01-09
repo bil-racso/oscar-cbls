@@ -27,8 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
-
 class TestCubes extends FunSuite with ShouldMatchers  {
 
 

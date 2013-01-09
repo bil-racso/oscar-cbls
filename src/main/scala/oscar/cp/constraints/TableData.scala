@@ -47,7 +47,7 @@ class TableData(val arity: Int) {
    */	
   def add(tuple: Int*) {
 		assert(arity == tuple.length,{println("wrong arrity:"+tuple.length)})
-		tuple.zipWithIndex.foreach{case(v,i) => data(i) + tuple(i)} 
+		tuple.zipWithIndex.foreach{case(v,i) => data(i) += tuple(i)} 
   }
   
   /**

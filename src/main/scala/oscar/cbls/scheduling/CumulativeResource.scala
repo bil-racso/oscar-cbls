@@ -47,7 +47,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int, name: String =
 
   val FirstOvershoot: IntVar = MinSet(Filter(UseAmount, x => x > MaxAmount))
 
-  val HighestUseTracker = ArgMaxArray(UseAmount)
+  val HighestUseTracker = new ArgMaxArray(UseAmount)
   val HighestUsePositions: IntSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 

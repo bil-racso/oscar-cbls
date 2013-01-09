@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * */
-case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, override val default: Int = Int.MinValue)
+case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MaxArray"
@@ -50,7 +50,7 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * */
-case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val default: Int = Int.MaxValue)
+case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MinArray"
@@ -66,7 +66,7 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, override val 
  * @param cond is the condition, cannot be null
  * update is O(log(n))
  * */
-abstract case class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int,Int)]{
+abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int,Int)]{
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))

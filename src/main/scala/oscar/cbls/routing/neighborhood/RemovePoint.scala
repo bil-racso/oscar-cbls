@@ -31,6 +31,9 @@ import scala.util.Random
  * The search complexity is O(n).
  */
 object RemovePoint extends SearchEngine{
+  
+  val rand = new Random()
+  
   /**
    * Returns the best remove-point operator, i.e. which decreases the most the objective value
    * of a given VRP problem.
@@ -72,7 +75,7 @@ object RemovePoint extends SearchEngine{
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
     if(random){
-      val toUnroute = Random.shuffle(Range(vrp.V,vrp.N))
+      val toUnroute = rand.shuffle(vrp.V to vrp.N-1).toArray
       for (beforeRemovePoint <- toUnroute if(vrp.isRouted(beforeRemovePoint))){
         val obj = getObjAfterMove(beforeRemovePoint,vrp.Next(beforeRemovePoint).value,vrp)
         if(obj != Int.MaxValue){

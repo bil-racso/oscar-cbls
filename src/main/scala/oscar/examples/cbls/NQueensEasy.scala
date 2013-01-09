@@ -42,7 +42,7 @@ object NQueensEasy extends App{
     val rand = new scala.util.Random()
     
     val ls = new LSSolver()
-    val init = rand.shuffle((0 until N).toSeq) // initial solution
+    val init = rand.shuffle(0 to N-1).toArray // initial solution
     val queens = Array.tabulate(N)(q => new LSVarInt(ls, 0, N-1,init(q),"queen" + q))
     val c = new ConstraintSystem(ls)
 

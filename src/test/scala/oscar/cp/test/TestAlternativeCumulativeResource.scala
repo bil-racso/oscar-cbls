@@ -9,8 +9,6 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 
-import org.scalacheck._
-
 class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	

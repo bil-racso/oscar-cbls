@@ -149,7 +149,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     // Check overall feasibility after potential changes
 
     // Subset of X2 such that each variable has some values out of the set of cardinality constrained values 
-    val X3 = X2 filter (x => x.min < constrainedValues.first || x.max > constrainedValues.last)
+    val X3 = X2 filter (x => x.min < constrainedValues.head || x.max > constrainedValues.last)
     if (low.sum > X2.size) {
       // DEBUG
       println("Too few variables to satisfy the lower bounds of CC")

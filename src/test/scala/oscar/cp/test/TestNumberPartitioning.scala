@@ -27,8 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
-
 /**
  * Problem 49 of CSPLib <br>
  * find a partition of numbers 1..N into two sets A and B such that: <br>

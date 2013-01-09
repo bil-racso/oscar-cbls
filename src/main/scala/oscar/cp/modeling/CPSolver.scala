@@ -185,7 +185,7 @@ class CPSolver() extends Store() {
 
       val unbound = vars.filter(!_.isBound)
       val heuris = unbound.map(varHeuris(_)).min
-      val x = unbound.filter(varHeuris(_) == heuris).first
+      val x = unbound.filter(varHeuris(_) == heuris).head
 
       val vals = x.toArray.sortBy(valHeuris)
       val median = vals(vals.size / 2)

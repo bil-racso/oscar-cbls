@@ -31,7 +31,7 @@ import oscar.cbls.modeling.Algebra
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-case class SuperTask(start: Task, end: Task, override val name: String = "")
+class SuperTask(start: Task, end: Task, override val name: String = "")
   extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
@@ -74,6 +74,10 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
   override def addStaticPredecessor(j: Task) {
     start.addStaticPredecessor(j)
   }
+}
+
+object SuperTask {
+  def apply(start: Task, end: Task, name: String = "") = new SuperTask(start,end,name)
 }
 
 case class Task(duration: IntVar, planning: Planning, name: String = "") {
@@ -155,7 +159,7 @@ case class Task(duration: IntVar, planning: Planning, name: String = "") {
       val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
       AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      val argMax = new ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
       EarliestStartDate <== argMax.getMax
 
       DefiningPredecessors = argMax

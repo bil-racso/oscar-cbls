@@ -27,7 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
 
 class TestMagicSquare extends FunSuite with ShouldMatchers  {
 

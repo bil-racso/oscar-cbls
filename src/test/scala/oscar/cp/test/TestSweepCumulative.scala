@@ -9,7 +9,6 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 
-import org.scalacheck._
 
 class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
