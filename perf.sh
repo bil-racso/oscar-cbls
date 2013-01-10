@@ -11,7 +11,7 @@ echo "scala10 directory $SCALA"
 for f in `ls -1 *.scala`; do
   echo "File -> $f"
   f2=${f%%??????}
-  $SCALA10/scalac  -cp oscar.jar  -P:continuations:enable $f
+  $SCALA/scalac  -cp oscar.jar  -P:continuations:enable $f
   SECONDS=0; $SCALA/scala  -cp oscar.jar  -P:continuations:enable $f2 ; echo "that took approximately $SECONDS seconds"
   echo $f $SECONDS $D2 $D1 $C >> ../perfresults.txt
   echo $f $SECONDS $D $C
