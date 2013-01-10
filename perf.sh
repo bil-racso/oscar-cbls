@@ -7,6 +7,7 @@ rm -f *.class
 D1=$(date +"%m-%d-%y")
 D2=$(date +%s)
 C=`hg id -i`
+SCALA=/home/pschaus/scala-2.10.0/bin
 echo "scala10 directory $SCALA"
 for f in `ls -1 *.scala`; do
   echo "File -> $f"
