@@ -5,9 +5,9 @@ class LinkedNode[T](k: Int, private var v: T) {
   private var _prev: LinkedNode[T] = null
   private var _next: LinkedNode[T] = null
 
-  def key = k
-  def value = v
-  def value_= (x : T) { v = x }
+  def objVal = k
+  def solNode = v
+  def solNode_= (x : T) { v = x }
 
   def prev = _prev
   def next = _next
@@ -17,4 +17,7 @@ class LinkedNode[T](k: Int, private var v: T) {
 
   def isFirst = _prev == null
   def isLast = _next == null
+  
+  def hasNext: Boolean = next != null
+  def hasPrev: Boolean = prev != null
 }

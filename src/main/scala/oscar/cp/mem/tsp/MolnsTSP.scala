@@ -11,27 +11,43 @@ import scala.util.Random.nextInt
 import scala.util.Random.nextFloat
 import scala.math.round
 import oscar.search.IDSSearchController
-import oscar.cp.mem.pareto.ParetoMinSet
 import java.io._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.NewPareto
+import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
 import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
+import oscar.cp.mem.visu.VisualSet
+import oscar.visual.Plot2D
+import oscar.visual.VisualFrame
 
 object MolnsTSP {
 
+  val visu = new VisualSet(180000, 180000)
+  /*val f = new VisualFrame("Hypervolume")
+  val visuPlot = new Plot2D("", "Iterations", "Hypervolume")
+  f.add(visuPlot)
+  f.pack*/
+
+  val verbous = false
+
   case class Sol(pred: Array[Int], succ: Array[Int]) { var tabu = 0 }
   var selected: Array[Array[Boolean]] = null
+
+  var plot: List[(Int, Int)] = List()
 
   def main(args: Array[String]) {
 
     val inst1 = 'A'
     val inst2 = 'B'
-    val in = "Good"
-    val out = "5c"
+    val in = "10c_merged"
+    val out = "new"
 
-    val pareto: NewPareto[Sol] = NewPareto(2)
+    val pareto: ParetoSet[Sol] = ParetoSet(2)
+
+    pareto.nadir(0) = 180000
+    pareto.nadir(1) = 180000
 
     val preds = TSPUtils.readSet("firstPhase" + inst1 + inst2 + in + ".txt")
     val succs = TSPUtils.buildSuccsFromPreds(preds)
@@ -46,6 +62,7 @@ object MolnsTSP {
     }
 
     for (i <- 0 until preds.size) {
+      //val i = 1
       val dist1 = TSPUtils.computeDist(preds(i), distMatrix1)
       val dist2 = TSPUtils.computeDist(preds(i), distMatrix2)
       val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
@@ -54,14 +71,35 @@ object MolnsTSP {
 
     solveMO(pareto, distMatrix1, distMatrix2)
 
-    TSPUtils.writeSet("setSol" + inst1 + inst2 + out + ".txt", pareto.toArray.map(_.sol.pred))
+    println(""+ inst1 + inst2 + out)
 
-    val outFile = OutFile("setPoint" + inst1 + inst2 + out + ".txt")
+    TSPUtils.writeSet("setSol" + inst1 + inst2 + out + ".txt", pareto.toArray.map(_.sol.pred))
+    val outFile = OutFile("Molns" + inst1 + inst2 + out + ".txt")
     pareto.foreach(x => outFile.writeln(x.objs.mkString(" ")))
     outFile.close()
+
+    val outFile2 = OutFile("Size" + inst1 + inst2 + out + ".txt")
+    plot.foreach(x => outFile2.writeln(x._1 + " " + x._2))
+    outFile2.close()
   }
 
-  def solveMO(pareto: NewPareto[Sol], distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]) = {
+  def hypervolume(set: ParetoSet[Sol]): Double = {
+    var prevObj2 = set.nadir(1)
+    var volume = 0.0
+    val sortedSet = set.sortedByObj(0)
+    for (s <- sortedSet) {
+      val obj1 = s.objs(0)
+      val obj2 = s.objs(1)
+      val dObj2 = prevObj2 - obj2
+      val dObj1 = set.nadir(0) - obj1
+      prevObj2 = obj2
+      val v = ((dObj2.toDouble / 10000) * (dObj1.toDouble / 10000))
+      if (v > 0) volume += v
+    }
+    volume
+  }
+
+  def solveMO(pareto: ParetoSet[Sol], distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]) = {
 
     val nCities = distMatrix1.size
     val Cities = 0 until nCities
@@ -88,20 +126,32 @@ object MolnsTSP {
     var iteration = 0
     var firstLns = true
 
-    var p = 5
-    val tabuLength = 200
-    var cycleBreaker = true
-    val maxIter = 10000
+    var p = 10
+    val tabuLength = 50
+    var cycleBreaker = false
+    val maxIter = 100000
+
+    var intens = false
+    var intensFreq = 0.2
 
     val t0 = System.currentTimeMillis()
     cp.lns(500) {
+      
+      if (iteration % 100 == 0) {
+        println("Iteration: " + iteration + " #Set: " + pareto.size)
+        println("H: " + hypervolume(pareto))
+      }
 
-      println("Iteration: " + iteration + " #Set: " + pareto.size)
 
       if (iteration == maxIter) {
         cp.stop
-        println(System.currentTimeMillis() - t0)
+        val t = System.currentTimeMillis() - t0
+        println(t + " ms")
+        println(t / 1000 + " s")
+        println(t / 60000 + " min")
       }
+
+      intens = cp.random.nextFloat() < intensFreq
 
       // If first LNS, select a first solution
       if (firstLns) {
@@ -121,7 +171,8 @@ object MolnsTSP {
       else {
         currentObjective += 1
       }
-      relaxObjectives(currentObjective)
+      visu.selected((currentSol.objs(0), currentSol.objs(1)))
+      relaxObjectives(currentObjective, intens)
       relaxVariables(clusterRelax(p))
     }
 
@@ -132,34 +183,73 @@ object MolnsTSP {
         var removed = false
         newSols.foreach(x => {
           if (x dominates currentSol) removed = true
-          println("new sol removes " + pareto.insert(x) + " sols")
+          val n = pareto.insert(x)
+          if (verbous) println("new sol removes " + n + " sols")
+
+          visu.update(pareto.map(p => (p.objs(0), p.objs(1))).toArray)
         })
         newSols.clear()
+
+        //Plot 
+        plot = (iteration, pareto.size) :: plot
+
         removed
       }
     }
 
     def selectSolution() {
+
+      if (verbous) println("Iteration: " + iteration + " #Set: " + pareto.size)
+
+      // Filter Tabu 
       var filteredSol = pareto.filter(_.tabu <= iteration)
       if (filteredSol.isEmpty) {
         val min = pareto.min(_.tabu)
         pareto.foreach(_.tabu -= (min.tabu - iteration))
         filteredSol = List(min)
       }
-      val r = nextInt(filteredSol.size)
-      currentSol = filteredSol(r)
-      //val r = nextInt(pareto.size)
-      //currentSol = pareto(r)
+
+      // Diff / Intens Search
+      val sorted = filteredSol.sortBy(s => if (intens) -computeIntenSurf(s) else -computeDiffSurf(s))
+      val rand = math.floor(math.pow(cp.random.nextFloat(), 10) * sorted.size).toInt
+      currentSol = sorted(rand)
+      
+      // Random Search
+      //currentSol = filteredSol(cp.random.nextInt(filteredSol.size))
+      
       iteration += 1
+    }
+
+    def computeIntenSurf(sol: MOSol[Sol]): Int = {
+      val diff1 = sol.objs(0) - sol.lowerBound(0)
+      val diff2 = sol.objs(1) - sol.lowerBound(1)
+      diff1 * diff2
+    }
+
+    def computeDiffSurf(sol: MOSol[Sol]): Double = {
+
+      val obj12 = sol.upperBound(0) - sol.objs(0).toDouble
+      val obj11 = sol.objs(0) - sol.lowerBound(0).toDouble
+      val obj22 = sol.upperBound(1) - sol.objs(1).toDouble
+      val obj21 = sol.objs(1) - sol.lowerBound(1).toDouble
+
+      val diff12 = obj12 / 1000
+      val diff11 = obj11 / 1000
+      val diff21 = obj21 / 1000
+      val diff22 = obj22 / 1000
+
+      diff12 * diff21 + diff11 * diff22
     }
 
     def relaxObjectives(obj: Int, intensification: Boolean = false) {
       for (o <- pareto.Objs) {
-        if (intensification || o == obj) {
+        if (o == obj) {
+          val temp = currentSol.objs(o)
           cp.objective.objs(o).best = currentSol.objs(o)
           cp.objective.objs(o).tightenMode = TightenType.StrongTighten
         } else {
-          cp.objective.objs(o).best = pareto.upper(o, currentSol.objs(o)) - 1
+          val temp = currentSol.upperBound(o) - 1
+          cp.objective.objs(o).best = if (!intens) currentSol.upperBound(o) - 1 else currentSol.objs(o)
           cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
         }
       }
@@ -213,6 +303,14 @@ object MolnsTSP {
           }
         }
       }
+
+      if (cycleBreaker) {
+        val notSelected = Cities.filter(selected(_))
+        val rand = cp.random.nextInt(notSelected.size)
+        val cc = notSelected(rand)
+        constraints.enqueue(pred(cc) == (if (cp.random.nextBoolean()) currentSol.pred(cc) else currentSol.succ(cc)))
+      }
+
       cp.post(constraints.toArray)
     }
 

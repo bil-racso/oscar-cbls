@@ -10,9 +10,8 @@ class OutFile(filepath: String, critical: Boolean, verbous: Boolean) {
   val file: BufferedWriter = openFile()
 
   private def openFile(): BufferedWriter = {
-    try {
-      new BufferedWriter(new FileWriter(filepath))
-    } catch {
+    try new BufferedWriter(new FileWriter(filepath))
+    catch {
       case e: Error => {
         errorHandling(e)
         null

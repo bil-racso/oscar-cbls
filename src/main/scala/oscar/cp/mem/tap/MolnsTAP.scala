@@ -205,5 +205,5 @@ object MolnsTAP extends App {
   }
 
   println("PARETO : ")
-  pareto.foreach(x => println(x.objs.map(-_).mkString(" ")))
+  pareto.sortBy(_.objs(0)).foreach(x => println(x.objs.mkString(" ")))
 }

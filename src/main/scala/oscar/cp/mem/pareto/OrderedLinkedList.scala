@@ -31,9 +31,9 @@ class OrderedLinkedList[T] {
     node
   }
 
-  def insert0(n: LinkedNode[T], newNode: LinkedNode[T]) {
+  private def insert0(n: LinkedNode[T], newNode: LinkedNode[T]) {
 
-    if (n.key > newNode.key) {
+    if (n.objVal > newNode.objVal) {
 
       if (n.isFirst) {
         first = newNode
@@ -72,4 +72,18 @@ class OrderedLinkedList[T] {
     first = null
     last = null
   }
+  
+  def toList() = {
+    var node = last
+    var l : List[T] = List()
+    for(_ <- 0 until size) {
+      l = node.solNode :: l
+      node = node.prev
+    }
+    l
+  }
+}
+
+object OrderedLinkedList {
+  def apply[T]() = new OrderedLinkedList[T]()
 }

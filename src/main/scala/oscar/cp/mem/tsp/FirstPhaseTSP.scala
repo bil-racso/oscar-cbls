@@ -11,7 +11,6 @@ import scala.util.Random.nextInt
 import scala.util.Random.nextFloat
 import scala.math.round
 import oscar.search.IDSSearchController
-import oscar.cp.mem.pareto.ParetoMinSet
 import java.io._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
@@ -23,26 +22,31 @@ object FirstPhaseTSP {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   def main(args: Array[String]) {
-    
+
     val inst1 = 'A'
     val inst2 = 'B'
-    val id = "Long2"
+    val idTemp = "10c_"
 
     val pareto: NewPareto[Sol] = NewPareto(2)
 
-    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst1+"100.tsp")
-    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst2+"100.tsp")
+    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst1 + "100.tsp")
+    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst2 + "100.tsp")
 
-    for (alpha <- 0 to 100) {
-      val x = search(alpha, distMatrix1, distMatrix2)
-      pareto.insert(x)
-      println(x.objs.mkString(" "))
+    for (i <- 1 to 5) {
+      
+      val id = idTemp + i
+
+      for (alpha <- 0 to 100) {
+        val x = search(alpha, distMatrix1, distMatrix2)
+        pareto.insert(x)
+        println(x.objs.mkString(" "))
+      }
+
+      TSPUtils.writeSet("firstPhase" + inst1 + inst2 + id + ".txt", pareto.map(_.sol.pred).toArray)
+      val out = OutFile("firstPhasePoint" + inst1 + inst2 + id + ".txt")
+      pareto.foreach(x => out.writeln(x.objs.mkString(" ")))
+      out.close()
     }
-
-    TSPUtils.writeSet("firstPhase"+inst1+inst2+id+".txt", pareto.map(_.sol.pred).toArray)
-    val out = OutFile("firstPhasePoint"+inst1+inst2+id+".txt")
-    pareto.foreach(x => out.writeln(x.objs.mkString(" ")))
-    out.close()
   }
 
   def search(alpha: Int, distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]): MOSol[Sol] = {
@@ -72,7 +76,7 @@ object FirstPhaseTSP {
     // --------------------
     var currentSol: Sol = null
     val cycleBreaker = true
-    val p = 15
+    val p = 10
 
     cp.lns(50, 3000) {
       relaxVariables(clusterRelax(p))

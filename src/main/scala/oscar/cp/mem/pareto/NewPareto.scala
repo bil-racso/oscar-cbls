@@ -57,6 +57,8 @@ class NewPareto[Sol](val nObjs: Int) {
   def filter(f: (MOSol[Sol]) => Boolean) = X.filter(f)
   
   def toArray: Array[MOSol[Sol]] = X.toArray
+  
+  def sortBy(f: (MOSol[Sol]) => Int) = X.sortBy(f)
 
   def max(f: (MOSol[Sol]) => Int): MOSol[Sol] = min(-f(_))
 

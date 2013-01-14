@@ -68,9 +68,9 @@ object myTSP extends App {
 
   var currentSol: Sol = null
   var nStarts = 1
-  val p = 15   
+  val p = 10   
   
-  cp.lns(100, 4000) {
+  cp.lns(10000, 500) {
     nStarts += 1
     relaxVariables(clusterRelax(p))
   }
@@ -82,6 +82,25 @@ object myTSP extends App {
     val dist = distMatrix(c)(sortedByDist(p))
 
     Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
+  }
+  
+  def dualPathRelax(p: Int): Array[Boolean] = {
+       
+    val selected = Array.fill(nCities)(false)   
+    var c = nextInt(nCities)       
+    for(i <- 0 until p/2) {
+      selected(c) = true
+      c = currentSol.succ(c)
+    }
+    
+    val filtered = Cities.filter(i => !(selected(i) && selected(currentSol.pred(i))))    
+    c = nextInt(filtered.size)      
+    for(i <- 0 until p/2) {
+      selected(c) = true
+      c = currentSol.succ(c)
+    }
+    
+    selected
   }
 
   def solFound() = {
@@ -107,6 +126,12 @@ object myTSP extends App {
         constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
       }
     }
+    
+    val notSelected = Cities.filter(selected(_))
+    val rand = cp.random.nextInt(notSelected.size)
+    val s = notSelected(rand)
+    constraints.enqueue(pred(s) == (if (cp.random.nextBoolean()) currentSol.pred(s) else currentSol.succ(s)))
+  
     cp.post(constraints.toArray)
   }
 

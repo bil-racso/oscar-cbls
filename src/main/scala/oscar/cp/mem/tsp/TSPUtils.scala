@@ -3,6 +3,8 @@ package oscar.cp.mem.tsp
 import scala.io.Source
 import oscar.util.OutFile
 import scala.math.round
+import oscar.cp.mem.pareto.NewPareto
+import oscar.cp.mem.pareto.MOSol
 
 object TSPUtils {
 

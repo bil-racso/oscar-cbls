@@ -1,12 +1,19 @@
 package oscar.cp.mem.pareto
 
 case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
+  
+  // Dynamically adjusted by the pareto front
+  var ub = Array.fill(objs.size)(0)
+  var lb = Array.fill(objs.size)(0)
+  
+  def upperBound(obj: Int): Int = ub(obj)
+  def lowerBound(obj: Int): Int = lb(obj)
 
-  def dominates(x: MOSol[Sol]): Boolean = dominates0(x, 0)
+  // True if the point dominates x
+  def dominates(x: MOSol[Sol]): Boolean = if (x == null) true else dominates0(x, 0)
   
   private def dominates0(x: MOSol[Sol], i: Int): Boolean = {
-    if (x == null) true
-    else if (i == objs.size) true
+    if (i == objs.size) true
     else if (x.objs(i) < objs(i)) false
     else dominates0(x, i+1)
   }
