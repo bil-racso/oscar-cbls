@@ -48,7 +48,7 @@ class TestCubes extends FunSuite with ShouldMatchers  {
     {
       cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
       for(word <- words)
-        cp.add(alldifferent( // The 4 letters of each word must be placed on different cubes
+        cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
             for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
         ), Strong)
     } exploration { // Each letter will be assigned different cubes during the search

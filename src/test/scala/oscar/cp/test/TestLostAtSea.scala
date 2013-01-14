@@ -63,7 +63,7 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
                 for (i <- 0 until 9) {
                   cp.add(table(path(i),path(i+1),tuples)) // for each consecutive visits, give the possible valid transitions
                 }
-                cp.add(alldifferent(path),Strong) // each visit must be different
+                cp.add(allDifferent(path),Strong) // each visit must be different
        } exploration {
          cp.binaryFirstFail(path)
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution

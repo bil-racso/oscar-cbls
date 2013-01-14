@@ -144,7 +144,7 @@ object Hidato {
         }
       }
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       for(k <- 1 until n*n-1) {
 

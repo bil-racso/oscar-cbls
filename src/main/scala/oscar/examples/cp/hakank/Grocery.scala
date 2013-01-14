@@ -64,7 +64,7 @@ object Grocery {
       var numSols = 0
       cp.solveAll() subjectTo {
 
-        cp.add(alldifferent(item), Strong)
+        cp.add(allDifferent(item), Strong)
         increasing(cp, item)       
         cp.add(sum(item) == m)
 

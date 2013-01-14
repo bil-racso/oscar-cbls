@@ -60,10 +60,10 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
              cp.add(sum(0 until n) (i => x(i)*values(i)) == values.sum/2) // sum of numbers in A = sum of numbers in B
              cp.add(sum(0 until n) (i => x(i)*values2(i)) == values2.sum/2) // sum of squares of numbers in A = sum of squares of numbers in B
        
-             cp.add(binaryknapsack(x,values,values.sum/2),Weak)
-             cp.add(binaryknapsack(x,values2,values2.sum/2),Weak)
-             cp.add(binaryknapsack(x,values,values.sum/2),Strong)
-             cp.add(binaryknapsack(x,values2,values2.sum/2),Strong)
+             cp.add(binaryKnapsack(x,values,values.sum/2),Weak)
+             cp.add(binaryKnapsack(x,values2,values2.sum/2),Weak)
+             cp.add(binaryKnapsack(x,values,values.sum/2),Strong)
+             cp.add(binaryKnapsack(x,values2,values2.sum/2),Strong)
              
            } exploration {
              cp.binary(x.reverse.map(_.asInstanceOf[CPVarInt]))

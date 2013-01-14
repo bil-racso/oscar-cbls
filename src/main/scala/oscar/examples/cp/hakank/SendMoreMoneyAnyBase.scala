@@ -72,7 +72,7 @@ object SendMoreMoneyAnyBase {
 
     cp.solveAll subjectTo {
 
-        cp.add(alldifferent(all), Strong)
+        cp.add(allDifferent(all), Strong)
         cp.add(       S*b3 + E*b2 + N*b1 + D +
                       M*b3 + O*b2 + R*b1 + E ==
                M*b4 + O*b3 + N*b2 + E*b1 + Y

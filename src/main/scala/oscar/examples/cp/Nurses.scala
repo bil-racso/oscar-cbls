@@ -136,7 +136,7 @@ object Nurses extends App  {
    cp.minimize(spreadAcuity) subjectTo {
      cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
-     cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
+     cp.add(binPacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
    } exploration {
      val x = nurseOfPatient
      while (!allBounds(x)) {

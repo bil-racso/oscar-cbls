@@ -121,8 +121,8 @@ object BreakingNews {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(locations), Strong)
-      cp.add(alldifferent(events), Strong)
+      cp.add(allDifferent(locations), Strong)
+      cp.add(allDifferent(events), Strong)
 
       // 1. The 30-pound baby wasn't born in South Amboy or New Hope.
       cp.add(baby != south_amboy)

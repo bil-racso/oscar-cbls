@@ -133,7 +133,7 @@ object CrossWord {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(E), Strong)
+      cp.add(allDifferent(E), Strong)
 
       for(I <- 0 until num_words;
           J <- 0 until word_len) {

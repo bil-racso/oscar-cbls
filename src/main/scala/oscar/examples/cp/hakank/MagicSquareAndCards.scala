@@ -75,12 +75,12 @@ object MagicSquareAndCards {
         // rows
         val row = for{j <- RANGE} yield x(i)(j)
         cp.add( sum(row) == s)
-        cp.add( alldifferent(row), Strong)
+        cp.add( allDifferent(row), Strong)
         
         // columns
         val col = for{j <- RANGE} yield x(j)(i)
         cp.add( sum(col) == s)
-        cp.add( alldifferent(col), Strong)
+        cp.add( allDifferent(col), Strong)
       }
 
       // diagonals

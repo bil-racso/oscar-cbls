@@ -60,8 +60,8 @@ object MurderMystery extends App {
     
     cp.solveAll() subjectTo {
 
-      cp.add(alldifferent(Array(murderer,witness,helper,victim)),Strong)
-      cp.add(alldifferent(age),Strong)
+      cp.add(allDifferent(Array(murderer,witness,helper,victim)),Strong)
+      cp.add(allDifferent(age),Strong)
             
       // 1. The witness and the one who helped the murderer were not of the same sex.
       cp.add(sex(witness) != sex(helper))

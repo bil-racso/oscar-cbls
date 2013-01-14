@@ -114,8 +114,8 @@ object ArchFriends {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(shoes), Strong)
-      cp.add(alldifferent(shops), Strong)
+      cp.add(allDifferent(shoes), Strong)
+      cp.add(allDifferent(shops), Strong)
 
       // 1. Harriet bought fuchsia flats at Heels in a Handcart.
       cp.add(fuchsia_flats == heels_in_a_handcart)

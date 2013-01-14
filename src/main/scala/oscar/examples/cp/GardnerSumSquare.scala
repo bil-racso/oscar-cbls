@@ -55,7 +55,7 @@ object GardnerSumSquare {
 
     cp.minimize(obj) subjectTo {
       
-      cp.add(alldifferent(Array(a,b,c,d,e,f,g,h)), Strong)
+      cp.add(allDifferent(Array(a,b,c,d,e,f,g,h)), Strong)
       cp.add(sum(Array(a,b,c,d),s1))
       cp.add(sum(Array(e,f,g,h),s2))
       // break symmetries inside first set

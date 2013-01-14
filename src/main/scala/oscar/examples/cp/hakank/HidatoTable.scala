@@ -161,7 +161,7 @@ object HidatoTable {
             cp.add(positions(problem(i)(j)-1) == i*n+j)
       }
 
-      cp.add(alldifferent(positions), Strong)
+      cp.add(allDifferent(positions), Strong)
 
       for(k <- 1 until n*n-1) {
         cp.add(table(Array(positions(k), positions(k+1)), valid))

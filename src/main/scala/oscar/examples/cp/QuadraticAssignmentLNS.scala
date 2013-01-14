@@ -83,7 +83,7 @@ object QuadraticAssignmentLNS {
     var nbSol = 0
     
     cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
     } exploration {
         cp.binaryFirstFail(x)
         println("solution"+x.mkString(","))

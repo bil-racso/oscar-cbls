@@ -134,9 +134,9 @@ object Exodus {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(story), Strong)
-      cp.add(alldifferent(country), Strong)
-      cp.add(alldifferent(age), Strong)
+      cp.add(allDifferent(story), Strong)
+      cp.add(allDifferent(country), Strong)
+      cp.add(allDifferent(age), Strong)
 
       cp.add(lithuania == debby)
       cp.add(age(passover) == age(bernice) + 2)

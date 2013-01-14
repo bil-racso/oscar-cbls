@@ -75,8 +75,8 @@ object ElectricityMarket {
 	        val consVars = consumers.filter(_.overlap(t)).map(_.selected)
 	        val consQty = consumers.filter(_.overlap(t)).map(_.qty.abs)
 	        
-	    	cp.add(binaryknapsack(prodVars,prodQty,varMapQty(t)), Strong)
-	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
+	    	cp.add(binaryKnapsack(prodVars,prodQty,varMapQty(t)), Strong)
+	    	cp.add(binaryKnapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
 	  } exploration {
 

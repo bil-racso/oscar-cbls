@@ -47,7 +47,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 	var nbSol = 0
 	
 	cp.solveAll() subjectTo {
-	  cp.add(alldifferent(x.flatten),Weak)
+	  cp.add(allDifferent(x.flatten),Weak)
 	  cp.add(sum(diag1) == s)
 	  cp.add(sum(diag2) == s)
 	  for (i <- 0 until n) {

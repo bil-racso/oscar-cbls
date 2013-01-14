@@ -99,11 +99,11 @@ object Zebra2 {
 
     cp.solveAll subjectTo {
     
-       cp.add(alldifferent(colors), Strong)
-       cp.add(alldifferent(nationality), Strong)
-       cp.add(alldifferent(animal),Strong)
-       cp.add(alldifferent(drink), Strong)
-       cp.add(alldifferent(smoke), Strong)
+       cp.add(allDifferent(colors), Strong)
+       cp.add(allDifferent(nationality), Strong)
+       cp.add(allDifferent(animal),Strong)
+       cp.add(allDifferent(drink), Strong)
+       cp.add(allDifferent(smoke), Strong)
 
        // The clues
        cp.add(englishman == red)

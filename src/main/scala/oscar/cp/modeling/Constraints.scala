@@ -36,10 +36,14 @@ trait Constraints {
 	 * @param l with l(j) is the load of bin j
 	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
 	 */
-	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
+	def binPacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
 		return new BinPacking(x.toArray, w.toArray, l.toArray)
 	}
-
+	/**
+	 * @deprecated(use binPacking instead)
+	 */
+	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) = binPacking(x,w,l)
+	
 	/**
 	 * Bin-Packing Constraint linking the placement variables of sized items into bins with
 	 * the total size of the bins
@@ -49,7 +53,7 @@ trait Constraints {
 	 * @param c with c(j) is the cardinality of bin j (number of items)
 	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i and 
 	 */	
-	def binpackingCardinality(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt], c: IndexedSeq[CPVarInt]) : Constraint = {
+	def binPackingCardinality(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt], c: IndexedSeq[CPVarInt]) : Constraint = {
 		return new BinPackingFlow(x.toArray, w.toArray, l.toArray, c.toArray)
 	}
 
@@ -60,7 +64,7 @@ trait Constraints {
 	 * @param l the load of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : CPVarInt) : Constraint = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : CPVarInt) : Constraint = {
 		return new BinaryKnapsack(x.toArray, w.toArray, l)
 	}
 	
@@ -71,7 +75,7 @@ trait Constraints {
 	 * @param l the load of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : Int) : Constraint = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : Int) : Constraint = {
 		return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store,l))
 	}	
 
@@ -84,7 +88,7 @@ trait Constraints {
 	 * @param W the total weight of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that P == sum,,j,, p[j]*x[i] and W == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], p : IndexedSeq[Int], w : IndexedSeq[Int], P : CPVarInt, W : CPVarInt) : Knapsack = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], p : IndexedSeq[Int], w : IndexedSeq[Int], P : CPVarInt, W : CPVarInt) : Knapsack = {
 		return new Knapsack(x.toArray, p.toArray, w.toArray, P, W)
 	}
 
@@ -93,12 +97,12 @@ trait Constraints {
 	 * @param vars an non empty array of variables
 	 * @return a constraint ensure that no value occurs more than once in vars
 	 */
-	def alldifferent(vars : CPVarInt*) : Constraint = {
+	def allDifferent(vars : CPVarInt*) : Constraint = {
 		return new AllDifferent(vars : _*)
 	}
 
-	def alldifferent(vars : Iterable[CPVarInt]) : Constraint = {
-		return alldifferent(vars.toArray : _*)
+	def allDifferent(vars : Iterable[CPVarInt]) : Constraint = {
+		return allDifferent(vars.toArray : _*)
 	}
 
 	/**
@@ -136,7 +140,7 @@ trait Constraints {
 	 * @return a constraint enforcing x LexLeq y i.e. :
 	 * 		 x1 < y1 or (x2,x3,...,xn) LexLeq (y2,y3,...,yn)
 	 */
-	def lexleq(x : Array[CPVarInt], y : Array[CPVarInt]) : Constraint = {
+	def lexLeq(x : Array[CPVarInt], y : Array[CPVarInt]) : Constraint = {
 		new LexLeq(x, y)
 	}
 
@@ -444,11 +448,23 @@ trait Constraints {
 		return new GCC(x, values.min, Array.fill(values.size)(min), Array.fill(values.size)(max))
 	}
 
+	/**
+	 * Global Cardinality Constraint: every value v occurs at least min(v) and at most max(v)
+	 * @param x an non empty array of variables
+	 * @param values is the range of constrained values
+	 * @param min is the minimum number of occurrences for each value in the range values
+	 * @param max is the maximum number of occurrences for each value in the range values
+	 * @return a constraint such that each value in the range values occurs at least min and at most max times.
+	 */
 	def gcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int]) : Constraint = {
 		return new GCC(x, values.min, min, max)
 	}
 
-	def softgcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int], totviol : CPVarInt) : Constraint = {
+	/**
+	 * Soft Global Cardinality Constraint = gcc with a violation variable
+	 * @see Revisiting the Soft Global Cardinality Constraint, Pierre Schaus, Pascal Van Hentenryck, Alessandro Zanarini: CPAIOR 2010
+	 */
+	def softGcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int], totviol : CPVarInt) : Constraint = {
 		return new SoftGCC(x, values.min, min, max, totviol)
 	}
 

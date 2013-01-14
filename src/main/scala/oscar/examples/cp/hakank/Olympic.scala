@@ -92,7 +92,7 @@ object Olympic {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       cp.add(x1 == 3)
 

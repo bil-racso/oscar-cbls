@@ -92,7 +92,7 @@ object SecretSanta {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // Can't be one own's Secret Santa
       // (i.e. ensure that there are no fix-point in x)

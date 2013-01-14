@@ -71,7 +71,7 @@ object DeBruijn {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       // channeling x <-> binary
       for (i <- 0 until m) {
          val t = Array.tabulate(n)(j=> CPVarInt(cp, 0 to base-1))

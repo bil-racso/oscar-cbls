@@ -120,11 +120,11 @@ object Zebra {
 
     cp.solveAll subjectTo {
     
-       cp.add(alldifferent(Array(red, green, yellow, blue, ivory)), Strong)
-       cp.add(alldifferent(Array(englishman, spaniard, japanese, ukrainian, norwegian)), Strong)
-       cp.add(alldifferent(Array(dog, snails, fox, zebra, horse)),Strong)
-       cp.add(alldifferent(Array(tea, coffee, water, milk, fruit_juice)), Strong)
-       cp.add(alldifferent(Array(parliaments, kools, chesterfields, lucky_strike, old_gold)), Strong)
+       cp.add(allDifferent(Array(red, green, yellow, blue, ivory)), Strong)
+       cp.add(allDifferent(Array(englishman, spaniard, japanese, ukrainian, norwegian)), Strong)
+       cp.add(allDifferent(Array(dog, snails, fox, zebra, horse)),Strong)
+       cp.add(allDifferent(Array(tea, coffee, water, milk, fruit_juice)), Strong)
+       cp.add(allDifferent(Array(parliaments, kools, chesterfields, lucky_strike, old_gold)), Strong)
 
 
        //

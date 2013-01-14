@@ -119,7 +119,7 @@ object SurvoPuzzle {
           cp.add(x(i)(j) == problem(i)(j))
       }
 
-      cp.add(alldifferent(x.flatten.toArray), Strong)
+      cp.add(allDifferent(x.flatten.toArray), Strong)
   
       // rows and columns
       for (i <- 0 until r) {

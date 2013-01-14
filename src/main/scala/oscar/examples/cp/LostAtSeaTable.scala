@@ -84,7 +84,7 @@ object LostAtSea  {
                 for (i <- 0 until 9) {
                   cp.add(table(path(i),path(i+1),tuples)) // for each consecutive visits, give the possible valid transitions
                 }
-                cp.add(alldifferent(path),Strong) // each visit must be different
+                cp.add(allDifferent(path),Strong) // each visit must be different
                 println(path.mkString(","))
        } exploration {
          def heuris(x : CPVarInt): Int = {

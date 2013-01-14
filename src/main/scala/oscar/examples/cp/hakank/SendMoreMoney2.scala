@@ -48,7 +48,7 @@ object SendMoreMoney2 {
             m*10000 + o*1000 + n*100 + e*10 + y)
         cp.add(s > 0)
         cp.add(m > 0)
-	cp.add(alldifferent(all), Strong)
+	cp.add(allDifferent(all), Strong)
 
       } exploration {
 

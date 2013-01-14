@@ -100,14 +100,14 @@ object Strimko {
       // all rows and columns must be unique, i.e. a Latin Square
       for(i <- 0 until n) {
         // rows
-        cp.add(alldifferent(for(j <- 0 until n) yield x(i)(j)), Strong)
+        cp.add(allDifferent(for(j <- 0 until n) yield x(i)(j)), Strong)
         // cols
-        cp.add(alldifferent(for(j <- 0 until n) yield x(j)(i)), Strong)
+        cp.add(allDifferent(for(j <- 0 until n) yield x(j)(i)), Strong)
       }
       
       // Handle the streams
       for(s <- 1 to n) {
-        cp.add(alldifferent(for{i <- 0 until n
+        cp.add(allDifferent(for{i <- 0 until n
                                 j <- 0 until n if streams(i)(j) == s} yield x(i)(j)), Strong)
 
         
