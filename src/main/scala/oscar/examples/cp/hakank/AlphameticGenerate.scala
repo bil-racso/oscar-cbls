@@ -148,7 +148,7 @@ object AlphameticGenerate {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // The equation: 
       //    word<0> + word<1> + ... = word<p-1>

@@ -79,8 +79,8 @@ object AllIntervals {
     var numSols = 0
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(diffs), Strong)
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(diffs), Strong)
+      cp.add(allDifferent(x), Strong)
       
       for(k <- 0 until n-1) {
         cp.add(diffs(k) == (x(k+1)-(x(k))).abs()) 

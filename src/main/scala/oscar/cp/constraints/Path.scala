@@ -58,7 +58,7 @@ class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarI
        
        if (s.post((elementVar(y,succ(v),y(v)+1).when((succ(v) !== v) && (end !== v)))) == CPOutcome.Failure) return CPOutcome.Failure
     }
-    if (s.post(alldifferent(succ),l) == CPOutcome.Failure) return CPOutcome.Failure
+    if (s.post(allDifferent(succ),l) == CPOutcome.Failure) return CPOutcome.Failure
     
     return CPOutcome.Success
   }

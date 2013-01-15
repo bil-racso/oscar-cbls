@@ -67,7 +67,7 @@ object FiveFloors {
 
     cp.solveAll subjectTo {
 
-       cp.add(alldifferent(x), Strong)
+       cp.add(allDifferent(x), Strong)
 
        // Baker does not live on the fifth floor.
        cp.add(baker != 5)

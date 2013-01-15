@@ -146,8 +146,8 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     val x = Array.tabulate(len)(i => CPVarInt(cp, 0 to len - 1))
     val z = Array.tabulate(len)(i => CPVarInt(cp, 0 to len - 1))
 
-    cp.add(alldifferent(x), Strong)
-    cp.add(alldifferent(z), Strong)
+    cp.add(allDifferent(x), Strong)
+    cp.add(allDifferent(z), Strong)
 
 
     for (i <- 1 until len) {

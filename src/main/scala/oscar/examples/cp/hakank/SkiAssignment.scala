@@ -77,7 +77,7 @@ object SkiAssignment {
 
     cp.minimize(z) subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
      } exploration {
        

@@ -55,8 +55,8 @@ class Permutation(x: Array[CPVarInt], y: Array[CPVarInt]) extends Constraint(y(0
       if (x(i).updateMax(n) == Failure) return Failure
       if (y(i).updateMax(n) == Failure) return Failure
     }
-    if (s.post(alldifferent(x),l) == Failure) return Failure
-    if (s.post(alldifferent(y),l) == Failure) return Failure
+    if (s.post(allDifferent(x),l) == Failure) return Failure
+    if (s.post(allDifferent(y),l) == Failure) return Failure
     
     for(i <- 0 to n; v <- 0 to n) {
       if (!x(i).hasValue(v)) {

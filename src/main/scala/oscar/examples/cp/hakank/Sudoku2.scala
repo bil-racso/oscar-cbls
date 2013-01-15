@@ -110,13 +110,13 @@ object Sudoku2 {
 
      // rows and columns
      for(i <- NRANGE) {
-       cp.add(alldifferent(x(i)), Strong)
-       cp.add(alldifferent(x_t(i)), Strong)
+       cp.add(allDifferent(x(i)), Strong)
+       cp.add(allDifferent(x_t(i)), Strong)
      }
 
      // blocks
      for(i <- RRANGE; j <- RRANGE) {
-       cp.add(alldifferent((for{ r <- i*reg until i*reg+reg;
+       cp.add(allDifferent((for{ r <- i*reg until i*reg+reg;
                                  c <- j*reg until j*reg+reg
              } yield x(r)(c))), Strong)
      }

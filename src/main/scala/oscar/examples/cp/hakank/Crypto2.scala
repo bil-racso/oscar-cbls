@@ -70,7 +70,7 @@ object Crypto2 {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(all), Strong)
+      cp.add(allDifferent(all), Strong)
 
       cp.add(sums(all, "ballet",     45, ht))
       cp.add(sums(all, "cello",      43, ht))

@@ -69,7 +69,7 @@ object BowlsAndOranges {
     cp.solveAll subjectTo {
 
       // constraints
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // increasing(x)
       for(i <- 1 until m) {

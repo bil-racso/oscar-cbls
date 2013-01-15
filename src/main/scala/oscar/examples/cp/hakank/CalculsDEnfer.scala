@@ -88,7 +88,7 @@ object CalculsDEnfer {
     cp.minimize(x_max) subjectTo {
     // cp.solveAll subjectTo {
 
-      cp.add(alldifferent(X), Strong)
+      cp.add(allDifferent(X), Strong)
 
       cp.add(z+e+r+o     == 0);
       cp.add(o+n+e       == 1);

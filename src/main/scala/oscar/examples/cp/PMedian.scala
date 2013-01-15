@@ -100,7 +100,7 @@ object PMedian extends App {
   val totCost = sum(costs) 
 
   cp.minimize(totCost) subjectTo {
-    cp.add(binpacking(x, demand, load))
+    cp.add(binPacking(x, demand, load))
     cp.add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
   } exploration {
     cp.binaryFirstFail(x,_.randomValue)

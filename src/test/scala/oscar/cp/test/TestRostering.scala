@@ -65,7 +65,7 @@ class TestRostering extends FunSuite with ShouldMatchers  {
     	cp.minimize(totUnderDemand) subjectTo {
     	  	// each person must do a different activity every day
 		    for (p <- 0 until nbPersons) {
-			  cp.add(alldifferent(activities(p)),Strong);
+			  cp.add(allDifferent(activities(p)),Strong);
 		    }
 		    
 		    val maxCap = Array.fill(nbActivities)(nbPersons)

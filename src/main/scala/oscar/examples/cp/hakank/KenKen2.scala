@@ -177,8 +177,8 @@ object KenKen2 {
 
       // rows and columns
       for(i <- RANGE) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
       }
       
       for(i <- 0 until num_p) {

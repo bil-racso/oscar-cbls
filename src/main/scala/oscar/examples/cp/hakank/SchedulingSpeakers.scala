@@ -64,7 +64,7 @@ object SchedulingSpeakers {
       var numSols = 0
       cp.solveAll() subjectTo {
 
-        cp.add(alldifferent(speakers))
+        cp.add(allDifferent(speakers))
 
 
       } exploration {

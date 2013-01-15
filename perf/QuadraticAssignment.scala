@@ -58,7 +58,7 @@ object QuadraticAssignment {
     val D = Array.tabulate(n, n)((i, j) => element(d, x(i), x(j))) //matrix of variables representing the distances
 
     cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
     } exploration {
         while (!allBounds(x)) {
            val y = x.minDomNotBound

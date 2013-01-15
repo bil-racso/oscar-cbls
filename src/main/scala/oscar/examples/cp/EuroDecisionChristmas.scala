@@ -41,7 +41,7 @@ object EuroDecisionChistmas {
 		val obj = CPVarInt(cp,0 to profit.sum)
 		
 		cp.maximize(obj) subjectTo {
-		  cp.add(binaryknapsack(x, profit, weights, obj, CPVarInt(cp,0 to 28)))
+		  cp.add(binaryKnapsack(x, profit, weights, obj, CPVarInt(cp,0 to 28)))
 		} 
 		cp.exploration {
 		 cp.binary(x.asInstanceOf[Array[CPVarInt]])

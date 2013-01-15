@@ -42,9 +42,9 @@ object Queens  {
       
       var nbsol = 0
       cp.solveAll subjectTo {
-    	  cp.add(alldifferent(queens),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
+    	  cp.add(allDifferent(queens),Strong)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
       } exploration {        
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))

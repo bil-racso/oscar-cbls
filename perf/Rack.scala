@@ -88,7 +88,7 @@ object Rack {
       for (r <- 1 until nbRack) {
         val var_r: Array[CPVarInt] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
         val var_r_1: Array[CPVarInt] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
-        cp.add(lexleq(var_r, var_r_1))
+        cp.add(lexLeq(var_r, var_r_1))
       }
 
 

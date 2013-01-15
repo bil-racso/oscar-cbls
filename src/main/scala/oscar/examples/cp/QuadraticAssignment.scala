@@ -60,7 +60,7 @@ object QuadraticAssignment {
     // for each facilities, the location chosen for it
     val x = N map (v => CPVarInt(cp, 0 until n))
     cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
     } exploration {
         while (!allBounds(x)) {
            val y = x.minDomNotBound

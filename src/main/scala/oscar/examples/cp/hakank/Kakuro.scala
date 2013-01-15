@@ -172,7 +172,7 @@ object Kakuro {
 
         // all numbers in this segment must be distinct
         val len = segment.length / 2
-        cp.add( alldifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
+        cp.add( allDifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
 
       }
 

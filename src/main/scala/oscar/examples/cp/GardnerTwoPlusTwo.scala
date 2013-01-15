@@ -51,7 +51,7 @@ object GardnerTwoPlusTwo  {
 	  
 	  cp.solveAll() subjectTo {
 	    cp.add((T*100+W*10+O)*2 == F*1000+O*100+U+10+R)
-	    cp.add(alldifferent(Array(T,W,O,F,U,R)), Strong)
+	    cp.add(allDifferent(Array(T,W,O,F,U,R)), Strong)
 	  } exploration {
 	    cp.binaryFirstFail(Array(T,W,O,F,U,R))
 	    println("T:"+T+" W:"+W+" O:"+O+" F:"+F+" U:"+U+" R:"+R)

@@ -102,7 +102,7 @@ object PlaceNumberPuzzle {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x))
+      cp.add(allDifferent(x))
 
       for(i <- 0 until m) {
         // (also make 0-base)
