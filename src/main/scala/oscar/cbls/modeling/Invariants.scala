@@ -132,24 +132,24 @@ trait AccessInvariants{
    * @param thenVar the returned value if ifVar > 0
    * @param elseVar the returned value if ifVar <= 0
    * */
-  def intite(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) = IntITE(ifVar, thenVar, elseVar)
+  def intITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) = IntITE(ifVar, thenVar, elseVar)
 
   /** inputarray[index]
    * @param inputarray is an array of IntVar
    * @param index is the index accessing the array*/
-  def intelement(index:IntVar, inputarray:Array[IntVar]) = IntElement(index:IntVar, inputarray:Array[IntVar])
+  def intElement(index:IntVar, inputarray:Array[IntVar]) = IntElement(index:IntVar, inputarray:Array[IntVar])
 
   /**Union(i in index) (array[i])
    * @param index is an IntSetVar denoting the set of positions in the array to consider
    * @param inputarray is the array of intvar that can be selected by the index
    */
-  def intelements(index:IntSetVar, inputarray:Array[IntVar]) = IntElements(index, inputarray)
+  def intElements(index:IntSetVar, inputarray:Array[IntVar]) = IntElements(index, inputarray)
 
   /** inputarray[index] on an array of IntSetVar
    * @param inputarray is the array of intsetvar
    * @param index is the index of the array access
    **/
-  def intsetelement(index:IntVar, inputarray:Array[IntSetVar]) = IntSetElement(index, inputarray)
+  def intSetElement(index:IntVar, inputarray:Array[IntSetVar]) = IntSetElement(index, inputarray)
 }
 
 trait MinMaxInvariants{
