@@ -154,13 +154,13 @@ trait AccessInvariants{
 
 trait MinMaxInvariants{
 
-  /** Maintains {i in indices of (varss Inter cond) | varss[i] == max(varss(i in indices of (varss Inter cond))}
-   * @param varss is an array of IntVar, which can be bulked
-   * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+  /** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
+   * @param vars is an array of IntVar, which can be bulked
+   * @param cond is the condition, supposed fully acceptant if not specified
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMax(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = new ArgMaxArray(varss, ccond,default)
+  def argMax(vars: Array[IntVar], cond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(vars, cond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -169,7 +169,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = new ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar

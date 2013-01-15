@@ -31,14 +31,14 @@ import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
 import oscar.cbls.invariants.core.computation._
 
-/** Maintains {i in indices of (varss Inter cond) | varss[i] == max(varss(i in indices of (varss Inter cond))}
- * @param varss is an array of IntVar, which can be bulked
- * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+/** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
+ * @param vars is an array of IntVar
+ * @param cond is the condition, supposed fully acceptant if not specified
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  * */
-class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MinValue)
-  extends ArgMiaxArray(varss, ccond ,default) {
+case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default:Int = Int.MinValue)
+  extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
 
@@ -52,14 +52,14 @@ class ArgMaxArray(varss: Array[IntVar], ccond: IntSetVar = null,override val def
   def getMax: IntVar = Miax
 }
 
-/** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
- * @param varss is an array of IntVar, which can be bulked
- * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+/** Maintains {i in indices of (vars Inter cond) | vars[i] == min(vars(i in indices of (vars Inter cond))}
+ * @param vars is an array of IntVar
+ * @param cond is the condition, supposed fully acceptant if not specified (must be specified if vars is bulked)
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  * */
-class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override val default:Int = Int.MaxValue)
-  extends ArgMiaxArray(varss, ccond,default) {
+case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default:Int = Int.MaxValue)
+  extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
 
@@ -79,7 +79,7 @@ class ArgMinArray(varss: Array[IntVar], ccond: IntSetVar = null,override val def
  * @param cond is the condition, can be null
  * update is O(log(n))
  * */
-abstract case class ArgMiaxArray(var vars: Array[IntVar], cond: IntSetVar,default:Int) extends IntSetInvariant with Bulked[IntVar, (Int,Int)]{
+abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) extends IntSetInvariant with Bulked[IntVar, (Int,Int)]{
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))

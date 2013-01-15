@@ -26,6 +26,7 @@ import oscar.cbls.search.SearchEngine
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
 import scala.util.Random
+import java.util
 
 
 /**
@@ -105,7 +106,7 @@ object ReinsertPoint extends SearchEngine{
     val rand = new Random()
     // if we want a random reinsert-move.
     if(random){
-      val beforeReinsertedPoint = if (onlyFrom) hotRestart to hotRestart else rand.shuffle(0 to vrp.N-1)
+      val beforeReinsertedPoint = if (onlyFrom) List(hotRestart) else rand.shuffle((0 to vrp.N-1).toList)
       for(p <- beforeReinsertedPoint if vrp.isRouted(p)){
         val toRoute = Random.shuffle(vrp.Unrouted.value.toList)
         toRoute.foreach(i =>

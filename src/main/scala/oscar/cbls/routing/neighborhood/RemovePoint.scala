@@ -75,7 +75,7 @@ object RemovePoint extends SearchEngine{
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
     if(random){
-      val toUnroute = rand.shuffle(vrp.V to vrp.N-1).toArray
+      val toUnroute = rand.shuffle((vrp.V to vrp.N-1).toList).toArray
       for (beforeRemovePoint <- toUnroute if(vrp.isRouted(beforeRemovePoint))){
         val obj = getObjAfterMove(beforeRemovePoint,vrp.Next(beforeRemovePoint).value,vrp)
         if(obj != Int.MaxValue){

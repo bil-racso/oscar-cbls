@@ -69,7 +69,7 @@ object ExConstraints extends App{
   val nbOfAllowedUnroutedNode = new IntVar(m,0,N,10,"nb of allowed unrouted node")
   // post and register the constraint
   weakConstraintSystem.post(LE(Cardinality(vrp.Unrouted),nbOfAllowedUnroutedNode),vrp.UnroutedPenalty)
-  weakConstraintSystem.registerForViolation(vrp.Unrouted)
+  weakConstraintSystem.violation(vrp.Unrouted)
   // could be also strongConstraint if needed.
 
   /*
@@ -91,7 +91,7 @@ object ExConstraints extends App{
   // post and register the constraint
   for(i <- 0 until vrp.V){
     strongConstraintSystem.post(LE(vrp.RouteLength(i),lengthMax))
-    strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
+    strongConstraintSystem.violation(vrp.RouteLength(i))
     // once more it could be a weakConstraint, it depends only of the problem's definition.
   }
 

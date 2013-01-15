@@ -190,7 +190,6 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
   override def notifyIntChanged(v:IntVar,indice:Int,OldVal:Int,NewVal:Int){
     assert(inputarray(indice) == v)
     assert(KeysToInputArray(indice) != null)
-    assert(KeysToInputArray(indice) == v)
 
     if (ValueCount(OldVal - myMin) == 1){
       ValueCount(OldVal - myMin) = 0

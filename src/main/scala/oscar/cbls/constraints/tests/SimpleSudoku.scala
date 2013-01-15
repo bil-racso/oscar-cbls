@@ -122,7 +122,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     // note: square constraints will be enforced (initially true and maintained by swap strategy)
     
     // register for violation
-    for (i <- LinearIndexes) { c.registerForViolation(grid(i)) }
+    for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // closing constraints
     c.close

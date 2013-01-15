@@ -80,7 +80,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
     c.post(AllDiff(for ( q <- range) yield (Queens(q) + q).toIntVar))
     c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
-    for (q <- range){c.registerForViolation(Queens(q))}
+    for (q <- range){c.violation(Queens(q))}
 
     c.close()
 

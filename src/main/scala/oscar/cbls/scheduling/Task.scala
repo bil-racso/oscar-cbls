@@ -159,7 +159,7 @@ case class Task(duration: IntVar, planning: Planning, name: String = "") {
       val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
       AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-      val argMax = new ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
       EarliestStartDate <== argMax.getMax
 
       DefiningPredecessors = argMax
