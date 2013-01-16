@@ -24,8 +24,7 @@ import oscar.stochastic._
 import oscar.des.engine._
 import oscar.invariants._
 import scala.util.continuations._
-import akka.util.Duration
-	import akka.util.duration._
+import org.scala_tools.time.Imports._
 
 
 /**
@@ -34,9 +33,9 @@ import akka.util.Duration
  * @author Pierre Schaus, Sebastien Mouthuy
  */
 class Machine2(m : Model[Unit], name: String, repairPerson: Resource) extends Process[Unit](name)(m) {
-	
-	val liveDur = new UniformDiscrete(1 minutes, 10 minutes)
-	val repairDur = new UniformDiscrete(1 minutes, 3 minutes)
+	val a = (1 minutes).toDuration
+	val liveDur = UniformDiscrete[Period](1 minutes, 10 minutes)
+	val repairDur = UniformDiscrete[Period](1 minutes, 3 minutes)
 	
 	
 	def alive(): Unit @susp = {

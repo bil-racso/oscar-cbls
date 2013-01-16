@@ -46,8 +46,8 @@ class Generator(m: Model[Unit], var dist: Distr[Double])(block: => Unit) extends
       }
   }
 
-  var generating = true
-
+  var generating = true 
+  
   def stop() { generating = false }
   def update(v: Distr[Double]) {
     dist = v

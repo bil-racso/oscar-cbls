@@ -40,6 +40,10 @@ class StochasticModel[+T] extends Model[T] with StochasticSolver[T]
 class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
 class DeterministicModel[+T] extends Model[T] with DeterministicSolver[T]
 
+/**
+ * This class represents a signal whose value is equals to the number of months
+ * last since the beginning of its creation.
+ */
 class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
 
   reset {
@@ -66,7 +70,7 @@ abstract class Model[+T] extends DistrSolver[T] {
   val n = DateTime.now
   //val b = comparable2ordered[ReadableInstant,DateTime](n)
 
-  val clock = new PQCounter[DateTime](new DateTime(1970, 0, 0, 0, 0, 0, 0))
+  val clock = new PQCounter[DateTime](new DateTime(1970, 1, 1, 0, 0, 0, 0))
   val month = new MonthEvent(clock)
 
   private val processes = new LinkedList[Process[_]]()
