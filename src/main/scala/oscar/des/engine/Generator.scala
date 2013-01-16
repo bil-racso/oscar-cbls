@@ -20,6 +20,7 @@
 package oscar.des.engine
 
 import scala.Math._
+
 import oscar.stochastic._
 import scala.util.Random
 import scala.util.continuations._

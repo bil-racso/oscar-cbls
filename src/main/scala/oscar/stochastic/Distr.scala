@@ -67,6 +67,8 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
     assert(false)
     list.first._2
   }
+  
+  override def toString(): String = { list.mkString(", ") }
 }
 
 object UniformDiscrete {
