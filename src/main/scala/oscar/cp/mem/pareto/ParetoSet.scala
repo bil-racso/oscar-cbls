@@ -7,7 +7,7 @@ class ParetoSet[Sol](val nObjs: Int) {
 
   class SolNode(val sol: MOSol[Sol], val objsNode: Array[LinkedNode[SolNode]]) { override def toString = sol.toString }
 
-  val Objs = 0 until nObjs
+  val Objs = 0 until nObjs 
 
   private val objsVal: Array[OrderedLinkedList[SolNode]] = Array.fill(nObjs)(OrderedLinkedList[SolNode]())
   private var X: List[SolNode] = List()
