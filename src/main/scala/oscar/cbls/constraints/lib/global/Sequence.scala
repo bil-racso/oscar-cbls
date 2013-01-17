@@ -26,10 +26,7 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.lib.logic.{Cluster, IntElement}
-import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
-import oscar.cbls.modeling.Algebra
-import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.core.computation._
 ;
 

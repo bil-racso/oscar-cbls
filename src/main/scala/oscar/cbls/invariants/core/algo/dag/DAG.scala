@@ -23,7 +23,7 @@
 
 package oscar.cbls.invariants.core.algo.dag
 
-import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, AbstractHeap}
+import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
 
 trait DAGNode extends Ordered[DAGNode]{

@@ -26,8 +26,6 @@ package oscar.cbls.constraints.tests
 
 import scala.swing.SimpleSwingApplication
 import scala.swing.MainFrame
-import scala.swing.Button
-import java.awt.GridLayout
 import scala.swing.GridPanel
 import scala.swing.Label
 import javax.swing.border.LineBorder
@@ -35,16 +33,7 @@ import java.awt.Color
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.basic._
-import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import scala.collection.mutable.HashSet
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.invariants.lib.set.MakeSet
-import collection.immutable.SortedSet
-import oscar.cbls.objective.Objective
 
 /**
  * Sudoku generator on NxN grids where N is a Square

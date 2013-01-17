@@ -26,7 +26,6 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.modeling.Algebra
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._

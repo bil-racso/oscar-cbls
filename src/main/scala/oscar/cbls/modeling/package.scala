@@ -1,6 +1,5 @@
 package oscar.cbls
 
-import oscar.cbls.modeling.Constraints
 
 import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.invariants.core.computation.IntSetVar

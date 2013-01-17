@@ -26,7 +26,7 @@ package oscar.cbls.invariants.core.propagation
 import oscar.cbls.invariants.core.algo.dag._;
 import oscar.cbls.invariants.core.algo.tarjan._
 import oscar.cbls.invariants.core.algo.dll._;
-import collection.immutable.{SortedMap}
+import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
 ;

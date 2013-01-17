@@ -200,6 +200,6 @@ case class ThreeOptA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
   def getValuesToAssign = vrp.threeOptA(insertionPoint,vrp.Next(insertionPoint).value,beforeSegmentStart,
     vrp.Next(beforeSegmentStart).value,segmentEnd,vrp.Next(segmentEnd).value)
 
-  override def toString():String = "(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
+  override def toString():String = "TreeOptA(beforeStart = " + beforeSegmentStart + ", end = " + segmentEnd + ", insertion ="+ insertionPoint+" )"
 }
 

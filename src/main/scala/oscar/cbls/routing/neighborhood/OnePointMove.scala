@@ -141,6 +141,6 @@ case class OnePointMove(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VR
   def startNodeForNextExploration: Int = predOfMovedPoint
   def getValuesToAssign = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)
 
-  override def toString():String = "(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
+  override def toString():String = "OnePointMove(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + PutAfter+" )"
 }
 

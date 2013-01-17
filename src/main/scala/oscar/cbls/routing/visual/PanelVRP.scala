@@ -26,7 +26,6 @@ import javax.swing._
 import oscar.cbls.routing._
 import neighborhood._
 import oscar.visual._
-import swing.ScrollBar
 
 
 object PanelVRP {

@@ -19,8 +19,6 @@
 
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.lib.logic.SparseCluster._
-import oscar.cbls.invariants.lib.logic.DenseCluster._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._

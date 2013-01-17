@@ -24,7 +24,6 @@ package oscar.cbls.modeling
  *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
-import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
