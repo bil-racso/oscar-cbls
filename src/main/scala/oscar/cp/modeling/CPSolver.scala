@@ -34,6 +34,9 @@ class CPSolver() extends Store() {
 
   case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit)
   var lns: Option[LNS] = None
+  
+  
+
 
   private var lastLNSRestartCompleted = false
 
@@ -113,6 +116,7 @@ class CPSolver() extends Store() {
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
+      pushState()
     } catch {
       case ex: NoSol => println("No Solution, inconsistent model")
     }
@@ -200,6 +204,59 @@ class CPSolver() extends Store() {
     println("time in fix point(ms)", getTimeInFixPoint())
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())
+  }
+  
+  
+  case class Exploration(val exploration: () => Unit @suspendable)
+  var exploBlock: Option[Exploration] = None
+  
+
+  
+  def explo(block: => Unit @suspendable): Unit = {
+    exploBlock = Option(Exploration(() => block))
+  }
+  
+  def run(nbSolMax:Int)(reversibleBlock: => Unit): Unit = {
+    var n = 0
+    stateObjective()
+    reset {
+      shift { k1: (Unit => Unit) =>
+        val b = () => {
+          sc.start()
+          propagate()
+          if (!isFailed()) {
+            exploBlock.get.exploration()
+          } else {
+            shift { k: (Unit => Unit) => k() }
+          }
+          if (!isFailed()) {
+            n += 1 // one more sol found
+            if (n == nbSolMax) {
+              sc.reset()
+              k1() // exit the exploration block
+            }
+          }
+        }
+        popAll()
+        pushState()
+        sc.reset()
+        if (!isFailed()) {
+            sc.reset()
+            reset {
+              b()
+              if (!isFailed()) {
+                solFound()
+                objective.tighten()
+                sc.limitActivated = true
+              }
+            }
+            if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
+        }
+        sc.limitActivated = true
+        k1() // exit the exploration block       
+      }
+    } 
+    
   }
 
   override def exploration(block: => Unit @suspendable): Unit = {
