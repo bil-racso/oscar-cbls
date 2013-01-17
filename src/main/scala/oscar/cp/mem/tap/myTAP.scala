@@ -120,8 +120,8 @@ object MyTAP extends App {
   
   cp.subjectTo {
     // make the link between cargo and load vars with binpacking constraint
-    cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
-    cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
+    cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
+    cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
     // dominance rules
     for (i <- 1 until cargos.size)

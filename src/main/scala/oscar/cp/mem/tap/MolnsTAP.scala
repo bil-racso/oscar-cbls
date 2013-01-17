@@ -173,8 +173,8 @@ object MolnsTAP extends App {
   cp.minimize(-freeSpace, -nbFreeTanks) subjectTo {
 
     // Make the link between cargo and load variables with binpacking constraints
-    cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
-    cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
+    cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
+    cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
     // Dominance rules
     for (i <- 1 until nCargos)

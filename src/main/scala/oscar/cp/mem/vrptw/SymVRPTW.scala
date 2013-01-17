@@ -1,5 +1,5 @@
 package oscar.cp.mem.vrptw
-
+/*
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
@@ -181,4 +181,4 @@ object SymVRPTW extends App {
   
   println("\nFinished !")
   cp.printStats
-}
+}*/

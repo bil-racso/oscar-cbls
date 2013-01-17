@@ -36,6 +36,7 @@ class CPSolver() extends Store() {
   var lns: Option[LNS] = None
 
   private var lastLNSRestartCompleted = false
+  var startByLNS = false
 
   /**
    * @return true if the last lns restart was caused because of completed exploration of search tree,
@@ -45,6 +46,10 @@ class CPSolver() extends Store() {
 
   def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
     lns = Option(new LNS(nbRestarts, nbFailures, () => restart))
+  }
+
+  def lns(nbFailures: Int)(restart: => Unit) {
+    lns = Option(new LNS(Int.MaxValue, nbFailures, () => restart))
   }
 
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
@@ -72,7 +77,7 @@ class CPSolver() extends Store() {
   }
 
   //(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
-  
+
   def minimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
@@ -261,7 +266,7 @@ class CPSolver() extends Store() {
           case None => () => sc.limitActivated = true
           case _ => sc.limitActivated = false // don't want to activate the limit in case of lns until first solution is found
         }
-        restart(false) // first restart, find a feasible solution so no limit
+        restart(startByLNS) // first restart, find a feasible solution so no limit
         sc.limitActivated = true
         for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
           restart(true)

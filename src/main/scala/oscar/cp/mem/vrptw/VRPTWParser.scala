@@ -1,5 +1,5 @@
 package oscar.cp.mem.vrptw
-
+/*
 import scala.io.Source
 import scala.math.sqrt
 import scala.math.pow
@@ -57,4 +57,4 @@ object VRPTWParser {
 }
 
 case class InstanceVRPTW(n : Int, k : Int, c : Int, demand : Array[Int], twStart : Array[Int], twEnd : Array[Int], servDur : Array[Int], dist : Array[Array[Double]], coord : Array[(Int, Int)])
-						 
+				*/		 

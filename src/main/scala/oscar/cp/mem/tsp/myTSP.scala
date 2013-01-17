@@ -49,7 +49,6 @@ object myTSP extends App {
   // Model
   // -----
   val cp = new CPSolver()
-  cp.startByLNS = false
 
   // Successors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
