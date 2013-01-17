@@ -20,6 +20,7 @@
 package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.NewMaxCumulative
+import java.awt.Dimension
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -39,126 +40,107 @@ object CumulativeJobShopLNS extends App {
   // Parsing		
   // -----------------------------------------------------------------------
 
-  var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
-
-  val nJobs = lines.head.trim().split(" ")(0).toInt
-  val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-  val nResources = lines.head.trim().split(" ")(2).toInt
-  val capacity = lines.head.trim().split(" ")(3).toInt
-
-  val nActivities = nJobs * nTasksPerJob
+  var lines = Source.fromFile("data/jobshop/Lawrence/la12.txt").getLines.toList 
+  lines = lines.drop(3)
+  
+  val size = lines.head.trim().split(" ")
+  val nJobs = size(0).toInt
+  val nResources = size(1).toInt 
+  val nActivities = nResources
 
   val Activities = 0 until nActivities
   val Jobs = 0 until nJobs
   val Resources = 0 until nResources
 
-  println("#Jobs       : " + nJobs)
-  println("#Activities : " + nActivities)
-  println("#Resources  : " + nResources)
-  println("Capacity    : " + capacity)
-
   lines = lines.drop(1)
+  
+  val assign = Array.fill(nJobs, nActivities)(0)
+  val durations = Array.fill(nJobs, nActivities)(0)
 
-  val job = new Array[Int](nActivities)
-  val resource = new Array[Int](nActivities)
-  val duration = new Array[Int](nActivities)
-
-  for (i <- Activities) {
-
+  for (j <- Jobs) {
     val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-
-    job(i) = l(0)
-    resource(i) = l(1)
-    duration(i) = l(2)
-
+    for (a <- Activities) {
+      assign(j)(a) = l(a*2)
+      durations(j)(a) = l(a*2+1)
+    }
     lines = lines.drop(1)
   }
 
   // Modeling	
   // -----------------------------------------------------------------------
 
-  val horizon = duration.sum
+  val horizon = durations.flatten.sum
   val cp = new CPScheduler(horizon)
 
   // Activities & Resources
-  val activities = Array.tabulate(nActivities)(i => Activity(cp, duration(i)))
+  val activities = Array.tabulate(nJobs, nActivities)((j, a) => Activity(cp, durations(j)(a)))
   val resources = Array.tabulate(nResources)(r => MaxResource(cp, 2))
 
   // Resource allocation
-  for (r <- Resources) {
-    val fActivities = Activities.filter(resource(_) == r)
-    val cumul = fActivities.map(i => CumulativeActivity(activities(i), r, 1)).toArray
-    cp.add(new NewMaxCumulative(cp, cumul, 2, r))
+  for (j <- Jobs; a <- Activities) {
+    activities(j)(a) needs 1 ofResource resources(assign(j)(a))
   }
 
-  // The makespan to minimize
-  val makespan = maximum(0 until nActivities)(i => activities(i).end)
+  // The makespan to minimize 
+  val flattenAct = activities.flatten
+  val makespan = maximum(0 until flattenAct.size)(a => flattenAct(a).end)
 
   // Visualization  
   // -----------------------------------------------------------------------
 
-  val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
+  val frame = new VisualFrame("Cumulative JobShop Problem")
+  frame.setPreferredSize(new Dimension(1024, 768))
   val colors = VisualUtil.getRandomColorArray(nResources)
 
-  val gantt = new VisualGanttChart(activities, i => job(i), colors = i => colors(resource(i)))
-  val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
-
-  frame.createFrame("Gantt chart").add(gantt)
-  for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
+  val flattenAssign = assign.flatten
+  val gantt = new VisualGanttChart(flattenAct, i => i/nActivities, colors = i => colors(flattenAssign(i)))
+  
+  frame.add(gantt)
   frame.pack
 
   // Constraints & Search
   // -----------------------------------------------------------------------
 
-  val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
+  val bestSol: Array[FixedActivity] = Array.tabulate(flattenAct.size)(i => new FixedActivity(i, 0, 0, 0, 0))
   var precedences: Array[(Int, Int)] = null
 
   cp.lns(2000, 2000) {
 
     val temp = cp.failLimit
 
-    // Adaptative LNS
-    if (!cp.isLastLNSRestartCompleted) {
-      cp.failLimit = (cp.failLimit * 110) / 100
-    } else {
-      cp.failLimit = max(10, (cp.failLimit * 90) / 100)
-    }
-
     val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
 
     // Selected are relaxed (20%)
     for (i <- 0 until bestSol.size)
-      if (nextFloat < 0.1)
+      if (nextFloat < 0.2)
         selected(i) = true
 
     val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
-    val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
+    val constraints = filteredPrecedences.map(p => flattenAct(p._1).end <= flattenAct(p._2).start)
 
     cp.post(constraints.asInstanceOf[Array[Constraint]])
   }
 
   cp.minimize(makespan) subjectTo {
-
-    for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
-      activities(i) endsBeforeStartOf activities(i + 1)
+    
+    for (j <- Jobs; a <- 1 until nActivities)
+      activities(j)(a-1) precedes activities(j)(a)
 
   } exploration {
-
-    cp.binaryFirstFail(activities.map(_.start))
-    //cp.setTimesSearch(activities)
+  
+    cp.setTimes(flattenAct)
 
     // Best so far solution
-    for (t <- Activities) {
+    for (t <- 0 until flattenAct.size) {
 
-      bestSol(t).start = activities(t).est
-      bestSol(t).end = activities(t).lct
+      bestSol(t).start = flattenAct(t).est
+      bestSol(t).end = flattenAct(t).lct
       bestSol(t).inc = 1
-      bestSol(t).machine = resource(t)
+      bestSol(t).machine = flattenAssign(t)
     }
 
     precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
 
-    for (p <- profiles) p.update(1, 20)
     gantt.update(1, 20)
   }
 

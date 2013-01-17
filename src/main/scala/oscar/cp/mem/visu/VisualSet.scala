@@ -18,6 +18,8 @@ class VisualSet(val nadir: (Int, Int)) extends VisualFrame("Relaxation Viewer") 
 
   setPreferredSize(new Dimension(dim._1, dim._2))
   val drawing = new VisualDrawing(false, true)
+  
+  val lines = Array.fill(4)(new VisualLine(drawing, 0, 0, 0, 0))
 
   var ratio = 1
   var xBLCorner = 0
@@ -47,22 +49,24 @@ class VisualSet(val nadir: (Int, Int)) extends VisualFrame("Relaxation Viewer") 
     drawing.repaint()
   }
   
-  def best(point: (Int, Int)) {  
+  def line(bound: Int, obj: Int) = {
     
     val xCoeff = ratio*xDiffMin
     val yCoeff = ratio*yDiffMin
     
-    val (xSol, ySol) = point
-      
-      val x = (xSol-xBLCorner)*xCoeff
-      val y = (ySol-yBLCorner)*yCoeff
-      
-      if (x >= 0 && x < dim._1 && y >= 0 && y < dim._2) {
-        
-        drawing.addShape(new VisualCircle(drawing, x, y, 2, Color.RED))
-      }
- 
-    drawing.repaint()
+    drawing.addShape(lines(0))
+    drawing.addShape(lines(1))
+    drawing.addShape(lines(2))
+    drawing.addShape(lines(3))
+    
+    if (obj == 0 || obj == 2) {
+      lines(obj).setDest((bound-xBLCorner)*xCoeff, 0)
+      lines(obj).setOrig((bound-xBLCorner)*xCoeff, 600)
+    }
+    else {     
+      lines(obj).setDest(0, (bound-yBLCorner)*yCoeff)
+      lines(obj).setOrig(600, (bound-yBLCorner)*yCoeff)
+    }
   }
   
   def selected(point: (Int, Int)) {  

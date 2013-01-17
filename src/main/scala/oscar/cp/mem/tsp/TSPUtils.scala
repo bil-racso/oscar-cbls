@@ -2,7 +2,9 @@ package oscar.cp.mem.tsp
 
 import scala.io.Source
 import oscar.util.OutFile
+import scala.math.ceil
 import scala.math.round
+import scala.math.floor
 import oscar.cp.mem.pareto.NewPareto
 import oscar.cp.mem.pareto.MOSol
 
@@ -43,7 +45,7 @@ object TSPUtils {
   }
   
   def buildDistMatrix(coord: Array[(Int, Int)]) = {
-    Array.tabulate(coord.size, coord.size)((i, j) => round(getDist(coord(i), coord(j)).toInt))
+    Array.tabulate(coord.size, coord.size)((i, j) => round(getDist(coord(i), coord(j))).toInt)
   }
   
   def computeDist(pred: Array[Int], distMatrix: Array[Array[Int]]): Int = {

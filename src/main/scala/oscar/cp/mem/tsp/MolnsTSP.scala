@@ -21,20 +21,16 @@ import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
 import oscar.cp.mem.visu.VisualSet
 import oscar.visual.Plot2D
 import oscar.visual.VisualFrame
+import oscar.cp.mem.DominanceConstraint
 
 object MolnsTSP {
 
   val visu = new VisualSet(180000, 180000)
-  /*val f = new VisualFrame("Hypervolume")
-  val visuPlot = new Plot2D("", "Iterations", "Hypervolume")
-  f.add(visuPlot)
-  f.pack*/
 
   val verbous = false
 
   case class Sol(pred: Array[Int], succ: Array[Int]) { var tabu = 0 }
   var selected: Array[Array[Boolean]] = null
-
   var plot: List[(Int, Int)] = List()
 
   def main(args: Array[String]) {
@@ -42,7 +38,7 @@ object MolnsTSP {
     val inst1 = 'A'
     val inst2 = 'B'
     val in = "10c_merged"
-    val out = "new"
+    val out = "newTabu150"
 
     val pareto: ParetoSet[Sol] = ParetoSet(2)
 
@@ -62,7 +58,7 @@ object MolnsTSP {
     }
 
     for (i <- 0 until preds.size) {
-      //val i = 1
+      val i = 1
       val dist1 = TSPUtils.computeDist(preds(i), distMatrix1)
       val dist2 = TSPUtils.computeDist(preds(i), distMatrix2)
       val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
@@ -71,7 +67,7 @@ object MolnsTSP {
 
     solveMO(pareto, distMatrix1, distMatrix2)
 
-    println(""+ inst1 + inst2 + out)
+    println("" + inst1 + inst2 + out)
 
     TSPUtils.writeSet("setSol" + inst1 + inst2 + out + ".txt", pareto.toArray.map(_.sol.pred))
     val outFile = OutFile("Molns" + inst1 + inst2 + out + ".txt")
@@ -127,7 +123,7 @@ object MolnsTSP {
     var firstLns = true
 
     var p = 10
-    val tabuLength = 50
+    val tabuLength = 20
     var cycleBreaker = false
     val maxIter = 100000
 
@@ -136,12 +132,11 @@ object MolnsTSP {
 
     val t0 = System.currentTimeMillis()
     cp.lns(500) {
-      
+
       if (iteration % 100 == 0) {
         println("Iteration: " + iteration + " #Set: " + pareto.size)
         println("H: " + hypervolume(pareto))
       }
-
 
       if (iteration == maxIter) {
         cp.stop
@@ -213,10 +208,10 @@ object MolnsTSP {
       val sorted = filteredSol.sortBy(s => if (intens) -computeIntenSurf(s) else -computeDiffSurf(s))
       val rand = math.floor(math.pow(cp.random.nextFloat(), 10) * sorted.size).toInt
       currentSol = sorted(rand)
-      
+
       // Random Search
       //currentSol = filteredSol(cp.random.nextInt(filteredSol.size))
-      
+
       iteration += 1
     }
 
@@ -226,32 +221,43 @@ object MolnsTSP {
       diff1 * diff2
     }
 
-    def computeDiffSurf(sol: MOSol[Sol]): Double = {
+    def computeDiffSurf(sol: MOSol[Sol]): Int = {
 
-      val obj12 = sol.upperBound(0) - sol.objs(0).toDouble
-      val obj11 = sol.objs(0) - sol.lowerBound(0).toDouble
-      val obj22 = sol.upperBound(1) - sol.objs(1).toDouble
-      val obj21 = sol.objs(1) - sol.lowerBound(1).toDouble
+      val obj12 = sol.upperBound(0) - sol.objs(0)
+      val obj11 = sol.objs(0) - sol.lowerBound(0)
+      val obj22 = sol.upperBound(1) - sol.objs(1)
+      val obj21 = sol.objs(1) - sol.lowerBound(1)
 
-      val diff12 = obj12 / 1000
-      val diff11 = obj11 / 1000
-      val diff21 = obj21 / 1000
-      val diff22 = obj22 / 1000
-
-      diff12 * diff21 + diff11 * diff22
+      obj12 * obj21 + obj11 * obj22
     }
 
     def relaxObjectives(obj: Int, intensification: Boolean = false) {
-      for (o <- pareto.Objs) {
-        if (o == obj) {
-          val temp = currentSol.objs(o)
-          cp.objective.objs(o).best = currentSol.objs(o)
-          cp.objective.objs(o).tightenMode = TightenType.StrongTighten
-        } else {
-          val temp = currentSol.upperBound(o) - 1
-          cp.objective.objs(o).best = if (!intens) currentSol.upperBound(o) - 1 else currentSol.objs(o)
-          cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
+
+      if (!intensification) {
+
+        for (o <- pareto.Objs) {
+          if (o != obj) {
+            cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
+            cp.objective.objs(o).best = pareto.nadir(o)
+          } else {
+            cp.objective.objs(o).tightenMode = TightenType.StrongTighten
+            cp.objective.objs(o).best = currentSol.objs(o)
+          }
         }
+
+        cp.post(new DominanceConstraint(cp, pareto, totDist1, totDist2))
+        
+      } else {
+        
+        for (o <- pareto.Objs) {
+          cp.objective.objs(o).best = currentSol.objs(o)
+          if (o == obj) {
+            cp.objective.objs(o).tightenMode = TightenType.StrongTighten
+          } else {
+            cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
+          }
+        }
+
       }
     }
 
@@ -266,27 +272,13 @@ object MolnsTSP {
       Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
     }
 
-    def proximityRelax(p: Int): Array[Boolean] = {
-
-      val dist = if (currentObjective == 0) distMatrix1 else distMatrix2
-      val selected = Array.fill(nCities)(false)
-      selected(nextInt(nCities)) = true
-
-      for (i <- 1 until p) {
-        val sel = Cities.filter(i => selected(i))
-        val rem = Cities.filter(i => !selected(i))
-        val c = sel(nextInt(sel.size))
-        val cNew = selectMin(rem)()(dist(c)(_)).get
-        selected(cNew) = true
-      }
-      selected
-    }
-
     def solFound() {
       newSols.insert(MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDist1.value, totDist2.value))
     }
 
     def relaxVariables(selected: Array[Boolean]) {
+      
+      cycleBreaker = intens
 
       val constraints: Queue[Constraint] = Queue()
 
@@ -322,8 +314,8 @@ object MolnsTSP {
       cp.add(new ChannelingPredSucc(cp, pred, succ))
 
       // Consistency of the circuit with Strong filtering
-      cp.add(circuit(succ), Strong)
-      cp.add(circuit(pred), Strong)
+      cp.add(circuit(succ))//, Strong)
+      cp.add(circuit(pred))//, Strong)
 
       // Total distance 1
       cp.add(sum(Cities)(i => distMatrix1(i)(succ(i))) == totDist1)
@@ -344,8 +336,14 @@ object MolnsTSP {
     // ------
     println("Searching...")
     cp.exploration {
-      val distMatrix = if (currentObjective == 0) distMatrix1 else distMatrix2
-      regretHeuristic(cp, succ, distMatrix)
+      val dist = if (currentObjective == 0) distMatrix1 else distMatrix2
+
+      visu.line(totDist1.min, 0)
+      visu.line(totDist2.min, 1)
+      visu.line(totDist1.max, 2)
+      visu.line(totDist2.max, 3)
+
+      regretHeuristic(cp, succ, dist)
       solFound()
     }
   }
