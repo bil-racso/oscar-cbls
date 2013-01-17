@@ -27,17 +27,20 @@ class SimQueue {
   val isBusy = new Var[Boolean](false)
   val isEmpty = new Var[Boolean](true)
   
-  def enter: Boolean@suspendable = {
-    if ( ! isOpen() ) false
-    else {
+  private def u[T] = {
+    if ( isBusy() )
+        waitFor[Unit,T](serve) 
+      else ()
+  }
+  
+  def enter[T]: Boolean@cpsParam[Option[T],Option[T]] = {
+    val res = if ( isOpen() ){
       isEmpty := false
-      if ( isBusy() )
-        waitFor(serve) 
-      else
-        cpsunit
+      u[T]
       isBusy := true
       true
-    }
+    }else false
+    res
   }
   
   def leave(){
