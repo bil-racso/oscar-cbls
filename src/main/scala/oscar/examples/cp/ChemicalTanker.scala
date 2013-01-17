@@ -177,9 +177,9 @@ object ChemicalTanker extends App {
     // --------------- state the objective, the constraints and the search -------------
 
     cp.maximize(/*freeSpace*/ nbFreeTanks) subjectTo {
-      // make the link between cargo and load vars with binpacking constraint
-      cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
-      cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
+      // make the link between cargo and load vars with binPacking constraint
+      cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
+      cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
       for (i <- 1 until cargos.size) {
         cp.add(new ChemicalConstraint(cargos(i),tanks,cargo)) // dominance rules

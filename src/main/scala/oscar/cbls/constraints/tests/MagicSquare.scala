@@ -81,7 +81,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     c.post(EQ(Sum(for ( i <- Dim) yield magic(i)(N-i-1)), T)) // other diagonal
     
     // register for violation
-    for (i <- Dim; j <- Dim) { c.registerForViolation(magic(i)(j)) }
+    for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
     // closing constraints
     c.close

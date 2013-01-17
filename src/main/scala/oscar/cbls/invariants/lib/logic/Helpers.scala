@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.computation.{Variable, IntInvariant, IntVar}
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
   var output:IntVar=null
 
   registerStaticAndDynamicDependency(a)
@@ -69,7 +69,7 @@ case class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = I
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
@@ -100,7 +100,7 @@ case class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), o
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-case class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:IntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)

@@ -62,7 +62,7 @@ object CuriousSetOfIntegers {
       var numSols = 0
       cp.solveAll() subjectTo {
 
-	cp.add(alldifferent(x), Strong)
+	cp.add(allDifferent(x), Strong)
 
         for(i <- 0 until n - 1) {
           for(j <- i + 1 until n) {

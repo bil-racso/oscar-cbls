@@ -99,7 +99,7 @@ object WordSquare {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(E),Weak)
+      cp.add(allDifferent(E),Weak)
 
       // now find the connections
       for{i <- WORDLEN

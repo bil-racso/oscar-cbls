@@ -93,9 +93,9 @@ object ARoundOfGolf {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(last_name), Strong);
-      cp.add(alldifferent(job), Strong);
-      cp.add(alldifferent(score), Strong);
+      cp.add(allDifferent(last_name), Strong);
+      cp.add(allDifferent(job), Strong);
+      cp.add(allDifferent(score), Strong);
 
       // 1. Bill, who is not the maintenance man, plays golf often and had
       //    the lowest score of the foursome.

@@ -50,7 +50,7 @@ object test extends SearchEngine {
     c <== a + b //Sum(SortedSet(a, b))
     e <== Inter(MakeSet(SortedSet(a, b)), MakeSet(SortedSet(b, c)))
     val Const5 = IntConst(5,m)
-    val f:IntVar = Max(SortedSet(a,b,c,d)) + MinLin(SortedSet(Abs(a),b,Const5,d))
+    val f:IntVar = MaxArray(SortedSet(a,b,c,d).toArray) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:IntVar = MaxLin(SortedSet(a,b,c,d))
 
     val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))

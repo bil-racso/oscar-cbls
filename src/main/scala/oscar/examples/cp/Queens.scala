@@ -29,7 +29,7 @@ import oscar.cp.core._
  * Using Non Deterministic Search
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Queen extends App {
+object Queens extends App {
 		
       val cp = CPSolver()
       
@@ -40,9 +40,9 @@ object Queen extends App {
       
       var nbsol = 0
       cp.solveAll subjectTo {
-    	  cp.add(alldifferent(queens),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),Strong)
-    	  cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),Strong)
+    	  cp.add(allDifferent(queens),Strong)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
       } exploration {        
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))

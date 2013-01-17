@@ -118,7 +118,7 @@ object TSPDemo {
       while (!allBounds(succ)) {
          val (x,i) = selectMin(succ.zipWithIndex)(!_._1.isBound)(_._1.size).get
          // get the closest successor in the domain of x
-         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).head
          cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
       updateVisu()

@@ -104,7 +104,7 @@ object Marathon {
       var numSols = 0
       cp.solveAll() subjectTo {
 
-	cp.add(alldifferent(runners), Strong)
+	cp.add(allDifferent(runners), Strong)
 
         // a: Olivier not last
         cp.add(olivier != n)

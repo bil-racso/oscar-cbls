@@ -80,7 +80,7 @@ object JustForgotten {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       for(r <- 0 until rows) {
         cp.add(sum(for{c <- 0 until cols} yield x(c) === a(r)(c)) == 4)
       }

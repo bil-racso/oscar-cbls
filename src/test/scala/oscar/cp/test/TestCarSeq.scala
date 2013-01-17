@@ -22,7 +22,6 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
-import org.scalacheck._
 import oscar.reversible.SetIndexedArray
 
 class TestCarSeq extends FunSuite with ShouldMatchers  {

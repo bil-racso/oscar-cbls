@@ -26,8 +26,8 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.reversible.ReversibleInt
-import scala.Math.min
-import scala.Math.max
+import scala.math.min
+import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.CPSolver
@@ -55,8 +55,8 @@ class Permutation(x: Array[CPVarInt], y: Array[CPVarInt]) extends Constraint(y(0
       if (x(i).updateMax(n) == Failure) return Failure
       if (y(i).updateMax(n) == Failure) return Failure
     }
-    if (s.post(alldifferent(x),l) == Failure) return Failure
-    if (s.post(alldifferent(y),l) == Failure) return Failure
+    if (s.post(allDifferent(x),l) == Failure) return Failure
+    if (s.post(allDifferent(y),l) == Failure) return Failure
     
     for(i <- 0 to n; v <- 0 to n) {
       if (!x(i).hasValue(v)) {

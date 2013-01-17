@@ -80,7 +80,7 @@ object CostasArray {
         cp.add(differences(i)(j) == -n+1)
       }
       
-      cp.add(alldifferent(costas), Strong)
+      cp.add(allDifferent(costas), Strong)
 
       
       // hakank: All the following constraints (and comments)
@@ -99,7 +99,7 @@ object CostasArray {
       // "All entries in a particular row of the difference
       //  triangle must be distint."
       for(i <- 0 until n-2) {
-        cp.add(alldifferent(
+        cp.add(allDifferent(
                             for(j <- 0 until n if j > i) yield differences(i)(j)
                             ), Strong)
       }

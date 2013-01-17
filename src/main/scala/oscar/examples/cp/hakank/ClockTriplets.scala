@@ -77,7 +77,7 @@ object ClockTriplets {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       cp.add(x(0) == 12)
       cp.add(x(1) > x(11))

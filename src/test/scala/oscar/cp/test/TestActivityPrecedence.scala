@@ -2,7 +2,6 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import org.scalacheck._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.cp.core.Constraint

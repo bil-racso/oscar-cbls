@@ -26,7 +26,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
 
 class TestDomino extends FunSuite with ShouldMatchers  {
 

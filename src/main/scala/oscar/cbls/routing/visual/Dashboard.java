@@ -1,6 +1,5 @@
 package oscar.cbls.routing.visual;
 
-import oscar.cbls.routing.initialSolution.HeuristicTimer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,8 +74,8 @@ public class Dashboard extends JPanel {
     private class ProgressThread implements Runnable {
         public void run(){
             frameProgressBar.setVisible(true);
-            frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
-
+            //frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
+            /*
             while(HeuristicTimer.getPercentComplete() != 100){
                 try{
                     HeuristicTimer.lock();
@@ -87,6 +86,7 @@ public class Dashboard extends JPanel {
             }
             progressBar.setValue(0);
             HeuristicTimer.setPercentComplete(0);
+            */
             frameProgressBar.setVisible(false);
         }
 
@@ -195,7 +195,7 @@ public class Dashboard extends JPanel {
                     //new Thread(new OldVisualMap.Search()).start();
                     firstIte = false;
                     iteration = true;
-                    PanelVRP.startSearching();
+                    //PanelVRP.startSearching();
 
                 }
                 if(pause){
@@ -246,7 +246,7 @@ public class Dashboard extends JPanel {
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new Thread(new ProgressThread()).start();
-                PanelVRP.makeInstance(false);
+                //PanelVRP.makeInstance(false);
             }
         });
 
@@ -261,7 +261,7 @@ public class Dashboard extends JPanel {
         resetInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 firstIte = true;
-                PanelVRP.makeInstance(true);
+                //PanelVRP.makeInstance(true);
             }});
         add(resetInstance);
     }
@@ -313,7 +313,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    PanelVRP.startSmartSearching();
+                    //PanelVRP.startSmartSearching();
                     lock2();
                 }
                 pause = !pause;
@@ -338,7 +338,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    PanelVRP.startSearching();
+                    //PanelVRP.startSearching();
                     lock2();
                 }
                 pause = !pause;

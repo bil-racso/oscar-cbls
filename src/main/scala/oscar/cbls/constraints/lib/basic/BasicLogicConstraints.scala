@@ -32,10 +32,11 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.invariants.lib.numeric.Minus._
 import oscar.cbls.invariants.lib.numeric.{Abs, Minus}
 
+
 /**
  * implements left <= right
  */
-case class LE(left:IntVar, right:IntVar) extends Constraint {
+protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
   registerConstrainedVariables(left,right)
 
@@ -53,16 +54,20 @@ case class LE(left:IntVar, right:IntVar) extends Constraint {
 }
 
 /**
+ * implements left <= right
+ */
+case class LE(l:IntVar,r:IntVar) extends LEA(l,r)
+
+/**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
  */
-case class GE(override val left:IntVar, override val right:IntVar) extends LE(right,left)
+case class GE(l:IntVar,r:IntVar) extends LEA(r,l)
 
 /**
  * implements left < right
- * it is just the 
  */
-case class L(left:IntVar, right:IntVar) extends Constraint{
+protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
 
   val Violation:IntVar = Max2(0, left + right + 1)
@@ -80,7 +85,12 @@ case class L(left:IntVar, right:IntVar) extends Constraint{
  * implements left > right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
  */
-case class G(override val left:IntVar, override val right:IntVar) extends L(right,left)
+case class L(l:IntVar,r:IntVar) extends LA(l,r)
+
+/**
+ * implements left < right
+ */
+case class G(l:IntVar,r:IntVar) extends LA(r,l)
 
 /**
  * implements left != right

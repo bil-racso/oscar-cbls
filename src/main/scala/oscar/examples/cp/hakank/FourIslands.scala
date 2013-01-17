@@ -109,9 +109,9 @@ object FourIslands {
     var numSols = 0
     cp.solveAll subjectTo {
       
-      cp.add(alldifferent(island), Strong)
-      cp.add(alldifferent(export), Strong)
-      cp.add(alldifferent(attraction), Strong)
+      cp.add(allDifferent(island), Strong)
+      cp.add(allDifferent(export), Strong)
+      cp.add(allDifferent(attraction), Strong)
       
       //  1. The island noted for its koala preserve is due south of Pwana.
       cp.add(

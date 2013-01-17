@@ -65,7 +65,7 @@ object ChooChooTrain {
 
         cp.add(C != 0)
         cp.add(T != 0)
-	cp.add(alldifferent(all), Strong)
+	cp.add(allDifferent(all), Strong)
 
       } exploration {
         

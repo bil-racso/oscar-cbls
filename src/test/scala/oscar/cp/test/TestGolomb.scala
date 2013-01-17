@@ -27,8 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
-
 class TestGolomb extends FunSuite with ShouldMatchers  {
 
 
@@ -52,7 +50,7 @@ class TestGolomb extends FunSuite with ShouldMatchers  {
 		  }
     	  
 
-          cp.add(alldifferent(for (i <- 0 until n; j <- i+1 until n) yield marks(j)-marks(i)), Strong);
+          cp.add(allDifferent(for (i <- 0 until n; j <- i+1 until n) yield marks(j)-marks(i)), Strong);
                 
                 
           // break the symmetries between differences

@@ -69,7 +69,7 @@ object ResourceAssignment extends App {
     val load = Array.fill(nbBins)(CPVarInt(cp,0 to binCapa))
 
     cp.minimize(maximum(0 until nbBins)(load(_))) subjectTo {
-      cp.add(binpacking(x,taskWeight.map(_._2),load))
+      cp.add(binPacking(x,taskWeight.map(_._2),load))
     } exploration {
       cp.binaryFirstFail(x)
     }

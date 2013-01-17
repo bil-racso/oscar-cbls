@@ -144,7 +144,7 @@ class Planning(val model: Model, val maxduration: Int) {
     for (j <- Tasks.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask) {
       toreturn += "" + padToLength(j.name, 20) + ":" + "[" +
         padToLength("" + j.EarliestStartDate.value, 4) + ";" + padToLength("" + j.EarliestEndDate.value, 4) + "] " +
-        (if (j.duration == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
+        (if (j.duration.value == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
         else nStrings(j.EarliestStartDate.value, " ") + "#" + nStrings(j.duration.value - 2, "=") + "#\n")
     }
     toreturn += MakeSpan
@@ -270,7 +270,7 @@ class Planning(val model: Model, val maxduration: Int) {
     }
   }
   
-  abstract case class DependencyCleaner()
+  abstract class DependencyCleaner()
   case class HardRockDependency() extends DependencyCleaner
   case class DependenciesCanBeKilled(d:List[(Task, Task)]) extends DependencyCleaner{
     def killDependencies{

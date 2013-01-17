@@ -46,7 +46,7 @@ object DivisibleBy9Through1 {
     
     cp.solve() subjectTo {
       
-      cp.add(alldifferent(digits), Strong)
+      cp.add(allDifferent(digits), Strong)
       for (i <- 1 to 9) {
         cp.add(sum(0 until i)(j => digits(j) * coefs.drop(9-i)(j)) == numbers(i-1))
         cp.add(numbers(i-1) == divisors(i-1) * i)

@@ -153,12 +153,12 @@ object Futoshiki {
 
       // all rows have to be different
       for(row <- RANGE) {
-        cp.add(alldifferent(for(col <- RANGE) yield field(row)(col)))
+        cp.add(allDifferent(for(col <- RANGE) yield field(row)(col)))
       }
       
       // all columns have to be different
       for(col <- RANGE) {
-        cp.add(alldifferent(for(row <- RANGE) yield field(row)(col)))
+        cp.add(allDifferent(for(row <- RANGE) yield field(row)(col)))
       }
 
       // all < constraints are satisfied

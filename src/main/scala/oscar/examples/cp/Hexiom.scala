@@ -115,7 +115,7 @@ object Hexiom  {
 		} exploration {
 		  
 		  while (!allBounds(used)) {
-			  val x = used.filter(!_.isBound).first
+			  val x = used.filter(!_.isBound).head
 			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
 		  }
 		  nbSol += 1

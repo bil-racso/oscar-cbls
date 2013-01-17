@@ -68,7 +68,7 @@ object Algebra {
 
     override def toList: List[Int] = unfold(startBy)
 
-    override def toArray[B >: Int](implicit evidence$1: ClassManifest[B]): Array[B] = toList.toArray
+    override def toArray[B >: Int](implicit evidence$1: scala.reflect.ClassTag[B]): Array[B] = toList.toArray
 
     override def toString(): String = "ShiftedRange(" + toList + ")"
   }

@@ -118,7 +118,7 @@ object Crypto {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(LD), Strong)
+      cp.add(allDifferent(LD), Strong)
 
       cp.add(            B + A + L + L + E + T == BALLET)
       cp.add(                C + E + L + L + O == CELLO)

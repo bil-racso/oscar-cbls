@@ -26,9 +26,6 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
-
-import org.scalacheck._
-
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -46,9 +43,9 @@ class TestQueens extends FunSuite with ShouldMatchers  {
            val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
            var nbsol = 0
            cp.solveAll subjectTo {
-    	     cp.add(alldifferent(queens),cons)
-    	     cp.add(alldifferent(for(i <- Queens) yield queens(i) + i),cons)
-    	     cp.add(alldifferent(for(i <- Queens) yield queens(i) - i),cons)
+    	     cp.add(allDifferent(queens),cons)
+    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),cons)
+    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),cons)
            } exploration {        
              for (q <- Queens.suspendable) {
                cp.branchAll(1 to n)(v => cp.post(queens(q) == v))

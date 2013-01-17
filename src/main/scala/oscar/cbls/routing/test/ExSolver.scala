@@ -88,12 +88,12 @@ object ExSolver extends SearchEngine with StopWatch with App{
 
   for(i <- 0 until vrp.V){
     strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)),strongPenalty)
-    strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
+    strongConstraintSystem.violation(vrp.RouteLength(i))
   }
 
   for(i <- 0 until vrp.V){
     weakConstraintSystem.post(GE(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
-    weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
+    weakConstraintSystem.violation(vrp.RouteLength(i))
   }
   val withConstraints = false
   if(withConstraints)

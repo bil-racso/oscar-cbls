@@ -74,7 +74,7 @@ object Crypta {
     var numSols = 0
     cp.solveAll subjectTo {
 
-        cp.add(alldifferent(x), Strong)
+        cp.add(allDifferent(x), Strong)
         cp.add(b >= 1)
         cp.add(d >= 1)
         cp.add(g >= 1)

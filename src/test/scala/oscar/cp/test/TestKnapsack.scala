@@ -25,8 +25,6 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
-
 /**
  * author Pierre Schaus pschaus@gmail.com
  */
@@ -47,8 +45,8 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	  //println("profit:"+profit.mkString(","))
 	  cp.silent = true
 	  cp.maximize(P) subjectTo {
-	    cp.add(binaryknapsack(X,profit,P))
-	    cp.add(binaryknapsack(X,weight,W))
+	    cp.add(binaryKnapsack(X,profit,P))
+	    cp.add(binaryKnapsack(X,weight,W))
 	    if (cons) {
 	      //println("with knapsack")
 	      cp.add(new Knapsack(X,profit,weight,P,W,true))

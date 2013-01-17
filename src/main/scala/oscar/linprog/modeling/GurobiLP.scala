@@ -19,7 +19,7 @@ package oscar.linprog.modeling
 
 import gurobi._
 import scala.collection.mutable.{ ListBuffer, HashMap }
-import oscar.algebra.`package`.ConstraintType
+import oscar.algebra._
 
 /**
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com, Jean van der Vaeren	

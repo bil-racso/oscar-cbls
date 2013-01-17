@@ -170,10 +170,8 @@ class NQueensApplet extends Applet {
       c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
-      for (q <- range) { c.registerForViolation(Queens(q)) }
-      c.close()
-
       val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+      c.close()
       m.close()
 
       var it: Int = 0

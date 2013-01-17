@@ -26,9 +26,6 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
-
-import org.scalacheck._
-
 class TestDudeney extends FunSuite with ShouldMatchers  {
 
 

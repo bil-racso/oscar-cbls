@@ -64,15 +64,13 @@ object NQueens3 extends SearchEngine with StopWatch with App{
   c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
   c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
-  for (q <- range){c.registerForViolation(Queens(q))}
-
+  val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
   c.close()
 
-  val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
   val Tabu:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
   val It = new IntVar(m,0,Int.MaxValue,0,"it")
   val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
-  val NonTabuMaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray, NonTabuQueens)
+  val NonTabuMaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
 
   m.close()
   // m.close(false)

@@ -103,7 +103,7 @@ object PandigitalNumbers {
 
     cp.solveAll subjectTo {
 
-      cp.add(alldifferent(x))
+      cp.add(allDifferent(x))
 
       cp.add(num1 == toNum((for{i <- 0 until len1} yield x(i)), base))
       cp.add(num2 == toNum((for{i <- len1 until len1+len2} yield x(i)), base))

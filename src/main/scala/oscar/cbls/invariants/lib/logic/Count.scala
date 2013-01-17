@@ -51,3 +51,4 @@ case class DenseCount(values:Array[IntVar], counts:Array[IntVar]) extends Invari
     counts(NewVal) :+= 1
   }
 }
+

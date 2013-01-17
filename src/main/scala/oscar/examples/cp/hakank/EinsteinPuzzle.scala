@@ -73,11 +73,11 @@ object EinsteinPuzzle {
 
     cp.solveAll subjectTo {
 
-       cp.add(alldifferent(nationality), Strong)    
-       cp.add(alldifferent(animal)     , Strong)
-       cp.add(alldifferent(drink)      , Strong)
-       cp.add(alldifferent(smoke)      , Strong)
-       cp.add(alldifferent(color)      , Strong)
+       cp.add(allDifferent(nationality), Strong)    
+       cp.add(allDifferent(animal)     , Strong)
+       cp.add(allDifferent(drink)      , Strong)
+       cp.add(allDifferent(smoke)      , Strong)
+       cp.add(allDifferent(color)      , Strong)
 
        //
        // The clues

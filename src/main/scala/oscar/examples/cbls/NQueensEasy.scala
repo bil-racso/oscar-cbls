@@ -42,14 +42,13 @@ object NQueensEasy extends App{
     val rand = new scala.util.Random()
     
     val ls = new LSSolver()
-    val init = rand.shuffle((0 until N).toSeq) // initial solution
+    val init = rand.shuffle((0 to N-1).toList).toArray // initial solution
     val queens = Array.tabulate(N)(q => new LSVarInt(ls, 0, N-1,init(q),"queen" + q))
     val c = new ConstraintSystem(ls)
 
     //alldiff on rows in enforced because we swap queens initially different
-    c.post(alldifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar))) // I would prefer not have to call toIntVar
-    c.post(alldifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
-
+    c.post(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar))) // I would prefer not have to call toIntVar
+    c.post(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
     val violations = Array.tabulate(N)(q => c.violation(queens(q)))
     val maxViolQueens = argMax(violations) // set of queens with highest violation

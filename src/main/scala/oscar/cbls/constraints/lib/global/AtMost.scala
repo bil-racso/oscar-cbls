@@ -75,7 +75,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
     if(Bound(varval) != -1){
       ValueCount(varval + offset) :+= 1
     }
-    Violations(v) <== (IntElement(v + offset, ValueCount) - IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
+    Violations(v) <== (IntElement(v + offset, ValueCount) - new IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
   }
 
   for(i <- range){

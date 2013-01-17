@@ -68,7 +68,7 @@ object AddedCorner {
     cp.solveAll subjectTo {
 
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       cp.add(b == a + c)
       cp.add(d == a + f)
       cp.add(e == c + h)

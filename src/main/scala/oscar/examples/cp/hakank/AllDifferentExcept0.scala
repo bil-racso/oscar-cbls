@@ -23,10 +23,10 @@ import oscar.cp.core._
 
 /**
  *
- * Decomposition of the global constraint alldifferent_except_0 in in Oscar.
+ * Decomposition of the global constraint allDifferent_except_0 in in Oscar.
  * 
  *  From Global constraint catalogue:
- * http://www.emn.fr/x-info/sdemasse/gccat/Calldifferent_except_0.html
+ * http://www.emn.fr/x-info/sdemasse/gccat/CallDifferent_except_0.html
  *  """ 
  * Enforce all variables of the collection VARIABLES to take distinct 
  * values, except those variables that are assigned to 0.
@@ -34,7 +34,7 @@ import oscar.cp.core._
  * Example
  *    (<5, 0, 1, 9, 0, 3>)
  * 
- * The alldifferent_except_0 constraint holds since all the values 
+ * The allDifferent_except_0 constraint holds since all the values 
  * (that are different from 0) 5, 1, 9 and 3 are distinct.
  * """
  *
@@ -45,8 +45,8 @@ import oscar.cp.core._
  */
 object AllDifferentExcept0 {
 
-  // Decomposition of alldifferent_except_0
-  def alldifferent_except_0(cp: CPSolver, y: Array[CPVarInt]) = {
+  // Decomposition of allDifferent_except_0
+  def allDifferent_except_0(cp: CPSolver, y: Array[CPVarInt]) = {
 
     for(i <- 0 until y.length; j <- 0 until i) {
       cp.add( ((y(i) !== 0) && (y(j) !== 0)) ==> (y(i) !== y(j)) )
@@ -80,7 +80,7 @@ object AllDifferentExcept0 {
 
     cp.solveAll subjectTo {
 
-      alldifferent_except_0(cp, x)
+      allDifferent_except_0(cp, x)
 
       // Just for fun, we add that x should be increasing
       increasing(cp, x)

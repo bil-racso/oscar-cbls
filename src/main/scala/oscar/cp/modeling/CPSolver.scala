@@ -36,7 +36,6 @@ class CPSolver() extends Store() {
   var lns: Option[LNS] = None
 
   private var lastLNSRestartCompleted = false
-  var startByLNS = false
 
   /**
    * @return true if the last lns restart was caused because of completed exploration of search tree,
@@ -46,10 +45,6 @@ class CPSolver() extends Store() {
 
   def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
     lns = Option(new LNS(nbRestarts, nbFailures, () => restart))
-  }
-  
-  def lns(nbFailures: Int)(restart: => Unit) {
-    lns = Option(new LNS(Int.MaxValue, nbFailures, () => restart))
   }
 
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
@@ -77,7 +72,7 @@ class CPSolver() extends Store() {
   }
 
   //(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
-
+  
   def minimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
@@ -98,13 +93,13 @@ class CPSolver() extends Store() {
 
   def maximize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*)
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
       post(objective)
     }
     solveAll()
     this
   }
-    
+
   def solve(): CPSolver = {
     solveOne = true
     this
@@ -190,7 +185,7 @@ class CPSolver() extends Store() {
 
       val unbound = vars.filter(!_.isBound)
       val heuris = unbound.map(varHeuris(_)).min
-      val x = unbound.filter(varHeuris(_) == heuris).first
+      val x = unbound.filter(varHeuris(_) == heuris).head
 
       val vals = x.toArray.sortBy(valHeuris)
       val median = vals(vals.size / 2)
@@ -266,10 +261,7 @@ class CPSolver() extends Store() {
           case None => () => sc.limitActivated = true
           case _ => sc.limitActivated = false // don't want to activate the limit in case of lns until first solution is found
         }
-        
-        // If start by LNS, set the limit
-        sc.limitActivated = startByLNS
-        restart(startByLNS) // first restart, find a feasible solution so no limit
+        restart(false) // first restart, find a feasible solution so no limit
         sc.limitActivated = true
         for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
           restart(true)
@@ -286,6 +278,7 @@ class CPSolver() extends Store() {
     }
     time = System.currentTimeMillis() - t1
   }
+
 }
 
 object CPSolver {

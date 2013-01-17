@@ -96,8 +96,8 @@ object QuasigroupCompletion {
   
       // make it a Latin Square
       for (i <- 0 until n) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j)) ), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i)) ), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(i)(j)) ), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(j)(i)) ), Strong)
       }
 
 

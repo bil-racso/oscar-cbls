@@ -96,17 +96,14 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     r(Carry.c2.id) <== ((d(Letter.N.id) + d(Letter.R.id) + r(Carry.c1.id)) / 10)
     r(Carry.c3.id) <== ((d(Letter.E.id) + d(Letter.O.id) + r(Carry.c2.id)) / 10)
     r(Carry.c4.id) <== ((d(Letter.S.id) + d(Letter.M.id) + r(Carry.c3.id)) / 10)
-    
-    for(l <- Letter.list) {c.registerForViolation(d(l.id))}
-//    for(i <- Carry.list)  {c.registerForViolation(r(i.id))} // carries will be enforced so no violation
-    c.close()
 
     // search variables
     val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
+    c.close()
     val Tabu:Array[IntVar] = (for (i <- Letter.list) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = new IntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolLetter:IntSetVar = ArgMaxArray(ViolationArray, NonTabuLetter)
+    val NonTabuMaxViolLetter:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
     
     // closing model
     m.close()

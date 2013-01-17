@@ -60,7 +60,7 @@ object MagicSquare {
 
     cp.solveAll subjectTo {
 
-       cp.add(alldifferent(x.flatten), Strong)
+       cp.add(allDifferent(x.flatten), Strong)
 
        // rows and columns
        for(i <- 0 until n) {

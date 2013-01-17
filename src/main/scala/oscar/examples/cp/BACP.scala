@@ -61,7 +61,7 @@ object BACP extends App{
 
     cp.minimize(vari) subjectTo {
         cp.add(spread(l,credits.sum, vari))
-        cp.add(binpacking(x, credits, l))
+        cp.add(binPacking(x, credits, l))
         for ((i,j) <- prerequisites) {
           cp.add(x(i) < x(j)) // precedence constraint
         } 

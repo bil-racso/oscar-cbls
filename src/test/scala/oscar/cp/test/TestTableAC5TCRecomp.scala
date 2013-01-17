@@ -25,7 +25,6 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
 
 class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
 
