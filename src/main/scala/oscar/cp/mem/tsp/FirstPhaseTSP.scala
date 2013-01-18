@@ -24,7 +24,7 @@ object FirstPhaseTSP extends App {
 
   val inst1 = 'A'
   val inst2 = 'B'
-  val out = "out"
+  val out = "floor"
 
   val Fullpareto = ParetoSet[Sol](2)
 

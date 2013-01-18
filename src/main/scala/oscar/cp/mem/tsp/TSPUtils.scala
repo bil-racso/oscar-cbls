@@ -41,11 +41,11 @@ object TSPUtils {
   }
   
   def buildDistMatrix(instance: String) = {
-    buildRealDistMatrix(instance).map(_.map(round(_).toInt))
+    buildRealDistMatrix(instance).map(_.map(floor(_).toInt))
   }
   
   def buildDistMatrix(coord: Array[(Int, Int)]) = {
-    Array.tabulate(coord.size, coord.size)((i, j) => round(getDist(coord(i), coord(j))).toInt)
+    Array.tabulate(coord.size, coord.size)((i, j) => floor(getDist(coord(i), coord(j))).toInt)
   }
   
   def computeDist(pred: Array[Int], distMatrix: Array[Array[Int]]): Int = {

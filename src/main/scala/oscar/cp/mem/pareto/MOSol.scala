@@ -10,12 +10,13 @@ case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
   def lowerBound(obj: Int): Int = lb(obj)
 
   // True if the point dominates x
-  def dominates(x: MOSol[Sol]): Boolean = if (x == null) true else dominates0(x, 0)
-  
-  private def dominates0(x: MOSol[Sol], i: Int): Boolean = {
-    if (i == objs.size) true
-    else if (x.objs(i) < objs(i)) false
-    else dominates0(x, i+1)
+  def dominates(x: MOSol[Sol]): Boolean = {
+    if (x == null) true 
+    else {
+      var dominates = true
+      for (o <- 0 until objs.size if x.objs(o) < objs(o)) return false
+      return true
+    }
   }
 
   override def toString: String = "MOSol("+objs.mkString(", ")+")"

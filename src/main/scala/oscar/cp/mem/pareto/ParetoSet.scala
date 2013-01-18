@@ -2,17 +2,15 @@ package oscar.cp.mem.pareto
 
 class ParetoSet[Sol](val nObjs: Int) {
 
-  class SolNode(val sol: MOSol[Sol], val objsNode: Array[LinkedNode[SolNode]]) { override def toString = sol.toString }
-
   val Objs = 0 until nObjs
   
   var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
   var ideal: Array[Int] = Array.fill(nObjs)(0)
 
-  private val objsVal: Array[OrderedLinkedList[SolNode]] = Array.fill(nObjs)(OrderedLinkedList[SolNode]())
-  private var X: List[SolNode] = List()
+  val objsVal: Array[OrderedLinkedList[SolNode[Sol]]] = Array.fill(nObjs)(OrderedLinkedList[SolNode[Sol]]())
+  private var X: List[SolNode[Sol]] = List()
 
-  private def deleteNode(s: SolNode) = {
+  private def deleteNode(s: SolNode[Sol]) = {
     for (i <- Objs) {
       val prev = s.objsNode(i).prev
       val next = s.objsNode(i).next
@@ -52,14 +50,14 @@ class ParetoSet[Sol](val nObjs: Int) {
       return 0
     } else {
       val removed = clean(xNew)
-      realInsert(xNew)
+      if (removed != -1) realInsert(xNew)
       return removed
     }
   }
 
   private def clean(xNew: MOSol[Sol]): Int = {
     var removed = 0
-    def clean0(xNew: MOSol[Sol], l: List[SolNode]): List[SolNode] = l match {
+    def clean0(xNew: MOSol[Sol], l: List[SolNode[Sol]]): List[SolNode[Sol]] = l match {
       case Nil => Nil
       case x :: t => {
         if (xNew dominates x.sol) {
