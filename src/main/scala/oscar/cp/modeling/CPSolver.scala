@@ -116,6 +116,7 @@ class CPSolver() extends Store() {
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
+      stateObjective()
       pushState()
     } catch {
       case ex: NoSol => println("No Solution, inconsistent model")
@@ -208,17 +209,20 @@ class CPSolver() extends Store() {
   
   
   case class Exploration(val exploration: () => Unit @suspendable)
-  var exploBlock: Option[Exploration] = None
-  
+  private var exploBlock: Option[Exploration] = None
 
-  
   def explo(block: => Unit @suspendable): Unit = {
     exploBlock = Option(Exploration(() => block))
   }
   
-  def run(nbSolMax:Int)(reversibleBlock: => Unit): Unit = {
+  var explorationCompleted = false
+  
+  def run(nbSolMax:Int = Int.MaxValue,failureLimit:Int = Int.MaxValue)(reversibleBlock: => Unit): Unit = {
+    val t1 = System.currentTimeMillis()
+    explorationCompleted = false
+    failLimit = failureLimit
     var n = 0
-    stateObjective()
+    
     reset {
       shift { k1: (Unit => Unit) =>
         val b = () => {
@@ -231,6 +235,8 @@ class CPSolver() extends Store() {
           }
           if (!isFailed()) {
             n += 1 // one more sol found
+            solFound()
+            objective.tighten()
             if (n == nbSolMax) {
               sc.reset()
               k1() // exit the exploration block
@@ -239,24 +245,27 @@ class CPSolver() extends Store() {
         }
         popAll()
         pushState()
+        reversibleBlock
         sc.reset()
         if (!isFailed()) {
             sc.reset()
             reset {
               b()
-              if (!isFailed()) {
-                solFound()
-                objective.tighten()
-                sc.limitActivated = true
-              }
             }
             if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
         }
-        sc.limitActivated = true
         k1() // exit the exploration block       
       }
-    } 
-    
+    }
+    time = System.currentTimeMillis() - t1
+    if (!sc.isLimitReached) {
+       explorationCompleted = true
+    }
+    if (explorationCompleted) {
+        if (!silent) print("!")
+    } else {
+        if (!silent) print("R")
+    }
   }
 
   override def exploration(block: => Unit @suspendable): Unit = {
