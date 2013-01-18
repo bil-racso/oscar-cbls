@@ -118,7 +118,7 @@ object Zebra {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
     
        cp.add(allDifferent(Array(red, green, yellow, blue, ivory)), Strong)
        cp.add(allDifferent(Array(englishman, spaniard, japanese, ukrainian, norwegian)), Strong)
@@ -160,7 +160,7 @@ object Zebra {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

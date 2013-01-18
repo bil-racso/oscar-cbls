@@ -101,7 +101,7 @@ object Sudoku2 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       // fill with the hints
       for(i <- NRANGE;
           j <- NRANGE if problem(i)(j) > 0) {
@@ -134,7 +134,7 @@ object Sudoku2 {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

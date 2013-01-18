@@ -84,7 +84,7 @@ object OrganizeDay {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(t <- tasks) {
         cp.add(ends(t) == begins(t) + durations(t))
@@ -114,7 +114,7 @@ object OrganizeDay {
 
       numSols += 1
 
-   }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

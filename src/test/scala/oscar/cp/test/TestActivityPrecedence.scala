@@ -66,7 +66,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -88,7 +88,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -109,7 +109,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -130,7 +130,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -151,7 +151,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -172,7 +172,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}

@@ -43,11 +43,11 @@ class TestObjective extends FunSuite with ShouldMatchers  {
 	  var nbsol = 0
 	  
 	  val obj = new CPObjective(cp,obj1,obj2)
-	  cp.optimize(obj) exploration {
+	  cp.optimize(obj) subjectTo {} exploration {
 	    cp.binary(Array(x1,x2),cp.minVar,_.max)
 	    nbsol +=1
 	    
-	  }
+	  } run()
 	  nbsol should be(3) 
   }
   
@@ -64,12 +64,12 @@ class TestObjective extends FunSuite with ShouldMatchers  {
 	  var nbsol = 0
 	  
 	  val obj = new CPObjective(cp,obj1,obj2)
-	  cp.optimize(obj) exploration {
+	  cp.optimize(obj) subjectTo {} exploration {
 	    cp.binary(Array(x1,x2),cp.minVar,_.max)
 	    println(x1+" "+x2)
 	    nbsol +=1
 	    
-	  }
+	  } run()
 	  nbsol should be(4) 
   } 
   
@@ -86,13 +86,13 @@ class TestObjective extends FunSuite with ShouldMatchers  {
 	  var nbsol = 0
 	  
 	  val obj = new CPObjective(cp,obj1,obj2)
-	  cp.optimize(obj) exploration {
+	  cp.optimize(obj) subjectTo {} exploration {
 	    cp.binary(Array(x1,x2),cp.minVar,_.max)
 	    println(x1+" "+x2)
 	    nbsol +=1
 	    // solutions are (3,3) (2,3)
 	    Set((3,3),(2,3)).contains((x1.value,x2.value)) should be(true)
-	  }
+	  } run()
 	  nbsol should be(2) 
   }    
   
@@ -109,13 +109,13 @@ class TestObjective extends FunSuite with ShouldMatchers  {
 	  var nbsol = 0
 	  
 	  val obj = new CPObjective(cp,obj1,obj2)
-	  cp.optimize(obj) exploration {
+	  cp.optimize(obj) subjectTo {} exploration {
 	    cp.binary(Array(x1,x2),cp.minVar,_.max)
 	    println(x1+" "+x2)
 	    nbsol +=1
 	    // solutions are (3,3) (2,2)
 	    Set((3,3),(2,2)).contains((x1.value,x2.value)) should be(true)
-	  }
+	  } run()
 	  nbsol should be(2) 
   }  
     

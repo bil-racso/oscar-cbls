@@ -144,7 +144,7 @@ object Futoshiki {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // set initial values
       for(row <- RANGE; col <- RANGE if values(row)(col) > 0) {
@@ -180,7 +180,7 @@ object Futoshiki {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

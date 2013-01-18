@@ -152,7 +152,7 @@ object HidatoTable {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       
       // fill the given hints
       for(i <- 0 until n; 
@@ -193,7 +193,7 @@ object HidatoTable {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

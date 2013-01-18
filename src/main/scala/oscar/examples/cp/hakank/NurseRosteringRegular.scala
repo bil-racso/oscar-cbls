@@ -62,11 +62,7 @@ object NurseRosteringRegular {
     //
     // data
     // 
-    var num_to_show = 1 // 0: show all solutions
-     
-    if (args.length > 0) {
-      num_to_show = args(0).toInt
-    }
+    var numToShow = if (args.length > 0) args(0).toInt else Int.MaxValue
 
     // Note: If you change num_nurses or num_days,
     //       please also change the constraints
@@ -136,7 +132,7 @@ object NurseRosteringRegular {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(n <- nurses) {
         cp.add(regular((for{d <- days} yield x(n)(d)), automaton))
@@ -208,11 +204,8 @@ object NurseRosteringRegular {
 
       numSols += 1
 
-      if (num_to_show > 0 && numSols >= num_to_show) {
-         cp.stop()
-      }
       
-     }
+     } run(numToShow)
 
      println("\nIt was " + numSols + " solutions.")
      cp.printStats()

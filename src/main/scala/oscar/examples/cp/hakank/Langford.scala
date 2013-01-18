@@ -72,7 +72,7 @@ object Langford {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       
       cp.add(allDifferent(position), Strong)
   
@@ -98,7 +98,7 @@ object Langford {
         cp.stop()
       }
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

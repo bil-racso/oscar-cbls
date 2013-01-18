@@ -109,7 +109,7 @@ object Tomography {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(i <- 0 until r) {
         cp.add(sum( x(i) ) == row_sums(i))
@@ -142,7 +142,7 @@ object Tomography {
 
        numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
      cp.printStats()

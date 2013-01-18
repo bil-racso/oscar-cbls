@@ -104,7 +104,7 @@ object NontransitiveDice {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // Number of occurrences for each number
       // cp.add(gcc(dice_flat, counts))
@@ -167,7 +167,7 @@ object NontransitiveDice {
         cp.stop()
       } 
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

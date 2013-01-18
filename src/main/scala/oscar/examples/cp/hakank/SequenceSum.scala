@@ -63,7 +63,7 @@ object SequenceSum {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       sequence_sum(cp, x, m, s)
       cp.add(m == 10)
@@ -81,7 +81,7 @@ object SequenceSum {
         
       numSols += 1
         
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
      cp.printStats()

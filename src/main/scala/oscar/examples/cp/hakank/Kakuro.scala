@@ -155,7 +155,7 @@ object Kakuro {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill the blanks with 0
       for(i <- 0 until num_blanks) {
@@ -195,7 +195,7 @@ object Kakuro {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

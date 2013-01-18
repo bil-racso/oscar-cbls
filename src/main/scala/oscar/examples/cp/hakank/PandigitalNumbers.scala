@@ -101,7 +101,7 @@ object PandigitalNumbers {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(x))
 
@@ -127,7 +127,7 @@ object PandigitalNumbers {
 
       numSols += 1
 
-    }
+    } run()
 
     // println("\nIt was " + numSols + " solutions.")
     // cp.printStats()

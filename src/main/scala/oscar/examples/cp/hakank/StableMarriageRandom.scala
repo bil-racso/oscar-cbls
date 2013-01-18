@@ -99,7 +99,7 @@ object StableMarriageRandom {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       val t1 = System.currentTimeMillis
 
@@ -139,7 +139,7 @@ object StableMarriageRandom {
         cp.stop()
       }
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.\n")
     cp.printStats()

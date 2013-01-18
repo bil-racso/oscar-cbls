@@ -97,7 +97,7 @@ object WordSquare {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(E),Weak)
 
@@ -121,7 +121,7 @@ object WordSquare {
         cp.stop();
       }
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

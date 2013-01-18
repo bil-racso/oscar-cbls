@@ -71,7 +71,7 @@ object EinsteinPuzzle {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
        cp.add(allDifferent(nationality), Strong)    
        cp.add(allDifferent(animal)     , Strong)
@@ -158,7 +158,7 @@ object EinsteinPuzzle {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

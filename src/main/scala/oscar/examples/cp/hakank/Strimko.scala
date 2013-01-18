@@ -95,7 +95,7 @@ object Strimko {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // all rows and columns must be unique, i.e. a Latin Square
       for(i <- 0 until n) {
@@ -131,7 +131,7 @@ object Strimko {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

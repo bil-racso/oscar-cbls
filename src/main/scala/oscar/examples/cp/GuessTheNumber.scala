@@ -42,12 +42,12 @@ object GuessTheNumber extends App {
     // with a one before 
     val nb2 =  digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4) + 100000
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(nb1 == (nb2*3))
     } exploration {
       cp.binary(digits)
       println("nb1:"+nb1.value+" nb2:"+nb2.value)
-    }
+    } run()
     cp.printStats()
     
     

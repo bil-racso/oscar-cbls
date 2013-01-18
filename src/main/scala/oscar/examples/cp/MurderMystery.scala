@@ -58,7 +58,7 @@ object MurderMystery extends App {
     val youngest = personWithAge(0)
     
     
-    cp.solveAll() subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(Array(murderer,witness,helper,victim)),Strong)
       cp.add(allDifferent(age),Strong)
@@ -88,7 +88,7 @@ object MurderMystery extends App {
     } exploration {
       cp.binaryFirstFail(Array(murderer,witness,helper,victim))
       println("murderer:"+name(murderer.value)+" witness:"+name(witness.value)+" helper:"+name(helper.value)+" victim:"+name(victim.value)+" youngest:"+name(youngest.value))
-    }
+    } run()
     
     cp.printStats()
 }

@@ -173,7 +173,7 @@ object KenKen2 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // rows and columns
       for(i <- RANGE) {
@@ -203,7 +203,7 @@ object KenKen2 {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

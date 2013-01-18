@@ -59,7 +59,7 @@ object SendMostMoney {
       val Money = M*10000 + O*1000 + N*100 + E*10 + Y
       var this_money = money
       if (money > 0) {
-        cp.solveAll() subjectTo {
+        cp.solve subjectTo {
 
           // constraints
           cp.add(       S*1000 + E*100 + N*10 + D +
@@ -77,7 +77,7 @@ object SendMostMoney {
            println(all.mkString(""))
            println("Money: " + Money)
 
-        }
+        } run()
 
 
       } else {

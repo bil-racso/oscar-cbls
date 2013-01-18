@@ -60,7 +60,7 @@ object SendMostMoney2 {
     
 
     // constraints
-    (if (money > 0) cp.solveAll() else cp.maximize(Money)) subjectTo {
+    (if (money > 0) cp.solve else cp.maximize(Money)) subjectTo {
       
       println("MONEY1: " + money)
       
@@ -85,7 +85,7 @@ object SendMostMoney2 {
       
       this_money = Money.value
       
-    }
+    } run()
     
     println()
     cp.printStats()

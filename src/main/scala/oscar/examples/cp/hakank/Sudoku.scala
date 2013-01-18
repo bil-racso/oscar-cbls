@@ -70,7 +70,7 @@ object Sudoku {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill with the hints
       NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0) cp.add(x(i)(j) == problem(i)(j))))
@@ -101,7 +101,7 @@ object Sudoku {
 
        numSols += 1
        
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()
