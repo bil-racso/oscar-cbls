@@ -43,8 +43,7 @@ object Cubes extends App {
     
     val placement = for(i <- 0 until numLetters) yield CPVarInt(cp, 0 until numCubes) // The cube (0 to 3) on which each letter is placed
     
-    cp.solveAll subjectTo
-    {
+    cp.solve subjectTo {
       cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
       for(word <- words)
         cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
@@ -60,7 +59,7 @@ object Cubes extends App {
             placement.zipWithIndex.map {
               case (v,i) => if (v.value == cube) letters(i) else "."}.mkString(" "))
       }
-    }
+    } run()
     
     cp.printStats()
 }

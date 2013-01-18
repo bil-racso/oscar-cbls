@@ -28,7 +28,7 @@ import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
 import oscar.visual.{VisualDrawing, VisualArrow}
 import oscar.cbls.constraints.core.ConstraintSystem
 import math._
-import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
+import oscar.cbls.constraints.lib.basic.{EQ, LE}
 import oscar.cbls.search.StopWatch
 import model._
 import test.data.{Point, InstanceVisualVRP}

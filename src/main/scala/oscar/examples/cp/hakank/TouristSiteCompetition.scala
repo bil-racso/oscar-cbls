@@ -92,7 +92,7 @@ object TouristSiteCompetition {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       //  Symmetry breaking
       for(s <- 0 until 3) {
@@ -135,7 +135,7 @@ object TouristSiteCompetition {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

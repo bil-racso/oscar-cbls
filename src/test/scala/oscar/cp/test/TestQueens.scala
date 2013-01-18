@@ -42,7 +42,7 @@ class TestQueens extends FunSuite with ShouldMatchers  {
            //variables
            val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
            var nbsol = 0
-           cp.solveAll subjectTo {
+           cp.solve subjectTo {
     	     cp.add(allDifferent(queens),cons)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),cons)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),cons)
@@ -51,7 +51,7 @@ class TestQueens extends FunSuite with ShouldMatchers  {
                cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
              }
              nbsol += 1
-           }
+           } run()
            nbsol
     }
     

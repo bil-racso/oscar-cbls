@@ -25,7 +25,7 @@
 package oscar.cbls.invariants.core.computation
 
 import collection.immutable.{SortedSet, SortedMap};
-import oscar.cbls.invariants.core.algo.dag._;
+
 import oscar.cbls.invariants.core.propagation._;
 
 /**This class contains the model, namely, the invariants and variables

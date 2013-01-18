@@ -64,24 +64,6 @@ object QuadraticAssignmentLNS {
     val rand = new scala.util.Random(0)
     val bestSol = Array.fill(n)(0)
     
-    
-    cp.lns(20,100) {
-      println("----------restart---------------")
-      println(cp.isLastLNSRestartCompleted)
-      
-      if (cp.isLastLNSRestartCompleted) {
-        println("set limit to "+(cp.failLimit/2))
-        cp.failLimit /= 2
-      } else {
-        println("set limit to "+(cp.failLimit*2))
-        cp.failLimit *= 2
-      }
-      // relax 50% of the variables
-      cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
-    }
-    
-    var nbSol = 0
-    
     cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
       cp.add(allDifferent(x), Strong)
     } exploration {
@@ -89,8 +71,17 @@ object QuadraticAssignmentLNS {
         println("solution"+x.mkString(","))
         // store the current best solution
         N.foreach(i => bestSol(i) = x(i).value)
-        nbSol += 1
-        if (nbSol == 100) cp.stop() // stop after the 100th solution
+    } run(1) // find first feasible solution
+
+    cp.failLimit = 100 // set the limit to 100 backtracks for LNS restarts
+    for (r <- 1 to 20) {
+      // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
+      val limit = if (cp.explorationCompleted) cp.failLimit/2 else cp.failLimit*2
+      println("set limit to "+limit)     
+      // relax randomly 50% of the variables
+      cp.runSubjectTo(Int.MaxValue,limit) {
+    	  cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
+      }
     }
 
     // Print some statistics

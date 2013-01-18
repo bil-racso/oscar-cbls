@@ -46,7 +46,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 	
 	var nbSol = 0
 	
-	cp.solveAll() subjectTo {
+	cp.solve subjectTo {
 	  cp.add(allDifferent(x.flatten),Weak)
 	  cp.add(sum(diag1) == s)
 	  cp.add(sum(diag2) == s)
@@ -57,7 +57,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 	} exploration {
 	  cp.binaryFirstFail(x.flatten)
 	  nbSol += 1
-	}
+	} run()
 	
 	nbSol should be(8)
 	

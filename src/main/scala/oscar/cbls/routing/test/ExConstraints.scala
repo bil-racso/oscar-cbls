@@ -25,8 +25,6 @@ package oscar.cbls.routing.test
 import data.{Point, BelgiumInstance}
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic._
-import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.invariants.lib.logic.Cluster

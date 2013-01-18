@@ -74,7 +74,7 @@ object Seseman {
 
      // constraints
      var numSols = 0
-     cp.solveAll subjectTo {
+     cp.solve subjectTo {
 
        // 0's in all the middle cells
        for(i <- 1 until n-1;
@@ -108,7 +108,7 @@ object Seseman {
 
        numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
      cp.printStats()

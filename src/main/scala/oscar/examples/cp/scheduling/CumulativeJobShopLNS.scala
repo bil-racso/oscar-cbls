@@ -19,7 +19,6 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -85,11 +84,8 @@ object CumulativeJobShopLNS extends App {
   val resources = Array.tabulate(nResources)(r => MaxResource(cp, 2))
 
   // Resource allocation
-  for (r <- Resources) {
-    val fActivities = Activities.filter(resource(_) == r)
-    val cumul = fActivities.map(i => CumulativeActivity(activities(i), r, 1)).toArray
-    cp.add(new NewMaxCumulative(cp, cumul, 2, r))
-  }
+  for (i <- Activities)
+    activities(i) needs 1 ofResource resources(resource(i))
 
   // The makespan to minimize
   val makespan = maximum(0 until nActivities)(i => activities(i).end)
@@ -113,34 +109,12 @@ object CumulativeJobShopLNS extends App {
   val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
   var precedences: Array[(Int, Int)] = null
 
-  cp.lns(2000, 2000) {
-
-    val temp = cp.failLimit
-
-    // Adaptative LNS
-    if (!cp.isLastLNSRestartCompleted) {
-      cp.failLimit = (cp.failLimit * 110) / 100
-    } else {
-      cp.failLimit = max(10, (cp.failLimit * 90) / 100)
-    }
-
-    val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
-
-    // Selected are relaxed (20%)
-    for (i <- 0 until bestSol.size)
-      if (nextFloat < 0.1)
-        selected(i) = true
-
-    val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
-    val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
-
-    cp.post(constraints.asInstanceOf[Array[Constraint]])
-  }
-
   cp.minimize(makespan) subjectTo {
 
     for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
       activities(i) endsBeforeStartOf activities(i + 1)
+
+    cp.add(makespan >= 666)
 
   } exploration {
 
@@ -160,6 +134,32 @@ object CumulativeJobShopLNS extends App {
 
     for (p <- profiles) p.update(1, 20)
     gantt.update(1, 20)
+  } run (1)
+
+  var limit = 2000
+
+  for (i <- 0 until 2000) {
+    val temp = limit
+
+    // Adaptative LNS
+    limit =
+      if (!cp.explorationCompleted) limit * 110 / 100
+      else max(10, (cp.failLimit * 90) / 100)
+
+    println("limit: " + limit)
+
+    val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
+
+    // Selected are relaxed (20%)
+    for (i <- 0 until bestSol.size)
+      if (nextFloat < 0.1)
+        selected(i) = true
+
+    cp.runSubjectTo(Int.MaxValue, limit) {
+      val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
+      val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
+      cp.post(constraints.asInstanceOf[Array[Constraint]])
+    }
   }
 
   cp.printStats()

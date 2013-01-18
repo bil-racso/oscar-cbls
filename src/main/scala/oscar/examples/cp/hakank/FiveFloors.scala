@@ -65,7 +65,7 @@ object FiveFloors {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
        cp.add(allDifferent(x), Strong)
 
@@ -97,7 +97,7 @@ object FiveFloors {
 
        numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.\n")
 

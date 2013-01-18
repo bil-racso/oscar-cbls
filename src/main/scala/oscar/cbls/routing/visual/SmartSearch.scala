@@ -26,7 +26,6 @@ import oscar.cbls.routing._
 import initialSolution.RandomNeighbor
 import model.{ClosestNeighborPoints, PositionInRouteAndRouteNr, HopDistanceAsObjective, VRP}
 import neighborhood._
-import javax.swing.{JFrame, JOptionPane}
 import oscar.cbls.search.StopWatch
 
 class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{

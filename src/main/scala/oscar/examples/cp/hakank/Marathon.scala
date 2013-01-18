@@ -102,9 +102,9 @@ object Marathon {
       val places = inverse2(cp, runners)
 
       var numSols = 0
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
-	cp.add(allDifferent(runners), Strong)
+    	cp.add(allDifferent(runners), Strong)
 
         // a: Olivier not last
         cp.add(olivier != n)
@@ -144,7 +144,7 @@ object Marathon {
         println()
 
         numSols += 1
-      }
+      } run()
 
       println("\nIt was " + numSols + " solutions.")	  
       cp.printStats()

@@ -42,7 +42,7 @@ class TestDudeney extends FunSuite with ShouldMatchers  {
     val nb = CPVarInt(cp, 1 to math.pow(10, n).toInt - 1)
     val s = CPVarInt(cp, 1 to 9 * n)
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(nb == (s mul s mul s))
       cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)
       cp.add(sum(x) == s)
@@ -50,7 +50,7 @@ class TestDudeney extends FunSuite with ShouldMatchers  {
       cp.binaryFirstFail(x)
       sol.contains(nb.value) should be(true)
       nbSol += 1
-    }
+    } run()
     nbSol should be (sol.size)
 
     

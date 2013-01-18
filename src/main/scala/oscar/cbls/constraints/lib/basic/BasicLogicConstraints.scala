@@ -24,12 +24,10 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.modeling.Algebra
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.Minus._
 import oscar.cbls.invariants.lib.numeric.{Abs, Minus}
 
 

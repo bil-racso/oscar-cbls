@@ -28,7 +28,6 @@ import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-import oscar.cbls.invariants.lib.set.Cardinality
 
 
 class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers{

@@ -23,8 +23,8 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+
+
 import oscar.cbls.invariants.core.computation._;
 
 import oscar.cbls.invariants.lib.logic._;

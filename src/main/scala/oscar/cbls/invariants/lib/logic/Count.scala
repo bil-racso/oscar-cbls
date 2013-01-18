@@ -25,7 +25,6 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
-import oscar.cbls.invariants.core.computation.Invariant._
 
 /**Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i] == j}
  * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''

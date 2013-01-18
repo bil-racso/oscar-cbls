@@ -80,7 +80,7 @@ object WhoKilledAgatha {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
 
       //  Agatha, the butler, and Charles live in Dreadsbury Mansion, and
@@ -131,7 +131,7 @@ object WhoKilledAgatha {
 
       numSols += 1
        
-   }
+   } run()
 
    println("\nIt was " + numSols + " solutions.\n")
    cp.printStats()

@@ -26,7 +26,6 @@ import oscar.cbls.search.SearchEngine
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
 import scala.util.Random
-import java.util
 
 
 /**
@@ -183,6 +182,6 @@ case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfte
   def startNodeForNextExploration: Int = reinsertedPoint
   def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)
 
-  override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
+  override def toString():String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 }
 

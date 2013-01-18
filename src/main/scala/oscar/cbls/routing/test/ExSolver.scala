@@ -24,22 +24,14 @@
 package oscar.cbls.routing.test
 
 import oscar.cbls.search.StopWatch
-import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.IntVar._
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
-import oscar.cbls.invariants.lib.logic.{Cluster, IntVar2IntVarFun, Routes}
-import oscar.cbls.invariants.lib.set.TakeAny._
-import oscar.cbls.invariants.lib.set.TakeAny
+import oscar.cbls.invariants.core.computation.Model
 import util.Random
 import scala.math._
-import oscar.cbls.modeling.Algebra._
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.{RandomNeighbor, NearestNeighbor}
+import oscar.cbls.routing.initialSolution.NearestNeighbor
 import oscar.cbls.routing.neighborhood._
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic.{GE, LE}
 
 /**supports only a single vehicle*/
 object ExSolver extends SearchEngine with StopWatch with App{
@@ -74,12 +66,14 @@ object ExSolver extends SearchEngine with StopWatch with App{
 
   val m: Model = new Model(false,false,false,false)
   val vrp = new VRP(N, 1, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
-  /*with SymmetricVRP*/  with Predecessors with Unrouted with OtherFunctionToObjective with WeakConstraints
-    with StrongConstraints
+  /*with SymmetricVRP*/ with Unrouted /*with Predecessors with OtherFunctionToObjective with WeakConstraints
+    with StrongConstraints*/
   vrp.installCostMatrix(DistanceMatrix)
   vrp.saveKNearestPoints(20)
 
+/*
   val strongConstraintSystem = new ConstraintSystem(m)
+
   val weakConstraintSystem = new ConstraintSystem(m)
   val maxNodes = 20
   val minNodes = 10
@@ -106,7 +100,7 @@ object ExSolver extends SearchEngine with StopWatch with App{
   weakConstraintSystem.close()
   //vrp.recordAddedFunctions(Array(strongConstraintSystem.violation,weakConstraintSystem.violation))
 
-
+*/
   m.close()
 
 
@@ -129,10 +123,10 @@ object ExSolver extends SearchEngine with StopWatch with App{
   var it = 0
   while(!saturated){
     val oldobj:Int = vrp.ObjectiveVar.value
-    //move = OnePointMove.getFirstImprovingMove(vrp,nsize,move)
-    move = ThreeOptA.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
-    //move = ThreeOptC.getFirstImprovingMove(vrp, nsize, move)
-    //move = ThreeOptB.getFirstImprovingMove(vrp, nsize, move)
+    move = OnePointMove.getFirstImprovingMove(vrp,vrp.getKNearest(nsize),move)
+    //move = ThreeOptA.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
+    //move = ThreeOptC.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
+    //move = ThreeOptB.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
       move.comit
@@ -143,12 +137,8 @@ object ExSolver extends SearchEngine with StopWatch with App{
     else{
         saturated = true
         println("done " + getWatchString)
-        if(realSum(vrp,DistanceMatrix).equals(vrp.ObjectiveVar.value)) println("Youpie!!") else println("Ohhh :'(")
     }
   }
-
-
-
 
   println(vrp.ObjectiveVar.value)
 }

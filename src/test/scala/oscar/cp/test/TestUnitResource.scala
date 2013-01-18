@@ -36,7 +36,7 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			act1 endsBeforeStartOf act2
 			act3 endsBeforeStartOf act4
@@ -47,7 +47,7 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(4)
 	}
@@ -75,7 +75,7 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			act1 precedes act2
 			act3 precedes act4
@@ -86,7 +86,7 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(3)
 		nSol should be(4)
@@ -139,14 +139,14 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 							  (2, 0, 3, 2))
 		
 		cp.addResourceConstraints()
-		cp.solveAll 
+		cp.solve 
 		cp.exploration {
 			cp.binary(acts.map(_.start))
 			
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(3)
 		nSol should be(24)

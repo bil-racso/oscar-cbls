@@ -111,7 +111,7 @@ object SurvoPuzzle {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill the things we know
       for (i <- 0 until r; 
@@ -144,7 +144,7 @@ object SurvoPuzzle {
 
        numSols += 1
        
-    }
+    } run()
     
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

@@ -198,7 +198,7 @@ case class ThreeOptB(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEd
   def getValuesToAssign = vrp.threeOptB(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,
     startOfSecondEdge,vrp.Next(startOfSecondEdge).value,startOfThirdEdge,vrp.Next(startOfThirdEdge).value)
 
-  override def toString():String = "(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
+  override def toString():String = "ThreeOptB(firstEdge = " + startOfFirstEdge + ", secondEdge = " + startOfSecondEdge + ", " +
     "thirdEdge = "+ startOfThirdEdge+" )"
 
 }

@@ -77,7 +77,7 @@ object AllIntervals {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(diffs), Strong)
       cp.add(allDifferent(x), Strong)
@@ -104,7 +104,7 @@ object AllIntervals {
         cp.stop()
       }
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

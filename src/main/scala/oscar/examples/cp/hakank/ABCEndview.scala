@@ -368,7 +368,7 @@ object ABCEndview {
       //
       var numSols = 0;
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         //
         // Latin square (except 0)
@@ -447,7 +447,7 @@ object ABCEndview {
           
         numSols +=1
 
-     }
+     } run()
  
      
      println("\nIt was " + numSols + " solution(s).")

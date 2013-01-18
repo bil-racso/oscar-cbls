@@ -127,7 +127,7 @@ object CalvinPuzzleTable {
       //
       var numSols = 0;
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // place all integers from 0..n*n-1
         cp.add(allDifferent(x_flat), Strong)
@@ -169,7 +169,7 @@ object CalvinPuzzleTable {
           cp.stop()
         }
 
-      }
+      } run()
  
       println("\nIt was " + numSols + " solution(s).")
       cp.printStats()

@@ -34,10 +34,11 @@ class TestSearch extends FunSuite with ShouldMatchers  {
     val x = Array(CPVarInt(cp, 0))
     var nbSol = 0
     cp.sc = new IDSSearchController(cp, 4)
-    cp.minimize(x(0)) exploration {
+    cp.minimize(x(0)) subjectTo() exploration {
       cp.binaryFirstFail(x)
+      println(x.mkString(","))
       nbSol += 1
-    }
+    } run()
     nbSol should be(1)
   }  
   

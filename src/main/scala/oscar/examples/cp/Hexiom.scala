@@ -30,8 +30,7 @@ import scala.io.Source
  * Hexiom Problem: http://www.kongregate.com/games/Moonkey/hexiom
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Hexiom  {
-	def main(args: Array[String]) {
+object Hexiom extends App {
 
 		/* Here is an Hexagon of dimension 3 (size of first row).
 		 * Each entry is numbered this way:
@@ -103,7 +102,7 @@ object Hexiom  {
 		// card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
 		val card =  Array.fill(k)(CPVarInt(cp,0 to 7))
 		var nbSol = 0
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 		  
 		  val tuples = (for (i <- 0 to 6) yield (i,0,7)) ++ (for (i <- 0 to 6) yield (i,1,i))
 		  println(tuples)
@@ -119,7 +118,7 @@ object Hexiom  {
 			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
 		  }
 		  nbSol += 1
-	    }
+	    } run()
 		println("nbsol"+nbSol)
 		/*
 		println("++++++++++++++++++ solution ++++++++++++++++++++\n")
@@ -134,7 +133,7 @@ object Hexiom  {
 		*/
 		cp.printStats()
 
-	}
+	
 	
 
 }

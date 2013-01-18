@@ -78,7 +78,7 @@ object AllDifferentExcept0 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       allDifferent_except_0(cp, x)
 
@@ -100,7 +100,7 @@ object AllDifferentExcept0 {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

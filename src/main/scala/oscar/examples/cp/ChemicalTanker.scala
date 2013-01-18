@@ -162,12 +162,7 @@ object ChemicalTanker extends App {
     // ask to have a 100 LNS restarts every 50 backtracks
     
 	
-	cp.lns(100,300) {
-        //fix randomly 90% of the slabs to the position of the current best solution
-    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 50; if (!cp.isFailed)) {
-    	   cp.post(cargo(i) == cargosol(i))
-    	}
-    }
+
     
     var nbSol = 0
     
@@ -209,6 +204,18 @@ object ChemicalTanker extends App {
       println("total slack:"+(-(volumeLeft.sum-volumeLeft(0)))+" tanks capas:"+tanks.map(_.capa).mkString(","))
       cargos.zipWithIndex.foreach{case (c,i) => barChart.setValue("Slack",i.toString,-volumeLeft(i))}
       plot.addPoint(nbSol,freeSpace.value)
+    } run(1)
+    
+    for (r <- 1 to 100) {
+      cp.runSubjectTo(Int.MaxValue,300) {
+        //fix randomly 90% of the slabs to the position of the current best solution
+    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 50; if (!cp.isFailed)) {
+    	   cp.post(cargo(i) == cargosol(i))
+    	}
+      }
     }
+    
+    
+    
   
 }

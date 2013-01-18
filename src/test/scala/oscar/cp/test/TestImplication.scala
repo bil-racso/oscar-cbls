@@ -51,7 +51,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   
@@ -67,7 +67,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   } 
   
@@ -83,7 +83,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   } 
     
@@ -99,7 +99,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   

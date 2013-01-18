@@ -28,7 +28,7 @@ package oscar.cbls.invariants.lib.minmax
 import oscar.cbls.invariants.core.computation._;
 import oscar.cbls.invariants.core.algo.heap._;
 import collection.immutable.SortedSet;
-import oscar.cbls.invariants.core.propagation._;
+
 import oscar.cbls.invariants.lib.logic._;
 
 abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {

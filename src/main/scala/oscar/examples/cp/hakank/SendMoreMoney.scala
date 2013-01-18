@@ -47,7 +47,7 @@ object SendMoreMoney {
 
       val all = Array(S,E,N,D,M,O,R,Y)
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // constraints
         cp.add(       S*1000 + E*100 + N*10 + D +
@@ -63,7 +63,7 @@ object SendMoreMoney {
 
          println(all.mkString(""))
 
-      }
+      } run()
       
       println()
       cp.printStats()

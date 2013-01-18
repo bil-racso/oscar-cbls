@@ -70,7 +70,7 @@ class TestDomino extends FunSuite with ShouldMatchers  {
 		// for each domino side (i,j) what is the id of it's domino in the solution
 		val id = Array.tabulate(nLines,nCols)((i,j) => CPVarInt(cp,neighborValues(i,j).map(dominoId(_,values(i)(j)))))
 		var nbSol = 0
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 		  for (i <- Lines; j <- Cols) {  
 		    val validTuples = for((k,l) <- neighbors(i,j)) yield (toIndex(k,l), dominoId(values(i)(j),values(k)(l)))
 		    // makes the link between the matchedNeighbor and the id of the domino
@@ -85,7 +85,7 @@ class TestDomino extends FunSuite with ShouldMatchers  {
 		} exploration {
 		  cp.binaryFirstFail(id.flatten)
 		  nbSol += 1
-		}
+		} run()
 		
 		nbSol should be(1)
 

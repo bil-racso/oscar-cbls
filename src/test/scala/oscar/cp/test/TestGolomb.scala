@@ -61,7 +61,7 @@ class TestGolomb extends FunSuite with ShouldMatchers  {
       } exploration {
         cp.binaryFirstFail(marks)
         best = obj.value
-      }
+      } run()
       best
     }
     

@@ -78,12 +78,12 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     
     var nbSol = 0
     	
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new TableSTR2(x,tuples))
     } exploration {
       cp.binary(x)
       nbSol += 1
-    }
+    } run()
     nbSol should be(4)
 
   }

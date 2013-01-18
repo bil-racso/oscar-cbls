@@ -24,7 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.{SortedMap, SortedSet}
+import collection.immutable.SortedSet
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}

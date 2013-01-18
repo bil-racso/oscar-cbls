@@ -68,7 +68,7 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
          cp.binaryFirstFail(path)
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
          best = obj.value
-       }
+       } run()
        best should be(33)
   }  
   
@@ -97,7 +97,7 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
          cp.binaryFirstFail(path)
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
          best = obj.value
-       }
+       } run()
        best should be(33)
 
   } 
