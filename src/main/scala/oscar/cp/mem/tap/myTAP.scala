@@ -84,44 +84,17 @@ object MyTAP extends App {
 
   val rnd = new scala.util.Random(0)
 
-  // LNS
-  // ------------------------------------------
-
-  case class Sol(cargo: Array[Int], freeSpace: Int, nbFreeTanks: Int)
-  var currentSol: Sol = null
-  val p = 30
-
-  cp.lns(1000, 500) { relaxVariables(randomRelax(p)) }
-
-  def randomRelax(p: Int): Array[Boolean] = {
-    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
-  }
-
-  def relaxVariables(selected: Array[Boolean]) {
-    val constraints: Queue[Constraint] = Queue()
-    for (i <- 0 until cargos.size; if selected(i)) {
-      cp.post(cargo(i) == currentSol.cargo(i))
-    }
-    cp.post(constraints.toArray)
-  }
-
-  def solFound() {
-    currentSol = Sol(cargo.map(_.value), freeSpace.value, nbFreeTanks.value)
-  }
-
   
   // Search + Constraints
   // ------------------------------------------
-  
-  var nbSol = 0
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
   cp.minimize(if (true) -freeSpace else -nbFreeTanks) 
   
   cp.subjectTo {
     // make the link between cargo and load vars with binpacking constraint
-    cp.add(binpacking(cargo, tanks.map(_.capa), load), Strong)
-    cp.add(binpackingCardinality(cargo, tanks.map(_.capa), load, card))
+    cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
+    cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
     // dominance rules
     for (i <- 1 until cargos.size)
@@ -132,6 +105,7 @@ object MyTAP extends App {
       cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
   } 
   
+  var nbSol = 0
   cp.exploration {
     
     while (!allBounds(cargo)) {     
@@ -158,6 +132,35 @@ object MyTAP extends App {
     val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
     cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Slack", i.toString, -volumeLeft(i)) }
     plot.addPoint(nbSol, freeSpace.value)
+  }
+  
+  // LNS
+  // ------------------------------------------
+
+  case class Sol(cargo: Array[Int], freeSpace: Int, nbFreeTanks: Int)
+  var currentSol: Sol = null
+  val p = 30
+  
+  for (iter <- 1 to 1000) {
+    cp.runSubjectTo(Int.MaxValue, 500) {
+      relaxVariables(randomRelax(p))
+    }
+  }
+
+  def randomRelax(p: Int): Array[Boolean] = {
+    Array.tabulate(cargos.size)(i => rnd.nextInt(100) > p && !cp.isFailed())
+  }
+
+  def relaxVariables(selected: Array[Boolean]) {
+    val constraints: Queue[Constraint] = Queue()
+    for (i <- 0 until cargos.size; if selected(i)) {
+      cp.post(cargo(i) == currentSol.cargo(i))
+    }
+    cp.post(constraints.toArray)
+  }
+
+  def solFound() {
+    currentSol = Sol(cargo.map(_.value), freeSpace.value, nbFreeTanks.value)
   }
 
 }

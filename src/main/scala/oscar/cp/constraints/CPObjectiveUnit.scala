@@ -43,7 +43,7 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
   
   def tightenMode = tightenType
   
-  override def tighten() = {
+override def tighten() = {
     if (!objVar.isBound) {
       throw new RuntimeException(name+" not bound:" + objVar)
     }

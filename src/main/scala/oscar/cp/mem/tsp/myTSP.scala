@@ -49,7 +49,6 @@ object myTSP extends App {
   // Model
   // -----
   val cp = new CPSolver()
-  cp.startByLNS = false
 
   // Successors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
@@ -62,78 +61,6 @@ object myTSP extends App {
   // -------------
   val visu = new VisualRelax(coord, realMatrix)
 
-  // LNS
-  // ---
-  case class Sol(pred: Array[Int], succ: Array[Int])
-
-  var currentSol: Sol = null
-  var nStarts = 1
-  val p = 10   
-  
-  cp.lns(10000, 500) {
-    nStarts += 1
-    relaxVariables(clusterRelax(p))
-  }
-
-  def clusterRelax(p: Int): Array[Boolean] = {
-
-    val c = nextInt(nCities)
-    val sortedByDist = Cities.sortBy(i => distMatrix(c)(i))
-    val dist = distMatrix(c)(sortedByDist(p))
-
-    Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
-  }
-  
-  def dualPathRelax(p: Int): Array[Boolean] = {
-       
-    val selected = Array.fill(nCities)(false)   
-    var c = nextInt(nCities)       
-    for(i <- 0 until p/2) {
-      selected(c) = true
-      c = currentSol.succ(c)
-    }
-    
-    val filtered = Cities.filter(i => !(selected(i) && selected(currentSol.pred(i))))    
-    c = nextInt(filtered.size)      
-    for(i <- 0 until p/2) {
-      selected(c) = true
-      c = currentSol.succ(c)
-    }
-    
-    selected
-  }
-
-  def solFound() = {
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value))
-    visu.updateRoute(currentSol.pred)
-    visu.updateDist()
-  }
-
-  def relaxVariables(selected: Array[Boolean]) {
-
-    visu.updateSelected(selected)
-    visu.updateRestart(nStarts)
-
-    val constraints: Queue[Constraint] = Queue()
-
-    for (c <- Cities; if !selected(c)) {
-
-      val p = currentSol.pred(c)
-      val s = currentSol.succ(c)
-
-      if (!selected(p) && !selected(s)) {
-        constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
-        constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
-      }
-    }
-    
-    val notSelected = Cities.filter(selected(_))
-    val rand = cp.random.nextInt(notSelected.size)
-    val s = notSelected(rand)
-    constraints.enqueue(pred(s) == (if (cp.random.nextBoolean()) currentSol.pred(s) else currentSol.succ(s)))
-  
-    cp.post(constraints.toArray)
-  }
 
   // Constraints
   // -----------
@@ -162,5 +89,60 @@ object myTSP extends App {
     solFound()
   }
 
-  cp.printStats()
+  // LNS
+  // ---
+  case class Sol(pred: Array[Int], succ: Array[Int])
+
+  var currentSol: Sol = null
+  val p = 10   
+  
+  // Get initial solution
+  cp.run(1)
+  
+  for (iter <- 1 to 10000) {
+    visu.updateRestart(iter)    
+    cp.runSubjectTo(Int.MaxValue, 500) {
+      relaxVariables(clusterRelax(p))
+    }
+  }
+
+  def clusterRelax(p: Int): Array[Boolean] = {
+
+    val c = nextInt(nCities)
+    val sortedByDist = Cities.sortBy(i => distMatrix(c)(i))
+    val dist = distMatrix(c)(sortedByDist(p))
+
+    Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
+  }
+
+  def solFound() = {
+    currentSol = new Sol(pred.map(_.value), succ.map(_.value))
+    visu.updateRoute(currentSol.pred)
+    visu.updateDist()
+  }
+
+  def relaxVariables(selected: Array[Boolean]) {
+
+    visu.updateSelected(selected)
+
+    val constraints: Queue[Constraint] = Queue()
+
+    for (c <- Cities; if !selected(c)) {
+
+      val p = currentSol.pred(c)
+      val s = currentSol.succ(c)
+
+      if (!selected(p) && !selected(s)) {
+        constraints.enqueue(new InSet(cp, pred(c), Set(p, s)))
+        constraints.enqueue(new InSet(cp, succ(c), Set(p, s)))
+      }
+    }
+    
+    val notSelected = Cities.filter(selected(_))
+    val rand = cp.random.nextInt(notSelected.size)
+    val s = notSelected(rand)
+    constraints.enqueue(pred(s) == (if (cp.random.nextBoolean()) currentSol.pred(s) else currentSol.succ(s)))
+  
+    cp.post(constraints.toArray)
+  }
 }

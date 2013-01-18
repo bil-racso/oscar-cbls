@@ -1,5 +1,5 @@
 package oscar.cp.mem.tap
-
+/*
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
@@ -206,4 +206,4 @@ object MolnsTAP extends App {
 
   println("PARETO : ")
   pareto.sortBy(_.objs(0)).foreach(x => println(x.objs.mkString(" ")))
-}
+}*/

@@ -20,7 +20,6 @@ package oscar.examples.des
 
 
 import oscar.des.engine._
-import oscar.stochastic._
 import scala.util.continuations._
 
 
@@ -28,21 +27,21 @@ import scala.util.continuations._
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
+class Machine1(m : Model, name: String) extends Process(m,name) {
 	
-	val liveDur = UniformDiscrete(1, 9)
-	val breakDur = UniformDiscrete(3, 4)
+	val liveDur = new scala.util.Random(0)
+	val breakDur = new scala.util.Random(0)
 	
-	def beAlive(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
+	def beAlive(): Unit @ suspendable = {
 		println(name+" is alive");
-		waitDuring(liveDur(m))
+		m.wait (liveDur.nextInt(10).max(0).toDouble)
 		beBroken()
 		
 	}
 	
-	def beBroken(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
+	def beBroken(): Unit @ suspendable =  {
 		println(name+" is broken");
-		waitDuring(breakDur(m))
+		m.wait(breakDur.nextInt(2).max(0).toDouble)
 		beAlive()
 	}
 	
@@ -53,10 +52,9 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new StochasticModel()
-  		mod.setTime("5/1/2012 5:00pm")
+  		val mod = new Model()
 		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
-		mod.simulate(mod.clock().plusDays(100),true);
+		mod.simulate(100,true);
 	}
 }

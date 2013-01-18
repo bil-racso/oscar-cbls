@@ -87,7 +87,7 @@ object CumulativeJobShop extends App {
 	val frame  = new VisualFrame("Cumulative JobShop Problem", nResources+1, 1)
 	val colors = VisualUtil.getRandomColorArray(nResources)
 	
-	val gantt  = new VisualGanttChart(activities, i => jobs(i), i => colors(machines(i)))
+	val gantt  = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
 	val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
 	
 	frame.createFrame("Gantt chart").add(gantt)

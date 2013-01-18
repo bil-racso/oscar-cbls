@@ -54,11 +54,9 @@ class CPSolver() extends Store() {
     this
   }
 
-  //(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
-  
   def minimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
-      
+
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
       post(objective)
     }
@@ -84,8 +82,6 @@ class CPSolver() extends Store() {
   def solve(): CPSolver = {
     this
   }
-
-
 
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
@@ -172,7 +168,7 @@ class CPSolver() extends Store() {
       branch(post(x <= median))(post(x > median))
     }
   }
-  
+
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
@@ -186,9 +182,6 @@ class CPSolver() extends Store() {
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())
   }
-  
-
-
 }
 
 object CPSolver {

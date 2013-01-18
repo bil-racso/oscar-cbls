@@ -72,14 +72,47 @@ object FirstPhaseTSP {
     // Total distance
     val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
 
+    // Constraints
+    // -----------
+    cp.minimize(totDist) subjectTo {
+
+      // Channeling between predecessors and successors
+      cp.add(new ChannelingPredSucc(cp, pred, succ))
+
+      // Consistency of the circuit with Strong filtering
+      cp.add(circuit(succ), Strong)
+      cp.add(circuit(pred), Strong)
+
+      // Total distance
+      cp.add(sum(Cities)(i => dist(i)(succ(i))) == totDist)
+      cp.add(sum(Cities)(i => dist(i)(pred(i))) == totDist)
+
+      cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
+      cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+    }
+    
+    var currentSol: Sol = null
+        
+    def solFound() = {
+      currentSol = new Sol(pred.map(_.value), succ.map(_.value))
+    }
+
+    // Search
+    // ------
+    cp.exploration {
+      regretHeuristic(cp, pred, dist)
+      solFound()
+    }
+    
     // LNS
     // --------------------
-    var currentSol: Sol = null
     val cycleBreaker = true
     val p = 10
-
-    cp.lns(50, 3000) {
-      relaxVariables(clusterRelax(p))
+    
+    for (iter <- 1 to 50) {
+      cp.runSubjectTo(Int.MaxValue, 3000) {
+        relaxVariables(clusterRelax(p))  
+      }
     }
 
     def clusterRelax(p: Int): Array[Boolean] = {
@@ -89,10 +122,6 @@ object FirstPhaseTSP {
       val threshold = dist(c)(sortedByDist(p))
 
       Array.tabulate(nCities)(i => dist(c)(i) <= threshold)
-    }
-
-    def solFound() = {
-      currentSol = new Sol(pred.map(_.value), succ.map(_.value))
     }
 
     def relaxVariables(selected: Array[Boolean]) {
@@ -116,32 +145,6 @@ object FirstPhaseTSP {
 
         cp.post(constraints.toArray)
       }
-    }
-
-    // Constraints
-    // -----------
-    cp.minimize(totDist) subjectTo {
-
-      // Channeling between predecessors and successors
-      cp.add(new ChannelingPredSucc(cp, pred, succ))
-
-      // Consistency of the circuit with Strong filtering
-      cp.add(circuit(succ), Strong)
-      cp.add(circuit(pred), Strong)
-
-      // Total distance
-      cp.add(sum(Cities)(i => dist(i)(succ(i))) == totDist)
-      cp.add(sum(Cities)(i => dist(i)(pred(i))) == totDist)
-
-      cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-      cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
-    }
-
-    // Search
-    // ------
-    cp.exploration {
-      regretHeuristic(cp, pred, dist)
-      solFound()
     }
 
     val dist1 = TSPUtils.computeDist(currentSol.pred, distMatrix1)

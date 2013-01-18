@@ -104,7 +104,6 @@ object MolnsTSP {
     // -----
     val cp = new CPSolver()
     cp.silent = true
-    cp.startByLNS = true
 
     // Successors & Predecessors
     val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
@@ -114,61 +113,96 @@ object MolnsTSP {
     val totDist1 = CPVarInt(cp, 0 to distMatrix1.flatten.sum)
     val totDist2 = CPVarInt(cp, 0 to distMatrix2.flatten.sum)
 
-    // MOLNS
+    // Constraints
+    // -----------
+    cp.minimize(totDist1, totDist2) subjectTo {
+
+      // Channeling between predecessors and successors
+      cp.add(new ChannelingPredSucc(cp, pred, succ))
+
+      // Consistency of the circuit with Strong filtering
+      cp.add(circuit(succ))//, Strong)
+      cp.add(circuit(pred))//, Strong)
+
+      // Total distance 1
+      cp.add(sum(Cities)(i => distMatrix1(i)(succ(i))) == totDist1)
+      cp.add(sum(Cities)(i => distMatrix1(i)(pred(i))) == totDist1)
+
+      cp.add(new TONOTCOMMIT(cp, pred, distMatrix1, totDist1))
+      cp.add(new TONOTCOMMIT(cp, succ, distMatrix1, totDist1))
+
+      // Total distance 2
+      cp.add(sum(Cities)(i => distMatrix2(i)(succ(i))) == totDist2)
+      cp.add(sum(Cities)(i => distMatrix2(i)(pred(i))) == totDist2)
+
+      cp.add(new TONOTCOMMIT(cp, pred, distMatrix2, totDist2))
+      cp.add(new TONOTCOMMIT(cp, succ, distMatrix2, totDist2))
+    }
+    
     // -----
     var newSols = NewPareto[Sol](2)
     var currentSol: MOSol[Sol] = null
-    var currentObjective = 0
-    var iteration = 0
-    var firstLns = true
+    
+        
+    def solFound() {
+      newSols.insert(MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDist1.value, totDist2.value))
+    }
+    var currentObj = 0
 
-    var p = 10
-    val tabuLength = 20
+    // Search
+    // ------
+    println("Searching...")
+    cp.exploration {
+      val dist = if (currentObj == 0) distMatrix1 else distMatrix2
+
+      visu.line(totDist1.min, 0)
+      visu.line(totDist2.min, 1)
+      visu.line(totDist1.max, 2)
+      visu.line(totDist2.max, 3)
+
+      regretHeuristic(cp, succ, dist)
+      solFound()
+    }
+    
+    // MOLNS
+    var newPoint = false
+
+    val p = 10
+    val tabuLength = 150
     var cycleBreaker = false
     val maxIter = 100000
-
-    var intens = false
-    var intensFreq = 0.2
+    val intensFreq = 0.3
 
     val t0 = System.currentTimeMillis()
-    cp.lns(500) {
-
-      if (iteration % 100 == 0) {
-        println("Iteration: " + iteration + " #Set: " + pareto.size)
-        println("H: " + hypervolume(pareto))
+    
+    for (iter <- 1 to maxIter) {
+            
+      if (iter % 100 == 0) printStats(iter)
+      if (verbous) println("Iteration: " + iter + " #Set: " + pareto.size)
+           
+      val intens = cp.random.nextFloat() < intensFreq
+      selectSolution(iter, intens)
+      
+      newPoint = false
+      for (obj <- pareto.Objs if !newPoint) {
+        
+        currentObj = obj
+        newSols.clear
+        
+        cp.runSubjectTo(Int.MaxValue, 500) {
+          
+          visu.selected((currentSol.objs(0), currentSol.objs(1)))
+          relaxObjectives(currentObj, intens)
+          relaxVariables(clusterRelax(p, currentObj))
+        }
+        
+        newPoint = insertNewSolutions()       
       }
-
-      if (iteration == maxIter) {
-        cp.stop
-        val t = System.currentTimeMillis() - t0
-        println(t + " ms")
-        println(t / 1000 + " s")
-        println(t / 60000 + " min")
-      }
-
-      intens = cp.random.nextFloat() < intensFreq
-
-      // If first LNS, select a first solution
-      if (firstLns) {
-        currentObjective = 0
-        selectSolution()
-        firstLns = false
-      } // If the current solution is removed
-      else if (insertNewSolutions()) {
-        currentObjective = 0
-        selectSolution()
-      } // If all objectives have been considered
-      else if (currentObjective == pareto.Objs.max) {
-        currentObjective = 0
-        currentSol.tabu = iteration + tabuLength
-        selectSolution()
-      } // Else, try next objective
-      else {
-        currentObjective += 1
-      }
-      visu.selected((currentSol.objs(0), currentSol.objs(1)))
-      relaxObjectives(currentObjective, intens)
-      relaxVariables(clusterRelax(p))
+    }
+    
+    def printStats(iter: Int) {
+      println("Iteration: " + iter + " #Set: " + pareto.size)
+      println("H: " + hypervolume(pareto))
     }
 
     def insertNewSolutions(): Boolean = {
@@ -185,22 +219,17 @@ object MolnsTSP {
         })
         newSols.clear()
 
-        //Plot 
-        plot = (iteration, pareto.size) :: plot
-
         removed
       }
     }
 
-    def selectSolution() {
-
-      if (verbous) println("Iteration: " + iteration + " #Set: " + pareto.size)
-
+    def selectSolution(iter: Int, intens: Boolean) {
+      
       // Filter Tabu 
-      var filteredSol = pareto.filter(_.tabu <= iteration)
+      var filteredSol = pareto.filter(_.tabu <= iter)
       if (filteredSol.isEmpty) {
         val min = pareto.min(_.tabu)
-        pareto.foreach(_.tabu -= (min.tabu - iteration))
+        pareto.foreach(_.tabu -= (min.tabu - iter))
         filteredSol = List(min)
       }
 
@@ -208,11 +237,6 @@ object MolnsTSP {
       val sorted = filteredSol.sortBy(s => if (intens) -computeIntenSurf(s) else -computeDiffSurf(s))
       val rand = math.floor(math.pow(cp.random.nextFloat(), 10) * sorted.size).toInt
       currentSol = sorted(rand)
-
-      // Random Search
-      //currentSol = filteredSol(cp.random.nextInt(filteredSol.size))
-
-      iteration += 1
     }
 
     def computeIntenSurf(sol: MOSol[Sol]): Int = {
@@ -261,9 +285,9 @@ object MolnsTSP {
       }
     }
 
-    def clusterRelax(p: Int): Array[Boolean] = {
+    def clusterRelax(p: Int, obj: Int): Array[Boolean] = {
 
-      val distMatrix = if (currentObjective == 0) distMatrix1 else distMatrix2
+      val distMatrix = if (obj == 0) distMatrix1 else distMatrix2
 
       val c = nextInt(nCities)
       val sortedByDist = Cities.sortBy(i => distMatrix(c)(i))
@@ -272,13 +296,7 @@ object MolnsTSP {
       Array.tabulate(nCities)(i => distMatrix(c)(i) <= dist)
     }
 
-    def solFound() {
-      newSols.insert(MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDist1.value, totDist2.value))
-    }
-
     def relaxVariables(selected: Array[Boolean]) {
-      
-      cycleBreaker = intens
 
       val constraints: Queue[Constraint] = Queue()
 
@@ -304,47 +322,6 @@ object MolnsTSP {
       }
 
       cp.post(constraints.toArray)
-    }
-
-    // Constraints
-    // -----------
-    cp.minimize(totDist1, totDist2) subjectTo {
-
-      // Channeling between predecessors and successors
-      cp.add(new ChannelingPredSucc(cp, pred, succ))
-
-      // Consistency of the circuit with Strong filtering
-      cp.add(circuit(succ))//, Strong)
-      cp.add(circuit(pred))//, Strong)
-
-      // Total distance 1
-      cp.add(sum(Cities)(i => distMatrix1(i)(succ(i))) == totDist1)
-      cp.add(sum(Cities)(i => distMatrix1(i)(pred(i))) == totDist1)
-
-      cp.add(new TONOTCOMMIT(cp, pred, distMatrix1, totDist1))
-      cp.add(new TONOTCOMMIT(cp, succ, distMatrix1, totDist1))
-
-      // Total distance 2
-      cp.add(sum(Cities)(i => distMatrix2(i)(succ(i))) == totDist2)
-      cp.add(sum(Cities)(i => distMatrix2(i)(pred(i))) == totDist2)
-
-      cp.add(new TONOTCOMMIT(cp, pred, distMatrix2, totDist2))
-      cp.add(new TONOTCOMMIT(cp, succ, distMatrix2, totDist2))
-    }
-
-    // Search
-    // ------
-    println("Searching...")
-    cp.exploration {
-      val dist = if (currentObjective == 0) distMatrix1 else distMatrix2
-
-      visu.line(totDist1.min, 0)
-      visu.line(totDist2.min, 1)
-      visu.line(totDist1.max, 2)
-      visu.line(totDist2.max, 3)
-
-      regretHeuristic(cp, succ, dist)
-      solFound()
     }
   }
 }

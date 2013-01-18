@@ -15,7 +15,7 @@ import oscar.cp.mem.TimeWindowSucc
  *
  * @author Renaud Hartert - ren.hartert@gmail.com
  */
-
+/*
 object VRPTW extends App {
   
   // ------------------------------------------------------------------------
@@ -372,4 +372,4 @@ object VRPTW extends App {
   
   println("\nFinished !")
   cp.printStats
-}
+}*/

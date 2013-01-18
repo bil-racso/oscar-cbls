@@ -103,21 +103,22 @@ object TSPVisu extends App {
   cp.minimize(totDist) subjectTo {
 
     // Channeling between predecessors and successors
+    /*
     for (i <- Cities) {
       cp.add(pred(succ(i)) == i)
       cp.add(succ(pred(i)) == i)
-    }
+    }*/
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
+    //cp.add(circuit(pred), Strong)
 
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
-    cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
+    //cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
   } exploration {
-
+	cp.binaryFirstFail(succ, _.randomValue)
     // Greedy heuristic
     while (!allBounds(succ)) {
 
