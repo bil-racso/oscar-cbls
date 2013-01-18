@@ -211,13 +211,16 @@ class CPSolver() extends Store() {
   case class Exploration(val exploration: () => Unit @suspendable)
   private var exploBlock: Option[Exploration] = None
 
-  def explo(block: => Unit @suspendable): Unit = {
+  def explo(block: => Unit @suspendable): CPSolver = {
     exploBlock = Option(Exploration(() => block))
+    this
   }
   
   var explorationCompleted = false
   
-  def run(nbSolMax:Int = Int.MaxValue,failureLimit:Int = Int.MaxValue)(reversibleBlock: => Unit): Unit = {
+  def run (nbSolMax:Int = Int.MaxValue,failureLimit:Int = Int.MaxValue) = runSubjectTo(nbSolMax,failureLimit)()
+  
+  def runSubjectTo(nbSolMax:Int = Int.MaxValue,failureLimit:Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
     val t1 = System.currentTimeMillis()
     explorationCompleted = false
     failLimit = failureLimit

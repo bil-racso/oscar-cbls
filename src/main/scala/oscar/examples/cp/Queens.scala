@@ -39,16 +39,16 @@ object Queens extends App {
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
-      cp.solveAll subjectTo {
+      cp.solve subjectTo {
     	  cp.add(allDifferent(queens),Strong)
     	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } exploration {        
+      } explo {        
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }
         nbsol += 1
-      }
+      } run()
   
       //print some statistics
       println("#sol",nbsol)

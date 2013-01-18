@@ -71,15 +71,15 @@ object QuadraticAssignmentLNS {
         println("solution"+x.mkString(","))
         // store the current best solution
         N.foreach(i => bestSol(i) = x(i).value)
-    }
-    
-    cp.run(1,100)() // find first feasible solution
+    } run(1) // find first feasible solution
+
+    cp.failLimit = 100 // set the limit to 100 backtracks for LNS restarts
     for (r <- 1 to 20) {
-      cp.isLastLNSRestartCompleted
+      // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
       val limit = if (cp.explorationCompleted) cp.failLimit/2 else cp.failLimit*2
       println("set limit to "+limit)     
-      // relax 50% of the variables
-      cp.run(Int.MaxValue,limit) {
+      // relax randomly 50% of the variables
+      cp.runSubjectTo(Int.MaxValue,limit) {
     	  cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
       }
     }
