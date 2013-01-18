@@ -26,9 +26,9 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
-import oscar.cbls.scheduling.{IFlatIRelax, Task, CumulativeResource, Planning}
-
-//TODO: get MT10 and solve it.
+import oscar.visual.{VisualProfile, VisualGanttChart, VisualUtil, VisualFrame}
+import oscar.visual.VisualProfile._
+import oscar.cbls.scheduling._
 
 /**this class loads JobShop problems as defined in
  * http://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/jobshop1.txt
@@ -45,6 +45,7 @@ object GenericJobShopTest extends StopWatch with App {
 
   val MaxIt = args(1).toInt
   val Stable = args(2).toInt
+  val maxDuration = args(3).toInt
 
   val src: Array[String] = file.mkString.split("\\s+")
   file.close()
@@ -62,7 +63,7 @@ object GenericJobShopTest extends StopWatch with App {
   println("Tasks: " + JobCount * MachineCount + "\n")
 
   val model = new Model(false, false, false)
-  val planning = new Planning(model, 6500)
+  val planning = new Planning(model, maxDuration)
 
   val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
     => CumulativeResource(planning, 1, "Machine" + MachineID))
@@ -88,10 +89,11 @@ object GenericJobShopTest extends StopWatch with App {
   val solver = new IFlatIRelax(planning, false)
 
   model.close()
+  planning.getVisual
 
   println("start search")
   //println(model.dumpToDot(true,true))
-  solver.Solve(MaxIt, Stable, solver.WorseFirst(), 8, 50)
+  solver.Solve(MaxIt, Stable, solver.WorseFirst(), 3, 20)
 
   println("run time: " + getWatch)
   println(planning.toAsciiArt)

@@ -33,8 +33,7 @@ import oscar.cp.core._
  *                             to geographical situation (described in a matrix).
  * @author Pierre Schaus pschaus@gmail.com
  */
-object FreqAssignment {
-	def main(args: Array[String]) {
+object FreqAssignment extends App {
 		
 	   val nbCells = 25
 	   val nbFreq = 256
@@ -86,10 +85,9 @@ object FreqAssignment {
 	       c.foreach(print(_))
 	       println()
 	     }
-	   }    
+	   } run(1)  
  
 	   cp.printStats()
-    }
 	
 	
 }

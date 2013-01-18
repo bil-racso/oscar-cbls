@@ -9,7 +9,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.reversible._
-import org.scalacheck._
+
 
 import oscar.visual._
 
@@ -36,7 +36,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 0, 3), (1, 0, 3), (0, 2, 0), (1, 2, 0))
 		
 		cp.addResourceConstraints()
-		cp.solveAll 
+		cp.solve 
 		cp.exploration {
 			cp.binary(acts.map(_.start))
 			
@@ -44,6 +44,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
 		}
+		cp.run()
 		
 		nSol should be(4)
 	}
@@ -69,14 +70,14 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 3, 4), (0, 4, 3), (1, 0, 4), (1, 4, 0), (2, 0, 1), (2, 1, 0))
 		
 		cp.addResourceConstraints()			               
-		cp.solveAll 
+		cp.solve() 
 		cp.exploration {
 			cp.binary(acts.map(_.start))
 			
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act2.dur.value should be(1)
 		act3.dur.value should be(1)
@@ -104,14 +105,14 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 0, 3), (1, 0, 3), (0, 2, 0), (1, 2, 0))
 		
 		cp.addResourceConstraints()
-		cp.solveAll 
+		cp.solve() 
 		cp.exploration {
 			cp.binary(acts.map(_.start))
 			
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		resource.heightOf(act1).value should be(1)
 		
@@ -142,14 +143,14 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 							  (2, 1, 0, 1))
 		
 		cp.addResourceConstraints()			               
-		cp.solveAll 
+		cp.solve() 
 		cp.exploration {
 			cp.binary(acts.map(_.start))
 			
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(2)
 		act4.dur.value should be(3)
@@ -179,14 +180,14 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 							  (2, 1, 0, 1))
 		
 		cp.addResourceConstraints()			               
-		cp.solveAll 
+		cp.solve 
 		cp.exploration {
 			cp.binary(cp.activities)
 			
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(2)
 		act4.dur.value should be(3)
@@ -214,7 +215,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 0, 2), 
 							  (0, 4, 0))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 		} exploration {
 			
@@ -223,7 +224,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(2)
 	}

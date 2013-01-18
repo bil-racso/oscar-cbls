@@ -1,6 +1,6 @@
 /**
  * *****************************************************************************
- * c * This file is part of OscaR (Scala in OR).
+ * This file is part of OscaR (Scala in OR).
  *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,14 +34,27 @@ trait Constraints {
 	 * @param x with x(i) is the bin where the item i is placed
 	 * @param w with w(i) is the size of item i
 	 * @param l with l(j) is the load of bin j
-	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*x[i] for all bins i
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
 	 */
-	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
+	def binPacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) : Constraint = {
 		return new BinPacking(x.toArray, w.toArray, l.toArray)
 	}
-
-	def binpackingflow(x : Array[CPVarInt], w : Array[Int], l : Array[CPVarInt]) : Constraint = {
-		return new BinPackingFlow(x, w, l)
+	/**
+	 * @deprecated(use binPacking instead)
+	 */
+	def binpacking(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt]) = binPacking(x,w,l)
+	
+	/**
+	 * Bin-Packing Constraint linking the placement variables of sized items into bins with
+	 * the total size of the bins
+	 * @param x with x(i) is the bin where the item i is placed
+	 * @param w with w(i) is the size of item i
+	 * @param l with l(j) is the load of bin j
+	 * @param c with c(j) is the cardinality of bin j (number of items)
+	 * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i and 
+	 */	
+	def binPackingCardinality(x : IndexedSeq[CPVarInt], w : IndexedSeq[Int], l : IndexedSeq[CPVarInt], c: IndexedSeq[CPVarInt]) : Constraint = {
+		return new BinPackingFlow(x.toArray, w.toArray, l.toArray, c.toArray)
 	}
 
 	/**
@@ -51,7 +64,7 @@ trait Constraints {
 	 * @param l the load of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : CPVarInt) : Constraint = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : CPVarInt) : Constraint = {
 		return new BinaryKnapsack(x.toArray, w.toArray, l)
 	}
 	
@@ -62,7 +75,7 @@ trait Constraints {
 	 * @param l the load of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : Int) : Constraint = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], w : IndexedSeq[Int], l : Int) : Constraint = {
 		return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store,l))
 	}	
 
@@ -75,7 +88,7 @@ trait Constraints {
 	 * @param W the total weight of the knapsack
 	 * @return a binary-knapsack constraint linking the variables in argument such that P == sum,,j,, p[j]*x[i] and W == sum,,j,, w[j]*x[i]
 	 */
-	def binaryknapsack(x : IndexedSeq[CPVarBool], p : IndexedSeq[Int], w : IndexedSeq[Int], P : CPVarInt, W : CPVarInt) : Knapsack = {
+	def binaryKnapsack(x : IndexedSeq[CPVarBool], p : IndexedSeq[Int], w : IndexedSeq[Int], P : CPVarInt, W : CPVarInt) : Knapsack = {
 		return new Knapsack(x.toArray, p.toArray, w.toArray, P, W)
 	}
 
@@ -84,12 +97,12 @@ trait Constraints {
 	 * @param vars an non empty array of variables
 	 * @return a constraint ensure that no value occurs more than once in vars
 	 */
-	def alldifferent(vars : CPVarInt*) : Constraint = {
+	def allDifferent(vars : CPVarInt*) : Constraint = {
 		return new AllDifferent(vars : _*)
 	}
 
-	def alldifferent(vars : Iterable[CPVarInt]) : Constraint = {
-		return alldifferent(vars.toArray : _*)
+	def allDifferent(vars : Iterable[CPVarInt]) : Constraint = {
+		return allDifferent(vars.toArray : _*)
 	}
 
 	/**
@@ -127,7 +140,7 @@ trait Constraints {
 	 * @return a constraint enforcing x LexLeq y i.e. :
 	 * 		 x1 < y1 or (x2,x3,...,xn) LexLeq (y2,y3,...,yn)
 	 */
-	def lexleq(x : Array[CPVarInt], y : Array[CPVarInt]) : Constraint = {
+	def lexLeq(x : Array[CPVarInt], y : Array[CPVarInt]) : Constraint = {
 		new LexLeq(x, y)
 	}
 
@@ -166,6 +179,20 @@ trait Constraints {
 	def element(tab : IndexedSeq[Int], x : CPVarInt, z : Int) : Constraint = {
 		new ElementCst(tab.toArray, x, CPVarInt(x.store, z, z))
 	}
+	
+	/**
+	 * Element 2D Constraint, indexing an integer matrix by two index variables
+	 * @param matrix rectangle matrix of sizes n x m
+	 * @param i the first index variable (line index) with domain defined on (0..n-1)
+	 * @param j the second index variable (column index) with domain defined on (0..m-1)
+	 * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
+	 */
+	def element(matrix : Array[Array[Int]], i : CPVarInt, j : CPVarInt) : CPVarInt = {
+		val z = CPVarInt(i.store, matrix.flatten.min to matrix.flatten.max)
+		val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
+		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
+		return z
+	}	
 
 	/**
 	 * Element Constraint, indexing an array of variables by a variable
@@ -173,11 +200,11 @@ trait Constraints {
 	 * @param x an index variable with domain defined on (0..n-1)
 	 * @return an integer variable z such that tab, x and z are linked by the relation tab(x) == z
 	 */
-	def element(tab : IndexedSeq[CPVarInt], x : CPVarInt) : CPVarInt = {
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt,l: CPPropagStrength = Weak) : CPVarInt = {
 		val minval = (for (x <- tab) yield x.getMin) min
 		val maxval = (for (x <- tab) yield x.getMax) max
 		val z = CPVarInt(x.store, minval, maxval)
-		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z))
+		x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z),l)
 		z
 	}
 
@@ -188,7 +215,7 @@ trait Constraints {
 	 * @param z an integer variable
 	 * @return a constraints such that tab , x and z are linked by the relation tab(x) == z
 	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : CPVarInt) : Constraint = {
 		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z)
 	}
 
@@ -199,8 +226,8 @@ trait Constraints {
 	 * @param z an integer
 	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
 	 */
-	def element(tab : Array[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
-		new ElementVar(tab.toArray, x, z)
+	def elementVar(tab : IndexedSeq[CPVarInt], x : CPVarInt, z : Int) : Constraint = {
+		new ElementVar(tab.toArray, x, CPVarInt(x.s,z))
 	}
 
 	/**
@@ -210,24 +237,12 @@ trait Constraints {
 	 * @param z an integer
 	 * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
 	 */
-	def element(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
+	def elementVar(tab : IndexedSeq[CPVarBool], x : CPVarInt, z : Boolean) : Constraint = {
 		val z_ = new CPVarBool(x.store, z)
 		new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z_)
 	}
 
-	/**
-	 * Element 2D Constraint, indexing an integer matrix by two index variables
-	 * @param matrix rectangle matrix of sizes n x m
-	 * @param i the first index variable (line index) with domain defined on (0..n-1)
-	 * @param j the second index variable (column index) with domain defined on (0..m-1)
-	 * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
-	 */
-	def element(matrix : Array[Array[Int]], i : CPVarInt, j : CPVarInt) : CPVarInt = {
-		val z = CPVarInt(i.store, matrix.flatten.min to matrix.flatten.max)
-		val ok = i.store.post(ElementCst2D(matrix, i, j, z))
-		assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
-		return z
-	}
+
 
 	/**
 	 * Sum Constraint
@@ -396,6 +411,22 @@ trait Constraints {
 		//import oscar.cp.constraints.TableAC5TCRecomp
 		//new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
 	}
+	
+	/**
+	 * Table Constraints for quadruples
+	 * @param x1 first variable
+	 * @param x2 second variable
+	 * @param x3 third variable
+	 * @param x4 fourth variable
+	 * @param x5 fifth variable
+	 * @param tuples a collection of five-tuples
+	 * @return a constraint enforcing that (x1,x2,x3,x4,x5) is one of the five-tuples given in tuples
+	 */
+	def table(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, x5: CPVarInt, tuples: Iterable[(Int, Int, Int, Int, Int)]) : Constraint = {
+		table(Array(x1, x2, x3, x4, x5), tuples.map(t => Array(t._1, t._2, t._3, t._4, t._5)).toArray)
+		//import oscar.cp.constraints.TableAC5TCRecomp
+		//new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
+	}	
 
 	def modulo(x : CPVarInt, v : Int, y : CPVarInt) : Constraint = {
 		return new Modulo(x, v, y)
@@ -417,11 +448,23 @@ trait Constraints {
 		return new GCC(x, values.min, Array.fill(values.size)(min), Array.fill(values.size)(max))
 	}
 
+	/**
+	 * Global Cardinality Constraint: every value v occurs at least min(v) and at most max(v)
+	 * @param x an non empty array of variables
+	 * @param values is the range of constrained values
+	 * @param min is the minimum number of occurrences for each value in the range values
+	 * @param max is the maximum number of occurrences for each value in the range values
+	 * @return a constraint such that each value in the range values occurs at least min and at most max times.
+	 */
 	def gcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int]) : Constraint = {
 		return new GCC(x, values.min, min, max)
 	}
 
-	def softgcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int], totviol : CPVarInt) : Constraint = {
+	/**
+	 * Soft Global Cardinality Constraint = gcc with a violation variable
+	 * @see Revisiting the Soft Global Cardinality Constraint, Pierre Schaus, Pascal Van Hentenryck, Alessandro Zanarini: CPAIOR 2010
+	 */
+	def softGcc(x : Array[CPVarInt], values : Range, min : Array[Int], max : Array[Int], totviol : CPVarInt) : Constraint = {
 		return new SoftGCC(x, values.min, min, max, totviol)
 	}
 
@@ -538,7 +581,7 @@ trait Constraints {
 	def maximum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).max, vars.map(_.max).max)
 		cp.add(maximum(x, m))
 		m
 	}
@@ -569,21 +612,56 @@ trait Constraints {
 	def minimum(vars : Iterable[CPVarInt]) : CPVarInt = {
 		val x = vars.toArray
 		val cp = x(0).store
-		val m = CPVarInt(cp, vars.map(_.getMin).max, vars.map(_.getMax).max)
+		val m = CPVarInt(cp, vars.map(_.min).min, vars.map(_.max).min)
 		cp.add(minimum(x, m))
 		m
 	}
+	
+    /**
+     * Constraint enforcing n * sum,,i,, |x[i]-s/n| <= nd and sum,,i,, x[i] = s <br> 
+     * Note that this constraint is very similar spread.
+     * @param x
+     * @param s
+     * @param nd
+     */
+    def deviation(x : Iterable[CPVarInt], s: Int, nd: CPVarInt): Constraint = {
+      new Deviation(x.toArray,s,nd)
+    }
+    
+    /**
+     * Constraint enforcing sum,,i,, x[i]^2^ <= s2 and sum,,i,, x[i] = s <br> 
+     * Note that this constraint is very similar deviation.
+     * @param x
+     * @param s
+     * @param s2
+     */
+    def spread(x : Iterable[CPVarInt], s: Int, s2 : CPVarInt): Constraint = {
+      new Spread(x.toArray,s,s2,true)
+    }
+    
+    /**
+     * Let n = x.size-1 = y.size-1
+     * This constraint enforces that x and y are permutations over {0, ... , n}
+     * with y(i) giving the position of number i in x. It means that x(y(i)) = i
+     * Note that this constraint could be enforced with element constraints but it is less efficient
+     * Weak and Strong consistency can be used acting on the filtering of alldifferent constraints
+     * @param x
+     * @param y of same size as x 
+     */
+    def permutation(x : IndexedSeq[CPVarInt], y : IndexedSeq[CPVarInt]): Constraint = {
+      new Permutation(x,y)
+    }    
 
 	def sortedness(x : IndexedSeq[CPVarInt], s : IndexedSeq[CPVarInt], p : IndexedSeq[CPVarInt]) : LinkedList[Constraint] = {
 		val cp = x(0).store
 		val n = x.size
 		val cons = new LinkedList[Constraint]
 		for (i <- 0 until n - 1) {
-			cons.add(element(x, p(i)) <= element(x, p(i + 1)))
+			cons.add(elementVar(x, p(i)) <= elementVar(x, p(i + 1)))
 			cons.add(s(i) <= s(i + 1))
 		}
 		for (i <- 0 until n) {
-			cons.add(element(x.toArray, p(i), s(i)))
+			cons.add(elementVar(x, p(i), s(i)))
 		}
 
 		val minVal : Int = x.map(_.min).min
@@ -601,7 +679,7 @@ trait Constraints {
 
 		for (i <- 1 until n) {
 			// there are less than i values smaller than s(i) 
-			cons.add(element(nbBefore, s(i) - minVal) <= i)
+			cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
 		}
 		cons
 	}

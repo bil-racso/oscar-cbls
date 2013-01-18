@@ -27,7 +27,6 @@ import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
 
 
-import org.scalacheck._
 
 class TestRCPSP extends FunSuite with ShouldMatchers  {
 

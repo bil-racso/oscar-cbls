@@ -144,7 +144,7 @@ object Futoshiki {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // set initial values
       for(row <- RANGE; col <- RANGE if values(row)(col) > 0) {
@@ -153,12 +153,12 @@ object Futoshiki {
 
       // all rows have to be different
       for(row <- RANGE) {
-        cp.add(alldifferent(for(col <- RANGE) yield field(row)(col)))
+        cp.add(allDifferent(for(col <- RANGE) yield field(row)(col)))
       }
       
       // all columns have to be different
       for(col <- RANGE) {
-        cp.add(alldifferent(for(row <- RANGE) yield field(row)(col)))
+        cp.add(allDifferent(for(row <- RANGE) yield field(row)(col)))
       }
 
       // all < constraints are satisfied
@@ -180,7 +180,7 @@ object Futoshiki {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

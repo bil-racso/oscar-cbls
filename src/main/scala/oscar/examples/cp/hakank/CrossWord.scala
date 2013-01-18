@@ -131,9 +131,9 @@ object CrossWord {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(E), Strong)
+      cp.add(allDifferent(E), Strong)
 
       for(I <- 0 until num_words;
           J <- 0 until word_len) {
@@ -176,7 +176,7 @@ object CrossWord {
 
         numSols += 1
 
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
 

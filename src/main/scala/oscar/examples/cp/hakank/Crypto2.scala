@@ -68,9 +68,9 @@ object Crypto2 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(all), Strong)
+      cp.add(allDifferent(all), Strong)
 
       cp.add(sums(all, "ballet",     45, ht))
       cp.add(sums(all, "cello",      43, ht))
@@ -102,7 +102,7 @@ object Crypto2 {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

@@ -70,20 +70,20 @@ object Sudoku {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill with the hints
       NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0) cp.add(x(i)(j) == problem(i)(j))))
 
       // rows and columns
-      NRANGE.foreach(i=>cp.add(alldifferent(x(i)), Strong))
-      NRANGE.foreach(j=>cp.add(alldifferent(x_t(j)), Strong))
+      NRANGE.foreach(i=>cp.add(allDifferent(x(i)), Strong))
+      NRANGE.foreach(j=>cp.add(allDifferent(x_t(j)), Strong))
       
 
       // blocks
       for(i <- RRANGE; 
           j <- RRANGE) {
-        cp.add(alldifferent((for{ r <- i*reg until i*reg+reg;
+        cp.add(allDifferent((for{ r <- i*reg until i*reg+reg;
                                   c <- j*reg until j*reg+reg
               } yield x(r)(c))), Strong)
       }
@@ -101,7 +101,7 @@ object Sudoku {
 
        numSols += 1
        
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

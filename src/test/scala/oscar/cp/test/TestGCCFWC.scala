@@ -25,10 +25,9 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
 
 class TestGCCFWC extends FunSuite with ShouldMatchers {
-  import TestGCCFWC._
+//  import TestGCCFWC._
 
 //  test("Test 1: too few variables to satisfy the lower bounds of CC") {
 //    val cp = new CPSolver()
@@ -86,12 +85,12 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(2, 0, 0)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       nbSol += 1
-    }
+    } run()
 
     nbSol should be > 0
   }
@@ -128,13 +127,13 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(0, 2, 3, 2)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       println((x map (_.value)).mkString(";"))
       nbSol += 1
-    }
+    } run()
 
     nbSol should be(2)
   }
@@ -151,13 +150,13 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(1, 1, 1, 1)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       println((x map (_.value)).mkString(";"))
       nbSol += 1
-    }
+    } run()
 
     nbSol should be(14)
 
@@ -205,7 +204,7 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 //  }
 
 }
-
+/*
 object TestGCCFWC {
   def domainGen(yMax: Int) = for {
     lb <- Gen.choose(0, yMax)
@@ -237,4 +236,4 @@ object TestGCCFWC {
 
     new GCCFWC(X, minVal, Low, Up)
   }
-}
+}*/

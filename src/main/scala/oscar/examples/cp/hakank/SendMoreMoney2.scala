@@ -40,7 +40,7 @@ object SendMoreMoney2 {
       val all = Array.fill(8)(CPVarInt(cp, 0 to 9))
       val Array(s,e,n,d,m,o,r,y) = all
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // constraints
         cp.add(       s*1000 + e*100 + n*10 + d +
@@ -48,7 +48,7 @@ object SendMoreMoney2 {
             m*10000 + o*1000 + n*100 + e*10 + y)
         cp.add(s > 0)
         cp.add(m > 0)
-	cp.add(alldifferent(all), Strong)
+        cp.add(allDifferent(all), Strong)
 
       } exploration {
 
@@ -56,7 +56,7 @@ object SendMoreMoney2 {
 
          println(all.mkString(""))
 
-      }
+      } run()
       
       println()
       cp.printStats()

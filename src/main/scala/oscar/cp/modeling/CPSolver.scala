@@ -28,255 +28,175 @@ import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 
-class NoSol(msg : String) extends Exception(msg)
+class NoSol(msg: String) extends Exception(msg)
 
 class CPSolver() extends Store() {
-    
-    case class LNS(val nbRestarts: Int, val nbFailures: Int, val restart: () => Unit ) 
-    var lns: Option[LNS] = None
-    
-    private var lastLNSRestartCompleted = false
+
+  def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
+    this.add(cons, propagStrength)
+  }
+
+  var stateObjective: Unit => Unit = Unit => Unit
+
+  def optimize(obj: CPObjective): CPSolver = {
+    stateObjective = Unit => {
+      objective = obj
+      post(obj)
+    }
+    this
+  }
+
+  def minimize(obj: CPVarInt): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
+      post(objective)
+    }
+    this
+  }
+
+  //(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
   
-    /**
-     * @return true if the last lns restart was caused because of completed exploration of search tree, 
-     * false otherwise (i.e. limit on the number failure reached)
-     */
-    def isLastLNSRestartCompleted = lastLNSRestartCompleted
-    
-    def lns(nbRestarts: Int, nbFailures: Int)(restart: => Unit) {
-	  lns = Option(new LNS(nbRestarts,nbFailures,() => restart))
-	}
+  def minimize(objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      post(objective)
+    }
+    this
+  }
 
-	/**
-	 * @param block a code block
-	 * @return the time (ms) to execute the block
-	 */
-	def getTime(block : => Unit) : Long = {
-		val t0 = System.currentTimeMillis()
-		block
-		System.currentTimeMillis - t0
-	}
+  def maximize(obj: CPVarInt): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPObjective(this, new CPObjectiveUnitMaximize(obj)) // must be maximize
+      post(objective)
+    }
+    this
+  }
 
-	def +=(cons : Constraint, propagStrength : CPPropagStrength = CPPropagStrength.Weak) : Unit = {
-		this.add(cons, propagStrength)
-	}
-	
-	var stateObjective: Unit => Unit = Unit => Unit
+  def maximize(objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
+      post(objective)
+    }
+    this
+  }
 
-	def minimize(obj : CPVarInt) : CPSolver = {
-		stateObjective = Unit => {
-		  val o = new CPObjectiveMinimize(obj)
-		  objective = o
-		  post(o)
-		}
-		solveAll()
-		this
-	}
-	
-	
-	//(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
-	
-	def minimize(objectives: CPVarInt*): CPSolver = {
-	  stateObjective = Unit => {
-		  val o = new CPObjectiveMinimize(objectives:_*)
-		  objective = o
-		  post(o)
-	  }
-	  solveAll()
-	  this
-	}
-	
-	
-
-	def maximize(obj : CPVarInt) : CPSolver = {
-		stateObjective = Unit => {
-		  val o = new CPObjectiveMaximize(obj)
-		  objective = o
-		  post(o)
-
-		}
-		solveAll()
-		this
-	}
-
-	def solve() : CPSolver = {
-		solveOne = true
-		this
-	}
-
-	def solveAll() : CPSolver = {
-		solveOne = false
-		this
-	}
-
-	def subjectTo(constraintsBlock : => Unit) : CPSolver = {
-		try {
-			constraintsBlock
-		} catch {
-			case ex : NoSol => println("No Solution, inconsistent model")
-		}
-		this
-	}
-
-	/**
-	 * return true if every variable is bound
-	 */
-	def allBounds(vars : IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
+  def solve(): CPSolver = {
+    this
+  }
 
 
 
-	def minDom(x : CPVarInt) : Int = x.size
-	def minRegre(x : CPVarInt) : Int = x.max - x.min
-	def minDomMaxDegree(x : CPVarInt) : (Int, Int) = (x.size, -x.constraintDegree)
-	def minVar(x : CPVarInt) : Int = 1
-	def maxDegree(x : CPVarInt) : Int = -x.constraintDegree
+  def subjectTo(constraintsBlock: => Unit): CPSolver = {
+    try {
+      constraintsBlock
+      stateObjective()
+      pushState()
+    } catch {
+      case ex: NoSol => println("No Solution, inconsistent model")
+    }
+    this
+  }
 
-	def minVal(x : CPVarInt) : Int = x.min
-	def maxVal(x : CPVarInt) : Int = x.max
-	def minValminVal(x : CPVarInt) : (Int, Int) = (x.min, x.min)
+  /**
+   * return true if every variable is bound
+   */
+  def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 
-	/**
-	 * Binary First Fail on the decision variables vars
-	 */
-	def binaryFirstFail(vars : Array[CPVarInt], valHeuris : (CPVarInt => Int) = minVal) : Unit @suspendable = {
-	    while (!allBounds(vars)) {
-			val unbound = vars.filter(!_.isBound)
-			val minDomSize = unbound.map(_.size).min
-			val x = unbound.filter(_.getSize == minDomSize).first
-			val v = valHeuris(x)
-			branch(post(x == v))(post(x != v)) // right alternative			
-	    }
-	}
+  def minDom(x: CPVarInt): Int = x.size
+  def minRegre(x: CPVarInt): Int = x.max - x.min
+  def minDomMaxDegree(x: CPVarInt): (Int, Int) = (x.size, -x.constraintDegree)
+  def minVar(x: CPVarInt): Int = 1
+  def maxDegree(x: CPVarInt): Int = -x.constraintDegree
 
-	/**
-	 * Binary search on the decision variables vars with custom variable/value heuristic
-	 */
-	def binary(vars : Array[CPVarInt], varHeuris : (CPVarInt => Int) = minVar, valHeuris : (CPVarInt => Int) = minVal) : Unit @suspendable = {
-		while (!allBounds(vars)) {
-			val unbound = vars.filter(!_.isBound)
-			val heuris = unbound.map(varHeuris(_)).min
-			val x = unbound.filter(varHeuris(_) == heuris).first
-			val v = valHeuris(x)
-			branch(post(x == v))(post(x != v)) // right alternative
-		}
-	}
+  def minVal(x: CPVarInt): Int = x.min
+  def maxVal(x: CPVarInt): Int = x.max
+  def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
-	/**
-	 *
-	 */
-	def binaryFirstFail(vars : CPVarInt*) : Unit @suspendable = {
-		binary(vars.toArray, valHeuris = minVal)
-	}
+  /**
+   * Binary First Fail on the decision variables vars
+   */
+  def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    while (!allBounds(vars)) {
+      val unbound = vars.filter(!_.isBound)
+      val minDomSize = unbound.map(_.size).min
+      val x = unbound.filter(_.getSize == minDomSize).head
+      val v = valHeuris(x)
+      branch(post(x == v))(post(x != v)) // right alternative			
+    }
+  }
 
-	/**
-	 * Binary search on the decision variables vars, selecting first the variables having the max number
-	 * of propagation methods attached to it.
-	 */
-	def binaryMaxDegree(vars : Array[CPVarInt]) : Unit @suspendable = {
-		binary(vars, varHeuris = maxDegree, valHeuris = minVal)
-	}
-	
-	/**
-	 * Binary search on the decision variables vars, splitting the domain of the selected variable on the 
-	 * median of the values (left : <= median, right : > median)
-	 */
-	def binaryDomainSplit(vars : Array[CPVarInt], varHeuris : (CPVarInt => Int) = minVar, valHeuris : (Int => Int) = i => i) : Unit @suspendable = {
-		
-		while (!allBounds(vars)) {
-			
-			val unbound = vars.filter(!_.isBound)
-			val heuris  = unbound.map(varHeuris(_)).min
-			val x       = unbound.filter(varHeuris(_) == heuris).first	
-			
-			val vals     = x.toArray.sortBy(valHeuris)
-			val median   = vals(vals.size/2)
-			
-			branch(post(x <= median))(post(x > median)) 
-		}
-	}
+  /**
+   * Binary search on the decision variables vars with custom variable/value heuristic
+   */
+  def binary(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    while (!allBounds(vars)) {
+      val unbound = vars.filter(!_.isBound)
+      val heuris = unbound.map(varHeuris(_)).min
+      val x = unbound.filter(varHeuris(_) == heuris).head
+      val v = valHeuris(x)
+      branch(post(x == v))(post(x != v)) // right alternative
+    }
+  }
 
-	def printStats() {
-		println("time(ms)", time)
-		println("#bkts", sc.nFail)
-		println("time in fix point(ms)", getTimeInFixPoint())
-		println("time in trail restore(ms)", getTrail().getTimeInRestore())
-		println("max trail size", getTrail().getMaxSize())
-	}
-	
-	
-	override def exploration(block: => Unit @suspendable ): Unit  =  {
-	  val t1 = System.currentTimeMillis()
-	  stateObjective()
-	  var nbRestart = 0
-	  var maxRestart = 1
-	  
-	  val relax = lns match {
-		   case None => () => Unit
-		   case Some(LNS(nbRestart,nbFailures,restar)) => {
-		     maxRestart = nbRestart
-		     failLimit = nbFailures
-		     restar
-		   }
-	  }  
+  /**
+   *
+   */
+  def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
+    binary(vars.toArray, valHeuris = minVal)
+  }
 
-	  reset {
-        shift { k1: (Unit => Unit ) =>
-          val b = () => {
-        	  	sc.start()
-                block
-                if (!isFailed()) {
-                	if (solveOne) {
-                	  sc.reset()
-                	  k1() // exit the exploration block
-                	}
-                }
-          }
+  /**
+   * Binary search on the decision variables vars, selecting first the variables having the max number
+   * of propagation methods attached to it.
+   */
+  def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
+    binary(vars, varHeuris = maxDegree, valHeuris = minVal)
+  }
 
-          def restart(relaxation: Boolean = false) {
-             popAll()
-             pushState()
-             if (relaxation) {
-               sc.reset()
-               relax()
-               
-             }
-             if (!isFailed()) {
-                 sc.reset()
-                 nbRestart += 1 
-                 reset {
-                   b()  	  
-                   if (!isFailed()) objective.tighten()
-      	         }
-                 if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-             }
-          }
-          restart(false) // first restart, find a feasible solution so no limit
-          for (r <- 2 to maxRestart; if (!objective.isOptimum() && !sc.exit)) {
-             restart(true)
-             if (sc.isLimitReached) {
-               lastLNSRestartCompleted = false
-               if (!silent) print("!") 
-             }
-             else {
-               lastLNSRestartCompleted = true
-               if (!silent) print("R") 
-             }
-          }
-          k1() // exit the exploration block       
-        } 
-      }
-	  time = System.currentTimeMillis() - t1
-    }	
-	
+  /**
+   * Binary search on the decision variables vars, splitting the domain of the selected variable on the
+   * median of the values (left : <= median, right : > median)
+   */
+  def binaryDomainSplit(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (Int => Int) = i => i): Unit @suspendable = {
+
+    while (!allBounds(vars)) {
+
+      val unbound = vars.filter(!_.isBound)
+      val heuris = unbound.map(varHeuris(_)).min
+      val x = unbound.filter(varHeuris(_) == heuris).head
+
+      val vals = x.toArray.sortBy(valHeuris)
+      val median = vals(vals.size / 2)
+
+      branch(post(x <= median))(post(x > median))
+    }
+  }
+  
+  override def update() = propagate()
+  override def solFound() = {
+    super.solFound()
+    objective.tighten()
+  }
+
+  def printStats() {
+    println("time(ms)", time)
+    println("#bkts", sc.nFail)
+    println("time in fix point(ms)", getTimeInFixPoint())
+    println("time in trail restore(ms)", getTrail().getTimeInRestore())
+    println("max trail size", getTrail().getMaxSize())
+  }
+  
+
+
 }
 
 object CPSolver {
 
-	/**
-	 * Creates a new CP Solver
-	 */
-	def apply() : CPSolver = {
-		new CPSolver()
-	}
+  /**
+   * Creates a new CP Solver
+   */
+  def apply(): CPSolver = {
+    new CPSolver()
+  }
 }
-

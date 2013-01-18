@@ -26,8 +26,6 @@ package oscar.cbls.constraints.tests
 
 import scala.swing.SimpleSwingApplication
 import scala.swing.MainFrame
-import scala.swing.Button
-import java.awt.GridLayout
 import scala.swing.GridPanel
 import scala.swing.Label
 import javax.swing.border.LineBorder
@@ -35,16 +33,7 @@ import java.awt.Color
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.basic._
-import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import scala.collection.mutable.HashSet
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.invariants.lib.set.MakeSet
-import collection.immutable.SortedSet
-import oscar.cbls.objective.Objective
 
 /**
  * Sudoku generator on NxN grids where N is a Square
@@ -147,7 +136,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     // note: Square constraints will be enforced (initially true and maintained by swap strategy)
     
     // register for violation
-    for (i <- LinearIndexes) { c.registerForViolation(grid(i)) }
+    for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // closing constraints
     c.close
@@ -162,7 +151,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     var it:Int=1
     while((c.Violation.value > 0) && (it < MAX_IT)){
       val allowed = LinearIndexes.filter(v => Tabu(v).value < it)
-      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.getSwapVal(grid(v1),grid(v2)),
+      val (v1,v2) = selectMin(allowed, allowed)((v1,v2) => c.swapVal(grid(v1),grid(v2)),
                                                 (v1,v2) => (v1 < v2) && (SquareOf(v1) == SquareOf(v2))) // swap on the same line
       
 //      require(SquareOf(v1)==SquareOf(v2))
@@ -173,7 +162,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       tab(v1/N)(v1%N).text=grid(v1).value+""
       tab(v2/N)(v2%N).text=grid(v2).value+""
       for(v <- 0 to LinearIndexes.length-1) {
-        if (c.getViolation(grid(v)).value>0)
+        if (c.violation(grid(v)).value>0)
           tab(v/N)(v%N).foreground=Color.RED
         else
           tab(v/N)(v%N).foreground=Color.BLACK

@@ -26,7 +26,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
 
 class TestDomino extends FunSuite with ShouldMatchers  {
 
@@ -71,14 +70,14 @@ class TestDomino extends FunSuite with ShouldMatchers  {
 		// for each domino side (i,j) what is the id of it's domino in the solution
 		val id = Array.tabulate(nLines,nCols)((i,j) => CPVarInt(cp,neighborValues(i,j).map(dominoId(_,values(i)(j)))))
 		var nbSol = 0
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 		  for (i <- Lines; j <- Cols) {  
 		    val validTuples = for((k,l) <- neighbors(i,j)) yield (toIndex(k,l), dominoId(values(i)(j),values(k)(l)))
 		    // makes the link between the matchedNeighbor and the id of the domino
 		    cp.add(table(matchedNeighbor(i)(j),id(i)(j),validTuples))    
 		    //  an entry is matched to another neighbor entry iff the other is also matched with it (reciprocity)
 		    //  This translates as x[i] == j <=> x[j] == i or with element constraint x[x[i]] = i		 
-		    cp.add(element(matchedNeighbor.flatten, matchedNeighbor(i)(j) ,toIndex(i,j)))		    
+		    cp.add(elementVar(matchedNeighbor.flatten, matchedNeighbor(i)(j) ,toIndex(i,j)),Strong)		    
 		  }
 		  // each domino can appear at most once so each domino id can appear at most twice
 		  cp.add(gcc(id.flatten,0 to 9*9,0,2))
@@ -86,7 +85,7 @@ class TestDomino extends FunSuite with ShouldMatchers  {
 		} exploration {
 		  cp.binaryFirstFail(id.flatten)
 		  nbSol += 1
-		}
+		} run()
 		
 		nbSol should be(1)
 

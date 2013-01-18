@@ -2,3 +2,11 @@
 lib/cplex.jar
 lib/gurobi.jar
 .iml
+target/
+bin
+.history
+syntax: glob
+lib/scalatest-1.6.1.jar
+.settings/org.scala-ide.sdt.core.prefs
+.cache
+.worksheet/src/test.scala

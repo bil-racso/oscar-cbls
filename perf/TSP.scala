@@ -1,35 +1,35 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.search._
+import oscar.util._
 import oscar.visual._
 import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
 
-
 /**
- * 
- * tsp model: given a distance matrix between 20 cities, 
+ *
+ * tsp model: given a distance matrix between 20 cities,
  *            find the shortest tour visiting each city exactly once.
- * 
+ *
  * @author Pierre Schaus pschaus@gmail.com
  */
 object TSP {
@@ -54,11 +54,13 @@ object TSP {
     } exploration {
       //exploration of the search tree
       while (!allBounds(succ)) {
-         val res = minDomNotbound(succ)
-         val (x, i) = res.first
-         // get the closest successor in the domain of x
-         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
-         cp.branch(cp.post(x == v)) (cp.post(x != v))
+
+        // Select the not yet bound city with the smallest number of possible successors
+        val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
+        // Select the closest successors of the city x
+        val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
+
+        cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
       }
     }
 

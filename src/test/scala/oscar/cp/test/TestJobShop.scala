@@ -28,8 +28,6 @@ import oscar.visual._
 import scala.io.Source
 
 
-import org.scalacheck._
-
 class TestJobShop extends FunSuite with ShouldMatchers  {
   
   

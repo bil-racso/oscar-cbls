@@ -22,10 +22,12 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
 import oscar.visual._
+import oscar.util._
 import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
 import java.awt.Color
+
 
 
 /**
@@ -47,7 +49,7 @@ object TSPDemo {
     f.createFrame("TSP Objective Function").add(plot)
     // creates the tour visu and place it into the frame
     val map = new VisualMap();
-    f.createFrame("TSP Tour").add(map)
+    f.createFrame("TSP Tour").add(map.peer)
     f.pack()
     // ------------------------------------------
     
@@ -114,10 +116,9 @@ object TSPDemo {
     } exploration {
       //exploration of the search tree
       while (!allBounds(succ)) {
-         val res = minDomNotbound(succ)
-         val (x, i) = res.first
+         val (x,i) = selectMin(succ.zipWithIndex)(!_._1.isBound)(_._1.size).get
          // get the closest successor in the domain of x
-         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).head
          cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
       updateVisu()

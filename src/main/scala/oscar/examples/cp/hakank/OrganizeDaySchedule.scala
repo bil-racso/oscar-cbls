@@ -84,7 +84,7 @@ object OrganizeDaySchedule {
 		//
 		var numSols = 0
 
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 
 			// precedences
 			bank precedes shop
@@ -105,7 +105,7 @@ object OrganizeDaySchedule {
 			println()
 
 			numSols += 1
-		}
+		} run()
 
 		println("\nIt was " + numSols + " solutions.")
 		cp.printStats()

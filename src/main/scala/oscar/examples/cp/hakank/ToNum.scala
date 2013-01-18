@@ -50,7 +50,7 @@ object ToNum {
       val y = CPVarInt(cp, 0 to pow(n, base).toInt)
 
       var numSols = 0
-      cp.solveAll subjectTo {
+      cp.solve subjectTo {
 
         cp.add(y == toNum(x))
         // cp.add(y == 2143)
@@ -63,7 +63,7 @@ object ToNum {
         
         numSols += 1     
 
-      }
+      } run()
 
       println("\nIt was " + numSols + " solutions.") 
       cp.printStats()

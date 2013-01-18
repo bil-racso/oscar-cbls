@@ -27,8 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
-
 /**
  * Problem 49 of CSPLib <br>
  * find a partition of numbers 1..N into two sets A and B such that: <br>
@@ -56,21 +54,21 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
            val values2 = Array.tabulate(n)(i => values(i)*values(i))
            var nbsol = 0
            
-           cp.solveAll subjectTo {
+           cp.solve subjectTo {
              cp.add(x(0) == 1) // break summetries between the two partitions
              cp.add(sum(0 until n)(i => x(i)) == n/2)
              cp.add(sum(0 until n) (i => x(i)*values(i)) == values.sum/2) // sum of numbers in A = sum of numbers in B
              cp.add(sum(0 until n) (i => x(i)*values2(i)) == values2.sum/2) // sum of squares of numbers in A = sum of squares of numbers in B
        
-             cp.add(binaryknapsack(x,values,values.sum/2),Weak)
-             cp.add(binaryknapsack(x,values2,values2.sum/2),Weak)
-             cp.add(binaryknapsack(x,values,values.sum/2),Strong)
-             cp.add(binaryknapsack(x,values2,values2.sum/2),Strong)
+             cp.add(binaryKnapsack(x,values,values.sum/2),Weak)
+             cp.add(binaryKnapsack(x,values2,values2.sum/2),Weak)
+             cp.add(binaryKnapsack(x,values,values.sum/2),Strong)
+             cp.add(binaryKnapsack(x,values2,values2.sum/2),Strong)
              
            } exploration {
              cp.binary(x.reverse.map(_.asInstanceOf[CPVarInt]))
              nbsol += 1
-           }
+           } run()
            nbsol
        
     }

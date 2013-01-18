@@ -74,7 +74,7 @@ object Binero {
     
     var numSol = 0
     
-    cp.solveAll() subjectTo {
+    cp.solve() subjectTo {
       // The solution must contain the elements of the input grid
       for(i <- range; j <- range; if(origGrid(i)(j) != -1))
           cp.add(grid(2*n*i+j) == origGrid(i)(j))
@@ -99,7 +99,7 @@ object Binero {
       // Printing the solution
       for(i <- range) println(grid.slice(2*n*i, 2*n*(i+1)).mkString(" "))
       println
-    }
+    } run() // find all solutions
     
     println("Number of solutions : "+numSol)
     // Printing some stats

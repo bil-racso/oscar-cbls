@@ -26,7 +26,7 @@ package oscar.cbls.invariants.core.propagation
 import oscar.cbls.invariants.core.algo.dag._;
 import oscar.cbls.invariants.core.algo.tarjan._
 import oscar.cbls.invariants.core.algo.dll._;
-import collection.immutable.{SortedMap}
+import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
 ;
@@ -67,7 +67,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) {
+abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -654,7 +654,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a static propagation graph that does not change after the call to setupPropagationStructure
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
  */
-trait PropagationElement extends DAGNode with TarjanNode{
+trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -708,14 +708,14 @@ trait PropagationElement extends DAGNode with TarjanNode{
 
   var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
-  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[(PropagationElement, Any)] = null
+  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
   def InitiateDynamicGraphFromSameComponent() {
     assert(component != null)
     DynamicallyListenedElementsFromSameComponent
        = DynamicallyListenedElements.PermaFilter((e: PropagationElement) => e.component == component)
     DynamicallyListeningElementsFromSameComponent
-      = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component)
+      = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component, (e) => e._1)
   }
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
@@ -816,7 +816,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
     = DynamicallyListenedElementsFromSameComponent
 
   final def getDAGSucceedingNodes: Iterable[DAGNode]
-    = DynamicallyListeningElementsFromSameComponent.mapToList(f => f._1)
+    = DynamicallyListeningElementsFromSameComponent
 
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc

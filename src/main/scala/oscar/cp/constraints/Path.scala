@@ -51,14 +51,14 @@ class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarI
       if (s.post((((succ(v) !== u) or (succ(u) !== u)) == 1).when(end !== u)) == CPOutcome.Failure) return CPOutcome.Failure
     }
 
-    if (s.post(element(y,start,0)) == CPOutcome.Failure) return CPOutcome.Failure
-    if (s.post(element(y,end,length)) == CPOutcome.Failure) return CPOutcome.Failure
+    if (s.post(elementVar(y,start,0)) == CPOutcome.Failure) return CPOutcome.Failure
+    if (s.post(elementVar(y,end,length)) == CPOutcome.Failure) return CPOutcome.Failure
     
     for (v <- 0 until succ.size) {
        
-       if (s.post((element(y,succ(v),y(v)+1).when((succ(v) !== v) && (end !== v)))) == CPOutcome.Failure) return CPOutcome.Failure
+       if (s.post((elementVar(y,succ(v),y(v)+1).when((succ(v) !== v) && (end !== v)))) == CPOutcome.Failure) return CPOutcome.Failure
     }
-    if (s.post(alldifferent(succ),l) == CPOutcome.Failure) return CPOutcome.Failure
+    if (s.post(allDifferent(succ),l) == CPOutcome.Failure) return CPOutcome.Failure
     
     return CPOutcome.Success
   }
@@ -77,11 +77,11 @@ object Path {
 	  var end = CPVarInt(cp, 5)
 	  var length = CPVarInt(cp, 3)
 	  
-	  cp.solveAll subjectTo {
+	  cp.solve subjectTo {
         cp.add(new Path(X,start,end,length))
       } exploration {
         cp.binary(X)
         println(X.mkString(","))
-      }
+      } run()
   }
 }

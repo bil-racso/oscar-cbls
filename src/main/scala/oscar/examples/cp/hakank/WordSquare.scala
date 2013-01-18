@@ -97,9 +97,9 @@ object WordSquare {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(E),Weak)
+      cp.add(allDifferent(E),Weak)
 
       // now find the connections
       for{i <- WORDLEN
@@ -121,7 +121,7 @@ object WordSquare {
         cp.stop();
       }
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

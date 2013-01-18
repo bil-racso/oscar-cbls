@@ -132,11 +132,11 @@ object Exodus {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(story), Strong)
-      cp.add(alldifferent(country), Strong)
-      cp.add(alldifferent(age), Strong)
+      cp.add(allDifferent(story), Strong)
+      cp.add(allDifferent(country), Strong)
+      cp.add(allDifferent(age), Strong)
 
       cp.add(lithuania == debby)
       cp.add(age(passover) == age(bernice) + 2)
@@ -171,7 +171,7 @@ object Exodus {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

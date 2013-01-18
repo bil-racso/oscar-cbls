@@ -24,7 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.{SortedMap, SortedSet}
+import collection.immutable.SortedSet
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
  * @param values an array of intvar
  * @param boundary the boundary for comparison
  */
-case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
@@ -122,7 +122,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
  */
-case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLESetQueue(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   def myMin = values.indices.start
@@ -140,7 +140,7 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
       output := SortedSet.empty[Int]
       val HeapAbove:BinomialHeap[Int] = new BinomialHeap((i:Int) => values(i).value,values.size)
       for(v <- values.indices){
-        if(values(v).value <= boundary){
+        if(values(v).value <= boundary.value){
           output.insertValue(v)
         }else{
           HeapAbove.insert(v)

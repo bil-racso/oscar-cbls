@@ -116,9 +116,9 @@ object Crypto {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(LD), Strong)
+      cp.add(allDifferent(LD), Strong)
 
       cp.add(            B + A + L + L + E + T == BALLET)
       cp.add(                C + E + L + L + O == CELLO)
@@ -151,7 +151,7 @@ object Crypto {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

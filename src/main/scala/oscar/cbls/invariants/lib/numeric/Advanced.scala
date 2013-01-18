@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.propagation._;
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
  */
-case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
@@ -63,7 +63,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     //it is always a listened one, but we could check this here
     assert(vars(index)==v)
     assert(keyForRemoval(index)!=null)
-    output := output.value - OldVal + NewVal
+    output :+= (NewVal - OldVal)
   }
 
   @inline
@@ -72,7 +72,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
-    output := output.value + vars(value).value
+    output :+= vars(value).value
   }
 
   @inline
@@ -82,7 +82,7 @@ case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInva
     unregisterDynamicDependency(keyForRemoval(value))
     keyForRemoval(value) = null
 
-    output := output.value - vars(value).value
+    output :-= vars(value).value
   }
 
   override def checkInternals() {

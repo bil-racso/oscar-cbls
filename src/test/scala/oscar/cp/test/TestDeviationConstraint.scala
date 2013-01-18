@@ -47,10 +47,10 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
         	cp.add(new Deviation(x, s, nd));
 
         var cnt = 0
-        cp.solveAll() exploration {
+        cp.solve exploration {
           cp.binaryFirstFail(x)
           cnt += 1
-        }
+        } run
         cnt
     }
 

@@ -155,7 +155,7 @@ object Kakuro {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill the blanks with 0
       for(i <- 0 until num_blanks) {
@@ -172,7 +172,7 @@ object Kakuro {
 
         // all numbers in this segment must be distinct
         val len = segment.length / 2
-        cp.add( alldifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
+        cp.add( allDifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
 
       }
 
@@ -195,7 +195,7 @@ object Kakuro {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

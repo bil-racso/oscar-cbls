@@ -43,7 +43,7 @@ object PrimeLooking {
     
     var cpt = 0 // number of solution
     
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(d1*d2 == x)
       cp.add(d1 <= d2) // avoid symmetric solutions
       // prevent divisibility by 2,3 and 5
@@ -56,7 +56,7 @@ object PrimeLooking {
     } exploration {
       cp.binaryFirstFail(Array(x,d1,d2))
       cpt += 1
-    }
+    } run()
     
     println("number of solutions:"+cpt)
   }

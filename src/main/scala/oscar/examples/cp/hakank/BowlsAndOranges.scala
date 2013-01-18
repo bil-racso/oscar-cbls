@@ -66,10 +66,10 @@ object BowlsAndOranges {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // constraints
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // increasing(x)
       for(i <- 1 until m) {
@@ -92,7 +92,7 @@ object BowlsAndOranges {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

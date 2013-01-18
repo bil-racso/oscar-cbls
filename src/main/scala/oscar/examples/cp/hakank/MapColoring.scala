@@ -58,7 +58,7 @@ object MapColoring {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for (c1 <- 0 until num_countries; 
            c2 <- 0 until c1 if connections(c1)(c2)==1) {
@@ -77,7 +77,7 @@ object MapColoring {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.\n")
 
      cp.printStats()
