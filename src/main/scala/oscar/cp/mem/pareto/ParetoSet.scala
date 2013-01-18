@@ -2,12 +2,12 @@ package oscar.cp.mem.pareto
 
 class ParetoSet[Sol](val nObjs: Int) {
 
-  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
-  var ideal: Array[Int] = Array.fill(nObjs)(0)
-
   class SolNode(val sol: MOSol[Sol], val objsNode: Array[LinkedNode[SolNode]]) { override def toString = sol.toString }
 
   val Objs = 0 until nObjs
+  
+  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
+  var ideal: Array[Int] = Array.fill(nObjs)(0)
 
   private val objsVal: Array[OrderedLinkedList[SolNode]] = Array.fill(nObjs)(OrderedLinkedList[SolNode]())
   private var X: List[SolNode] = List()
@@ -52,7 +52,6 @@ class ParetoSet[Sol](val nObjs: Int) {
       return 0
     } else {
       val removed = clean(xNew)
-      assert(removed > -1)
       realInsert(xNew)
       return removed
     }

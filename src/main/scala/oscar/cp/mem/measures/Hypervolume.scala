@@ -1,37 +1,23 @@
 package oscar.cp.mem.measures
 
+import oscar.cp.mem.pareto.ParetoSet
+
 object Hypervolume {
 
-  def hypervolumeNadir(set: Array[(Int, Int)], nadir: (Int, Int)): Double = {
-    var prevObj2 = nadir._2
+  def hypervolume[Sol](set: ParetoSet[Sol]): Double = {
+    var prevObj2 = set.nadir(1)
     var volume = 0.0
-    for ((obj1, obj2) <- set) {
+    val sortedSet = set.sortedByObj(0)
+    for (s <- sortedSet) {
+      val obj1 = s.objs(0)
+      val obj2 = s.objs(1)
       val dObj2 = prevObj2 - obj2
-      val dObj1 = nadir._1 - obj1
+      val dObj1 = set.nadir(0) - obj1
       prevObj2 = obj2
-      val v = (dObj2 * dObj1).toDouble / 100000000
+      val v = ((dObj2.toDouble / 10000) * (dObj1.toDouble / 10000))
       if (v > 0) volume += v
     }
     volume
-  }
-
-  def main(args: Array[String]) {
-
-    val rhSet1 = (SetParser.parseSet("setPointABtest.txt")).sortBy(_._1)
-    val rhSet2 = (SetParser.parseSet("setPointACtest.txt")).sortBy(_._1)
-    val rhSet3 = (SetParser.parseSet("setPointADtest.txt")).sortBy(_._1)
-    val rhSet4 = (SetParser.parseSet("setPointBCtest.txt")).sortBy(_._1)
-    val rhSet5 = (SetParser.parseSet("setPointBDtest.txt")).sortBy(_._1)
-    val rhSet6 = (SetParser.parseSet("setPointCDtest.txt")).sortBy(_._1)
-
-    val nadir = (180000, 180000)
-
-    println("rh\t : " + hypervolumeNadir(rhSet1, nadir))
-    println("rh\t : " + hypervolumeNadir(rhSet2, nadir))
-    println("rh\t : " + hypervolumeNadir(rhSet3, nadir))
-    println("rh\t : " + hypervolumeNadir(rhSet4, nadir))
-    println("rh\t : " + hypervolumeNadir(rhSet5, nadir))
-    println("rh\t : " + hypervolumeNadir(rhSet6, nadir))
   }
 }
 

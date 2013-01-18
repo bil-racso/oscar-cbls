@@ -16,38 +16,35 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.NewPareto
 import oscar.cp.mem.pareto.MOSol
+import oscar.cp.mem.pareto.ParetoSet
 
-object FirstPhaseTSP {
+object FirstPhaseTSP extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
 
-  def main(args: Array[String]) {
+  val inst1 = 'A'
+  val inst2 = 'B'
+  val out = "out"
 
-    val inst1 = 'A'
-    val inst2 = 'B'
-    val idTemp = "10c_"
+  val Fullpareto = ParetoSet[Sol](2)
 
-    val pareto: NewPareto[Sol] = NewPareto(2)
+  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst1 + "100.tsp")
+  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst2 + "100.tsp")
 
-    val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst1 + "100.tsp")
-    val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro" + inst2 + "100.tsp")
+  for (i <- 1 to 5) {
 
-    for (i <- 1 to 5) {
-      
-      val id = idTemp + i
+    val pareto = ParetoSet[Sol](2)
 
-      for (alpha <- 0 to 100) {
-        val x = search(alpha, distMatrix1, distMatrix2)
-        pareto.insert(x)
-        println(x.objs.mkString(" "))
-      }
-
-      TSPUtils.writeSet("firstPhase" + inst1 + inst2 + id + ".txt", pareto.map(_.sol.pred).toArray)
-      val out = OutFile("firstPhasePoint" + inst1 + inst2 + id + ".txt")
-      pareto.foreach(x => out.writeln(x.objs.mkString(" ")))
-      out.close()
+    for (alpha <- 0 to 100) {
+      println(i + " : " + alpha)
+      val x = search(alpha, distMatrix1, distMatrix2)
+      pareto.insert(x)
     }
+
+    pareto.foreach(Fullpareto.insert(_))
   }
+
+  TSPUtils.writeSet("firstSet" + inst1 + inst2 + out + ".txt", Fullpareto.map(_.pred).toArray)
 
   def search(alpha: Int, distMatrix1: Array[Array[Int]], distMatrix2: Array[Array[Int]]): MOSol[Sol] = {
 
@@ -90,9 +87,9 @@ object FirstPhaseTSP {
       cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
       cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
     }
-    
+
     var currentSol: Sol = null
-        
+
     def solFound() = {
       currentSol = new Sol(pred.map(_.value), succ.map(_.value))
     }
@@ -103,15 +100,16 @@ object FirstPhaseTSP {
       regretHeuristic(cp, pred, dist)
       solFound()
     }
-    
+
     // LNS
     // --------------------
     val cycleBreaker = true
     val p = 10
     
+    cp.run(1)
     for (iter <- 1 to 50) {
       cp.runSubjectTo(Int.MaxValue, 3000) {
-        relaxVariables(clusterRelax(p))  
+        relaxVariables(clusterRelax(p))
       }
     }
 
@@ -142,9 +140,14 @@ object FirstPhaseTSP {
           if (!selected(p)) constraints enqueue (pred(c) == p)
           if (!selected(s)) constraints enqueue (succ(c) == s)
         }
-
-        cp.post(constraints.toArray)
       }
+      if (cycleBreaker) {
+        val notSelected = Cities.filter(selected(_))
+        val rand = cp.random.nextInt(notSelected.size)
+        val cc = notSelected(rand)
+        constraints.enqueue(pred(cc) == (if (cp.random.nextBoolean()) currentSol.pred(cc) else currentSol.succ(cc)))
+      }
+      cp.post(constraints.toArray)
     }
 
     val dist1 = TSPUtils.computeDist(currentSol.pred, distMatrix1)
