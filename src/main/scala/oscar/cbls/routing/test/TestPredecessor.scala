@@ -24,10 +24,9 @@ package oscar.cbls.routing.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.{RandomNeighbor, NearestNeighbor}
+import oscar.cbls.routing.initialSolution.RandomNeighbor
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 

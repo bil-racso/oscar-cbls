@@ -19,8 +19,6 @@
 
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.lib.logic.SparseCluster._
-import oscar.cbls.invariants.lib.logic.DenseCluster._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
@@ -132,35 +130,35 @@ trait AccessInvariants{
    * @param thenVar the returned value if ifVar > 0
    * @param elseVar the returned value if ifVar <= 0
    * */
-  def intite(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) = IntITE(ifVar, thenVar, elseVar)
+  def intITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) = IntITE(ifVar, thenVar, elseVar)
 
   /** inputarray[index]
    * @param inputarray is an array of IntVar
    * @param index is the index accessing the array*/
-  def intelement(index:IntVar, inputarray:Array[IntVar]) = IntElement(index:IntVar, inputarray:Array[IntVar])
+  def intElement(index:IntVar, inputarray:Array[IntVar]) = IntElement(index:IntVar, inputarray:Array[IntVar])
 
   /**Union(i in index) (array[i])
    * @param index is an IntSetVar denoting the set of positions in the array to consider
    * @param inputarray is the array of intvar that can be selected by the index
    */
-  def intelements(index:IntSetVar, inputarray:Array[IntVar]) = IntElements(index, inputarray)
+  def intElements(index:IntSetVar, inputarray:Array[IntVar]) = IntElements(index, inputarray)
 
   /** inputarray[index] on an array of IntSetVar
    * @param inputarray is the array of intsetvar
    * @param index is the index of the array access
    **/
-  def intsetelement(index:IntVar, inputarray:Array[IntSetVar]) = IntSetElement(index, inputarray)
+  def intSetElement(index:IntVar, inputarray:Array[IntSetVar]) = IntSetElement(index, inputarray)
 }
 
 trait MinMaxInvariants{
 
-  /** Maintains {i in indices of (varss Inter cond) | varss[i] == max(varss(i in indices of (varss Inter cond))}
-   * @param varss is an array of IntVar, which can be bulked
-   * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+  /** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
+   * @param vars is an array of IntVar, which can be bulked
+   * @param cond is the condition, supposed fully acceptant if not specified
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMax(varss: Array[IntVar], ccond: IntSetVar = null,default:Int = Int.MinValue) = new ArgMaxArray(varss, ccond,default)
+  def argMax(vars: Array[IntVar], cond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(vars, cond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -169,7 +167,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = new ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar

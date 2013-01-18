@@ -138,13 +138,13 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    * The violation mechanism will be instantiated as many times as the variable is registered for violation. 
    * @param v the variable that is registered
    */
-  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed")
+  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed","1.0")
   def registerForViolation(v:Variable){
     violation(v:Variable)
   }
 
   /**performs the same operation as registerForViolation on the given variables*/
-  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed")
+  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed","1.0")
   def registerForViolation(vit:Iterable[Variable]){
     for (v <- vit) registerForViolation(_:Variable)
   }

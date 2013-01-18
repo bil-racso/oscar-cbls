@@ -157,7 +157,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
     for (q <- range) {
-      c.registerForViolation(Queens(q))
+      c.violation(Queens(q))
     }
     c.close()
 

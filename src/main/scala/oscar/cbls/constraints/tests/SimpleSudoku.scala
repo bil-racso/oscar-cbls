@@ -27,12 +27,7 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import scala.collection.mutable.HashSet
 
 /**
  * Simple Sudoku (for 9x9 grid) 
@@ -122,7 +117,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     // note: square constraints will be enforced (initially true and maintained by swap strategy)
     
     // register for violation
-    for (i <- LinearIndexes) { c.registerForViolation(grid(i)) }
+    for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // closing constraints
     c.close

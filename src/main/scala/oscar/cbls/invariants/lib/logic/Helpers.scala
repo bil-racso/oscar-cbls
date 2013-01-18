@@ -24,8 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.IntVar._
-import oscar.cbls.invariants.core.computation.{Variable, IntInvariant, IntVar}
+import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
 
 /** This is a helper to define an invariant from an Int -> Int function.
  * Ths invariant is not incremental, so it should only be used for very simple functions.

@@ -26,7 +26,6 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.core.computation.IntVar._

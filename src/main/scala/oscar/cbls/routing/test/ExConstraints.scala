@@ -25,8 +25,6 @@ package oscar.cbls.routing.test
 import data.{Point, BelgiumInstance}
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic._
-import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.invariants.lib.logic.Cluster
@@ -69,7 +67,7 @@ object ExConstraints extends App{
   val nbOfAllowedUnroutedNode = new IntVar(m,0,N,10,"nb of allowed unrouted node")
   // post and register the constraint
   weakConstraintSystem.post(LE(Cardinality(vrp.Unrouted),nbOfAllowedUnroutedNode),vrp.UnroutedPenalty)
-  weakConstraintSystem.registerForViolation(vrp.Unrouted)
+  weakConstraintSystem.violation(vrp.Unrouted)
   // could be also strongConstraint if needed.
 
   /*
@@ -91,7 +89,7 @@ object ExConstraints extends App{
   // post and register the constraint
   for(i <- 0 until vrp.V){
     strongConstraintSystem.post(LE(vrp.RouteLength(i),lengthMax))
-    strongConstraintSystem.registerForViolation(vrp.RouteLength(i))
+    strongConstraintSystem.violation(vrp.RouteLength(i))
     // once more it could be a weakConstraint, it depends only of the problem's definition.
   }
 

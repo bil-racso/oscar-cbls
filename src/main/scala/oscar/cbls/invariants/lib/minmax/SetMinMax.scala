@@ -24,9 +24,7 @@
 
 package oscar.cbls.invariants.lib.minmax
 
-import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
-import oscar.cbls.invariants.core.propagation.PropagationElement._
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{

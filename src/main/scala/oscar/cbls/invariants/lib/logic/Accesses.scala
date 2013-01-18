@@ -23,11 +23,9 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.{SortedSet, SortedMap}
+import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
-import oscar.cbls.invariants.core.computation.IntVar._
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -190,7 +188,6 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
   override def notifyIntChanged(v:IntVar,indice:Int,OldVal:Int,NewVal:Int){
     assert(inputarray(indice) == v)
     assert(KeysToInputArray(indice) != null)
-    assert(KeysToInputArray(indice) == v)
 
     if (ValueCount(OldVal - myMin) == 1){
       ValueCount(OldVal - myMin) = 0

@@ -1,5 +1,5 @@
 package oscar.cbls.invariants.core.propagation
-import collection.immutable.{SortedMap}
+import collection.immutable.SortedMap
 
 trait DistributedStorageUtility{
 

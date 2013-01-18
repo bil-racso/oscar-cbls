@@ -24,7 +24,6 @@ package oscar.cbls.modeling
  *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
-import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
@@ -68,7 +67,7 @@ object Algebra {
 
     override def toList: List[Int] = unfold(startBy)
 
-    override def toArray[B >: Int](implicit evidence$1: ClassManifest[B]): Array[B] = toList.toArray
+    override def toArray[B >: Int](implicit evidence$1: scala.reflect.ClassTag[B]): Array[B] = toList.toArray
 
     override def toString(): String = "ShiftedRange(" + toList + ")"
   }

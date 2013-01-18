@@ -75,7 +75,7 @@ object RemovePoint extends SearchEngine{
                        startFrom:Neighbor = null):RemovePoint = {
     var move:((Int, Int)) = null
     if(random){
-      val toUnroute = rand.shuffle(vrp.V to vrp.N-1).toArray
+      val toUnroute = rand.shuffle((vrp.V to vrp.N-1).toList).toArray
       for (beforeRemovePoint <- toUnroute if(vrp.isRouted(beforeRemovePoint))){
         val obj = getObjAfterMove(beforeRemovePoint,vrp.Next(beforeRemovePoint).value,vrp)
         if(obj != Int.MaxValue){
@@ -144,6 +144,6 @@ case class RemovePoint(beforeRemovedPoint:Int, removedPoint:Int, objAfter:Int, v
   def startNodeForNextExploration: Int = beforeRemovedPoint
   def getValuesToAssign = vrp.remove(List((beforeRemovedPoint,removedPoint)))
 
-  override def toString():String = "(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
+  override def toString():String = "RemovePoint(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
 }
 

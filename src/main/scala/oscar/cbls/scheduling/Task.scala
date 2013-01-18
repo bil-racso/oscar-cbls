@@ -27,7 +27,6 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.modeling.Algebra
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
@@ -159,7 +158,7 @@ case class Task(duration: IntVar, planning: Planning, name: String = "") {
       val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
       AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-      val argMax = new ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
       EarliestStartDate <== argMax.getMax
 
       DefiningPredecessors = argMax

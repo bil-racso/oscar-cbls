@@ -28,10 +28,9 @@ package oscar.cbls.invariants.lib.minmax
 import oscar.cbls.invariants.core.computation._;
 import oscar.cbls.invariants.core.algo.heap._;
 import collection.immutable.SortedSet;
-import oscar.cbls.invariants.core.propagation._;
+
 import oscar.cbls.invariants.lib.logic._;
 
-@deprecated
 abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant " + name + " declared with zero vars to max")
 
@@ -52,7 +51,7 @@ abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
     var CurrentMiax: Int = vars.head.value
     MiaxCount = 1
     vars.foreach(v => {
-      if (v == CurrentMiax) {
+      if (v.value == CurrentMiax) {
         MiaxCount += 1
       } else if (Better(v.value, CurrentMiax)) {
         MiaxCount = 1
@@ -89,8 +88,6 @@ abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
  * * on is a set of IntVar
  * update is O(n)
  * */
-
-@deprecated
 case class MaxLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
   override def name = "MaxLin"
 
@@ -103,7 +100,6 @@ case class MaxLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
  * * on is a set of IntVar
  * update is O(n)
  * */
-@deprecated
 case class MinLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
   override def name = "MinLin"
 
@@ -111,7 +107,6 @@ case class MinLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
 
 }
 
-@deprecated
 abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
   def name: String
 
@@ -150,7 +145,7 @@ abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
  * * output is an IntVar
  * update is O(n*n)
  * */
-@deprecated
+@deprecated("use the MinArray instead","always")
 case class Min(vars: SortedSet[IntVar]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Min declared with zero vars to min")
 
@@ -167,7 +162,7 @@ case class Min(vars: SortedSet[IntVar]) extends Miax(vars) {
  * * output is an IntVar
  * update is O(n*n)
  * */
-@deprecated
+@deprecated("use the MaxArray instead","always")
 case class Max(vars: SortedSet[IntVar]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Max declared with zero vars to max")
   override def name = "Max"

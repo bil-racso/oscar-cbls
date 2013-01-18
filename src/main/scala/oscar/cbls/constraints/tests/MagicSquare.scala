@@ -26,12 +26,9 @@ package oscar.cbls.constraints.tests
 
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
-import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
 
 /**
  * Example showing how to use Asteroid on the magic square problem  
@@ -81,7 +78,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     c.post(EQ(Sum(for ( i <- Dim) yield magic(i)(N-i-1)), T)) // other diagonal
     
     // register for violation
-    for (i <- Dim; j <- Dim) { c.registerForViolation(magic(i)(j)) }
+    for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
     // closing constraints
     c.close

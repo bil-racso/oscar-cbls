@@ -26,8 +26,6 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.modeling.Algebra
-import oscar.cbls.modeling.Algebra._
 import oscar.visual.{Plot2D, VisualFrame}
 ;
 
@@ -101,13 +99,13 @@ class Planning(val model: Model, val maxduration: Int) {
       FirstOvershootArray(r.ResourceID) = r.FirstOvershoot
     }
     val ResourceWithOvershoot: IntSetVar = Filter(FirstOvershootArray, (date: Int) => date <= maxduration)
-    EarliestOvershotResources = new ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
+    EarliestOvershotResources = ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
 
     val WorseOvershootArray: Array[IntVar] = new Array[IntVar](ResourceCount)
     for (r <- Ressources) {
       WorseOvershootArray(r.ResourceID) = r.HighestUse
     }
-    WorseOvershotResource = new ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
+    WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
   var gantt:Gantt = null
@@ -144,7 +142,7 @@ class Planning(val model: Model, val maxduration: Int) {
     for (j <- Tasks.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask) {
       toreturn += "" + padToLength(j.name, 20) + ":" + "[" +
         padToLength("" + j.EarliestStartDate.value, 4) + ";" + padToLength("" + j.EarliestEndDate.value, 4) + "] " +
-        (if (j.duration == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
+        (if (j.duration.value == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
         else nStrings(j.EarliestStartDate.value, " ") + "#" + nStrings(j.duration.value - 2, "=") + "#\n")
     }
     toreturn += MakeSpan

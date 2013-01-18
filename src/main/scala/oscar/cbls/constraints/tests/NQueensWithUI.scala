@@ -26,23 +26,14 @@ package oscar.cbls.constraints.tests
 import scala.swing.SimpleSwingApplication
 import scala.swing.MainFrame
 import scala.swing.Button
-import java.awt.GridLayout
 import scala.swing.GridPanel
 import scala.swing.Label
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.modeling.Algebra._
-import scala.swing.Component
-import scala.swing.Swing
 import javax.swing.ImageIcon
 import java.awt.Color
 import oscar.cbls.search.SearchEngineTrait
-import sun.swing.ImageIconUIResource
 import scala.swing.BoxPanel
 import scala.swing.Orientation
 import scala.swing.event.ButtonClicked
@@ -164,11 +155,9 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     //c.post(AllDiff(Queens)) handled trough permutations
     c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
     c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
-    
-    for (q <- range){c.registerForViolation(Queens(q))}
-    c.close()
-    
+
     val viol:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
+    c.close()
 
     for (q<-range){
       Event(Queens(q),viol(q),(oldqueenposition:Int) => {

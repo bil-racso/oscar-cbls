@@ -24,9 +24,7 @@
 package oscar.cbls.constraints.tests
 
 import scala.swing.Applet
-import scala.swing.Reactor
 import scala.swing.Button
-import scala.swing.TextArea
 import scala.swing.event.ButtonClicked
 import scala.swing.BoxPanel
 import scala.swing.Orientation
@@ -39,8 +37,6 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.modeling.Algebra._
 import javax.swing.border.LineBorder
 
@@ -170,10 +166,8 @@ class NQueensApplet extends Applet {
       c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
-      for (q <- range) { c.registerForViolation(Queens(q)) }
-      c.close()
-
       val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+      c.close()
       m.close()
 
       var it: Int = 0

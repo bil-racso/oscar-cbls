@@ -105,7 +105,7 @@ object ReinsertPoint extends SearchEngine{
     val rand = new Random()
     // if we want a random reinsert-move.
     if(random){
-      val beforeReinsertedPoint = if (onlyFrom) hotRestart to hotRestart else rand.shuffle(0 to vrp.N-1)
+      val beforeReinsertedPoint = if (onlyFrom) List(hotRestart) else rand.shuffle((0 to vrp.N-1).toList)
       for(p <- beforeReinsertedPoint if vrp.isRouted(p)){
         val toRoute = Random.shuffle(vrp.Unrouted.value.toList)
         toRoute.foreach(i =>
@@ -182,6 +182,6 @@ case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfte
   def startNodeForNextExploration: Int = reinsertedPoint
   def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)
 
-  override def toString():String = "(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
+  override def toString():String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 }
 

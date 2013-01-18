@@ -23,7 +23,7 @@ package oscar.cbls.invariants.lib.numeric
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntInvariant, IntSetInvariant, IntVar}
+import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
 import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
 
 /**Maintains output to the smallest value such that
