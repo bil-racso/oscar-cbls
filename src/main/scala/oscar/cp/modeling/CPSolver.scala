@@ -27,6 +27,8 @@ import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
+import oscar.cp.mem.CPMObjective
+import oscar.cp.mem.pareto.ParetoSet
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -45,6 +47,14 @@ class CPSolver() extends Store() {
     }
     this
   }
+  
+  def minimizeMO[Sol](pareto: ParetoSet[Sol], objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPMObjective(this, pareto, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      post(objective)
+    }
+    this
+  }
 
   def minimize(obj: CPVarInt): CPSolver = {
     stateObjective = Unit => {
@@ -56,7 +66,6 @@ class CPSolver() extends Store() {
 
   def minimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
-
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
       post(objective)
     }
