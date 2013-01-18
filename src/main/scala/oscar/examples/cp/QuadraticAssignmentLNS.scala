@@ -66,7 +66,7 @@ object QuadraticAssignmentLNS {
     
     cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
       cp.add(allDifferent(x), Strong)
-    } explo {
+    } exploration {
         cp.binaryFirstFail(x)
         println("solution"+x.mkString(","))
         // store the current best solution

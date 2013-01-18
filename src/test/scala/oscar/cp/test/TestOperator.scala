@@ -69,7 +69,7 @@ class TestOperator extends FunSuite with ShouldMatchers  {
 	  cp.exploration {
 	    cp.binary(Array(A,B))
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   

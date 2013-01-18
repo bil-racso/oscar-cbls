@@ -56,7 +56,7 @@ object Xkcd {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(weightedSum(price, x) == total)
 
@@ -68,7 +68,7 @@ object Xkcd {
 
        numSols += 1
        
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.\n")
     cp.printStats()

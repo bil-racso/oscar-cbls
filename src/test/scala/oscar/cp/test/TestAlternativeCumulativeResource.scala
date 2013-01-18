@@ -29,7 +29,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		var nSol = 0
 		val expectedSol = Set((0, 0, 3), (1, 0, 3), (0, 2, 0), (1, 2, 0))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -42,7 +42,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(4)
 	}
@@ -67,7 +67,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val expectedSol = Set((0, 3, 4), (0, 4, 3), (1, 0, 4), (1, 4, 0), (2, 0, 1), (2, 1, 0))
 				               
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -80,7 +80,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act2.dur.value should be(1)
 		act3.dur.value should be(1)
@@ -107,7 +107,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		val expectedSol = Set((0, 0, 3), (1, 0, 3), (0, 2, 0), (1, 2, 0))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -120,7 +120,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		resourceSet.heightOf(act1).value should be(1)
 		
@@ -150,7 +150,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 2, 2, 0), 
 							  (2, 1, 0, 1))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -167,7 +167,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(2)
 		act4.dur.value should be(3)
@@ -197,7 +197,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		val expectedSol = Set((0, 2, 2, 0), 
 							  (2, 1, 0, 1))
 		
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -214,7 +214,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		act1.dur.value should be(2)
 		act4.dur.value should be(3)
@@ -243,7 +243,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		var nbSol = 0
 
-		cp.solveAll 
+		cp.solve 
 		cp.subjectTo {
 			
 			cp.add(resourceSet.resourcesOf(act2) == 0)
@@ -257,7 +257,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 			
 			cp.binary(acts.map(resourceSet.resourcesOf(_)))
 			nbSol += 1
-		}	
+		} run()
 		
 		nbSol should be(1)
 	}
@@ -321,7 +321,7 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		cp.add(act1.start == 0)
 
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
 
 			cp.add(resourceSet.resourcesOf(act1) == 0)
 			cp.add(resourceSet.heightOf(act1) == 2)

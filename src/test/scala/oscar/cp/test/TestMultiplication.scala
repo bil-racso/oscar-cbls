@@ -43,7 +43,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
       cp.binaryFirstFail(Array(x,y))
       ((x.isBoundTo(-2) && y.isBoundTo(-50)) || (x.isBoundTo(2) && y.isBoundTo(50))) should be(true)
       nbSol += 1
-    }
+    } run()
     nbSol should be(2)
 
   }
@@ -91,7 +91,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
       nbsol += 1
       nb1.value should be(428571)
       nb2.value should be(142857)
-    }
+    } run()
     nbsol should be(1)
     
     

@@ -77,11 +77,11 @@ object Path {
 	  var end = CPVarInt(cp, 5)
 	  var length = CPVarInt(cp, 3)
 	  
-	  cp.solveAll subjectTo {
+	  cp.solve subjectTo {
         cp.add(new Path(X,start,end,length))
       } exploration {
         cp.binary(X)
         println(X.mkString(","))
-      }
+      } run()
   }
 }

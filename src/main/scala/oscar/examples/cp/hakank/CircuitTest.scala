@@ -157,7 +157,7 @@ object CircuitTest {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // cp.add(circuit(x), Strong) // use the built-in
       circuit_me(cp, x)
@@ -173,7 +173,7 @@ object CircuitTest {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

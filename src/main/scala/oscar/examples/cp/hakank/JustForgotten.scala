@@ -78,7 +78,7 @@ object JustForgotten {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(x), Strong)
       for(r <- 0 until rows) {
@@ -106,7 +106,7 @@ object JustForgotten {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

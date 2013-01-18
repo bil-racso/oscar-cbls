@@ -133,7 +133,7 @@ object Hidato {
     //
     var numSols = 0
     var backtracks = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       
       // fill the given hints
       for(i <- 0 until n) {
@@ -191,7 +191,7 @@ object Hidato {
 
       numSols += 1
 
-   }
+   } run()
 
     println("It was " + numSols + " solutions.")
 

@@ -107,7 +107,7 @@ object FourIslands {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       
       cp.add(allDifferent(island), Strong)
       cp.add(allDifferent(export), Strong)
@@ -192,7 +192,7 @@ object FourIslands {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

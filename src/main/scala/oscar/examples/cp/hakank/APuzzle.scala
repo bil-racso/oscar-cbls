@@ -122,7 +122,7 @@ object APuzzle {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       if (p==1) {
         
@@ -235,7 +235,7 @@ object APuzzle {
 
       numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.\n")
 
      cp.printStats()

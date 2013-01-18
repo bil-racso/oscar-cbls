@@ -180,7 +180,7 @@ object StableMarriage {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // Comet code are shown in the comments.
 
@@ -235,7 +235,7 @@ object StableMarriage {
 
        numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.\n")
 

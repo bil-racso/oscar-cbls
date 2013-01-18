@@ -55,7 +55,7 @@ class TestCarSeq extends FunSuite with ShouldMatchers  {
 		val line = Array.fill(nbCars)(CPVarInt(cp,0,nbConfigs-1))
 		
 		var nbSol = 0
-		cp.solveAll subjectTo {
+		cp.solve subjectTo {
     	  for (o <- 1 until nbOptions) {
     	    cp.add(new oscar.cp.constraints.Sequence(line, options(o), ub(o), 0, lb(o)))
     	  }
@@ -63,7 +63,7 @@ class TestCarSeq extends FunSuite with ShouldMatchers  {
     	} exploration {
     	  cp.binaryFirstFail(line)
     	  nbSol += 1
-    	}
+    	} run()
     	nbSol should be(860)
 
     

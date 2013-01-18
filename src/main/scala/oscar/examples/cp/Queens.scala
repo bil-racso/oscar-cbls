@@ -43,7 +43,7 @@ object Queens extends App {
     	  cp.add(allDifferent(queens),Strong)
     	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
     	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } explo {        
+      } exploration {        
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }

@@ -85,12 +85,12 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(2, 0, 0)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       nbSol += 1
-    }
+    } run()
 
     nbSol should be > 0
   }
@@ -127,13 +127,13 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(0, 2, 3, 2)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       println((x map (_.value)).mkString(";"))
       nbSol += 1
-    }
+    } run()
 
     nbSol should be(2)
   }
@@ -150,13 +150,13 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     val Up = Array(1, 1, 1, 1)
 
     var nbSol = 0;
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
     } exploration {
       cp.binaryFirstFail(x)
       println((x map (_.value)).mkString(";"))
       nbSol += 1
-    }
+    } run()
 
     nbSol should be(14)
 

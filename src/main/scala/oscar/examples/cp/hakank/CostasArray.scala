@@ -71,7 +71,7 @@ object CostasArray {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // Fix the values in the lower triangle in the
       // difference matrix to -n+1. This removes variants
@@ -141,7 +141,7 @@ object CostasArray {
  
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

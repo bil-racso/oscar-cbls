@@ -131,7 +131,7 @@ object CrossWord {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(E), Strong)
 
@@ -176,7 +176,7 @@ object CrossWord {
 
         numSols += 1
 
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
 

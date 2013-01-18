@@ -58,7 +58,7 @@ object MagicSquare {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
        cp.add(allDifferent(x.flatten), Strong)
 
@@ -95,7 +95,7 @@ object MagicSquare {
          cp.stop()
        }
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

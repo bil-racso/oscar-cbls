@@ -48,7 +48,7 @@ object ChooChooTrain {
       val all = Array(C,H,O,T,R,A,I,N)
       val all_str = Array("C","H","O","T","R","A","I","N")
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // constraints
 
@@ -79,7 +79,7 @@ object ChooChooTrain {
           
         println(all.mkString(""))
 
-      }
+      } run()
       
       println()
       cp.printStats()

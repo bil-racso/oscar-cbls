@@ -73,7 +73,7 @@ object SafeCracking {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(allDifferent(x))
       cp.add(c4 - c6 == c7)
@@ -91,7 +91,7 @@ object SafeCracking {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

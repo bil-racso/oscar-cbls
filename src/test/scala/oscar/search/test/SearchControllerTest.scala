@@ -48,7 +48,7 @@ class SearchControllerTest extends FunSuite with ShouldMatchers  {
 	      n.branch { v(2).value = false } 
     	           { v(2).value = true  }
           sol = sol :+ v(0)*4+v(1)*2+v(2)
-	   }
+	   } run()
     	
        sol should equal(Array(0,1,2,3,4,5,6,7))
 	
@@ -70,7 +70,7 @@ class SearchControllerTest extends FunSuite with ShouldMatchers  {
     		 cp.branchAll(dom(y(i)))(v => cp.post(y(i) == v))      
     	    }
         	nbSol += 1
-    	}
+    	} run()
     	nbSol should equal(16)
     }
 

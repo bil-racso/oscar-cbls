@@ -54,7 +54,7 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
            val values2 = Array.tabulate(n)(i => values(i)*values(i))
            var nbsol = 0
            
-           cp.solveAll subjectTo {
+           cp.solve subjectTo {
              cp.add(x(0) == 1) // break summetries between the two partitions
              cp.add(sum(0 until n)(i => x(i)) == n/2)
              cp.add(sum(0 until n) (i => x(i)*values(i)) == values.sum/2) // sum of numbers in A = sum of numbers in B
@@ -68,7 +68,7 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
            } exploration {
              cp.binary(x.reverse.map(_.asInstanceOf[CPVarInt]))
              nbsol += 1
-           }
+           } run()
            nbsol
        
     }

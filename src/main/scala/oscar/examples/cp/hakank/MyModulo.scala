@@ -134,7 +134,7 @@ object MyModulo {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(i <- 1 until n) {
         // myMod(cp, x(i), x(i-1), one)
@@ -150,7 +150,7 @@ object MyModulo {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()
