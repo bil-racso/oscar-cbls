@@ -56,7 +56,7 @@ trait DiscreteDistr[B] extends Distr[B] {
 
 class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
   require(list.size > 0)
-  require(list.foldLeft(0.0)(_ + _._1) == 1.0)
+  require(Math.abs(list.foldLeft(0.0)(_ + _._1) - 1.0) <= 0.0001)
   def getNextStochasticRealization(random: scala.util.Random): A = {
     val target = random nextDouble
     var tot = 0.0
