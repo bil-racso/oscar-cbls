@@ -66,8 +66,6 @@ object TSPVisu extends App {
 
   // Successors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  // Predecessors
-  val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
   val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
 
@@ -101,40 +99,27 @@ object TSPVisu extends App {
   // --------------------
   var nbSol = 0
   cp.minimize(totDist) subjectTo {
-
-    // Channeling between predecessors and successors
-    /*
-    for (i <- Cities) {
-      cp.add(pred(succ(i)) == i)
-      cp.add(succ(pred(i)) == i)
-    }*/
-
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
-    //cp.add(circuit(pred), Strong)
 
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
-    //cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
   } exploration {
 	cp.binaryFirstFail(succ, _.randomValue)
     // Greedy heuristic
     while (!allBounds(succ)) {
-
       // Selects the not yet bound city with the smallest number of possible successors
       val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
       // Selects the closest successors of the city x
       val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
-
     // One additional solution
     nbSol += 1
     // Updates the visualization
     updateVisu()
-  }
+  } run()
 
   cp.printStats()
 }

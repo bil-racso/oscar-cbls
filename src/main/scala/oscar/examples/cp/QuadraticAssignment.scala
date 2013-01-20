@@ -72,7 +72,7 @@ object QuadraticAssignment extends App {
       }
     }
     println("solution" + x.mkString(","))
-  } run ()
+  } run()
 
   // Print some statistics
   cp.printStats()

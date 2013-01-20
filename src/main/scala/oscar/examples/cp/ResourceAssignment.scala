@@ -72,7 +72,7 @@ object ResourceAssignment extends App {
       cp.add(binPacking(x,taskWeight.map(_._2),load))
     } exploration {
       cp.binaryFirstFail(x)
-    }
+    } run()
 
     cp.printStats()
 }

@@ -46,7 +46,14 @@ class ReversibleSearchNode {
 
   var sc: SearchController = new DFSSearchController(this)
 
+  /**
+   * time (ms) spend in last exploration
+   */
   var time: Long = 0
+  /**
+   * number of backtracks in last exploration
+   */
+  var bkts: Int = 0
 
   private var limit = Int.MaxValue
   private var tLimit = Int.MaxValue
@@ -218,10 +225,21 @@ class ReversibleSearchNode {
 
   var explorationCompleted = false
 
+  /**
+   * Start the exploration block
+   * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
+   * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
+   */
   def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit)()
 
   protected def update() = {}
   
+  /**
+   * Start the exploration block
+   * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
+   * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
+   * @param: reversibleBlock is bloc of code such that every constraints posted in it are removed after the run
+   */
   def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
     val t1 = System.currentTimeMillis()
     explorationCompleted = false
@@ -242,7 +260,8 @@ class ReversibleSearchNode {
             n += 1 // one more sol found
             solFound()
             if (n == nbSolMax) {
-              sc.reset()
+              bkts = sc.nFail
+              sc.reset() // stop the search
               k1() // exit the exploration block
             }
           }
@@ -266,9 +285,9 @@ class ReversibleSearchNode {
       explorationCompleted = true
     }
     if (explorationCompleted) {
-      if (!silent) print("!")
-    } else {
       if (!silent) print("R")
+    } else {
+      if (!silent) print("!")
     }
   }
 

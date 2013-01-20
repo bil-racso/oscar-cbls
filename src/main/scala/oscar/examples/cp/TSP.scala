@@ -74,20 +74,15 @@ object TSP extends App {
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
 
   } exploration {
-
     // Greedy heuristic
     while (!allBounds(succ)) {
-
       // Select the not yet bound city with the smallest number of possible successors
       val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
       // Select the closest successors of the city x
       val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
-    
-    //println("best sol")
-  }
+  } run()
 
   cp.printStats()
 }

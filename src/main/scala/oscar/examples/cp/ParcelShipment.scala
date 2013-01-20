@@ -71,7 +71,7 @@ object ParcelShipment {
 	      
 	    } exploration {
 	      cp.binaryFirstFail(succ)
-	    }
+	    } run()
 	    
 	    val f = new VisualFrame("ParcelShipment",1,1) 
 	    val w = f.createFrame("Tree")

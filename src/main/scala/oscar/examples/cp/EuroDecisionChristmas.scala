@@ -49,7 +49,7 @@ object EuroDecisionChistmas {
 		  for (i <- 0 until names.size; if (x(i).value == 1)) {
 		    println(names(i))
 		  }
-		}
+		} run()
 
 	}
 

@@ -27,6 +27,7 @@ import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
+import oscar.util._
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -114,26 +115,26 @@ class CPSolver() extends Store() {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   /**
-   * Binary First Fail on the decision variables vars
+   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
+   * @param vars: the array of variables to assign during the search
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
   def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    while (!allBounds(vars)) {
-      val unbound = vars.filter(!_.isBound)
-      val minDomSize = unbound.map(_.size).min
-      val x = unbound.filter(_.getSize == minDomSize).head
-      val v = valHeuris(x)
-      branch(post(x == v))(post(x != v)) // right alternative			
-    }
+    binary(vars,_.size,valHeuris)
   }
 
   /**
-   * Binary search on the decision variables vars with custom variable/value heuristic
+   * Binary search on the decision variables vars with custom variable/value heuristic (random tie breaking)
+   * @param vars: the array of variables to assign during the search
+   * @param varHeuris: for each variable, it's priority. 
+   *        The non-instanciated variable with the smallest priority is chosen first (random tie break).
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
   def binary(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
     while (!allBounds(vars)) {
       val unbound = vars.filter(!_.isBound)
       val heuris = unbound.map(varHeuris(_)).min
-      val x = unbound.filter(varHeuris(_) == heuris).head
+      val x = selectMin(vars)(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
@@ -181,7 +182,7 @@ class CPSolver() extends Store() {
 
   def printStats() {
     println("time(ms)", time)
-    println("#bkts", sc.nFail)
+    println("#bkts", bkts)
     println("time in fix point(ms)", getTimeInFixPoint())
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())

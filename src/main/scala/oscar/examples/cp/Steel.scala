@@ -128,7 +128,7 @@ object Steel {
       plot.addPoint(nbSol, obj.value)
       nbSol += 1
       println("sol #fail:" + cp.nFail)
-    } run (1)
+    } run(1)
 
     for (r <- 1 to 100) {
       cp.runSubjectTo(Int.MaxValue, 200) {

@@ -62,8 +62,6 @@ object StableMariage {
 
 
     cp.solve subjectTo {
-
- 
       for (m <- Men) {
         cp.add(elementVar(husband, wife(m),m),Strong)
       }
@@ -79,14 +77,11 @@ object StableMariage {
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
      } exploration {
-       
        cp.binary(wife)
-
        println("wife   :" + wife.mkString(""))
        println("husband:" + husband.mkString(""))
        println()
-
-     }
+     } run(1)
 
      cp.printStats()    
 
