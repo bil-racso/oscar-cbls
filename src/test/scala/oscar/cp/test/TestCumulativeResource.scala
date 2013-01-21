@@ -13,7 +13,7 @@ import oscar.reversible._
 
 import oscar.visual._
 
-class TestMaxResource extends FunSuite with ShouldMatchers {
+class TestCumulativeResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	
 		
