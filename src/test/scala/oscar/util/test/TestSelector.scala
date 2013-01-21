@@ -59,9 +59,9 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	  
     	}
     	println(count.mkString(","))
-    	count(0) should be >= (300)
-    	count(0) should be >= (300)
-    	count(4) should be >= (300)
+    	count(0) should be >= (290)
+    	count(0) should be >= (290)
+    	count(4) should be >= (290)
     	count(0)+count(1)+count(4) should be(1000)
 
     }  
@@ -86,9 +86,9 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	  count(j) += 1
     	  
     	}
-    	count(0) should be >= (300)
-    	count(0) should be >= (300)
-    	count(4) should be >= (300)
+    	count(0) should be >= (290)
+    	count(0) should be >= (290)
+    	count(4) should be >= (290)
     	count(0)+count(1)+count(4) should be(1000)
 		
     } 
