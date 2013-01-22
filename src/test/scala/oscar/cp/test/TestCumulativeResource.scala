@@ -222,6 +222,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 			cp.binary(cp.activities)
 			
 			val sol = (act1.est, act2.est, act3.est)
+			println(act1.start+" "+act2.start+" "+act3.start)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
 		} run()
