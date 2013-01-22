@@ -95,7 +95,7 @@ object Rack {
     } exploration {
       cp.binaryFirstFail(rack)
       cp.binaryFirstFail(counters.flatten)
-    } 
+    } run()
 
 
     cp.printStats()

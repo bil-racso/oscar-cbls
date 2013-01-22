@@ -70,7 +70,7 @@ object QuadraticAssignment {
            }
         }
         println("solution"+x.mkString(",")) 
-    }
+    } run()
 
     // Print some statistics
     cp.printStats()

@@ -76,7 +76,7 @@ object LongestPath {
 
     } exploration {
       cp.binaryFirstFail(path)
-    }
+    } run()
     cp.printStats
 
   }

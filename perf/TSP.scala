@@ -62,7 +62,7 @@ object TSP {
 
         cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
       }
-    }
+    } run()
 
     cp.printStats()
   }

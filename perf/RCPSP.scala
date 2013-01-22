@@ -47,7 +47,7 @@ object RCPSP {
 			cp.add(new MaxSweepCumulative(cp, tasks, capa, 0))
 		} exploration {
 			cp.setTimes(tasks)
-		}
+		} run()
 		cp.printStats()
 
 	}

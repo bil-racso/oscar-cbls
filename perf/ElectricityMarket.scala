@@ -89,7 +89,7 @@ object ElectricityMarket {
 	    }
 	    nbSol += 1
 	    
-	  }
+	  } run()
 	  cp.printStats()
 	  
 	}

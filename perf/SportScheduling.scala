@@ -78,7 +78,7 @@ object SportScheduling {
       
       cp.binaryFirstFail(game.flatten)
       printSol()
-    }
+    } run(1)
     
     cp.printStats()
 
