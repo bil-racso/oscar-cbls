@@ -115,6 +115,7 @@ class CPSolver() extends Store() {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   /**
+   * Randomized branching
    * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
@@ -122,15 +123,26 @@ class CPSolver() extends Store() {
   def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
     binary(vars,_.size,valHeuris)
   }
-
+  
   /**
+   * Deterministic branching:
+   * Instantiate variable in from the first to last one in vars, trying smallest value first
+   */
+  def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+    binary(vars,vars.indexOf(_),minVal)
+  }
+  
+  
+  /**
+   * Randomized branching (unless you use a deterministic varHeuris,valHeuris selection rules):
    * Binary search on the decision variables vars with custom variable/value heuristic (random tie breaking)
    * @param vars: the array of variables to assign during the search
    * @param varHeuris: for each variable, it's priority. 
-   *        The non-instanciated variable with the smallest priority is chosen first (random tie break).
+   *        The non-instantiated variable with the smallest priority is chosen first (random tie break).
+   * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binary(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+  def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
       val unbound = vars.filter(!_.isBound)
       val heuris = unbound.map(varHeuris(_)).min
@@ -140,11 +152,9 @@ class CPSolver() extends Store() {
     }
   }
 
-  /**
-   *
-   */
+
   def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
-    binary(vars.toArray, valHeuris = minVal)
+    binary(vars.toArray,_.size,minVal)
   }
 
   /**

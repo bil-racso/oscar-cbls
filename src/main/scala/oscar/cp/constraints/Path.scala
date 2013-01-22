@@ -80,7 +80,7 @@ object Path {
 	  cp.solve subjectTo {
         cp.add(new Path(X,start,end,length))
       } exploration {
-        cp.binary(X)
+        cp.binaryFirstFail(X)
         println(X.mkString(","))
       } run()
   }

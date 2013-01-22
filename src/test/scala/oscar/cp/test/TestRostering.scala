@@ -77,7 +77,8 @@ class TestRostering extends FunSuite with ShouldMatchers  {
     	  
     	} exploration {
     	  println("exploration"+activities.flatten.mkString(","))
-    	  cp.binaryFirstFail(activities.flatten)
+    	  val x = activities.flatten
+    	  cp.binary(x,y => (y.size,x.indexOf(y)))
     	  //println("solution======"+cp.isFailed()+" "+totUnderDemand)
     	  best = totUnderDemand.value
     	} run()
