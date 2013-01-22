@@ -115,6 +115,17 @@ class CPSolver() extends Store() {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   /**
+   * Deterministic branching
+   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
+   * @param vars: the array of variables to assign during the search
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
+   */
+  def deterministicBinaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    binary(vars,x => (x.size,vars.indexOf(x)),valHeuris)
+  }
+  
+  
+  /**
    * Randomized branching
    * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
    * @param vars: the array of variables to assign during the search
