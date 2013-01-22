@@ -46,7 +46,9 @@ object RCPSP {
 		cp.minimize(makespan) subjectTo {
 			cp.add(new MaxSweepCumulative(cp, tasks, capa, 0))
 		} exploration {
-			cp.setTimes(tasks)
+		    cp.setTimes(tasks)
+		    println("here")
+			//
 		} run()
 		cp.printStats()
 
