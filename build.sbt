@@ -1,6 +1,8 @@
 import AssemblyKeys._
 import de.johoop.jacoco4sbt._
 import JacocoPlugin._
+import sbt._
+
 
 
 name := "oscar"
@@ -55,6 +57,8 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 testOptions in Test <+= (target in Test) map {
   t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports"))
 }
+
+TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
 
 
 
