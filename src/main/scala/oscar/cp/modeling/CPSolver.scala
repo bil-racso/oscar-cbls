@@ -155,8 +155,6 @@ class CPSolver() extends Store() {
    */
   def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val unbound = vars.filter(!_.isBound)
-      val heuris = unbound.map(varHeuris(_)).min
       val x = selectMin(vars)(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
