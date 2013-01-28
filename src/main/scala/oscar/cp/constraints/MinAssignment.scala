@@ -28,7 +28,7 @@ import scala.annotation.tailrec
 import scala.util.control.Breaks._
 
 /**
- * This code is inspired from an implementation by Kevin L. Stern of the hungarian algorithm
+ * This code is inspired by an implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
  */
 class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val cost: CPVarInt) extends Constraint(x(0).s, "MinAssignment") {

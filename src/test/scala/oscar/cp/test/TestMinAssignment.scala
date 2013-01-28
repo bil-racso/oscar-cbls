@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
-import oscar.cp.constraints.MinAssignment2
+import oscar.cp.constraints.MinAssignment
 
 class TestMinAssignment extends FunSuite with ShouldMatchers {
 
