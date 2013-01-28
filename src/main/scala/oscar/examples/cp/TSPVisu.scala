@@ -28,6 +28,8 @@ import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
 import java.awt.Color
+import oscar.cp.constraints.MinAssignment2
+import oscar.cp.constraints.MinAssignment
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -101,11 +103,13 @@ object TSPVisu extends App {
   cp.minimize(totDist) subjectTo {
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
-
+    cp.add(new MinAssignment(succ,distMatrix,totDist))
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
   } exploration {
+    cp.deterministicBinaryFirstFail(succ)
+    /*
 	cp.binaryFirstFail(succ, _.randomValue)
     // Greedy heuristic
     while (!allBounds(succ)) {
@@ -115,6 +119,7 @@ object TSPVisu extends App {
       val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
       cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
     }
+    */
     // One additional solution
     nbSol += 1
     // Updates the visualization
