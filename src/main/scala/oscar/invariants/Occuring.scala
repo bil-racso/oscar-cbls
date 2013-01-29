@@ -1,10 +1,10 @@
 /**
- * This file describes classes to use Event Programming in OscaR. 
- * 
- * This is of special interest for Discrete-Event Simulation, Agent-Based 
- * simulation and invariants (functions maintained automatically from 
+ * This file describes classes to use Event Programming in OscaR.
+ *
+ * This is of special interest for Discrete-Event Simulation, Agent-Based
+ * simulation and invariants (functions maintained automatically from
  * changes to given variables).
- * 
+ *
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
  *
@@ -43,7 +43,7 @@ trait Occuring[A] {
   def foreach(f: A => Boolean): Reaction[A]
 
   def apply(f: A => Unit) = new ReactionDescription(this, { msg: A => f(msg); true })
-  def ~>(f: A => Unit) = this(f)
+  def    ~>(f: A => Unit) = this(f)
 
   /**
    * This methods returns an Occuring that will throw a notification each time this
@@ -118,7 +118,7 @@ trait BaseEvent[A] extends Occuring[A] {
   class EventReaction(var event: BaseEvent[A], f: A => Boolean) extends Reaction[A](f, event) {
     val cf = dependants.add(this)
     def dispose() {
-      dependants.remove(cf)
+      cf silentlyRemove
     }
   }
   override def foreach(f: A => Boolean) = new EventReaction(this, f)
@@ -126,19 +126,22 @@ trait BaseEvent[A] extends Occuring[A] {
 }
 
 /**
- * These events notify all reactions listening to them. Thsi is the default implementation.
+ * These events notify all reactions listening to them. This is the default implementation.
  */
 trait NotifyAllEvent[A] extends BaseEvent[A] {
   override def emit(msg: A) {
     for (d <- dependants) d(msg)
   }
   def toSignal(v: A) = {
-	  val res = new SignalAll(v)
-	  whenever(this) { res.emit(_) }
-	  res
+    val res = new SignalAll(v)
+    whenever(this) { res.emit(_) }
+    res
   }
 }
-class Event[A] extends NotifyAllEvent[A] {
+
+object Event {
+  def apply[A]() = new NotifyAllEvent[A](){}
+  def oneAtATime[A]() = new NotifyOneEvent[A](){}
 }
 
 /**
@@ -146,12 +149,11 @@ class Event[A] extends NotifyAllEvent[A] {
  * but this is still experimental. It is not straightforward to use them for correct implementation of queues.
  * Will likely be removeed in future versions.
  */
-trait NotifyOneEvent[A] extends Event[A] {
+trait NotifyOneEvent[A] extends BaseEvent[A] {
   override def emit(a: A) {
     if (dependants.first != null) dependants.first.apply(a)
   }
 }
-class EventOne[A] extends NotifyOneEvent[A] {}
 
 /**
  * This class represents an Occuring that throws notifications each time any Occuring in a given list throws notifications.
@@ -204,29 +206,31 @@ class ReactionDescription[A](val e: Occuring[A], val f: A => Boolean) {
   def post() = occuring.foreach(f)
 }
 
-
+object Signal {
+  def apply[A](v: A) = new SignalAll[A](v)
+}
 /**
  * A Signal holds a value and throw a notification each time the value changes.
  */
-class Signal[A](private var value: A) extends Event[A] {
-	override def emit(msg: A) {
-		if (msg != value) {
-			value = msg
-					super.emit(msg)
-		}
-	}
-	def apply() = value
-			override def filter(f: A => Boolean) = new ConditionalOccuring[A](this, f) {
-		// could be improved in the case the call to f(sig()) is false;
-		// then we could avoid to create the Reaction
-		override def foreach(f: A => Boolean) = {
-			val r = super.foreach(f)
-					if (f(value)) r(value)
-					r
-		}
-	}
-	
-	//new EventFromNow(this, f)
+class Signal[A](private var value: A) extends NotifyAllEvent[A] {
+  override def emit(msg: A) {
+    if (msg != value) {
+      value = msg
+      super.emit(msg)
+    }
+  }
+  def apply() = value
+  override def filter(f: A => Boolean) = new ConditionalOccuring[A](this, f) {
+    // could be improved in the case the call to f(sig()) is false;
+    // then we could avoid to create the Reaction
+    override def foreach(f: A => Boolean) = {
+      val r = super.foreach(f)
+      if (f(value)) r(value)
+      r
+    }
+  }
+
+  //new EventFromNow(this, f)
 }
 
 //class SignalOne[A](value: A) extends Signal[A](value) with NotifyOneEvent[A] {
@@ -239,7 +243,7 @@ class Signal[A](private var value: A) extends Event[A] {
 class SignalAll[A](value: A) extends Signal[A](value) with NotifyAllEvent[A] {
   override def emit(msg: A) {
     super[Signal].emit(msg)
-    super[NotifyAllEvent].emit(msg)
+    //super[NotifyAllEvent].emit(msg)
   }
 }
 

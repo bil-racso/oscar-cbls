@@ -29,7 +29,7 @@ import oscar.invariants._
 class InvariantsTest extends FunSuite with ShouldMatchers  {
 
   
-  test("test whener on VarInt") {
+  test("test whenever on VarInt") {
 	  	val y = new VarInt(1)
 	  	
 	  	var nb = 0

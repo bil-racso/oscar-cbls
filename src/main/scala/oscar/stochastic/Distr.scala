@@ -74,19 +74,16 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
 }
 
 object UniformDiscrete {
-  def apply[B  <% Ordered[B] : Numeric](a: B, b: B) = new UniformDiscrete(a, b)
+  def apply(a: Int, b: Int) = new UniformDiscrete(a, b)
 }
-class UniformDiscrete[B <% Ordered[B] : Numeric](val min: B, val max: B) extends ContinuousDistr[B] {
-  val op = implicitly[Numeric[B]]
-  implicit def b2Int(b: B) = op.toInt(b)
-  implicit def int2B(i: Int) = op.fromInt(i)
+class UniformDiscrete(val min: Int, val max: Int) extends ContinuousDistr[Int] {
   require(max >= min)
-  require(op.minus(max,min) < Int.MaxValue)
   
-  val interval = op.minus(max,min)
+  val interval = max-min
   val midInterval = (interval) / 2
-  def getNextStochasticRealization(random: scala.util.Random): B = {
-    op.plus(min,random.nextInt(interval))
+  def getNextStochasticRealization(random: scala.util.Random): Int = {
+    
+    min + random.nextInt(interval)
   }
   def mean = min + midInterval 
   def std = { assert(false); -1 }

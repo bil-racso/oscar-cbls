@@ -56,7 +56,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
    */
   def setTime(t: A) {
     require(t >= this())
-    require(t <= nextTime)
+    require(pq.isEmpty() || t <= nextTime)
 
     if (!pq.isEmpty() && t == nextTime) {
       generateNext
@@ -70,15 +70,17 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
    */
   def nextTime = pq.peek().time
 
-  override def ===(i: A) = new Occuring[A] {
-    override def foreach(f2: A => Boolean) = {
-      val a = new WaitEvent[A](v, f2)
-      PQCounter.this addEvent (a)
-      new PQEventBlock(a)
+  override def ===(i: A) = {
+    new Occuring[A] {
+      override def foreach(f2: A => Boolean) = {
+        val a = new WaitEvent[A](i, f2)
+        PQCounter.this addEvent (a)
+        new PQEventBlock(a)
+      }
     }
   }
 
-  def nonEmpty = pq.size() > 0
+  def nonEmpty = !pq.isEmpty()
 
   /**
    * Executes all the reactions holding on this counter.
@@ -112,22 +114,20 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
  * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class SimEvent[A<%Ordered[A]](val time: A) extends Ordered[SimEvent[A]] {
-	def compare(that : SimEvent[A]) = time.compare(that.time)
+abstract class SimEvent[A <% Ordered[A]](val time: A) extends Ordered[SimEvent[A]] {
+  def compare(that: SimEvent[A]) = time.compare(that.time)
 }
 
-class WaitEvent[A<%Ordered[A]](time: A, block: A => Boolean ) extends SimEvent[A](time) {
-	def process(){
-	  block(time)
-	}	
+class WaitEvent[A <% Ordered[A]](time: A, block: A => Boolean) extends SimEvent[A](time) {
+  def process() {
+    block(time)
+  }
 }
-
-
 
 object Counter {
 
   def pq[A <% Ordered[A]](v: A) = new PQCounter(v)
-  
+
   def main(args: Array[String]) {
 
     val x = new VarInt(5)

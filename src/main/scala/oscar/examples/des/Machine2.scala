@@ -34,8 +34,8 @@ import org.scala_tools.time.Imports._
  */
 class Machine2(m : Model[Unit], name: String, repairPerson: Resource) extends Process[Unit](name)(m) {
 	val a = (1 minutes).toDuration
-	val liveDur = UniformDiscrete[Period](1 minutes, 10 minutes)
-	val repairDur = UniformDiscrete[Period](1 minutes, 3 minutes)
+	val liveDur = UniformDiscrete(1, 10 ).map(_.minutes)
+	val repairDur = UniformDiscrete(1, 3).map(_.minutes)
 	
 	
 	def alive(): Unit @susp = {

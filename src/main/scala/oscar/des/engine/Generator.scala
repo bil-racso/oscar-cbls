@@ -27,6 +27,11 @@ import scala.util.continuations._
 import JSci.maths.statistics._
 import oscar.invariants._
 
+object Generator {
+	def apply(dist: Distr[Double])(block: => Unit)(implicit m: Model[Unit]) = new Generator(m, dist)(block)
+	def apply(dist: ProbabilityDistribution) = new NumberGenerator(dist)
+}
+
 class Generator(m: Model[Unit], var dist: Distr[Double])(block: => Unit) extends Process[Unit]("Generator")(m){
 
   simulate()
@@ -54,6 +59,16 @@ class Generator(m: Model[Unit], var dist: Distr[Double])(block: => Unit) extends
     dist = v
   }
 }
-object Generator {
-  def apply(dist: Distr[Double])(block: => Unit)(implicit m: Model[Unit]) = new Generator(m, dist)(block)
+class NumberGenerator(dist: ProbabilityDistribution) {
+
+  val generator = new Random()
+
+  var generating = true
+
+  def stop() { generating = false }
+
+  def apply(): Double = dist.inverse(generator.nextDouble)
+  def generateNext = apply
+
 }
+

@@ -30,7 +30,7 @@ import oscar.invariants._
 class Resource(var capacity: Int)(implicit m: Model[_]) {
 	
 	private var n = 0
-	private val rel = new EventOne[Unit]
+	private val rel = Event.oneAtATime[Unit]
 	
 	def request[T]() = {
 	  

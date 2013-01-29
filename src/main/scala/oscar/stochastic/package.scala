@@ -20,7 +20,7 @@ object NumericPeriod extends Numeric[Period]{
 package object stochastic {
 	implicit val n = NumericPeriod
 	implicit def valueToDistr[A](value: A) = new ValueDistr(value)
-	implicit def t2ToPeriod( t: Tuple2[Period,Period]) = UniformDiscrete(t._1,t._2) 
+	//implicit def t2ToPeriod( t: Tuple2[Period,Period]) = UniformDiscrete(t._1,t._2) 
   
 	//implicit def probaDistr2Distr(d: ProbabilityDistribution) = new Distribution(d)
 }

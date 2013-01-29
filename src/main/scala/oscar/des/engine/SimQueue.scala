@@ -23,7 +23,7 @@ import scala.util.continuations._
 class SimQueue {
 
   val isOpen = new Var[Boolean](false)
-  val serve = new EventOne[Unit]  
+  val serve = Event.oneAtATime[Unit]()  
   val isBusy = new Var[Boolean](false)
   val isEmpty = new Var[Boolean](true)
   

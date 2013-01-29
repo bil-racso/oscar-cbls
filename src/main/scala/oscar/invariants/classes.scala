@@ -53,7 +53,7 @@ class Reactive {
     val elem = reactingOn.add(this)
     def dispose() {
       reaction.dispose()
-      reactingOn.remove(elem)
+      elem remove
     }
   }
   def dispose() = {
@@ -113,7 +113,7 @@ class VarInt(v: Int) extends Var[Int](v) {
   /**
    * Occuring that throws notifications representing the incremental change in the value each time it changes.
    */
-  val incChanges = new Event[(Int, Int)]
+  val incChanges = Event[(Int, Int)]()
   @inline override final def :=(v: Int) {
     val old = this()
     super.:=(v)
@@ -127,8 +127,8 @@ class VarInt(v: Int) extends Var[Int](v) {
  * A Var holding a list of values, with facility methods.
  */
 class VarList[A]() extends Var[Seq[A]](Nil) {
-  val isIncreased = new Event[A]
-  val isDecreased = new Event[A]
+  val isIncreased = Event[A]()
+  val isDecreased = Event[A]()
   def add(elem: A) {
     this := this() :+ elem
     isIncreased emit (elem)

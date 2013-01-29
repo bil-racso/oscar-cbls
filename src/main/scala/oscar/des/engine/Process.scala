@@ -108,7 +108,7 @@ abstract class ProcessWithStates[S,T <: ProcessResult[T]](name: String = "Proces
 }
 
 trait MonitorState[S,T <: ProcessResult[T]] extends ProcessWithStates[S,T] {
-  val entering = new Event[S]
+  val entering = Event[S]()
   override def deepExec(state: S) = {
     entering.emit(state)
     super.deepExec(state)

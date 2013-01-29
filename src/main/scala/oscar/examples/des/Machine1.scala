@@ -22,6 +22,8 @@ package oscar.examples.des
 import oscar.des.engine._
 import oscar.stochastic._
 import scala.util.continuations._
+import org.scala_tools.time.Imports._
+import org.joda.time.Minutes
 
 
 /**
@@ -30,19 +32,20 @@ import scala.util.continuations._
  */
 class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 	
-	val liveDur = UniformDiscrete(1, 9)
-	val breakDur = UniformDiscrete(3, 4)
+  //implicit def period2Long(p: Period) = p.millis.toLong
+	val liveDur  = UniformDiscrete(1, 9).map(_.minutes)
+	val breakDur = UniformDiscrete(3, 4).map(_.minutes)
 	
 	def beAlive(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
-		println(name+" is alive");
-		waitDuring(liveDur(m))
+		println(name+" is alive")
+		waitDuring(liveDur(m).toPeriod)
 		beBroken()
 		
 	}
 	
 	def beBroken(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
 		println(name+" is broken");
-		waitDuring(breakDur(m))
+		waitDuring(breakDur(m).toPeriod)
 		beAlive()
 	}
 	
@@ -54,8 +57,8 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 object Machine1 {
 	def main(args: Array[String]){
   		val mod = new StochasticModel()
-  		mod.setTime("5/1/2012 5:00pm")
-		val m1 = new Machine1(mod,"machine1")
+  		mod.setTime( new DateTime(2012,1,5,17,0))
+  		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
 		mod.simulate(mod.clock().plusDays(100),true);
 	}
