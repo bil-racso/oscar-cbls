@@ -27,9 +27,7 @@ import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
-import oscar.cp.mem.CPMObjective
-import oscar.cp.mem.pareto.ParetoSet
-import oscar.cp.mem.CPMObjectiveUnitMinimize
+import oscar.util._
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -45,14 +43,6 @@ class CPSolver() extends Store() {
     stateObjective = Unit => {
       objective = obj
       post(obj)
-    }
-    this
-  }
-  
-  def minimizeMO[Sol](pareto: ParetoSet[Sol], objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPMObjective(this, pareto, objectives.map(new CPMObjectiveUnitMinimize(_)): _*)
-      post(objective)
     }
     this
   }
@@ -120,36 +110,55 @@ class CPSolver() extends Store() {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   /**
-   * Binary First Fail on the decision variables vars
+   * Deterministic branching
+   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
+   * @param vars: the array of variables to assign during the search
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
+   */
+  def deterministicBinaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    binary(vars,x => (x.size,vars.indexOf(x)),valHeuris)
+  }
+  
+  
+  /**
+   * Randomized branching
+   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
+   * @param vars: the array of variables to assign during the search
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
   def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    while (!allBounds(vars)) {
-      val unbound = vars.filter(!_.isBound)
-      val minDomSize = unbound.map(_.size).min
-      val x = unbound.filter(_.getSize == minDomSize).head
-      val v = valHeuris(x)
-      branch(post(x == v))(post(x != v)) // right alternative			
-    }
+    binary(vars,_.size,valHeuris)
   }
-
+  
   /**
-   * Binary search on the decision variables vars with custom variable/value heuristic
+   * Deterministic branching:
+   * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
-  def binary(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+  def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+    binary(vars,vars.indexOf(_),minVal)
+  }
+  
+  
+  /**
+   * Randomized branching (unless you use a deterministic varHeuris,valHeuris selection rules):
+   * Binary search on the decision variables vars with custom variable/value heuristic (random tie breaking)
+   * @param vars: the array of variables to assign during the search
+   * @param varHeuris: for each variable, it's priority. 
+   *        The non-instantiated variable with the smallest priority is chosen first (random tie break).
+   * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
+   */
+  def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val unbound = vars.filter(!_.isBound)
-      val heuris = unbound.map(varHeuris(_)).min
-      val x = unbound.filter(varHeuris(_) == heuris).head
+      val x = selectMin(vars)(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
   }
 
-  /**
-   *
-   */
+
   def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
-    binary(vars.toArray, valHeuris = minVal)
+    binary(vars.toArray,_.size,minVal)
   }
 
   /**
@@ -187,7 +196,7 @@ class CPSolver() extends Store() {
 
   def printStats() {
     println("time(ms)", time)
-    println("#bkts", sc.nFail)
+    println("#bkts", bkts)
     println("time in fix point(ms)", getTimeInFixPoint())
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())

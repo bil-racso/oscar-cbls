@@ -118,6 +118,81 @@ class TestObjective extends FunSuite with ShouldMatchers  {
 	  } run()
 	  nbsol should be(2) 
   }  
+  
+  test("Obj5") {   
+      
+	  val cp = CPSolver()
+	  val x1 = CPVarInt(cp,0 to 2)
+	  val x2 = CPVarInt(cp,0 to 2)
+	  
+	  val obj1 = new CPObjectiveUnitMinimize(x1,"x1")
+	  obj1.tightenMode = TightenType.NoTighten
+	  val obj2 = new CPObjectiveUnitMinimize(x2,"x2")
+	  obj2.tightenMode = TightenType.NoTighten
+	  val obj3 = new CPObjectiveUnitMinimize((x1*2)+x2,"2*x1+x2")
+	  obj3.tightenMode = TightenType.StrongTighten
+  
+	  var nbsol = 0
+	  
+	  val obj = new CPObjective(cp,obj1,obj2,obj3)
+	  cp.optimize(obj) subjectTo {} exploration {
+	    cp.binary(Array(x1),cp.minVar,_.max)
+	    cp.binary(Array(x2),cp.minVar,_.max)
+	    //println(x1+" "+x2)
+	    nbsol +=1
+
+	  } run()
+	  nbsol should be(7) 
+  } 
+  
+    test("Obj6") {   
+	  val cp = CPSolver()
+	  val x1 = CPVarInt(cp,0 to 2)
+	  val x2 = CPVarInt(cp,0 to 2)
+	  
+	  val obj1 = new CPObjectiveUnitMinimize(x1,"x1")
+	  obj1.tightenMode = TightenType.WeakTighten
+	  val obj2 = new CPObjectiveUnitMinimize(x2,"x2")
+	  obj2.tightenMode = TightenType.WeakTighten
+	  val obj3 = new CPObjectiveUnitMinimize((x1*2)+x2,"2*x1+x2")
+	  obj3.tightenMode = TightenType.StrongTighten
+  
+	  var nbsol = 0
+	  
+	  val obj = new CPObjective(cp,obj1,obj2,obj3)
+	  cp.optimize(obj) subjectTo {} exploration {
+	    cp.binary(Array(x1),cp.minVar,_.max)
+	    cp.binary(Array(x2),cp.minVar,_.max)
+	    nbsol +=1
+
+	  } run()
+	  nbsol should be(5) 
+  } 
+    
+    test("Obj7") {   
+	  val cp = CPSolver()
+	  val x1 = CPVarInt(cp,0 to 2)
+	  val x2 = CPVarInt(cp,0 to 2)
+	  
+	  val obj1 = new CPObjectiveUnitMinimize(x1,"x1")
+	  obj1.tightenMode = TightenType.StrongTighten
+	  val obj2 = new CPObjectiveUnitMinimize(x2,"x2")
+	  obj2.tightenMode = TightenType.WeakTighten
+	  val obj3 = new CPObjectiveUnitMinimize((x1*2)+x2,"2*x1+x2")
+	  obj3.tightenMode = TightenType.StrongTighten
+  
+	  var nbsol = 0
+	  
+	  val obj = new CPObjective(cp,obj1,obj2,obj3)
+	  cp.optimize(obj) subjectTo {} exploration {
+	    cp.binary(Array(x1),cp.minVar,_.max)
+	    cp.binary(Array(x2),cp.minVar,_.max)
+	    println(x1+" "+x2)
+	    nbsol +=1
+
+	  } run()
+	  nbsol should be(3) 
+  }     
     
     
   

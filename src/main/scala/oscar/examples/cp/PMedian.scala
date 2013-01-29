@@ -31,6 +31,13 @@ import java.awt.Color
 /**
  * P-Median Problem
  * 
+ * Let us consider a set I={1,..., n} of potential locations for p facilities, 
+ * a set J={1,..., m} of customers, and  n x m matrix of transportations costs 
+ * for satisfying the demands of the customers from the facilities.  
+ * The p-median problem is to locate the p facilities at locations of I in order 
+ * to minimize the total transportation cost for satisfying the demand of the customers. 
+ * Also each location has fixed capacity for the demand that cannot be exceeded.
+ * 
  * @author Pierre Schaus pschaus@gmail.com
  */
 object PMedian extends App {
@@ -107,6 +114,6 @@ object PMedian extends App {
     for (i <- 0 until nbCust) xsol(i) = x(i).value
     updateVisu()
     println("\n"+totCost)
-  }
+  } run()
 
 }

@@ -76,9 +76,9 @@ object SportScheduling {
         cp.add(gcc(team(p).flatten, Teams, 1, 2),Strong)
     } exploration {
       
-      cp.binaryFirstFail(game.flatten)
+      cp.deterministicBinaryFirstFail(game.flatten)
       printSol()
-    }
+    } run(1)
     
     cp.printStats()
 

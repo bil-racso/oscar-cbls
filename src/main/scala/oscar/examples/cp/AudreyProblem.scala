@@ -54,7 +54,7 @@ object AudreyProblem  {
 		} exploration {
 		  cp.binaryFirstFail(x)
 		  println(x.map(_.value).mkString(","))
-		}
+		} run(1)
 		
 		cp.printStats()
 		

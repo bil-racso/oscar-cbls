@@ -13,7 +13,7 @@ import oscar.reversible._
 
 import oscar.visual._
 
-class TestMaxResource extends FunSuite with ShouldMatchers {
+class TestCumulativeResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	
 		
@@ -182,7 +182,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 		cp.addResourceConstraints()			               
 		cp.solve 
 		cp.exploration {
-			cp.binary(cp.activities)
+			cp.binary(cp.activities.map(_.start))
 			
 			val sol = (act1.est, act2.est, act3.est, act4.est)
 			expectedSol.contains(sol) should be(true)
@@ -222,6 +222,7 @@ class TestMaxResource extends FunSuite with ShouldMatchers {
 			cp.binary(cp.activities)
 			
 			val sol = (act1.est, act2.est, act3.est)
+			println(act1.start+" "+act2.start+" "+act3.start)
 			expectedSol.contains(sol) should be(true)
 			nSol += 1
 		} run()
