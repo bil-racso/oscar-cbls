@@ -28,7 +28,6 @@ import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
 import java.awt.Color
-import oscar.cp.constraints.MinAssignment2
 import oscar.cp.constraints.MinAssignment
 
 /**
