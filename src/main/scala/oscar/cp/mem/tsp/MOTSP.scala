@@ -53,7 +53,7 @@ abstract class MOTSP[Sol](selected: Array[Array[Boolean]], distMatrices: Array[A
   }
 
   cp.exploration {
-    regretHeuristic(cp, succ, distMatrices(currentObjective))
+    minDomDistHeuristic(cp, succ, distMatrices(currentObjective))
     solFound()
   }     
 }

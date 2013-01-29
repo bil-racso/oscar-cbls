@@ -29,6 +29,7 @@ import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 import oscar.cp.mem.CPMObjective
 import oscar.cp.mem.pareto.ParetoSet
+import oscar.cp.mem.CPMObjectiveUnitMinimize
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -50,7 +51,7 @@ class CPSolver() extends Store() {
   
   def minimizeMO[Sol](pareto: ParetoSet[Sol], objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
-      objective = new CPMObjective(this, pareto, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      objective = new CPMObjective(this, pareto, objectives.map(new CPMObjectiveUnitMinimize(_)): _*)
       post(objective)
     }
     this

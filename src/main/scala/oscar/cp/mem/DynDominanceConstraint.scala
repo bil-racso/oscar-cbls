@@ -1,35 +1,33 @@
 package oscar.cp.mem
 
-import oscar.cp.constraints.CPObjective
-import oscar.cp.constraints.CPObjectiveUnit
-import oscar.cp.core.Store
-import oscar.cp.mem.pareto.ParetoSet
-import oscar.cp.core.Constraint
-import oscar.cp.core.CPOutcome
-import oscar.cp.core.CPPropagStrength
-import oscar.reversible.ReversiblePointer
-import oscar.cp.mem.pareto.SolNode
-import oscar.cp.core.CPVarInt
-import oscar.cp.mem.pareto.LinkedNode
 import oscar.reversible.ReversibleInt
-import oscar.cp.modeling.TightenType
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.Store
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.mem.pareto.ParetoSet
+import oscar.reversible.ReversibleSetIndexedArray
+import oscar.cp.mem.pareto.MOSol
+import oscar.cp.modeling.CPSolver
+import oscar.reversible.ReversiblePointer
+import oscar.cp.mem.pareto.LinkedNode
+import oscar.cp.mem.pareto.SolNode
 
-class CPMObjective[Sol](st: Store, pareto: ParetoSet[Sol], objs: CPObjectiveUnit*) extends CPObjective(st, objs:_*) {
+class DynDominanceConstraint[Sol](cp: Store, pareto: ParetoSet[Sol], objs: CPVarInt*) extends Constraint(cp, "Dominance") {
 
-  val lastBound: Array[ReversiblePointer[LinkedNode[SolNode[Sol]]]] = Array.fill(pareto.nObjs)(new ReversiblePointer(st, null))
+  val lastBound: Array[ReversiblePointer[LinkedNode[SolNode[Sol]]]] = Array.fill(pareto.nObjs)(new ReversiblePointer(cp, null))
   
   override def propagate(): CPOutcome = {
-    if (pareto.Objs.forall(o => {
-      updateUpperBound(o)     
-      objs(o).filter() != CPOutcome.Failure
-    })) CPOutcome.Suspend
+    if (pareto.Objs.forall(o => updateUpperBound(o) != CPOutcome.Failure)) CPOutcome.Suspend
     else CPOutcome.Failure
   }
   
-  private def updateUpperBound(obj: Int) {
+  private def updateUpperBound(obj: Int): CPOutcome = {
     lastBound(obj).setValue(null)
-    adjustMin(obj, objs(obj).objVar.min)
-    objs(1-obj).best = upperBound(obj, 1-obj)
+    adjustMin(obj, objs(obj).min)
+    objs(1-obj).updateMax(upperBound(obj, 1-obj) - 1)
   }
     
   private def adjustMin(obj: Int, min: Int) {
@@ -37,6 +35,10 @@ class CPMObjective[Sol](st: Store, pareto: ParetoSet[Sol], objs: CPObjectiveUnit
       if (lastBound(obj).value == null) lastBound(obj).setValue(pareto.objsVal(obj).first)
       else lastBound(obj).setValue(lastBound(obj).value.next)
     }
+  }
+  
+  override def updateMinIdx(cpvar: CPVarInt, obj: Int, v: Int): CPOutcome = {
+    return updateUpperBound(obj)
   }
   
   private def nextVal(obj: Int): Int = {
@@ -54,8 +56,9 @@ class CPMObjective[Sol](st: Store, pareto: ParetoSet[Sol], objs: CPObjectiveUnit
   }
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    objs.foreach(_.objVar.callPropagateWhenBoundsChange(this))
-    objs.foreach(s.post(_))
+    setIdempotent()
+    for (o <- pareto.Objs)
+      objs(o).callUpdateMinIdxWhenMinChanges(this, o)
     propagate()
   }
 }

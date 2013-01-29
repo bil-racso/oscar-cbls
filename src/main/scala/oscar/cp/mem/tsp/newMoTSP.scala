@@ -1,44 +1,43 @@
 package oscar.cp.mem.tsp
 
-import oscar.cp.mem.visu.VisualSet
+import oscar.cp.mem.RoutingUtils._
+import oscar.cp.modeling._
+import oscar.cp.core._
+import oscar.cp.mem.ChannelingPredSucc
+import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
-import scala.collection.mutable.Queue
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp.mem.visu.VisualSet
 import oscar.cp.mem.DominanceConstraint
-import oscar.cp.mem.InSet
-import oscar.cp.modeling.CPSolver
-import oscar.cp.mem.ChannelingPredSucc
-import oscar.cp.mem.measures.Hypervolume.hypervolume
-import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.constraints.TONOTCOMMIT
+import oscar.util._
+import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
+import oscar.cp.mem.measures.Hypervolume.hypervolume
 
-object MoLnsTSP extends App {
+object newMoTSP extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int]) { var lifes = 10 }
 
+  // BiObjective Pareto Set 
   val pareto: ParetoSet[Sol] = ParetoSet(2)
-  val newSols: ParetoSet[Sol] = ParetoSet(pareto.nObjs)
   pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
+  // Visualization
   val visu = new VisualSet(pareto)
   
-  val inst1 = "A"
-  val inst2 = "B"
-
-  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst1+"100.tsp")
-  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kro"+inst2+"100.tsp")
+  // Parsing
+  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
+  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp") 
   val distMatrices = Array(distMatrix1, distMatrix2)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
-
+  
   // First Phase
   // -----------
   
   // Read data
-  val preds = TSPUtils.readSet("firstPhase"+inst1+inst2+"merged.txt")
+  val preds = TSPUtils.readSet("firstPhaseABmerged.txt")
   val succs = TSPUtils.buildSuccsFromPreds(preds)
 
   // Only use edges of the first phase
@@ -55,15 +54,16 @@ object MoLnsTSP extends App {
     val dist2 = TSPUtils.computeDist(preds(i), distMatrix2)
     val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
     pareto insert x
-  }  
-  
-  // Init Model
-  // ----------
-  
+  }
+
+  // Model
+  // -----
   val cp = new CPSolver()
   cp.silent = true
 
   // Successors & Predecessors  
+  //val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
+  //val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
   val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
   val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
 
@@ -93,9 +93,9 @@ object MoLnsTSP extends App {
   
   // Search
   // ------
-  var currentObjective = 0
+  var objective = 0
   cp.exploration {    
-    regretHeuristic(cp, succ, distMatrices(currentObjective))
+    regretHeuristic(cp, succ, distMatrices(objective))
     solFound()
   } 
 
@@ -110,85 +110,45 @@ object MoLnsTSP extends App {
     visu.update()
     visu.paint
   }
-
-  // MOLNS Framework
-  // ---------------
-
-  val rand = cp.random
-
-  // Parameters
-  val p = 10
-  val intensFreq = 0.3
-
+  
+  // Run
+  // ---  
+  println("Search...")
+  //cp.run(1)
   var stopCriterion = false
-  var currentDominated = false
   var iter = 0
   
-  // Framework 
   while(!stopCriterion) {
     
     iter += 1
-    if (iter % 100 == 0) println("Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
+    if (iter % 100 == 0) println("Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + hypervolume(pareto))   
+
+    noSol = true
+    val alive = pareto.filter(_.lifes > 0)
     
-    // Selects mode
-    val intens = rand.nextFloat() < intensFreq
-    
-    // Selects a solution
-    val sol = selectSolution(iter, intens)
-    
-    // Search
-    if (sol == null) stopCriterion = true
+    if (alive.isEmpty) stopCriterion = true
     else {
-      currentDominated = false
-      for (o <- pareto.Objs if !currentDominated) {
-        currentObjective = o
-        cp.runSubjectTo(failureLimit = 3000) {
-          relaxObjectives(o, sol, intens)
-          relaxVariables(clusterRelax(p, o), sol)
-        }
+      val sol = alive(cp.random.nextInt(alive.size))
+      objective = cp.random.nextInt(pareto.nObjs)
+
+      cp.runSubjectTo(failureLimit = 3000) {
+        relaxVariables(clusterRelax(10, objective), sol)
       }
+
       if (noSol) sol.lifes -= 1
     }
   }
-
-  def selectSolution(iter: Int, intens: Boolean): MOSol[Sol] = {   
-    val alive = pareto.filter(_.lifes > 0)
-    if (alive.isEmpty) null
-    else alive(rand.nextInt(alive.size))
-  }
-
-  def computeIntenSurf(sol: MOSol[Sol]): Int = {
-    val diff1 = sol.objs(0) - sol.lowerBound(0)
-    val diff2 = sol.objs(1) - sol.lowerBound(1)
-    diff1 * diff2
-  }
-
-  def computeDiffSurf(sol: MOSol[Sol]): Int = {
-    val diff12 = sol.upperBound(0) - sol.objs(0)
-    val diff11 = sol.objs(0) - sol.lowerBound(0)
-    val diff22 = sol.upperBound(1) - sol.objs(1)
-    val diff21 = sol.objs(1) - sol.lowerBound(1)
-    diff12 * diff21 + diff11 * diff22
-  }
-
-  def relaxObjectives(obj: Int, sol: MOSol[Sol], intensification: Boolean = false) {   
-    for (o <- pareto.Objs) {
-      if (o != obj) {
-        cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
-        if (intensification) cp.objective.objs(o).best = sol.upperBound(o)
-        else cp.objective.objs(o).best = sol.objs(o)
-      } else {
-        cp.objective.objs(o).tightenMode = TightenType.StrongTighten
-        cp.objective.objs(o).best = sol.objs(o)
-      }
-    }
-  }
-
+  
   def clusterRelax(p: Int, obj: Int): Array[Boolean] = {
     val c = rand.nextInt(nCities)
     val sortedByDist = Cities.sortBy(i => distMatrices(obj)(c)(i))
     val dist = distMatrices(obj)(c)(sortedByDist(p))
     Array.tabulate(nCities)(i => distMatrices(obj)(c)(i) <= dist)
+  }
+  
+  def selectSol: MOSol[Sol] = {
+    val points = pareto.toArray
+    points(cp.random.nextInt(points.size))
   }
 
   def relaxVariables(selected: Array[Boolean], sol: MOSol[Sol]) {
@@ -207,4 +167,15 @@ object MoLnsTSP extends App {
     constraints.enqueue(pred(cc) == (if (cp.random.nextBoolean()) sol.pred(cc) else sol.succ(cc)))
     cp.post(constraints.toArray)
   }
+ 
+  cp.printStats() 
+  println("Pareto Set")
+  println("H: " + hypervolume(pareto))
+  
+  val points = pareto.sortedByObj(0)
+  println(points.mkString("\n"))
+  
+  val out = OutFile("ResultAB")
+  points.foreach(p => out.writeln(p.objs(0)+", "+p.objs(1)))
+  out.close()
 }

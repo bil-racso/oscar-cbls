@@ -22,8 +22,8 @@ object FirstPhaseTSP extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
 
-  val inst1 = 'A'
-  val inst2 = 'B'
+  val inst1 = 'C'
+  val inst2 = 'D'
   val out = "floor"
 
   val Fullpareto = ParetoSet[Sol](2)
