@@ -95,6 +95,10 @@ trait ProcessResult[T]{
   def +:(v: T): T
 }
 
+class DefaultResult extends ProcessResult[DefaultResult] {
+  def +:(v : DefaultResult) = { new DefaultResult() }
+}
+
 abstract class ProcessWithStates[S,T <: ProcessResult[T]](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
   def cost(state: S): T @susp
   def exec (implicit state: S): T @susp

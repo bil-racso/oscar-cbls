@@ -69,6 +69,8 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
   }
   
   override def toString(): String = { list.mkString(", ") }
+  
+  def getProbability(value : A) : Double = {list.find(pair => pair._2.equals(value)).get._1}
 }
 
 object UniformDiscrete {

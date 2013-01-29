@@ -101,6 +101,7 @@ abstract class Model[+T] extends DistrSolver[T] {
       if (clock() <= horizon) {
         e.process
       }
+      println(clock.pq.size)
     }
     //}
   }
