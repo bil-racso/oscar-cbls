@@ -91,12 +91,12 @@ class MapPainter(map : VisualMap) extends Painter[JXMapViewer] {
 		//waypoints
 		g.setColor(Color.BLUE)
 		for (wp <- mymap.waypoints) {
-            val pt1 = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom())
+            val pt1 = map.getTileFactory().geoToPixel(new GeoPosition(wp.lat, wp.long), map.getZoom())
             val x =  pt1.getX().toInt
             val y = pt1.getY().toInt
             
             g.setStroke(new BasicStroke(3f))
-            g.setColor(Color.BLUE)
+            g.setColor(wp.color)
             g.drawOval(x-10,y-10,20,20)
             g.setStroke(new BasicStroke(1f))
             g.drawLine(x-10,y-0,x+10,y+0)

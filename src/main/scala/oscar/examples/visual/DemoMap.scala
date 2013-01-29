@@ -1,6 +1,7 @@
 package oscar.examples.visual
 
 import oscar.visual.VisualMap
+import oscar.visual.MapWaypoint
 import oscar.visual.VisualFrame
 import oscar.visual.Location
 import oscar.visual.Geocoder
@@ -24,7 +25,7 @@ object DemoMap {
   val capitals = List(bruxelles, paris, london, rome, madrid, luxembourg, berlin, hamsterdam)
   
   var bp: MapPath = _
-  var waypoints = List[Waypoint]()
+  var waypoints = List[MapWaypoint]()
   
   //display components
   
@@ -78,7 +79,7 @@ object DemoMap {
   
   def removewp = {
     waypoints.foreach(m.removeWaypoint(_))
-    waypoints = List[Waypoint]()
+    waypoints = List[MapWaypoint]()
   }
   
   /*

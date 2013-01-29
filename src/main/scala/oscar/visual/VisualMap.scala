@@ -54,7 +54,7 @@ class VisualMap extends JPanel(new BorderLayout()) {
 
   val viewer = new JXMapViewer()
   var lines = List[MapLine]()
-  var waypoints = List[Waypoint]()
+  var waypoints = List[MapWaypoint]()
   var paths = List[MapPath]()
 
   val max = 17
@@ -82,14 +82,14 @@ class VisualMap extends JPanel(new BorderLayout()) {
   //viewer.setDefaultProvider(DefaultProviders.OpenStreetMaps);
   add(viewer)
 
-  def createWaypoint(lt: Double, lg: Double): Waypoint = {
-    val res = new Waypoint(lt, lg)
+  def createWaypoint(lt: Double, lg: Double, col : Color = Color.BLUE): MapWaypoint = {
+    val res = new MapWaypoint(this, lt, lg, col)
     waypoints = waypoints :+ res
     refresh()
     res
   }
 
-  def removeWaypoint(wp : Waypoint) = {
+  def removeWaypoint(wp : MapWaypoint) = {
     waypoints = waypoints.filterNot(_ == wp)
     refresh()
   }
@@ -111,7 +111,7 @@ class VisualMap extends JPanel(new BorderLayout()) {
 
   def clear() = {
     lines = List[MapLine]()
-    waypoints = List[Waypoint]()
+    waypoints = List[MapWaypoint]()
     paths = List[MapPath]()
     refresh()
   }

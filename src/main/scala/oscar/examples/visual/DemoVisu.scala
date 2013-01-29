@@ -41,7 +41,7 @@ object DemoVisu {
   
   def demoBinPacking = {
 
-		val bp = new VisualBinPacking(10, 50);
+		val bp = new VisualBinPacking(10, 50)
 		
 		val inf = f.createFrame("Bin Packing")
 		inf.add(bp)
