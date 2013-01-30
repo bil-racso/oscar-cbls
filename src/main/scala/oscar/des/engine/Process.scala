@@ -91,23 +91,27 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
 
 }
 
-trait ProcessResult[T]{
+trait ProcessResult[T] {
   def +:(v: T): T
 }
 
 class DefaultResult extends ProcessResult[DefaultResult] {
-  def +:(v : DefaultResult) = { new DefaultResult() }
+  def +:(v: DefaultResult) = { new DefaultResult() }
 }
 
-abstract class ProcessWithStates[S,T <: ProcessResult[T]](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
-  def cost(state: S): T @susp
-  def exec (implicit state: S): T @susp
+abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
+  def exec(implicit state: S): T @susp
   def deepExec(state: S) = exec(state)
-  def Iam(next: S)(implicit current: S) = cost(current).+:(deepExec(next))
+  def Iam(next: S)(implicit current: S) = deepExec(next)
   override def start() = deepExec(initState)
 }
 
-trait MonitorState[S,T <: ProcessResult[T]] extends ProcessWithStates[S,T] {
+abstract class ProcessWithCostByState[S, T <: ProcessResult[T]](name: String = "Process", initState: S)(implicit m: Model[T]) extends ProcessWithStates[S, T](name, initState)(m) {
+  def cost(state: S): T @susp
+  override def Iam(next: S)(implicit current: S) = cost(current).+:(deepExec(next))
+}
+
+trait MonitorState[S, T] extends ProcessWithStates[S, T] {
   val entering = Event[S]()
   override def deepExec(state: S) = {
     entering.emit(state)
@@ -115,7 +119,7 @@ trait MonitorState[S,T <: ProcessResult[T]] extends ProcessWithStates[S,T] {
   }
 }
 
-trait Precomputation[S,T <: ProcessResult[T]] extends ProcessWithStates[S,T] {
+trait Precomputation[S, T] extends ProcessWithStates[S, T] {
   val results = mutable.HashMap[S, T]()
 
   def future(state: S) = {
