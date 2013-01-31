@@ -82,8 +82,8 @@ class VisualMap extends JPanel(new BorderLayout()) {
   //viewer.setDefaultProvider(DefaultProviders.OpenStreetMaps);
   add(viewer)
 
-  def createWaypoint(lt: Double, lg: Double, col : Color = Color.BLUE): MapWaypoint = {
-    val res = new MapWaypoint(this, lt, lg, col)
+  def createWaypoint(lt: Double, lg: Double, col : Color = Color.BLUE, lbl : String = null): MapWaypoint = {
+    val res = new MapWaypoint(this, lt, lg, col, lbl)
     waypoints = waypoints :+ res
     refresh()
     res

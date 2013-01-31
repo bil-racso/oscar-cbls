@@ -16,22 +16,22 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.Set;
-
-import org.jdesktop.swingx.JXMapViewer;
-import org.jdesktop.swingx.mapviewer.DefaultWaypointRenderer;
-import org.jdesktop.swingx.mapviewer.GeoPosition;
-import org.jdesktop.swingx.mapviewer.Waypoint;
-import org.jdesktop.swingx.mapviewer.WaypointRenderer;
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
+import java.util.Set
+import org.jdesktop.swingx.JXMapViewer
+import org.jdesktop.swingx.mapviewer.DefaultWaypointRenderer
+import org.jdesktop.swingx.mapviewer.GeoPosition
+import org.jdesktop.swingx.mapviewer.Waypoint
+import org.jdesktop.swingx.mapviewer.WaypointRenderer
 import org.jdesktop.swingx.painter.Painter;
+import java.awt.Font
 
 /**
  * @author Pierre Schaus
@@ -94,14 +94,20 @@ class MapPainter(map : VisualMap) extends Painter[JXMapViewer] {
             val pt1 = map.getTileFactory().geoToPixel(new GeoPosition(wp.lat, wp.long), map.getZoom())
             val x =  pt1.getX().toInt
             val y = pt1.getY().toInt
-            
-            g.setStroke(new BasicStroke(3f))
+                        
             g.setColor(wp.color)
+            
+            g.setStroke(new BasicStroke(2f))
             g.drawOval(x-10,y-10,20,20)
             g.setStroke(new BasicStroke(1f))
             g.drawLine(x-10,y-0,x+10,y+0)
             g.drawLine(x-0,y-10,x+0,y+10)
             
+            if(wp.label != null)
+            {
+              g.setFont(new Font("Arial", Font.BOLD, 16));  
+              g.drawString(wp.label, x+15 , y); 
+            }
             
             
             

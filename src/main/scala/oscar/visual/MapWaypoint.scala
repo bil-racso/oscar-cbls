@@ -22,11 +22,13 @@ import java.awt.Color
 /**
  * @author Corentin Mulders
  */
-class MapWaypoint(map : VisualMap,  xlat : Double, xlong : Double, col : Color = Color.BLUE) {
+class MapWaypoint(map : VisualMap,  xlat : Double, xlong : Double, col : Color = Color.BLUE, lbl : String = null) {
 	var lat = xlat
 	var long = xlong
 	
 	var color = col
+	
+	var label = lbl
 
 	def this(map : VisualMap, o: (Double, Double), col : Color = Color.BLUE) = this(map, o._1, o._2, col)
 	def remove = map.removeWaypoint(this)
