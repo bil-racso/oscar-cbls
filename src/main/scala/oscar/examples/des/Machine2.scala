@@ -66,7 +66,7 @@ class Machine2(m : Model[Unit], name: String, repairPerson: Resource) extends Pr
 
 object Machine2 {
 	def main(args: Array[String]){
-  		val mod = new StochasticModel()
+  		val mod = new StochasticModel[Unit]()
   		val repairPerson = Resource.unary(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
 		val m2 = new Machine2(mod,"machine2",repairPerson)

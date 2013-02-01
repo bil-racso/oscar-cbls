@@ -36,9 +36,9 @@ import org.scala_tools.time.Imports._
  * @author pschaus
  */
 
-class StochasticModel[+T] extends Model[T] with StochasticSolver[T]
-class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
-class DeterministicModel[+T] extends Model[T] with DeterministicSolver[T]
+class StochasticModel[S] extends Model[S] with StochasticSolver[S]
+//class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
+class DeterministicModel[S] extends Model[S] with DeterministicSolver[S]
 
 /**
  * This class represents a signal whose value is equals to the number of months
@@ -58,7 +58,7 @@ class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
 
 }
 
-abstract class Model[+T] extends DistrSolver[T] {
+abstract class Model[-S] extends DistrSolver[S] {
 
   //  
   implicit def comparable2ordered[A <: Comparable[A], B <: A](x: A): Ordered[B] =

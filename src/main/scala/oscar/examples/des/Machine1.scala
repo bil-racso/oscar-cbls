@@ -56,7 +56,7 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new StochasticModel()
+  		val mod = new StochasticModel[Unit]()
   		mod.setTime( new DateTime(2012,1,5,17,0))
   		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
