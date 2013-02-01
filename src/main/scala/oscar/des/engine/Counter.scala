@@ -138,7 +138,7 @@ object Counter {
     reset {
       waitFor[Int, Unit](x)
       println("500")
-      None
+      End
     }
 
     whenever(c === 5) { w: Int =>

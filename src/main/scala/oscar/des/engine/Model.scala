@@ -53,12 +53,12 @@ class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
       m += 1
       emit(m)
     }
-    None
+    End
   }
 
 }
 
-abstract class Model[-S] extends DistrSolver[S] {
+abstract class Model[S] extends DistrSolver[S] {
 
   //  
   implicit def comparable2ordered[A <: Comparable[A], B <: A](x: A): Ordered[B] =
@@ -73,9 +73,9 @@ abstract class Model[-S] extends DistrSolver[S] {
   val clock = new PQCounter[DateTime](new DateTime(1970, 1, 1, 0, 0, 0, 0))
   //val month = new MonthEvent(clock)
 
-  private val processes = new LinkedList[Process[_]]()
+  private val processes = new LinkedList[AbstractProcess[_]]()
 
-  def addProcess(p: Process[_]) {
+  def addProcess(p: AbstractProcess[_]) {
     processes.addLast(p)
   }
 

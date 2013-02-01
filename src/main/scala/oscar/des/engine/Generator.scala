@@ -28,11 +28,11 @@ import JSci.maths.statistics._
 import oscar.invariants._
 
 object Generator {
-	def apply(dist: Distr[Double])(block: => Unit)(implicit m: Model[Any]) = new Generator(m, dist)(block)
+	def apply[T](dist: Distr[Double])(block: => Unit)(implicit m: Model[T]) = new Generator(m, dist)(block)
 	def apply(dist: ProbabilityDistribution) = new NumberGenerator(dist)
 }
 
-class Generator(m: Model[Any], var dist: Distr[Double])(block: => Unit) extends Process[Unit]("Generator")(m){
+class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Unit) extends ProcessUnit[T]("Generator")(m){
 
   simulate()
 

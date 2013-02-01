@@ -2,19 +2,20 @@ package oscar.stochastic
 
 import oscar.stochastic._
 import scala.util.continuations._
+import oscar.invariants._
 
 trait DistrSolver[S] {
 
   def getNextStochasticRealization[B](distr: ContinuousDistr[B]): B
   //def apply[B](distr: Choice[B]): B
-  def getNextStochasticRealization[B,T <: S](ch: DiscreteDistr[B]): B @cpsParam[Option[T], Option[T]]
+  def getNextStochasticRealization[B,T <: S](ch: DiscreteDistr[B]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]]
 }
 
 trait StochasticSolver[S] extends DistrSolver[S] {
   val random = new scala.util.Random
   override def getNextStochasticRealization[B](distr: ContinuousDistr[B]) = distr.getNextStochasticRealization(random)
   //  override def getNextStochasticRealization[A <: T, B](ch: DiscreteDistr[B]): B @cpsParam[Unit, A] = ch.getNextStochasticRealization()
-  override def getNextStochasticRealization[B,T <: S](ch: DiscreteDistr[B]): B @cpsParam[Option[T], Option[T]] = ch.getNextStochasticRealization(random)
+  override def getNextStochasticRealization[B,T <: S](ch: DiscreteDistr[B]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = ch.getNextStochasticRealization(random)
 }
 
 trait DeterministicSolver[S] extends StochasticSolver[S]{

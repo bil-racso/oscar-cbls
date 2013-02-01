@@ -10,6 +10,7 @@ import scala.collection.JavaConverters._
 import scala.util.continuations._
 import oscar.cp.constraints.Square
 import scala.math
+import oscar.invariants._
 
 object Distr {
   private val randomGenerator = new scala.util.Random(4568)
@@ -19,19 +20,19 @@ object Distr {
 
 
 trait Distr[B] {
-  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[Option[T], Option[T]]
+  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]]
   def getNextStochasticRealization(random: scala.util.Random): B
   def map[C](g: B => C) = new MapDistr(this, g)
 }
 
 class MapDistr[A,B](d: Distr[A], f: A => B) extends Distr[B]{
   
-  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[Option[T], Option[T]] = f(d(m)) 
+  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = f(d(m)) 
   def getNextStochasticRealization(random: scala.util.Random): B = f(d.getNextStochasticRealization(random))
 }
 
 trait ContinuousDistr[B] extends Distr[B] {
-  override def apply[T](implicit m: DistrSolver[T]): B @cpsParam[Option[T], Option[T]] = m.getNextStochasticRealization(this)
+  override def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = m.getNextStochasticRealization(this)
   def min: B
   def max: B
   def mean: B
@@ -39,7 +40,7 @@ trait ContinuousDistr[B] extends Distr[B] {
 }
 class ValueDistr[B](val value: B) extends Distr[B] {
   def getNextStochasticRealization(random: scala.util.Random) = value
-  override def apply[T](implicit m: DistrSolver[T]): B @cpsParam[Option[T], Option[T]] = value
+  override def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = value
 }
 
 class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with ContinuousDistr[Double] {
@@ -51,7 +52,7 @@ class NumericalValueDistr(value: Double) extends ValueDistr[Double](value) with 
 
 trait DiscreteDistr[B] extends Distr[B] {
   def list: Traversable[(Double, B)]
-  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[Option[T], Option[T]] = m.getNextStochasticRealization(this)
+  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = m.getNextStochasticRealization(this)
 }
 
 class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {

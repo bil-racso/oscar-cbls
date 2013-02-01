@@ -66,12 +66,12 @@ package object invariants {
     }
   }
 
-  @inline def waitFor[A,T](d: Occuring[A]): A @cpsParam[Option[T],Option[T]] = {
-    shift { k: (A => Option[T]) =>
+  @inline def waitFor[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
+    shift { k: (A => SuspendableResult[T]) =>
       once(d) { msg: A =>
         k(msg)
       }
-      None
+      Suspend
     }
   }
 

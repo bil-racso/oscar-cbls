@@ -26,14 +26,16 @@ import akka.util.FiniteDuration
 import oscar.invariants._
 import org.joda.time._
 
+
+
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
+abstract class AbstractProcess[T](name: String = "Process")(implicit m: Model[T]) {
 
-  type State = Unit @cpsParam[Option[T], Option[T]]
-  type susp = cpsParam[Option[T], Option[T]]
+  type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
+  type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]
   //
   //  def suspend(): Unit @susp = {
   //    //		if (suspending) {
@@ -60,18 +62,9 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
   //  private var suspended = {}
 
   /**
-   * Entry point of the simulation for this process
-   */
-  def start(): T @cpsParam[Option[T], Option[T]]
-
-  /**
    * Properly start the simulation of this process (method normally called by the engine, not the modeler).
    */
-  def simulate() {
-    reset {
-      Some(start())
-    }
-  }
+  def simulate(): Unit 
 
   //def request(r: Resource): Unit @susp 
 
@@ -89,6 +82,38 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) {
   def w[A](occ: Occuring[A]) = waitFor[A, T](occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 
+}
+
+abstract class Process[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m){
+  
+  /**
+   * Entry point of the simulation for this process
+   */
+  def start(): T @susp
+
+  /**
+   * Properly start the simulation of this process (method normally called by the engine, not the modeler).
+   */
+  def simulate() {
+    reset {
+      End(start())
+    }
+  }
+}
+
+abstract class ProcessUnit[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m){
+  
+  /**
+   * Entry point of the simulation for this process
+   */
+  def start(): Unit @susp
+
+  def simulate{
+	  reset{
+	    start()
+	    End
+	  }
+  }
 }
 
 trait ProcessResult[T] {
@@ -124,20 +149,23 @@ trait Precomputation[S, T] extends ProcessWithStates[S, T] {
 
   def future(state: S) = {
     reset {
-      val i = shift { k: (Int => Option[T]) =>
+      val i = shift { k: (Int => SuspendableResult[T]) =>
         {
           k(0) match {
-            case None =>
+            case Suspend =>
               assert(false)
-              None
-            case Some(v) => {
+              Suspend
+            case End =>
+              assert(false)
+              Suspend              
+            case EndResult(v) => {
               this(state) = v
-              Some(v)
+              End(v)
             }
           }
         }
       }
-      Some(super.deepExec(state))
+      End(super.deepExec(state))
     }.get
   }
 

@@ -36,14 +36,14 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 	val liveDur  = UniformDiscrete(1, 9).map(_.minutes)
 	val breakDur = UniformDiscrete(3, 4).map(_.minutes)
 	
-	def beAlive(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
+	def beAlive(): Unit @susp = {
 		println(name+" is alive")
 		waitDuring(liveDur(m).toPeriod)
 		beBroken()
 		
 	}
 	
-	def beBroken(): Unit @cpsParam[Option[Unit],Option[Unit]] = {
+	def beBroken(): Unit @susp = {
 		println(name+" is broken");
 		waitDuring(breakDur(m).toPeriod)
 		beAlive()
