@@ -36,6 +36,7 @@ abstract class AbstractProcess[T](name: String = "Process")(implicit m: Model[T]
 
   type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
   type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]
+  def unit: Unit @susp = ()
   //
   //  def suspend(): Unit @susp = {
   //    //		if (suspending) {
