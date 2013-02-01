@@ -75,9 +75,10 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
 }
 
 object UniformDiscrete {
-  def apply(a: Int, b: Int) = new UniformDiscrete(a, b)
+  def apply(a: Int, b: Int) = if(a==b) new ValueDistr(a) else new UniformDiscrete(a, b)
 }
 class UniformDiscrete(val min: Int, val max: Int) extends ContinuousDistr[Int] {
+  
   require(max >= min)
   
   val interval = max-min

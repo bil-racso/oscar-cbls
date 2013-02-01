@@ -67,11 +67,11 @@ abstract class Model[S] extends DistrSolver[S] {
       def compare(y: B): Int = { x.compareTo(y) }
     }
   implicit def DT2Ordered(dt: DateTime) = comparable2ordered[ReadableInstant, DateTime](dt)
-  //val n = DateTime.now
+  val n = DateTime.now
   //val b = comparable2ordered[ReadableInstant,DateTime](n)
 
   val clock = new PQCounter[DateTime](new DateTime(1970, 1, 1, 0, 0, 0, 0))
-  //val month = new MonthEvent(clock)
+  val month = new MonthEvent(clock)
 
   private val processes = new LinkedList[AbstractProcess[_]]()
 
@@ -101,7 +101,6 @@ abstract class Model[S] extends DistrSolver[S] {
       if (clock() <= horizon) {
         e.process
       }
-      println(clock.pq.size)
     }
     //}
   }
