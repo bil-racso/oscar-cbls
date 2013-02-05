@@ -35,7 +35,7 @@ import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
  * @param MaxAmount the available amount of this resource that is available throughout the planning
  * @param name the name of the resource, used to annotate the internal variables of the problem
  */
-case class CumulativeResource(planning: Planning, val MaxAmount: Int, name: String = "") {
+case class CumulativeResource(planning: Planning, MaxAmount: Int, name: String = "") {
   val ResourceID = planning.AddRessource(this)
 
   /**The set of tasks using this resource at every position*/

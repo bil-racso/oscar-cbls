@@ -27,7 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -66,7 +65,7 @@ class TestRostering extends FunSuite with ShouldMatchers  {
     	cp.minimize(totUnderDemand) subjectTo {
     	  	// each person must do a different activity every day
 		    for (p <- 0 until nbPersons) {
-			  cp.add(alldifferent(activities(p)),Strong);
+			  cp.add(allDifferent(activities(p)),Strong);
 		    }
 		    
 		    val maxCap = Array.fill(nbActivities)(nbPersons)
@@ -78,10 +77,11 @@ class TestRostering extends FunSuite with ShouldMatchers  {
     	  
     	} exploration {
     	  println("exploration"+activities.flatten.mkString(","))
-    	  cp.binaryFirstFail(activities.flatten)
-    	  println("solution======"+cp.isFailed()+" "+totUnderDemand)
+    	  val x = activities.flatten
+    	  cp.binary(x,y => (y.size,x.indexOf(y)))
+    	  //println("solution======"+cp.isFailed()+" "+totUnderDemand)
     	  best = totUnderDemand.value
-    	}
+    	} run()
     	best should be(1)
 		
 		

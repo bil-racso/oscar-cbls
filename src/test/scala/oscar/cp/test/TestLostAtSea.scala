@@ -25,7 +25,6 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
 
 class TestLostAtSea extends FunSuite with ShouldMatchers  {
 
@@ -57,19 +56,19 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
        val path = Array.fill(10)(CPVarInt(cp,0 until 64))
        
        val sol = Array.fill(10)(0) 
-       
-       val obj = sum(0 until 10)(i => element(proba.flatten,path(i)))
+       val prob = proba.flatten
+       val obj = sum(0 until 10)(i => element(prob,path(i)))
        
        cp.maximize(obj) subjectTo {
                 for (i <- 0 until 9) {
                   cp.add(table(path(i),path(i+1),tuples)) // for each consecutive visits, give the possible valid transitions
                 }
-                cp.add(alldifferent(path),Strong) // each visit must be different
+                cp.add(allDifferent(path),Strong) // each visit must be different
        } exploration {
          cp.binaryFirstFail(path)
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
          best = obj.value
-       }
+       } run()
        best should be(33)
   }  
   
@@ -85,20 +84,20 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
        val sol = Array.fill(10)(0) 
        
        var best = 1000
-       
-       val obj = sum(0 until 10)(i => element(proba.flatten,path(i)))
+       val prob = proba.flatten
+       val obj = sum(0 until 10)(i => element(prob,path(i)))
        
        cp.maximize(obj) subjectTo {
                 
     	  		for (i <- 0 until 9) {
-                  cp.add(element(succ,path(i),path(i+1))) 
+                  cp.add(elementVar(succ,path(i),path(i+1))) 
                 }
                 cp.add(circuit(succ),Strong)
        } exploration {
          cp.binaryFirstFail(path)
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
          best = obj.value
-       }
+       } run()
        best should be(33)
 
   } 

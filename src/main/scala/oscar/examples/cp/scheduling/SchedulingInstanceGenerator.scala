@@ -7,7 +7,7 @@ import scala.util.Random.nextBoolean
 import scala.collection.mutable.Queue
 
 object SchedulingInstanceGenerator {
-	
+	val rand = new scala.util.Random()
 	/** 
 	 * CUMULATIVE JOB-SHOP
 	 */
@@ -17,7 +17,7 @@ object SchedulingInstanceGenerator {
 		
 		val machines : Array[Array[Int]] =  
 		if (fullMachine) 
-			Array.fill(nJobs)(shuffle(0 until nMachines).toArray)
+			Array.fill(nJobs)(rand.shuffle(0 to (nMachines-1)).toArray)
 		else
 			Array.fill(nJobs, nTasksPerJob)(nextInt(nMachines))
 		
@@ -39,7 +39,7 @@ object SchedulingInstanceGenerator {
 		
 		for (i <- 0 until nJobs) {
 			
-			val states    = shuffle(0 until nTasksPerJob).toArray
+			val states    = rand.shuffle(0 to (nTasksPerJob-1)).toArray
 			val durations = Array.fill(nTasksPerJob)(nextInt(maxDuration)+minDuration)
 			
 			for (j <- 0 until nTasksPerJob) {

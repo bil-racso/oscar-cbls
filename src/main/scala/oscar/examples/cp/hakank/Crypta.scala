@@ -72,9 +72,9 @@ object Crypta {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-        cp.add(alldifferent(x), Strong)
+        cp.add(allDifferent(x), Strong)
         cp.add(b >= 1)
         cp.add(d >= 1)
         cp.add(g >= 1)
@@ -103,7 +103,7 @@ object Crypta {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

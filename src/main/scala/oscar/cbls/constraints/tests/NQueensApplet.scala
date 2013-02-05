@@ -24,9 +24,7 @@
 package oscar.cbls.constraints.tests
 
 import scala.swing.Applet
-import scala.swing.Reactor
 import scala.swing.Button
-import scala.swing.TextArea
 import scala.swing.event.ButtonClicked
 import scala.swing.BoxPanel
 import scala.swing.Orientation
@@ -39,9 +37,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import javax.swing.border.LineBorder
 
 class NQueensApplet extends Applet {
@@ -170,10 +166,8 @@ class NQueensApplet extends Applet {
       c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
-      for (q <- range) { c.registerForViolation(Queens(q)) }
+      val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
       c.close()
-
-      val viol: Array[IntVar] = (for (q <- range) yield c.getViolation(Queens(q))).toArray
       m.close()
 
       var it: Int = 0
@@ -183,7 +177,7 @@ class NQueensApplet extends Applet {
       while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
         val oldviolation: Int = c.Violation.value
         val allowedqueens = range.filter(q => Tabu(q) < it)
-        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
+        val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.swapVal(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
 
         swapQueens(q1, q2)
         Tabu(q1) = it + tabulength

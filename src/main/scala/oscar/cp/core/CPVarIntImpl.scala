@@ -52,6 +52,15 @@ class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "") ext
      */
 	def this(st: Store, r: Range) = this(st, r.start,if (r.isInclusive) r.end else r.end-1)	
 	
+
+	def iterator = {
+		val it = dom.iterator
+		new Iterator[Int] {
+		  def next = it.next
+		  def hasNext = it.hasNext
+		}
+	}
+	
 	
     /**
 	 * 

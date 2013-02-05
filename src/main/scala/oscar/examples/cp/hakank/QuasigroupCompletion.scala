@@ -85,7 +85,7 @@ object QuasigroupCompletion {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill the things we know
       for (i <- 0 until n; j <- 0 until n) {
@@ -96,8 +96,8 @@ object QuasigroupCompletion {
   
       // make it a Latin Square
       for (i <- 0 until n) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j)) ), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i)) ), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(i)(j)) ), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(j)(i)) ), Strong)
       }
 
 
@@ -113,7 +113,7 @@ object QuasigroupCompletion {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

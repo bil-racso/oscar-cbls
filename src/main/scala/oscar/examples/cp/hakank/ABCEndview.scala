@@ -58,7 +58,7 @@ import oscar.cp.core._
  *   http://www.janko.at/Raetsel/AbcEndView/index.htm
  *
  * The diagonal constraint means that the two diagonal should
- * also be alldifferent (except empty cells). See problem11
+ * also be allDifferent (except empty cells). See problem11
  * for an example: http://www.janko.at/Raetsel/AbcEndView/168.a.htm
  *
  *
@@ -368,7 +368,7 @@ object ABCEndview {
       //
       var numSols = 0;
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         //
         // Latin square (except 0)
@@ -447,7 +447,7 @@ object ABCEndview {
           
         numSols +=1
 
-     }
+     } run()
  
      
      println("\nIt was " + numSols + " solution(s).")

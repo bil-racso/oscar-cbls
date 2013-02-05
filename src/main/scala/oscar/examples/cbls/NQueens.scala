@@ -26,11 +26,10 @@ package oscar.examples.cbls
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
 import oscar.cbls.invariants.core.computation.IntSetVar._
 ;
 
@@ -81,12 +80,12 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
     c.post(AllDiff(for ( q <- range) yield (Queens(q) + q).toIntVar))
     c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
-    for (q <- range){c.registerForViolation(Queens(q))}
+    for (q <- range){c.violation(Queens(q))}
 
     c.close()
 
-    val ViolationArray:Array[IntVar] = (for(q <- range) yield c.getViolation(Queens(q))).toArray
-    val MaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray)
+    val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
+    val MaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray)
 
     m.close(false)
     print(", " + getWatch)
@@ -98,7 +97,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
 
       val q1 = selectFirst(MaxViolQueens.value)
       val q2 = selectFirst(range, (q:Int) => {
-        q!=q1 && c.getSwapVal(Queens(q1),Queens(q)) < oldviolation
+        q!=q1 && c.swapVal(Queens(q1),Queens(q)) < oldviolation
       })
       // println("viol: " + oldviolation + " swapped: " + q1 + " and " + q2)
 

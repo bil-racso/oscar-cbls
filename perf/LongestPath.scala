@@ -72,11 +72,11 @@ object LongestPath {
       for (i <- 0 until len - 1) {
         cp.add(table(path(i), path(i + 1), tuples)) // for each consecutive visits, give the possible valid transitions
       }
-      cp.add(alldifferent(path), Weak)
+      cp.add(allDifferent(path), Weak)
 
     } exploration {
-      cp.binaryFirstFail(path)
-    }
+      cp.deterministicBinaryFirstFail(path)
+    } run()
     cp.printStats
 
   }

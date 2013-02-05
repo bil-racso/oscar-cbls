@@ -58,9 +58,9 @@ object MagicSquare {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-       cp.add(alldifferent(x.flatten), Strong)
+       cp.add(allDifferent(x.flatten), Strong)
 
        // rows and columns
        for(i <- 0 until n) {
@@ -95,7 +95,7 @@ object MagicSquare {
          cp.stop()
        }
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

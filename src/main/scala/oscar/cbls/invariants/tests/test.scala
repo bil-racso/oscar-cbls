@@ -28,7 +28,7 @@ import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.invariants.lib.minmax._
 import collection.immutable.SortedSet
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 
 
 object test extends SearchEngine {
@@ -50,7 +50,7 @@ object test extends SearchEngine {
     c <== a + b //Sum(SortedSet(a, b))
     e <== Inter(MakeSet(SortedSet(a, b)), MakeSet(SortedSet(b, c)))
     val Const5 = IntConst(5,m)
-    val f:IntVar = Max(SortedSet(a,b,c,d)) + MinLin(SortedSet(Abs(a),b,Const5,d))
+    val f:IntVar = MaxArray(SortedSet(a,b,c,d).toArray) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:IntVar = MaxLin(SortedSet(a,b,c,d))
 
     val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))
@@ -61,7 +61,7 @@ object test extends SearchEngine {
 
     Event(c,{println("Trigger: c changed: " + c)})
 
-    //TriggerOn(cstr.getViolation(d), {println("Violation change on d: " + e)})
+    //TriggerOn(cstr.violation(d), {println("Violation change on d: " + e)})
 
     m.close()
     println("closed")
@@ -76,7 +76,7 @@ object test extends SearchEngine {
     m.propagate()
     
     //while(cstr.Violation != 0){
-    //  val tochange:IntVar = selectMax(List(a,b),v => cstr.getViolation(v))
+    //  val tochange:IntVar = selectMax(List(a,b),v => cstr.violation(v))
     //  val newval = selectMin(tochange.getDomain(), i => cstr.GetAssignDelta(tochange,i))
     //  tochange := newval
     //}

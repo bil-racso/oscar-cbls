@@ -107,7 +107,7 @@ object Minesweeper {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       val tmp = List(-1,0,1)
 
@@ -137,7 +137,7 @@ object Minesweeper {
 
       numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.\n")
      cp.printStats()

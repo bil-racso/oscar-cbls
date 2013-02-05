@@ -72,13 +72,10 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {
 
-		try {
-			constraintsBlock
-		} catch {
-			case ex : NoSol => println("No Solution, inconsistent model")
-		}
+		
 
 		addResourceConstraints()
+		super.subjectTo(constraintsBlock)
 
 		this
 	}
@@ -125,7 +122,7 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 			val (est, ect) = selectableIndices().map(i => (activities(i).est, activities(i).ect)).min
 			
 			// Select the activity with the smallest EST, ECT as tie breaker
-			val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).first
+			val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).head
 			
 			branch {
 				this.post(activities(x).start == est)

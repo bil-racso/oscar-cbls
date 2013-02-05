@@ -25,7 +25,6 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
 
 class TestOperator extends FunSuite with ShouldMatchers  {
   
@@ -70,7 +69,7 @@ class TestOperator extends FunSuite with ShouldMatchers  {
 	  cp.exploration {
 	    cp.binary(Array(A,B))
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   

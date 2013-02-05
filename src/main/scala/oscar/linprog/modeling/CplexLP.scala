@@ -21,6 +21,8 @@ import ilog.concert._
 import ilog.concert.IloRange
 import ilog.cplex._
 
+
+
 /**
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com
  */
@@ -36,11 +38,12 @@ class CplexLP extends AbstractLP {
   var released = false  
   val model = new IloCplex()
   val lp = model.addLPMatrix() // matrix associated to model
+  var configFile = new java.io.File("ToBImplemented")
 
   var lexpr = model.linearNumExpr()
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
-
+    
     this.nbCols = nbCols
 
     model.numVarArray(model.columnArray(lp, nbCols), 0.0, java.lang.Double.MAX_VALUE) // creating nbCols variables

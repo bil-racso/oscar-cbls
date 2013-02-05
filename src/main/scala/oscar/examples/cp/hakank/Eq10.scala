@@ -55,7 +55,7 @@ object Eq10 {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(x1*98527+x2*34588+x3*5872+x5*59422+x7*65159
                  == x4*30704+x6*29649+1547604)
@@ -97,7 +97,7 @@ object Eq10 {
 
       numSols += 1
 
-   }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

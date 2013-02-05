@@ -76,7 +76,7 @@ object SetPartition {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
     
       for(i <- SRANGE;
           j <- SRANGE if i!=j) {
@@ -149,7 +149,7 @@ object SetPartition {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

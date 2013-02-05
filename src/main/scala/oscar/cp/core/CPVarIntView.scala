@@ -50,6 +50,10 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	
 	def max = v.max + b
 	
+	def iterator = {
+		v.iterator.map(_+b)
+	}
+	
 	override def toString() = "view with shift "+b+" on ("+v+")";
 		
 	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)

@@ -16,18 +16,16 @@
  ******************************************************************************/
 
 package oscar.cp.test
-/*
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.modeling._
 import oscar.search._
-import oscar.cp.scheduling.CumulativeActivity
+import oscar.cp.core._
+import oscar.cp.scheduling._
 import oscar.cp.constraints._
-import oscar.cp.core.CPVarInt
 
-
-import org.scalacheck._
 
 class TestRCPSP extends FunSuite with ShouldMatchers  {
 
@@ -39,18 +37,19 @@ class TestRCPSP extends FunSuite with ShouldMatchers  {
 	    val capa = 4
 	    val horizon = instance.map(_._1).sum
 		val Times = 0 to horizon
-  
-		val cp = CPSolver()
+
+		
+		val cp = CPScheduler(horizon)
 
 		var bestObj = horizon
-		val tasks = instance.map{case(dur,req) => CumulativeActivity(CPVarInt(cp,Times),dur,0,req)}
+		val tasks : Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
 		val makespan = maximum(tasks.map(_.end))
 		cp.minimize(makespan) subjectTo {
 		  cp.add(new MaxSweepCumulative(cp,tasks,capa,0))
 		} exploration {
 		  cp.setTimes(tasks)
 		  bestObj = makespan.value
-		}
+		} run()
 		cp.printStats()
 		bestObj should be(160)
     
@@ -60,4 +59,4 @@ class TestRCPSP extends FunSuite with ShouldMatchers  {
   
 
 
-}*/
+}

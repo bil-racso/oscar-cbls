@@ -117,7 +117,7 @@ object TrafficLights {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(i <- 0 until n) {
         val j = (1+i) % n
@@ -138,7 +138,7 @@ object TrafficLights {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

@@ -75,7 +75,7 @@ object MrSmith {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // If Mr Smith comes then his wife will come too.
       cp.add((mr_smith === 1) ==> (mrs_smith === 1))
@@ -107,7 +107,7 @@ object MrSmith {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

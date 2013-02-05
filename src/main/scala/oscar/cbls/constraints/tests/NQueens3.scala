@@ -26,7 +26,7 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
@@ -63,15 +63,13 @@ object NQueens3 extends SearchEngine with StopWatch with App{
   c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
   c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
-  for (q <- range){c.registerForViolation(Queens(q))}
-
+  val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
   c.close()
 
-  val ViolationArray:Array[IntVar] = (for(q <- range) yield c.getViolation(Queens(q))).toArray
   val Tabu:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
   val It = new IntVar(m,0,Int.MaxValue,0,"it")
   val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
-  val NonTabuMaxViolQueens:IntSetVar = ArgMaxArray(ViolationArray, NonTabuQueens)
+  val NonTabuMaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
 
   m.close()
   // m.close(false)
@@ -84,7 +82,7 @@ object NQueens3 extends SearchEngine with StopWatch with App{
   while((c.Violation.value > 0) && (It.value < MaxIT)){
 
     val q1 = selectFrom(NonTabuMaxViolQueens.value)
-    val q2 = selectMin(NonTabuQueens.value)(q => c.getSwapVal(Queens(q1),Queens(q)), (q:Int) => q!=q1)
+    val q2 = selectMin(NonTabuQueens.value)(q => c.swapVal(Queens(q1),Queens(q)), (q:Int) => q!=q1)
 
     Queens(q1) :=: Queens(q2)
     Tabu(q1) := It.value + tabulength

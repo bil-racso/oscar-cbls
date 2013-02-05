@@ -31,7 +31,7 @@ class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
 }
 
 trait SearchEngineTrait{
-  private var RandomGenerator: Random = null;
+  var RandomGenerator: Random = null;
 
   var Randomized:Boolean = true
   setRandomized(true)
@@ -239,6 +239,13 @@ trait SearchEngineTrait{
         choice -= a._2
       }
     }
-    return null //should not happen
+    null //should not happen
   }
 }
+
+
+
+
+
+
+

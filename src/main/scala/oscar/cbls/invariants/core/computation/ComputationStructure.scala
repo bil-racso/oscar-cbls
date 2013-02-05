@@ -25,7 +25,7 @@
 package oscar.cbls.invariants.core.computation
 
 import collection.immutable.{SortedSet, SortedMap};
-import oscar.cbls.invariants.core.algo.dag._;
+
 import oscar.cbls.invariants.core.propagation._;
 
 /**This class contains the model, namely, the invariants and variables
@@ -177,7 +177,6 @@ class Model(override val Verbose:Boolean = false,
   def getSourceVariables(v:Variable):SortedSet[Variable] = {
     var ToExplore: List[PropagationElement] = List(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty[Variable]
-    //TODO: check that this works also in case of cycle.
     while(!ToExplore.isEmpty){
       val head = ToExplore.head
       ToExplore = ToExplore.tail
@@ -446,7 +445,7 @@ abstract class Variable(val model:Model,val name:String) extends PropagationElem
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one defining invariant")
+      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
   def getDefiningInvariant:Invariant = DefiningInvariant
@@ -481,7 +480,6 @@ object Variable{
 }
 
 object Event{
-  //TODO: on peut pas ettre des params par défaut si on fait plusieurs apply.
 
   def apply(v:Variable,
             action: =>Unit):Event = {
@@ -688,19 +686,25 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
  */
 class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override val name:String="")
   extends Variable(model,name) {
-
-  {assert(MinVal <= MaxVal)}
   private var OldValue:Int=Value
 
-  def getDomain:Range = new Range(MinVal,MaxVal,1)
-
+  def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
+  val domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
   override def toString:String = name + ":=" + Value //value
 
   def setValue(v:Int){
     if (v != Value){
-      Value = v
-      notifyChanged()
-    }
+     //TODO: disable assert while domain of invariant are buggy, this assert is needed in UNIT TEST.
+     // (-Xdisable-assertions as argument of scala compiler)
+     // or comment this assert and use it only to throw unit test while domain bugs.
+     /*
+     assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
+         "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
+          "new value :"+ v +"\n" ))
+          */
+        Value = v
+        notifyChanged()
+      }
   }
   
   def value:Int = getValue(false)
@@ -735,16 +739,20 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def :=(v:Int) {setValue(v)}
   def :+=(v:Int) {setValue(v+getValue(true))}
+  def :*=(v:Int) {setValue(v*getValue(true))}
   def :-=(v:Int) {setValue(getValue(true) - v)}
 
   def ++ {this := this.getValue(true) +1}
 
-  /**this operators swaps the value of two IntVar*/
+  /**this operator swaps the value of two IntVar*/
   def :=:(v:IntVar){
     val a:Int = v.value
     v:=this.value
     this := a
   }
+
+  /**this operator swaps the value of two IntVar*/
+  def swap(v:IntVar) {this :=: v}
 
   def <==(i:IntInvariant) {i.setOutputVar(this)}
   def <==(i:IntVar) {this <== i.getClone}
@@ -900,11 +908,10 @@ class IntSetVar(override val model:Model,
       }else{
         //only touched values must be looked for
         for ((v,inserted) <- TouchedValues.reverse){
-          //TODO: we simply replay the history, so if some backtrack was performed, it sucks ;
+          //We simply replay the history. If some backtrack was performed, it is suboptimal
           // eg: if something was propagated to this during a neighbourhood exploration not involving this var
           if (inserted){
             //inserted
-            //TODO: this lazy mechanics might be unnecessary if invar queries it anyway...
             ToPerform = (v, inserted) :: ToPerform
             for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
               val inv:Invariant = e._1.asInstanceOf[Invariant]

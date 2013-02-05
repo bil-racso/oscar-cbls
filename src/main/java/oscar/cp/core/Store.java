@@ -21,7 +21,7 @@ import java.util.LinkedList;
 import java.util.Random;
 
 import oscar.cp.constraints.CPObjective;
-import oscar.cp.constraints.CPObjectiveMinimize;
+import oscar.cp.constraints.CPObjectiveUnit;
 import oscar.cp.constraints.Eq;
 import oscar.reversible.ReversiblePointer;
 import oscar.reversible.ReversibleSearchNode;
@@ -61,7 +61,7 @@ public class Store extends ReversibleSearchNode {
 	
 	private boolean inPropagate = false;
 	
-	public CPObjective objective = new CPObjective(CPVarInt.apply(this, 0));
+	public CPObjective objective = new CPObjective(this, new CPObjectiveUnit[]{});
 
 	
 	@SuppressWarnings("unchecked")
@@ -279,13 +279,18 @@ public class Store extends ReversibleSearchNode {
 	}
 	
 	/**
-	 * call only the propagate method of the constraint and trigger the fix point does not post it
+	 * call only the propagate method of the constraints and trigger the fix point does not post it
 	 * @param c
 	 */
-	public CPOutcome propagate(Constraint c) {
+	public CPOutcome propagate(Constraint ... c) {
 		if (status.getValue() == CPOutcome.Failure) return status.getValue();
 		//assert(status.getValue() != CPOutcome.Failure);
-		if (c.propagate() == CPOutcome.Failure || propagate() == CPOutcome.Failure) {
+		for (Constraint cons: c) {
+			if (cons.propagate() == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+		}
+		if (propagate() == CPOutcome.Failure) {
 			status.setValue(CPOutcome.Failure);
 		}
 		return status.getValue();

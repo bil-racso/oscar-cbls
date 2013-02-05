@@ -53,7 +53,7 @@ object LeastDiff2 {
       cp.minimize(diff) subjectTo {
 
         // constraints
-	cp.add(alldifferent(all), Strong)
+	cp.add(allDifferent(all), Strong)
         cp.add(a > 0)
         cp.add(f > 0)
         cp.add(diff > 0)

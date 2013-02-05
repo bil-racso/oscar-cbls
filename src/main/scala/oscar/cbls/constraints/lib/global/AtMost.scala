@@ -27,10 +27,8 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
-import oscar.cbls.invariants.lib.logic.IntElement._
-import oscar.cbls.invariants.lib.logic.IntVar2IntVarFun._
 import oscar.cbls.invariants.lib.logic.{IntElement, IntVar2IntVarFun}
-import oscar.cbls.algebra.Algebra._;
+import oscar.cbls.modeling.Algebra._
 
 //TODO: check
 /**Implements the AtMost constraint on IntVar.
@@ -53,7 +51,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   private val N0:Int = variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MaxVal > acc) intvar.MaxVal else acc))
   private val offset:Int = - variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MinVal < acc) intvar.MinVal else acc))
   private val N = N0 + offset
-  private val range = 0 to N
+  private val range = 0 until N
 
   private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
   => {
@@ -75,7 +73,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
     if(Bound(varval) != -1){
       ValueCount(varval + offset) :+= 1
     }
-    Violations(v) <== (IntElement(v + offset, ValueCount) - IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
+    Violations(v) <== (IntElement(v + offset, ValueCount) - new IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
   }
 
   for(i <- range){
@@ -111,12 +109,12 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
    * the number of variable in excess is the max between zero and
    * (the number of variable that have the value of the bound minus the bound).
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of a variable is zero if its value is not the one of a bound.
    * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp

@@ -59,9 +59,9 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	  
     	}
     	println(count.mkString(","))
-    	count(0) should be >= (300)
-    	count(0) should be >= (300)
-    	count(4) should be >= (300)
+    	count(0) should be >= (290)
+    	count(0) should be >= (290)
+    	count(4) should be >= (290)
     	count(0)+count(1)+count(4) should be(1000)
 
     }  
@@ -74,6 +74,43 @@ class TestSelector extends FunSuite with ShouldMatchers {
     	val res = selectMin(indices)(_ < 4)(i => (f1(i),f2(i))).get
     	res should be(3)
     }
+    
+    test("test random k selector 1") {
+    			
+    	val indices: Array[Int] = Array(0,1,2,3,4)
+    	val f: Array[Int] = Array(1,1,3,2,1)
+    	val count = Array.fill(indices.size)(0)
+
+    	for (i <- 0 until 1000) {
+    	  val j = selectMinK(indices,1)(_ != 2)(f(_)).head
+    	  count(j) += 1
+    	  
+    	}
+    	count(0) should be >= (290)
+    	count(0) should be >= (290)
+    	count(4) should be >= (290)
+    	count(0)+count(1)+count(4) should be(1000)
+		
+    } 
+    
+    test("test random k selector 2") {
+    			
+    	val indices: Array[Int] = Array(0,1,2,3,4)
+    	val f: Array[Int] = Array(1,2,0,1,2)
+    	val count = Array.fill(indices.size)(0)
+
+    	for (i <- 0 until 1000) {
+    	  val res = selectMinK(indices,3)(_ != 2)(f(_))
+    	  res.foreach(i => count(i) += 1)
+    	  
+    	}
+    	count(0) should be (1000)
+    	count(3) should be >= (1000)
+    	count(4) should be >= (450)
+    	count(1) should be >= (450)
+    	count(1)+count(4) should be(1000)
+		
+    }     
 
 }
 

@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.propagation._;
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
  */
-case class SumElements(var vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 

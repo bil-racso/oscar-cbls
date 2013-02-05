@@ -83,7 +83,7 @@ object YoungTableaux {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // 1..n is used exactly once
       for(i <- 1 until n+1) {
@@ -143,7 +143,7 @@ object YoungTableaux {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

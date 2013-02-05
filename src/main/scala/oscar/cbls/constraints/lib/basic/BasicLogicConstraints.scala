@@ -24,17 +24,17 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.Minus._
 import oscar.cbls.invariants.lib.numeric.{Abs, Minus}
+
 
 /**
  * implements left <= right
  */
-case class LE(left:IntVar, right:IntVar) extends Constraint {
+protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
   registerConstrainedVariables(left,right)
 
@@ -44,24 +44,28 @@ case class LE(left:IntVar, right:IntVar) extends Constraint {
 
   /**the violation is Max(0,right-left)
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of each variable is equal to the global violation of the constraint
    */
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
+
+/**
+ * implements left <= right
+ */
+case class LE(l:IntVar,r:IntVar) extends LEA(l,r)
 
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
  */
-case class GE(override val left:IntVar, override val right:IntVar) extends LE(right,left)
+case class GE(l:IntVar,r:IntVar) extends LEA(r,l)
 
 /**
  * implements left < right
- * it is just the 
  */
-case class L(left:IntVar, right:IntVar) extends Constraint{
+protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
 
   val Violation:IntVar = Max2(0, left + right + 1)
@@ -69,17 +73,22 @@ case class L(left:IntVar, right:IntVar) extends Constraint{
 
   /**the violation is Max(0,right-left + 1)
    */
-  override def getViolation = Violation
+  override def violation = Violation
   /**The violation of each variable is equal to the global violation of the constraint
    */
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
 
 /**
  * implements left > right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
  */
-case class G(override val left:IntVar, override val right:IntVar) extends L(right,left)
+case class L(l:IntVar,r:IntVar) extends LA(l,r)
+
+/**
+ * implements left < right
+ */
+case class G(l:IntVar,r:IntVar) extends LA(r,l)
 
 /**
  * implements left != right
@@ -99,9 +108,9 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
   }
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def getViolation = Violation
+  override def violation = Violation
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }
 
 /**constraints left == right
@@ -112,9 +121,8 @@ case class EQ(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
   finishInitialization()
 
-  //todo: supprimer ces invariants
   val Violation:IntVar = Abs(Minus(left,right))
 
-  override def getViolation:IntVar = Violation
-  override def getViolation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
+  override def violation:IntVar = Violation
+  override def violation(v: Variable):IntVar = {if(left==v || right==v) Violation else 0}
 }

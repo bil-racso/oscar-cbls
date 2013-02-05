@@ -62,31 +62,26 @@ object StableMariage {
 
 
     cp.solve subjectTo {
-
- 
       for (m <- Men) {
-        cp.add(element(husband, wife(m),m))
+        cp.add(elementVar(husband, wife(m),m),Strong)
       }
       for (w <- Women) {
-        cp.add(element(wife, husband(w),w))
+        cp.add(elementVar(wife, husband(w),w),Strong)
       }      
 
       for (m <- Men; w <- Women) { 
-          val pref_m = element(rankMen(m),wife(m)) // preference of m for his wife
-          val pref_w = element(rankWomen(w),husband(w)) // preference of w for her husband
+          val pref_m = element(rankMen(m),wife(m),Weak) // preference of m for his wife
+          val pref_w = element(rankWomen(w),husband(w),Weak) // preference of w for her husband
 
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
      } exploration {
-       
        cp.binary(wife)
-
        println("wife   :" + wife.mkString(""))
        println("husband:" + husband.mkString(""))
        println()
-
-     }
+     } run(1)
 
      cp.printStats()    
 

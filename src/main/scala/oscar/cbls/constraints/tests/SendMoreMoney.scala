@@ -26,13 +26,11 @@ package oscar.cbls.constraints.tests
 
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
-import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -97,17 +95,14 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     r(Carry.c2.id) <== ((d(Letter.N.id) + d(Letter.R.id) + r(Carry.c1.id)) / 10)
     r(Carry.c3.id) <== ((d(Letter.E.id) + d(Letter.O.id) + r(Carry.c2.id)) / 10)
     r(Carry.c4.id) <== ((d(Letter.S.id) + d(Letter.M.id) + r(Carry.c3.id)) / 10)
-    
-    for(l <- Letter.list) {c.registerForViolation(d(l.id))}
-//    for(i <- Carry.list)  {c.registerForViolation(r(i.id))} // carries will be enforced so no violation
-    c.close()
 
     // search variables
-    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.getViolation(d(l.id))).toArray
+    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
+    c.close()
     val Tabu:Array[IntVar] = (for (i <- Letter.list) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = new IntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolLetter:IntSetVar = ArgMaxArray(ViolationArray, NonTabuLetter)
+    val NonTabuMaxViolLetter:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
     
     // closing model
     m.close()
@@ -115,11 +110,11 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // search
     while((c.Violation.value > 0) && (It.value < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter.value)
-      val l2 = selectMin(NonTabuLetter.value)(i => c.getSwapVal(d(l1),d(i)), (i:Int) => i!=l1)
+      val l2 = selectMin(NonTabuLetter.value)(i => c.swapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation.toString +" "+c.Violation.value+" "+c.getSwapVal(d(l1),d(l2)))
+      println(c.Violation.toString +" "+c.Violation.value+" "+c.swapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
       //r(Carry.c1.id).setValue((d(Letter.D.id).value+d(Letter.E.id).value) / 10)

@@ -88,8 +88,8 @@ object GolombRuler {
     var numSols = 0
     cp.minimize(mark(m-1)) subjectTo {
 
-      cp.add(alldifferent(mark), Strong)
-      cp.add(alldifferent(differences), Strong)
+      cp.add(allDifferent(mark), Strong)
+      cp.add(allDifferent(differences), Strong)
 
       increasing(cp, mark)
 
