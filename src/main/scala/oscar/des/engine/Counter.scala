@@ -106,6 +106,10 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
     this emit res.time
     res
   }
+  
+  def dispose {
+    pq.clear()
+  }
 
   private def removeEvent(ev: WaitEvent[A]) { pq.remove(ev) }
 }

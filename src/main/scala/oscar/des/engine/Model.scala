@@ -71,9 +71,9 @@ abstract class Model[S] extends DistrSolver[S] {
   //val b = comparable2ordered[ReadableInstant,DateTime](n)
 
   val clock = new PQCounter[DateTime](new DateTime(1970, 1, 1, 0, 0, 0, 0))
-  val month = new MonthEvent(clock)
+  //val month = new MonthEvent(clock)
 
-  private val processes = new LinkedList[AbstractProcess[_]]()
+  private var processes = new LinkedList[AbstractProcess[_]]()
 
   def addProcess(p: AbstractProcess[_]) {
     processes.addLast(p)
@@ -87,12 +87,17 @@ abstract class Model[S] extends DistrSolver[S] {
   def simulate(horizon: DateTime, verbose: Boolean = true) {
     // make all the process alive
     //reset{
-    val it = processes.iterator
-    while (it.hasNext) {
-      it.next().simulate()
-    }
 
-    while (clock.nonEmpty && clock() <= horizon) {
+    while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
+      while (!processes.isEmpty) {
+        val tmp = processes
+        processes = new LinkedList[AbstractProcess[_]]()
+        val it = tmp.iterator
+        while (it.hasNext) {
+          val proc = it.next()
+          proc.simulate()
+        }
+      }
       val e = clock.next
 
       if (verbose && e.time <= horizon) {
@@ -113,6 +118,11 @@ abstract class Model[S] extends DistrSolver[S] {
 
   def waitDuration[T](duration: Period) = {
     waitFor(clock === (clock() + duration))
+
+  }
+
+  def endSimulate {
+    clock.dispose
 
   }
   //  def waitDuration[T](duration: Int) = {

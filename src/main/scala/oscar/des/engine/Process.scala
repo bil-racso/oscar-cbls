@@ -32,7 +32,7 @@ import org.joda.time._
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class AbstractProcess[T](name: String = "Process")(implicit m: Model[T]) {
+abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Model[T]) {
 
   type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
   type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]

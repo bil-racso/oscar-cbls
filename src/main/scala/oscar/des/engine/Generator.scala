@@ -26,15 +26,18 @@ import scala.util.Random
 import scala.util.continuations._
 import JSci.maths.statistics._
 import oscar.invariants._
+import org.scala_tools.time.Imports._
 
 object Generator {
-	def apply[T](dist: Distr[Double])(block: => Unit)(implicit m: Model[T]) = new Generator(m, dist)(block)
+    def forever[T](dist: Distr[Double])(block: => Unit)(implicit m: Model[T]) = new Generator(m, dist)(
+      {block
+      true}
+    )
+	def apply[T](dist: Distr[Double])(block: => Boolean)(implicit m: Model[T]) = new Generator(m, dist)(block)
 	def apply(dist: ProbabilityDistribution) = new NumberGenerator(dist)
 }
 
-class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Unit) extends ProcessUnit[T]("Generator")(m){
-
-  simulate()
+class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) extends ProcessUnit[T]("Generator")(m){
 
   def restart() ={
     if (!generating) {
@@ -44,10 +47,10 @@ class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Unit) extends
   def start() = {
     generating = true
       while (generating) {
-        val t = floor(dist.apply(m)).toInt
-        val a = w(m.clock === m.clock().plusMillis(t))
+        val t = floor(dist.apply(m)).toLong
+        val a = w(m.clock === new DateTime(m.clock().getMillis() + t) )
         if (generating){
-          block
+          if(!block) generating = false
         }
       }
   }
