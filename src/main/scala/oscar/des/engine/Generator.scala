@@ -34,8 +34,6 @@ object Generator {
 
 class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Unit) extends ProcessUnit[T]("Generator")(m){
 
-  simulate()
-
   def restart() ={
     if (!generating) {
       start()

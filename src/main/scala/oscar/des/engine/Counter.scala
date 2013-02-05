@@ -79,7 +79,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
       }
     }
   }
-
+  override def hanging = pq.size()
   def nonEmpty = !pq.isEmpty()
 
   /**

@@ -39,7 +39,7 @@ import oscar.invariants._
  * it listens to are stored in a list so that this Reactive can be removed and
  * all reactions set to the Occuring are disposed automatically.
  */
-class Reactive {
+trait Reactive {
   val reactingOn = new MyDLL[RDependency[_]]
 
   /**

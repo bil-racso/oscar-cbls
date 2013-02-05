@@ -67,6 +67,7 @@ abstract class AbstractProcess[T](name: String = "Process")(implicit m: Model[T]
    */
   def simulate(): Unit 
 
+  
   //def request(r: Resource): Unit @susp 
 
   def release(r: Resource) = {

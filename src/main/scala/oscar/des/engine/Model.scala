@@ -44,14 +44,14 @@ class DeterministicModel[S] extends Model[S] with DeterministicSolver[S]
  * This class represents a signal whose value is equals to the number of months
  * last since the beginning of its creation.
  */
-class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
+class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](-1) {
 
   reset {
     var m = 0
     while (true) {
       waitFor[DateTime, Unit](clock === clock().plusMonths(1).withDayOfMonth(1).withMillisOfDay(0))
-      m += 1
       emit(m)
+      m += 1
     }
     End
   }
@@ -71,9 +71,9 @@ abstract class Model[S] extends DistrSolver[S] {
   //val b = comparable2ordered[ReadableInstant,DateTime](n)
 
   val clock = new PQCounter[DateTime](new DateTime(1970, 1, 1, 0, 0, 0, 0))
-  val month = new MonthEvent(clock)
+  //val month = new MonthEvent(clock)
 
-  private val processes = new LinkedList[AbstractProcess[_]]()
+  private var processes = new LinkedList[AbstractProcess[_]]()
 
   def addProcess(p: AbstractProcess[_]) {
     processes.addLast(p)
@@ -87,12 +87,16 @@ abstract class Model[S] extends DistrSolver[S] {
   def simulate(horizon: DateTime, verbose: Boolean = true) {
     // make all the process alive
     //reset{
-    val it = processes.iterator
-    while (it.hasNext) {
-      it.next().simulate()
-    }
 
-    while (clock.nonEmpty && clock() <= horizon) {
+    while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
+      while (!processes.isEmpty()) {
+
+        val it = processes.iterator
+        processes = new LinkedList[AbstractProcess[_]]()
+        while (it.hasNext) {
+          it.next().simulate()
+        }
+      }
       val e = clock.next
 
       if (verbose && e.time <= horizon) {
