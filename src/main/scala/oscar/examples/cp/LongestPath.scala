@@ -83,7 +83,7 @@ object LongestPath extends App {
     for (i <- 0 until len - 1) {
       cp.add(table(path(i), path(i + 1), tuples)) // for each consecutive visits, give the possible valid transitions
     }
-    cp.add(alldifferent(path), Weak)
+    cp.add(allDifferent(path), Weak)
     //val cons = new WeightedPath(path, outNodes, inNodes, distMatrix_, weight)
     //println("initlb:"+cons.bound(true)+" initub:"+cons.bound(false))
     //cp.post(cons)
