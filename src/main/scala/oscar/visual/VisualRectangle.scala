@@ -52,6 +52,16 @@ class VisualRectangle(d:VisualDrawing, shape:Rectangle2D.Double) extends Colored
 
 	
 	/**
+	 * Move the specified left corner
+	 * @param x
+	 */
+	def move(x:Double, y:Double) {
+		rect.setRect(x, y, width, height)
+		drawing.repaint()
+	}
+
+	
+	/**
 	 * width of the rectangle
 	 * @return
 	 */
@@ -65,16 +75,6 @@ class VisualRectangle(d:VisualDrawing, shape:Rectangle2D.Double) extends Colored
 	def height = rect.getHeight()
 	
 	
-	/**
-	 * Move the specified left corner
-	 * @param x
-	 * @param y
-	 */
-	def move(x:Double, y:Double) {
-		rect.setRect(x, y, width, height)
-		drawing.repaint()
-	}
-
 	/**
 	 * Set width
 	 * @param w

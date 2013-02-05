@@ -40,6 +40,7 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	content.setBackground(Color.white)
 	content.add(new JScrollPane(desktop))
 	setSize(screenSize)
+	setMinimumSize(new java.awt.Dimension(400,300))
 	setVisible(true)
 	
 	addWindowListener(new WindowAdapter() {
@@ -77,6 +78,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		val frame = new JInternalFrame(title, true, false, true, true)
 		
 		frame.setLocation(c*w,l*h)
+		frame.setPreferredSize(new java.awt.Dimension(w,h))
+		frame.setMinimumSize(new java.awt.Dimension(w,h))
 		frame.setSize(w,h)
 		frame.setBackground(Color.white)
 		frame.setVisible(true)

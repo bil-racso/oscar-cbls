@@ -38,8 +38,8 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 		
 		val makespan = activities.map(_.lct).max
 		
-		makespanLine.setOrig(makespan*xScale, 0)
-		makespanLine.setDest(makespan*xScale, (max+1)*yScale)
+		makespanLine.orig = (makespan*xScale, 0)
+		makespanLine.dest = (makespan*xScale, (max+1)*yScale)
 		
 		text.setText(makespan.toString)
 		text.move(makespan*xScale, (max+2)*yScale);

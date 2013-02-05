@@ -91,7 +91,7 @@ object TSPVisu extends App {
   
   // Updates the visualization
   def updateVisu() {
-    (Cities).foreach(i => lines(i).setDest(coord(succ(i).value)._1, coord(succ(i).value)._2))
+    (Cities).foreach(i => lines(i).dest = (coord(succ(i).value)._1, coord(succ(i).value)._2))
     drawing.repaint()
     plot.addPoint(nbSol, totDist.value)
   }

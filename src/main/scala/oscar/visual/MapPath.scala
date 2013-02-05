@@ -21,6 +21,7 @@ import scala.io.Source
 import scala.collection.mutable.{ HashMap, SynchronizedMap }
 import scala.xml._
 import java.io.IOException;
+import java.awt.Color
 
 /*
  * Representation of a point defined by coordinates
@@ -63,58 +64,60 @@ object MapQuest {
 /*
  * Represent a path from orig to dest as a list of MapLines
  */
-class MapPath(m : VisualMap, o: MapPoint, d : MapPoint) {
+class MapPath(m : VisualMap, o: MapPoint, d : MapPoint, col : Color = Color.BLACK) {
   val map = m
-  var orig = o
-  var dest = d
-  var lines = List[MapLine]()
-    refreshLines()
+  private var _orig = o
+  private var _dest = d
+  private var _lines = List[MapLine]()
+  
+  val color = col
+  
+  
+  refreshLines()
   
   
   /*
    * get mapquest path from orig to dest
    */
   private def refreshLines() = {
- 	val waypoints = MapQuest.getPath(orig, dest)
+ 	val waypoints = MapQuest.getPath(_orig, _dest)
  	//build lines ignoring "empty" shapes
- 	lines = (for(i <- 0 until waypoints.length-2 if waypoints(i).lat != waypoints(i+1).lat || waypoints(i).long != waypoints(i+1).long) 
- 	  yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long)).toList
+ 	_lines = (for(i <- 0 until waypoints.length-2 if waypoints(i).lat != waypoints(i+1).lat || waypoints(i).long != waypoints(i+1).long) 
+ 	  yield new MapLine(map, waypoints(i).lat, waypoints(i).long, waypoints(i+1).lat, waypoints(i+1).long, color)).toList
   }
   
-  // constructor without using MapPoint structure
-  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double) = 
-    this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong)) 
-
+  // constructor without using internal MapPoint structure
+  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double, col : Color = Color.BLACK) = 
+    this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong), col) 
+    
+    
+  def remove = map.removePath(this)
   /*
    *  change destination
    */
-  def setDest(dlat : Double, dlong : Double) = {
-    if(dlat != dest.lat || dlong != dest.long) {
-      dest = new MapPoint(dlat, dlong)
+  def dest_=(d: (Double, Double)): Unit = {
+    if(d._1 != _dest.lat || d._2 != _dest.long) {
+      _dest = new MapPoint(d._1, d._2)
       refreshLines()
       map.viewer.repaint();
     }      
   }
-  
-  def dest_=(latlong: (Double,Double)) {
-    setDest(latlong._1,latlong._2)
-  }
-  
   
   /*
    *  change origin
    */
-  def setOrig(olat : Double, olong : Double) =  {
-    if(olat != orig.lat || olong != orig.long) {
-      orig = new MapPoint(olat, olong)
+  def orig_=(o: (Double,Double)): Unit =  {
+    if(o._1 != _orig.lat || o._2 != _orig.long) {
+      _orig = new MapPoint(o._1, o._2)
       refreshLines()
       map.viewer.repaint();
     }      
   }
   
-  def orig_=(latlong: (Double,Double)) {
-    setOrig(latlong._1,latlong._2)
-  }
+  def dest = (_dest.lat, _dest.long)
+  def orig = (_orig.lat, _orig.long)
+  
+  def lines = _lines
   
 }
 
@@ -123,7 +126,7 @@ object MapPath {
   
   def main(args : Array[String]) {
     val mp = new MapPath(new VisualMap(), 50.466246,4.869278,50.708634,4.572647)
-    println(mp.lines.map(lin => "["+lin.lt1+","+lin.lg1+" to "+lin.lt2+","+lin.lg2+"]")) 
+    println(mp._lines.map(lin => "["+lin.orig._1+","+lin.orig._2+" to "+lin.dest._1+","+lin.dest._2+"]")) 
     
   }
 }
