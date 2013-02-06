@@ -44,14 +44,14 @@ class DeterministicModel[S] extends Model[S] with DeterministicSolver[S]
  * This class represents a signal whose value is equals to the number of months
  * last since the beginning of its creation.
  */
-class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](0) {
+class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](-1) {
 
   reset {
     var m = 0
     while (true) {
       waitFor[DateTime, Unit](clock === clock().plusMonths(1).withDayOfMonth(1).withMillisOfDay(0))
-      m += 1
       emit(m)
+      m += 1
     }
     End
   }
@@ -98,6 +98,18 @@ abstract class Model[S] extends DistrSolver[S] {
           proc.simulate()
         }
       }
+      
+      
+//      while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
+//          while (!processes.isEmpty()) {
+//
+//            val it = processes.iterator
+//            processes = new LinkedList[AbstractProcess[_]]()
+//            while (it.hasNext) {
+//              it.next().simulate()
+//            }
+//          }
+      
       val e = clock.next
 
       if (verbose && e.time <= horizon) {

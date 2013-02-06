@@ -67,6 +67,7 @@ abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Mode
    */
   def simulate(): Unit 
 
+  
   //def request(r: Resource): Unit @susp 
 
   def release(r: Resource) = {

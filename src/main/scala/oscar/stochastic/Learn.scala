@@ -45,20 +45,20 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   }
 
   override def observe(v: B) {
-    require(op.positive(v))
+    //require(op.positive(v))
     super.observe(v)
     if (!op.equiv(op.zero, v)) {
       val o = count.get(v)
       count.put(v, o + 1)
+      n += 1
     }
-    n += 1
   }
 
   def quantileUp(p: Double, nRea: Int) = {
     require(p > 0)
     require(p <= 1)
     require(nRea >= n)
-    assert(n == count.map(_._2).sum, (n, count))
+    //assert(n == count.map(_._2).sum, (n, count))
     val nullObservation = nRea - n
     quantile(Math.ceil(p * nRea).toInt - nullObservation)
   }
@@ -66,7 +66,7 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
     require(p > 0)
     require(p <= 1)
     require(nRea >= n)
-    assert(n == count.map(_._2).sum, (n, count))
+    //assert(n == count.map(_._2).sum, (n, count))
     val nullObservation = nRea - n
     quantile(Math.floor(p * nRea).toInt - nullObservation)
   }
@@ -83,6 +83,13 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
     count.last._1
   }
   override def hasPertinentObservations = super.hasPertinentObservations || count.size != 0
+  override def corresponds(other: LearnedNumerical[B]) ={
+    val that = other.asInstanceOf[AbstractLearnedQuantiles[B]]
+    super.corresponds(that) && this.pmin==that.pmin && this.pmax==that.pmax && this.count.equals(that.count)
+  }
+  override def toString() = {
+    "Learn.quantile: n: " + n + ", tot: " + tot + ", count: " + count
+  }
 }
 
 class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
@@ -105,6 +112,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
     squaredTot = op.+(that.squaredTot, squaredTot)
   }
   def update(v: B) {
+    
     current = v
   }
   def apply() = current
@@ -118,6 +126,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
     observe(current)
   }
   def hasPertinentObservations = tot != 0 || squaredTot != 0
+  def corresponds(that: LearnedNumerical[B]) = this.tot == that.tot && this.squaredTot == that.squaredTot
 }
 
 object Learn {
@@ -152,6 +161,14 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
   def size = numbers.size
   def createNumber: N
 
+  def firstPertinentIndex = {
+    val min = numbers.findIndexOf { _.hasPertinentObservations }
+    if ( min == -1 ) 0
+    else min
+  }
+  def lastPertinentIndex = numbers.findLastIndexOf { _.hasPertinentObservations }
+
+  
   def apply(t: Int) = {
     if (t < 0) throw new ArrayIndexOutOfBoundsException("Do not accept negative indices: " + t)
     var i = numbers.size - 1
