@@ -105,7 +105,10 @@ class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operationab
 }
 
 object Flip {
-  def apply(p: Double) = new Flip(p)
+  def apply(p: Double) = 
+    if (p==0.0) new ValueDistr(false)
+    else if (p==1.0) new ValueDistr(false)
+    else new Flip(p)
 }
 class Flip(p: Double) extends DiscreteDistr[Boolean] {
   override def getNextStochasticRealization(random: scala.util.Random) = random.nextDouble() < p

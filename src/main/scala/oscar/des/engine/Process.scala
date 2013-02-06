@@ -26,8 +26,6 @@ import akka.util.FiniteDuration
 import oscar.invariants._
 import org.joda.time._
 
-
-
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
@@ -65,9 +63,8 @@ abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Mode
   /**
    * Properly start the simulation of this process (method normally called by the engine, not the modeler).
    */
-  def simulate(): Unit 
+  def simulate(): Unit
 
-  
   //def request(r: Resource): Unit @susp 
 
   def release(r: Resource) = {
@@ -86,8 +83,8 @@ abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Mode
 
 }
 
-abstract class Process[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m){
-  
+abstract class Process[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m) {
+
   /**
    * Entry point of the simulation for this process
    */
@@ -103,18 +100,18 @@ abstract class Process[T](name: String = "Process")(implicit m: Model[T]) extend
   }
 }
 
-abstract class ProcessUnit[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m){
-  
+abstract class ProcessUnit[T](name: String = "Process")(implicit m: Model[T]) extends AbstractProcess[T](name)(m) {
+
   /**
    * Entry point of the simulation for this process
    */
   def start(): Unit @susp
 
-  def simulate{
-	  reset{
-	    start()
-	    End
-	  }
+  def simulate {
+    reset {
+      start()
+      End
+    }
   }
 }
 
@@ -132,11 +129,11 @@ abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(i
   def Iam(next: S)(implicit current: S) = deepExec(next)
   override def start() = deepExec(initState)
 }
-
-abstract class ProcessWithCostByState[S, T <: ProcessResult[T]](name: String = "Process", initState: S)(implicit m: Model[T]) extends ProcessWithStates[S, T](name, initState)(m) {
-  def cost(state: S): T @susp
-  override def Iam(next: S)(implicit current: S) = cost(current).+:(deepExec(next))
-}
+//
+//abstract trait ProcessWithCostByState[S, T <: ProcessResult[T]] extends ProcessWithStates[S, T] {
+//  def cost(state: S): T @susp
+//  override def Iam(next: S)(implicit current: S) = cost(current).+:(deepExec(next))
+//}
 
 trait MonitorState[S, T] extends ProcessWithStates[S, T] {
   val entering = Event[S]()
@@ -159,7 +156,7 @@ trait Precomputation[S, T] extends ProcessWithStates[S, T] {
               Suspend
             case End =>
               assert(false)
-              Suspend              
+              Suspend
             case EndResult(v) => {
               this(state) = v
               End(v)
@@ -172,9 +169,12 @@ trait Precomputation[S, T] extends ProcessWithStates[S, T] {
   }
 
   override def deepExec(state: S): T @susp = {
-
+//println( state.toString().substring(0,Math.min(45,state.toString().length())) )
     this(state) match {
-      case None => future(state)
+      case None => {
+        future(state)
+        
+      }
       case Some(v) => {
         //assert( future(state) == v )
         v
@@ -184,12 +184,13 @@ trait Precomputation[S, T] extends ProcessWithStates[S, T] {
 
   def apply(state: S) = results.get(state)
   def update(state: S, res: T) = {
+//	 println( state.toString().substring(0,Math.min(45,state.toString().length())) + " *** " + res)
     assert(results.get(state) == None)
     results(state) = res
   }
-  override def waitDuring(d: Period): DateTime @susp = {
-    model.setTime(model.clock().plus(d))
-    model.clock()
-  }
+    override def waitDuring(d: Period): DateTime @susp = {
+      model.setTime(model.clock().plus(d))
+      model.clock()
+    }
 
 }

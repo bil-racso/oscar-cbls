@@ -37,7 +37,7 @@ import org.scala_tools.time.Imports._
  */
 
 class StochasticModel[S] extends Model[S] with StochasticSolver[S]
-//class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
+class EsperanceModel[T <: Meanalizable[T]] extends Model[T] with EsperanceSolver[T]
 class DeterministicModel[S] extends Model[S] with DeterministicSolver[S]
 
 /**
