@@ -15,12 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.util.test
+package oscar.util.mo.test
 
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.util._
+import oscar.util.mo._
 
 
 /**

@@ -15,11 +15,12 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.util
+package oscar.util.mo
 
 import math.Numeric.Implicits._
-import Ordering.Implicits._
-import org.omg.CORBA.Object
+//import Implicits._
+import scala.Array.canBuildFrom
+import scala.Option.option2Iterable
 
 /**
  * QuadTree able to maintain a set of non dominated vectors (assuming maximizations in all dimensions).
