@@ -89,27 +89,15 @@ abstract class Model[S] extends DistrSolver[S] {
     //reset{
 
     while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
-      while (!processes.isEmpty) {
-        val tmp = processes
+      while (!processes.isEmpty()) {
+
+        val it = processes.iterator
         processes = new LinkedList[AbstractProcess[_]]()
-        val it = tmp.iterator
         while (it.hasNext) {
-          val proc = it.next()
-          proc.simulate()
+          it.next().simulate()
         }
       }
-      
-      
-//      while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
-//          while (!processes.isEmpty()) {
-//
-//            val it = processes.iterator
-//            processes = new LinkedList[AbstractProcess[_]]()
-//            while (it.hasNext) {
-//              it.next().simulate()
-//            }
-//          }
-      
+
       val e = clock.next
 
       if (verbose && e.time <= horizon) {
