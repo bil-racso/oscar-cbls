@@ -39,7 +39,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = TSPUtils.parseCoordinates("data/TSP/kroB100.tsp")
+  val coord = TSPUtils.parseCoordinates("data/TSP/renB50.tsp")
   val realMatrix = TSPUtils.buildRealDistMatrix(coord)
   val distMatrix = TSPUtils.buildDistMatrix(coord)
 
@@ -71,14 +71,10 @@ object myTSP extends App {
     cp.add(circuit(succ))
     cp.add(circuit(pred))
 
-    //cp.add(new MyCircuit(cp, succ), Strong)
-    //cp.add(new MyCircuit(cp, pred), Strong)
-
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
     cp.add(sum(Cities)(i => distMatrix(i)(pred(i))) == totDist)
-
-    cp.add(new TONOTCOMMIT(cp, pred, distMatrix, totDist))
-    cp.add(new TONOTCOMMIT(cp, succ, distMatrix, totDist))
+    cp.add(new MinAssignment(pred, distMatrix, totDist))
+    cp.add(new MinAssignment(succ, distMatrix, totDist))
   }
 
   // Search
@@ -94,14 +90,14 @@ object myTSP extends App {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   var currentSol: Sol = null
-  val p = 10   
+  var p = 15
   
   // Get initial solution
   cp.run(1)
   
-  for (iter <- 1 to 10000) {
+  for (iter <- 1 to 100) {
     visu.updateRestart(iter)    
-    cp.runSubjectTo(Int.MaxValue, 500) {
+    cp.runSubjectTo(Int.MaxValue, 1000) {
       relaxVariables(clusterRelax(p))
     }
   }

@@ -12,12 +12,12 @@ import oscar.cp.modeling.CPSolver
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.measures.Hypervolume.hypervolume
 import oscar.cp.mem.RoutingUtils.regretHeuristic
-import oscar.cp.constraints.TONOTCOMMIT
 import oscar.cp.mem.DynDominanceConstraint
+import oscar.cp.constraints.MinAssignment
 
 object MoLnsTSP extends App {
 
-  case class Sol(pred: Array[Int], succ: Array[Int]) { var lifes = 10 }
+  case class Sol(pred: Array[Int], succ: Array[Int]) { var tabu = 0 }
 
   val pareto: ParetoSet[Sol] = ParetoSet(2)
   val newSols: ParetoSet[Sol] = ParetoSet(pareto.nObjs)
@@ -50,12 +50,14 @@ object MoLnsTSP extends App {
 
   // Insert first points
   for (i <- 0 until preds.size) {
-    //val i = 1
+    val i = 1
     val dist1 = TSPUtils.computeDist(preds(i), distMatrix1)
     val dist2 = TSPUtils.computeDist(preds(i), distMatrix2)
     val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
     pareto insert x
   }  
+  
+  println(pareto.sortedByObj(0).mkString("\n"))
   
   // Init Model
   // ----------
@@ -72,7 +74,7 @@ object MoLnsTSP extends App {
 
   // Constraints
   // -----------
-  cp.solve() subjectTo {
+  cp.minimize(totDists:_*) subjectTo {
 
     // Channeling between predecessors and successors
     cp.add(new ChannelingPredSucc(cp, pred, succ))
@@ -84,8 +86,8 @@ object MoLnsTSP extends App {
     for (o <- pareto.Objs) {
       cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
       cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
-      cp.add(new TONOTCOMMIT(cp, pred, distMatrices(o), totDists(o)))
-      cp.add(new TONOTCOMMIT(cp, succ, distMatrices(o), totDists(o)))
+      cp.add(new MinAssignment(pred, distMatrices(o), totDists(o)))
+      cp.add(new MinAssignment(succ, distMatrices(o), totDists(o)))
     }
     
     cp.add(new DynDominanceConstraint(cp, pareto, totDists:_*))
@@ -99,18 +101,6 @@ object MoLnsTSP extends App {
     solFound()
   } 
 
-  var noSol = true
-  def solFound() {   
-    // No dominated solutions !
-    val newSol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))    
-    assert(pareto.insert(newSol) != -1) 
-    noSol = false
-    // Visu
-    visu.selected(totDists(0).value, totDists(1).value)
-    visu.update()
-    visu.paint
-  }
-
   // MOLNS Framework
   // ---------------
 
@@ -119,51 +109,66 @@ object MoLnsTSP extends App {
   // Parameters
   val p = 10
   val intensFreq = 0.3
-
-  var stopCriterion = false
-  var currentDominated = false
-  var iter = 0
+  val tabuLength = 50
+ 
+  var currentSol: MOSol[Sol] = null
+  var currentDominated = false  
+  var noSol = true 
   
   // Framework 
-  while(!stopCriterion) {
-    
-    iter += 1
-    if (iter % 100 == 0) println("Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
+  for (iter <- 1 to 10000) {
+
+    if (iter % 100 == 0) println("Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + hypervolume(pareto))
     
     // Selects mode
     val intens = rand.nextFloat() < intensFreq
     
     // Selects a solution
-    val sol = selectSolution(iter, intens)
+    currentSol = selectSolution(iter, intens)
     
-    // Search
-    if (sol == null) stopCriterion = true
-    else {
-      currentDominated = false
-      for (o <- pareto.Objs if !currentDominated) {
-        currentObjective = o
-        cp.runSubjectTo(failureLimit = 3000) {
-          relaxObjectives(o, sol, intens)
-          relaxVariables(clusterRelax(p, o), sol)
-        }
+    // Visu
+    visu.selected(currentSol.objs(0), currentSol.objs(1))
+    
+    // Init Search
+    currentDominated = false
+    noSol = true
+    
+    // Searches
+    for (o <- pareto.Objs if !currentDominated) {
+      currentObjective = o
+      cp.runSubjectTo(failureLimit = 3000) {
+        relaxObjectives(o, currentSol, intens)
+        relaxVariables(clusterRelax(p, o), currentSol)
       }
-      if (noSol) sol.lifes -= 1
+    }
+    
+    // Tabu list
+    if (noSol) currentSol.tabu = iter + tabuLength
+  }
+
+  def selectSolution(iter: Int, intens: Boolean): MOSol[Sol] = {  
+    val notTabu = pareto.filter(_.tabu <= iter)
+    if (!notTabu.isEmpty) notTabu.sortBy(surfHeuristic(_, intens)).last
+    else {
+      val min = pareto.min(_.tabu)
+      val diff = min.tabu - iter
+      pareto.foreach(p => p.tabu = p.tabu - diff)
+      min
     }
   }
-
-  def selectSolution(iter: Int, intens: Boolean): MOSol[Sol] = {   
-    val alive = pareto.filter(_.lifes > 0)
-    if (alive.isEmpty) null
-    else alive(rand.nextInt(alive.size))
+  
+  def surfHeuristic(sol: MOSol[Sol], intens: Boolean): Int = {
+    if (intens) computeLIS(sol)
+    else computeLDS(sol)
   }
 
-  def computeIntenSurf(sol: MOSol[Sol]): Int = {
+  def computeLIS(sol: MOSol[Sol]): Int = {
     val diff1 = sol.objs(0) - sol.lowerBound(0)
     val diff2 = sol.objs(1) - sol.lowerBound(1)
     diff1 * diff2
   }
 
-  def computeDiffSurf(sol: MOSol[Sol]): Int = {
+  def computeLDS(sol: MOSol[Sol]): Int = {
     val diff12 = sol.upperBound(0) - sol.objs(0)
     val diff11 = sol.objs(0) - sol.lowerBound(0)
     val diff22 = sol.upperBound(1) - sol.objs(1)
@@ -206,5 +211,19 @@ object MoLnsTSP extends App {
     val cc = notSelected(r)
     constraints.enqueue(pred(cc) == (if (cp.random.nextBoolean()) sol.pred(cc) else sol.succ(cc)))
     cp.post(constraints.toArray)
+  }
+  
+  def solFound() {   
+    
+    // No dominated solutions !
+    val newSol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))  
+    assert(pareto.insert(newSol) != -1) 
+       
+    if (newSol dominates currentSol) currentDominated = true   
+    noSol = false
+    
+    // Visu
+    visu.update()
+    visu.paint
   }
 }

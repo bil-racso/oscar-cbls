@@ -71,7 +71,7 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
       lines(i).setDest(pX * scale + xPadding, pY * scale + yPadding)
     }
     
-    text.setText("#Starts: " + nRestart + ", Distance: " + dist)
+    text.setText("#Iterations: " + nRestart + ", Distance: " + dist)
     drawing.repaint()
   }
 

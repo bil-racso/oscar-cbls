@@ -86,7 +86,10 @@ class ParetoSet[Sol](val nObjs: Int) {
 
   def foreach[B](f: (MOSol[Sol]) => B) = X.foreach(n => f(n.sol))
 
-  def clear() { X = List() }
+  def clear() { 
+    X = List() 
+    objsVal.foreach(_.clear())
+  }
 
   def filter(f: (MOSol[Sol]) => Boolean) = X.map(_.sol).filter(f)
 

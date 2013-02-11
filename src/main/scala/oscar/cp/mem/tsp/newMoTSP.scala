@@ -14,6 +14,7 @@ import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.mem.measures.Hypervolume.hypervolume
+import oscar.cp.constraints.MinAssignment
 
 object newMoTSP extends App {
 
@@ -21,21 +22,21 @@ object newMoTSP extends App {
 
   // BiObjective Pareto Set 
   val pareto: ParetoSet[Sol] = ParetoSet(2)
-  pareto.Objs.foreach(pareto.nadir(_) = 180000)
+  pareto.Objs.foreach(pareto.nadir(_) = 300000)
   
   // Visualization
   val visu = new VisualSet(pareto)
   
   // Parsing
-  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
-  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp") 
+  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/renA50.tsp")
+  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/renB50.tsp") 
   val distMatrices = Array(distMatrix1, distMatrix2)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
   
   // First Phase
   // -----------
-  
+  /*
   // Read data
   val preds = TSPUtils.readSet("firstPhaseABmerged.txt")
   val succs = TSPUtils.buildSuccsFromPreds(preds)
@@ -55,6 +56,12 @@ object newMoTSP extends App {
     val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
     pareto insert x
   }
+  
+  val sol1 = pareto.min(_.objs(0))
+  val sol2 = pareto.min(_.objs(1))
+  pareto.clear()
+  pareto insert sol1
+  pareto insert sol2*/
 
   // Model
   // -----
@@ -62,10 +69,10 @@ object newMoTSP extends App {
   cp.silent = true
 
   // Successors & Predecessors  
-  //val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
-  //val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
-  val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
-  val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
+  val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
+  val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities))
+  //val succ = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
+  //val pred = Array.tabulate(nCities)(i => CPVarInt(cp, Cities.filter(j => selected(i)(j))))
 
   // Total distance
   val totDists = Array.tabulate(pareto.nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
@@ -84,8 +91,8 @@ object newMoTSP extends App {
     for (o <- pareto.Objs) {
       cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
       cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
-      cp.add(new TONOTCOMMIT(cp, pred, distMatrices(o), totDists(o)))
-      cp.add(new TONOTCOMMIT(cp, succ, distMatrices(o), totDists(o)))
+      cp.add(new MinAssignment(pred, distMatrices(o), totDists(o)))
+      cp.add(new MinAssignment(succ, distMatrices(o), totDists(o)))
     }
     
     cp.add(new DynDominanceConstraint(cp, pareto, totDists:_*))
@@ -114,14 +121,18 @@ object newMoTSP extends App {
   // Run
   // ---  
   println("Search...")
-  //cp.run(1)
+  cp.run(failureLimit = 5000)
+  objective = 1
+  cp.run(failureLimit = 5000)
   var stopCriterion = false
   var iter = 0
+  var p = 5
   
   while(!stopCriterion) {
-    
+
     iter += 1
-    if (iter % 100 == 0) println("Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + hypervolume(pareto))   
+    if (iter % 1000 == 0 && p < 10) p += 1
+    if (iter % 100 == 0) println("p " + p + "Iter: " + iter + "\t#Set: " + pareto.size + "\tH: " + hypervolume(pareto))   
 
     noSol = true
     val alive = pareto.filter(_.lifes > 0)
@@ -131,12 +142,13 @@ object newMoTSP extends App {
       val sol = alive(cp.random.nextInt(alive.size))
       objective = cp.random.nextInt(pareto.nObjs)
 
-      cp.runSubjectTo(failureLimit = 3000) {
-        relaxVariables(clusterRelax(10, objective), sol)
+      cp.runSubjectTo(failureLimit = 2000) {
+        relaxVariables(clusterRelax(p, objective), sol)
       }
 
       if (noSol) sol.lifes -= 1
     }
+    if (iter > 15000) stopCriterion = true
   }
   
   def clusterRelax(p: Int, obj: Int): Array[Boolean] = {
@@ -173,9 +185,9 @@ object newMoTSP extends App {
   println("H: " + hypervolume(pareto))
   
   val points = pareto.sortedByObj(0)
-  println(points.mkString("\n"))
+  //println(points.mkString("\n"))
   
-  val out = OutFile("ResultAB")
-  points.foreach(p => out.writeln(p.objs(0)+", "+p.objs(1)))
+  val out = OutFile("fullSetRen50")
+  points.foreach(p => out.writeln(p.sol.pred.mkString(" ")))
   out.close()
 }
