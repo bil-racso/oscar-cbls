@@ -155,7 +155,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       if(vrp.isRouted(i)){
         arrows(i).visible = true
         setColorToRoute( arrows(i),vrp.RouteNr(i).value)
-        arrows(i).setDest(nodes(vrp.Next(i).value).long,
+        arrows(i).dest = (nodes(vrp.Next(i).value).long,
           nodes(vrp.Next(i).value).lat)
       }
       else

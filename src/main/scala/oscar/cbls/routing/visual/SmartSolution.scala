@@ -68,7 +68,7 @@ class SmartSolution() extends JFrame{
       if(vrp.isRouted(i)){
         arrows(i).visible = true
         setColorToRoute( arrows(i),vrp.RouteNr(i).value)
-        arrows(i).setDest(nodes(vrp.Next(i).value).long,
+        arrows(i).dest = (nodes(vrp.Next(i).value).long,
           nodes(vrp.Next(i).value).lat)
       }
       else

@@ -20,31 +20,18 @@ import java.awt.Color
 
 
 /**
- * @author Pierre Schaus
+ * @author Corentin Mulders
  */
-class MapLine(map : VisualMap,  lat1 : Double, long1 : Double, lat2 : Double, long2 : Double, col : Color = Color.RED) {
-	private var olat = lat1
-	private var olong = long1
-	private var dlat = lat2
-	private var dlong = long2
+class MapWaypoint(map : VisualMap,  xlat : Double, xlong : Double, col : Color = Color.BLUE, lbl : String = null) {
+	var lat = xlat
+	var long = xlong
 	
 	var color = col
-
-	def this(map : VisualMap, o: (Double, Double), d: (Double, Double), col : Color = Color.RED) = this(map, o._1, o._2, d._1, d._2, col)
-	def remove = map.removeLine(this)
 	
-	def dest_=(d:(Double,Double)) : Unit = {
-		this.dlat = d._1;
-		this.dlong = d._2;
-		map.viewer.repaint();
-	}
+	var label = lbl
 
-	def orig_=(o:(Double,Double) ) : Unit =  {
-		this.olat = o._1;
-		this.olong = o._2;
-		map.viewer.repaint();
-	}		
+	def this(map : VisualMap, o: (Double, Double), col : Color = Color.BLUE) = this(map, o._1, o._2, col)
+	def remove = map.removeWaypoint(this)
+		
 	
-	def dest = (dlat, dlong)
-	def orig = (olat, olong)
 }

@@ -27,8 +27,10 @@ import oscar.cp.core._
 import scala.annotation.tailrec
 import scala.util.control.Breaks._
 
+
+
 /**
- * This code is inspired by an implementation by Kevin L. Stern of the Hungarian algorithm
+ * This code is adapted to CP from an origina implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
  */
 class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val cost: CPVarInt) extends Constraint(x(0).s, "MinAssignment") {
@@ -90,10 +92,7 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
    */
   private def computeInitialFeasibleSolution() {
     for (j <- J) {
-      labelByJob(j).value = Int.MaxValue;
-    }
-    for (w <- W; j <- J; if (costMatrix(w)(j).value < labelByJob(j).value)) {
-      labelByJob(j).value = costMatrix(w)(j).value
+      labelByJob(j).value = W.map(costMatrix(_)(j).value).min
     }
   }
 
@@ -220,6 +219,7 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
     var w = fetchUnmatchedWorker()
     //println("fetching worker:" + w)
     while (w < n) {
+      println("initialize phase")
       initializePhase(w)
       executePhase()
       //printAll()
@@ -244,10 +244,13 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
   }
 
   private def filter(): CPOutcome = {
+    //println("filter")
+    //printAll()
     val sum = (W).foldLeft(0)((tot, w) => tot + weights(w)(matchJobByWorker(w).value))
     if (cost.updateMin(sum) == CPOutcome.Failure) return CPOutcome.Failure
     val maxSlack = cost.max - sum
     for (w <- W; j <- J; if x(w).hasValue(j)) {
+        //println("slack of "+w+"->"+j+":"+slack(w,j))
     	if (slack(w,j) > maxSlack) {
     	  if (x(w).removeValue(j) == CPOutcome.Failure) {
     	    return CPOutcome.Failure
@@ -293,7 +296,7 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
 
 }
 
-object MinAssignment2 {
+object MinAssignment {
   def main(args: Array[String]) {
 
   }

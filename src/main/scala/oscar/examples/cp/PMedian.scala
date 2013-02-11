@@ -94,7 +94,7 @@ object PMedian extends App {
       val j = x(i).value
       vcircles(i).innerCol = Color.WHITE;
       vcircles(j).innerCol = Color.RED
-      vlines(i).setDest(cust(j)._1 * scale + offsetx, cust(j)._2 * scale  + offsety)
+      vlines(i).dest = (cust(j)._1 * scale + offsetx, cust(j)._2 * scale  + offsety)
     }
   }
   // ---------------------------
