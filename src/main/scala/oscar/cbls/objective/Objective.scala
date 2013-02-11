@@ -27,9 +27,6 @@ import oscar.cbls.invariants.core.computation._;
 
 case class Objective(Objective: IntVar) extends ObjectiveTrait {
   setObjectiveVar(Objective)
-
-
-
 }
 
 trait ObjectiveTrait {
@@ -51,9 +48,6 @@ trait ObjectiveTrait {
     a :=: b
     NewVal
   }
-
-
-
 
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.

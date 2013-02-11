@@ -32,7 +32,7 @@ import oscar.cbls.scheduling._
  * he cannot sleep before having eaten
  */
 object Reagan extends App {
-  val model = new Model(false, true, false)
+  val model = new Model(false, None, false)
   val planning = new Planning(model, 31)
   val solver = new IFlatIRelax(planning)
 

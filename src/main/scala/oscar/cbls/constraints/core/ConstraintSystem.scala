@@ -32,6 +32,7 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
  * monitoring the violation of a variable requires that the ConstraintSystem has been notified that the variable should have an associated violation degree.
  * This is achieved by calling the method registerForViolation(v:Variable).
+ * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
  */
 class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{

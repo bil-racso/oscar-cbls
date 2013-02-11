@@ -118,7 +118,7 @@ class ModelVRP() extends StopWatch{
     N = boardPanel.nbNodes.getText.toInt
 
     closeNeighbor = boardPanel.klimited.getText.toInt
-    m = new Model(false,false,false,false)
+    m = new Model(false,None,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
       with ClosestNeighborPoints with Predecessors with Unrouted
       with WeightedNode with WeakConstraints with StrongConstraints

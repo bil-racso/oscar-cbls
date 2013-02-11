@@ -113,7 +113,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     startWatch()
         
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
         
     // grid definition and initialisation
     val grid=Array.ofDim[IntVar](M)

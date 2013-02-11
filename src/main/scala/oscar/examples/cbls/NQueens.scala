@@ -70,7 +70,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
     startWatch()
     val range:Range = Range(0,N)
 
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
     val it:Iterator[Int] = getRandomPermutation(N)
     val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 

@@ -38,6 +38,7 @@ import oscar.cbls.invariants.core.computation._
  * @param items the items, designing the bins they are placed into
  * @param itemsizes the size of the items
  * @param binsizes the max size of the available bins
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar])
   extends Constraint {

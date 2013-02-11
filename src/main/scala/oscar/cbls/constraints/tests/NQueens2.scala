@@ -77,7 +77,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val range:Range = Range(0,N)
     val tabulength = 10
 
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
     val it = Random.shuffle(range.toList).iterator
     val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 

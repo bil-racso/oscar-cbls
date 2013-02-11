@@ -29,6 +29,7 @@ import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic.IntITE
+import oscar.cbls.invariants.core.propagation.checker
 
 /**Implement the AtLeast constraint on IntVars.
  * There is a set of minbounds, defined in the parameter bound as pair (value,minbound).
@@ -37,6 +38,7 @@ import oscar.cbls.invariants.lib.logic.IntITE
  * @param variables the variable whose values are constrained
  * @param bounds map(value,minbound) specifying the minimal number of occurrence of ''value'' among the variables.
  * We use a map to ensure that there is no two bounds on the same value.
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) extends Constraint{
 
@@ -127,7 +129,7 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
     tmp
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
     for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v),"" + ValueCount + MyValueCount)
