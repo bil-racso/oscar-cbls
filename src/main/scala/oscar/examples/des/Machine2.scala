@@ -19,41 +19,45 @@ package oscar.examples.des
 
 
 
+import oscar.des.engine
+import oscar.stochastic._
 import oscar.des.engine._
+import oscar.invariants._
 import scala.util.continuations._
+import org.scala_tools.time.Imports._
+
 
 /**
  * Two machines can be broken, there is only one repair person that can fix it at a time,
  * so one of the machines must wait if the two machines are broken at the same time
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Process(m,name) {
+class Machine2(m : Model[Unit], name: String, repairPerson: Resource) extends Process[Unit](name)(m) {
+	val a = (1 minutes).toDuration
+	val liveDur = UniformDiscrete(1, 10 ).map(_.minutes)
+	val repairDur = UniformDiscrete(1, 3).map(_.minutes)
 	
-	val liveDur = new scala.util.Random(0)
-	val repairDur = new scala.util.Random(0)
 	
-	
-	def alive(): Unit @suspendable = {
+	def alive(): Unit @susp = {
 		println(name+" is alive")
-		m.wait(liveDur.nextInt(10).max(1));
+		waitDuring( liveDur(m) );
 		broken()
 	}
 	
-	def broken(): Unit @ suspendable = {
+	def broken() = {
 		println(name+" is broken waiting to be repaired")
 		//m.request(repairPerson)
-		repairPerson.request
+		request(repairPerson)
 		repair()
 		
 	}
 	
-	def repair(): Unit @ suspendable ={
+	def repair() ={
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(1));
+		waitDuring(repairDur(m) );
 		//m.release(repairPerson)
 		repairPerson.release
-		alive()
-		
+		alive()		
 	}		
 	
 	override def start = alive
@@ -62,10 +66,10 @@ class Machine2(m : Model, name: String, repairPerson: UnaryResource) extends Pro
 
 object Machine2 {
 	def main(args: Array[String]){
-  		val mod = new Model()
-  		val repairPerson = new UnaryResource(mod)
+  		val mod = new StochasticModel[Unit]()
+  		val repairPerson = Resource.unary(mod)
 		val m1 = new Machine2(mod,"machine1",repairPerson)
 		val m2 = new Machine2(mod,"machine2",repairPerson)
-		mod.simulate(100,true)
+		mod.simulate(mod.clock().plusDays(100),true)
 	}
 }

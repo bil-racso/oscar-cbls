@@ -38,37 +38,34 @@ object Reagan extends App {
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
-  val Eat = Task(2, planning, "eat")
-  Eat uses 2 ofResource Reagan
+  val Manger = Task(2, planning, "eat")
+  Manger uses 2 ofResource Reagan
 
-  val Sleep = Task(8, planning, "sleep")
-  Sleep uses 1 ofResource Reagan
+  val Dormir = Task(8, planning, "sleep")
+  Dormir uses 1 ofResource Reagan
 
-  val Think = Task(12, planning, "think")
-  Think uses 1 ofResource Reagan
+  val Reflechir = Task(12, planning, "think")
+  Reflechir uses 1 ofResource Reagan
 
-  val Chew = Task(3, planning, "chew")
-  Chew uses 1 ofResource Reagan
+  val Chiquer = Task(3, planning, "chew")
+  Chiquer uses 1 ofResource Reagan
 
-  val Speak = Task(3, planning, "speak")
-  Speak uses 3 ofResource Reagan
+  val Parler = Task(3, planning, "speak")
+  Parler uses 3 ofResource Reagan
 
-  val Drink = Task(3, planning, "drink")
-  Drink uses 3 ofResource Reagan
+  val Boire = Task(3, planning, "drink")
+  Boire uses 3 ofResource Reagan
 
-  val Digest = SuperTask(Eat, Sleep, "digest")
-  Digest uses 1 ofResource Reagan
+  val Digerer = SuperTask(Manger, Dormir, "digest")
 
-  Think precedes Drink
-  Eat precedes Sleep
-  Chew precedes Speak
+  Reflechir precedes Boire
+  Manger precedes Dormir
+  Chiquer precedes Parler
 
   planning.close()
   model.close(false)
  // println(model.dumpToDot(true, true))
-  solver.Solve(15, 10, solver.WorseFirst(), 2, 50)
+  solver.Solve(10, 4, solver.WorseFirst(), 2, 50)
 
   println(planning.toAsciiArt)
-  println(planning.dependencies)
 }
-

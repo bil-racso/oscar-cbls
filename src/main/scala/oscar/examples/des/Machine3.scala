@@ -21,17 +21,18 @@ package oscar.examples.des
 
 import oscar.des.engine._
 import scala.util.continuations._
+import org.joda.time._
 
 /**
  * two machines can be broken, there is only one repair person that can repair it at a time
  * but this person must wait that the two machines are broken to start repairing any of them
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine3(m : Model, name: String, machineList : MachineList) extends Process(m,name) {
+class Machine3(m : Model[Unit], name: String, machineList : MachineList) extends Process[Unit](name)(m) {
 	
 	val liveDur = new scala.util.Random(0)
 	val repairDur = new scala.util.Random(0)
-	val repairPerson = new UnaryResource(m)
+	val repairPerson = Resource.unary(m)
 	private var broken = false
 	private var repairInProgress = false
 	machineList + this //add this to the list of machines
@@ -40,7 +41,7 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 	
 	def isRepairInProgress : Boolean =  repairInProgress 
 	
-	def alive(): Unit @ suspendable = {
+	def alive():Unit @susp = {
 		println(name+" is alive")
 		broken = false
 		repairInProgress = false
@@ -48,34 +49,34 @@ class Machine3(m : Model, name: String, machineList : MachineList) extends Proce
 		break()
 	}
 	
-	def break() : Unit @ suspendable ={
+	def break() ={
 		println(name+" is broken waiting to be repaired")
 		broken = true
 		
 		if (machineList.notAllBroken()) {
-			m.suspend(this) 
+			//suspend 
 			//we wait because some of the machines are not yet broken
 			repair() 
 			
 		} else {
 			//all machines are broken but some of them are in the process of being repaired
 			// so we reactivate only those not currently being repaired
-			machineList.notBeingRepaired().foreach(ma => if(ma != this) m.resume(ma))
+			//machineList.notBeingRepaired().foreach(ma => if(ma != this) ma.resume)
 			repair() 
 		}
 	}
 	
-	def repair()  : Unit @ suspendable ={
+	def repair()={
 		println(name+" is asking to be repaired")
-		m.request(repairPerson) 
+		request(repairPerson) 
 		
 		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(0))
-		m.release(repairPerson)
+		waitDuring(new Period(repairDur.nextInt(3).max(0)))
+		release(repairPerson)
 		alive()
 	}
 	
-	override def start()  = alive()
+	override def start(): Unit @susp  = alive()
 	
 }
 
@@ -99,11 +100,11 @@ class MachineList{
 
 object Machine3 {
 	def main(args: Array[String]){
-  		val mod = new Model()
+  		val mod = new StochasticModel[Unit]()
   		val mlist = new MachineList()
 		val m1 = new Machine3(mod,"machine1",mlist)
 		val m2 = new Machine3(mod,"machine2",mlist)
-		mod.simulate(100,true);
+		mod.simulate(mod.clock().plusDays(100),true);
   		println("done1")
 	}
 }
