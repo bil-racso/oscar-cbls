@@ -23,24 +23,21 @@ import scala.util.continuations._
 class SimQueue {
 
   val isOpen = new Var[Boolean](false)
-  val serve = Event.oneAtATime[Unit]()  
+  val serve = new EventOne[Unit]  
   val isBusy = new Var[Boolean](false)
   val isEmpty = new Var[Boolean](true)
   
-  private def u[T] = {
-    if ( isBusy() )
-        waitFor[Unit,T](serve) 
-      else ()
-  }
-  
-  def enter[T]: Boolean@cpsParam[SuspendableResult[T],SuspendableResult[T]] = {
-    val res = if ( isOpen() ){
+  def enter: Boolean@suspendable = {
+    if ( ! isOpen() ) false
+    else {
       isEmpty := false
-      u[T]
+      if ( isBusy() )
+        waitFor(serve) 
+      else
+        cpsunit
       isBusy := true
       true
-    }else false
-    res
+    }
   }
   
   def leave(){

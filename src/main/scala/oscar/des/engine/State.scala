@@ -24,8 +24,8 @@ class BasicState{}
 class State[A] extends BasicState {
   
 
-  val atEntry = Event[A]()
-  val atLeaving = Event[A]()
+  val atEntry = new Event[A]
+  val atLeaving = new Event[A]
   
   def code(param: A): Unit @suspendable={println()}
   

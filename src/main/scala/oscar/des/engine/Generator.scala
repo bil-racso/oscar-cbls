@@ -19,59 +19,23 @@
 
 package oscar.des.engine
 
-import scala.Math._
-
-import oscar.stochastic._
+import scala.math._
 import scala.util.Random
 import scala.util.continuations._
 import JSci.maths.statistics._
 import oscar.invariants._
-import org.scala_tools.time.Imports._
 
-object Generator {
-    def forever[T](dist: Distr[Double])(block: => Unit)(implicit m: Model[T]) = new Generator(m, dist)(
-      {block
-      true}
-    )
-	def apply[T](dist: Distr[Double])(block: => Boolean)(implicit m: Model[T]) = new Generator(m, dist)(block)
-	def apply(dist: ProbabilityDistribution) = new NumberGenerator(dist)
-}
+class Generator(m: Model, dist: ProbabilityDistribution, block: => Unit) extends NumberGenerator(dist){
 
-class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) extends ProcessUnit[T]("Generator")(m){
-
-  def restart() ={
-    if (!generating) {
-      start()
+  reset {
+    while (generating) {
+      val t = generateNext
+      waitFor(m.clock === m.clock() + t)
+      block
     }
   }
-  def start() = {
-    generating = true
-      while (generating) {
-        val t = floor(dist.apply(m)).toLong
-        val a = w(m.clock === new DateTime(m.clock().getMillis() + t) )
-        if (generating){
-          if(!block) generating = false
-        }
-      }
-  }
-
-  var generating = true 
-  
-  def stop() { generating = false }
-  def update(v: Distr[Double]) {
-    dist = v
-  }
 }
-class NumberGenerator(dist: ProbabilityDistribution) {
-
-  val generator = new Random()
-
-  var generating = true
-
-  def stop() { generating = false }
-
-  def apply(): Double = dist.inverse(generator.nextDouble)
-  def generateNext = apply
-
+object Generator {
+  def apply(m: Model, dist: ProbabilityDistribution)(block: => Unit) = new Generator(m,dist,block)
 }
 
