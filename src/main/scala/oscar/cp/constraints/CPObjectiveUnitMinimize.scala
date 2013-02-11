@@ -44,6 +44,8 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
     CPOutcome.Suspend
   }
 
-
-
+  override def relax() {
+    super.relax()
+    best = ub
+  }
 }

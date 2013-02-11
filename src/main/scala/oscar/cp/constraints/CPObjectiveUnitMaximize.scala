@@ -42,5 +42,9 @@ class CPObjectiveUnitMaximize(objVar: CPVarInt, n: String = "") extends CPObject
     }
     CPOutcome.Suspend
   }
-
+  
+  override def relax() {
+    super.relax()
+    best = lb
+  }
 }
