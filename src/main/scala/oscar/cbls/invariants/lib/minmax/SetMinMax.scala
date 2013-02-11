@@ -25,6 +25,7 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
+import oscar.cbls.invariants.core.propagation.checker
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
@@ -96,11 +97,11 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     if (v.value.isEmpty){
-      assert(output.value == Default)
+      c.check(output.value == Default)
     }else{
-      assert(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
     }
   }
 }
@@ -125,11 +126,11 @@ case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     if (v.value.isEmpty){
-      assert(output.value == Default)
+      c.check(output.value == Default)
     }else{
-      assert(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
     }
   }
 }

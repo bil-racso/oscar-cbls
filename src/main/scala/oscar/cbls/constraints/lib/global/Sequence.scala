@@ -36,6 +36,7 @@ import oscar.cbls.invariants.core.computation._
  * @param length the length of the sequence
  * @param Max the max number of elements matchind pred in all sequences of the history
  * @param predicate a predicate to say which values belong to the constraint
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(Int=>Boolean))
   extends Constraint {

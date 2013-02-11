@@ -25,6 +25,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
+import oscar.cbls.invariants.core.propagation.checker
 
 /** This is a helper to define an invariant from an Int -> Int function.
  * Ths invariant is not incremental, so it should only be used for very simple functions.
@@ -54,8 +55,8 @@ class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.Mi
     output := fun(NewVal)
   }
 
-  override def checkInternals(){
-    assert(output.value == fun(a.value))
+  override def checkInternals(c:checker){
+    c.check(output.value == fun(a.value))
   }
 }
 
@@ -85,8 +86,8 @@ class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), overri
     output := fun(a.value,b.value)
   }
 
-  override def checkInternals(){
-    assert(output.value == fun(a.value,b.value))
+  override def checkInternals(c:checker){
+    c.check(output.value == fun(a.value,b.value))
   }
 }
 

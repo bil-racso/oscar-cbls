@@ -87,7 +87,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     var current:Int = from
     while(current != to){
       nodeStack = current :: nodeStack
-      current = Next(current).value //TODO: out of bound exception HERE!!!
+      current = Next(current).value
     }
     while(!nodeStack.isEmpty){
       listToUpdate =(Next(current),nodeStack.head)::listToUpdate
@@ -532,6 +532,7 @@ trait ObjectiveFunction extends VRP with ObjectiveTrait{
   setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
 }
 
+//TODO: this class should be the single point of entry for objective fct in the VRP. no need to a ObjectiveFunction Trait in addition to this one.
 /**
  * Allows to add news functions cost to the actual objective of the VRP.
 */

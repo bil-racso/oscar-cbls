@@ -32,14 +32,14 @@ import oscar.cbls.invariants.core.propagation._;
  * They are all modeled as propagation Elements, which are handled by the inherited propagationstructure class.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
- * @param DebugMode specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
+ * @param Checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
  * @param NoCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  */
 class Model(override val Verbose:Boolean = false,
-            override val DebugMode:Boolean = false,
+            override val Checker:Option[checker] = None,
             override val NoCycle:Boolean = false,
             override val TopologicalSort:Boolean = false)
-  extends PropagationStructure(Verbose,DebugMode,NoCycle,TopologicalSort)
+  extends PropagationStructure(Verbose,Checker,NoCycle,TopologicalSort)
   with Bulker{
 
   private var Variables:List[Variable] = List.empty
@@ -400,7 +400,7 @@ trait Invariant extends PropagationElement{
    * this will be called for each invariant after propagation is performed.
    * It requires that the Model is instantiated with the varible debug set to true.
    */
-  override def checkInternals(){;}
+  override def checkInternals(c:checker){;}
 
   def getDotNode = "[label = \"" + this.getClass.getSimpleName + "\" shape = box]"
 }
@@ -412,18 +412,15 @@ object InvariantHelper{
    * @return the model that the invariant belongs to
    */
   def FindModel(i:Iterable[PropagationElement]):Model={
-    var toreturn:Model = null
     i.foreach(e => {
       if (e.isInstanceOf[Variable]){
         val m = e.asInstanceOf[Variable].model
         if (m != null){
-          if (toreturn != null){assert(m == toreturn)}
-          toreturn = m
-          if (!m.DebugMode) return m
+          return m
         }
       }
     })
-    toreturn //they are all constants, so what are you doing here??
+    return null
   }
 }
 
@@ -759,7 +756,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
   def getClone:IdentityInt = IdentityInt(this)
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     assert( OldValue == Value,this)
   }
 
@@ -837,7 +834,7 @@ class IntSetVar(override val model:Model,
     ToPerform = List.empty
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     assert(this.DefiningInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
@@ -1050,7 +1047,7 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   def myMax = v.MaxVal
   def myMin = v.MinVal
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     assert(output.getValue(true) == v.value)
   }
 
@@ -1076,7 +1073,7 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   val myMin = v.getMinVal
   val myMax = v.getMaxVal
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     assert(output.getValue(true).intersect(v.value).size == v.value.size)
   }
 
@@ -1106,7 +1103,7 @@ case class Singleton(v:IntVar) extends IntSetInvariant  {
   def myMin=v.MinVal
   def myMax = v.MaxVal
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     assert(output.getValue(true).size == 1)
     assert(output.getValue(true).head == v.value)
   }
