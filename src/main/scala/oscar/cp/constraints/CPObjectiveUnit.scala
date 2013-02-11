@@ -52,7 +52,10 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
   }
 
 
-  def relax() = {}
+  def relax() = {
+    lb = Int.MinValue
+    ub = Int.MaxValue
+  }
 
   def restoreBest() = {}
 

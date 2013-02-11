@@ -17,35 +17,20 @@
  * ****************************************************************************
  */
 
-package oscar.cp.constraints
+package oscar.cp.mem
 
 import oscar.search._
 import oscar.cp.core._
 import oscar.cp.modeling._
+import TightenType._
+import oscar.cp.constraints.CPObjectiveUnit
 
 /**
- * @author Pierre Schaus pschaus@gmail.com
+ * @author ren
  */
-class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
+class CPMObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
 
   best = Int.MaxValue
   
-  override def isOptimum = (best == lb)
-  
-  // constraint methods
-  import TightenType._
-  override def propagate(): CPOutcome = {
-    if (tightenType == NoTighten) return CPOutcome.Suspend
-    def delta = if (tightenType == StrongTighten) 1 else 0
-    //println("propagate "+StrongTighten+" delta:"+delta+" best:"+best)
-    if (objVar.updateMax(best - delta) == CPOutcome.Failure) {
-        return CPOutcome.Failure
-    }
-    CPOutcome.Suspend
-  }
-  
-  override def relax() {
-    super.relax()
-    best = Int.MaxValue
-  }
+  override def propagate(): CPOutcome = objVar.updateMax(best - 1)
 }
