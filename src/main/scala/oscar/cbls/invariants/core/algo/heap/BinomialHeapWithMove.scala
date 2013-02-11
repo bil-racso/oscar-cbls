@@ -25,6 +25,7 @@ package oscar.cbls.invariants.core.algo.heap
 
 import collection.immutable.SortedMap
 import collection.Iterator
+import oscar.cbls.invariants.core.propagation.checker
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
@@ -199,7 +200,7 @@ class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Or
 
   def isEmpty = (size==0)
 
-  def checkInternals(){
+  def checkInternals(c:checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)
@@ -352,7 +353,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
 
-  def checkInternals(){
+  def checkInternals(c:checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)

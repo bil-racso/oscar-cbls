@@ -40,7 +40,7 @@ object ExConstraints extends App{
   val vehicles = 2
   val kLimited = 20
 
-  val m: Model = new Model(false,false,false,false)
+  val m: Model = new Model(false,None,false,false)
   val vrp = new VRP(N, vehicles, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
     with PenaltyForUnrouted with OtherFunctionToObjective with WeightedNode with WeakConstraints with StrongConstraints
 

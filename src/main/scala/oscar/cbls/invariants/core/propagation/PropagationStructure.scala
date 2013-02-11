@@ -52,7 +52,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  This an be useful when checking the behavior of partial propagation.
  *
  *  A self-check method is called by the propagation structure after propagation is performed.
- *  This is activated by the DebugMode parameter.
+ *  This is activated by the Checker parameter.
  *  You should ensure that Asteroid is compiled with assert activated if you are using the debug mode.
  *  It will considerably slow down Asteroid, as other checks are implemented in the base modules.
  *
@@ -63,11 +63,11 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing.
- * @param DebugMode to active the debug mode
+ * @param Checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -397,9 +397,13 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
 
     if (Verbose) println("PropagationStruture: end propagation")
 
-    if (DebugMode && Track == null) {
-      for (p <- getPropagationElements) {
-        p.checkInternals()
+    if (Track == null) {
+      Checker match{
+        case Some(c) =>
+          for (p <- getPropagationElements) {
+            p.checkInternals(c)
+          }
+        case None =>
       }
     }
     Propagating = false
@@ -628,8 +632,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override private[core] def rescheduleIfNeeded() {}
   //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
 
-  override def checkInternals(){
-    for(e <-Elements){e.checkInternals()}
+  override def checkInternals(c:checker){
+    for(e <-Elements){e.checkInternals(c)}
   }
 }
 
@@ -912,7 +916,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
    * that the incremental computation they perform through the performPropagation method is correct
    * overriding this method is optional, so an empty body is provided by default
    */
-  def checkInternals() {
+  def checkInternals(c:checker) {
     ;
   }
 
@@ -926,3 +930,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 /**This is the node type to be used for bulking
  **/
 trait BulkPropagator extends PropagationElement
+
+abstract trait checker{
+  def check(b:Boolean)
+}

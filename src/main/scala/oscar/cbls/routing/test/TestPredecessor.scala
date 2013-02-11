@@ -27,6 +27,7 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.RandomNeighbor
+import scala.language.reflectiveCalls
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 
@@ -37,7 +38,7 @@ class TestPredecessor extends FunSuite with ShouldMatchers {
       val V:Int = v
       val N:Int = n
       // model with check internal
-      val model: Model = new Model(false,true,false,false)
+      val model: Model = new Model(false,None,false,false)
       val vrp = new VRP(N, V, model) with ObjectiveFunction with HopDistance with PositionInRouteAndRouteNr
         with Unrouted with Predecessors
       model.close()

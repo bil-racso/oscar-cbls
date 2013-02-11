@@ -28,7 +28,7 @@ import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-
+import scala.language.reflectiveCalls
 
 class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers{
 
@@ -49,7 +49,7 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers{
       val N:Int = 9
 
       val matrix = getDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
-      val model: Model = new Model(false,false,false,false)
+      val model: Model = new Model(false,None,false,false)
 
       val vrp = new VRP(N, V, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
         with PenaltyForUnrouted

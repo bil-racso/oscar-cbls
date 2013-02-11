@@ -151,7 +151,7 @@ class NQueensApplet extends Applet {
       val max = N - 1
       val range: Range = Range(0, N)
       val tabulength = 0
-      val m: Model = new Model(false, false, true)
+      val m: Model = new Model(false, None, true)
       val MaxIT = 10000
 
       println("NQueens(" + N + ")")

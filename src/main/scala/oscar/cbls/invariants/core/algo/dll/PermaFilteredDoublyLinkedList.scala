@@ -30,7 +30,7 @@ package oscar.cbls.invariants.core.algo.dll
  * You should not perform any operation on the slave DLL,
  * although this will not be detected and reported as an error
  *
- * Beware that this is a mutable data structure, hence you should not perform delete on it while iterating on it. 
+ * Beware that this is a mutable data structure, hence you should not perform any update on it while iterating on it.
  * */
  class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
@@ -64,7 +64,7 @@ package oscar.cbls.invariants.core.algo.dll
     }
     d
   }
-   
+
   def addAny(elem:AnyRef):AnyRef =  addElem(elem.asInstanceOf[T])
 
   /**adds an element to the data structure, cfr. method addElem*/
