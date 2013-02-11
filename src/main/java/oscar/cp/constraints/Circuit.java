@@ -34,6 +34,7 @@ public class Circuit extends Constraint {
 	private ReversibleInt [] lengthToDest; // lengthToDest[i] is the number of edges on the path from i to dest[i]
 	private ReversibleInt [] orig; // orig[i] is the origin node index on the assigned path leading to i
 	
+
     /**
      * Ensures that succ represents a valid circuit. <br>
      * succ[i] represents the city visited after city i. Each city is visited once and

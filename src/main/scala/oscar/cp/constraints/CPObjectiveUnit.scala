@@ -26,30 +26,31 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective" + n) with Objective {
+class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective"+n) with Objective {
 
   import TightenType._
-
+  
   protected var lb = Int.MinValue
   protected var ub = Int.MaxValue
-
+  
   protected var tightenType = StrongTighten
 
   var best = 0 // best value so far (the one recorded on last tighten)
-
+  
   def tightenMode_=(t: TightenType.Value) = {
     tightenType = t
   }
-
+  
   def tightenMode = tightenType
-
+  
   override def tighten() = {
     if (!objVar.isBound) {
-      throw new RuntimeException(name + " not bound:" + objVar)
+      throw new RuntimeException(name+" not bound:" + objVar)
     }
-    if (tightenType != MaintainTighten) best = objVar.value
-    if (!s.silent && tightenType != NoTighten) println(name + " tightened to " + best + " lb:" + lb)
+    best = objVar.value
+    if (!s.silent && tightenType != NoTighten) println(name+" tightened to " + best + " lb:"+  lb) 
   }
+
 
   def relax() = {}
 
@@ -59,10 +60,11 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
 
   def isOK() = s.propagate(this) != CPOutcome.Failure
 
-  override def toString = "best value:" + best + " tightening:" + tightenType
-
+  override def toString = "best value:"+best+" tightening:"+tightenType
+  
+  
   // constraint methods
-
+  
   def filter() = propagate()
 
   override def setup(l: CPPropagStrength): CPOutcome = {
@@ -71,5 +73,7 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
     objVar.callPropagateWhenBoundsChange(this)
     propagate()
   }
+  
+  
 
 }

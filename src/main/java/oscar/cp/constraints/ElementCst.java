@@ -148,16 +148,7 @@ public class ElementCst extends Constraint {
 			i++;
 		}
 		minIndSupp.setValue(i);
-		if (i >= y.length) {
-			System.out.println("----");
-			System.out.println("i:"+i);
-			System.out.println("y:"+Arrays.toString(y));
-			System.out.println("x:"+x);
-			System.out.println("sortedperm:"+Arrays.toString(sortedPerm));
-			System.out.println("minindsup:"+minIndSupp);
-			System.out.println("maxindsup:"+maxIndSupp);
-			System.out.println("z:"+z);
-		}
+		
 		if (z.updateMin(y[sortedPerm[i]]) == CPOutcome.Failure){
 			return CPOutcome.Failure;
 		}

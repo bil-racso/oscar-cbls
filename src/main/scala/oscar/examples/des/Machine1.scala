@@ -20,32 +20,28 @@ package oscar.examples.des
 
 
 import oscar.des.engine._
-import oscar.stochastic._
 import scala.util.continuations._
-import org.scala_tools.time.Imports._
-import org.joda.time.Minutes
 
 
 /**
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
+class Machine1(m : Model, name: String) extends Process(m,name) {
 	
-  //implicit def period2Long(p: Period) = p.millis.toLong
-	val liveDur  = UniformDiscrete(1, 9).map(_.minutes)
-	val breakDur = UniformDiscrete(3, 4).map(_.minutes)
+	val liveDur = new scala.util.Random(0)
+	val breakDur = new scala.util.Random(0)
 	
-	def beAlive(): Unit @susp = {
-		println(name+" is alive")
-		waitDuring(liveDur(m).toPeriod)
+	def beAlive(): Unit @ suspendable = {
+		println(name+" is alive");
+		m.wait (liveDur.nextInt(10).max(0).toDouble)
 		beBroken()
 		
 	}
 	
-	def beBroken(): Unit @susp = {
+	def beBroken(): Unit @ suspendable =  {
 		println(name+" is broken");
-		waitDuring(breakDur(m).toPeriod)
+		m.wait(breakDur.nextInt(2).max(0).toDouble)
 		beAlive()
 	}
 	
@@ -56,10 +52,9 @@ class Machine1(m : Model[Unit], name: String) extends Process[Unit](name)(m) {
 
 object Machine1 {
 	def main(args: Array[String]){
-  		val mod = new StochasticModel[Unit]()
-  		mod.setTime( new DateTime(2012,1,5,17,0))
-  		val m1 = new Machine1(mod,"machine1")
+  		val mod = new Model()
+		val m1 = new Machine1(mod,"machine1")
 		val m2 = new Machine1(mod,"machine2")
-		mod.simulate(mod.clock().plusDays(100),true);
+		mod.simulate(100,true);
 	}
 }

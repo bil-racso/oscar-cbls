@@ -84,8 +84,8 @@ object FirstPhaseTSP extends App {
       cp.add(sum(Cities)(i => dist(i)(succ(i))) == totDist)
       cp.add(sum(Cities)(i => dist(i)(pred(i))) == totDist)
 
-      cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-      cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+      cp.add(new MinAssignment(pred, dist, totDist))
+      cp.add(new MinAssignment(succ, dist, totDist))
     }
 
     var currentSol: Sol = null

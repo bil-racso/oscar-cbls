@@ -4,7 +4,6 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.constraints.TONOTCOMMIT
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.mem.TimeWindowPred

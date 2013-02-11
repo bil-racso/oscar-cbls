@@ -58,12 +58,12 @@ class VisualSet[Sol](val pareto: ParetoSet[Sol]) extends VisualFrame("Relaxation
     val xCoeff = ratio*xDiffMin
     val yCoeff = ratio*yDiffMin    
     if (obj == 0 || obj == 2) {
-      lines(obj).setDest((bound-xBLCorner)*xCoeff, 0)
-      lines(obj).setOrig((bound-xBLCorner)*xCoeff, 600)
+      lines(obj).dest = ((bound-xBLCorner)*xCoeff, 0)
+      lines(obj).orig = ((bound-xBLCorner)*xCoeff, 600)
     }
     else {     
-      lines(obj).setDest(0, (bound-yBLCorner)*yCoeff)
-      lines(obj).setOrig(600, (bound-yBLCorner)*yCoeff)
+      lines(obj).dest = (0, (bound-yBLCorner)*yCoeff)
+      lines(obj).orig = (600, (bound-yBLCorner)*yCoeff)
     }
     paint
   }

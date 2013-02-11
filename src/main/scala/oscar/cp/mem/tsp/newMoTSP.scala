@@ -9,7 +9,6 @@ import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.VisualSet
 import oscar.cp.mem.DominanceConstraint
-import oscar.cp.constraints.TONOTCOMMIT
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint

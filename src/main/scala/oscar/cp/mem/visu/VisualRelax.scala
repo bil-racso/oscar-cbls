@@ -67,8 +67,8 @@ class VisualRelax(val coord: Array[(Int, Int)], distances: Array[Array[Double]])
       val (pX, pY) = coord(prev(i))
       
       circles(i).move(x * scale + xPadding, y * scale + yPadding)
-      lines(i).setOrig(x * scale + xPadding, y * scale + yPadding)
-      lines(i).setDest(pX * scale + xPadding, pY * scale + yPadding)
+      lines(i).orig = (x * scale + xPadding, y * scale + yPadding)
+      lines(i).dest = (pX * scale + xPadding, pY * scale + yPadding)
     }
     
     text.setText("#Iterations: " + nRestart + ", Distance: " + dist)
