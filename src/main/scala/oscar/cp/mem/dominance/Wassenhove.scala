@@ -5,7 +5,7 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
-import oscar.cp.mem.pareto.ParetoSet
+import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.VisualSet
 import oscar.cp.mem.DominanceConstraint
@@ -21,7 +21,7 @@ object Wassenhove extends App {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   // BiObjective Pareto Set 
-  val pareto: ParetoSet[Sol] = ParetoSet(2)
+  val pareto: RBPareto[Sol] = RBPareto()
   pareto.Objs.foreach(pareto.nadir(_) = 10000)
   
   // Parsing
@@ -34,7 +34,7 @@ object Wassenhove extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  val visu = new VisualSet(pareto)
+  //val visu = new VisualSet(pareto)
 
   // Model
   // -----
@@ -82,9 +82,9 @@ object Wassenhove extends App {
     sol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))      
     
     // Visu
-    visu.selected(totDists(0).value, totDists(1).value)
-    visu.update()
-    visu.paint
+    //visu.selected(totDists(0).value, totDists(1).value)
+    //visu.update()
+    //visu.paint
   }
     
   // Run
@@ -100,7 +100,8 @@ object Wassenhove extends App {
     }
   } while(sol != null)
   
+  cp.printStats()
   println("Pareto Set")
-  println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
+  //println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
   println(pareto.sortedByObj(0).mkString("\n"))
 }

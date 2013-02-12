@@ -57,25 +57,53 @@ class RBPareto[Sol] {
   }
 
   def insert(sol: MOSol[Sol]): Int = {
-    
-    // Find closest node
-    val closestNode = sols.find(sol.objs(0))    
-    // Find lower closest node
-    val lowerNode = if (closestNode.value.objs(0) < sol.objs(0)) closestNode else closestNode.next
-    
-    // DOMINATED
-    if (lowerNode.value.objs(1) < sol.objs(1)) -1
-    else {
-      val nextNode = closestNode.next
-      // DOMINATING
-      if (nextNode.value.objs(1) >= sol.objs(1)) clean(sol, nextNode, 0)
-      // NON-DOMINATING
+
+    // Insert solution
+    if (sols.isEmpty) {      
+      val newNode = sols.insert(sol.objs(0), sol)
+      updateBounds(newNode)
+      0
+    } 
+    // Check dominance
+    else {          
+      val closestNode = sols.find(sol.objs(0))
+      val n = checkNode(sol, closestNode)
+      if (n != 0) n
       else {
         val newNode = sols.insertIn(sol.objs(0), sol, closestNode)
         updateBounds(newNode)
-        1
+        0
       }
-    } 
+    }
+  }
+  
+  private def checkNode(sol: MOSol[Sol], node: sols.RBNode): Int = {   
+    if (node.value.objs(0) <= sol.objs(0)) checkLeft(sol, node)
+    else checkRight(sol, node)
+  }
+  
+  private def checkLeft(sol: MOSol[Sol], node: sols.RBNode): Int = {      
+    // Dominating Quadrant
+    if (node.value.objs(1) <= sol.objs(1)) -1
+    // Dominated Quadrant
+    else if (node.hasNext) {
+      val nextNode = node.next
+      if (nextNode.value.objs(1) > sol.objs(1)) clean(sol, nextNode, 0)
+      else 0
+    }
+    else 0
+  }
+  
+  private def checkRight(sol: MOSol[Sol], node: sols.RBNode): Int = {      
+    // Dominated Quadrant
+    if (node.value.objs(1) > sol.objs(1)) clean(sol, node, 0)
+    // Dominating Quadrant
+    else if (node.hasPrev) {
+      val prevNode = node.prev
+      if (prevNode.value.objs(1) > sol.objs(1)) clean(sol, prevNode, 0)
+      else 0
+    }
+    else 0
   }
     
   def size = sols.size
