@@ -150,12 +150,17 @@ class QuadTree[T <% Ordered[T]](private var vector: Array[T]) {
     } else if (!sons(phiInd).isDefined) {
       sons(phiInd) = Some(zs)
     }
+    
   }
 
   // the only difference with reinsert is that zs may be dominated by zr
   private def reconsider(zs: QuadTree[T]) {
     for (theta <- sonsFrom(1); if zs.sons(theta).isDefined) {
       reconsider(zs.sons(theta).get)
+    }
+    
+    for (i <- sonsFrom(1)) {
+      zs.sons(i) = None
     }
     val phiInd = phiIndex(zs)
     if (phiInd == 0) return
@@ -164,6 +169,7 @@ class QuadTree[T <% Ordered[T]](private var vector: Array[T]) {
     } else if (!sons(phiInd).isDefined) {
       sons(phiInd) = Some(zs)
     }
+    
   }
 }
 

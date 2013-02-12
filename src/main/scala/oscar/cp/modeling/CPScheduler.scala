@@ -71,12 +71,12 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	}
 
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {
-
+	
+		super.subjectTo {
+		  constraintsBlock
+		  addResourceConstraints()
+		}
 		
-
-		addResourceConstraints()
-		super.subjectTo(constraintsBlock)
-
 		this
 	}
 
