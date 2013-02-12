@@ -91,15 +91,15 @@ object Wassenhove extends App {
   // ---  
   println("Search...")
   cp.run()
-  while(sol != null) {   
-    // Init
+  do {   
     assert(pareto.insert(sol) != -1)
     cp.objective.objs(0).best = Int.MaxValue  
     cp.runSubjectTo() {
       cp.post(totDists(0) < sol.objs(0))
       sol = null
     }
-  }
+  } while(sol != null)
+  
   println("Pareto Set")
   println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
   println(pareto.sortedByObj(0).mkString("\n"))

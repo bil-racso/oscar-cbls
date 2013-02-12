@@ -34,8 +34,6 @@ object ExactMoTSP extends App {
   
   // Visualization
   val visu = new VisualSet(pareto)
-  val visuT1 = new VisualRelax(coord1, TSPUtils.buildRealDistMatrix(coord1))
-  val visuT2 = new VisualRelax(coord2, TSPUtils.buildRealDistMatrix(coord2))
 
   // Model
   // -----
@@ -87,8 +85,6 @@ object ExactMoTSP extends App {
     visu.selected(totDists(0).value, totDists(1).value)
     visu.update()
     visu.paint
-    visuT1.updateRoute(pred.map(_.value))
-    visuT2.updateRoute(pred.map(_.value))
   }
   
   // Run
