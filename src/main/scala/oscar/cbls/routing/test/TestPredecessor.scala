@@ -27,7 +27,6 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.RandomNeighbor
-import scala.language.reflectiveCalls
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 

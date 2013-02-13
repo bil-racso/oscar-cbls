@@ -29,7 +29,6 @@ import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import scala.Array
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-import scala.language.reflectiveCalls
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which

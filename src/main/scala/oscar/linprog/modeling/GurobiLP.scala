@@ -87,7 +87,7 @@ class GurobiLP extends AbstractLP {
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
 
     val ntot = toGRBLinExpr(coef, col, model.getVars)
-    model.setObjective(ntot, if (minMode) 1 else -1)
+    model.setObjective(ntot)  //, if (minMode) 1 else -1)
     model.update()
   }
 
