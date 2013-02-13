@@ -24,17 +24,18 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.{SortedMap, SortedSet}
+import collection.immutable.SortedSet
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
+import oscar.cbls.invariants.core.propagation.checker
 
 /** {i in index of values | values[i] <= boundary}
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
  * @param values an array of intvar
  * @param boundary the boundary for comparison
  */
-case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
@@ -100,17 +101,17 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(v <- output.value){
-      assert(values(v).value <= boundary.value)
+      c.check(values(v).value <= boundary.value)
     }
     var count:Int = 0
     for(v <- values){
       if(v.value <= boundary.value)
         count +=1
     }
-    assert(count == output.value.size)
-    assert(HeapAbove.size + HeapBelowOrEqual.size == values.size)
+    c.check(count == output.value.size)
+    c.check(HeapAbove.size + HeapBelowOrEqual.size == values.size)
   }
 }
 
@@ -122,7 +123,7 @@ case class SelectLEHeapHeap(var values:Array[IntVar], boundary: IntVar) extends 
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
  */
-case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
+case class SelectLESetQueue(values:Array[IntVar], boundary: IntVar) extends IntSetInvariant {
   var output:IntSetVar=null
 
   def myMin = values.indices.start
@@ -140,7 +141,7 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
       output := SortedSet.empty[Int]
       val HeapAbove:BinomialHeap[Int] = new BinomialHeap((i:Int) => values(i).value,values.size)
       for(v <- values.indices){
-        if(values(v).value <= boundary){
+        if(values(v).value <= boundary.value){
           output.insertValue(v)
         }else{
           HeapAbove.insert(v)
@@ -169,14 +170,14 @@ case class SelectLESetQueue(var values:Array[IntVar], boundary: IntVar) extends 
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var count:Int = 0
     for(i <- values.indices){
       if(values(i).value <= boundary.value){
-        assert(output.value.contains(i))
+        c.check(output.value.contains(i))
         count +=1
       }
     }
-    assert(output.value.size == count)
+    c.check(output.value.size == count)
   }
 }

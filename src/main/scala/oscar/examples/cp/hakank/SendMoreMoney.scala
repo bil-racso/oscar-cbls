@@ -47,7 +47,7 @@ object SendMoreMoney {
 
       val all = Array(S,E,N,D,M,O,R,Y)
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // constraints
         cp.add(       S*1000 + E*100 + N*10 + D +
@@ -55,7 +55,7 @@ object SendMoreMoney {
             M*10000 + O*1000 + N*100 + E*10 + Y)
         cp.add(S > 0)
         cp.add(M > 0)
-        cp.add(alldifferent(all), Strong)
+        cp.add(allDifferent(all), Strong)
 
       } exploration {
 
@@ -63,7 +63,7 @@ object SendMoreMoney {
 
          println(all.mkString(""))
 
-      }
+      } run()
       
       println()
       cp.printStats()

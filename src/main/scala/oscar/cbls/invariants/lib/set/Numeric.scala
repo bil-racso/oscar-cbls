@@ -25,6 +25,7 @@
 package oscar.cbls.invariants.lib.set
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
+import oscar.cbls.invariants.core.propagation.checker
 
 /** Sum(i in on)(fun(i))
  * @param on is the set of integers to add
@@ -57,10 +58,10 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
     output :-= fun(value)
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var count = 0;
     for (v <- on.value) count += fun(v)
-    assert(output.value == count)
+    c.check(output.value == count)
   }
 }
 
@@ -117,9 +118,9 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var count = 1;
     for (v <- on.value) count *= v
-    assert(output.value == count)
+    c.check(output.value == count)
   }
 }

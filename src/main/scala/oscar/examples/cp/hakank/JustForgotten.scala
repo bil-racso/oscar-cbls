@@ -78,9 +78,9 @@ object JustForgotten {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       for(r <- 0 until rows) {
         cp.add(sum(for{c <- 0 until cols} yield x(c) === a(r)(c)) == 4)
       }
@@ -106,7 +106,7 @@ object JustForgotten {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

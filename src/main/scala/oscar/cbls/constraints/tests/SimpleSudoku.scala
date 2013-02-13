@@ -27,12 +27,7 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import scala.collection.mutable.HashSet
 
 /**
  * Simple Sudoku (for 9x9 grid) 
@@ -95,7 +90,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     }
                 
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
         
     // grid definition and initialisation
     val grid = Array.ofDim[IntVar](M)
@@ -122,7 +117,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     // note: square constraints will be enforced (initially true and maintained by swap strategy)
     
     // register for violation
-    for (i <- LinearIndexes) { c.registerForViolation(grid(i)) }
+    for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // closing constraints
     c.close
@@ -137,7 +132,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     // search
     while((c.Violation.value > 0) && (it < MAX_IT)){
       val allowed = openCells.filter(v => Tabu(v).value < it)
-      val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.getSwapVal(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
+      val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.swapVal(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
 
       grid(v1) :=: grid(v2)
       Tabu(v1) := it + TABU_LENGTH

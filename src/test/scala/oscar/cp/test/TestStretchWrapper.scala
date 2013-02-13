@@ -25,7 +25,7 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
+
 
 class TestStretchWrapper extends FunSuite with ShouldMatchers  {
 

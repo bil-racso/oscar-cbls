@@ -60,7 +60,7 @@ object MagicSequence {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(weightedSum(0 to n, x) == n)
 
@@ -80,7 +80,7 @@ object MagicSequence {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

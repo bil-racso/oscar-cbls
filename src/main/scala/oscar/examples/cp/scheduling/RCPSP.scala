@@ -52,6 +52,6 @@ object RCPSP extends App {
 	} exploration {
 
 		cp.setTimes(cp.activities)
-	}
+	} run()
 	cp.printStats()
 }

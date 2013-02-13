@@ -22,10 +22,12 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
 import oscar.visual._
+import oscar.util._
 import scala.collection.JavaConversions._
 import scala.io.Source
 import java.lang._
 import java.awt.Color
+
 
 
 /**
@@ -81,7 +83,7 @@ object TSPDemo {
     val coord = Array.tabulate(n)(i => (100+rand.nextInt(400),rand.nextInt(400)))
     
     
-    val lines = Array.tabulate(n)(i => map.createLine(countries(i).lat,countries(i).lon,0,0))
+    val lines = Array.tabulate(n)(i => map.createLine((countries(i).lat,countries(i).lon),(0,0)))
 
     
 
@@ -101,7 +103,7 @@ object TSPDemo {
     var nbSol = 0
     countries.foreach(c => map.createWaypoint(c.lat,c.lon))
     def updateVisu() {
-      def update(i: Int) = lines(i).setDest(countries((succ(i).value)).lat,countries((succ(i).value)).lon)
+      def update(i: Int) = lines(i).dest = (countries((succ(i).value)).lat,countries((succ(i).value)).lon)
       nbSol += 1
       (0 until n).foreach(update(_))
       plot.addPoint(nbSol,dist.value)
@@ -114,10 +116,9 @@ object TSPDemo {
     } exploration {
       //exploration of the search tree
       while (!allBounds(succ)) {
-         val res = minDomNotbound(succ)
-         val (x, i) = res.first
+         val (x,i) = selectMin(succ.zipWithIndex)(!_._1.isBound)(_._1.size).get
          // get the closest successor in the domain of x
-         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).first
+         val v = argMin((x.min to x.max).filter(x.hasValue(_)))(distMatrix(i)(_)).head
          cp.branch(cp.post(x == v)) (cp.post(x != v))
       }
       updateVisu()

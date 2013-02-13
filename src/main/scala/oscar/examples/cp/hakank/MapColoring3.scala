@@ -67,7 +67,7 @@ object MapColoring3 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(i <- 0 until neighbours.length) {
         cp.add(color(neighbours(i)(0)) != color(neighbours(i)(1)))
@@ -85,7 +85,7 @@ object MapColoring3 {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.\n")
 
      cp.printStats()

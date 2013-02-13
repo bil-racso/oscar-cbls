@@ -78,7 +78,7 @@ object BalesOfHay {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(w <- 0 until weights.length) {
         // indices in bales
@@ -101,7 +101,7 @@ object BalesOfHay {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

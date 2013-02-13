@@ -27,12 +27,7 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.algebra.Algebra._
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.basic._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 
 /**
  * Very simple example showing how to use Asteroid on the basic pigeon hole problem
@@ -60,7 +55,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     println("PigeonHoles(" + N + "," + M + ")")
 
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
        
     // holes
     val holes:Array[IntVar] = (for(i <- range) yield new IntVar(m, 0, N, 0, "h" + (i+1))).toArray

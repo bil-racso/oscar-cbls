@@ -111,7 +111,7 @@ object SurvoPuzzle {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // fill the things we know
       for (i <- 0 until r; 
@@ -119,7 +119,7 @@ object SurvoPuzzle {
           cp.add(x(i)(j) == problem(i)(j))
       }
 
-      cp.add(alldifferent(x.flatten.toArray), Strong)
+      cp.add(allDifferent(x.flatten.toArray), Strong)
   
       // rows and columns
       for (i <- 0 until r) {
@@ -144,7 +144,7 @@ object SurvoPuzzle {
 
        numSols += 1
        
-    }
+    } run()
     
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

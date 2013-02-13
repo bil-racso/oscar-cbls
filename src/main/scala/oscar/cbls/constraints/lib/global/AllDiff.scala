@@ -26,13 +26,14 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.core.computation.IntVar._
+import oscar.cbls.invariants.core.propagation.checker
 
 /**Implement the AllDiff constraint on IntVars: all variables must have a different value.
  * @param variables the variable whose values should all be different.
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
@@ -96,25 +97,25 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
    * to ensure that the constraint is not violated.
    * @return an IntVar that can be incorporated in an invariant.
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The degree of violation of a variable is the number of other variables that have the same value
    * @return an IntVar that can be incorporated in an invariant.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
     for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
 
     for (v <- variables)
-      assert(getViolation(v).value == MyValueCount(v.value+offset)-1
-        ,"error on " + v + " " + getViolation(v).value + " " + MyValueCount(v.value+offset))
+      assert(violation(v).value == MyValueCount(v.value+offset)-1
+        ,"error on " + v + " " + violation(v).value + " " + MyValueCount(v.value+offset))
 
     var MyViol:Int = 0
     for(v <- range)MyViol += 0.max(MyValueCount(v) -1)

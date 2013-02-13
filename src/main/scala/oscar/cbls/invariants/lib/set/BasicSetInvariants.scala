@@ -26,7 +26,9 @@ package oscar.cbls.invariants.lib.set
 
 import oscar.cbls.invariants.core.computation._;
 import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+import collection.immutable.SortedMap
+import oscar.cbls.invariants.core.propagation.checker
+;
 
 
 /** left UNION right
@@ -72,8 +74,8 @@ case class Union(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
     }
   }
 
-  override def checkInternals(){
-    assert(output.value.intersect(left.value.union(right.value)).size == output.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value.intersect(left.value.union(right.value)).size == output.value.size)
   }
 }
 
@@ -119,8 +121,8 @@ case class Inter(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
     output.deleteValue(value)
   }
 
-  override def checkInternals(){
-    assert(output.value.intersect(left.value.intersect(right.value)).size == output.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value.intersect(left.value.intersect(right.value)).size == output.value.size)
   }
 }
 
@@ -174,8 +176,8 @@ case class Diff(left:IntSetVar, right:IntSetVar) extends IntSetInvariant  {
     }
   }
 
-  override def checkInternals(){
-    assert(output.value.intersect(left.value.diff(right.value)).size == output.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value.intersect(left.value.diff(right.value)).size == output.value.size)
   }
 }
 
@@ -211,8 +213,8 @@ case class Cardinality(v:IntSetVar) extends IntInvariant {
     output :-= 1
   }
 
-  override def checkInternals(){
-    assert(output.value == v.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value == v.value.size)
   }
 }
 
@@ -256,9 +258,9 @@ case class MakeSet(on:SortedSet[IntVar]) extends IntSetInvariant {
     }
   }
 
-  override def checkInternals(){
-    assert(output.value.size == on.size)
-    for(v <- on) assert(output.value.contains(v.value))
+  override def checkInternals(c:checker){
+    c.check(output.value.size == on.size)
+    for(v <- on) c.check(output.value.contains(v.value))
   }
 }
 
@@ -305,11 +307,11 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
     }
   }
 
-   override def checkInternals(){
-    assert(output.value.size == 0.max(ub.value - lb.value + 1))
+   override def checkInternals(c:checker){
+    c.check(output.value.size == 0.max(ub.value - lb.value + 1))
      if(ub.value >= lb.value){
        for(i <- lb.value to ub.value)
-         assert(output.value.contains(i))
+         c.check(output.value.contains(i))
      }
    }
 }

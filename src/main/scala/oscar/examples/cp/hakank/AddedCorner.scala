@@ -65,10 +65,10 @@ object AddedCorner {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       cp.add(b == a + c)
       cp.add(d == a + f)
       cp.add(e == c + h)
@@ -86,7 +86,7 @@ object AddedCorner {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

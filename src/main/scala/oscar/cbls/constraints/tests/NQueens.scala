@@ -33,10 +33,8 @@ package oscar.cbls.constraints.tests
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.search.StopWatch
 
 /**
@@ -58,7 +56,7 @@ object NQueens extends SearchEngine with StopWatch{
     val max = N-1
     val range:Range = Range(0,N)
     val tabulength = 0
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
@@ -85,7 +83,7 @@ object NQueens extends SearchEngine with StopWatch{
     while((c.Violation.value > 0) && (it < MaxIT)){
       val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
-      val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.getSwapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
+      val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.swapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
       Queens(q1) :=: Queens(q2)
       Tabu(q1) = it + tabulength

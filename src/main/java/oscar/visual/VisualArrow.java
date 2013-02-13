@@ -16,15 +16,11 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.Shape;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 
-import javax.swing.JInternalFrame;
+import scala.Tuple2;
 
 
 /**
@@ -58,8 +54,8 @@ public class VisualArrow extends VisualLine{
     	
     	AffineTransform tx = new AffineTransform();
         tx.setToIdentity();
-        double angle = Math.atan2(line.y2-line.y1, line.x2-line.x1);
-        tx.translate(line.x2, line.y2);
+        double angle = Math.atan2(line().y2-line().y1, line().x2-line().x1);
+        tx.translate(line().x2, line().y2);
         tx.rotate((angle-Math.PI/2d));  
         g2d.fill(tx.createTransformedShape(arrowHead));
     }
@@ -79,7 +75,7 @@ public class VisualArrow extends VisualLine{
 			
 			Thread.sleep(1000);
 			
-			arrow.setDest(100, 100);
+			arrow.dest_$eq(new Tuple2(100.0, 100.0));
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

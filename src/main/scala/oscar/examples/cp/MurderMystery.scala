@@ -58,10 +58,10 @@ object MurderMystery extends App {
     val youngest = personWithAge(0)
     
     
-    cp.solveAll() subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(Array(murderer,witness,helper,victim)),Strong)
-      cp.add(alldifferent(age),Strong)
+      cp.add(allDifferent(Array(murderer,witness,helper,victim)),Strong)
+      cp.add(allDifferent(age),Strong)
             
       // 1. The witness and the one who helped the murderer were not of the same sex.
       cp.add(sex(witness) != sex(helper))
@@ -88,7 +88,7 @@ object MurderMystery extends App {
     } exploration {
       cp.binaryFirstFail(Array(murderer,witness,helper,victim))
       println("murderer:"+name(murderer.value)+" witness:"+name(witness.value)+" helper:"+name(helper.value)+" victim:"+name(victim.value)+" youngest:"+name(youngest.value))
-    }
+    } run()
     
     cp.printStats()
 }

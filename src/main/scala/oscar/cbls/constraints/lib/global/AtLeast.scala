@@ -25,11 +25,11 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.IntConst
 import oscar.cbls.invariants.core.computation.{Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic.IntITE
+import oscar.cbls.invariants.core.propagation.checker
 
 /**Implement the AtLeast constraint on IntVars.
  * There is a set of minbounds, defined in the parameter bound as pair (value,minbound).
@@ -38,6 +38,7 @@ import oscar.cbls.invariants.lib.logic.IntITE
  * @param variables the variable whose values are constrained
  * @param bounds map(value,minbound) specifying the minimal number of occurrence of ''value'' among the variables.
  * We use a map to ensure that there is no two bounds on the same value.
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) extends Constraint{
 
@@ -117,18 +118,18 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
 
   /**the violation is the sum for all bounds of the number of missing variables to reach the bound
    */
-  override def getViolation = Violation
+  override def violation = Violation
 
   /**The violation of a variable is zero if the value of the variable is the one of a bound that is not reached,
    * otherwise, it is equal to the global violation degree.
    */
-  override def getViolation(v: Variable):IntVar = {
+  override def violation(v: Variable):IntVar = {
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
     for(v <- variables){MyValueCount(v.value + offset) += 1}
     for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v),"" + ValueCount + MyValueCount)
@@ -140,9 +141,9 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
     assert(Violation.value == MyViol)
     for(v <- variables){
       if(bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value))){
-        assert(getViolation(v).value == 0)
+        assert(violation(v).value == 0)
       }else{
-        assert(getViolation(v).value == Violation.value)
+        assert(violation(v).value == Violation.value)
       }
     }
   }

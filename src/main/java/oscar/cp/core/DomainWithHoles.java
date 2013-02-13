@@ -16,6 +16,8 @@
  ******************************************************************************/
 package oscar.cp.core;
 
+import java.util.Iterator;
+
 import oscar.reversible.ReversibleBool;
 import oscar.reversible.ReversibleInt;
 import oscar.reversible.ReversibleSet;
@@ -28,15 +30,15 @@ import oscar.reversible.ReversibleSetIndexedArray;
  * It means that as long as a no hole is present, the internal representation of the domain is a range (a min and max value). <br>
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class DomainWithHoles implements Domain {
+public class DomainWithHoles implements Domain, Iterable<Integer> {
 	
 	private ReversibleBool withHoles;
-	private ReversibleSet values; //instantiated and used lazily only if there are holes in the domain
+	private ReversibleSetIndexedArray values; //instantiated and used lazily only if there are holes in the domain
 	
 	private ReversibleInt min,max;
 	private ReversibleInt size;
 	private Store s;
-	private boolean bitvector = false;
+
 	
 	/**
 	 * Construct a Domain with IndexedArray used in case holes are created in the domain
@@ -56,17 +58,6 @@ public class DomainWithHoles implements Domain {
 		this.size.setValue(max-min+1);	
 	}
 	
-	/**
-	 * 
-	 * @param s
-	 * @param min
-	 * @param max
-	 * @param bitvector = true to use a bitvector in case of holes, = false to use an indexed array
-	 */
-	public DomainWithHoles(Store s, int min, int max, boolean bitvector) {
-		this(s,min,max);
-		this.bitvector = bitvector;
-	}
 	
 	@Override
 	public String toString() {
@@ -80,10 +71,7 @@ public class DomainWithHoles implements Domain {
 
 
 	private void createValueSet() {
-		if (bitvector)
-			values = new ReversibleSetBitVector(s, min.getValue(), max.getValue());
-		else
-			values = new ReversibleSetIndexedArray(s, min.getValue(), max.getValue());
+		values = new ReversibleSetIndexedArray(s, min.getValue(), max.getValue());
 	}
 
     /**
@@ -277,6 +265,30 @@ public class DomainWithHoles implements Domain {
      */
 	public int getMin(){
 		return min.getValue();
+	}
+
+	private int curr;
+	@Override
+	public Iterator<Integer> iterator() {
+		if (withHoles.value()) {
+			return values.iterator();
+		} else {
+			curr = min.getValue();
+			return new Iterator<Integer>() {
+				@Override
+				public boolean hasNext() {
+					return  curr <= max.getValue();
+				}
+				@Override
+				public Integer next() {
+					return curr++;
+				}
+				@Override
+				public void remove() {
+					throw new RuntimeException("not implemented");
+				}
+			};
+		}
 	}
 
 }

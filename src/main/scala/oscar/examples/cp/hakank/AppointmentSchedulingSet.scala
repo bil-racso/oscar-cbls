@@ -146,9 +146,9 @@ object AppointmentSchedulingSet {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo { 
+    cp.solve subjectTo { 
       
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
     } exploration {
        
@@ -160,7 +160,7 @@ object AppointmentSchedulingSet {
       if (num_to_show > 0 && numSols >= num_to_show) {
         cp.stop()
       }
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

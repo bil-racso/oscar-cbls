@@ -11,35 +11,35 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	
 	private val rectangles : Array[VisualRectangle] = Array.tabulate(activities.size)(a => {
 		val rect = new VisualRectangle(this, 0, 0, 0, 0)
-	   	rect.setInnerCol(colors(a))
+	   	rect.innerCol = colors(a)
 	   	rect 
 	})
 	   												                       
 	private val max = (0 until activities.size).map(i => f(i)).max
 	
 	private val text : VisualText = new VisualText(this, 50, 50, "")
-	text.setInnerCol(Color.RED)
+	text.innerCol = Color.RED
 	text.setCentered(true)
 	   												               
 	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	makespanLine.setOuterCol(Color.RED);
+	makespanLine.outerCol = Color.RED;
 	
 	def update(xScale : Int, yScale: Int) {
 		
 		for (i <- 0 until activities.size) {
 			
-			rectangles(i).setWidth((activities(i).maxDuration)*xScale)
-			rectangles(i).setHeight(yScale)
+			rectangles(i).width = (activities(i).maxDuration)*xScale
+			rectangles(i).height = yScale
 			
 			rectangles(i).move(activities(i).est*xScale, f(i)*yScale)
 			
-			rectangles(i).setInnerCol(colors(i))
+			rectangles(i).innerCol = colors(i)
 		}
 		
 		val makespan = activities.map(_.lct).max
 		
-		makespanLine.setOrig(makespan*xScale, 0)
-		makespanLine.setDest(makespan*xScale, (max+1)*yScale)
+		makespanLine.orig = (makespan*xScale, 0)
+		makespanLine.dest = (makespan*xScale, (max+1)*yScale)
 		
 		text.setText(makespan.toString)
 		text.move(makespan*xScale, (max+2)*yScale);

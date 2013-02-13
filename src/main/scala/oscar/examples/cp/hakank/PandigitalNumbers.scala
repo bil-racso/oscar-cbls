@@ -101,9 +101,9 @@ object PandigitalNumbers {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x))
+      cp.add(allDifferent(x))
 
       cp.add(num1 == toNum((for{i <- 0 until len1} yield x(i)), base))
       cp.add(num2 == toNum((for{i <- len1 until len1+len2} yield x(i)), base))
@@ -127,7 +127,7 @@ object PandigitalNumbers {
 
       numSols += 1
 
-    }
+    } run()
 
     // println("\nIt was " + numSols + " solutions.")
     // cp.printStats()

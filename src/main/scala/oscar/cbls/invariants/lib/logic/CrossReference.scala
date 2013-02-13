@@ -27,8 +27,7 @@ package oscar.cbls.invariants.lib.logic
 
 
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.Invariant._
-import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar}
+import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar}
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
  * */

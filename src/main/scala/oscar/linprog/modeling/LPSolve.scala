@@ -32,6 +32,7 @@ class LPSolve extends AbstractLP{
   	var status = LPStatus.NOT_SOLVED
  	var closed = false
   	var released = false
+  	var configFile = new java.io.File("options.ini")
 	
 	def startModelBuilding(nbRows : Int,nbCols : Int) {
 		this.nbRows = 0
@@ -39,9 +40,8 @@ class LPSolve extends AbstractLP{
 		lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
 		lp.setInfinite(Double.MaxValue)
 		lp.setAddRowmode(true)
-		val file = new java.io.File("options.ini")
-		if (file.exists()) {
-			lp.readParams("options.ini","[Default]");
+		if (configFile.exists()) {
+			lp.readParams(configFile.getAbsolutePath,"[Default]");
 		}
 	}
 	
