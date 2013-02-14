@@ -107,7 +107,7 @@ object CumulativeJobShopLNS extends App {
   // -----------------------------------------------------------------------
 
   val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
-  var precedences: Array[(Int, Int)] = null
+  var precedences:Set[(Int, Int)] = Set()
 
   cp.minimize(makespan) subjectTo {
 
@@ -130,7 +130,8 @@ object CumulativeJobShopLNS extends App {
       bestSol(t).machine = resource(t)
     }
 
-    precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+    //precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+    val precedences = resources.map(_.precedences()).foldLeft(Set[(Int,Int)]())((a,b) => a union b)
 
     for (p <- profiles) p.update(1, 20)
     gantt.update(1, 20)
@@ -148,15 +149,12 @@ object CumulativeJobShopLNS extends App {
 
     println("limit: " + limit)
 
-    val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
+    // 10% of  activities are relaxed
+    val relaxed = Array.fill(bestSol.size)(nextFloat < 0.1)
 
-    // Selected are relaxed (20%)
-    for (i <- 0 until bestSol.size)
-      if (nextFloat < 0.1)
-        selected(i) = true
 
     cp.runSubjectTo(Int.MaxValue, limit) {
-      val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
+      val filteredPrecedences = precedences.filter(p => !relaxed(p._1) && !relaxed(p._2))
       val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
       cp.post(constraints.asInstanceOf[Array[Constraint]])
     }
