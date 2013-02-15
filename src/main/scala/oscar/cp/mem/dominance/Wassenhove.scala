@@ -15,13 +15,14 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.tsp.TSPUtils
+import oscar.cp.mem.pareto.Pareto
 
 object Wassenhove extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   // BiObjective Pareto Set 
-  val pareto: RBPareto[Sol] = RBPareto()
+  val pareto: Pareto[Sol] = RBPareto()
   pareto.Objs.foreach(pareto.nadir(_) = 10000)
   
   // Parsing
@@ -103,5 +104,5 @@ object Wassenhove extends App {
   cp.printStats()
   println("Pareto Set")
   //println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
-  println(pareto.sortedByObj(0).mkString("\n"))
+  println(pareto.sortByObj(0).mkString("\n"))
 }

@@ -1,14 +1,13 @@
 package oscar.cp.mem.pareto
 
-class RBPareto[Sol] {
+class RBPareto[Sol] extends Pareto[Sol] {
 
   val nObjs = 2
-  val Objs = 0 until nObjs
   
-  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
-  var ideal: Array[Int] = Array.fill(nObjs)(0)
+  val nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
+  val ideal: Array[Int] = Array.fill(nObjs)(0)
   
-  val sols: RBLinkedTree[MOSol[Sol]] = new RBLinkedTree()
+  private val sols: RBLinkedTree[MOSol[Sol]] = new RBLinkedTree()
   
   private def updateBounds(node: sols.RBNode) {
     
@@ -77,6 +76,10 @@ class RBPareto[Sol] {
     }
   }
   
+  def isDominated(point: Array[Int]): Boolean = {
+    false
+  }
+  
   private def checkNode(sol: MOSol[Sol], node: sols.RBNode): Int = {   
     if (node.value.objs(0) <= sol.objs(0)) checkLeft(sol, node)
     else checkRight(sol, node)
@@ -107,17 +110,15 @@ class RBPareto[Sol] {
   }
     
   def size = sols.size
-  def isEmpty = sols.isEmpty
-  def map[B](f: (MOSol[Sol]) => B): IndexedSeq[B] = sols.toList.map(n => f(n)).toIndexedSeq
+  def map[B](f: (MOSol[Sol]) => B): List[B] = sols.toList.map(n => f(n))
   def mkString(s: String) = sols.toList.mkString(s)
   def foreach[B](f: (MOSol[Sol]) => B) = sols.toList.foreach(n => f(n))
   def removeAll() { sols.removeAll }
   def filter(f: (MOSol[Sol]) => Boolean) = sols.toList.filter(f)
-  def toArray: Array[MOSol[Sol]] = sols.toList.toArray
+  def toList: List[MOSol[Sol]] = sols.toList
   def sortBy(f: (MOSol[Sol]) => Int) = sols.toList.sortBy(f)
-  def max(f: (MOSol[Sol]) => Int): MOSol[Sol] = min(-f(_))
   
-  def sortedByObj(obj: Int) = {
+  def sortByObj(obj: Int) = {
     if (obj == 0) sols.toList 
     else if (obj == 1) sols.toReversedList
     else throw new IllegalArgumentException("biobjective pareto set")  
