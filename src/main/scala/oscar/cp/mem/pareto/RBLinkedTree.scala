@@ -225,6 +225,7 @@ class RBLinkedTree[T] {
   }
   
   def remove(z: RBNode) {
+    _size -= 1
     removeLinkedNode(z)
     var y = z
     var yCol = y.isBlack
@@ -397,5 +398,6 @@ object RBLinkedTree {
     val node = c.find(8)
     c.remove(node)
     println(c.toList)
+    println(c.size)
   }
 }

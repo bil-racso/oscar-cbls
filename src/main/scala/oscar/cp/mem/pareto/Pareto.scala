@@ -58,7 +58,7 @@ abstract class Pareto[Sol] {
    */
   def foreach[B](f: (MOSol[Sol]) => B): Unit
   
-  /** Removes all the solution in the pareto front. It is thus empty.
+  /** Removes all the solution in the pareto front. It is thus empty
    * 
    */
   def removeAll(): Unit
@@ -74,23 +74,23 @@ abstract class Pareto[Sol] {
    */
   def toList: List[MOSol[Sol]]
   
-  /** Returns the minimal solution, according to f, in the pareto front.
+  /** Returns the minimal solution, according to f, in the pareto front
    * 
    */
   def min(f: (MOSol[Sol]) => Int): MOSol[Sol]
   
-  /** Returns the maximal solution, according to f, in the pareto front.
+  /** Returns the maximal solution, according to f, in the pareto front
    * 
    */
   def max(f: (MOSol[Sol]) => Int): MOSol[Sol] = min(-f(_))  
   
-  /** Maps the pareto front into a list in which the solutions are sorted according to f.
+  /** Maps the pareto front into a list in which the solutions are sorted according to f
    * 
    */
   def sortBy(f: (MOSol[Sol]) => Int): List[MOSol[Sol]]
   
   /** Maps the pareto front into a list in which the solutions are sorted according to
-   *  the value of the objective obj.
+   *  the value of the objective obj
    */
   def sortByObj(obj: Int): List[MOSol[Sol]]
 }

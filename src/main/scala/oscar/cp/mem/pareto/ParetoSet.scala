@@ -1,11 +1,9 @@
 package oscar.cp.mem.pareto
 
-class ParetoSet[Sol](val nObjs: Int) {
-
-  val Objs = 0 until nObjs
+class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   
-  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
-  var ideal: Array[Int] = Array.fill(nObjs)(0)
+  val nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
+  val ideal: Array[Int] = Array.fill(nObjs)(0)
 
   val objsVal: Array[OrderedLinkedList[SolNode[Sol]]] = Array.fill(nObjs)(OrderedLinkedList[SolNode[Sol]]())
   private var X: List[SolNode[Sol]] = List()
@@ -21,6 +19,11 @@ class ParetoSet[Sol](val nObjs: Int) {
       if (next != null) next.solNode.sol.lb(i) = if (prev != null) prev.objVal
       else ideal(i)
     }
+  }
+  
+  def isDominated(point: Array[Int]): Boolean = {
+    val dummySol = MOSol(null, point)
+    X.exists(p => p.sol dominates dummySol)
   }
 
   private def realInsert(xNew: MOSol[Sol]) = {
@@ -76,30 +79,24 @@ class ParetoSet[Sol](val nObjs: Int) {
 
   def size = X.size
 
-  def isEmpty = X.isEmpty
-
-  def apply(i: Int) = X(i)
-
-  def map[B](f: (MOSol[Sol]) => B): IndexedSeq[B] = X.map(n => f(n.sol)).toIndexedSeq
+  def map[B](f: (MOSol[Sol]) => B): List[B] = X.map(n => f(n.sol))
 
   def mkString(s: String) = X.mkString(s)
 
   def foreach[B](f: (MOSol[Sol]) => B) = X.foreach(n => f(n.sol))
 
-  def clear() { 
+  def removeAll() { 
     X = List() 
     objsVal.foreach(_.clear())
   }
 
   def filter(f: (MOSol[Sol]) => Boolean) = X.map(_.sol).filter(f)
 
-  def toArray: Array[MOSol[Sol]] = X.map(_.sol).toArray
+  def toList: List[MOSol[Sol]] = X.map(_.sol)
 
   def sortBy(f: (MOSol[Sol]) => Int) = X.map(_.sol).sortBy(f)
-
-  def max(f: (MOSol[Sol]) => Int): MOSol[Sol] = min(-f(_))
   
-  def sortedByObj(obj: Int) = objsVal(obj).toList.map(_.sol)
+  def sortByObj(obj: Int) = objsVal(obj).toList.map(_.sol)
 
   def min(f: (MOSol[Sol]) => Int): MOSol[Sol] = {
     var minValue = Int.MaxValue

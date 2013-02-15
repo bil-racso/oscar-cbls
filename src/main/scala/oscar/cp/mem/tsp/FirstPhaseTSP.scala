@@ -14,7 +14,6 @@ import oscar.search.IDSSearchController
 import java.io._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
-import oscar.cp.mem.pareto.NewPareto
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.pareto.ParetoSet
 

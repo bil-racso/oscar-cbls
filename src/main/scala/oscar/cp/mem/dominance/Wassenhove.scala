@@ -7,13 +7,11 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualSet
-import oscar.cp.mem.DominanceConstraint
+import oscar.cp.mem.visu.VisualPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
-import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.tsp.TSPUtils
 import oscar.cp.mem.pareto.Pareto
 
@@ -22,8 +20,9 @@ object Wassenhove extends App {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   // BiObjective Pareto Set 
-  val pareto: Pareto[Sol] = RBPareto()
-  pareto.Objs.foreach(pareto.nadir(_) = 10000)
+  val pareto: RBPareto[Sol] = RBPareto()
+  pareto.nadir(0) = 10000
+  pareto.nadir(1) = 10000
   
   // Parsing
   val coord1 = TSPUtils.parseCoordinates("data/TSP/renA15.tsp")
@@ -35,7 +34,7 @@ object Wassenhove extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  //val visu = new VisualSet(pareto)
+  val visu = new VisualPareto(pareto)
 
   // Model
   // -----
@@ -47,7 +46,7 @@ object Wassenhove extends App {
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
 
   // Total distance
-  val totDists = Array.tabulate(pareto.nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
+  val totDists = Array.tabulate(2)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
 
   // Constraints
   // -----------
@@ -60,7 +59,7 @@ object Wassenhove extends App {
     cp.add(circuit(succ), Strong)
     cp.add(circuit(pred), Strong)
 
-    for (o <- pareto.Objs) {
+    for (o <- 0 to 1) {
       cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
       cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
       cp.add(new MinAssignment(pred, distMatrices(o), totDists(o)))
@@ -83,17 +82,17 @@ object Wassenhove extends App {
     sol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))      
     
     // Visu
-    //visu.selected(totDists(0).value, totDists(1).value)
-    //visu.update()
-    //visu.paint
+    visu.highlight(totDists(0).value, totDists(1).value)
+    visu.update()
   }
     
   // Run
   // ---  
   println("Search...")
   cp.run()
+  println("find")
   do {   
-    assert(pareto.insert(sol) != -1)
+    pareto.insert(sol)
     cp.objective.objs(0).best = Int.MaxValue  
     cp.runSubjectTo() {
       cp.post(totDists(0) < sol.objs(0))
@@ -103,6 +102,6 @@ object Wassenhove extends App {
   
   cp.printStats()
   println("Pareto Set")
-  //println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
+  println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
   println(pareto.sortByObj(0).mkString("\n"))
 }

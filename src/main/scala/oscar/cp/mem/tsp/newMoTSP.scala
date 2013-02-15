@@ -7,8 +7,7 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualSet
-import oscar.cp.mem.DominanceConstraint
+import oscar.cp.mem.visu.VisualPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
@@ -24,7 +23,7 @@ object newMoTSP extends App {
   pareto.Objs.foreach(pareto.nadir(_) = 300000)
   
   // Visualization
-  val visu = new VisualSet(pareto)
+  val visu = new VisualPareto(pareto)
   
   // Parsing
   val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/renA50.tsp")
@@ -112,9 +111,8 @@ object newMoTSP extends App {
     assert(pareto.insert(newSol) != -1) 
     noSol = false
     // Visu
-    visu.selected(totDists(0).value, totDists(1).value)
+    visu.highlight(totDists(0).value, totDists(1).value)
     visu.update()
-    visu.paint
   }
   
   // Run
@@ -158,7 +156,7 @@ object newMoTSP extends App {
   }
   
   def selectSol: MOSol[Sol] = {
-    val points = pareto.toArray
+    val points = pareto.toList
     points(cp.random.nextInt(points.size))
   }
 
@@ -183,7 +181,7 @@ object newMoTSP extends App {
   println("Pareto Set")
   println("H: " + hypervolume(pareto))
   
-  val points = pareto.sortedByObj(0)
+  val points = pareto.sortByObj(0)
   //println(points.mkString("\n"))
   
   val out = OutFile("fullSetRen50")

@@ -1,12 +1,11 @@
 package oscar.cp.mem.tsp
 
-import oscar.cp.mem.visu.VisualSet
+import oscar.cp.mem.visu.VisualPareto
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
 import scala.collection.mutable.Queue
 import oscar.cp.core._
 import oscar.cp.modeling._
-import oscar.cp.mem.DominanceConstraint
 import oscar.cp.mem.InSet
 import oscar.cp.modeling.CPSolver
 import oscar.cp.mem.ChannelingPredSucc
@@ -23,7 +22,7 @@ object MoLnsTSP extends App {
   val newSols: ParetoSet[Sol] = ParetoSet(pareto.nObjs)
   pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
-  val visu = new VisualSet(pareto)
+  val visu = new VisualPareto(pareto)
   
   val inst1 = "A"
   val inst2 = "B"
@@ -57,7 +56,7 @@ object MoLnsTSP extends App {
     pareto insert x
   }  
   
-  println(pareto.sortedByObj(0).mkString("\n"))
+  println(pareto.sortByObj(0).mkString("\n"))
   
   // Init Model
   // ----------
@@ -127,7 +126,7 @@ object MoLnsTSP extends App {
     currentSol = selectSolution(iter, intens)
     
     // Visu
-    visu.selected(currentSol.objs(0), currentSol.objs(1))
+    visu.highlight(currentSol.objs(0), currentSol.objs(1))
     
     // Init Search
     currentDominated = false
@@ -224,6 +223,5 @@ object MoLnsTSP extends App {
     
     // Visu
     visu.update()
-    visu.paint
   }
 }

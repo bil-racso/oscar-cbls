@@ -1,13 +1,13 @@
 package oscar.cp.mem.measures
 
-import oscar.cp.mem.pareto.ParetoSet
+import oscar.cp.mem.pareto.Pareto
 
 object Hypervolume {
 
-  def hypervolume[Sol](set: ParetoSet[Sol]): Double = {
+  def hypervolume[Sol](set: Pareto[Sol]): Double = {
     var prevObj2 = set.nadir(1)
     var volume = 0.0
-    val sortedSet = set.sortedByObj(0)
+    val sortedSet = set.sortByObj(0)
     for (s <- sortedSet) {
       val obj1 = s.objs(0)
       val obj2 = s.objs(1)

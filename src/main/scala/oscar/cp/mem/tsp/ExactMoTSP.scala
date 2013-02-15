@@ -5,10 +5,11 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
+import oscar.cp.mem.pareto.Pareto
 import oscar.cp.mem.pareto.ParetoSet
+import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualSet
-import oscar.cp.mem.DominanceConstraint
+import oscar.cp.mem.visu.VisualPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
@@ -33,7 +34,7 @@ object ExactMoTSP extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  val visu = new VisualSet(pareto)
+  val visu = new VisualPareto(pareto)
 
   // Model
   // -----
@@ -82,9 +83,8 @@ object ExactMoTSP extends App {
     assert(pareto.insert(newSol) != -1)
     
     // Visu
-    visu.selected(totDists(0).value, totDists(1).value)
+    visu.highlight(totDists(0).value, totDists(1).value)
     visu.update()
-    visu.paint
   }
   
   // Run
@@ -95,5 +95,5 @@ object ExactMoTSP extends App {
   cp.printStats() 
   println("Pareto Set")
   println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
-  println(pareto.sortedByObj(0).mkString("\n"))
+  println(pareto.sortByObj(0).mkString("\n"))
 }

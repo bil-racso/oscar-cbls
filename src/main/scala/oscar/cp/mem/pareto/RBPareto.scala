@@ -37,8 +37,11 @@ class RBPareto[Sol] extends Pareto[Sol] {
   private def clean(sol: MOSol[Sol], node: sols.RBNode, n: Int) : Int = {
     if (!sol.dominates(node.value)) n
     else {
-      removeSol(node)
-      if (node.hasNext) clean(sol, node.next, n+1)
+      if (node.hasNext) {
+        val next = node.next
+        removeSol(node)
+        clean(sol, next, n+1)
+      }
       else n+1
     }
   }
@@ -54,56 +57,61 @@ class RBPareto[Sol] extends Pareto[Sol] {
     }
     sols.remove(node)
   }
+  
+  def insert(sol: MOSol[Sol]): Int = insert(sol, true)
 
-  def insert(sol: MOSol[Sol]): Int = {
+  private def insert(sol: MOSol[Sol], edit: Boolean): Int = {
 
-    // Insert solution
+    // Empty front
     if (sols.isEmpty) {      
-      val newNode = sols.insert(sol.objs(0), sol)
-      updateBounds(newNode)
+      if (edit) updateBounds(sols.insert(sol.objs(0), sol))
       0
     } 
     // Check dominance
     else {          
       val closestNode = sols.find(sol.objs(0))
-      val n = checkNode(sol, closestNode)
-      if (n != 0) n
-      else {
-        val newNode = sols.insertIn(sol.objs(0), sol, closestNode)
-        updateBounds(newNode)
-        0
-      }
+      val n = checkNode(sol, closestNode, edit)
+      if (n == 0 && edit) updateBounds(sols.insertIn(sol.objs(0), sol, closestNode))
+      else if (n > 0 && edit) updateBounds(sols.insert(sol.objs(0), sol)) // may have removed closest node
+      n
     }
   }
   
   def isDominated(point: Array[Int]): Boolean = {
-    false
+    val dummySol = MOSol(null, point)
+    insert(dummySol, false) == -1
   }
   
-  private def checkNode(sol: MOSol[Sol], node: sols.RBNode): Int = {   
-    if (node.value.objs(0) <= sol.objs(0)) checkLeft(sol, node)
-    else checkRight(sol, node)
+  private def checkNode(sol: MOSol[Sol], node: sols.RBNode, edit: Boolean): Int = {   
+    if (node.value.objs(0) <= sol.objs(0)) checkLeft(sol, node, edit)
+    else checkRight(sol, node, edit)
   }
   
-  private def checkLeft(sol: MOSol[Sol], node: sols.RBNode): Int = {      
+  private def checkLeft(sol: MOSol[Sol], node: sols.RBNode, edit: Boolean): Int = {      
     // Dominating Quadrant
     if (node.value.objs(1) <= sol.objs(1)) -1
     // Dominated Quadrant
     else if (node.hasNext) {
       val nextNode = node.next
-      if (nextNode.value.objs(1) > sol.objs(1)) clean(sol, nextNode, 0)
+      if (nextNode.value.objs(1) > sol.objs(1)) {
+        if (edit) clean(sol, nextNode, 0)
+        else 1
+      }
       else 0
     }
     else 0
   }
   
-  private def checkRight(sol: MOSol[Sol], node: sols.RBNode): Int = {      
+  private def checkRight(sol: MOSol[Sol], node: sols.RBNode, edit: Boolean): Int = {      
     // Dominated Quadrant
-    if (node.value.objs(1) > sol.objs(1)) clean(sol, node, 0)
+    if (node.value.objs(1) > sol.objs(1)) {
+      if (edit) clean(sol, node, 0)
+      else 1
+    }
     // Dominating Quadrant
     else if (node.hasPrev) {
       val prevNode = node.prev
-      if (prevNode.value.objs(1) > sol.objs(1)) clean(sol, prevNode, 0)
+      if (prevNode.value.objs(1) <= sol.objs(1)) -1
       else 0
     }
     else 0
@@ -125,14 +133,15 @@ class RBPareto[Sol] extends Pareto[Sol] {
   }
 
   def min(f: (MOSol[Sol]) => Int): MOSol[Sol] = {
-    val list = sols.toList
-    var minValue = Int.MaxValue
-    var min: MOSol[Sol] = null
-    for (x <- list) {
-      val value = f(x)
+    var node = sols.first
+    var minValue = f(node.value)
+    var min = node.value
+    while(node.hasNext) {
+      node = node.next
+      val value = f(node.value)
       if (value < minValue) {
         minValue = value
-        min = x
+        min = node.value
       }
     }
     min
