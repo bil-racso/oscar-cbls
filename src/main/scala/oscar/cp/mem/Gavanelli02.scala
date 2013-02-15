@@ -14,6 +14,7 @@ import oscar.cp.modeling.CPSolver
 import oscar.reversible.ReversiblePointer
 import oscar.cp.mem.pareto.LinkedNode
 import oscar.cp.mem.pareto.SolNode
+import oscar.cp.mem.pareto.ParetoSet
 
 class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) extends Constraint(cp, "Gavanelli02 Dominance") {
 
@@ -26,7 +27,7 @@ class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) exten
  
   override def updateMinIdx(cpvar: CPVarInt, obj: Int, v: Int): CPOutcome = {
     for (o <- pareto.Objs if o != obj) {
-      if (adjustUpperBound(obj) == Failure) return Failure
+      if (adjustUpperBound(o) == Failure) return Failure
     }
     Suspend
   }
@@ -62,4 +63,21 @@ class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) exten
       Suspend
     }
   }
+}
+
+object Gavanelli02 extends App {
+  
+  val cp = CPSolver()
+  val obj1 = CPVarInt(cp, 0 to 5)
+  val obj2 = CPVarInt(cp, 0 to 5)
+  
+  val pareto = ParetoSet[String](2)
+  pareto insert MOSol("A", 2, 5)
+  pareto insert MOSol("B", 3, 3)
+  pareto insert MOSol("C", 5, 2)
+  
+  cp.add(new Gavanelli02(cp, pareto, obj1, obj2))
+  println(obj1 + " " + obj2)
+  cp.add(obj1 > 2)
+  println(obj1 + " " + obj2)
 }

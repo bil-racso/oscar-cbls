@@ -15,7 +15,7 @@ case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
   def lowerSol(obj: Int): Option[MOSol[Sol]] = ls(obj)
 
   // True if the point dominates x
-  def dominates(x: MOSol[Sol]): Boolean = {
+  def dominates[T](x: MOSol[T]): Boolean = {
     if (x == null) true 
     else {
       var dominates = true

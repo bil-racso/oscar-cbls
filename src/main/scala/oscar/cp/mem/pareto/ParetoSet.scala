@@ -22,8 +22,8 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   }
   
   def getDominant(sol: Array[Int]): Option[MOSol[Sol]] = {
-    val dummySol = MOSol(null, sol)
-    val sols = filter(s => s dominates dummySol)
+    val dummySol = MOSol("dummy", sol)
+    val sols = filter(_ dominates dummySol)
     if (sols.isEmpty) None
     else Some(sols.head)
   }
