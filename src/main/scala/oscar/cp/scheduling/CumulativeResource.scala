@@ -26,163 +26,173 @@ import oscar.cp.core.CPVarInt
 import java.security.InvalidParameterException
 import scala.collection.mutable.PriorityQueue
 import scala.collection.mutable.Queue
+import oscar.cp.core.Constraint
 
-class CumulativeResource(scheduler : CPScheduler, maxCapa : Int = Int.MaxValue, minCapa : Int = Int.MinValue, n : String = null) extends Resource(scheduler, n = n) {
-	
-	protected val activitiesSet : Map[Activity, CumulativeActivity] = Map()
-	
-	def activities = {
-	  println(activitiesSet)
-	  activitiesSet.values.toArray
-	}
-	def capacity   = maxCapa
-	
-	def heightOf(act : Activity) : CPVarInt = activitiesSet(act).height
-	def heightOf(i : Int) : CPVarInt = heightOf(activities(i))
-	
-	override def setup() {
-		
-		if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
-			scheduler.add(cumulative(activities, id, max = maxCapa, min = minCapa))
-		}
-		else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
-			scheduler.add(cumulative(activities, id, max = maxCapa))
-		}
-		else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
-			scheduler.add(cumulative(activities, id, min = minCapa))
-		}
-		else throw new InvalidParameterException("cumulative constraint bounded between -Infinity and Infinity")
-	}
-	
-	// Adding an activity
-	def addActivity(act : Activity, cum : CumulativeActivity) {
-		if (activitiesSet.contains(act)) 
-			throw new InvalidParameterException("The activity is already scheduled on this resource.")
-		else 
-			activitiesSet += (act -> cum)
-	}
-	
+class CumulativeResource(scheduler: CPScheduler, maxCapa: Int = Int.MaxValue, minCapa: Int = Int.MinValue, n: String = null) extends Resource(scheduler, n = n) {
 
-	
-	def precedences() : Set[(Int,Int)] = {
+  protected val activitiesSet: Map[Activity, CumulativeActivity] = Map()
 
-		val nextInt = 2
-		// Sort the tasks by start, inc and random as tie breaker
-		val sortedTasks = (0 until activities.length).sortBy(t => (activities(t).est, -heightOf(t).min, nextInt))
-		divide(sortedTasks.map(t => (t,heightOf(t).min)).toArray, maxCapa)
-		//val precedences = divide(sortedTasks.map(t => (t,heightOf(t).min)).toArray, capacity(maxCapa)).toArray
-		//precedences.sortBy(t => activities(sortedTasks(t._1)).est)
+  def heightOf(act: Activity): CPVarInt = activitiesSet(act).height
 
-	}
-	
-	// tasks = id,demand
-	def divide(tasks :Array[(Int,Int)], limit : Int): Set[(Int,Int)] = {
-		if (!stopCriterion(tasks, limit)) {
+  def capacity = maxCapa
 
-			val limit1 = scala.math.ceil(limit / 2).toInt
-			val limit2 = limit - limit1
-
-			val gapStruct1 = new GapStructure(limit1)
-			val gapStruct2 = new GapStructure(limit2)
+  def cumulativeActivities = activitiesSet.values.toArray
 
 
-			val tasks1 : Queue[(Int,Int)] = Queue()
-			val tasks2 : Queue[(Int,Int)] = Queue()
+  val rand = new scala.util.Random()
 
-			for ((t,c) <- tasks) {
+  override def setup() {
+	val act = activitiesSet.values.toArray
+    if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
+      scheduler.add(cumulative(act, id, max = maxCapa, min = minCapa))
+    } else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
+      scheduler.add(cumulative(act, id, max = maxCapa))
+    } else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
+      scheduler.add(cumulative(act, id, min = minCapa))
+    } else throw new InvalidParameterException("cumulative constraint bounded between -Infinity and Infinity")
+  }
+
+  // Adding an activity
+  def addActivity(act: Activity, cum: CumulativeActivity) {
+    if (activitiesSet.contains(act))
+      throw new InvalidParameterException("The activity is already scheduled on this resource.")
+    else
+      activitiesSet += (act -> cum)
+  }
+  
+  var posPrec: Set[(Activity, Activity)] = Set()
+  
+  def recordPartialOrderSchedule() {
+    posPrec = precedences()
+  }
+  
+  def partialOrderSchedule(relaxed: Set[Activity]) = {
+    val filteredPrecedences = posPrec.filter{case(a,b) => !relaxed.contains(a) && !relaxed.contains(b)}
+    val constraints = filteredPrecedences.map{case(a,b) => a.end <= b.start}
+    constraints.toArray[Constraint]
+  }
+
+  def precedences(): Set[(Activity, Activity)] = {
+    
+    val (activitiesOrig, activities) = {
+    	val (a, b) = activitiesSet.unzip
+    	(a.toArray, b.toArray)
+    }
+    
+    //def heightOf(act: Activity): CPVarInt = activitiesSet(act).height
+    def heightOf(i: Int): CPVarInt = activities(i).height
+
+    // Sort the tasks by start, inc and random as tie breaker
+    val sortedTasks = (0 until activities.length).sortBy(t => (activities(t).est, -heightOf(t).min, rand.nextInt))
+    
 
 
-				val act = activities(t)
+    // tasks = id,demand
+    def divide(tasks: Array[(Int, Int)], limit: Int): Set[(Int, Int)] = {
+      if (!stopCriterion(tasks, limit)) {
 
-				val gap1 = gapStruct1.gap(act.est)
-				val gap2 = gapStruct2.gap(act.est)
+        val limit1 = scala.math.ceil(limit / 2).toInt
+        val limit2 = limit - limit1
 
-				val (minQueue, minStruct, minGap, maxQueue, maxStruct, maxGap) =
-					if (gap1 < gap2) {
-						(tasks1, gapStruct1, gap1, tasks2, gapStruct2, gap2)
-					} else {
-						(tasks2, gapStruct2, gap2, tasks1, gapStruct1, gap1)
-					}
+        val gapStruct1 = new GapStructure(limit1)
+        val gapStruct2 = new GapStructure(limit2)
 
-				if (maxGap >= c) {
+        val tasks1: Queue[(Int, Int)] = Queue()
+        val tasks2: Queue[(Int, Int)] = Queue()
 
-					maxStruct.add(act.lct, c)
-					maxQueue.enqueue((t,c))
+        for ((t, c) <- tasks) {
 
-				} else {
+          val act = activities(t)
 
-					val r = c - maxGap
+          val gap1 = gapStruct1.gap(act.est)
+          val gap2 = gapStruct2.gap(act.est)
 
-					maxStruct.add(act.lct, maxGap)
-					maxQueue.enqueue((t, maxGap))
-					minStruct.add(act.lct, r)
-					minQueue.enqueue((t, r))
-				}
-			}
-			return divide(tasks1.toArray, limit1) union divide(tasks2.toArray, limit2)
+          val (minQueue, minStruct, minGap, maxQueue, maxStruct, maxGap) =
+            if (gap1 < gap2) {
+              (tasks1, gapStruct1, gap1, tasks2, gapStruct2, gap2)
+            } else {
+              (tasks2, gapStruct2, gap2, tasks1, gapStruct1, gap1)
+            }
 
-		} else {
-			return tasks.sliding(2,2).map(a => (a(0)._1,a(1)._1)).toSet
-		}
-	}	
-	
-	def stopCriterion(tasks : Array[(Int,Int)], capacity : Int) : Boolean = {
+          if (maxGap >= c) {
 
-		if (tasks.size <= 2)
-			return true
+            maxStruct.add(act.lct, c)
+            maxQueue.enqueue((t, c))
 
-		val s = tasks.sortBy(_._2)
+          } else {
 
-		if (s(0)._2 + s(1)._2 > capacity)
-			return true
+            val r = c - maxGap
 
-		return false
-	}
-	
-	
-	
-	
-	
-	// This class allows to efficiently compute the gap at a specific time
-	class GapStructure(limit : Int) {
-	  
-		private val ordering = new Ordering[Tuple2[Int, Int]] { 
-		  def compare(a : Tuple2[Int, Int], b : Tuple2[Int, Int]) = if (b._2 > a._2) { 1 } else if (b._2 == a._2) { 0 } else { -1 } 
-		}
-		private val eventPointSeries = new PriorityQueue[Tuple2[Int, Int]]()(ordering)
-		private var gap = limit
+            maxStruct.add(act.lct, maxGap)
+            maxQueue.enqueue((t, maxGap))
+            minStruct.add(act.lct, r)
+            minQueue.enqueue((t, r))
+          }
+        }
+        return divide(tasks1.toArray, limit1) union divide(tasks2.toArray, limit2)
 
-		def gap(date : Int) : Int = {
-			while (!eventPointSeries.isEmpty && eventPointSeries.head._2 <= date)
-				gap += eventPointSeries.dequeue()._1
+      } else {
+        return if (tasks.size <= 1) Set() else tasks.sliding(2).map(a => (a(0)._1, a(1)._1)).toSet
+      }
+    }
 
-			return gap
-		}
+    divide(sortedTasks.map(t => (t, heightOf(t).min)).toArray, maxCapa).map{case(a,b) => (activitiesOrig(a),activitiesOrig(b))}
 
-		def add(end : Int, inc : Int) {
-			gap -= inc
-			eventPointSeries.enqueue((inc, end))
-		}
-	}	
-	
+  }
+
+  def stopCriterion(tasks: Array[(Int, Int)], capacity: Int): Boolean = {
+
+    if (tasks.size <= 2)
+      return true
+
+    val s = tasks.sortBy(_._2)
+
+    if (s(0)._2 + s(1)._2 > capacity)
+      return true
+
+    return false
+  }
+
+  // This class allows to efficiently compute the gap at a specific time
+  class GapStructure(limit: Int) {
+
+    private val ordering = new Ordering[Tuple2[Int, Int]] {
+      def compare(a: Tuple2[Int, Int], b: Tuple2[Int, Int]) = if (b._2 > a._2) { 1 } else if (b._2 == a._2) { 0 } else { -1 }
+    }
+    private val eventPointSeries = new PriorityQueue[Tuple2[Int, Int]]()(ordering)
+    private var gap = limit
+
+    def gap(date: Int): Int = {
+      while (!eventPointSeries.isEmpty && eventPointSeries.head._2 <= date)
+        gap += eventPointSeries.dequeue()._1
+
+      return gap
+    }
+
+    def add(end: Int, inc: Int) {
+      gap -= inc
+      eventPointSeries.enqueue((inc, end))
+    }
+  }
+
 }
 
 object MaxResource {
-	
-	def apply(scheduler : CPScheduler, capa : Int, name : String = null) = new CumulativeResource(scheduler, maxCapa = capa, n = name)
+
+  def apply(scheduler: CPScheduler, capa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa = capa, n = name)
 }
 
 object MinResource {
-	
-	def apply(scheduler : CPScheduler, capa : Int, name : String = null) = new CumulativeResource(scheduler, minCapa = capa, n = name)
+
+  def apply(scheduler: CPScheduler, capa: Int, name: String = null) = new CumulativeResource(scheduler, minCapa = capa, n = name)
 }
 
 object ContainerResource {
-	
-	def apply(scheduler : CPScheduler, maxCapa : Int, name : String = null) = new CumulativeResource(scheduler, maxCapa, 0, name)
+
+  def apply(scheduler: CPScheduler, maxCapa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa, 0, name)
 }
 
 object BoundedResource {
-	
-	def apply(scheduler : CPScheduler, maxCapa : Int, minCapa : Int, name : String = null) = new CumulativeResource(scheduler,  maxCapa, minCapa, name)
+
+  def apply(scheduler: CPScheduler, maxCapa: Int, minCapa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa, minCapa, name)
 }
