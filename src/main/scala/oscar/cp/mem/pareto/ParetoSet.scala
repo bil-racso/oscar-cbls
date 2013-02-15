@@ -21,9 +21,11 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
     }
   }
   
-  def isDominated(point: Array[Int]): Boolean = {
-    val dummySol = MOSol(null, point)
-    X.exists(p => p.sol dominates dummySol)
+  def getDominant(sol: Array[Int]): Option[MOSol[Sol]] = {
+    val dummySol = MOSol(null, sol)
+    val sols = filter(s => s dominates dummySol)
+    if (sols.isEmpty) None
+    else Some(sols.head)
   }
 
   private def realInsert(xNew: MOSol[Sol]) = {
@@ -127,6 +129,8 @@ object ParetoSet {
     val s2 = MOSol[String]("sol2", 5, 2)
     set.insert(s2)
     println(computeDiffSurf(s2))
+    
+    val d = set.getDominant(Array(5, 5))
 
     val s3 = MOSol[String]("solFinal", 2, 3)
     set.insert(s3)

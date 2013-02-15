@@ -7,6 +7,12 @@ case class MOSol[Sol](sol: Sol, objs: Array[Int]) {
   
   def upperBound(obj: Int): Int = ub(obj)
   def lowerBound(obj: Int): Int = lb(obj)
+  
+  private[pareto] var us: Array[Option[MOSol[Sol]]] = null
+  private[pareto] var ls: Array[Option[MOSol[Sol]]] = null
+  
+  def upperSol(obj: Int): Option[MOSol[Sol]] = us(obj)
+  def lowerSol(obj: Int): Option[MOSol[Sol]] = ls(obj)
 
   // True if the point dominates x
   def dominates(x: MOSol[Sol]): Boolean = {

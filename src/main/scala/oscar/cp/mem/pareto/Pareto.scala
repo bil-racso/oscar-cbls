@@ -28,10 +28,16 @@ abstract class Pareto[Sol] {
    */
   def insert(sol: MOSol[Sol]): Int
   
+  /** Return a solution which dominates sol 
+   *  None if it does not exist
+   * 
+   */
+  def getDominant(sol: Array[Int]): Option[MOSol[Sol]]
+
   /** Return true if the solution is dominated false otherwise
    * 
    */
-  def isDominated(point: Array[Int]): Boolean
+  def isDominated(sol: Array[Int]): Boolean = getDominant(sol).isDefined
     
   /** The number of solution in the pareto front
    * 

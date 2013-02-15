@@ -15,6 +15,7 @@ import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
+import oscar.cp.mem.Gavanelli02
 
 object ExactMoTSP extends App {
 
@@ -66,7 +67,8 @@ object ExactMoTSP extends App {
       cp.add(new MinAssignment(succ, distMatrices(o), totDists(o)))
     }
     
-    cp.add(new DynDominanceConstraint(cp, pareto, totDists:_*))
+    //cp.add(new DynDominanceConstraint(cp, pareto, totDists:_*))
+    cp.add(new Gavanelli02(cp, pareto, totDists:_*))
   }
   
   // Search
