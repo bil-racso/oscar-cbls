@@ -1,6 +1,5 @@
 package oscar.cp.mem
 
-import oscar.reversible.ReversibleInt
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.Store
 import oscar.cp.core.CPOutcome
@@ -8,16 +7,9 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.mem.pareto.Pareto
-import oscar.reversible.ReversibleSetIndexedArray
-import oscar.cp.mem.pareto.MOSol
-import oscar.cp.modeling.CPSolver
-import oscar.reversible.ReversiblePointer
-import oscar.cp.mem.pareto.LinkedNode
-import oscar.cp.mem.pareto.SolNode
-import oscar.cp.mem.pareto.ParetoSet
 
-class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) extends Constraint(cp, "Gavanelli02 Dominance") {
-
+class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+  
   override def propagate(): CPOutcome = {
     for (o <- pareto.Objs) {
       if (adjustUpperBound(o) == Failure) return Failure
@@ -25,7 +17,7 @@ class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) exten
     Suspend
   }
  
-  override def updateMinIdx(cpvar: CPVarInt, obj: Int, v: Int): CPOutcome = {
+  override def updateMinIdx(cpVar: CPVarInt, obj: Int, v: Int): CPOutcome = {
     for (o <- pareto.Objs if o != obj) {
       if (adjustUpperBound(o) == Failure) return Failure
     }
@@ -36,8 +28,8 @@ class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) exten
   private def adjustUpperBound(obj: Int): CPOutcome = {  
     val DPobj = computeDPobj(obj)
     var dominant = pareto.getDominant(DPobj)
-    while(dominant.isDefined) {
-      val ub = dominant.get.objs(obj) - 1 // the solution has to be better
+    while(dominant.isDefined) { // Not really efficient !
+      val ub = dominant.get.objVals(obj) - 1 // the solution has to be better
       if (objVars(obj).updateMax(ub) == Failure) return Failure
       DPobj(obj) = ub
       dominant = pareto.getDominant(DPobj)
@@ -65,19 +57,6 @@ class Gavanelli02[Sol](cp: Store, pareto: Pareto[Sol], objVars: CPVarInt*) exten
   }
 }
 
-object Gavanelli02 extends App {
-  
-  val cp = CPSolver()
-  val obj1 = CPVarInt(cp, 0 to 5)
-  val obj2 = CPVarInt(cp, 0 to 5)
-  
-  val pareto = ParetoSet[String](2)
-  pareto insert MOSol("A", 2, 5)
-  pareto insert MOSol("B", 3, 3)
-  pareto insert MOSol("C", 5, 2)
-  
-  cp.add(new Gavanelli02(cp, pareto, obj1, obj2))
-  println(obj1 + " " + obj2)
-  cp.add(obj1 > 2)
-  println(obj1 + " " + obj2)
+object Gavanelli02 {  
+  def apply[Sol](pareto: Pareto[Sol], objs: CPVarInt*): Gavanelli02[Sol] = new Gavanelli02(pareto, objs:_*)
 }

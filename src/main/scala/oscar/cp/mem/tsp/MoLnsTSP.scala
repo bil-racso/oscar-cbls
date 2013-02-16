@@ -126,7 +126,7 @@ object MoLnsTSP extends App {
     currentSol = selectSolution(iter, intens)
     
     // Visu
-    visu.highlight(currentSol.objs(0), currentSol.objs(1))
+    visu.highlight(currentSol(0), currentSol(1))
     
     // Init Search
     currentDominated = false
@@ -162,16 +162,16 @@ object MoLnsTSP extends App {
   }
 
   def computeLIS(sol: MOSol[Sol]): Int = {
-    val diff1 = sol.objs(0) - sol.lowerBound(0)
-    val diff2 = sol.objs(1) - sol.lowerBound(1)
+    val diff1 = sol(0) - sol.lowerBound(0)
+    val diff2 = sol(1) - sol.lowerBound(1)
     diff1 * diff2
   }
 
   def computeLDS(sol: MOSol[Sol]): Int = {
-    val diff12 = sol.upperBound(0) - sol.objs(0)
-    val diff11 = sol.objs(0) - sol.lowerBound(0)
-    val diff22 = sol.upperBound(1) - sol.objs(1)
-    val diff21 = sol.objs(1) - sol.lowerBound(1)
+    val diff12 = sol.upperBound(0) - sol(0)
+    val diff11 = sol(0) - sol.lowerBound(0)
+    val diff22 = sol.upperBound(1) - sol(1)
+    val diff21 = sol(1) - sol.lowerBound(1)
     diff12 * diff21 + diff11 * diff22
   }
 
@@ -180,10 +180,10 @@ object MoLnsTSP extends App {
       if (o != obj) {
         cp.objective.objs(o).tightenMode = TightenType.MaintainTighten
         if (intensification) cp.objective.objs(o).best = sol.upperBound(o)
-        else cp.objective.objs(o).best = sol.objs(o)
+        else cp.objective.objs(o).best = sol(o)
       } else {
         cp.objective.objs(o).tightenMode = TightenType.StrongTighten
-        cp.objective.objs(o).best = sol.objs(o)
+        cp.objective.objs(o).best = sol(o)
       }
     }
   }

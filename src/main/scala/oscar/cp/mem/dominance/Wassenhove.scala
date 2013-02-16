@@ -95,7 +95,7 @@ object Wassenhove extends App {
     pareto.insert(sol)
     cp.objective.objs(0).best = Int.MaxValue  
     cp.runSubjectTo() {
-      cp.post(totDists(0) < sol.objs(0))
+      cp.post(totDists(0) < sol(0))
       sol = null
     }
   } while(sol != null)

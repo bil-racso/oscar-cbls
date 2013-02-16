@@ -12,10 +12,10 @@ class RBPareto[Sol] extends Pareto[Sol] {
   private def updateBounds(node: sols.RBNode) {
     
     if(node.hasPrev) {
-      node.prev.value.ub(0) = node.value.objs(0)
-      node.value.lb(0) = node.prev.value.objs(0)
-      node.prev.value.lb(1) = node.value.objs(1)
-      node.value.ub(1) = node.prev.value.objs(1)
+      node.prev.value.ub(0) = node.value(0)
+      node.value.lb(0) = node.prev.value(0)
+      node.prev.value.lb(1) = node.value(1)
+      node.value.ub(1) = node.prev.value(1)
     }
     else {
       node.value.lb(0) = ideal(0)
@@ -23,10 +23,10 @@ class RBPareto[Sol] extends Pareto[Sol] {
     }
     
     if(node.hasNext) {
-      node.next.value.lb(0) = node.value.objs(0)
-      node.value.ub(0) = node.next.value.objs(0)
-      node.next.value.ub(1) = node.value.objs(1)
-      node.value.lb(1) = node.next.value.objs(1)
+      node.next.value.lb(0) = node.value(0)
+      node.value.ub(0) = node.next.value(0)
+      node.next.value.ub(1) = node.value(1)
+      node.value.lb(1) = node.next.value(1)
     }
     else {
       node.value.ub(0) = nadir(0)
@@ -48,12 +48,12 @@ class RBPareto[Sol] extends Pareto[Sol] {
   
   private def removeSol(node: sols.RBNode) {   
     if (node.hasPrev) {
-      node.prev.value.ub(0) = if (node.hasNext) node.next.value.objs(0) else nadir(0)
-      node.prev.value.lb(1) = if (node.hasNext) node.next.value.objs(1) else ideal(1)
+      node.prev.value.ub(0) = if (node.hasNext) node.next.value(0) else nadir(0)
+      node.prev.value.lb(1) = if (node.hasNext) node.next.value(1) else ideal(1)
     }
     if (node.hasNext) {
-      node.next.value.lb(0) = if (node.hasPrev) node.next.value.objs(0) else ideal(0)
-      node.next.value.ub(1) = if (node.hasPrev) node.next.value.objs(1) else ideal(1) 
+      node.next.value.lb(0) = if (node.hasPrev) node.next.value(0) else ideal(0)
+      node.next.value.ub(1) = if (node.hasPrev) node.next.value(1) else ideal(1) 
     }
     sols.remove(node)
   }
@@ -63,15 +63,15 @@ class RBPareto[Sol] extends Pareto[Sol] {
 
     // Empty front
     if (sols.isEmpty) {      
-      updateBounds(sols.insert(sol.objs(0), sol))
+      updateBounds(sols.insert(sol(0), sol))
       0
     } 
     // Check dominance
     else {          
-      val closestNode = sols.find(sol.objs(0))
+      val closestNode = sols.find(sol(0))
       val n = checkNode(sol, closestNode)
-      if (n == 0) updateBounds(sols.insertIn(sol.objs(0), sol, closestNode))
-      else if (n > 0) updateBounds(sols.insert(sol.objs(0), sol)) // may have removed closest node
+      if (n == 0) updateBounds(sols.insertIn(sol(0), sol, closestNode))
+      else if (n > 0) updateBounds(sols.insert(sol(0), sol)) // may have removed closest node
       n
     }
   }
@@ -81,28 +81,28 @@ class RBPareto[Sol] extends Pareto[Sol] {
     else {      
       // Get the lower closest solution (if any)
       var closestNode = sols.find(sol(0))
-      if (closestNode.value.objs(0) > sol(0)) {
+      if (closestNode.value(0) > sol(0)) {
         if (closestNode.hasPrev) closestNode = closestNode.prev
         else None
       }
       // Returns the solution if it dominates sol
-      if (closestNode.value.objs(1) <= sol(1)) Some(closestNode.value)
+      if (closestNode.value(1) <= sol(1)) Some(closestNode.value)
       else None
     }
   }
   
   private def checkNode(sol: MOSol[Sol], node: sols.RBNode): Int = {   
-    if (node.value.objs(0) <= sol.objs(0)) checkLeft(sol, node)
+    if (node.value(0) <= sol(0)) checkLeft(sol, node)
     else checkRight(sol, node)
   }
   
   private def checkLeft(sol: MOSol[Sol], node: sols.RBNode): Int = {      
     // Dominating Quadrant
-    if (node.value.objs(1) <= sol.objs(1)) -1
+    if (node.value(1) <= sol(1)) -1
     // Dominated Quadrant
     else if (node.hasNext) {
       val nextNode = node.next
-      if (nextNode.value.objs(1) > sol.objs(1)) {
+      if (nextNode.value(1) > sol(1)) {
         clean(sol, nextNode, 0)
       }
       else 0
@@ -112,13 +112,13 @@ class RBPareto[Sol] extends Pareto[Sol] {
   
   private def checkRight(sol: MOSol[Sol], node: sols.RBNode): Int = {      
     // Dominated Quadrant
-    if (node.value.objs(1) > sol.objs(1)) {
+    if (node.value(1) > sol(1)) {
       clean(sol, node, 0)
     }
     // Dominating Quadrant
     else if (node.hasPrev) {
       val prevNode = node.prev
-      if (prevNode.value.objs(1) <= sol.objs(1)) -1
+      if (prevNode.value(1) <= sol(1)) -1
       else 0
     }
     else 0

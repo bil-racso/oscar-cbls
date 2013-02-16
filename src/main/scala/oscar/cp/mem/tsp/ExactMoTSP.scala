@@ -67,8 +67,7 @@ object ExactMoTSP extends App {
       cp.add(new MinAssignment(succ, distMatrices(o), totDists(o)))
     }
     
-    //cp.add(new DynDominanceConstraint(cp, pareto, totDists:_*))
-    cp.add(new Gavanelli02(cp, pareto, totDists:_*))
+    cp.add(new Gavanelli02(pareto, totDists:_*))
   }
   
   // Search

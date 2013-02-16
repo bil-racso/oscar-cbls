@@ -52,7 +52,7 @@ class DynDominanceConstraint[Sol](cp: Store, pareto: ParetoSet[Sol], objs: CPVar
   
   private def upperBound(obj: Int, o: Int) = {
     if (lastBound(obj).value == null) pareto.nadir(o)
-    else lastBound(obj).value.solNode.sol.objs(o)
+    else lastBound(obj).value.solNode.sol(o)
   }
 
   override def setup(l: CPPropagStrength): CPOutcome = {

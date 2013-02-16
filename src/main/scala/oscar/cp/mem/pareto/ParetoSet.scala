@@ -29,7 +29,7 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   }
 
   private def realInsert(xNew: MOSol[Sol]) = {
-    val solNode = new SolNode(xNew, Array.tabulate(nObjs)(i => objsVal(i).insert(xNew.objs(i), null)))
+    val solNode = new SolNode(xNew, Array.tabulate(nObjs)(i => objsVal(i).insert(xNew.objVals(i), null)))
     for (i <- Objs) {
       val objNode = solNode.objsNode(i)
       objNode.solNode = solNode
@@ -118,38 +118,4 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
 
 object ParetoSet {
   def apply[Sol](nObjs: Int) = new ParetoSet[Sol](nObjs)
-
-  def main(args: Array[String]) {
-
-    val set = ParetoSet[String](2)
-
-    val s1 = MOSol[String]("sol1", 2, 5)
-    set.insert(s1)
-    println(computeDiffSurf(s1))
-    val s2 = MOSol[String]("sol2", 5, 2)
-    set.insert(s2)
-    println(computeDiffSurf(s2))
-    
-    val d = set.getDominant(Array(5, 5))
-
-    val s3 = MOSol[String]("solFinal", 2, 3)
-    set.insert(s3)
-    println(computeDiffSurf(s3))
-    val s4 = MOSol[String]("solFinal", 3, 2)
-    set.insert(s4)
-    println(computeDiffSurf(s4))
-
-  }
-
-  def computeDiffSurf(sol: MOSol[String]): Int = {
-
-    val diffD0 = sol.upperBound(0) - sol.objs(0)
-    val diffD1 = sol.objs(1) - sol.lowerBound(1)
-
-    val diffU0 = sol.objs(0) - sol.lowerBound(0)
-    val diffU1 = sol.upperBound(1) - sol.objs(1)
-
-    
-    diffD0 * diffD1 + diffU0 * diffU1
-  }
 }

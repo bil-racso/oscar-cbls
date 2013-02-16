@@ -9,8 +9,8 @@ object Hypervolume {
     var volume = 0.0
     val sortedSet = set.sortByObj(0)
     for (s <- sortedSet) {
-      val obj1 = s.objs(0)
-      val obj2 = s.objs(1)
+      val obj1 = s(0)
+      val obj2 = s(1)
       val dObj2 = prevObj2 - obj2
       val dObj1 = set.nadir(0) - obj1
       prevObj2 = obj2

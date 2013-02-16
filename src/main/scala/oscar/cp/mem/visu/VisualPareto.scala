@@ -25,8 +25,8 @@ class VisualPareto[Sol](val pareto: Pareto[Sol]) extends VisualFrame("Pareto Set
 
   def update() {       
     points = (for (p <- pareto) yield {      
-      val x = p.objs(0)*xDiffMin
-      val y = p.objs(1)*yDiffMin     
+      val x = p(0)*xDiffMin
+      val y = p(1)*yDiffMin     
       new VisualCircle(drawing, x, y, 1, Color.black)
     })
     paint
