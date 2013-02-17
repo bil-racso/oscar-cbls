@@ -20,8 +20,8 @@ case class MOSol[Sol](sol: Sol, objVals: Array[Int]) {
   
   private def weakDominates[T](sol: MOSol[T], o: Int, dominate: Boolean): Boolean = {
     if (o == objVals.size) dominate
-    else if (objVals(o) < sol(o)) weakDominates(sol, o+1, true)
-    else if (objVals(o) == sol(o)) weakDominates(sol, o+1, dominate)
+    else if (objVals(o) < sol.objVals(o)) weakDominates(sol, o+1, true)
+    else if (objVals(o) == sol.objVals(o)) weakDominates(sol, o+1, dominate)
     else false
   }
 
@@ -29,7 +29,7 @@ case class MOSol[Sol](sol: Sol, objVals: Array[Int]) {
   
   private def strongDominates[T](sol: MOSol[T], o: Int): Boolean = {
     if (o == objVals.size) true
-    else if (objVals(o) < sol(o)) strongDominates(sol, o+1)
+    else if (objVals(o) < sol.objVals(o)) strongDominates(sol, o+1)
     else false
   }
 

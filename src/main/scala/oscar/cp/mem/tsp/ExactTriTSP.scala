@@ -16,12 +16,13 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
+import oscar.cp.mem.pareto.ListPareto
 
 object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
   
-  var pareto = List[MOSol[Sol]]()
+  var pareto = new ListPareto[Sol](3)
   
   val nObjs = 3
   val Objs = 0 until nObjs
@@ -53,7 +54,8 @@ object ExactTriTSP extends App {
   // -----------
   cp.solve() subjectTo {
     cp.add(circuit(succ))
-    for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
+    for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))   
+    cp.add(Gavanelli02(pareto, totDists:_*))
   }
   
   // Search
@@ -68,10 +70,7 @@ object ExactTriTSP extends App {
     // No dominated solutions !
     val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))  
     // Insert Solution
-    if (!pareto.exists(_ dominates newSol)) {
-      pareto = pareto.filter(!newSol.dominates(_))
-      pareto = newSol :: pareto
-    }
+    pareto.insert(newSol)
   }
   
   // Run
