@@ -17,17 +17,34 @@ class PointQuadTree[V](private val nDim: Int) {
    else (dim, adjacent(quadId, dim)) :: adjacents0(quadId, dim+1)
   }
   
-  private def sameDimension(quadId: Int, dim: Int): List[Int] = {
+  def sameDimension(quadId: Int, dim: Int): IndexedSeq[Int] = {
     val access = (1 << dim)
     val diff = quadId - (quadId ^ access)
-    Quadrants.filter(q => (q - (q ^ access)) == diff).toList
+    Quadrants.filter(q => (q - (q ^ access)) == diff)
   }
   
-  case class QuadTree(keys: Array[Int], value: V) {
+  abstract class Tree {
+    def isEmpty: Boolean
+    def insert(k: Array[Int], v: V): Tree
+    def remove(): Tree
+  }
+  
+  case object Empty extends Tree {
+    def isEmpty = true
+    def insert(k: Array[Int], v: V) = QuadTree(k, v)
+    def remove() = this
+  }
+  
+  case class QuadTree(keys: Array[Int], value: V) extends Tree {
+    
+    def isEmpty = false
 
+    // One children in each quadrant
     private val children: Array[Option[QuadTree]] = Array.fill(nQuadrants)(None)
+    
+    def hasChild(quadId: Int): Boolean = children(quadId).isDefined
 
-    def insert(k: Array[Int], v: V): QuadTree = {
+    def insert(k: Array[Int], v: V): Tree = {
       val quad = getQuadrant(k)
       if (children(quad).isDefined) children(quad).get.insert(k, v)
       else children(quad) = Some(QuadTree(k, v))
@@ -35,48 +52,45 @@ class PointQuadTree[V](private val nDim: Int) {
     }
 
     // Samet remove algorithm
-    def remove(): QuadTree = {
-
-      // Check children !!!
-
-      // Select a root candidate     
-      val (refQuad, candidate) = selectCandidate
-      val oppQuad = opposite(refQuad)
-
-      // Compute the new root
-      val nRoot = QuadTree(candidate.keys, candidate.value)
-      for (q <- Quadrants) nRoot.children(q) = children(q)
-
-      // Compute all the adjacent quadrants with dimensions
-      val adjs = adjacents(oppQuad)
-
-      // Apply on each adjacentQuads
-      for ((dim, adjQuad) <- adjs) {
-        if (nRoot.children(adjQuad).isDefined) {
+    def remove(): Tree = {
+      if (!children.exists(_.isDefined)) Empty
+      else {
+        // Select a root candidate     
+        val (refQuad, candidate) = selectCandidate
+        // Compute the new root
+        val nRoot = QuadTree(candidate.keys, candidate.value)
+        for (q <- Quadrants) nRoot.children(q) = children(q)
+        // Reajust the tree
+        reajust(nRoot, candidate, opposite(refQuad), refQuad)
+        nRoot
+      }
+    }
+    
+    def reajust(nRoot: QuadTree, candidate: QuadTree, oppQuad: Int, refQuad: Int) = {         
+      // Phase 1
+      for ((dim, adjQuad) <- adjacents(oppQuad)) {
+        if (nRoot.hasChild(adjQuad)) {
           val child = nRoot.children(adjQuad).get
           child.adjQuadrant(dim, adjQuad, oppQuad, nRoot, nRoot)
         }
       }
-
-      // Apply to the first node in refQuad and call recursively until reaching candidate
+      // Phase 2
       val child = nRoot.children(refQuad).get
-      child.newRoot(refQuad, this, nRoot, candidate)
-
-      // The new me (needs to replace A and B)
-      nRoot
+      child.newRoot(adjacents(refQuad), oppQuad, this, nRoot, candidate)
     }
 
     def adjQuadrant(dim: Int, outQuad: Int, inQuad: Int, father: QuadTree, nRoot: QuadTree) {
-
       // Reinsertion
-      if (nRoot.getQuadrant(this) == inQuad) nRoot.reinsert(this, outQuad, father)
+      if (nRoot.getQuadrant(this.keys) == inQuad) {
+        nRoot.reinsert(this, outQuad, father)
+      }
       // No reinsertion
       else {
         // Get the remaining sub-quadrants adjacent to inQuad
         val remainingQuad = sameDimension(inQuad, dim)
         // Process separately each remaining quadrant
         for (q <- remainingQuad) {
-          if (this.children(q).isDefined) {
+          if (this.hasChild(q)) {
             val child = this.children(q).get
             child.adjQuadrant(dim, q, inQuad, this, nRoot)
           }
@@ -84,21 +98,17 @@ class PointQuadTree[V](private val nDim: Int) {
       }
     }
 
-    def newRoot(outQuad: Int, father: QuadTree, nRoot: QuadTree, cand: QuadTree) {
-
-      val adjs = adjacents(outQuad)
-
-      for ((dim, adjQuad) <- adjs) {
+    def newRoot(adjQuads: List[(Int, Int)], goQuad: Int, father: QuadTree, nRoot: QuadTree, cand: QuadTree) {
+      for ((dim, adjQuad) <- adjQuads) {
         if (this.children(adjQuad).isDefined) {
           val child = this.children(adjQuad).get
-          child.adjQuadrant(dim, outQuad, adjQuad, this, nRoot)
+          child.adjQuadrant(dim, adjQuad, adjQuad, this, nRoot)
         }
       }
-
-      if (this == cand) father.children(opposite(outQuad)) = None
+      if (this == cand) father.children(goQuad) = None
       else {
-        val child = children(opposite(outQuad)).get
-        child.newRoot(outQuad, this, nRoot, cand)
+        val child = children(goQuad).get
+        child.newRoot(adjQuads, goQuad, this, nRoot, cand)
       }
     }
 
@@ -112,6 +122,57 @@ class PointQuadTree[V](private val nDim: Int) {
       minManhattan(if (candAxis.isEmpty) candidates else candAxis)
     }
 
+    def getCandidates: List[(Int, QuadTree)] = getCandidates0(0)
+
+    private def getCandidates0(quad: Int): List[(Int, QuadTree)] = {
+      if (quad == nQuadrants) Nil
+      else if (!this.hasChild(quad)) getCandidates0(quad+1)
+      else {
+        val oppQuad = opposite(quad)
+        val candidate = this.children(quad).get.deep(oppQuad)       
+        (quad, candidate) :: getCandidates0(quad+1)
+      }     
+    }
+    
+    def deep(quad: Int): QuadTree = {
+      if (!this.hasChild(quad)) this
+      else this.children(quad).get.deep(quad)
+    }
+
+    // TODO !!
+    // There is at most 2 candidates
+    def selectMinAxis(candidates: List[(Int, QuadTree)]): List[(Int, QuadTree)] = {
+      candidates
+    }
+        
+    def closest(cand1: QuadTree, cand2: QuadTree, dim: Int): Boolean = {
+      true
+    }
+
+    // Selects the candidate with the lower Manhattan distance
+    def minManhattan(candidates: List[(Int, QuadTree)]): (Int, QuadTree) = candidates match {
+      case Nil => throw new NoSuchElementException("no candidates")
+      case h :: Nil => h
+      case (quadId, cand) :: tail => minManhattan0(tail, (quadId, cand), manhattan(cand))
+    }
+
+    private def minManhattan0(candidates: List[(Int, QuadTree)], min: (Int, QuadTree), minVal: Int): (Int, QuadTree) = candidates match {
+      case Nil => min
+      case (quadId, cand) :: tail => {
+        val m = manhattan(cand)
+        if (m < minVal) minManhattan0(tail, (quadId, cand), m)
+        else minManhattan0(tail, min, minVal)
+      }
+    }
+
+    // Compute the Manhattan distance 
+    def manhattan(cand: QuadTree): Int = manhattan0(cand, 0, 0)
+    
+    private def manhattan0(cand: QuadTree, dist: Int, dim: Int): Int = {
+      if (dim == nDim) dist
+      else manhattan0(cand, dist + math.abs(cand.keys(dim) - this.keys(dim)), dim+1)
+    }
+        
     def reinsert(child: QuadTree, outQuad: Int, father: QuadTree) {
       father.children(outQuad) = None
       insert(child.keys, child.value)
@@ -127,55 +188,13 @@ class PointQuadTree[V](private val nDim: Int) {
       else children(quad) = Some(quadTree)
     }
 
-    def getCandidates: List[(Int, QuadTree)] = getCandidates0(0)
-
-    def getCandidates0(quad: Int): List[(Int, QuadTree)] = {
-      if (quad == nQuadrants) Nil
-      else if (children(quad).isDefined) (quad, children(quad).get) :: getCandidates0(quad)
-      else getCandidates0(quad)
-    }
-
-    // TODO !!
-    // There is at most 2 candidates
-    def selectMinAxis(candidates: List[(Int, QuadTree)]): List[(Int, QuadTree)] = {
-      candidates
-    }
-
-    // Selects the candidate with the lower Manhattan distance
-    def minManhattan(candidates: List[(Int, QuadTree)]): (Int, QuadTree) = candidates match {
-      case Nil => throw new NoSuchElementException("no candidates")
-      case h :: Nil => h
-      case (quad, cand) :: tail => minManhattan(tail, (quad, cand), computeManhattan(cand))
-    }
-
-    def minManhattan(candidates: List[(Int, QuadTree)], min: (Int, QuadTree), minVal: Int): (Int, QuadTree) = candidates match {
-      case Nil => min
-      case (quad, cand) :: tail => {
-        val m = computeManhattan(cand)
-        if (m < minVal) minManhattan(tail, (quad, cand), m)
-        else minManhattan(tail, min, minVal)
-      }
-    }
-
-    // Compute the Manhattan distance 
-    def computeManhattan(cand: QuadTree): Int = {
-      var dist = 0
-      for (d <- Dim) dist += math.abs(cand.keys(d) - keys(d))
-      dist
-    }
-
-    def closest(cand1: QuadTree, cand2: QuadTree, dim: Int): Boolean = {
-      true
-    }
-
     // Returns the id of the corresponding quadrant
-    def getQuadrant(quadTree: QuadTree): Int = getQuadrant(quadTree.keys, 0, 0)
-    def getQuadrant(k: Array[Int]): Int = getQuadrant(k, 0, 0)
+    def getQuadrant(k: Array[Int]): Int = getQuadrant0(k, 0, 0)
 
-    private def getQuadrant(k: Array[Int], dim: Int, quadrant: Int): Int = {
+    private def getQuadrant0(k: Array[Int], dim: Int, quadrant: Int): Int = {
       if (dim == k.size) quadrant
-      else if (k(dim) <= keys(dim)) getQuadrant(k, dim + 1, (quadrant << 1) + 1)
-      else getQuadrant(k, dim + 1, quadrant << 1)
+      else if (k(dim) <= keys(dim)) getQuadrant0(k, dim + 1, (quadrant << 1) + 1)
+      else getQuadrant0(k, dim + 1, quadrant << 1)
     }
 
     override def toString = "QuadTree(keys: (" + keys.mkString(",") + "), value: " + value + ")"
@@ -187,8 +206,15 @@ object QuadTree {
   def apply[V](nDim: Int) = {
     new PointQuadTree[V](nDim)
   }
+  
+  def getTree[V](nDim: Int) = {
+    val pqt = new PointQuadTree[V](nDim)
+    pqt.Empty
+  }
 
   def main(args: Array[String]) {
+    
+    val vv = QuadTree.getTree[String](3)
 
     val p = QuadTree[String](2)
 
@@ -198,23 +224,10 @@ object QuadTree {
     tree insert (Array(82, 65), "Buffalo")
     tree insert (Array(27, 35), "Omaha")
     tree insert (Array(5, 45), "Denver")
-    
-    val adj = p.adjacents(0)
-    
-    
-    val id = 10
-    val s = p.adjacent(10, 2)
-    println(s)
-    
-    
-    
-    for ((dim, quadId) <- adj) {
-      val sId = p.adjacent(0, dim)
-      assert(sId == quadId)
-    }
-    
+    tree insert (Array(85, 15), "Atlanta")
+    tree insert (Array(90, 5), "Miami")
 
-    //tree.remove()
+    val cand = tree.getCandidates
 
     println(tree)
   }
