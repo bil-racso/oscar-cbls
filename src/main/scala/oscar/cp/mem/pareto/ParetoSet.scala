@@ -81,37 +81,14 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
 
   def size = X.size
 
-  def map[B](f: (MOSol[Sol]) => B): List[B] = X.map(n => f(n.sol))
-
-  def mkString(s: String) = X.mkString(s)
-
   def foreach[B](f: (MOSol[Sol]) => B) = X.foreach(n => f(n.sol))
 
   def removeAll() { 
     X = List() 
     objsVal.foreach(_.clear())
   }
-
-  def filter(f: (MOSol[Sol]) => Boolean) = X.map(_.sol).filter(f)
-
-  def toList: List[MOSol[Sol]] = X.map(_.sol)
-
-  def sortBy(f: (MOSol[Sol]) => Int) = X.map(_.sol).sortBy(f)
   
   def sortByObj(obj: Int) = objsVal(obj).toList.map(_.sol)
-
-  def min(f: (MOSol[Sol]) => Int): MOSol[Sol] = {
-    var minValue = Int.MaxValue
-    var min: MOSol[Sol] = null
-    for (x <- X) {
-      val value = f(x.sol)
-      if (value < minValue) {
-        minValue = value
-        min = x.sol
-      }
-    }
-    min
-  }
 
   override def toString: String = X.toString
 }

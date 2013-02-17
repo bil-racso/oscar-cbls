@@ -125,33 +125,13 @@ class RBPareto[Sol] extends Pareto[Sol] {
   }
     
   def size = sols.size
-  def map[B](f: (MOSol[Sol]) => B): List[B] = sols.toList.map(n => f(n))
-  def mkString(s: String) = sols.toList.mkString(s)
   def foreach[B](f: (MOSol[Sol]) => B) = sols.toList.foreach(n => f(n))
   def removeAll() { sols.removeAll }
-  def filter(f: (MOSol[Sol]) => Boolean) = sols.toList.filter(f)
-  def toList: List[MOSol[Sol]] = sols.toList
-  def sortBy(f: (MOSol[Sol]) => Int) = sols.toList.sortBy(f)
   
   def sortByObj(obj: Int) = {
     if (obj == 0) sols.toList 
     else if (obj == 1) sols.toReversedList
     else throw new IllegalArgumentException("biobjective pareto set")  
-  }
-
-  def min(f: (MOSol[Sol]) => Int): MOSol[Sol] = {
-    var node = sols.first
-    var minValue = f(node.value)
-    var min = node.value
-    while(node.hasNext) {
-      node = node.next
-      val value = f(node.value)
-      if (value < minValue) {
-        minValue = value
-        min = node.value
-      }
-    }
-    min
   }
 
   override def toString: String =  sols.toList.toString
