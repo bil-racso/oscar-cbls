@@ -126,6 +126,7 @@ class PoissonD(decay: Double) extends ContinuousDistr[Double] {
 }
 
 class ExponentialD(lambda: Double) extends ContinuousDistr[Double] {
+  require(lambda > 0.0)
   //val ln = new ExponentialDistribution(decay) 
   private def inverse(p: Double) = {
     require(0 <= p && p <= 1)

@@ -47,8 +47,8 @@ class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) exte
   def start() = {
     generating = true
       while (generating) {
-        val t = floor(dist.apply(m)).toInt
-        val a = w(m.clock === m.clock().plusMillis(t) )//new DateTime(m.clock().getMillis() + t) )
+        val d = new Duration(dist.apply(m).toLong)
+        val a = w(m.clock === m.clock() + d )//new DateTime(m.clock().getMillis() + t) )
         if (generating){
           if(!block) generating = false
         }
