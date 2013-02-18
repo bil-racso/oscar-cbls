@@ -26,8 +26,8 @@ package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
 
-import collection.immutable.{SortedMap, SortedSet}
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.checker
 
 /**maintains a sorting of the ''values'' array:
  * @param ReversePerm   i < j => values(ReversePerm(i)) < values(ReversePerm(j))
@@ -96,14 +96,14 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     ForwardPerm(ReversePerm(Position2).getValue(true)) := Position2
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     val range = values.indices
     for(i <- range){
-      assert(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i)
+      c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i)
     }
     for(i <- range){
       for(j <- range){
-        assert(!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value), "Sort error: " + values.toList + " ReversePerm: " + ReversePerm.toList)
+        c.check(!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value))
       }
     }
   }

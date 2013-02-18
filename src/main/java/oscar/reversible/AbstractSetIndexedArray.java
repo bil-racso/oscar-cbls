@@ -279,7 +279,7 @@ public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 	public String toString() {
 		return Arrays.toString(getValues());
 	}
-	
+
 	
 	public Iterator<Integer> iterator() {
 		iterIndex = 0;

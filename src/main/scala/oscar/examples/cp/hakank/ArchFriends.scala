@@ -112,10 +112,10 @@ object ArchFriends {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(shoes), Strong)
-      cp.add(alldifferent(shops), Strong)
+      cp.add(allDifferent(shoes), Strong)
+      cp.add(allDifferent(shops), Strong)
 
       // 1. Harriet bought fuchsia flats at Heels in a Handcart.
       cp.add(fuchsia_flats == heels_in_a_handcart)
@@ -147,7 +147,7 @@ object ArchFriends {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

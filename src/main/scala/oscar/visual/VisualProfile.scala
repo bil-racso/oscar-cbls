@@ -11,15 +11,15 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 	
 	// The profile is represented by a polygon
 	private val polygon : VisualPolygon = new VisualPolygon(this)
-	polygon.setInnerCol(color)
+	polygon.innerCol = color
 	
 	// The capacity limit
 	private val capaLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	capaLine.setOuterCol(Color.RED);
+	capaLine.outerCol = Color.RED;
 	
 	// The zero line
 	private val zeroLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
-	zeroLine.setOuterCol(Color.BLUE);
+	zeroLine.outerCol = Color.BLUE;
 	
 	def resource = res
 	
@@ -35,11 +35,11 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 		
 		polygon.update(points.map(p => (p._1*xScale, (p._2 + min)*yScale)))
 
-		capaLine.setOrig(0, (resource.capacity + min)*yScale)
-		capaLine.setDest(xScale*makespan.getMax, (resource.capacity + min)*yScale)
+		capaLine.orig = (0, (resource.capacity + min)*yScale)
+		capaLine.dest = (xScale*makespan.getMax, (resource.capacity + min)*yScale)
 		
-		zeroLine.setOrig(0, (min)*yScale)
-		zeroLine.setDest(xScale*makespan.getMax, (min)*yScale)
+		zeroLine.orig = (0, (min)*yScale)
+		zeroLine.dest = (xScale*makespan.getMax, (min)*yScale)
 		
 		repaint()
 	}

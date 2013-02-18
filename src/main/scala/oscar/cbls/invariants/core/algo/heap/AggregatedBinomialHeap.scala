@@ -69,7 +69,10 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
 
   override def popFirsts:List[T] = {
     assert(!isEmpty)
-    val toreturn = a(b.popFirst())
+    val positionToReturn = b.popFirst()
+    val toreturn = a(positionToReturn)
+    a(positionToReturn) = List.empty
+    msize -= toreturn.length
     assert(!toreturn.isEmpty)
     toreturn
   }

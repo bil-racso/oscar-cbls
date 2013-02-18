@@ -4,7 +4,7 @@ import scala.collection.mutable.PriorityQueue
 import scala.collection.mutable.Queue
 import scala.collection.mutable.Set
 import scala.util.Random.nextInt
-import scala.Math.ceil
+import scala.math.ceil
 
 object PartialOrderSchedule {
 

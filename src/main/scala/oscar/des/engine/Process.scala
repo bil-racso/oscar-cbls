@@ -25,12 +25,13 @@ import akka.util.FiniteDuration
 //import akka.util.duration.
 import oscar.invariants._
 import org.joda.time._
+import com.typesafe.scalalogging.slf4j._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Model[T]) {
+abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Model[T]) extends Logging{
 
   type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
   type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]
@@ -125,8 +126,14 @@ class DefaultResult extends ProcessResult[DefaultResult] {
 
 abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
   def exec(implicit state: S): T @susp
-  def deepExec(state: S) = exec(state)
-  def Iam(next: S)(implicit current: S) = deepExec(next)
+  def deepExec(state: S) = {
+    
+    exec(state)
+  }
+  def Iam(next: S)(implicit current: S) = {
+    logger.debug(name + " becomes " + next)
+    deepExec(next)
+  }
   override def start() = deepExec(initState)
 }
 //

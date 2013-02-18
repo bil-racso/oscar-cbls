@@ -146,9 +146,9 @@ object AlphameticGenerate {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // The equation: 
       //    word<0> + word<1> + ... = word<p-1>
@@ -185,7 +185,7 @@ object AlphameticGenerate {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions to the problem " + problem_in)
     cp.printStats()

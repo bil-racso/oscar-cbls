@@ -15,7 +15,7 @@ object FirstScheduling extends App{
 		act1 precedes act2
 		
 	} exploration {
-		cp.binary(cp.activities)
+		cp.binary(cp.activities.map(_.start))
 	}
 	
 	println(act1.name + " starts at " + act1.start)

@@ -60,9 +60,9 @@ object CuriousSetOfIntegers {
       val x = Array.fill(n)(CPVarInt(cp, 0 to max_val))
 
       var numSols = 0
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
-	cp.add(alldifferent(x), Strong)
+	cp.add(allDifferent(x), Strong)
 
         for(i <- 0 until n - 1) {
           for(j <- i + 1 until n) {
@@ -98,7 +98,7 @@ object CuriousSetOfIntegers {
         }
 
         numSols += 1
-      }
+      } run()
 
       println("\nIt was " + numSols + " solutions.")	  
       cp.printStats()

@@ -30,9 +30,7 @@ import scala.math
  * What is the minimum possible value of (a+b+c+d)^2 + (e+f+g+h)^2
  * @author Pierre Schaus pschaus@gmail.com
  */
-object GardnerSumSquare {
-
-  def main(args: Array[String]) {
+object GardnerSumSquare extends App {
     val n = 5
     
     val dom = Set(-7,-5,-3,-2,2,4,6,13)
@@ -55,7 +53,7 @@ object GardnerSumSquare {
 
     cp.minimize(obj) subjectTo {
       
-      cp.add(alldifferent(Array(a,b,c,d,e,f,g,h)), Strong)
+      cp.add(allDifferent(Array(a,b,c,d,e,f,g,h)), Strong)
       cp.add(sum(Array(a,b,c,d),s1))
       cp.add(sum(Array(e,f,g,h),s2))
       // break symmetries inside first set
@@ -79,11 +77,11 @@ object GardnerSumSquare {
     } exploration {
       cp.binaryFirstFail(Array(a,b,c,d,e,f,g,h))
       println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
-    }
+    } run()
 
     cp.printStats()
 
 
-  }
+  
 
 }

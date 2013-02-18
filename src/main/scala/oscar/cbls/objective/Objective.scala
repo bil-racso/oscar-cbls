@@ -23,19 +23,14 @@ package oscar.cbls.objective
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
-import collection.immutable.SortedMap;
 import oscar.cbls.invariants.core.computation._;
 
-import oscar.cbls.invariants.core.computation.IntVar._
-
-case class Objective(ObjectiveVar: IntVar) extends ObjectiveTrait {
-  setObjectiveVar(ObjectiveVar)
+case class Objective(Objective: IntVar) extends ObjectiveTrait {
+  setObjectiveVar(Objective)
 }
 
 trait ObjectiveTrait {
-
-  private var ObjectiveVar: IntVar = null
+  var ObjectiveVar: IntVar = null
 
   def setObjectiveVar(v: IntVar) {
     ObjectiveVar = v
@@ -47,9 +42,9 @@ trait ObjectiveTrait {
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getSwapVal(a: IntVar, b: IntVar): Int = {
+  def swapVal(a: IntVar, b: IntVar): Int = {
     a :=: b
-    val NewVal = ObjectiveVar.value
+    val NewVal = propagateObjective
     a :=: b
     NewVal
   }
@@ -59,28 +54,31 @@ trait ObjectiveTrait {
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getAssignVal(a: IntVar, v: Int): Int = getAssignVal(SortedMap(a -> v))
+  def assignVal(a: IntVar, v: Int): Int = assignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
    */
-  def getAssignVal(a: Iterable[(IntVar, Int)]): Int = {
+  def assignVal(a: Iterable[(IntVar, Int)]): Int = {
     //memorize
-    val oldvals: Iterable[(IntVar, Int)] = a.map(IntVarAndInt => (IntVarAndInt._1, IntVarAndInt._1.value))
-
+    val oldvals: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
+      (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
     //excurse
-    for (assign <- a) {
+    for (assign <- a)
       assign._1 := assign._2
-    }
-    val NewVal = ObjectiveVar.value
-
+    val newObj = propagateObjective
     //undo
-    for (assign <- oldvals) {
+    for (assign <- oldvals)
       assign._1 := assign._2
-    }
-
-    NewVal
+    newObj
   }
+
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  def propagateObjective = ObjectiveVar.value
 }

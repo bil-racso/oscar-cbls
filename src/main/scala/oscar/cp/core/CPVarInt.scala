@@ -18,7 +18,7 @@
 package oscar.cp.core
 
 
-abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[Int] {
+abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int] {
 
     def store = s
   
@@ -67,6 +67,8 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	 */
 	def randomValue: Int = {
 		val ind = s.getRandom().nextInt(size);
+		this.toArray.apply(ind)
+		/*
 		var cpt = 0;
 		for (v: Int <- this) {
 			if (cpt == ind) {
@@ -75,6 +77,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 			cpt += 1
 		}
 		min
+		*/
 	}	
     
     /**
@@ -82,15 +85,9 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	 */
     def median : Int = {
     	
-    	val vals = this.toArray
+    	val vals = this.toArray.sortBy(i => i)
     	return vals(vals.size/2)
     }
-	
-	def foreach[U](f: Int => U) = {
-	  for (v <- min to max; if (hasValue(v))) {
-	    f(v)
-	  }
-	}
 
 	/**
      * @return  the size of the domain
@@ -98,6 +95,11 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Traversable[
 	def size: Int
 	
 	def getSize = size
+	
+	/**
+	 * @return true is the domain is full
+	 */
+	def isFull = (max-min+1) == size
 	
     /**
 	 * Number of values in common in both domains

@@ -152,17 +152,17 @@ object KillerSudoku {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // rows and columns
       for(i <- RANGE) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
       }
       
       // blocks
       for(i <- CELLS; j <- CELLS) {
-        cp.add(alldifferent(  (for{ r <- i*cell_size until i*cell_size+cell_size;
+        cp.add(allDifferent(  (for{ r <- i*cell_size until i*cell_size+cell_size;
                                     c <- j*cell_size until j*cell_size+cell_size
               } yield x(r)(c)).toArray), Strong)
       }
@@ -177,7 +177,7 @@ object KillerSudoku {
 
         // all numbers in this segment must be distinct
         val len = segment.length / 2
-        cp.add( alldifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
+        cp.add( allDifferent(for(j <- 0 until len) yield x(s2(j * 2) - 1)(s2(j * 2 + 1) - 1)))
 
       }
 
@@ -192,7 +192,7 @@ object KillerSudoku {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

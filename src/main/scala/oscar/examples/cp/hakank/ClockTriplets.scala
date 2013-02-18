@@ -75,9 +75,9 @@ object ClockTriplets {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       cp.add(x(0) == 12)
       cp.add(x(1) > x(11))
@@ -106,7 +106,7 @@ object ClockTriplets {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

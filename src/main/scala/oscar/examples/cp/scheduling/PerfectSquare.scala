@@ -84,7 +84,7 @@ object PerfectSquare extends App {
 
 		label(activitiesX.map(_.start))
 		label(activitiesY.map(_.start))
-	}
+	} run(1)
 	
 	cp.printStats()
 
@@ -95,10 +95,10 @@ object PerfectSquare extends App {
 	ff.add(d)
 	def scale = 5
 	val bg = new VisualRectangle(d, 0, 0, s * scale, s * scale)
-	bg.setInnerCol(Color.black)
+	bg.innerCol = Color.black
 	(Square).foreach { i =>
 		val r = new VisualRectangle(d, activitiesX(i).start.value * scale, activitiesY(i).start.value * scale, side(i) * scale, side(i) * scale)
-		r.setInnerCol(VisualUtil.getRandomColor())
+		r.innerCol = VisualUtil.getRandomColor()
 	}
 }
 

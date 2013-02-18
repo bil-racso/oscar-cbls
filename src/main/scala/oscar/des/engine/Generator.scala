@@ -19,7 +19,7 @@
 
 package oscar.des.engine
 
-import scala.Math._
+import scala.math._
 
 import oscar.stochastic._
 import scala.util.Random
@@ -47,8 +47,8 @@ class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) exte
   def start() = {
     generating = true
       while (generating) {
-        val t = floor(dist.apply(m)).toLong
-        val a = w(m.clock === new DateTime(m.clock().getMillis() + t) )
+        val t = floor(dist.apply(m)).toInt
+        val a = w(m.clock === m.clock().plusMillis(t) )//new DateTime(m.clock().getMillis() + t) )
         if (generating){
           if(!block) generating = false
         }

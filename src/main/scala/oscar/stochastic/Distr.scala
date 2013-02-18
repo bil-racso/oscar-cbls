@@ -1,7 +1,7 @@
 package oscar.stochastic
 
 import JSci.maths.statistics._
-import scala.Math.sqrt
+import scala.math.sqrt
 import scala.util.Random
 import scala.collection._
 import java.util.TreeMap
@@ -66,7 +66,7 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
       if (tot > target) return el._2
     }
     assert(false)
-    list.first._2
+    list.head._2
   }
   
   override def toString(): String = { list.mkString(", ") }
@@ -129,7 +129,7 @@ class ExponentialD(lambda: Double) extends ContinuousDistr[Double] {
   //val ln = new ExponentialDistribution(decay) 
   private def inverse(p: Double) = {
     require(0 <= p && p <= 1)
-    -scala.Math.log(1 - p) / lambda
+    -scala.math.log(1 - p) / lambda
   }
   def min = inverse(0.05)
   val max = inverse(0.95)

@@ -27,16 +27,37 @@ import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
-import oscar.cbls.algebra.Algebra._
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-case class SuperTask(start: Task, end: Task, override val name: String = "")
+class SuperTask(start: Task, end: Task, override val name: String = "")
   extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
+  start precedes end
+
   override def post() {
-    super.post()
+
+    start.post()
+    end.post()
+
+    AdditionalPredecessors = start.AdditionalPredecessors
+
+    AllPrecedingTasks = start.AllPrecedingTasks
+
+    EarliestStartDate <== start.EarliestStartDate
+
+    DefiningPredecessors = start.DefiningPredecessors
+
+    PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
+
+    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+
+    LatestEndDate <== end.LatestEndDate
+
     this.duration <== end.EarliestEndDate - start.EarliestStartDate
+
+    //ParasiticPrecedences = SortedSet.empty[Int]
   }
 
   override def addDynamicPredecessor(t: Task) {
@@ -47,16 +68,24 @@ case class SuperTask(start: Task, end: Task, override val name: String = "")
     start.removeDynamicPredecessor(t)
   }
   override def getEndTask: Task = end.getEndTask
+  override def getStartTask: Task = start.getStartTask
 
   override def addStaticPredecessor(j: Task) {
     start.addStaticPredecessor(j)
   }
 }
 
-case class Task(val duration: IntVar, val planning: Planning, val name: String = "") {
+object SuperTask {
+  def apply(start: Task, end: Task, name: String = "") = new SuperTask(start,end,name)
+}
+
+case class Task(duration: IntVar, planning: Planning, name: String = "") {
   val TaskID: Int = planning.AddTask(this)
 
-  override def toString: String = name
+  /**Used for marking algorithm. Must always be set to false between algorithm execution*/
+  var Mark:Boolean =  false;
+
+  override def toString(): String = name
 
   var StaticPredecessors: List[Task] = List.empty
 
@@ -117,25 +146,31 @@ case class Task(val duration: IntVar, val planning: Planning, val name: String =
   }
 
   def getEndTask: Task = this
+  def getStartTask: Task = this
 
+ // var ParasiticPrecedences:IntSetVar = null
   /**This method is called by the planning when all tasks are created*/
   def post() {
+    if (AdditionalPredecessors == null){
+      AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
+        "added predecessors of " + name, SortedSet.empty)
 
-    AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
-      "added predecessors of " + name, SortedSet.empty)
+      val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
+      AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-    val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
-    AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
+      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      EarliestStartDate <== argMax.getMax
 
-    val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
-    EarliestStartDate <== argMax.getMax
+      DefiningPredecessors = argMax
 
-    DefiningPredecessors = argMax
+      PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-    PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
+      AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
 
-    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+      LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
 
-    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
+     // ParasiticPrecedences = AdditionalPredecessors minus PotentiallyKilledPredecessors
+    }
   }
 }
+

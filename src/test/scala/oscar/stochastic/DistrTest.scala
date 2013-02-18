@@ -161,7 +161,7 @@ class DistrTest extends FunSuite with ShouldMatchers {
     f mean (7) should equal(0)
     f mean (100) should equal(5)
     f mean (50) should equal(1.5)
-
+    
     intercept[ArrayIndexOutOfBoundsException] {
       f(-1) should equal(0)
     }
@@ -171,7 +171,7 @@ class DistrTest extends FunSuite with ShouldMatchers {
     val choice = new NumericalChoice(List((0.2, 1), (0.3, 2), (0.5, 8)))
     reset[Unit,Unit]{
       var sum = 0.0
-      (0 to 100000).suspendable.foreach{_ => sum += choice.apply[Unit](m)}
+      iter2susp[Int](0 to 100000).suspendable.foreach[Unit]{_ => sum += choice.apply[Unit](m)}
 
 //      val a = assert(sum < 500000)
 //      val b = assert(sum > 460000)

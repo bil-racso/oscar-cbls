@@ -58,8 +58,7 @@ class OrderedSetTest extends FunSuite with ShouldMatchers {
     	myset.toSet should equal(Set(4))
     	myset.getSize should equal(1)
     	
-    	println("---------------------------")
-    	println(myset.toSet)
+
     	myset.hasValue(4) should equal(true)
     	myset.removeValue(5)
     	myset.removeValue(4)

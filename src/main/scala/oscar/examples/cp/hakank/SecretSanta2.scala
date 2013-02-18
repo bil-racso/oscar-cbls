@@ -172,7 +172,7 @@ object SecretSanta2 {
 
     cp.maximize(z) subjectTo {
 
-      cp.add(alldifferent(santas), Strong)
+      cp.add(allDifferent(santas), Strong)
       
       // Can't be one own"s Secret Santa
       // (i.e. ensure that there are no fix-point in the array.)

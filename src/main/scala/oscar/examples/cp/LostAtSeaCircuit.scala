@@ -69,11 +69,12 @@ object LostAtSeaCircuit  {
        val path = Array.fill(10)(CPVarInt(cp,0 until 64)) // represent the path of length ten which is the solution
        
        val sol = Array.fill(10)(0) 
-       
-       cp.maximize(sum(0 until 10)(i => element(proba.flatten,path(i)))) subjectTo {
+       val prob = proba.flatten
+
+       cp.maximize(sum(0 until 10)(i => element(prob,path(i)))) subjectTo {
                 
     	  		for (i <- 0 until 9) {
-                  cp.add(element(succ,path(i),path(i+1))) 
+                  cp.add(elementVar(succ,path(i),path(i+1))) 
                 }
                 cp.add(circuit(succ),Strong)
        } exploration {
@@ -86,7 +87,7 @@ object LostAtSeaCircuit  {
        
        // ---------------- make a small visu ---------------	
        
-       val f = new VisualFrame("Lost At Sea",1,1)
+       val f = new VisualFrame("Lost At Sea",1,2)
 	   val drawing = new VisualDrawing(true)
 	   f.createFrame("Solution").add(drawing)
 	   val scale = 60
@@ -102,6 +103,10 @@ object LostAtSeaCircuit  {
          val (li1,ci1) = getLineCol(sol(i+1))
          new VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
        }
+       
+
+       
+       
        f.pack()
        
        

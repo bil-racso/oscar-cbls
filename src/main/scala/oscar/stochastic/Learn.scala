@@ -1,6 +1,6 @@
 package oscar.stochastic
 
-import scala.Math.sqrt
+import scala.math.sqrt
 import scala.collection._
 import java.util.TreeMap
 import collection.JavaConversions._
@@ -162,11 +162,11 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
   def createNumber: N
 
   def firstPertinentIndex = {
-    val min = numbers.findIndexOf { _.hasPertinentObservations }
+    val min = numbers.indexWhere { _.hasPertinentObservations }
     if ( min == -1 ) 0
     else min
   }
-  def lastPertinentIndex = numbers.findLastIndexOf { _.hasPertinentObservations }
+  def lastPertinentIndex = numbers.lastIndexWhere { _.hasPertinentObservations }
 
   
   def apply(t: Int) = {

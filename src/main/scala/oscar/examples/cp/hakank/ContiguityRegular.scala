@@ -97,7 +97,7 @@ object ContiguityRegular {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(MyContiguity(reg_input))
 
@@ -109,7 +109,7 @@ object ContiguityRegular {
 
       numSols += 1
        
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
 

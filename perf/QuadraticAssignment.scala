@@ -16,7 +16,6 @@
  ******************************************************************************/
 
 import oscar.cp.modeling._
-import oscar.cp.search._
 import oscar.cp.core._
 
 
@@ -59,10 +58,10 @@ object QuadraticAssignment {
     val D = Array.tabulate(n, n)((i, j) => element(d, x(i), x(j))) //matrix of variables representing the distances
 
     cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
     } exploration {
         while (!allBounds(x)) {
-           val (y,i) = minDomNotbound(x).first
+           val y = x.minDomNotBound
            val v = y.min
     	   cp.branch {
              cp.post(y == v)
@@ -71,7 +70,7 @@ object QuadraticAssignment {
            }
         }
         println("solution"+x.mkString(",")) 
-    }
+    } run()
 
     // Print some statistics
     cp.printStats()

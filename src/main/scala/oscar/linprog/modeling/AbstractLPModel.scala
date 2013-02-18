@@ -56,6 +56,8 @@ abstract class AbstractLP {
  	
   	
   	var released : Boolean
+  	
+  	var configFile : java.io.File 
 	
   	
 	def startModelBuilding(nbRows : Int,nbCols : Int)
@@ -248,7 +250,7 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
 
 class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, val index: Int, val name:String) {
 
- 	val e = cstr.linExpr.coef.toList
+ 	private val e = cstr.linExpr.coef.toArray
  	val perm = (0 until e.size).sortBy(i => e(i)._1.index)
  	
     val coef : Array[Double] = perm.map(i => e(i)._2).toArray

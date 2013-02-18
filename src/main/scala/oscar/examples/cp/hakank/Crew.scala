@@ -152,7 +152,7 @@ object Crew {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
     // cp.minimize(num_working) subjectTo {
 
       // cp.add(num_working <= 19)
@@ -234,7 +234,7 @@ object Crew {
           cp.stop()
         }
 
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
 

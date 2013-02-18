@@ -135,8 +135,8 @@ object PhotoProblem {
     cp.maximize(z) subjectTo {
     // cp.solveAll subjectTo {
 
-      cp.add(alldifferent(positions), Strong)
-      cp.add(alldifferent(places), Strong)
+      cp.add(allDifferent(positions), Strong)
+      cp.add(allDifferent(places), Strong)
 
       // Symmetry breaking (from the Oz page):
       //    Fred is somewhere left of Betty

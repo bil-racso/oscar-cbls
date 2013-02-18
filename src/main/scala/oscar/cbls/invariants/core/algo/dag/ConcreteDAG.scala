@@ -21,10 +21,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.core.algo.dag
-
-import collection.immutable.SortedSet;
 
 class ConcreteDAGNode(val _UniqueID:Int) extends DAGNode{
 

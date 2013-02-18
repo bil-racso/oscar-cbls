@@ -95,8 +95,8 @@ object CircuitTest {
     val len = x.length
     val z = Array.tabulate(len)(i=> CPVarInt(cp, 0 to len-1))
 
-    cp.add(alldifferent(x), Strong)
-    cp.add(alldifferent(z), Strong)
+    cp.add(allDifferent(x), Strong)
+    cp.add(allDifferent(z), Strong)
 
     cp.add(z(0) == x(0))
 
@@ -125,7 +125,7 @@ object CircuitTest {
 
     val len = x.length
 
-    cp.add(alldifferent(p), Strong)
+    cp.add(allDifferent(p), Strong)
     cp.add(p(0) == 0) // path always starts with 1
     for(i <- 1 until len) {
       cp.add(x(p(i-1)) == p(i), Strong) 
@@ -157,7 +157,7 @@ object CircuitTest {
     // constraints
     //
     var numSols = 0
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // cp.add(circuit(x), Strong) // use the built-in
       circuit_me(cp, x)
@@ -173,7 +173,7 @@ object CircuitTest {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

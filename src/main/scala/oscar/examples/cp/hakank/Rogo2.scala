@@ -197,7 +197,7 @@ object Rogo2 {
         cp.add(problem_flatten(path(s)) != B)
       }
       
-      cp.add(alldifferent(path), Strong)
+      cp.add(allDifferent(path), Strong)
 
 
       // valid connections

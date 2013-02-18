@@ -91,11 +91,11 @@ object ARoundOfGolf {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(last_name), Strong);
-      cp.add(alldifferent(job), Strong);
-      cp.add(alldifferent(score), Strong);
+      cp.add(allDifferent(last_name), Strong);
+      cp.add(allDifferent(job), Strong);
+      cp.add(allDifferent(score), Strong);
 
       // 1. Bill, who is not the maintenance man, plays golf often and had
       //    the lowest score of the foursome.
@@ -151,7 +151,7 @@ object ARoundOfGolf {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

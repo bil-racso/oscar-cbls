@@ -37,7 +37,7 @@ public class Opposite extends Constraint {
      * @see cp.core.CPVarInt#opposite()
      */
 	public Opposite(CPVarInt x, CPVarInt y) {
-		super(x.s());
+		super(x.s(),"Opposite");
 		this.x = x;
 		this.y = y;
 	}
@@ -61,27 +61,36 @@ public class Opposite extends Constraint {
 			return CPOutcome.Failure;
 		}
 		
-		for (int v = x.getMin(); v <= x.getMax(); v++) {
-			if (!x.hasValue(v)) {
-				if (y.removeValue(-v) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
+		if (!x.isFull()) {
+			for (int v = x.getMin(); v <= x.getMax(); v++) {
+				if (!x.hasValue(v)) {
+					if (y.removeValue(-v) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
 				}
 			}
 		}
-		
-		for (int v = y.getMin(); v <= y.getMax(); v++) {
-			if (!y.hasValue(v)) {
-				if (x.removeValue(-v) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
+		if (!y.isFull()) {
+			for (int v = y.getMin(); v <= y.getMax(); v++) {
+				if (!y.hasValue(v)) {
+					if (x.removeValue(-v) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
 				}
 			}
 		}
 		
 		if (!x.isBound()) { //then y is also not bind
 			x.callValBindWhenBind(this);
-			x.callValRemoveWhenValueIsRemoved(this);
 			y.callValBindWhenBind(this);
-			y.callValRemoveWhenValueIsRemoved(this);
+			
+			x.callUpdateBoundsWhenBoundsChange(this);
+			y.callUpdateBoundsWhenBoundsChange(this);
+			 
+			if (l == CPPropagStrength.Strong) {
+			 y.callValRemoveWhenValueIsRemoved(this);
+			 x.callValRemoveWhenValueIsRemoved(this);
+			}
 		}
 		
 		return CPOutcome.Suspend;
@@ -100,6 +109,26 @@ public class Opposite extends Constraint {
 		}
 		return CPOutcome.Success;
 	}
+	
+	@Override
+	protected CPOutcome updateBounds(CPVarInt var) {
+		if (var == x) {
+			if (y.updateMax(-x.min()) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			if (y.updateMin(-x.max()) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+		} else {
+			if (x.updateMax(-y.min()) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			if (x.updateMin(-y.max()) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+		}
+		return CPOutcome.Suspend;
+	}	
 	
 	@Override
 	protected CPOutcome valRemove(CPVarInt var, int val) {

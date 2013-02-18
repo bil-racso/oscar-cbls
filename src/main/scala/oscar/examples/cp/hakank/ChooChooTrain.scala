@@ -48,7 +48,7 @@ object ChooChooTrain {
       val all = Array(C,H,O,T,R,A,I,N)
       val all_str = Array("C","H","O","T","R","A","I","N")
 
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
         // constraints
 
@@ -65,7 +65,7 @@ object ChooChooTrain {
 
         cp.add(C != 0)
         cp.add(T != 0)
-	cp.add(alldifferent(all), Strong)
+	cp.add(allDifferent(all), Strong)
 
       } exploration {
         
@@ -79,7 +79,7 @@ object ChooChooTrain {
           
         println(all.mkString(""))
 
-      }
+      } run()
       
       println()
       cp.printStats()
