@@ -67,8 +67,13 @@ package object invariants {
   }
 
   @inline def waitFor[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
+    val e = (new Throwable()).getStackTrace()
     shift { k: (A => SuspendableResult[T]) =>
       once(d) { msg: A =>
+        println("Executing Reaction from ")
+        for (el <- e) {
+          println("   " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
+        }
         k(msg)
       }
       Suspend
