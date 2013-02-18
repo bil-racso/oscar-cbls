@@ -54,6 +54,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
   /**
    * sets the current value of the counter
    */
+  def update(t: A) = setTime(t)
   def setTime(t: A) {
     require(t >= this())
     require(pq.isEmpty() || t <= nextTime)

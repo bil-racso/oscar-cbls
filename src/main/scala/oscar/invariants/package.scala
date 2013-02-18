@@ -22,6 +22,8 @@ package oscar
 import scala.collection.mutable._
 import scala.util.continuations._
 
+import com.typesafe.scalalogging.slf4j._
+
 class SuspendableIterable[T](iter: scala.collection.immutable.Iterable[T]) {
   def foreach[U](f: T => Unit @cpsParam[U, U]): Unit @cpsParam[U, U] = {
     val i = iter.iterator
@@ -32,7 +34,8 @@ class SuspendableIterable[T](iter: scala.collection.immutable.Iterable[T]) {
   def suspendable = this
 }
 
-package object invariants {
+package object invariants extends Logging {
+
   def cpsunit: Unit @cps[Unit] = ()
   def cpsfalse: Boolean @cps[Unit] = false
   def cpstrue: Boolean @cps[Unit] = true
@@ -68,19 +71,27 @@ package object invariants {
 
   @inline def waitFor[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
     val e = (new Throwable()).getStackTrace()
+    //at oscar.des.engine.MonthEvent$$anonfun$1.apply(Model.scala:51)
+
     shift { k: (A => SuspendableResult[T]) =>
-      once(d) { msg: A =>
-        println("Executing Reaction from ")
-        for (el <- e) {
-          println("   " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
+      try {
+        once(d) { msg: A =>
+          k(msg)
         }
-        k(msg)
+      } catch {
+        case exception: Exception =>
+          println("Executing Reaction from ")
+          for (el <- e) {
+            //println("   at " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
+            println("    " + el)
+          }
+          throw exception
       }
       Suspend
     }
   }
 
-  implicit def Var2Val[A](v: Var[A]) = { v() }
+  implicit def Var2Val[A](v: Var[A]) = v()
   implicit def array2ElementArray[A](at: scala.collection.immutable.IndexedSeq[Var[A]]) = {
     new ElementArray(at)
   }
