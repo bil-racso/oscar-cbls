@@ -37,7 +37,7 @@ object Generator {
 	def apply(dist: ProbabilityDistribution) = new NumberGenerator(dist)
 }
 
-class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) extends ProcessUnit[T]("Generator")(m){
+class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) extends ProcessUnit[T]("Generator")(m) with Depending{
 
   def restart() ={
     if (!generating) {
@@ -60,6 +60,9 @@ class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) exte
   def stop() { generating = false }
   def update(v: Distr[Double]) {
     dist = v
+  }
+  def dispose{
+    stop
   }
 }
 class NumberGenerator(dist: ProbabilityDistribution) {

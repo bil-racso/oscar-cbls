@@ -65,7 +65,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
       emit(t)
     }
   }
-
+  def currentTime = this()
   /**
    * returns the next value for which a reaction has been set
    */
@@ -74,7 +74,18 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
   override def ===(i: A) = {
     new Occuring[A] {
       override def foreach(f2: A => Boolean) = {
+        assert(currentTime <= i)
         val a = new WaitEvent[A](i, f2)
+        PQCounter.this addEvent (a)
+        new PQEventBlock(a)
+      }
+    }
+  }
+  def >=(i: A) = {
+    new Occuring[A] {
+      override def foreach(f2: A => Boolean) = {
+        val t = if (currentTime > i) currentTime else i
+        val a = new WaitEvent[A](t, f2)
         PQCounter.this addEvent (a)
         new PQEventBlock(a)
       }
@@ -107,7 +118,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
     this emit res.time
     res
   }
-  
+
   def dispose {
     pq.clear()
   }

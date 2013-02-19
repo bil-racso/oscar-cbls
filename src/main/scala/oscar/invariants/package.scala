@@ -54,6 +54,17 @@ package object invariants extends Logging {
       true
     }
   }
+  @inline def until[A](s: Signal[Option[A]])(block: => Depending){
+    println("Until: " + s())
+    if ( s() == None ){
+      println("entered")
+      val d = block
+      for(v <- s; if v != None){
+        d.dispose
+        false
+      }
+    }
+  }
   @inline def whenever[A](e: Occuring[A])(f: A => Unit): Reaction[A] = {
     for (msg <- e) {
       f(msg)

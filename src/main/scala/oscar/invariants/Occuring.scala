@@ -43,7 +43,7 @@ trait Occuring[A] {
   def foreach(f: A => Boolean): Reaction[A]
 
   def apply(f: A => Unit) = new ReactionDescription(this, { msg: A => f(msg); true })
-  def    ~>(f: A => Unit) = this(f)
+  def ~>(f: A => Unit) = this(f)
 
   /**
    * This methods returns an Occuring that will throw a notification each time this
@@ -140,8 +140,8 @@ trait NotifyAllEvent[A] extends BaseEvent[A] {
 }
 
 object Event {
-  def apply[A]() = new NotifyAllEvent[A](){}
-  def oneAtATime[A]() = new NotifyOneEvent[A](){}
+  def apply[A]() = new NotifyAllEvent[A]() {}
+  def oneAtATime[A]() = new NotifyOneEvent[A]() {}
 }
 
 /**
@@ -227,6 +227,13 @@ class Signal[A](private var value: A) extends NotifyAllEvent[A] {
       val r = super.foreach(f)
       if (f(value)) r(value)
       r
+    }
+  }
+  def filterOption(cond: A => Boolean) = {
+    val self = this
+    val fOption = (i: A) => if (cond(i)) Some(i) else None
+    new Signal[Option[A]](fOption(self())) {
+      for (v <- self) { emit(fOption(v)); true }
     }
   }
 
