@@ -49,7 +49,6 @@ object MoLnsTSP extends App {
 
   // Insert first points
   for (i <- 0 until preds.size) {
-    val i = 1
     val dist1 = TSPUtils.computeDist(preds(i), distMatrix1)
     val dist2 = TSPUtils.computeDist(preds(i), distMatrix2)
     val x = MOSol(Sol(preds(i), succs(i)), dist1, dist2)
