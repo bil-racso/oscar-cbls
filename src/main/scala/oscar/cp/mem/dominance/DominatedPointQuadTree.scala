@@ -1,5 +1,17 @@
 package oscar.cp.mem.dominance
 
+/** Dominated Point QuadTree
+ * 
+ *  Dominated Point QuadTree based on the pareto dominance relation.
+ *  The insertion function is an adaptation of the algorithm of Samet 
+ *  for deletion:
+ * 
+ *  1) The inserted node becomes the new root
+ *  2) Dominated children are not reinserted
+ * 
+ *  @author: Renaud Hartert - ren.hartert@gmail.com
+ */
+
 class DominatedPointQuadTree[V](private val nDim: Int) {
   
   private val nQuadrants = 1 << nDim
@@ -16,11 +28,11 @@ class DominatedPointQuadTree[V](private val nDim: Int) {
 
   private def opposite(quadId: Int): Int = quadId ^ worstQuad
   
-  // This function is the tricky MO part of the structure!
-  // Regarding a quadrant in the removing phase, this function returns the set 
-  // of "safe" quadrants and the set of "not-safe" quadrants.
-  private def safeQuadrants(diff: Int): (IndexedSeq[Int], IndexedSeq[Int]) = {
-    val sameDims = opposite(diff)
+  // Returns the lists of the sub-quadrants of quad that are:
+  //   list 1 : non-adjacent to the worst quadrant
+  //   list 2 : adjacent to the worst quadrant
+  private def adjacentQuadrants(quad: Int): (IndexedSeq[Int], IndexedSeq[Int]) = {
+    val sameDims = opposite(quad)
     Quadrants.partition(q => (q - (q ^ sameDims)) != sameDims)
   }
   
@@ -92,7 +104,7 @@ class DominatedPointQuadTree[V](private val nDim: Int) {
     private def removeDominated(quad: Int, father: QuadTree, newRoot: NonEmpty) {
       
       // List of non-adjacent and adjacent quadrants to the worst quadrant
-      val (safeQuads, notSafeQuads) = safeQuadrants(quad)
+      val (safeQuads, notSafeQuads) = adjacentQuadrants(quad)
       
       // This node is dominated by newRoot
       if (newRoot.getQuadrant(keys) == worstQuad) {
