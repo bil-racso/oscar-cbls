@@ -30,20 +30,23 @@ import oscar.reversible.ReversibleInt;
 class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Array[CPVarInt]) 
 	extends Constraint(x(0).s,"BinPackingFlow"){
 	
-	private val c 		= Array.tabulate(l.length)(i => CPVarInt(s,0,sizes.length)) //cardinalities
-	private val l_t	= Array.tabulate(sizes.length)(i => new ReversibleInt(s,0)) // keep track of the current load of each bin
-	private val c_t 	= Array.tabulate(sizes.length)(i => new ReversibleInt(s,0)) // keep track of the number of items in each bin
+	val c 		= Array.tabulate(l.length)(i => CPVarInt(s,0,sizes.length)) //cardinalities
+	protected val l_t		= Array.tabulate(l.length)(i => new ReversibleInt(s,0)) // keep track of the current load of each bin
+	protected val c_t 	= Array.tabulate(l.length)(i => new ReversibleInt(s,0)) // keep track of the number of items in each bin
 
 	
-	private val perm = ArrayUtils.sortPerm(sizes) //permutation of sorted items i.e. s[perm[i]] <= s[perm[i+1]]
+	protected val perm = ArrayUtils.sortPerm(sizes) //permutation of sorted items i.e. s[perm[i]] <= s[perm[i+1]]
 	
 
 	override def setup( strength : CPPropagStrength) : CPOutcome =  {
+	  
 		if( 	x.exists(_.updateMax(l.length-1) == CPOutcome.Failure)
 		    ||  x.exists(_.updateMin(0) == CPOutcome.Failure)
 		    || 	s.post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure)
-		    CPOutcome.Failure
+		{
 
+		    CPOutcome.Failure
+		}
 
 		for (lt <- l) 
 			lt.callPropagateWhenBoundsChange(this);
@@ -59,6 +62,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 				xt.callPropagateWhenBind(this);
 			}
 		}
+
 		propagate()
 	}
 	
@@ -68,12 +72,20 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 		val size 	= sizes(idx)
 		l_t(j).setValue(l_t(j).getValue + size)
 		c_t(j).incr()
+
 	    CPOutcome.Suspend
 	}
 	
 	override def propagate() : CPOutcome =  {
+	  //no call to super???
+		
 		if((0 until l.length).exists(setCardinality(_) == CPOutcome.Failure)) CPOutcome.Failure
-		else CPOutcome.Suspend
+		else 
+		  {
+
+			CPOutcome.Suspend
+		  
+		  }
 	}
 	
 	/**
@@ -81,31 +93,34 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	 * @param j is the bin index
 	 * @return Failure if fail detected when adapting cards, or Suspend otherwise
 	 */
-	private def setCardinality(j : Int) : CPOutcome = {
+	protected def setCardinality(j : Int) : CPOutcome = {
+	  println("BinPackingFlow setCardinality")	
 	    val minVal = l(j).getMin
 	    val maxVal = l(j).getMax
 	    
 	    //how many items do I need at least to reach minVal ?
-	    val v = l_t(j).getValue
+	    var v = l_t(j).getValue
 	    var i = x.length-1;
 	    var nbAdded = 0;
 	    while (v < minVal && i >= 0){
 	      if (!x(perm(i)).isBound && x(perm(i)).hasValue(j)) {
-	        v += sizes[perm[i]]
+	        v += sizes(perm(i))
 	        nbAdded += 1
 	      }
-	      i -= i
+	      i -= 1
 	    }
-	    if(v < minVal) return CPOutcome.Failure; //not possible to reach the minimum level
+	    if(v < minVal) {
+	      return CPOutcome.Failure; //not possible to reach the minimum level
+	    }
 	    val nbMin = nbAdded + c_t(j).getValue;
 	    if (c(j).updateMin(nbMin) == CPOutcome.Failure){
 	      return CPOutcome.Failure
 	    }
 	    // how many items can I use at most before reaching maxVal ?
-	    v = l_t[j].getValue();
+	    v = l_t(j).getValue();
 	    i = 0;
 	    nbAdded = 0;
-	    while (i < x.length && v+sizes[perm[i]] <= maxVal) {
+	    while (i < x.length && v+sizes(perm(i)) <= maxVal) {
 	      if (!x(perm(i)).isBound && x(perm(i)).hasValue(j)) {
 	        v += sizes(perm(i))
 	        nbAdded += 1
@@ -116,6 +131,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	    if (c(j).updateMax(nbMax) == CPOutcome.Failure){
 	      return CPOutcome.Failure
 	    }
+
 		return CPOutcome.Suspend
 	}
 
