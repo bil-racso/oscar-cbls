@@ -83,6 +83,7 @@ class BinPackingTester(bpi:BinPackingInstance)
 object BinPackingTester{
   	def testAndStats(instances : Seq[BinPackingInstance]) = {
 	  var extBetter	= 0
+	  var notTrivial = 0
 	  var extBetterNoFail	= 0
 	  var normFail 	= 0
 	  var extFail 	= 0
@@ -90,14 +91,14 @@ object BinPackingTester{
 	  
 	  for (inst <- instances) new BinPackingTester(inst).testNormalVsExtended match
 	  {
-	    case (_,_,1,1) => normFail +=1; extFail +=1
-	    case (_,_,_,1) => extFail +=1; extBetter
-	    case (n,e,_,_) if (n!=e) => extBetter += 1;extBetterNoFail += 1;;  extImprovementMeanCount += (e + 0.0)/n
-	    
+	    case (_,_,1,1) => normFail +=1; extFail +=1; notTrivial +=1
+	    case (_,_,_,1) => extFail +=1; extBetter += 1; notTrivial +=1
+	    case (n,e,_,_) if (n!=e) => extBetter += 1;extBetterNoFail += 1;notTrivial +=1;  extImprovementMeanCount += (e + 0.0)/n
+	    case _ => {} 
 	  }
 	  
 	  val formatter = new DecimalFormat("#.###")
-	  print("Extended is better in " + formatter.format(((extBetter + 0.0) / instances.size)*100) + "% cases,"
+	  print("Extended is better in " + formatter.format(((extBetter + 0.0) / notTrivial)*100) + "% cases ("+extBetter+"/"+notTrivial+"),"
 	      +" it found " + extFail + " fails against " + normFail +" for the normal version"
 	      +" and the improvement mean is " + formatter.format(extImprovementMeanCount / extBetterNoFail) + " by cardinality\n");
 	}
@@ -107,12 +108,11 @@ object BinPackingTester{
 object BinPackingFlowCardOpt extends App {
 
   
-  /*
-  val bins = 0 until 4
-  val items = 0 until 12
-  val binCapacities = Array(45,20,15,10)
-  val itemsSizes 	= Array(15,10,10,10,10,5,5,5,5,5,5,5)
-  val binForItems 	= Array(
+
+  val  test0 = {
+	  val bpi = BinPackingInstance();
+	  bpi.binCapacities = Array(45 to 45,20 to 20,15 to 15,10 to 10)
+	  bpi.binForItems = Array(
 		  Array(0,1),
 		  Array(0,1,2,3),
 		  Array(0,1,2,3),
@@ -125,8 +125,12 @@ object BinPackingFlowCardOpt extends App {
 		  Array(2,3),
 		  Array(2,3),
 		  Array(2,3))
-		  
-  */
+	  bpi.itemsSizes = Array(15,10,10,10,10,5,5,5,5,5,5,5)
+	  bpi
+  }
+  
+
+  
   
   val  test1 = {
 	  val bpi = BinPackingInstance();
@@ -174,7 +178,7 @@ object BinPackingFlowCardOpt extends App {
   }
 	  
   
-  BinPackingTester.testAndStats(List(test1,test2,test3))
+  BinPackingTester.testAndStats(List(test0,test1,test2,test3))
  
   
   
