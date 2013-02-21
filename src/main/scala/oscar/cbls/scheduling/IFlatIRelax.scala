@@ -1,27 +1,27 @@
 package oscar.cbls.scheduling
 
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+  * This file is part of OscaR (Scala in OR).
+  *
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+  ******************************************************************************/
 
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngine
@@ -36,9 +36,9 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   case class Random() extends FlatteningHeuristics
 
   /**This solves the jobshop by iterative relaxation and flattening
-   * @param MaxIt the max number of iterations of the search
-   * @param Stable the number of no successice noimprove that will cause the search to stop
-   */
+    * @param MaxIt the max number of iterations of the search
+    * @param Stable the number of no successice noimprove that will cause the search to stop
+    */
   def Solve(MaxIt: Int,
             Stable: Int,
             flatteningheursitics: FlatteningHeuristics = WorseFirst(),
@@ -67,15 +67,17 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //iterative weakening and flattening
       it += 1
 
-       if(plateaulength > 10 && (plateaulength % 50) == 0){
-       for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
-       println("jumping****************")
+      if(plateaulength > 10 && (plateaulength % 50) == 0){
+
+        for (i <- 0 until NbRelax*3){Relax(PkillPerRelax);}
+        println("jumping****************")
+
       }else{
-      val m = p.MakeSpan.value
-      for (i <- 0 until NbRelax) {
-        Relax(PkillPerRelax);
-      }
-      if(p.MakeSpan.value == m)println("skip")
+        val m = p.MakeSpan.value
+        for (i <- 0 until NbRelax) {
+          Relax(PkillPerRelax);
+        }
+        if(p.MakeSpan.value == m)println("skip")
       }
 
       flatteningheursitics match {
@@ -86,6 +88,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       println(p.MakeSpan)
       println("iteration: " + it)
+
 
       if (p.MakeSpan.value < BestMakeSpan) {
         BestSolution = model.getSolution(true)
@@ -100,6 +103,9 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println("----------------")
     }
     model.restoreSolution(BestSolution)
+
+    println("restored best solution")
+
     p.updateVisual
   }
 
@@ -109,28 +115,14 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
    * relaxes N additional dependencies on a critical path (if n are found)
    */
   def Relax(PKill: Int) {
-    //takes one node from the determining predecessors.
-    def PrecedingNode(j: Activity): Activity = {
-      if (j.DefiningPredecessors.value isEmpty) null
-      else p.ActivityArray(selectFrom(j.DefiningPredecessors.value))
-      //random tie break, as it is likely that there will be few forks.
-    }
 
-    var CurrentActivity: Activity = PrecedingNode(p.SentinelActivity)
-    var PotentiallykilledNodes: List[(Activity, Activity)] = List.empty
-    while (CurrentActivity != null) {
-      val Predecessor = PrecedingNode(CurrentActivity)
-      if (Predecessor != null && CurrentActivity.AdditionalPredecessors.value.contains(Predecessor.ID)) {
-        PotentiallykilledNodes = (Predecessor, CurrentActivity) :: PotentiallykilledNodes
-      }
-      CurrentActivity = Predecessor
-    }
+    val PotentiallykilledNodes = CriticalPathFinder.nonSolidCriticalPath(p)
     if (PotentiallykilledNodes.isEmpty) return
 
     //val (from, to) = selectFrom(PotentiallykilledNodes)
     //if (Verbose) println("killed " + from + "->" + to)
     //to.removeDynamicPredecessor(from)
-    
+
     for ((from,to) <- PotentiallykilledNodes){
       if (flip(PKill)){
         if (Verbose) println("killed " + from + "->" + to)
