@@ -7,9 +7,8 @@ import collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.continuations._
 
-
 trait Observing {
-  def observe{}
+  def observe {}
 }
 
 trait CountNRealizations extends Observing {
@@ -19,9 +18,16 @@ trait CountNRealizations extends Observing {
   }
 }
 
-class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
-  var n = 0
-  val count = (new TreeMap[B, Int](op))
+object AbstractLearnedQuantiles {
+  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
+    new AbstractLearnedQuantiles(pmin, pmax, 0, new mutable.HashMap[B, Int]())
+  def apply[B](other: AbstractLearnedQuantiles[B])(implicit op: Operationable[B]) =
+    new AbstractLearnedQuantiles[B](other.pmin, other.pmax, other.n, other.count.clone())
+  def withCountRealizations[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
+    new AbstractLearnedQuantiles(pmin, pmax, 0, new mutable.HashMap[B, Int]()) with CountNRealizations
+}
+
+class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double, var n: Int = 0, val count: mutable.HashMap[B, Int] = new mutable.HashMap[B, Int]())(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
 
   require(0 <= pmin)
   require(pmin <= 1)
@@ -35,21 +41,23 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   }
 
   override def aggregate(o: Any) {
-
-    val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
-
-    require(pmin == that.pmin && that.pmax == that.pmax)
-    n += that.n
-    that.count.foreach(a => count.put(a._1, count.get(a._1) + a._2))
-    super.aggregate(that)
+    throw new NotImplementedError()
+    //    val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
+    //
+    //    require(pmin == that.pmin && that.pmax == that.pmax)
+    //    n += that.n
+    //    that.count.foreach(a => count.put(a._1, count.get(a._1) + a._2))
+    //    super.aggregate(that)
   }
 
   override def observe(v: B) {
     //require(op.positive(v))
     super.observe(v)
     if (!op.equiv(op.zero, v)) {
-      val o = count.get(v)
-      count.put(v, o + 1)
+      count.get(v) match {
+        case None    => count(v) = 1
+        case Some(d) => count(v) = d + 1
+      }
       n += 1
     }
   }
@@ -73,19 +81,21 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   private def quantile(target: Int): B = {
     if (target <= 0) return op.zero
 
-    require(!count.isEmpty())
+    require(count.nonEmpty)
+
+    val arr = count.toArray.sorted
 
     var c = 0
-    for (en <- count.entrySet()) {
-      c += en.getValue()
-      if (c >= target) return en.getKey()
+    for (en <- arr) {
+      c += en._2
+      if (c >= target) return en._1
     }
     count.last._1
   }
   override def hasPertinentObservations = super.hasPertinentObservations || count.size != 0
-  override def corresponds(other: LearnedNumerical[B]) ={
+  override def corresponds(other: LearnedNumerical[B]) = {
     val that = other.asInstanceOf[AbstractLearnedQuantiles[B]]
-    super.corresponds(that) && this.pmin==that.pmin && this.pmax==that.pmax && this.count.equals(that.count)
+    super.corresponds(that) && this.pmin == that.pmin && this.pmax == that.pmax && this.count.equals(that.count)
   }
   override def toString() = {
     "Learn.quantile: n: " + n + ", tot: " + tot + ", count: " + count
@@ -98,8 +108,8 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
   var tot = op.zero
   var squaredTot = op.zero
 
-  def mean(nRea: Int) = op.*#(tot, 1.0/nRea)
-  
+  def mean(nRea: Int) = op.*#(tot, 1.0 / nRea)
+
   override def equals(o: Any) = {
     val that = o.asInstanceOf[LearnedNumerical[B]]
     tot == that.tot && that.squaredTot == squaredTot
@@ -112,7 +122,6 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
     squaredTot = op.+(that.squaredTot, squaredTot)
   }
   def update(v: B) {
-    
     current = v
   }
   def apply() = current
@@ -131,7 +140,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
 
 object Learn {
 
-  def number[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new AbstractLearnedQuantiles(pmin, pmax)(op) with CountNRealizations
+  def number[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = AbstractLearnedQuantiles.withCountRealizations(pmin, pmax)(op)
   def number[B](implicit op: Operationable[B]) = new LearnedNumerical()(op) with CountNRealizations
 
   def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = function(pmin, pmax)(op)
@@ -143,7 +152,7 @@ object Learn {
 
 class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumericalFunction[B, AbstractLearnedQuantiles[B]] {
 
-  override def createNumber = new AbstractLearnedQuantiles[B](pmin, pmax)
+  override def createNumber = AbstractLearnedQuantiles[B](pmin, pmax)
   def quantileUp(t: Int, d: Double) = this(t) quantileUp (d, nRea)
   def quantileDown(t: Int, d: Double) = this(t) quantileDown (d, nRea)
 
@@ -154,7 +163,7 @@ class LearnedNumericalFunctionWithMean[B](implicit op: Operationable[B]) extends
 
 }
 
-abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations{
+abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations {
 
   implicit val numbers = new mutable.ArrayBuffer[N]
 
@@ -163,12 +172,11 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
 
   def firstPertinentIndex = {
     val min = numbers.indexWhere { _.hasPertinentObservations }
-    if ( min == -1 ) 0
+    if (min == -1) 0
     else min
   }
   def lastPertinentIndex = numbers.lastIndexWhere { _.hasPertinentObservations }
 
-  
   def apply(t: Int) = {
     if (t < 0) throw new ArrayIndexOutOfBoundsException("Do not accept negative indices: " + t)
     var i = numbers.size - 1

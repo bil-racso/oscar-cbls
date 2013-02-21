@@ -54,12 +54,12 @@ package object invariants extends Logging {
       true
     }
   }
-  @inline def until[A](s: Signal[Option[A]])(block: => Depending){
+  @inline def until[A](s: Signal[Option[A]])(block: => Depending) {
     println("Until: " + s())
-    if ( s() == None ){
+    if (s() == None) {
       println("entered")
       val d = block
-      for(v <- s; if v != None){
+      for (v <- s; if v != None) {
         d.dispose
         false
       }
@@ -81,24 +81,33 @@ package object invariants extends Logging {
   }
 
   @inline def waitFor[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
-    val e = (new Throwable()).getStackTrace()
-    //at oscar.des.engine.MonthEvent$$anonfun$1.apply(Model.scala:51)
 
-    shift { k: (A => SuspendableResult[T]) =>
-      try {
+    if (logger.underlying.isDebugEnabled()) {
+      val e = (new Throwable())
+
+      shift { k: (A => SuspendableResult[T]) =>
+        try {
+          once(d) { msg: A =>
+            k(msg)
+          }
+        } catch {
+          case exception: Exception =>
+            println("Executing Reaction from ")
+            for (el <- e.getStackTrace()) {
+              //println("   at " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
+              println("    " + el)
+            }
+            throw exception
+        }
+        Suspend
+      }
+    } else {
+      shift { k: (A => SuspendableResult[T]) =>
         once(d) { msg: A =>
           k(msg)
         }
-      } catch {
-        case exception: Exception =>
-          println("Executing Reaction from ")
-          for (el <- e) {
-            //println("   at " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
-            println("    " + el)
-          }
-          throw exception
+        Suspend
       }
-      Suspend
     }
   }
 
