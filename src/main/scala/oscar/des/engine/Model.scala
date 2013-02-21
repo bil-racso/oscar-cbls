@@ -21,6 +21,7 @@ package oscar.des.engine
 
 import scala.collection.mutable._
 import oscar.stochastic._
+import oscar.invariants._
 import annotation._
 import annotation.elidable._
 import scala.util.continuations._
@@ -83,12 +84,14 @@ abstract class Model[S] extends DistrSolver[S] {
     clock.setTime(dateTime)
   }
   def setTime(d: String) { setTime(new DateTime(d)) }
-
-  def simulate(horizon: DateTime, verbose: Boolean = true) {
+  
+  def simulate(simuStopper: Occuring[_], verbose: Boolean = true) {
     // make all the process alive
     //reset{
 
-    while ((!processes.isEmpty() || clock.nonEmpty) && clock() <= horizon) {
+    once(simuStopper){endSimulate}
+    
+    while ((!processes.isEmpty() || clock.nonEmpty)) {
       while (!processes.isEmpty()) {
 
         val it = processes.iterator
@@ -100,15 +103,19 @@ abstract class Model[S] extends DistrSolver[S] {
 
       val e = clock.next
 
-      if (verbose && e.time <= horizon) {
+      if (verbose) {
         println("-----------> time: " + e.time)
       }
-      if (clock() <= horizon) {
-        e.process
-      }
+
+      e.process
     }
     //}
   }
+
+  def simulate(horizon: DateTime, verbose: Boolean) {
+    simulate(clock === horizon, verbose)
+  }
+  
   @elidable(INFO) def print(s: String) {
     println(clock().toString() + ": " + s)
   }
