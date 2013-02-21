@@ -30,8 +30,8 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-class SuperTask(start: Task, end: Task, override val name: String = "")
-  extends Task(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
+class SuperTask(start: Activity, end: Activity, override val name: String = "")
+  extends Activity(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
   start precedes end
@@ -43,7 +43,7 @@ class SuperTask(start: Task, end: Task, override val name: String = "")
 
     AdditionalPredecessors = start.AdditionalPredecessors
 
-    AllPrecedingTasks = start.AllPrecedingTasks
+    AllPrecedingActivities = start.AllPrecedingActivities
 
     EarliestStartDate <== start.EarliestStartDate
 
@@ -51,7 +51,7 @@ class SuperTask(start: Task, end: Task, override val name: String = "")
 
     PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
 
-    AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+    AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
     LatestEndDate <== end.LatestEndDate
 
@@ -60,46 +60,56 @@ class SuperTask(start: Task, end: Task, override val name: String = "")
     //ParasiticPrecedences = SortedSet.empty[Int]
   }
 
-  override def addDynamicPredecessor(t: Task) {
+  override def addDynamicPredecessor(t: Activity) {
     start.addDynamicPredecessor(t)
   }
 
-  override def removeDynamicPredecessor(t:Task){
+  override def removeDynamicPredecessor(t:Activity){
     start.removeDynamicPredecessor(t)
   }
-  override def getEndTask: Task = end.getEndTask
-  override def getStartTask: Task = start.getStartTask
+  override def getEndActivity: Activity = end.getEndActivity
+  override def getStartActivity: Activity = start.getStartActivity
 
-  override def addStaticPredecessor(j: Task) {
+  override def addStaticPredecessor(j: Activity) {
     start.addStaticPredecessor(j)
   }
-}
+
+  override def removeNonTightAdditionalPredecessors(){} //nothing to be done here because no such dependencies can exist
+
+  }
 
 object SuperTask {
-  def apply(start: Task, end: Task, name: String = "") = new SuperTask(start,end,name)
+  def apply(start: Activity, end: Activity, name: String = "") = new SuperTask(start,end,name)
 }
 
-case class Task(duration: IntVar, planning: Planning, name: String = "") {
-  val TaskID: Int = planning.AddTask(this)
+/**
+ *
+ * @param duration
+ * @param planning
+ * @param name
+ * @param Shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
+ */
+case class Activity(duration: IntVar, planning: Planning, name: String = "", Shifter:(IntVar,IntVar) => IntVar = (a:IntVar,_) => a) {
+  val ID: Int = planning.AddActivity(this)
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false;
 
   override def toString(): String = name
 
-  var StaticPredecessors: List[Task] = List.empty
+  var StaticPredecessors: List[Activity] = List.empty
 
-  def addStaticPredecessor(j: Task) {
+  def addStaticPredecessor(j: Activity) {
     StaticPredecessors = j :: StaticPredecessors
   }
 
-  def precedes(j: Task) {
+  def precedes(j: Activity) {
     j.addStaticPredecessor(this)
   }
 
-  def uses(n:IntVar):TaskAndAmount = TaskAndAmount(this,n)
+  def uses(n:IntVar):ActivityAndAmount = ActivityAndAmount(this,n)
 
-  case class TaskAndAmount(t:Task, amount:IntVar){
+  case class ActivityAndAmount(t:Activity, amount:IntVar){
     def ofResource(r:CumulativeResource){t.usesCumulativeResource(r, amount)}
 
     def ofResources(rr:CumulativeResource*){
@@ -107,12 +117,20 @@ case class Task(duration: IntVar, planning: Planning, name: String = "") {
     }
   }
 
+  def removeNonTightAdditionalPredecessors(){
+    for(iD:Int <- AdditionalPredecessors.value){
+      if(!PotentiallyKilledPredecessors.value.contains(iD)){
+        AdditionalPredecessors :-= iD
+      }
+    }
+  }
+
   var Resources: List[(CumulativeResource, IntVar)] = List.empty
 
-  /**use this method to add resource requirement to a task.
-   * the task and the resource must be registered to the same planning
-   * @param r a resource that the task uses
-   * @param amount the amount of this resource that the task uses
+  /**use this method to add resource requirement to a activity.
+   * the activity and the resource must be registered to the same planning
+   * @param r a resource that the activity uses
+   * @param amount the amount of this resource that the activity uses
    */
   def usesCumulativeResource(r: CumulativeResource, amount: IntVar) {
     Resources = (r, amount) :: Resources
@@ -129,45 +147,45 @@ case class Task(duration: IntVar, planning: Planning, name: String = "") {
     planning.maxduration, planning.maxduration, "led(" + name + ")")
 
   val LatestStartDate: IntVar = LatestEndDate - duration
-  var AllSucceedingTasks: IntSetVar = null
+  var AllSucceedingActivities: IntSetVar = null
 
   var AdditionalPredecessors: IntSetVar = null
-  var AllPrecedingTasks: IntSetVar = null
+  var AllPrecedingActivities: IntSetVar = null
 
   var DefiningPredecessors: IntSetVar = null
   var PotentiallyKilledPredecessors: IntSetVar = null
 
-  def addDynamicPredecessor(t: Task) {
-    AdditionalPredecessors :+= t.getEndTask.TaskID
+  def addDynamicPredecessor(t: Activity) {
+    AdditionalPredecessors :+= t.getEndActivity.ID
   }
 
-  def removeDynamicPredecessor(t:Task){
-    AdditionalPredecessors :-= t.getEndTask.TaskID
+  def removeDynamicPredecessor(t:Activity){
+    AdditionalPredecessors :-= t.getEndActivity.ID
   }
 
-  def getEndTask: Task = this
-  def getStartTask: Task = this
+  def getEndActivity: Activity = this
+  def getStartActivity: Activity = this
 
  // var ParasiticPrecedences:IntSetVar = null
-  /**This method is called by the planning when all tasks are created*/
+  /**This method is called by the planning when all activities are created*/
   def post() {
     if (AdditionalPredecessors == null){
-      AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Tasks.size,
+      AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Activities.size,
         "added predecessors of " + name, SortedSet.empty)
 
-      val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Task) => j.TaskID)
-      AllPrecedingTasks = Union(StaticPredecessorsID, AdditionalPredecessors)
+      val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Activity) => j.ID)
+      AllPrecedingActivities = Union(StaticPredecessorsID, AdditionalPredecessors)
 
-      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingTasks, 0)
+      val argMax = ArgMaxArray(planning.EarliestEndDates, AllPrecedingActivities, 0)
       EarliestStartDate <== argMax.getMax
 
       DefiningPredecessors = argMax
 
       PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-      AllSucceedingTasks = new IntSetVar(planning.model, 0, planning.taskcount - 1, "succeeding_jobs")
+      AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
-      LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingTasks, planning.maxduration)
+      LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
 
      // ParasiticPrecedences = AdditionalPredecessors minus PotentiallyKilledPredecessors
     }

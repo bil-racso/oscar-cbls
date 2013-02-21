@@ -26,19 +26,31 @@ package oscar.cbls.invariants.lib.numeric
 import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
 import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
 
-/**Maintains output to the smallest value such that
- * output >= from
- * (output - shift) MOD period > zone
- * (output - shift + length) MOD period > zone
- * of course, it is required that length is < period - zone, and exception is thrown otherwise.
+ /**Maintains output to the smallest value such that
+  * output >= from
+  * (output - shift) MOD period > zone
+  * (output - shift + length) MOD period > zone
+  * of course, it is required that length is < period - zone, and exception is thrown otherwise.
+  *
+  * For instance, suppose that some task can only happen during open day (Mon-Fri),
+  * let 'from" being the lowest starting date, and 'length' its duration.
+  * the invariant will check that the task can be finished by friday of the week, and if not,
+  * will propose the next monday. 'shift' specifies says what is the starting day at zero.
+  * zone is the forbidden zone. it starts at the beginning of the cycle.
+ *
+ * @param from the starting date of the task. it can start later.
+ * @param duration the duration of the task.
+ * @param period the period of the forbidden-allowed pattern
+ * @param zone the size of the forbidden zone. it starts at the begining of the period
+ * @param shift the first period starts later then zero. it starts at shift. the duration before its start is allowed.
  */
-case class RoundUpModulo(from: IntVar, length: IntVar, period: Int, zone: Int, shift: Int)
-  extends LazyIntVarIntVar2IntVarFun(from, length, (from: Int, to: Int) => {
-    assert(length.value < period - zone)
+ case class RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
+  extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
+    assert(duration < period - zone)
     val reducedfrom = (from - shift) % period
     if (reducedfrom < zone)
       from + (zone - reducedfrom) //to restore the modulo, we must compute this
-    else if (reducedfrom + length.value > period)
+    else if (reducedfrom + duration > period)
       from + (period + zone - reducedfrom)
     else
       from

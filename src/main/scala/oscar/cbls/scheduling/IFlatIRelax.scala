@@ -110,20 +110,20 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
    */
   def Relax(PKill: Int) {
     //takes one node from the determining predecessors.
-    def PrecedingNode(j: Task): Task = {
+    def PrecedingNode(j: Activity): Activity = {
       if (j.DefiningPredecessors.value isEmpty) null
-      else p.TaskArray(selectFrom(j.DefiningPredecessors.value))
+      else p.ActivityArray(selectFrom(j.DefiningPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }
 
-    var CurrentTask: Task = PrecedingNode(p.SentinelTask)
-    var PotentiallykilledNodes: List[(Task, Task)] = List.empty
-    while (CurrentTask != null) {
-      val Predecessor = PrecedingNode(CurrentTask)
-      if (Predecessor != null && CurrentTask.AdditionalPredecessors.value.contains(Predecessor.TaskID)) {
-        PotentiallykilledNodes = (Predecessor, CurrentTask) :: PotentiallykilledNodes
+    var CurrentActivity: Activity = PrecedingNode(p.SentinelActivity)
+    var PotentiallykilledNodes: List[(Activity, Activity)] = List.empty
+    while (CurrentActivity != null) {
+      val Predecessor = PrecedingNode(CurrentActivity)
+      if (Predecessor != null && CurrentActivity.AdditionalPredecessors.value.contains(Predecessor.ID)) {
+        PotentiallykilledNodes = (Predecessor, CurrentActivity) :: PotentiallykilledNodes
       }
-      CurrentTask = Predecessor
+      CurrentActivity = Predecessor
     }
     if (PotentiallykilledNodes.isEmpty) return
 
@@ -144,11 +144,11 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
-      val TasksAndUse = r.TasksAndUse.filter((taksAndamount: (Task, IntVar)) => r.Use(t).value.contains(taksAndamount._1.TaskID))
-      val Tasks: List[Task] = TasksAndUse.map((taskAndamount: (Task, IntVar)) => taskAndamount._1)
+      val ActivitiesAndUse = r.ActivitiesAndUse.filter((taksAndamount: (Activity, IntVar)) => r.Use(t).value.contains(taksAndamount._1.ID))
+      val Activities: List[Activity] = ActivitiesAndUse.map((ActivityAndamount: (Activity, IntVar)) => ActivityAndamount._1)
 
-      val a = selectFrom(Tasks)
-      val b = selectFrom(Tasks, (j: Task) => j != a)
+      val a = selectFrom(Activities)
+      val b = selectFrom(Activities, (j: Activity) => j != a)
 
       if (Verbose) println("added " + a + "->" + b)
       b.addDynamicPredecessor(a)
@@ -161,22 +161,22 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
       val t: Int = selectFirst(r.HighestUsePositions.value)
 
-      val TasksAndUse = r.getTasksAndUse(t)
+      val ActivitiesAndUse = r.getActivitiesAndUse(t)
 
-      val conflictSet: List[(Task, IntVar)] = ConflictSearch(
+      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
         0,
-        TasksAndUse,
-        (use: Int, taskAndamount: (Task, IntVar)) => use + taskAndamount._2.value,
-        (use: Int, taskAndamount: (Task, IntVar)) => use - taskAndamount._2.value,
+        ActivitiesAndUse,
+        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
+        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
         (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks: List[Task] = conflictSet.map(_._1)
+      val conflictActivities: List[Activity] = conflictSet.map(_._1)
 
-      //TODO: it could be the case tat no pair of task is available here.
-      val (a, b) = selectMax2(conflictTasks, conflictTasks,
-        (a: Task, b: Task) => (b.LatestEndDate.value - a.EarliestStartDate.value),
-        (a: Task, b: Task) => p.canAddPrecedenceAssumingResourceConflict(a,b))
+      //TODO: it could be the case tat no pair of Activity is available here.
+      val (a, b) = selectMax2(conflictActivities, conflictActivities,
+        (a: Activity, b: Activity) => (b.LatestEndDate.value - a.EarliestStartDate.value),
+        (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a,b))
 
       if (Verbose) println("added " + a + "->" + b)
       b.addDynamicPredecessor(a)
@@ -188,7 +188,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
-      //the two selected tasks a,b must belong to a minimal conflict set
+      //the two selected Activities a,b must belong to a minimal conflict set
       //and they must maximize lsd(b)-esd(a)  //pq pas led(b) - esd(a)??
       //then insert a->b
 
@@ -196,29 +196,38 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       //uniquement b doit appartenir au conflict set.
       //et on maximise led(b) - esd(a)
 
-      val TaskssAndUse = r.getTasksAndUse(t)
+      val ActivitiessAndUse = r.getActivitiesAndUse(t)
 
-      val conflictSet: List[(Task, IntVar)] = ConflictSearch(
+      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
         0,
-        TaskssAndUse,
-        (use: Int, taskAndamount: (Task, IntVar)) => use + taskAndamount._2.value,
-        (use: Int, taskAndamount: (Task, IntVar)) => use - taskAndamount._2.value,
+        ActivitiessAndUse,
+        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
+        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
         (use: Int) => use > r.MaxAmount
       )
 
-      val conflictTasks: List[Task] = conflictSet.map(_._1)
+      val conflictActivities: List[Activity] = conflictSet.map(_._1)
 
-      val Tasks: List[Task] = TaskssAndUse.map(_._1)
+      val Activities: List[Activity] = ActivitiessAndUse.map(_._1)
 
-      val (a, b) = selectMax2(Tasks, conflictTasks,
-        (a: Task, b: Task) => (b.LatestStartDate.value - a.EarliestEndDate.value),
-        (a: Task, b: Task) => a != b)
+      val (a, b) = selectMax2(Activities, conflictActivities,
+        (a: Activity, b: Activity) => (b.LatestStartDate.value - a.EarliestEndDate.value),
+        (a: Activity, b: Activity) => a != b)
 
       if (Verbose) println("added " + a + "->" + b)
       b.addDynamicPredecessor(a)
     }
   }
 
+
+  /** removes all additional Activity precedences that are not tight
+    */
+  def clean(){
+    for(t:Activity <- p.ActivityArray){
+      t.removeNonTightAdditionalPredecessors()
+    }
+
+  }
 }
 
 

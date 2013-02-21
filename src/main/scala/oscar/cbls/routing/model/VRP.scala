@@ -287,7 +287,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   override def toString():String = {
     var toReturn = ""
     for ( v <- 0 until V){
-      toReturn += "Vehicle" + v + ":"
+      toReturn += "Vehicle" + v + ":" + v
       var current = Next(v).value
       while(current != v){
         toReturn += " -> " + current

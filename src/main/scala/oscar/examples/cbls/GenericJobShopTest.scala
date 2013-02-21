@@ -69,12 +69,12 @@ object GenericJobShopTest extends StopWatch with App {
     => CumulativeResource(planning, 1, "Machine" + MachineID))
 
   for (JobID <- 0 until JobCount) {
-    var PreviousTask: Task = null
+    var PreviousTask: Activity = null
     for (TaskID <- MachineArray.indices) {
       val MachineID = WordReader.next().toInt
       val Duration = WordReader.next().toInt
 
-      val NewTask = Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      val NewTask = Activity(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
       NewTask uses 1 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
