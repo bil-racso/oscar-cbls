@@ -84,7 +84,7 @@ object PerfectSquare extends App {
 
 		label(activitiesX.map(_.start))
 		label(activitiesY.map(_.start))
-	}
+	} run(1)
 	
 	cp.printStats()
 
