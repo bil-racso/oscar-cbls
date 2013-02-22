@@ -48,6 +48,17 @@ package object invariants extends Logging {
   implicit def bl2f[A, B](block: => B) = { a: A => block }
   implicit def rd2r[A](rd: ReactionDescription[A]) = rd.post()
   implicit def occuring2desc[A](occ: Occuring[A]) = occ ~> { _ => }
+
+  def and(occurings: scala.collection.Iterable[Occuring[_]]) = {
+      def loop(occ: Occuring[_], others: scala.collection.Iterable[Occuring[_]]): Occuring[_] = {
+        if ( others.isEmpty ) occ
+        else loop(occ & others.head, others)
+      }
+      
+      if ( occurings isEmpty ) Event[Unit]()
+      else loop(occurings.head, occurings.tail)
+  }
+
   @inline def perform[A](rd: ReactionDescription[A]): Reaction[A] = {
     for (msg <- rd.occuring) {
       rd.f(msg)

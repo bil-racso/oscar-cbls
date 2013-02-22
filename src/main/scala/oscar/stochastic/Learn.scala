@@ -20,15 +20,19 @@ trait CountNRealizations extends Observing {
 
 object AbstractLearnedQuantiles {
   def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
-    new AbstractLearnedQuantiles(pmin, pmax, 0, new mutable.HashMap[B, Int]())
-  def apply[B](other: AbstractLearnedQuantiles[B])(implicit op: Operationable[B]) =
-    new AbstractLearnedQuantiles[B](other.pmin, other.pmax, other.n, other.count.clone())
+    new AbstractLearnedQuantiles(pmin, pmax)
+  def apply[B](other: AbstractLearnedQuantiles[B])(implicit op: Operationable[B]) = {
+    val res = new AbstractLearnedQuantiles[B](other.pmin, other.pmax)
+    res.aggregate(other)
+    res
+  }
   def withCountRealizations[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
-    new AbstractLearnedQuantiles(pmin, pmax, 0, new mutable.HashMap[B, Int]()) with CountNRealizations
+    new AbstractLearnedQuantiles(pmin, pmax) with CountNRealizations
 }
 
-class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double, var n: Int = 0, val count: mutable.HashMap[B, Int] = new mutable.HashMap[B, Int]())(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
-
+class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
+  var n: Int = 0
+  val count = (new mutable.HashMap[B, Int]()).withDefaultValue(0)
   require(0 <= pmin)
   require(pmin <= 1)
   require(0 <= pmax)
@@ -41,23 +45,20 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double, var n: Int
   }
 
   override def aggregate(o: Any) {
-    throw new NotImplementedError()
-    //    val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
-    //
-    //    require(pmin == that.pmin && that.pmax == that.pmax)
-    //    n += that.n
-    //    that.count.foreach(a => count.put(a._1, count.get(a._1) + a._2))
-    //    super.aggregate(that)
+        val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
+    
+        require(pmin == that.pmin && that.pmax == that.pmax)
+        n += that.n
+
+        that.count.foreach{a => count(a._1) += a._2}  //.put(a._1, count.get(a._1) + a._2))
+        super.aggregate(that)
   }
 
   override def observe(v: B) {
     //require(op.positive(v))
     super.observe(v)
     if (!op.equiv(op.zero, v)) {
-      count.get(v) match {
-        case None    => count(v) = 1
-        case Some(d) => count(v) = d + 1
-      }
+      count(v) += 1
       n += 1
     }
   }
@@ -81,7 +82,7 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double, var n: Int
   private def quantile(target: Int): B = {
     if (target <= 0) return op.zero
 
-    require(count.nonEmpty)
+    assume(count.nonEmpty)
 
     val arr = count.toArray.sorted
 
@@ -179,10 +180,8 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
 
   def apply(t: Int) = {
     if (t < 0) throw new ArrayIndexOutOfBoundsException("Do not accept negative indices: " + t)
-    var i = numbers.size - 1
-    while (i < t) {
+    for ( i <- numbers.size to t){
       numbers += createNumber
-      i += 1
     }
     numbers(t)
   }
@@ -206,7 +205,6 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
   }
   def observe(f: Traversable[(Int, B)]) {
     nRea += 1
-
     for ((t, v) <- f if t >= 0) {
       this(t) observe v
     }
