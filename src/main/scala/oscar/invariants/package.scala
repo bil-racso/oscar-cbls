@@ -54,9 +54,8 @@ package object invariants extends Logging {
         if ( others.isEmpty ) occ
         else loop(occ & others.head, others)
       }
-      
-      if ( occurings isEmpty ) Event[Unit]()
-      else loop(occurings.head, occurings.tail)
+      require(occurings nonEmpty)
+      loop(occurings.head, occurings.tail)
   }
 
   @inline def perform[A](rd: ReactionDescription[A]): Reaction[A] = {
