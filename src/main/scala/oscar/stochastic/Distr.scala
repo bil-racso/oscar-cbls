@@ -18,16 +18,15 @@ object Distr {
   def apply[A](v: A) = new ValueDistr(v)
 }
 
-
 trait Distr[B] {
   def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]]
   def getNextStochasticRealization(random: scala.util.Random): B
   def map[C](g: B => C) = new MapDistr(this, g)
 }
 
-class MapDistr[A,B](d: Distr[A], f: A => B) extends Distr[B]{
-  
-  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = f(d(m)) 
+class MapDistr[A, B](d: Distr[A], f: A => B) extends Distr[B] {
+
+  def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = f(d(m))
   def getNextStochasticRealization(random: scala.util.Random): B = f(d.getNextStochasticRealization(random))
 }
 
@@ -68,26 +67,26 @@ class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
     assert(false)
     list.head._2
   }
-  
+
   override def toString(): String = { list.mkString(", ") }
-  
-  def getProbability(value : A) : Double = {list.find(pair => pair._2.equals(value)).get._1}
+
+  def getProbability(value: A): Double = { list.find(pair => pair._2.equals(value)).get._1 }
 }
 
 object UniformDiscrete {
-  def apply(a: Int, b: Int) = if(a==b) new ValueDistr(a) else new UniformDiscrete(a, b)
+  def apply(a: Int, b: Int) = if (a == b) new ValueDistr(a) else new UniformDiscrete(a, b)
 }
 class UniformDiscrete(val min: Int, val max: Int) extends ContinuousDistr[Int] {
-  
+
   require(max >= min)
-  
-  val interval = max-min
+
+  val interval = max - min
   val midInterval = (interval) / 2
   def getNextStochasticRealization(random: scala.util.Random): Int = {
-    
+
     min + random.nextInt(interval)
   }
-  def mean = min + midInterval 
+  def mean = min + midInterval
   def std = { assert(false); -1 }
 
 }
@@ -105,9 +104,9 @@ class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operationab
 }
 
 object Flip {
-  def apply(p: Double) = 
-    if (p==0.0) new ValueDistr(false)
-    else if (p==1.0) new ValueDistr(true)
+  def apply(p: Double) =
+    if (p == 0.0) new ValueDistr(false)
+    else if (p == 1.0) new ValueDistr(true)
     else new Flip(p)
 }
 class Flip(p: Double) extends DiscreteDistr[Boolean] {
@@ -159,4 +158,16 @@ class NormalD(mu: Double, variance: Double) extends ContinuousDistr[Double] {
   val std = sqrt(nd.getVariance())
   def mean = nd.getMean()
 
+}
+
+class Beta(alpha: Double, beta: Double) extends ContinuousDistr[Double] {
+  
+  val bd = new BetaDistribution(alpha, beta)
+  
+  def getNextStochasticRealization(random: scala.util.Random): Double = bd.inverse(random.nextDouble)
+ 
+  def min = bd.inverse(0.05)
+  val max = bd.inverse(0.95)
+  def mean = 1 / ( 1 + beta/alpha)
+  val std = sqrt( alpha*beta / ( (alpha+beta)*(alpha+beta)*(alpha+beta+1)))
 }
