@@ -52,7 +52,7 @@ package object invariants extends Logging {
   def and(occurings: scala.collection.Iterable[Occuring[_]]) = {
       def loop(occ: Occuring[_], others: scala.collection.Iterable[Occuring[_]]): Occuring[_] = {
         if ( others.isEmpty ) occ
-        else loop(occ & others.head, others)
+        else loop(occ & others.head, others.tail)
       }
       require(occurings nonEmpty)
       loop(occurings.head, occurings.tail)
