@@ -52,6 +52,9 @@ class BinPackingInstanceGenerator
 	
 	var itemAvailableToNeededRatio:Double 	= 5.0
 	
+	def profileValues 	: Array[String] = Array(binCapacityMean, binCapacityDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio).map(_.toString)
+	def profileKeys 	: Array[String] = Array("binCapacityMean", "binCapacityDeviation", "itemsSizeMean", "itemsSizeDeviation", "numberOfBins", "wasteBin", "itemAvailableToNeededRatio")	
+	
 	
 	def generate () : Stream[BinPackingInstance] = 
 	{
@@ -100,6 +103,24 @@ class BinPackingInstanceGenerator
 
 class BinPackingTester(bpi:BinPackingInstance)
 {
+  
+	var extendedFail = false
+	var normalFail = false
+	var classicFail = false
+	
+	var extendedCardDomainsSize = 0
+	var normalCardDomainsSize = 0
+	
+	var extendedAllocDomainsSize = 0
+	var normalAllocDomainsSize = 0
+	var classicAllocDomainsSize = 0
+	
+	var normalTime : Long = 0
+	var extendedTime : Long = 0
+	var classicTime : Long = 0
+	  
+	
+	
 	/*
 	 * return first the items allocations then the cardinalities
 	 */
@@ -135,68 +156,77 @@ class BinPackingTester(bpi:BinPackingInstance)
 	 * @return
 	 * countNorm, countExt, normFail, extFail
 	 */
-	def testNormalVsExtended(): (Int,Int, Int, Int) =
+	def testNormalExtendedAndClassic() =
 	{
-	  var normalFail = false
-	  var extendedFail = false
-	  var classicFail = false
+
 	  var normalPropagateRestultCard = Array[CPVarInt]()
 	  var extendedPropagateRestultCard = Array[CPVarInt]()
 	  
 	  var normalPropagateRestultAlloc = Array[CPVarInt]()
 	  var extendedPropagateRestultAlloc = Array[CPVarInt]()
-	  var classicPropagateRestultClassic = Array[CPVarInt]()
+	  var classicPropagateRestultAlloc = Array[CPVarInt]()
+	  
+	 
 	  
 	  try{
+		  val t = System.currentTimeMillis
 		  val (normalPropagateRestultAlloc, normalPropagateRestultCard) = solve(false)
-	  } 
-	  catch {
+		  normalTime = System.currentTimeMillis - t
+	  } catch {
 	    case e:NoSolutionException => normalFail = true
-	    
 	  }
 	  
 	   try{
-		  val(extendedPropagateRestultAlloc,extendedPropagateRestultCard) = solve(true)
-	  } 
-	  catch {
+	     val t = System.currentTimeMillis
+		 val(extendedPropagateRestultAlloc,extendedPropagateRestultCard) = solve(true)
+		 extendedTime = System.currentTimeMillis - t
+	  } catch {
 	    case e:NoSolutionException => extendedFail = true 
-	    
 	  }
 	  
 	  try{
-		  classicPropagateRestultAlloc = solveClassic
-	  } 
-	  catch {
-	    case e:NoSolutionException => extendedFail = true 
-	    
+	    val t = System.currentTimeMillis
+		classicPropagateRestultAlloc = solveClassic
+		classicTime = System.currentTimeMillis - t
+	  } catch {
+	    case e:NoSolutionException => classicFail = true 
 	  }
 	  
 	  if (normalFail && !extendedFail)
 	    throw new Exception("Normal find failure but not extended")
 	  
-	  if(normalFail) (0,0,1,1) 
- 	  else if (extendedFail) (0,0,0,1)
-	  else{
-		  val resultDiff = normalPropagateRestultCard.zip(extendedPropagateRestultCard).foldLeft((0,0)){
-		    case ((countNorm, countExt), (n, e)) if n.getMin > e.getMin || n.getMax < e.getMax=> 
-		      throw new Exception("Normal did better than extended normal ("+n.getMin+","+n.getMax+") extended ("+e.getMin+","+e.getMax+")" )
-		    case ((countNorm, countExt), (n, e)) => 
-		      (countNorm + n.getSize,countExt + e.getSize)
-		  }
-		  (resultDiff._1,resultDiff._2,0,0) 
-	  }
-	   
+
+	  if (normalPropagateRestultCard.zip(extendedPropagateRestultCard).exists{case (n,e) =>  n.getMin > e.getMin || n.getMax < e.getMax})
+		throw new Exception("Normal did better than extended normal")
+		  
+	  	extendedCardDomainsSize = extendedPropagateRestultCard.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+	  	normalCardDomainsSize 	= normalPropagateRestultCard.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+	
+		extendedAllocDomainsSize 	= extendedPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+		normalAllocDomainsSize 		= normalPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+		classicAllocDomainsSize 	= classicPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+	
 	}
 }
 
 object BinPackingTester{
   	def testAndStats(aInstances : Stream[BinPackingInstance],numberOfNonTrivial : Int = 10) = {
-	  var extBetter	= 0
 	  var notTrivial = 0
-	  var extBetterNoFail	= 0
+	  
+  	  var extBetterThanNormal			= 0
+
+	  
+	  var extBetterThanClassic			= 0
+	  var classicBetterThanExt			= 0
+	  
 	  var normFail 	= 0
 	  var extFail 	= 0
-	  var extImprovementMeanCount = 0.0
+	  var classFail = 0
+	  
+	  var totalNotTrivialNormalTime : Long = 0
+	  var totalNotTrivialExtendedTime : Long = 0
+	  var totalNotTrivialClassicTime : Long = 0
+	  
 	  var nonTrivialToGo = numberOfNonTrivial
 	  val formatter = new DecimalFormat("#.###")
 	  
@@ -205,13 +235,40 @@ object BinPackingTester{
 	   * return false if the instance is trivial (fail for both)
 	   */
 	  def treatInstance(inst : BinPackingInstance) : Boolean =  {
-		  new BinPackingTester(inst).testNormalVsExtended match
+		  val tester = new BinPackingTester(inst)
+		  tester.testNormalExtendedAndClassic
+		  
+		  if (!(tester.normalFail && tester.classicFail && tester.extendedFail))
 		  {
-		    case (_,_,1,1) 				=> false
-		    case (_,_,_,1) 				=> extFail +=1; extBetter += 1; notTrivial +=1; true
-		    case (n,e,_,_) if (n!=e) 	=> extBetter += 1;extBetterNoFail += 1;notTrivial +=1;  extImprovementMeanCount += (e + 0.0)/n; true 
-		    case (n,e,_,_) 				=> notTrivial +=1; true
-		  }
+		    notTrivial += 1
+		    totalNotTrivialClassicTime += tester.classicTime
+		    totalNotTrivialNormalTime += tester.normalTime
+		    totalNotTrivialExtendedTime += tester.extendedTime
+		    
+		    if(tester.normalFail) normFail += 1
+		    if(tester.extendedFail) extFail += 1
+		    if(tester.classicFail) classFail += 1
+		    
+		    if (tester.extendedFail && !tester.normalFail) extBetterThanNormal += 1
+		    else if(!tester.extendedFail && !tester.normalFail 
+		        && tester.extendedCardDomainsSize != tester.normalCardDomainsSize)
+		      extBetterThanNormal += 1
+		    
+		    
+		    if 		(tester.extendedFail && !tester.classicFail) extBetterThanClassic += 1
+		    else if (!tester.extendedFail && tester.classicFail) classicBetterThanExt += 1
+		    else if(!tester.extendedFail && !tester.classicFail 
+		        && tester.extendedAllocDomainsSize < tester.classicAllocDomainsSize)
+		      extBetterThanClassic += 1
+		    else if(!tester.extendedFail && !tester.classicFail 
+		        && tester.extendedAllocDomainsSize > tester.classicAllocDomainsSize)
+		      classicBetterThanExt += 1  
+		    
+		    true
+		  } 
+		  else
+		    false
+
 	  }
 	  
 	  def testFirst(instances: Stream[BinPackingInstance])
@@ -222,9 +279,13 @@ object BinPackingTester{
 	    	try
 	    	{
 		    	 if (treatInstance(instances.head)){
-				  print("Extended is better in " + formatter.format(((extBetter + 0.0) / notTrivial)*100) + "% cases ("+extBetter+"/"+notTrivial+"),"
-					+" it found " + extFail + " fails against " + normFail +" for the normal version"
-					+" and the improvement mean is " + formatter.format(extImprovementMeanCount / extBetterNoFail) + " by cardinality\n");
+				  print(	"Extended is better in " + formatter.format(((extBetterThanNormal + 0.0) / notTrivial)*100) + "% cases than normal ("+extBetterThanNormal+"/"+notTrivial+"),\n"
+						  + "Extended is better in " + formatter.format(((extBetterThanClassic + 0.0) / notTrivial)*100) + "% cases than classic ("+extBetterThanClassic+"/"+notTrivial+"),\n"
+						  + "Classic is better in " + formatter.format(((classicBetterThanExt + 0.0) / notTrivial)*100) + "% cases than extended ("+classicBetterThanExt+"/"+notTrivial+"),\n"
+						  + "extended found " + extFail + " fails normal " + normFail +" and classic " + classFail + "\n"
+						  + "times for extended " + totalNotTrivialExtendedTime/notTrivial + ", normal " + totalNotTrivialNormalTime/notTrivial +" and classic " + totalNotTrivialClassicTime/notTrivial + "\n"
+						  + "------------------------------------------------------------------------------------------\n"
+						);
 					  nonTrivialToGo -= 1
 				 } else 
 				   println("invalid")
@@ -328,13 +389,14 @@ object BinPackingFlowCardOpt extends App {
    // print((new BinPackingTester(test4)).testNormalVsExtended())
   //BinPackingTester.testAndStats(List(test0,test1,test2,test3))
  
+ 
+  
     val instancesGenerator = new BinPackingInstanceGenerator()
-    instancesGenerator.itemAvailableToNeededRatio = 1.4
+    instancesGenerator.itemAvailableToNeededRatio = 1.3
     
     val instances = instancesGenerator.generate()
- //for(instance <- instances)
- //  print("---------------------\n" + instance.description + "---------------------\n")
+ 
   
   
-  BinPackingTester.testAndStats(instances, 1500)
+  BinPackingTester.testAndStats(instances, 1000)
 }
