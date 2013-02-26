@@ -94,7 +94,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	 * @return Failure if fail detected when adapting cards, or Suspend otherwise
 	 */
 	protected def setCardinality(j : Int) : CPOutcome = {
-	  println("BinPackingFlow setCardinality")	
+	  
 	    val minVal = l(j).getMin
 	    val maxVal = l(j).getMax
 	    

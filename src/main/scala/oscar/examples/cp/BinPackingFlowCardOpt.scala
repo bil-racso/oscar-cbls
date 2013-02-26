@@ -1,5 +1,5 @@
 package oscar.examples.cp
-
+import java.io._
 
 import oscar.cp.modeling._
 import oscar.search._
@@ -20,9 +20,9 @@ case class BinPackingInstance()
     def description() = 
     {
       var str = "BinPackingInstance with " + binCapacities.length + " bins and " + itemsSizes.length + " items"
-      str += "\n bin capacities : " + binCapacities.mkString(",")
+      str += "\n bin capacities : " + binCapacities.map(r => r.start + " to " + r.end).mkString(",")
       str += "\n items sizes : " + itemsSizes.mkString(",")
-      str += "\n bins for items : " + binForItems.foldLeft("")(_ + "\n\t" + _.mkString(","))
+      str += "\n bins for items : " + binForItems.map("\n\tArray(" + _.mkString(",") + ")").mkString(",")
       str += "\n"
       str
       
@@ -32,35 +32,28 @@ case class BinPackingInstance()
 class BinPackingInstanceGenerator
 {
   
-	var itemsNeededByBin			= 10
-	var itemsNeededByBinDeviation	= 4
 
-	var itemsSizeMean				= 10
-	var itemsSizeDeviation			= 4
 	var itemSizeMin					= 5
 	var itemSizeMax					= Int.MaxValue
+	var binCapacityMin				= 10
+	var binCapacityMax				= Int.MaxValue //(not for the waste bin)
 
-	//the standard deviation on the bin capacity
+	
+	
+	var binCapacityMean				= 100
 	var binCapacityDeviation		= 10
 	
-	//the min capacity of a bin
-	var binCapacityMin				= 10
+	var itemsSizeMean				= 10
+	var itemsSizeDeviation			= 4
 	
-	// the max capacity of a bin (not for the waste bin)
-	var binCapacityMax				= Int.MaxValue
-	
-	  
 	var numberOfBins				= 10
 	var wasteBin 					= true
 	
-	var itemAvailableToNeededRatio 	= 5
+	var itemAvailableToNeededRatio:Double 	= 5.0
 	
 	
 	def generate () : Stream[BinPackingInstance] = 
 	{
-	  
-	  val binCapacityMean = itemsNeededByBin * itemsSizeMean;
-	  
 	  val r = new util.Random
 	  val bpi = new BinPackingInstance()
 	  
@@ -94,7 +87,9 @@ class BinPackingInstanceGenerator
 	  if(wasteBin) 
 	  {
 	    bpi.binCapacities = bpi.binCapacities :+ (0 to bpi.itemsSizes.foldLeft(0)(_ + _))
-	    bpi.binForItems = bpi.binForItems :+ bpi.itemsSizes.indices.toArray
+	    
+	    //here the waste bin is the last one so the one with at index = to the precedent number of bins
+	    bpi.binForItems = bpi.binForItems.map(_:+numberOfBins) //:+ bpi.itemsSizes.indices.toArray
 	  }
 	  bpi #:: generate()
 	  
@@ -191,31 +186,39 @@ object BinPackingTester{
 	  
 	  def testFirst(instances: Stream[BinPackingInstance])
 	  {
-	    print("Instance to test : " + instances.head.description())
+	    //print("Instance to test : " + instances.head.description())
 	    if(nonTrivialToGo > 0 ) 
 	    {
-	      
-	    	 if (treatInstance(instances.head)){
-			  print("Extended is better in " + formatter.format(((extBetter + 0.0) / notTrivial)*100) + "% cases ("+extBetter+"/"+notTrivial+"),"
-				+" it found " + extFail + " fails against " + normFail +" for the normal version"
-				+" and the improvement mean is " + formatter.format(extImprovementMeanCount / extBetterNoFail) + " by cardinality\n");
-				  nonTrivialToGo -= 1
-			 }
-			 else 
-			    print("\n\ntrivial\n\n")
- 			 }
-	    
-	    	testFirst(instances.tail)
-      
+	    	try
+	    	{
+		    	 if (treatInstance(instances.head)){
+				  print("Extended is better in " + formatter.format(((extBetter + 0.0) / notTrivial)*100) + "% cases ("+extBetter+"/"+notTrivial+"),"
+					+" it found " + extFail + " fails against " + normFail +" for the normal version"
+					+" and the improvement mean is " + formatter.format(extImprovementMeanCount / extBetterNoFail) + " by cardinality\n");
+					  nonTrivialToGo -= 1
+				 } else 
+				   println("invalid")
+	    	} catch {
+	    		case e:Exception => 
+	    		  print("Exception : " + e.getMessage())
+
+	    		  val fw = new FileWriter("binPackingFowCardOpt.err", true)
+				  try {
+					  fw.write("Exception : " + e.getMessage() + "\n" + instances.head.description + "\n-------------------------------\n\n\n\n")
+				  }
+	    		  finally fw.close() 
+	    	}
+			 
+		    
+		    testFirst(instances.tail)
 	    }
 	    
-	    testFirst(aInstances)
-	    
-		    
+	    	
+      
 	  }
 	  
-	  
-	
+	  testFirst(aInstances)
+  	}
   
 }
 
@@ -290,14 +293,18 @@ object BinPackingFlowCardOpt extends App {
 	  bpi.itemsSizes = Array(10,10,10,5,5,5,5)
 	  bpi
   }
-	  
-  
+    
+    
+   // print((new BinPackingTester(test4)).testNormalVsExtended())
   //BinPackingTester.testAndStats(List(test0,test1,test2,test3))
  
     val instancesGenerator = new BinPackingInstanceGenerator()
+    instancesGenerator.itemAvailableToNeededRatio = 1.4
+    
     val instances = instancesGenerator.generate()
  //for(instance <- instances)
  //  print("---------------------\n" + instance.description + "---------------------\n")
   
-  BinPackingTester.testAndStats(instances, 20)
+  
+  BinPackingTester.testAndStats(instances, 1500)
 }
