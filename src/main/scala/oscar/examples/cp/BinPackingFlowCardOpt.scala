@@ -4,6 +4,7 @@ import java.io._
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
+import oscar.cp.constraints.BinPacking
 import oscar.cp.constraints.BinPackingFlow
 import oscar.cp.constraints.BinPackingFlowExtended
 import java.text.DecimalFormat
@@ -99,7 +100,10 @@ class BinPackingInstanceGenerator
 
 class BinPackingTester(bpi:BinPackingInstance)
 {
-	def solve(extended:Boolean = true) : Array[CPVarInt] =
+	/*
+	 * return first the items allocations then the cardinalities
+	 */
+	def solve(extended:Boolean = true) : (Array[CPVarInt],Array[CPVarInt]) =
 	{
 	  val cp = CPSolver()
 	  val itemsCPVar = for(i <- bpi.items) yield CPVarInt(cp, bpi.binForItems(i))
@@ -111,7 +115,20 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  
 	  cp.add(bpf)
 	  
-	  bpf.c
+	  (itemsCPVar,bpf.c)
+	}
+	
+	//the classic binpacking return the items allocation
+	def solveClassic() : Array[CPVarInt] =
+	{
+	  val cp = CPSolver()
+	  val itemsCPVar = for(i <- bpi.items) yield CPVarInt(cp, bpi.binForItems(i))
+	  
+	  val bp = new BinPacking(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))))
+	  			
+	  cp.add(bp)
+	  itemsCPVar
+	  
 	}
 	
 	/*
@@ -122,11 +139,16 @@ class BinPackingTester(bpi:BinPackingInstance)
 	{
 	  var normalFail = false
 	  var extendedFail = false
-	  var normalPropagateRestult = Array[CPVarInt]()
-	  var extendedPropagateRestult = Array[CPVarInt]()
+	  var classicFail = false
+	  var normalPropagateRestultCard = Array[CPVarInt]()
+	  var extendedPropagateRestultCard = Array[CPVarInt]()
+	  
+	  var normalPropagateRestultAlloc = Array[CPVarInt]()
+	  var extendedPropagateRestultAlloc = Array[CPVarInt]()
+	  var classicPropagateRestultClassic = Array[CPVarInt]()
 	  
 	  try{
-		  normalPropagateRestult = solve(false)
+		  val (normalPropagateRestultAlloc, normalPropagateRestultCard) = solve(false)
 	  } 
 	  catch {
 	    case e:NoSolutionException => normalFail = true
@@ -134,7 +156,15 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  }
 	  
 	   try{
-		  extendedPropagateRestult = solve(true)
+		  val(extendedPropagateRestultAlloc,extendedPropagateRestultCard) = solve(true)
+	  } 
+	  catch {
+	    case e:NoSolutionException => extendedFail = true 
+	    
+	  }
+	  
+	  try{
+		  classicPropagateRestultAlloc = solveClassic
 	  } 
 	  catch {
 	    case e:NoSolutionException => extendedFail = true 
@@ -147,7 +177,7 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  if(normalFail) (0,0,1,1) 
  	  else if (extendedFail) (0,0,0,1)
 	  else{
-		  val resultDiff = normalPropagateRestult.zip(extendedPropagateRestult).foldLeft((0,0)){
+		  val resultDiff = normalPropagateRestultCard.zip(extendedPropagateRestultCard).foldLeft((0,0)){
 		    case ((countNorm, countExt), (n, e)) if n.getMin > e.getMin || n.getMax < e.getMax=> 
 		      throw new Exception("Normal did better than extended normal ("+n.getMin+","+n.getMax+") extended ("+e.getMin+","+e.getMax+")" )
 		    case ((countNorm, countExt), (n, e)) => 
@@ -202,7 +232,7 @@ object BinPackingTester{
 	    		case e:Exception => 
 	    		  print("Exception : " + e.getMessage())
 
-	    		  val fw = new FileWriter("binPackingFowCardOpt.err", true)
+	    		  val fw = new FileWriter("cdbinPackingFowCardOpt.err", true)
 				  try {
 					  fw.write("Exception : " + e.getMessage() + "\n" + instances.head.description + "\n-------------------------------\n\n\n\n")
 				  }
