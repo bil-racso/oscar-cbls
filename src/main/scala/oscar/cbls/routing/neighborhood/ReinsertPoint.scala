@@ -177,7 +177,7 @@ object ReinsertPoint extends SearchEngine{
  */
 case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
+  def comit() {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = reinsertedPoint
   def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)

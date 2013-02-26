@@ -680,14 +680,14 @@ trait StrongConstraints extends ObjectiveFunction {
   /**
    * Update the violation of the strong constraints system.
    */
-  def updateViolatedStrongConstraints {
+  def updateViolatedStrongConstraints() {
     if(strongConstraints == null) violatedStrongConstraints  = false
     else
       violatedStrongConstraints = !strongConstraints.isTrue
   }
 
   override def propagateObjective:Int = {
-    updateViolatedStrongConstraints
+    updateViolatedStrongConstraints()
     if (violatedStrongConstraints) Int.MaxValue else ObjectiveVar.value
   }
 }

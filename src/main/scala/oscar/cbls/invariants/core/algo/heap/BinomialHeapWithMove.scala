@@ -66,7 +66,7 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   }
 
   /**makes the datastruct empty, but does not frees the space*/
-  override def dropAll{
+  override def dropAll(){
     msize = 0;
   }
 

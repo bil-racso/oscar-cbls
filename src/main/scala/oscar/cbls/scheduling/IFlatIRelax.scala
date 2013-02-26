@@ -58,7 +58,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("----------------")
     }
-    p.updateVisual
+    p.updateVisual()
 
     var plateaulength = 0
     var BestMakeSpan = p.MakeSpan.value
@@ -74,9 +74,10 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       }else{
         val m = p.MakeSpan.value
-        for (i <- 0 until NbRelax) {
-          Relax(PkillPerRelax);
-        }
+        RelaxUntilMakespanReduced(PkillPerRelax,NbRelax)
+//        for (i <- 0 until NbRelax) {
+//          Relax(PkillPerRelax);
+//        }
         if(p.MakeSpan.value == m)println("skip")
       }
 
@@ -89,13 +90,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("iteration: " + it)
 
-
       if (p.MakeSpan.value < BestMakeSpan) {
         BestSolution = model.getSolution(true)
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
-        p.updateVisual
+        p.updateVisual()
       } else {
         plateaulength += 1
       }
@@ -106,13 +106,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
     println("restored best solution")
 
-    p.updateVisual
+    p.updateVisual()
   }
 
   /**
    * performs the relaxation of the critical path
-   * This N is our contribution; not found in iFlatiRelax papers.
-   * relaxes N additional dependencies on a critical path (if n are found)
+   * @param PKill: the probability to kill a killable precedence constraint in percent
    */
   def Relax(PKill: Int) {
 
@@ -129,6 +128,22 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         to.removeDynamicPredecessor(from)
       }
     }
+  }
+
+  /**
+   * performs the relaxation of the critical path
+   * @param PKill: the probability to kill a killable precedence constraint in percent
+   * @param min: the minimal number of relaxation
+   */
+  def RelaxUntilMakespanReduced(PKill:Int, min:Int = 3){
+    val m = p.MakeSpan.value
+    var n = 0;
+    while((p.MakeSpan.value == m) | (n < min)){
+      n +=1
+      Relax(PKill)
+    }
+    println("relaxed " + n + " times to shorten makespan")
+
   }
 
   def RandomFlatten() {

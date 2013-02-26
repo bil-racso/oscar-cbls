@@ -27,7 +27,9 @@ import java.awt.Dimension
 class Applet extends JApplet with App {
 
   override def init(){
-    setContentPane(PanelVRP.PanelVRP)
+    val easyMode = false;
+    val myPanelVRP = new PanelVRP(easyMode);
+    setContentPane(myPanelVRP)
     setSize(new Dimension(800,500))
 
     setName("VRP Routing")

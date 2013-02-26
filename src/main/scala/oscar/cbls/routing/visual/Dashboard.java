@@ -64,9 +64,11 @@ public class Dashboard extends JPanel {
     JTextField penaltySCField = null;
     JTextField penaltyWCField = null;
 
+    private PanelVRP myPanelVRP = null;
 
     private final JProgressBar progressBar = new JProgressBar(0, 100);
     private JFrame frameProgressBar;
+
 
     /**
      * Thread bounded to the progress bar.
@@ -74,7 +76,7 @@ public class Dashboard extends JPanel {
     private class ProgressThread implements Runnable {
         public void run(){
             frameProgressBar.setVisible(true);
-            //frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
+            frameProgressBar.setLocationRelativeTo(myPanelVRP.mapPanel());
             /*
             while(HeuristicTimer.getPercentComplete() != 100){
                 try{
@@ -92,7 +94,9 @@ public class Dashboard extends JPanel {
 
     }
 
-    public Dashboard(boolean easyMode){
+    public Dashboard(boolean easyMode, PanelVRP myPanelVRP){
+
+        this.myPanelVRP = myPanelVRP;
 
         if(easyMode){
             setBackground(Color.white);
@@ -195,7 +199,7 @@ public class Dashboard extends JPanel {
                     //new Thread(new OldVisualMap.Search()).start();
                     firstIte = false;
                     iteration = true;
-                    //PanelVRP.startSearching();
+                    myPanelVRP.startSearching();
 
                 }
                 if(pause){
@@ -242,11 +246,13 @@ public class Dashboard extends JPanel {
     }
 
     void setMakeInstance(){
+        System.out.println("created make instance");
         makeInstance = new JButton("Make instance");
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new Thread(new ProgressThread()).start();
-                //PanelVRP.makeInstance(false);
+                System.out.println("pressed make instance");
+                myPanelVRP.makeInstance(false);
             }
         });
 
@@ -261,7 +267,7 @@ public class Dashboard extends JPanel {
         resetInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 firstIte = true;
-                //PanelVRP.makeInstance(true);
+                myPanelVRP.makeInstance(true);
             }});
         add(resetInstance);
     }
@@ -313,7 +319,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    //PanelVRP.startSmartSearching();
+                    myPanelVRP.startSmartSearching();
                     lock2();
                 }
                 pause = !pause;
@@ -338,7 +344,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    //PanelVRP.startSearching();
+                    myPanelVRP.startSearching();
                     lock2();
                 }
                 pause = !pause;

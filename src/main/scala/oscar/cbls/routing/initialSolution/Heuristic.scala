@@ -54,17 +54,17 @@ object HeuristicTimer{
    * Set the actual progression of an heuristic.
    * @param p the actual progression.
    */
-  def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p;unlock}
+  def setPercentComplete(p:Int) {heuristicTimer.actualPercentComplete=p;unlock()}
 
   /**
    * Lock the semaphore which is associated to the timer.
    */
-  def lock {heuristicTimer.lock.acquire()}
+  def lock() {heuristicTimer.lock.acquire()}
 
   /**
    * Unlock the semaphore which is associated to the timer.
    */
-  def unlock {heuristicTimer.lock.release()}
+  def unlock() {heuristicTimer.lock.release()}
 }
 
 /**

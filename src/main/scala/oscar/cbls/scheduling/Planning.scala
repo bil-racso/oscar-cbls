@@ -110,7 +110,7 @@ class Planning(val model: Model, val maxduration: Int) {
 
   var gantt:Gantt = null
   var plot:Plot2D = null
-  def getVisual{
+  def getVisual(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)
     gantt = new Gantt(this)
@@ -122,7 +122,7 @@ class Planning(val model: Model, val maxduration: Int) {
     frame.setSize(1500,500)
   }
 
-  def updateVisual{
+  def updateVisual(){
     if (gantt!=null) gantt.update(1.0f, 30)
   }
 
@@ -271,12 +271,12 @@ class Planning(val model: Model, val maxduration: Int) {
   abstract class DependencyCleaner()
   case class HardRockDependency() extends DependencyCleaner
   case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner{
-    def killDependencies{
+    def killDependencies(){
       for ((a,b) <- d){
         b.removeDynamicPredecessor(a)
       }
     }
-    def restoreDependencies{
+    def restoreDependencies(){
       for ((a,b) <- d){
         b.addDynamicPredecessor(a)
       }

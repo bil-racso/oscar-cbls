@@ -24,7 +24,7 @@ package oscar.cbls.invariants.core.algo.heap
  ******************************************************************************/
 
 abstract class AbstractHeap[T] extends Iterable[T] {
-  def dropAll
+  def dropAll()
   def insert(elem:T)
   def getFirsts:List[T]
   def popFirsts:List[T]
