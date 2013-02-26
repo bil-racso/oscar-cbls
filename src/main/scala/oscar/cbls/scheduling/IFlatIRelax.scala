@@ -225,16 +225,6 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       b.addDynamicPredecessor(a)
     }
   }
-
-
-  /** removes all additional Activity precedences that are not tight
-    */
-  def clean(){
-    for(t:Activity <- p.ActivityArray){
-      t.removeNonTightAdditionalPredecessors()
-    }
-
-  }
 }
 
 

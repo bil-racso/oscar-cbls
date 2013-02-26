@@ -30,7 +30,7 @@ import util.Random
 import scala.math._
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.NearestNeighbor
+import oscar.cbls.routing.initialSolution._
 import oscar.cbls.routing.neighborhood._
 
 /**supports only a single vehicle*/
@@ -46,7 +46,7 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
     }
     sum
   }
-  val N:Int = 250
+  val N:Int = 10000
 
   this.startWatch()
   
@@ -104,8 +104,8 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
   m.close()
 
   println("closed " + getWatchString)
-  NearestNeighbor(vrp)
-  //RandomNeighbor(vrp)
+  //NearestNeighbor(vrp)
+  RandomNeighbor(vrp)
   m.propagate()
 
   println("start val: " + vrp.ObjectiveVar.value)

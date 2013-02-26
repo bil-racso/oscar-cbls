@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.propagation.checker
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
  * smallest first
- * @param initialGetKey a function that returns an integer for each element inserted i nthe heap this value is used to sort the heap content
+ * @param initialGetKey a function that returns an integer for each element inserted in the heap this value is used to sort the heap content
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap

@@ -424,7 +424,7 @@ public class Dashboard extends JPanel {
             heuristic.setSelectedIndex(0);
             writeRoute = new JCheckBox();
 
-            instances = new JComboBox(new String[]{"2D-2V-50P","4D-4V-100P","6D-6V-150P","1D-8V-200P","1D-8V-250P"});
+            instances = new JComboBox(new String[]{"2D-2V-50P","4D-4V-100P","6D-6V-150P","1D-8V-200P","1D-10V-250P"});
             instances.setPreferredSize(new Dimension(100,30));
             instances.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {

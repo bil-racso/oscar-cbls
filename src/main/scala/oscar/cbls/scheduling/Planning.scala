@@ -282,5 +282,14 @@ class Planning(val model: Model, val maxduration: Int) {
       }
     }
   }
+
+
+  /** removes all additional Activity precedences that are not tight
+    */
+  def clean(){
+    for(t:Activity <- ActivityArray){
+      t.removeNonTightAdditionalPredecessors()
+    }
+  }
 }
 
