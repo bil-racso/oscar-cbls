@@ -99,5 +99,5 @@ object BinPackingFlowCardOpt extends App {
  
   
   
-  BinPackingTester.testAndStats(instances, 1000)
+  (new BinPackingTester()).testAndStats(instances, 1000)
 }
