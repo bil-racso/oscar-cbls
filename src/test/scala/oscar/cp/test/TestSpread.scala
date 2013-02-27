@@ -250,6 +250,24 @@ class TestSpread extends FunSuite with ShouldMatchers {
     
     val doms2 = Array.fill(4)((-100,100))
     nbSol(doms2, 0, 192, false) should be(nbSol(doms2, 0, 192, true))
+    
+    val doms3 = Array.fill(5)((-100,100))
+    nbSol(doms3, 0, 18, false) should be(nbSol(doms3, 0, 18, true))
+    
+    val doms4 = Array.fill(6)((-100,100))
+    nbSol(doms4, 0, 14, false) should be(nbSol(doms4, 0, 14, true))
+    
+    val doms5 = Array.fill(7)((-100,100))
+    nbSol(doms5, 0, 10, false) should be(nbSol(doms5, 0, 10, true))  
+    
+    val doms6 = Array.fill(8)((-100,100))
+    nbSol(doms6, 0, 8, false) should be(nbSol(doms6, 0, 8, true))   
+ 
+    val doms7 = Array.fill(10)((-100,100))
+    nbSol(doms7, 0, 6, false) should be(nbSol(doms7, 0, 6, true)) 
+    
+    nbSol(doms7, 0, 8, false) should be(nbSol(doms7, 0, 8, true)) 
+
   }
 
   test("Spread 15") {
