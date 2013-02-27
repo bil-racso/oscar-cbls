@@ -44,13 +44,20 @@ class BinPackingInstanceGenerator
 	var binCapacityMean				= 100
 	var binCapacityDeviation		= 10
 	
+	var binCapacityDomainSizeMean  		= 20
+	var binCapacityDomainSizeDeviation	= 2
+	
 	var itemsSizeMean				= 10
 	var itemsSizeDeviation			= 4
 	
 	var numberOfBins				= 10
 	var wasteBin 					= true
 	
-	var itemAvailableToNeededRatio:Double 	= 5.0
+	//if we need 100 items to fill the bins there will be 150 availables 
+	var itemAvailableToNeededRatio:Double 	= 1.5
+	
+	//for instance an item that need 10 items will have 15 available
+	var itemAvailableToNeededRatioByBin:Double = 1.5
 	
 	def profileValues 	: Array[String] = Array(binCapacityMean, binCapacityDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio).map(_.toString)
 	def profileKeys 	: Array[String] = Array("binCapacityMean", "binCapacityDeviation", "itemsSizeMean", "itemsSizeDeviation", "numberOfBins", "wasteBin", "itemAvailableToNeededRatio")	
@@ -64,9 +71,11 @@ class BinPackingInstanceGenerator
 	  
 	  
 	  
-	  bpi.binCapacities = Stream.continually{val c = (r.nextGaussian * binCapacityDeviation + binCapacityMean);  c.toInt to c.toInt}.filterNot(r => r.start < binCapacityMin || r.end > binCapacityMax).take(numberOfBins).toArray
+	  bpi.binCapacities = Stream.continually{	val c = (r.nextGaussian * binCapacityDeviation + binCapacityMean);  
+	  											val s = (r.nextGaussian * binCapacityDomainSizeDeviation + binCapacityDomainSizeMean)/ 2 .abs;
+	  											(c - s).abs.toInt to (c + s).toInt}.filterNot(r => r.start < binCapacityMin || r.end > binCapacityMax).take(numberOfBins).toArray
 	  
-	  val numberOfItems = bpi.binCapacities.foldLeft(0)((s, r) => s + (r.start + r.end)/2 ) / itemsSizeMean
+	  val numberOfItems = ((bpi.binCapacities.foldLeft(0)((s, r) => s + (r.start + r.end)/2 ) / itemsSizeMean) * itemAvailableToNeededRatio).toInt
 	  
 	  
 	  
@@ -77,7 +86,7 @@ class BinPackingInstanceGenerator
 	  {
 	    bin =>
 	    val capacity = bpi.binCapacities(bin)	    
-	    val numberOfItemsNeeded = (((capacity.start + capacity.end)/2.0) / itemsSizeMean ) * itemAvailableToNeededRatio
+	    val numberOfItemsNeeded = (((capacity.start + capacity.end)/2.0) / itemsSizeMean ) * itemAvailableToNeededRatioByBin
 		numberOfItemsNeeded / numberOfItems
 	  }
 	  
@@ -170,7 +179,9 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  
 	  try{
 		  val t = System.currentTimeMillis
-		  val (normalPropagateRestultAlloc, normalPropagateRestultCard) = solve(false)
+		  val (a,b) =  solve(false)
+		  normalPropagateRestultAlloc = a
+		  normalPropagateRestultCard = b 
 		  normalTime = System.currentTimeMillis - t
 	  } catch {
 	    case e:NoSolutionException => normalFail = true
@@ -178,8 +189,11 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  
 	   try{
 	     val t = System.currentTimeMillis
-		 val(extendedPropagateRestultAlloc,extendedPropagateRestultCard) = solve(true)
+		 val (a,b) =  solve(true)
+		  extendedPropagateRestultAlloc = a
+		  extendedPropagateRestultCard = b 
 		 extendedTime = System.currentTimeMillis - t
+		 
 	  } catch {
 	    case e:NoSolutionException => extendedFail = true 
 	  }
@@ -199,12 +213,13 @@ class BinPackingTester(bpi:BinPackingInstance)
 	  if (normalPropagateRestultCard.zip(extendedPropagateRestultCard).exists{case (n,e) =>  n.getMin > e.getMin || n.getMax < e.getMax})
 		throw new Exception("Normal did better than extended normal")
 		  
-	  	extendedCardDomainsSize = extendedPropagateRestultCard.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
-	  	normalCardDomainsSize 	= normalPropagateRestultCard.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+
+	  	extendedCardDomainsSize = extendedPropagateRestultCard.foldLeft(0)(_ + _.getSize)
+	  	normalCardDomainsSize 	= normalPropagateRestultCard.foldLeft(0)(_ + _.getSize)
 	
-		extendedAllocDomainsSize 	= extendedPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
-		normalAllocDomainsSize 		= normalPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
-		classicAllocDomainsSize 	= classicPropagateRestultAlloc.foldLeft(0)((s,r) => s + (r.getMax - r.getMin))
+		extendedAllocDomainsSize 	= extendedPropagateRestultAlloc.foldLeft(0)(_ + _.getSize)
+		normalAllocDomainsSize 		= normalPropagateRestultAlloc.foldLeft(0)(_ + _.getSize)
+		classicAllocDomainsSize 	= classicPropagateRestultAlloc.foldLeft(0)(_ + _.getSize)
 	
 	}
 }
@@ -249,12 +264,13 @@ object BinPackingTester{
 		    if(tester.extendedFail) extFail += 1
 		    if(tester.classicFail) classFail += 1
 		    
+
 		    if (tester.extendedFail && !tester.normalFail) extBetterThanNormal += 1
 		    else if(!tester.extendedFail && !tester.normalFail 
 		        && tester.extendedCardDomainsSize != tester.normalCardDomainsSize)
 		      extBetterThanNormal += 1
 		    
-		    
+		    print(tester.extendedAllocDomainsSize + " " + tester.classicAllocDomainsSize)
 		    if 		(tester.extendedFail && !tester.classicFail) extBetterThanClassic += 1
 		    else if (!tester.extendedFail && tester.classicFail) classicBetterThanExt += 1
 		    else if(!tester.extendedFail && !tester.classicFail 
@@ -287,8 +303,7 @@ object BinPackingTester{
 						  + "------------------------------------------------------------------------------------------\n"
 						);
 					  nonTrivialToGo -= 1
-				 } else 
-				   println("invalid")
+				 } 
 	    	} catch {
 	    		case e:Exception => 
 	    		  print("Exception : " + e.getMessage())
@@ -392,8 +407,8 @@ object BinPackingFlowCardOpt extends App {
  
   
     val instancesGenerator = new BinPackingInstanceGenerator()
-    instancesGenerator.itemAvailableToNeededRatio = 1.3
-    
+    instancesGenerator.itemAvailableToNeededRatio = 1.5
+    instancesGenerator.numberOfBins = 10
     val instances = instancesGenerator.generate()
  
   
