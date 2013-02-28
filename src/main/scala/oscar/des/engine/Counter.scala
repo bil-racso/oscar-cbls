@@ -152,7 +152,7 @@ object Counter {
     val c = new PQCounter(0)
 
     reset {
-      waitFor[Int, Unit](x)
+      oscar.invariants.hangUntil[Int, Unit](x)
       println("500")
       End
     }

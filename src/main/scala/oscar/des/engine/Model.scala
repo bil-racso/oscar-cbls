@@ -50,7 +50,7 @@ class MonthEvent(clock: Signal[DateTime]) extends Signal[Int](-1) {
   reset {
     var m = 0
     while (true) {
-      waitFor[DateTime, Unit](clock === clock().plusMonths(1).withDayOfMonth(1).withMillisOfDay(0))
+      oscar.invariants.hangUntil[DateTime, Unit](clock === clock().plusMonths(1).withDayOfMonth(1).withMillisOfDay(0))
       emit(m)
       m += 1
     }
@@ -124,7 +124,7 @@ abstract class Model[S] extends DistrSolver[S] {
   //def frequency(state: State[_]) = new Frequency(this, state)
 
   def waitDuration[T](duration: Period) = {
-    waitFor(clock === (clock() + duration))
+    oscar.invariants.hangUntil(clock === (clock() + duration))
 
   }
 

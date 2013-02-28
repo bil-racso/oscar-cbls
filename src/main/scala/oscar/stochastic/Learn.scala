@@ -30,7 +30,7 @@ object AbstractLearnedQuantiles {
     new AbstractLearnedQuantiles(pmin, pmax) with CountNRealizations
 }
 
-class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing {
+class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing with Aggregatable[AbstractLearnedQuantiles[B]] {
   var n: Int = 0
   val count = (new mutable.HashMap[B, Int]()).withDefaultValue(0)
   require(0 <= pmin)
@@ -44,14 +44,13 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
       super.equals(that)
   }
 
-  override def aggregate(o: Any) {
-        val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
-    
-        require(pmin == that.pmin && that.pmax == that.pmax)
-        n += that.n
+  def aggregate(that: AbstractLearnedQuantiles[B]) = {
 
-        that.count.foreach{a => count(a._1) += a._2}  //.put(a._1, count.get(a._1) + a._2))
-        super.aggregate(that)
+    require(pmin == that.pmin && that.pmax == that.pmax)
+    n += that.n
+
+    that.count.foreach { a => count(a._1) += a._2 } //.put(a._1, count.get(a._1) + a._2))
+    super[LearnedNumerical].aggregate(that)
   }
 
   override def observe(v: B) {
@@ -103,7 +102,7 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   }
 }
 
-class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
+class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing with Aggregatable[LearnedNumerical[B]] {
 
   var current = op.zero
   var tot = op.zero
@@ -116,8 +115,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
     tot == that.tot && that.squaredTot == squaredTot
   }
 
-  def aggregate(o: Any) {
-
+  def aggregate(o: LearnedNumerical[B]){
     val that = o.asInstanceOf[LearnedNumerical[B]]
     tot = op.+(tot, that.tot)
     squaredTot = op.+(that.squaredTot, squaredTot)
@@ -137,6 +135,22 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing {
   }
   def hasPertinentObservations = tot != 0 || squaredTot != 0
   def corresponds(that: LearnedNumerical[B]) = this.tot == that.tot && this.squaredTot == that.squaredTot
+}
+
+trait Learning extends Aggregatable[Learning] {
+  var created: List[Aggregatable[_]] = Nil
+  def aggregate(that: Learning) = {
+    require(that.created.size == this.created.size)
+    val iter = created.iterator
+    for (n <- created) {
+      iter.next.doAggregate(n)
+    }
+  }
+}
+
+trait Aggregatable[-N] {
+  def doAggregate(other: Any) = aggregate(other.asInstanceOf[N])
+  def aggregate(that: N): Unit
 }
 
 object Learn {
@@ -164,7 +178,7 @@ class LearnedNumericalFunctionWithMean[B](implicit op: Operationable[B]) extends
 
 }
 
-abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations {
+abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations with Aggregatable[LearnedNumericalFunction[B, N]] {
 
   implicit val numbers = new mutable.ArrayBuffer[N]
 
@@ -180,7 +194,7 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
 
   def apply(t: Int) = {
     if (t < 0) throw new ArrayIndexOutOfBoundsException("Do not accept negative indices: " + t)
-    for ( i <- numbers.size to t){
+    for (i <- numbers.size to t) {
       numbers += createNumber
     }
     numbers(t)
@@ -191,14 +205,13 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
 
   def update(t: Int, v: B) { this(t).update(v) }
 
-  def aggregate[M <: LearnedNumericalFunction[B, N]](that: M): this.type = {
+  def aggregate(that: LearnedNumericalFunction[B, N]) {
     nRea += that.nRea
     for ((t, n) <- that) {
-      this(t).aggregate(n)
+      this(t).doAggregate(n)
     }
-    this
   }
-  def +=(that: LearnedNumericalFunction[B, N]) = aggregate(that)
+  def +=(that: this.type) = aggregate(that)
   override def observe {
     super.observe
     for (n <- numbers) n observe

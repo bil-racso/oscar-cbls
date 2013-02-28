@@ -34,7 +34,7 @@ class Resource(var capacity: Int)(implicit m: Model[_]) {
 	
 	def request[T]() = {
 	  
-	  val res = if ( n >= capacity ) waitFor[Unit,T](rel)
+	  val res = if ( n >= capacity ) oscar.invariants.hangUntil[Unit,T](rel)
 	  
 	  n += 1
 	}

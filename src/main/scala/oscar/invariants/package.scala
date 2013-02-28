@@ -90,7 +90,7 @@ package object invariants extends Logging {
     }
   }
 
-  @inline def waitFor[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
+  @inline def hangUntil[A, T](d: Occuring[A]): A @cpsParam[SuspendableResult[T], SuspendableResult[T]] = {
 
     if (logger.underlying.isDebugEnabled()) {
       val e = (new Throwable())

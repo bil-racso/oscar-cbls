@@ -77,9 +77,9 @@ abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Mode
   }
   //@noinline
   def waitDuring(d: Period): DateTime @susp = {
-    waitFor[DateTime, T](m.clock === m.clock().plus(d))
+    oscar.invariants.hangUntil[DateTime, T](m.clock === m.clock().plus(d))
   }
-  def w[A](occ: Occuring[A]) = waitFor[A, T](occ)
+  def waitFor[A](occ: Occuring[A]) = oscar.invariants.hangUntil[A, T](occ)
   //def waitFor[B](occ: Occuring[B]) = oscar.invariants.waitFor(occ)
 
 }

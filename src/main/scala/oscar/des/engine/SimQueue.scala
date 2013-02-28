@@ -29,7 +29,7 @@ class SimQueue {
   
   private def u[T] = {
     if ( isBusy() )
-        waitFor[Unit,T](serve) 
+        oscar.invariants.hangUntil[Unit,T](serve) 
       else ()
   }
   
