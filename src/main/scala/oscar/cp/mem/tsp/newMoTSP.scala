@@ -14,22 +14,26 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.mem.measures.Hypervolume.hypervolume
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.Gavanelli02
+import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.mem.pareto.Pareto
 
 object newMoTSP extends App {
 
-  case class Sol(pred: Array[Int], succ: Array[Int]) { var lifes = 10 }
+  case class Sol(pred: Array[Int], succ: Array[Int]) { var lifes = 4 }
 
   // BiObjective Pareto Set 
-  val pareto: ParetoSet[Sol] = ParetoSet(2)
-  pareto.Objs.foreach(pareto.nadir(_) = 300000)
+  val pareto: Pareto[Sol] = new ListPareto(3)
+  pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
   // Parsing
-  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/kroA100.tsp")
-  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/kroB100.tsp") 
-  val distMatrix3 = TSPUtils.buildDistMatrix("data/TSP/kroC100.tsp") 
+  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/renA10.tsp")
+  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/renB10.tsp") 
+  val distMatrix3 = TSPUtils.buildDistMatrix("data/TSP/renC10.tsp") 
   val distMatrices = Array(distMatrix1, distMatrix2, distMatrix3)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
+  
+  //val visu = new VisualPareto(pareto)
 
   // Model
   // -----
@@ -78,16 +82,18 @@ object newMoTSP extends App {
     val newSol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))    
     assert(pareto.insert(newSol) != -1) 
     noSol = false
+    // Visu
+    //visu.update()
   }
   
   // Run
   // ---  
   println("Search...")
-  cp.run(failureLimit = 5000)
-  objective = 1
-  cp.run(failureLimit = 5000)
-  objective = 2
-  cp.run(failureLimit = 5000)
+  
+  for (o <- pareto.Objs) {
+    objective = o
+    cp.run(nbSolMax = 1)
+  }
   
   var stopCriterion = false
   var iter = 0
@@ -96,7 +102,6 @@ object newMoTSP extends App {
   while(!stopCriterion) {
 
     iter += 1
-    if (iter % 1000 == 0 && p < 10) p += 1
     if (iter % 10 == 0) println("p " + p + "Iter: " + iter + "\t#Set: " + pareto.size)   
 
     noSol = true
@@ -108,12 +113,20 @@ object newMoTSP extends App {
       objective = cp.random.nextInt(pareto.nObjs)
 
       cp.runSubjectTo(failureLimit = 2000) {
+        
+        if (rand.nextBoolean) {
+          for (o <- pareto.Objs) {
+            if (o == objective) cp.post(totDists(o) < sol(o))
+            else cp.post(totDists(o) <= sol(o))
+          }
+        }
+        
         relaxVariables(clusterRelax(p, objective), sol)
       }
 
       if (noSol) sol.lifes -= 1
     }
-    if (iter > 15000) stopCriterion = true
+    if (iter > 1000) stopCriterion = true
   }
   
   def clusterRelax(p: Int, obj: Int): Array[Boolean] = {
@@ -125,7 +138,17 @@ object newMoTSP extends App {
   
   def selectSol: MOSol[Sol] = {
     val points = pareto.toList
-    points(cp.random.nextInt(points.size))
+    points(rand.nextInt(points.size))
+    /*val value = for (p <- points) yield {
+      var dist = 0
+      for (p2 <- points; o <- pareto.Objs; if p2 != p) {        
+        dist += math.abs(p(o) - p2(o))
+      }
+      (p, dist)
+    }
+    
+    val sol = value.sortBy(-_._2)
+    sol.head._1*/
   }
 
   def relaxVariables(selected: Array[Boolean], sol: MOSol[Sol]) {

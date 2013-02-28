@@ -25,6 +25,15 @@ case class MOSol[Sol](sol: Sol, objVals: Array[Int]) {
     else false
   }
   
+  def eDominates[T](e: Int, sol: MOSol[T]): Boolean = eDominates(e, sol, 0, false)
+  
+  private def eDominates[T](e: Int, sol: MOSol[T], o: Int, dominate: Boolean): Boolean = {
+    if (o == objVals.size) dominate
+    else if (objVals(o)-e < sol.objVals(o)) eDominates(e, sol, o+1, true)
+    else if (objVals(o)-e == sol.objVals(o)) eDominates(e, sol, o+1, dominate)
+    else false
+  }
+  
   def weakDominates[T](sol: MOSol[T]): Boolean = weakDominates(sol, 0)
   
   private def weakDominates[T](sol: MOSol[T], o: Int): Boolean = {

@@ -70,13 +70,26 @@ object ExactTriTSP extends App {
     // No dominated solutions !
     val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))  
     // Insert Solution
+    println(newSol)
     pareto.insert(newSol)
+    println(pareto.toList)
+    val sols = pareto.toList
+    for (sol1 <- sols; sol2 <- sols; if sol1 != sol2) {
+      assert(!sol1.dominates(sol2))
+      assert(!sol2.dominates(sol1))
+    }
   }
   
   // Run
   // ---  
   println("Search...")
   cp.run()  
+  
+  val sols = pareto.toList
+  for (sol1 <- sols; sol2 <- sols; if sol1 != sol2) {
+    assert(!sol1.dominates(sol2))
+    assert(!sol2.dominates(sol1))
+  }
  
   cp.printStats() 
   println("Pareto Set")
