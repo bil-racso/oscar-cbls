@@ -18,7 +18,7 @@ class ProfileTester(profile: (Int,Int,Int,Int,Int,Int,Int,Boolean,Double,Double)
     instancesGenerator.setProperties(profile)
     val instances 	= instancesGenerator.generate()
     val results 	= (new BinPackingTester()).testAndStats(instances, 1000)
-    resultManager 	! (results.map(_.toString),instancesGenerator.profileValues.map(_.toString))
+    resultManager 	! (instancesGenerator.profileValues.map(_.toString),results.map(_.toString))
   }
   
 }
@@ -175,6 +175,7 @@ object BinPackingFlowCardOpt extends App {
 	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin))
 	
     val results = new BinPackingResults()
+    
     val profilesTester = new ProfilesTester(profiles.toList, results) 
     profilesTester.start
 }
