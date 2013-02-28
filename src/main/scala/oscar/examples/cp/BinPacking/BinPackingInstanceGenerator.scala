@@ -29,9 +29,22 @@ class BinPackingInstanceGenerator
 	//for instance an item that need 10 items will have 15 available
 	var itemAvailableToNeededRatioByBin:Double = 1.5
 	
-	def profileValues 	: Array[String] = Array(binCapacityMean, binCapacityDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio).map(_.toString)
-	def profileKeys 	: Array[String] = Array("binCapacityMean", "binCapacityDeviation", "itemsSizeMean", "itemsSizeDeviation", "numberOfBins", "wasteBin", "itemAvailableToNeededRatio")	
+	def profileValues 	: Array[AnyVal] = Array(binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin)
+	def profileKeys 	: Array[String] = Array("binCapacityMean", "binCapacityDeviation","binCapacityDomainSizeMean","binCapacityDomainSizeDeviation", "itemsSizeMean", "itemsSizeDeviation", "numberOfBins", "wasteBin", "itemAvailableToNeededRatio","itemAvailableToNeededRatioByBin")	
 	
+	
+	def setProperties(profile : (Int,Int,Int,Int,Int,Int,Int,Boolean,Double,Double) ) {
+	  binCapacityMean 					= profile._1
+	  binCapacityDeviation				= profile._2
+	  binCapacityDomainSizeMean			= profile._3
+	  binCapacityDomainSizeDeviation	= profile._4
+	  itemsSizeMean						= profile._5
+	  itemsSizeDeviation				= profile._6
+	  numberOfBins						= profile._7
+	  wasteBin							= profile._8
+	  itemAvailableToNeededRatio		= profile._9
+	  itemAvailableToNeededRatioByBin	= profile._10
+	}
 	
 	def generate () : Stream[BinPackingInstance] = 
 	{

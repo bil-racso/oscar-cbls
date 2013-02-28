@@ -14,7 +14,7 @@ import oscar.cp.constraints.BinPacking
 class BinPackingTester{
   
 	// return resultKeys, resultValues
-  	def testAndStats(aInstances : Stream[BinPackingInstance],numberOfNonTrivial : Int = 10) : (Array[String], Array[String]) = 
+  	def testAndStats(aInstances : Stream[BinPackingInstance],numberOfNonTrivial : Int = 10) : Array[AnyVal] = 
   	{
 	  var notTrivial = 0
 	  
@@ -35,7 +35,7 @@ class BinPackingTester{
 	  var nonTrivialToGo = numberOfNonTrivial
 	  val formatter = new DecimalFormat("#.###")
 	  
-	  def resultValues 	: Array[String] = Array(extBetterThanNormal, extBetterThanClassic, classicBetterThanExt, normFail, extFail, classFail, totalNotTrivialNormalTime, totalNotTrivialExtendedTime, totalNotTrivialClassicTime).map(_ / notTrivial).map(_.toString)
+	  def resultValues 	: Array[AnyVal] = Array(extBetterThanNormal, extBetterThanClassic, classicBetterThanExt, normFail, extFail, classFail, totalNotTrivialNormalTime, totalNotTrivialExtendedTime, totalNotTrivialClassicTime).map(_ / notTrivial)
 	  def resultKeys 	: Array[String] = Array("extBetterThanNormal%", "extBetterThanClassic%", "classicBetterThanExt%", "normFail%", "extFail%", "classFail%", "totalNotTrivialNormalTime%", "totalNotTrivialExtendedTime%", "totalNotTrivialClassicTime%")	
 	  
 	  /*
@@ -62,7 +62,6 @@ class BinPackingTester{
 		        && tester.extendedCardDomainsSize != tester.normalCardDomainsSize)
 		      extBetterThanNormal += 1
 		    
-		    print(tester.extendedAllocDomainsSize + " " + tester.classicAllocDomainsSize)
 		    if 		(tester.extendedFail && !tester.classicFail) extBetterThanClassic += 1
 		    else if (!tester.extendedFail && tester.classicFail) classicBetterThanExt += 1
 		    else if(!tester.extendedFail && !tester.classicFail 
@@ -81,7 +80,7 @@ class BinPackingTester{
 	  
 	  
 	  
-	  def testFirst(instances: Stream[BinPackingInstance]) : (Array[String], Array[String]) =
+	  def testFirst(instances: Stream[BinPackingInstance]) : Array[AnyVal] =
 	  {
 	    //print("Instance to test : " + instances.head.description())
 	    if(nonTrivialToGo > 0 ) 
@@ -89,13 +88,16 @@ class BinPackingTester{
 	    	try
 	    	{
 		    	 if (treatInstance(instances.head)){
-				  print(	"Extended is better in " + formatter.format(((extBetterThanNormal + 0.0) / notTrivial)*100) + "% cases than normal ("+extBetterThanNormal+"/"+notTrivial+"),\n"
+				 
+		    	   /*
+		    	      print(	"Extended is better in " + formatter.format(((extBetterThanNormal + 0.0) / notTrivial)*100) + "% cases than normal ("+extBetterThanNormal+"/"+notTrivial+"),\n"
 						  + "Extended is better in " + formatter.format(((extBetterThanClassic + 0.0) / notTrivial)*100) + "% cases than classic ("+extBetterThanClassic+"/"+notTrivial+"),\n"
 						  + "Classic is better in " + formatter.format(((classicBetterThanExt + 0.0) / notTrivial)*100) + "% cases than extended ("+classicBetterThanExt+"/"+notTrivial+"),\n"
 						  + "extended found " + extFail + " fails normal " + normFail +" and classic " + classFail + "\n"
 						  + "times for extended " + totalNotTrivialExtendedTime/notTrivial + ", normal " + totalNotTrivialNormalTime/notTrivial +" and classic " + totalNotTrivialClassicTime/notTrivial + "\n"
 						  + "------------------------------------------------------------------------------------------\n"
 						);
+						*/
 					  nonTrivialToGo -= 1
 				 } 
 	    	} catch {
@@ -112,7 +114,7 @@ class BinPackingTester{
 		    
 		    testFirst(instances.tail)
 	    } else 
-	      (resultKeys, resultValues)
+	      resultValues
 	    
 	    	
       
