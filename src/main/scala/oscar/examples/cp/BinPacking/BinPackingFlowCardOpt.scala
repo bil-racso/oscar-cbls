@@ -143,12 +143,121 @@ object BinPackingFlowCardOpt extends App {
 	  bpi
   }
     
+  val  test4 = {
+	  val bpi = new BinPackingInstance();
+	  bpi.binCapacities = Array(102 to 102,100 to 100,101 to 101,105 to 105,106 to 106,97 to 97,99 to 99,88 to 88,104 to 104,101 to 101,0 to 1027)
+	  bpi.binForItems = Array(
+Array(10),
+	Array(10),
+	Array(5,8,10),
+	Array(2,7,10),
+	Array(4,5,9,10),
+	Array(4,8,10),
+	Array(1,10),
+	Array(1,10),
+	Array(10),
+	Array(3,10),
+	Array(2,5,10),
+	Array(1,10),
+	Array(0,2,10),
+	Array(1,8,10),
+	Array(6,10),
+	Array(5,6,9,10),
+	Array(5,7,10),
+	Array(10),
+	Array(4,9,10),
+	Array(3,10),
+	Array(0,3,10),
+	Array(5,10),
+	Array(7,10),
+	Array(1,10),
+	Array(9,10),
+	Array(0,10),
+	Array(8,10),
+	Array(0,6,10),
+	Array(7,9,10),
+	Array(4,5,10),
+	Array(2,10),
+	Array(0,4,9,10),
+	Array(10),
+	Array(3,10),
+	Array(7,10),
+	Array(7,8,10),
+	Array(7,10),
+	Array(2,9,10),
+	Array(4,8,10),
+	Array(2,10),
+	Array(0,9,10),
+	Array(2,6,9,10),
+	Array(6,10),
+	Array(0,3,4,10),
+	Array(0,1,3,8,10),
+	Array(1,10),
+	Array(4,10),
+	Array(10),
+	Array(10),
+	Array(4,10),
+	Array(0,10),
+	Array(3,4,10),
+	Array(8,10),
+	Array(0,7,8,10),
+	Array(0,10),
+	Array(3,9,10),
+	Array(7,9,10),
+	Array(0,8,9,10),
+	Array(0,4,10),
+	Array(6,10),
+	Array(0,1,10),
+	Array(4,10),
+	Array(3,9,10),
+	Array(2,5,7,10),
+	Array(10),
+	Array(5,10),
+	Array(0,6,10),
+	Array(7,9,10),
+	Array(9,10),
+	Array(7,10),
+	Array(0,6,10),
+	Array(2,3,10),
+	Array(3,10),
+	Array(5,9,10),
+	Array(0,4,6,9,10),
+	Array(10),
+	Array(10),
+	Array(0,4,6,10),
+	Array(0,10),
+	Array(1,8,10),
+	Array(2,4,8,10),
+	Array(8,9,10),
+	Array(10),
+	Array(1,8,10),
+	Array(4,10),
+	Array(3,8,10),
+	Array(6,10),
+	Array(10),
+	Array(10),
+	Array(0,4,7,9,10),
+	Array(1,10),
+	Array(3,8,10),
+	Array(2,6,8,10),
+	Array(5,6,10),
+	Array(10),
+	Array(5,7,10),
+	Array(0,10),
+	Array(0,4,6,7,10),
+	Array(3,8,10),
+	Array(1,10)
+			  )
+	  bpi.itemsSizes = Array(13,6,12,11,11,12,16,13,11,13,14,14,12,8,8,7,8,11,10,5,11,10,7,12,14,7,15,8,16,10,5,6,9,13,10,7,10,10,11,13,8,11,15,9,13,15,12,7,10,11,9,7,10,15,15,7,10,16,8,10,10,15,15,7,10,11,9,6,8,13,12,8,11,11,9,8,8,8,17,10,16,6,8,8,7,5,12,8,6,8,9,6,10,13,14,11,9,10,8,10)
+	  bpi
+  }
     
-   // print((new BinPackingTester(test4)).testNormalVsExtended())
+    
+    print((new BinPackingTest(test4)).testNormalExtendedAndClassic)
   //BinPackingTester.testAndStats(List(test0,test1,test2,test3))
  
  
-  
+  /*
     val binCapacityMean					= 100
 	val binCapacityDeviation			= 10
 	
@@ -178,4 +287,5 @@ object BinPackingFlowCardOpt extends App {
     
     val profilesTester = new ProfilesTester(profiles.toList, results) 
     profilesTester.start
+    */
 }
