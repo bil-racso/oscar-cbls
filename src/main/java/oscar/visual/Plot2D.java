@@ -62,6 +62,12 @@ public class Plot2D extends JPanel {
 	}
 
 
+	public void clear()
+	{
+		series.clear();
+		chart.fireChartChanged();
+	}
+	
 	public static void main(String[] args) {
 
 		VisualFrame f = new VisualFrame("toto");
@@ -82,5 +88,7 @@ public class Plot2D extends JPanel {
 
 		}
 	}
+	
+	
 
 }

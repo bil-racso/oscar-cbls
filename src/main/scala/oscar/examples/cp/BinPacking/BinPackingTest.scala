@@ -119,5 +119,4 @@ class BinPackingTest (bpi:BinPackingInstance)
 		classicAllocDomainsSize 	= classicPropagateRestultAlloc.foldLeft(0)(_ + _.getSize)
 	
 	}
-
 }
