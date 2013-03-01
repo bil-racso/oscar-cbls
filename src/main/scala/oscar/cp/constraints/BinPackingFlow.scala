@@ -110,15 +110,15 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	      i -= 1
 	    }
 	    if(v < minVal) {
-	      println("Failure 1")
+	      //println("Failure 1")
 	      return CPOutcome.Failure; //not possible to reach the minimum level
 	    }
 	    val nbMin = nbAdded + c_t(j).getValue;
-println(" --" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMin+ " /// " + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	    
+//println(" --" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMin+ " /// " + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	    
 	    if (c(j).updateMin(nbMin) == CPOutcome.Failure){
-	      println(j + " " + nbMin )
+	      //println(j + " " + nbMin )
 	      
-	      println("Failure 2")
+	      //println("Failure 2")
 	      return CPOutcome.Failure
 	    }
 	    // how many items can I use at most before reaching maxVal ?
@@ -133,9 +133,9 @@ println(" --" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMin+ " 
 	      i += 1
 	    }
 	    val nbMax = nbAdded + c_t(j).getValue
-println(" ++" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMax)	    
+//println(" ++" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMax)	    
 	    if (c(j).updateMax(nbMax) == CPOutcome.Failure){
-	      println("Failure 3")
+	     // println("Failure 3")
 	      return CPOutcome.Failure
 	    }
 

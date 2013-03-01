@@ -253,11 +253,11 @@ Array(10),
   }
     
     
-    print((new BinPackingTest(test4)).testNormalExtendedAndClassic)
+    //print((new BinPackingTest(test4)).testNormalExtendedAndClassic)
   //BinPackingTester.testAndStats(List(test0,test1,test2,test3))
  
  
-  /*
+  
     val binCapacityMean					= 100
 	val binCapacityDeviation			= 10
 	
@@ -280,12 +280,17 @@ Array(10),
 	var profiles = for(binCapacityDomainSizeMean <- 0 to 20) 
 	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin)
 	
-	profiles = profiles ++ (for(itemAvailableToNeededRatioByBin <- 1.2 to(2,0.2) ) 
+	profiles = profiles ++ (for(itemAvailableToNeededRatioByBin <- 1.2 to(2,0.1) ) 
 	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin))
 	
+	profiles = profiles ++ (for(itemAvailableToNeededRatio <- 1.2 to(2,0.1) ) 
+	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin))  
+	
+	profiles = profiles ++ (for(itemsSizeMean <- 1 to (100,5)) 
+	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin))
     val results = new BinPackingResults()
     
     val profilesTester = new ProfilesTester(profiles.toList, results) 
     profilesTester.start
-    */
+    
 }
