@@ -84,7 +84,6 @@ class BinPackingTest (bpi:BinPackingInstance)
 	    case e:NoSolutionException => normalFail = true
 	  }
 	  
-	  println("----------------------------------------------------------------");
 	  
 	   try{
 	     val t = System.currentTimeMillis
