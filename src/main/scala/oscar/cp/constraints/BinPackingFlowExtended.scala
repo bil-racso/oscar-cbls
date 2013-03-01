@@ -95,7 +95,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 			
 					
 		val (card,load) = getCard(bin, perm, (binLoad, nextItemSize) => binLoad + nextItemSize <= l(bin).getMax.intValue())
-		//println(" ++" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card)
+		println(" ++" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card)
 		c(bin).updateMax(card)
 	}
 	
@@ -106,7 +106,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 	{
 			
 	  	val (card,load) = getCard(bin, permRev, (binLoad, nextItemSize) => l(bin).getMin.intValue() > binLoad)
-	  	//println(" --" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card + " /// "  + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	  	
+	  	println(" --" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card + " /// "  + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	  	
 		if(load < l(bin).getMin.intValue())
 		  return CPOutcome.Failure
 		else
@@ -133,13 +133,14 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 					else candidates(b).length - (c(b).getMin.intValue - c_t(b).getValue)  
 		}
 	 	
-		for(i <- sortedItems if x(i).hasValue(bin) && continueLoad(binLoad, sizes(i)))
+		for(i <- sortedItems if x(i).hasValue(bin) && !x(i).isBound && continueLoad(binLoad, sizes(i)))
 		{	
 			val refuteItem = othersBins.exists(b=> x(i).hasValue(b) 
 			    && candidatesAvailableForBin(b)<=0)
 			
 		
-			if (!refuteItem){	  
+			if (!refuteItem){	
+			  print(sizes(i) + " ")
 			  binLoad 		+= sizes(i)
 			  binCompCard 	+= 1
 			  candidatesAvailableForBin = candidatesAvailableForBin.zipWithIndex.map{
@@ -152,6 +153,6 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 		(binCompCard, binLoad)
 	}
 	
-	def candidates(bin:Int) = x.filter(v => v.hasValue(bin))
+	def candidates(bin:Int) = x.filter(v => v.hasValue(bin) && !v.isBound)
 
 }
