@@ -104,7 +104,6 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	    var nbAdded = 0;
 	    while (v < minVal && i >= 0){
 	      if (!x(perm(i)).isBound && x(perm(i)).hasValue(j)) {
-	        print(sizes(perm(i)) + " ")
 	        v += sizes(perm(i))
 	        nbAdded += 1
 	      }
@@ -115,7 +114,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	      return CPOutcome.Failure; //not possible to reach the minimum level
 	    }
 	    val nbMin = nbAdded + c_t(j).getValue;
-println(" --" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMin+ " /// " + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	    
+	    
 	    if (c(j).updateMin(nbMin) == CPOutcome.Failure){
 	      //println(j + " " + nbMin )
 	      
@@ -128,14 +127,12 @@ println(" --" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMin+ " 
 	    nbAdded = 0;
 	    while (i < x.length && v+sizes(perm(i)) <= maxVal) {
 	      if (!x(perm(i)).isBound && x(perm(i)).hasValue(j)) {
-	        print(sizes(perm(i)) + " ")
 	        v += sizes(perm(i))
 	        nbAdded += 1
 	      }
 	      i += 1
 	    }
-	    val nbMax = nbAdded + c_t(j).getValue
-println(" ++" +j + " " + c(j).getMin + " - " + c(j).getMax + "  :  " + nbMax)	    
+	    val nbMax = nbAdded + c_t(j).getValue	    
 	    if (c(j).updateMax(nbMax) == CPOutcome.Failure){
 	     // println("Failure 3")
 	      return CPOutcome.Failure

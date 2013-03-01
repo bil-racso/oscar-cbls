@@ -95,7 +95,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 			
 					
 		val (card,load) = getCard(bin, perm, (binLoad, nextItemSize) => binLoad + nextItemSize <= l(bin).getMax.intValue())
-		println(" ++" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card)
+		
 		c(bin).updateMax(card)
 	}
 	
@@ -106,7 +106,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 	{
 			
 	  	val (card,load) = getCard(bin, permRev, (binLoad, nextItemSize) => l(bin).getMin.intValue() > binLoad)
-	  	println(" --" + bin + " " + c(bin).getMin + " - " + c(bin).getMax + "  :  " + card + " /// "  + c.map(x=>x.getMin+":"+x.getMax).mkString(","))	  	
+	  		  	
 		if(load < l(bin).getMin.intValue())
 		  return CPOutcome.Failure
 		else
@@ -140,7 +140,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 			
 		
 			if (!refuteItem){	
-			  print(sizes(i) + " ")
+			  
 			  binLoad 		+= sizes(i)
 			  binCompCard 	+= 1
 			  candidatesAvailableForBin = candidatesAvailableForBin.zipWithIndex.map{
