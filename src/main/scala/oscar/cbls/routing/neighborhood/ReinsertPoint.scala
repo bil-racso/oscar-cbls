@@ -125,7 +125,7 @@ object ReinsertPoint extends SearchEngine{
 
       for (beforeReinsertedPoint <- if (!onlyFrom) (0 until vrp.N startBy hotRestart) else Range(hotRestart,hotRestart+1)
         if vrp.isRouted(beforeReinsertedPoint)){
-          for(reinsertedPoint <- vrp.Unrouted.value){
+          for(reinsertedPoint <- vrp.Unrouted.value){ //TODO: use the closes neighbor if possible to speed up the story here
             val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
             if (newObj < BestObj){
               if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)

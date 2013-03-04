@@ -361,6 +361,7 @@ trait Unrouted extends VRP {
    * the data structure set which maintains the unrouted node.
    */
   val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == N)
+  this.m.registerForPartialPropagation(Unrouted)
 }
 
 /**
@@ -474,7 +475,6 @@ trait HopDistance extends VRP {
     for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(Next(i), j => fun(i,j))
   }
 
-  //TODO: should get it from the matrix instead of computing it again.
   /**
    * Returns the distance from a given node (start node) to another given node (end node) of the VRP.
    * @param from the start node
@@ -483,7 +483,6 @@ trait HopDistance extends VRP {
    */
   def getHop(from:Int, to:Int):Int = distanceFunction(from,to)
 }
-
 
 /**
  * Declares an objective function, attached to the VRP.

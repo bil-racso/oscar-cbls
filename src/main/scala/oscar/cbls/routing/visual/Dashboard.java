@@ -31,7 +31,7 @@ import java.util.concurrent.Semaphore;
  *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
 
-
+@SuppressWarnings("unchecked")
 public class Dashboard extends JPanel {
 
     private JButton nextIte = null;

@@ -46,10 +46,10 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
     }
     sum
   }
-  val N:Int = 10000
+  val N:Int = 1000
 
   this.startWatch()
-  
+
   println("TSP(" + N + ")")
   val random = new Random(0)
   
@@ -104,8 +104,8 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
   m.close()
 
   println("closed " + getWatchString)
-  //NearestNeighbor(vrp)
-  RandomNeighbor(vrp)
+  NearestNeighbor(vrp)
+  //RandomNeighbor(vrp)
   m.propagate()
 
   println("start val: " + vrp.ObjectiveVar.value)
@@ -129,7 +129,7 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
       it +=1
       move.comit
       vrp.ObjectiveVar.value
-      if(it % 100 == 0) println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
+      if(it % 100 == 0) println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value + ": " + getWatch)
 
     }
     else{
