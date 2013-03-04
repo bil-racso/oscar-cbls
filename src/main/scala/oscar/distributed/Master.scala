@@ -2,13 +2,12 @@ package oscar.distributed
 
 
 import akka.actor._
-import akka.dispatch.Await
-import akka.dispatch.Future
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import akka.routing.RoundRobinRouter
-import akka.util.Duration._
-import akka.util.duration._
 import oscar.utils.Time._
-
+import ExecutionContext.Implicits.global
 import akka.util.Timeout
 
 import akka.pattern.ask
@@ -16,26 +15,28 @@ import akka.pattern.ask
 import scala.collection.immutable.Stack
 
 object DistributedComputation{
-  def apply[R](block: => R) = new DistributedComputation(block)
+  def apply[I,R](block: I => R) = new DistributedComputation(block)
 }
-class DistributedComputation[R](block: => R){
-  
-  
-  implicit val system = ActorSystem("DES")
+class DistributedComputation[I,R](block: I=> R){
+    
+  implicit val system = ActorSystem.apply()
   // create the master
   //val master = system.actorOf(Props(new Master(nbWorkers)), name = "master")
   
   implicit val timeout = Timeout(5 seconds)
-  def apply() = Future{ block }
-    
+  def apply(i: I) = Future{ block(i) }
+  
+  def run(iter: Iterable[I]) = for (i <- iter) yield{this(i)}
+  def runAndReduce(iter: Iterable[I])(op: (R,R)=>R) = reduce(run(iter))(op)
   def await(results: Traversable[Future[R]]) = Future.sequence(results)
-  def reduce(s: Seq[Future[R]])(op: (R,R)=>R) = Future.reduce(s)(op)
+  def reduce(s: Iterable[Future[R]])(op: (R,R)=>R) = Future.reduce(s)(op)
   def fold[T](s: Seq[Future[R]])(zero: T)(op: (T,R)=>T) = Future.fold(s)(zero)(op)
   def foreach(s: Seq[Future[R]])(op: R=>Unit) = Future.fold(s)(Unit){(z,r) => 
     op(r)
     Unit
   }
 }
+
 
 sealed trait Message
 case class Simulate[A](block: () => A) extends Message

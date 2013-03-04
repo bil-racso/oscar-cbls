@@ -10,7 +10,7 @@ version := "1.0"
 
 organization := ""
 
-scalaVersion := "2.10.0"
+scalaVersion := "2.10.1-RC2"
 
 autoCompilerPlugins := true
 
@@ -45,7 +45,7 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->defau
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 
-//libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
+libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.1.1"
 
 libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
 

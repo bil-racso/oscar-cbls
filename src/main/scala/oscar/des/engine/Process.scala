@@ -20,9 +20,6 @@
 package oscar.des.engine
 import scala.collection._
 import scala.util.continuations._
-import akka.util.Duration
-import akka.util.FiniteDuration
-//import akka.util.duration.
 import oscar.invariants._
 import org.joda.time._
 import com.typesafe.scalalogging.slf4j._

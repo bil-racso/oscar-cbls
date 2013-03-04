@@ -115,7 +115,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing wit
     tot == that.tot && that.squaredTot == squaredTot
   }
 
-  def aggregate(o: LearnedNumerical[B]){
+  def aggregate(o: LearnedNumerical[B]) {
     val that = o.asInstanceOf[LearnedNumerical[B]]
     tot = op.+(tot, that.tot)
     squaredTot = op.+(that.squaredTot, squaredTot)
@@ -138,6 +138,7 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing wit
 }
 
 trait Learning extends Aggregatable[Learning] {
+  type learn = Learning
   var created: List[Aggregatable[_]] = Nil
   def aggregate(that: Learning) = {
     require(that.created.size == this.created.size)
@@ -146,24 +147,50 @@ trait Learning extends Aggregatable[Learning] {
       iter.next.doAggregate(n)
     }
   }
+  override def equals(other: Any) = equals(other, false)
+  def equals(other: Any, log: Boolean): Boolean = {
+    val that = other.asInstanceOf[Learning]
+    if (that.created.size != that.created.size) {
+      val iter = this.created.iterator
+      for (n <- that.created) {
+        val thisN = iter.next
+        if (n != thisN) {
+          return false
+        }
+      }
+      true
+    } else true
+  }
+  def add[T <: Aggregatable[_]](n: T) = {
+    created :+= n
+    n
+  }
+  def learnNumber[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = add(AbstractLearnedQuantiles.withCountRealizations(pmin, pmax)(op))
+  def learnNumber[B](implicit op: Operationable[B]) = add(new LearnedNumerical()(op) with CountNRealizations)
+
+  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = learnFunction(pmin, pmax)(op)
+  def apply[B]()(implicit op: Operationable[B]) = learnFunction(op)
+
+  def learnFunction[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = add(new LearnedNumericalFunctionWithQuantiles(pmin, pmax))
+  def learnFunction[B](implicit op: Operationable[B]) = add(new LearnedNumericalFunctionWithMean[B]())
 }
 
 trait Aggregatable[-N] {
   def doAggregate(other: Any) = aggregate(other.asInstanceOf[N])
   def aggregate(that: N): Unit
 }
-
-object Learn {
-
-  def number[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = AbstractLearnedQuantiles.withCountRealizations(pmin, pmax)(op)
-  def number[B](implicit op: Operationable[B]) = new LearnedNumerical()(op) with CountNRealizations
-
-  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = function(pmin, pmax)(op)
-  def apply[B]()(implicit op: Operationable[B]) = function(op)
-
-  def function[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new LearnedNumericalFunctionWithQuantiles(pmin, pmax)
-  def function[B](implicit op: Operationable[B]) = new LearnedNumericalFunctionWithMean[B]()
-}
+//
+//object Learn {
+//
+//  def number[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = AbstractLearnedQuantiles.withCountRealizations(pmin, pmax)(op)
+//  def number[B](implicit op: Operationable[B]) = new LearnedNumerical()(op) with CountNRealizations
+//
+//  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = function(pmin, pmax)(op)
+//  def apply[B]()(implicit op: Operationable[B]) = function(op)
+//
+//  def function[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = new LearnedNumericalFunctionWithQuantiles(pmin, pmax)
+//  def function[B](implicit op: Operationable[B]) = new LearnedNumericalFunctionWithMean[B]()
+//}
 
 class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumericalFunction[B, AbstractLearnedQuantiles[B]] {
 
@@ -210,6 +237,10 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
     for ((t, n) <- that) {
       this(t).doAggregate(n)
     }
+  }
+  override def equals(other: Any) = {
+    val that = other.asInstanceOf[LearnedNumericalFunction[B,N]]
+    that.numbers == this.numbers
   }
   def +=(that: this.type) = aggregate(that)
   override def observe {
