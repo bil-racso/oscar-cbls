@@ -67,4 +67,12 @@ TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.a
 
 parallelExecution in Test := false
 
+resolvers ++= Seq(
+  "Sonatype Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+  "Sonatype Releases" at "http://oss.sonatype.org/content/repositories/releases"
+)
+
+libraryDependencies ++= Seq(
+  "org.scalacheck" %% "scalacheck" % "1.10.0" % "test"
+)
 

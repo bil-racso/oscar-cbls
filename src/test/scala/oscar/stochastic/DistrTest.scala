@@ -16,10 +16,8 @@ class Solver extends StochasticSolver[Unit]
 
 class DistrTest extends FunSuite with ShouldMatchers {
 
-  implicit def intOp = IntOp
-  implicit def doubleOp = DoubleOp
   implicit val m = new Solver
-
+  
   //implicit def cont2Fix[A](c: A @suspendable) = reset(c)
 
   test("Flip") {
@@ -32,7 +30,8 @@ class DistrTest extends FunSuite with ShouldMatchers {
   }
 
   test("LearnedNumerical") {
-    val n = new LearnedNumerical[Double]
+
+    val n = new LearnedNumerical[Int]
 
     n() = 4
     n() += 5
@@ -52,7 +51,7 @@ class DistrTest extends FunSuite with ShouldMatchers {
   test("aggregation of two LearnedNumerical") {
     val m = new LearnedNumerical[Double]
     val n = new LearnedNumerical[Double]
-
+    
     m observe (5)
     m observe (10)
 

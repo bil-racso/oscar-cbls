@@ -5,70 +5,92 @@ import scala.collection._
 import collection.JavaConversions._
 import scala.collection.JavaConverters._
 
-trait Operationable[B] extends Ordering[B] with java.util.Comparator[B] {
-  implicit def intOp: Operationable[Int] = IntOp
-  def +(a: B, b: B): B
-  def -(a: B, b: B): B
-  def *(a: B, b: B): B
-  def *#(a: B, b: Double): Double
-  def **(a: B, b: Double): B
-  def /#(a: B, b: Double) = *#(a, 1 / b)
-  def /(a: B, b: B): B
-  //def *(d: Double, b: B):Double
-  def >(a: B, b: B): Boolean
-  def <(a: B, b: B): Boolean
+trait Operator[B] extends Ordering[B] {
   def zero: B
-  def positive(v: B) = compare(v, zero) >= 0
-  def negative(v: B) = compare(v, zero) <= 0
-  override def compare(a: B, b: B) = {
-    if (>(a, b)) 1
-    else if (<(a, b)) -1
+  def compare(a: B, b: B): Int
+}
+trait Operationable[B] extends Any {
+  def +(a: B): B
+  def -(a: B): B
+  def *(a: B): B
+  def *#(b: Double): B
+  def /#(b: Double): B
+  def /(a: B): B
+  def >(a: B): Boolean
+  def <(a: B): Boolean
+}
+trait RootSquarable[B] extends Any with Operationable[B] {
+  def sqrt: B
+}
+
+class IntOp(val n: Int) extends AnyVal with Operationable[Int] {
+  def +(a: Int) = n + a
+  def -(a: Int) = n - a
+  def *(a: Int) = n * a
+  def *#(b: Double) = (n * b).toInt
+  def /#(b: Double) = (n.toDouble / b).toInt
+  def /(a: Int) = n / a
+  def >(a: Int) = n > a
+  def <(a: Int) = n < a
+}
+object IntOp extends Operator[Int] {
+  def zero = 0
+  def compare(a: Int, b: Int) = a - b
+}
+class DoubleOp(val n: Double) extends AnyVal with RootSquarable[Double] {
+  def +(a: Double) = n + a
+  def -(a: Double) = n - a
+  def *(a: Double) = n * a
+  def *#(b: Double) = n * b
+  def /#(b: Double) = n * b
+  def /(a: Double) = n / a
+  def >(a: Double) = n > a
+  def <(a: Double) = n < a
+  def sqrt = scala.math.sqrt(n)
+}
+object DoubleOp extends Operator[Double] {
+  def zero = 0
+  def compare(a: Double, b: Double) =
+    if (a < b) +1
+    else if (a > b) +1
     else 0
-  }
 }
-
-object IntOp extends Operationable[Int] {
-  override def +(a: Int, b: Int) = a + b
-  override def -(a: Int, b: Int) = a - b
-  override def *(a: Int, b: Int) = a * b
-  override def *#(a: Int, b: Double) = a.toDouble * b
-  def **(a: Int, b: Double) = (a * b).toInt
-  override def /(a: Int, b: Int) = a / b
-  //override def *(d: Double, b: Int) = b*d
-  override def >(a: Int, b: Int) = a > b
-  override def <(a: Int, b: Int) = a < b
-  override def zero = 0
+class LongOp(val n: Long) extends AnyVal with Operationable[Long] {
+  def +(a: Long) = n + a
+  def -(a: Long) = n - a
+  def *(a: Long) = n * a
+  def *#(b: Double) = (n * b).toInt
+  def /#(b: Double) = (n.toDouble / b).toInt
+  def /(a: Long) = n / a
+  def >(a: Long) = n > a
+  def <(a: Long) = n < a
 }
-
-object LongOp extends Operationable[Long] {
-  override def +(a: Long, b: Long) = a + b
-		  override def -(a: Long, b: Long) = a - b
-  override def *(a: Long, b: Long) = a * b
-  override def *#(a: Long, b: Double) = a.toDouble * b
-  override def **(a: Long, b: Double) = (a * b).toLong
-  override def /(a: Long, b: Long) = a / b
-  //override def *(d: Double, b: Long) = b*d
-  override def >(a: Long, b: Long) = a > b
-  override def <(a: Long, b: Long) = a < b
-  override def zero = 0
-}
-
-object DoubleOp extends Operationable[Double] {
-  override def +(a: Double, b: Double) = a + b
-		  override def -(a: Double, b: Double) = a - b
-  override def *(a: Double, b: Double) = a * b
-  override def *#(a: Double, b: Double) = a * b
-  override def **(a: Double, b: Double) = a * b
-  override def /(a: Double, b: Double) = a / b
-  //override def *(d: Double, b: Double) = b*d
-  override def >(a: Double, b: Double) = a > b
-  override def <(a: Double, b: Double) = a < b
-  override def zero = 0
+object LongOp extends Operator[Long] {
+  def zero = 0l
+  def compare(a: Long, b: Long) =
+    if (a < b) +1
+    else if (a > b) +1
+    else 0
 }
 
 trait TableView[B] extends Function1[Int, B] with Iterable[(Int, B)] with Traversable[(Int, B)] {
   def map(f: B => B) = TableView(this, f) //treemap.view.map(_ match { case ((t, v)) => (t, f(v)) })
   def map(f: (Int, B) => (Int, B)) = TableView(this, f)
+  override def equals(other: Any): Boolean = {
+    if (other.isInstanceOf[TableView[B]]) {
+      val that = other.asInstanceOf[TableView[B]]
+      if (that.iterator.size != this.iterator.size) false
+      else {
+        val iter1 = that.iterator
+        val iter2 = this.iterator
+        while (iter1 hasNext) {
+          if (iter1.next != iter2.next) return false
+        }
+        true
+      }
+
+    } else false
+  }
   //override def filter(f: ((Int, B)) => Boolean) = this.filter(f)
   //override def foreach[U](f: ((Int, B)) => U) = iterator.foreach(f)
 }
@@ -79,7 +101,7 @@ object TableView {
 
 }
 
-class TableFunction[B](implicit val op: Operationable[B]) extends TableView[B] {
+class TableFunction[B <% Operationable[B]](implicit op: Operator[B]) extends TableView[B] {
 
   val treemapjava = new TreeMap[Int, B]
   val treemap = treemapjava.asScala.withDefaultValue(op.zero)
@@ -87,16 +109,16 @@ class TableFunction[B](implicit val op: Operationable[B]) extends TableView[B] {
   def domain = treemap.keySet
   def apply(t: Int) = treemap(t)
   def update(t: Int, v: B) = treemap.put(t, v)
-
+  def isInDomain(t: Int) = treemap.contains(t)
   //def view2(f2: TableFunction[B], f: (B,B) => B) = treemap.view.map( _ match{case ((t,v)) => (t,f(v,f2(t)))})
 
-  def +(f2: TableFunction[B]) = new ApplyView2(this, f2, op.+)
-  def max(f2: TableFunction[B]) = new ApplyView2(this, f2, (a: B, b: B) => if (op.>(a, b)) a else b)
-  def *(m: B) = map { b: B => op.*(b, m) }
+  def +(f2: TableFunction[B]) = new ApplyView2(this, f2, (a: B, b: B) => a + b)
+  def max(f2: TableFunction[B]) = new ApplyView2(this, f2, (a: B, b: B) => if (a > b) a else b)
+  def *(m: B) = map { m * _ }
 
   def add[C <: TableView[B]](f2: C) {
     for (((t, v)) <- f2) {
-      this(t) = op + (this(t), v)
+      this(t) += v
     }
   }
   def delay(d: Int) = map((t: Int, v: B) => (t + d, v)) //for( (t,v) <- this.treemap.view ) yield (t+d,v)
@@ -104,9 +126,7 @@ class TableFunction[B](implicit val op: Operationable[B]) extends TableView[B] {
     if (that.isInstanceOf[TableFunction[B]]) {
       val f2 = that.asInstanceOf[TableFunction[B]]
       f2.treemap.equals(treemap)
-    } else if (that.isInstanceOf[TableView[B]]) super.equals(that)
-    else false
-
+    } else super.equals(that)
   }
   override def toString = treemap.toString()
   def iterator = treemap.iterator
@@ -122,7 +142,7 @@ class TableFunction[B](implicit val op: Operationable[B]) extends TableView[B] {
 //  }
 //}
 
-class ApplyIterator2[B](g: TableFunction[B], h: TableFunction[B], f: (B, B) => B) extends Iterator[(Int, B)] {
+class ApplyIterator2[B](g: TableFunction[B], h: TableFunction[B], f: (B, B) => B)(implicit op: Operator[B]) extends Iterator[(Int, B)] {
   val iterG = g.treemap.entrySet().iterator()
   val iterH = h.treemap.entrySet().iterator()
 
@@ -144,17 +164,17 @@ class ApplyIterator2[B](g: TableFunction[B], h: TableFunction[B], f: (B, B) => B
 
   def next = {
     (vnextG, vnextH) match {
-      case (None, Some(a)) => { nextH; (a.getKey(), f(a.getValue(), h.op.zero)) }
-      case (Some(a), None) => { nextG; (a.getKey(), f(g.op.zero, a.getValue())) }
+      case (None, Some(a)) => { nextH; (a.getKey(), f(a.getValue(), op.zero)) }
+      case (Some(a), None) => { nextG; (a.getKey(), f(op.zero, a.getValue())) }
       case (Some(a), Some(b)) => {
         if (a.getKey() < b.getKey()) {
-          nextG; (a.getKey(), f(a.getValue(), h.op.zero))
+          nextG; (a.getKey(), f(a.getValue(), op.zero))
         } else if (a.getKey() == b.getKey()) {
           nextG
           nextH
           (a.getKey(), f(a.getValue(), b.getValue()))
         } else {
-          nextH; (b.getKey(), f(g.op.zero, b.getValue()))
+          nextH; (b.getKey(), f(op.zero, b.getValue()))
         }
       }
       case q => throw new RuntimeException(q.toString())
@@ -172,50 +192,34 @@ class ApplyView1[B](g: TableView[B], f: (Int, B) => (Int, B)) extends TableView[
     res += "}"
     res
   }
-  override def equals(o: Any) = {
-    if (!o.isInstanceOf[TableView[B]]) false
-    else {
-      val that = o.asInstanceOf[TableView[B]]
-      val i1 = this.iterator
-      val i2 = that.iterator
-      if (i1.size != i2.size) false
-      for (tup <- i1) {
-        if (tup != i2.next()) false
-      }
-      true
-    }
-  }
+
 }
 
-class ApplyView2[B](g: TableFunction[B], h: TableFunction[B], f: (B, B) => B) extends TableView[B] {
+class ApplyView2[B](g: TableFunction[B], h: TableFunction[B], f: (B, B) => B)(implicit op: Operator[B]) extends TableView[B] {
   def apply(i: Int) = f(g(i), h(i))
   def iterator = new ApplyIterator2(g, h, f)
 }
 
 object TableFunction {
-  implicit def intOp: Operationable[Int] = IntOp
-  implicit def dOp: Operationable[Double] = DoubleOp
-  implicit def lOp: Operationable[Long] = LongOp
 
-  def apply[B](fb: Iterable[(Int, B)])(implicit op: Operationable[B]): TableFunction[B] = {
+  def apply[B <% Operationable[B]](fb: Iterable[(Int, B)])(implicit op: Operator[B]): TableFunction[B] = {
     val f = new TableFunction[B]
     for ((k, v) <- fb.iterator) {
       f(k) = v
     }
     f
   }
-  def sum[B](list: Traversable[TableView[B]])(implicit op: Operationable[B]) = {
+  def sum[B <% Operationable[B]](list: Traversable[TableView[B]])(implicit op: Operator[B]) = {
     val res = new TableFunction[B]()
     for (f <- list) res add f
     res
   }
   import scala.collection._
 
-  implicit def fb2tf[B](fb: Iterable[(Int, B)])(implicit op: Operationable[B]) = this(fb)
+  implicit def fb2tf[B <: Operationable[B]](fb: Iterable[(Int, B)])(implicit op: Operator[B]) = apply(fb)
 
   def main(args: Array[String]) {
 
-      implicit def intOp = IntOp
     val f = new TableFunction[Int]
 
     f(2) = 4
@@ -226,7 +230,7 @@ object TableFunction {
       println("f(" + k + ") = " + v)
     }
 
-    val sum = TableFunction(f + f)
+    val sum = TableFunction[Int](f + f)
 
     println(sum)
     println(TableFunction(sum max f) * 3)

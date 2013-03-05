@@ -2,74 +2,127 @@ package oscar.stochastic
 
 import oscar.stochastic._
 import scala.collection.immutable._
+import scala.collection._
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
+import org.scalacheck.Prop._
+import org.scalacheck._
+import org.scalatest.prop.Checkers
+import org.scalacheck.Test._
 
 @RunWith(classOf[JUnitRunner])
-class TableFunctionTest extends FunSuite with ShouldMatchers {
-  implicit def intOp = IntOp
+class TableFunctionTest extends FunSuite with ShouldMatchers with Checkers {
 
-  test("test1") {
-    val t1 = TableFunction(SortedMap(1 -> 2, 2 -> 3))
-    val t2 = TableFunction(SortedMap(1 -> 3, 2 -> 5))
+  implicit def tfGen = org.scalacheck.Gen.resultOf { m: immutable.Map[Int, Int] => TableFunction(m) }
 
-    val sum = t1 + t2
+  test("equals") {
+    check {
+      forAll { m1: immutable.Map[Int, Int] =>
+        TableFunction(m1) should not equal (TableFunction(m1))
+        true
+      }
+    }
+  }
 
-    sum(1) should equal(5)
-    sum(2) should equal(8)
+  test("Sum") {
+    check {
+      forAll(tfGen, tfGen) { (m1: TableFunction[Int], m2: TableFunction[Int]) =>
 
-    for (t <- 3 to 1000) {
-      sum(t) should equal(0)
+          def tSum = {
+            val mSum = mutable.Map[Int, Int]().withDefaultValue(0)
+            for ((k, v) <- m1) mSum(k) = v
+            for ((k, v) <- m2) mSum(k) = mSum(k) + v
+            mSum
+          }
+        TableFunction(tSum) == TableFunction(TableFunction(m1) + TableFunction(m2))
+      }
+    }
+  }
+
+  test("Max") {
+    check {
+      forAll(tfGen, tfGen) { (m1: TableFunction[Int], m2: TableFunction[Int]) =>
+          def tMax = {
+            val mMax = mutable.Map[Int, Int]().withDefaultValue(0)
+            for ((k, v) <- m1) mMax(k) = scala.math.max(0, v)
+            for ((k, v) <- m2) mMax(k) =
+              if (m1.isInDomain(k)) scala.math.max(m1(k), v)
+              else scala.math.max(mMax(k), v)
+            mMax
+          }
+
+        TableFunction(tMax) should equal(TableFunction(TableFunction(m1) max TableFunction(m2)))
+        true
+      }
+    }
+  }
+  test("multiply") {
+    check {
+      forAll { (m: immutable.Map[Int, Int], factor: Int) =>
+        val mM = mutable.Map[Int, Int]()
+        for ((k, v) <- m) mM(k) = factor * v
+        TableFunction(mM) should equal(TableFunction(TableFunction(m) * factor))
+        true
+      }
     }
   }
   test("testAdd") {
-    val t1 = TableFunction(SortedMap(1 -> 2, 2 -> 3))
-    val t2 = TableFunction(SortedMap(1 -> 3, 2 -> 5))
 
-    t1.add(t2)
-
-    t1(1) should equal(5)
-    t1(2) should equal(8)
-
-    for (t <- 3 to 1000) {
-      t1(t) should equal(0)
+    check {
+      forAll(tfGen, tfGen) { (m1: TableFunction[Int], m2: TableFunction[Int]) =>
+          def tSum = {
+            val mSum = mutable.Map[Int, Int]().withDefaultValue(0)
+            for ((k, v) <- m1) mSum(k) = v
+            for ((k, v) <- m2) mSum(k) = mSum(k) + v
+            mSum
+          }
+        val t1 = TableFunction(m1)
+        val t2 = TableFunction(m2)
+        t1.add(t2)
+        TableFunction(tSum) == TableFunction(t1)
+      }
     }
   }
 
   test("testMap") {
-    val t1 = TableFunction(SortedMap(1 -> 2, 2 -> 3))
-    val t2 = TableFunction(SortedMap(1 -> 3, 2 -> 5))
-
-    t1.add(t2)
-
-    val m = t1.map( (t,v) => (t,2*v)) //for (((t, v)) <- t1) yield { (t, 2 * v) }
-    m(1) should equal(10)
-    println(m);
+    check {
+      forAll { (m1: immutable.Map[Int, Int], f: Int => Int) =>
+        TableFunction(m1.map { case (a, b) => (a, f(b)) }) == TableFunction(TableFunction(m1).map { b: Int => f(b) })
+      }
+    }
   }
 
-  test("testMax") {
-    val t1 = TableFunction(SortedMap(1 -> 5, 2 -> 3))
-    val t2 = TableFunction(SortedMap(1 -> 3, 2 -> 5))
-    val t3 = TableFunction(SortedMap(1 -> 5, 2 -> 5))
-
-    val max = t1 max t2
-
-    for ( t <- -100 to 100 )
-      max(t) should equal(t3(t))
-    
+  test("delay") {
+    check {
+      forAll { (m1: immutable.Map[Int, Int], d: Int) =>
+        val md = mutable.Map[Int, Int]()
+        for ((k, v) <- m1) md(k + d) = v
+        TableFunction(md) should equal(TableFunction(TableFunction(m1).delay(d)))
+        true
+      }
+    }
+  }
+  test("ApplyView.map") {
+    check {
+      forAll { (m: immutable.Map[Int, Int], f: Int => Int, g: Int => Int) =>
+        TableFunction(m).map(f).map(g) should equal(TableFunction(m.map { case (k, v) => (k, (g(f(v)))) }))
+        true
+      }
+    }
+  }
+  test("TableFunction.sum") {
+    check {
+      forAll { (list: List[immutable.Map[Int, Int]]) =>
+        val mSum = mutable.Map[Int, Int]().withDefaultValue(0)
+        for (t <- list; (k, v) <- t) mSum(k) += v
+        TableFunction(mSum) should equal(TableFunction.sum(list.map { TableFunction(_) }))
+        true
+      }
+    }
   }
 
-  test("delay"){
-    
-    val t1 = TableFunction(SortedMap(1 -> 5, 2 -> 3, 5-> 10))
-    val tres = TableFunction(SortedMap(3 -> 5, 4 -> 3, 7-> 10))
-    val delayed = t1 delay(2)
-    
-    delayed should equal(tres)
-  }
-  
 }

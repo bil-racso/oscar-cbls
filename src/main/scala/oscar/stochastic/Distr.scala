@@ -91,8 +91,8 @@ class UniformDiscrete(val min: Int, val max: Int) extends ContinuousDistr[Int] {
 
 }
 
-class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operationable[Double]) extends Choice[Double](list) with ContinuousDistr[Double] {
-  def mean = (for ((p, v) <- list) yield (op.*(p, v))).sum
+class NumericalChoice(list: List[(Double, Double)])(implicit val op: Operator[Double]) extends Choice[Double](list) with ContinuousDistr[Double] {
+  def mean = (for ((p, v) <- list) yield p*v).sum
   def min = list.map(_._2).min(op)
   def max = list.map(_._2).max(op)
   def std = sqrt(variance)

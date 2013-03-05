@@ -19,18 +19,17 @@ trait CountNRealizations extends Observing {
 }
 
 object AbstractLearnedQuantiles {
-  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
-    new AbstractLearnedQuantiles(pmin, pmax)
-  def apply[B](other: AbstractLearnedQuantiles[B])(implicit op: Operationable[B]) = {
+  def apply[B <% Operationable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B])         = new AbstractLearnedQuantiles[B](pmin, pmax)
+  def apply[B <% Operationable[B]](other: AbstractLearnedQuantiles[B])(implicit op: Operator[B]) = {
     val res = new AbstractLearnedQuantiles[B](other.pmin, other.pmax)
     res.aggregate(other)
     res
   }
-  def withCountRealizations[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) =
-    new AbstractLearnedQuantiles(pmin, pmax) with CountNRealizations
+  def withCountRealizations[B <% Operationable[B]](pmin: Double, pmax: Double)(implicit  op: Operator[B]) =
+    new AbstractLearnedQuantiles[B](pmin, pmax) with CountNRealizations
 }
 
-class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumerical[B] with Observing with Aggregatable[AbstractLearnedQuantiles[B]] {
+class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax: Double)(implicit  op: Operator[B]) extends LearnedNumerical[B] with Observing with Aggregatable[AbstractLearnedQuantiles[B]] {
   var n: Int = 0
   val count = (new mutable.HashMap[B, Int]()).withDefaultValue(0)
   require(0 <= pmin)
@@ -56,7 +55,7 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   override def observe(v: B) {
     //require(op.positive(v))
     super.observe(v)
-    if (!op.equiv(op.zero, v)) {
+    if ( v != op.zero) {
       count(v) += 1
       n += 1
     }
@@ -102,13 +101,13 @@ class AbstractLearnedQuantiles[B](val pmin: Double, val pmax: Double)(implicit o
   }
 }
 
-class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing with Aggregatable[LearnedNumerical[B]] {
+class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends Observing with Aggregatable[LearnedNumerical[B]] {
 
   var current = op.zero
   var tot = op.zero
   var squaredTot = op.zero
 
-  def mean(nRea: Int) = op.*#(tot, 1.0 / nRea)
+  def mean(nRea: Int) = tot /# nRea
 
   override def equals(o: Any) = {
     val that = o.asInstanceOf[LearnedNumerical[B]]
@@ -117,16 +116,16 @@ class LearnedNumerical[B]()(implicit op: Operationable[B]) extends Observing wit
 
   def aggregate(o: LearnedNumerical[B]) {
     val that = o.asInstanceOf[LearnedNumerical[B]]
-    tot = op.+(tot, that.tot)
-    squaredTot = op.+(that.squaredTot, squaredTot)
+    tot += that.tot
+    squaredTot += that.squaredTot
   }
   def update(v: B) {
     current = v
   }
   def apply() = current
   def observe(v: B) {
-    tot = op.+(tot, v)
-    squaredTot = op.+(squaredTot, op.*(v, v))
+    tot += v
+    squaredTot += v*v
     current = op.zero
   }
   override def observe {
@@ -165,14 +164,14 @@ trait Learning extends Aggregatable[Learning] {
     created :+= n
     n
   }
-  def learnNumber[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = add(AbstractLearnedQuantiles.withCountRealizations(pmin, pmax)(op))
-  def learnNumber[B](implicit op: Operationable[B]) = add(new LearnedNumerical()(op) with CountNRealizations)
+  def learnNumber[B <% RootSquarable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B]) = add(AbstractLearnedQuantiles.withCountRealizations[B](pmin, pmax))
+  def learnNumber[B <% RootSquarable[B]](implicit op: Operator[B]) = add(new LearnedNumerical[B] with CountNRealizations)
 
-  def apply[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = learnFunction(pmin, pmax)(op)
-  def apply[B]()(implicit op: Operationable[B]) = learnFunction(op)
+  def apply[B <% RootSquarable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B]) = learnFunction[B](pmin, pmax)
+  def apply[B <% RootSquarable[B]](implicit op: Operator[B]) = learnFunction[B]
 
-  def learnFunction[B](pmin: Double, pmax: Double)(implicit op: Operationable[B]) = add(new LearnedNumericalFunctionWithQuantiles(pmin, pmax))
-  def learnFunction[B](implicit op: Operationable[B]) = add(new LearnedNumericalFunctionWithMean[B]())
+  def learnFunction[B <% RootSquarable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B]) = add(new LearnedNumericalFunctionWithQuantiles[B](pmin, pmax))
+  def learnFunction[B <% RootSquarable[B]](implicit op: Operator[B]) = add(new LearnedNumericalFunctionWithMean[B]())
 }
 
 trait Aggregatable[-N] {
@@ -192,7 +191,7 @@ trait Aggregatable[-N] {
 //  def function[B](implicit op: Operationable[B]) = new LearnedNumericalFunctionWithMean[B]()
 //}
 
-class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Double)(implicit op: Operationable[B]) extends LearnedNumericalFunction[B, AbstractLearnedQuantiles[B]] {
+class LearnedNumericalFunctionWithQuantiles[B <% RootSquarable[B]](val pmin: Double, val pmax: Double)(implicit op: Operator[B]) extends LearnedNumericalFunction[B, AbstractLearnedQuantiles[B]] {
 
   override def createNumber = AbstractLearnedQuantiles[B](pmin, pmax)
   def quantileUp(t: Int, d: Double) = this(t) quantileUp (d, nRea)
@@ -200,12 +199,12 @@ class LearnedNumericalFunctionWithQuantiles[B](val pmin: Double, val pmax: Doubl
 
 }
 
-class LearnedNumericalFunctionWithMean[B](implicit op: Operationable[B]) extends LearnedNumericalFunction[B, LearnedNumerical[B]] {
+class LearnedNumericalFunctionWithMean[B <% RootSquarable[B]](implicit op: Operator[B]) extends LearnedNumericalFunction[B, LearnedNumerical[B]] {
   override def createNumber = new LearnedNumerical[B]()
 
 }
 
-abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op: Operationable[B]) extends CountNRealizations with Aggregatable[LearnedNumericalFunction[B, N]] {
+abstract class LearnedNumericalFunction[B <% RootSquarable[B], N <: LearnedNumerical[B]] extends CountNRealizations with Aggregatable[LearnedNumericalFunction[B, N]] {
 
   implicit val numbers = new mutable.ArrayBuffer[N]
 
@@ -226,9 +225,9 @@ abstract class LearnedNumericalFunction[B, N <: LearnedNumerical[B]](implicit op
     }
     numbers(t)
   }
-  def mean(t: Int) = op./#(numbers(t).tot, nRea)
-  def variance(t: Int) = op./#(numbers(t).squaredTot, nRea) - op./#(numbers(t).tot, nRea) * op./#(numbers(t).tot, nRea)
-  def std(t: Int) = sqrt(variance(t))
+  def mean(t: Int) = numbers(t).tot /# nRea
+  def variance(t: Int) = numbers(t).squaredTot /# nRea - numbers(t).tot /# nRea * numbers(t).tot /# nRea
+  def std(t: Int) = variance(t).sqrt
 
   def update(t: Int, v: B) { this(t).update(v) }
 
