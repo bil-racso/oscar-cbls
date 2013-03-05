@@ -79,7 +79,6 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		
 		frame.setLocation(c*w,l*h)
 		frame.setPreferredSize(new java.awt.Dimension(w,h))
-		frame.setMinimumSize(new java.awt.Dimension(w,h))
 		frame.setSize(w,h)
 		frame.setBackground(Color.white)
 		frame.setVisible(true)
