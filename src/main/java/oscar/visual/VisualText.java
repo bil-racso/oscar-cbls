@@ -66,7 +66,7 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 	@Override
 	public void draw(Graphics2D g) {
 		
-		g.setColor(innerCol());
+		g.setColor(outerCol());
 		
 		if (centered) 
 			drawCenteredString(text, x, y, g);

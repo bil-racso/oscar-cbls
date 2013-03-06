@@ -17,10 +17,7 @@
 
 package oscar.util.mo
 
-import math.Numeric.Implicits._
-//import Implicits._
-import scala.Array.canBuildFrom
-import scala.Option.option2Iterable
+import oscar.util.tree.Node
 
 /**
  * QuadTree able to maintain a set of non dominated vectors (assuming maximizations in all dimensions).

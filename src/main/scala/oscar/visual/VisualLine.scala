@@ -26,8 +26,6 @@ import java.awt.geom.Line2D;
  */
 class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line2D.Double](d,shape){
 	
-	
-	
 	def line:Line2D.Double = shape
 	
 	def this(d:VisualDrawing,xorig:Double, yorig:Double, xdest:Double, ydest:Double) {
