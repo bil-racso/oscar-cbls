@@ -31,7 +31,6 @@ class TableFunctionTest extends FunSuite with ShouldMatchers with Checkers {
   test("Sum") {
     check {
       forAll(tfGen, tfGen) { (m1: TableFunction[Int], m2: TableFunction[Int]) =>
-
           def tSum = {
             val mSum = mutable.Map[Int, Int]().withDefaultValue(0)
             for ((k, v) <- m1) mSum(k) = v
