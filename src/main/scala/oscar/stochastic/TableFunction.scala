@@ -54,7 +54,7 @@ class DoubleOp(val n: Double) extends AnyVal with RootSquarable[Double] {
 object DoubleOp extends Operator[Double] {
   def zero = 0
   def compare(a: Double, b: Double) =
-    if (a < b) +1
+    if (a < b) -1
     else if (a > b) +1
     else 0
 }
