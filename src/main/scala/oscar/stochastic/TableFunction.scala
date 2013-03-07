@@ -72,7 +72,7 @@ class LongOp(val n: Long) extends AnyVal with Operationable[Long] {
 object LongOp extends Operator[Long] {
   def zero = 0l
   def compare(a: Long, b: Long) =
-    if (a < b) +1
+    if (a < b) -1
     else if (a > b) +1
     else 0
 }
