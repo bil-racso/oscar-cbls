@@ -18,6 +18,7 @@ trait Operationable[B] extends Any {
   def /(a: B): B
   def >(a: B): Boolean
   def <(a: B): Boolean
+  def =+-(b:B)(implicit op: Operator[B]): Boolean
 }
 trait RootSquarable[B] extends Any with Operationable[B] {
   def sqrt: B
@@ -32,6 +33,7 @@ class IntOp(val n: Int) extends AnyVal with Operationable[Int] {
   def /(a: Int) = n / a
   def >(a: Int) = n > a
   def <(a: Int) = n < a
+  def =+-(b:Int)(implicit op: Operator[Int])= n==b
 }
 object IntOp extends Operator[Int] {
   def zero = 0
@@ -47,6 +49,7 @@ class DoubleOp(val n: Double) extends AnyVal with RootSquarable[Double] {
   def >(a: Double) = n > a
   def <(a: Double) = n < a
   def sqrt = scala.math.sqrt(n)
+  def =+-(b:Double)(implicit op: Operator[Double])= op.compare(n,b) == 0
 }
 object DoubleOp extends Operator[Double] {
   def zero = 0
@@ -64,6 +67,7 @@ class LongOp(val n: Long) extends AnyVal with Operationable[Long] {
   def /(a: Long) = n / a
   def >(a: Long) = n > a
   def <(a: Long) = n < a
+  def =+-(b:Long)(implicit op: Operator[Long])= n==b
 }
 object LongOp extends Operator[Long] {
   def zero = 0l

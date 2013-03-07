@@ -108,10 +108,11 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
   var squaredTot = op.zero
 
   def mean(nRea: Int) = tot /# nRea
+  def variance(nRea: Int) = squaredTot/#nRea - mean(nRea)*mean(nRea)
 
   override def equals(o: Any) = {
     val that = o.asInstanceOf[LearnedNumerical[B]]
-    tot == that.tot && that.squaredTot == squaredTot
+    tot =+- that.tot && that.squaredTot =+- squaredTot
   }
 
   def aggregate(o: LearnedNumerical[B]) {
@@ -132,6 +133,7 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
     super.observe
     observe(current)
   }
+  override def toString = s"LearnedNumerical (tot: $tot, squaredTot: $squaredTot"
   def hasPertinentObservations = tot != 0 || squaredTot != 0
   def corresponds(that: LearnedNumerical[B]) = this.tot == that.tot && this.squaredTot == that.squaredTot
 }

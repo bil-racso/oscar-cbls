@@ -101,7 +101,7 @@ package object invariants extends Logging {
             k(msg)
           }
         } catch {
-          case exception: Exception =>
+          case exception: Throwable =>
             println("Executing Reaction from ")
             for (el <- e.getStackTrace()) {
               //println("   at " + el.getClassName() + "->" + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber() + ")")
