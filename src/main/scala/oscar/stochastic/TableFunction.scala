@@ -42,7 +42,7 @@ class DoubleOp(val n: Double) extends AnyVal with RootSquarable[Double] {
   def -(a: Double) = n - a
   def *(a: Double) = n * a
   def *#(b: Double) = n * b
-  def /#(b: Double) = n * b
+  def /#(b: Double) = n / b
   def /(a: Double) = n / a
   def >(a: Double) = n > a
   def <(a: Double) = n < a
