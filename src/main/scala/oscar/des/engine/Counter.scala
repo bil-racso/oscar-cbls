@@ -74,7 +74,7 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
   override def ===(i: A) = {
     new Occuring[A] {
       override def foreach(f2: A => Boolean) = {
-        assert(currentTime <= i)
+        assert(currentTime <= i, s"Trying to define an event in the past. currentTime is $currentTime and eventTime is $i")
         val a = new WaitEvent[A](i, f2)
         PQCounter.this addEvent (a)
         new PQEventBlock(a)
