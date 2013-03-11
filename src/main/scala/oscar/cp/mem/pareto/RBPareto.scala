@@ -60,9 +60,9 @@ class RBPareto[Sol] extends Pareto[Sol] {
   
 
   def insert(sol: MOSol[Sol]): Int = {
-
+		  
     // Empty front
-    if (sols.isEmpty) {      
+    val ret = if (sols.isEmpty) {      
       updateBounds(sols.insert(sol(0), sol))
       0
     } 
@@ -74,6 +74,8 @@ class RBPareto[Sol] extends Pareto[Sol] {
       else if (n > 0) updateBounds(sols.insert(sol(0), sol)) // may have removed closest node
       n
     }
+    notifyObservers()
+    ret
   }
   
   def getDominant(sol: Array[Int]): Option[MOSol[Sol]] = {   

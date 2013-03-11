@@ -16,34 +16,11 @@
  ******************************************************************************/
 
 
-package oscar.cp.mem.visu
-
-import oscar.visual._
-import java.awt.Color
-import java.awt.Dimension
-import oscar.cp.mem.pareto.Pareto
-import org.jdesktop.swingx.decorator.ComponentAdapter
-import java.awt.event.ComponentEvent
-import oscar.cp.mem.pareto.ParetoObserver
-
+package oscar.cp.mem.pareto
 
 /**
  * @author Pierre Schaus
  */
- class PlotPareto[Sol](val pareto: Pareto[Sol],title: String = "Pareto", xlab: String = "Obj1", ylab: String = "Obj2") extends PlotScatter(title,xlab,ylab) with ParetoObserver {
-
-  pareto.addObserver(this)
-  
-  def update() {
-    removeAllPoints()
-    for (p <- pareto) {
-        val x = p(0)
-        val y = p(1)
-        addPoint(x, y)
-    }
-  }
-  
-
-  
-  
+trait ParetoObserver {
+  def update()
 }
