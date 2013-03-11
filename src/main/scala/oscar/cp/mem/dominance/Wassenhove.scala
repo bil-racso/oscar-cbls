@@ -89,7 +89,7 @@ object Wassenhove extends App {
     sol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))      
     
     // Visu
-    //visu.highlight(totDists(0).value, totDists(1).value)
+    visu.highlight(totDists(0).value, totDists(1).value)
     visu.update()
   }
     

@@ -30,6 +30,7 @@ import org.jfree.chart.ChartFactory
 import java.awt.Color
 import org.jfree.chart.plot.PlotOrientation
 import org.jfree.chart.plot.XYPlot
+import org.jfree.chart.plot.ValueMarker
 
 
 /**
@@ -46,7 +47,28 @@ abstract class Plot(title: String, xlab: String, ylab: String) extends JPanel(ne
 	panel.setVisible(true);
 	add(panel);
 	
+	val plot = chart.getPlot().asInstanceOf[XYPlot];
+    val xMarker = new ValueMarker(0.5)
+    val yMarker = new ValueMarker(0.5)
+    
+    hideHighlight()
+
 	
+	
+    def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY) = {
+      xMarker.setPaint(col);
+      yMarker.setPaint(col);
+      plot.addDomainMarker(xMarker)
+      plot.addRangeMarker(yMarker)
+      xMarker.setValue(x)
+      yMarker.setValue(y)
+    }
+    
+    def hideHighlight() = {
+      plot.removeDomainMarker(xMarker)
+      plot.removeRangeMarker(yMarker)
+    }
+    
 	def addPoint(x: Double, y: Double) = {
 		series.add(x,y);
 		chart.fireChartChanged();

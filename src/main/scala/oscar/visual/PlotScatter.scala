@@ -29,6 +29,10 @@ import org.jfree.chart.ChartFactory
 import java.awt.Color
 import org.jfree.chart.plot.PlotOrientation
 import org.jfree.chart.plot.XYPlot
+import org.jfree.chart.plot.CombinedDomainXYPlot
+import org.jfree.chart.plot.ValueMarker
+import org.jfree.ui.RectangleAnchor
+import org.jfree.ui.TextAnchor
 
 
 /**
@@ -37,6 +41,7 @@ import org.jfree.chart.plot.XYPlot
 class PlotScatter(title: String, xlab: String, ylab: String) extends Plot(title,xlab,ylab) {
   
 	def createChart = ChartFactory.createScatterPlot(title,xlab,ylab,xyDataset,PlotOrientation.VERTICAL,false,false, false);
+
 
 }
 
@@ -52,8 +57,13 @@ object PlotScatter extends App {
 		myPlot.yDom = 0 to 1
 		
 		for (i <- 0 until 10) {
-			myPlot.addPoint(i, Math.random());
+		    val y = Math.random()
+			myPlot.addPoint(i, y);
+			myPlot.highlight(i,y, Color.green)
 			Thread.sleep(1000);
 
-		}  
+		} 
+		
+		
+		
 }
