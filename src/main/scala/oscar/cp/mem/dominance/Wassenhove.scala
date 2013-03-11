@@ -7,13 +7,14 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualPareto
+import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.tsp.TSPUtils
 import oscar.cp.mem.pareto.Pareto
+import oscar.visual.VisualFrame
 
 object Wassenhove extends App {
 
@@ -25,8 +26,8 @@ object Wassenhove extends App {
   pareto.nadir(1) = 10000
   
   // Parsing
-  val coord1 = TSPUtils.parseCoordinates("data/TSP/renA15.tsp")
-  val coord2 = TSPUtils.parseCoordinates("data/TSP/renB15.tsp")
+  val coord1 = TSPUtils.parseCoordinates("data/TSP/renA10.tsp")
+  val coord2 = TSPUtils.parseCoordinates("data/TSP/renB10.tsp")
   val distMatrix1 = TSPUtils.buildDistMatrix(coord1)
   val distMatrix2 = TSPUtils.buildDistMatrix(coord2)
   val distMatrices = Array(distMatrix1, distMatrix2)
@@ -34,8 +35,14 @@ object Wassenhove extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  val visu = new VisualPareto(pareto)
-
+  val f = new VisualFrame("TSP",1,1)
+    // creates the plot and place it into the frame
+  val visu = new PlotPareto(pareto)
+  // fix the range of the plot
+  visu.xDom = 2500 to 5000
+  visu.yDom = 2500 to 5000
+  f.createFrame("TSP Objective Function").add(visu)
+  f.pack()
   // Model
   // -----
   val cp = new CPSolver()
@@ -82,7 +89,7 @@ object Wassenhove extends App {
     sol = MOSol(Sol(pred.map(_.value), succ.map(_.value)), totDists.map(_.value))      
     
     // Visu
-    visu.highlight(totDists(0).value, totDists(1).value)
+    //visu.highlight(totDists(0).value, totDists(1).value)
     visu.update()
   }
     
