@@ -8,12 +8,13 @@ import scala.collection.JavaConverters._
 import scala.util.continuations._
 
 trait Observing[B] {
-  def observe(v:B) {}
+  def observe {}
 }
 
 trait CountNRealizations[B] extends Observing[B] {
   var nRea = 0
-  override def observe(v:B) {
+  override def observe {
+    super.observe
     nRea += 1
   }
 }
@@ -128,14 +129,16 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
     current = v
   }
   def apply() = current
-  override def observe(v: B) {
-    super[Observing].observe(v)
-    tot += v
-    squaredTot += v*v
-    current = op.zero
+  def observe(v: B) {
+    current = v
+    observe
   }
-  def observe {
-    observe(current)
+   
+  override def observe {
+    super.observe
+    tot += current
+    squaredTot += current*current
+    current = op.zero
   }
   override def toString = s"LearnedNumerical (tot: $tot, squaredTot: $squaredTot"
   def hasPertinentObservations = tot != 0 || squaredTot != 0
@@ -248,8 +251,8 @@ abstract class LearnedNumericalFunction[B <% RootSquarable[B], N <: LearnedNumer
     that.numbers == this.numbers
   }
   def +=(that: this.type) = aggregate(that)
-  def observe {
-    super[CountNRealizations].observe(this)
+  override def observe {
+    super[CountNRealizations].observe
     for (n <- numbers) n observe
   }
   def observe(f: Traversable[(Int, B)]) {
