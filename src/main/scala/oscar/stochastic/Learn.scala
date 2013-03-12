@@ -7,13 +7,13 @@ import collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.continuations._
 
-trait Observing {
-  def observe {}
+trait Observing[B] {
+  def observe(v:B) {}
 }
 
-trait CountNRealizations extends Observing {
+trait CountNRealizations[B] extends Observing[B] {
   var nRea = 0
-  override def observe {
+  override def observe(v:B) {
     nRea += 1
   }
 }
@@ -26,10 +26,10 @@ object AbstractLearnedQuantiles {
     res
   }
   def withCountRealizations[B <% Operationable[B]](pmin: Double, pmax: Double)(implicit  op: Operator[B]) =
-    new AbstractLearnedQuantiles[B](pmin, pmax) with CountNRealizations
+    new AbstractLearnedQuantiles[B](pmin, pmax) with CountNRealizations[B]
 }
 
-class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax: Double)(implicit  op: Operator[B]) extends LearnedNumerical[B] with Observing with Aggregatable[AbstractLearnedQuantiles[B]] {
+class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax: Double)(implicit  op: Operator[B]) extends LearnedNumerical[B] with Observing[B] with Aggregatable[AbstractLearnedQuantiles[B]] {
   var n: Int = 0
   val count = (new mutable.HashMap[B, Int]()).withDefaultValue(0)
   require(0 <= pmin)
@@ -101,7 +101,7 @@ class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax
   }
 }
 
-class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends Observing with Aggregatable[LearnedNumerical[B]] {
+class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends Aggregatable[LearnedNumerical[B]] with Observing[B] {
 
   var current = op.zero
   var tot = op.zero
@@ -112,7 +112,11 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
 
   override def equals(o: Any) = {
     val that = o.asInstanceOf[LearnedNumerical[B]]
-    tot =+- that.tot && that.squaredTot =+- squaredTot
+    val t = that.tot
+    println(s"$tot   $t")
+    val res = tot =+- that.tot && that.squaredTot =+- squaredTot
+    println(s"rrrr  $res")
+    res
   }
 
   def aggregate(o: LearnedNumerical[B]) {
@@ -124,13 +128,13 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
     current = v
   }
   def apply() = current
-  def observe(v: B) {
+  override def observe(v: B) {
+    super[Observing].observe(v)
     tot += v
     squaredTot += v*v
     current = op.zero
   }
-  override def observe {
-    super.observe
+  def observe {
     observe(current)
   }
   override def toString = s"LearnedNumerical (tot: $tot, squaredTot: $squaredTot"
@@ -167,7 +171,7 @@ trait Learning extends Aggregatable[Learning] {
     n
   }
   def learnNumber[B <% RootSquarable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B]) = add(AbstractLearnedQuantiles.withCountRealizations[B](pmin, pmax))
-  def learnNumber[B <% RootSquarable[B]](implicit op: Operator[B]) = add(new LearnedNumerical[B] with CountNRealizations)
+  def learnNumber[B <% RootSquarable[B]]()(implicit op: Operator[B]) = add(new LearnedNumerical[B] with CountNRealizations[B])
 
   def apply[B <% RootSquarable[B]](pmin: Double, pmax: Double)(implicit op: Operator[B]) = learnFunction[B](pmin, pmax)
   def apply[B <% RootSquarable[B]](implicit op: Operator[B]) = learnFunction[B]
@@ -206,7 +210,7 @@ class LearnedNumericalFunctionWithMean[B <% RootSquarable[B]](implicit op: Opera
 
 }
 
-abstract class LearnedNumericalFunction[B <% RootSquarable[B], N <: LearnedNumerical[B]] extends CountNRealizations with Aggregatable[LearnedNumericalFunction[B, N]] {
+abstract class LearnedNumericalFunction[B <% RootSquarable[B], N <: LearnedNumerical[B]] extends CountNRealizations[LearnedNumericalFunction[B,N]] with Aggregatable[LearnedNumericalFunction[B, N]] {
 
   implicit val numbers = new mutable.ArrayBuffer[N]
 
@@ -244,8 +248,8 @@ abstract class LearnedNumericalFunction[B <% RootSquarable[B], N <: LearnedNumer
     that.numbers == this.numbers
   }
   def +=(that: this.type) = aggregate(that)
-  override def observe {
-    super.observe
+  def observe {
+    super[CountNRealizations].observe(this)
     for (n <- numbers) n observe
   }
   def observe(f: Traversable[(Int, B)]) {

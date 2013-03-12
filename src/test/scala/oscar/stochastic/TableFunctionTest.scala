@@ -1,6 +1,7 @@
 package oscar.stochastic
 
 import oscar.stochastic._
+import oscar.stochastic
 import scala.collection.immutable._
 import scala.collection._
 import org.scalatest.FunSuite
@@ -17,6 +18,7 @@ import org.scalacheck.Test._
 @RunWith(classOf[JUnitRunner])
 class TableFunctionTest extends FunSuite with ShouldMatchers with Checkers {
 
+  implicit def op = IntOp
   implicit def tfGen = org.scalacheck.Gen.resultOf { m: immutable.Map[Int, Int] => TableFunction(m) }
 
   test("equals") {
