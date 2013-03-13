@@ -31,80 +31,87 @@ import java.awt.Color
 import org.jfree.chart.plot.PlotOrientation
 import org.jfree.chart.plot.XYPlot
 import org.jfree.chart.plot.ValueMarker
-
+import javax.swing.SwingUtilities
 
 /**
  * @author Pierre Schaus
  */
-abstract class Plot(title: String, xlab: String, ylab: String) extends JPanel(new BorderLayout()) {
+abstract class Plot(title: String, xlab: String, ylab: String, nbSeries: Int = 1) extends JPanel(new BorderLayout()) {
 
+  var series: Array[XYSeries] = Array.tabulate(nbSeries)(i => new XYSeries(i.toInt))
 
-	val series: XYSeries = new XYSeries("");
-	val xyDataset: XYDataset  = new XYSeriesCollection(series);
-	val chart: JFreeChart = createChart()
-	chart.getPlot().setBackgroundPaint(Color.white);
-	val panel:ChartPanel  = new ChartPanel(chart);
-	panel.setVisible(true);
-	add(panel);
-	
-	val plot = chart.getPlot().asInstanceOf[XYPlot];
-    val xMarker = new ValueMarker(0.5)
-    val yMarker = new ValueMarker(0.5)
-    
-    hideHighlight()
+  val xyDataset: XYSeriesCollection = new XYSeriesCollection();
+  series.foreach(xyDataset.addSeries(_))
+  val chart: JFreeChart = createChart()
+  chart.getPlot().setBackgroundPaint(Color.white);
+  val panel: ChartPanel = new ChartPanel(chart);
+  panel.setVisible(true);
+  add(panel);
 
-	
-	
-    def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY) = {
-      xMarker.setPaint(col);
-      yMarker.setPaint(col);
-      plot.addDomainMarker(xMarker)
-      plot.addRangeMarker(yMarker)
-      xMarker.setValue(x)
-      yMarker.setValue(y)
-    }
-    
-    def hideHighlight() = {
-      plot.removeDomainMarker(xMarker)
-      plot.removeRangeMarker(yMarker)
-    }
-    
-	def addPoint(x: Double, y: Double) = {
-		series.add(x,y);
-		chart.fireChartChanged();
-	}
-	
-	def removeAllPoints() {
-		series.clear();
-	}
+  val plot = chart.getPlot().asInstanceOf[XYPlot];
 
-    def getPoints(): XYSeries  = series
-    
-    def minMax(dom: Range):(Int,Int) = {
-      val min = dom.start
-      val max = if (dom.isInclusive) dom.end else dom.end-1
-      (min,max)
-    }
-    
-    def xDom = chart.getPlot().asInstanceOf[XYPlot].getDomainAxis().getRange()
-    
-    def yDom = chart.getPlot().asInstanceOf[XYPlot].getRangeAxis().getRange()
-    
-    
-    def xDom_= (dom: Range):Unit = {
-      val (min,max) = minMax(dom)
-      val xyPlot = chart.getPlot().asInstanceOf[XYPlot];
-	  xyPlot.getDomainAxis().setRange(min,max); 
-    }
-    
-    def yDom_= (dom: Range):Unit = {
-      val (min,max) = minMax(dom)
-      val xyPlot = chart.getPlot().asInstanceOf[XYPlot];
-	  xyPlot.getRangeAxis().setRange(min,max); 
-    }     
-    
-    def createChart(): JFreeChart
+  val xMarker = new ValueMarker(0.5)
+  val yMarker = new ValueMarker(0.5)
 
+  hideHighlight()
+
+  def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY) = {
+    SwingUtilities.invokeLater(new Runnable() {
+      def run() {
+        xMarker.setPaint(col);
+        yMarker.setPaint(col);
+        plot.addDomainMarker(xMarker)
+        plot.addRangeMarker(yMarker)
+        xMarker.setValue(x)
+        yMarker.setValue(y)
+        chart.fireChartChanged()
+
+      }
+    })
+  }
+
+  def hideHighlight() = {
+    plot.removeDomainMarker(xMarker)
+    plot.removeRangeMarker(yMarker)
+  }
+
+  def addPoint(x: Double, y: Double, ser: Int = 0) = {
+    series(ser).add(x, y);
+    series(ser).fireSeriesChanged()
+
+    //xyDataset.ss
+    //chart.fireChartChanged();
+  }
+
+  def removeAllPoints(ser: Int = 0) {
+    series(ser).clear();
+  }
+
+  def getPoints(ser: Int = 0): XYSeries = series(ser)
+
+  def minMax(dom: Range): (Int, Int) = {
+    val min = dom.start
+    val max = if (dom.isInclusive) dom.end else dom.end - 1
+    (min, max)
+  }
+
+  def xDom = chart.getPlot().asInstanceOf[XYPlot].getDomainAxis().getRange()
+
+  def yDom = chart.getPlot().asInstanceOf[XYPlot].getRangeAxis().getRange()
+
+  def xDom_=(dom: Range): Unit = {
+    val (min, max) = minMax(dom)
+    val xyPlot = chart.getPlot().asInstanceOf[XYPlot];
+    xyPlot.getDomainAxis().setRange(min, max);
+  }
+
+  def yDom_=(dom: Range): Unit = {
+    val (min, max) = minMax(dom)
+    val xyPlot = chart.getPlot().asInstanceOf[XYPlot];
+    xyPlot.getRangeAxis().setRange(min, max);
+  }
+
+  def createChart(): JFreeChart
 
 }
 

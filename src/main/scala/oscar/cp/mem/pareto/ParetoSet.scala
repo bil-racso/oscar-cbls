@@ -2,7 +2,7 @@ package oscar.cp.mem.pareto
 
 class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   
-  val nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
+  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
   val ideal: Array[Int] = Array.fill(nObjs)(0)
 
   val objsVal: Array[OrderedLinkedList[SolNode[Sol]]] = Array.fill(nObjs)(OrderedLinkedList[SolNode[Sol]]())

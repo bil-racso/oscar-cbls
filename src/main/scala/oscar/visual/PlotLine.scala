@@ -34,7 +34,7 @@ import org.jfree.chart.plot.XYPlot
 /**
  * @author Pierre Schaus
  */
-class PlotLine(title: String, xlab: String, ylab: String) extends Plot(title,xlab,ylab) {
+class PlotLine(title: String, xlab: String, ylab: String, nbSeries: Int = 1) extends Plot(title,xlab,ylab, nbSeries) {
 
 	def createChart = ChartFactory.createXYLineChart(title,xlab,ylab,xyDataset,PlotOrientation.VERTICAL,false,false, false);
 }
@@ -42,7 +42,7 @@ class PlotLine(title: String, xlab: String, ylab: String) extends Plot(title,xla
 object PlotLine extends App {
 		val f = new VisualFrame("toto");
 		val inf = f.createFrame("Drawing");
-		val myplot = new PlotLine("My Line Plot","xlab","ylab");
+		val myplot = new PlotLine("My Line Plot","xlab","ylab",2);
 		inf.add(myplot);
 		inf.pack();
 		
@@ -51,7 +51,11 @@ object PlotLine extends App {
 		
 		for (i <- 0 until 10) {
 			myplot.addPoint(i, Math.random());
-			Thread.sleep(1000);
-
-		}  
+			Thread.sleep(500);
+		} 
+		// add points on second series
+		for (i <- 0 until 10) {
+			myplot.addPoint(i, Math.random(),1);
+			Thread.sleep(500);
+		} 
 }

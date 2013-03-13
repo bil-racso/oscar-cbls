@@ -38,7 +38,7 @@ import org.jfree.ui.TextAnchor
 /**
  * @author Pierre Schaus
  */
-class PlotScatter(title: String, xlab: String, ylab: String) extends Plot(title,xlab,ylab) {
+class PlotScatter(title: String, xlab: String, ylab: String, nbSeries: Int = 1) extends Plot(title,xlab,ylab,nbSeries) {
   
 	def createChart = ChartFactory.createScatterPlot(title,xlab,ylab,xyDataset,PlotOrientation.VERTICAL,false,false, false);
 
@@ -48,7 +48,7 @@ class PlotScatter(title: String, xlab: String, ylab: String) extends Plot(title,
 object PlotScatter extends App {
 		val f = new VisualFrame("toto");
 		val inf = f.createFrame("Drawing");
-		val myPlot = new PlotScatter("My Scatter Plot","xlab","ylab");
+		val myPlot = new PlotScatter("My Scatter Plot","xlab","ylab",2);
 		inf.add(myPlot);
 		inf.pack();
 		
@@ -61,9 +61,13 @@ object PlotScatter extends App {
 			myPlot.addPoint(i, y);
 			myPlot.highlight(i,y, Color.green)
 			Thread.sleep(1000);
-
 		} 
-		
-		
+		// add points on second series
+		for (i <- 0 until 10) {
+		    val y = Math.random()
+			myPlot.addPoint(i, y, 1);
+			myPlot.highlight(i,y, Color.blue)
+			Thread.sleep(1000);
+		} 		
 		
 }
