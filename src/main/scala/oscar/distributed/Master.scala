@@ -23,7 +23,7 @@ class DistributedComputation[I,R](block: I=> R){
   // create the master
   //val master = system.actorOf(Props(new Master(nbWorkers)), name = "master")
   
-  implicit val timeout = Timeout(5 seconds)
+//  implicit val timeout = Timeout(5 seconds)
   def apply(i: I) = Future{ block(i) }
   
   def run(iter: Iterable[I]) = for (i <- iter) yield{this(i)}
