@@ -39,7 +39,7 @@ object myTSP extends App {
 
   // Data parsing
   // ------------
-  val coord = TSPUtils.parseCoordinates("data/TSP/renB50.tsp")
+  val coord = TSPUtils.parseCoordinates("data/TSP/renA10.tsp")
   val realMatrix = TSPUtils.buildRealDistMatrix(coord)
   val distMatrix = TSPUtils.buildDistMatrix(coord)
 
@@ -56,11 +56,6 @@ object myTSP extends App {
   val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
   // Total distance
   val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
-
-  // Visualization
-  // -------------
-  val visu = new VisualRelax(coord, realMatrix)
-
 
   // Constraints
   // -----------
@@ -90,13 +85,12 @@ object myTSP extends App {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   var currentSol: Sol = null
-  var p = 15
+  var p = 5
   
   // Get initial solution
   cp.run(1)
   
-  for (iter <- 1 to 100) {
-    visu.updateRestart(iter)    
+  for (iter <- 1 to 100) {    
     cp.runSubjectTo(Int.MaxValue, 1000) {
       relaxVariables(clusterRelax(p))
     }
@@ -113,13 +107,9 @@ object myTSP extends App {
 
   def solFound() = {
     currentSol = new Sol(pred.map(_.value), succ.map(_.value))
-    visu.updateRoute(currentSol.pred)
-    visu.updateDist()
   }
 
   def relaxVariables(selected: Array[Boolean]) {
-
-    visu.updateSelected(selected)
 
     val constraints: Queue[Constraint] = Queue()
 

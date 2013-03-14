@@ -18,15 +18,12 @@ import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
 import oscar.cp.mem.pareto.QuadTreePareto
 import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.mem.dominance.SimpleQuadTree
 
 object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
-  
-  var pareto = new ListPareto[Sol](3)
-  
-  val nObjs = 3
-  val Objs = 0 until nObjs
+  val pareto = new ListPareto[Sol](1)
   
   // Parsing
   val coord1 = TSPUtils.parseCoordinates("data/TSP/renA10.tsp")
@@ -35,7 +32,7 @@ object ExactTriTSP extends App {
   val distMatrix1 = TSPUtils.buildDistMatrix(coord1)
   val distMatrix2 = TSPUtils.buildDistMatrix(coord2)
   val distMatrix3 = TSPUtils.buildDistMatrix(coord3)
-  val distMatrices = Array(distMatrix1, distMatrix2, distMatrix3)
+  val distMatrices = Array(distMatrix1)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
   
@@ -46,22 +43,21 @@ object ExactTriTSP extends App {
 
   // Successors & Predecessors
   val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  //val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
 
   // Total distance
-  val totDists = Array.tabulate(nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
+  val totDists = Array.tabulate(pareto.nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
 
   // Constraints
   // -----------
   cp.solve() subjectTo {
     cp.add(circuit(succ))
-    for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))   
+    for (o <- pareto.Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))   
     cp.add(Gavanelli02(pareto, totDists:_*))
   }
   
   // Search
   // ------
-  val objective = 1
+  val objective = 0
   cp.exploration {
     regretHeuristic(cp, succ, distMatrices(objective))
     solFound()
@@ -72,12 +68,10 @@ object ExactTriTSP extends App {
     val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))  
     // Insert Solution
     pareto.insert(newSol)
-    val sols = pareto.toList
   }
   
   // Run
   // ---  
-  println("Search...")
   cp.run()  
   
   val sols = pareto.toList
@@ -86,8 +80,6 @@ object ExactTriTSP extends App {
     assert(!sol2.dominates(sol1))
   }
  
-  cp.printStats() 
   println("Pareto Set")
-  val sorted = pareto.sortBy(_(0))
-  println(sorted.mkString("\n"))
+  println(pareto.mkString("\n"))
 }

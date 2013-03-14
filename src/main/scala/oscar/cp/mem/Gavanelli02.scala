@@ -11,17 +11,7 @@ import oscar.cp.mem.pareto.MOSol
 
 class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
   
-  override def propagate(): CPOutcome = updateMinIdx(null, -1, -1) // Value are not 
- 
-  /*override def updateMinIdx(cpVar: CPVarInt, obj: Int, v: Int): CPOutcome = {
-    for (o <- pareto.Objs if o != obj) {
-      if (adjustUpperBound(o) == Failure) return Failure
-    }
-    Suspend
-  }*/
-  
-   
-  override def updateMinIdx(cpVar: CPVarInt, obj: Int, v: Int): CPOutcome = {
+  override def propagate(): CPOutcome = {    
     
     // List of all solutions
     val allSols = pareto.toList
@@ -30,7 +20,7 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constrai
     // The best dominant solutions according to each objective
     val bestDoms = getAllBestDominant(DPobjs, allSols)
     
-    for (o <- pareto.Objs if o != obj) {
+    for (o <- pareto.Objs) {
       if (bestDoms(o).isDefined) {
         val ub = bestDoms(o).get(o) - 1
         if (objVars(o).updateMax(ub) == Failure) return Failure
@@ -38,7 +28,14 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constrai
     }
     
     Suspend
-  }
+  }  
+ 
+  /*override def updateMinIdx(cpVar: CPVarInt, obj: Int, v: Int): CPOutcome = {
+    for (o <- pareto.Objs if o != obj) {
+      if (adjustUpperBound(o) == Failure) return Failure
+    }
+    Suspend
+  }*/
   
   def getAllBestDominant(DPobjs: Array[Array[Int]], sols: List[MOSol[Sol]]): Array[Option[MOSol[Sol]]] = {
     
@@ -84,7 +81,8 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constrai
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs) {
-        if (!objVars(o).isBound) objVars(o).callUpdateMinIdxWhenMinChanges(this, o)
+        if (!objVars(o).isBound) objVars(o).callPropagateWhenMinChanges(this)
+        //if (!objVars(o).isBound) objVars(o).callUpdateMinIdxWhenMinChanges(this, o)
       }
       Suspend
     }
