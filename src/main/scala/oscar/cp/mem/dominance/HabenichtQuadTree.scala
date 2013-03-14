@@ -68,7 +68,7 @@ class HabenichtQuadTree[V](private val nDim: Int) {
     else if (!isDominated(newNode, root, better(quad))) {     
       
       // Test 1
-      for (q <- worst(quad) if root hasChild q) {
+      for (q <- worse(quad) if root hasChild q) {
         root.children(q) = filterDominance(newNode, root.child(q)) // Safe
       }
       
@@ -228,9 +228,22 @@ class HabenichtQuadTree[V](private val nDim: Int) {
     (usedQuadrants.min to quad).filter(q => ((q ^ dim) - q) == dim)
   }
   
-  def worst(quad: Int): IndexedSeq[Int] = {
+  def worse(quad: Int): IndexedSeq[Int] = {
     val dim = opposite(quad)
     (usedQuadrants.min until quad).filter(q => ((q ^ dim) - q) == dim)
+  }
+  
+  def toList: List[V] = {
+    if (!root.isDefined) List()
+    else toList0(root.get)
+  }
+  
+  def toList0(node: QuadNode): List[V] = {
+    var list = List(node.value)
+    for (q <- usedQuadrants if node hasChild q) {
+      list = list ::: toList0(node.child(q))
+    }
+    list
   }
 }
 

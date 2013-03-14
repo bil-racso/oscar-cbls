@@ -16,13 +16,14 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
+import oscar.cp.mem.pareto.QuadTreePareto
 import oscar.cp.mem.pareto.ListPareto
 
 object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
   
-  var pareto = new ListPareto[Sol](3)
+  var pareto = new QuadTreePareto[Sol](3)
   
   val nObjs = 3
   val Objs = 0 until nObjs
@@ -70,14 +71,8 @@ object ExactTriTSP extends App {
     // No dominated solutions !
     val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))  
     // Insert Solution
-    println(newSol)
     pareto.insert(newSol)
-    println(pareto.toList)
     val sols = pareto.toList
-    for (sol1 <- sols; sol2 <- sols; if sol1 != sol2) {
-      assert(!sol1.dominates(sol2))
-      assert(!sol2.dominates(sol1))
-    }
   }
   
   // Run
