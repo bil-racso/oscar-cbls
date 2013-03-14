@@ -23,7 +23,7 @@ object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
   
-  var pareto = new QuadTreePareto[Sol](3)
+  var pareto = new ListPareto[Sol](3)
   
   val nObjs = 3
   val Objs = 0 until nObjs
