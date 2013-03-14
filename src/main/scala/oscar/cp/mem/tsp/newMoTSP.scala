@@ -25,10 +25,12 @@ object newMoTSP extends App {
   val pareto: Pareto[Sol] = new ListPareto(3)
   pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
+  var allSol : List[Array[Int]] = List()
+  
   // Parsing
-  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/renA10.tsp")
-  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/renB10.tsp") 
-  val distMatrix3 = TSPUtils.buildDistMatrix("data/TSP/renC10.tsp") 
+  val distMatrix1 = TSPUtils.buildDistMatrix("data/TSP/renA50.tsp")
+  val distMatrix2 = TSPUtils.buildDistMatrix("data/TSP/renB50.tsp") 
+  val distMatrix3 = TSPUtils.buildDistMatrix("data/TSP/renC50.tsp") 
   val distMatrices = Array(distMatrix1, distMatrix2, distMatrix3)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
@@ -84,6 +86,8 @@ object newMoTSP extends App {
     noSol = false
     // Visu
     //visu.update()
+    
+    allSol = newSol.objVals :: allSol
   }
   
   // Run
@@ -102,7 +106,7 @@ object newMoTSP extends App {
   while(!stopCriterion) {
 
     iter += 1
-    if (iter % 10 == 0) println("p " + p + "Iter: " + iter + "\t#Set: " + pareto.size)   
+    if (iter % 10 == 0) println("p " + p + " Iter: " + iter + "\t#Set: " + pareto.size)   
 
     noSol = true
     val alive = pareto.filter(_.lifes > 0)
@@ -127,6 +131,11 @@ object newMoTSP extends App {
       if (noSol) sol.lifes -= 1
     }
     if (iter > 1000) stopCriterion = true
+    
+    if (allSol.size >= 10000) {
+      stopCriterion = true
+      println(allSol.map("Array("+_.mkString(", ")+")"))
+    }
   }
   
   def clusterRelax(p: Int, obj: Int): Array[Boolean] = {

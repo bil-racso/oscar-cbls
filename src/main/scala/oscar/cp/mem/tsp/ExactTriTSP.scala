@@ -16,14 +16,13 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
-import oscar.cp.mem.pareto.QuadTreePareto
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.dominance.SimpleQuadTree
 
 object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
-  val pareto = new ListPareto[Sol](1)
+  val pareto = new ListPareto[Sol](3)
   
   // Parsing
   val coord1 = TSPUtils.parseCoordinates("data/TSP/renA10.tsp")
@@ -32,7 +31,7 @@ object ExactTriTSP extends App {
   val distMatrix1 = TSPUtils.buildDistMatrix(coord1)
   val distMatrix2 = TSPUtils.buildDistMatrix(coord2)
   val distMatrix3 = TSPUtils.buildDistMatrix(coord3)
-  val distMatrices = Array(distMatrix1)
+  val distMatrices = Array(distMatrix1, distMatrix2, distMatrix3)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
   
@@ -65,9 +64,9 @@ object ExactTriTSP extends App {
 
   def solFound() {   
     // No dominated solutions !
-    val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))  
+    val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))      
     // Insert Solution
-    pareto.insert(newSol)
+    assert(pareto.insert(newSol) != -1)
   }
   
   // Run
@@ -75,11 +74,12 @@ object ExactTriTSP extends App {
   cp.run()  
   
   val sols = pareto.toList
+  
   for (sol1 <- sols; sol2 <- sols; if sol1 != sol2) {
     assert(!sol1.dominates(sol2))
     assert(!sol2.dominates(sol1))
   }
  
   println("Pareto Set")
-  println(pareto.mkString("\n"))
+  println(sols.sortBy(_.objVals(0)).mkString("\n"))
 }

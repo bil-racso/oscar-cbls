@@ -16,14 +16,14 @@ import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
-import oscar.cp.mem.pareto.QuadTreePareto
+import oscar.cp.mem.pareto.ListPareto
 
 object ExactBiTSP extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   // BiObjective Pareto Set 
-  val pareto: Pareto[Sol] = new QuadTreePareto(2)
+  val pareto: Pareto[Sol] = new ListPareto(2)
   pareto.Objs.foreach(pareto.nadir(_) = 10000)
   
   // Parsing
