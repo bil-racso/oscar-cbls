@@ -29,6 +29,7 @@ import java.awt.*;
 
 /**
  * @author Pierre Schaus
+ * @deprecated(use PlotLine instead,1.0)
  */
 public class Plot2D extends JPanel {
 

@@ -1,6 +1,6 @@
 package oscar.cp.mem.tsp
 
-import oscar.cp.mem.visu.VisualPareto
+import oscar.cp.mem.visu.PlotPareto
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
 import scala.collection.mutable.Queue
@@ -22,7 +22,7 @@ object MoLnsTSP extends App {
   val newSols: ParetoSet[Sol] = ParetoSet(pareto.nObjs)
   pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
-  val visu = new VisualPareto(pareto)
+  val visu = new PlotPareto(pareto)
   
   val inst1 = "A"
   val inst2 = "B"
@@ -125,7 +125,7 @@ object MoLnsTSP extends App {
     currentSol = selectSolution(iter, intens)
     
     // Visu
-    visu.highlight(currentSol(0), currentSol(1))
+    //visu.highlight(currentSol(0), currentSol(1))
     
     // Init Search
     currentDominated = false

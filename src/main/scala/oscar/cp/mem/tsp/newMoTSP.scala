@@ -7,7 +7,7 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualPareto
+import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint

@@ -9,7 +9,7 @@ import oscar.cp.mem.pareto.Pareto
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
-import oscar.cp.mem.visu.VisualPareto
+import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.mem.DynDominanceConstraint
@@ -36,7 +36,7 @@ object ExactBiTSP extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  val visu = new VisualPareto(pareto)
+  val visu = new PlotPareto(pareto)
 
   // Model
   // -----
@@ -85,7 +85,7 @@ object ExactBiTSP extends App {
     assert(pareto.insert(newSol) != -1)
     
     // Visu
-    visu.highlight(totDists(0).value, totDists(1).value)
+    //visu.highlight(totDists(0).value, totDists(1).value)
     visu.update()
   }
   

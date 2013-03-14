@@ -2,6 +2,14 @@ package oscar.cp.mem.pareto
 
 abstract class Pareto[Sol] {
   
+  var observers: List[ParetoObserver] = Nil
+  
+  def addObserver(obs: ParetoObserver) {
+    observers = obs :: observers
+  }
+  
+  def notifyObservers() = observers.foreach(_.update())
+  
   /** Returns the number of objectives
    * 
    */

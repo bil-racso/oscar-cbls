@@ -2,7 +2,7 @@ package oscar.cp.mem.pareto
 
 class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   
-  val nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
+  var nadir: Array[Int] = Array.fill(nObjs)(Int.MaxValue)
   val ideal: Array[Int] = Array.fill(nObjs)(0)
 
   val objsVal: Array[OrderedLinkedList[SolNode[Sol]]] = Array.fill(nObjs)(OrderedLinkedList[SolNode[Sol]]())
@@ -49,15 +49,18 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
     X = solNode :: X
   }
 
-  def insert(xNew: MOSol[Sol]): Int = {
+  def insert(xNew: MOSol[Sol]): Int = { 
+    val ret = 
     if (X.isEmpty) {
       realInsert(xNew)
-      return 0
+      0
     } else {
       val removed = clean(xNew)
       if (removed != -1) realInsert(xNew)
-      return removed
+      removed
     }
+    notifyObservers()
+    ret
   }
 
   private def clean(xNew: MOSol[Sol]): Int = {
@@ -86,6 +89,7 @@ class ParetoSet[Sol](val nObjs: Int) extends Pareto[Sol] {
   def removeAll() { 
     X = List() 
     objsVal.foreach(_.clear())
+    notifyObservers()
   }
   
   def sortByObj(obj: Int) = objsVal(obj).toList.map(_.sol)
