@@ -30,13 +30,11 @@ object AbstractLearnedQuantiles {
     new AbstractLearnedQuantiles[B](pmin, pmax) with CountNRealizations[B]
 }
 
-class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax: Double)(implicit  op: Operator[B]) extends LearnedNumerical[B] with Observing[B] with Aggregatable[AbstractLearnedQuantiles[B]] {
+class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax: Double)(implicit  op: Operator[B]) extends LearnedNumerical[B] with Aggregatable[AbstractLearnedQuantiles[B]] {
   var n: Int = 0
   val count = (new mutable.HashMap[B, Int]()).withDefaultValue(0)
-  require(0 <= pmin)
-  require(pmin <= 1)
-  require(0 <= pmax)
-  require(pmax <= 1)
+  require(0 <= pmin && pmin <= 1)
+  require(0 <= pmax && pmax <= 1)
 
   override def equals(o: Any) = {
     val that = o.asInstanceOf[AbstractLearnedQuantiles[B]]
@@ -53,13 +51,13 @@ class AbstractLearnedQuantiles[B <% Operationable[B]](val pmin: Double, val pmax
     super[LearnedNumerical].aggregate(that)
   }
 
-  override def observe(v: B) {
+  override def observe {
     //require(op.positive(v))
-    super.observe(v)
-    if ( v != op.zero) {
-      count(v) += 1
+    if ( current != op.zero) {
+      count(current) += 1
       n += 1
     }
+    super.observe
   }
 
   def quantileUp(p: Double, nRea: Int) = {
@@ -129,7 +127,7 @@ class LearnedNumerical[B <% Operationable[B]](implicit  op: Operator[B]) extends
     current = v
   }
   def apply() = current
-  def observe(v: B) {
+  final def observe(v: B) {
     current = v
     observe
   }
