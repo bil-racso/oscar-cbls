@@ -19,9 +19,16 @@
 
 package oscar.invariants.test
 
-import org.scalatest.FunSuite
+import oscar.stochastic._
 import scala.collection.immutable._
-import oscar.invariants._
+import scala.math.abs
+import scala.collection._
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
+import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Spec
 import org.scalacheck.Prop._
 import org.scalacheck._
 import org.scalatest.prop.Checkers
@@ -29,8 +36,8 @@ import org.scalacheck.Test._
 import java.util.Arrays
 import oscar.invariants.MyDLL
 
-
-class MyDLLTest extends FunSuite with Checkers {
+@RunWith(classOf[JUnitRunner])
+class MyDLLTest extends FunSuite with ShouldMatchers with Checkers {
 
 	def listGen = Gen.listOf[Int](Gen.choose(-10000000, 10000000))
 
