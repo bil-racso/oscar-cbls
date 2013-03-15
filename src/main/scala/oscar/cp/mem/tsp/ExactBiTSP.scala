@@ -35,7 +35,7 @@ object ExactBiTSP extends App {
   val Cities = 0 until nCities
   
   // Visualization
-  val visu = new PlotPareto(pareto)
+  val visu = new PlotPareto()
 
   // Model
   // -----
@@ -85,7 +85,7 @@ object ExactBiTSP extends App {
     
     // Visu
     //visu.highlight(totDists(0).value, totDists(1).value)
-    visu.update()
+    visu.insert(totDists(0).value, totDists(1).value)
   }
   
   // Run

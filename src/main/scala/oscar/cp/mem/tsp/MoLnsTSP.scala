@@ -22,7 +22,7 @@ object MoLnsTSP extends App {
   val newSols: ParetoSet[Sol] = ParetoSet(pareto.nObjs)
   pareto.Objs.foreach(pareto.nadir(_) = 180000)
   
-  val visu = new PlotPareto(pareto)
+  val visu = new PlotPareto()
   
   val inst1 = "A"
   val inst2 = "B"
@@ -221,6 +221,6 @@ object MoLnsTSP extends App {
     noSol = false
     
     // Visu
-    visu.update()
+    // insert here
   }
 }
