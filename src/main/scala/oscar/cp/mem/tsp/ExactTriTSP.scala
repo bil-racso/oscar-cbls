@@ -17,7 +17,7 @@ import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
 import oscar.cp.mem.pareto.ListPareto
-import oscar.cp.mem.dominance.SimpleQuadTree
+//import oscar.cp.mem.dominance.SimpleQuadTree
 
 object ExactTriTSP extends App {
 
