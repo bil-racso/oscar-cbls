@@ -30,11 +30,11 @@ import util.Random
 import scala.math._
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.NearestNeighbor
+import oscar.cbls.routing.initialSolution._
 import oscar.cbls.routing.neighborhood._
 
 /**supports only a single vehicle*/
-object ExSolver extends SearchEngine with StopWatch with App{
+object TSPCBLS extends SearchEngine with StopWatch with App{
 
   // tester si l'objectif est bien la distance réel via la matrice de base des distances.
   def realSum(vrp:VRP,matrice:Array[Array[Int]])={
@@ -49,7 +49,7 @@ object ExSolver extends SearchEngine with StopWatch with App{
   val N:Int = 1000
 
   this.startWatch()
-  
+
   println("TSP(" + N + ")")
   val random = new Random(0)
   
@@ -103,8 +103,6 @@ object ExSolver extends SearchEngine with StopWatch with App{
 */
   m.close()
 
-
-
   println("closed " + getWatchString)
   NearestNeighbor(vrp)
   //RandomNeighbor(vrp)
@@ -112,7 +110,7 @@ object ExSolver extends SearchEngine with StopWatch with App{
 
   println("start val: " + vrp.ObjectiveVar.value)
   println(vrp)
-  println(vrp.routes)
+  //println(vrp.routes)
   var nsize = 20
   // 20 for the ThreeOpt withtout reverse
   // 20-100 for the ThreeOpt with 1 or 2 reverse works well
@@ -131,12 +129,12 @@ object ExSolver extends SearchEngine with StopWatch with App{
       it +=1
       move.comit
       vrp.ObjectiveVar.value
-      println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value)
+      if(it % 100 == 0) println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value + ": " + getWatch)
 
     }
     else{
         saturated = true
-        println("done " + getWatchString)
+        println("done " + getWatchString + " it: " + it)
     }
   }
 

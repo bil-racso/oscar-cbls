@@ -24,10 +24,16 @@ import javax.swing.JApplet
 import java.awt.Dimension
 
 
+/** this is an applet demonstrating the routing engine.
+  * it takes a parameter: light which can be true or false
+  * if true, it provides a lightweight demonstrator, if false, it provides a richer demonstrator
+  */
 class Applet extends JApplet with App {
 
   override def init(){
-    setContentPane(PanelVRP.PanelVRP)
+    val easyMode = ("true" == this.getParameter("light"))
+    val myPanelVRP = new PanelVRP(easyMode);
+    setContentPane(myPanelVRP)
     setSize(new Dimension(800,500))
 
     setName("VRP Routing")

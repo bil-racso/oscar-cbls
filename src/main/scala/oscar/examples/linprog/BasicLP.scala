@@ -33,11 +33,25 @@ object BasicLP {
 	  val x2 = LPVar(lp,"x2",0 ,17) 
 	  val x3 = LPVar(lp,"x3",2,3)	 
 	   
-	   
+	  var cons = Array[LPConstraint]() 
 	  lp.maximize(x0+2*x1+3*x2+x3) subjectTo {
-	 	  lp.add(-1*x0 + x1 + x2 + 10*x3 <= 20)
-	 	  lp.add(x0 - 3.0*x1 + x2 <= 30)
-	 	  lp.add(x1 - 3.5*x3 == 0 )
+	 	  cons = cons :+ lp.add(-1*x0 + x1 + x2 + 10*x3 <= 20, "cons1")
+	 	  cons = cons :+ lp.add(x0 - 3.0*x1 + x2 <= 30, "cons2")
+	 	  cons = cons :+ lp.add(x1 - 3.5*x3 == 0)
+	  }
+	  
+	  println("x0:"+x0.value)
+	  println("x1:"+x1.value)
+	  println("x2:"+x2.value)
+	  println("x3:"+x3.value)
+	  
+	  
+	  for (c <- cons) {
+	    println("-------------")
+	    println(c.name)
+	    println(c.slack())
+	    println(c.isTight())
+	    println(c.check())
 	  }
   
 	  println("objective"+lp.getObjectiveValue())

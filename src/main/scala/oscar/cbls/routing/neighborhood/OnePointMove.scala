@@ -136,7 +136,7 @@ object OnePointMove extends SearchEngine{
  */
 case class OnePointMove(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
+  def comit() {OnePointMove.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = predOfMovedPoint
   def getValuesToAssign = vrp.moveTo(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter)

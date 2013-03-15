@@ -40,7 +40,7 @@ abstract class Neighbor{
   /**
    * It performs the move (which consist to choose this neighbor) on the VRP problem.
    */
-  def comit
+  def comit()
 
   /**
    * Returns the node on which we restart the search procedure.

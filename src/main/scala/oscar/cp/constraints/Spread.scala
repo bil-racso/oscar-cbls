@@ -38,6 +38,8 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
   val xmax = Array.fill(n)(0)
   val bnds = Array.fill(2*n)((0,0)) // will contain the lower and upper bounds of the n domains + bounds type (1 = lower, 0 = upper)
  
+  val epsilon = 10e-6
+  
   override def setup(l: CPPropagStrength): CPOutcome = { 
     
     if (reverse) {
@@ -187,15 +189,20 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
 	var minopt = 
 	   if (m(Iopt) == 0) {
 		   es2(Iopt)
-	   } else{
-	       val y = (sum - es(Iopt)) % m(Iopt)
+	   } else {
+	       val offset = (sum - es(Iopt)).abs / m(Iopt) + 2
+	       val y = (sum - es(Iopt) + offset*m(Iopt)) % m(Iopt)
 		   val vinf:  Int = ((sum - es(Iopt)) - y) / m(Iopt)
 		   val vsup = vinf + (if (y > 0) 1 else 0)
 		   (es2(Iopt) + y * (vsup * vsup) + (m(Iopt) - y) * (vinf * vinf))
 	   }
 	
-	val v: Double = (sum - es(Iopt)) / m(Iopt)
-	
+	val v: Double = (sum - es(Iopt)).toDouble / m(Iopt)
+	//println("v:"+v)
+	//println("Imin:"+Imin.mkString(","))
+	//println("Imax:"+Imax.mkString(","))
+	//println("Iopt:"+Iopt)
+	//println("es:"+es(Iopt))
 	//minopt = scala.math.ceil(es2(Iopt) + m(Iopt) * v * v).toInt
 	
 	if (sum2.updateMin(minopt) == CPOutcome.Failure) {
@@ -230,20 +237,27 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
                 val c = deltaQ - sum2.max
                 val d2 = (-b + scala.math.sqrt(b*b-a*c))/a
                 if(d2 <= d1) {
-                  var xiZ = scala.math.floor(xiq+d2).toInt
+                  var xiZ = scala.math.floor(xiq+d2+epsilon).toInt
                   
                   // Z-bound consistent pruning
                   
                   val (mStar,esStar,es2Star) = updateValues(i,xiZ,I)
-                  val y = (sum-esStar) % mStar
+                  
+                  //println("mStar:"+mStar+" eStar:"+esStar+" es2Star:"+es2Star)
+                  
+                  val offset = (sum-esStar).toInt.abs / mStar +2
+                  val y = (sum-esStar + mStar * offset) % mStar
+                  //println("y:"+y+ " sum-esStar:"+(sum-esStar)+" mod:"+(sum-esStar + mStar * offset)+ " offset:"+offset)
                   val vinf = ((sum-esStar) - y) / mStar
                   val vsup = if (y > 0) vinf+1 else vinf
+                  //println("vinf:"+vinf+" vsup:"+vsup)
                   var deltaZ = es2Star + y * (vsup*vsup) + (mStar-y) * (vinf*vinf)
+                  
                   while (deltaZ > sum2.max) {
                     deltaZ += 2 * (vsup-xiZ);
                     xiZ -= 1
                   }
-                  
+                  //println("deltaZ:"+deltaZ+" xiZ:"+xiZ)
                   x(i).updateMax(xiZ)
                 } 
                 else pruneMax(i,xiq+ d1, I-1)	        

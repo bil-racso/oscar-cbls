@@ -26,7 +26,9 @@ package oscar.cbls
  */
 
 /**
- * Modeling of vehicle routing problem.
+ * This is a package to solve routing problems.
+ * It includes modeling features as well as standard neighbor to conduct the search.
+ * It also encompasses some heuristics to construct the initial solution for the search.
  */
 package object routing {}
 

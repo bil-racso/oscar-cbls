@@ -27,7 +27,7 @@ import javax.swing.JInternalFrame;
  * @author Pierre Schaus
  *
  */
-class VisualRectangle(d:VisualDrawing, shape:Rectangle2D.Double) extends ColoredShape[Rectangle2D.Double](d,shape){
+class VisualRectangle(d: VisualDrawing, shape: Rectangle2D.Double) extends ColoredShape[Rectangle2D.Double](d,shape){
 
 	def rect:Rectangle2D.Double = shape
 

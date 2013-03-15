@@ -192,7 +192,7 @@ object ThreeOptB extends SearchEngine{
 case class ThreeOptB(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
                                   objAfter:Int, vrp:VRP) extends Neighbor{
   // overridings methods
-  def comit {ThreeOptB.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
+  def comit() {ThreeOptB.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = startOfFirstEdge
   def getValuesToAssign = vrp.threeOptB(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,

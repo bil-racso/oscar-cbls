@@ -32,6 +32,8 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
   var actualNeighbor = 0
   var ended = false
 
+  var mySmartSolution:SmartSolution=null;
+
   def getSelectedNeighborhood(kLimit:Int,n:Neighbor) = panelVRP.getSelectedNeighborhood(kLimit,n)
 
   def updateVisualisation(iteration:Int) = panelVRP.updateVisualisation(iteration)
@@ -56,6 +58,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         if (n==null){ended =true} else actualNeighbor = 0;n}
       }
   }
+
   def run(){
     var smartIt = 1
     var bestObj = panelVRP.vrpModel.vrp.ObjectiveVar.value
@@ -86,10 +89,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
           previousMove.comit
           updateVisualisation(it)
         }
-
       }
-
-
 
       boardPanel.iteration = false
       boardPanel.start.setText("Start")
@@ -99,16 +99,11 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         println("Nouveau meilleur objectif: \n" +
           "-----------   ite: "+smartIt+"\n"+
           "-----------   obj: "+bestObj+"\n")
-        if(smartIt == 1)
-          SmartSolution(true)
-        else SmartSolution(false)
+
+        if(smartIt == 1) mySmartSolution = new SmartSolution(panelVRP)
+        else mySmartSolution.updateUI()
       }
       smartIt = smartIt +1
     }
-
-
   }
-
-
-
 }

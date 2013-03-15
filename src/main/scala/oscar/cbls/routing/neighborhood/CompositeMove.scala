@@ -113,7 +113,7 @@ case class CompositeDeclaration(vrp:VRP){
  */
 case class CompositeMove(move:Neighbor, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {move.getValuesToAssign.foreach(t => t._1 := t._2)}
+  def comit() {move.getValuesToAssign.foreach(t => t._1 := t._2)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = move.startNodeForNextExploration
   def getValuesToAssign = move.getValuesToAssign
