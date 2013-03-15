@@ -28,6 +28,10 @@ import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 import oscar.util._
+import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.mem.pareto.Pareto
+import oscar.cp.mem.pareto.MOSol
+import oscar.cp.mem.Gavanelli02
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -38,6 +42,19 @@ class CPSolver() extends Store() {
   }
 
   var stateObjective: Unit => Unit = Unit => Unit
+  
+  private val decVariables = scala.collection.mutable.Set[CPVarInt]()
+  private var lastSol = new CPSol(Set[CPVarInt]())
+  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
+  def pareto = paretoSet
+  
+  def addDecisionVariables(x: Iterable[CPVarInt]) {
+    x.foreach(decVariables += _)
+  }
+  
+  def recordSol() {
+    lastSol = new CPSol(decVariables.toSet)
+  }
 
   def optimize(obj: CPObjective): CPSolver = {
     stateObjective = Unit => {
@@ -52,6 +69,18 @@ class CPSolver() extends Store() {
       objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
       post(objective)
     }
+    this
+  }
+  
+  def paretoMinimize(objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      post(objective)
+      objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
+    }
+    addDecisionVariables(objectives)
+    paretoSet = new ListPareto[CPSol](objectives.size)
+    add(new Gavanelli02(paretoSet,objectives:_*))
     this
   }
 
@@ -191,6 +220,8 @@ class CPSolver() extends Store() {
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
+    lastSol = new CPSol(Set[CPVarInt]())
+    paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
     objective.tighten()
   }
 

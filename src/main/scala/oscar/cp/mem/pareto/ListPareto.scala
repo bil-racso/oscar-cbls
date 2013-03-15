@@ -8,6 +8,7 @@ class ListPareto[Sol](val nObjs: Int) extends Pareto[Sol] {
   var ideal: Array[Int] = Array.fill(nObjs)(Int.MinValue)
 
   def insert(sol: MOSol[Sol]): Int = { 
+    val ret =
     if (sols.exists(_ dominates sol)) -1
     else {     
       var newList: List[MOSol[Sol]] = List()
@@ -16,6 +17,8 @@ class ListPareto[Sol](val nObjs: Int) extends Pareto[Sol] {
       sols = sol :: newList
       nRemoved
     }
+    notifyObservers()
+    ret
   }
   
   def getDominant(sol: Array[Int]): Option[MOSol[Sol]] = {

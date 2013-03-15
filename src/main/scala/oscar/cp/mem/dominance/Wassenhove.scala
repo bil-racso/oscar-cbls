@@ -37,7 +37,7 @@ object Wassenhove extends App {
   // Visualization
   val f = new VisualFrame("TSP",1,1)
     // creates the plot and place it into the frame
-  val visu = new PlotPareto(pareto)
+  val visu = new PlotPareto()
   // fix the range of the plot
   visu.xDom = 2500 to 5000
   visu.yDom = 2500 to 5000
@@ -90,7 +90,7 @@ object Wassenhove extends App {
     
     // Visu
     visu.highlight(totDists(0).value, totDists(1).value)
-    visu.update()
+    visu.insert(totDists(0).value, totDists(1).value)
   }
     
   // Run

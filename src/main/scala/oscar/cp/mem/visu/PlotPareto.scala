@@ -27,43 +27,31 @@ import java.awt.event.ComponentEvent
 import oscar.cp.mem.pareto.ParetoObserver
 import oscar.cp.mem.pareto.ParetoSet
 import javax.swing.SwingUtilities
+import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.mem.pareto.MOSol
 
 
 /**
  * @author Pierre Schaus
  */
- class PlotPareto[Sol](val pareto1: Pareto[Sol], val pareto2: Pareto[Sol] = new ParetoSet[Sol](2), title: String = "Pareto", xlab: String = "Obj1", ylab: String = "Obj2") extends PlotScatter(title,xlab,ylab,2) with ParetoObserver {
+ class PlotPareto(title: String = "Pareto", xlab: String = "Obj1", ylab: String = "Obj2", nbPareto: Int = 1) extends PlotScatter(title,xlab,ylab,nbPareto) {
 
 
-  pareto1.addObserver(this)
-  pareto2.addObserver(this)
-  update()
+  val paretos = Array.fill(nbPareto)(new ListPareto[Object](2))
   
- 
-  def update() {
+  def insert(obj1: Int, obj2: Int, paretoIdx: Int = 0) {
+    paretos(paretoIdx).insert(new MOSol(null, Array(obj1, obj2)))
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
-        removeAllPoints(0)
-        removeAllPoints(1)
-
-        for (p <- pareto1) {
+        removeAllPoints(paretoIdx)
+        for (p <- paretos(paretoIdx)) {
           val x = p(0)
           val y = p(1)
-          addPoint(x, y, 0)
+          addPoint(x, y, paretoIdx)
         }
-
-        for (p <- pareto2) {
-          val x = p(0)
-          val y = p(1)
-          addPoint(x, y, 1)
-        }
-        chart.fireChartChanged()
-
       }
     })
   }
-  
 
-  
   
 }
