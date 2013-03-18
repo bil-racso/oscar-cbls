@@ -19,18 +19,14 @@ abstract class Pareto[Sol](protected val objs: Array[CPObjectiveUnit]) {
     dominate0(sol1, sol2, 0)
   }
   
-  // Sol1 dominates sol2 if it does not exist a value i such that sol1(i) 
-  // is not better or equal to sol2(i)
+  // If it exists an objective i for which sol1(i) is worse than sol2(i), then sol1 does not
+  // dominate sol2
   private def dominate0(sol1: Array[Int], sol2: Array[Int], i: Int): Boolean = {
     if (i == nObjs) true
     else if (objs(i).isWorse(sol1(i), sol2(i))) false
     else dominate0(sol1, sol2, i+1)
   }
-  
-  def test {
-    val sol1 = Array(2, 3)
-    val sol2 = Array(2, 3)
-  }
+
   /** Returns the number of objectives
    * 
    */

@@ -5,7 +5,7 @@ import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
-import oscar.cp.mem.pareto.RBPareto
+import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
@@ -21,7 +21,7 @@ object Wassenhove extends App {
   case class Sol(pred: Array[Int], succ: Array[Int])
 
   // BiObjective Pareto Set 
-  val pareto: RBPareto[Sol] = RBPareto()
+  val pareto: Pareto[Sol] = ListPareto()
   pareto.nadir(0) = 10000
   pareto.nadir(1) = 10000
   
