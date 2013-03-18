@@ -25,7 +25,7 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 	
 	def update(xScale : Int, yScale: Int) {
 			
-		val activities = resource.activities
+		val activities = resource.cumulativeActivities
 		val rawPoints  = CumulativeProfile.getCumulativeProfile(activities)
 		
 		// The end of a ProdConsActivity is not relevant

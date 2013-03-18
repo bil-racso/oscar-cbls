@@ -194,7 +194,7 @@ object ThreeOptA extends SearchEngine{
 case class ThreeOptA(beforeSegmentStart:Int, segmentEnd:Int, insertionPoint:Int,
                         objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {ThreeOptA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
+  def comit() {ThreeOptA.doMove(beforeSegmentStart, segmentEnd, insertionPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = insertionPoint
   def getValuesToAssign = vrp.threeOptA(insertionPoint,vrp.Next(insertionPoint).value,beforeSegmentStart,

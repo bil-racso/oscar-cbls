@@ -739,7 +739,9 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
   def :*=(v:Int) {setValue(v*getValue(true))}
   def :-=(v:Int) {setValue(getValue(true) - v)}
 
-  def ++ {this := this.getValue(true) +1}
+  /** increments the variable by one
+    */
+  def ++() {this := this.getValue(true) +1}
 
   /**this operator swaps the value of two IntVar*/
   def :=:(v:IntVar){
@@ -822,7 +824,7 @@ class IntSetVar(override val model:Model,
   private var ToPerform: List[(Int,Boolean)] = List.empty
   private var OldValue:SortedSet[Int] = Value
 
-  private def Perform{
+  private def Perform(){
     def Update(l:List[(Int,Boolean)]){
       if (l.isEmpty) return
       Update(l.tail)
@@ -944,7 +946,7 @@ class IntSetVar(override val model:Model,
     }else{
       if(this.DefiningInvariant!= null && getModel != null){
         getModel.propagate(this)
-        if (!ToPerform.isEmpty){Perform}
+        if (!ToPerform.isEmpty){Perform()}
         OldValue
       }else{
         Value

@@ -28,6 +28,10 @@ import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 import oscar.util._
+import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.mem.pareto.Pareto
+import oscar.cp.mem.pareto.MOSol
+import oscar.cp.mem.Gavanelli02
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -37,7 +41,27 @@ class CPSolver() extends Store() {
     this.add(cons, propagStrength)
   }
 
-  var stateObjective: Unit => Unit = Unit => Unit
+  private var stateObjective: Unit => Unit = Unit => Unit
+  
+  private val decVariables = scala.collection.mutable.Set[CPVarInt]()
+  private var lastSol = new CPSol(Set[CPVarInt]())
+  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
+  //def pareto = paretoSet
+  var recordNonDominatedSolutions = false
+  
+  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.map(_.sol)
+  
+  def addDecisionVariables(x: Iterable[CPVarInt]) {
+    x.foreach(decVariables += _)
+  }
+  
+  private def recordSol() {
+    lastSol = new CPSol(decVariables.toSet)
+  }
+  
+  def obj(objVar: CPVarInt): CPObjectiveUnit = {
+    objective(objVar)
+  }
 
   def optimize(obj: CPObjective): CPSolver = {
     stateObjective = Unit => {
@@ -52,6 +76,19 @@ class CPSolver() extends Store() {
       objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
       post(objective)
     }
+    this
+  }
+  
+  def paretoMinimize(objectives: CPVarInt*): CPSolver = {
+    stateObjective = Unit => {
+      recordNonDominatedSolutions = true
+      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      post(objective)
+      objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
+    }
+    addDecisionVariables(objectives)
+    paretoSet = new ListPareto[CPSol](objectives.size)
+    add(new Gavanelli02(paretoSet,objectives:_*))
     this
   }
 
@@ -134,7 +171,7 @@ class CPSolver() extends Store() {
    * Deterministic branching:
    * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
-  def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+  def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
     binary(vars,vars.indexOf(_),minVal)
   }
   
@@ -148,9 +185,9 @@ class CPSolver() extends Store() {
    * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
+  def binary[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val x = selectMin(vars)(!_.isBound)(varHeuris).get
+      val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
@@ -191,6 +228,10 @@ class CPSolver() extends Store() {
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
+    lastSol = new CPSol(decVariables.toSet)
+    if (recordNonDominatedSolutions) {
+      paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
+    }
     objective.tighten()
   }
 

@@ -80,6 +80,18 @@ public abstract class Constraint {
 		this.idempotent = true;
 	}
 	
+	public boolean isIdempotent() {
+		return this.isIdempotent();
+	}
+	
+	/**
+	 * Tells the store that this constraint is idempotent or not, which means that if a changes occur during propagate method,
+	 * it will not be called again because you know it would be useless
+	 */
+	public void setIdempotent(boolean idempotent) {
+		this.idempotent = idempotent;
+	}	
+	
 	/**
 	 * @param b
 	 * @return a garded version of this constraint i.e. that will only be posted when b is true

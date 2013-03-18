@@ -26,16 +26,8 @@ import javax.swing.{BorderFactory, JFrame}
 import oscar.visual.{VisualLine, VisualArrow, VisualCircle, VisualDrawing}
 import java.awt.{Color, Dimension}
 
-object SmartSolution{
-  var frame:SmartSolution = null
+class SmartSolution(myPanelVRP:PanelVRP) extends JFrame{
 
-  def apply(b:Boolean){
-    if (b || frame==null) {if(frame != null) frame.dispose(); frame = new SmartSolution()}
-    else frame.updateUI()
-  }
-}
-
-class SmartSolution() extends JFrame{
   val mapPanel : VisualDrawing = new VisualDrawing(false);
   mapPanel.setPreferredSize(new Dimension(700,700))
   mapPanel.setMinimumSize(new Dimension(500,500))
@@ -57,12 +49,12 @@ class SmartSolution() extends JFrame{
   }
 
   def setColorToRoute(l:VisualLine ,i:Int){
-    l.outerCol = PanelVRP.PanelVRP.colorsManagement(i+1)
+    l.outerCol = myPanelVRP.colorsManagement(i+1)
   }
 
   def updateVisualisation() {
-    val vrp = PanelVRP.vrpModel.vrp
-    val nodes = PanelVRP.vrpModel.towns
+    val vrp = myPanelVRP.vrpModel.vrp
+    val nodes = myPanelVRP.vrpModel.towns
 
     def update(i: Int) {
       if(vrp.isRouted(i)){
@@ -80,22 +72,22 @@ class SmartSolution() extends JFrame{
 
 
   def displayNodes(){
-    val nodes = PanelVRP.vrpModel.towns
-    PanelVRP.PanelVRP.colorsManagement.setDifferentColors(PanelVRP.vrpModel.V)
+    val nodes = myPanelVRP.vrpModel.towns
+    myPanelVRP.colorsManagement.setDifferentColors(myPanelVRP.vrpModel.V)
     for(i <- 0 until nodes.length){
       val t = nodes(i)
-      if (i<PanelVRP.vrpModel.V)
-        new VisualCircle(mapPanel, t.long,t.lat,10,Color.blue).innerCol = PanelVRP.PanelVRP.colorsManagement(i+1)
+      if (i<myPanelVRP.vrpModel.V)
+        new VisualCircle(mapPanel, t.long,t.lat,10,Color.blue).innerCol = myPanelVRP.colorsManagement(i+1)
       else
         new VisualCircle(mapPanel, t.long,t.lat,6,Color.white)
     }
   }
 
   def displayArrows() {
-    val vrp = PanelVRP.vrpModel.vrp
-    val nodes = PanelVRP.vrpModel.towns
+    val vrp = myPanelVRP.vrpModel.vrp
+    val nodes = myPanelVRP.vrpModel.towns
 
-    arrows = Array.tabulate(PanelVRP.vrpModel.N)(i => {
+    arrows = Array.tabulate(myPanelVRP.vrpModel.N)(i => {
       val arrow =
         if (vrp.isRouted(i)) new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
           nodes(vrp.Next(i).value).long,nodes(vrp.Next(i).value).lat,4)

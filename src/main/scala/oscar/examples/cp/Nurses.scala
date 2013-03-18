@@ -147,7 +147,7 @@ object Nurses extends App  {
      x.zipWithIndex.foreach{case(n,j) => items(j).setBin(n.value + nbNursesInZone.take(i).sum)}
      
      best = spreadAcuity.value
-   }
+   } run()
    totSpread += best
    println("spread zone:"+i+"="+best)
    cp.printStats

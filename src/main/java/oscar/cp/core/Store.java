@@ -71,7 +71,7 @@ public class Store extends ReversibleSearchNode {
 		status = new ReversiblePointer<CPOutcome>(this,CPOutcome.Suspend);
 		status.setValue(CPOutcome.Suspend);
 
-		propagQueueL1 = new LinkedList[MAXPRIORL2+1];
+		propagQueueL1 = new LinkedList[MAXPRIORL1+1];
 		for (int i = 0; i < propagQueueL1.length; i++) {
 			propagQueueL1[i] = new LinkedList<PropagEvent>();
 		}

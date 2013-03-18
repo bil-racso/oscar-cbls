@@ -110,7 +110,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
 		if (other.min > max) return 0
 		if (other.max < min) return 0
 		var res = 0
-		var v = other.min.min(min)
+		var v = other.min.max(min)
 		while (v <= other.max.min(max)) {
 		  if (hasValue(v) && other.hasValue(v)) {
 		    res += 1
