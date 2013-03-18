@@ -171,7 +171,7 @@ class CPSolver() extends Store() {
    * Deterministic branching:
    * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
-  def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+  def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
     binary(vars,vars.indexOf(_),minVal)
   }
   
@@ -185,9 +185,9 @@ class CPSolver() extends Store() {
    * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
+  def binary[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val x = selectMin(vars)(!_.isBound)(varHeuris).get
+      val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
