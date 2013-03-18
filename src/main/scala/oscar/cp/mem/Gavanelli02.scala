@@ -7,16 +7,15 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.pareto.MOSol
 
 class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
   
   override def propagate(): CPOutcome = {    
     
     // List of all solutions
-    val allSols = pareto.toList
+    val allSols = pareto.objectiveSols
     // The DPobj of each objective
-    val DPobjs = Array.tabulate(pareto.nObjs)(computeDPobj(_)) 
+    val DPobjs = for(o <- pareto.Objs) yield computeDPobj(o)
     // The best dominant solutions according to each objective
     val bestDoms = getAllBestDominant(DPobjs, allSols)
     
@@ -30,14 +29,14 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
     Suspend
   }  
   
-  def getAllBestDominant(DPobjs: Array[Array[Int]], sols: List[MOSol[Sol]]): Array[Option[MOSol[Sol]]] = {
+  def getAllBestDominant(DPobjs: IndexedSeq[IndexedSeq[Int]], sols: List[IndexedSeq[Int]]): Array[Option[IndexedSeq[Int]]] = {
     
-    val bestDom: Array[Option[MOSol[Sol]]] = Array.fill(pareto.nObjs)(None)
+    val bestDom: Array[Option[IndexedSeq[Int]]] = Array.fill(pareto.nObjs)(None)
     val bestObj: Array[Int] = Array.fill(pareto.nObjs)(Int.MaxValue)
     
     for (s <- sols; o <- pareto.Objs) {
-      if (pareto.dominate(s.objVals, DPobjs(o))) {
-        if (s(o) < bestObj(o)) {
+      if (pareto.dominate(s, DPobjs(o))) {
+        if (pareto.isBetter(o)(s(o), bestObj(o))) {
           bestDom(o) = Some(s)
           bestObj(o) = s(o)
         }
@@ -47,11 +46,11 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
   }
   
   // Compute the point which is the best for all objectives except for objective obj
-  private def computeDPobj(obj: Int): Array[Int] = {
-    Array.tabulate(pareto.nObjs)(o => {
+  private def computeDPobj(obj: Int): IndexedSeq[Int] = {
+    for (o <- pareto.Objs) yield {
       if (o == obj) objVars(o).max
       else objVars(o).min
-    })
+    }
   }
 
   override def setup(l: CPPropagStrength): CPOutcome = {

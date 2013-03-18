@@ -5,9 +5,14 @@ import oscar.cp.mem.pareto.Pareto
 object Hypervolume {
 
   def hypervolume[Sol](set: Pareto[Sol]): Double = {
+    
+    assert(set.nObjs == 2)
+    
     var prevObj2 = set.nadir(1)
     var volume = 0.0
-    val sortedSet = set.sortByObj(0)
+    
+    val sortedSet = set.objectiveSols.sortBy(_(0))
+    
     for (s <- sortedSet) {
       val obj1 = s(0)
       val obj2 = s(1)

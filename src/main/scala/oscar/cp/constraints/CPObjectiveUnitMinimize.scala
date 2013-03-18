@@ -42,10 +42,6 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
     }
     CPOutcome.Suspend
   }
-  
-  override def isBetter(x: Int, y: Int): Boolean = x < y
-  override def isBetterOrEqual(x: Int, y: Int): Boolean = x <= y 
-  override def isWorse(x: Int, y: Int): Boolean = x > y
 
   override def relax() {
     super.relax()

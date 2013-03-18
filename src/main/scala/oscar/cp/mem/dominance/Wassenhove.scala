@@ -6,7 +6,6 @@ import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.ListPareto
-import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
