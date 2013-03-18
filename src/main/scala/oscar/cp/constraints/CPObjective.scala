@@ -28,6 +28,8 @@ import oscar.cp.modeling._
  */
 class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
 
+  def map = objs.map(o => o.objVar -> o).toMap
+  
   def this(s: Store, o: Array[CPObjectiveUnit]) = this(s, o: _*)
   def tighten() = objs.foreach(_.tighten())
 
@@ -37,6 +39,28 @@ class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(
     val objCons: Array[Constraint] = objs.toArray
     s.propagate(objCons: _*) != CPOutcome.Failure
   }
+  
+  def apply(objVar: CPVarInt) = map(objVar)
+  
+  def diversify() {
+      for (o <- objs) {
+        o.tightenMode = TightenType.NoTighten
+      }
+  }
+
+  def intensify(sol: CPSol, objVar: CPVarInt) {
+      for (o <- objs) {
+        o.best = sol(o.objVar)
+        o.tightenMode = if (o.objVar == objVar) TightenType.StrongTighten else TightenType.WeakTighten
+      }
+  }
+  
+  def intensify(sol: CPSol) {      
+      for (o <- objs) {
+        o.best = sol(o.objVar)
+        o.tightenMode = TightenType.StrongTighten
+      }
+  }  
 
   // constraint methods
 

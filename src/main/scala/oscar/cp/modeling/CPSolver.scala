@@ -41,19 +41,26 @@ class CPSolver() extends Store() {
     this.add(cons, propagStrength)
   }
 
-  var stateObjective: Unit => Unit = Unit => Unit
+  private var stateObjective: Unit => Unit = Unit => Unit
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
   private var lastSol = new CPSol(Set[CPVarInt]())
   private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
-  def pareto = paretoSet
+  //def pareto = paretoSet
+  var recordNonDominatedSolutions = false
+  
+  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.map(_.sol)
   
   def addDecisionVariables(x: Iterable[CPVarInt]) {
     x.foreach(decVariables += _)
   }
   
-  def recordSol() {
+  private def recordSol() {
     lastSol = new CPSol(decVariables.toSet)
+  }
+  
+  def obj(objVar: CPVarInt): CPObjectiveUnit = {
+    objective(objVar)
   }
 
   def optimize(obj: CPObjective): CPSolver = {
@@ -74,6 +81,7 @@ class CPSolver() extends Store() {
   
   def paretoMinimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
+      recordNonDominatedSolutions = true
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
       post(objective)
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
@@ -220,8 +228,10 @@ class CPSolver() extends Store() {
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
-    lastSol = new CPSol(Set[CPVarInt]())
-    paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
+    lastSol = new CPSol(decVariables.toSet)
+    if (recordNonDominatedSolutions) {
+      paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
+    }
     objective.tighten()
   }
 
