@@ -21,16 +21,17 @@ class NewQuadTree[V](private val nDim: Int, max: Boolean = false) {
   }
 
   def insert(keys: Array[Int], value: V): Boolean = {
-    if (root.isDefined) process(root.get, new Node(keys, value))
+    if (root.isDefined) process(root.get, new Node(keys, value), 0)
     else {
       root = Some(new Node(keys, value))
       true
     }
   }
 
-  def process(R: Node, cand: Node): Boolean = {
+  def process(R: Node, cand: Node, bd: Int): Boolean = {
 
     val quad = position(R, cand)
+    val domQuad = opposite(quad)
 
     if (quad == worstQuad) return false
     else if (quad == bestQuad) {
@@ -46,17 +47,18 @@ class NewQuadTree[V](private val nDim: Int, max: Boolean = false) {
 
       // Removes
       for (q <- worseQuads(quad) if R hasChild q) {
-        removeDominated(R.children(q).get, cand, 0)
+        removeDominated(R.children(q).get, cand, computeBoundedVector(domQuad, q, bd))
       }
 
       // Insert
-      if (R hasChild quad) process(R.children(quad).get, cand) // Safe
+      if (R hasChild quad) process(R.children(quad).get, cand, computeBoundedVector(domQuad, quad, bd)) // Safe
       else {
         R.children(quad) = Some(cand)
         cand.quadrant = quad
         cand.father = Some(R)
         return true
       }
+      true
     }
   }
 
@@ -88,25 +90,9 @@ class NewQuadTree[V](private val nDim: Int, max: Boolean = false) {
       val newRoot = R.children(first).get
       transplant(R, newRoot)     
       for (q <- remainingQuads if R hasChild q) {
-        //reinsertIn(R.children(q).get, newRoot)
-        reinsertFilter(R.children(q).get, cand, newRoot, computeBoundedVector(fQuad, q, bd))
+        reinsertIn(R.children(q).get, newRoot)
       }
       removeDominated(newRoot, cand, bd)
-    }
-  }
-  
-  def reinsertFilter(R: Node, domNode: Node, newRoot: Node, bd: Int) {
-    val quad = position(domNode, R)   
-    if (quad == worstQuad) {
-      for (q <- betterQuads(bd) if R hasChild q) {
-        reinsertFilter(R.children(q).get, domNode, newRoot, computeBoundedVector(quad, q, bd))
-      }
-    }
-    else {
-      for (q <- asGoodQuads(opposite(quad)) if R hasChild q) {
-        reinsertFilter(R.children(q).get, domNode, newRoot, computeBoundedVector(quad, q, bd))
-      }
-      insert(R, newRoot)
     }
   }
   
@@ -215,7 +201,7 @@ class NewQuadTree[V](private val nDim: Int, max: Boolean = false) {
   }
   
   def computeBoundedVector(fQuad: Int, cQuad: Int, bVect: Int): Int = {
-    bVect | opposite(fQuad) & opposite(cQuad)
+    bVect | opposite(fQuad | cQuad)
   }
   
   override def toString = "{"+toList.mkString(", ")+"}"

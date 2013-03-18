@@ -37,12 +37,15 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
   override def propagate(): CPOutcome = {
     if (tightenType == NoTighten) return CPOutcome.Suspend
     def delta = if (tightenType == StrongTighten) 1 else 0
-    //println("propagate "+StrongTighten+" delta:"+delta+" best:"+best)
     if (objVar.updateMax(best - delta) == CPOutcome.Failure) {
         return CPOutcome.Failure
     }
     CPOutcome.Suspend
   }
+  
+  override def isBetter(x: Int, y: Int): Boolean = x < y
+  override def isBetterOrEqual(x: Int, y: Int): Boolean = x <= y 
+  override def isWorse(x: Int, y: Int): Boolean = x > y
 
   override def relax() {
     super.relax()

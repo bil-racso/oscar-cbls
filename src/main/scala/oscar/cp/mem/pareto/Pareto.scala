@@ -1,8 +1,10 @@
 package oscar.cp.mem.pareto
 
-abstract class Pareto[Sol] {
+import oscar.cp.constraints.CPObjectiveUnit
+
+abstract class Pareto[Sol](protected val objs: Array[CPObjectiveUnit]) {
   
-  var observers: List[ParetoObserver] = Nil
+  var observers: List[ParetoObserver] = List()
   
   def addObserver(obs: ParetoObserver) {
     observers = obs :: observers
@@ -10,10 +12,29 @@ abstract class Pareto[Sol] {
   
   def notifyObservers() = observers.foreach(_.update())
   
+  def dominate(sol1: Array[Int], sol2: Array[Int]): Boolean = {    
+    // Checks consistency 
+    assert(sol1.size == sol2.size)
+    assert(sol1.size == nObjs)
+    dominate0(sol1, sol2, 0)
+  }
+  
+  // Sol1 dominates sol2 if it does not exist a value i such that sol1(i) 
+  // is not better or equal to sol2(i)
+  private def dominate0(sol1: Array[Int], sol2: Array[Int], i: Int): Boolean = {
+    if (i == nObjs) true
+    else if (objs(i).isWorse(sol1(i), sol2(i))) false
+    else dominate0(sol1, sol2, i+1)
+  }
+  
+  def test {
+    val sol1 = Array(2, 3)
+    val sol2 = Array(2, 3)
+  }
   /** Returns the number of objectives
    * 
    */
-  def nObjs: Int
+  def nObjs: Int = objs.size
   
   /** Returns a range over the objectives
    * 

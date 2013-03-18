@@ -62,6 +62,11 @@ class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constrai
   def isOptimum() = false
 
   def isOK() = s.propagate(this) != CPOutcome.Failure
+  
+  // No order between solutions in satisfaction problems
+  def isBetter(x: Int, y: Int): Boolean = false
+  def isBetterOrEqual(x: Int, y: Int): Boolean = false
+  def isWorse(x: Int, y: Int): Boolean = false
 
   override def toString = "best value:"+best+" tightening:"+tightenType
   

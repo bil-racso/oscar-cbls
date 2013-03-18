@@ -1,6 +1,8 @@
 package oscar.cp.mem.pareto
 
-class ListPareto[Sol](val nObjs: Int) extends Pareto[Sol] {
+import oscar.cp.constraints.CPObjectiveUnit
+
+class ListPareto[Sol](objs: Array[CPObjectiveUnit]) extends Pareto[Sol](objs) {
   
   private var sols: List[MOSol[Sol]] = List()
 
