@@ -1,5 +1,5 @@
 package oscar.cp.mem.tsp
-
+/*
 import oscar.cp.mem.visu.PlotPareto
 import oscar.cp.mem.pareto.ParetoSet
 import oscar.cp.mem.pareto.MOSol
@@ -223,4 +223,4 @@ object MoLnsTSP extends App {
     // Visu
     // insert here
   }
-}
+}*/

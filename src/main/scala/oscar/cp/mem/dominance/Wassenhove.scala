@@ -10,12 +10,11 @@ import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
-import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.tsp.TSPUtils
 import oscar.cp.mem.pareto.Pareto
 import oscar.visual.VisualFrame
-
+/*
 object Wassenhove extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
@@ -111,4 +110,4 @@ object Wassenhove extends App {
   println("Pareto Set")
   println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
   println(pareto.sortByObj(0).mkString("\n"))
-}
+}*/

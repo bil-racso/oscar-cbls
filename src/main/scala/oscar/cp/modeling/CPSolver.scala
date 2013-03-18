@@ -45,7 +45,7 @@ class CPSolver() extends Store() {
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
   private var lastSol = new CPSol(Set[CPVarInt]())
-  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
+  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   //def pareto = paretoSet
   var recordNonDominatedSolutions = false
   
@@ -87,8 +87,8 @@ class CPSolver() extends Store() {
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
     addDecisionVariables(objectives)
-    paretoSet = new ListPareto[CPSol](objectives.size)
-    add(new Gavanelli02(paretoSet,objectives:_*))
+    paretoSet = new ListPareto[CPSol](objective.objs.toArray)
+    add(new Gavanelli02(paretoSet, Array.fill(objectives.size)(false), objectives.toArray))
     this
   }
 

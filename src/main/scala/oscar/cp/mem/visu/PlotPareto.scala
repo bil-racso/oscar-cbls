@@ -25,7 +25,6 @@ import oscar.cp.mem.pareto.Pareto
 import org.jdesktop.swingx.decorator.ComponentAdapter
 import java.awt.event.ComponentEvent
 import oscar.cp.mem.pareto.ParetoObserver
-import oscar.cp.mem.pareto.ParetoSet
 import javax.swing.SwingUtilities
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.pareto.MOSol
@@ -36,8 +35,8 @@ import oscar.cp.mem.pareto.MOSol
  */
  class PlotPareto(title: String = "Pareto", xlab: String = "Obj1", ylab: String = "Obj2", nbPareto: Int = 1) extends PlotScatter(title,xlab,ylab,nbPareto) {
 
-
-  val paretos = Array.fill(nbPareto)(new ListPareto[Object](2))
+  // TODO: Will return a null pointer exception when calling insert
+  val paretos = Array.fill(nbPareto)(new ListPareto[Object](Array(null, null)))
   
   def insert(obj1: Int, obj2: Int, paretoIdx: Int = 0) {
     paretos(paretoIdx).insert(new MOSol(null, Array(obj1, obj2)))

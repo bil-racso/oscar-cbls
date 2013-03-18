@@ -6,18 +6,15 @@ import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.pareto.ParetoSet
-import oscar.cp.mem.pareto.RBPareto
 import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
-import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
 import oscar.cp.mem.pareto.ListPareto
-
+/*
 object ExactBiTSP extends App {
 
   case class Sol(pred: Array[Int], succ: Array[Int])
@@ -98,4 +95,4 @@ object ExactBiTSP extends App {
   println("Pareto Set")
   println("H: " + oscar.cp.mem.measures.Hypervolume.hypervolume(pareto))
   println(pareto.sortByObj(0).mkString("\n"))
-}
+}*/

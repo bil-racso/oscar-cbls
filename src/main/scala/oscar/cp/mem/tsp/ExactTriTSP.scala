@@ -1,5 +1,5 @@
 package oscar.cp.mem.tsp
-
+/*
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -82,4 +82,4 @@ object ExactTriTSP extends App {
  
   println("Pareto Set")
   println(sols.sortBy(_.objVals(0)).mkString("\n"))
-}
+}*/

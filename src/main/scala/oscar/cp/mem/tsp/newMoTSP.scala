@@ -1,5 +1,5 @@
 package oscar.cp.mem.tsp
-
+/*
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -187,4 +187,4 @@ object newMoTSP extends App {
   val out = OutFile("fullSetRen50")
   points.foreach(p => out.writeln(p.sol.pred.mkString(" ")))
   out.close()
-}
+}*/
