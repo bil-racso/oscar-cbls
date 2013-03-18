@@ -40,6 +40,8 @@ class CPSolver() extends Store() {
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
     this.add(cons, propagStrength)
   }
+  
+  var objective = new CPObjective(this, Array[CPObjectiveUnit]());
 
   private var stateObjective: Unit => Unit = Unit => Unit
   
@@ -66,7 +68,7 @@ class CPSolver() extends Store() {
   def optimize(obj: CPObjective): CPSolver = {
     stateObjective = Unit => {
       objective = obj
-      post(obj)
+      postCut(obj)
     }
     this
   }
@@ -74,7 +76,7 @@ class CPSolver() extends Store() {
   def minimize(obj: CPVarInt): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
-      post(objective)
+      postCut(objective)
     }
     this
   }
@@ -83,19 +85,19 @@ class CPSolver() extends Store() {
     stateObjective = Unit => {
       recordNonDominatedSolutions = true
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
-      post(objective)
+      postCut(objective)
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](objectives.size)
-    add(new Gavanelli02(paretoSet,objectives:_*))
+    addCut(new Gavanelli02(paretoSet,objectives:_*))
     this
   }
 
   def minimize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
-      post(objective)
+      postCut(objective)
     }
     this
   }
@@ -103,7 +105,7 @@ class CPSolver() extends Store() {
   def maximize(obj: CPVarInt): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, new CPObjectiveUnitMaximize(obj)) // must be maximize
-      post(objective)
+      postCut(objective)
     }
     this
   }
@@ -111,7 +113,7 @@ class CPSolver() extends Store() {
   def maximize(objectives: CPVarInt*): CPSolver = {
     stateObjective = Unit => {
       objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
-      post(objective)
+      postCut(objective)
     }
     this
   }
@@ -230,6 +232,7 @@ class CPSolver() extends Store() {
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
+      println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
       paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
     }
     objective.tighten()
