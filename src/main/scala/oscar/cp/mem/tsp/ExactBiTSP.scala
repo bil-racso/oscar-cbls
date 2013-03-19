@@ -14,6 +14,7 @@ import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.visu.PlotPareto
+import oscar.cp.mem.visu.PlotPareto
 
 object ExactBiTSP extends App {
   
@@ -27,6 +28,8 @@ object ExactBiTSP extends App {
   val distMatrices = Array(distMatrix1, distMatrix2)
   val nCities = distMatrix1.size
   val Cities = 0 until nCities
+  
+  val visu = new PlotPareto()
   
   // Model
   // -----

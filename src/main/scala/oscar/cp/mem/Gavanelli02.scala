@@ -8,7 +8,10 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.mem.pareto.Pareto
 
-class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+
+  // Simplifies code understanding
+  type Point = IndexedSeq[Int]
   
   override def propagate(): CPOutcome = {    
     
@@ -29,9 +32,11 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
     Suspend
   }  
   
-  def getAllBestDominant(DPobjs: IndexedSeq[IndexedSeq[Int]], sols: List[IndexedSeq[Int]]): Array[Option[IndexedSeq[Int]]] = {
+  // Returns the array of solutions such that for each objective i, bestDominant(i) is the solution 
+  // that dominates DPObjs(i) with the best value for the objective i.
+  private def getAllBestDominant(DPobjs: IndexedSeq[Point], sols: List[Point]): Array[Option[Point]] = {
     
-    val bestDom: Array[Option[IndexedSeq[Int]]] = Array.fill(pareto.nObjs)(None)
+    val bestDom: Array[Option[Point]] = Array.fill(pareto.nObjs)(None)
     val bestObj: Array[Int] = Array.fill(pareto.nObjs)(Int.MaxValue)
     
     for (s <- sols; o <- pareto.Objs) {
@@ -45,11 +50,17 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
     bestDom
   }
   
-  // Compute the point which is the best for all objectives except for objective obj
+  // Compute the point which is the best for all objectives except for the objective obj
   private def computeDPobj(obj: Int): IndexedSeq[Int] = {
     for (o <- pareto.Objs) yield {
-      if (o == obj) objVars(o).max
-      else objVars(o).min
+      if (o == obj) {
+        if (isMax(o)) objVars(o).min
+        else objVars(o).max
+      }
+      else {
+        if (isMax(o)) objVars(o).max
+        else objVars(o).min
+      }
     }
   }
 
@@ -58,7 +69,7 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs if !objVars(o).isBound) {
-    	if (objMax(o)) objVars(o).callPropagateWhenMaxChanges(this)
+    	if (isMax(o)) objVars(o).callPropagateWhenMaxChanges(this)
     	else objVars(o).callPropagateWhenMinChanges(this)
       }
       Suspend
@@ -67,5 +78,5 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objVars: Arr
 }
 
 object Gavanelli02 {  
-  def apply[Sol](pareto: Pareto[Sol], objMax: Array[Boolean], objs: Array[CPVarInt]): Gavanelli02[Sol] = new Gavanelli02(pareto, objMax, objs)
+  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPVarInt]): Gavanelli02[Sol] = new Gavanelli02(pareto, isMax, objs)
 }

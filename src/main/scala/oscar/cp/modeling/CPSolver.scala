@@ -70,52 +70,47 @@ class CPSolver() extends Store() {
     this
   }
 
-  def minimize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
-      post(objective)
-    }
-    this
-  }
+  def minimize(objective: CPVarInt): CPSolver = minimize(Seq(objective): _*)
   
-  def paretoMinimize(objectives: CPVarInt*): CPSolver = {
+  def minimize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
+
+  def maximize(objective: CPVarInt): CPSolver = maximize(Seq(objective): _*)
+
+  def maximize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
+  
+  def paretoMinimize(objective: CPVarInt): CPSolver = paretoOptimize((objective, false))  
+  
+  def paretoMinimize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
+  
+  def paretoMaximize(objective: CPVarInt): CPSolver = paretoOptimize((objective, true))
+  
+  def paretoMaximize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
+  
+  def paretoOptimize(objVarModes: (CPVarInt, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
+  
+  def paretoOptimize(objVarMode: (CPVarInt, Boolean)*): CPSolver = {
+    
+    // objVar of each objective
+    val objectives = objVarMode.map(_._1).toArray
+    // true if objective i has to be maximized
+    val isMax = objVarMode.map(_._2).toArray
     
     stateObjective = Unit => {
       recordNonDominatedSolutions = true
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      objective = new CPObjective(this, (for(i <- 0 until isMax.size) yield {
+        if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
+        else new CPObjectiveUnitMinimize(objectives(i))
+      }):_*)
       post(objective)
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
     
     addDecisionVariables(objectives)
-    val objType = Array.fill(objectives.size)(false) // Minimization
-    paretoSet = new ListPareto[CPSol](objType)
+    paretoSet = new ListPareto[CPSol](isMax)
     // Adds a dominance constraint with all objectives in minimization mode
-    add(new Gavanelli02(paretoSet, objType, objectives.toArray))
-    this
-  }
-
-  def minimize(objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
-      post(objective)
-    }
-    this
-  }
-
-  def maximize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMaximize(obj)) // must be maximize
-      post(objective)
-    }
-    this
-  }
-
-  def maximize(objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
-      post(objective)
-    }
+    add(new Gavanelli02(paretoSet, isMax, objectives.toArray))
     this
   }
 

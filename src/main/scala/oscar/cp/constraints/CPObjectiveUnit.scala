@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective"+n) with Objective {
+abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective"+n) with Objective {
 
   import TightenType._
   

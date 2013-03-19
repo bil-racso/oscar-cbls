@@ -62,7 +62,7 @@ object ExactTriTSP extends App {
     // No dominated solutions !
     val newSol = Sol(succ.map(_.value))      
     // Insert Solution
-    val inserted = pareto.insert(newSol, totDists.map(_.value):_*)
+    val inserted = pareto.insert(newSol, totDists.map(_.value))
     assert(inserted)
   }
   
