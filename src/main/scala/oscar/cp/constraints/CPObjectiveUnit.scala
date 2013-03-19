@@ -99,7 +99,8 @@ abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends
     }
   }
 
-  def restoreBest() = {} // ?
+  // Never called
+  //def restoreBest() = {}
   
   /** Calls propagate() */
   def filter() = propagate()

@@ -230,7 +230,7 @@ class CPSolver() extends Store() {
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
-      println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
+      if (!silent) println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
       paretoSet.insert(lastSol, objective.objs.map(_.objVar.value):_*)
     }
     objective.tighten()

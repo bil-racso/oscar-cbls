@@ -22,10 +22,17 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Arra
     // The best dominant solutions according to each objective
     val bestDoms = getAllBestDominant(DPobjs, allSols)
     
-    for (o <- pareto.Objs) {
-      if (bestDoms(o).isDefined) {
-        val ub = bestDoms(o).get(o) - 1
-        if (objVars(o).updateMax(ub) == Failure) return Failure
+    for (o <- pareto.Objs if bestDoms(o).isDefined) {
+        
+      val bound = bestDoms(o).get(o)
+      
+      // objective has to be maximized
+      if (isMax(o)) { 
+        if (objVars(o).updateMin(bound + 1) == Failure) return Failure
+      }
+      // objective has to be minimized
+      else { 
+        if (objVars(o).updateMax(bound - 1) == Failure) return Failure
       }
     }
     
