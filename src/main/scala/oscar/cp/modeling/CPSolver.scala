@@ -40,6 +40,8 @@ class CPSolver() extends Store() {
     this.add(cons, propagStrength)
   }
   
+  var objective = new CPObjective(this, Array[CPObjectiveUnit]());
+  
   private var stateObjective: Unit => Unit = Unit => Unit
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
@@ -65,7 +67,7 @@ class CPSolver() extends Store() {
   def optimize(obj: CPObjective): CPSolver = {
     stateObjective = Unit => {
       objective = obj
-      post(obj)
+      postCut(obj)
     }
     this
   }
@@ -103,14 +105,14 @@ class CPSolver() extends Store() {
         if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
         else new CPObjectiveUnitMinimize(objectives(i))
       }):_*)
-      post(objective)
+      postCut(objective)
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
     
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](isMax)
     // Adds a dominance constraint with all objectives in minimization mode
-    add(new Gavanelli02(paretoSet, isMax, objectives.toArray))
+    addCut(new Gavanelli02(paretoSet, isMax, objectives.toArray))
     this
   }
 
@@ -228,6 +230,7 @@ class CPSolver() extends Store() {
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
+      println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
       paretoSet.insert(lastSol, objective.objs.map(_.objVar.value):_*)
     }
     objective.tighten()

@@ -16,7 +16,6 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import java.util.Arrays;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
