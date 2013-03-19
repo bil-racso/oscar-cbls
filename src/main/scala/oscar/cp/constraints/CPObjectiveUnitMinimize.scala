@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
+/*class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
 
   best = Int.MaxValue
   
@@ -47,4 +47,4 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
     super.relax()
     best = ub
   }
-}
+}*/
