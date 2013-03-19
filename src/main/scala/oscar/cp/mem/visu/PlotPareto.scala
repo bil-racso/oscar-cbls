@@ -42,7 +42,7 @@ class PlotPareto(
 ) extends PlotScatter(title, xlab, ylab, nbPareto) {
 
   val paretos = Array.fill(nbPareto)(new ListPareto[Object](Array(objMax1, objMax2)))
-
+ 
   def insert(obj1: Int, obj2: Int, paretoIdx: Int = 0) {
     paretos(paretoIdx).insert(null, obj1, obj2)
     SwingUtilities.invokeLater(new Runnable() {
