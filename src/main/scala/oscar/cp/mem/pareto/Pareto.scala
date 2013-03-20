@@ -186,4 +186,12 @@ abstract class Pareto[Sol](protected val maxObj: Array[Boolean]) {
    *  the value of the objective obj
    */
   def sortByObj(obj: Int): List[Sol]
+  
+  override def equals(otherPareto:Any) = {
+    val other = otherPareto.asInstanceOf[Pareto[Any]]
+    if (size == other.size) {
+      objectiveSols.forall(o => other.objectiveSols.exists(p => p == o))
+    } else false
+  }
+
 }
