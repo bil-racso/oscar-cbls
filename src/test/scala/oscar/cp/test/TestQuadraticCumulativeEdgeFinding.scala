@@ -35,7 +35,7 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 			act
 		})
 		
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r.activities, r.capacity, r.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r.cumulativeActivities, r.capacity, r.id))
 		
 		activities(5).est should be(6)
 	}
@@ -71,8 +71,8 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 			act
 		})
 		
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r1.activities, r1.capacity, r1.id))
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r2.activities, r2.capacity, r2.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r1.cumulativeActivities, r1.capacity, r1.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r2.cumulativeActivities, r2.capacity, r2.id))
 		
 		for (a <- 0 until nActivities) {
 			activities1(a).est should be(horizon - activities2(a).lct)
@@ -104,7 +104,7 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 			act
 		})
 		
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r.activities, r.capacity, r.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r.cumulativeActivities, r.capacity, r.id))
 		
 		activities(2).est should be(4)
 	}
@@ -140,8 +140,8 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 			act
 		})
 		
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r1.activities, r1.capacity, r1.id))
-		cp.add(new QuadraticCumulativeEdgeFinding(cp, r2.activities, r2.capacity, r2.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r1.cumulativeActivities, r1.capacity, r1.id))
+		cp.add(new QuadraticCumulativeEdgeFinding(cp, r2.cumulativeActivities, r2.capacity, r2.id))
 		
 		for (a <- 0 until nActivities) {
 			activities1(a).est should be(horizon - activities2(a).lct)

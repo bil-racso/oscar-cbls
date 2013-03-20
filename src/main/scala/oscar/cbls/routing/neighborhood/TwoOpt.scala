@@ -135,7 +135,7 @@ object TwoOpt extends SearchEngine{
  */
 case class TwoOpt(firstEdge:Int, secondEdge:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {TwoOpt.doMove(firstEdge, secondEdge, vrp)}
+  def comit() {TwoOpt.doMove(firstEdge, secondEdge, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = firstEdge
   def getValuesToAssign = vrp.twoOpt(firstEdge,vrp.Next(firstEdge).value,secondEdge,vrp.Next(secondEdge).value)

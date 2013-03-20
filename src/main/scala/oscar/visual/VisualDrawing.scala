@@ -54,7 +54,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.Shape;
 
-class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new BorderLayout()) {
+class VisualDrawing(saveButton : Boolean, flipped:Boolean) extends JPanel (new BorderLayout()) {
 
 	var drawingPanel:JPanel = new JPanel() {
 			override def paintComponent(g:Graphics) {
@@ -71,7 +71,7 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 
 
 	var shapes:Array[ColoredShape[Shape]] = Array();
-		
+	
 	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
 		override def mouseMoved(e:MouseEvent) {
 			drawingPanel.setToolTipText("");
@@ -83,7 +83,6 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 		override def mouseDragged(arg0:MouseEvent) {
 		}
 	})
-	
 	
 	drawingPanel.setBackground(Color.white)
 
@@ -108,6 +107,10 @@ class VisualDrawing(saveButton : Boolean,flipped:Boolean) extends JPanel (new Bo
 	def addShape(s:ColoredShape[Shape]) {
 		shapes :+= s
 		repaint();
+	}
+	
+	def removeAllShapes() {
+	  shapes = Array[ColoredShape[Shape]]()
 	}
 
 }

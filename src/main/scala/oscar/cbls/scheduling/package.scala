@@ -26,7 +26,7 @@ package oscar.cbls
 /** This package is a scheduling library.
  * it supports
  - [[oscar.cbls.scheduling.CumulativeResource]]
- - [[oscar.cbls.scheduling.Task]] with varying durations and precedence constraints
+ - [[oscar.cbls.scheduling.Activity]] with varying durations and precedence constraints
  - [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks.
  *   This is useful to model that a resource is not released between tasks.
  *
