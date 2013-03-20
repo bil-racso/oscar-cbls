@@ -12,17 +12,22 @@ import oscar.cp.mem.pareto.MOSol
 class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
   
   override def propagate(): CPOutcome = {    
-    
+    //println("propagate gananelli")
     // List of all solutions
     val allSols = pareto.toList
     // The DPobj of each objective
     val DPobjs = Array.tabulate(pareto.nObjs)(computeDPobj(_)) 
     // The best dominant solutions according to each objective
     val bestDoms = getAllBestDominant(DPobjs, allSols)
-    
+    //println("allsols:"+allSols.size)
+    //for (o <- pareto.Objs) {
+      //println(DPobjs(o).mkString(","))
+    //}
     for (o <- pareto.Objs) {
+      //println("defined?"+bestDoms(o).isDefined)
       if (bestDoms(o).isDefined) {
         val ub = bestDoms(o).get(o) - 1
+        //println("ub max:"+ub)
         if (objVars(o).updateMax(ub) == Failure) return Failure
       }
     }
@@ -81,7 +86,8 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], objVars: CPVarInt*) extends Constrai
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs) {
-        if (!objVars(o).isBound) objVars(o).callPropagateWhenMinChanges(this)
+        objVars(o).callPropagateWhenBoundsChange(this)
+        //if (!objVars(o).isBound) objVars(o).callPropagateWhenMinChanges(this)
         //if (!objVars(o).isBound) objVars(o).callUpdateMinIdxWhenMinChanges(this, o)
       }
       Suspend

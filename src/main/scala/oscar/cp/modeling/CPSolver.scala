@@ -46,7 +46,7 @@ class CPSolver() extends Store() {
   private var stateObjective: Unit => Unit = Unit => Unit
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
-  private var lastSol = new CPSol(Set[CPVarInt]())
+  var lastSol = new CPSol(Set[CPVarInt]())
   private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
   //def pareto = paretoSet
   var recordNonDominatedSolutions = false
