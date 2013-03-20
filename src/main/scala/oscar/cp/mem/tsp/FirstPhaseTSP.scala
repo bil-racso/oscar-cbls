@@ -1,5 +1,5 @@
 package oscar.cp.mem.tsp
-
+/*
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -153,4 +153,4 @@ object FirstPhaseTSP extends App {
     val dist2 = TSPUtils.computeDist(currentSol.pred, distMatrix2)
     return MOSol(Sol(currentSol.pred, currentSol.succ), dist1, dist2)
   }
-}
+}*/

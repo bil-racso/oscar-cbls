@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
+/*class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
 
   best = Int.MaxValue
   
@@ -37,7 +37,6 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
   override def propagate(): CPOutcome = {
     if (tightenType == NoTighten) return CPOutcome.Suspend
     def delta = if (tightenType == StrongTighten) 1 else 0
-    //println("propagate "+StrongTighten+" delta:"+delta+" best:"+best)
     if (objVar.updateMax(best - delta) == CPOutcome.Failure) {
         return CPOutcome.Failure
     }
@@ -48,4 +47,4 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
     super.relax()
     best = ub
   }
-}
+}*/

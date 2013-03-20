@@ -6,13 +6,9 @@ import oscar.cp.core._
 import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.InSet
 import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.pareto.ParetoSet
-import oscar.cp.mem.pareto.RBPareto
-import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
-import oscar.cp.mem.DynDominanceConstraint
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.Gavanelli02
@@ -22,7 +18,7 @@ import oscar.cp.mem.pareto.ListPareto
 object ExactTriTSP extends App {
 
   case class Sol(succ: Array[Int])
-  val pareto = new ListPareto[Sol](3)
+  val pareto = ListPareto[Sol](3, maximization = false)
   
   // Parsing
   val coord1 = TSPUtils.parseCoordinates("data/TSP/renA10.tsp")
@@ -51,7 +47,7 @@ object ExactTriTSP extends App {
   cp.solve() subjectTo {
     cp.add(circuit(succ))
     for (o <- pareto.Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))   
-    cp.add(Gavanelli02(pareto, totDists:_*))
+    cp.add(Gavanelli02(pareto, Array.fill(pareto.nObjs)(false), totDists))
   }
   
   // Search
@@ -64,22 +60,18 @@ object ExactTriTSP extends App {
 
   def solFound() {   
     // No dominated solutions !
-    val newSol = MOSol(Sol(succ.map(_.value)), totDists.map(_.value))      
+    val newSol = Sol(succ.map(_.value))      
     // Insert Solution
-    assert(pareto.insert(newSol) != -1)
+    val inserted = pareto.insert(newSol, totDists.map(_.value))
+    assert(inserted)
   }
   
   // Run
   // ---  
   cp.run()  
   
-  val sols = pareto.toList
-  
-  for (sol1 <- sols; sol2 <- sols; if sol1 != sol2) {
-    assert(!sol1.dominates(sol2))
-    assert(!sol2.dominates(sol1))
-  }
+  val sols = pareto.objectiveSols
  
   println("Pareto Set")
-  println(sols.sortBy(_.objVals(0)).mkString("\n"))
+  println(sols.sortBy(_(0)).mkString("\n"))
 }

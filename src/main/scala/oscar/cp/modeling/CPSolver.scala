@@ -30,7 +30,6 @@ import oscar.reversible._
 import oscar.util._
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.pareto.MOSol
 import oscar.cp.mem.Gavanelli02
 
 class NoSol(msg: String) extends Exception(msg)
@@ -42,16 +41,16 @@ class CPSolver() extends Store() {
   }
   
   var objective = new CPObjective(this, Array[CPObjectiveUnit]());
-
+  
   private var stateObjective: Unit => Unit = Unit => Unit
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
   var lastSol = new CPSol(Set[CPVarInt]())
-  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](0)
-  //def pareto = paretoSet
+  private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   var recordNonDominatedSolutions = false
   
-  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.map(_.sol)
+  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.toList
+  def nonDominatedSolutionsObjs: Iterable[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
   def addDecisionVariables(x: Iterable[CPVarInt]) {
     x.foreach(decVariables += _)
@@ -73,48 +72,47 @@ class CPSolver() extends Store() {
     this
   }
 
-  def minimize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
-      postCut(objective)
-    }
-    this
-  }
+  def minimize(objective: CPVarInt): CPSolver = minimize(Seq(objective): _*)
   
-  def paretoMinimize(objectives: CPVarInt*): CPSolver = {
+  def minimize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
+
+  def maximize(objective: CPVarInt): CPSolver = maximize(Seq(objective): _*)
+
+  def maximize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
+  
+  def paretoMinimize(objective: CPVarInt): CPSolver = paretoOptimize((objective, false))  
+  
+  def paretoMinimize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
+  
+  def paretoMaximize(objective: CPVarInt): CPSolver = paretoOptimize((objective, true))
+  
+  def paretoMaximize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
+  
+  def paretoOptimize(objVarModes: (CPVarInt, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
+  
+  def paretoOptimize(objVarMode: (CPVarInt, Boolean)*): CPSolver = {
+    
+    // objVar of each objective
+    val objectives = objVarMode.map(_._1).toArray
+    // true if objective i has to be maximized
+    val isMax = objVarMode.map(_._2).toArray
+    
     stateObjective = Unit => {
       recordNonDominatedSolutions = true
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
+      objective = new CPObjective(this, (for(i <- 0 until isMax.size) yield {
+        if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
+        else new CPObjectiveUnitMinimize(objectives(i))
+      }):_*)
       postCut(objective)
       objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
+    
     addDecisionVariables(objectives)
-    paretoSet = new ListPareto[CPSol](objectives.size)
-    addCut(new Gavanelli02(paretoSet,objectives:_*))
-    this
-  }
-
-  def minimize(objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
-      postCut(objective)
-    }
-    this
-  }
-
-  def maximize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMaximize(obj)) // must be maximize
-      postCut(objective)
-    }
-    this
-  }
-
-  def maximize(objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
-      postCut(objective)
-    }
+    paretoSet = new ListPareto[CPSol](isMax)
+    // Adds a dominance constraint with all objectives in minimization mode
+    addCut(new Gavanelli02(paretoSet, isMax, objectives.toArray))
     this
   }
 
@@ -139,7 +137,7 @@ class CPSolver() extends Store() {
   def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 
   def minDom(x: CPVarInt): Int = x.size
-  def minRegre(x: CPVarInt): Int = x.max - x.min
+  def minRegret(x: CPVarInt): Int = x.max - x.min
   def minDomMaxDegree(x: CPVarInt): (Int, Int) = (x.size, -x.constraintDegree)
   def minVar(x: CPVarInt): Int = 1
   def maxDegree(x: CPVarInt): Int = -x.constraintDegree
@@ -232,8 +230,8 @@ class CPSolver() extends Store() {
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
-      println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
-      paretoSet.insert(new MOSol(lastSol,objective.objs.map(_.objVar.value).toArray))
+      if (!silent) println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
+      paretoSet.insert(lastSol, objective.objs.map(_.objVar.value):_*)
     }
     objective.tighten()
   }

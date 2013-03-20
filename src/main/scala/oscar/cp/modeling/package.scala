@@ -311,6 +311,18 @@ package object modeling extends Constraints {
   }
 
   //helper functions
+  
+  /**
+   * relax randomly k variables in x, others are assigned to the values they have in sol
+   */
+  def relaxRandomly(x: IndexedSeq[_ <: CPVarInt], sol: CPSol, k: Int): CPOutcome = {
+      val cp = x.head.s
+      val n = x.size
+      val toKeep = n-k
+      val fixed = (for (i <- 1 to toKeep) yield scala.util.Random.nextInt(n)).toSet
+      cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
+  }
+  
 
   def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
 
