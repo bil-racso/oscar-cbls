@@ -13,7 +13,7 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Arra
   type Point = IndexedSeq[Int]
   
   override def propagate(): CPOutcome = {    
-    
+    //println("propagate gananelli")
     // List of all solutions
     val allSols = pareto.objectiveSols
     // The DPobj of each objective

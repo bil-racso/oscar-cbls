@@ -80,7 +80,7 @@ object QuadraticAssignmentLNS {
       println("set limit to "+limit)     
       // relax randomly 50% of the variables and run again
       cp.runSubjectTo(Int.MaxValue,limit) {
-    	  cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
+    	cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == cp.lastSol(x(i))))
       }
     }
 

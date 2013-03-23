@@ -45,7 +45,7 @@ class CPSolver() extends Store() {
   private var stateObjective: Unit => Unit = Unit => Unit
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
-  private var lastSol: Option[CPSol] = None
+  var lastSol = new CPSol(Set[CPVarInt]())
   private var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   var recordNonDominatedSolutions = false
   
@@ -57,10 +57,8 @@ class CPSolver() extends Store() {
   }
   
   private def recordSol() {
-    lastSol = Some(new CPSol(decVariables.toSet))
+    lastSol = new CPSol(decVariables.toSet)
   }
-  
-  def lastSolution = lastSol
   
   def obj(objVar: CPVarInt): CPObjectiveUnit = {
     objective(objVar)
@@ -230,10 +228,10 @@ class CPSolver() extends Store() {
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
-    lastSol = Some(new CPSol(decVariables.toSet))
+    lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
       if (!silent) println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
-      paretoSet.insert(lastSol.get, objective.objs.map(_.objVar.value):_*)
+      paretoSet.insert(lastSol, objective.objs.map(_.objVar.value):_*)
     }
     objective.tighten()
   }
