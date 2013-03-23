@@ -136,7 +136,7 @@ object SymVRPTW extends App {
 
   println("\nFinished !")
   println("Routes")
-  val solSucc = Array.tabulate(nSites)(i => cp.lastSolution.get(succ(i)))
+  val solSucc = Array.tabulate(nSites)(i => cp.lastSol(succ(i)))
   
   for (v <- Vehicles) {
     println("vehicle " + v)

@@ -157,19 +157,16 @@ abstract class Pareto[Sol](protected val maxObj: Array[Boolean]) {
    * 
    */
   def min(f: (Sol) => Int): Option[Sol] = {
-    if (this.isEmpty) throw new NoSuchElementException("empty set")
-    else {
-      var min: Option[Sol] = None
-      var minVal = Int.MaxValue
-      this.foreach(sol => {
-        val v = f(sol)
-        if (v < minVal) {
-          minVal = v
-          min = Some(sol)
-        }
-      })
-      min
-    }
+    var min: Option[Sol] = None
+    var minVal = Int.MaxValue
+    this.foreach(sol => {
+      val v = f(sol)
+      if (v < minVal) {
+        minVal = v
+        min = Some(sol)
+      }
+    })
+    min
   }
   
   /** Returns the maximal solution, according to f, in the pareto front
