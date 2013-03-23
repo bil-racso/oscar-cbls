@@ -3,15 +3,15 @@ package oscar.cp.mem.tsp
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.mem.ChannelingPredSucc
-import oscar.cp.mem.InSet
+import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.constraints.InSet
 import oscar.cp.mem.pareto.Pareto
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._
 import scala.collection.mutable.Queue
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.mem.Gavanelli02
+import oscar.cp.mem.constraints.Gavanelli02
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.visu.PlotPareto
 import oscar.cp.mem.visu.PlotPareto
@@ -48,7 +48,7 @@ object ExactBiTSP extends App {
   cp.paretoMinimize(totDists:_*) subjectTo {
 
     // Channeling between predecessors and successors
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+    cp.add(ChannelingPredSucc(pred, succ))
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)

@@ -3,8 +3,8 @@ package oscar.cp.mem.dominance
 import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.mem.ChannelingPredSucc
-import oscar.cp.mem.InSet
+import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.constraints.InSet
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.visu.PlotPareto
 import oscar.util._

@@ -1,7 +1,6 @@
-package oscar.cp.mem
+package oscar.cp.mem.constraints
 
 import oscar.cp.core.CPVarInt
-import oscar.cp.core.Store
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint

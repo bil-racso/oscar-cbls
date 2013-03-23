@@ -31,9 +31,8 @@ import scala.math.round
 import scala.math.pow
 import oscar.search.IDSSearchController
 import oscar.cp.mem.RoutingUtils
-import oscar.cp.mem.ChannelingPredSucc
-import oscar.cp.mem.MyCircuit
-import oscar.cp.mem.InSet
+import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.constraints.InSet
 
 object myTSP extends App {
 
@@ -61,7 +60,7 @@ object myTSP extends App {
   // -----------
   cp.minimize(totDist) subjectTo {
 
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+    cp.add(ChannelingPredSucc(pred, succ))
 
     cp.add(circuit(succ))
     cp.add(circuit(pred))

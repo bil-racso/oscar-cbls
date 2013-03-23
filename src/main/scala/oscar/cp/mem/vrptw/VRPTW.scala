@@ -1,5 +1,5 @@
 package oscar.cp.mem.vrptw
-
+/*
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
@@ -8,13 +8,14 @@ import oscar.cp.mem.ChannelingPredSucc
 import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.mem.TimeWindowPred
 import oscar.cp.mem.TimeWindowSucc
+import oscar.cp.constraints.MinAssignment
 
 /**
  * VRPTW
  *
  * @author Renaud Hartert - ren.hartert@gmail.com
  */
-/*
+
 object VRPTW extends App {
   
   // ------------------------------------------------------------------------
@@ -57,14 +58,12 @@ object VRPTW extends App {
   }
 
   // Distance matrix between sites
-  val dist = new Array[Array[Int]](nSites, nSites)
-  val realDist = new Array[Array[Double]](nSites, nSites)
+  val dist = Array.fill(nSites)(Array.fill(nSites)(0))
 
   for (c1 <- Sites; c2 <- Sites) {
     val i = if (c1 >= nCustomers) 0 else c1 + 1
     val j = if (c2 >= nCustomers) 0 else c2 + 1
     dist(c1)(c2) = (instance.dist(i)(j) * scale).round.toInt
-    realDist(c1)(c2) = (instance.dist(i)(j))
   }
 
   val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
@@ -280,15 +279,12 @@ object VRPTW extends App {
   def solFound() {
     stagnation = false    
     currentSol = new Sol(pred.map(_.value), succ.map(_.value), vehicle.map(_.value), totDist.value)
-    visu.updateRoute(currentSol.pred)
-    visu.updateDist()
   }
 
   // ------------------------------------------------------------------------
   // VISUALIZATION
   // ------------------------------------------------------------------------
 
-  val visu = new VisualRelax(coord, realDist)
 
   // ------------------------------------------------------------------------
   // CONSTRAINTS BLOCK
@@ -297,7 +293,7 @@ object VRPTW extends App {
   cp.minimize(totDist) subjectTo {
 
     // Successor and Predecessor
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
+    cp.add(ChannelingPredSucc(pred, succ))
 
     for (i <- 1 to Vehicles.max) {
       cp.add(pred(FirstDepots.min + i) == LastDepots.min + i - 1)
@@ -332,8 +328,8 @@ object VRPTW extends App {
     cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
     cp.add(sum(Sites)(i => dist(i)(succ(i))) == totDist)
 
-    cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-    cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
+    cp.add(new MinAssignment(pred, dist, totDist))
+    cp.add(new MinAssignment(succ, dist, totDist))
 
     // Time 
     for (i <- Customers) {

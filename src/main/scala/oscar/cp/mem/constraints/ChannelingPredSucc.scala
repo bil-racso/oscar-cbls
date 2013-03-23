@@ -1,26 +1,26 @@
-package oscar.cp.mem
-
-import oscar.cp.core._
+package oscar.cp.mem.constraints
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 
 /** ChannelingPredSucc
  *
  *  This constraint aims to link predecessors and successors of visits
  *  in symmetric routing problems.
  *
- *  @author Renaud Hartert - ren.hartert@gmail.com
+ *  @author Renaud Hartert ren.hartert@gmail.com
  */
 
-class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(cp, "ChannelingPredSucc") {
-
-  private val FAIL    = CPOutcome.Failure
-  private val SUSPEND = CPOutcome.Suspend
+class ChannelingPredSucc(pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(pred.head.store, "ChannelingPredSucc") {
 
   private val nSites = pred.size
   private val Sites  = 0 until nSites
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
-    if (propagate() == FAIL) return FAIL
+    if (propagate() == Failure) return Failure
 
     for (s <- Sites) {
 
@@ -32,7 +32,7 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
       if (!succ(s).isBound) succ(s).callValRemoveIdxWhenValueIsRemoved(this, s + nSites)
     }
 
-    SUSPEND
+    Suspend
   }
 
   override def propagate(): CPOutcome = {
@@ -42,23 +42,23 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
       // Predecessor
       if (pred(i).hasValue(j)) {
         if (pred(i).isBound) {
-          if (succ(j).assign(i) == FAIL) return FAIL
+          if (succ(j).assign(i) == Failure) return Failure
         } else if (!succ(j).hasValue(i)) {
-          if (pred(i).removeValue(j) == FAIL) return FAIL
+          if (pred(i).removeValue(j) == Failure) return Failure
         }
       }
 
       // Successor
       if (succ(i).hasValue(j)) {
         if (succ(i).isBound) {
-          if (pred(j).assign(i) == FAIL) return FAIL
+          if (pred(j).assign(i) == Failure) return Failure
         } else if (!pred(j).hasValue(i)) {
-          if (succ(i).removeValue(j) == FAIL) return FAIL
+          if (succ(i).removeValue(j) == Failure) return Failure
         }
       }
     }
 
-    return SUSPEND
+    return Suspend
   }
 
   override def valRemoveIdx(cpvar: CPVarInt, i: Int, j: Int): CPOutcome =
@@ -74,5 +74,9 @@ class ChannelingPredSucc(cp: Store, pred: Array[CPVarInt], succ: Array[CPVarInt]
 
   private def bindPred(i: Int): CPOutcome = succ(pred(i).value).assign(i)
   private def bindSucc(i: Int): CPOutcome = pred(succ(i).value).assign(i)
+}
+
+object ChannelingPredSucc {
+  def apply(pred: Array[CPVarInt], succ: Array[CPVarInt]) = new ChannelingPredSucc(pred, succ)
 }
 
