@@ -29,51 +29,47 @@ import oscar.cp.modeling._
 class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
 
   def map = objs.map(o => o.objVar -> o).toMap
-  
+
   def this(s: Store, o: Array[CPObjectiveUnit]) = this(s, o: _*)
   def tighten() = objs.foreach(_.tighten())
 
   def isOptimum() = objs.forall(_.isOptimum())
 
   def isOK() = {
-    val objCons: Array[Constraint] = objs.toArray
-    s.propagate(objCons: _*) != CPOutcome.Failure
+    val objCons = objs.toArray
+    propagate != CPOutcome.Failure
   }
-  
+
   def apply(objVar: CPVarInt) = map(objVar)
-  
+
   def diversify() {
-      for (o <- objs) {
-        o.tightenMode = TightenType.NoTighten
-      }
+    for (o <- objs) {
+      o.tightenMode = TightenType.NoTighten
+    }
   }
 
   def intensify(sol: CPSol, objVar: CPVarInt) {
-      for (o <- objs) {
-        o.best = sol(o.objVar)
-        o.tightenMode = if (o.objVar == objVar) TightenType.StrongTighten else TightenType.WeakTighten
-      }
+    for (o <- objs) {
+      o.best = sol(o.objVar)
+      o.tightenMode = if (o.objVar == objVar) TightenType.StrongTighten else TightenType.WeakTighten
+    }
   }
-  
-  def intensify(sol: CPSol) {      
-      for (o <- objs) {
-        o.best = sol(o.objVar)
-        o.tightenMode = TightenType.StrongTighten
-      }
-  }  
+
+  def intensify(sol: CPSol) {
+    for (o <- objs) {
+      o.best = sol(o.objVar)
+      o.tightenMode = TightenType.StrongTighten
+    }
+  }
 
   // constraint methods
 
   override def propagate(): CPOutcome = {
-    if (objs.forall(_.filter() != CPOutcome.Failure)) CPOutcome.Suspend
+    if (objs.forall(_.ensureBest() != CPOutcome.Failure)) CPOutcome.Suspend
     else CPOutcome.Failure
   }
 
-  override def setup(l: CPPropagStrength): CPOutcome = {
-    objs.foreach(s.post(_))
-    propagate()
-  }
-  
-  override def toString = objs.mkString(" , ")
+  override def setup(l: CPPropagStrength): CPOutcome = propagate()
 
+  override def toString = objs.mkString(" , ")
 }
