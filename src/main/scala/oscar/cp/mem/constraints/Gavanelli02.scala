@@ -43,7 +43,7 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Arra
   private def getAllBestDominant(DPobjs: IndexedSeq[Point], sols: List[Point]): Array[Option[Point]] = {
     
     val bestDom: Array[Option[Point]] = Array.fill(pareto.nObjs)(None)
-    val bestObj: Array[Int] = Array.fill(pareto.nObjs)(Int.MaxValue)
+    val bestObj: Array[Int] = Array.tabulate(pareto.nObjs)(o => if (isMax(o)) Int.MinValue else Int.MaxValue)
     
     for (s <- sols; o <- pareto.Objs) {
       if (pareto.dominate(s, DPobjs(o))) {

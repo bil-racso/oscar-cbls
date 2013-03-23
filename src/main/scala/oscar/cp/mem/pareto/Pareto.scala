@@ -193,5 +193,4 @@ abstract class Pareto[Sol](protected val maxObj: Array[Boolean]) {
       objectiveSols.forall(o => other.objectiveSols.exists(p => p == o))
     } else false
   }
-
 }
