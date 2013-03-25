@@ -1,15 +1,18 @@
 package oscar.cp.mem.vrptw
-/*
+
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.mem.visu.VisualRelax
 import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.constraints.TONOTCOMMIT
-import oscar.cp.mem.ChannelingPredSucc
-import oscar.cp.mem.RoutingUtils.minDomDistHeuristic
+import oscar.cp.constraints.MinAssignment
+import oscar.cp.mem.constraints.ChannelingPredSucc
+import oscar.cp.mem.RoutingUtils.regretHeuristic
 import oscar.cp.mem.vrptw.VRPTWParser.parse
-import oscar.cp.mem.TimeWindowPred
-import oscar.cp.mem.TimeWindowSucc
+import oscar.cp.mem.constraints.TimeWindowPred
+import oscar.cp.mem.constraints.TimeWindowSucc
+import scala.collection.mutable.Queue
+import oscar.cp.mem.constraints.NoCycle
+import oscar.util.selectMin
 
 /**
  * VRPTW
@@ -18,167 +21,132 @@ import oscar.cp.mem.TimeWindowSucc
  */
 
 object SymVRPTW extends App {
-  
-  // ------------------------------------------------------------------------
-  // DATA AND PARSING
-  // ------------------------------------------------------------------------
 
-  val instance = parse("data/VRPTW/Solomon/R104.txt")
+  val instance = parse("data/VRPTW/Solomon/C101.txt", 2)
 
-  // Distance scaling
-  val scale = 100
-
-  // Data
-  val nCustomers = instance.n
-  val nVehicles = instance.k
-  val nSites = nCustomers + 2 * nVehicles
-  val capacity = instance.c
+  val nCustomers = instance.nCustomers
+  val nVehicles = instance.nVehicles
+  val nSites = nCustomers + 2*nVehicles
+  val capacity = instance.capacity
 
   val Vehicles = 0 until nVehicles
   val Customers = 0 until nCustomers
-  val Sites = 0 until nCustomers + 2 * nVehicles
+  val Sites = 0 until nCustomers + 2*nVehicles
   val FirstDepots = nCustomers until nCustomers + nVehicles
-  val LastDepots = nCustomers + nVehicles until nCustomers + 2 * nVehicles
+  val LastDepots = nCustomers + nVehicles until nCustomers + 2*nVehicles
 
-  val demand = new Array[Int](nSites) 
-  val twStart = new Array[Int](nSites) 
-  val twEnd = new Array[Int](nSites)
-  val servDur = new Array[Int](nSites)
+  val demand = instance.demand 
+  val twStart = instance.twStart
+  val twEnd = instance.twEnd
+  val servDur = instance.servDur
+  val coord = instance.coord
 
-  val coord = new Array[(Int, Int)](nSites)
+  val realDist: Array[Array[Double]] = instance.dist
+  val dist: Array[Array[Int]] = realDist.map(_.map(_.toInt))
 
-  for (s <- Sites) {
-    val i = if (s >= nCustomers) 0 else s + 1
+  val Horizon = twStart(FirstDepots.min) to twEnd(LastDepots.min)
 
-    demand(s) = instance.demand(i)
-    twStart(s) = instance.twStart(i) * scale
-    twEnd(s) = instance.twEnd(i) * scale
-    servDur(s) = instance.servDur(i) * scale
-
-    coord(s) = instance.coord(i)
-  }
-
-  // Distance matrix between sites
-  val dist = new Array[Array[Int]](nSites, nSites)
-  val realDist = new Array[Array[Double]](nSites, nSites)
-
-  for (c1 <- Sites; c2 <- Sites) {
-    val i = if (c1 >= nCustomers) 0 else c1 + 1
-    val j = if (c2 >= nCustomers) 0 else c2 + 1
-    dist(c1)(c2) = (instance.dist(i)(j) * scale).round.toInt
-    realDist(c1)(c2) = (instance.dist(i)(j))
-  }
-
-  val Horizon = twStart(FirstDepots.min) to twEnd(FirstDepots.min)
-
-  // ------------------------------------------------------------------------
-  // VARIABLES
-  // ------------------------------------------------------------------------
+  // Variables
+  // ---------
 
   val cp = CPSolver()
 
-  val pred = Array.fill(nSites)(CPVarInt(cp, Sites)) 
-  val succ = Array.fill(nSites)(CPVarInt(cp, Sites))  
-  val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles))
-  val arrival = Array.fill(nSites)(CPVarInt(cp, Horizon))
-  val departure = Array.fill(nSites)(CPVarInt(cp, Horizon))
+  val succ = Array.fill(nSites)(CPVarInt(cp, Sites)) 
+  val pred = Array.fill(nSites)(CPVarInt(cp, Sites))  
+  
   val load = Array.fill(nVehicles)(CPVarInt(cp, 0 to capacity))
+  
+  val service = Array.fill(nSites)(CPVarInt(cp, Horizon))
+  
+  val vehicle = Array.fill(nSites)(CPVarInt(cp, Vehicles))
+  
   val totDist = CPVarInt(cp, 0 to dist.flatten.sum)
 
-  case class Sol(pred: Array[Int], succ: Array[Int], vehicle: Array[Int], dist: Int) 
-  var currentSol: Sol = null
-  
-  def solFound() {    
-    currentSol = new Sol(pred.map(_.value), succ.map(_.value), vehicle.map(_.value), totDist.value)
-    visu.updateRoute(currentSol.pred)
-    visu.updateDist()
-  }
-
-  // ------------------------------------------------------------------------
-  // VISUALIZATION
-  // ------------------------------------------------------------------------
+  // Visualization
+  // -------------
 
   val visu = new VisualRelax(coord, realDist)
 
-  // ------------------------------------------------------------------------
-  // CONSTRAINTS BLOCK
-  // ------------------------------------------------------------------------
+  // Constraints
+  // -----------
   
   cp.minimize(totDist) subjectTo {
-
-    // Successor and Predecessor
-    cp.add(new ChannelingPredSucc(cp, pred, succ))
-
-    for (i <- 1 to Vehicles.max) {
-      cp.add(pred(FirstDepots.min + i) == LastDepots.min + i - 1)
-      cp.add(succ(LastDepots.min + i - 1) == FirstDepots.min + i)
+    
+    cp.add(allDifferent(succ), Strong) 
+    cp.add(allDifferent(pred), Strong) 
+    
+    for (i <- Sites) {
+      cp.post(pred(i) != i)
+      cp.post(succ(i) != i)
     }
-
-    cp.add(pred(FirstDepots.min) == LastDepots.max)
-    cp.add(succ(LastDepots.max) == FirstDepots.min)
-
-    // No cycles
-    cp.add(circuit(pred), Strong)
-    cp.add(circuit(succ), Strong)
-
-    // Vehicle
+    
     for (i <- Customers) {
-      cp.add(vehicle(succ(i)) == vehicle(i))
-      cp.add(vehicle(pred(i)) == vehicle(i))
+      cp.post(pred(succ(i)) == i)
+      cp.post(succ(pred(i)) == i)
     }
-
+    
+    for (i <- LastDepots) {
+      cp.post(succ(pred(i)) == i)
+    }
+    
+    for (i <- FirstDepots) {
+      cp.post(pred(succ(i)) == i)
+    }
+    
     for (i <- Vehicles) {
-      cp.add(vehicle(FirstDepots.min + i) == vehicle(succ(FirstDepots.min + i)))
-      cp.add(vehicle(LastDepots.min + i) == vehicle(pred(LastDepots.min + i)))
-      
-      cp.add(vehicle(FirstDepots.min + i) == i)
-      cp.add(vehicle(LastDepots.min + i) == i)
+      cp.post(vehicle(FirstDepots.min + i) == i)
+      cp.post(vehicle(LastDepots.min + i) == i)
     }
-
-    // Capacity of vehicles
-    cp.add(binpacking(vehicle, demand, load))
-
-    // Length of the circuit
+    
+    for (i <- Vehicles) {
+      cp.post(succ(LastDepots.min + i) == FirstDepots.min + i)
+      cp.post(pred(FirstDepots.min + i) == LastDepots.min + i)
+    }
+        
+    for (i <- Customers) {
+      cp.post(vehicle(i) == vehicle(succ(i)))
+      cp.post(vehicle(i) == vehicle(pred(i)))
+    }
+    
+    for (i <- LastDepots) {
+      cp.post(vehicle(i) == vehicle(pred(i)))
+    }
+        
+    for (i <- FirstDepots) {
+      vehicle(i) == vehicle(succ(i))
+    }
+    
     cp.add(sum(Sites)(i => dist(i)(pred(i))) == totDist)
     cp.add(sum(Sites)(i => dist(i)(succ(i))) == totDist)
-
-    cp.add(new TONOTCOMMIT(cp, pred, dist, totDist))
-    cp.add(new TONOTCOMMIT(cp, succ, dist, totDist))
-
-    // Time 
-    for (i <- Customers) {
-
-      cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
-      cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
-
-      cp.add(arrival(i) >= arrival(pred(i)) + servDur(pred(i)) + dist(i)(pred(i)))
-      cp.add(arrival(i) <= arrival(succ(i)) - servDur(i) - dist(i)(succ(i)))
-
-      cp.add(arrival(i) <= twEnd(i))
-      cp.add(arrival(i) >= twStart(i))
-    }
-
-    for (i <- FirstDepots) {      
-      cp.add(new TimeWindowSucc(cp, i, succ, arrival, dist, servDur))
-      cp.add(arrival(i) == 0)
-    }
-
-    for (i <- LastDepots) {
-      cp.add(new TimeWindowPred(cp, i, pred, arrival, dist, servDur))
-      cp.add(arrival(i) <= twEnd(i))
-    }
   }
 
-  // ------------------------------------------------------------------------
-  // EXPLORATION BLOCK
-  // ------------------------------------------------------------------------
-
-  cp.exploration {
-    //regretHeuristic(cp, succ, dist)
-    minDomDistHeuristic(cp, pred, succ, dist)
-    solFound()
+  // Solution
+  cp.addDecisionVariables(succ)
+  cp.addDecisionVariables(vehicle)
+  
+  cp.exploration {  
+    //regretHeuristic(cp, pred, dist) 
+    cp.binaryFirstFail(pred)
+    visu.updateRoute(succ.map(_.value))
+    visu.updateDist()
   } 
   
+  println("Search...")
+  cp.run(1)
+
   println("\nFinished !")
-  cp.printStats
-}*/
+  println("Routes")
+  val solSucc = Array.tabulate(nSites)(i => cp.lastSol(succ(i)))
+  
+  for (v <- Vehicles) {
+    println("vehicle " + v)
+    val first = FirstDepots.min + v
+    var i = solSucc(first)
+    print(first + " -> " + i)
+    while (i != first) {
+      print(" -> " + solSucc(i))
+      i = solSucc(i)
+    }
+    println()
+  }
+}

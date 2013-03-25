@@ -30,7 +30,7 @@ import oscar.reversible._
 import oscar.util._
 import oscar.cp.mem.pareto.ListPareto
 import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.Gavanelli02
+import oscar.cp.mem.constraints.Gavanelli02
 
 class NoSol(msg: String) extends Exception(msg)
 

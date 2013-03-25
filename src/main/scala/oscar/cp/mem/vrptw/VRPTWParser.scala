@@ -1,60 +1,74 @@
 package oscar.cp.mem.vrptw
-/*
+
 import scala.io.Source
 import scala.math.sqrt
 import scala.math.pow
 
 object VRPTWParser {
+  
+  private val scale = 1
+  
+  case class InstanceVRPTW(
+    nCustomers: Int, 
+    nVehicles: Int, 
+    capacity: Int, 
+    demand: Array[Int], 
+    twStart: Array[Int], 
+    twEnd: Array[Int], 
+    servDur: Array[Int], 
+    dist: Array[Array[Double]], 
+    coord: Array[(Int, Int)]
+  )
 
-	def parse(filepath : String) : InstanceVRPTW = {
-		
-		var lines = Source.fromFile(filepath).getLines.toList
+  def parse(filepath: String, depotsFactor: Int = 1): InstanceVRPTW = {
 
-		val name = lines.head.trim
-		
-		lines = lines.drop(4)
-		
-		val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-		val k = l(0).toInt
-		val c = l(1).toInt
-		
-		lines = lines.drop(5)
-		
-		
-		val n = lines.size - 1
-					
-		val coord   = new Array[(Int, Int)](n+1)
-		val demand  = new Array[Int](n+1)
-		val twStart = new Array[Int](n+1)
-		val twEnd   = new Array[Int](n+1)
-		val servDur = new Array[Int](n+1)
-	
-		for(i <- 0 to n) {
-	
-			val l = lines.head.trim.split("[ ,\t]+").map(_.toInt).toArray
-	
-			coord(i)   = (l(1), l(2))
-			demand(i)  = l(3)
-			twStart(i) = l(4)
-			twEnd(i)   = l(5)
-			servDur(i) = l(6)
-			
-			lines = lines.drop(1)
-		}
-		
-		val dist = new Array[Array[Double]](n+1, n+1)
-		
-		for(c1 <- 0 to n; c2 <- 0 until c1) {
-			
-			dist(c1)(c2) = (sqrt( pow(coord(c1)._1 - coord(c2)._1,2) + pow(coord(c1)._2 - coord(c2)._2,2) ))
-			dist(c2)(c1) = dist(c1)(c2)
-			dist(c1)(c1) = 0
-			dist(c2)(c2) = 0
-		}
-		
-		new InstanceVRPTW(n, k, c, demand, twStart, twEnd, servDur, dist, coord)
-	}
+    var lines = Source.fromFile(filepath).getLines.toList
+    val name = lines.head.trim
+    lines = lines.drop(4)
+
+    var l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray   
+    val nVehicles = l(0).toInt
+    val capacity = l(1).toInt
+
+    lines = lines.drop(5)
+
+    val nCustomers = lines.size - 1
+    val nSites = nCustomers + nVehicles*depotsFactor
+
+    val coord = Array.fill(nSites)((0, 0))
+    val demand = Array.fill(nSites)(0)
+    val twStart = Array.fill(nSites)(0)
+    val twEnd = Array.fill(nSites)(0)
+    val servDur = Array.fill(nSites)(0)
+    
+    // Depots
+    l = lines.head.trim.split("[ ,\t]+").map(_.toInt).toArray
+    for (i <- nCustomers until nSites) {
+      coord(i) = (l(1) * scale, l(2) * scale)
+      demand(i) = l(3)
+      twStart(i) = l(4) * scale
+      twEnd(i) = l(5) * scale
+      servDur(i) = l(6) * scale
+    }
+    lines = lines.drop(1)
+    
+    // Customers 
+    for (i <- 0 until nCustomers) {
+      val l = lines.head.trim.split("[ ,\t]+").map(_.toInt).toArray
+      coord(i) = (l(1) * scale, l(2) * scale)
+      demand(i) = l(3)
+      twStart(i) = l(4) * scale
+      twEnd(i) = l(5) * scale
+      servDur(i) = l(6) * scale
+      lines = lines.drop(1)
+    }
+    
+    val distMatrix = Array.tabulate(nSites, nSites)((i, j) => {
+      val (xi, yi) = coord(i)
+      val (xj, yj) = coord(j)
+      sqrt(pow(xi - xj, 2) + pow(yi - yj, 2))
+    })
+
+    InstanceVRPTW(nCustomers, nVehicles, capacity, demand, twStart, twEnd, servDur, distMatrix, coord)
+  }
 }
-
-case class InstanceVRPTW(n : Int, k : Int, c : Int, demand : Array[Int], twStart : Array[Int], twEnd : Array[Int], servDur : Array[Int], dist : Array[Array[Double]], coord : Array[(Int, Int)])
-					*/	 

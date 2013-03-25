@@ -1,4 +1,4 @@
-package oscar.cp.mem
+package oscar.cp.mem.constraints
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
