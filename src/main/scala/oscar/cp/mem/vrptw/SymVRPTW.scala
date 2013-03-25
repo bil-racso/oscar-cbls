@@ -11,7 +11,6 @@ import oscar.cp.mem.vrptw.VRPTWParser.parse
 import oscar.cp.mem.constraints.TimeWindowPred
 import oscar.cp.mem.constraints.TimeWindowSucc
 import scala.collection.mutable.Queue
-import oscar.cp.mem.constraints.NoCycle
 import oscar.util.selectMin
 
 /**
