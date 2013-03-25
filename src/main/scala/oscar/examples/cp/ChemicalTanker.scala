@@ -109,7 +109,7 @@ object ChemicalTanker extends App {
     
     // ------------- parses the data of the problem  ---------------
 
-    val problemNode = xml.XML.loadFile("data/chemical.xml")
+    val problemNode = xml.XML.loadFile("data/chemical4.xml")
     val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
     val cargos = Array(dummyCargo) ++ // dummy cargo
       (for (node <- (problemNode \ "cargos" \ "cargo").toArray)
@@ -171,7 +171,7 @@ object ChemicalTanker extends App {
     
     // --------------- state the objective, the constraints and the search -------------
 
-    cp.maximize(/*freeSpace*/ nbFreeTanks) subjectTo {
+    cp.maximize(freeSpace /*nbFreeTanks*/) subjectTo {
       // make the link between cargo and load vars with binPacking constraint
       cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
       cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
@@ -183,6 +183,11 @@ object ChemicalTanker extends App {
       for (t <- tanks; t2 <- t.neighbours; if (t2>t.id)) {
 	      cp.add(table(cargo(t.id-1),cargo(t2-1),compatibles))
       }
+      /*
+      val sol = Array(3,0,0,17,7,10,1,18,15,14,1,5,9,1,4,9,0,10,2,4,7,13,13,0,15,11,12,6,18,8,0,16,16,0)
+      for (t <- 0 until cargo.size) {
+        cp.add(cargo(t) == sol(t))
+      }*/
       
     } exploration {
       while(!allBounds(cargo)) {
@@ -206,10 +211,10 @@ object ChemicalTanker extends App {
       plot.addPoint(nbSol,freeSpace.value)
     } run(1)
     
-    for (r <- 1 to 100) {
+    for (r <- 1 to 10000) {
       cp.runSubjectTo(Int.MaxValue,300) {
         //fix randomly 90% of the slabs to the position of the current best solution
-    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 50; if (!cp.isFailed)) {
+    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 70; if (!cp.isFailed)) {
     	   cp.post(cargo(i) == cargosol(i))
     	}
       }
