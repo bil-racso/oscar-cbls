@@ -99,7 +99,8 @@ class TestGavanelli extends FunSuite with ShouldMatchers  {
         else selectMin(Cities)(succ(i).hasValue(_))(distMatrices(0)(i)(_)).get
         cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
       }     
-      val inserted = paretoSet.insert(cp.lastSol, totDists.map(_.value): _*)        
+      val inserted = paretoSet.insert(cp.lastSol, totDists.map(_.value): _*) 
+      // Only non-dominated solutions are found
       inserted should be(true)
     }
     
