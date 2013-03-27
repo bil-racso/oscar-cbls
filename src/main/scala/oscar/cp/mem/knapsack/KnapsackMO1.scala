@@ -42,9 +42,11 @@ object KnapsackMO1 extends App {
   //val dataFile = "data/mo-knapsack/100.txt"
   //val solutionFile = "data/mo-knapsack/solution/100_2.txt"
 
-  val dataFile = "data/mo-knapsack/2KP100A.txt"
-  val solutionFile = "data/mo-knapsack/solution/2KP100A.txt"
-    
+  //val dataFile = "data/mo-knapsack/2KP100A.txt"
+  //val solutionFile = "data/mo-knapsack/solution/2KP100A.txt"
+
+  val dataFile = "data/mo-knapsack/2KP150B.txt"
+  val solutionFile = "data/mo-knapsack/solution/2KP150B.txt"  
     
   // Read the data
   var (n:Int,capa1:Int,capa2:Int,items1:Array[(Int,Int)],items2:Array[(Int,Int)]) = KnapsackReader.read(dataFile)
