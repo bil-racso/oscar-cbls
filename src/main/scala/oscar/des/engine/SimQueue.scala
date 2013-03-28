@@ -33,14 +33,13 @@ class SimQueue {
       else ()
   }
   
-  def enter[T]: Boolean@cpsParam[SuspendableResult[T],SuspendableResult[T]] = {
-    val res = if ( isOpen() ){
+  def enter[T] = {
+    if ( isOpen() ){
       isEmpty := false
       u[T]
       isBusy := true
       true
     }else false
-    res
   }
   
   def leave(){
