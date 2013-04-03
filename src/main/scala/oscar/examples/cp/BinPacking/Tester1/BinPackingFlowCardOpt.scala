@@ -48,8 +48,9 @@ class ProfilesTester(profiles: List[(Int,Int,Int,Int,Int,Int,Int,Boolean,Double,
     for(actor <- actors) actor.start
     
     while(true)
-    {
-      receive{
+    {	
+
+receive{
         case (profile : Array[String], results : Array[String]) =>  
           {
         	  actors = actors.filterNot(_ == sender)

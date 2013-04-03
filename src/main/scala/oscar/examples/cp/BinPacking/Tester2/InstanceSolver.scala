@@ -20,9 +20,8 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
 	  	
+	  
 	  cp.solveAll subjectTo {
-		  
-		  
 		postConstraints(cp,x,l,classic,current,extended)
 		  
 	    }
@@ -39,19 +38,17 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  val l = instance.bins.map(i=>CPVarInt(cp,instance.binCapacities(i))).toArray
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
-	  	
+	  cp.timeLimit = 1	
+	  
 	  cp.solve subjectTo {
 		  postConstraints(cp,x,l,classic,current,extended)
 
-		} exploration {
-		  
+		} exploration {		  
 		  cp.binaryFirstFail(x)
-		  
-		  
-		  
+		  nbSol += 1
 	    }
 		val duration =  System.currentTimeMillis - startTime
-	 (1, duration, cp.nFail)
+	 (nbSol, duration, cp.nFail)
 	  
 	 
 	}

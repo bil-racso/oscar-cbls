@@ -104,10 +104,6 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	    var v = l_t(j).getValue
 	   
 	    
-	    val real = x.zipWithIndex.filter(i => i._1.isBound && i._1.getValue == j).map(i=>sizes(i._2)).sum
-	    if(real != v)
-	      throw new Exception("L_t is wrong");
-	    
 	    var i = x.length-1;
 	    
 	    var nbAdded = 0;

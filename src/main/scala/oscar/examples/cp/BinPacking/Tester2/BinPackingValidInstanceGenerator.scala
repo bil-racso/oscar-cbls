@@ -7,9 +7,9 @@ import scala.collection.immutable.Stream.consWrapper
 class BinPackingValidInstanceGenerator {
 	var numberOfBins = 10
 	
-	var itemsByBinsLimits 		= (2,20)
-	var itemsByBinsMean 		= 8
-	var itemsByBinsDeviation 	= 2
+	var itemsByBinsLimits 		= (2,100)
+	var itemsByBinsMean 		= 30
+	var itemsByBinsDeviation 	= 10
 	
 	var itemsSizeLimits 		= (1,100)
 	var itemsSizeMean			= 10
@@ -17,8 +17,11 @@ class BinPackingValidInstanceGenerator {
 	
 	var binSizeDomainExpension 	= 0.10
 	
-	var binByItemMean			= 4
-	var binByItemDeviation		= 2
+	var binByItemMean			= 2
+	var binByItemDeviation		= 1
+	
+	def key = List("numberOfBins","itemsByBinsLimits","itemsByBinsMean","itemsByBinsDeviation","itemsSizeLimits","itemsSizeMean","itemsSizeDeviation","binSizeDomainExpension","binByItemMean","binByItemDeviation")
+	def values = List(numberOfBins,itemsByBinsLimits,itemsByBinsMean,itemsByBinsDeviation,itemsSizeLimits,itemsSizeMean,itemsSizeDeviation,binSizeDomainExpension,binByItemMean,binByItemDeviation)
 	
 	def generateSolution : List[List[Int]] = {
 	  (0 until numberOfBins).map{ 
