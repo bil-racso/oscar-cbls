@@ -49,7 +49,7 @@ class BinPackingFlowExtended (_x : Array[CPVarInt],_sizes : Array[Int], _l : Arr
 		for ((xt,i) <- x.zipWithIndex) {
 			if (xt.isBound) {
 				val j = xt.getValue
-				l_t(j).setValue(l_t(j).getValue + sizes(j))
+				l_t(j).setValue(l_t(j).getValue + sizes(i))
 				c_t(j).incr
 			}
 			else {

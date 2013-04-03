@@ -5,10 +5,10 @@ import oscar.examples.cp.BinPacking.DataStructures.BinPackingInstance
 import scala.collection.immutable.Stream.consWrapper
 
 class BinPackingValidInstanceGenerator {
-	var numberOfBins = 3
+	var numberOfBins = 10
 	
 	var itemsByBinsLimits 		= (2,20)
-	var itemsByBinsMean 		= 2
+	var itemsByBinsMean 		= 8
 	var itemsByBinsDeviation 	= 2
 	
 	var itemsSizeLimits 		= (1,100)
@@ -17,8 +17,8 @@ class BinPackingValidInstanceGenerator {
 	
 	var binSizeDomainExpension 	= 0.10
 	
-	var binByItemMean			= 2
-	var binByItemDeviation		= 0
+	var binByItemMean			= 4
+	var binByItemDeviation		= 2
 	
 	def generateSolution : List[List[Int]] = {
 	  (0 until numberOfBins).map{ 
@@ -33,6 +33,8 @@ class BinPackingValidInstanceGenerator {
 	def generateInstance() : BinPackingInstance = 
 	{
 	  var solution = generateSolution 
+	  while(solution.flatten[Int].length == 0)
+	    solution = generateSolution
 	  
 	  val r = new Random
 	  val bpi = new BinPackingInstance()

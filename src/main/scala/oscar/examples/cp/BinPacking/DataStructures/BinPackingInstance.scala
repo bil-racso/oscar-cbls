@@ -1,6 +1,7 @@
 package oscar.examples.cp.BinPacking.DataStructures
 
 import scala.Array.canBuildFrom
+import scala.util.Random
 
 class BinPackingInstance
 {
@@ -10,6 +11,14 @@ class BinPackingInstance
     
     def items = 0 until itemsSizes.length
     def bins = 0 until binCapacities.length
+    
+    def shuffle() = 
+    {
+      var shuffle_order = Random.shuffle(items)
+      itemsSizes = (for (i <- shuffle_order) yield itemsSizes(i)).toArray
+      binForItems = (for (i <- shuffle_order) yield Random.shuffle(binForItems(i).toList).toArray).toArray
+      
+    }
     
     def description(instName:String = "instance") = 
     {

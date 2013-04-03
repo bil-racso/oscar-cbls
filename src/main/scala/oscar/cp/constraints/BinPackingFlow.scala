@@ -44,7 +44,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 		    ||  x.exists(_.updateMin(0) == CPOutcome.Failure)
 		    || 	s.post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure)
 		{
-		    println("BinPackingFlow failure 0")
+		    
 		    CPOutcome.Failure
 
 		}
@@ -103,38 +103,32 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	    //how many items do I need at least to reach minVal ?
 	    var v = l_t(j).getValue
 	   
-	    /*
-	    println("items packed" + x.zipWithIndex.filter(i => i._1.isBound && i._1.getValue == j).map(_._2).mkString( " " ))
-	    println("l_t:" +v + " real:"+x.zipWithIndex.filter(i => i._1.isBound && i._1.getValue == j).map(i=>sizes(i._2)).sum)
-	    */
 	    
 	    val real = x.zipWithIndex.filter(i => i._1.isBound && i._1.getValue == j).map(i=>sizes(i._2)).sum
 	    if(real != v)
 	      throw new Exception("L_t is wrong");
 	    
 	    var i = x.length-1;
-	    println("track 1 : v="+v+" i="+i)
+	    
 	    var nbAdded = 0;
 	    while (v < minVal && i >= 0){
-	      println("trying to add "+perm(i) + " in "+j+" bounded:" + x(perm(i)).isBound + " " + x(perm(i)) )
+	      
 	      if (!x(perm(i)).isBound && x(perm(i)).hasValue(j)) {
 	        v += sizes(perm(i))
 	        nbAdded += 1
 	      }
 	      i -= 1
-	      println("track 1 : v="+v+" i="+i)
+	      
 	    }
 	    if(v < minVal) {     
-	      println("BinPackingFlow failure 1 : " +v+ " ; " +minVal)
+	      
 	      return CPOutcome.Failure; //not possible to reach the minimum level
 	    }
 	    val nbMin = nbAdded + c_t(j).getValue;
 	    
 	    if (c(j).updateMin(nbMin) == CPOutcome.Failure){
-	      //println(j + " " + nbMin )
 	      
-	      //println("Failure 2")
-	    	println("BinPackingFlow failure 2")	      
+	    	      
 	      return CPOutcome.Failure
 	    }
 	    // how many items can I use at most before reaching maxVal ?
@@ -150,7 +144,7 @@ class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Ar
 	    }
 	    val nbMax = nbAdded + c_t(j).getValue	    
 	    if (c(j).updateMax(nbMax) == CPOutcome.Failure){
-	    	println("BinPackingFlow failure 3")
+	    	
 	      return CPOutcome.Failure
 	    }
 
