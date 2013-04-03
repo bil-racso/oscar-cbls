@@ -133,7 +133,7 @@ object KnapsackMO1 extends App {
       println("init=>"+profitVar1neg+" "+profitVar2neg)
       */
     } exploration {
-      cp.binary(x, _.max)      
+      cp.binary(x,x.indexOf(_), _.max)      
       obj1Sol = profitVar1neg.value
       obj2Sol = profitVar2neg.value
       println("sol found")
@@ -144,7 +144,7 @@ object KnapsackMO1 extends App {
       val sol = randomSol()
       paretoPlot.highlight(sol(profitVar1neg),sol(profitVar2neg))
       cp.runSubjectTo(Int.MaxValue, 1000) {
-        if (i % 2 == 0) {
+        if (i % 4 == 0) {
           cp.objective.diversify()  
         } else {
           cp.objective.intensify(sol)

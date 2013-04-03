@@ -86,17 +86,17 @@ object QuadraticAssignmentMO3 extends App {
   val n = 10  
   */
   
-  
+  /*
   val dataFile = "data/mo-qap/KC10-2fl-5rl.dat"
   val solFile = "data/mo-qap/solutions/KC10-2fl-5rl.PO.txt"
   val n = 10  
+  */
   
   
-  /*
   val dataFile = "data/mo-qap/KC20-2fl-3uni.dat"
   val solFile = "data/mo-qap/solutions/KC10-2fl-5rl.PO.txt"
   val n = 20  
-  */
+  
   
   /*
   val dataFile = "data/mo-qap/qapUni.25.0.1"
@@ -115,7 +115,7 @@ object QuadraticAssignmentMO3 extends App {
   // Read the data
   val (d,w1,w2) = QAPReader.read(dataFile, n)
   // Read the solution
-  val solutions = QAPReader.readSolutions(solFile, n)
+  //val solutions = QAPReader.readSolutions(solFile, n)
   //val solutions = QAPReader.readSolutions2(solFile, n)
   
   
@@ -142,9 +142,10 @@ object QuadraticAssignmentMO3 extends App {
   f.createFrame("QAP HV").add(plotHV)
   f.pack()
   
+  /*
   for ((xsol,o) <- solutions) {
     plotPareto.insert(o(0),o(1),1)
-  }
+  }*/
   
   
   //val qapLNS = new QuadraticAssignmentWeightedSum(n,d,w1,w2)
