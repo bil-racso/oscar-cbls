@@ -38,7 +38,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  val l = instance.bins.map(i=>CPVarInt(cp,instance.binCapacities(i))).toArray
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
-	  cp.timeLimit = 1	
+	  cp.timeLimit = 60	
 	  
 	  cp.solve subjectTo {
 		  postConstraints(cp,x,l,classic,current,extended)
