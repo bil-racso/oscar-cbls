@@ -222,12 +222,12 @@ class Signal[A](private var value: A) extends NotifyAllEvent[A] {
     }
   }
   def apply() = value
-  override def filter(f: A => Boolean) = new ConditionalOccuring[A](this, f) {
+  override def filter(cond: A => Boolean) = new ConditionalOccuring[A](this, cond) {
     // could be improved in the case the call to f(sig()) is false;
     // then we could avoid to create the Reaction
     override def foreach(f: A => Boolean) = {
       val r = super.foreach(f)
-      if (f(value)) r(value)
+      if (cond(value)) r(value)
       r
     }
   }

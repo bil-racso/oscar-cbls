@@ -262,6 +262,35 @@ class LPConstraint(val solver : AbstractLPSolver,val cstr : LinearConstraint, va
    
     
     def dual() = solver.getDual(this)
+    
+    def check(tol: Double = 10e-6): Boolean = {
+    	val s = slack()
+	    cstr.consType match {
+              case ConstraintType.GQ => s+tol >= 0
+              case ConstraintType.LQ => s+tol >= 0
+              case ConstraintType.EQ => s.abs - tol <= 0
+        }
+ 	}
+ 	
+    def slack(): Double = {
+ 	    var res = 0.0
+ 	  	val ex = cstr.linExpr.coef.toArray
+	    
+	    for ((i,a) <- varIds.zip(coef)) {
+	      val x: AbstractLPVar = solver.variable(i) match {
+	          case Some(variable) => variable
+	          case None => throw new IllegalArgumentException("Variable with index "+i+" not present in lp solver")
+	      }
+	      res += a * x.getValue
+	    }
+	    cstr.consType match {
+              case ConstraintType.GQ => res-rhs
+              case ConstraintType.LQ => rhs-res
+              case ConstraintType.EQ => rhs-res
+        }
+ 	}
+    
+    def isTight(tol: Double = 10e-6) = slack.abs <= tol
 	
 } 
   
@@ -286,15 +315,24 @@ abstract class AbstractLPSolver {
       vars.size-1
     }
     
-    def add(constr : LinearConstraint,name: Option[String]= None): LPConstraint = {
-      val cstName = name match {
-        case Some(n) => n
-        case None => "cstr"+cons.size
+    /**
+     * @deprecated("no need to use option",1.0)
+     */
+    def add(constr : LinearConstraint,name: Option[String]): LPConstraint = {
+      name match {
+        case None => add(constr,"")
+        case Some(n) => add(constr,n)
       }
+    }
+    
+    def add(constr : LinearConstraint,name: String = ""): LPConstraint = {
+      val cstName = if (name.isEmpty()) "cstr"+cons.size else name
       val constraint = new LPConstraint(this,constr,cons.size,cstName)
       cons(cons.size) = constraint
       constraint
     }
+    
+    def variable(i: Int) = vars.get(i)
     
     /**
      * add the constraints really into the solver implem
@@ -425,32 +463,7 @@ abstract class AbstractLPSolver {
 	/**
 	 * Check that all the constraints are satisfied
 	 */
-	def checkConstraints(tol: Double = 10e-6): Boolean = {
-	  var violation = false
-	  cons  foreach { case (i,c) =>
-	    var res = 0.0
-	    
-	    val ex = c.cstr.linExpr.coef.toArray
-	    
-	    for ((i,a) <- c.varIds.zip(c.coef)) {
-	      val x: AbstractLPVar = vars.get(i) match {
-	        case Some(variable) => variable
-	        case None => throw new IllegalArgumentException("Variable with index "+i+" not present in lp solver")
-	      }
-	      res += a * x.getValue
-	    }
-	    val ok = c.cstr.consType match {
-              case ConstraintType.GQ => res+tol >= c.rhs
-              case ConstraintType.LQ => res-tol <= c.rhs
-              case ConstraintType.EQ => res <= c.rhs+tol && res >= c.rhs-tol
-        }
-        if (!ok) {
-          println("violation of constraint: "+c.name+": "+res+" "+c.cstr.consType+" "+c.rhs)
-          violation = true
-        }
-      }
-	  !violation
-	}
+	def checkConstraints(tol: Double = 10e-6): Boolean = cons.values.forall(c => c.check(tol))
 	
 	
 } // end class AbstractLPSolver

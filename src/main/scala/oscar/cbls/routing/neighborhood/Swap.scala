@@ -142,7 +142,7 @@ object Swap extends SearchEngine{
  */
 case class Swap(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
+  def comit() {Swap.doMove(predOfMovedPoint, PutAfter, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = predOfMovedPoint
   def getValuesToAssign = vrp.swap(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter,

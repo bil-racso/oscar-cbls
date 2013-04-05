@@ -38,9 +38,9 @@ import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
 case class CumulativeResource(planning: Planning, MaxAmount: Int, name: String = "") {
   val ResourceID = planning.AddRessource(this)
 
-  /**The set of tasks using this resource at every position*/
+  /**The set of activities using this resource at every position*/
   val Use: Array[IntSetVar] = (for (t <- 0 to planning.maxduration) yield
-    new IntSetVar(planning.model, 0, Int.MaxValue, "Tasks_using_" + name + "_at_ime_" + t)).toArray
+    new IntSetVar(planning.model, 0, Int.MaxValue, "Activities_using_" + name + "_at_ime_" + t)).toArray
 
   val UseAmount: Array[IntVar] = (for (t <- 0 to planning.maxduration) yield
     new IntVar(planning.model, 0, Int.MaxValue, 0, "use_amount_" + name + "_at_time_" + t)).toArray
@@ -51,26 +51,26 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int, name: String =
   val HighestUsePositions: IntSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
-  var TasksAndUse: List[(Task, IntVar)] = List.empty
+  var ActivitiesAndUse: List[(Activity, IntVar)] = List.empty
 
-  /**called by task to register itself to the resource*/
-  def notifyUsedBy(j: Task, amount: IntVar) {
-    TasksAndUse = (j, amount) :: TasksAndUse
+  /**called by activities to register itself to the resource*/
+  def notifyUsedBy(j: Activity, amount: IntVar) {
+    ActivitiesAndUse = (j, amount) :: ActivitiesAndUse
   }
 
-  def getTasksAndUse(t:Int):List[(Task, IntVar)] = {
-    TasksAndUse.filter((taskAndamount: (Task, IntVar)) => Use(t).value.contains(taskAndamount._1.TaskID))
+  def getActivitiesAndUse(t:Int):List[(Activity, IntVar)] = {
+    ActivitiesAndUse.filter((x: (Activity, IntVar)) => Use(t).value.contains(x._1.ID))
   }
   
   def close() {
-    val NbTasks = TasksAndUse.size
+    val NbTasks = ActivitiesAndUse.size
     val TaskIDs: Array[Int] = new Array[Int](NbTasks)
     val UseAmounts: Array[IntVar] = new Array[IntVar](NbTasks)
     val TaskDurations: Array[IntVar] = new Array[IntVar](NbTasks)
     val TaskStarts: Array[IntVar] = new Array[IntVar](NbTasks)
     var i = 0;
-    for (taskanduse <- TasksAndUse) {
-      TaskIDs(i) = taskanduse._1.TaskID
+    for (taskanduse <- ActivitiesAndUse) {
+      TaskIDs(i) = taskanduse._1.ID
       UseAmounts(i) = taskanduse._2
       TaskDurations(i) = taskanduse._1.duration
       TaskStarts(i) = taskanduse._1.EarliestStartDate

@@ -47,7 +47,9 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.1.1"
 
-libraryDependencies += "org.scala-lang" % "scala-swing" % "2.9.2"
+libraryDependencies += "org.scala-lang" % "scala-swing" % "2.10.1-RC2"
+
+//"2.9.2"
 
 excludedJars in assembly <<= (fullClasspath in assembly) map { cp => 
   cp filter {x => 

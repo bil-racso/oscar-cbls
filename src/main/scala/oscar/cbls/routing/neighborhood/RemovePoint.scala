@@ -139,7 +139,7 @@ object RemovePoint extends SearchEngine{
  */
 case class RemovePoint(beforeRemovedPoint:Int, removedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {RemovePoint.doMove(beforeRemovedPoint, removedPoint, vrp)}
+  def comit() {RemovePoint.doMove(beforeRemovedPoint, removedPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = beforeRemovedPoint
   def getValuesToAssign = vrp.remove(List((beforeRemovedPoint,removedPoint)))

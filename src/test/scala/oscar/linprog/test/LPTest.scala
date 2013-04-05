@@ -149,5 +149,45 @@ class LPTest extends FunSuite with ShouldMatchers {
     }
   }
 
+  test("lp test 7") {
+    for (lib <- solvers) {
+      val lp = new LPSolver(lib)
+      val x = new LPVar(lp, "x", 0, 10)
+      val y = new LPVar(lp, "y", 0, 10)
+
+      var cons: Vector[LPConstraint] = Vector()
+
+      lp.maximize(x + y) subjectTo {
+        cons = cons :+ lp.add(x + y >= 5)
+        cons = cons :+ lp.add(x + 2 * y <= 25)
+        cons = cons :+ lp.add(x + 2 * y <= 30)
+        cons = cons :+ lp.add(x + y >= 17.5)
+        cons = cons :+ lp.add(x == 10.0)
+      }
+
+      x.value.get should be(10.0 plusOrMinus 1e-6)
+      y.value.get should be(7.5 plusOrMinus 1e-6)
+
+      cons(0).isTight() should be(false)
+      cons(1).isTight() should be(true)
+      cons(2).isTight() should be(false)
+      cons(3).isTight() should be(true)
+      cons(4).isTight() should be(true)
+
+      cons(0).slack should be(12.5 plusOrMinus 1e-6)
+      cons(1).slack should be(0.0 plusOrMinus 1e-6)
+      cons(2).slack should be(5.0 plusOrMinus 1e-6)
+      cons(3).slack should be(0.0 plusOrMinus 1e-6)
+      cons(4).slack should be(0.0 plusOrMinus 1e-6)
+
+      cons.foreach(c => c.check() should be(true))
+
+      lp.getObjectiveValue() should be(17.5 plusOrMinus 1e-6)
+      lp.status should equal(LPStatus.OPTIMAL)
+
+      lp.release()
+    }
+  }
+
 }
 

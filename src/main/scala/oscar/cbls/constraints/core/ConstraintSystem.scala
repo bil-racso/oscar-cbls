@@ -81,7 +81,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def aggregateLocalViolations{
+  private def aggregateLocalViolations(){
     for (variable <- VarInConstraints){
       val ConstrAndWeightList:List[(Constraint,IntVar)] = variable.getStorageAt(IndexForLocalViolationINSU,null)
 
@@ -97,7 +97,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def PropagateLocalToGlobalViolations{
+  private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
       val localViol:IntVar = varWithLocalViol.getStorageAt(IndexForLocalViolationINSU)
       val sources = model.getSourceVariables(varWithLocalViol)
@@ -108,7 +108,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def aggregateGlobalViolations{
+  private def aggregateGlobalViolations(){
     for (variable <- VarsWatchedForViolation){
       val ElementsAndViol:GlobalViolationDescriptor = variable.getStorageAt(IndexForGlobalViolationINSU)
       ElementsAndViol.Violation <== Sum(ElementsAndViol.AggregatedViolation)
@@ -128,9 +128,9 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
 
     setObjectiveVar(Violation)
 
-    aggregateLocalViolations
-    PropagateLocalToGlobalViolations
-    aggregateGlobalViolations
+    aggregateLocalViolations()
+    PropagateLocalToGlobalViolations()
+    aggregateGlobalViolations()
   }
 
   /**Call this method to notify that the variable should have a violation degree computed for the whole constraint system.

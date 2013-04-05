@@ -92,8 +92,4 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 			drawing.showToolTip(toolTip);
 		}
 	}
-	
-	
-	
-	
 }
