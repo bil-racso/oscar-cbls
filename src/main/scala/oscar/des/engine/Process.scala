@@ -124,7 +124,6 @@ class DefaultResult extends ProcessResult[DefaultResult] {
 abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
   def exec(implicit state: S): T @susp
   def deepExec(state: S) = {
-    
     exec(state)
   }
   def Iam(next: S)(implicit current: S) = {
@@ -133,11 +132,13 @@ abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(i
   }
   override def start() = deepExec(initState)
 }
-//
-//abstract trait ProcessWithCostByState[S, T <: ProcessResult[T]] extends ProcessWithStates[S, T] {
-//  def cost(state: S): T @susp
-//  override def Iam(next: S)(implicit current: S) = cost(current).+:(deepExec(next))
-//}
+
+abstract trait ProcessWithCostByState[S, T <: ProcessResult[T]] extends ProcessWithStates[S, T] {
+  def cost(state: S): T @susp
+  override def Iam(next: S)(implicit current: S) = {
+    cost(current).+:(deepExec(next))
+  }
+  }
 
 trait MonitorState[S, T] extends ProcessWithStates[S, T] {
   val entering = Event[S]()

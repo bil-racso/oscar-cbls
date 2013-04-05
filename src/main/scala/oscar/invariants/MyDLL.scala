@@ -30,16 +30,16 @@ class MyDLL[A] {
   class MyDLLElementContainer[C <: A](private var elem: C, var previous: MyDLLElementContainer[_ <: A], var next: MyDLLElementContainer[_ <: A]) {
 
     var list = MyDLL.this
-//    def foreach(f: (A) => Unit) {
-//      var current = elem
-//      while(elem != null){
-//      f(elem)
-//      elem = elem.next
-//      if (next != null) next.foreach(f)
-//    }
+    //    def foreach(f: (A) => Unit) {
+    //      var current = elem
+    //      while(elem != null){
+    //      f(elem)
+    //      elem = elem.next
+    //      if (next != null) next.foreach(f)
+    //    }
     def apply = elem
-    def silentlyRemove{
-      if ( list != null){
+    def silentlyRemove {
+      if (list != null) {
         MyDLL.this.remove(this)
         list == null
       }
@@ -48,6 +48,8 @@ class MyDLL[A] {
       require(list != null, "This element has already been removed")
       silentlyRemove
     }
+    
+    override def toString() : String = elem.toString()
   }
 
   var first: MyDLLElementContainer[_ <: A] = null
@@ -85,11 +87,21 @@ class MyDLL[A] {
       ec.next.previous = ec.previous
     _size -= 1
   }
-  def foreach(f: (A) => Unit) { 
+  def foreach(f: (A) => Unit) {
     var current = first
-    while (current != null){
+    while (current != null) {
       f(current.apply)
       current = current.next
     }
+  }
+  
+  override def toString() : String = {
+    var current = first
+    var string = ""
+    while (current != null) {
+      string += current.toString() + " , "
+      current = current.next
+    }
+    string
   }
 }

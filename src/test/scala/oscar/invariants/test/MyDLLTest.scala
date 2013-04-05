@@ -39,26 +39,29 @@ import oscar.invariants.MyDLL
 @RunWith(classOf[JUnitRunner])
 class MyDLLTest extends FunSuite with ShouldMatchers with Checkers {
 
-	def listGen = Gen.listOf[Int](Gen.choose(-10000000, 10000000))
+  def listGen = Gen.containerOf[List, Int](Gen.choose(-1000,1000))
 
+  def arbitraryFunction(a : Int) : Int = (a*a + 2*a -5)
+		  
   test("Some Operations on Lists Of Int") {
-    
-    forAll(listGen) { list: List[Int] =>
-      // Create a double linked list with elements of the list
-      val dll = new MyDLL[Int]
-      for (l <- list) dll.add(l)
+    check {
+      forAll(listGen) { list: List[Int] =>
+        // Create a double linked list with elements of the list
+        val dll = myDLL(list)
 
-      // Do some operations on both lists
-      list.foreach(l => l*l  - l + 5)
-      dll.foreach(l => l*l - l + 5)
-
-      // Elements should be the same
-      equivalent(list, dll)
+        // Do some operations on both lists
+        val newList = for (l <- list) yield arbitraryFunction(l)
+        val newDll = new MyDLL[Int]();
+        for (l <- dll) newDll.add(arbitraryFunction(l))
+        
+        // Elements should be the same
+        equivalent(newList, newDll)
+      }
     }
   }
 
   // Assert a list and a MyDLL are equals ( contain the same elements )
-  def equivalent(l1: List[Int], l2: MyDLL[Int]) : Boolean = {
+  def equivalent(l1: List[Int], l2: MyDLL[Int]): Boolean = {
     if (l1.size != l2.size) false
 
     var equal = true
@@ -68,5 +71,13 @@ class MyDLLTest extends FunSuite with ShouldMatchers with Checkers {
       current = current.next
     }
     equal
+  }
+
+  def myDLL(list: List[Int]): MyDLL[Int] = {
+    val result = new MyDLL[Int]
+    for (l <- list) {
+      result.add(l)
+    }
+    result
   }
 }
