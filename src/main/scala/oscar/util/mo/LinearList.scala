@@ -24,7 +24,7 @@ import scala.collection.mutable.DoubleLinkedList
 /** LinearList able to maintain a set of non dominated points (assuming maximizations in all dimensions).
   * 
   * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com */
-class LinearList[T, E](private var mooPoint: MOOPoint[T, E]) extends ParetoFront[T, E]{
+class LinearList[T, E <% Ordered[E]](private var mooPoint: MOOPoint[T, E]) extends ParetoFront[T, E]{
   
   /** The list containing the non-dominated points */
   private var archive = List(mooPoint);
@@ -34,19 +34,19 @@ class LinearList[T, E](private var mooPoint: MOOPoint[T, E]) extends ParetoFront
     * If this point is already dominated by some other points, it is discarded. If this point dominates other
     * points already presents, those dominated points are discarded. Complexity O(n) with n the number of
     * points in the linear list. */
-  def insert(mooPoint: MOOPoint[T, E]) {
+  def insert(mooPoint: MOOPoint[T, E], comparator: MOOComparator[T, E]) {
     var newList = List[MOOPoint[T, E]]()
     def getFiltered(l: List[MOOPoint[T, E]]): List[MOOPoint[T, E]] = {
       if (l.isEmpty) {
         List[MOOPoint[T, E]](mooPoint)
       }
       else {
-        if (mooPoint.equivalentTo(l.head)) {
+        if (comparator.isEquivalent(mooPoint, l.head)) {
           return l
         }
         else {
-          if (mooPoint.dominates(l.head)) getFiltered(l.tail)
-          else if (l.head.dominates(mooPoint)) l
+          if (comparator.dominates(mooPoint, l.head)) getFiltered(l.tail)
+          else if (comparator.dominated(mooPoint, l.head)) l
           else l.head :: getFiltered(l.tail)
 	    }
       }
@@ -54,29 +54,29 @@ class LinearList[T, E](private var mooPoint: MOOPoint[T, E]) extends ParetoFront
     archive = getFiltered(archive)
   }
   
-  def nbPointsDominating(candidatePoint: MOOPoint[T, E]): Int = {
+  def nbPointsDominating(candidatePoint: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
     var domCount = 0
     for (point <- archive) {
-      if (point.dominates(candidatePoint))
+      if (comparator.dominated(point, candidatePoint))
         domCount += 1
     }
     domCount
   }
   
-  def nbPointsDominated(candidatePoint: MOOPoint[T, E]): Int = {
+  def nbPointsDominated(candidatePoint: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
     var domCount = 0
     for (point <- archive) {
-      if (candidatePoint.dominates(point))
+      if (comparator.dominates(candidatePoint, point))
         domCount += 1
     }
     domCount
   }
   
-  def score(point: MOOPoint[T, E]): Int = {
+  def score(point: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
     var score = 0
     for (p <- archive) {
-      if (point.dominates(p)) score += 1
-      else if (p.dominates(point)) score -= 1
+      if (comparator.dominates(point, p)) score += 1
+      else if (comparator.dominated(point, p)) score -= 1
     }
     score
   }
