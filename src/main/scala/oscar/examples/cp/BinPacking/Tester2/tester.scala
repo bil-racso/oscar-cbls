@@ -86,12 +86,7 @@ object tester {
 	def main(args : Array[String]) {
 	  println("tester valid solution")
 	  var generators =List[BinPackingValidInstanceGenerator]()
-	  /*
-	  for(i<- 1.to(30,5)) {
-	    val generator = new BinPackingValidInstanceGenerator()
-	    generator.binByItemMean = i
-	  } 
-	  
+
 	  for(i<- 1.to(30,5)) {
 	    val generator = new BinPackingValidInstanceGenerator()
 	    generator.binByItemMean = i
@@ -115,10 +110,8 @@ object tester {
 	    generator.binByItemMean = i
 	    generators ::=  generator
 	  } 
-	  */
-	  	    val generator = new BinPackingValidInstanceGenerator()
-	    generator.binByItemMean = 6
-	    generators ::=  generator
+	  
+	  	
 	  generators.par.map(generator => logResult(generator,test(generator)))
 	  
 	  

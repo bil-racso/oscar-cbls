@@ -20,7 +20,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  val c = Array.tabulate(instance.bins.size+1)(j => CPVarInt(cp,0 to instance.items.size))
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
-	  
+	  cp.timeLimit = 5
 	  
 	  cp.solve subjectTo {
 		postConstraints(cp,x,l,c,classic,current,extended)

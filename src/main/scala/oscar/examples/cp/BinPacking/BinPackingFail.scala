@@ -1,11 +1,11 @@
-package oscar.examples.cp
+package oscar.examples.cp.BinPacking
 
 import oscar.cp.core.CPVarInt
 import oscar.cp.constraints.BinPacking
 import oscar.cp.modeling.CPSolver
 import oscar.cp.constraints.Sum
 
-object BinPackingBasic {
+object BinPackingFail {
   def main(args : Array[String]) {
     
 	  val binCapacities = Array(2 to 3,45 to 55,0 to 0)
@@ -28,12 +28,13 @@ object BinPackingBasic {
 		  	
 		  cp.solve subjectTo {
 			 cp.add(new BinPacking(x,itemsSizes,l))
+/*
 			 val itemInBin = Array.tabulate(items.size, bins.size)((i,j) => CPVarInt(cp,Array(0,1)))
 			 for (j <- bins; i<- items)
 			   cp.add(itemInBin(i)(j) == x(i).isEq(j))
 			 for(j <- bins)
 				 cp.add(new Sum((for(i<-items) yield itemInBin(i)(j) * itemsSizes(i)).toArray,l(j)))
-				 
+*/				 
 			} exploration { 
 			  cp.binaryFirstFail(x)
 			  println("solution x:"+x.map(_.getValue).mkString(" ") + " l" + l.map(_.getValue).mkString(" ") )
