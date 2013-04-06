@@ -25,7 +25,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  cp.solve subjectTo {
 		postConstraints(cp,x,l,c,classic,current,extended)
 	  } exploration {		  
-		  cp.binaryFirstFail(x)
+		  cp.deterministicBinaryFirstFail(x)
 		  nbSol += 1
 	    } run(1)
 		val duration =  System.currentTimeMillis - startTime
@@ -48,7 +48,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 		  postConstraints(cp,x,l,c,classic,current,extended)
 
 		} exploration {		  
-		  cp.binaryFirstFail(x)
+		  cp.deterministicBinaryFirstFail(x)
 		  nbSol += 1
 	    } run()
 		val duration =  System.currentTimeMillis - startTime

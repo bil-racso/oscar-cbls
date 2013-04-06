@@ -20,8 +20,11 @@ object PriorityTester {
   def testInstance(instance : BinPackingInstance) =
   {
 		val resultShaw = (new InstanceSolver(instance)).solve(true,false,false)
+		 println( resultShaw )   
 	    val resultCurrentFlow = (new InstanceSolver(instance)).solve(true,true,false)
+	    println( resultCurrentFlow )
 	    val resultExtFlow = (new InstanceSolver(instance)).solve(true,false,true)
+	    println( resultExtFlow)
 	    val results = resultShaw :: resultCurrentFlow :: resultExtFlow :: Nil
 	    println( results .mkString(" "))   
 	  
@@ -33,14 +36,14 @@ object PriorityTester {
 	  println("tester valid solution")
 	  var generators =List[BinPackingValidInstanceGenerator]()
 	  
-	  
+	 /* 
     val generator = new BinPackingValidInstanceGenerator()
     generator.binByItemMean = 2
     generator.itemsByBinsMean = 32	
 	testGenerator(generator)
+	  */
 	  
-	  
-	  //testInstance(instance1)
+	  testInstance(instance1)
     
 	  
 	  

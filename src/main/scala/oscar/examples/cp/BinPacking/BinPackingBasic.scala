@@ -1,42 +1,86 @@
 package oscar.examples.cp.BinPacking
 
 import oscar.cp.modeling.CPSolver
+import oscar.cp.modeling._
 import oscar.cp.core.CPVarInt
 import oscar.cp.constraints.BinPacking
 import oscar.cp.constraints.Sum
+import oscar.cp.constraints.BinPackingFlow
+import oscar.cp.constraints.BinPackingFlowExtended
 
 
 
 object BinPackingBasic {
   def main(args: Array[String]) {
+    
+    val rand = new scala.util.Random(2)
+    
+    val wmin = 20
+    val wmax = 5
+    val n = 30
+    val m = 10
+    
+    val sol = Array.tabulate(n)(i => (rand.nextInt(m),wmin+rand.nextInt(wmax)))
 
-    val binCapacities = Array(2 to 3, 45 to 55, 0 to 0)
-    val itemsSizes = Array(3, 10, 12, 18, 10)
-    val binForItems = Array(
-      Array(0, 1),
-      Array(1, 2),
-      Array(1, 2),
-      Array(1, 0),
-      Array(1, 0))
 
-    val items = 0 until itemsSizes.length
-    val bins = 0 until binCapacities.length
-
+    val w = sol.map(_._2)
+    val lsol = Array.tabulate(m)(i => sol.filter(_._1 == i).map(_._2).sum)
+    val csol = Array.tabulate(m)(i => sol.filter(_._1 == i).size)
+    
+    def getDom(i: Int) = {
+      val bin = sol(i)._1
+      (Array.fill(3)(rand.nextInt(m)) :+ sol(i)._1 :+ m).toSet
+    }
+    
     val cp = new CPSolver()
-    val x = (for (i <- items) yield CPVarInt(cp, binForItems(i))).toArray
-    val l = bins.map(i => CPVarInt(cp, binCapacities(i))).toArray
-
-    cp.solve subjectTo {
-      cp.add(new BinPacking(x, itemsSizes, l))
-      val itemInBin = Array.tabulate(items.size, bins.size)((i, j) => CPVarInt(cp, Array(0, 1)))
-      for (j <- bins; i <- items)
-        cp.add(itemInBin(i)(j) == x(i).isEq(j))
-      for (j <- bins)
-        cp.add(new Sum((for (i <- items) yield itemInBin(i)(j) * itemsSizes(i)).toArray, l(j)))
-
+    val x = Array.tabulate(n)(i => CPVarInt(cp,getDom(i)))
+    val l = Array.tabulate(m)(j => CPVarInt(cp,(lsol(j)/2) to (lsol(j)))) :+  CPVarInt(cp,0 to w.sum)
+    val c = Array.tabulate(m+1)(j => CPVarInt(cp,0 to n))
+    var nbsol = 0
+    var best = 0
+    //cp.tim
+    cp.silent = true
+    cp.maximize(l(m)) subjectTo {
+      
     } exploration {
-      cp.binaryFirstFail(x)
-      println("solution x:" + x.map(_.getValue).mkString(" ") + " l" + l.map(_.getValue).mkString(" "))
-    } run ()
+      cp.deterministicBinaryFirstFail(x)
+      nbsol += 1
+      best = l(m).value
+    } 
+    
+    best = 0
+    nbsol = 0
+   // cp.objective(l(m)).relax()
+    cp.runSubjectTo() {
+      cp.add(new BinPacking(x, w, l))
+      cp.add(new BinPackingFlowExtended(x,w,l,c))
+      println(c.map(_.min).mkString(","))
+    }
+    println("======>nbsol="+nbsol)
+    println("obj=="+best)
+    cp.printStats
+    
+    best = 0
+    nbsol = 0
+  //  cp.objective(l(m)).relax()
+    cp.runSubjectTo() {
+      cp.add(new BinPacking(x, w, l))
+      cp.add(new BinPackingFlow(x,w,l,c))
+      println(c.map(_.min).mkString(","))
+    }
+    println("======>nbsol="+nbsol)
+    println("obj=="+best)
+    cp.printStats
+    
+    best = 0
+    nbsol = 0
+  //  cp.objective(l(m)).relax()
+    cp.runSubjectTo() {
+      cp.add(new BinPacking(x, w, l))
+      println(c.map(_.min).mkString(","))
+    }
+    println("======>nbsol="+nbsol)
+    println("obj=="+best)
+    cp.printStats    
   }
 }

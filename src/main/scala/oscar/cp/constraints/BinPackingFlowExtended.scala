@@ -186,23 +186,22 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
  */
   	def bestCandidatesForBin(bin:Int,sortedItems: Array[Int]) =
   	{
-  	    var i = 0; //the next item to try in sortedItems 
+  	    var i = -1; //the last item tried in sortedItems 
 		for (b <- 0 until c_t.size) {
 		  candidatesAvailableForBin(b) = if (b == bin) 0 else candidates_t(b).value - (c(b).getMin.intValue - c_t(b).getValue)
 		}
 		
 		def nextAcceptableItem() : Stream[Int] = {
-		  if (x(i).hasValue(bin) && !x(i).isBound) {
+		  i+=1
+		  if(i == sortedItems.length) Stream.empty
+		  else if (x(i).hasValue(bin) && !x(i).isBound) {
 				val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
-				(refuteItem) match {
-				  case (false) => {
+				if(!refuteItem){
 				    for (b <- 0 until c_t.size; if x(i).hasValue(b))
 						candidatesAvailableForBin(b) -= 1
 				    sortedItems(i) #:: nextAcceptableItem
-				  }
-				  case (true) if (i== sortedItems.length -1) => Stream.empty
-				  case _ => nextAcceptableItem
-				}
+				} else nextAcceptableItem
+				
 		  } else 
 		  	nextAcceptableItem
 		}
