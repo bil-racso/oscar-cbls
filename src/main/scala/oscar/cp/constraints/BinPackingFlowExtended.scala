@@ -102,14 +102,12 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
 
       var curCard = cardInit
       var curLoad = loadInit
-      var i = 0
-      while (curCard < cardToReach && i < x.size) {
-        if (!x(permArray(i)).isBound && x(permArray(i)).hasValue(j)) {
-          curLoad += sizes(permArray(i))
-          curCard += 1
-        }
-        i += 1
+      for (i <- bestCandidatesForBin(j, permArray) if curCard < cardToReach)
+      {
+        curLoad += sizes(i)
+        curCard += 1
       }
+      
       curLoad
   }
   
@@ -172,24 +170,46 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
     var binCompCard = c_t(bin).getValue // the current value of the computation of the cardinality
     var binLoad = l_t(bin).getValue
 
-    for (b <- 0 until c_t.size) {
-      candidatesAvailableForBin(b) = if (b == bin) 0 else candidates_t(b).value - (c(b).getMin.intValue - c_t(b).getValue)
-    }
-
-    for (i <- sortedItems if x(i).hasValue(bin) && !x(i).isBound && continueLoad(binLoad, sizes(i))) {
-      val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
-
-      if (!refuteItem) {
+    for (i<- bestCandidatesForBin(bin,sortedItems) if continueLoad(binLoad, sizes(i))) {
         binLoad += sizes(i)
         binCompCard += 1
-        for (b <- 0 until c_t.size; if x(i).hasValue(b)) {
-          candidatesAvailableForBin(b) -= 1
-        }
-      }
     }
 
     (binCompCard, binLoad)
   }
 
+/**
+ * stream of the item that can go into the bin `bin`
+ * An item can be refuted if it make impossible if every previous item are packed in `bin` the bin to fill another one.  
+ * This is based on the cardinalities of the others bins
+ * 
+ */
+  	def bestCandidatesForBin(bin:Int,sortedItems: Array[Int]) =
+  	{
+  	    var i = 0; //the next item to try in sortedItems 
+		for (b <- 0 until c_t.size) {
+		  candidatesAvailableForBin(b) = if (b == bin) 0 else candidates_t(b).value - (c(b).getMin.intValue - c_t(b).getValue)
+		}
+		
+		def nextAcceptableItem() : Stream[Int] = {
+		  if (x(i).hasValue(bin) && !x(i).isBound) {
+				val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
+				(refuteItem) match {
+				  case (false) => {
+				    for (b <- 0 until c_t.size; if x(i).hasValue(b))
+						candidatesAvailableForBin(b) -= 1
+				    sortedItems(i) #:: nextAcceptableItem
+				  }
+				  case (true) if (i== sortedItems.length -1) => Stream.empty
+				  case _ => nextAcceptableItem
+				}
+		  } else 
+		  	nextAcceptableItem
+		}
+		
+		nextAcceptableItem
 
+  	}
+  
+  
 }
