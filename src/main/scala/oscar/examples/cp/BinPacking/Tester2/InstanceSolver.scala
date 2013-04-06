@@ -17,12 +17,13 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  val cp = new CPSolver()
 	  val x = (for(i <- instance.items) yield CPVarInt(cp, instance.binForItems(i))).toArray
 	  val l = instance.bins.map(i=>CPVarInt(cp,instance.binCapacities(i))).toArray
+	  val c = Array.tabulate(instance.bins.size+1)(j => CPVarInt(cp,0 to instance.items.size))
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
-	  	
+	  
 	  
 	  cp.solveAll subjectTo {
-		postConstraints(cp,x,l,classic,current,extended)
+		postConstraints(cp,x,l,c,classic,current,extended)
 		  
 	    }
 		val duration =  System.currentTimeMillis - startTime
@@ -36,12 +37,13 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  val cp = new CPSolver()
 	  val x = (for(i <- instance.items) yield CPVarInt(cp, instance.binForItems(i))).toArray
 	  val l = instance.bins.map(i=>CPVarInt(cp,instance.binCapacities(i))).toArray
+	  val c = Array.tabulate(instance.bins.size+1)(j => CPVarInt(cp,0 to instance.items.size))	  
 	  var nbSol = 0
 	  val startTime = System.currentTimeMillis
-	  cp.timeLimit = 60	
+	  cp.timeLimit = 60		
 	  
 	  cp.solve subjectTo {
-		  postConstraints(cp,x,l,classic,current,extended)
+		  postConstraints(cp,x,l,c,classic,current,extended)
 
 		} exploration {		  
 		  cp.binaryFirstFail(x)
@@ -53,7 +55,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 	 
 	}
 	
-	def postConstraints(cp:CPSolver,x:Array[CPVarInt],l:Array[CPVarInt],
+	def postConstraints(cp:CPSolver,x:Array[CPVarInt],l:Array[CPVarInt],c:Array[CPVarInt],
 	    classic:Boolean, current:Boolean, extended:Boolean) {
 	  
 	  if(classic){
@@ -67,6 +69,6 @@ class InstanceSolver(instance : BinPackingInstance) {
 		  if(current)
 			  cp.add(new BinPackingFlow(x,instance.itemsSizes,l))
 		  if(extended)			  
-			  cp.add(new BinPackingFlowExtended(x,instance.itemsSizes,l))
+			  cp.add(new BinPackingFlowExtended(x,instance.itemsSizes,l,c))
 	}
 }

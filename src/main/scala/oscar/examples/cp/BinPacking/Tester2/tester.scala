@@ -63,11 +63,7 @@ object tester {
 	    val nbSol = results.head._1 
 	    println( results .mkString(" "))
 		r.addResult(results.toArray)
-	    if(results.exists(_._1 != nbSol))
-	    {
-	      println(instance.description())
-	      throw new Exception("all constraint don't give the same result")
-	    }	    
+	    
 	  }
       r
   }
@@ -90,7 +86,7 @@ object tester {
 	def main(args : Array[String]) {
 	  println("tester valid solution")
 	  var generators =List[BinPackingValidInstanceGenerator]()
-	  
+	  /*
 	  for(i<- 1.to(30,5)) {
 	    val generator = new BinPackingValidInstanceGenerator()
 	    generator.binByItemMean = i
@@ -101,6 +97,7 @@ object tester {
 	    generator.binByItemMean = i
 	    generators ::=  generator
 	  } 
+	  
 	  
 	  for(i<- 0.to(10)) {
 	    val generator = new BinPackingValidInstanceGenerator()
@@ -118,7 +115,10 @@ object tester {
 	    generator.binByItemMean = i
 	    generators ::=  generator
 	  } 
-	  
+	  */
+	  	    val generator = new BinPackingValidInstanceGenerator()
+	    generator.binByItemMean = 6
+	    generators ::=  generator
 	  generators.par.map(generator => logResult(generator,test(generator)))
 	  
 	  

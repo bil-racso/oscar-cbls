@@ -34,15 +34,15 @@ class BinPackingTest (bpi:BinPackingInstance)
 	{
 	  val cp = CPSolver()
 	  val itemsCPVar = (for(i <- bpi.items) yield CPVarInt(cp, bpi.binForItems(i))).toArray
-	  
+	  val c = Array.tabulate(bpi.bins.size+1)(j => CPVarInt(cp,0 to bpi.items.size))
 	  val bpf = if (extended)
-	  				new BinPackingFlowExtended(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray)
+	  				new BinPackingFlowExtended(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray,c)
 	  			else 
 	  			    new BinPackingFlow(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray)
 	  
 	  cp.add(bpf)
 	  
-	  (itemsCPVar,bpf.c)
+	  (itemsCPVar,c)
 	}
 	
 	//the classic binpacking return the items allocation
