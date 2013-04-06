@@ -57,6 +57,10 @@ public class Plot2D extends JPanel {
     public XYSeries getPoints(){
         return series;
     }
+<<<<<<< local
+=======
+
+>>>>>>> other
 
 
 	public void clear()
