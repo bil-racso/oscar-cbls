@@ -70,9 +70,9 @@ object SendMoreMoneyAnyBase {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-        cp.add(alldifferent(all), Strong)
+        cp.add(allDifferent(all), Strong)
         cp.add(       S*b3 + E*b2 + N*b1 + D +
                       M*b3 + O*b2 + R*b1 + E ==
                M*b4 + O*b3 + N*b2 + E*b1 + Y
@@ -89,7 +89,7 @@ object SendMoreMoneyAnyBase {
 
        numSols += 1
        
-     }
+     } run()
 
      println("\nIt was " + numSols + " solutions.")
      cp.printStats()

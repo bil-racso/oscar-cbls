@@ -23,6 +23,8 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.JInternalFrame;
 
+import scala.Tuple2;
+
 
 /**
  * 
@@ -64,7 +66,7 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 	@Override
 	public void draw(Graphics2D g) {
 		
-		g.setColor(innerCol());
+		g.setColor(outerCol());
 		
 		if (centered) 
 			drawCenteredString(text, x, y, g);
@@ -96,7 +98,7 @@ public class VisualText extends ColoredShape<Rectangle2D> {
 			
 			Thread.sleep(1000);
 			
-			arrow.setDest(100, 100);
+			arrow.dest_$eq(new Tuple2(100.0, 100.0));
 			text.move(100, 100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();

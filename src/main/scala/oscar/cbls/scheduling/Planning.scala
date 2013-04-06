@@ -26,7 +26,6 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.cbls.algebra.Algebra._
 import oscar.visual.{Plot2D, VisualFrame}
 ;
 
@@ -41,13 +40,13 @@ class Planning(val model: Model, val maxduration: Int) {
     ResourceCount - 1
   }
 
-  var Tasks: List[Task] = List.empty
-  var taskcount: Int = 0
-  /**called by taskss registers it in the planning, returns an ID, which is the one of the tasks*/
-  def AddTask(j: Task): Int = {
-    Tasks = j :: Tasks;
-    taskcount += 1;
-    taskcount - 1
+  var Activities: List[Activity] = List.empty
+  var activityCount: Int = 0
+  /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
+  def AddActivity(j: Activity): Int = {
+    Activities = j :: Activities;
+    activityCount += 1;
+    activityCount - 1
   }
 
   var EarliestStartDates: Array[IntVar] = null
@@ -59,36 +58,36 @@ class Planning(val model: Model, val maxduration: Int) {
   var WorseOvershotResource: IntSetVar = null
 
   var ResourceArray: Array[CumulativeResource] = null
-  var TaskArray: Array[Task] = null
+  var ActivityArray: Array[Activity] = null
 
-  var SentinelTask: Task = null //a taks that is added after all taskss, to simplify algorithm construction
+  var SentinelActivity: Activity = null //a taks that is added after all activities, to simplify algorithm construction
 
   def close() {
-    val TasksNoSentinel = Tasks
-    SentinelTask = new Task(0, this, "SentinelTask")
-    SentinelTask.LatestEndDate := maxduration
+    val ActivitiesNoSentinel = Activities
+    SentinelActivity = new Activity(0, this, "SentinelActivity")
+    SentinelActivity.LatestEndDate := maxduration
 
-    for (task <- TasksNoSentinel) {
-      SentinelTask.addStaticPredecessor(task)
+    for (a <- ActivitiesNoSentinel) {
+      SentinelActivity.addStaticPredecessor(a)
     }
 
-    TaskArray = new Array[Task](taskcount)
-    EarliestEndDates = new Array[IntVar](taskcount)
-    EarliestStartDates = new Array[IntVar](taskcount)
-    LatestStartDates = new Array[IntVar](taskcount)
+    ActivityArray = new Array[Activity](activityCount)
+    EarliestEndDates = new Array[IntVar](activityCount)
+    EarliestStartDates = new Array[IntVar](activityCount)
+    LatestStartDates = new Array[IntVar](activityCount)
 
-    for (j <- Tasks) {
-      TaskArray(j.TaskID) = j
-      EarliestStartDates(j.TaskID) = j.EarliestStartDate
-      EarliestEndDates(j.TaskID) = j.EarliestEndDate
-      LatestStartDates(j.TaskID) = j.LatestStartDate
+    for (j <- Activities) {
+      ActivityArray(j.ID) = j
+      EarliestStartDates(j.ID) = j.EarliestStartDate
+      EarliestEndDates(j.ID) = j.EarliestEndDate
+      LatestStartDates(j.ID) = j.LatestStartDate
     }
 
-    for (j <- Tasks) {j.post()}
+    for (j <- Activities) {j.post()}
 
-    DenseRef(TaskArray.map(job => job.AllPrecedingTasks), TaskArray.map(job => job.AllSucceedingTasks))
+    DenseRef(ActivityArray.map(job => job.AllPrecedingActivities), ActivityArray.map(job => job.AllSucceedingActivities))
 
-    MakeSpan <== SentinelTask.EarliestStartDate
+    MakeSpan <== SentinelActivity.EarliestStartDate
 
     ResourceArray = new Array[CumulativeResource](ResourceCount)
     for (r <- Ressources) {
@@ -111,7 +110,7 @@ class Planning(val model: Model, val maxduration: Int) {
 
   var gantt:Gantt = null
   var plot:Plot2D = null
-  def getVisual{
+  def getVisual(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)
     gantt = new Gantt(this)
@@ -123,13 +122,13 @@ class Planning(val model: Model, val maxduration: Int) {
     frame.setSize(1500,500)
   }
 
-  def updateVisual{
+  def updateVisual(){
     if (gantt!=null) gantt.update(1.0f, 30)
   }
 
   override def toString: String = {
     var toreturn: String = ""
-    for (j <- Tasks.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask) {
+    for (j <- Activities.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelActivity) {
       toreturn += "" + j.name + "[" + j.EarliestStartDate.value + ";" + j.EarliestEndDate.value + "]" + "\n"
     }
     toreturn += MakeSpan
@@ -140,10 +139,10 @@ class Planning(val model: Model, val maxduration: Int) {
     var toreturn: String = ""
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
-    for (j <- Tasks.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelTask) {
+    for (j <- Activities.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelActivity) {
       toreturn += "" + padToLength(j.name, 20) + ":" + "[" +
         padToLength("" + j.EarliestStartDate.value, 4) + ";" + padToLength("" + j.EarliestEndDate.value, 4) + "] " +
-        (if (j.duration == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
+        (if (j.duration.value == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
         else nStrings(j.EarliestStartDate.value, " ") + "#" + nStrings(j.duration.value - 2, "=") + "#\n")
     }
     toreturn += MakeSpan
@@ -152,13 +151,13 @@ class Planning(val model: Model, val maxduration: Int) {
 
   def dependencies: String = {
     var toreturn: String = ""
-    for (task <- Tasks.sortBy(t => t.EarliestStartDate.value)){
-      for (t2 <- task.AllSucceedingTasks.value if t2 != task.TaskID && t2 != SentinelTask.TaskID){
-        val task2 = TaskArray(t2)
-        if (task2.AdditionalPredecessors.value.contains(task.TaskID)){
-          toreturn += task.name + " -> " + task2.name + "\n"
+    for (activity <- Activities.sortBy(t => t.EarliestStartDate.value)){
+      for (t2 <- activity.AllSucceedingActivities.value if t2 != activity.ID && t2 != SentinelActivity.ID){
+        val activity = ActivityArray(t2)
+        if (activity.AdditionalPredecessors.value.contains(activity.ID)){
+          toreturn += activity.name + " -> " + activity.name + "\n"
         }else{
-          toreturn += task.name + " ->> " + task2.name + "\n"
+          toreturn += activity.name + " ->> " + activity.name + "\n"
         }
       }
     }
@@ -173,22 +172,22 @@ class Planning(val model: Model, val maxduration: Int) {
    * @param to
    * @return true if a dependence can be addd, false otherwise.
    */
-  def canAddPrecedenceAssumingResourceConflict(from:Task,  to:Task):Boolean = {
+  def canAddPrecedenceAssumingResourceConflict(from:Activity,  to:Activity):Boolean = {
     (from != to) & !isThereDependency(to,from)
   }
 
-  /**Checks if there is a path leading from one task to another one
+  /**Checks if there is a path leading from one activity to another one
    * @param from
    * @param to
    * @return true if there is a path from 'from' to 'to', false otherwise
    */
-  def isThereDependency(from:Task, to:Task):Boolean = {
-    val target = to.getEndTask
+  def isThereDependency(from:Activity, to:Activity):Boolean = {
+    val target = to.getEndActivity
 
-    var Reached:List[Task] = List.empty
+    var Reached:List[Activity] = List.empty
 
-    /**PRE: from is a ground task. */
-    def Search(from:Task):Boolean = {
+    /**PRE: from is a ground activity. */
+    def Search(from:Activity):Boolean = {
       if (from == target) return true
       if (from.EarliestEndDate.value > to.EarliestStartDate.value){
         return false
@@ -197,90 +196,99 @@ class Planning(val model: Model, val maxduration: Int) {
       if(from.Mark){return false}
       from.Mark = true
       Reached = from :: Reached
-      for(next <- from.getStartTask.AllSucceedingTasks.value){
-        val nextTask:Task = TaskArray(next)
-        if (Search(nextTask)) return true
+      for(next <- from.getStartActivity.AllSucceedingActivities.value){
+        val activity:Activity = ActivityArray(next)
+        if (Search(activity)) return true
       }
       false
     }
 
-    val toreturn = Search(from.getStartTask)
-    for (task <- Reached) task.Mark = false
+    val toreturn = Search(from.getStartActivity)
+    for (activity <- Reached) activity.Mark = false
     toreturn
   }
 
-  /**returns a list of pair of task; precedences to kill to make it possible to add the new dependency
+  /**returns a list of pair of activity; precedences to kill to make it possible to add the new dependency
    * 
    * @param from
    * @param to
    * @return
    */
-  def getDependencyToKillToAvoidCycle(from:Task, to:Task):DependencyCleaner = {
-    var MarkedTasks:List[Task] = List.empty
-    var DependenciesToKill:List[(Task, Task)] = List.empty
-    /**marks all tasks on the path linking From to To
-     * all market tasks are also added to MArketTasks*/ 
-    def MarkPathes(from:Task, to:Task):Boolean = {
+  def getDependencyToKillToAvoidCycle(from:Activity, to:Activity):DependencyCleaner = {
+    var MarkedActivities:List[Activity] = List.empty
+    var DependenciesToKill:List[(Activity, Activity)] = List.empty
+    /**marks all activities on the path linking From to To
+     * all market activities are also added to MArkekActivities*/
+    def MarkPathes(from:Activity, to:Activity):Boolean = {
       if (from == to) return true;
       if (from.EarliestEndDate.value > to.EarliestStartDate.value){
         return false
       }
       if(from.Mark){return true}
-      for(next <- from.getStartTask.AllSucceedingTasks.value){
-        val nextTask:Task = TaskArray(next)
-        if (MarkPathes(nextTask, to)) from.Mark = true
+      for(next <- from.getStartActivity.AllSucceedingActivities.value){
+        val nextActivity:Activity = ActivityArray(next)
+        if (MarkPathes(nextActivity, to)) from.Mark = true
       }
       if (from.Mark){
-        MarkedTasks = from :: MarkedTasks
+        MarkedActivities = from :: MarkedActivities
       }
       from.Mark
     }
 
     /**returns false if hard rock dependency, true if can be killed*/
-    def FindDependenciesToKill(from:Task, to:Task) :Boolean = {
+    def FindDependenciesToKill(from:Activity, to:Activity) :Boolean = {
       if (from == to) return false
       if(!from.Mark){return true}
-      for(next <- from.getStartTask.AdditionalPredecessors.value){
-        val nextTask:Task = TaskArray(next)
-        if (nextTask.Mark){
-          DependenciesToKill = (from,nextTask) :: DependenciesToKill
-          nextTask.Mark = false
+      for(next <- from.getStartActivity.AdditionalPredecessors.value){
+        val nextActivity:Activity = ActivityArray(next)
+        if (nextActivity.Mark){
+          DependenciesToKill = (from,nextActivity) :: DependenciesToKill
+          nextActivity.Mark = false
         }
       }
-      for(nextTask <- from.getStartTask.StaticPredecessors){
-        if (nextTask.Mark){
-          if (FindDependenciesToKill(nextTask, to)){
-            nextTask.Mark = false
+      for(nextActivity <- from.getStartActivity.StaticPredecessors){
+        if (nextActivity.Mark){
+          if (FindDependenciesToKill(nextActivity, to)){
+            nextActivity.Mark = false
           }else{
             return false
           }
         }
       }
-      return true
+      true
     }
 
-    MarkPathes(from.getStartTask, to.getEndTask)
-    if(FindDependenciesToKill(from.getStartTask, to.getEndTask)){
-      for (t <- MarkedTasks) t.Mark = false
-      return HardRockDependency()
+    MarkPathes(from.getStartActivity, to.getEndActivity)
+    if(FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
+      for (t <- MarkedActivities) t.Mark = false
+      HardRockDependency()
     }else{
-      for (t <- MarkedTasks) t.Mark = false
-      return DependenciesCanBeKilled(DependenciesToKill)
+      for (t <- MarkedActivities) t.Mark = false
+      DependenciesCanBeKilled(DependenciesToKill)
     }
   }
   
-  abstract case class DependencyCleaner()
+  abstract class DependencyCleaner()
   case class HardRockDependency() extends DependencyCleaner
-  case class DependenciesCanBeKilled(d:List[(Task, Task)]) extends DependencyCleaner{
-    def killDependencies{
+  case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner{
+    def killDependencies(){
       for ((a,b) <- d){
         b.removeDynamicPredecessor(a)
       }
     }
-    def restoreDependencies{
+    def restoreDependencies(){
       for ((a,b) <- d){
         b.addDynamicPredecessor(a)
       }
+    }
+  }
+
+
+  /** removes all additional Activity precedences that are not tight
+    */
+  def clean(){
+    for(t:Activity <- ActivityArray){
+      t.removeNonTightAdditionalPredecessors()
     }
   }
 }

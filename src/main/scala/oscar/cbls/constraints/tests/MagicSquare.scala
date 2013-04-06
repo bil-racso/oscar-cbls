@@ -26,12 +26,9 @@ package oscar.cbls.constraints.tests
 
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
-import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
 
 /**
  * Example showing how to use Asteroid on the magic square problem  
@@ -59,7 +56,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     val TABU_LENGTH = N/2+1
 
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
         
     // Square
     val magic = Array.ofDim[IntVar](N,N)
@@ -81,7 +78,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     c.post(EQ(Sum(for ( i <- Dim) yield magic(i)(N-i-1)), T)) // other diagonal
     
     // register for violation
-    for (i <- Dim; j <- Dim) { c.registerForViolation(magic(i)(j)) }
+    for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
     // closing constraints
     c.close
@@ -89,7 +86,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     // working variables - using flat arrays
     // conversion is: i=v/N, j=v%N
     // TODO - can we work with multidimensional arrays here ?
-    //val ViolationArray:Array[IntVar] = (for(i <- Dim; j <- Dim) yield c.getViolation(magic(i)(j))).toArray
+    //val ViolationArray:Array[IntVar] = (for(i <- Dim; j <- Dim) yield c.violation(magic(i)(j))).toArray
     val Tabu:Array[IntVar] = (for (i <- Dim; j <- Dim) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i+"_"+j)).toArray
     var it:Int=1
     
@@ -99,7 +96,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     // search
     while((c.Violation.value > 0) && (it < MAX_IT)){
       val allowed = Dim2.filter(v => Tabu(v).value < it)
-      val (v1,v2)=selectMin(allowed, allowed) ((v1,v2) => c.getSwapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1,v2) => v1 < v2)
+      val (v1,v2)=selectMin(allowed, allowed) ((v1,v2) => c.swapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1,v2) => v1 < v2)
 
       val i1=v1/N
       val j1=v1%N

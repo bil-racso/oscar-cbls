@@ -56,7 +56,7 @@ object MapColoring2 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       cp.add(color(France) != color(Belgium))
       cp.add(color(France) != color(Luxembourg))
@@ -81,7 +81,7 @@ object MapColoring2 {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.\n")
 
      cp.printStats()

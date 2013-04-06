@@ -26,7 +26,7 @@ object BinPackingBasic {
 		  
 		
 		  	
-		  cp.solveAll subjectTo {
+		  cp.solve subjectTo {
 			 cp.add(new BinPacking(x,itemsSizes,l))
 			 val itemInBin = Array.tabulate(items.size, bins.size)((i,j) => CPVarInt(cp,Array(0,1)))
 			 for (j <- bins; i<- items)
@@ -37,6 +37,6 @@ object BinPackingBasic {
 			} exploration { 
 			  cp.binaryFirstFail(x)
 			  println("solution x:"+x.map(_.getValue).mkString(" ") + " l" + l.map(_.getValue).mkString(" ") )
-		    }
+		    } run()
 	}
 }

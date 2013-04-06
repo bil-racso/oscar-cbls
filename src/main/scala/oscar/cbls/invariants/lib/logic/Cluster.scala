@@ -29,12 +29,14 @@ import collection.immutable.SortedSet;
 import collection.immutable.SortedMap;
 import oscar.cbls.invariants.core.computation.IntVar._
 
-import oscar.cbls.invariants.core.computation._;
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.checker
+;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
  * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
  * */
-case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]) extends Invariant {
+case class SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
@@ -55,13 +57,13 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
     if(y != null) y.insertValue(index)
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v).value)){assert(Clusters(values(v).value).value.contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)){c.check(Clusters(values(v).value).value.contains(v))}
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
-        assert(values(indices).value == value)
+        c.check(values(indices).value == value)
       }
     }
   }
@@ -70,7 +72,7 @@ case class SparseCluster(var values:Array[IntVar], Clusters:SortedMap[Int,IntSet
 /**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
  * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
  * */
-case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) extends Invariant {
+case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends Invariant {
 
   //We register the static and dynamic dependencies.
   //Dynamic dependencies are the ones considered for the notifications.
@@ -104,13 +106,13 @@ case class DenseCluster(var values:Array[IntVar], clusters:Array[IntSetVar]) ext
 
   //This method is optionnal, it is called by the model when its debug mode is activated (see the contructor of model)
   //In this method, we check that the outputs are correct, based on non-incremental code
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(v <- values.indices){
-      assert(clusters(values(v).value).value.contains(v))
+      c.check(clusters(values(v).value).value.contains(v))
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
-        assert(values(indices).value == value)
+        c.check(values(indices).value == value)
       }
     }
   }
@@ -133,6 +135,7 @@ object Cluster{
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray
     DenseCluster(values,Clusters)
   }
+
   def MakeDenseAssumingMinMax(values:Array[IntVar],themin:Int,themax:Int):DenseCluster = {
     assert(themin == 0, "dense clusters must start at zero")
     val m:Model = InvariantHelper.FindModel(values)

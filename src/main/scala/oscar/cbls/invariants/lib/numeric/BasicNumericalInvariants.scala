@@ -23,11 +23,13 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+
+
 import oscar.cbls.invariants.core.computation._;
 
-import oscar.cbls.invariants.lib.logic._;
+import oscar.cbls.invariants.lib.logic._
+import oscar.cbls.invariants.core.propagation.checker
+;
 
 /** sum(vars)
  * @param vars is an iterable of IntVars
@@ -54,8 +56,8 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
     output :+= NewVal - OldVal
   }
 
-  override def checkInternals(){
-    assert(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
+  override def checkInternals(c:checker){
+    c.check(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
   }
 }
 
@@ -74,7 +76,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   var output:IntVar = null
 
   //TODO: find better bound, this is far too much
-  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(intvar.MaxVal > -intvar.MinVal) intvar.MaxVal else -intvar.MinVal))
+  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(math.abs(intvar.MaxVal) > math.abs(intvar.MinVal)) math.abs(intvar.MaxVal) else math.abs(intvar.MinVal)))
   def myMin = - myMax
 
   override def setOutputVar(v:IntVar){
@@ -107,10 +109,10 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     var prod = 1;
     for (v <- vars) prod *= v.value
-    assert(output.value == prod)
+    c.check(output.value == prod)
   }
 }
 

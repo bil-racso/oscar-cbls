@@ -25,7 +25,7 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
+
 
 class StableMarriage extends FunSuite with ShouldMatchers  {
 
@@ -59,15 +59,15 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
 
  
       for (m <- Men) {
-        cp.add(element(husband, wife(m),m))
+        cp.add(elementVar(husband, wife(m),m))
       }
       for (w <- Women) {
-        cp.add(element(wife, husband(w),w))
+        cp.add(elementVar(wife, husband(w),w))
       }      
 
       for (m <- Men; w <- Women) { 
-          val pref_m = element(rankMen(m),wife(m)) // preference of m for his wife
-          val pref_w = element(rankWomen(w),husband(w)) // preference of w for her husband
+          val pref_m = element(rankMen(m),wife(m),Weak) // preference of m for his wife
+          val pref_w = element(rankWomen(w),husband(w),Weak) // preference of w for her husband
 
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         

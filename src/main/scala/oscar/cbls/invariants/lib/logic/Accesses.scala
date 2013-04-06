@@ -23,11 +23,9 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.{SortedSet, SortedMap}
+import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.computation.Invariant._
-import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
-import oscar.cbls.invariants.core.computation.IntVar._
+import oscar.cbls.invariants.core.propagation.{checker, KeyForElementRemoval}
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -76,8 +74,8 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
     "ITE(" + ifVar + ',' + thenVar + "," + elseVar + ")"
   }
 
-  override def checkInternals(){
-    assert(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value),this)
+  override def checkInternals(c:checker){
+    c.check(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value))
   }
 }
 
@@ -128,8 +126,8 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(){
-    assert(output.value == inputarray(index.value).value, this)
+  override def checkInternals(c:checker){
+    c.check(output.value == inputarray(index.value).value)
   }
 
   override def toString:String= {
@@ -141,7 +139,7 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index
  */
-case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
+case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
   extends IntSetInvariant with Bulked[IntVar, ((Int,Int))]{
 
   var output:IntSetVar = null
@@ -190,7 +188,6 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
   override def notifyIntChanged(v:IntVar,indice:Int,OldVal:Int,NewVal:Int){
     assert(inputarray(indice) == v)
     assert(KeysToInputArray(indice) != null)
-    assert(KeysToInputArray(indice) == v)
 
     if (ValueCount(OldVal - myMin) == 1){
       ValueCount(OldVal - myMin) = 0
@@ -238,11 +235,11 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(){
-    assert(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
-    assert(index.value.forall((i:Int) =>
-      output.value.contains(inputarray(i).value)), "" + index + inputarray.toList + output)
-    assert(output.value.size == index.value.size)
+  override def checkInternals(c:checker){
+    c.check(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
+    c.check(index.value.forall((i:Int) =>
+      output.value.contains(inputarray(i).value)))
+    c.check(output.value.size == index.value.size)
   }
 }
 
@@ -250,7 +247,7 @@ case class IntElements(index:IntSetVar, var inputarray:Array[IntVar])
  * @param inputarray is the array of intsetvar
  * @param index is the index of the array access
  **/
-case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
+case class IntSetElement(index:IntVar, inputarray:Array[IntSetVar])
   extends IntSetInvariant with Bulked[IntSetVar, ((Int,Int))]{
 
   var output:IntSetVar = null
@@ -302,7 +299,7 @@ case class IntSetElement(index:IntVar, var inputarray:Array[IntSetVar])
     output.insertValue(value)
   }
 
-  override def checkInternals(){
-    assert(output.value.intersect(inputarray(index.value).value).size == output.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value.intersect(inputarray(index.value).value).size == output.value.size)
   }
 }

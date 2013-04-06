@@ -14,7 +14,8 @@ class BinPackingInstance
     
     def shuffle() = 
     {
-      var shuffle_order = Random.shuffle(items)
+      val shuffle_order = Random.shuffle(items.toList)
+      
       itemsSizes = (for (i <- shuffle_order) yield itemsSizes(i)).toArray
       binForItems = (for (i <- shuffle_order) yield Random.shuffle(binForItems(i).toList).toArray).toArray
       

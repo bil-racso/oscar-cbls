@@ -69,9 +69,9 @@ object DeBruijn {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
       // channeling x <-> binary
       for (i <- 0 until m) {
          val t = Array.tabulate(n)(j=> CPVarInt(cp, 0 to base-1))
@@ -118,7 +118,7 @@ object DeBruijn {
 
        numSols += 1
        
-     }
+     } run()
      println("\nIt was " + numSols + " solutions.")
 
      cp.printStats()

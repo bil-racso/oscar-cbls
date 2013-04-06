@@ -49,13 +49,13 @@ object GardnerTwoPlusTwo  {
 	  val U = CPVarInt(cp,0 to 9)
 	  val R = CPVarInt(cp,0 to 9)
 	  
-	  cp.solveAll() subjectTo {
+	  cp.solve subjectTo {
 	    cp.add((T*100+W*10+O)*2 == F*1000+O*100+U+10+R)
-	    cp.add(alldifferent(Array(T,W,O,F,U,R)), Strong)
+	    cp.add(allDifferent(Array(T,W,O,F,U,R)), Strong)
 	  } exploration {
 	    cp.binaryFirstFail(Array(T,W,O,F,U,R))
 	    println("T:"+T+" W:"+W+" O:"+O+" F:"+F+" U:"+U+" R:"+R)
-	  }
+	  } run()
 	  
 	  cp.printStats()
 		

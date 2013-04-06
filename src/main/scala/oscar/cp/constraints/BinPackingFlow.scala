@@ -27,11 +27,10 @@ import oscar.reversible.ReversibleInt;
  * Redundant Bin-Packing Flow Constraint
  * @author pschaus@gmail.com
  */
-class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Array[CPVarInt]) 
+class BinPackingFlow (val x : Array[CPVarInt],val sizes : Array[Int], val l : Array[CPVarInt], val c : Array[CPVarInt]) 
 	extends Constraint(x(0).s,"BinPackingFlow"){
 	
-	val c 		= Array.tabulate(l.length)(i => CPVarInt(s,0,sizes.length)) //cardinalities
-	protected val l_t		= Array.tabulate(l.length)(i => new ReversibleInt(s,0)) // keep track of the current load of each bin
+	protected val l_t	= Array.tabulate(l.length)(i => new ReversibleInt(s,0)) // keep track of the current load of each bin
 	protected val c_t 	= Array.tabulate(l.length)(i => new ReversibleInt(s,0)) // keep track of the number of items in each bin
 
 	

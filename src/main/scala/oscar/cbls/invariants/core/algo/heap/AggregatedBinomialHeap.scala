@@ -41,7 +41,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
   private var msize:Int = 0
 
   /**makes the datastruct empty*/
-  override def dropAll{
+  override def dropAll(){
     for (i <- b) a(i) = List.empty[T]
     msize = 0
     b.dropAll
@@ -72,7 +72,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
     val positionToReturn = b.popFirst()
     val toreturn = a(positionToReturn)
     a(positionToReturn) = List.empty
-    msize -= toreturn.size
+    msize -= toreturn.length
     assert(!toreturn.isEmpty)
     toreturn
   }

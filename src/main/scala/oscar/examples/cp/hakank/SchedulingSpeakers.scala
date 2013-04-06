@@ -62,9 +62,9 @@ object SchedulingSpeakers {
       val speakers = Array.tabulate(num_speakers)(i=>CPVarInt(cp, available(i).toSet ))
 
       var numSols = 0
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
-        cp.add(alldifferent(speakers))
+        cp.add(allDifferent(speakers))
 
 
       } exploration {
@@ -74,7 +74,7 @@ object SchedulingSpeakers {
         println(speakers.mkString(""))
 
         numSols += 1
-      }
+      } run()
 
       println("\nIt was " + numSols + " solutions.")	  
       cp.printStats()

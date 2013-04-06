@@ -27,8 +27,6 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 
 
-import org.scalacheck._
-
 class TestCubes extends FunSuite with ShouldMatchers  {
 
 
@@ -46,11 +44,11 @@ class TestCubes extends FunSuite with ShouldMatchers  {
     
     val placement = for(i <- 0 until numLetters) yield CPVarInt(cp, 0 until numCubes) // The cube (0 to 3) on which each letter is placed
     var nbSol = 0
-    cp.solveAll subjectTo
+    cp.solve subjectTo
     {
       cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
       for(word <- words)
-        cp.add(alldifferent( // The 4 letters of each word must be placed on different cubes
+        cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
             for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
         ), Strong)
     } exploration { // Each letter will be assigned different cubes during the search
@@ -59,7 +57,7 @@ class TestCubes extends FunSuite with ShouldMatchers  {
       }
       nbSol +=1
       
-    }
+    } run()
     nbSol should be(24)
     
   }  

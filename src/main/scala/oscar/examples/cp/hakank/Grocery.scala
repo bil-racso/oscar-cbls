@@ -62,9 +62,9 @@ object Grocery {
       val item = Array.fill(n)(CPVarInt(cp, 1 to (m / 2).toInt))
 
       var numSols = 0
-      cp.solveAll() subjectTo {
+      cp.solve subjectTo {
 
-        cp.add(alldifferent(item), Strong)
+        cp.add(allDifferent(item), Strong)
         increasing(cp, item)       
         cp.add(sum(item) == m)
 
@@ -83,7 +83,7 @@ object Grocery {
 
          numSols += 1
 
-      }
+      } run()
 	  
       println("\nIt was " + numSols + " solutions.\n")
   

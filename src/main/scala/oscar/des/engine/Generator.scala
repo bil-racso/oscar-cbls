@@ -17,7 +17,7 @@
 
 package oscar.des.engine
 
-import scala.Math._
+import scala.math._
 import scala.util.Random
 import scala.util.continuations._
 import JSci.maths.statistics._

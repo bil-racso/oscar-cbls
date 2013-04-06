@@ -2,19 +2,17 @@ package oscar.cbls.scheduling
 
 import java.awt.Color
 import oscar.visual.{VisualLine, VisualText, VisualRectangle, VisualDrawing, VisualUtil}
-import java.awt.Component._
-import oscar.cbls.scheduling._
 
 class Gantt(p:Planning) extends VisualDrawing(false) {
 
   var LineCount = 0
   val LineArray:Array[Int] = makeLineArray(p)
-  val colors:Array[Color] = Array.tabulate(p.TaskArray.size)(_ => VisualUtil.getRandomColor())
+  val colors:Array[Color] = Array.tabulate(p.ActivityArray.size)(_ => VisualUtil.getRandomColor())
   def makeLineArray(p:Planning):Array[Int] = {
     var currentline = -1
     var Front:List[Int] = List.empty
-    val GantLines:Array[Int] = Array.tabulate(p.TaskArray.size)((i:Int)
-    => (if (p.TaskArray(i).StaticPredecessors.isEmpty){
+    val GantLines:Array[Int] = Array.tabulate(p.ActivityArray.size)((i:Int)
+    => (if (p.ActivityArray(i).StaticPredecessors.isEmpty){
       currentline +=1
       Front = i :: Front
       currentline
@@ -23,11 +21,11 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
      }))
     LineCount = currentline -1
     def decorate(startid:Int){
-      val task:Task = p.TaskArray(startid)
-      for (t <- task.AllSucceedingTasks.value){
-        val succeedingTask:Task = p.TaskArray(t)
-        if (GantLines(succeedingTask.TaskID) == -1){
-          GantLines(succeedingTask.TaskID) = GantLines(task.TaskID)
+      val task:Activity = p.ActivityArray(startid)
+      for (t <- task.AllSucceedingActivities.value){
+        val succeedingTask:Activity = p.ActivityArray(t)
+        if (GantLines(succeedingTask.ID) == -1){
+          GantLines(succeedingTask.ID) = GantLines(task.ID)
           decorate(t)
         }
       }
@@ -37,10 +35,10 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
     GantLines
   }
   
-  private val rectangles : Array[VisualRectangle] = Array.tabulate(p.TaskArray.size)(a => {
+  private val rectangles : Array[VisualRectangle] = Array.tabulate(p.ActivityArray.size)(a => {
     val rect = new VisualRectangle(this, 0, 0, 0, 0)
     rect.innerCol = colors(a)
-    rect.toolTip = p.TaskArray(a).name
+    rect.toolTip = p.ActivityArray(a).name
     rect
   })
 
@@ -53,17 +51,17 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
 
   def update(xScale : Float, yScale: Int) {
 
-    for (task <- p.Tasks) {
+    for (task <- p.Activities) {
 
-      val i = task.TaskID
+      val i = task.ID
       rectangles(i).width = ((task.duration.value)*xScale).ceil
       rectangles(i).height = yScale
       rectangles(i).innerCol = colors(i)
-      rectangles(i).move((task.EarliestStartDate.value*xScale).ceil, LineArray(task.TaskID)*yScale)
+      rectangles(i).move((task.EarliestStartDate.value*xScale).ceil, LineArray(task.ID)*yScale)
     }
 
-    makespanLine.setOrig((p.MakeSpan.value*xScale).ceil, 0)
-    makespanLine.setDest((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
+    makespanLine.orig = ((p.MakeSpan.value*xScale).ceil, 0)
+    makespanLine.dest = ((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
 
     text.setText(p.MakeSpan.value.toString)
     text.move((p.MakeSpan.value*xScale).ceil.toInt, (LineCount+2)*yScale);

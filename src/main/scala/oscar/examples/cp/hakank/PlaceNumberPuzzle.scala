@@ -100,9 +100,9 @@ object PlaceNumberPuzzle {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x))
+      cp.add(allDifferent(x))
 
       for(i <- 0 until m) {
         // (also make 0-base)
@@ -121,7 +121,7 @@ object PlaceNumberPuzzle {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

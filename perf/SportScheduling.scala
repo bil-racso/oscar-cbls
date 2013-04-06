@@ -67,18 +67,18 @@ object SportScheduling {
       // a team plays exactly one game per week
       for (w <- Weeks) {
         val teamw = for (p <- Periods; h <- Homes) yield team(p)(w)(h)
-        cp.add(alldifferent(teamw), Strong)
+        cp.add(allDifferent(teamw), Strong)
       }
       // every team plays against every other team
-      cp.add(alldifferent(game.flatten), Strong)
+      cp.add(allDifferent(game.flatten), Strong)
       // a team can play at most twice in the same period
       for (p <- Periods)
         cp.add(gcc(team(p).flatten, Teams, 1, 2),Strong)
     } exploration {
       
-      cp.binaryFirstFail(game.flatten)
+      cp.deterministicBinaryFirstFail(game.flatten)
       printSol()
-    }
+    } run(1)
     
     cp.printStats()
 

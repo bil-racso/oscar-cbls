@@ -25,8 +25,6 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 
-import org.scalacheck._
-
 class TestImplication extends FunSuite with ShouldMatchers  {
   
   
@@ -53,7 +51,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   
@@ -69,7 +67,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   } 
   
@@ -85,7 +83,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   } 
     
@@ -101,7 +99,7 @@ class TestImplication extends FunSuite with ShouldMatchers  {
 	    val entry = (A.getValue,B.getValue,res.getValue)
 	    values.contains(entry) should be(true)
 	    nbSol += 1
-	  }
+	  } run()
 	  nbSol should be(4)
   }
   

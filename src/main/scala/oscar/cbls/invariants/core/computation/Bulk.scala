@@ -23,7 +23,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{BulkPropagator, PropagationElement}
+import oscar.cbls.invariants.core.propagation.BulkPropagator
 import collection.immutable.SortedMap
 
 /**Invariants over arrays can implement this trait to make it possible to bulk load their dependencies*/
@@ -97,7 +97,7 @@ trait Bulker{
         return b
       }
     }
-    return null
+    null
   }
   
   def registerBulk(identifyingName:String, bulk:Bulk){

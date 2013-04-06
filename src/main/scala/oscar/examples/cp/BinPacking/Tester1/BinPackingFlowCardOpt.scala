@@ -4,7 +4,7 @@ import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import scala.Array.canBuildFrom
-import scala.actors.Actor
+//import scala.actors.Actor
 import oscar.examples.cp.BinPacking.DataStructures.BinPackingInstance
 import oscar.examples.cp.BinPacking.Tester1.BinPackingInstanceGenerator
 import oscar.examples.cp.BinPacking.Tester1.BinPackingTester
@@ -12,7 +12,7 @@ import oscar.examples.cp.BinPacking.Tester1.BinPackingTester
 import oscar.examples.cp.BinPacking.Tester1.BinPackingInstanceGenerator
 import oscar.examples.cp.BinPacking.Tester1.BinPackingResults
 
-
+/*
 class ProfileTester(profile: (Int,Int,Int,Int,Int,Int,Int,Boolean,Double,Double), resultManager:Actor) extends Actor{
   def act(){
     val instancesGenerator = new BinPackingInstanceGenerator()
@@ -73,6 +73,7 @@ receive{
   
 }
 
+*/
 object BinPackingFlowCardOpt extends App {
 
   
@@ -291,8 +292,8 @@ Array(10),
 	profiles = profiles ++ (for(itemsSizeMean <- 1 to (100,5)) 
 	  yield (binCapacityMean, binCapacityDeviation,binCapacityDomainSizeMean,binCapacityDomainSizeDeviation, itemsSizeMean, itemsSizeDeviation, numberOfBins, wasteBin, itemAvailableToNeededRatio,itemAvailableToNeededRatioByBin))
     val results = new BinPackingResults()
-    
+  /*  
     val profilesTester = new ProfilesTester(profiles.toList, results) 
     profilesTester.start
-    
+  */  
 }

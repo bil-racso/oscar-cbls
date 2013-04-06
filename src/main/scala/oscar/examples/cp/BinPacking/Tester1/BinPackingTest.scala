@@ -38,7 +38,7 @@ class BinPackingTest (bpi:BinPackingInstance)
 	  val bpf = if (extended)
 	  				new BinPackingFlowExtended(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray,c)
 	  			else 
-	  			    new BinPackingFlow(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray)
+	  			    new BinPackingFlow(itemsCPVar,bpi.itemsSizes,bpi.bins.map(i=>CPVarInt(cp,bpi.binCapacities(i))).toArray,c)
 	  
 	  cp.add(bpf)
 	  

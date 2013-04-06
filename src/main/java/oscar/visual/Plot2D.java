@@ -16,28 +16,21 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-
-import javax.swing.JInternalFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingWorker;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.general.DefaultPieDataset;
-import org.jfree.data.general.PieDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Pierre Schaus
  */
 public class Plot2D extends JPanel {
-
 
 	final XYSeries series;
 	JFreeChart chart;
@@ -60,6 +53,10 @@ public class Plot2D extends JPanel {
 		series.add(x,y);
 		chart.fireChartChanged();
 	}
+
+    public XYSeries getPoints(){
+        return series;
+    }
 
 
 	public void clear()

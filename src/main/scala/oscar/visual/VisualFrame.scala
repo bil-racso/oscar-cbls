@@ -29,8 +29,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	
 	
 	desktop.setBackground(Color.white)
-	
-	val screenSize = Toolkit.getDefaultToolkit().getScreenSize()
+	val sz = Toolkit.getDefaultToolkit().getScreenSize()
+	val screenSize = new java.awt.Dimension(sz.getWidth().toInt,(sz.getHeight()*85/100).toInt)
 	var n = 0
 	var w = screenSize.width/nbCols
 	var h = screenSize.height/nbLines	
@@ -40,6 +40,7 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	content.setBackground(Color.white)
 	content.add(new JScrollPane(desktop))
 	setSize(screenSize)
+	setMinimumSize(new java.awt.Dimension(400,300))
 	setVisible(true)
 	
 	addWindowListener(new WindowAdapter() {
@@ -77,6 +78,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		val frame = new JInternalFrame(title, true, false, true, true)
 		
 		frame.setLocation(c*w,l*h)
+		frame.setPreferredSize(new java.awt.Dimension(w,h))
+		frame.setMinimumSize(new java.awt.Dimension(w,h))
 		frame.setSize(w,h)
 		frame.setBackground(Color.white)
 		frame.setVisible(true)
@@ -98,7 +101,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 }
 object VisualFrame{
   	def main(args : Array[String]) {
-		val frame = new VisualFrame("My Frame")
-		val subframe = frame.createFrame("My Sub-frame")
+		val frame = new VisualFrame("My Frame",3,2)
+		for (i <- 0 until 6) frame.createFrame("My Sub-frame "+i)
+		//val subframe = frame.createFrame("My Sub-frame")
 	}
 }

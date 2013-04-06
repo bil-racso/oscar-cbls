@@ -33,7 +33,7 @@ import scala.math._
   The scene-allocation problem was communicated to us by Irvin Lustig, 
   who also provided an integer-programming model and a specific instance. 
   It consists of deciding when to shoot scenes for a movie. Each scene 
-  invoves a number of actors and at most 5 scenes a day can be filmed. 
+  involves a number of actors and at most 5 scenes a day can be filmed. 
   All actors of a scene must, of course, be present on the day the scene 
   is shot. The actors have fees representing the amount to be paid per day 
   they spent in the studio. The goal of the application is to minimize 

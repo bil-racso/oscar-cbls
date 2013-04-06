@@ -99,7 +99,7 @@ object SichermanDice {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       for(k <- 0 until standard_dist.length) {
         cp.add(
@@ -126,7 +126,7 @@ object SichermanDice {
 
       numSols += 1
 
-    }
+    } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

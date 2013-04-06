@@ -151,9 +151,9 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
       }
             
       // Binary constraints, sum of the X, and fitting to the curve
-      add(sum(0 until num)(i=>X(i)) == Q,Some(name+"_nc_sommeX=Q"))
-      add(sum(0 until num)(i=>Y(i)) == 1,Some(name+"_nc_sommeY=1"))
-      add(sum(0 until num)(i=>(rates(i)*X(i) + c(i) * Y(i))) <= Z,Some(name+"_nc_coller a la courbe"))
+      add(sum(0 until num)(i=>X(i)) == Q,name+"_nc_sommeX=Q")
+      add(sum(0 until num)(i=>Y(i)) == 1)// ,name+"_nc_sommeY=1"
+      add(sum(0 until num)(i=>(rates(i)*X(i) + c(i) * Y(i))) <= Z,name+"_nc_coller a la courbe")
       Z
     } 
     

@@ -90,9 +90,9 @@ object SecretSanta {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
-      cp.add(alldifferent(x), Strong)
+      cp.add(allDifferent(x), Strong)
 
       // Can't be one own's Secret Santa
       // (i.e. ensure that there are no fix-point in x)
@@ -122,7 +122,7 @@ object SecretSanta {
         cp.stop()
       }
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

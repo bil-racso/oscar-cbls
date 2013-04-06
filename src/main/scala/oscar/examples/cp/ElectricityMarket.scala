@@ -87,20 +87,19 @@ object ElectricityMarket {
 	        val consVars = consumers.filter(_.overlap(t)).map(_.selected)
 	        val consQty = consumers.filter(_.overlap(t)).map(_.qty.abs)
 	        
-	    	cp.add(binaryknapsack(prodVars,prodQty,varMapQty(t)), Strong)
-	    	cp.add(binaryknapsack(consVars,consQty,varMapQty(t)), Strong)
+	    	cp.add(binaryKnapsack(prodVars,prodQty,varMapQty(t)), Strong)
+	    	cp.add(binaryKnapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
-	  } exploration {
-	    cp.binary(orders.map(_.selected))
-	    /*
+	  } exploration {   
 	    // efficient heuristic
 	    def allBounds = orders.filter(!_.bound).isEmpty
 	    while (!allBounds) {
 	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
+	      // select orders on the left
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
-	    */
+	    
 	    // update visualization
 	    for (t <- tmin to tmax) {
 	      barPlot.setValue(t-tmin,varMapQty(t).value)
@@ -108,7 +107,7 @@ object ElectricityMarket {
 	    plot.addPoint(nbSol,obj.value)
 	    nbSol += 1
 	    
-	  }
+	  } run()
 	  cp.printStats()
 	  
 	}

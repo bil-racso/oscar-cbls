@@ -2,7 +2,6 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import org.scalacheck._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.cp.core.Constraint
@@ -67,7 +66,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -89,7 +88,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -110,7 +109,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -131,7 +130,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -152,7 +151,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}
@@ -173,7 +172,7 @@ class TestActivityPrecedence extends FunSuite with ShouldMatchers {
 			cp.binary(Array(act1, act2))
 			expectedSol.contains(act1.start.value) should be(true)
 			nSol += 1
-		}
+		} run()
 		
 		nSol should be(3)
 	}

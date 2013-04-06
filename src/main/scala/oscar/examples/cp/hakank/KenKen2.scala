@@ -173,12 +173,12 @@ object KenKen2 {
     //
     var numSols = 0
 
-    cp.solveAll subjectTo {
+    cp.solve subjectTo {
 
       // rows and columns
       for(i <- RANGE) {
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
-        cp.add(alldifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(i)(j))), Strong)
+        cp.add(allDifferent( Array.tabulate(n)(j=> x(j)(i))), Strong)
       }
       
       for(i <- 0 until num_p) {
@@ -203,7 +203,7 @@ object KenKen2 {
 
       numSols += 1
 
-   }
+   } run()
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()
