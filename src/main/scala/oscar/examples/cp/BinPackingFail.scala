@@ -1,4 +1,4 @@
-package oscar.examples.cp.BinPacking
+package oscar.examples.cp
 
 import oscar.cp.core.CPVarInt
 import oscar.cp.constraints.BinPacking

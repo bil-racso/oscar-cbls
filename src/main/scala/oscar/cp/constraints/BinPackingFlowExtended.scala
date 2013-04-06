@@ -94,6 +94,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
       if (updateLoad(j) == CPOutcome.Failure) {
         return CPOutcome.Failure
       }
+      
     }
     return CPOutcome.Suspend;
   }
@@ -112,6 +113,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
   }
   
   def updateLoad(j: Int): CPOutcome = {
+    
       // update load min based on card min
       if (l(j).updateMin(bestLoad(j,c_t(j).value,c(j).min,l_t(j).value,perm)) == CPOutcome.Failure) {
         return CPOutcome.Failure
@@ -120,6 +122,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
       if (l(j).updateMax(bestLoad(j,c_t(j).value,c(j).max,l_t(j).value,permRev)) == CPOutcome.Failure) {
         return CPOutcome.Failure
       }
+      
       CPOutcome.Suspend
     
   }
@@ -166,7 +169,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
   val candidatesAvailableForBin = Array.fill(c_t.length)(0)
   
   def getCard(bin: Int, sortedItems: Array[Int], continueLoad: (Int, Int) => Boolean): (Int, Int) = {
-
+	
     var binCompCard = c_t(bin).getValue // the current value of the computation of the cardinality
     var binLoad = l_t(bin).getValue
 
@@ -176,6 +179,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
     }
 
     (binCompCard, binLoad)
+    
   }
 
 /**
@@ -186,24 +190,27 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
  */
   	def bestCandidatesForBin(bin:Int,sortedItems: Array[Int]) =
   	{
-  	    var i = -1; //the last item tried in sortedItems 
+  	    var itemsListHead = -1; //the last index of sorted item tried in sortedItems 
 		for (b <- 0 until c_t.size) {
 		  candidatesAvailableForBin(b) = if (b == bin) 0 else candidates_t(b).value - (c(b).getMin.intValue - c_t(b).getValue)
 		}
 		
 		def nextAcceptableItem() : Stream[Int] = {
-		  i+=1
-		  if(i == sortedItems.length) Stream.empty
-		  else if (x(i).hasValue(bin) && !x(i).isBound) {
-				val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
-				if(!refuteItem){
-				    for (b <- 0 until c_t.size; if x(i).hasValue(b))
-						candidatesAvailableForBin(b) -= 1
-				    sortedItems(i) #:: nextAcceptableItem
-				} else nextAcceptableItem
-				
-		  } else 
-		  	nextAcceptableItem
+		  itemsListHead += 1
+		  if(itemsListHead == sortedItems.length) Stream.empty
+		  else {
+			  val i = sortedItems(itemsListHead)
+			  if (x(i).hasValue(bin) && !x(i).isBound) {
+					val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
+					if(!refuteItem){
+					    for (b <- 0 until c_t.size; if x(i).hasValue(b))
+							candidatesAvailableForBin(b) -= 1
+					    i #:: nextAcceptableItem
+					} else nextAcceptableItem
+					
+			  } else 
+			  	nextAcceptableItem
+		  }
 		}
 		
 		nextAcceptableItem
