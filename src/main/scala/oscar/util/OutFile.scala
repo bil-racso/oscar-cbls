@@ -32,6 +32,8 @@ class OutFile(filepath: String, critical: Boolean, verbous: Boolean) {
   }
 
   def writeln(line: String) = write(line + "\n")
+  
+  def writeln() = write("\n")
 
   def close() = {
     try file.close()
