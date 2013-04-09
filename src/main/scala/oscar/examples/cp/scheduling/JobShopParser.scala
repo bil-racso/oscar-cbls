@@ -9,7 +9,7 @@ object JobShopParser {
       	// Parsing		
 	// -----------------------------------------------------------------------
 
-	var lines = Source.fromFile("data/jobshop/Lawrence/la01.txt").getLines.toList
+	var lines = Source.fromFile(f).getLines.toList
 	while (lines.head.trim().startsWith("+++") || lines.head.trim().isEmpty()) {
 	  lines = lines.drop(1)
 	}
@@ -22,7 +22,6 @@ object JobShopParser {
     val machines : Array[Array[Int]] = Array.fill(nJobs,nTasksPerJob)(0)
     for (i <- 0 until nJobs) {
                    val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-                   println(nTasksPerJob+" "+nJobs+" "+l.mkString(" ")+"  size: "+l.size)
                    machines(i) = Array.tabulate(nTasksPerJob)(j => l(2*j))
                    durations(i) = Array.tabulate(nTasksPerJob)(j => l(2*j+1))
                    lines = lines.drop(1)

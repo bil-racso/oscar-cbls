@@ -403,11 +403,7 @@ class LightBinaryKnapsack extends Constraint {
 		if (c.updateMin(rsum.getValue()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-			
-		if (propagate() == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		
+
 		for (int i = 0; i < w.length; i++) {
 			if (!x[i].isBound()) {
 				x[i].callValBindIdxWhenBind(this, i);
@@ -418,8 +414,8 @@ class LightBinaryKnapsack extends Constraint {
 		if (!c.isBound()) {
 			c.callPropagateWhenBoundsChange(this);
 		}
-		
-		return CPOutcome.Suspend;
+
+		return propagate();
 	}
 	
 	@Override

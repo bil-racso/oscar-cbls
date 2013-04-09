@@ -6,6 +6,7 @@ import oscar.cp.core._
 import oscar.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
+import oscar.cp.constraints.BinPackingFlowExtended
 
 
 
@@ -109,7 +110,7 @@ object ChemicalTanker extends App {
     
     // ------------- parses the data of the problem  ---------------
 
-    val problemNode = xml.XML.loadFile("data/chemical4.xml")
+    val problemNode = xml.XML.loadFile("data/chemical.xml")
     val dummyCargo = new Cargo(<cargo id="0" name="empty" volume="0"/>, java.awt.Color.WHITE)
     val cargos = Array(dummyCargo) ++ // dummy cargo
       (for (node <- (problemNode \ "cargos" \ "cargo").toArray)
@@ -174,7 +175,8 @@ object ChemicalTanker extends App {
     cp.maximize(freeSpace /*nbFreeTanks*/) subjectTo {
       // make the link between cargo and load vars with binPacking constraint
       cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
-      cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
+      //cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
+      cp.add(new BinPackingFlowExtended(cargo, tanks.map(_.capa), load, card))
 
       for (i <- 1 until cargos.size) {
         cp.add(new ChemicalConstraint(cargos(i),tanks,cargo)) // dominance rules
@@ -209,7 +211,7 @@ object ChemicalTanker extends App {
       println("total slack:"+(-(volumeLeft.sum-volumeLeft(0)))+" tanks capas:"+tanks.map(_.capa).mkString(","))
       cargos.zipWithIndex.foreach{case (c,i) => barChart.setValue("Slack",i.toString,-volumeLeft(i))}
       plot.addPoint(nbSol,freeSpace.value)
-    } run(1)
+    } run(0)
     
     for (r <- 1 to 10000) {
       cp.runSubjectTo(Int.MaxValue,300) {

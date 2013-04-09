@@ -90,10 +90,6 @@ object CumulativeJobShopLNS extends App {
 
   // Constraints & Search
   // -----------------------------------------------------------------------
-
-  val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
-  var precedences:Set[(Activity,Activity)] = Set()
-
   
   cp.minimize(makespan) subjectTo {
 
