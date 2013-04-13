@@ -211,7 +211,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
 			  val i = sortedItems(itemsListHead)
 			  if (x(i).hasValue(bin) && !x(i).isBound) {
 					val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) 
-					    && candidatesAvailableForBin(b) <= 0 )//slackForBin(b) < sizes(i)))
+					    && (candidatesAvailableForBin(b) <= 0 || slackForBin(b) < sizes(i)))
 					if(!refuteItem){
 					    for (b <- 0 until c_t.size; if x(i).hasValue(b))
 							candidatesAvailableForBin(b) -= 1

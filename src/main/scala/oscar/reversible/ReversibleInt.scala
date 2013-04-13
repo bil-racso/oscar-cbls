@@ -31,14 +31,14 @@ class ReversibleInt(node : ReversibleSearchNode, value : Int ) extends Reversibl
      * increment the reversible integer by one
      */
 	def incr() : Int = {
-		+=(1)
+		this += 1
 	}
 
     /**
      * decrement the reversible integer by one
      */
 	def decr() : Int = {
-		+=(-1)
+		this += -1
 	}
 	
 	/**
@@ -46,7 +46,7 @@ class ReversibleInt(node : ReversibleSearchNode, value : Int ) extends Reversibl
 	 */
 	def +=(v:Int) : Int ={
 		assert(hasValue())
-		val tmpv = getValue() - v
+		val tmpv = getValue() + v
 		setValue(tmpv)
 		tmpv
 	}
