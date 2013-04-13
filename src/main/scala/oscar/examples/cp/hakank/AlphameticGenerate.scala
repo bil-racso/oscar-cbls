@@ -210,7 +210,7 @@ object AlphameticGenerate {
         val problem = (a slice (0, num_words-1)).mkString("+") + "=" + a(num_words-1)
         found += solve(problem, base, start)
       } catch {
-        case _ => print("")
+        case _ : Throwable => print("")
       }
     }
     

@@ -13,7 +13,8 @@ class InstanceSolver(instance : BinPackingInstance) {
 	
 
 	
-	def solveGeneric(solveStrategy : CPSolver => CPSolver,runStrategy : ReversibleSearchNode => Unit,
+	def solveGeneric(solveStrategy : (CPSolver, (Array[CPVarInt],Array[CPVarInt],Array[CPVarInt]))=> CPSolver,
+	    runStrategy : ReversibleSearchNode => Unit,
 	    classic : Boolean = true, current : Boolean = true, extended : Boolean = true,
 	    timeLimit : Option[Int] = None) = 
 	{
@@ -26,7 +27,7 @@ class InstanceSolver(instance : BinPackingInstance) {
 	  if(timeLimit!=None)
 		  cp.timeLimit = timeLimit.get
 	  
-	  val cpInst = solveStrategy(cp) subjectTo {
+	  val cpInst = solveStrategy(cp,(x,l,c)) subjectTo {
 				postConstraints(cp,x,l,c,classic,current,extended)
 			  } exploration {		  
 				  cp.deterministicBinaryFirstFail(x)
@@ -40,12 +41,17 @@ class InstanceSolver(instance : BinPackingInstance) {
   
 	def solve(classic : Boolean = true, current : Boolean = true, extended : Boolean = true) =
 	{ 
-	  solveGeneric(_.solve,_.run(1),classic,current,extended,Some(10))
+	  solveGeneric((solver,variables) => solver.solve,_.run(1),classic,current,extended,Some(10))
 	}
 	
 	def solveAll(classic : Boolean = true, current : Boolean = true, extended : Boolean = true) =
 	{
-	  solveGeneric(_.solve,_.run(),classic,current,extended)
+	  solveGeneric((solver,variables) => solver.solve,_.run(),classic,current,extended)
+	}
+	
+	def minimize(classic : Boolean = true, current : Boolean = true, extended : Boolean = true) =
+	{
+	  solveGeneric((solver,variables) => solver.minimize(variables._2(0)),_.run(),classic,current,extended)
 	}
 	
 	
