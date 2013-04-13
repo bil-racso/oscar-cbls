@@ -35,6 +35,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
   val l_t = Array.fill(c.size)(new ReversibleInt(s, 0))
   val c_t = Array.fill(c.size)(new ReversibleInt(s, 0))
   val candidates_t = Array.fill(c.size)(new ReversibleInt(s, 0))
+  val candidates_sum_t = Array.fill(c.size)(new ReversibleInt(s, 0))  
   val permRev = perm.reverse
 
   override def setup(strength: CPPropagStrength): CPOutcome = {
@@ -60,9 +61,10 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
         card.callPropagateWhenBoundsChange(this);
         //card.callPropagateWhenBind(this);
       }
-      for (variable <- x; if (!variable.isBound)) {
+      for ((variable,index) <- x.zipWithIndex; if (!variable.isBound)) {
         for (bin <- variable) {
           candidates_t(bin).incr
+          candidates_sum_t(bin) += sizes(index)
         }
       }
       propagate()
@@ -72,6 +74,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
 
   override def valRemoveIdx(x: CPVarInt, idx: Int, value: Int): CPOutcome = {
     candidates_t(value).decr();
+    candidates_sum_t(value) -= sizes(idx)
     return CPOutcome.Suspend;
   }
 
@@ -81,9 +84,10 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
     val wj = sizes(idx);
     l_t(j).setValue(l_t(j).value + wj);
     c_t(j).incr();
-    candidates_t(j).decr();
+    candidates_t(j).decr()
+    candidates_sum_t(j) -= wj
     return CPOutcome.Suspend;
-  }
+ }
 
   override def propagate(): CPOutcome = {
     for (j <- 0 until l.size) {
@@ -166,7 +170,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
    * @return
    */
   
-  val candidatesAvailableForBin = Array.fill(c_t.length)(0)
+  
   
   def getCard(bin: Int, sortedItems: Array[Int], continueLoad: (Int, Int) => Boolean): (Int, Int) = {
 	
@@ -182,6 +186,10 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
     
   }
 
+  
+  val candidatesAvailableForBin = Array.fill(c_t.length)(0)
+  val slackForBin = Array.fill(c_t.length)(0)
+  
 /**
  * stream of the item that can go into the bin `bin`
  * An item can be refuted if it make impossible if every previous item are packed in `bin` the bin to fill another one.  
@@ -193,6 +201,7 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
   	    var itemsListHead = -1; //the last index of sorted item tried in sortedItems 
 		for (b <- 0 until c_t.size) {
 		  candidatesAvailableForBin(b) = if (b == bin) 0 else candidates_t(b).value - (c(b).getMin.intValue - c_t(b).getValue)
+		  slackForBin(b) = if (b == bin) 0 else candidates_sum_t(b).value - (l(b).getMin.intValue - l_t(b).getValue)
 		}
 		
 		def nextAcceptableItem() : Stream[Int] = {
@@ -201,7 +210,8 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
 		  else {
 			  val i = sortedItems(itemsListHead)
 			  if (x(i).hasValue(bin) && !x(i).isBound) {
-					val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) && candidatesAvailableForBin(b) <= 0)
+					val refuteItem = (0 until c_t.length).exists(b => b!= bin &&  x(i).hasValue(b) 
+					    && candidatesAvailableForBin(b) <= 0 )//slackForBin(b) < sizes(i)))
 					if(!refuteItem){
 					    for (b <- 0 until c_t.size; if x(i).hasValue(b))
 							candidatesAvailableForBin(b) -= 1

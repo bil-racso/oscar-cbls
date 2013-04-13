@@ -14,46 +14,48 @@
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
-package oscar.reversible;
+package oscar.reversible
 
-import oscar.reversible.ReversibleSearchNode;
+import oscar.reversible.ReversibleSearchNode
 
 /**
  * Reversible integer
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleInt extends ReversiblePointer<Integer> {
-
-    /**
-     * creates a reversible integer
-     * @param node
-     */
-	public ReversibleInt(ReversibleSearchNode node) {
-		super(node,0);
-	}
-	
-	public ReversibleInt(ReversibleSearchNode node, int val) {
-		super(node,val);
-	}
+class ReversibleInt(node : ReversibleSearchNode, value : Int ) extends ReversiblePointer[Integer](node, value) 
+{
+	def this(node : ReversibleSearchNode) = this(node,0)
+    
 
     /**
      * increment the reversible integer by one
      */
-	public int incr(){
-		assert(hasValue());
-		int v = getValue() + 1;
-		setValue(v);
-		return v;
+	def incr() : Int = {
+		+=(1)
 	}
 
     /**
      * decrement the reversible integer by one
      */
-	public int decr(){
-		assert(hasValue());
-		int v = getValue() - 1;
-		setValue(v);
-		return v;
+	def decr() : Int = {
+		+=(-1)
+	}
+	
+	/**
+	 *  increment the reversible integer by v
+	 */
+	def +=(v:Int) : Int ={
+		assert(hasValue())
+		val tmpv = getValue() - v
+		setValue(tmpv)
+		tmpv
+	}
+	
+	/**
+	 *  decrement the reversible integer by v
+	 */
+	def -=(v:Int) : Int ={
+		+=(-v)
 	}
 
 }
