@@ -214,7 +214,10 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
 					    && (candidatesAvailableForBin(b) <= 0 || slackForBin(b) < sizes(i)))
 					if(!refuteItem){
 					    for (b <- 0 until c_t.size; if x(i).hasValue(b))
+					    {
 							candidatesAvailableForBin(b) -= 1
+							slackForBin(b) -= sizes((i))
+					    }
 					    i #:: nextAcceptableItem
 					} else nextAcceptableItem
 					
