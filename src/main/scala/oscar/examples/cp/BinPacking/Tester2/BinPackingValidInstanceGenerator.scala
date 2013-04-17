@@ -7,7 +7,7 @@ import scala.collection.immutable.Stream.consWrapper
 class BinPackingValidInstanceGenerator {
 	var numberOfBins = 10
 	
-	var itemsByBinsLimits 		= (2,100)
+	var itemsByBinsLimits 		= (1,100)
 	var itemsByBinsMean 		= 30
 	var itemsByBinsDeviation 	= 10
 	
