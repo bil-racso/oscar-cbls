@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
+case class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
 
   def this(s: Store, o: Array[CPObjectiveUnit]) = this(s, o: _*)
   def tighten() = objs.foreach(_.tighten())
@@ -51,5 +51,5 @@ class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(
   }
   
   override def toString = objs.mkString(" , ")
-
+  
 }

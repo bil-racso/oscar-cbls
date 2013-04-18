@@ -1,4 +1,4 @@
-package oscar.examples.cp.BinPacking
+package oscar.examples.cp
 
 import oscar.cp.modeling.CPSolver
 import oscar.cp.modeling._
@@ -51,36 +51,44 @@ object BinPackingBasic {
     best = 0
     nbsol = 0
    // cp.objective(l(m)).relax()
+    cp.objective.objs(0).best = Int.MinValue 
     cp.runSubjectTo() {
       cp.add(new BinPacking(x, w, l))
       cp.add(new BinPackingFlowExtended(x,w,l,c))
       println(c.map(_.min).mkString(","))
     }
-    println("======>nbsol="+nbsol)
+    println("Extended ======>nbsol="+nbsol)
     println("obj=="+best)
     cp.printStats
     
     best = 0
     nbsol = 0
   //  cp.objective(l(m)).relax()
+    cp.objective.objs(0).best = Int.MinValue 
     cp.runSubjectTo() {
       cp.add(new BinPacking(x, w, l))
       cp.add(new BinPackingFlow(x,w,l,c))
       println(c.map(_.min).mkString(","))
     }
-    println("======>nbsol="+nbsol)
+    println("Current ======>nbsol="+nbsol)
     println("obj=="+best)
     cp.printStats
     
+    /*
     best = 0
     nbsol = 0
   //  cp.objective(l(m)).relax()
+    cp.objective.objs(0).best = Int.MinValue 
     cp.runSubjectTo() {
       cp.add(new BinPacking(x, w, l))
       println(c.map(_.min).mkString(","))
     }
-    println("======>nbsol="+nbsol)
+    println("classic ======>nbsol="+nbsol)
     println("obj=="+best)
     cp.printStats    
+  */
+    
+    
   }
+  
 }
