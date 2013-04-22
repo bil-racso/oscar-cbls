@@ -23,8 +23,6 @@ import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.cp.scheduling._
-import oscar.reversible.ReversibleSetIndexedArray
-import oscar.reversible.ReversibleInt
 import oscar.search._
 import oscar.visual._
 import scala.util.Random.nextFloat
@@ -107,24 +105,21 @@ object CumulativeJobShopLNS extends App {
   // -----------------------------------------------------------------------
 
   val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
-  var precedences:Set[(Activity,Activity)] = Set()
+  var precedences: Set[(Activity, Activity)] = Set()
 
-  
-  cp.minimize(makespan) subjectTo {
+  cp.minimize(makespan)
 
+  cp.subjectTo {
     for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
       activities(i) endsBeforeStartOf activities(i + 1)
+  }
 
-    cp.add(makespan >= 666)
+  cp.exploration {
 
-  } exploration {
-
-    cp.binaryFirstFail(activities.map(_.start))
-    //cp.setTimesSearch(activities)
+    cp.setTimes(activities)
 
     // Best so far solution
     for (t <- Activities) {
-
       bestSol(t).start = activities(t).est
       bestSol(t).end = activities(t).lct
       bestSol(t).inc = 1
@@ -136,24 +131,14 @@ object CumulativeJobShopLNS extends App {
 
     for (p <- profiles) p.update(1, 20)
     gantt.update(1, 20)
-  } run (1)
+  }
 
-  var limit = 2000
+  cp.run(1)
 
   for (i <- 0 until 2000) {
-    val temp = limit
-
-    // Adaptative LNS
-    limit =
-      if (!cp.explorationCompleted) limit * 110 / 100
-      else max(10, (cp.failLimit * 90) / 100)
-
-    println("limit: " + limit)
-
-    // 10% of  activities are relaxed
-    val relaxed = activities.filter(i => nextFloat < 0.1).toSet
-
-    cp.runSubjectTo(Int.MaxValue, limit) {
+    cp.runSubjectTo(failureLimit = 2000) {
+      // 10% of  activities are relaxed
+      val relaxed = activities.filter(i => nextFloat < 0.1).toSet
       for (r <- resources) {
         cp.post(r.partialOrderSchedule(relaxed))
       }
