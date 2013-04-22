@@ -1,19 +1,21 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
- *  
+ *
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.linprog.modeling
 
@@ -22,7 +24,7 @@ import scala.collection.mutable.{ ListBuffer, HashMap }
 import oscar.algebra._
 
 /**
- * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com, Jean van der Vaeren	
+ * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com, Jean van der Vaeren
  */
 class GurobiLP extends AbstractLP {
   println("GurobiLP")
@@ -40,11 +42,11 @@ class GurobiLP extends AbstractLP {
   var model = new GRBModel(env)
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
-	println("model gurobi:"+nbRows+"x"+nbCols)
-	
-  if (configFile.exists()) {
-    model.getEnv.readParams(configFile.getAbsolutePath)
-  }
+    println("model gurobi:" + nbRows + "x" + nbCols)
+
+    if (configFile.exists()) {
+      model.getEnv.readParams(configFile.getAbsolutePath)
+    }
     this.nbRows = nbRows
     this.nbCols = nbCols
     val cols = (1 to nbCols).toArray
@@ -123,8 +125,8 @@ class GurobiLP extends AbstractLP {
   }
 
   def solveModel(): LPStatus.Value = {
-    model.update() 
-   // model.write("gurobi.lp")
+    model.update()
+    // model.write("gurobi.lp")
     model.optimize()
     var optimstatus = model.get(GRB.IntAttr.Status)
     if (optimstatus == GRB.INF_OR_UNBD) {
@@ -205,17 +207,21 @@ class GurobiLP extends AbstractLP {
   def deleteVariable(colId: Int) {
     model.remove(model.getVar(colId))
   }
+  /** release the memory associated to the model and the environment as well as the gurobi license*/
   def release() {
-    model.reset
+    model.dispose
+    env.release
+    env.dispose
   }
 
   def exportModel(fileName: String) {
     model.write(fileName)
   }
 
-  def addAllConstraints(cons: List[LPConstraint]) = {
+  def addAllConstraints(cons: Map[Int, LPConstraint])={
+
     val vars = model.getVars
-    val allCons = cons.toArray
+    val allCons = cons.values.toArray
 
     model.addConstrs(
       allCons map (c => toGRBLinExpr(c.coef, c.varIds, vars)),
@@ -223,6 +229,7 @@ class GurobiLP extends AbstractLP {
       allCons map (c => c.rhs),
       allCons map (c => c.name))
     model.update()
+    println("Added " + allCons.size + " constraints.")
   }
 
   def setVarProperties(vars: Array[AbstractLPVar]) = {
