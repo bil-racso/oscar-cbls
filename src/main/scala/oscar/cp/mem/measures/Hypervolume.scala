@@ -10,8 +10,9 @@ object Hypervolume {
     var volume = 0.0 
     for (s <- sortedSet) {
       val (obj1, obj2) = s
-      val dObj1 = (prevObj1 - obj1).abs
-      val v = ((dObj1.toDouble / 1000) * (obj2.toDouble / 1000)).abs
+      val dObj1 = ((prevObj1 - (obj1-6)).abs)
+      val dObj2 = obj2-4611
+      val v = ((dObj1.toDouble) * (dObj2.toDouble)).abs
       prevObj1 = obj1
       volume += v
     }
