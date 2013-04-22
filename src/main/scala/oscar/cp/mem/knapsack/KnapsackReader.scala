@@ -40,7 +40,6 @@ object KnapsackReader {
     
     // Read the data
     var lines = Source.fromFile(solFile).getLines.toList.filter(_ != "")
-    lines = lines.drop(1)
     (for (l <- lines) yield {
      val s = l.split("[ ,\t]+").filter(_ != "").map(_ toInt).toArray
      (s(0),s(1))
