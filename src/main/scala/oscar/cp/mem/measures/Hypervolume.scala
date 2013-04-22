@@ -4,17 +4,16 @@ import oscar.cp.mem.pareto.Pareto
 
 object Hypervolume {
 
-  def hypervolume(set: IndexedSeq[(Int, Int)]): Double = { 
+  def hypervolume(set: IndexedSeq[(Int, Int)], nadir: (Int, Int) = (0, 0), scale: Int = 1): Double = { 
     val sortedSet = set.sortBy(_._1)
-    var prevObj1 = 0    
+    var prevObj1 = nadir._1 
     var volume = 0.0 
     for (s <- sortedSet) {
-      val (obj1, obj2) = s
-      val dObj1 = ((prevObj1 - (obj1-6)).abs)
-      val dObj2 = obj2-4611
-      val v = ((dObj1.toDouble) * (dObj2.toDouble)).abs
-      prevObj1 = obj1
-      volume += v
+      val dObj1 = s._1 - prevObj1
+      val dObj2 = (s._2-nadir._2)
+      val v = (dObj1.toDouble/scale) * (dObj2.toDouble/scale)
+      prevObj1 = s._1
+      volume += (if (v > 0) v else 0)
     }
     volume
   }
