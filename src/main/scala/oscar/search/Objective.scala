@@ -37,8 +37,6 @@ trait Objective {
 	
 	def tighten(): Unit
 	
-	//def relax(): Unit
-	
 	def isOptimum(): Boolean
 		
 	def isOK() : Boolean
