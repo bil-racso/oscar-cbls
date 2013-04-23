@@ -1,13 +1,13 @@
-package oscar.cp.mem.constraints
+package oscar.cp.constraints
 
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.mem.pareto.Pareto
+import oscar.cp.multiobjective.Pareto
 
-class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
 
   // Simplifies code understanding
   type Point = IndexedSeq[Int]
@@ -83,6 +83,6 @@ class Gavanelli02[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Arra
   }
 }
 
-object Gavanelli02 {  
-  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPVarInt]): Gavanelli02[Sol] = new Gavanelli02(pareto, isMax, objs)
+object ParetoConstraint {  
+  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPVarInt]): ParetoConstraint[Sol] = new ParetoConstraint(pareto, isMax, objs)
 }

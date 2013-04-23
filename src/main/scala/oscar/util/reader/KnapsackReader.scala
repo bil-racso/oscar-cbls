@@ -1,11 +1,8 @@
-package oscar.cp.mem.knapsack
-
+package oscar.util.reader
 
 import scala.io.Source
 
-
 object KnapsackReader {
-  
   
   def read(dataFile: String) = {
     

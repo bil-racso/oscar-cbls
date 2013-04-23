@@ -119,7 +119,7 @@ object ChemicalTanker extends App {
 
     //lp.maximize(nbFreeTanks) subjectTo {
     lp.maximize(freeSpace) subjectTo {
-      lp.add(nbFreeTanks == 1)
+      lp.add(nbFreeTanks == 15)
 	  // make the link between cargo and load vars with binPacking constraint
 	  for (c <- 0 until cargos.size) {
 	    lp.add(sum(0 until tanks.size)(t => cargo(t)(c) * tanks(t).capa) >= cargos(c).volume)
@@ -131,8 +131,6 @@ object ChemicalTanker extends App {
 	    lp.add(cargo(t)(c) == 0)
 	  }
 	  
-	  
-	
       // enforce that for any two neighbor tanks, they must contain compatible cargo types
       for (t <- tanks; t2 <- t.neighbours; if (t2>t.id)) {
         for ((c1,c2) <- incompatibles) {

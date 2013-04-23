@@ -1,8 +1,7 @@
-package oscar.cp.mem.qap
-
+package oscar.util.reader
 
 import scala.io.Source
-
+import scala.Array.canBuildFrom
 
 object QAPReader {
   

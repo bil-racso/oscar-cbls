@@ -28,9 +28,9 @@ import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 import oscar.util._
-import oscar.cp.mem.pareto.ListPareto
-import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.constraints.Gavanelli02
+import oscar.cp.multiobjective.ListPareto
+import oscar.cp.multiobjective.Pareto
+import oscar.cp.constraints.ParetoConstraint
 
 class NoSol(msg: String) extends Exception(msg)
 
@@ -112,7 +112,7 @@ class CPSolver() extends Store() {
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](isMax)
     // Adds a dominance constraint with all objectives in minimization mode
-    addCut(new Gavanelli02(paretoSet, isMax, objectives.toArray))
+    addCut(new ParetoConstraint(paretoSet, isMax, objectives.toArray))
     this
   }
 

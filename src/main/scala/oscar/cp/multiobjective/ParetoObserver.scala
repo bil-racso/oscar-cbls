@@ -16,7 +16,7 @@
  ******************************************************************************/
 
 
-package oscar.cp.mem.pareto
+package oscar.cp.multiobjective
 
 /**
  * @author Pierre Schaus

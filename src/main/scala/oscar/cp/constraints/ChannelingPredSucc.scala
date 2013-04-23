@@ -1,4 +1,5 @@
-package oscar.cp.mem.constraints
+package oscar.cp.constraints
+
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint

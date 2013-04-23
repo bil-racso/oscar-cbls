@@ -1,22 +1,16 @@
-package oscar.cp.mem.tsp
+package oscar.examples.cp.multiobjective
 
-import oscar.cp.mem.RoutingUtils._
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.mem.constraints.ChannelingPredSucc
-import oscar.cp.mem.constraints.InSet
-import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.visu.PlotPareto
-import oscar.util._
+import oscar.cp.constraints.ChannelingPredSucc
+import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
 import oscar.cp.constraints.MinAssignment
-import oscar.cp.mem.visu.VisualRelax
-import oscar.cp.mem.constraints.Gavanelli02
-import oscar.cp.mem.pareto.ListPareto
-import oscar.cp.mem.visu.PlotPareto
-import oscar.cp.mem.visu.PlotPareto
+import oscar.cp.multiobjective.ListPareto
+import oscar.visual.PlotPareto
+import oscar.util.reader.TSPUtils
 
-object ExactBiTSP extends App {
+object BiTSP extends App {
   
   // Parsing
   val nObjs = 2
@@ -66,7 +60,7 @@ object ExactBiTSP extends App {
   // ------
   val objective = 1
   cp.exploration {
-    regretHeuristic(cp, succ, distMatrices(objective))
+    TSPUtils.regretHeuristic(cp, succ, distMatrices(objective))
   } 
   
   // Run

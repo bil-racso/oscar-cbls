@@ -17,17 +17,11 @@
  * ****************************************************************************
  */
 
-package oscar.cp.mem.visu
+package oscar.visual
 
 import oscar.visual._
-import java.awt.Color
-import java.awt.Dimension
-import oscar.cp.mem.pareto.Pareto
-import org.jdesktop.swingx.decorator.ComponentAdapter
-import java.awt.event.ComponentEvent
-import oscar.cp.mem.pareto.ParetoObserver
 import javax.swing.SwingUtilities
-import oscar.cp.mem.pareto.ListPareto
+import oscar.cp.multiobjective.ListPareto
 
 /**
  * @author Pierre Schaus

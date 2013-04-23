@@ -1,4 +1,5 @@
-package oscar.cp.mem.pareto
+package oscar.cp.multiobjective
+
 
 class ListPareto[Sol](objMax: Array[Boolean]) extends Pareto[Sol](objMax) {
   

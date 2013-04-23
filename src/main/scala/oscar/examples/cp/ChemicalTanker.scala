@@ -1,12 +1,12 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+/*import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import oscar.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
-import oscar.cp.constraints.BinPackingFlowExtended
+import oscar.cp.constraints.BinPackingFlow
 
 
 
@@ -225,4 +225,4 @@ object ChemicalTanker extends App {
     
     
   
-}
+}*/

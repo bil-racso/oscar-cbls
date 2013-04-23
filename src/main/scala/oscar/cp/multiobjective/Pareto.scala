@@ -1,7 +1,5 @@
-package oscar.cp.mem.pareto
-
-import oscar.cp.constraints.CPObjectiveUnit
-import oscar.cp.core.CPSol
+package oscar.cp.multiobjective
+import oscar.cp.multiobjective.ParetoObserver
 
 abstract class Pareto[Sol](protected val maxObj: Array[Boolean]) {
   

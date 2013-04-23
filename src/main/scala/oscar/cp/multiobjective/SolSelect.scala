@@ -1,4 +1,4 @@
-package oscar.cp.mem
+package oscar.cp.multiobjective
 
 object SolSelect {
 

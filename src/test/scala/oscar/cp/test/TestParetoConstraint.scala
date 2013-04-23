@@ -6,11 +6,11 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.constraints.MinAssignment
 import oscar.util.selectMin
-import oscar.cp.mem.pareto.Pareto
-import oscar.cp.mem.pareto.ListPareto
-import oscar.cp.mem.constraints.Gavanelli02
+import oscar.cp.multiobjective.Pareto
+import oscar.cp.multiobjective.ListPareto
+import oscar.cp.constraints.ParetoConstraint
 
-class TestGavanelli extends FunSuite with ShouldMatchers  {
+class TestParetoConstraint extends FunSuite with ShouldMatchers  {
   
   val coord1 = Array((985,588), (847,313), (254,904), (434,606), (978,748), (569,473), (317,263), (562,234), (592,262), (596,189))
   val coord2 = Array((108,372), (40,67), (389,350), (606,719), (847,68), (94,86), (434,614), (514,416), (67,399), (530,231))
@@ -89,7 +89,7 @@ class TestGavanelli extends FunSuite with ShouldMatchers  {
     cp.solve() subjectTo {
       cp.post(circuit(succ), Strong)
       for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
-      cp.post(new Gavanelli02(paretoSet, isMax, totDists.toArray))
+      cp.post(new ParetoConstraint(paretoSet, isMax, totDists.toArray))
     } 
     
     cp.exploration {
