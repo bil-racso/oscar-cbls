@@ -16,11 +16,12 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Shape;
-import java.awt.geom.Point2D;
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Shape
+import java.awt.geom.Point2D
 import oscar.visual._
+import java.awt.geom.AffineTransform
 
 class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 
@@ -40,6 +41,15 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 	
 	
 	def draw(g:Graphics2D) {
+		//drawing.scaledTransform.setToIdentity() 
+		//val scaledTransform = new AffineTransform();
+		//scaledTransform.scale(2, 2);
+		//drawing.scaledTransform.setToTranslation(100,100)
+		//println(scaledTransform.getTranslateX());
+		//g.setTransform(scaledTransform);
+	  
+		//g.setTransform(drawing.scaledTransform);
+	  
 		if (visible) {
 		  if(fill){
 			g.setColor(innerCol)
@@ -82,7 +92,7 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 		drawing.repaint();
 	}
 
-	 def outerCol_= (outerCol:Color): Unit = {
+	def outerCol_= (outerCol:Color): Unit = {
 		_outerCol = outerCol;
 		drawing.repaint();
 	}

@@ -73,7 +73,7 @@ public class BinPackingFlow extends Constraint {
 		for (int i = 0; i < sizes.length; i++) {
 			if (x[i].isBound()) {
 				int j = x[i].getValue();
-				l_t[j].setValue(l_t[j].getValue() + sizes[j]);
+				l_t[j].setValue(l_t[j].getValue() + sizes[i]);
 				c_t[j].incr();
 			}
 			else {
@@ -93,10 +93,23 @@ public class BinPackingFlow extends Constraint {
 	    return CPOutcome.Suspend;
 	}
 	
+	private void printDebug() {
+		for (int i = 0; i < x.length; i++) {
+			System.out.println("x"+i+"="+x[i]+ "w"+i+"="+sizes[i]);
+		}
+		for (int j = 0; j < l.length; j++) {
+			System.out.println("load"+j+"="+l[j]+" card:"+c[j]+" packedload="+l_t[j]+" packedcard="+c_t[j]);
+		}
+		
+	}
+	
 	@Override
 	protected CPOutcome propagate() {
+		//printDebug();
 		for (int j = 0; j < l.length; j++) {
-			if (setCardinality(j) == CPOutcome.Failure){
+			//System.out.println("set card bin "+j);
+			if (setCardinality(j) == CPOutcome.Failure) {
+				//System.out.println("failure set card");
 		        return CPOutcome.Failure;
 		    }
 		}
@@ -124,6 +137,7 @@ public class BinPackingFlow extends Constraint {
 	    }
 	    if(v < minVal) return CPOutcome.Failure; //not possible to reach the minimum level
 	    int nbMin = nbAdded + c_t[j].getValue();
+	    //System.out.println("cardmin="+nbMin);
 	    if (c[j].updateMin(nbMin) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }
@@ -139,6 +153,7 @@ public class BinPackingFlow extends Constraint {
 	      i++;
 	    }
 	    int nbMax = nbAdded + c_t[j].getValue();
+	    //System.out.println("cardmax="+nbMax);
 	    if (c[j].updateMax(nbMax) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }

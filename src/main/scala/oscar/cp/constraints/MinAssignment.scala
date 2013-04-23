@@ -219,7 +219,7 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
     var w = fetchUnmatchedWorker()
     //println("fetching worker:" + w)
     while (w < n) {
-      println("initialize phase")
+      //println("initialize phase")
       initializePhase(w)
       executePhase()
       //printAll()

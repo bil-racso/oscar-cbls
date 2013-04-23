@@ -79,7 +79,7 @@ object PMedian extends App {
   val scale = 5
   val offsetx = 100
   val offsety = 100
-  val drawing = new VisualDrawing(false, true)
+  val drawing = new VisualDrawing(true)
   w.add(drawing)
   val vcircles = for (i <- 0 until nbCust) yield {
     new VisualCircle(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale  + offsety, demand(i))
