@@ -17,6 +17,9 @@
 
 package oscar.util.mo
 
+import com.sun.org.apache.xpath.internal.operations.Plus
+import scala.reflect.ClassTag
+
 /** Point with its coordinates and its associated evaluations.
   *
   * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -28,63 +31,45 @@ package oscar.util.mo
   *                    of the coordinates passed as argument
   * @param maximization A Boolean which is true when the point is part of a maximization 
   *                     problem, false otherwise. Default value: true */
-class MOOPoint[T, E <% Ordered[E]](coordinates: T, evaluations: Array[E], maximization: Boolean = true) {
+class MOOPoint[E <% Ordered[E]](val coordinates: Array[Double], val evaluations: Array[E]) extends ArchiveElement[E] {
   
-  var label = ""
-  
-  def this(coordinates: T, evaluator: (T => Array[E]), maximization: Boolean) = {
-    this(coordinates, evaluator(coordinates), maximization)
+  def this(coordinates: Array[Double], evaluator: (Array[Double] => Array[E])) = {
+    this(coordinates, evaluator(coordinates))
   }
+  
+  /** Returns the MOOPoint contained in the archive element */
+  def getMOOPoint: MOOPoint[E] = this
   
   /** The number of evaluations */
   def nbEvaluations: Int = evaluations.length
+  
+  /** The number of coordinates */
+  def nbCoordinates: Int = coordinates.length
   
   def getEvaluation(functionIndex: Int): E = {
     evaluations(functionIndex)
   }
   
+  var iter = 0
   
-  
-  def evaluationsToString: String = {
-    var repr = "("
-    for (i <- 0 until (nbEvaluations - 1)) {
-      if (evaluations(i).toString.length() > 5) {
-        repr += evaluations(i).toString.substring(0, 5) + ", "
-      }
-      else {
-        repr += evaluations(i).toString + ", "
-      }
+  def equals(other: MOOPoint[E]): Boolean = {
+    for(evalIndex <- 0 until evaluations.length) {
+      if(evaluations(evalIndex) != other.evaluations(evalIndex)) return false
     }
-    if (evaluations(nbEvaluations - 1).toString.length() > 5) {
-      repr += evaluations(nbEvaluations - 1).toString.substring(0, 5) + ")"
-    }
-    else {
-      repr += evaluations(nbEvaluations - 1).toString + ")"
-    }
-    repr
+    true
   }
   
   override def toString: String = {
-    //var repr = "Coordinates: " + coordinates.toString + "  ->  " + evaluationsToString
-    var repr = "[" + label + "] " + evaluationsToString
-    repr
+    "[" + iter + "] Coordinates: (" + coordinates.mkString(", ") + ")   ->   Evaluations: (" + evaluations.mkString(", ") + ")"
   }
 }
 
 object MOOPoint {
-  def apply[T, E <% Ordered[E]](coordinates: T, evaluations: Array[E], maximization: Boolean): MOOPoint[T, E] = {
-    new MOOPoint(coordinates, evaluations, maximization)
+  def apply[E <% Ordered[E]](coordinates: Array[Double], evaluations: Array[E]): MOOPoint[E] = {
+    new MOOPoint(coordinates, evaluations)
   }
   
-  def apply[T, E <% Ordered[E]](coordinates: T, evaluations: Array[E]): MOOPoint[T, E] = {
-    new MOOPoint(coordinates, evaluations, true)
-  }
-  
-  def apply[T, E <% Ordered[E]](coordinates: T, evaluator: (T => Array[E]), maximization: Boolean): MOOPoint[T, E] = {
-    new MOOPoint(coordinates, evaluator, maximization)
-  }
-  
-  def apply[T, E <% Ordered[E]](coordinates: T, evaluator: (T => Array[E])): MOOPoint[T, E] = {
-    new MOOPoint(coordinates, evaluator, true)
+  def apply[E <% Ordered[E]](coordinates: Array[Double], evaluator: (Array[Double] => Array[E])): MOOPoint[E] = {
+    new MOOPoint(coordinates, evaluator)
   }
 }

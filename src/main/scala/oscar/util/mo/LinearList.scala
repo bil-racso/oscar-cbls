@@ -17,36 +17,30 @@
 
 package oscar.util.mo
 
-import math.Numeric.Implicits._
 import scala.Array.canBuildFrom
-import scala.collection.mutable.DoubleLinkedList
+import scala.math.Numeric.Implicits._
 
 /** LinearList able to maintain a set of non dominated points (assuming maximizations in all dimensions).
   * 
   * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com */
-class LinearList[T, E <% Ordered[E]](private var mooPoint: MOOPoint[T, E]) extends ParetoFront[T, E]{
+class LinearList[E <% Ordered[E]](initialPoints: List[ArchiveElement[E]]) extends ParetoFront[E]{
   
   /** The list containing the non-dominated points */
-  private var archive = List(mooPoint);
+  private var archive = List[ArchiveElement[E]](initialPoints: _*);
   
   /** Insert a new point in the archive.
     * 
     * If this point is already dominated by some other points, it is discarded. If this point dominates other
     * points already presents, those dominated points are discarded. Complexity O(n) with n the number of
     * points in the linear list. */
-  def insert(mooPoint: MOOPoint[T, E], comparator: MOOComparator[T, E]) {
-    var newList = List[MOOPoint[T, E]]()
-    def getFiltered(l: List[MOOPoint[T, E]]): List[MOOPoint[T, E]] = {
-      if (l.isEmpty) {
-        List[MOOPoint[T, E]](mooPoint)
-      }
+  def insert(newElement: ArchiveElement[E], comparator: MOOComparator[E]) = {
+    def getFiltered(l: List[ArchiveElement[E]]): List[ArchiveElement[E]] = {
+      if (l.isEmpty) List[ArchiveElement[E]](newElement)
       else {
-        if (comparator.isEquivalent(mooPoint, l.head)) {
-          return l
-        }
+        if (comparator.hasEqualEvals(newElement.getMOOPoint, l.head.getMOOPoint)) return getFiltered(l.tail)
         else {
-          if (comparator.dominates(mooPoint, l.head)) getFiltered(l.tail)
-          else if (comparator.dominated(mooPoint, l.head)) l
+          if (comparator.dominates(newElement.getMOOPoint, l.head.getMOOPoint)) getFiltered(l.tail)
+          else if (comparator.dominated(newElement.getMOOPoint, l.head.getMOOPoint)) l
           else l.head :: getFiltered(l.tail)
 	    }
       }
@@ -54,36 +48,58 @@ class LinearList[T, E <% Ordered[E]](private var mooPoint: MOOPoint[T, E]) exten
     archive = getFiltered(archive)
   }
   
-  def nbPointsDominating(candidatePoint: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
+  def contains(mooPoint: MOOPoint[E]): Boolean = archive.exists(elem => elem.getMOOPoint.equals(mooPoint))
+  
+  def contains(element: ArchiveElement[E]): Boolean = archive.contains(element)
+  
+  def head: ArchiveElement[E] = archive.head
+  
+  def isEmpty: Boolean = archive.isEmpty
+  
+  def nbPointsDominating(candidatePoint: MOOPoint[E], comparator: MOOComparator[E]): Int = {
     var domCount = 0
-    for (point <- archive) {
-      if (comparator.dominated(point, candidatePoint))
+    for (elem <- archive) {
+      if (comparator.dominated(elem.getMOOPoint, candidatePoint))
         domCount += 1
     }
     domCount
   }
   
-  def nbPointsDominated(candidatePoint: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
+  def nbPointsDominated(candidatePoint: MOOPoint[E], comparator: MOOComparator[E]): Int = {
     var domCount = 0
-    for (point <- archive) {
-      if (comparator.dominates(candidatePoint, point))
+    for (elem <- archive) {
+      if (comparator.dominates(candidatePoint, elem.getMOOPoint))
         domCount += 1
     }
     domCount
   }
   
-  def score(point: MOOPoint[T, E], comparator: MOOComparator[T, E]): Int = {
+  def score(point: MOOPoint[E], mooPointCmpRaw: MOOComparator.MOOPointCmpRaw[E]): Int = {
     var score = 0
-    for (p <- archive) {
-      if (comparator.dominates(point, p)) score += 1
-      else if (comparator.dominated(point, p)) score -= 1
+    for (elem <- archive) {
+      if (mooPointCmpRaw(point, elem.getMOOPoint)) score += 1
+      else if (mooPointCmpRaw(elem.getMOOPoint, point)) score -= 1
     }
     score
   }
   
+  def randomElement: ArchiveElement[E] = archive(RandomGenerator.nextInt(archive.length))
+  
+  /** Removes the specified element from the Pareto front */
+  def removeElement(formerElement: ArchiveElement[E]): Boolean = {
+    val tmpArch = archive.filter(elem => elem != formerElement)
+    if (archive == tmpArch) false
+    else {
+      archive = tmpArch
+      true
+    }
+  }
+  
   def size: Int = archive.size
   
-  def toSet: Set[MOOPoint[T, E]] = archive.toSet
+  def toSet: Set[MOOPoint[E]] = archive.map(elem => elem.getMOOPoint).toSet
+  
+  def toList: List[MOOPoint[E]] = archive.map(elem => elem.getMOOPoint)
   
   /** Displays the current set of non-dominated points. */
   def print() {
@@ -94,5 +110,7 @@ class LinearList[T, E <% Ordered[E]](private var mooPoint: MOOPoint[T, E]) exten
 
 /** Factory for LinearList instances. */
 object LinearList {
-  def apply[T, E <% Ordered[E]](mooPoint: MOOPoint[T, E]): LinearList[T, E] = new LinearList(mooPoint)
+  def apply[E <% Ordered[E]](initialPoints: List[ArchiveElement[E]])= new LinearList(initialPoints)
+  def apply[E <% Ordered[E]](initialPoint: ArchiveElement[E])= new LinearList(List(initialPoint))
+  def apply[E <% Ordered[E]]()= new LinearList(List[ArchiveElement[E]]())
 }
