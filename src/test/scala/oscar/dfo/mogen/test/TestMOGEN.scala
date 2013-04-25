@@ -32,13 +32,14 @@ import oscar.dfo.mogen.algos.NelderMead
  */
 class TestMOGEN extends FunSuite with ShouldMatchers {
   test("Test MOGEN dummy 2D") {
-    val nbCoord = 2
+    val nbCoords = 2
     val nbEvals = 2
     val nbPoints = 100
-    val nbIterations = 10
-    val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double]())
+    val nbIterations = 100
+    val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
     mogen.initFeasibleReagion(List(inUnitInterval))
-    mogen.initArchive(nbPoints, Array.fill(nbCoord)((0.0, 1.0)), List((NelderMead, 1.0)))
+    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
+    println(mogen.archive.toSet.size)
     val paretoEstimation = mogen.optimizeMOO(nbIterations)
     for (mooPoint <- paretoEstimation) {
       println(mooPoint)
@@ -47,13 +48,13 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
   }
   
   test("Test MOGEN dummy 3D") {
-    val nbCoord = 3
+    val nbCoords = 3
     val nbEvals = 3
     val nbPoints = 100
     val nbIterations = 100
     val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double]())
     mogen.initFeasibleReagion(List(inUnitInterval))
-    mogen.initArchive(nbPoints, Array.fill(nbCoord)((0.0, 1.0)), List((NelderMead, 1.0)))
+    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
     val paretoEstimation = mogen.optimizeMOO(nbIterations)
     for (mooPoint <- paretoEstimation) {
       println(mooPoint)
@@ -62,15 +63,15 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
   }
 
   def zdt1(coordinates: Array[Double]): Array[Double] = {
-    def g = 1 + 9 * (coordinates.drop(1).sum / (coordinates.length - 1))
+    def g = 1 + (9 / (coordinates.length - 1)) * (coordinates.drop(1).sum)
     def f1 = coordinates(0)
-    def f2 = g * (1 - math.sqrt(f1/g))
+    def f2 = g * (1.0 - math.sqrt(f1/g))
     Array(f1, f2)
   }
   
   def inUnitInterval(ar: Array[Double]): Boolean = {
     for (e <- ar) {
-      if (e < 0 || e > 1)
+      if (e < 0.0 || e > 1.0)
         return false
     }
     true

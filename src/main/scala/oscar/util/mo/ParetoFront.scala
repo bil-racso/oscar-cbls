@@ -2,7 +2,7 @@ package oscar.util.mo
 
 abstract class ParetoFront[E <% Ordered[E]] {
   /** Inserts a point in the Pareto Front such that the Pareto Front still contains only non-dominated points */
-  def insert(candidate: ArchiveElement[E], comparator: MOOComparator[E])
+  def insert(candidate: ArchiveElement[E], comparator: MOOComparator[E]): Boolean
   /** Returns the number of points in the Pareto front dominating the candidate point */
   def nbPointsDominating(candidatePoint: MOOPoint[E], comparator: MOOComparator[E]): Int
   /** Returns the number of points in the Pareto front dominated by the candidate point */
