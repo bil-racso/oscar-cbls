@@ -33,6 +33,7 @@ import oscar.cbls.invariants.lib.numeric.{Abs, Minus}
 
 /**
  * implements left <= right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
@@ -53,17 +54,20 @@ protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
 /**
  * implements left <= right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class LE(l:IntVar,r:IntVar) extends LEA(l,r)
 
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class GE(l:IntVar,r:IntVar) extends LEA(r,l)
 
 /**
  * implements left < right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
@@ -82,16 +86,19 @@ protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
 /**
  * implements left > right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class L(l:IntVar,r:IntVar) extends LA(l,r)
 
 /**
  * implements left < right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class G(l:IntVar,r:IntVar) extends LA(r,l)
 
 /**
  * implements left != right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class NE(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
@@ -115,7 +122,9 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
 
 /**constraints left == right
  * this is considered as a primitive constraint and used in the [[oscar.cbls.constraints.core.Constraint]]
- * class, so that it is part of the core instead of the library*/
+ * class, so that it is part of the core instead of the library
+ * @author  Renaud De Landtsheer rdl@cetic.be
+ */
 case class EQ(left:IntVar, right:IntVar) extends Constraint{
 
   registerConstrainedVariables(left,right)

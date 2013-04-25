@@ -25,6 +25,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.invariants.lib.logic.Routes
+import scala.language.reflectiveCalls
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -39,7 +40,7 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
       val ROUTE_ARRAY_UNROUTED = 1
       val nbPoints = 6
       val nbCars = 1
-      val model = new Model(false,true,false,false)
+      val model = new Model(false,None,false,false)
       val next = Array.tabulate(nbPoints)(i => if(i<nbCars) new IntVar(model, i, nbPoints-1, i, "next" + i)
       else new IntVar(model, 0, nbPoints, i, "next" + i))
       // 0->1->2->3->4->5(->0)

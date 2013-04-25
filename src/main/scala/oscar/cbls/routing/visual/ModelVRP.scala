@@ -18,6 +18,7 @@
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
+  *     Corrected by Renaud De Landtsheer (removed statics)
   ******************************************************************************/
 
 package oscar.cbls.routing.visual
@@ -33,10 +34,6 @@ import oscar.cbls.search.StopWatch
 import model._
 import test.data.{Point, InstanceVisualVRP}
 import util.Random
-
-object ModelVRP {
-  val model = new ModelVRP()
-}
 
 class ModelVRP() extends StopWatch{
 
@@ -77,7 +74,7 @@ class ModelVRP() extends StopWatch{
 
   //clone the Next array in case of new test on the same instance
   var clonedNext:Array[Int] = null
-  def cloneHeuristic {
+  def cloneHeuristic() {
     clonedNext = new Array[Int](N)
     for(i <- 0 until N)
       clonedNext(i) = vrp.Next(i).value
@@ -118,7 +115,7 @@ class ModelVRP() extends StopWatch{
     N = boardPanel.nbNodes.getText.toInt
 
     closeNeighbor = boardPanel.klimited.getText.toInt
-    m = new Model(false,false,false,false)
+    m = new Model(false,None,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
       with ClosestNeighborPoints with Predecessors with Unrouted
       with WeightedNode with WeakConstraints with StrongConstraints
@@ -171,7 +168,7 @@ class ModelVRP() extends StopWatch{
       }
     }
     m.propagate()
-    cloneHeuristic
+    cloneHeuristic()
     it = 0
     this
   }

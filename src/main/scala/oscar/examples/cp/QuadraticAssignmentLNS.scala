@@ -59,7 +59,7 @@ object QuadraticAssignmentLNS {
     // State the model and solve it
     val cp = CPSolver()
     // for each facilities, the location chosen for it
-    val x = N map (v => CPVarInt(cp, 0 until n))
+    val x = N map (v => CPVarInt(cp, N))
 
     val rand = new scala.util.Random(0)
     val bestSol = Array.fill(n)(0)
@@ -78,9 +78,9 @@ object QuadraticAssignmentLNS {
       // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
       val limit = if (cp.explorationCompleted) cp.failLimit/2 else cp.failLimit*2
       println("set limit to "+limit)     
-      // relax randomly 50% of the variables
+      // relax randomly 50% of the variables and run again
       cp.runSubjectTo(Int.MaxValue,limit) {
-    	  cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
+    	cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == cp.lastSol(x(i))))
       }
     }
 

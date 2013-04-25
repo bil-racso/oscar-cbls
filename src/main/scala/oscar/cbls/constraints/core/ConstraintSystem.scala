@@ -32,6 +32,7 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
  * monitoring the violation of a variable requires that the ConstraintSystem has been notified that the variable should have an associated violation degree.
  * This is achieved by calling the method registerForViolation(v:Variable).
+ * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
  */
 class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
@@ -80,7 +81,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def aggregateLocalViolations{
+  private def aggregateLocalViolations(){
     for (variable <- VarInConstraints){
       val ConstrAndWeightList:List[(Constraint,IntVar)] = variable.getStorageAt(IndexForLocalViolationINSU,null)
 
@@ -96,7 +97,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def PropagateLocalToGlobalViolations{
+  private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
       val localViol:IntVar = varWithLocalViol.getStorageAt(IndexForLocalViolationINSU)
       val sources = model.getSourceVariables(varWithLocalViol)
@@ -107,7 +108,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
-  private def aggregateGlobalViolations{
+  private def aggregateGlobalViolations(){
     for (variable <- VarsWatchedForViolation){
       val ElementsAndViol:GlobalViolationDescriptor = variable.getStorageAt(IndexForGlobalViolationINSU)
       ElementsAndViol.Violation <== Sum(ElementsAndViol.AggregatedViolation)
@@ -127,9 +128,9 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
 
     setObjectiveVar(Violation)
 
-    aggregateLocalViolations
-    PropagateLocalToGlobalViolations
-    aggregateGlobalViolations
+    aggregateLocalViolations()
+    PropagateLocalToGlobalViolations()
+    aggregateGlobalViolations()
   }
 
   /**Call this method to notify that the variable should have a violation degree computed for the whole constraint system.

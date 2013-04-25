@@ -7,7 +7,7 @@ import oscar.algo.CumulativeProfile
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
 
-class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color = Color.WHITE) extends VisualDrawing(false, true) {
+class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color = Color.WHITE) extends VisualDrawing(true) {
 	
 	// The profile is represented by a polygon
 	private val polygon : VisualPolygon = new VisualPolygon(this)
@@ -25,7 +25,7 @@ class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color
 	
 	def update(xScale : Int, yScale: Int) {
 			
-		val activities = resource.activities
+		val activities = resource.cumulativeActivities
 		val rawPoints  = CumulativeProfile.getCumulativeProfile(activities)
 		
 		// The end of a ProdConsActivity is not relevant

@@ -34,6 +34,7 @@ import oscar.cbls.invariants.lib.numeric.Step
  * It can be obtained through the violation(v:Variable) method.
  * All these violation are stored as IntVar, so that they can be involved in the construction of complex formulas,
  * and managed as invariants.
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 abstract class Constraint extends IntInvariant{
 

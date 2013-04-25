@@ -32,28 +32,28 @@ import oscar.cbls.scheduling._
  * he cannot sleep before having eaten
  */
 object Reagan extends App {
-  val model = new Model(false, true, false)
+  val model = new Model(false, None, false)
   val planning = new Planning(model, 31)
   val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
-  val Eat = Task(2, planning, "eat")
+  val Eat = Activity(2, planning, "eat")
   Eat uses 2 ofResource Reagan
 
-  val Sleep = Task(8, planning, "sleep")
+  val Sleep = Activity(8, planning, "sleep")
   Sleep uses 1 ofResource Reagan
 
-  val Think = Task(12, planning, "think")
+  val Think = Activity(12, planning, "think")
   Think uses 1 ofResource Reagan
 
-  val Chew = Task(3, planning, "chew")
+  val Chew = Activity(3, planning, "chew")
   Chew uses 1 ofResource Reagan
 
-  val Speak = Task(3, planning, "speak")
+  val Speak = Activity(3, planning, "speak")
   Speak uses 3 ofResource Reagan
 
-  val Drink = Task(3, planning, "drink")
+  val Drink = Activity(3, planning, "drink")
   Drink uses 3 ofResource Reagan
 
   val Digest = SuperTask(Eat, Sleep, "digest")

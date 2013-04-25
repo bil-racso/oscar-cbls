@@ -32,11 +32,6 @@ import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
 import collection.Iterator
 
-
-//object Test extends App{
-//  println((Algebra.instrumentRange (1 until 10) startBy 5).toIterator.toList)
-//}
-
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
  */

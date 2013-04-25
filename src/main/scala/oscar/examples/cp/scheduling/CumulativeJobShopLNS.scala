@@ -33,17 +33,15 @@ import scala.io.Source
 import scala.collection.mutable.Set
 import scala.math.max
 
-object CumulativeJobShopLNS extends App {
+object CumulativeJobShopLNS extends App {  
+  
+  val js = JobShopParser.parse("data/jobshop/Lawrence/la21.txt")
 
-  // Parsing		
-  // -----------------------------------------------------------------------
-
-  var lines = Source.fromFile("data/cJobShop.txt").getLines.toList
-
-  val nJobs = lines.head.trim().split(" ")(0).toInt
-  val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-  val nResources = lines.head.trim().split(" ")(2).toInt
-  val capacity = lines.head.trim().split(" ")(3).toInt
+  val nJobs = js.nbJobs
+  val nTasksPerJob = js.nbActPerJob
+  
+  val nResources = nTasksPerJob
+  val capacity = 2
 
   val nActivities = nJobs * nTasksPerJob
 
@@ -56,39 +54,23 @@ object CumulativeJobShopLNS extends App {
   println("#Resources  : " + nResources)
   println("Capacity    : " + capacity)
 
-  lines = lines.drop(1)
-
-  val job = new Array[Int](nActivities)
-  val resource = new Array[Int](nActivities)
-  val duration = new Array[Int](nActivities)
-
-  for (i <- Activities) {
-
-    val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-
-    job(i) = l(0)
-    resource(i) = l(1)
-    duration(i) = l(2)
-
-    lines = lines.drop(1)
-  }
-
   // Modeling	
   // -----------------------------------------------------------------------
 
-  val horizon = duration.sum
+  val horizon = js.durationMatrix.flatten.sum
   val cp = new CPScheduler(horizon)
 
   // Activities & Resources
-  val activities = Array.tabulate(nActivities)(i => Activity(cp, duration(i)))
+  val activities = Array.tabulate(nJobs,nTasksPerJob){case(i,j) => Activity(cp, js.durationMatrix(i)(j))}
   val resources = Array.tabulate(nResources)(r => MaxResource(cp, 2))
 
   // Resource allocation
-  for (i <- Activities)
-    activities(i) needs 1 ofResource resources(resource(i))
+  for (i <- 0 until nJobs; j <- 0 until nTasksPerJob) {
+    activities(i)(j) needs 1 ofResource resources(js.jobMatrix(i)(j))
+  }
 
   // The makespan to minimize
-  val makespan = maximum(0 until nActivities)(i => activities(i).end)
+  val makespan = maximum(0 until nJobs)(i => activities(i)(nTasksPerJob-1).end)
 
   // Visualization  
   // -----------------------------------------------------------------------
@@ -96,8 +78,11 @@ object CumulativeJobShopLNS extends App {
   val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
   val colors = VisualUtil.getRandomColorArray(nResources)
 
-  val gantt = new VisualGanttChart(activities, i => job(i), colors = i => colors(resource(i)))
+  val jobsFlat = js.jobMatrix.flatten
+
+  val gantt = new VisualGanttChart(activities.flatten, i => i/nTasksPerJob, colors = i => colors(jobsFlat(i)))
   val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
+
 
   frame.createFrame("Gantt chart").add(gantt)
   for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
@@ -105,35 +90,20 @@ object CumulativeJobShopLNS extends App {
 
   // Constraints & Search
   // -----------------------------------------------------------------------
-
-  val bestSol: Array[FixedActivity] = Array.tabulate(activities.size)(i => new FixedActivity(i, 0, 0, 0, 0))
-  var precedences: Array[(Int, Int)] = null
-
+  
   cp.minimize(makespan) subjectTo {
 
-    for (i <- 0 until nActivities - 1; if (job(i) == job(i + 1)))
-      activities(i) endsBeforeStartOf activities(i + 1)
-
-    cp.add(makespan >= 666)
-
+    for (i <- 0 until nJobs; j <- 0 until nTasksPerJob-1)
+      activities(i)(j) endsBeforeStartOf activities(i)(j + 1)
   } exploration {
 
-    cp.binaryFirstFail(activities.map(_.start))
-    //cp.setTimesSearch(activities)
+    cp.setTimes(activities.flatten)
 
-    // Best so far solution
-    for (t <- Activities) {
-
-      bestSol(t).start = activities(t).est
-      bestSol(t).end = activities(t).lct
-      bestSol(t).inc = 1
-      bestSol(t).machine = resource(t)
-    }
-
-    precedences = PartialOrderSchedule.getPrecedences(bestSol, Array.fill(nResources)(2))
+    // record partial order schedule of current best sol
+    resources.foreach(_.recordPartialOrderSchedule())
 
     for (p <- profiles) p.update(1, 20)
-    gantt.update(1, 20)
+    gantt.update(1, 10)
   } run (1)
 
   var limit = 2000
@@ -146,19 +116,13 @@ object CumulativeJobShopLNS extends App {
       if (!cp.explorationCompleted) limit * 110 / 100
       else max(10, (cp.failLimit * 90) / 100)
 
-    println("limit: " + limit)
-
-    val selected: Array[Boolean] = Array.fill(bestSol.size)(false)
-
-    // Selected are relaxed (20%)
-    for (i <- 0 until bestSol.size)
-      if (nextFloat < 0.1)
-        selected(i) = true
+    // 10% of  activities are relaxed
+    val relaxed = activities.flatten.filter(i => nextFloat < 0.1).toSet
 
     cp.runSubjectTo(Int.MaxValue, limit) {
-      val filteredPrecedences = precedences.filter(p => !selected(p._1) && !selected(p._2))
-      val constraints = filteredPrecedences.map(p => activities(p._1).end <= activities(p._2).start)
-      cp.post(constraints.asInstanceOf[Array[Constraint]])
+      for (r <- resources) {
+        cp.post(r.partialOrderSchedule(relaxed))
+      }
     }
   }
 

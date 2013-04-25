@@ -90,7 +90,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     }
                 
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
         
     // grid definition and initialisation
     val grid = Array.ofDim[IntVar](M)

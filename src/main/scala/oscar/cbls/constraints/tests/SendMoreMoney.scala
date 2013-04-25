@@ -71,7 +71,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     val TABU_LENGTH = 4
 
     // model
-    val m: Model = new Model(false,false,true)
+    val m: Model = new Model(false,None,true)
         
     // letter and carriage values
     // d initialised with 0..10, r with 0

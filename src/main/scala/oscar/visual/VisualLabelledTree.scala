@@ -33,7 +33,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(t
   }
   
   def replaceTree(newTree: PositionedNode[T]) = {
-    this.removeAllShapes
+    //this.removeAllShapes
     this.tree = newTree
     update
   }

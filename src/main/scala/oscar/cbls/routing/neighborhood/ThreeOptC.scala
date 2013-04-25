@@ -155,7 +155,7 @@ object ThreeOptC extends SearchEngine{
 case class ThreeOptC(startOfFirstEdge:Int, startOfSecondEdge:Int, startOfThirdEdge:Int,
                                   objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {ThreeOptC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
+  def comit() {ThreeOptC.doMove(startOfFirstEdge,startOfSecondEdge,startOfThirdEdge,vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = startOfFirstEdge
   def getValuesToAssign = vrp.threeOptC(startOfFirstEdge,vrp.Next(startOfFirstEdge).value,

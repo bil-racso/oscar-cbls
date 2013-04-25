@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * This file is part of OscaR (Scala in OR).
+ *  
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ * 
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ ******************************************************************************/
+
 package oscar.cp.scheduling
 
 import scala.collection.mutable.PriorityQueue
@@ -6,6 +23,9 @@ import scala.collection.mutable.Set
 import scala.util.Random.nextInt
 import scala.math.ceil
 
+/**
+ * @author Renaud Hartert
+ */
 object PartialOrderSchedule {
 
 	val gapStruct1 = new GapStructure
@@ -112,8 +132,11 @@ object PartialOrderSchedule {
 
 	// This class allows to efficiently compute the gap at a specific time
 	class GapStructure {
-
-		val eventPointSeries = new PriorityQueue[Tuple2[Int, Int]]()(new Ordering[Tuple2[Int, Int]] { def compare(a : Tuple2[Int, Int], b : Tuple2[Int, Int]) = if (b._2 > a._2) { 1 } else if (b._2 == a._2) { 0 } else { -1 } })
+	    // demand, end
+		val ordering = new Ordering[Tuple2[Int, Int]] { 
+		  def compare(a : Tuple2[Int, Int], b : Tuple2[Int, Int]) = if (b._2 > a._2) { 1 } else if (b._2 == a._2) { 0 } else { -1 } 
+		}
+		val eventPointSeries = new PriorityQueue[Tuple2[Int, Int]]()(ordering)
 		var gap = 0
 
 		def reset(limit : Int) {

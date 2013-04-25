@@ -19,61 +19,124 @@
 
 package oscar.cp.constraints
 
-import oscar.search._
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp.modeling.TightenType
+import oscar.cp.modeling.TightenType._
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
+import oscar.search.Objective
+import oscar.cp.core.CPPropagStrength
 
 /**
- * @author Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus  pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Constraint(objVar.store, "objective"+n) with Objective {
-
-  import TightenType._
+abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Objective {
   
-  protected var lb = Int.MinValue
-  protected var ub = Int.MaxValue
-  
+  // Upper bound of the objective
+  protected var lb = objVar.min
+  // Lower bound of the objective
+  protected var ub = objVar.max
+  // Tightening mode of the objective
   protected var tightenType = StrongTighten
-
-  var best = 0 // best value so far (the one recorded on last tighten)
+  // Best so far value of the objective (the one recorded on the last tighten)
+  var best = 0
   
+  /** Returns the best value in the current domain of the objective */
+  def domBest: Int
+  /** Returns the worst value in the current domain of the objective */
+  def domWorst: Int
+  /** Returns true if the objective has to be maximized, false otherwise */
+  def isMax: Boolean
+  /** Returns true if the objective has to be minimized, false otherwise */
+  def isMin: Boolean
+  /** Tries to adjust the worst bound of the domain to newBound with delta */
+  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome
+  /** Tries to adjust the best bound of the domain to newBound with delta */
+  def updateBestBound(newBound: Int, delta: Int = 0): CPOutcome
+  /** Returns the value of the worst bound of the objective */
+  def worstBound: Int
+  /** Returns the value of the best bound of the objective */
+  def bestBound: Int
+
+  /** Sets the tightening mode of the objective */
   def tightenMode_=(t: TightenType.Value) = {
     tightenType = t
   }
   
+  /** Returns the tightening mode of the objective */
   def tightenMode = tightenType
   
-  override def tighten() = {
-    if (!objVar.isBound) {
-      throw new RuntimeException(name+" not bound:" + objVar)
+  /** Tightens the objective according to its tightening mode */
+  def tighten() = {
+    if (!objVar.isBound) throw new RuntimeException("objective"+n+" not bound:" + objVar)
+    else {
+      best = objVar.value // Sets new best value
+      if (!objVar.store.silent && tightenType != NoTighten) {
+        println("objective"+n+" tightened to " + best + " lb:"+  lb)
+      }
     }
-    best = objVar.value
-    if (!s.silent && tightenType != NoTighten) println(name+" tightened to " + best + " lb:"+  lb) 
   }
 
+  /** Returns true if the objective has reached is optimal value, false otherwise */
+  def isOptimum = (best == bestBound)
 
-  def relax() = {}
-
-  def restoreBest() = {}
-
-  def isOptimum() = false
-
-  def isOK() = s.propagate(this) != CPOutcome.Failure
-
-  override def toString = "best value:"+best+" tightening:"+tightenType
+  /** Returns true if the objective is consistent according to its model */
+  def isOK() = ensureBest() != CPOutcome.Failure
   
-  
-  // constraint methods
-  
-  def filter() = propagate()
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
-    lb = objVar.min
-    ub = objVar.max
-    objVar.callPropagateWhenBoundsChange(this)
-    propagate()
+  /** Restores the lower and upper bounds of the objective as well as its best so far value */
+  def relax() {
+    lb = Int.MinValue
+    ub = Int.MaxValue
+    best = bestBound
   }
   
+  /** Adjusts the bounds of the objective according to the best so far value and to the 
+   *  tightening mode */
+  def ensureBest(): CPOutcome = {
+    if (tightenType == NoTighten) Suspend
+    else {
+      val delta = if (tightenType == StrongTighten) 1 else 0
+      updateWorstBound(best, delta)
+    }
+  }
   
+  override def toString = "best value: "+best+" tightening: "+tightenType
+}
 
+/** Best  : smallest values
+ *  Worst : largest values
+ */
+class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjectiveUnit(objVar,n) {
+
+  def domBest: Int = objVar.min
+  def domWorst: Int = objVar.max 
+  def isMax: Boolean = false
+  def isMin: Boolean = true 
+  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMax(newBound-delta) 
+  def updateBestBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMin(newBound+delta)
+  def worstBound: Int = ub
+  def bestBound: Int = lb
+  
+  // Init best
+  best = Int.MaxValue
+}
+
+/** Best  : largest values
+ *  Worst : smallest values
+ */
+class CPObjectiveUnitMaximize(objVar: CPVarInt, n: String = "") extends CPObjectiveUnit(objVar,n) {
+
+  def domBest: Int = objVar.max
+  def domWorst: Int = objVar.min 
+  def isMax: Boolean = true
+  def isMin: Boolean = false
+  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMin(newBound+delta)   
+  def updateBestBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMax(newBound-delta) 
+  def worstBound: Int = lb
+  def bestBound: Int = ub
+  
+  // Init best
+  best = Int.MinValue
 }

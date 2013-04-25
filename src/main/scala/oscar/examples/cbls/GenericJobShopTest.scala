@@ -62,19 +62,19 @@ object GenericJobShopTest extends StopWatch with App {
   println("Machines: " + MachineCount)
   println("Tasks: " + JobCount * MachineCount + "\n")
 
-  val model = new Model(false, false, false)
+  val model = new Model(false, None, false)
   val planning = new Planning(model, maxDuration)
 
   val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
     => CumulativeResource(planning, 1, "Machine" + MachineID))
 
   for (JobID <- 0 until JobCount) {
-    var PreviousTask: Task = null
+    var PreviousTask: Activity = null
     for (TaskID <- MachineArray.indices) {
       val MachineID = WordReader.next().toInt
       val Duration = WordReader.next().toInt
 
-      val NewTask = Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      val NewTask = Activity(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
       NewTask uses 1 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
@@ -89,7 +89,7 @@ object GenericJobShopTest extends StopWatch with App {
   val solver = new IFlatIRelax(planning, false)
 
   model.close()
-  planning.getVisual
+  planning.getVisual()
 
   println("start search")
   //println(model.dumpToDot(true,true))

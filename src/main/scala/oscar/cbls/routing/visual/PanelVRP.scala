@@ -27,35 +27,21 @@ import oscar.cbls.routing._
 import neighborhood._
 import oscar.visual._
 
-
+/*
 object PanelVRP {
-  val easyMode = false // to modify to change the user's GUI in a easier panel.
+  val easyMode = true // to modify to change the user's GUI in a easier panel.
 
-  val PanelVRP = {val v = new PanelVRP(easyMode);v.initialize();v} // management of all GUI component.
+  // management of all GUI component.
   val boardPanel = PanelVRP.boardPanel // board panel
   val mapPanel = PanelVRP.mapPanel // map panel
 
   val vrpModel = PanelVRP.vrpModel // vrp model
-  val vrpSearch = new SearchVRP(PanelVRP) // vrp search strategy
-  val vrpSmartSearch =  new SmartSearch(PanelVRP)
 
-  //actions of board panel
-  def makeInstance(b:Boolean) = {
-    class InstanceInThread(b:Boolean) extends Thread{
-      override  def run(){
-        vrpModel.initModel(PanelVRP,b)
-        PanelVRP.cleanMapPanel()
-        PanelVRP.cleanPlotPanel()
-        PanelVRP.displayNodes()
-        PanelVRP.displayArrows()
-      }
-    }
-    new InstanceInThread(b).start()
-  }
 
-  def startSearching() = new Thread(vrpSearch).start()
-  def startSmartSearching()= new Thread(vrpSmartSearch).start()
+
 }
+*/
+
 
 class PanelVRP(easyMode:Boolean) extends JPanel{
 
@@ -67,16 +53,14 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   val mapPanel:VisualDrawing = newMapPanel
   val plotPanel:Plot2D = newPlotPanel()
   val boardPanel:Dashboard = newBoardPanel
-  val vrpModel = ModelVRP.model
+  val vrpModel = new ModelVRP()
   val colorsManagement = new ColorManagement()
 
-  /*
-    Setup the GridBagLayout.
-   */
-  def initialize(){
-    setGridBagLayout()
-    setBackground(Color.white)
-  }
+  setGridBagLayout()
+  setBackground(Color.white)
+
+  val vrpSearch = new SearchVRP(this) // vrp search strategy
+  val vrpSmartSearch =  new SmartSearch(this)
 
   /*
     Returns the neighborhood selected in the board panel.
@@ -104,7 +88,6 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       case _ => null
     }
   }
-
 
   /**
    * Displays nodes on map panel.
@@ -139,6 +122,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       arrow
     })
   }
+
   def setColorToRoute(l:VisualLine ,i:Int){
     l.outerCol = colorsManagement(i+1)
   }
@@ -168,7 +152,6 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
       boardPanel.updateRouteLabel(vrpModel.getRoute(vrp))
     }
   }
-
 
   def newMapPanel:VisualDrawing = {
     val mapPanel : VisualDrawing = new VisualDrawing(false);
@@ -203,7 +186,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def newBoardPanel():Dashboard = {
-    val boardPanel = new Dashboard(easyMode)
+    val boardPanel = new Dashboard(easyMode,this)
     boardPanel.setBorder(BorderFactory.createTitledBorder("Board option"))
     boardPanel.setBackground(Color.white)
     if(!easyMode){
@@ -261,5 +244,23 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     add(mapPanel)
   }
 
+  //actions of board panel
+  def makeInstance(b:Boolean) = {
+    val a = this;
+    println("make instance pressed")
+    class InstanceInThread(b:Boolean) extends Thread{
+      override  def run(){
+        vrpModel.initModel(a,b)
+        cleanMapPanel()
+        cleanPlotPanel()
+        displayNodes()
+        displayArrows()
+      }
+    }
+    new InstanceInThread(b).start()
+  }
+
+  def startSearching() = new Thread(vrpSearch).start()
+  def startSmartSearching()= new Thread(vrpSmartSearch).start()
 }
 

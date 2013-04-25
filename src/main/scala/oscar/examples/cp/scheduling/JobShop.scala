@@ -118,7 +118,7 @@ object JobShop extends App {
 		cp.binary(Array(makespan))
 		gantt1.update(1, 20)
 		gantt2.update(1, 20)
-	}
+	} run()
 
 	cp.printStats()
 }

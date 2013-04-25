@@ -21,10 +21,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.invariants.core.algo.dag
-
-
 
 class ConcreteDAGNode(val _UniqueID:Int) extends DAGNode{
 

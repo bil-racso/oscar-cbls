@@ -29,6 +29,7 @@ import oscar.cbls.invariants.lib.logic.{Filter, Predecessor, Routes, IntVar2IntV
 import oscar.cbls.invariants.lib.numeric.{SumElements, Sum}
 import oscar.cbls.objective.ObjectiveTrait
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
 
 /**
@@ -87,7 +88,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     var current:Int = from
     while(current != to){
       nodeStack = current :: nodeStack
-      current = Next(current).value //TODO: out of bound exception HERE!!!
+      current = Next(current).value
     }
     while(!nodeStack.isEmpty){
       listToUpdate =(Next(current),nodeStack.head)::listToUpdate
@@ -287,7 +288,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   override def toString():String = {
     var toReturn = ""
     for ( v <- 0 until V){
-      toReturn += "Vehicle" + v + ":"
+      toReturn += "Vehicle" + v + ":" + v
       var current = Next(v).value
       while(current != v){
         toReturn += " -> " + current
@@ -360,6 +361,7 @@ trait Unrouted extends VRP {
    * the data structure set which maintains the unrouted node.
    */
   val Unrouted: IntSetVar = Filter(Next, (next: Int) => next == N)
+  this.m.registerForPartialPropagation(Unrouted)
 }
 
 /**
@@ -367,14 +369,13 @@ trait Unrouted extends VRP {
  * Used by some neighborhood searches.
  */
 trait ClosestNeighborPoints extends VRP with HopDistance{
+
+  //TODO: there is a filter function when computing the knearest points. this fct should be saved somewhere!!
+
   /**
    * the data structure which maintains the k closest neighbors of each point.
    */
   var closestNeighbors:SortedMap[Int, Array[List[Int]]] = SortedMap.empty
-  /**
-   * the max average of unrouted point in the k closest neighbors of each point.
-   */
-  var maxAvgUnrouted:Double = 0
 
   /**
    * Save the k nearest neighbors of each node of the VRP.
@@ -390,18 +391,6 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
   }
 
   /**
-   * Computes and returns in an ordered form (nearest to farthest) the neighbors of a given node.
-   * @param node the given node.
-   * @return the neighbors of a given node ordered from the nearest to the farthest as a list of Int.
-   */
-  def computeNearestNeighbors(node:Int):List[Int] = {
-    val reachableneigbors = Nodes.filter((next:Int)
-      => node != next && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
-    //TODO: this is deeply inefficient. use a lazy quicksort instead, orr a partial sort based on a heap?
-    reachableneigbors.sortBy((neigbor:Int) => min(getHop(neigbor, node),getHop(node,neigbor))).toList
-  }
-
-  /**
    * Computes and returns the k nearest neighbor of a given node.
    * It allows us to add a filter (optional) on the neighbor we want to save.
    * @param node the given node.
@@ -410,7 +399,18 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
    * @return the k nearest neighbor of the a node as a list of Int.
    */
   def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean)):List[Int]= {
-    computeNearestNeighbors(node).filter(filter).take(k)
+
+    val reachableneigbors = Nodes.filter((next:Int)
+    => node != next && filter(next) && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
+
+    val heap = new BinomialHeap[(Int,Int)](-_._2,k+1)
+
+    for(neigbor <- reachableneigbors){
+      heap.insert(neigbor, min(getHop(neigbor, node),getHop(node,neigbor)))
+      if (heap.size>k)heap.popFirst()
+    }
+
+    heap.toList.map(_._1)
   }
 
   /**
@@ -428,38 +428,8 @@ trait ClosestNeighborPoints extends VRP with HopDistance{
     if(!closestNeighbors.isDefinedAt(k)){
       saveKNearestPoints(k:Int,filter)
     }
-    updateMaxAvgUnrouted(k,node)
     closestNeighbors(k)(node)
   }
-
-  /**
-   * Returns the k nearest neighbor of a given point.
-   * It allows us to add a filter (optional) on the neighbor.
-   * @param k the parameter k.
-   * @param node the given point.
-   * @param filter the filter.
-   * @return the k nearest neighbor as an iterable list of Int.
-   */
-  def getKNearestNeighbors(k:Int, node:Int,filter:(Int => Boolean) = ( _ => true)):Iterable[Int] = {
-    if (k >= N-1) return Nodes
-    if(!closestNeighbors.isDefinedAt(k)){
-      saveKNearestPoints(k:Int,filter)
-    }
-    updateMaxAvgUnrouted(k,node)
-    closestNeighbors(k)(node)
-  }
-
-  /**
-    * Update the maximum average of unrouted node in the k nearest neighbor of a given point.
-    * @param k the parameter k.
-    * @param node the given point.
-    */
-  def updateMaxAvgUnrouted(k:Int,node:Int){
-    var avg : Double = 0
-    closestNeighbors(k)(node).foreach(n => if(!isRouted(n)) avg += 1)
-    if (avg/k >maxAvgUnrouted) maxAvgUnrouted = avg/k
-  }
-
 }
 
 /**
@@ -514,7 +484,6 @@ trait HopDistance extends VRP {
   def getHop(from:Int, to:Int):Int = distanceFunction(from,to)
 }
 
-
 /**
  * Declares an objective function, attached to the VRP.
  * It maintains it equal to the hop distance in the VRP,
@@ -532,6 +501,7 @@ trait ObjectiveFunction extends VRP with ObjectiveTrait{
   setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
 }
 
+//TODO: this class should be the single point of entry for objective fct in the VRP. no need to a ObjectiveFunction Trait in addition to this one.
 /**
  * Allows to add news functions cost to the actual objective of the VRP.
 */
@@ -679,14 +649,14 @@ trait StrongConstraints extends ObjectiveFunction {
   /**
    * Update the violation of the strong constraints system.
    */
-  def updateViolatedStrongConstraints {
+  def updateViolatedStrongConstraints() {
     if(strongConstraints == null) violatedStrongConstraints  = false
     else
       violatedStrongConstraints = !strongConstraints.isTrue
   }
 
   override def propagateObjective:Int = {
-    updateViolatedStrongConstraints
+    updateViolatedStrongConstraints()
     if (violatedStrongConstraints) Int.MaxValue else ObjectiveVar.value
   }
 }

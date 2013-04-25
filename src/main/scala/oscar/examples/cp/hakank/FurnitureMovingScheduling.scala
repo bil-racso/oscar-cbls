@@ -88,7 +88,7 @@ object FurnitureMovingScheduling {
       println("makespan : " + makespan)
       println("capacity : " + resource.capacity)
       // some different ways of obtaining detailed info about activities
-      println("resource.activities:\n" + resource.activities.mkString("\n"))
+      println("resource.activities:\n" + activities.mkString("\n"))
       println("cp.activities:\n" + cp.activities.mkString("\n"))
       println("activities:\n" + activities.mkString("\n"))
       println(activities.map(a=>"Activity " + a.id + ":" + a.start + " --" + a.dur + " -- " + a.end).mkString("\n"))
