@@ -18,8 +18,6 @@ package oscar.visual;
 
 import java.awt.Color;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-
 
 import javax.swing.JInternalFrame;
 
