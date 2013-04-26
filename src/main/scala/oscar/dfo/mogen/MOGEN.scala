@@ -1,20 +1,19 @@
 package oscar.dfo.mogen
 
 import scala.reflect.ClassTag
+
 import oscar.dfo.mogen.algos.ComparativeAlgorithm
-import oscar.dfo.mogen.algos.ComparativeAlgorithm
-import oscar.dfo.mogen.algos.ComparativeAlgorithmState
+import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
+import oscar.util.mo.ArchiveElement
 import oscar.util.mo.FeasibleRegion
+import oscar.util.mo.LinearList
+import oscar.util.mo.MOEvaluator
 import oscar.util.mo.MOOComparator
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.ParetoFront
 import oscar.util.mo.RandomGenerator
-import oscar.util.mo.LinearList
-import oscar.util.mo.MOEvaluator
-import oscar.util.mo.ArchiveElement
-import oscar.dfo.mogen.algos.NelderMeadState
-import oscar.visual.VisualFrame
 import oscar.visual.PlotDFOPareto2D
+import oscar.visual.VisualFrame
 
 class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E], val visu: Boolean) {
 
@@ -35,9 +34,9 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
 
-  def initArchive(nbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]) = {
-    var pointCreationCounter = 0
-    while (archive.isEmpty && pointCreationCounter < nbPoints) {
+  def initArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
+    val maxTemptative = 100
+    for (i <- 1 to 100) {
       val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
         val newAlgo = getRandomAlgo(algorithms)
@@ -45,9 +44,9 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
         for (newPoint <- newAlgoState.getPoints) {
           val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint, comparator))
           archive.insert(newTriplet, comparator)
+          if (archive.size >= maxNbPoints) return
         }
       }
-      pointCreationCounter += 1
     }
   }
 

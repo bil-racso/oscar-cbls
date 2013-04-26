@@ -5,6 +5,7 @@ import oscar.util.mo.MOOComparator
 import oscar.util.mo.ParetoFront
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOEvaluator
+import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
 
 trait ComparativeAlgorithm {
   /** Performs one iteration of the algorithm starting from state and comparing points with comparator and currentArchive.

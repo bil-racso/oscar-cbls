@@ -7,7 +7,7 @@ import oscar.util.mo.FeasibleRegion
 import oscar.dfo.mogen.algos.ComparativeAlgorithm
 import oscar.util.mo.LinearList
 import oscar.dfo.mogen.algos.ComparativeAlgorithm
-import oscar.dfo.mogen.algos.ComparativeAlgorithmState
+import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
 import oscar.util.mo.RandomGenerator
 import scala.reflect.ClassTag
 import oscar.util.mo.ArchiveElement
