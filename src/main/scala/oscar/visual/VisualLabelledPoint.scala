@@ -60,12 +60,12 @@ object VisualLabelledPoint {
   	
   def main(args : Array[String]) {
 	val f = new VisualFrame("toto");
-	val d = new VisualDrawing(false);
+	val d = new VisualDrawing(true);
 	val inf = f.createFrame("Drawing");
 	inf.add(d);
 	f.pack();
 	
-	val point = new VisualLabelledPoint(d, 200, 200, 1, "Yolo", 180);
+	val point = new VisualLabelledPoint(d, 200, 0, 1, "Yolo", 180);
 	point.toolTip_$eq("Yolo");
 			
 	Thread.sleep(1000);
