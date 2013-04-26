@@ -1,7 +1,13 @@
 package oscar.util.tree
 
 class Node[T](val label: T, val sons: List[Node[T]], val edgeLabels: List[T]) {
-
+	
+	override def toString = {
+	  label.toString + (sons match {
+	    case Nil => ""
+	    case e => e.mkString("(",",",")")
+	  })
+	}
 }
 
 object Node {

@@ -159,12 +159,12 @@ class ReversibleSearchNode {
    */
   def afterBranch() = {}
 
-  def branch(left: => Unit)(right: => Unit) = {
+  def branch(left: => Unit, leftLabel:String = "")(right: => Unit, rightLabel:String = "") = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
     nodeMagic += 2
-    tree.addBranch(currParent, idleft, "", "")
-    tree.addBranch(currParent, idright, "", "")
+    tree.addBranch(currParent, idleft, idleft.toString, leftLabel)
+    tree.addBranch(currParent, idright,idright.toString,rightLabel)
 
     shift { k: (Unit => Unit) =>
       if (!isFailed) {

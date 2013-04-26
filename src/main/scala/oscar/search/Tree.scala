@@ -17,6 +17,8 @@
 
 package oscar.search
 
+import oscar.util.tree.Node
+
 /**
  * search tree encoding for visualization
  * @author Pierre Schaus pschaus@gmail.com
@@ -26,7 +28,7 @@ class Tree(var record: Boolean = true) {
   
   var succ: List[Int] = Nil
   
-  def addBranch(parentId: Int, id: Int, name: String, value: String) {
+  def addBranch(parentId: Int, id: Int, name: String="", value: String="") {
 	//<try id="1" parent="0" name="a" size="2" value="1"/>
     if (record) branches = (parentId,id,name,value) :: branches
   }
@@ -38,6 +40,19 @@ class Tree(var record: Boolean = true) {
   def clear() = {
     branches = Nil
     succ = Nil
+  }
+  
+  def children(n: Int) = {
+    branches.filter(b => b._1 == n)
+  }
+  
+  def toNode(n: Int = 0): Node[String] = {
+    val childs = children(n).reverse
+    if (childs.isEmpty) {
+      Node(n.toString)
+    } else {
+      Node(n.toString,childs.map(c => toNode(c._2)),childs.map(_._4))
+    }
   }
   
   
@@ -61,4 +76,15 @@ class Tree(var record: Boolean = true) {
   }
   
   
+}
+
+object Tree {
+  def main(args: Array[String]) {
+	  val t = new Tree(true)
+	  t.addBranch(0, 1)
+	  t.addBranch(0,4)
+	  //println(t.children(0))
+	  //t.toNode(0)
+	  println(t.toNode(0))
+  }
 }
