@@ -108,7 +108,7 @@ object VisualRectangle{
 		f.pack();
 
 		val rect = new VisualRectangle(d, 50, 50, 100, 50);
-		rect.toolTip_$eq("Hello");
+		rect.toolTip = "Hello";
 		
 		
 		Thread.sleep(1000);
