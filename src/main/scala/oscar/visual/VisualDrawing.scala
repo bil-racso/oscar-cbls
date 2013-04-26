@@ -59,8 +59,14 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {
       if (!shapes.filter(_.shape != null).isEmpty) {
-        val maxX = shapes.filter(_.shape != null).map(s => s.shape.getBounds().x).max
-        val maxY = shapes.filter(_.shape != null).map(s => s.shape.getBounds().y).max
+        val maxX = shapes.filter(_.shape != null).map{ s => 
+          val b = s.shape.getBounds() 
+          b.x + b.width
+        }.max
+        val maxY = shapes.filter(_.shape != null).map { s =>
+          val b = s.shape.getBounds()
+          b.y + b.height
+        }.max
         val scx = getWidth() / (maxX.toDouble * 1.3)
         val scy = getHeight() / (maxY.toDouble * 1.5)
 
