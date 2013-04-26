@@ -19,8 +19,9 @@ package oscar.util.mo.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.util.mo.LinearList
 import oscar.util.mo.MOOPoint
+import oscar.util.mo.MaxMOOComparator
+import oscar.util.mo.LinearList
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -59,118 +60,120 @@ class TestLinearList extends FunSuite with ShouldMatchers {
 //|                                        x4=(50,10) *  |
 //|______________________________________________________|
   
-	val x1 = MOOPoint(Array(10,50), Array(10,50))
-	val x2 = MOOPoint(Array(30,40), Array(30,40))
-	val x3 = MOOPoint(Array(40,30), Array(40,30)) 
-	val x4 = MOOPoint(Array(50,10), Array(50,10))
-	val x5 = MOOPoint(Array(45,45), Array(45,45))
-	val x6 = MOOPoint(Array(50,50), Array(50,50))
-	val x7 = MOOPoint(Array(10,30), Array(10,30))
-	val x8 = MOOPoint(Array(20,35), Array(20,35))
+	val x1 = MOOPoint(Array(10.0,50.0), Array(10,50))
+	val x2 = MOOPoint(Array(30.0,40.0), Array(30,40))
+	val x3 = MOOPoint(Array(40.0,30.0), Array(40,30)) 
+	val x4 = MOOPoint(Array(50.0,10.0), Array(50,10))
+	val x5 = MOOPoint(Array(45.0,45.0), Array(45,45))
+	val x6 = MOOPoint(Array(50.0,50.0), Array(50,50))
+	val x7 = MOOPoint(Array(10.0,30.0), Array(10,30))
+	val x8 = MOOPoint(Array(20.0,35.0), Array(20,35))
+	val comparator = MaxMOOComparator[Int]
   
 	test("Test LinearList 1") {
-		val list = new LinearList(x1)
-		list.insert(x2)
-		list.insert(x3)
+		val list = LinearList(x1)
+		list.insert(x2, comparator)
+		list.insert(x3, comparator)
 		list.size should be(3)
+		list.contains(x1) should be(true)
 		list.toSet should be(Set(x1,x2,x3))
 	}
 	
 	test("Test LinearList 2") {
-		val list = new LinearList(x4)
-		list.insert(x2)
-		list.insert(x3)
-		list.insert(x1)
-		list.insert(x3)
-		list.insert(x4)
-		list.insert(x1)
+		val list = LinearList(x4)
+		list.insert(x2, comparator)
+		list.insert(x3, comparator)
+		list.insert(x1, comparator)
+		list.insert(x3, comparator)
+		list.insert(x4, comparator)
+		list.insert(x1, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x1,x2,x3,x4))
 	}
 	
 	test("Test LinearList 3") {
-		val list = new LinearList(x1)
-		list.insert(x5)
-		list.insert(x3)
-		list.insert(x2)
+		val list = LinearList(x1)
+		list.insert(x5, comparator)
+		list.insert(x3, comparator)
+		list.insert(x2, comparator)
 		list.size should be(2)
 		list.toSet should be(Set(x1,x5))
 	}
 	
 	test("Test LinearList 4") {
-		val list = new LinearList(x1)
-		list.insert(x5)
-		list.insert(x3)
-		list.insert(x2)
-		list.insert(x1)
-		list.insert(x5)
-		list.insert(x7)
+		val list = LinearList(x1)
+		list.insert(x5, comparator)
+		list.insert(x3, comparator)
+		list.insert(x2, comparator)
+		list.insert(x1, comparator)
+		list.insert(x5, comparator)
+		list.insert(x7, comparator)
 		list.size should be(2)
 		list.toSet should be(Set(x1,x5))
 	}
 	
 	test("Test LinearList 5") {
-		val list = new LinearList(x1)
-		list.insert(x5)
-		list.insert(x3)
-		list.insert(x2)
-		list.insert(x1)
-		list.insert(x5)
-		list.insert(x7)
-		list.insert(x8)
-		list.insert(x6)
+		val list = LinearList(x1)
+		list.insert(x5, comparator)
+		list.insert(x3, comparator)
+		list.insert(x2, comparator)
+		list.insert(x1, comparator)
+		list.insert(x5, comparator)
+		list.insert(x7, comparator)
+		list.insert(x8, comparator)
+		list.insert(x6, comparator)
 		list.size should be(1)
 		list.toSet should be(Set(x6))
 	}
 	
 	test("Test LinearList 6") {
-		val list = new LinearList(x4)
-		list.insert(x3)
-		list.insert(x8)
-		list.insert(x1)
+		val list = LinearList(x4)
+		list.insert(x3, comparator)
+		list.insert(x8, comparator)
+		list.insert(x1, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x8,x1))
 		
-		list.insert(x7)
+		list.insert(x7, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x8,x1))
 		
-		list.insert(x2)
+		list.insert(x2, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x2,x1))
 		
-		list.insert(x5)
+		list.insert(x5, comparator)
 		list.size should be(3)
 		list.toSet should be(Set(x4,x5,x1))
 	}
 	
     test("Test LinearList 7") {
-		val list = new LinearList(x3)
-		list.insert(x4)
-		list.insert(x7)
-		list.insert(x8)
+		val list = LinearList(x3)
+		list.insert(x4, comparator)
+		list.insert(x7, comparator)
+		list.insert(x8, comparator)
 		list.size should be(3)
 		list.toSet should be(Set(x3,x4,x8))
 	}
     
     test("Test LinearList 8") {
-		val list = new LinearList(x2)
-		list.insert(x4)
-		list.insert(x3)
-		list.insert(x8)
-		list.insert(x1)
+		val list = LinearList(x2)
+		list.insert(x4, comparator)
+		list.insert(x3, comparator)
+		list.insert(x8, comparator)
+		list.insert(x1, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x2,x1))
 		
-		list.insert(x7)
+		list.insert(x7, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x2,x1))
 		
-		list.insert(x2)
+		list.insert(x2, comparator)
 		list.size should be(4)
 		list.toSet should be(Set(x4,x3,x2,x1))
 		
-		list.insert(x5)
+		list.insert(x5, comparator)
 		list.size should be(3)
 		list.toSet should be(Set(x4,x5,x1))		
 	}
