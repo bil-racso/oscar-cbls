@@ -15,7 +15,7 @@ class VisualToolBar(withVisuController: Boolean = false) extends JToolBar {
     addButton("Play", play())
   }
 
-  def addButton(label:String, actionOnClick : => Unit){
+  def addButton(label:String,actionOnClick : => Unit){
     val button = new JButton(label)
     button.addActionListener( new ActionListener() {
 		override def actionPerformed(e:ActionEvent) { actionOnClick }
@@ -23,4 +23,25 @@ class VisualToolBar(withVisuController: Boolean = false) extends JToolBar {
 	add(button)
 	button
   }
+}
+
+object VisualToolBar{
+  	
+  def main(args : Array[String]) {
+		val f = new VisualFrame("toto");
+		val tb = f.createToolBar
+		val d = new VisualDrawing(false);
+		val inf = f.createFrame("Drawing");
+		inf.add(d);
+		f.pack();
+		
+		tb.addButton("rectangle",{
+		  val rect = new VisualRectangle(d, 50, 50, 100, 50);
+		  rect.toolTip_$eq("Hello");
+		  
+		  tb.addButton("make it move",{
+			  rect.move(100, 20);
+		  })
+		})		
+	}
 }
