@@ -64,12 +64,6 @@ object ParcelShipment {
     val totDist = CPVarInt(cp, 0 to distance.flatten.sum)
     val predStart = CPVarInt(cp, 0 until n)
 
-    val f = new VisualFrame("ParcelShipment", 1, 1)
-    val w = f.createFrame("Tree")
-    val vt = new VisualSearchTree(cp)
-    w.add(vt)
-    w.pack()
-
     cp.minimize(totDist) subjectTo {
 
       cp.add(load(start) == 0) // start initially empty
@@ -80,18 +74,14 @@ object ParcelShipment {
       cp.add(circuit(succ), Strong)
 
     } exploration {
-      //cp.binaryFirstFail(succ)
-      while (!allBounds(succ)) {
-        val x = succ.filter(!_.isBound).head
-        val v = x.min
-        cp.branch(cp.post(x == v), "=" + v)(cp.post(x != v), "!=" + v)
-        vt.update()
-      w.pack()
-      Thread.sleep(1000)
-
-      }
-      
+      cp.binaryFirstFail(succ)
     } run ()
+
+    val f = new VisualFrame("ParcelShipment", 1, 1)
+    val w = f.createFrame("Tree")
+    val vt = new VisualSearchTree(cp)
+    w.add(vt)
+    w.pack()
 
     cp.printStats()
 

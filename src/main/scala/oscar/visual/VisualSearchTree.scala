@@ -38,10 +38,11 @@ class VisualSearchTree(node: ReversibleSearchNode) extends JPanel (new BorderLay
 
 	
 	def update() {
-	  remove(visualTree)
+	  //remove(visualTree)
 	  root = Node.design( node.tree.toNode(0), 42)
-	  visualTree = new VisualLabelledTree(root)
-	  add(visualTree)
+	  visualTree.update(root)
+	  //visualTree = new VisualLabelledTree(root)
+	  //add(visualTree)
 	  
 	}
 	

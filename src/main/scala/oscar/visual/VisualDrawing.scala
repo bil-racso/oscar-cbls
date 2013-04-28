@@ -59,11 +59,12 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {
       if (!shapes.filter(_.shape != null).isEmpty) {
-        val maxX = shapes.filter(_.shape != null).map{ s => 
+        val s = shapes.filter(_.shape != null)
+        val maxX = s.map{ s => 
           val b = s.shape.getBounds() 
           b.x + b.width
         }.max
-        val maxY = shapes.filter(_.shape != null).map { s =>
+        val maxY = s.map { s =>
           val b = s.shape.getBounds()
           b.y + b.height
         }.max
@@ -117,7 +118,13 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
 	def addShape(s:ColoredShape[Shape]) {
 		shapes :+= s
-		repaint();
+		repaint()
+	}
+	
+	def clear() {
+	  shapes = Array()
+	  revalidate()
+	  repaint()
 	}
 
 }

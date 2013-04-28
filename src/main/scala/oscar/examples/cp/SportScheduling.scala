@@ -37,7 +37,7 @@ object SportScheduling {
 
   def main(args: Array[String]) {
 
-    val n = 12
+    val n = 10
     val nbPeriods = n / 2
     val Periods = 0 until nbPeriods
     val nbTeams = n

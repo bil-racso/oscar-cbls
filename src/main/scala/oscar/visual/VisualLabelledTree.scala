@@ -16,6 +16,15 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
     this(Node.design(tree))
   }
   
+  def update(t: PositionedNode[T]) {
+    tree = t
+    clear()
+    rectSet = Set()
+    branchSet = Set()
+    getRectangles
+    repaint()
+  }
+  
   def getRectangles = {
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
       val newNode = new VisualLabelledRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)

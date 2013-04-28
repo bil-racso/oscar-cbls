@@ -88,8 +88,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		frame
 	}	
 
-	def  createToolBar():VisualToolBar = {
-		val toolbar = new VisualToolBar()
+	def  createToolBar(withVisuController: Boolean = false):VisualToolBar = {
+		val toolbar = new VisualToolBar(withVisuController)
 		content.add(toolbar,BorderLayout.NORTH)
 		toolbar
 	}
@@ -102,6 +102,8 @@ object VisualFrame{
   	def main(args : Array[String]) {
 		val frame = new VisualFrame("My Frame",3,2)
 		for (i <- 0 until 6) frame.createFrame("My Sub-frame "+i)
+		val tools = frame.createToolBar()
+		tools.addButton("toto",println("hello"))
 		//val subframe = frame.createFrame("My Sub-frame")
 	}
 }
