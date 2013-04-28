@@ -31,6 +31,8 @@ import oscar.dfo.mogen.algos.NelderMead
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  */
 class TestMOGEN extends FunSuite with ShouldMatchers {
+  
+  /*
   test("Test MOGEN dummy 2D") {
     val nbCoords = 2
     val nbEvals = 2
@@ -61,6 +63,7 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     }
     paretoEstimation.size should be(1)
   }
+  */
 
   def zdt1(coordinates: Array[Double]): Array[Double] = {
     def g = 1 + (9 / (coordinates.length - 1)) * (coordinates.drop(1).sum)
