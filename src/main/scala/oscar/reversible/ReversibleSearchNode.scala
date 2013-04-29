@@ -157,8 +157,13 @@ class ReversibleSearchNode {
    * executed just after the actual branch action
    */
   def afterBranch() = {}
-
-  def branch(left: => Unit, leftLabel: String = "")(right: => Unit, rightLabel: String = "") = {
+  
+  
+  def branch(left: => Unit)(right: => Unit):  Unit@suspendable =  {
+    branchLabel("")(left)("")(right)
+  }
+  
+  def branchLabel(leftLabel: String)(left: => Unit)( rightLabel: String)(right: => Unit) = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
     nodeMagic += 2
@@ -222,13 +227,6 @@ class ReversibleSearchNode {
         }))
 
       }
-      /*
-      beforeBranch()
-      f(first)
-      afterBranch()
-      if (!isFailed()) k()
-      
-      */
     }
   }
 

@@ -5,7 +5,7 @@ import scala.collection.SeqLike
 
 object VisualController {
   
-  var inPause = true
+  var inPause = false
   var cont: (Unit => Unit) = null
 
   def withController(block: => Unit @suspendable) = {
@@ -26,7 +26,7 @@ object VisualController {
   }
   
   def next() {
-    println("next:"+cont)
+    //println("next:"+cont)
     val c = cont
     //cont = null
     if (c != null) c()

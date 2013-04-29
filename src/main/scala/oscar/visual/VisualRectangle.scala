@@ -121,9 +121,7 @@ object VisualRectangle {
         pause()
         Thread.sleep(200)
         rect.move(rect.x + 5, rect.y);
-
       }
-
     }
     
 

@@ -3,6 +3,7 @@ package oscar.visual
 import oscar.util.tree.Node
 import oscar.util.tree.PositionedNode
 import oscar.util.tree.Extent
+import javax.swing.SwingUtilities
 
 class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false) {
   
@@ -15,19 +16,28 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   def this(tree: Node[T]) = {
     this(Node.design(tree))
   }
-  
+
   def update(t: PositionedNode[T]) {
-    tree = t
-    clear()
-    rectSet = Set()
-    branchSet = Set()
-    getRectangles
-    repaint()
+    SwingUtilities.invokeLater(new Runnable() {
+      def run() {
+        tree = t
+        clear()
+        rectSet = Set()
+        branchSet = Set()
+        getRectangles
+        revalidate()
+        repaint()
+        repaint(0, 0, 2000, 2000)
+
+      }
+    })
+
   }
   
   def getRectangles = {
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
       val newNode = new VisualLabelledRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
+      newNode.innerCol = node.col
       rectSet += newNode
       for (i <- 0 until node.sons.length) {
         branchSet += new VisualLabelledBranch(this,

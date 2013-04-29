@@ -18,6 +18,7 @@
 package oscar.search
 
 import oscar.util.tree.Node
+import java.awt.Color
 
 /**
  * search tree encoding for visualization
@@ -47,11 +48,12 @@ class Tree(var record: Boolean = true) {
   }
   
   def toNode(n: Int = 0): Node[String] = {
+    //println("succ:"+succ)
     val childs = children(n).reverse
     if (childs.isEmpty) {
-      Node(n.toString)
+      Node(n.toString,if(succ.contains(n)) Color.green else Color.white)
     } else {
-      Node(n.toString,childs.map(c => toNode(c._2)),childs.map(_._4))
+      Node(n.toString,childs.map(c => toNode(c._2)),childs.map(_._4),if(succ.contains(n)) Color.green else Color.white)
     }
   }
   

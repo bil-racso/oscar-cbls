@@ -56,10 +56,12 @@ import javax.swing.event.ChangeEvent
 
 class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
+  setBackground(Color.white)
+  
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {
-      if (!shapes.filter(_.shape != null).isEmpty) {
-        val s = shapes.filter(_.shape != null)
+      val s = shapes.filter(_.shape != null)
+      if (!s.isEmpty) {
         val maxX = s.map{ s => 
           val b = s.shape.getBounds() 
           b.x + b.width

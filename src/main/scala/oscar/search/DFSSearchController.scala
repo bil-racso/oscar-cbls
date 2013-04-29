@@ -44,9 +44,10 @@ class DFSSearchController(node: ReversibleSearchNode) extends SearchController(n
     stack.clear()
   }
 
-  //@tailrec
+
   def explore(): Unit = {
-    if (pausable) {
+
+    if (pausable && VisualController.inPause) {
       if (!stack.isEmpty && !limitReached && !exit) {
         stack.pop.call()
         VisualController.cont = Unit => { explore() }
