@@ -70,8 +70,8 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
           val b = s.shape.getBounds()
           b.y + b.height
         }.max
-        val scx = getWidth() / (maxX.toDouble * 1.3)
-        val scy = getHeight() / (maxY.toDouble * 1.5)
+        val scx = getWidth() / (maxX.toDouble * 1.1)
+        val scy = getHeight() / (maxY.toDouble * 1.1)
 
         if (flipped) {
           g.translate(0, getHeight());

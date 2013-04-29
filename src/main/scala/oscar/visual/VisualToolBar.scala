@@ -13,6 +13,7 @@ class VisualToolBar(withVisuController: Boolean = false) extends JToolBar {
     addButton("Pause", inPause = true)
     addButton("Next", next())
     addButton("Play", play())
+    inPause = true
   }
 
   def addButton(label:String,actionOnClick : => Unit){
