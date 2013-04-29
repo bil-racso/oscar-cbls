@@ -148,7 +148,6 @@ class ReversibleSearchNode {
     "ReversibleSearchNode: nbPushed" + pointerStack.size() + " currentTrailSize:" + trail.getSize();
   }
 
-
   /**
    * executed just before the actual branch action
    */
@@ -158,53 +157,76 @@ class ReversibleSearchNode {
    * executed just after the actual branch action
    */
   def afterBranch() = {}
-
-  def branch(left: => Unit, leftLabel:String = "")(right: => Unit, rightLabel:String = "") = {
+  
+  
+  def branch(left: => Unit)(right: => Unit):  Unit@suspendable =  {
+    branchLabel("")(left)("")(right)
+  }
+  
+  def branchLabel(leftLabel: String)(left: => Unit)( rightLabel: String)(right: => Unit) = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
     nodeMagic += 2
-    tree.addBranch(currParent, idleft, idleft.toString, leftLabel)
-    tree.addBranch(currParent, idright,idright.toString,rightLabel)
+    val parent = currParent
 
     shift { k: (Unit => Unit) =>
       if (!isFailed) {
+        pushState()
         sc.addChoice(new MyContinuation("right", {
+          tree.addBranch(parent, idright, idright.toString, rightLabel)
+          pop()
+          sc.fail()
           if (!isFailed) {
             beforeBranch()
             currParent = idright
             right
             afterBranch()
           }
-          if (!isFailed()) k()
+          if (!isFailed()) {
+            k()
+          }
+        }))
+        sc.addChoice(new MyContinuation("left", {
+          tree.addBranch(parent, idleft, idleft.toString, leftLabel)
+          if (!isFailed()) {
+            beforeBranch()
+            currParent = idleft
+            left
+            afterBranch()
+          }
+          if (!isFailed()) {
+            k()
+          }
         }))
       }
-      if (!isFailed()) {
-        beforeBranch()
-        currParent = idleft
-        left
-        afterBranch()
-      }
-      if (!isFailed()) k()
     }
   }
 
   def branchAll[A](indexes: Seq[A])(f: A => Unit) = {
+    val idleft = nodeMagic + 1
+    val idright = nodeMagic + 2
+    val idchildren = Array.tabulate(indexes.length)(nodeMagic+_+1)
+    val parent = currParent    
+    nodeMagic += indexes.length
 
     shift { k: (Unit => Unit) =>
       val first = indexes.head
-      for (i <- indexes.reverse; if (i != first)) {
+      for ((i,j) <- indexes.reverse.zipWithIndex) {
+        if (i != first) pushState()
         sc.addChoice(new MyContinuation("i", {
+          tree.addBranch(parent, idchildren(j), idchildren(j).toString, "")
+          if (i != first) {
+            pop()
+            sc.fail()
+          }
           beforeBranch()
+          currParent = idchildren(j)
           f(i)
           afterBranch()
           if (!isFailed()) k()
         }))
 
       }
-      beforeBranch()
-      f(first)
-      afterBranch()
-      if (!isFailed()) k()
     }
   }
 
@@ -233,7 +255,7 @@ class ReversibleSearchNode {
   def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit)()
 
   protected def update() = {}
-  
+
   /**
    * Start the exploration block
    * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
@@ -272,8 +294,12 @@ class ReversibleSearchNode {
         sc.reset()
         if (!isFailed()) {
           sc.reset()
+          var exploreStarted = false
           reset {
             b()
+            if (exploreStarted) {
+              exploreStarted = true
+            }
           }
           if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
         }
