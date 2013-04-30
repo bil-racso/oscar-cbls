@@ -218,7 +218,7 @@ class GurobiLP extends AbstractLP {
     model.write(fileName)
   }
 
-  def addAllConstraints(cons: Map[Int, LPConstraint])={
+  override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint])={
 
     val vars = model.getVars
     val allCons = cons.values.toArray

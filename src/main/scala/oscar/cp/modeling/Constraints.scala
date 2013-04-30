@@ -666,12 +666,28 @@ trait Constraints {
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i)) <= elementVar(x, p(i + 1)))
+      cons.add(elementVar(x, p(i),Strong) <= elementVar(x, p(i + 1),Strong))
       cons.add(s(i) <= s(i + 1))
+    }
+    val minx = x.map(_.min).min
+    val maxx = x.map(_.max).max
+    val mins = s.map(_.min).min
+    val maxs = s.map(_.max).max
+    
+    for( i <- 0 until x.size) {
+      cons.add(p(i) >= 0)
+      cons.add(p(i) <= n)
+      
+      cons.add(s(i) <= maxx)
+      cons.add(s(i) >= minx)
+      
+      cons.add(x(i) <= maxs)
+      cons.add(x(i) >= mins)
     }
     for (i <- 0 until n) {
       cons.add(elementVar(x, p(i), s(i)))
     }
+    cons.add(allDifferent(p))
 
     val minVal: Int = x.map(_.min).min
     val maxVal: Int = x.map(_.max).max
@@ -686,7 +702,7 @@ trait Constraints {
       else sum(minVal to i - 1)(j => occ(j))
     }
 
-    for (i <- 1 until n) {
+    for (i <- 0 until n) {
       // there are less than i values smaller than s(i) 
       cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
     }

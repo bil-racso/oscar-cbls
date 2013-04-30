@@ -57,5 +57,7 @@ object PlotLine extends App {
 		for (i <- 0 until 10) {
 			myplot.addPoint(i, Math.random(),1);
 			Thread.sleep(500);
-		} 
+		}
+		
+		
 }

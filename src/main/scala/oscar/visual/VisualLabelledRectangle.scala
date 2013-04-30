@@ -31,7 +31,7 @@ import java.awt.Graphics2D
 class VisualLabelledRectangle(d: VisualDrawing, shape: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends ColoredShape[RoundRectangle2D.Double](d, shape){
   
   def rect: RoundRectangle2D.Double = shape
-  def textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
+  val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
   var marginWidth = _marginWidth
   
   def this(d: VisualDrawing, x: Double, y: Double, label: String, arcw: Double = 7, arch: Double = 7, marginWidth: Double = 5) = {
@@ -77,7 +77,7 @@ class VisualLabelledRectangle(d: VisualDrawing, shape: RoundRectangle2D.Double, 
   def move(x: Double, y: Double) {
     rect.setRoundRect(x, y, width, height, arcWidth, arcHeight)
     textDraw.move(xText, yText)
-	drawing.repaint()
+	//drawing.repaint()
   }
   
   def getWidth(newLabel: String) = {
@@ -134,14 +134,14 @@ object VisualLabelledRectangle {
 	val d = new VisualDrawing(false);
 	val inf = f.createFrame("Drawing");
 	
-	val rect = new VisualLabelledRectangle(d, 50, 50, "Yolo", 10);
-	rect.toolTip_$eq("Hello");
+	val rect = new VisualLabelledRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", 10);
+	rect.toolTip = ("Hello");
 	
 	inf.add(d);
 	f.pack();
 			
 	Thread.sleep(1000);
-	rect.innerCol_$eq(Color.red);
+	rect.innerCol = (Color.red);
 	Thread.sleep(1000);
 	rect.move(100, 20);
 	for (i <- 0 until 20) {

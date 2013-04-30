@@ -17,42 +17,11 @@
 package oscar.visual;
 
 
-import java.awt.Color
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.FlowLayout
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Image
-import java.awt.Toolkit
-import java.awt.datatransfer.Clipboard
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionListener
-import java.awt.geom.Line2D
-import java.awt.geom.Rectangle2D
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.LinkedList
-import javax.swing.ImageIcon
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JInternalFrame
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTable
-import javax.swing.TransferHandler
-import javax.swing.event.CellEditorListener
-import javax.swing.table.AbstractTableModel
-import javax.swing.table.DefaultTableCellRenderer
-import javax.swing.table.TableCellRenderer
 import java.awt.Shape
 import oscar.reversible.ReversibleSearchNode
-import ie.ucc.cccc.viz.Viz
-import org.apache.batik.swing.JSVGCanvas
-import org.apache.batik.swing.JSVGScrollPane
+import oscar.util.tree.Node
+import javax.swing.JPanel
+import java.awt.BorderLayout
 
 
 /**
@@ -62,18 +31,17 @@ import org.apache.batik.swing.JSVGScrollPane
 
 
 class VisualSearchTree(node: ReversibleSearchNode) extends JPanel (new BorderLayout()) {
-	node.tree.save("tree.xml")
-	Viz.runViz("configuration.xml", "tree.xml", "res.viz")
-    val c = new JSVGCanvas()
-	//c.setEnableImageZoomInteractor(true)
-	//c.setEnablePanInteractor(true)
-	c.setEnableZoomInteractor(true)
-	//c.setEnableRotateInteractor(true)
-	//c.resetRenderingTransform()
-	c.setURI(new File("tree.svg").toURL().toString)
-	val pane = new JSVGScrollPane(c)
-	pane.setScrollbarsAlwaysVisible(true)
-	add(c)
+	
+	var root = Node.design( node.tree.toNode(0), 42)
+	var visualTree = new VisualLabelledTree(root)
+	add(visualTree)
+
+	
+	def update() {
+	  root = Node.design( node.tree.toNode(0), 42)
+	  visualTree.update(root)	  
+	}
+	
 }
 
 object VisualSearchTree{

@@ -49,6 +49,8 @@ abstract class SearchController(val node: ReversibleSearchNode) {
   var limitActivated = false
   var t0 = System.currentTimeMillis()
   
+  var pausable = false
+  
   /**
    * set the failure limit for this controller
    */
@@ -94,6 +96,7 @@ abstract class SearchController(val node: ReversibleSearchNode) {
     nbFail = 0
     t0 = System.currentTimeMillis()
   }
+
   
   
   def explore()

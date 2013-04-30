@@ -8,9 +8,9 @@ trait Simplex[E] {
 
   val simplex: Array[MOOPoint[E]]
   
-  val simplexSize = simplex.length
+  def simplexSize = simplex.length
   
-  var bestPoint = simplex(0)
+  var bestPoint: MOOPoint[E]
 
   def getBestPoint = bestPoint
   

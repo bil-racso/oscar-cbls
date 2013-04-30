@@ -21,6 +21,7 @@ package oscar.search
 import oscar.reversible._
 import scala.collection.mutable.Stack
 import scala.util.continuations._
+import oscar.util.VisualController
 
 
 

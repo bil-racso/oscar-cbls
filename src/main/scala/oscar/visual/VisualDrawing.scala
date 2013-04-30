@@ -56,13 +56,22 @@ import javax.swing.event.ChangeEvent
 
 class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
+  setBackground(Color.white)
+  
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {
-      if (!shapes.filter(_.shape != null).isEmpty) {
-        val maxX = shapes.filter(_.shape != null).map(s => s.shape.getBounds().x).max
-        val maxY = shapes.filter(_.shape != null).map(s => s.shape.getBounds().y).max
-        val scx = getWidth() / (maxX.toDouble * 1.3)
-        val scy = getHeight() / (maxY.toDouble * 1.5)
+      val s = shapes.filter(_.shape != null)
+      if (!s.isEmpty) {
+        val maxX = s.map{ s => 
+          val b = s.shape.getBounds() 
+          b.x + b.width
+        }.max
+        val maxY = s.map { s =>
+          val b = s.shape.getBounds()
+          b.y + b.height
+        }.max
+        val scx = getWidth() / (maxX.toDouble * 1.1)
+        val scy = getHeight() / (maxY.toDouble * 1.1)
 
         if (flipped) {
           g.translate(0, getHeight());
@@ -111,7 +120,13 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
 	def addShape(s:ColoredShape[Shape]) {
 		shapes :+= s
-		repaint();
+		repaint()
+	}
+	
+	def clear() {
+	  shapes = Array()
+	  revalidate()
+	  repaint()
 	}
 
 }

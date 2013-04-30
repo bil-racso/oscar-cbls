@@ -3,8 +3,9 @@ package oscar.visual
 import oscar.util.tree.Node
 import oscar.util.tree.PositionedNode
 import oscar.util.tree.Extent
+import javax.swing.SwingUtilities
 
-class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(true) {
+class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false) {
   
   private def levelHeight = 4 * this.getFontMetrics(this.getFont()).getHeight()
   private def baseOffset = this.getFontMetrics(this.getFont()).stringWidth(tree.label.toString) + tree.minOffset
@@ -15,10 +16,28 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(t
   def this(tree: Node[T]) = {
     this(Node.design(tree))
   }
+
+  def update(t: PositionedNode[T]) {
+    SwingUtilities.invokeLater(new Runnable() {
+      def run() {
+        tree = t
+        clear()
+        rectSet = Set()
+        branchSet = Set()
+        getRectangles
+        revalidate()
+        repaint()
+        repaint(0, 0, 2000, 2000)
+
+      }
+    })
+
+  }
   
   def getRectangles = {
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
       val newNode = new VisualLabelledRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
+      newNode.innerCol = node.col
       rectSet += newNode
       for (i <- 0 until node.sons.length) {
         branchSet += new VisualLabelledBranch(this,
@@ -63,6 +82,7 @@ object VisualLabelledTree{
 	val F = Node("F")
 	val G = Node("G", List(H, I, J), List("Son 1", "Son 2", "Son 3"))
 	val A = Node("A", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
+	println(A)
 	val positionedA = Node.design(A, 42)
 	
 	val visualTree = new VisualLabelledTree(positionedA);

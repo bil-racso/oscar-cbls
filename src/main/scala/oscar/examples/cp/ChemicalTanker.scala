@@ -1,6 +1,6 @@
 package oscar.examples.cp
 
-/*import oscar.cp.modeling._
+import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import oscar.reversible._
@@ -162,9 +162,6 @@ object ChemicalTanker extends App {
     val rnd = new scala.util.Random(0)		
     // ask to have a 100 LNS restarts every 50 backtracks
     
-	
-
-    
     var nbSol = 0
     
     val slack =  Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
@@ -175,8 +172,7 @@ object ChemicalTanker extends App {
     cp.maximize(freeSpace /*nbFreeTanks*/) subjectTo {
       // make the link between cargo and load vars with binPacking constraint
       cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
-      //cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
-      cp.add(new BinPackingFlowExtended(cargo, tanks.map(_.capa), load, card))
+      cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
       for (i <- 1 until cargos.size) {
         cp.add(new ChemicalConstraint(cargos(i),tanks,cargo)) // dominance rules
@@ -185,11 +181,6 @@ object ChemicalTanker extends App {
       for (t <- tanks; t2 <- t.neighbours; if (t2>t.id)) {
 	      cp.add(table(cargo(t.id-1),cargo(t2-1),compatibles))
       }
-      /*
-      val sol = Array(3,0,0,17,7,10,1,18,15,14,1,5,9,1,4,9,0,10,2,4,7,13,13,0,15,11,12,6,18,8,0,16,16,0)
-      for (t <- 0 until cargo.size) {
-        cp.add(cargo(t) == sol(t))
-      }*/
       
     } exploration {
       while(!allBounds(cargo)) {
@@ -225,4 +216,4 @@ object ChemicalTanker extends App {
     
     
   
-}*/
+}

@@ -56,7 +56,7 @@ public class VisualArrow extends VisualLine{
         tx.setToIdentity();
         double angle = Math.atan2(line().y2-line().y1, line().x2-line().x1);
         tx.translate(line().x2, line().y2);
-        tx.rotate((angle-Math.PI/2d));  
+        tx.rotate((angle-Math.PI/2d));
         g2d.fill(tx.createTransformedShape(arrowHead));
     }
     
