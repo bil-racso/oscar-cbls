@@ -96,6 +96,7 @@ abstract class SearchController(val node: ReversibleSearchNode) {
     nbFail = 0
     t0 = System.currentTimeMillis()
   }
+
   
   
   def explore()

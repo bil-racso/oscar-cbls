@@ -57,6 +57,7 @@ class DFSSearchController(node: ReversibleSearchNode) extends SearchController(n
         stack.pop.call()
       }
     }
+    
   }
 
 }
