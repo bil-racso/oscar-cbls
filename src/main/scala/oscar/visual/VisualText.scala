@@ -34,13 +34,11 @@ import java.awt.image.BufferedImage
  * @author Pierre Schaus, pschaus@gmail.com
  */
 class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, private var t: String, var centered: Boolean, shape: Rectangle2D.Double) extends ColoredShape[Rectangle2D](d, shape) {
-
   def this(d: VisualDrawing, x: Int, y: Int, t: String, centered: Boolean = false) {
     this(d, x,y,t,centered,new Rectangle2D.Double(x, y, 1, 1))
   }
   
-  val f = new Font("Arial", Font.PLAIN, 16)
-  val fm = createFontMetrics(f)
+  val fm = d.getFontMetrics(d.getFont())
   shape.setRect(x,y, fm.stringWidth(text),fm.getHeight())
   
   
@@ -64,9 +62,6 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
   }
 
   override def draw(g: Graphics2D) {
-	g.setFont(f)
-    g.setColor(outerCol);
-
     if (centered)
       drawCenteredString(text, x, y, g);
     else
@@ -80,21 +75,11 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
     val w = fm.stringWidth(text);
     g.drawString(text, x - (w / 2), y);
   }
-  
-
-  
-  def createFontMetrics(f: Font) = {
-   val bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB_PRE);
-   val g = bi.getGraphics();
-   val fom = g.getFontMetrics(f);
-   g.dispose();
-   fom;   
-  }
  
 }
 
 object VisualText extends App {
-
+/*
     val  f = new VisualFrame("toto");
     val d = new VisualDrawing(false);
     val inf = f.createFrame("Drawing");
@@ -108,5 +93,5 @@ object VisualText extends App {
 
     arrow.dest = ((100.0, 100.0));
     text.move(100, 100);
-
+*/
 }
