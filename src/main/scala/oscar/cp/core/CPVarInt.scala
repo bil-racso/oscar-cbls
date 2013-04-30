@@ -530,11 +530,11 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
     /**
      * x!=y
      */
-    def !=(y: CPVarInt) = new oscar.cp.constraints.Diff(this,y)
+    def !=(y: CPVarInt) = new oscar.cp.constraints.DiffVar(this,y)
     /**
      * x!=y
      */
-    def !=(y: Int) = new oscar.cp.constraints.Diff(this,y)
+    def !=(y: Int) = new oscar.cp.constraints.DiffVal(this,y)
     /**
      * x==y
      */

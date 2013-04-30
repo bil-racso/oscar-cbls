@@ -404,7 +404,6 @@ class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "") ext
 			if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
 			    var i = dom.getMin()
 			    while (i <= dom.getMax()) {
-				
 					if (i!= value && dom.hasValue(i)) {
 						if (onDomainL1.hasValue()) {
 							s.notifRemoveL1(onDomainL1.getValue(),this,i);

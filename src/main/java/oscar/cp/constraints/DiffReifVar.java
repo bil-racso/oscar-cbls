@@ -73,7 +73,7 @@ public class DiffReifVar extends Constraint {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				// x != y
-				if (s.post(new Diff(x,y)) == CPOutcome.Failure) {
+				if (s.post(new DiffVar(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			} else {

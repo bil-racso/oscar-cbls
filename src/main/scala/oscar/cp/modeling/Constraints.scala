@@ -661,13 +661,18 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt],strictly: Boolean = false): LinkedList[Constraint] = {
     val cp = x(0).store
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n - 1) {
       cons.add(elementVar(x, p(i),Strong) <= elementVar(x, p(i + 1),Strong))
-      cons.add(s(i) <= s(i + 1))
+      if (strictly) {
+        cons.add(s(i) < s(i + 1))
+      } else {
+        cons.add(s(i) <= s(i + 1))
+      }
+      
     }
     val minx = x.map(_.min).min
     val maxx = x.map(_.max).max

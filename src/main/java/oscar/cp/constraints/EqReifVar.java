@@ -80,7 +80,7 @@ public class EqReifVar extends Constraint {
 				}
 			} else {
 				//x != y
-				if (s.post(new Diff(x,y))  == CPOutcome.Failure) {
+				if (s.post(new DiffVar(x,y))  == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}

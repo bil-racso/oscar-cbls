@@ -149,11 +149,11 @@ package object modeling extends Constraints {
     /**
      * x!=y
      */
-    def !=(y: CPVarInt) = new Diff(x, y)
+    def !=(y: CPVarInt) = new DiffVar(x, y)
     /**
      * x!=y
      */
-    def !=(y: Int) = new Diff(x, y)
+    def !=(y: Int) = new DiffVal(x, y)
     /**
      * x==y
      */

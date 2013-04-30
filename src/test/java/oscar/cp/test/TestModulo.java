@@ -69,7 +69,7 @@ public class TestModulo extends TestCase {
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
     	assertTrue(y.getSize() == 2);
-    	cp.post(new Diff(x, 1));
+    	cp.post(new DiffVal(x, 1));
     	assertTrue(y.isBound());
     	assertTrue(y.getValue() == 0);
     }
@@ -79,7 +79,7 @@ public class TestModulo extends TestCase {
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,6,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
-    	cp.post(new Diff(y, 0));
+    	cp.post(new DiffVal(y, 0));
     	assertTrue(x.isBound());
     	assertTrue(x.getValue() == 1);
     }
@@ -89,8 +89,8 @@ public class TestModulo extends TestCase {
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,6,2,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
-    	cp.post(new Diff(y, 0));
-    	cp.post(new Diff(y, 2));
+    	cp.post(new DiffVal(y, 0));
+    	cp.post(new DiffVal(y, 2));
     	assertTrue(x.isBound());
     	assertTrue(x.getValue() == 1);
     	assertTrue(y.getValue() == 1);
@@ -101,8 +101,8 @@ public class TestModulo extends TestCase {
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,-1,-6,-2,-9,-12});
     	CPVarInt y = CPVarInt.apply(cp, -5,5);
     	cp.post(new Modulo(x, 3, y));
-    	cp.post(new Diff(y, 0));
-    	cp.post(new Diff(y, -2));
+    	cp.post(new DiffVal(y, 0));
+    	cp.post(new DiffVal(y, -2));
     	assertTrue(x.isBound());
     	assertTrue(x.getValue() == -1);
     	assertTrue(y.getValue() == -1);

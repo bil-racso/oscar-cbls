@@ -24,7 +24,6 @@ import java.util.Arrays;
 import oscar.cp.constraints.AllDifferent;
 import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.constraints.Deviation;
-import oscar.cp.constraints.Diff;
 import oscar.cp.constraints.GCC;
 import oscar.cp.constraints.MulVar;
 import oscar.cp.constraints.Sequence;

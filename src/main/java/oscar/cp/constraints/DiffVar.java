@@ -25,68 +25,7 @@ import oscar.cp.core.Constraint;
  * Difference Constraint x != y
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class Diff extends Constraint {
-
-	Constraint diffImpl;
-
-    /**
-     * Ask that x and y takes different values (x != y)
-     * @param x
-     * @param y
-     * @see AllDifferent
-     */
-	public Diff(CPVarInt x, int y) {
-		super(x.s(),"Diff");
-		diffImpl = new DiffVal(x,y);
-	}
-
-    /**
-     * Ask that x and y takes different values (x != y)
-     * @param x
-     * @param y
-     * @see AllDifferent
-     */
-	public Diff(CPVarInt x, CPVarInt y) {
-		super(x.s());
-		diffImpl = new DiffVar(x,y);
-	}
-	
- 
-	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(diffImpl) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Success;
-	}
-
-}
-
-
-class DiffVal extends Constraint {
-
-	CPVarInt x;
-	int y;
-	
-	public DiffVal(CPVarInt x, int y) {
-		super(x.s(),"DiffVal");
-		this.x = x;
-		this.y = y;
-	}
-		
-	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if (x.removeValue(y) ==  CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Success;
-	}
-	
-	
-
-}
-
-class DiffVar extends Constraint {
+public class DiffVar extends Constraint {
 
 	CPVarInt x, y;
 	
