@@ -8,6 +8,7 @@ import oscar.util.mo.FeasibleRegion
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit
+  var bestPoint = simplex(0)
 
   var deltaR = 1
   var deltaE = 2

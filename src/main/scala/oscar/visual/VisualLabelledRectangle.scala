@@ -134,7 +134,7 @@ object VisualLabelledRectangle {
 	val d = new VisualDrawing(false);
 	val inf = f.createFrame("Drawing");
 	
-	val rect = new VisualLabelledRectangle(d, 50, 50, "Yolo", 10);
+	val rect = new VisualLabelledRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", 10);
 	rect.toolTip = ("Hello");
 	
 	inf.add(d);
