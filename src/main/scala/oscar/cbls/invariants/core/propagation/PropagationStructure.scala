@@ -103,9 +103,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
    * this happens when dependencies are modified with transient cycles
    * @return the summed number of stalls for all the SCC
    */
-  def getStalls = StrognlyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
+  def getStalls = StronglyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
-  private var StrognlyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
+  private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**To call when one has defined all the propagation elements on which propagation will ever be triggered.
    * It must be called before any propagation is triggered,
@@ -142,14 +142,14 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
     //tri topologique sur les composantes fortement connexes
     acyclic = true;
-    StrognlyConnexComponentsList = List.empty;
+    StronglyConnexComponentsList = List.empty;
     val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {
         acyclic = false;
         val c = new StronglyConnectedComponent(a, this, GetNextID())
-        StrognlyConnexComponentsList = c :: StrognlyConnexComponentsList
+        StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
     })
@@ -193,7 +193,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     for (e <- getPropagationElements) {
       e.rescheduleIfNeeded
     }
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
     }
     //propagate() we do not propagate anymore here since the first query might require a partial propagation only
@@ -336,7 +336,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
         }
     }
 
-    for (scc <- StrognlyConnexComponentsList) {
+    for (scc <- StronglyConnexComponentsList) {
       Track(scc.UniqueID) = Track(scc.Elements.head.UniqueID)
     }
     Track
@@ -449,7 +449,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
         ToReturn += "   " + nodeName(e) + e.getDotNode + "\n"
     }
 
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       ToReturn += "   subgraph " + "cluster_"+nodeName(scc) + "{" + "\n"
       for (f <- scc.Elements) {
         ToReturn += "      " + nodeName(f) + f.getDotNode + "\n"
