@@ -119,7 +119,7 @@ object VisualRectangle {
 
       for (i <- (0 until 20).suspendable) {
         pause()
-        Thread.sleep(200)
+        //Thread.sleep(200)
         rect.move(rect.x + 5, rect.y);
       }
     }

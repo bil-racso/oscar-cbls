@@ -28,14 +28,14 @@ object VisualController {
   def next() {
     //println("next:"+cont)
     val c = cont
-    //cont = null
+    cont = null
     if (c != null) c()
   }
   
   def play() {
     inPause = false
     val c = cont
-    //cont = null
+    cont = null
     if (c != null) c()
   }
   
