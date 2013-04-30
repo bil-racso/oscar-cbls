@@ -38,7 +38,7 @@ import oscar.dfo.mogen.algos.DirectionalDirectSearch
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  */
 class TestMOGEN extends FunSuite with ShouldMatchers {
-  
+  /*
   test("Test MOGEN dummy 2D - Only Nelder-Mead") {
     val nbCoords = 2
     val nbEvals = 2
@@ -133,7 +133,7 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     paretoEstimation.size > 1 should be(true)
   }
   
-  /*
+  
   test("Test MOGEN dummy 3D") {
     val nbCoords = 3
     val nbEvals = 3
