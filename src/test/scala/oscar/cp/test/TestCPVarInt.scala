@@ -105,9 +105,5 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 		evaluating {
 			cp.add(a < 10)
 		} should produce [NoSolutionException]
-		  
-		evaluating {
-			a.isBound should be(false)
-		} should produce [AssertionError]
 	}
 }
