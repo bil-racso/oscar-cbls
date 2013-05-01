@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.visual;
 
@@ -32,8 +30,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	val sz = Toolkit.getDefaultToolkit().getScreenSize()
 	val screenSize = new java.awt.Dimension(sz.getWidth().toInt,(sz.getHeight()*85/100).toInt)
 	var n = 0
-	var w = screenSize.width/nbCols
-	var h = screenSize.height/nbLines	
+	var w = (screenSize.width/nbCols)*90/100
+	var h = (screenSize.height/nbLines)*90/100	
 
 	
 	val content = getContentPane()
@@ -88,8 +86,8 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		frame
 	}	
 
-	def  createToolBar():VisualToolBar = {
-		val toolbar = new VisualToolBar()
+	def  createToolBar(withVisuController: Boolean = false):VisualToolBar = {
+		val toolbar = new VisualToolBar(withVisuController)
 		content.add(toolbar,BorderLayout.NORTH)
 		toolbar
 	}
@@ -102,6 +100,8 @@ object VisualFrame{
   	def main(args : Array[String]) {
 		val frame = new VisualFrame("My Frame",3,2)
 		for (i <- 0 until 6) frame.createFrame("My Sub-frame "+i)
+		val tools = frame.createToolBar()
+		tools.addButton("toto",println("hello"))
 		//val subframe = frame.createFrame("My Sub-frame")
 	}
 }

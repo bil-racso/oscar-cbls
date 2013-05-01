@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.visual;
 
@@ -56,13 +54,22 @@ import javax.swing.event.ChangeEvent
 
 class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
+  setBackground(Color.white)
+  
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {
-      if (!shapes.filter(_.shape != null).isEmpty) {
-        val maxX = shapes.filter(_.shape != null).map(s => s.shape.getBounds().x).max
-        val maxY = shapes.filter(_.shape != null).map(s => s.shape.getBounds().y).max
-        val scx = getWidth() / (maxX.toDouble * 1.3)
-        val scy = getHeight() / (maxY.toDouble * 1.5)
+      val s = shapes.filter(_.shape != null)
+      if (!s.isEmpty) {
+        val maxX = s.map{ s => 
+          val b = s.shape.getBounds() 
+          b.x + b.width
+        }.max
+        val maxY = s.map { s =>
+          val b = s.shape.getBounds()
+          b.y + b.height
+        }.max
+        val scx = getWidth() / (maxX.toDouble * 1.1)
+        val scy = getHeight() / (maxY.toDouble * 1.1)
 
         if (flipped) {
           g.translate(0, getHeight());
@@ -111,7 +118,13 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
 	def addShape(s:ColoredShape[Shape]) {
 		shapes :+= s
-		repaint();
+		repaint()
+	}
+	
+	def clear() {
+	  shapes = Array()
+	  revalidate()
+	  repaint()
 	}
 
 }

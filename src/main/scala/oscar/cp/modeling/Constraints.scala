@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -661,17 +675,38 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt]): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt],strictly: Boolean = false): LinkedList[Constraint] = {
     val cp = x(0).store
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i)) <= elementVar(x, p(i + 1)))
-      cons.add(s(i) <= s(i + 1))
+      cons.add(elementVar(x, p(i),Strong) <= elementVar(x, p(i + 1),Strong))
+      if (strictly) {
+        cons.add(s(i) < s(i + 1))
+      } else {
+        cons.add(s(i) <= s(i + 1))
+      }
+      
+    }
+    val minx = x.map(_.min).min
+    val maxx = x.map(_.max).max
+    val mins = s.map(_.min).min
+    val maxs = s.map(_.max).max
+    
+    for( i <- 0 until x.size) {
+      cons.add(p(i) >= 0)
+      cons.add(p(i) <= n)
+      
+      cons.add(s(i) <= maxx)
+      cons.add(s(i) >= minx)
+      
+      cons.add(x(i) <= maxs)
+      cons.add(x(i) >= mins)
     }
     for (i <- 0 until n) {
       cons.add(elementVar(x, p(i), s(i)))
     }
+    cons.add(allDifferent(p))
 
     val minVal: Int = x.map(_.min).min
     val maxVal: Int = x.map(_.max).max
@@ -686,7 +721,7 @@ trait Constraints {
       else sum(minVal to i - 1)(j => occ(j))
     }
 
-    for (i <- 1 until n) {
+    for (i <- 0 until n) {
       // there are less than i values smaller than s(i) 
       cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
     }
