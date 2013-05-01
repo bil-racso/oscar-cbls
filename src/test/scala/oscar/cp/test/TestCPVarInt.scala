@@ -87,6 +87,27 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	  x.toSet should be(Set(0,1,2,3,4))
 	  cp.add(x != 2)
 	  x.toSet should be(Set(0,1,3,4))
-	}	
+	}
 	
+	test("isBound test - var does get bound") {
+		val cp = CPSolver()
+		val a = CPVarInt(cp, Array(10, 20, 30))
+		a.isBound should be(false)
+		cp.add(a == 10)
+		a.isBound should be(true)
+	}
+	
+	test("isBound test - var doesn't get bound") {
+		val cp = CPSolver()
+		val a = CPVarInt(cp, Array(10, 20, 30))
+		a.isBound should be(false)
+		
+		evaluating {
+			cp.add(a < 10)
+		} should produce [NoSolutionException]
+		  
+		evaluating {
+			a.isBound should be(false)
+		} should produce [AssertionError]
+	}
 }
