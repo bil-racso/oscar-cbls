@@ -49,8 +49,8 @@ class CPSolver() extends Store() {
   var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   var recordNonDominatedSolutions = false
   
-  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.toList
-  def nonDominatedSolutionsObjs: Iterable[IndexedSeq[Int]] = paretoSet.objectiveSols 
+  def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
+  def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
   def addDecisionVariables(x: Iterable[CPVarInt]) {
     x.foreach(decVariables += _)
