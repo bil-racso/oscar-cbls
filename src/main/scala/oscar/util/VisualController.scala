@@ -19,12 +19,12 @@ import scala.collection.SeqLike
 
 object VisualController {
   
-  var inPause = false
+  var inPause = true
   var cont: (Unit => Unit) = null
 
   def withController(block: => Unit @suspendable) = {
     reset {
-      pause()
+      //pause()
       block
     }
   }

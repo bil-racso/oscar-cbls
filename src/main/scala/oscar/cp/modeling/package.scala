@@ -332,8 +332,7 @@ package object modeling extends Constraints {
   def relaxRandomly(x: IndexedSeq[_ <: CPVarInt], sol: CPSol, k: Int): CPOutcome = {
       val cp = x.head.s
       val n = x.size
-      val toKeep = n-k
-      val fixed = (for (i <- 1 to toKeep) yield scala.util.Random.nextInt(n)).toSet
+      val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
       cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
   }
   
