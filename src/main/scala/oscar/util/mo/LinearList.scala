@@ -116,6 +116,29 @@ class LinearList[E <% Ordered[E]](initialPoints: List[ArchiveElement[E]]) extend
     for (element <- archive)
       println(element.toString)
   }
+  
+  def getExtremePoints = {
+    Array.tabulate(archive.head.nbEvaluations){ i =>
+      archive.drop(1).foldLeft((archive.head, archive.head))((acc, newPoint) => {
+        if(newPoint.getEvaluation(i) < acc._1.getEvaluation(i)) {
+          if (newPoint.getEvaluation(i) > acc._2.getEvaluation(i)) (newPoint, newPoint)
+          else (newPoint, acc._2)
+        }
+        else {
+          if (newPoint.getEvaluation(i) > acc._2.getEvaluation(i)) (acc._1, newPoint)
+          else (acc._1, acc._2)
+        }
+      })
+    }
+  }
+  
+  def getClosest(coordinates: Array[Double]) = {
+    archive.drop(1).foldLeft((archive(0), euclidianDistance(archive(0).getMOOPoint.coordinates, coordinates)))((acc, newPoint) => {
+      val dist = euclidianDistance(newPoint.getMOOPoint.coordinates, coordinates)
+      if (dist <= acc._2) (newPoint, dist)
+      else acc
+    })._1
+  }
 }
 
 /** Factory for LinearList instances. */

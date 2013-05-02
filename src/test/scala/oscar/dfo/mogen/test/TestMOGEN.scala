@@ -54,43 +54,43 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     f.add(paretoPlot)
     f.pack()
     
+    //for (i <- 0 until 43) println(i)
     
-    MOGEN.onIterateSelected = (triplet: MOGENTriplet[_]) => {
-      println("onIterateSelected")
-      withController {
-        println("inside withController")
-        paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
-        pause()
+    withController {
+      println("Praise the lord")
+      MOGEN.onIterateSelected{
+        (triplet: MOGENTriplet[_]) => {
+          println("inside withController")
+          paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
+          pause()
+        }
       }
-    }
-    MOGEN.onArchiveChanged = (archive: ParetoFront[_]) => {
-      withController {
-        paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
-        pause()
+      MOGEN.onArchiveChanged {
+        (archive: ParetoFront[_]) => {
+          paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
+          pause()
+        }
       }
-    }
     
-    withController{
-      println("I begin")
-      pause()
+      val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
+      mogen.initFeasibleReagion(List(inUnitInterval))
+      mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
+      println(mogen.archive.toSet.size)
+      val paretoEstimation = mogen.optimizeMOO(nbIterations)
+      for (mooPoint <- paretoEstimation) {
+        println(mooPoint)
+      }
+      paretoEstimation.size > 1 should be(true)
     }
-    
-    val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
-    mogen.initFeasibleReagion(List(inUnitInterval))
-    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
-    println(mogen.archive.toSet.size)
-    val paretoEstimation = mogen.optimizeMOO(nbIterations)
-    for (mooPoint <- paretoEstimation) {
-      println(mooPoint)
-    }
-    paretoEstimation.size > 1 should be(true)
+    1 should be (1)
   }
   
+  /*
   test("Test MOGEN dummy 2D - Only Directional Direct-Search") {
     val nbCoords = 2
     val nbEvals = 2
     val nbPoints = 100
-    val nbIterations = 100
+    val nbIterations = 8000
     
     /** The frame used to observe Pareto front improvement */
     val f = new VisualFrame("MOGEN", 1, 2)
@@ -101,7 +101,7 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     f.add(paretoPlot)
     f.pack()
     
-    
+    /*
     MOGEN.onIterateSelected = (triplet: MOGENTriplet[_]) => {
       println("onIterateSelected")
       withController {
@@ -124,14 +124,19 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     
     val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
     mogen.initFeasibleReagion(List(inUnitInterval))
-    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.3, 0.4)), List((DirectionalDirectSearch, 1.0)))
+    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((DirectionalDirectSearch, 1.0)))
     println(mogen.archive.toSet.size)
     val paretoEstimation = mogen.optimizeMOO(nbIterations)
     for (mooPoint <- paretoEstimation) {
+      paretoPlot.addPoint(mooPoint.getEvaluation(0), mooPoint.getEvaluation(1))
       println(mooPoint)
     }
+    //Thread.sleep(30000)
+    //pause()
     paretoEstimation.size > 1 should be(true)
   }
+  */
+  */
   
   /*
   test("Test MOGEN dummy 3D") {

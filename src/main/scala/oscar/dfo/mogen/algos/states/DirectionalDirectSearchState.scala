@@ -6,7 +6,7 @@ import oscar.util.mo.MOEvaluator
 import oscar.util.mo.RandomGenerator
 import oscar.util.mo.FeasibleRegion
 
-class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {
+class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], var stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {
   val newDirectionProportion = 0.2
   var bestPoint = initPoint
   var currentBasis = getRandomBasis
@@ -24,7 +24,7 @@ class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val 
   }
   
   def getNewPoint(directionIndex: Int, evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): MOOPoint[E] = {
-    val newCoordinates = Array.tabulate(bestPoint.nbCoordinates)(i => bestPoint.coordinates(i) + dictionary(currentBasis(directionIndex))(i))
+    val newCoordinates = Array.tabulate(bestPoint.nbCoordinates)(i => bestPoint.coordinates(i) + stepSizes(i) * dictionary(currentBasis(directionIndex))(i))
     evaluator.eval(newCoordinates, feasibleReg)
   }
   
@@ -49,8 +49,8 @@ class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val 
     List((0 until dictionary.size): _*).filter(index => !basis.contains(index))(RandomGenerator.nextInt(dictionary.length - basis.length))
   }
   
-  def increaseStepSizes = stepSizes.foreach(_ * DirectionalDirectSearchState.increaseFactor)
-  def decreaseStepSizes = stepSizes.foreach(_ * DirectionalDirectSearchState.decreaseFactor)
+  def increaseStepSizes = stepSizes = stepSizes.map((dim: Double) => dim * DirectionalDirectSearchState.increaseFactor)
+  def decreaseStepSizes = stepSizes = stepSizes.map((dim: Double) => dim * DirectionalDirectSearchState.decreaseFactor)
 }
 
 object DirectionalDirectSearchState {

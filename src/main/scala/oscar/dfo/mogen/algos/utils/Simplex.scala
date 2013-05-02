@@ -1,8 +1,9 @@
-package oscar.dfo.mogen.algos.states
+package oscar.dfo.mogen.algos.utils
 
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOOComparator
 import oscar.util.mo.RandomGenerator
+import scala.util.continuations._
 
 trait Simplex[E] {
 
@@ -29,4 +30,11 @@ trait Simplex[E] {
   def arrayDiff(ar1: Array[Double], ar2: Array[Double]): Array[Double] = Array.tabulate(ar1.length)(i => ar1(i) - ar2(i))
   
   def arrayProd(ar: Array[Double], factor: Double): Array[Double] = Array.tabulate(ar.length)(i => factor * ar(i))
+  
+  def onInit(): Unit@suspendable = {}
+  def onReflexion(reflectedPoint: MOOPoint[E]): Unit@suspendable = {}
+  def onExpansion(expandedPoint: MOOPoint[E]): Unit@suspendable = {}
+  def onInsideContraction(expandedPoint: MOOPoint[E]): Unit@suspendable = {}
+  def onOutsideContraction(expandedPoint: MOOPoint[E]): Unit@suspendable = {}
+  def onShrink(expandedPoint: MOOPoint[E]): Unit@suspendable = {}
 }

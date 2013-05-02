@@ -24,9 +24,11 @@ import java.awt.Shape
 import java.awt.geom.Ellipse2D
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.chart.annotations.XYTextAnnotation
+import scala.collection.generic.Clearable
 
-class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = false) extends JPanel(new BorderLayout()) {
-
+class VisualSimplex2D(inputSpace: Boolean = false) extends JPanel(new BorderLayout()) {
+  var simplex: Array[MOOPoint[Double]] = Array[MOOPoint[Double]]()
+  
   val textDistFactor = 10.0
   val originalSerie = new XYSeries(0, false)
   val transformSeries:  Array[XYSeries] = Array.tabulate(4)(i => new XYSeries(i + 1, false))
@@ -35,8 +37,8 @@ class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = fa
   xyDataset.addSeries(originalSerie)
   transformSeries.foreach(xyDataset.addSeries(_))
   val chart: JFreeChart = createChart()
-  chart.getPlot().setBackgroundPaint(Color.white);
-  val panel: ChartPanel = new ChartPanel(chart);
+  chart.getPlot().setBackgroundPaint(Color.white)
+  val panel: ChartPanel = new ChartPanel(chart)
   panel.setVisible(true)
   add(panel)
   
@@ -47,9 +49,9 @@ class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = fa
   
   val offsetMultiplier = 2.2
   
-  initGraph
-  
-  def initGraph {
+  def update(simp: Array[MOOPoint[Double]]) {
+    removeAllPoints
+    simplex = simp
     initPoints
     setRanges
     hideHighlight()
@@ -154,6 +156,7 @@ class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = fa
   }
 
   def removeAllPoints() {
+    lineRenderer.removeAnnotations()
     originalSerie.clear()
     for (i <- 0 until 4) transformSeries(i).clear()
   }
@@ -174,12 +177,15 @@ object VisualSimplex2D extends App {
   val inf2 = f.createFrame("Simplex Output")
   val simplex = Array(MOOPoint(Array(10.0, 10.0), Array(1.0, 1.0)), MOOPoint(Array(42.0, 10.0), Array(1.0, 2.0)), MOOPoint(Array(10.0, 42.0), Array(2.0, 1.0)))
 	
-  val myInputSimplexPlot = new VisualSimplex2D(simplex, true)
-  val myOutputSimplexPlot = new VisualSimplex2D(simplex, false)
+  val myInputSimplexPlot = new VisualSimplex2D(true)
+  val myOutputSimplexPlot = new VisualSimplex2D(false)
   inf1.add(myInputSimplexPlot);
   inf2.add(myOutputSimplexPlot);
   inf1.pack()
   inf2.pack()
+  
+  myInputSimplexPlot.update(simplex)
+  myOutputSimplexPlot.update(simplex)
   
   Thread.sleep(waitingDelay)
   val reflectedPoint = MOOPoint(Array(42.0, -22.0), Array(3.0, 3.0))
@@ -200,4 +206,8 @@ object VisualSimplex2D extends App {
   val contractedOutsidePoint = MOOPoint(Array(34.0, -6.0), Array(3.0, -5.0))
   myInputSimplexPlot.showOutsideContraction(simplex, contractedOutsidePoint)
   myOutputSimplexPlot.showOutsideContraction(simplex, contractedOutsidePoint)
+  
+  Thread.sleep(waitingDelay)
+  myInputSimplexPlot.update(simplex)
+  myOutputSimplexPlot.update(simplex)
 }

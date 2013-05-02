@@ -49,8 +49,10 @@ class PlotDFOPareto2D[E <% Ordered[E]] (
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
         removeAllPoints(paretoIndex)
-        addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
-        highLightIterate(currentIterate)
+        if (currentIterate != null) {
+          addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
+          highLightIterate(currentIterate)
+        }
         for (p <- archive.toSet) {
           val x = p.getEvaluation(0).asInstanceOf[Double]
           val y = p.getEvaluation(1).asInstanceOf[Double]
@@ -58,6 +60,8 @@ class PlotDFOPareto2D[E <% Ordered[E]] (
         }
       }
     })
+    
+        repaint()
   }
 }
 

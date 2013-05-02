@@ -25,4 +25,13 @@ abstract class ParetoFront[E <% Ordered[E]] {
   def head: ArchiveElement[E]
   /** Returns true if the Pareto front contains no point, false otherwise */
   def isEmpty: Boolean
+  /** Returns an array containing the points which are the biggest in a dimension */
+  def getExtremePoints: Array[(ArchiveElement[E], ArchiveElement[E])]
+  /** Returns the point that is the closest to the specified coordinates */
+  def getClosest(coordinates: Array[Double]): ArchiveElement[E]
+  
+  
+  def euclidianDistance(coord1: Array[Double], coord2: Array[Double]): Double = {
+    math.sqrt(coord1.zip(coord2).foldLeft(0.0)((acc, newPair) => acc + math.pow(newPair._2 - newPair._1, 2.0)))
+  }
 }

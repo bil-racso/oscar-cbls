@@ -14,11 +14,6 @@ object NelderMead extends ComparativeAlgorithm {
       case nmState: NelderMeadState[E] => {
         val centroid = nmState.getCentroid
         val reflectedPoint = nmState.getReflection(evaluator, feasReg, centroid)
-        //println("=" * 30 + " " * 5 + "SIMPLEX" + " " * 5 + "=" * 30)
-        //for (point <- nmState.simplex) println(point)
-        //println("=" * 30 + " " * 5 + "REFLEXION" + " " * 5 + "=" * 30)
-        //println(reflectedPoint )
-        //println("=" * 80)
         // The reflected point is better than the second worst point of the simplex but worse or equivalent to the best point (f^0 <= f^r < f^(n-1) for SO minimisation problems)
         if (comparator.cmpWithArchive(nmState.bestPoint, reflectedPoint, currentArchive) && comparator.cmpWithArchive(reflectedPoint, nmState.simplex(nmState.simplexSize - 2), currentArchive) &&
             !currentArchive.contains(reflectedPoint) && feasReg.isFeasible(reflectedPoint.coordinates)) {
@@ -30,9 +25,6 @@ object NelderMead extends ComparativeAlgorithm {
           // The reflected point was better than the best point of the simplex => Expansion performed
           if (comparator.cmpWithArchive(reflectedPoint, nmState.bestPoint, currentArchive)) {
             val expandedPoint = nmState.getExpansion(evaluator, feasReg, centroid)
-            //println("reflectedPoint: " + reflectedPoint)
-            //println("bestPoint: " + nmState.bestPoint)
-            //println("expandedPoint: " + expandedPoint)
             // The expanded point is better than the reflected point
             if (comparator.cmpWithArchive(expandedPoint, reflectedPoint, currentArchive)) {
               nmState.applySinglePointTransformation(expandedPoint, comparator)

@@ -5,6 +5,7 @@ import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.RandomGenerator
 import oscar.util.mo.FeasibleRegion
+import oscar.dfo.mogen.algos.utils.Simplex
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit
@@ -74,7 +75,7 @@ object NelderMeadState {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {
-        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1) * 0.05)
+        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1) * 0.5)
         Array.tabulate(coordinates.length)(i => coordinates(i) + randPerturbation(i))
       }
     }

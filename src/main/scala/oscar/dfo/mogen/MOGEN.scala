@@ -14,15 +14,16 @@ import oscar.util.mo.ParetoFront
 import oscar.util.mo.RandomGenerator
 import oscar.visual.PlotDFOPareto2D
 import oscar.visual.VisualFrame
+import scala.util.continuations._
 
-class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E]) {
+class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E], suspendable: Boolean = false) {
 
   /** Function defining the feasible region of the problem */
   val feasibleRegion = FeasibleRegion()
   /** The set of non-dominated points (approximation of the Pareto front) */
   var archive = LinearList[E]()
   /** The iterate selection heuristic */
-  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.fairSelect
+  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.hyperPlaneSelect//MOGEN.fairSelect
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
 
@@ -52,7 +53,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     algorithms(0)._1
   }
 
-  def optimizeMOO(maxIters: Int): Set[MOOPoint[E]] = {
+  def optimizeMOO(maxIters: Int): Set[MOOPoint[E]]@suspendable = {
     var nbIterations = 1
     while (nbIterations <= maxIters) {
       performIteration(nbIterations)
@@ -62,11 +63,9 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     archive.toSet
   }
   
-  def performIteration(iterationNumber: Int) {
+  def performIteration(iterationNumber: Int): Unit@suspendable = {
     val currentTriplet = selectIterate
-    MOGEN.onIterateSelected(currentTriplet)
-    println("What?")
-    //if (visu) {paretoPlot.highLightIterate(currentTriplet); Thread.sleep(500)}
+    MOGEN.onIterSel(currentTriplet)
     val newPoints = currentTriplet.getAlgorithm.singleIteration(currentTriplet.getAlgorithmState, archive, feasibleRegion, comparator, evaluator)
     var archiveChanged = false
     for (newPoint <- newPoints) {
@@ -76,7 +75,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
       //if (archive.insert(newTriplet, comparator) && visu) {paretoPlot.update(archive); Thread.sleep(500)}
     }
     archive.insert(currentTriplet, comparator)
-    if (archiveChanged) MOGEN.onArchiveChanged(archive)
+    if (archiveChanged) MOGEN.onArchChan(archive)
   }
 
   def selectIterate: MOGENTriplet[E] = {
@@ -94,17 +93,42 @@ object MOGEN {
   def fairSelect[E](archive: ParetoFront[E]): MOGENTriplet[E] = {
     archive.head match {
       case triplet: MOGENTriplet[E] => triplet
-      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplet")
+      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplets")
     }
   }
   
   def randomSelect[E](archive: ParetoFront[E]): MOGENTriplet[E] = {
     archive.randomElement match {
       case triplet: MOGENTriplet[E] => triplet
-      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplet")
+      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplets")
     }
   }
   
-  var onIterateSelected: (MOGENTriplet[_]) => Unit = {triplet: MOGENTriplet[_] => println("KKKKKKKKKKKKK")}
-  var onArchiveChanged: (ParetoFront[_]) => Unit = {newArchive: ParetoFront[_] => }
+  def hyperPlaneSelect[E](archive: ParetoFront[E]): MOGENTriplet[E] = {
+    val points = archive.getExtremePoints
+    //TODO Change these lines here to get the multi-dimensional case
+    val num = (points(0)._1.getMOOPoint.coordinates(1) - points(0)._2.getMOOPoint.coordinates(1))
+    val den = (points(0)._1.getMOOPoint.coordinates(0) - points(0)._2.getMOOPoint.coordinates(0))
+    val slope = if (den != 0) num / den else 0
+    val d = points(0)._1.getMOOPoint.coordinates(1) - slope * points(0)._1.getMOOPoint.coordinates(0)
+    val randX1 = points(0)._1.getMOOPoint.coordinates(0) + (points(0)._2.getMOOPoint.coordinates(0) - points(0)._1.getMOOPoint.coordinates(0)) * RandomGenerator.nextDouble
+    val newCoordinates = Array.tabulate(points(0)._1.getMOOPoint.nbCoordinates)(i => if (i == 0) randX1 else slope * randX1 + d)
+    archive.getClosest(newCoordinates) match {
+      case triplet: MOGENTriplet[E] => triplet
+      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplets")
+    }
+  }
+  
+  
+  
+  var onIterSel: (MOGENTriplet[_]) => Unit@suspendable = {triplet: MOGENTriplet[_] => }
+  var onArchChan: (ParetoFront[_]) => Unit@suspendable = {newArchive: ParetoFront[_] => }
+  
+  def onIterateSelected(newFun: MOGENTriplet[_] => Unit@suspendable) {
+	onIterSel = newFun
+  }
+  
+  def onArchiveChanged(newFun: ParetoFront[_] => Unit@suspendable) {
+	onArchChan = newFun
+  }
 }
