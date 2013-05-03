@@ -53,7 +53,8 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     algorithms(0)._1
   }
 
-  def optimizeMOO(maxIters: Int): Set[MOOPoint[E]]@suspendable = {
+  def optimizeMOO(maxIters: Int): Set[MOOPoint[E]] = {
+    MOGEN.onArchChan(archive)
     var nbIterations = 1
     while (nbIterations <= maxIters) {
       performIteration(nbIterations)
@@ -63,7 +64,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     archive.toSet
   }
   
-  def performIteration(iterationNumber: Int): Unit@suspendable = {
+  def performIteration(iterationNumber: Int): Unit = {
     val currentTriplet = selectIterate
     MOGEN.onIterSel(currentTriplet)
     val newPoints = currentTriplet.getAlgorithm.singleIteration(currentTriplet.getAlgorithmState, archive, feasibleRegion, comparator, evaluator)
@@ -121,14 +122,14 @@ object MOGEN {
   
   
   
-  var onIterSel: (MOGENTriplet[_]) => Unit@suspendable = {triplet: MOGENTriplet[_] => }
-  var onArchChan: (ParetoFront[_]) => Unit@suspendable = {newArchive: ParetoFront[_] => }
+  var onIterSel: (MOGENTriplet[_]) => Unit = {triplet: MOGENTriplet[_] => }
+  var onArchChan: (ParetoFront[_]) => Unit = {newArchive: ParetoFront[_] => }
   
-  def onIterateSelected(newFun: MOGENTriplet[_] => Unit@suspendable) {
+  def onIterateSelected(newFun: MOGENTriplet[_] => Unit) {
 	onIterSel = newFun
   }
   
-  def onArchiveChanged(newFun: ParetoFront[_] => Unit@suspendable) {
+  def onArchiveChanged(newFun: ParetoFront[_] => Unit) {
 	onArchChan = newFun
   }
 }

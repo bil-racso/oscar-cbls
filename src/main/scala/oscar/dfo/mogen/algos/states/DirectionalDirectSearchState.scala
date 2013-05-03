@@ -7,6 +7,7 @@ import oscar.util.mo.RandomGenerator
 import oscar.util.mo.FeasibleRegion
 
 class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], var stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {
+  val originalStepSizes = stepSizes.clone
   val newDirectionProportion = 0.2
   var bestPoint = initPoint
   var currentBasis = getRandomBasis
@@ -45,23 +46,28 @@ class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], var 
     randomBasis
   }
   
+  def reInitializeStepSizes = stepSizes = originalStepSizes.clone
+  
   def getNewRandomDirection(basis: List[Int]): Int = {
     List((0 until dictionary.size): _*).filter(index => !basis.contains(index))(RandomGenerator.nextInt(dictionary.length - basis.length))
   }
   
   def increaseStepSizes = stepSizes = stepSizes.map((dim: Double) => dim * DirectionalDirectSearchState.increaseFactor)
-  def decreaseStepSizes = stepSizes = stepSizes.map((dim: Double) => dim * DirectionalDirectSearchState.decreaseFactor)
+  def decreaseStepSizes = stepSizes = stepSizes.map((dim: Double) => dim * (DirectionalDirectSearchState.decreaseFactorLowerBound + RandomGenerator.nextDouble * (DirectionalDirectSearchState.decreaseFactorUpperBound - DirectionalDirectSearchState.decreaseFactorLowerBound)))
 }
 
 object DirectionalDirectSearchState {
-  var increaseFactor = 1.1
-  var decreaseFactor = 0.9
+  var increaseFactor = 1.25
+  var decreaseFactorUpperBound = 0.9
+  var decreaseFactorLowerBound = 0.5
   
   def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizes: Array[Double], dictionnary: Array[Array[Double]], basisSize: Int) = new DirectionalDirectSearchState(initPoint, stepSizes, dictionnary, basisSize)
   
   def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizeIntervals: Array[(Double, Double)], dictionarySize: Int = 100, basisSize: Int = 10): ComparativeAlgorithmState[E] = {
     val stepSizes = Array.tabulate(initPoint.nbCoordinates)(i => stepSizeIntervals(i)._1 + RandomGenerator.nextDouble * (stepSizeIntervals(i)._2 - stepSizeIntervals(i)._1))
-    val dictionary = Array.tabulate(dictionarySize)(i => normalizeArray(Array.tabulate(initPoint.nbCoordinates)(i => RandomGenerator.nextDouble)))
+    val positiveDictionary = Array.tabulate(dictionarySize)(i => normalizeArray(Array.tabulate(initPoint.nbCoordinates)(i => RandomGenerator.nextDouble)))
+    val negativeDictionary = Array.tabulate(dictionarySize)(i => Array.tabulate(initPoint.nbCoordinates)(j => - positiveDictionary(i)(j)))
+    val dictionary = RandomGenerator.shuffle(Array.tabulate(2 * dictionarySize)(i => if(i < dictionarySize) positiveDictionary(i) else negativeDictionary(i - dictionarySize)).toSeq).toArray
     DirectionalDirectSearchState(initPoint, stepSizes, dictionary, basisSize)
   }
   

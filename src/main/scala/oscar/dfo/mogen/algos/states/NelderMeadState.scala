@@ -1,11 +1,12 @@
 package oscar.dfo.mogen.algos.states
 
+import scala.Array.canBuildFrom
+import oscar.util.mo.FeasibleRegion
+import oscar.util.mo.MOEvaluator
 import oscar.util.mo.MOOComparator
 import oscar.util.mo.MOOPoint
-import oscar.util.mo.MOEvaluator
 import oscar.util.mo.RandomGenerator
-import oscar.util.mo.FeasibleRegion
-import oscar.dfo.mogen.algos.utils.Simplex
+import oscar.dfo.mogen.utils.ArrayUtils
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit
@@ -38,7 +39,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
   def getOutsideContraction(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint[E] = getSinglePointTransformation(centroid, deltaOC, evaluator, feasibleReg)
   
   def getSinglePointTransformation(centroid: Array[Double], factor: Double, evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): MOOPoint[E] = {
-    val newCoordinates = arraySum(centroid, arrayProd(arrayDiff(centroid, worstPoint.coordinates), factor))
+    val newCoordinates = ArrayUtils.arraySum(centroid, ArrayUtils.arrayProd(ArrayUtils.arrayDiff(centroid, worstPoint.coordinates), factor))
     evaluator.eval(newCoordinates, feasibleReg)
   }
   
@@ -49,13 +50,13 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
   
   def getCentroid: Array[Double] = {
     val allButWorstCoordinates = simplex.map(mooP => mooP.coordinates).take(simplexSize - 1)
-    arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
+    ArrayUtils.arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => ArrayUtils.arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
   }
   
   def applyShrink(comparator: MOOComparator[E], evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion) = {
     val simplexCoordinates = simplex.map(mooP => mooP.coordinates).drop(1)
     for (i <- 1 until simplexSize - 1) {
-      simplex(i) = evaluator.eval(arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
+      simplex(i) = evaluator.eval(ArrayUtils.arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
     }
     orderSimplex(comparator)
   }
@@ -75,7 +76,7 @@ object NelderMeadState {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {
-        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1) * 0.5)
+        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1))
         Array.tabulate(coordinates.length)(i => coordinates(i) + randPerturbation(i))
       }
     }

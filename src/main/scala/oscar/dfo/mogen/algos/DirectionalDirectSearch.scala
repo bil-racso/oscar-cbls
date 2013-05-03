@@ -16,8 +16,6 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
       case ddsState: DirectionalDirectSearchState[E] => {
         for (i <- 0 until ddsState.basisSize) {
           val newPoint = ddsState.getNewPoint(i, evaluator, feasReg)
-          println("NewPoint: " + newPoint)
-          println("StepSizes Before: " + ddsState.stepSizes.mkString("(", ", ", ")"))
           if (comparator.cmpWithArchive(newPoint, ddsState.bestPoint, currentArchive)) {
             ddsState.updateBasis
             ddsState.increaseStepSizes
@@ -26,7 +24,7 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
         }
         ddsState.updateBasis
         ddsState.decreaseStepSizes
-        println("StepSizes After: " + ddsState.stepSizes.mkString("(", ", ", ")"))
+        if (minimalSizeOfStepSizes(ddsState.stepSizes) < tolerance) ddsState.reInitializeStepSizes
         List[MOOPoint[E]]()
       }
       case _ => throw new IllegalArgumentException("The Directional Direct-Search algorithm can only be used with a state for Directional Direct-Search");
@@ -37,4 +35,6 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
   def getInitialState[E <% Ordered[E]](coordinates: Array[Double], stepSizeIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
     DirectionalDirectSearchState(evaluator.eval(coordinates, feasReg), stepSizeIntervals)
   }
+  
+  def minimalSizeOfStepSizes(stepSizes: Array[Double]): Double = stepSizes.foldLeft(Double.MaxValue)((acc, newCand) => if (acc > newCand) newCand else acc)
 }

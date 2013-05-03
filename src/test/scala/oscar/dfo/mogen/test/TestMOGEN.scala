@@ -43,7 +43,7 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     val nbCoords = 2
     val nbEvals = 2
     val nbPoints = 100
-    val nbIterations = 100
+    val nbIterations = 8000
     
     /** The frame used to observe Pareto front improvement */
     val f = new VisualFrame("MOGEN", 1, 2)
@@ -54,38 +54,31 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     f.add(paretoPlot)
     f.pack()
     
-    //for (i <- 0 until 43) println(i)
-    
-    withController {
-      println("Praise the lord")
-      MOGEN.onIterateSelected{
-        (triplet: MOGENTriplet[_]) => {
-          println("inside withController")
-          paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
-          pause()
-        }
+    MOGEN.onIterateSelected{
+      (triplet: MOGENTriplet[_]) => {
+        paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
+        Thread.sleep(500)
       }
-      MOGEN.onArchiveChanged {
-        (archive: ParetoFront[_]) => {
-          paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
-          pause()
-        }
-      }
-    
-      val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
-      mogen.initFeasibleReagion(List(inUnitInterval))
-      mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
-      println(mogen.archive.toSet.size)
-      val paretoEstimation = mogen.optimizeMOO(nbIterations)
-      for (mooPoint <- paretoEstimation) {
-        println(mooPoint)
-      }
-      paretoEstimation.size > 1 should be(true)
     }
-    1 should be (1)
+    MOGEN.onArchiveChanged {
+      (archive: ParetoFront[_]) => {
+        paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
+        Thread.sleep(500)
+      }
+    }
+    
+    val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
+    mogen.initFeasibleReagion(List(inUnitInterval))
+    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
+    println(mogen.archive.toSet.size)
+    val paretoEstimation = mogen.optimizeMOO(nbIterations)
+    for (mooPoint <- paretoEstimation) {
+      println(mooPoint)
+    }
+    paretoEstimation.size > 1 should be(true)
   }
   
-  /*
+  
   test("Test MOGEN dummy 2D - Only Directional Direct-Search") {
     val nbCoords = 2
     val nbEvals = 2
@@ -101,25 +94,17 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
     f.add(paretoPlot)
     f.pack()
     
-    /*
-    MOGEN.onIterateSelected = (triplet: MOGENTriplet[_]) => {
-      println("onIterateSelected")
-      withController {
-        println("inside withController")
+    MOGEN.onIterateSelected{
+      (triplet: MOGENTriplet[_]) => {
         paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
-        pause()
+        Thread.sleep(500)
       }
     }
-    MOGEN.onArchiveChanged = (archive: ParetoFront[_]) => {
-      withController {
+    MOGEN.onArchiveChanged {
+      (archive: ParetoFront[_]) => {
         paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
-        pause()
+        Thread.sleep(500)
       }
-    }
-    
-    withController{
-      println("I begin")
-      pause()
     }
     
     val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double](), visu=true)
@@ -131,29 +116,8 @@ class TestMOGEN extends FunSuite with ShouldMatchers {
       paretoPlot.addPoint(mooPoint.getEvaluation(0), mooPoint.getEvaluation(1))
       println(mooPoint)
     }
-    //Thread.sleep(30000)
-    //pause()
     paretoEstimation.size > 1 should be(true)
   }
-  */
-  */
-  
-  /*
-  test("Test MOGEN dummy 3D") {
-    val nbCoords = 3
-    val nbEvals = 3
-    val nbPoints = 100
-    val nbIterations = 100
-    val mogen = MOGEN(MOEvaluator(zdt1, Array.fill(nbEvals)(Double.MaxValue)), MinMOOComparator[Double]())
-    mogen.initFeasibleReagion(List(inUnitInterval))
-    mogen.initArchive(nbPoints, Array.fill(nbCoords)((0.0, 1.0)), List((NelderMead, 1.0)))
-    val paretoEstimation = mogen.optimizeMOO(nbIterations)
-    for (mooPoint <- paretoEstimation) {
-      println(mooPoint)
-    }
-    paretoEstimation.size should be(1)
-  }
-  */
 
   def zdt1(coordinates: Array[Double]): Array[Double] = {
     def g = 1 + (9 / (coordinates.length - 1)) * (coordinates.drop(1).sum)

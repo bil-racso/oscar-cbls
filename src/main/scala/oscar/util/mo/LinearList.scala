@@ -21,6 +21,7 @@ package oscar.util.mo
 
 import scala.Array.canBuildFrom
 import scala.math.Numeric.Implicits._
+import oscar.dfo.mogen.utils.ArrayUtils
 
 /**
  * LinearList able to maintain a set of non dominated points (assuming maximizations in all dimensions).
@@ -133,8 +134,8 @@ class LinearList[E <% Ordered[E]](initialPoints: List[ArchiveElement[E]]) extend
   }
   
   def getClosest(coordinates: Array[Double]) = {
-    archive.drop(1).foldLeft((archive(0), euclidianDistance(archive(0).getMOOPoint.coordinates, coordinates)))((acc, newPoint) => {
-      val dist = euclidianDistance(newPoint.getMOOPoint.coordinates, coordinates)
+    archive.drop(1).foldLeft((archive(0), ArrayUtils.euclidianDistance(archive(0).getMOOPoint.coordinates, coordinates)))((acc, newPoint) => {
+      val dist = ArrayUtils.euclidianDistance(newPoint.getMOOPoint.coordinates, coordinates)
       if (dist <= acc._2) (newPoint, dist)
       else acc
     })._1
