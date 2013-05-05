@@ -255,7 +255,7 @@ class ReversibleSearchNode {
    * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
    * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
    */
-  def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit)()
+  def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit, timeLimit)()
 
   protected def update() = {}
 
