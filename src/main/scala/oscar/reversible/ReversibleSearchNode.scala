@@ -69,7 +69,7 @@ class ReversibleSearchNode {
    */
   var bkts: Int = 0
 
-  private var limit = Int.MaxValue
+  private var fLimit = Int.MaxValue
   private var tLimit = Int.MaxValue
 
   // tree visu
@@ -79,18 +79,6 @@ class ReversibleSearchNode {
   def recordTree() {
     tree.clear()
     tree.record = true
-  }
-
-  def failLimit = limit
-  def failLimit_=(lim: Int) {
-    sc.failLimit_=(lim)
-    limit = lim
-  }
-
-  def timeLimit = tLimit
-  def timeLimit_=(lim: Int) {
-    sc.timeLimit_=(lim)
-    tLimit = lim
   }
 
   /**
@@ -265,8 +253,9 @@ class ReversibleSearchNode {
    * Start the exploration block
    * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
    * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
+   * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
    */
-  def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit)()
+  def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit)()
 
   protected def update() = {}
 
@@ -274,12 +263,20 @@ class ReversibleSearchNode {
    * Start the exploration block
    * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
    * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
+   * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
    * @param: reversibleBlock is bloc of code such that every constraints posted in it are removed after the run
    */
-  def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
+  def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
     val t1 = System.currentTimeMillis()
     explorationCompleted = false
-    failLimit = failureLimit
+    
+    // Fix failure limit
+    sc.failLimit_=(failureLimit)
+    fLimit = failureLimit    
+    // Fix time limit
+    sc.timeLimit_=(timeLimit)
+    tLimit = timeLimit
+    
     var n = 0
     reset {
       shift { k1: (Unit => Unit) =>
