@@ -7,6 +7,7 @@ import oscar.util.mo.MOOComparator
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.RandomGenerator
 import oscar.dfo.mogen.utils.ArrayUtils
+import oscar.dfo.mogen.utils.Simplex
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit
@@ -59,14 +60,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
       simplex(i) = evaluator.eval(ArrayUtils.arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
     }
     orderSimplex(comparator)
-  }
-  
-  def printSimplex = {
-    println("=" * 80)
-    for (i <- 0 until simplexSize)
-      println(i + ": " + simplex(i).toString)
-  }
-  
+  }  
 }
 
 object NelderMeadState {

@@ -1,4 +1,4 @@
-package oscar.dfo.mogen.algos.states
+package oscar.dfo.mogen.utils
 
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOOComparator
@@ -24,6 +24,12 @@ trait Simplex[E] {
   }
 
   def getPoints: List[MOOPoint[E]] = simplex.toList
+  
+  def printSimplex = {
+    println("=" * 80)
+    for (i <- 0 until simplexSize)
+      println(i + ": " + simplex(i).toString)
+  }
   
   def onInit(): Unit = {}
   def onReflexion(reflectedPoint: MOOPoint[E]): Unit = {}
