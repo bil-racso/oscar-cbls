@@ -87,8 +87,9 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {
 
 		super.subjectTo {
-		  addResourceConstraints()
+		  // do not swap these two lines
 		  constraintsBlock
+		  addResourceConstraints()
 		}
 		
 		this

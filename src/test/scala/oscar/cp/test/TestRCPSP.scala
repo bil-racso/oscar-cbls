@@ -64,12 +64,13 @@ class TestRCPSP extends FunSuite with ShouldMatchers {
       bestObj = makespan.value
     } run ()
     cp.printStats()
+
     bestObj should be(160)
 
   }
 
   test("RCPSP2") {
-
+	println("test2")
     // (duration, consumption)
     val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2))
     val capa = 4
@@ -92,6 +93,7 @@ class TestRCPSP extends FunSuite with ShouldMatchers {
       cp.setTimes(cp.activities)
       bestObj = makespan.value
     } run ()
+    println("=>"+bestObj)
     cp.printStats()
     bestObj should be(160)
 
