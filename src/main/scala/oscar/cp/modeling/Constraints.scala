@@ -697,6 +697,8 @@ trait Constraints {
 	 */
 	def cumulative(activities : Array[CumulativeActivity], machine : Int, min : Int = Int.MinValue, max : Int = Int.MaxValue) : Constraint = {
 
+	  require (activities nonEmpty)
+	  
 		val cp = activities(0).store
 
 		if (max != Int.MaxValue) {

@@ -49,7 +49,7 @@ class AlternativeUnitResource(scheduler : CPScheduler) {
 
 object AlternativeUnitResource {
 	
-	def apply(scheduler : CPScheduler) = new AlternativeCumulativeResource(scheduler)
+	def apply(scheduler : CPScheduler) = new AlternativeUnitResource(scheduler)
 	
 	def apply(scheduler: CPScheduler, nResources : Int, capa : Int) = {
 		

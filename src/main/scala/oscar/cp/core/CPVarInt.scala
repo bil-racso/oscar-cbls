@@ -17,6 +17,8 @@
 
 package oscar.cp.core
 
+import oscar.cp.constraints.ElementCst
+
 
 abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int] {
 
@@ -606,7 +608,7 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
 	/**
 	 * b <=> x > y
 	 */
-	def >>=(y: CPVarInt) = this.isGrEq(y+1)		
+	def >>=(y: CPVarInt) = this.isGrEq(y+1)
 	/**
 	 * b <=> x >= y
 	 */
@@ -623,7 +625,31 @@ abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int
 	 * b <=> x > y
 	 */
 	def <<=(y: CPVarInt) = this <== (y-1)	
+	
+	def is (array: Array[Int]) = new ElementDescriptor1D(array, this)
+	def is (array: Array[CPVarInt]) = new ElementDescriptor1DVar(array, this)
+	def is (array: Array[Array[Int]]) = new ElementDescriptor2D(array, this)
+	
 }
+
+class ElementDescriptor1D(array: Array[Int], res: CPVarInt){
+  def at(v: CPVarInt)={
+    new oscar.cp.constraints.ElementCst(array, v, res)
+  }
+}
+class ElementDescriptor1DVar(array: Array[CPVarInt], res: CPVarInt){
+	def at(v: CPVarInt)={
+		new oscar.cp.constraints.ElementVar(array, v, res)
+	}
+}
+
+class ElementDescriptor2D(array: Array[Array[Int]], res: CPVarInt){
+	
+	def at(v: CPVarInt, w: CPVarInt)={
+		oscar.cp.constraints.ElementCst2D(array, v, w, res)
+	}
+}
+
 
 object CPVarInt {
 

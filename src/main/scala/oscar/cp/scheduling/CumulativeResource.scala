@@ -177,6 +177,14 @@ class CumulativeResource(scheduler: CPScheduler, maxCapa: Int = Int.MaxValue, mi
 
 }
 
+object CumulativeResource{
+  def apply(scheduler: CPScheduler, capaMin: Int, capaMax: Int, name: String = null) = 
+    new CumulativeResource(scheduler, capaMin, capaMax, name)
+  def max(scheduler: CPScheduler, capa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa = capa, n = name)
+  def min(scheduler: CPScheduler, capa: Int, name: String = null) = new CumulativeResource(scheduler, minCapa = capa, n = name)
+  def container(scheduler: CPScheduler, maxCapa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa, 0, name)
+}
+
 object MaxResource {
 
   def apply(scheduler: CPScheduler, capa: Int, name: String = null) = new CumulativeResource(scheduler, maxCapa = capa, n = name)

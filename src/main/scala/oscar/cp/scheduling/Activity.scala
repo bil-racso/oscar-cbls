@@ -26,209 +26,210 @@ import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.core.CPOutcome
 
-class Activity(val scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, n : String = null, existingId : Option[Int] = None) {
+class NewActivity(scheduler: CPScheduler) extends Activity(scheduler, CPVarInt(scheduler, 0 to scheduler.horizon), CPVarInt(scheduler, 0 to scheduler.horizon), CPVarInt(scheduler, 0 to scheduler.horizon))
 
-	// Linking the variables
-	scheduler.add(startVar + durVar == endVar)
-	// If no id is specified, link the activity to the scheduler and get an id
-	val id = existingId.getOrElse(scheduler.addActivity(this))
-	// Default name
-	val name = Option(n) getOrElse ("Activity " + id)
+class Activity(val scheduler: CPScheduler, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt, n: String = null, existingId: Option[Int] = None) {
 
-	// The variables
-	def start = startVar
-	def end = endVar
-	def dur = durVar
+  // Linking the variables
+  scheduler.add(startVar + durVar == endVar)
+  // If no id is specified, link the activity to the scheduler and get an id
+  val id = existingId.getOrElse(scheduler.addActivity(this))
+  // Default name
+  val name = Option(n) getOrElse ("Activity " + id)
 
-	// Earliest starting time
-	def est = start.min
-	// Latest starting time
-	def lst = start.max
-	// Earliest completion time assuming the smallest duration
-	def ect = end.min
-	// Latest completion time assuming the smallest duration
-	def lct = end.max
+  // The variables
+  def start = startVar
+  def end = endVar
+  def dur = durVar
 
-	// Current minimal duration of this activity
-	def minDuration = dur.min
-	// Current maximal duration of this activity
-	def maxDuration = dur.max
+  // Earliest starting time
+  def est = start.min
+  // Latest starting time
+  def lst = start.max
+  // Earliest completion time assuming the smallest duration
+  def ect = end.min
+  // Latest completion time assuming the smallest duration
+  def lct = end.max
 
-	def store = scheduler
+  // Current minimal duration of this activity
+  def minDuration = dur.min
+  // Current maximal duration of this activity
+  def maxDuration = dur.max
 
-	override def toString = name + "(s: " + start + ", d: " + dur + ", e: " + end + ")"
+  def store = scheduler
 
-	def adjustStart(v : Int) : CPOutcome = {
-		
-		if (startVar.updateMin(v) == CPOutcome.Failure)
-			return CPOutcome.Failure
-			
-		if (endVar.updateMin(v + durVar.min) == CPOutcome.Failure)
-			return CPOutcome.Failure
-		
-		return CPOutcome.Suspend
-	}
+  override def toString = name + "(s: " + start + ", d: " + dur + ", e: " + end + ")"
 
-	// Precedences 
-	// -----------------------------------------------------------
-	
-	def starts(delay : Int) 	   = ActivityPrecedence(startVar, delay)
-	def ends(delay : Int)          = ActivityPrecedence(endVar, delay)
-	def startsExactly(delay : Int) = ActivityPrecedence(startVar, delay, true)
-	def endsExactly(delay : Int)   = ActivityPrecedence(endVar, delay, true)
+  def adjustStart(v: Int): CPOutcome = {
 
-	def precedes(act : Activity)            = endsBeforeStartOf(act)
-	def endsBeforeEndOf(act : Activity)     = scheduler.add(endVar <= act.end)
-	def endsBeforeStartOf(act : Activity)   = scheduler.add(endVar <= act.start)
-	def startsBeforeEndOf(act : Activity)   = scheduler.add(startVar <= act.end)
-	def startsBeforeStartOf(act : Activity) = scheduler.add(startVar <= act.start)
-	
-	def endsAtEndOf(act : Activity) 		= scheduler.add(endVar == act.end)
-	def endsAtStartOf(act : Activity) 		= scheduler.add(endVar == act.start)
-	def startsAtEndOf(act : Activity) 		= scheduler.add(startVar == act.end)
-	def startsAtStartOf(act : Activity) 	= scheduler.add(startVar == act.start)
+    if (startVar.updateMin(v) == CPOutcome.Failure)
+      return CPOutcome.Failure
 
-	// Start and End
-	// -----------------------------------------------------------
+    if (endVar.updateMin(v + durVar.min) == CPOutcome.Failure)
+      return CPOutcome.Failure
 
-	def startsEarlierAt(t : Int) = { scheduler.add(startVar >= t) }
-	def startsLaterAt(t : Int)   = { scheduler.add(startVar <= t) }
-	def startsAt(t : Int)        = { scheduler.add(startVar == t) }
-	def endsEarlierAt(t : Int)   = { scheduler.add(endVar >= t) }
-	def endsLaterAt(t : Int)     = { scheduler.add(endVar <= t) }
-	def endsAt(t : Int) 		 = { scheduler.add(endVar == t) }
+    return CPOutcome.Suspend
+  }
 
-	// Needs / Gives
-	// -----------------------------------------------------------
+  // Precedences 
+  // -----------------------------------------------------------
 
-	// UnitResource
-	def needs(resource : UnitResource) {
-		resource.addActivity(this)
-	}
-	
-	def needs(resources : UnitResource*) {
-		val cum = CumulativeActivity(this, 1, resources.map(_.id).toArray)
-		new AlternativeUnitUsage(this, cum)
-	}
+  def starts(delay: Int) = ActivityPrecedence(startVar, delay)
+  def ends(delay: Int) = ActivityPrecedence(endVar, delay)
+  def startsExactly(delay: Int) = ActivityPrecedence(startVar, delay, true)
+  def endsExactly(delay: Int) = ActivityPrecedence(endVar, delay, true)
 
-	// CumulativeResource	
-	def needs(height : ImplicitVarInt) = {
-		new NeedsUsage(this, height)
-	}
+  def precedes(act: Activity) = endsBeforeStartOf(act)
+  def endsBeforeEndOf(act: Activity) = scheduler.add(endVar <= act.end)
+  def endsBeforeStartOf(act: Activity) = scheduler.add(endVar <= act.start)
+  def startsBeforeEndOf(act: Activity) = scheduler.add(startVar <= act.end)
+  def startsBeforeStartOf(act: Activity) = scheduler.add(startVar <= act.start)
 
-	def gives(height : ImplicitVarInt) = {
-		new GivesUsage(this, height)
-	}
-	
-	def needsF(height : ImplicitVarInt) = {
-		new NeedsFUsage(this, height, true)
-	}
+  def endsAtEndOf(act: Activity) = scheduler.add(endVar == act.end)
+  def endsAtStartOf(act: Activity) = scheduler.add(endVar == act.start)
+  def startsAtEndOf(act: Activity) = scheduler.add(startVar == act.end)
+  def startsAtStartOf(act: Activity) = scheduler.add(startVar == act.start)
 
-	def givesF(height : ImplicitVarInt) = {
-		new GivesFUsage(this, height, true)
-	}
-	
-	def needsFAtEnd(height : ImplicitVarInt) = {
-		new NeedsFUsage(this, height, true)
-	}
+  def mirror(a: Activity){
+    this startsAtStartOf(a)
+    this endsAtEndOf(a)
+  }
 
-	def givesFAtEnd(height : ImplicitVarInt) = {
-		new GivesFUsage(this, height, true)
-	}
-	
-	def needsAtStart(height : ImplicitVarInt) = {
-		new NeedsFUsage(this, height, false)
-	}
+  
+  // Start and End
+  // -----------------------------------------------------------
 
-	def givesFAtStart(height : ImplicitVarInt) = {
-		new GivesFUsage(this, height, false)
-	}
+  def startsEarlierAt(t: Int) = { scheduler.add(startVar >= t) }
+  def startsLaterAt(t: Int) = { scheduler.add(startVar <= t) }
+  def startsAt(t: Int) = { scheduler.add(startVar == t) }
+  def endsEarlierAt(t: Int) = { scheduler.add(endVar >= t) }
+  def endsLaterAt(t: Int) = { scheduler.add(endVar <= t) }
+  def endsAt(t: Int) = { scheduler.add(endVar == t) }
 
-	/**
-	 * forces the update of start, end, dur
-	 */
-	def update() : CPOutcome = {
-		
-		// end <= start
-		if (end.updateMin(start.min) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		else if (start.updateMax(end.max) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		// end = start + dur
-		else if (end.updateMax(start.max + dur.max) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		else if (end.updateMin(start.min + dur.min) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		// start = end - dur
-		else if (start.updateMax(end.max - dur.min) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		else if (start.updateMin(end.min - dur.max) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		// dur = end - start
-		else if (dur.updateMax(end.max - start.min) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		else if (dur.updateMin(end.min - start.max) == CPOutcome.Failure) {
-			CPOutcome.Failure
-		} 
-		else CPOutcome.Suspend
-	}
+  // Needs / Gives
+  // -----------------------------------------------------------
+
+  // UnitResource
+  def needs(resource: UnitResource) {
+    resource.addActivity(this)
+  }
+
+  def needs(resources: UnitResource*) {
+
+    val cum = CumulativeActivity(this, 1, resources.map(_.id).toArray)
+    new AlternativeUnitUsage(this, cum)
+  }
+
+  // CumulativeResource	
+  def needs(height: ImplicitVarInt) = {
+    new NeedsUsage(this, height)
+  }
+
+  def gives(height: ImplicitVarInt) = {
+    new GivesUsage(this, height)
+  }
+
+  def needsF(height: ImplicitVarInt) = {
+    new NeedsFUsage(this, height, true)
+  }
+
+  def givesF(height: ImplicitVarInt) = {
+    new GivesFUsage(this, height, true)
+  }
+
+  def needsFAtEnd(height: ImplicitVarInt) = {
+    new NeedsFUsage(this, height, true)
+  }
+
+  def givesFAtEnd(height: ImplicitVarInt) = {
+    new GivesFUsage(this, height, true)
+  }
+
+  def needsAtStart(height: ImplicitVarInt) = {
+    new NeedsFUsage(this, height, false)
+  }
+
+  def givesFAtStart(height: ImplicitVarInt) = {
+    new GivesFUsage(this, height, false)
+  }
+
+  /**
+   * forces the update of start, end, dur
+   */
+  def update(): CPOutcome = {
+
+    // end <= start
+    if (end.updateMin(start.min) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } else if (start.updateMax(end.max) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } // end = start + dur
+    else if (end.updateMax(start.max + dur.max) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } else if (end.updateMin(start.min + dur.min) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } // start = end - dur
+    else if (start.updateMax(end.max - dur.min) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } else if (start.updateMin(end.min - dur.max) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } // dur = end - start
+    else if (dur.updateMax(end.max - start.min) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } else if (dur.updateMin(end.min - start.max) == CPOutcome.Failure) {
+      CPOutcome.Failure
+    } else CPOutcome.Suspend
+  }
 }
 
 object Activity {
 
-	def apply(scheduler : CPScheduler, dur : ImplicitVarInt, n : String = null) = {
+  def apply(scheduler: CPScheduler, dur: ImplicitVarInt, n: String = null) = {
 
-		val durVar = dur.toCPVarInt(scheduler)
+    val durVar = dur.toCPVarInt(scheduler)
 
-		val startVar : CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
-		val endVar   : CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
+    val startVar: CPVarInt = CPVarInt(scheduler, 0 to scheduler.horizon - durVar.min)
+    val endVar: CPVarInt = CPVarInt(scheduler, durVar.min to scheduler.horizon)
 
-		new Activity(scheduler, startVar, durVar, endVar, n)
-	}
+    new Activity(scheduler, startVar, durVar, endVar, n)
+  }
 }
 
-class MirrorActivity(val act : Activity) extends Activity(act.scheduler, act.start, act.dur, act.end, n = act.name, existingId = Option(act.id)) {
+class MirrorActivity(val act: Activity) extends Activity(act.scheduler, act.start, act.dur, act.end, n = act.name, existingId = Option(act.id)) {
 
-	override def start : CPVarInt = throw new UninitializedFieldError("not available")
-	override def end   : CPVarInt = throw new UninitializedFieldError("not available")
+  override def start: CPVarInt = throw new UninitializedFieldError("not available")
+  override def end: CPVarInt = throw new UninitializedFieldError("not available")
 
-	// Earliest starting time
-	override def est = -act.lct;
-	// Latest starting time
-	override def lst = -act.ect;
-	// Earliest completion time assuming the smallest duration
-	override def ect = -act.lst
-	// Latest completion time assuming the smallest duration
-	override def lct = -act.est
+  // Earliest starting time
+  override def est = -act.lct;
+  // Latest starting time
+  override def lst = -act.ect;
+  // Earliest completion time assuming the smallest duration
+  override def ect = -act.lst
+  // Latest completion time assuming the smallest duration
+  override def lct = -act.est
 
-	override def adjustStart(v : Int) : CPOutcome = {
-		
-		if (end.updateMax(-v) == CPOutcome.Failure)
-			return CPOutcome.Failure
-			
-		if (start.updateMax(-v + dur.min) == CPOutcome.Failure)
-			return CPOutcome.Failure
-			
-		return CPOutcome.Suspend
-	}
-	
-	override def toString() = "mirror of activity:" + act;
+  override def adjustStart(v: Int): CPOutcome = {
 
-	// Precedences
-	override def precedes(act : Activity) = throw new UninitializedFieldError("not available")
-	override def endsBeforeEndOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def endsBeforeStartOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def startsBeforeEndOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def startsBeforeStartOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def endsAtEndOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def endsAtStartOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def startsAtEndOf(act : Activity) = throw new UninitializedFieldError("not available")
-	override def startsAtStartOf(act : Activity) = throw new UninitializedFieldError("not available")
+    if (end.updateMax(-v) == CPOutcome.Failure)
+      return CPOutcome.Failure
+
+    if (start.updateMax(-v + dur.min) == CPOutcome.Failure)
+      return CPOutcome.Failure
+
+    return CPOutcome.Suspend
+  }
+
+  override def toString() = "mirror of activity:" + act;
+
+  // Precedences
+  override def precedes(act: Activity) = throw new UninitializedFieldError("not available")
+  override def endsBeforeEndOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def endsBeforeStartOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def startsBeforeEndOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def startsBeforeStartOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def endsAtEndOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def endsAtStartOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def startsAtEndOf(act: Activity) = throw new UninitializedFieldError("not available")
+  override def startsAtStartOf(act: Activity) = throw new UninitializedFieldError("not available")
 }

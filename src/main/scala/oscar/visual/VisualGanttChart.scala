@@ -3,7 +3,6 @@ package oscar.visual
 import oscar.visual._
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
-
 import java.awt.geom.Line2D
 import java.awt.Color
 
@@ -14,7 +13,9 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	   	rect.innerCol = colors(a)
 	   	rect 
 	})
-	   												                       
+	   		
+	def tooltip(i: Int,s: String){ rectangles(i).toolTip = s}
+	
 	private val max = (0 until activities.size).map(i => f(i)).max
 	
 	private val text : VisualText = new VisualText(this, 50, 50, "")
@@ -23,6 +24,8 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	   												               
 	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
 	makespanLine.outerCol = Color.RED;
+	
+	def maxX = makespanLine.dest._1	
 	
 	def update(xScale : Int, yScale: Int) {
 		
@@ -34,6 +37,7 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 			rectangles(i).move(activities(i).est*xScale, f(i)*yScale)
 			
 			rectangles(i).innerCol = colors(i)
+			
 		}
 		
 		val makespan = activities.map(_.lct).max
