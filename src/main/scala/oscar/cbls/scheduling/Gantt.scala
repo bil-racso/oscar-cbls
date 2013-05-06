@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cbls.scheduling
 
 import java.awt.Color
@@ -42,9 +56,8 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
     rect
   })
 
-  private val text : VisualText = new VisualText(this, 50, 50, "")
+  private val text : VisualText = new VisualText(this, 50, 50, "",true)
   text.innerCol = Color.RED
-  text.setCentered(true)
 
   private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
   makespanLine.outerCol = Color.RED;
@@ -63,7 +76,7 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
     makespanLine.orig = ((p.MakeSpan.value*xScale).ceil, 0)
     makespanLine.dest = ((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
 
-    text.setText(p.MakeSpan.value.toString)
+    text.text = p.MakeSpan.value.toString
     text.move((p.MakeSpan.value*xScale).ceil.toInt, (LineCount+2)*yScale);
     repaint()
   }

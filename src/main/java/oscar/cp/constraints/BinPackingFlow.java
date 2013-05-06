@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -73,7 +71,7 @@ public class BinPackingFlow extends Constraint {
 		for (int i = 0; i < sizes.length; i++) {
 			if (x[i].isBound()) {
 				int j = x[i].getValue();
-				l_t[j].setValue(l_t[j].getValue() + sizes[j]);
+				l_t[j].setValue(l_t[j].getValue() + sizes[i]);
 				c_t[j].incr();
 			}
 			else {
@@ -93,10 +91,23 @@ public class BinPackingFlow extends Constraint {
 	    return CPOutcome.Suspend;
 	}
 	
+	private void printDebug() {
+		for (int i = 0; i < x.length; i++) {
+			System.out.println("x"+i+"="+x[i]+ "w"+i+"="+sizes[i]);
+		}
+		for (int j = 0; j < l.length; j++) {
+			System.out.println("load"+j+"="+l[j]+" card:"+c[j]+" packedload="+l_t[j]+" packedcard="+c_t[j]);
+		}
+		
+	}
+	
 	@Override
 	protected CPOutcome propagate() {
+		//printDebug();
 		for (int j = 0; j < l.length; j++) {
-			if (setCardinality(j) == CPOutcome.Failure){
+			//System.out.println("set card bin "+j);
+			if (setCardinality(j) == CPOutcome.Failure) {
+				//System.out.println("failure set card");
 		        return CPOutcome.Failure;
 		    }
 		}
@@ -124,6 +135,7 @@ public class BinPackingFlow extends Constraint {
 	    }
 	    if(v < minVal) return CPOutcome.Failure; //not possible to reach the minimum level
 	    int nbMin = nbAdded + c_t[j].getValue();
+	    //System.out.println("cardmin="+nbMin);
 	    if (c[j].updateMin(nbMin) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }
@@ -139,6 +151,7 @@ public class BinPackingFlow extends Constraint {
 	      i++;
 	    }
 	    int nbMax = nbAdded + c_t[j].getValue();
+	    //System.out.println("cardmax="+nbMax);
 	    if (c[j].updateMax(nbMax) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }

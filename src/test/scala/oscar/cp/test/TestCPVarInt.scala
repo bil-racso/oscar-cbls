@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cp.test
 
 import org.scalatest.FunSuite
@@ -73,6 +87,23 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	  x.toSet should be(Set(0,1,2,3,4))
 	  cp.add(x != 2)
 	  x.toSet should be(Set(0,1,3,4))
-	}	
+	}
 	
+	test("isBound test - var does get bound") {
+		val cp = CPSolver()
+		val a = CPVarInt(cp, Array(10, 20, 30))
+		a.isBound should be(false)
+		cp.add(a == 10)
+		a.isBound should be(true)
+	}
+	
+	test("isBound test - var doesn't get bound") {
+		val cp = CPSolver()
+		val a = CPVarInt(cp, Array(10, 20, 30))
+		a.isBound should be(false)
+		
+		evaluating {
+			cp.add(a < 10)
+		} should produce [NoSolutionException]
+	}
 }

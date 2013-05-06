@@ -22,7 +22,7 @@ libraryDependencies += "com.typesafe" %% "scalalogging-slf4j" % "1.0.1"
 
 //unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "lib_commercial") }
 
-scalacOptions ++= Seq("-P:continuations:enable") //,"-optimize"
+scalacOptions ++= Seq("-P:continuations:enable", "-Xdisable-assertions") //,"-optimize"
 
 seq(assemblySettings: _*)
 

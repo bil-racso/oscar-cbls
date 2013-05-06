@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -28,57 +42,90 @@ import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.reversible._
 import oscar.util._
+import oscar.cp.multiobjective.ListPareto
+import oscar.cp.multiobjective.Pareto
+import oscar.cp.constraints.ParetoConstraint
 
-class NoSol(msg: String) extends Exception(msg)
 
 class CPSolver() extends Store() {
 
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
     this.add(cons, propagStrength)
   }
-
-  var stateObjective: Unit => Unit = Unit => Unit
+  
+  var objective = new CPObjective(this, Array[CPObjectiveUnit]());
+  
+  private var stateObjective: Unit => Unit = Unit => Unit
+  
+  private val decVariables = scala.collection.mutable.Set[CPVarInt]()
+  var lastSol = new CPSol(Set[CPVarInt]())
+  var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
+  var recordNonDominatedSolutions = false
+  
+  def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
+  def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
+  
+  def addDecisionVariables(x: Iterable[CPVarInt]) {
+    x.foreach(decVariables += _)
+  }
+  
+  private def recordSol() {
+    lastSol = new CPSol(decVariables.toSet)
+  }
+  
+  def obj(objVar: CPVarInt): CPObjectiveUnit = {
+    objective(objVar)
+  }
 
   def optimize(obj: CPObjective): CPSolver = {
     stateObjective = Unit => {
       objective = obj
-      post(obj)
+      postCut(obj)
     }
     this
   }
 
-  def minimize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMinimize(obj))
-      post(objective)
-    }
-    this
-  }
-
-  //(obj1,weight1,id1,"name1"),(obj2,weight2,id2,"name2")
+  def minimize(objective: CPVarInt): CPSolver = minimize(Seq(objective): _*)
   
-  def minimize(objectives: CPVarInt*): CPSolver = {
-    stateObjective = Unit => {
-      
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*)
-      post(objective)
-    }
-    this
-  }
+  def minimize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
 
-  def maximize(obj: CPVarInt): CPSolver = {
-    stateObjective = Unit => {
-      objective = new CPObjective(this, new CPObjectiveUnitMaximize(obj)) // must be maximize
-      post(objective)
-    }
-    this
-  }
+  def maximize(objective: CPVarInt): CPSolver = maximize(Seq(objective): _*)
 
-  def maximize(objectives: CPVarInt*): CPSolver = {
+  def maximize(objectives: CPVarInt*): CPSolver = 
+    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
+  
+  def paretoMinimize(objective: CPVarInt): CPSolver = paretoOptimize((objective, false))  
+  
+  def paretoMinimize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
+  
+  def paretoMaximize(objective: CPVarInt): CPSolver = paretoOptimize((objective, true))
+  
+  def paretoMaximize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
+  
+  def paretoOptimize(objVarModes: (CPVarInt, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
+  
+  def paretoOptimize(objVarMode: (CPVarInt, Boolean)*): CPSolver = {
+    
+    // objVar of each objective
+    val objectives = objVarMode.map(_._1).toArray
+    // true if objective i has to be maximized
+    val isMax = objVarMode.map(_._2).toArray
+    
     stateObjective = Unit => {
-      objective = new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*) // must be maximize
-      post(objective)
+      recordNonDominatedSolutions = true
+      objective = new CPObjective(this, (for(i <- 0 until isMax.size) yield {
+        if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
+        else new CPObjectiveUnitMinimize(objectives(i))
+      }):_*)
+      postCut(objective)
+      objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     }
+    
+    addDecisionVariables(objectives)
+    paretoSet = new ListPareto[CPSol](isMax)
+    // Adds a dominance constraint with all objectives in minimization mode
+    addCut(new ParetoConstraint(paretoSet, isMax, objectives.toArray))
     this
   }
 
@@ -86,15 +133,13 @@ class CPSolver() extends Store() {
     this
   }
 
-
-
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
       stateObjective()
       pushState()
     } catch {
-      case ex: NoSol => println("No Solution, inconsistent model")
+      case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
   }
@@ -105,7 +150,7 @@ class CPSolver() extends Store() {
   def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 
   def minDom(x: CPVarInt): Int = x.size
-  def minRegre(x: CPVarInt): Int = x.max - x.min
+  def minRegret(x: CPVarInt): Int = x.max - x.min
   def minDomMaxDegree(x: CPVarInt): (Int, Int) = (x.size, -x.constraintDegree)
   def minVar(x: CPVarInt): Int = 1
   def maxDegree(x: CPVarInt): Int = -x.constraintDegree
@@ -139,7 +184,7 @@ class CPSolver() extends Store() {
    * Deterministic branching:
    * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
-  def binary(vars: Array[CPVarInt]): Unit @suspendable = {
+  def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
     binary(vars,vars.indexOf(_),minVal)
   }
   
@@ -153,9 +198,9 @@ class CPSolver() extends Store() {
    * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binary[T](vars: Array[CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
+  def binary[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val x = selectMin(vars)(!_.isBound)(varHeuris).get
+      val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
@@ -192,10 +237,15 @@ class CPSolver() extends Store() {
       branch(post(x <= median))(post(x > median))
     }
   }
-  
+
   override def update() = propagate()
   override def solFound() = {
     super.solFound()
+    lastSol = new CPSol(decVariables.toSet)
+    if (recordNonDominatedSolutions) {
+      if (!silent) println("new solution:"+objective.objs.map(_.objVar.value).toArray.mkString(","))
+      paretoSet.insert(lastSol, objective.objs.map(_.objVar.value):_*)
+    }
     objective.tighten()
   }
 
@@ -206,9 +256,6 @@ class CPSolver() extends Store() {
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())
   }
-  
-
-
 }
 
 object CPSolver {

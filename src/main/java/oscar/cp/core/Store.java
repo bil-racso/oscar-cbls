@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.core;
 
@@ -61,8 +59,7 @@ public class Store extends ReversibleSearchNode {
 	
 	private boolean inPropagate = false;
 	
-	public CPObjective objective = new CPObjective(this, new CPObjectiveUnit[]{});
-
+	public LinkedList<Constraint> cutConstraints = new LinkedList<Constraint>();
 	
 	@SuppressWarnings("unchecked")
 	public Store(){
@@ -80,10 +77,6 @@ public class Store extends ReversibleSearchNode {
 			propagQueueL2[i] = new LinkedList<Constraint>();
 		}
 		highestPriorL2 = 0;
-	}
-	
-	public void setObjective(CPObjective o) {
-		this.objective = o;
 	}
 	
 	/**
@@ -295,6 +288,12 @@ public class Store extends ReversibleSearchNode {
 		}
 		return status.getValue();
 	}
+	
+	private void addCutConstraints() {
+		for (Constraint c: cutConstraints) {
+			propagQueueL2[c.priorityL2].add(c);
+		}
+	}
 
     /**
      * Fix Point algorithm
@@ -305,7 +304,9 @@ public class Store extends ReversibleSearchNode {
 		
 		long t0 = System.currentTimeMillis();
 		inPropagate = true;
-		CPOutcome ok = objective.propagate();
+		//CPOutcome ok = objective.propagate();
+		CPOutcome ok = CPOutcome.Suspend;
+		addCutConstraints();
 		while (ok != CPOutcome.Failure) {
 			int p;
 			
@@ -352,6 +353,10 @@ public class Store extends ReversibleSearchNode {
 		return post(c, CPPropagStrength.Weak);
 	}
 	
+	public CPOutcome postCut(Constraint c) {
+		return postCut(c, CPPropagStrength.Weak);
+	}
+	
     /**
      * Add a constraint b == true to the store (with a Weak propagation strength) in a reversible way and trigger the fix-point algorithm. <br>
      * In a reversible way means that the constraint is present in the store only for descendant nodes.
@@ -387,6 +392,13 @@ public class Store extends ReversibleSearchNode {
 		status.setValue(oc);
 		return status.getValue();
 	}
+	
+	public CPOutcome postCut(Constraint c, CPPropagStrength st) {
+		CPOutcome ok = post(c,st);
+		cutConstraints.add(c);
+		return ok;
+	}
+	
 
     /**
      * Add a set of constraints to the store (with a Weak propagation strength) in a reversible way and trigger the fix-point algorithm afterwards.
@@ -447,6 +459,12 @@ public class Store extends ReversibleSearchNode {
             throw  new NoSolutionException("the store failed when adding constraint :"+c);
         }
     }
+    
+    public void addCut(Constraint c) {
+        if (postCut(c) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+            throw  new NoSolutionException("the store failed when adding constraint :"+c);
+        }
+    }    
 
     /**
      * Add a constraint to the store in a reversible way and trigger the fix-point algorithm. <br>
