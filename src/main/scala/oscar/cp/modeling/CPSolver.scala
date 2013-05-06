@@ -46,7 +46,6 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-class NoSol(msg: String) extends Exception(msg)
 
 class CPSolver() extends Store() {
 
@@ -140,7 +139,7 @@ class CPSolver() extends Store() {
       stateObjective()
       pushState()
     } catch {
-      case ex: NoSol => println("No Solution, inconsistent model")
+      case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
   }
