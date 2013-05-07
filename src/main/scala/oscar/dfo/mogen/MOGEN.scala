@@ -23,7 +23,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
   /** The set of non-dominated points (approximation of the Pareto front) */
   var archive = LinearList[E]()
   /** The iterate selection heuristic */
-  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.hyperPlaneSelect//MOGEN.fairSelect
+  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.fairSelect//MOGEN.hyperPlaneSelect
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
 
@@ -57,6 +57,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     MOGEN.onArchChan(archive)
     var nbIterations = 1
     while (nbIterations <= maxIters) {
+      println("Iteration nb: " + nbIterations)
       performIteration(nbIterations)
       nbIterations += 1
     }

@@ -54,7 +54,10 @@ object NelderMead extends ComparativeAlgorithm {
             // The contracted point is worse than the reflected point => shrink
             else {
               nmState.applyShrink(comparator, evaluator, feasReg)
-              return nmState.simplex.toList
+              if (nmState.getSmallestEdge < tolerance) {
+                nmState.reinitializeSimplex(evaluator, feasReg, comparator)
+              }
+              return nmState.simplex.drop(1).toList
             }
           }
         }
@@ -66,15 +69,5 @@ object NelderMead extends ComparativeAlgorithm {
   
   def getInitialState[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
     NelderMeadState(coordinates, startIntervals, evaluator, feasReg, comparator)
-  }
-  
-  def minimalSizeOfSimplex(simplex: Array[Array[Double]]): Double = {
-    var minDist = Double.MaxValue
-    for (i <- 0 until simplex.length) {
-      for (j <- (i + 1) until simplex.length) {
-        minDist = math.min(minDist, ArrayUtils.euclidianDistance(simplex(i), simplex(j)))
-      }
-    }
-    minDist
   }
 }

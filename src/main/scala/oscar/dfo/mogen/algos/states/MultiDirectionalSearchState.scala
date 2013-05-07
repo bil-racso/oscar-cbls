@@ -6,8 +6,9 @@ import oscar.util.mo.MOOComparator
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.FeasibleRegion
 import oscar.dfo.mogen.utils.ArrayUtils
+import oscar.util.mo.RandomGenerator
 
-class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
+class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val intervals: Array[(Double, Double)]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit.clone
   var bestPoint = simplex(0)
   
@@ -15,7 +16,7 @@ class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E
   var gammaE = 2.0
   
   def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
-    val newState = MultiDirectionalSearchState(simplex)
+    val newState = MultiDirectionalSearchState(simplex, intervals)
     newState.gammaS = this.gammaS
     newState.gammaE = this.gammaE
     newState.bestPoint = newBestPoint
@@ -41,8 +42,21 @@ class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E
       simplex(i) = newSimplex(i)
     orderSimplex(comparator)
   }
+  
+  def reinitializeSimplex(evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): Unit = reinitializeSimplex(intervals, evaluator, feasReg, comparator)
 }
 
 object MultiDirectionalSearchState {
-  def apply[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) = new MultiDirectionalSearchState(simplexInit)
+  def apply[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], intervals: Array[(Double, Double)]) = new MultiDirectionalSearchState(simplexInit, intervals)
+  
+  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+    val simplex = Array.tabulate(coordinates.length + 1){ index =>
+      if (index == 0) coordinates
+      else {
+        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1))
+        Array.tabulate(coordinates.length)(i => coordinates(i) + randPerturbation(i))
+      }
+    }
+    MultiDirectionalSearchState(simplex.map(coord => evaluator.eval(coord, feasReg)), startIntervals)
+  }
 }

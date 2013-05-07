@@ -9,7 +9,7 @@ import oscar.util.mo.RandomGenerator
 import oscar.dfo.mogen.utils.ArrayUtils
 import oscar.dfo.mogen.utils.Simplex
 
-class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
+class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val intervals: Array[(Double, Double)]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit
   var bestPoint = simplex(0)
 
@@ -20,7 +20,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
   var gammaS = 0.5
   
   def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
-    val newState = NelderMeadState(simplex)
+    val newState = NelderMeadState(simplex, intervals)
     newState.deltaR = this.deltaR
     newState.deltaE = this.deltaE
     newState.deltaOC = this.deltaOC
@@ -60,13 +60,15 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
       simplex(i) = evaluator.eval(ArrayUtils.arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
     }
     orderSimplex(comparator)
-  }  
+  }
+  
+  def reinitializeSimplex(evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): Unit = reinitializeSimplex(intervals, evaluator, feasReg, comparator)
 }
 
 object NelderMeadState {
-  def apply[E <% Ordered[E]](simplex: Array[MOOPoint[E]]) = new NelderMeadState(simplex)
+  def apply[E <% Ordered[E]](simplex: Array[MOOPoint[E]], intervals: Array[(Double, Double)]) = new NelderMeadState(simplex, intervals)
   
-  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): NelderMeadState[E] = {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {
@@ -74,6 +76,6 @@ object NelderMeadState {
         Array.tabulate(coordinates.length)(i => coordinates(i) + randPerturbation(i))
       }
     }
-    NelderMeadState(simplex.map(coord => evaluator.eval(coord, feasReg)))
+    NelderMeadState(simplex.map(coord => evaluator.eval(coord, feasReg)), startIntervals)
   }
 }

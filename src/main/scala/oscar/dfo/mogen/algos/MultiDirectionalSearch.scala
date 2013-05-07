@@ -11,9 +11,13 @@ import oscar.dfo.mogen.algos.states.MultiDirectionalSearchState
 
 object MultiDirectionalSearch extends ComparativeAlgorithm {
   
+  var tolerance = math.pow(10.0, -3.0)
+  
   def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]] = {
     state match {
       case mdsState: MultiDirectionalSearchState[E] => {
+        println("Smallest simplex edge: " + mdsState.getSmallestEdge)
+        mdsState.printSimplex
         val rotatedPoints = mdsState.getRotation(evaluator, feasReg)
         val goodRotatedPoints = rotatedPoints.drop(1).filter(candidatePoint => comparator.cmpWithArchive(candidatePoint, mdsState.bestPoint, currentArchive))
         // The rotation discovered some new interesting points
@@ -28,6 +32,7 @@ object MultiDirectionalSearch extends ComparativeAlgorithm {
               mdsState.applyMultiPointTransformation(expandedPoints, comparator)
               expandedPoints.drop(1).toList
             }
+            // Rotated points are more interesting than expanded points
             else {
               mdsState.applyMultiPointTransformation(rotatedPoints, comparator)
               rotatedPoints.drop(1).toList
@@ -40,9 +45,14 @@ object MultiDirectionalSearch extends ComparativeAlgorithm {
         }
         // The rotation didn't discover any new interesting point, a shrink is performed
         else {
-          val newSimplex = mdsState.getShrink(evaluator, feasReg)
-          mdsState.applyMultiPointTransformation(newSimplex, comparator)
-          newSimplex.drop(1).toList
+          val shrunkSimplex = mdsState.getShrink(evaluator, feasReg)
+          mdsState.applyMultiPointTransformation(shrunkSimplex, comparator)
+          if (mdsState.getSmallestEdge < tolerance) {
+            mdsState.reinitializeSimplex(evaluator, feasReg, comparator)
+            return mdsState.simplex.drop(1).toList
+          }
+          else
+            mdsState.simplex.drop(1).toList
         }
       }
       case _ => throw new IllegalArgumentException("The MultiDirectional Direct Searc algorithm can only be used with a state for Nelder-Mead")
@@ -51,7 +61,7 @@ object MultiDirectionalSearch extends ComparativeAlgorithm {
   
   // TODO: Change this piece of code
   def getInitialState[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
-    NelderMeadState(coordinates, startIntervals, evaluator, feasReg, comparator)
+    MultiDirectionalSearchState(coordinates, startIntervals, evaluator, feasReg, comparator)
   }
   
 }

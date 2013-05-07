@@ -4,6 +4,8 @@ import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOOComparator
 import oscar.util.mo.RandomGenerator
 import scala.util.continuations._
+import oscar.util.mo.MOEvaluator
+import oscar.util.mo.FeasibleRegion
 
 trait Simplex[E] {
 
@@ -29,6 +31,26 @@ trait Simplex[E] {
     println("=" * 80)
     for (i <- 0 until simplexSize)
       println(i + ": " + simplex(i).toString)
+  }
+  
+  def getSmallestEdge: Double = {
+    val coords = simplex.map(point =>point.coordinates)
+    var minDist = Double.MaxValue
+    for (i <- 0 until simplex.length) {
+      for (j <- (i + 1) until simplex.length) {
+        minDist = math.min(minDist, ArrayUtils.euclidianDistance(coords(i), coords(j)))
+      }
+    }
+    minDist
+  }
+  
+  def reinitializeSimplex(intervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): Unit = {
+    val newCoords = Array.tabulate(bestPoint.coordinates.length){ index =>
+      val randPerturbation = intervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1))
+      Array.tabulate(bestPoint.coordinates.length)(i => bestPoint.coordinates(i) + randPerturbation(i))
+    }
+    for (i <- 1 until simplexSize)
+      simplex(i) = evaluator.eval(newCoords(i), feasReg)
   }
   
   def onInit(): Unit = {}
