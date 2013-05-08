@@ -39,8 +39,6 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
 	makespanLine.outerCol = Color.RED;
 	
-	def maxX = makespanLine.dest._1	
-	
 	def update(xScale : Int, yScale: Int) {
 		
 		for (i <- 0 until activities.size) {

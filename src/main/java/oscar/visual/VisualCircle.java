@@ -98,7 +98,7 @@ public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
 
 		try {
 			VisualFrame f = new VisualFrame("toto");
-			VisualDrawing d = new VisualDrawing(false);
+			VisualDrawing d = new VisualDrawing(false, true);
 			JInternalFrame inf = f.createFrame("Drawing");
 			inf.add(d);
 			f.pack();

@@ -35,7 +35,7 @@ public class VisualBinPacking extends VisualDrawing {
 	private ArrayList<VisualBinPackingItem> items = new ArrayList<VisualBinPacking.VisualBinPackingItem>();
 	
 	public VisualBinPacking(int nbBins, int binWidth) {
-		super(true);
+		super(true, true);
 		this.nbBins = nbBins;
 		this.binWidth = binWidth;
 	}

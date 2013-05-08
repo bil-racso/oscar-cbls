@@ -114,7 +114,8 @@ object VisualRectangle {
     inf.add(d);
     f.pack();
 
-    val rect = new VisualRectangle(d, 50, 50, 100, 50);
+    val rect = new VisualRectangle(d, 5, 50, 10, 50);
+    val rect2 = new VisualRectangle(d, 500, 50, 10, 50);
     rect.toolTip = "Hello";
 
     import oscar.util.VisualController._

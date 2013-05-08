@@ -19,7 +19,7 @@ import oscar.util.tree.PositionedNode
 import oscar.util.tree.Extent
 import javax.swing.SwingUtilities
 
-class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false) {
+class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false, false) {
   
   private def levelHeight = 4 * this.getFontMetrics(this.getFont()).getHeight()
   private def baseOffset = this.getFontMetrics(this.getFont()).stringWidth(tree.label.toString) + tree.minOffset
@@ -27,11 +27,13 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   var branchSet = Set[VisualLabelledBranch]()
   getRectangles
   
+  
   def this(tree: Node[T]) = {
     this(Node.design(tree))
   }
 
   def update(t: PositionedNode[T]) {
+    super.update
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
         tree = t
@@ -49,7 +51,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   }
   
   def getRectangles = {
-    def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
+    def rectAux(node: PositionedNode[T], accOffset: Double, level: Int):VisualLabelledRectangle = {
       val newNode = new VisualLabelledRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
       newNode.innerCol = node.col
       rectSet += newNode
@@ -59,8 +61,9 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
             level * levelHeight + newNode.height,
             accOffset + node.pos + node.sons(i).pos + newNode.getWidth(node.sons(i).label.toString) / 2,
             (level + 1) * levelHeight , node.edgeLabels(i).toString)
-        rectAux(node.sons(i), accOffset + node.pos, level + 1)
+        rectAux(node.sons(i), accOffset + node.pos, level + 1).toolTip = node.edgeLabels(i).toString
       }
+      newNode
     }
     rectAux(tree, baseOffset, 0)
   }
@@ -71,7 +74,8 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
     update
   }
   
-  def update = {
+  override def update = {
+    super.update
     //this.removeAll()
     rectSet.empty
     branchSet.empty
@@ -83,7 +87,9 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
 object VisualLabelledTree{
   	
   def main(args : Array[String]) {
-	val f = new VisualFrame("toto");
+	
+    
+    val f = new VisualFrame("toto");
 	val inf = f.createFrame("Drawing");
 	
 	val C = Node("C")

@@ -69,7 +69,7 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 		menuBar
 	}
 	
-	def  createFrame( title:String):JInternalFrame = {
+	def  createFrame( title:String ):JInternalFrame = {
 		val c = n%nbCols
 		val l = n/nbCols
 		

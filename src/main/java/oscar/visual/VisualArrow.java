@@ -64,7 +64,7 @@ public class VisualArrow extends VisualLine{
 
 		try {
 			VisualFrame f = new VisualFrame("toto");
-			VisualDrawing d = new VisualDrawing(false);
+			VisualDrawing d = new VisualDrawing(false, true);
 			JInternalFrame inf = f.createFrame("Drawing");
 			inf.add(d);
 			f.pack();

@@ -1,19 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.visual;
-
 
 import java.awt.Color
 import java.awt.BorderLayout
@@ -52,107 +53,119 @@ import javax.swing.JSlider
 import javax.swing.event.ChangeListener
 import javax.swing.event.ChangeEvent
 
-class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
+class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(new BorderLayout()) {
+
+  require(!flipped || resizable)
 
   setBackground(Color.white)
+
+  def scx = getWidth() / (maxX.toDouble * 1.1)
+  def scy = getHeight() / (maxY.toDouble * 1.1)
+
+  var shapes: Array[ColoredShape[Shape]] = Array();
+
+  def update{
+    /*
+     * smouthuy: if anyone knows where it would be better to set the preferred size, let's change this
+     * . Setting this in the repaint method is too costly
+     */
+	  if ( shapes != null && shapes.filter(_.shape != null).nonEmpty) this.setPreferredSize(new java.awt.Dimension(maxX,maxY))
+  }  
   
-  var drawingPanel: JPanel = new JPanel() {
-    override def paintComponent(g: Graphics) {
-      val s = shapes.filter(_.shape != null)
-      if (!s.isEmpty) {
-        val maxX = s.map{ s => 
-          val b = s.shape.getBounds() 
+  def maxX = shapes.filter(_.shape != null).map { s =>
+          val b = s.shape.getBounds()
           b.x + b.width
         }.max
-        val maxY = s.map { s =>
+        def maxY = shapes.filter(_.shape != null).map { s =>
           val b = s.shape.getBounds()
           b.y + b.height
         }.max
-        val scx = getWidth() / (maxX.toDouble * 1.1)
-        val scy = getHeight() / (maxY.toDouble * 1.1)
+  
+    var drawingPanel: JPanel = new JPanel() {
+    override def paintComponent(g: Graphics) {
+      
+      val s = shapes.filter(_.shape != null)
 
+      if (!s.isEmpty) {
+        
         if (flipped) {
           g.translate(0, getHeight());
           (g.asInstanceOf[Graphics2D]).scale(scx, -scy);
         } else {
-          (g.asInstanceOf[Graphics2D]).scale(scx, scy);
+          if (resizable) {
+            (g.asInstanceOf[Graphics2D]).scale(scx, scy);
+          } else{
+        	  (g.asInstanceOf[Graphics2D]).scale(1.0,1.0);
+            
+          }
         }
         super.paintComponent(g);
         for (s <- shapes) {
           s.draw(g.asInstanceOf[Graphics2D]);
         }
       }
+
     }
   }
 
 
-	var shapes:Array[ColoredShape[Shape]] = Array();
-		
-	drawingPanel.addMouseMotionListener(new MouseMotionListener() {
-		override def mouseMoved(e:MouseEvent) {
-			drawingPanel.setToolTipText("");
-			for (s <- shapes) {
-				s.showToolTip(e.getPoint());
-			}
-		}
-		
-		override def mouseDragged(arg0:MouseEvent) {
-		}
-	})
-	
-	
-	drawingPanel.setBackground(Color.white)
+  drawingPanel.addMouseMotionListener(new MouseMotionListener() {
+    override def mouseMoved(e: MouseEvent) {
+      drawingPanel.setToolTipText("");
+      for (s <- shapes) {
+        s.showToolTip(e.getPoint());
+      }
+    }
 
-	add(drawingPanel, BorderLayout.CENTER)
+    override def mouseDragged(arg0: MouseEvent) {
+    }
+  })
 
+  drawingPanel.setBackground(Color.white)
 
-	val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
-	
-	buttonPanel.setBackground(Color.white)
-	
-	
-	def showToolTip(text:String) {
-		drawingPanel.setToolTipText(text);
-	}
+  add(drawingPanel, BorderLayout.CENTER)
 
+  val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
 
-	def addShape(s:ColoredShape[Shape]) {
-		shapes :+= s
-		repaint()
-	}
-	
-	def clear() {
-	  shapes = Array()
-	  revalidate()
-	  repaint()
-	}
+  buttonPanel.setBackground(Color.white)
+
+  def showToolTip(text: String) {
+    drawingPanel.setToolTipText(text);
+  }
+
+  def addShape(s: ColoredShape[Shape]) {
+    shapes :+= s
+    repaint()
+  }
+
+  def clear() {
+    shapes = Array()
+    revalidate()
+    repaint()
+  }
 
 }
 
-object VisualDrawingTest{
-  def main(args : Array[String]) {
-		
-		val f = new VisualFrame("toto");
-		val d = new VisualDrawing(false);
-		val inf = f.createFrame("Drawing");
-		inf.add(d);
-		f.pack();
-		val r = new Rectangle2D.Double(0, 0,100,100);
-		
-		val rect = new ColoredShape[Rectangle2D](d,r);
-		
-	    
-		val l = new ColoredShape[Line2D](d,new Line2D.Double(0, 0, 100, 100));
-		
-		
-		try {
-			Thread.sleep(1000);
-		} catch{
-			case e : InterruptedException => e.printStackTrace();
-		}
-		rect.innerCol=Color.red;
-		
-		
-		
-	}
+object VisualDrawingTest {
+  def main(args: Array[String]) {
+
+    val f = new VisualFrame("toto");
+    val d = new VisualDrawing(false);
+    val inf = f.createFrame("Drawing");
+    inf.add(d);
+    f.pack();
+    val r = new Rectangle2D.Double(0, 0, 100, 100);
+
+    val rect = new ColoredShape[Rectangle2D](d, r);
+
+    val l = new ColoredShape[Line2D](d, new Line2D.Double(0, 0, 100, 100));
+
+    try {
+      Thread.sleep(1000);
+    } catch {
+      case e: InterruptedException => e.printStackTrace();
+    }
+    rect.innerCol = Color.red;
+
+  }
 }

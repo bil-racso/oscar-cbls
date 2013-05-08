@@ -29,6 +29,7 @@ import java.awt.Graphics2D
 class VisualLabelledRectangle(d: VisualDrawing, shape: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends ColoredShape[RoundRectangle2D.Double](d, shape){
   
   def rect: RoundRectangle2D.Double = shape
+  this toolTip = label
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
   var marginWidth = _marginWidth
   
