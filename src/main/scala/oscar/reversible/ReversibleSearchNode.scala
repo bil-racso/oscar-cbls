@@ -203,6 +203,34 @@ class ReversibleSearchNode {
       }
     }
   }
+  
+  def branchAllLabel[A](indexes: Seq[A])(l: A => String)(f: A => Unit) = {
+    val idleft = nodeMagic + 1
+    val idright = nodeMagic + 2
+    val idchildren = Array.tabulate(indexes.length)(nodeMagic+_+1)
+    val parent = currParent    
+    nodeMagic += indexes.length
+
+    shift { k: (Unit => Unit) =>
+      val first = indexes.head
+      for ((i,j) <- indexes.reverse.zipWithIndex) {
+        if (i != first) pushState()
+        sc.addChoice(new MyContinuation("i", {
+          tree.addBranch(parent, idchildren(j), idchildren(j).toString, l(i))
+          if (i != first) {
+            pop()
+            sc.fail()
+          }
+          beforeBranch()
+          currParent = idchildren(j)
+          f(i)
+          afterBranch()
+          if (!isFailed()) k()
+        }))
+
+      }
+    }
+  }  
 
   def branchAll[A](indexes: Seq[A])(f: A => Unit) = {
     val idleft = nodeMagic + 1
@@ -276,7 +304,6 @@ class ReversibleSearchNode {
     // Fix time limit
     sc.timeLimit_=(timeLimit)
     tLimit = timeLimit
-    
     var n = 0
     reset {
       shift { k1: (Unit => Unit) =>
@@ -319,7 +346,7 @@ class ReversibleSearchNode {
     }
     bkts = sc.nFail
     time = System.currentTimeMillis() - t1
-    if (!sc.isLimitReached) {
+    if (!sc.isLimitReached && n < nbSolMax) {
       explorationCompleted = true
     }
     if (explorationCompleted) {
