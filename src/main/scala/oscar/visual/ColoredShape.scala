@@ -96,8 +96,10 @@ class ColoredShape[+E <: Shape](_drawing:VisualDrawing, _shape:E) {
 	}
 
 	def showToolTip( mousePoint : Point2D) = {
-		if (toolTip != null && shape.contains(mousePoint)) {
-			drawing.showToolTip(toolTip);
+	  //println(mousePoint)
+		if (toolTip != null /*&& shape.contains(mousePoint)*/ ) {
+			//println(toolTip)
+			//drawing.showToolTip(mousePoint, toolTip);
 		}
 	}
 }

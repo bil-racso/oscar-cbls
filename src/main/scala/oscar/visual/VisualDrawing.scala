@@ -59,8 +59,10 @@ class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(
 
   setBackground(Color.white)
 
-  def scx = getWidth() / (maxX.toDouble * 1.1)
-  def scy = getHeight() / (maxY.toDouble * 1.1)
+  var scx = 1.0
+  def cscx{ scx = getWidth() / (maxX.toDouble * 1.1)}
+  var scy = 1.0
+  def cscy{ scy = getHeight() / (maxY.toDouble * 1.1)}
 
   var shapes: Array[ColoredShape[Shape]] = Array();
 
@@ -87,7 +89,8 @@ class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(
       val s = shapes.filter(_.shape != null)
 
       if (!s.isEmpty) {
-        
+        cscx
+        cscy
         if (flipped) {
           g.translate(0, getHeight());
           (g.asInstanceOf[Graphics2D]).scale(scx, -scy);
@@ -113,7 +116,11 @@ class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(
     override def mouseMoved(e: MouseEvent) {
       drawingPanel.setToolTipText("");
       for (s <- shapes) {
-        s.showToolTip(e.getPoint());
+        //s.showToolTip(e.getPoint());
+        val p = e.getPoint()
+        if ( s.toolTip!= null && s.shape.contains(p.getX()/scx, p.getY()/scy)){
+          showToolTip(s.toolTip)
+        }
       }
     }
 

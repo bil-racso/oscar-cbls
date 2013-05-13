@@ -91,7 +91,7 @@ public class EqReifVar extends Constraint {
 			return CPOutcome.Success;
 		}
 		else if (y.isBound()) {
-			System.out.println("yvalue:"+y.value());
+//			System.out.println("yvalue:"+y.value());
 			if (s.post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
