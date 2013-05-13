@@ -105,9 +105,18 @@ trait Constraints {
   def binaryKnapsack(x: IndexedSeq[CPVarBool], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPVarInt, W: CPVarInt): Knapsack = {
     return new Knapsack(x.toArray, p.toArray, w.toArray, P, W)
   }
+  
+  /**
+   * atLeastNValue Constraint (Available Filtering: Weak, Strong)
+   * @param vars an non empty array of variables
+   * @return a constraint ensuring that nValue is the number of different valuesin vars
+   */
+  def atLeastNValue(vars: Iterable[CPVarInt], nValue: CPVarInt): Constraint = {
+    return new AtLeastNValue(vars.toArray,nValue)
+  }  
 
   /**
-   * AllDifferent Constraint (Available Filtering: Weak, Strong)
+   * allDifferent Constraint (Available Filtering: Weak, Strong)
    * @param vars an non empty array of variables
    * @return a constraint ensure that no value occurs more than once in vars
    */
