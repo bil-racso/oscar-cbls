@@ -127,6 +127,15 @@ trait Constraints {
   def allDifferent(vars: Iterable[CPVarInt]): Constraint = {
     return allDifferent(vars.toArray: _*)
   }
+  
+  /**
+   * minAssignment Constraint (Available Filtering: Medium)
+   * @param vars an non empty array of variables, weights a n x n array (n = vars.size-1).
+   * @return a constraint ensure that allDifferent(x) and cost <= sum(i) weights(i)(x(i)) 
+   */  
+  def minAssignment(x: Array[CPVarInt], weights: Array[Array[Int]], cost: CPVarInt): MinAssignment = {
+    return new MinAssignment(x,weights,cost)
+  } 
 
   /**
    * @param succ[i] is the successor of node i (also place i inside the domain of succ[i] if you want to allow it not to be part of the path
