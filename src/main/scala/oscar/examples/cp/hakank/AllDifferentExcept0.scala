@@ -68,8 +68,8 @@ object AllDifferentExcept0 {
 
     // variables
     val x = Array.fill(n)(CPVarInt(cp, 0 to n))
-    val occurrences = Array.tabulate(n+1)(i => (CPVarInt(cp, 0 to n), i))
-    val z = occurrences(0)._1  // the tuple is (#occurrences, value)
+    val occurrences = Array.tabulate(n+1)(i => (i,CPVarInt(cp, 0 to n)))
+    val z = occurrences(0)._2  // the tuple is (#occurrences, value)
 
     //
     // constraints

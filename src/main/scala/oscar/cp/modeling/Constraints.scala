@@ -516,9 +516,9 @@ trait Constraints {
    *        where o is variable representing the number of occurrences of value v
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
-  def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Array[Tuple2[Int,CPVarInt]]): Constraint = {
-    def freshCard(): CPVarInt = CPVarInt(x(0).store, 0, x.length - 1)
-    val sortedValOcc = valueOccurrence.sortWith((a, b) => a._1 <= b._1)
+  def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Iterable[(Int,CPVarInt)]): Constraint = {
+    def freshCard(): CPVarInt = CPVarInt(x.head.store, 0, x.size - 1)
+    val sortedValOcc = valueOccurrence.toArray.sortWith((a, b) => a._1 <= b._1)
     val (v0,x0) = sortedValOcc(0)
     var values = Array(v0)
     var cardinalities = Array(x0)
@@ -535,7 +535,8 @@ trait Constraints {
     new GCCVar(x.toArray, values(0), cardinalities)
   }
 
-  def gcc(x: Array[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt, Int]]): Constraint = {
+  
+  def gcc(x: Array[CPVarInt], valueOccurrence: Array[(Int,CPVarInt)]): Constraint = {
     gcc(x.toIndexedSeq, valueOccurrence)
   }
 
@@ -731,7 +732,7 @@ trait Constraints {
 
     // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
     val occ = Array.fill(maxVal - minVal + 1)(CPVarInt(cp, 0 to n))
-    cons.add(gcc(x, occ.zip(minVal to maxVal)))
+    cons.add(gcc(x, (minVal to maxVal).zip(occ)))
 
     // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
     val nbBefore = for (i <- minVal to maxVal) yield {
