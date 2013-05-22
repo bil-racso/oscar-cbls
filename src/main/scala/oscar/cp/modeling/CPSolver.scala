@@ -138,6 +138,7 @@ class CPSolver() extends Store() {
       constraintsBlock
       stateObjective()
       pushState()
+      deactivateNoSolExceptions()
     } catch {
       case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
