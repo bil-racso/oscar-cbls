@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -83,21 +85,23 @@ abstract class AbstractLP {
   /**
    *  Adds all the constraints to the model
    *  @param cons map of all the constraints with their id
-   *  
+   *
    *  Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
    *  if it has a method to add all the constraints at once (ex: Gurobi).
    */
   def addAllConstraints(cons: Map[Int, LPConstraint]) {
     var nbC = 0
-    cons foreach {
-      case (i, c) =>
-        if (nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
-        c.cstr.consType match {
-          case ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
-          case ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
-          case ConstraintType.EQ => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
-        }
-        nbC += 1
+    for {
+      i <- cons.keys.toSeq.sortWith(_ < _)
+      c = cons(i)
+    } {
+      if (nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
+      c.cstr.consType match {
+        case ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
+        case ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
+        case ConstraintType.EQ => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
+      }
+      nbC += 1
     }
   }
 
@@ -121,6 +125,16 @@ abstract class AbstractLP {
    * @param col indicates to which column/variable the coefficients refer to
    */
   def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+
+  /**
+   *  modify the right hand side (constant term) of the specified constraint
+   */
+  def updateRhs(consId: Int, rhs: Double): Unit
+
+  /**
+   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   */
+  def updateCoef(consId: Int, varId: Int, coeff: Double): Unit
 
   /**
    * Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
@@ -480,6 +494,19 @@ abstract class AbstractLPSolver {
    */
   def checkConstraints(tol: Double = 10e-6): Boolean = cons.values.forall(c => c.check(tol))
 
+  /**
+   *  modify the right hand side (constant term) of the specified constraint
+   */
+  def updateRhs(cons: LPConstraint, rhs: Double) = {
+    solver.updateRhs(cons.index, rhs)
+  }
+
+  /**
+   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   */
+  def updateCoef(cons: LPConstraint, variable: AbstractLPVar, coeff: Double) = {
+    solver.updateCoef(cons.index, variable.index, coeff)
+  }
 } // end class AbstractLPSolver
 
 
