@@ -81,6 +81,9 @@ object AlternativeCumulativeResource {
 	}
 	
 	def apply(resources: CumulativeResource*): AlternativeCumulativeResource = {
+	  this.apply(resources.toList)
+	}
+		def apply(resources: List[CumulativeResource]): AlternativeCumulativeResource = {
 		val scheduler = resources.head.scheduler
 		val alt = new AlternativeCumulativeResource(scheduler)
 		resources foreach (alt.addAlternative(_))

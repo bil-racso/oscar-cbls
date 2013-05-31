@@ -35,6 +35,7 @@ package oscar.cp.scheduling
 
 import scala.collection.mutable.Map
 import oscar.cp.modeling._
+import oscar.cp.constraints.NewMaxCumulative
 import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.core.CPVarInt
 import java.security.InvalidParameterException
@@ -60,6 +61,7 @@ class CumulativeResource(scheduler: CPScheduler, maxCapa: Int = Int.MaxValue, mi
     if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
       scheduler.add(cumulative(act, id, max = maxCapa, min = minCapa))
     } else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
+      //scheduler.add(new NewMaxCumulative(scheduler, act, maxCapa, id))
       scheduler.add(cumulative(act, id, max = maxCapa))
     } else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
       scheduler.add(cumulative(act, id, min = minCapa))

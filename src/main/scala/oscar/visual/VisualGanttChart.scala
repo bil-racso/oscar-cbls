@@ -47,7 +47,7 @@ class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (In
 
       rectangles(i).visible = draw(i)
       
-      rectangles(i).width = (activities(i).maxDuration) * xScale
+      rectangles(i).width = (activities(i).minDuration) * xScale
       rectangles(i).height = yScale
 
       rectangles(i).move(activities(i).est * xScale, f(i) * yScale)

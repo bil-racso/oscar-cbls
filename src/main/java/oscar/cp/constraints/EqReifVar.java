@@ -42,7 +42,7 @@ public class EqReifVar extends Constraint {
 		super(x.s(),"DiffReif");
 		this.x = x;
 		this.y = y;
-		System.out.println("x:"+x+" y:"+y);
+		//System.out.println("x:"+x+" y:"+y);
 		this.b = b;
 	}
 	
@@ -55,7 +55,7 @@ public class EqReifVar extends Constraint {
 			return valBind(x);
 		} 
 		else if (y.isBound()) {
-			System.out.println("val bind y");
+			//System.out.println("val bind y");
 			return valBind(y);
 		}
 		else {
