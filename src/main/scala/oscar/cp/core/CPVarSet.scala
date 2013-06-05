@@ -43,150 +43,49 @@ abstract class CPVarSet(val s: Store,val name: String = "") {
 
 	
     /**
-     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-     * the domain of the variable is a singleton (i.e. isBound).
+     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever the domain of the variable changes
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenDomainChanges(c: Constraint): Unit
 
     /**
-     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-     * the maximum or the minimum value of the domain changes
+     * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenRequiredValue(c: Constraint): Unit
-
+	def callValRequiredWhenRequiredValue(c: Constraint): Unit
+	
+	
     /**
-     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-     * the maximum of the domain changes
+     * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
+     * @param c
+     * @see oscar.cp.core.Constraint#propagate()
+     */	
+	def callValExcludedWhenExcludedValue(c: Constraint): Unit
+	
+    /**
+     * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenMaxChanges(c: Constraint): Unit
-
+	def callValRequiredWhenRequiredValue(c: Constraint, idx: Int): Unit
+	
+	
     /**
-     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-     * the minimum of the domain changes
+     * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
-     */
-	def callPropagateWhenMinChanges(c: Constraint): Unit
-
-    /**
-     * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-     * one of the value is removed from the domain
-     * @param c
-     * @see oscar.cp.core.Constraint#propagate()
-     */
-	def callPropagateWhenDomainChanges(c: Constraint): Unit
-
-    /**
-     * Level 1 registration: ask that the valBind(CPVarInt) method of the constraint c is called whenever
-     * the domain of the variable is a singleton (i.e. isBound).
-     * @param c
-     * @see oscar.cp.core.Constraint#valBind(CPVarInt)
-     */
-	def callValBindWhenBind(c: Constraint): Unit
+     */	
+	def callValExcludedWhenExcludedValue(c: Constraint, idx: Int): Unit	
 	
-	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the updateBounds(CPVarInt) method of the constraint c is called whenever
-     * the minimum or maximum value of the domain changes.
-     * @param c
-     * @see oscar.cp.core.Constraint#updateBounds(CPVarInt)
-     */
-	def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit
+	def requires(v: Int): CPOutcome
 	
-	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt,delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the updateMax(CPVarInt, int) method of the constraint c is called whenever
-     * the maximum value of the domain changes.
-     * @param c
-     * @see oscar.cp.core.Constraint#updateMax(CPVarInt, int)
-     */
-	def callUpdateMaxWhenMaxChanges(c: Constraint): Unit
+	def excludes(v: Int): CPOutcome
 	
-	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int): Unit
-
-     /**
-     * Level 1 registration: ask that the updateMin(CPVarInt, int) method of the constraint c is called whenever
-     * the minimum value of the domain changes.
-     * @param c
-     * @see oscar.cp.core.Constraint#updateMin(CPVarInt, int)
-     */
-	def callUpdateMinWhenMinChanges(c: Constraint): Unit
+	def value(): Set[Int]
 	
-	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the valRemove(CPVarInt, int) method of the constraint c is called for each
-     * value deletion from the domain
-     * @param c
-     * @see oscar.cp.core.Constraint#valRemove(CPVarInt, int)
-     */
-	def callValRemoveWhenValueIsRemoved(c: Constraint): Unit
 	
-	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the valRemoveIdx(CPVarInt, int, int) method of the constraint c is called for each
-     * value deletion from the domain
-     * @param c
-     * @param idx, an index that will be given as parameter to valRemoveIdx(CPVarInt, int, int)
-     * @see Constraint#valRemoveIdx(CPVarInt, int, int)
-     */
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit
-	
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
-	
-    /**
-     * Level 1 registration: ask that the updateMinIdx(CPVarInt, int, int) method of the constraint c is called whenever
-     * the minimum value of the domain changes
-     * @param c
-     * @param idx, an index that will be given as parameter to updateMinIdx(CPVarInt, int, int)
-     * @see Constraint#updateMinIdx(CPVarInt, int, int)
-     */
-	def callUpdateMinIdxWhenMinChanges(c: Constraint , idx: Int): Unit
-
-
-	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the updateMaxIdx(CPVarInt, int, int) method of the constraint c is called whenever
-     * the maximum value of the domain changes
-     * @param c
-     * @param idx, an index that will be given as parameter to updateMaxIdx(CPVarInt, int, int)
-     * @see Constraint#updateMaxIdx(CPVarInt, int, int)
-     */
-	def callUpdateMaxIdxWhenMaxChanges(c: Constraint , idx: Int): Unit
-
-	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the updateBoundsIdx(CPVarInt, int) method of the constraint c is called whenever
-     * the minimum or maximum value of the domain changes
-     * @param c
-     * @param idx, an index that will be given as parameter to updateBoundsIdx(CPVarInt, int)
-     * @see Constraint#updateBoundsIdx(CPVarInt, int)
-     */
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint , idx: Int): Unit
-	
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
-
-    /**
-     * Level 1 registration: ask that the valBindIdx(CPVarInt, int) method of the constraint c is called whenever
-     * the domain of the variable is a singleton (i.e. isBound).
-     * @param c
-     * @param idx, an index that will be given as parameter to valBindIdx(CPVarInt, int)
-     * @see Constraint#valBindIdx(CPVarInt, int)
-     */
-	def callValBindIdxWhenBind(c: Constraint , idx: Int): Unit
-	
-	def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
 	
     /**
      * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
