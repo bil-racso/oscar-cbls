@@ -69,6 +69,10 @@ class CPSolver() extends Store() {
     x.foreach(decVariables += _)
   }
   
+  def addDecisionVariables(x: CPVarInt*) {
+    x.foreach(decVariables += _)
+  }
+  
   private def recordSol() {
     lastSol = new CPSol(decVariables.toSet)
   }
