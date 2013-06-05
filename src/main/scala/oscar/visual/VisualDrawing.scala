@@ -51,10 +51,12 @@ import java.awt.geom.AffineTransform
 import javax.swing.JSlider
 import javax.swing.event.ChangeListener
 import javax.swing.event.ChangeEvent
+import java.awt.Font
 
 class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
 
   setBackground(Color.white)
+  //setFont (new Font("Arial", Font.PLAIN, 10));
   
   var drawingPanel: JPanel = new JPanel() {
     override def paintComponent(g: Graphics) {

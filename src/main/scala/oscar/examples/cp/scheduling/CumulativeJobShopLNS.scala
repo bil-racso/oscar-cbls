@@ -121,14 +121,11 @@ object CumulativeJobShopLNS extends App {
   } run (1)
 
   var limit = 2000
-
   for (i <- 0 until 2000) {
     val temp = limit
 
     // Adaptative LNS
-    limit =
-      if (!cp.explorationCompleted) limit * 110 / 100
-      else max(10, (cp.failLimit * 90) / 100)
+    limit = if (!cp.explorationCompleted) limit * 110 / 100 else max(10, (limit * 90) / 100)
 
     // 10% of  activities are relaxed
     val relaxed = activities.flatten.filter(i => nextFloat < 0.1).toSet

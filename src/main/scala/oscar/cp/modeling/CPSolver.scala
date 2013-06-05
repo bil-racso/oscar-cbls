@@ -46,7 +46,6 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-class NoSol(msg: String) extends Exception(msg)
 
 class CPSolver() extends Store() {
 
@@ -67,6 +66,10 @@ class CPSolver() extends Store() {
   def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
   def addDecisionVariables(x: Iterable[CPVarInt]) {
+    x.foreach(decVariables += _)
+  }
+  
+  def addDecisionVariables(x: CPVarInt*) {
     x.foreach(decVariables += _)
   }
   
@@ -139,8 +142,9 @@ class CPSolver() extends Store() {
       constraintsBlock
       stateObjective()
       pushState()
+      deactivateNoSolExceptions()
     } catch {
-      case ex: NoSol => println("No Solution, inconsistent model")
+      case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
   }

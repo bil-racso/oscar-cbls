@@ -37,10 +37,10 @@ import oscar.cp.scheduling._
 import oscar.reversible.ReversibleBool
 import oscar.reversible.ReversibleInt
 import oscar.cp.core.CPVarInt
-
 import scala.util.continuations._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
+import oscar.cp.core.NoSolutionException
 
 class CPScheduler(val horizon : Int) extends CPSolver {
 
@@ -80,13 +80,14 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		try {
 			resourcesMap foreach (r => r._2.setup)
 		} catch {
-			case ex : NoSol => println("No Solution, inconsistent model (resource constraints)")
+			case ex : NoSolutionException => println("No Solution, inconsistent model (resource constraints)")
 		}
 	}
 
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {
-	
+
 		super.subjectTo {
+		  // do not swap these two lines
 		  constraintsBlock
 		  addResourceConstraints()
 		}
