@@ -1,5 +1,23 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.reversible
 
+/**
+ * @author Pierre Schaus
+ */
 class ReversibleSubsetIndexedArray(store: ReversibleSearchNode,min: Int, max: Int) {
 
     //s1: Set[Int], s2: Set[Int]
@@ -25,6 +43,23 @@ class ReversibleSubsetIndexedArray(store: ReversibleSearchNode,min: Int, max: In
 		size1.incr()
 		assert(size1.value <= values.length);
 	}
+    
+    def possibleSize = size2.value
+    def requiredSize = size1.value
+    
+    /**
+     * requires all possibles
+     */
+    def requiresAll() {
+      size1.value = size2.value
+    }
+    
+    /**
+     * excludes all possible not yet required
+     */
+    def excludesAll() {
+      size2.value = size1.value
+    }
     
     def excludes(value: Int) {
 		assert(checkVal(value))

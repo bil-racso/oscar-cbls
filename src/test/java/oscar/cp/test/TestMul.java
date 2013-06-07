@@ -52,7 +52,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul1() {  
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,0,5);
     	CPVarInt y = x.mul(-2);
     	s.post(new Gr(y,-10));
@@ -60,7 +60,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul2() { 
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,2,5);
     	CPVarInt y = CPVarInt.apply(s,10,10);
     	s.post(new MulCte(x,3,y));
@@ -69,7 +69,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul3() {  	
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,2,5);
     	CPVarInt z = CPVarInt.apply(s,10,12);
     	s.post(new MulCte(x,3,z));
@@ -78,7 +78,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul4() { 
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,2,5);
     	CPVarInt z = CPVarInt.apply(s,9,12);
     	s.post(new MulCte(x,3,z));
@@ -88,7 +88,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul5() {  
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,2,5);
     	CPVarInt y = CPVarInt.apply(s,10,10);
     	//s.post(new MulCte(x,3,y));
@@ -100,7 +100,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul6() {  
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,-1,4);
     	CPVarInt y = CPVarInt.apply(cp,-1,1);
     	CPVarInt z = CPVarInt.apply(cp,0,0);
@@ -113,7 +113,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul7() {  
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,-1,4);
     	CPVarInt y = CPVarInt.apply(cp,-1,1);
     	CPVarInt z = CPVarInt.apply(cp,0,1);
@@ -132,7 +132,7 @@ public class TestMul extends TestCase {
     	
     	//could prune better x1
 
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,-4,4);
     	CPVarInt y = CPVarInt.apply(cp,-1,1);
     	CPVarInt z = CPVarInt.apply(cp,-1,1);
@@ -150,7 +150,7 @@ public class TestMul extends TestCase {
     public void testMul9() {
     	//could prune better x1 and y1
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,-4,4);
     	CPVarInt y = CPVarInt.apply(cp,-1,1);
     	CPVarInt z = CPVarInt.apply(cp,-1,1);
@@ -161,7 +161,7 @@ public class TestMul extends TestCase {
     
     public void testMul10() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,0,4);
     	CPVarInt y = CPVarInt.apply(cp,-3,1);
     	CPVarInt z = CPVarInt.apply(cp,-1,1);
@@ -174,7 +174,7 @@ public class TestMul extends TestCase {
     
     public void testMul11() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,0,4);
     	CPVarInt y = CPVarInt.apply(cp,-3,0);
     	CPVarInt z = CPVarInt.apply(cp,0,2);
@@ -190,7 +190,7 @@ public class TestMul extends TestCase {
     
     public void testMul12() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,0,4);
     	CPVarInt y = CPVarInt.apply(cp,-3,0);
     	CPVarInt z = CPVarInt.apply(cp,0,2);
@@ -206,7 +206,7 @@ public class TestMul extends TestCase {
     
     public void testMul13() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,1,4);
     	CPVarInt y = CPVarInt.apply(cp,-3,0);
     	CPVarInt z = CPVarInt.apply(cp,-2,2);
@@ -222,7 +222,7 @@ public class TestMul extends TestCase {
     
     public void testMul14() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt s = CPVarInt.apply(cp,1,30);
     	CPVarInt nb = CPVarInt.apply(cp,10506,19596);
     	CPVarInt tmp = CPVarInt.apply(cp,351,900);
@@ -233,7 +233,7 @@ public class TestMul extends TestCase {
     
     public void testMul15() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,1, 10);
     	CPVarInt y = CPVarInt.apply(cp,new int[]{50,70});
     	CPVarInt z = CPVarInt.apply(cp,100,100);
@@ -248,7 +248,7 @@ public class TestMul extends TestCase {
     
     public void testMul16() {
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,0, 10);
     	CPVarInt y = CPVarInt.apply(cp,new int[]{50,70});
     	CPVarInt z = CPVarInt.apply(cp,100,100);
@@ -264,7 +264,7 @@ public class TestMul extends TestCase {
  
     
     public void testMul18() {  
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,-5,5);
     	CPVarInt y = CPVarInt.apply(s,-5,16);
     	s.post(new Eq(x.mul(x), y)); // should detect it is a square constraint
@@ -276,7 +276,7 @@ public class TestMul extends TestCase {
     }
     
     public void testMul19() {  
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	
 
     	CPVarInt x = CPVarInt.apply(s,6,43986624);

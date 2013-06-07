@@ -30,7 +30,7 @@ import oscar.search.*;
  */
 public class TestMemberReif extends TestCase {
 	
-	private Store s;	
+	private CPStore s;	
 	
     public TestMemberReif(String name) {
         super(name);
@@ -42,7 +42,7 @@ public class TestMemberReif extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**

@@ -14,32 +14,51 @@
  ******************************************************************************/
 package oscar.cp.core
 
+import oscar.reversible.ReversibleQueue
+import oscar.reversible.ReversiblePointer
+import oscar.cp.core.CPOutcome._ 
 
-abstract class CPVarSet(val s: Store,val name: String = "") {
+
+/**
+ * @author Pierre Schaus
+ */
+abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = "") {
 
     def store = s
+    val dom = new SetDomain(s,min,max);
+    
+
+	val onDomainL2 = new ReversibleQueue[Constraint](s)
+
+	val onRequiredL1    = new ReversiblePointer[PropagEventQueue](s,null)
+	val onExcludedL1    = new ReversiblePointer[PropagEventQueue](s,null)
+	val onRequiredIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
+	val onExcludedIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
+    
+    
   
 	def constraintDegree(): Int
 	
     /**
      * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
      */
-	def isBound: Boolean
+	def isBound: Boolean = dom.possibleSize == dom.requiredSize
+	
+
 	
 	/**
-	 * 
-	 * @param v
-	 * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
-	 */
-	def isBoundTo(v: Int): Boolean
-	
-	/**
-     * Test if a value is in the domain
+     * Test if a value is in the possible values
      * @param val
-     * @return  true if the domain contains the value val, false otherwise
+     * @return  true if value is in the possible values false otherwise
      */
-	def hasValue(value: Int): Boolean
-	
+	def isPossibleValue(value: Int) = dom.isPossible(value)
+
+	/**
+     * Test if a value is in the required values
+     * @param val
+     * @return  true if value is in the required values false otherwise
+     */
+	def isRequiredValue(value: Int) = dom.isRequired(value)	
 
 	
     /**
@@ -47,14 +66,19 @@ abstract class CPVarSet(val s: Store,val name: String = "") {
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenDomainChanges(c: Constraint): Unit
+	def callPropagateWhenDomainChanges(c: Constraint) {
+		onDomainL2.setValue(new Queue[Constraint](onDomainL2.value,c));
+	  
+	}
 
     /**
      * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callValRequiredWhenRequiredValue(c: Constraint): Unit
+	def callValRequiredWhenRequiredValue(c: Constraint) {
+	  //onRequiredL1.setValue(new PropagEventQueue(onRequiredL1.value,c,this,0));
+	}
 	
 	
     /**
@@ -79,42 +103,21 @@ abstract class CPVarSet(val s: Store,val name: String = "") {
      */	
 	def callValExcludedWhenExcludedValue(c: Constraint, idx: Int): Unit	
 	
-	def requires(v: Int): CPOutcome
+	def requires(v: Int): CPOutcome = {
+	  Suspend
+	}
 	
-	def excludes(v: Int): CPOutcome
+	def excludes(v: Int): CPOutcome = {
+	  Suspend
+	}
 	
-	def value(): Set[Int]
+	def value(): Set[Int] = dom.requiredSet
 	
+	def requiredSet(): Set[Int] = dom.requiredSet
 	
-	
-    /**
-     * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
-     * @param val
-     * @return  Suspend if val was in the domain, Failure otherwise
-     */
-	def assign(value: Int): CPOutcome
-
-    /**
-     * Remove from the domain all values < val, and notify appropriately all the propagators registered to this variable
-     * @param val
-     * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
-     */
-	def updateMin(value: Int): CPOutcome
-	
-     /**
-     * Remove from the domain all values > val, and notify appropriately all the propagators registered to this variable
-     * @param val
-     * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
-     */
-	def updateMax(value: Int): CPOutcome
+	def possibleSet(): Set[Int] = dom.possibleSet
 	
 	
-    /**
-     * Remove val from the domain, and notify appropriately all the propagators registered to this variable
-     * @param val
-     * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
-     */
-	def removeValue(value: Int): CPOutcome
 	
 	
 

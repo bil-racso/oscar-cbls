@@ -30,7 +30,7 @@ import oscar.cp.constraints.WeightedSum;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 import oscar.cp.util.Counter;
 import oscar.reversible.SetIndexedArray;
@@ -65,7 +65,7 @@ public class TestDeviation extends TestCase {
 
 
     public void testDeviation1(){
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPVarInt.apply(cp,-2,2);
@@ -79,7 +79,7 @@ public class TestDeviation extends TestCase {
     }
 
     public void testDeviation2(){
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPVarInt.apply(cp,-2,2);
@@ -94,7 +94,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation3(){
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	x[0] = CPVarInt.apply(cp,3,7);
         x[1] = CPVarInt.apply(cp,0,5);
@@ -110,7 +110,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation4(){
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	x[0] = CPVarInt.apply(cp,3,7);
         x[1] = CPVarInt.apply(cp,0,5);
@@ -126,7 +126,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation5() {
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	x[0] = CPVarInt.apply(cp,3,10);
         x[1] = CPVarInt.apply(cp,4,5);
@@ -143,7 +143,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation6() {
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	x[0] = CPVarInt.apply(cp,3,10);
         x[1] = CPVarInt.apply(cp,4,5);
@@ -160,7 +160,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation7() {
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
     	x[0] = CPVarInt.apply(cp,3,10);
         x[1] = CPVarInt.apply(cp,4,5);
@@ -177,7 +177,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation8() {
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[4];
 
         x[0] = CPVarInt.apply(cp,4,5);
@@ -195,7 +195,7 @@ public class TestDeviation extends TestCase {
 
     public void testDeviation9() {
 
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[6];
 
         x[0] = CPVarInt.apply(cp,11,16);
@@ -216,7 +216,7 @@ public class TestDeviation extends TestCase {
   
     
     public void testDeviation11(){
-        Store cp = new Store();
+        CPStore cp = new CPStore();
     	CPVarInt [] x = new CPVarInt[8];
 
         x[0] = CPVarInt.apply(cp,-27,-25);
@@ -237,7 +237,7 @@ public class TestDeviation extends TestCase {
     }
     
   public void testDeviation12(){
-	Store cp = new Store();
+	CPStore cp = new CPStore();
 	CPVarInt [] x = new CPVarInt[6];
 
 	x[0] = CPVarInt.apply(cp,11,16);
@@ -257,7 +257,7 @@ public class TestDeviation extends TestCase {
  }
     
   public void testDeviation13(){
-	Store cp = new Store();
+	CPStore cp = new CPStore();
 	CPVarInt [] x = new CPVarInt[6];
 	
 	x[0] = CPVarInt.apply(cp,-14,-12);

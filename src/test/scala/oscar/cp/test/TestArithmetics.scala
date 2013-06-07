@@ -68,7 +68,7 @@ class TestArithmetics extends FunSuite with ShouldMatchers  {
     for (i <- 0 until sol.size) {
         cp.add(x(i) == sol(i))        	
     }
-    cp.getStatus() should be(CPOutcome.Suspend)
+    cp.isFailed should be(false)
 
   }   
 

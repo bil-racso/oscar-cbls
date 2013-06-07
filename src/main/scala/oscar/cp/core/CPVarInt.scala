@@ -15,7 +15,7 @@
 package oscar.cp.core
 
 
-abstract class CPVarInt(val s: Store,val name: String = "") extends Iterable[Int] {
+abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[Int] {
 
     def store = s
   
@@ -630,7 +630,7 @@ object CPVarInt {
    * @param domain the range defining the possible values for the variable
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
-  def apply(cp: Store, domain: Range): CPVarInt = {
+  def apply(cp: CPStore, domain: Range): CPVarInt = {
     new CPVarIntImpl(cp, domain)
   }
 
@@ -640,7 +640,7 @@ object CPVarInt {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
-  def apply(cp: Store, value: Int): CPVarInt = {
+  def apply(cp: CPStore, value: Int): CPVarInt = {
     new CPVarIntImpl(cp, value, value)
   }
   
@@ -650,7 +650,7 @@ object CPVarInt {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
-  def apply(cp: Store, valueMin: Int, valueMax: Int): CPVarInt = {
+  def apply(cp: CPStore, valueMin: Int, valueMax: Int): CPVarInt = {
     new CPVarIntImpl(cp, valueMin, valueMax)
   }  
 
@@ -661,7 +661,7 @@ object CPVarInt {
    * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
    */
   
-  def apply(cp: Store, values: Set[Int]): CPVarInt = {
+  def apply(cp: CPStore, values: Set[Int]): CPVarInt = {
     val (minv,maxv) = (values.min,values.max)
     val x = new CPVarIntImpl(cp, minv,maxv)
     for (v <- minv to maxv; if (!values.contains(v))) {
@@ -670,7 +670,7 @@ object CPVarInt {
     x
   }
   
-  def apply(cp: Store, values: Array[Int]): CPVarInt = {
+  def apply(cp: CPStore, values: Array[Int]): CPVarInt = {
     CPVarInt(cp,values.toSet)
   }
   

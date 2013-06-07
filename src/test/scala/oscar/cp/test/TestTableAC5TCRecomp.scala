@@ -44,7 +44,7 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
     cp.post(x(2) != 3)
     println(x.mkString(","))
     
-    cp.getStatus() should not be === (CPOutcome.Failure)
+    cp.isFailed should be(false)
     x(1).value should be(1)
     x(2).value should be(1)
 

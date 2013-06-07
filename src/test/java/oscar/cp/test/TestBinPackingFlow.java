@@ -19,7 +19,7 @@ import oscar.cp.constraints.Eq;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;
@@ -51,7 +51,7 @@ public class TestBinPackingFlow extends TestCase {
     }
 /*    
     public void test1() { 
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1,2}),
     									CPVarInt.apply(cp, new int[]{0,1,2}),
     									CPVarInt.apply(cp, new int[]{0,1,2})};
@@ -64,7 +64,7 @@ public class TestBinPackingFlow extends TestCase {
     }
     
     public void test2() { 	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1}),
     									CPVarInt.apply(cp, new int[]{0,1}),
     									CPVarInt.apply(cp, new int[]{0,1})};
@@ -78,7 +78,7 @@ public class TestBinPackingFlow extends TestCase {
     }
  */   
     public void test3() { 	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1}),
     									CPVarInt.apply(cp, new int[]{0,1}),
     									CPVarInt.apply(cp, new int[]{0,1})};
@@ -97,7 +97,7 @@ public class TestBinPackingFlow extends TestCase {
    /* 
     public void test4() { 
     	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1,2}),
     									CPVarInt.apply(cp, new int[]{0,1,2}),
     									CPVarInt.apply(cp, new int[]{0,1,2})};

@@ -35,7 +35,7 @@ import oscar.search.*;
  */
 public class TestSetIndexArray extends TestCase {
 
-	private Store s;
+	private CPStore s;
 
 
     /**
@@ -52,7 +52,7 @@ public class TestSetIndexArray extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**

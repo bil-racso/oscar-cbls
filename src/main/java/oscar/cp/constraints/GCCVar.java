@@ -19,7 +19,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 /**
@@ -90,7 +90,7 @@ public class GCCVar extends Constraint {
 		this.minVal = minval;
 		this.maxVal = minval+o.length-1;
 		nbVals = maxVal-minVal+1;
-		this.priorityL2 =  Store.MAXPRIORL2-3;
+		this.priorityL2 =  CPStore.MAXPRIORL2()-3;
 	}
 
 	@Override

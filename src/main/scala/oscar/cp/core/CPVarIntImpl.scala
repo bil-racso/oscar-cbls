@@ -22,7 +22,7 @@ import scala.collection.generic._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
+class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
   
 	val dom = new DomainWithHoles(s,minimum,maximum);
 	val onMinL2    = new ReversibleQueue[Constraint](s)
@@ -47,7 +47,7 @@ class CPVarIntImpl(st: Store, minimum: Int, maximum: Int, name: String = "") ext
      * Builds a variable with domain defined by the range into the store s
      * @param r a scala range
      */
-	def this(st: Store, r: Range) = this(st, r.start,if (r.isInclusive) r.end else r.end-1)	
+	def this(st: CPStore, r: Range) = this(st, r.start,if (r.isInclusive) r.end else r.end-1)	
 	
 
 	def iterator = {

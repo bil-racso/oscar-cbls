@@ -158,7 +158,49 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
 		s.possibleSet should be(Set(-2,2))
 		s.requiredSet should be(Set(2))
 
+  } 
+  
+  
+  
+    test("Test 5") {
+   
+		
+		val cp = CPSolver()
+    	
+		val s = ReversibleSubsetIndexedArray(cp,Set(-6,-10,1,5,9,11))
+		
+		intercept[RuntimeException] {
+			s.requires(8)
+		}
+		
+		s.requires(-10)
+		s.requires(9)
+		s.excludesAll()
+		
+		
+		s.possibleSet should be(Set(-10,9))
+		s.requiredSet should be(Set(-10,9))
+		
+
+    
   }  
+    
+    test("Test 6") {
+   
+		
+		val cp = CPSolver()
+		val s = ReversibleSubsetIndexedArray(cp,Set(-6,-10,1,5,9,11))
+		
+		s.excludes(1)
+		s.excludes(5)
+		s.excludes(9)
+		s.requires(-10)
+		s.requiresAll()
+	    s.possibleSet should be(Set(-6,-10,11))
+		s.requiredSet should be(Set(-6,-10,11))
+
+    
+  }    
   
 
   
