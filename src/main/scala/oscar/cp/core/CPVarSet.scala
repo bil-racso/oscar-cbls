@@ -30,10 +30,10 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
 
 	val onDomainL2 = new ReversibleQueue[Constraint](s)
 
-	val onRequiredL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onExcludedL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onRequiredIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onExcludedIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
+	val onRequiredL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
+	val onExcludedL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
+	val onRequiredIdxL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
+	val onExcludedIdxL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
     
     
   

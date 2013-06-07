@@ -92,13 +92,13 @@ class CPStore extends ReversibleSearchNode {
      * is called at some point in the current fix point
      * @param constraints
      */
-	def notifyL2(constraints: Queue[Constraint]) {
+	def notifyL2(constraints: ConstraintQueue) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
+			val c = q.cons;
 			val p = addQueueL2(c);
 			highestPriorL2 = Math.max(p, highestPriorL2);
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
@@ -107,125 +107,104 @@ class CPStore extends ReversibleSearchNode {
 		highestPriorL1 = Math.max(highestPriorL1, evt.prior);
 	}
 	
-	def notifRemoveL1(constraints: PropagEventQueue, x: CPVarInt, v: Int) {
+	def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			val d = q.getDelta();
-			if(c.isActive()){
-				addQueueL1(new PropagEventRemoveValue(c,q.getVar(),v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventRemoveValue(q.cons,q.x,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyRemoveIdxL1(constraints: PropagEventQueue , x: CPVarInt, v: Int) {
+	def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			var c = q.getElem();
-			val d = q.getDelta();
-			val idx = q.getIdx();
-			if(c.isActive()){
-				addQueueL1(new PropagEventRemoveValueIdx(c,q.getVar(),idx,v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventRemoveValueIdx(q.cons,q.x,q.idx,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyUpdateMinL1(constraints: PropagEventQueue, x: CPVarInt, v: Int) {
+	def notifyUpdateMinL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while(q != null) {
-			val c = q.getElem();
-			val d = q.getDelta();
-			if(c.isActive()){
-				addQueueL1(new PropagEventUpdateMin(c,q.getVar(),v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventUpdateMin(q.cons,q.x,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next;
 		}
 	}
 	
-	def notifyUpdateMinIdxL1(constraints: PropagEventQueue, x: CPVarInt, v: Int) {
+	def notifyUpdateMinIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			val d = q.getDelta();
-			val idx = q.getIdx();
-			if(c.isActive()){
-				addQueueL1(new PropagEventUpdateMinIdx(c,q.getVar(),idx,v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventUpdateMinIdx(q.cons,q.x,q.idx,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next;
 		}
 	}
 	
-	def notifyBindL1(constraints: PropagEventQueue, x: CPVarInt) {
+	def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			if(c.isActive()){
-				addQueueL1(new PropagEventBindToValue(c,q.getVar()));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventBindToValue(q.cons,q.x))
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyBindIdxL1(constraints: PropagEventQueue, x: CPVarInt ) {
+	def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt ) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			val idx = q.getIdx();
-			if (c.isActive()) {
-				addQueueL1(new PropagEventBindToValueIdx(c,q.getVar(),idx));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventBindToValueIdx(q.cons,q.x,q.idx))
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}	
 	
-	def notifyUpdateMaxL1(constraints: PropagEventQueue, x: CPVarInt, v: Int) {
-		var q = constraints;
+	def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+		var q = constraints
 		while (q != null) {
-			val c = q.getElem();
-			val d = q.getDelta();
-			if (c.isActive()) {
-				addQueueL1(new PropagEventUpdateMax(c,q.getVar(),v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventUpdateMax(q.cons,q.x,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyUpdateMaxIdxL1(constraints: PropagEventQueue, x: CPVarInt, v: Int) {
+	def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			val d = q.getDelta();
-			val idx = q.getIdx();
-			if (c.isActive()) {
-				addQueueL1(new PropagEventUpdateMaxIdx(c,q.getVar(),idx,v+d));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventUpdateMaxIdx(q.cons,q.x,q.idx,v+q.delta));
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyUpdateBoundsL1(constraints: PropagEventQueue, x: CPVarInt) {
+	def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			if (c.isActive()) {
-				addQueueL1(new PropagEventUpdateBounds(c,q.getVar()));
+			if (q.cons.isActive()) {
+				addQueueL1(new PropagEventUpdateBounds(q.cons,q.x));
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	
-	def notifyUpdateBoundsIdxL1(constraints: PropagEventQueue, x: CPVarInt) {
+	def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
 		var q = constraints;
 		while (q != null) {
-			val c = q.getElem();
-			val idx = q.getIdx();
-			if (c.isActive()) {
+			if (q.cons.isActive()) {
 				// we must do q.getVar rather than var because it might be a view of the var that did the domain modif
-				addQueueL1(new PropagEventUpdateBoundsIdx(c,q.getVar(),idx)); 
+				addQueueL1(new PropagEventUpdateBoundsIdx(q.cons,q.x,q.idx)); 
 			}
-			q = q.getNext();
+			q = q.next
 		}
 	}
 	

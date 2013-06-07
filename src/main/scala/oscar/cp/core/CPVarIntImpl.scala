@@ -25,23 +25,23 @@ import scala.collection.generic._
 class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
   
 	val dom = new DomainWithHoles(s,minimum,maximum);
-	val onMinL2    = new ReversibleQueue[Constraint](s)
-	val onMaxL2    = new ReversibleQueue[Constraint](s)
-	val onBoundsL2 = new ReversibleQueue[Constraint](s)
-	val onBindL2   = new ReversibleQueue[Constraint](s)
-	val onDomainL2 = new ReversibleQueue[Constraint](s)
+	val onMinL2    = new ReversiblePointer[ConstraintQueue](s,null)
+	val onMaxL2    = new ReversiblePointer[ConstraintQueue](s,null)
+	val onBoundsL2 = new ReversiblePointer[ConstraintQueue](s,null)
+	val onBindL2   = new ReversiblePointer[ConstraintQueue](s,null)
+	val onDomainL2 = new ReversiblePointer[ConstraintQueue](s,null)
 
-	val onMinL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onMaxL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onBoundsL1 = new ReversiblePointer[PropagEventQueue](s,null)
-	val onBindL1   = new ReversiblePointer[PropagEventQueue](s,null)
-	val onDomainL1 = new ReversiblePointer[PropagEventQueue](s,null)
+	val onMinL1    = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onMaxL1    = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onBindL1   = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](s,null)
 
-	val onMinIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onMaxIdxL1    = new ReversiblePointer[PropagEventQueue](s,null)
-	val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueue](s,null)
-	val onBindIdxL1   = new ReversiblePointer[PropagEventQueue](s,null)
-	val onDomainIdxL1 = new ReversiblePointer[PropagEventQueue](s,null)
+	val onMinIdxL1    = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onMaxIdxL1    = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onBindIdxL1   = new ReversiblePointer[PropagEventQueueVarInt](s,null)
+	val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](s,null)
 	
 	/**
      * Builds a variable with domain defined by the range into the store s
@@ -65,23 +65,23 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	 */
 	def constraintDegree() = {
 		var tot = 0
-		if (onMinL2.hasValue()) tot += onMinL2.getValue().getSize();
-		if (onMaxL2.hasValue()) tot += onMaxL2.getValue().getSize();
-		if (onBoundsL2.hasValue()) tot += onBoundsL2.getValue().getSize();
-		if (onBindL2.hasValue()) tot += onBindL2.getValue().getSize();
-		if (onDomainL2.hasValue()) tot += onDomainL2.getValue().getSize();
+		if (onMinL2.hasValue()) tot += onMinL2.value.size;
+		if (onMaxL2.hasValue()) tot += onMaxL2.value.size;
+		if (onBoundsL2.hasValue()) tot += onBoundsL2.value.size;
+		if (onBindL2.hasValue()) tot += onBindL2.value.size;
+		if (onDomainL2.hasValue()) tot += onDomainL2.value.size;
 		
-		if (onMinL1.hasValue())    tot += onMinL1.getValue().getSize();
-		if (onMaxL1.hasValue())    tot += onMaxL1.getValue().getSize();
-		if (onBoundsL1.hasValue()) tot += onBoundsL1.getValue().getSize();
-		if (onBindL1.hasValue())   tot += onBindL1.getValue().getSize();
-		if (onDomainL1.hasValue()) tot += onDomainL1.getValue().getSize();
+		if (onMinL1.hasValue())    tot += onMinL1.value.size;
+		if (onMaxL1.hasValue())    tot += onMaxL1.value.size;
+		if (onBoundsL1.hasValue()) tot += onBoundsL1.value.size;
+		if (onBindL1.hasValue())   tot += onBindL1.value.size;
+		if (onDomainL1.hasValue()) tot += onDomainL1.value.size;
 		
-		if (onMinIdxL1.hasValue())    tot += onMinIdxL1.getValue().getSize();
-		if (onMaxIdxL1.hasValue())    tot += onMaxIdxL1.getValue().getSize();
-		if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.getValue().getSize();
-		if (onBindIdxL1.hasValue())   tot += onBindIdxL1.getValue().getSize();
-		if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.getValue().getSize();	
+		if (onMinIdxL1.hasValue())    tot += onMinIdxL1.value.size;
+		if (onMaxIdxL1.hasValue())    tot += onMaxIdxL1.value.size;
+		if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.value.size;
+		if (onBindIdxL1.hasValue())   tot += onBindIdxL1.value.size;
+		if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.value.size;	
 		tot
 	}
 	
@@ -170,7 +170,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenBind(c: Constraint) {
-		onBindL2.setValue(new Queue[Constraint](onBindL2.getValue(),c));
+		onBindL2.setValue(new ConstraintQueue(onBindL2.value,c));
 	}
 
     /**
@@ -180,7 +180,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenBoundsChange(c: Constraint) {
-		onBoundsL2.setValue(new Queue[Constraint](onBoundsL2.getValue(),c));
+		onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value,c));
 	}
 
     /**
@@ -190,7 +190,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenMaxChanges(c: Constraint) {
-		onMaxL2.setValue(new Queue[Constraint](onMaxL2.getValue(),c));
+		onMaxL2.setValue(new ConstraintQueue(onMaxL2.value,c));
 	}
 
     /**
@@ -200,7 +200,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenMinChanges(c: Constraint) {
-		onMinL2.setValue(new Queue[Constraint](onMinL2.getValue(),c));
+		onMinL2.setValue(new ConstraintQueue(onMinL2.value,c));
 	}
 
     /**
@@ -210,7 +210,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenDomainChanges(c: Constraint) {
-		onDomainL2.setValue(new Queue[Constraint](onDomainL2.getValue(),c));
+		onDomainL2.setValue(new ConstraintQueue(onDomainL2.value,c));
 	}
 
     /**
@@ -224,7 +224,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int) {
-		onBindL1.setValue(new PropagEventQueue(onBindL1.getValue(),c,variable,delta));
+		onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value,c,variable,delta));
 	}
 
     /**
@@ -238,7 +238,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt,delta: Int) {
-		onBoundsL1.setValue(new PropagEventQueue(onBoundsL1.getValue(),c,variable,delta));
+		onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value,c,variable,delta));
 	}
 
     /**
@@ -252,7 +252,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int) {
-		onMaxL1.setValue(new PropagEventQueue(onMaxL1.getValue(),c,variable,delta))
+		onMaxL1.setValue(new PropagEventQueueVarInt(onMaxL1.value,c,variable,delta))
 	}
 
      /**
@@ -266,7 +266,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int) {
-		onMinL1.setValue(new PropagEventQueue(onMinL1.getValue(),c,variable,delta));
+		onMinL1.setValue(new PropagEventQueueVarInt(onMinL1.value,c,variable,delta));
 	}
 
     /**
@@ -280,7 +280,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int) {
-		onDomainL1.setValue(new PropagEventQueue(onDomainL1.getValue(),c,variable,delta));
+		onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value,c,variable,delta));
 	}
 
     /**
@@ -295,7 +295,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
-		onDomainIdxL1.setValue(new PropagEventQueue(onDomainIdxL1.getValue(),c,variable,idx,delta));
+		onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value,c,variable,idx,delta));
 	}
 
     /**
@@ -311,7 +311,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 
 
 	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
-		onMinIdxL1.setValue(new PropagEventQueue(onMinIdxL1.getValue(),c,variable,idx,delta));
+		onMinIdxL1.setValue(new PropagEventQueueVarInt(onMinIdxL1.value,c,variable,idx,delta));
 	}
 
     /**
@@ -326,7 +326,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 
 	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
-		onMaxIdxL1.setValue(new PropagEventQueue(onMaxIdxL1.getValue(),c,variable, idx,delta));	
+		onMaxIdxL1.setValue(new PropagEventQueueVarInt(onMaxIdxL1.value,c,variable, idx,delta));	
 	}
 
     /**
@@ -341,7 +341,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
-		onBoundsIdxL1.setValue(new PropagEventQueue(onBoundsIdxL1.getValue(),c,variable,idx,delta));
+		onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value,c,variable,idx,delta));
 	}
 
     /**
@@ -356,7 +356,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 	def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
-		onBindIdxL1.setValue(new PropagEventQueue(onBindIdxL1.getValue(),c,variable,idx,delta));
+		onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value,c,variable,idx,delta));
 	}	
 	
 	
@@ -373,29 +373,29 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 			val assignToMin = min == value
 			// -------- AC3 notifications ------------
 			if (!assignToMax)
-                s.notifyL2(onMaxL2.getValue());
+                s.notifyL2(onMaxL2.value);
 			if (!assignToMin)
-                s.notifyL2(onMinL2.getValue());
-			s.notifyL2(onBoundsL2.getValue());
-			s.notifyL2(onDomainL2.getValue());
-			s.notifyL2(onBindL2.getValue());
+                s.notifyL2(onMinL2.value);
+			s.notifyL2(onBoundsL2.value);
+			s.notifyL2(onDomainL2.value);
+			s.notifyL2(onBindL2.value);
 			// --------- AC5 notifications ------------
-			s.notifyBindL1(onBindL1.getValue(),this);
-			s.notifyBindIdxL1(onBindIdxL1.getValue(),this);
-			s.notifyUpdateBoundsL1(onBoundsL1.getValue(),this);
-			s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.getValue(),this);
+			s.notifyBindL1(onBindL1.value,this);
+			s.notifyBindIdxL1(onBindIdxL1.value,this);
+			s.notifyUpdateBoundsL1(onBoundsL1.value,this);
+			s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value,this);
 			if (value == dom.getMin()) {
-				s.notifyUpdateMaxL1(onMaxL1.getValue(),this,dom.getMax());
-				s.notifyUpdateMaxIdxL1(onMaxIdxL1.getValue(),this,dom.getMax());
+				s.notifyUpdateMaxL1(onMaxL1.value,this,dom.getMax());
+				s.notifyUpdateMaxIdxL1(onMaxIdxL1.value,this,dom.getMax());
 			} 
 			else if (value == dom.getMax()) {
-				s.notifyUpdateMinL1(onMinL1.getValue(),this,dom.getMin());
-				s.notifyUpdateMinIdxL1(onMinIdxL1.getValue(),this,dom.getMin());
+				s.notifyUpdateMinL1(onMinL1.value,this,dom.getMin());
+				s.notifyUpdateMinIdxL1(onMinIdxL1.value,this,dom.getMin());
 			} else {
-				s.notifyUpdateMaxL1(onMaxL1.getValue(), this,dom.getMax());
-				s.notifyUpdateMaxIdxL1(onMaxIdxL1.getValue(),this, dom.getMax());
-				s.notifyUpdateMinL1(onMinL1.getValue(), this,dom.getMin());
-				s.notifyUpdateMinIdxL1(onMinIdxL1.getValue(),this, dom.getMin());
+				s.notifyUpdateMaxL1(onMaxL1.value, this,dom.getMax());
+				s.notifyUpdateMaxIdxL1(onMaxIdxL1.value,this, dom.getMax());
+				s.notifyUpdateMinL1(onMinL1.value, this,dom.getMin());
+				s.notifyUpdateMinIdxL1(onMinIdxL1.value,this, dom.getMin());
 			}
 			// must notify AC5 event before the actual removal
 			if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
@@ -403,10 +403,10 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 			    while (i <= dom.getMax()) {
 					if (i!= value && dom.hasValue(i)) {
 						if (onDomainL1.hasValue()) {
-							s.notifRemoveL1(onDomainL1.getValue(),this,i);
+							s.notifRemoveL1(onDomainL1.value,this,i);
 						}
 						if (onDomainIdxL1.hasValue()) {
-							s.notifyRemoveIdxL1(onDomainIdxL1.getValue(),this,i);
+							s.notifyRemoveIdxL1(onDomainIdxL1.value,this,i);
 						}
 					}
 					i += 1
@@ -435,9 +435,9 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 			while (i < value) {
 				if(dom.hasValue(i)) {
 					if (onDomainL1.hasValue())
-						s.notifRemoveL1(onDomainL1.getValue(),this,i);
+						s.notifRemoveL1(onDomainL1.value,this,i);
 					if (onDomainIdxL1.hasValue())
-						s.notifyRemoveIdxL1(onDomainIdxL1.getValue(),this,i);
+						s.notifyRemoveIdxL1(onDomainIdxL1.value,this,i);
 				}
 				i += 1
 			}
@@ -448,17 +448,17 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 		
 		if (dom.getSize()==1) {
 			assert(isBound);
-			s.notifyBindL1(onBindL1.getValue(),this);
-			s.notifyBindIdxL1(onBindIdxL1.getValue(),this);
-			s.notifyL2(onBindL2.getValue());
+			s.notifyBindL1(onBindL1.value,this);
+			s.notifyBindIdxL1(onBindIdxL1.value,this);
+			s.notifyL2(onBindL2.value);
 		}
-		s.notifyUpdateMinL1(onMinL1.getValue(),this,omin);
-		s.notifyUpdateMinIdxL1(onMinIdxL1.getValue(),this,omin);
-		s.notifyL2(onMinL2.getValue());
-		s.notifyUpdateBoundsL1(onBoundsL1.getValue(),this);
-		s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.getValue(),this);
-		s.notifyL2(onBoundsL2.getValue());
-		s.notifyL2(onDomainL2.getValue());
+		s.notifyUpdateMinL1(onMinL1.value,this,omin);
+		s.notifyUpdateMinIdxL1(onMinIdxL1.value,this,omin);
+		s.notifyL2(onMinL2.value);
+		s.notifyUpdateBoundsL1(onBoundsL1.value,this);
+		s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value,this);
+		s.notifyL2(onBoundsL2.value);
+		s.notifyL2(onDomainL2.value);
 		return CPOutcome.Suspend;
 	}
 	
@@ -480,9 +480,9 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 		   while (i > value) {
 				if(dom.hasValue(i)){
 					if (onDomainL1.hasValue())
-						s.notifRemoveL1(onDomainL1.getValue(), this, i);
+						s.notifRemoveL1(onDomainL1.value, this, i);
 					if (onDomainIdxL1.hasValue())
-						s.notifyRemoveIdxL1(onDomainIdxL1.getValue(), this, i);
+						s.notifyRemoveIdxL1(onDomainIdxL1.value, this, i);
 				}
 				i -= 1
 			}
@@ -493,17 +493,17 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 		
 		if(dom.getSize()==1){
 			assert(isBound);
-			s.notifyBindL1(onBindL1.getValue(),this);
-			s.notifyBindIdxL1(onBindIdxL1.getValue(),this);
-			s.notifyL2(onBindL2.getValue());
+			s.notifyBindL1(onBindL1.value,this);
+			s.notifyBindIdxL1(onBindIdxL1.value,this);
+			s.notifyL2(onBindL2.value);
 		}
-		s.notifyUpdateMaxL1(onMaxL1.getValue(), this,omax);
-		s.notifyUpdateMaxIdxL1(onMaxIdxL1.getValue(),this,omax);
-		s.notifyL2(onMaxL2.getValue());
-		s.notifyUpdateBoundsL1(onBoundsL1.getValue(),this);
-		s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.getValue(),this);
-		s.notifyL2(onBoundsL2.getValue());
-		s.notifyL2(onDomainL2.getValue());
+		s.notifyUpdateMaxL1(onMaxL1.value, this,omax);
+		s.notifyUpdateMaxIdxL1(onMaxIdxL1.value,this,omax);
+		s.notifyL2(onMaxL2.value);
+		s.notifyUpdateBoundsL1(onBoundsL1.value,this);
+		s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value,this);
+		s.notifyL2(onBoundsL2.value);
+		s.notifyL2(onDomainL2.value);
 		return CPOutcome.Suspend;
 	}
 	
@@ -527,29 +527,29 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 		
 		
 		if (minRemoved || maxRemoved) {
-			s.notifyUpdateBoundsL1(onBoundsL1.getValue(),this);
-			s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.getValue(),this);
-			s.notifyL2(onBoundsL2.getValue());
+			s.notifyUpdateBoundsL1(onBoundsL1.value,this);
+			s.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value,this);
+			s.notifyL2(onBoundsL2.value);
 		}
 		if (minRemoved) {
-			s.notifyUpdateMinL1(onMinL1.getValue(),this,omin);
-			s.notifyUpdateMinIdxL1(onMinIdxL1.getValue(),this,omin);
-			s.notifyL2(onMinL2.getValue());
+			s.notifyUpdateMinL1(onMinL1.value,this,omin);
+			s.notifyUpdateMinIdxL1(onMinIdxL1.value,this,omin);
+			s.notifyL2(onMinL2.value);
 		}
 		if (maxRemoved) {
-			s.notifyUpdateMaxL1(onMaxL1.getValue(),this,omax);
-			s.notifyUpdateMaxIdxL1(onMaxIdxL1.getValue(),this,omax);
-			s.notifyL2(onMaxL2.getValue());
+			s.notifyUpdateMaxL1(onMaxL1.value,this,omax);
+			s.notifyUpdateMaxIdxL1(onMaxIdxL1.value,this,omax);
+			s.notifyL2(onMaxL2.value);
 		}
 		if (indom) {
-			s.notifRemoveL1(onDomainL1.getValue(),this,value);
-			s.notifyRemoveIdxL1(onDomainIdxL1.getValue(),this,value);
-			s.notifyL2(onDomainL2.getValue());
+			s.notifRemoveL1(onDomainL1.value,this,value);
+			s.notifyRemoveIdxL1(onDomainIdxL1.value,this,value);
+			s.notifyL2(onDomainL2.value);
 		}
 		if (isBound) {
-			s.notifyBindL1(onBindL1.getValue(),this);
-			s.notifyBindIdxL1(onBindIdxL1.getValue(),this);
-			s.notifyL2(onBindL2.getValue());
+			s.notifyBindL1(onBindL1.value,this);
+			s.notifyBindIdxL1(onBindIdxL1.value,this);
+			s.notifyL2(onBindL2.value);
 		}
 		return ok;
 	}

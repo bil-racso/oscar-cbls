@@ -35,12 +35,12 @@ abstract class PropagEvent(val cstr: Constraint,val prior: Int = 0) {
 	def propagate(): CPOutcome = {
 		if(cstr.isActive()){
 			val oc = notifyConstraint();
-			if(oc == CPOutcome.Success){
+			if (oc == CPOutcome.Success) {
 				cstr.deactivate();
 			}
-			return oc;
+			oc;
 		}
-		else return CPOutcome.Suspend;
+		else CPOutcome.Suspend;
 	}
 
 }
