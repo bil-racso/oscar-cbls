@@ -37,7 +37,7 @@ class CPStore extends ReversibleSearchNode {
 	 */
 	private var nbPropag = 0
 	
-	val  propagQueueL1 = Array.fill(CPStore.MAXPRIORL1+1)(new LinkedList[PropagEvent]())
+	val  propagQueueL1 = Array.fill(CPStore.MAXPRIORL1+1)(new LinkedList[() => CPOutcome]())
 	val  propagQueueL2 = Array.fill(CPStore.MAXPRIORL2+1)(new LinkedList[Constraint]())
 	
 	var  status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this,Suspend);
@@ -102,16 +102,26 @@ class CPStore extends ReversibleSearchNode {
 		}
 	}
 	
-	private def addQueueL1(evt:PropagEvent ) {
-		propagQueueL1(evt.prior).add(evt);
-		highestPriorL1 = Math.max(highestPriorL1, evt.prior);
+	private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome) {
+		propagQueueL1(prior).add(() => 
+			if (c.isActive) {
+			  val oc = evt;
+			  if (oc == Success) c.deactivate();
+			  oc
+			}
+			else Suspend
+		);
+		highestPriorL1 = Math.max(highestPriorL1, prior);
 	}
 	
 	def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventRemoveValue(q.cons,q.x,v+q.delta));
+		    val c = q.cons
+		    val x = q.x
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityRemoveL1(), c.valRemove(x,v+delta));
 			}
 			q = q.next
 		}
@@ -120,8 +130,12 @@ class CPStore extends ReversibleSearchNode {
 	def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventRemoveValueIdx(q.cons,q.x,q.idx,v+q.delta));
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityRemoveL1(), c.valRemoveIdx(x,idx,v+delta))
 			}
 			q = q.next
 		}
@@ -130,8 +144,12 @@ class CPStore extends ReversibleSearchNode {
 	def notifyUpdateMinL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while(q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventUpdateMin(q.cons,q.x,v+q.delta));
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMin(x,v+delta))
 			}
 			q = q.next;
 		}
@@ -140,8 +158,66 @@ class CPStore extends ReversibleSearchNode {
 	def notifyUpdateMinIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
 		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventUpdateMinIdx(q.cons,q.x,q.idx,v+q.delta));
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMinIdx(x,idx,v+delta));
+			}
+			q = q.next;
+		}
+	}
+	
+	
+	
+	def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+		var q = constraints;
+		while(q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMax(x,v+delta))
+			}
+			q = q.next;
+		}
+	}
+	
+	def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+		var q = constraints;
+		while (q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+		    val delta = q.delta
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMaxIdx(x,idx,v+delta));
+			}
+			q = q.next;
+		}
+	}
+	
+	def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+		var q = constraints;
+		while(q != null) {
+		    val c = q.cons
+		    val x = q.x
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateBounds(x))
+			}
+			q = q.next;
+		}
+	}
+	
+	def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+		var q = constraints;
+		while(q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBoundsL1(), c.updateBoundsIdx(x,idx))
 			}
 			q = q.next;
 		}
@@ -150,8 +226,10 @@ class CPStore extends ReversibleSearchNode {
 	def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
 		var q = constraints;
 		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventBindToValue(q.cons,q.x))
+			val c = q.cons
+		    val x = q.x
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valBind(x))
 			}
 			q = q.next
 		}
@@ -160,53 +238,15 @@ class CPStore extends ReversibleSearchNode {
 	def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt ) {
 		var q = constraints;
 		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventBindToValueIdx(q.cons,q.x,q.idx))
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valBindIdx(x,idx))
 			}
 			q = q.next
 		}
 	}	
-	
-	def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
-		var q = constraints
-		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventUpdateMax(q.cons,q.x,v+q.delta));
-			}
-			q = q.next
-		}
-	}
-	
-	def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
-		var q = constraints;
-		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventUpdateMaxIdx(q.cons,q.x,q.idx,v+q.delta));
-			}
-			q = q.next
-		}
-	}
-	
-	def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
-		var q = constraints;
-		while (q != null) {
-			if (q.cons.isActive()) {
-				addQueueL1(new PropagEventUpdateBounds(q.cons,q.x));
-			}
-			q = q.next
-		}
-	}
-	
-	def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
-		var q = constraints;
-		while (q != null) {
-			if (q.cons.isActive()) {
-				// we must do q.getVar rather than var because it might be a view of the var that did the domain modif
-				addQueueL1(new PropagEventUpdateBoundsIdx(q.cons,q.x,q.idx)); 
-			}
-			q = q.next
-		}
-	}
 	
 	/**
 	 * call only the propagate method of the constraints and trigger the fix point does not post it
@@ -252,7 +292,7 @@ class CPStore extends ReversibleSearchNode {
 			//var p = int p;
 		    if (q1.exists(!_.isEmpty())) {
 		      val queue = q1.find(!_.isEmpty()).get
-		      ok = queue.removeFirst().propagate()
+		      ok = queue.removeFirst()()
 		    } else if (q2.exists(!_.isEmpty())) {
 		      val queue = q2.find(!_.isEmpty()).get
 		      ok = queue.removeFirst().execute()
