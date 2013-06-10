@@ -14,4 +14,10 @@ object ArrayUtils {
   def euclidianDistance(coord1: Array[Double], coord2: Array[Double]): Double = {
     math.sqrt(coord1.zip(coord2).foldLeft(0.0)((acc, newPair) => acc + math.pow(newPair._2 - newPair._1, 2.0)))
   }
+
+  /** Returns the array normalized. */
+  def normalize(ar: Array[Double]): Array[Double] = {
+    val arrayLength = math.sqrt(ar.foldLeft(0.0)((acc, coord) => acc + math.pow(coord, 2)))
+    Array.tabulate(ar.length)(i => ar(i) / arrayLength)
+  }  
 }

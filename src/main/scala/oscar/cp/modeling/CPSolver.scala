@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -32,7 +46,6 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-class NoSol(msg: String) extends Exception(msg)
 
 class CPSolver() extends Store() {
 
@@ -49,10 +62,14 @@ class CPSolver() extends Store() {
   var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   var recordNonDominatedSolutions = false
   
-  def nonDominatedSolutions: Iterable[CPSol] = paretoSet.toList
-  def nonDominatedSolutionsObjs: Iterable[IndexedSeq[Int]] = paretoSet.objectiveSols 
+  def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
+  def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
   def addDecisionVariables(x: Iterable[CPVarInt]) {
+    x.foreach(decVariables += _)
+  }
+  
+  def addDecisionVariables(x: CPVarInt*) {
     x.foreach(decVariables += _)
   }
   
@@ -125,8 +142,9 @@ class CPSolver() extends Store() {
       constraintsBlock
       stateObjective()
       pushState()
+      deactivateNoSolExceptions()
     } catch {
-      case ex: NoSol => println("No Solution, inconsistent model")
+      case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
   }

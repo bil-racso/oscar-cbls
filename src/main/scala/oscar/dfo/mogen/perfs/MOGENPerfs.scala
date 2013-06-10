@@ -1,15 +1,13 @@
 package oscar.dfo.mogen.perfs
 
-import oscar.visual.VisualFrame
-import oscar.visual.PlotDFOPareto2D
-import oscar.util.VisualController._
-import scala.util.continuations._
 import oscar.dfo.mogen.MOGEN
 import oscar.dfo.mogen.MOGENTriplet
-import oscar.util.mo.ParetoFront
+import oscar.dfo.mogen.algos.NelderMead
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.MinMOOComparator
-import oscar.dfo.mogen.algos.NelderMead
+import oscar.util.mo.ParetoFront
+import oscar.visual.PlotDFOPareto2D
+import oscar.visual.VisualFrame
 import oscar.dfo.mogen.algos.MultiDirectionalSearch
 
 object MOGENPerfs {
@@ -22,7 +20,7 @@ object MOGENPerfs {
     /** The frame used to observe Pareto front improvement */
     val f = new VisualFrame("MOGEN", 4, 4)
     /** The toolbar with the play, pause and next buttons */
-    val toolBar = f.createToolBar(withVisuController = true)
+    //val toolBar = f.createToolBar(withVisuController = true)
     /** The visualisation pareto plot */
     val paretoPlot = PlotDFOPareto2D[Double](nbPareto = 1, objMax1 = false, objMax2 = false)
     f.add(paretoPlot)
@@ -35,7 +33,7 @@ object MOGENPerfs {
       MOGEN.onIterateSelected{
         (triplet: MOGENTriplet[_]) => {
           paretoPlot.highLightIterate(triplet.asInstanceOf[MOGENTriplet[Double]])
-          Thread.sleep(250)
+          Thread.sleep(50)
           //pause()
         }
       }
@@ -43,7 +41,7 @@ object MOGENPerfs {
       MOGEN.onArchiveChanged {
         (archive: ParetoFront[_]) => {
           paretoPlot.update(archive.asInstanceOf[ParetoFront[Double]])
-          Thread.sleep(250)
+          Thread.sleep(50)
           //pause()
         }
       }

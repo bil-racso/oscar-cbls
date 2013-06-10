@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -23,10 +37,10 @@ import oscar.cp.scheduling._
 import oscar.reversible.ReversibleBool
 import oscar.reversible.ReversibleInt
 import oscar.cp.core.CPVarInt
-
 import scala.util.continuations._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
+import oscar.cp.core.NoSolutionException
 
 class CPScheduler(val horizon : Int) extends CPSolver {
 
@@ -66,13 +80,14 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		try {
 			resourcesMap foreach (r => r._2.setup)
 		} catch {
-			case ex : NoSol => println("No Solution, inconsistent model (resource constraints)")
+			case ex : NoSolutionException => println("No Solution, inconsistent model (resource constraints)")
 		}
 	}
 
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {
-	
+
 		super.subjectTo {
+		  // do not swap these two lines
 		  constraintsBlock
 		  addResourceConstraints()
 		}

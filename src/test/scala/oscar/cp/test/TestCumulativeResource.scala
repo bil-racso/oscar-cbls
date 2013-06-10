@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cp.test
 
 import org.scalatest.FunSuite
@@ -228,5 +242,27 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		} run()
 		
 		nSol should be(2)
+	}
+	
+	 test("Test 7: unsolvable problem") {
+	    val cp = CPScheduler(100)
+	    val act1 = Activity(cp, 30)
+	    val act2 = Activity(cp, 30)
+	    val resource = MaxResource(cp, 5)
+	    
+	    act2 gives 5 toResource resource
+	    act1 needs 6 ofResource resource // act1 needs more than act2 provides
+	    
+	    try {
+		    cp.solve subjectTo {
+		      act1.endsBeforeStartOf(act2) // act2 can't provide resource until after act1
+		    } exploration {
+		      cp.binary(cp.activities)
+		    }
+	    } catch {
+	      case e: NoSolutionException => fail("Caught NoSolutionException. This should be handled internally")
+	    }
+	    
+	    cp.isFailed() should be(true)
 	}
 }

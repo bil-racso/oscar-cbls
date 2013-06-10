@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -73,13 +70,13 @@ object QuadraticAssignmentLNS {
         N.foreach(i => bestSol(i) = x(i).value)
     } run(1) // find first feasible solution
 
-    cp.failLimit = 100 // set the limit to 100 backtracks for LNS restarts
+    var limit = 100 // set the limit to 100 backtracks for LNS restarts
     for (r <- 1 to 20) {
       // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
-      val limit = if (cp.explorationCompleted) cp.failLimit/2 else cp.failLimit*2
+      limit = if (cp.explorationCompleted) limit/2 else limit*2
       println("set limit to "+limit)     
       // relax randomly 50% of the variables and run again
-      cp.runSubjectTo(Int.MaxValue,limit) {
+      cp.runSubjectTo(failureLimit = limit) {
     	cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == cp.lastSol(x(i))))
       }
     }

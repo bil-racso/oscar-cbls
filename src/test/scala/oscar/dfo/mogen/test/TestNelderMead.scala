@@ -15,32 +15,22 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  ******************************************************************************/
 
-package oscar.dfo.mogen.algos.test
+package oscar.dfo.mogen.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.util.mo.MOOPoint
-import oscar.util.mo.MaxMOOComparator
-import oscar.util.mo.LinearList
-import oscar.dfo.mogen.MOGEN
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.MinMOOComparator
-import oscar.dfo.mogen.algos.NelderMead
-import oscar.visual.PlotDFOPareto2D
-import oscar.visual.VisualFrame
-import oscar.dfo.mogen.MOGENTriplet
-import oscar.util.mo.ParetoFront
 import oscar.util.VisualController._
 import scala.util.continuations._
-import oscar.dfo.mogen.algos.DirectionalDirectSearch
 import oscar.dfo.mogen.algos.states.NelderMeadState
 import oscar.util.mo.FeasibleRegion
-import oscar.util.mo.MOOComparator
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  */
-class TestMOGENNelderMead extends FunSuite with ShouldMatchers {
+class TestNelderMead extends FunSuite with ShouldMatchers {
   val originPoint = MOOPoint(Array(0.0, 0.0), Array(0.0, 0.0))
   val point1 = MOOPoint(Array(0.0, 1.0), Array(0.0, 1.0))
   val point2 = MOOPoint(Array(1.0, 0.0), Array(1.0, 0.0))
@@ -74,31 +64,68 @@ class TestMOGENNelderMead extends FunSuite with ShouldMatchers {
     val centroid = nmState1.getCentroid
     val reflection = nmState1.getReflection(evaluator, feasReg, centroid)
     centroid should be(Array(0.0, 0.5))
-    reflection should be(Array(-1.0, 1.0))
+    reflection.coordinates should be(Array(-1.0, 1.0))
     nmState1.applySinglePointTransformation(reflection, comparator)
+    nmState1.simplex(0).coordinates should be (originPoint.coordinates)
+    nmState1.simplex(1).coordinates should be (point1.coordinates)
+    nmState1.simplex(2).coordinates should be (Array(-1.0, 1.0))
+    val nmState2 = nmState1.getNewState(reflection, comparator)
+    nmState2.simplex(0).coordinates should be (Array(-1.0, 1.0))
+    nmState2.simplex(1).coordinates should be (originPoint.coordinates)
+    nmState2.simplex(2).coordinates should be (point1.coordinates)
   }
   
   test("Test Nelder-Mead dummy 2D - Expansion on a NelderMeadState") {
     val nmState1 = NelderMeadState(Array(originPoint, point1, point2), unit2DIntervals)
     val centroid = nmState1.getCentroid
     val expansion = nmState1.getExpansion(evaluator, feasReg, centroid)
+    expansion.coordinates should be(Array(-2.0, 1.5))
+    nmState1.applySinglePointTransformation(expansion, comparator)
+    nmState1.simplex(0).coordinates should be (originPoint.coordinates)
+    nmState1.simplex(1).coordinates should be (point1.coordinates)
+    nmState1.simplex(2).coordinates should be (Array(-2.0, 1.5))
+    val nmState2 = nmState1.getNewState(expansion, comparator)
+    nmState2.simplex(0).coordinates should be (Array(-2.0, 1.5))
+    nmState2.simplex(1).coordinates should be (originPoint.coordinates)
+    nmState2.simplex(2).coordinates should be (point1.coordinates)
   }
   
   test("Test Nelder-Mead dummy 2D - Inside Contraction on a NelderMeadState") {
     val nmState1 = NelderMeadState(Array(originPoint, point1, point2), unit2DIntervals)
     val centroid = nmState1.getCentroid
     val insideContraction = nmState1.getInsideContraction(evaluator, feasReg, centroid)
+    insideContraction.coordinates should be(Array(0.5, 0.25))
+    nmState1.applySinglePointTransformation(insideContraction, comparator)
+    nmState1.simplex(0).coordinates should be (originPoint.coordinates)
+    nmState1.simplex(1).coordinates should be (point1.coordinates)
+    nmState1.simplex(2).coordinates should be (Array(0.5, 0.25))
+    val nmState2 = nmState1.getNewState(insideContraction, comparator)
+    nmState2.simplex(0).coordinates should be (Array(0.5, 0.25))
+    nmState2.simplex(1).coordinates should be (originPoint.coordinates)
+    nmState2.simplex(2).coordinates should be (point1.coordinates)
   }
   
   test("Test Nelder-Mead dummy 2D - Outside Contraction on a NelderMeadState"){
     val nmState1 = NelderMeadState(Array(originPoint, point1, point2), unit2DIntervals)
     val centroid = nmState1.getCentroid
     val outsideContraction = nmState1.getOutsideContraction(evaluator, feasReg, centroid)
+    outsideContraction.coordinates should be(Array(-0.5, 0.75))
+    nmState1.applySinglePointTransformation(outsideContraction, comparator)
+    nmState1.simplex(0).coordinates should be (originPoint.coordinates)
+    nmState1.simplex(1).coordinates should be (point1.coordinates)
+    nmState1.simplex(2).coordinates should be (Array(-0.5, 0.75))
+    val nmState2 = nmState1.getNewState(outsideContraction, comparator)
+    nmState2.simplex(0).coordinates should be (Array(-0.5, 0.75))
+    nmState2.simplex(1).coordinates should be (originPoint.coordinates)
+    nmState2.simplex(2).coordinates should be (point1.coordinates)
   }
   
   test("Test Nelder-Mead dummy 2D - Shrink on a NelderMeadState"){
     val nmState1 = NelderMeadState(Array(originPoint, point1, point2), unit2DIntervals)
     val shrink = nmState1.applyShrink(comparator, evaluator, feasReg)
+    nmState1.simplex(0).coordinates should be (originPoint.coordinates)
+    nmState1.simplex(1).coordinates should be (Array(0.5, 0.0))
+    nmState1.simplex(2).coordinates should be (Array(0.0, 0.5))
   }
   
   

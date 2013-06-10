@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.dfo.mogen.algos.states
 
 import scala.Array.canBuildFrom
@@ -10,7 +24,7 @@ import oscar.dfo.mogen.utils.ArrayUtils
 import oscar.dfo.mogen.utils.Simplex
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val intervals: Array[(Double, Double)]) extends ComparativeAlgorithmState[E] with Simplex[E] {
-  val simplex = simplexInit
+  val simplex = Array.tabulate(simplexInit.length)(i => simplexInit(i))
   var bestPoint = simplex(0)
 
   var deltaR = 1
@@ -19,7 +33,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val inte
   var deltaIC = -0.5
   var gammaS = 0.5
   
-  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): NelderMeadState[E] = {
     val newState = NelderMeadState(simplex, intervals)
     newState.deltaR = this.deltaR
     newState.deltaE = this.deltaE
@@ -27,7 +41,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val inte
     newState.deltaIC = this.deltaIC
     newState.gammaS = this.gammaS
     newState.bestPoint = newBestPoint
-    orderSimplex(comparator)
+    newState.orderSimplex(comparator)
     newState
   }
   
@@ -55,10 +69,11 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val inte
   }
   
   def applyShrink(comparator: MOOComparator[E], evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion) = {
-    val simplexCoordinates = simplex.map(mooP => mooP.coordinates).drop(1)
-    for (i <- 1 until simplexSize - 1) {
-      simplex(i) = evaluator.eval(ArrayUtils.arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
+    val simplexCoordinates = simplex.map(mooP => mooP.coordinates)
+    for (i <- 1 until simplexSize) {
+      simplex(i) = evaluator.eval(ArrayUtils.arraySum(simplexCoordinates(0), ArrayUtils.arrayProd(ArrayUtils.arrayDiff(simplexCoordinates(i), simplexCoordinates(0)), gammaS)), feasibleReg)
     }
+    printSimplex
     orderSimplex(comparator)
   }
   
@@ -72,7 +87,7 @@ object NelderMeadState {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {
-        val randPerturbation = startIntervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1))
+        val randPerturbation = startIntervals.map(e => ((2 * RandomGenerator.nextDouble) - 1) * math.abs(e._2 - e._1))
         Array.tabulate(coordinates.length)(i => coordinates(i) + randPerturbation(i))
       }
     }

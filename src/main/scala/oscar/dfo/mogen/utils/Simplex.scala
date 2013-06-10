@@ -22,7 +22,12 @@ trait Simplex[E] {
   def worstPoint = simplex(simplexSize - 1)
 
   def orderSimplex(comparator: MOOComparator[E]) = {
-    simplex.sortWith((point1, point2) => ((point1 == bestPoint) || (comparator.isEquivalent(point1, point2) && 0.5 > RandomGenerator.nextDouble) || comparator.dominates(point1, point2)))
+    val orderedAr = simplex.sortWith((point1, point2) => {
+      if (point2 == bestPoint) false
+      else (point1 == bestPoint || comparator.dominates(point1, point2) || (comparator.isEquivalent(point1, point2) && 0.5 > RandomGenerator.nextDouble))
+    })
+    for (i <- 0 until simplex.length)
+      simplex(i) = orderedAr(i)
   }
 
   def getPoints: List[MOOPoint[E]] = simplex.toList
@@ -45,7 +50,7 @@ trait Simplex[E] {
   }
   
   def reinitializeSimplex(intervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): Unit = {
-    val newCoords = Array.tabulate(bestPoint.coordinates.length){ index =>
+    val newCoords = Array.tabulate(simplexSize){ index =>
       val randPerturbation = intervals.map(e => (0.5 - RandomGenerator.nextDouble) * math.abs(e._2 - e._1))
       Array.tabulate(bestPoint.coordinates.length)(i => bestPoint.coordinates(i) + randPerturbation(i))
     }

@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.core;
 
@@ -63,6 +61,8 @@ public class Store extends ReversibleSearchNode {
 	
 	public LinkedList<Constraint> cutConstraints = new LinkedList<Constraint>();
 	
+	public boolean throwNoSolExceptions = true;
+	
 	@SuppressWarnings("unchecked")
 	public Store(){
 		super();
@@ -86,6 +86,13 @@ public class Store extends ReversibleSearchNode {
 	 */
 	public int getNbPropag() {
 		return nbPropag;
+	}
+	
+	/**
+	 * deactivate the no solution exception when an add is used and an inconsistent model is detected
+	 */
+	public void deactivateNoSolExceptions() {
+		throwNoSolExceptions = false;
 	}
 
     /**
@@ -456,16 +463,20 @@ public class Store extends ReversibleSearchNode {
      * @param c
      * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
      */
-    public void add(Constraint c) {
-        if (post(c) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when adding constraint :"+c);
+    public CPOutcome add(Constraint c) {
+    	CPOutcome res = post(c);
+        if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+            if (throwNoSolExceptions) throw  new NoSolutionException("the store failed when adding constraint :"+c);
         }
+        return res;
     }
     
-    public void addCut(Constraint c) {
-        if (postCut(c) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when adding constraint :"+c);
+    public CPOutcome addCut(Constraint c) {
+    	CPOutcome res = postCut(c);
+        if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+        	if (throwNoSolExceptions) throw new NoSolutionException("the store failed when adding constraint :"+c);
         }
+        return res;
     }    
 
     /**
@@ -475,10 +486,12 @@ public class Store extends ReversibleSearchNode {
      * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint).
      * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
      */
-    public void add(Constraint c, CPPropagStrength st) {
-        if (post(c,st) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when adding constraint :"+c);
+    public CPOutcome add(Constraint c, CPPropagStrength st) {
+    	CPOutcome res = post(c,st);
+    	if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+        	if (throwNoSolExceptions) throw  new NoSolutionException("the store failed when adding constraint :"+c);
         }
+        return res;
     }
     
     /**
@@ -487,10 +500,12 @@ public class Store extends ReversibleSearchNode {
      * @param c
      * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
      */
-    public void add(CPVarBool b) {
-        if (post(new Eq(b, 1)) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when setting boolvar to true");
+    public CPOutcome add(CPVarBool b) {
+    	CPOutcome res = post(new Eq(b, 1));
+        if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+        	if (throwNoSolExceptions) throw  new NoSolutionException("the store failed when setting boolvar to true");
         }
+        return res;
     }
 
     /**
@@ -499,10 +514,12 @@ public class Store extends ReversibleSearchNode {
      * @param constraints
      * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
      */
-    public void add(Collection<Constraint> constraints) {
-        if (post(constraints) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when adding constraints :"+constraints);
+    public CPOutcome add(Collection<Constraint> constraints) {
+    	CPOutcome res = post(constraints);
+    	if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+        	if (throwNoSolExceptions) throw  new NoSolutionException("the store failed when adding constraints :"+constraints);
         }
+        return res;
     }
 
     /**
@@ -512,10 +529,12 @@ public class Store extends ReversibleSearchNode {
      * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint)
      * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
      */
-    public void add(Collection<Constraint> constraints, CPPropagStrength st) {
-        if (post(constraints,st) == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
-            throw  new NoSolutionException("the store failed when adding constraints :"+constraints);
+    public  CPOutcome add(Collection<Constraint> constraints, CPPropagStrength st) {
+    	CPOutcome res = post(constraints,st);
+    	if (res == CPOutcome.Failure || getStatus() == CPOutcome.Failure) {
+        	if (throwNoSolExceptions) throw  new NoSolutionException("the store failed when adding constraints :"+constraints);
         }
+        return res;
     }
 
 }

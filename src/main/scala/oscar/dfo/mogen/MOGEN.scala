@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.dfo.mogen
 
 import scala.reflect.ClassTag
@@ -21,14 +35,14 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
   /** Function defining the feasible region of the problem */
   val feasibleRegion = FeasibleRegion()
   /** The set of non-dominated points (approximation of the Pareto front) */
-  var archive = LinearList[E]()
+  val archive = LinearList[E]()
   /** The iterate selection heuristic */
-  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.fairSelect//MOGEN.hyperPlaneSelect
+  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.combinationWithProbas(List((MOGEN.hyperPlaneSelect, 10.0), (MOGEN.fairSelect, 15.0), (MOGEN.randomSelect, 1.0)))//MOGEN.randomSelect//MOGEN.hyperPlaneSelect//MOGEN.fairSelect
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
 
   def initArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
-    for (i <- 1 to 100) {
+    for (i <- 1 to maxNbPoints) {
       val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
         val newAlgo = getRandomAlgo(algorithms)
@@ -57,7 +71,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     MOGEN.onArchChan(archive)
     var nbIterations = 1
     while (nbIterations <= maxIters) {
-      println("Iteration nb: " + nbIterations)
+      println("Iteration nb: " + nbIterations + "  (nb evaluations: " + evaluator.nbCallToEvalFunction + ")")
       performIteration(nbIterations)
       nbIterations += 1
     }
@@ -78,6 +92,7 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     }
     archive.insert(currentTriplet, comparator)
     if (archiveChanged) MOGEN.onArchChan(archive)
+    println("MOGEN: nb iterations: " + evaluator.nbCallToEvalFunction)
   }
 
   def selectIterate: MOGENTriplet[E] = {
@@ -85,7 +100,25 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     if (archive.removeElement(newIterate)) newIterate
     else throw new IllegalArgumentException("The archive didn't contain the iterate... It cannot be!")
   }
-
+  
+  def printAlgosProportion = {
+    println("Archive size: " + archive.size)
+    val algoMap = scala.collection.mutable.HashMap[ComparativeAlgorithm, Int]()
+    for (elem <- archive.getElements) {
+      elem match {
+        case triplet: MOGENTriplet[E] => {
+          algoMap.get(triplet.getAlgorithm) match {
+            case Some(algoCount) => algoMap.update(triplet.getAlgorithm, algoCount + 1)
+            case None => algoMap.put(triplet.getAlgorithm, 1)
+          }
+        }
+        case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplets")
+      }
+    }
+    for ((algo, algoCount) <- algoMap) {
+      println()
+    }
+  }
 }
 
 object MOGEN {
@@ -119,6 +152,22 @@ object MOGEN {
       case triplet: MOGENTriplet[E] => triplet
       case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplets")
     }
+  }
+  
+  def combinationWithProbas[E](selectFunctions: List[((ParetoFront[E]) => MOGENTriplet[E], Double)]): (oscar.util.mo.ParetoFront[E]) => oscar.dfo.mogen.MOGENTriplet[E] = {
+    val probaSum = selectFunctions.foldLeft(0.0)((acc, newPair) => acc + newPair._2)
+    def probaSelect(archive: ParetoFront[E]): MOGENTriplet[E] = {
+      val randNum = RandomGenerator.nextDouble
+      var sumOfProbas = 0.0
+      for (pair <- selectFunctions) {
+        sumOfProbas += pair._2
+        if (sumOfProbas >= randNum * probaSum) {
+          return pair._1(archive)
+        }
+      }
+      selectFunctions(0)._1(archive)
+    }
+    probaSelect
   }
   
   

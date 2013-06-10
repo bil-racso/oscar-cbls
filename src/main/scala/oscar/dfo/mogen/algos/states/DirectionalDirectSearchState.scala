@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.dfo.mogen.algos.states
 
 import oscar.util.mo.MOOComparator
@@ -5,6 +19,7 @@ import oscar.util.mo.MOOPoint
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.RandomGenerator
 import oscar.util.mo.FeasibleRegion
+import oscar.dfo.mogen.utils.ArrayUtils
 
 class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], var stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {
   val originalStepSizes = stepSizes.clone
@@ -63,16 +78,13 @@ object DirectionalDirectSearchState {
   
   def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizes: Array[Double], dictionnary: Array[Array[Double]], basisSize: Int) = new DirectionalDirectSearchState(initPoint, stepSizes, dictionnary, basisSize)
   
-  def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizeIntervals: Array[(Double, Double)], dictionarySize: Int = 100, basisSize: Int = 10): ComparativeAlgorithmState[E] = {
+  def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizeIntervals: Array[(Double, Double)]): ComparativeAlgorithmState[E] = {
+    val dictionarySize = math.pow(10, initPoint.nbCoordinates).toInt
+    val basisSize = math.pow(2, initPoint.nbCoordinates).toInt
     val stepSizes = Array.tabulate(initPoint.nbCoordinates)(i => stepSizeIntervals(i)._1 + RandomGenerator.nextDouble * (stepSizeIntervals(i)._2 - stepSizeIntervals(i)._1))
-    val positiveDictionary = Array.tabulate(dictionarySize)(i => normalizeArray(Array.tabulate(initPoint.nbCoordinates)(i => RandomGenerator.nextDouble)))
+    val positiveDictionary = Array.tabulate(dictionarySize)(i => ArrayUtils.normalize(Array.tabulate(initPoint.nbCoordinates)(i => RandomGenerator.nextDouble)))
     val negativeDictionary = Array.tabulate(dictionarySize)(i => Array.tabulate(initPoint.nbCoordinates)(j => - positiveDictionary(i)(j)))
     val dictionary = RandomGenerator.shuffle(Array.tabulate(2 * dictionarySize)(i => if(i < dictionarySize) positiveDictionary(i) else negativeDictionary(i - dictionarySize)).toSeq).toArray
     DirectionalDirectSearchState(initPoint, stepSizes, dictionary, basisSize)
-  }
-  
-  def normalizeArray(coordinates: Array[Double]): Array[Double] = {
-    val vectorLength = math.sqrt(coordinates.foldLeft(0.0)((acc, newDim) => acc + newDim * newDim))
-    Array.tabulate(coordinates.length)(i => coordinates(i) / vectorLength)
   }
 }

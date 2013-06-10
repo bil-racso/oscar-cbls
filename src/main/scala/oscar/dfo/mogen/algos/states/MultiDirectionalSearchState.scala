@@ -9,26 +9,27 @@ import oscar.dfo.mogen.utils.ArrayUtils
 import oscar.util.mo.RandomGenerator
 
 class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val intervals: Array[(Double, Double)]) extends ComparativeAlgorithmState[E] with Simplex[E] {
-  val simplex = simplexInit.clone
+  val simplex = Array.tabulate(simplexInit.length)(i => simplexInit(i))
   var bestPoint = simplex(0)
-  
   var gammaS = 0.5
   var gammaE = 2.0
+  var gammaR = 1.0
   
-  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): MultiDirectionalSearchState[E] = {
     val newState = MultiDirectionalSearchState(simplex, intervals)
     newState.gammaS = this.gammaS
     newState.gammaE = this.gammaE
+    newState.gammaR = this.gammaR
     newState.bestPoint = newBestPoint
-    orderSimplex(comparator)
+    newState.orderSimplex(comparator)
     newState
   }
   
-  def getRotation(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = getMultiPointTransformation(1.0, evaluator, feasibleReg)
+  def getRotation(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = getMultiPointTransformation(gammaR, evaluator, feasibleReg)
   
   def getExpansion(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = getMultiPointTransformation(gammaE, evaluator, feasibleReg)
   
-  def getShrink(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = getMultiPointTransformation(gammaS, evaluator, feasibleReg)
+  def getShrink(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = getMultiPointTransformation(-gammaS, evaluator, feasibleReg)
   
   def getMultiPointTransformation(factor: Double, evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): Array[MOOPoint[E]] = {
     Array.tabulate(simplex.length){i =>
@@ -47,9 +48,9 @@ class MultiDirectionalSearchState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E
 }
 
 object MultiDirectionalSearchState {
-  def apply[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], intervals: Array[(Double, Double)]) = new MultiDirectionalSearchState(simplexInit, intervals)
+  def apply[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], intervals: Array[(Double, Double)]): MultiDirectionalSearchState[E] = new MultiDirectionalSearchState(simplexInit, intervals)
   
-  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): MultiDirectionalSearchState[E] = {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {
