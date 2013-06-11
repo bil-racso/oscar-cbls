@@ -84,7 +84,7 @@ object ParcelShipment {
       for (i <- 0 until n) {
         cp.add(elementVar(load, succ(i), load(i) + toLoad(succ(i))))
       }
-      cp.add(sum(0 until n)(i => element(distance(i), succ(i))) == totDist)
+      cp.add(sum(0 until n)(i => distance(i)(succ(i))) == totDist)
       cp.add(circuit(succ), Strong)
 
     } exploration {

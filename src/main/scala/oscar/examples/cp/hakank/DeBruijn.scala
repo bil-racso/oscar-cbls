@@ -60,7 +60,7 @@ object DeBruijn {
     val x        = Array.fill(m)(CPVarInt(cp, 0 to pow(base, n).toInt - 1))
     val binary   = Array.fill(m,n)(CPVarInt(cp, 0 to base-1))
     val bin_code = Array.fill(m)(CPVarInt(cp, 0 to base-1))
-    val gccv     = Array.tabulate(base)(i => (CPVarInt(cp, 0 to m), i))
+    val gccv     = Array.tabulate(base)(i => (i,CPVarInt(cp, 0 to m)))
 
     //
     // constraints

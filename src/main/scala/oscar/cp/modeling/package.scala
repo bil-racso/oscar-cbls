@@ -30,7 +30,7 @@ import oscar.util._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-package object modeling extends Constraints {
+package object modeling extends oscar.cp.modeling.Constraints {
 
   /**
    * Filtering power can be specified for some of the constraints.

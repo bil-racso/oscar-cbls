@@ -37,7 +37,52 @@ class TestSearch extends FunSuite with ShouldMatchers  {
       nbSol += 1
     } run()
     nbSol should be(1)
-  }  
+  }
+
+  test("explocompleted") {
+    val cp = CPSolver()
+    val v = Array.tabulate(3)(i => false)
+    var nb = 0
+    cp.exploration {
+      cp.branch { v(0) = true } { v(0) = false }
+      cp.branch { v(1) = true } { v(1) = false }
+      cp.branch { v(2) = true } { v(2) = false }
+      println(v.mkString(","))
+      nb += 1
+    } 
+    
+    cp.run (nbSolMax = 3)
+    cp.explorationCompleted should be(false)
+    cp.run ()
+    cp.explorationCompleted should be(true)
+    cp.run (nbSolMax = 3)
+    cp.explorationCompleted should be(false)
+    cp.run ()
+    cp.explorationCompleted should be(true)
+    cp.run (failureLimit = 3)
+    cp.explorationCompleted should be(false)
+  }
+  
+  test("timelimit") {
+	  val cp = CPSolver()
+	  val x = Array.fill(20)(CPVarInt(cp,0 to 1))
+	  var nb = 0
+	  var t0 = System.currentTimeMillis()
+	  cp.solve subjectTo {
+	    
+	  } exploration {
+	    cp.binary(x)
+	    //println(x.mkString(","))
+	    nb += 1
+	  } 
+	  cp.run(timeLimit = 1)
+	  cp.run(timeLimit = 1)
+	  val time: Int = ((System.currentTimeMillis()-t0)/1000).toInt
+	  time should be >=(2)
+	  cp.explorationCompleted should be(false)
+	  time should be <=(3)
+	  cp.explorationCompleted should be(false)
+  } 
   
     
   

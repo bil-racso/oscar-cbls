@@ -116,7 +116,7 @@ object TSPDemo extends App {
 
   cp.minimize(dist) subjectTo {
     cp.add(circuit(succ), Strong) //ask to have a strong filtering
-    cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
+    cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == dist)
   } exploration {
     //exploration of the search tree
     while (!allBounds(succ)) {

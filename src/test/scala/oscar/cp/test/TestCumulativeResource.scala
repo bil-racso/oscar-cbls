@@ -243,4 +243,26 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
 		
 		nSol should be(2)
 	}
+	
+	 test("Test 7: unsolvable problem") {
+	    val cp = CPScheduler(100)
+	    val act1 = Activity(cp, 30)
+	    val act2 = Activity(cp, 30)
+	    val resource = MaxResource(cp, 5)
+	    
+	    act2 gives 5 toResource resource
+	    act1 needs 6 ofResource resource // act1 needs more than act2 provides
+	    
+	    try {
+		    cp.solve subjectTo {
+		      act1.endsBeforeStartOf(act2) // act2 can't provide resource until after act1
+		    } exploration {
+		      cp.binary(cp.activities)
+		    }
+	    } catch {
+	      case e: NoSolutionException => fail("Caught NoSolutionException. This should be handled internally")
+	    }
+	    
+	    cp.isFailed() should be(true)
+	}
 }

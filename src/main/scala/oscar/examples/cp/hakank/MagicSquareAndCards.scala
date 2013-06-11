@@ -56,7 +56,7 @@ object MagicSquareAndCards {
     // 
     val x = Array.fill(n,n)(CPVarInt(cp, 1 to values))
     val s = CPVarInt(cp, 1 to values*colors)
-    val counts = Array.tabulate(values+1)(i => (CPVarInt(cp, 0 to colors), i))
+    val counts = Array.tabulate(values+1)(i => (i,CPVarInt(cp, 0 to colors)))
 
     //
     // constraints
@@ -86,7 +86,7 @@ object MagicSquareAndCards {
       cp.add( sum(for{i <- RANGE} yield x(i)(n-i-1)) == s)
 
       // redundant constraint
-      cp.add(sum(counts.map(_._1)) == n*n) 
+      cp.add(sum(counts.map(_._2)) == n*n) 
 
       // symmetry breaking
       cp.add(x(n-1)(n-1) == values)

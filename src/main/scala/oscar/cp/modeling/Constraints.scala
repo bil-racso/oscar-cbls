@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -78,10 +76,10 @@ trait Constraints {
    * @param x with x(i) == 1 if the item is selected, 0 otherwise
    * @param w with w(i) is the weight of item i
    * @param l the load of the knapsack
-   * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
+   * @return a binary-knapsack constraint linking the variables in argument such that W == sum,,j,, w[j]*x[i]
    */
-  def binaryKnapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], l: CPVarInt): Constraint = {
-    return new BinaryKnapsack(x.toArray, w.toArray, l)
+  def binaryKnapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], W: CPVarInt): Constraint = {
+    return new BinaryKnapsack(x.toArray, w.toArray, W)
   }
 
   /**
@@ -89,10 +87,10 @@ trait Constraints {
    * @param x with x(i) == 1 if the item is selected, 0 otherwise
    * @param w with w(i) is the weight of item i
    * @param l the load of the knapsack
-   * @return a binary-knapsack constraint linking the variables in argument such that l == sum,,j,, w[j]*x[i]
+   * @return a binary-knapsack constraint linking the variables in argument such that W == sum,,j,, w[j]*x[i]
    */
-  def binaryKnapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], l: Int): Constraint = {
-    return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store, l))
+  def binaryKnapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], W: Int): Constraint = {
+    return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store, W))
   }
 
   /**
@@ -107,9 +105,18 @@ trait Constraints {
   def binaryKnapsack(x: IndexedSeq[CPVarBool], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPVarInt, W: CPVarInt): Knapsack = {
     return new Knapsack(x.toArray, p.toArray, w.toArray, P, W)
   }
+  
+  /**
+   * atLeastNValue Constraint (Available Filtering: Weak, Strong)
+   * @param vars an non empty array of variables
+   * @return a constraint ensuring that nValue is the number of different valuesin vars
+   */
+  def atLeastNValue(vars: Iterable[CPVarInt], nValue: CPVarInt): Constraint = {
+    return new AtLeastNValue(vars.toArray,nValue)
+  }  
 
   /**
-   * AllDifferent Constraint (Available Filtering: Weak, Strong)
+   * allDifferent Constraint (Available Filtering: Weak, Strong)
    * @param vars an non empty array of variables
    * @return a constraint ensure that no value occurs more than once in vars
    */
@@ -120,6 +127,15 @@ trait Constraints {
   def allDifferent(vars: Iterable[CPVarInt]): Constraint = {
     return allDifferent(vars.toArray: _*)
   }
+  
+  /**
+   * minAssignment Constraint (Available Filtering: Medium)
+   * @param vars an non empty array of variables, weights a n x n array (n = vars.size-1).
+   * @return a constraint ensure that allDifferent(x) and sum(i) weights(i)(x(i)) <= cost 
+   */  
+  def minAssignment(x: Array[CPVarInt], weights: Array[Array[Int]], cost: CPVarInt): MinAssignment = {
+    return new MinAssignment(x,weights,cost)
+  } 
 
   /**
    * @param succ[i] is the successor of node i (also place i inside the domain of succ[i] if you want to allow it not to be part of the path
@@ -489,26 +505,26 @@ trait Constraints {
    * Soft Global Cardinality Constraint = gcc with a violation variable
    * @see Revisiting the Soft Global Cardinality Constraint, Pierre Schaus, Pascal Van Hentenryck, Alessandro Zanarini: CPAIOR 2010
    */
-  def softGcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], totviol: CPVarInt): Constraint = {
-    return new SoftGCC(x, values.min, min, max, totviol)
+  def softGcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], viol: CPVarInt): Constraint = {
+    return new SoftGCC(x, values.min, min, max, viol)
   }
 
   /**
    * Global Cardinality Constraint with variable counters
    * @param x a non empty array of variables
-   * @param valueOccurence is an array of pairs (o,v)
+   * @param valueOccurence is an array of pairs (v,o)
    *        where o is variable representing the number of occurrences of value v
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
-  def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt, Int]]): Constraint = {
-      def freshCard(): CPVarInt = CPVarInt(x(0).store, 0, x.length - 1)
-    val sortedValOcc = valueOccurrence.sortWith((a, b) => a._2 <= b._2)
-    val (x0, v0) = sortedValOcc(0)
+  def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Iterable[(Int,CPVarInt)]): Constraint = {
+    def freshCard(): CPVarInt = CPVarInt(x.head.store, 0, x.size - 1)
+    val sortedValOcc = valueOccurrence.toArray.sortWith((a, b) => a._1 <= b._1)
+    val (v0,x0) = sortedValOcc(0)
     var values = Array(v0)
     var cardinalities = Array(x0)
     for (i <- 1 until sortedValOcc.length) {
-      val (xi_1, vi_1) = sortedValOcc(i - 1)
-      val (xi, vi) = sortedValOcc(i)
+      val (vi_1,xi_1) = sortedValOcc(i - 1)
+      val (vi,xi) = sortedValOcc(i)
       for (v <- (vi_1 + 1) until vi) {
         values = values :+ v
         cardinalities = cardinalities :+ freshCard()
@@ -519,7 +535,8 @@ trait Constraints {
     new GCCVar(x.toArray, values(0), cardinalities)
   }
 
-  def gcc(x: Array[CPVarInt], valueOccurrence: Array[Tuple2[CPVarInt, Int]]): Constraint = {
+  
+  def gcc(x: Array[CPVarInt], valueOccurrence: Array[(Int,CPVarInt)]): Constraint = {
     gcc(x.toIndexedSeq, valueOccurrence)
   }
 
@@ -677,31 +694,31 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt], strictly: Boolean = false): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPVarInt], s: IndexedSeq[CPVarInt], p: IndexedSeq[CPVarInt],strictly: Boolean = false): LinkedList[Constraint] = {
     val cp = x(0).store
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
+      cons.add(elementVar(x, p(i),Strong) <= elementVar(x, p(i + 1),Strong))
       if (strictly) {
         cons.add(s(i) < s(i + 1))
       } else {
         cons.add(s(i) <= s(i + 1))
       }
-
+      
     }
     val minx = x.map(_.min).min
     val maxx = x.map(_.max).max
     val mins = s.map(_.min).min
     val maxs = s.map(_.max).max
-
-    for (i <- 0 until x.size) {
+    
+    for( i <- 0 until x.size) {
       cons.add(p(i) >= 0)
       cons.add(p(i) <= n)
-
+      
       cons.add(s(i) <= maxx)
       cons.add(s(i) >= minx)
-
+      
       cons.add(x(i) <= maxs)
       cons.add(x(i) >= mins)
     }
@@ -715,7 +732,7 @@ trait Constraints {
 
     // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
     val occ = Array.fill(maxVal - minVal + 1)(CPVarInt(cp, 0 to n))
-    cons.add(gcc(x, occ.zip(minVal to maxVal)))
+    cons.add(gcc(x, (minVal to maxVal).zip(occ)))
 
     // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
     val nbBefore = for (i <- minVal to maxVal) yield {
