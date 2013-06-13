@@ -536,9 +536,9 @@ trait Constraints {
   }
 
   
-  def gcc(x: Array[CPVarInt], valueOccurrence: Array[(Int,CPVarInt)]): Constraint = {
-    gcc(x.toIndexedSeq, valueOccurrence)
-  }
+//  def gcc(x: Array[CPVarInt], valueOccurrence: Array[(Int,CPVarInt)]): Constraint = {
+//    gcc(x.toIndexedSeq, valueOccurrence)
+//  }
 
   // regular and automatons
 
