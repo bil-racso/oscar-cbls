@@ -1,24 +1,24 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.linprog.modeling
 
 import ilog.concert._
 import ilog.concert.IloRange
 import ilog.cplex._
-
-
 
 /**
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com
@@ -32,7 +32,7 @@ class CplexLP extends AbstractLP {
   var objectiveValue = 0.0
   var status = LPStatus.NOT_SOLVED
   var closed = false
-  var released = false  
+  var released = false
   val model = new IloCplex()
   val lp = model.addLPMatrix() // matrix associated to model
   var configFile = new java.io.File("ToBImplemented")
@@ -40,7 +40,7 @@ class CplexLP extends AbstractLP {
   var lexpr = model.linearNumExpr()
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
-    
+
     this.nbCols = nbCols
 
     model.numVarArray(model.columnArray(lp, nbCols), 0.0, java.lang.Double.MAX_VALUE) // creating nbCols variables
@@ -56,16 +56,16 @@ class CplexLP extends AbstractLP {
   }
 
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
-     // do not use lp.addrow(model.addLe(...)). This is highly ineficient 
-     val idx = sign match {
-      case "<=" => lp.addRow(-Double.MaxValue,rhs,col,coef)
-      case ">=" => lp.addRow(rhs,Double.MaxValue,col,coef)
-      case "==" => lp.addRow(rhs,rhs,col,coef)
-     }
-     // range constructor used above does not allow to set name directly...
-     lp.getRange(idx).setName(name)
-    
-     nbRows += 1
+    // do not use lp.addrow(model.addLe(...)). This is highly ineficient 
+    val idx = sign match {
+      case "<=" => lp.addRow(-Double.MaxValue, rhs, col, coef)
+      case ">=" => lp.addRow(rhs, Double.MaxValue, col, coef)
+      case "==" => lp.addRow(rhs, rhs, col, coef)
+    }
+    // range constructor used above does not allow to set name directly...
+    lp.getRange(idx).setName(name)
+
+    nbRows += 1
   }
 
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
@@ -197,7 +197,7 @@ class CplexLP extends AbstractLP {
 
   def deleteConstraint(rowId: Int) {
     lp.removeRow(rowId)
-   }
+  }
 
   def exportModel(fileName: String) {
     model.exportModel(fileName)
@@ -214,5 +214,19 @@ class CplexLP extends AbstractLP {
 
   def release() {
     model.end()
+  }
+
+  def updateRhs(rowId: Int, rhs: Double): Unit = {
+    val cons = lp.getRange(rowId)
+
+    if (cons.getLB != -Double.MaxValue) cons.setLB(rhs)
+
+    if (cons.getUB != Double.MaxValue) cons.setUB(rhs)
+  }
+
+  def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
+    val cons = lp.getRange(rowId)
+    val variable = lp.getNumVar(colId)
+    model.setLinearCoef(cons, coeff, variable)
   }
 }
