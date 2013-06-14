@@ -164,11 +164,12 @@ class LPSolve extends AbstractLP {
     }
   }
 
-  def getDual(colId: Int): Double = {
-    if (colId < 0 || colId >= nbRows) {
+  def getDual(rowId: Int): Double = {
+    if (rowId < 0 || rowId >= nbRows) {
       0.0
     } else {
-      lp.getPtrDualSolution()(colId + 1)
+      println( lp.getPtrDualSolution().mkString(", " ))
+      lp.getPtrDualSolution()(rowId +1)
     }
   }
 
