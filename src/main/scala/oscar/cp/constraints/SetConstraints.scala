@@ -13,35 +13,27 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
+package oscar.cp.constraints
+
+import oscar.cp.core.CPVarSet
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPOutcome
+
+class Requires(val X: CPVarSet, v: Int) extends Constraint(X.s, "Set requires") {
+
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    X.requires(v)
+  }
+
+}
 
 
-/**
- * Trailable Queue of AC5 events
- * Each entry of the queue stores:
- *  - a index
- *  - a variable
- *  @author Pierre Schaus pschaus@gmail.com
- */
-class PropagEventQueueVarSet(val next: PropagEventQueueVarSet, val cons: Constraint, val x: CPVarSet, val idx: Int) {
-	
-    def this(next: PropagEventQueueVarSet, cons: Constraint, x: CPVarSet) = {
-      this(next,cons,x,0)
-    }
-    
-    def hasNext() = next != null
+class Excludes(val X: CPVarSet, v: Int) extends Constraint(X.s, "Set excludes") {
 
-	override def toString(): String = "PropagEventQueueVarSet constraint:"+cons+" var:"+x+" idx:"+idx;
-	
-	
-	def size() = {
-		var s = 0;
-		var q = this;
-		while (q != null) {
-			s += 1
-			q = q.next
-		}
-		s
-	}
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    X.excludes(v)
+  }
 
 }

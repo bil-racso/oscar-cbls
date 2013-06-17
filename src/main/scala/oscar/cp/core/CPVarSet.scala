@@ -16,28 +16,27 @@ package oscar.cp.core
 
 import oscar.reversible.ReversibleQueue
 import oscar.reversible.ReversiblePointer
-import oscar.cp.core.CPOutcome._ 
+import oscar.cp.core.CPOutcome._
+import oscar.cp.constraints.Requires
+import oscar.cp.constraints.Excludes
 
 
 /**
- * @author Pierre Schaus
+ * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = "") {
+class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = "") {
 
     def store = s
     val dom = new SetDomain(s,min,max);
     
 
-	val onDomainL2 = new ReversibleQueue[Constraint](s)
+	val onDomainL2 = new ReversiblePointer[ConstraintQueue](s,null)
 
 	val onRequiredL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
 	val onExcludedL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
 	val onRequiredIdxL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
 	val onExcludedIdxL1    = new ReversiblePointer[PropagEventQueueVarSet](s,null)
     
-    
-  
-	def constraintDegree(): Int
 	
     /**
      * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
@@ -67,8 +66,7 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenDomainChanges(c: Constraint) {
-		onDomainL2.setValue(new Queue[Constraint](onDomainL2.value,c));
-	  
+		onDomainL2.setValue(new ConstraintQueue(onDomainL2.value,c));
 	}
 
     /**
@@ -77,7 +75,7 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callValRequiredWhenRequiredValue(c: Constraint) {
-	  //onRequiredL1.setValue(new PropagEventQueue(onRequiredL1.value,c,this,0));
+	  onRequiredL1.setValue(new PropagEventQueueVarSet(onRequiredL1.value,c,this))
 	}
 	
 	
@@ -86,14 +84,18 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */	
-	def callValExcludedWhenExcludedValue(c: Constraint): Unit
+	def callValExcludedWhenExcludedValue(c: Constraint) {
+	  onExcludedL1.setValue(new PropagEventQueueVarSet(onExcludedL1.value,c,this))
+	}
 	
     /**
      * Level 1 registration: ask that the propagate() method of the constraint c is called whenever ...
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callValRequiredWhenRequiredValue(c: Constraint, idx: Int): Unit
+	def callValRequiredIdxWhenRequiredValue(c: Constraint, idx: Int) {
+	  onRequiredIdxL1.setValue(new PropagEventQueueVarSet(onRequiredIdxL1.value,c,this,idx))
+	}
 	
 	
     /**
@@ -101,14 +103,30 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */	
-	def callValExcludedWhenExcludedValue(c: Constraint, idx: Int): Unit	
+	def callValExcludedIdxWhenExcludedValue(c: Constraint, idx: Int) {
+	  onExcludedIdxL1.setValue(new PropagEventQueueVarSet(onExcludedIdxL1.value,c,this,idx))
+	}
 	
 	def requires(v: Int): CPOutcome = {
-	  Suspend
+	  if (dom.isPossible(v) && !dom.isRequired(v)) {
+	    // -------- AC3 notifications ------------
+        s.notifyL2(onDomainL2.value)
+	    // -------- AC5 notifications ------------
+        s.notifyRequired(onRequiredL1.value,this,v)
+	    s.notifyRequiredIdx(onRequiredIdxL1.value,this,v)
+	  }
+	  dom.requires(v)
 	}
 	
 	def excludes(v: Int): CPOutcome = {
-	  Suspend
+	  if (dom.isPossible(v) && !dom.isRequired(v)) {
+	    // -------- AC3 notifications ------------
+        s.notifyL2(onDomainL2.value)
+	    // -------- AC5 notifications ------------
+        s.notifyExcluded(onExcludedL1.value,this,v)
+	    s.notifyExcludedIdx(onExcludedIdxL1.value,this,v)
+	  }
+	  dom.excludes(v)
 	}
 	
 	def value(): Set[Int] = dom.requiredSet
@@ -120,10 +138,12 @@ abstract class CPVarSet(val s: CPStore,min: Int, max: Int, val name: String = ""
 	
 	
 	
+	def include(v: Int) = new Requires (this,v) 
+	def exclude(v: Int) = new Excludes (this,v) 
 
 }
 
-object CPVarSetInt {
+object CPVarSet {
   
   
 }

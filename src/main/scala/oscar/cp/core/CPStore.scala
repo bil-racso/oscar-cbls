@@ -173,7 +173,7 @@ class CPStore extends ReversibleSearchNode {
 	
 	def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
 		var q = constraints;
-		while(q != null) {
+		while (q != null) {
 		    val c = q.cons
 		    val x = q.x
 		    val delta = q.delta
@@ -246,7 +246,63 @@ class CPStore extends ReversibleSearchNode {
 			}
 			q = q.next
 		}
+	}
+	
+	// set variable
+	
+	def notifyRequired(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+		var q = constraints;
+		while (q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valRequired(x,v))
+			}
+			q = q.next
+		}
+	}
+	
+	def notifyRequiredIdx(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+		var q = constraints;
+		while (q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valRequiredIdx(x,idx,v))
+			}
+			q = q.next
+		}
+	}
+	
+	def notifyExcluded(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+		var q = constraints;
+		while (q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valExcluded(x,v))
+			}
+			q = q.next
+		}
+	}
+	
+	def notifyExcludedIdx(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+		var q = constraints;
+		while (q != null) {
+		    val c = q.cons
+		    val x = q.x
+		    val idx = q.idx
+			if (c.isActive()) {
+				addQueueL1(c,c.getPriorityBindL1(), c.valExcludedIdx(x,idx,v))
+			}
+			q = q.next
+		}
 	}	
+	
+	
 	
 	/**
 	 * call only the propagate method of the constraints and trigger the fix point does not post it

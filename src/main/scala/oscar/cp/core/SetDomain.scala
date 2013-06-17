@@ -39,7 +39,7 @@ class SetDomain(s: CPStore, min: Int, max: Int) {
    def excludes(value: Int): CPOutcome = {
      if (values.isRequired(value)) Failure
      else {
-       values.requires(value)
+       values.excludes(value)
        Suspend
      }
    }
