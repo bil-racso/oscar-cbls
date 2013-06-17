@@ -28,7 +28,7 @@ class VisualFrame(title:String, nbLines:Int, nbCols:Int) extends JFrame(title) {
 	
 	desktop.setBackground(Color.white)
 	val sz = Toolkit.getDefaultToolkit().getScreenSize()
-	val screenSize = new java.awt.Dimension(sz.getWidth().toInt,(sz.getHeight()*85/100).toInt)
+	val screenSize = new java.awt.Dimension(sz.getWidth().toInt/2,(sz.getHeight()*85/100).toInt/2)
 	var n = 0
 	var w = (screenSize.width/nbCols)*90/100
 	var h = (screenSize.height/nbLines)*90/100	
