@@ -16,7 +16,7 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
@@ -53,7 +53,7 @@ import oscar.cp.constraints.QuadraticCumulativeEdgeFinding
  *  @author Renaud Hartert ren.hartert@gmail.com
  *  @version 28/07/2012 
  */
-abstract class SweepCumulativeA(cp: Store, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
+abstract class SweepCumulativeA(cp: CPStore, allTasks : Array[CumulativeActivity], lb : Int, ub : Int, r : Int, name : String) extends Constraint(cp, name) {
 
 	// Contains all the relevant tasks
 	protected val tasks = allTasks.filter(_.resource.hasValue(r))

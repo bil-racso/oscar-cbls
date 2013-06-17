@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestTrailBoundedSet extends TestCase {
 	
-	private Store s;
+	private CPStore s;
 	
 	
     /**
@@ -48,7 +48,7 @@ public class TestTrailBoundedSet extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**

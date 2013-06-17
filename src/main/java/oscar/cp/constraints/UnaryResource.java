@@ -22,7 +22,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.scheduling.Activity;
 import oscar.cp.scheduling.MirrorActivity;
 
@@ -112,7 +112,7 @@ public class UnaryResource extends Constraint {
 		this(activities, makeRequiredArray(activities.length,activities[0].start().store()), name);
 	}
 	
-	private static CPVarBool[] makeRequiredArray(int n, Store s) {
+	private static CPVarBool[] makeRequiredArray(int n, CPStore s) {
 		CPVarBool [] res = new CPVarBool[n];
 		for (int i = 0; i < res.length; i++) {
 			res[i] = new CPVarBool(s);

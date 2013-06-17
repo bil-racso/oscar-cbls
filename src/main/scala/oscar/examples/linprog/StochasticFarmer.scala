@@ -189,7 +189,7 @@ object StochasticFarmer {
     }
     
     /**
-     * Store variable values
+     * CPStore variable values
      */
     class Solution (vars: Map[String, LPVar]) {
     	val data = vars map (el => (el._1,el._2.getValue)) toMap

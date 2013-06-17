@@ -17,7 +17,7 @@ package oscar.cp.constraints
 import scala.math.max
 import scala.math.min
 
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
@@ -25,7 +25,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.MirrorCumulativeActivity
 
-class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
+class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
 
 	// The tasks
 	var lToRTasks : Array[CumulativeActivity] = allTasks

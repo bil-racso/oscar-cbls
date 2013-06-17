@@ -57,7 +57,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     for (i <- 0 until x.size) {
       p(i).value should be(p_(i))
     }
-    cp.getStatus() should not be(CPOutcome.Failure)
+    cp.isFailed should be(false)
   }
   
   test("Sortedness2") {
@@ -73,7 +73,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))
     }
-    cp.getStatus() should not be(CPOutcome.Failure)
+    cp.isFailed should be(false)
   }
   
   test("Sortedness3") {
@@ -95,7 +95,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))
     }
-    cp.getStatus() should not be(CPOutcome.Failure)
+    cp.isFailed should be(false)
   }
 
   
@@ -136,7 +136,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))
     }
-    cp.getStatus() should not be (CPOutcome.Failure)
+    cp.isFailed should be(false)
   }
 
 }

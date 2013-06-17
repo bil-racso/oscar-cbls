@@ -91,7 +91,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     X(4).getValue should be (1)
     P.getValue should be (156)
     W.getValue should be (38)
-    cp.getStatus() should be (CPOutcome.Suspend)
+    cp.isFailed should be (false)
 
   }
   
@@ -112,7 +112,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     X(4).getValue should be (1)
     P.getValue should be (90)
     W.getValue should be (40)
-    cp.getStatus() should be (CPOutcome.Suspend)
+    cp.isFailed should be (false)
 
   }  
   

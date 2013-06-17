@@ -12,29 +12,36 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core;
+
+package oscar.cp.core
+
 
 /**
- * @author Pierre Schaus pschaus@gmail.com
+ * Trailable Queue of AC5 events
+ * Each entry of the queue stores:
+ *  - a index
+ *  - a variable
+ *  @author Pierre Schaus pschaus@gmail.com
  */
-public class PropagEventUpdateMin extends PropagEvent {
+class PropagEventQueueVarSet(val next: PropagEventQueueVarSet, val cons: Constraint, val x: CPVarSet, val idx: Int) {
 	
-	private CPVarInt var;
-	private int val;
+    def this(next: PropagEventQueueVarSet, cons: Constraint, x: CPVarSet) = {
+      this(next,cons,x,0)
+    }
+    
+    def hasNext() = next != null
+
+	override def toString(): String = "PropagEventQueueVarSet constraint:"+cons+" var:"+x+" idx:"+idx;
 	
-	public PropagEventUpdateMin(Constraint cstr,CPVarInt var, int val) {
-		super(cstr);
-		this.var = var;
-		this.val = val;
-	}
 	
-	int getPrior() {
-		return cstr.getPriorityBoundsL1();
-	}
-	
-	@Override
-	public CPOutcome notifyConstraint() {
-		return cstr.updateMin(var, val);
+	def size() = {
+		var s = 0;
+		var q = this;
+		while (q != null) {
+			s += 1
+			q = q.next
+		}
+		s
 	}
 
 }

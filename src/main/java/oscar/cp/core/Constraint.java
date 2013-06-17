@@ -24,17 +24,19 @@ import oscar.reversible.ReversibleBool;
  * @author Pierre Schaus pschaus@gmail.com
  */
 public abstract class Constraint {
-	protected Store s;	
+	protected CPStore s;	
 	
-	protected int priorityL2 = Store.MAXPRIORL2;
+	protected int priorityL2 = 7;//CPStore.MAXPRIORL2;
 	
 	private ReversibleBool active;
 	private ReversibleBool inQueue;
 	
 	
-	protected int priorityBindL1 = Store.MAXPRIORL1-1;
-	protected int prioritBoundsL1 = Store.MAXPRIORL1-2;
-	protected int priorityRemoveL1= Store.MAXPRIORL1-2;
+	protected int priorityBindL1 = CPStore.MAXPRIORL1()-1;
+	protected int prioritBoundsL1 = CPStore.MAXPRIORL1()-2;
+	protected int priorityRemoveL1= CPStore.MAXPRIORL1()-2;
+	protected int priorityRequireL1 = CPStore.MAXPRIORL1()-1;
+	protected int priorityExcludeL1 = CPStore.MAXPRIORL1()-2;
 	
 	protected String name="cons";
 	
@@ -50,7 +52,7 @@ public abstract class Constraint {
 	 */
 	protected boolean idempotent = false;
 	
-	public Constraint(Store s){
+	public Constraint(CPStore s){
 		this.s = s;
 		active = new ReversibleBool(s);
 		active.setValue(true);
@@ -58,7 +60,7 @@ public abstract class Constraint {
 		inQueue.setValue(false);
 	}
 	
-	public Constraint(Store s,String name){
+	public Constraint(CPStore s,String name){
 		this(s);
 		this.name = name;
 	}
@@ -134,14 +136,14 @@ public abstract class Constraint {
 
 	/**
 	 * 
-	 * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and Store.MAXPRIORL2 
+	 * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and CPStore.MAXPRIORL2 
 	 */
 	protected void setPriorityL2(int priority) {
 		this.priorityL2 = priority;
 	}
 	
 	private int checkL1Prior(int priority) {
-		return Math.max(0,Math.min(priority,Store.MAXPRIORL1));
+		return Math.max(0,Math.min(priority,CPStore.MAXPRIORL1()));
 	}
 	
 	protected void setPriorityBindL1(int priority) {
@@ -167,6 +169,15 @@ public abstract class Constraint {
 	protected int getPriorityBoundsL1() {
 		return this.prioritBoundsL1;
 	}	
+	
+	protected int getPriorityRequireL1() {
+		return this.priorityRequireL1;
+	}
+	
+	protected int getPriorityExcludeL1() {
+		return this.priorityExcludeL1;
+	}	
+	
 	
 	/**
 	 * @return true if the constraint is still active
@@ -293,7 +304,7 @@ public abstract class Constraint {
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callValBindIdx(this,idx)
 	 * @param x is bind 
-	 * @param idx is a key value that was given to callValBind(x,idx) attached to variable x. 
+	 * @param idx is a key value that was given to callValBindIdx(x,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
@@ -322,6 +333,53 @@ public abstract class Constraint {
 	protected CPOutcome valRemoveIdx(CPVarInt x, int idx, int val) {
 		return CPOutcome.Suspend;
 	}
+	
+	
+	/**
+	 * Propagation method of Level L1 that is called if variable x has asked to do so
+	 * with the method call x.callValRequiredWhenValueRequired(this)
+	 * @param val is a value that has been put as required in the domain of x since last call
+	 * @return the outcome i.e. Failure, Success or Suspend
+	 */
+	protected CPOutcome valRequired(CPVarSet x, int val) {
+		return CPOutcome.Suspend;
+	}
+	
+	/**
+	 * Propagation method of Level L1 that is called if variable x has asked to do so
+	 * with the method call x.callValRequiredIdxWhenValueRemovedIdx(this)
+	 * @param val is a value that has been put as required in the domain of x since last call
+	 * @param idx is a key value that was given to callValRequiredIdxWhenValueRemovedIdx(x,idx) attached to variable x. 
+	 *        This is typically used to retrieve the index of x in an array of variables in constant time  
+	 * @return the outcome i.e. Failure, Success or Suspend
+	 */
+	protected CPOutcome valRequiredIdx(CPVarSet x, int idx, int val) {
+		return CPOutcome.Suspend;
+	}
+	
+	/**
+	 * Propagation method of Level L1 that is called if variable x has asked to do so
+	 * with the method call x.callValExcludeddWhenValueRequired(this)
+	 * @param val is a value that has been excluded in the domain of x since last call
+	 * @return the outcome i.e. Failure, Success or Suspend
+	 */
+	protected CPOutcome valExcluded(CPVarSet x, int val) {
+		return CPOutcome.Suspend;
+	}
+	
+	/**
+	 * Propagation method of Level L1 that is called if variable x has asked to do so
+	 * with the method call x.callValExcludedIdxWhenValueRemovedIdx(this)
+	 * @param val is a value that has been put as required in the domain of x since last call
+	 * @param idx is a key value that was given to callValExcludedIdxWhenValueRemovedIdx(x,idx) attached to variable x. 
+	 *        This is typically used to retrieve the index of x in an array of variables in constant time  
+	 * @return the outcome i.e. Failure, Success or Suspend
+	 */
+	protected CPOutcome valExcludedIdx(CPVarSet x, int idx, int val) {
+		return CPOutcome.Suspend;
+	}	
+
+	
 	
 	protected CPOutcome execute() {
 		inQueue.setValue(false);

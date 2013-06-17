@@ -32,7 +32,7 @@ import oscar.search.*;
  */
 public class TestUnaryResource extends TestCase {
 	
-	private Store s;	
+	private CPStore s;	
 	
     public TestUnaryResource(String name) {
         super(name);
@@ -43,7 +43,7 @@ public class TestUnaryResource extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**
