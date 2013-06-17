@@ -152,8 +152,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    * @param v must have been previously declared through the registerForViolation(v:Variable) method
    */
   override def violation(v:Variable):IntVar = {
-    val StoredRecord:GlobalViolationDescriptor = v.getStorageAt(IndexForGlobalViolationINSU,null)
-    if (StoredRecord == null){
+    val CPStoredRecord:GlobalViolationDescriptor = v.getStorageAt(IndexForGlobalViolationINSU,null)
+    if (CPStoredRecord == null){
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
@@ -163,7 +163,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
       violationvariable
     }else{
       //already registered
-      StoredRecord.Violation
+      CPStoredRecord.Violation
     }
   }
 

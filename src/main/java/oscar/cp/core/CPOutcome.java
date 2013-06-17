@@ -15,7 +15,7 @@
 package oscar.cp.core;
 
 /**
- * A CPOutcome informs us on the state of a Store or the result of a propagation method.
+ * A CPOutcome informs us on the state of a CPStore or the result of a propagation method.
  * @author Pierre Schaus pschaus@gmail.com
  */
 public enum CPOutcome {

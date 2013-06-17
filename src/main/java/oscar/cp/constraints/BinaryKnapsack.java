@@ -22,7 +22,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.reversible.ReversibleBool;
 import oscar.reversible.ReversibleInt;
 
@@ -71,7 +71,7 @@ public class BinaryKnapsack extends Constraint {
 	public BinaryKnapsack(CPVarBool [] b, final int [] weights, CPVarInt load) {
 		super(b[0].s(),"BinaryKnapsack");
         assert(b.length == weights.length);
-		setPriorityL2(Store.MAXPRIORL2-2);
+		setPriorityL2(CPStore.MAXPRIORL2()-2);
 		
 		Integer [] perm = new Integer [weights.length];
 		for (int i = 0; i < perm.length; i++) {

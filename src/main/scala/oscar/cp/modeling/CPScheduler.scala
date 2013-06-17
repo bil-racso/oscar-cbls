@@ -122,7 +122,7 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 		val oldEST = Array.fill(n)(new ReversibleInt(this, -1))
 	
 		// update the new ones becoming available because est has moved
-		def updateSelectable() = (Activities).filter(i => oldEST(i).value < activities(i).est).foreach(selectable(_).value = true)
+		def updateSelectable() = (Activities).filter(i => oldEST(i).value < activities(i).est || activities(i).dur.max == 0).foreach(selectable(_).value = true)
 		def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
 		def allStartBounds() = bound.forall(i => i.value)
 		

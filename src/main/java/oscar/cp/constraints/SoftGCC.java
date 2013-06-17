@@ -20,7 +20,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 enum FlowType { UF, OF };
@@ -111,7 +111,7 @@ public class SoftGCC extends Constraint{
 		this.low = low;
 		this.up = up;
 		this.viol = viol;
-		this.priorityL2 =  Store.MAXPRIORL2-2;
+		this.priorityL2 =  CPStore.MAXPRIORL2()-2;
 		check();		
 	}
 	

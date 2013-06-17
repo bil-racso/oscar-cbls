@@ -121,7 +121,7 @@ class ReversibleSearchNode {
   }
 
   /**
-   * Store the current state of the node on a stack.
+   * CPStore the current state of the node on a stack.
    */
   def pushState() {
     magic += 1

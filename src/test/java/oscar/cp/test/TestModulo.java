@@ -53,7 +53,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test1(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,3,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
@@ -62,7 +62,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test2(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,6,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
@@ -73,7 +73,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test3(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,6,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
@@ -83,7 +83,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test4(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,6,2,9,12});
     	CPVarInt y = CPVarInt.apply(cp, 0,5);
     	cp.post(new Modulo(x, 3, y));
@@ -95,7 +95,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test5(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{0,-1,-6,-2,-9,-12});
     	CPVarInt y = CPVarInt.apply(cp, -5,5);
     	cp.post(new Modulo(x, 3, y));
@@ -107,7 +107,7 @@ public class TestModulo extends TestCase {
     }
     
     public void test6(){  	
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	CPVarInt x = CPVarInt.apply(cp,new int[]{-6,-3,-9,-12,3,6,9,12});
     	CPVarInt y = CPVarInt.apply(cp, -5,5);
     	cp.post(new Modulo(x, 3, y));

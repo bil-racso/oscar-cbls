@@ -12,7 +12,8 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core;
+
+package oscar.cp.core
 
 /**
  * Trailable Queue of AC5 events
@@ -22,53 +23,22 @@ package oscar.cp.core;
  *  - a variable
  *  @author Pierre Schaus pschaus@gmail.com
  */
-public class PropagEventQueue extends Queue<Constraint> {
+class ConstraintQueue(val next: ConstraintQueue, val cons: Constraint) {
 	
-	private int delta;
-	private int idx;
-	private CPVarInt var;
+ 
+    def hasNext() = next != null
 
-	protected PropagEventQueue(PropagEventQueue next, Constraint elem, CPVarInt v, int delta) {
-		super(next, elem);
-		this.var = v;
-		this.delta = delta;
-		idx = 0;
-	}
+	override def toString(): String = "ConstraintQueue constraint:"+cons;
 	
-	protected PropagEventQueue(PropagEventQueue next, Constraint elem, CPVarInt v, int idx,int delta) {
-		this(next,elem,v,delta);
-		this.idx = idx;
-	}
 	
-	protected CPVarInt getVar() {
-		return var;
-	}
-	
-	protected int getDelta() {
-		return delta;
-	}
-	
-	protected int getIdx() {
-		return idx;
-	}
-	
-	public PropagEventQueue getNext() {
-		return (PropagEventQueue) next;
-	}
-	
-	@Override
-	public String toString() {
-		return "PropagEventQueue constraint:"+elem+" var:"+var+" idx:"+idx;
-	}
-	
-	public int getSize() {
-		int size = 0;
-		PropagEventQueue q = this;
+	def size() = {
+		var s = 0;
+		var q = this;
 		while (q != null) {
-			size++;
-			q = q.getNext();
+			s += 1
+			q = q.next
 		}
-		return size;
+		s
 	}
 
 }

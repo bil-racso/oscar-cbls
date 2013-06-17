@@ -20,11 +20,11 @@ package oscar.cp.core
  * 1 is used for true, 0 for false.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVarBool(st: Store) extends CPVarIntImpl(st,0,1) {
+class CPVarBool(st: CPStore) extends CPVarIntImpl(st,0,1) {
 
 
     	
-	def this(s: Store, b: Boolean) = {
+	def this(s: CPStore, b: Boolean) = {
 		this(s)
 		if (b) assign(1)
 		else assign(0)
@@ -102,14 +102,14 @@ object CPVarBool {
    /**
     * Creates a new CP Boolean Variable
     */
-   def apply(cp: Store): CPVarBool = {
+   def apply(cp: CPStore): CPVarBool = {
     new CPVarBool(cp)
    }
    
-   def apply(cp: Store,b: Boolean): CPVarBool = {
+   def apply(cp: CPStore,b: Boolean): CPVarBool = {
     new CPVarBool(cp,b)
    }
    
-   def getArray(cp: Store,nb: Int) = Array.fill(nb)(CPVarBool(cp));
+   def getArray(cp: CPStore,nb: Int) = Array.fill(nb)(CPVarBool(cp));
 }  
   

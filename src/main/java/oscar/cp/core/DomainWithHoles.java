@@ -35,7 +35,7 @@ public class DomainWithHoles implements Domain, Iterable<Integer> {
 	
 	private ReversibleInt min,max;
 	private ReversibleInt size;
-	private Store s;
+	private CPStore s;
 
 	
 	/**
@@ -44,7 +44,7 @@ public class DomainWithHoles implements Domain, Iterable<Integer> {
 	 * @param min
 	 * @param max
 	 */
-	public DomainWithHoles(Store s, int min, int max) {
+	public DomainWithHoles(CPStore s, int min, int max) {
 		this.s = s;
 		withHoles = new ReversibleBool(s);
 		withHoles.setValue(false);

@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestVariable extends TestCase {
 
-	private Store s;
+	private CPStore s;
 	private CPVarInt a;
 	private CPVarInt b;
 	private CPVarInt c;
@@ -47,7 +47,7 @@ public class TestVariable extends TestCase {
 	 */
 	protected void setUp() throws Exception {
 		super.setUp();
-		s = new Store();
+		s = new CPStore();
 		a = CPVarInt.apply(s,1,6);
 		b = CPVarInt.apply(s,0,31);
 		c = CPVarInt.apply(s,1,10);
@@ -150,7 +150,7 @@ public class TestVariable extends TestCase {
 
 
 	public void testd(){
-		Store cp = new Store();
+		CPStore cp = new CPStore();
 		CPVarInt x = CPVarInt.apply(cp,1,6);
 		assertTrue(x.valueAfter(5) == 6);
 		assertTrue(x.valueAfter(-10) == 1);
@@ -184,7 +184,7 @@ public class TestVariable extends TestCase {
 
 
 	public void teste(){
-		Store cp = new Store();
+		CPStore cp = new CPStore();
 		int [] freq = new int[4]; 
 		CPVarInt x = CPVarInt.apply(cp,new int[]{0,1,2,3});
 		for (int i = 0; i < 200; i++) {
@@ -197,7 +197,7 @@ public class TestVariable extends TestCase {
 	}
 
 	public void testf(){
-		Store cp = new Store();
+		CPStore cp = new CPStore();
 		CPVarInt x = CPVarInt.apply(cp,new int[]{1,5,9,10});
 		CPVarInt y = CPVarInt.apply(cp,new int[]{5,9,11});
 		CPVarInt z = CPVarInt.apply(cp,new int[]{6,7,11});

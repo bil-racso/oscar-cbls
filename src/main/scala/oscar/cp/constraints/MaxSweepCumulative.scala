@@ -17,9 +17,9 @@ package oscar.cp.constraints
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 
-class MaxSweepCumulative(cp: Store, allTasks : Array[CumulativeActivity], ub : Int, r : Int) extends SweepCumulativeA(cp, allTasks, Int.MinValue, ub, r, "MaxSweepCumulative") {
+class MaxSweepCumulative(cp: CPStore, allTasks : Array[CumulativeActivity], ub : Int, r : Int) extends SweepCumulativeA(cp, allTasks, Int.MinValue, ub, r, "MaxSweepCumulative") {
 
 	val eventPointSeries = new Array[Event](nTasks*3)
 	

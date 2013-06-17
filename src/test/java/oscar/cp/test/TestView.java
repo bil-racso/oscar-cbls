@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestView extends TestCase {
 	
-	private Store s;	
+	private CPStore s;	
 	
     public TestView(String name) {
         super(name);
@@ -43,7 +43,7 @@ public class TestView extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**
@@ -71,7 +71,7 @@ public class TestView extends TestCase {
 //    		System.out.println(v);
 //    	}
     	
-    	assertTrue(s.getStatus()!= CPOutcome.Failure);
+    	assertTrue(!s.isFailed());
 
 
     }

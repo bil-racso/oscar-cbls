@@ -17,7 +17,7 @@ package oscar.reversible;
 
 import java.util.Arrays;
 
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet{
@@ -27,7 +27,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	private ReversibleInt maxV;
 	private ReversibleInt minV;
 
-	private Store s;
+	private CPStore s;
 	
 	/**
 	 * Initializes a set with all values min..max in it
@@ -35,7 +35,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(Store s, int min, int max) {
+	public ReversibleSetIndexedArray(CPStore s, int min, int max) {
 		this(s,min,max,false);
 	}
 	
@@ -45,7 +45,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(Store s, int min, int max, boolean empty) {
+	public ReversibleSetIndexedArray(CPStore s, int min, int max, boolean empty) {
 		this.s = s;
 		initIndexes(min, max, empty);
 	}

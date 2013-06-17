@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 /**
@@ -34,7 +34,7 @@ import oscar.cp.core.Store;
 
 public class ReversibleSetBitVector implements ReversibleSet {
 	
-	private Store s;
+	private CPStore s;
 	
 	private int minBitSetVal;
 	private int bitSetSize = 32;
@@ -46,7 +46,7 @@ public class ReversibleSetBitVector implements ReversibleSet {
 	private int _min;
 	private int _max;
 	
-	public ReversibleSetBitVector(Store s, int min, int max) {
+	public ReversibleSetBitVector(CPStore s, int min, int max) {
 		assert(max >= min);
 		this.s = s;
 		this._min = min;

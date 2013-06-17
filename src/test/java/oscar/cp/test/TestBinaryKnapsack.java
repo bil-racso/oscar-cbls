@@ -15,8 +15,9 @@
 package oscar.cp.test;
 import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.*;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPVarBool;
+import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;
@@ -50,7 +51,7 @@ public class TestBinaryKnapsack extends TestCase {
     
     public void testa() {
 
-        Store s = new Store();
+        CPStore s = new CPStore();
         CPVarBool [] b = new CPVarBool[111];
         for (int i = 0; i < b.length; i++) {
 			b[i] = CPVarBool.apply(s);
@@ -71,7 +72,7 @@ public class TestBinaryKnapsack extends TestCase {
 
 
     public void testb() {
-        Store cp = new Store();
+        CPStore cp = new CPStore();
         int n = 20;
         CPVarBool [] x = CPVarBool.getArray(cp,n);
         int [] values = new int[n];
@@ -108,7 +109,7 @@ public class TestBinaryKnapsack extends TestCase {
     }
 
     public void testc() {
-        Store cp = new Store();
+        CPStore cp = new CPStore();
 
         CPVarBool [] x = CPVarBool.getArray(cp,3);
         int [] values = new int[]{43,23,23};

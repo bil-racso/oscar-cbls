@@ -19,7 +19,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * Reified Equality Constraint
@@ -74,15 +74,15 @@ public class EqReif extends Constraint {
 	
 	
 	protected int getPriorityBindL1(){
-		return Store.MAXPRIORL1;
+		return CPStore.MAXPRIORL1();
 	}
 	
 	protected int getPriorityRemoveL1(){
-		return Store.MAXPRIORL1;
+		return CPStore.MAXPRIORL1();
 	}
 	
 //	public int getPriorityAC5Bounds(){
-//		return Store.MAXPRIORAC5;
+//		return CPStore.MAXPRIORAC5;
 //	}	
 	
 	@Override

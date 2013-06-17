@@ -15,7 +15,7 @@
 package oscar.cp.test;
 
 import oscar.cp.core.*;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;
@@ -58,7 +58,7 @@ public class TestArrayUtils extends TestCase {
     }
     /*
     public void testGetRandomVar1() {
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	int [] freq = new int[5]; 
         CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,3),CPVarInt.apply(cp,1,3,9)};
         for (int i = 0; i < 600; i++) {
@@ -72,7 +72,7 @@ public class TestArrayUtils extends TestCase {
     }
     
     public void testGetRandomVar2() {
-    	Store cp = new Store();
+    	CPStore cp = new CPStore();
     	int [] freq = new int[5]; 
         CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,2),CPVarInt.apply(cp,3),CPVarInt.apply(cp,9)};
         

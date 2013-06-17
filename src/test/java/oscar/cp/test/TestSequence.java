@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestSequence extends TestCase {
 
-	private Store s;
+	private CPStore s;
 
     public TestSequence(String name) {
         super(name);
@@ -42,7 +42,7 @@ public class TestSequence extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**

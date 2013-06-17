@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestThetaTree extends TestCase {
 	
-	private Store s;	
+	private CPStore s;	
 	
     public TestThetaTree(String name) {
         super(name);
@@ -43,7 +43,7 @@ public class TestThetaTree extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**
