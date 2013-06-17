@@ -90,7 +90,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  
 	  
 	  lp.status should equal (LPStatus.OPTIMAL)
-	  C.map(_.number).sum should equal(41) // // should have 45 boards at the end
+	  C.map(_.number).sum should equal(48) // should have 45 boards at the end
 	  
 	}
   }

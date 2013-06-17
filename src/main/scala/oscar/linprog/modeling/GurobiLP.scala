@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -232,10 +234,10 @@ class GurobiLP extends AbstractLP {
     model.write(fileName)
   }
 
-  override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint])={
+  override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint]) = {
 
     val vars = model.getVars
-    val allCons = cons.values.toArray
+    val allCons = cons.values.toArray.sortWith(_.index < _.index)
 
     model.addConstrs(
       allCons map (c => toGRBLinExpr(c.coef, c.varIds, vars)),
@@ -272,6 +274,15 @@ class GurobiLP extends AbstractLP {
       case ConstraintType.GQ => GRB.GREATER_EQUAL
       case ConstraintType.EQ => GRB.EQUAL
     }
+  }
+
+  def updateRhs(rowId: Int, rhs: Double): Unit = model.getConstr(rowId).set(GRB.DoubleAttr.RHS, rhs)
+
+  def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
+    val cons = model.getConstr(rowId)
+    val variable = model.getVar(colId)
+    
+    model.chgCoeff(cons, variable, coeff)
   }
 
 }
