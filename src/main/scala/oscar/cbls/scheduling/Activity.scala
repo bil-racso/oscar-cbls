@@ -129,6 +129,10 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
     def ofResources(rr:CumulativeResource*){
       for (r <- rr){t.usesCumulativeResource(r, amount)}
     }
+    
+    def ofResources(rr: Iterable[CumulativeResource]) {
+      rr.foreach(t.usesCumulativeResource(_, amount))
+    }
   }
 
   def removeNonTightAdditionalPredecessors(){
