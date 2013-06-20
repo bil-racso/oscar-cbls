@@ -17,14 +17,13 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.cbls.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.RandomNeighbor
-import scala.language.reflectiveCalls
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 
@@ -79,8 +78,4 @@ class TestPredecessor extends FunSuite with ShouldMatchers {
   test("check internal of 500 points and 5 vehicle"){
     fixture(500,5)
   }
-
-
-
-
 }

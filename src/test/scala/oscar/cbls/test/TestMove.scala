@@ -17,16 +17,14 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.cbls.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import scala.Array
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-import scala.language.reflectiveCalls
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which

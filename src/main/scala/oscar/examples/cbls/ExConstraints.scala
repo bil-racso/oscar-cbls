@@ -17,9 +17,9 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.examples.cbls
 
-import data.{Point, BelgiumInstance}
+import oscar.examples.cbls.data.{Point, BelgiumInstance}
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.LE
@@ -28,8 +28,9 @@ import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
-import initialSolution.RandomNeighbor
-import model._
+import oscar.cbls.routing.initialSolution.RandomNeighbor
+import oscar.cbls.routing.model._
+import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 
 object ExConstraints extends App{
 
