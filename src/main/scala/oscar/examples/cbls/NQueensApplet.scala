@@ -18,7 +18,7 @@
  *         by Renaud De Landtsheer and Christophe Ponsard
  ******************************************************************************/
 
-package oscar.cbls.constraints.tests
+package oscar.examples.cbls
 
 import scala.swing.Applet
 import scala.swing.Button
