@@ -39,7 +39,7 @@ import oscar.cbls.modeling.Algebra._
 case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
   registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()
 

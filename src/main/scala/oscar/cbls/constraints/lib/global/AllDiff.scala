@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.propagation.checker
 case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
   registerStaticAndDynamicDependencyAllNoID(variables)
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
   finishInitialization()
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value

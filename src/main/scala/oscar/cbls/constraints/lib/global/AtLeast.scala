@@ -39,7 +39,7 @@ import oscar.cbls.invariants.core.propagation.checker
  */
 case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) extends Constraint{
 
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
   registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()
 

@@ -39,7 +39,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   extends Constraint {
 
   registerStaticAndDynamicDependencyArrayIndex(variables)
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
 
   finishInitialization()
 
