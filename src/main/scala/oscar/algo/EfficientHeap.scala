@@ -97,21 +97,3 @@ class EfficientHeap[A : ClassManifest](maxSize : Int, f : (A, A) => Boolean) {
 	def right(i : Int) = 2*i+1
 }
 
-object EfficientHeap {
-	
-	def main(args : Array[String]) {
-		
-		val h = new EfficientHeap[Int](10, (a, b) => a > b)
-		h.enqueue(1)
-		h.enqueue(8)
-		h.enqueue(7)
-		h.enqueue(3)
-		h.enqueue(4)
-		h.enqueue(6)
-		h.enqueue(5)
-		h.enqueue(2)
-		
-		while(!h.isEmpty) 
-			println(h.dequeue)
-	}
-}
