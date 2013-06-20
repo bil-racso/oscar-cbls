@@ -29,8 +29,9 @@ import math._
 import oscar.cbls.constraints.lib.basic.{EQ, LE}
 import oscar.cbls.search.StopWatch
 import model._
-import test.data.{Point, InstanceVisualVRP}
+import oscar.examples.cbls.data.Point
 import util.Random
+import oscar.examples.cbls.data.InstanceVisualVRP
 
 class ModelVRP() extends StopWatch{
 
