@@ -27,8 +27,8 @@ import oscar.cbls.invariants.lib.numeric.Step
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
  * This degree of violation is obtained through the violation method.
  * Furthermore, each variable involved in the constraint also gets an associated violation.
- * This variable-specific violation quantifies the involvement of the variable in the overall violation of he constraint.
- * It can be obtained through the violation(v:Variable) method.
+ * This variable-specific violation quantifies the involvement of the variable in the overall violation of the constraint.
+ * It can be obtained through the violation(v: Variable) method.
  * All these violation are stored as IntVar, so that they can be involved in the construction of complex formulas,
  * and managed as invariants.
  * @author  Renaud De Landtsheer rdl@cetic.be
@@ -37,13 +37,13 @@ abstract class Constraint extends IntInvariant{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree. */
-  def violation(v:Variable):IntVar
+  def violation(v: Variable): IntVar
 
   /**returns the degree of violation of the constraint*/
-  def violation:IntVar
+  def violation: IntVar
 
   /**facility to check that the constraint is enforced*/
-  final def isTrue:Boolean = (violation.value == 0)
+  final def isTrue: Boolean = (violation.value == 0)
 
   def myMin = 0
   def myMax = 1
@@ -54,27 +54,28 @@ abstract class Constraint extends IntInvariant{
   /**the variables that are constrained by the constraint.
    * This should be read only. If you want to declare more constrained variables,
    * use the registerConstrainedVariable method. */
-  var constrainedVariables:List[Variable] = List.empty
-
+  private var _constrainedVariables:List[Variable] = List.empty
+  def constrainedVariables = _constrainedVariables
+  
   /**This should be called by the constraint to declare the set of constrained variables.
-   * this should be done at the same time as the registration for invariant API
-   * The sole purpose of this is to know which variable have an associated degree of violation
-   * this is not correlated wit the registration for dependencies in the invariants.
-   * eg: A constraint can constraint a variable,
-   * but subcontract the computation and implementation of the constraint to invariants
-   * notice that all variables sent here which are actually constants are not kept, as they are not variables, actually.
+   * This should be done at the same time as the registration for invariant API.
+   * The sole purpose of this is to know which variables have an associated degree of violation.
+   * This is not correlated with the registration for dependencies in the invariants.
+   * e.g.: A constraint can constrain a variable,
+   * but subcontract the computation and implementation of the constraint to invariants.
+   * Notice that all variables sent here which are actually constants are not kept, as they are not variables, actually.
    * This is tested by looking that the variable has a model associated.
    * @param v the variable that is declared as constrained by the constraint
    */
-  def registerConstrainedVariable(v:Variable){
-    if (v.model != null) constrainedVariables = v :: constrainedVariables
+  def registerConstrainedVariable(v: Variable){
+    if (v.model != null) _constrainedVariables = v :: constrainedVariables
   }
 
-  def registerConstrainedVariables(v:Variable*){
+  def registerConstrainedVariables(v: Variable*){
     for (vv <- v){registerConstrainedVariable(vv)}
   }
 
-  def registerConstrainedVariablesAll(v:Iterable[Variable]){
+  def registerConstrainedVariables(v: Iterable[Variable]){
     for (vv <- v){registerConstrainedVariable(vv)}
   }
 }
