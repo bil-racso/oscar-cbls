@@ -56,7 +56,7 @@ class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (In
 
     }
 
-    val makespan = activities.map(_.lct).max
+    val makespan = activities.map(_.ect).max
 
     makespanLine.orig = (makespan * xScale, 0)
     makespanLine.dest = (makespan * xScale, (max + 1) * yScale)
