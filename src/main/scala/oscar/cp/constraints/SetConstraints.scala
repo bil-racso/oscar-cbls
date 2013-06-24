@@ -12,29 +12,28 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core;
 
-/**
- * @author Pierre Schaus pschaus@gmail.com
- */
-public class PropagEventUpdateBounds extends PropagEvent{
-	
-	private CPVarInt var;
-	
-	
-	public PropagEventUpdateBounds(Constraint cstr, CPVarInt var) {
-		super(cstr);
-		this.var = var;
+package oscar.cp.constraints
 
-	}
-	
-	int getPrior() {
-		return cstr.getPriorityBoundsL1();
-	}
-	
-	@Override
-	public CPOutcome notifyConstraint() {
-		return cstr.updateBounds(var);
-	}
+import oscar.cp.core.CPVarSet
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPOutcome
+
+class Requires(val X: CPVarSet, v: Int) extends Constraint(X.s, "Set requires") {
+
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    X.requires(v)
+  }
+
+}
+
+
+class Excludes(val X: CPVarSet, v: Int) extends Constraint(X.s, "Set excludes") {
+
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    X.excludes(v)
+  }
 
 }

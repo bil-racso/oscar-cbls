@@ -19,7 +19,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * Reified Greater or Equal Constraint
@@ -78,7 +78,7 @@ public class GrEqCteReif extends Constraint {
 	
 	
 	protected int getPriorityBindL1(){
-		return Store.MAXPRIORL1;
+		return CPStore.MAXPRIORL1();
 	}
 		
 	@Override

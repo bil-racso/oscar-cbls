@@ -15,7 +15,7 @@
 package oscar.cp.scheduling
 
 import oscar.cp.core.CPVarInt
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 import oscar.cp.modeling.CPScheduler
 
 class CumulativeActivity(scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt, n : String = null, existingId: Option[Int] = None) extends Activity(scheduler, startVar, durVar, endVar, n = n, existingId = existingId) {

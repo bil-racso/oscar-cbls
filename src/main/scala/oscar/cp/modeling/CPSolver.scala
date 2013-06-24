@@ -47,7 +47,7 @@ import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
 
-class CPSolver() extends Store() {
+class CPSolver() extends CPStore() {
 
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
     this.add(cons, propagStrength)
@@ -257,7 +257,7 @@ class CPSolver() extends Store() {
   def printStats() {
     println("time(ms)", time)
     println("#bkts", bkts)
-    println("time in fix point(ms)", getTimeInFixPoint())
+    println("time in fix point(ms)", timeInFixPoint)
     println("time in trail restore(ms)", getTrail().getTimeInRestore())
     println("max trail size", getTrail().getMaxSize())
   }

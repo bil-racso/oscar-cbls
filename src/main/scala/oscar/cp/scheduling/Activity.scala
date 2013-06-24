@@ -35,7 +35,7 @@ package oscar.cp.scheduling;
 import java.security.InvalidParameterException
 
 import oscar.cp.core.CPVarInt
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 import oscar.cp.constraints.LeEq
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.core.CPOutcome

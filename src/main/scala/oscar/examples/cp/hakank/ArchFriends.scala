@@ -47,7 +47,7 @@ import scala.math._
   3. The Foot Farm was Harriet's second stop.
   4. Two stops after leaving The Shoe Place, Harriet bought her suede sandals.
   
-  Determine: Order - Shoes - Store 
+  Determine: Order - Shoes - CPStore 
   ""
 
   @author Hakan Kjellerstrand hakank@gmail.com

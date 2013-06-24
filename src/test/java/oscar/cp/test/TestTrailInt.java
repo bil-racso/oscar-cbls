@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestTrailInt extends TestCase {
 	
-	private Store s;
+	private CPStore s;
 	private ReversibleInt a;
 	private ReversibleInt b;
 	
@@ -49,7 +49,7 @@ public class TestTrailInt extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
         a = new ReversibleInt(s);
         b = new ReversibleInt(s);
     }

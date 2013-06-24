@@ -41,12 +41,12 @@ import oscar.cp.modeling._
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPObjective(val st: Store, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
+class CPObjective(val st: CPStore, val objs: CPObjectiveUnit*) extends Constraint(st, "objective constraint") with Objective {
 
   /** Returns the map of each objective variable to its corresponding objective object */
   def map = objs.map(o => o.objVar -> o).toMap
 
-  def this(s: Store, o: Array[CPObjectiveUnit]) = this(s, o: _*)
+  def this(s: CPStore, o: Array[CPObjectiveUnit]) = this(s, o: _*)
   
   /** Tightens all the objective unit. The current value of an objective unit becomes 
    *  its best so far value. Returns an error if one objective variable is not bounded. */

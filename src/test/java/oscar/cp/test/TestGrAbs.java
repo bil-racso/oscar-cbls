@@ -30,7 +30,7 @@ import oscar.search.*;
  */
 public class TestGrAbs extends TestCase {
 	
-	private Store s;	
+	private CPStore s;	
 	
     public TestGrAbs(String name) {
         super(name);
@@ -42,7 +42,7 @@ public class TestGrAbs extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
     }
 
     /**
@@ -65,7 +65,7 @@ public class TestGrAbs extends TestCase {
     	
     	s.post(new Eq(x[0],1));
     	
-    	assertTrue(s.getStatus()!= CPOutcome.Failure);
+    	assertTrue(!s.isFailed());
 
 
     }

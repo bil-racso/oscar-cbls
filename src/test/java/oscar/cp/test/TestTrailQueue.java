@@ -31,7 +31,7 @@ import oscar.search.*;
  */
 public class TestTrailQueue extends TestCase {
 	
-	private Store s;
+	private CPStore s;
 	private ReversibleQueue<Integer> a;
 	private ReversibleQueue<String>  b;
 	
@@ -46,7 +46,7 @@ public class TestTrailQueue extends TestCase {
      */
     protected void setUp() throws Exception {
         super.setUp();
-        s = new Store();
+        s = new CPStore();
         a = new ReversibleQueue<Integer>(s);
         b = new ReversibleQueue<String>(s);
     }

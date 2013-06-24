@@ -18,7 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -65,7 +65,7 @@ public class AtLeastNValueAC extends Constraint {
 		this.x = x;
 		this.posted = false;
 		this.nValueVar = nval;
-		this.priorityL2 = Store.MAXPRIORL2-1;
+		this.priorityL2 = CPStore.MAXPRIORL2()-1;
 		//setIdempotent();
 	}
 	

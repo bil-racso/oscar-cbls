@@ -52,7 +52,7 @@ public class TestSquare extends TestCase {
 
     
     public void testSquare1() {  
-    	Store s = new Store();
+    	CPStore s = new CPStore();
     	CPVarInt x = CPVarInt.apply(s,-5,5);
     	CPVarInt y = CPVarInt.apply(s,-5,16);
     	s.post(new Square(x, y));

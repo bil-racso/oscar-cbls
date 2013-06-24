@@ -16,7 +16,7 @@ package oscar.cp.core;
 
 /**
  * A CPPropagStrength is used to ask for strength of filtering when adding/posting a constraint
- * to a Constraint Programming Store.
+ * to a Constraint Programming CPStore.
  * Three levels are possible, it doesn't mean all of them are implemented for every constraint. <br>
  * Note that usually, the strongest is the filtering the slowest is the propagation algorithm. <br>
  * Carefully choosing the filtering is usually done through experimentation (trade-off time and pruning power).
