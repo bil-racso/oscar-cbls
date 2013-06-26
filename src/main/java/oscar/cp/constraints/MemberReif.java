@@ -39,14 +39,14 @@ public class MemberReif extends Constraint {
 	 * @param b
 	 */
 	public MemberReif(CPVarInt x, SetIndexedArray set, CPVarBool b) {
-		super(x.s());
+		super(x.s(),"MemberReif");
 		this.x = x;
 		this.set = set;
 		this.b = b;
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (b.isBound()) {
             return valBind(b);
         }
@@ -65,8 +65,8 @@ public class MemberReif extends Constraint {
         if (interSize >= x.getSize()) { // D(x) is included in set
            return fullIntersection();
         }
-        inter = new ReversibleInt(s,interSize);
-        xsize = new ReversibleInt(s,x.getSize());
+        inter = new ReversibleInt(s(),interSize);
+        xsize = new ReversibleInt(s(),x.getSize());
 
 		x.callValBindWhenBind(this);
         b.callValBindWhenBind(this);
@@ -77,7 +77,7 @@ public class MemberReif extends Constraint {
 	}
 
     @Override
-    protected CPOutcome valRemove(CPVarInt var, int val) {
+    public CPOutcome valRemove(CPVarInt var, int val) {
         xsize.decr();
         if (set.hasValue(val)) {
             inter.decr();
@@ -92,7 +92,7 @@ public class MemberReif extends Constraint {
     }
 
     @Override
-    protected CPOutcome valBind(CPVarInt var) {
+    public CPOutcome valBind(CPVarInt var) {
         assert(var.isBound());
 		if (var == x) {
              if (set.hasValue(x.getValue())) {

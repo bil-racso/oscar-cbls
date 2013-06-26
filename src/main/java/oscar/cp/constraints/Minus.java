@@ -37,15 +37,14 @@ public class Minus extends Constraint {
      * @see CPVarInt#minus(cp.core.CPVarInt)
      */
 	public Minus(CPVarInt x, CPVarInt y, CPVarInt z) {
-		super(x.s());
+		super(x.s(),"Minus");
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-			
+	public CPOutcome setup(CPPropagStrength l) {		
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -74,7 +73,7 @@ public class Minus extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		//x-y=z		
 		
 		//prune z (= x -y)

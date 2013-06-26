@@ -47,13 +47,13 @@ public class BinPackingFlow extends Constraint {
 		l_t = new ReversibleInt[sizes.length];
 		c_t = new ReversibleInt[sizes.length];
 		for (int i = 0; i < l_t.length; i++) {
-			l_t[i] = new ReversibleInt(s,0);
-			c_t[i] = new ReversibleInt(s,0);
+			l_t[i] = new ReversibleInt(s(),0);
+			c_t[i] = new ReversibleInt(s(),0);
 		}
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength strength) {
+	public CPOutcome setup(CPPropagStrength strength) {
 		for (CPVarInt var: x) {
 			if (var.updateMax(l.length-1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -62,7 +62,7 @@ public class BinPackingFlow extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if(s.post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
+		if(s().post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		for (int j = 0; j < l.length; j++) {
@@ -83,7 +83,7 @@ public class BinPackingFlow extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt x, int idx) {
+	public CPOutcome valBindIdx(CPVarInt x, int idx) {
 		int j = x.getValue();
 		int size = sizes[idx];
 		l_t[j].setValue(l_t[j].getValue() + size);
@@ -102,7 +102,7 @@ public class BinPackingFlow extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		//printDebug();
 		for (int j = 0; j < l.length; j++) {
 			//System.out.println("set card bin "+j);

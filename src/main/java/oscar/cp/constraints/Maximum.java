@@ -43,10 +43,10 @@ public class Maximum extends Constraint {
 		super(x[0].s(),"Maximum");
 		this.x = x;
 		this.y = y;
-		maxval = new ReversibleInt(s);
-		maxvalsupport = new ReversibleInt(s);
-		minval = new ReversibleInt(s);
-		minvalsupport = new ReversibleInt(s);
+		maxval = new ReversibleInt(s());
+		maxvalsupport = new ReversibleInt(s());
+		minval = new ReversibleInt(s());
+		minvalsupport = new ReversibleInt(s());
 	}
 	
 	private void updateSupport() {
@@ -70,7 +70,7 @@ public class Maximum extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		for (int i=0; i < x.length; i++) {			
 			if (x[i].updateMax(y.getMax()) == CPOutcome.Failure) {
@@ -97,7 +97,7 @@ public class Maximum extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBoundsIdx(CPVarInt x, int idx) {
+	public CPOutcome updateBoundsIdx(CPVarInt x, int idx) {
 		if (idx == minvalsupport.getValue() || idx == maxvalsupport.getValue()) {
 			updateSupport();
 			if (y.updateMin(minval.getValue()) == CPOutcome.Failure) {
@@ -119,7 +119,7 @@ public class Maximum extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt y) {
+	public CPOutcome updateBounds(CPVarInt y) {
 		for (int i=0; i < x.length; i++) {			
 			if (x[i].updateMax(y.getMax()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

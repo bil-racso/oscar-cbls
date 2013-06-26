@@ -67,7 +67,7 @@ public class Deviation extends Constraint {
     }
 
     @Override
-    protected CPOutcome setup(CPPropagStrength l) {
+    public CPOutcome setup(CPPropagStrength l) {
         for (int i = 0; i < x.length; i++) {
             if (!x[i].isBound())
                 x[i].callPropagateWhenBoundsChange(this);
@@ -77,7 +77,7 @@ public class Deviation extends Constraint {
     }
 
     @Override
-    protected CPOutcome propagate() {
+    public CPOutcome propagate() {
         // 1) make the sum constraint bound consistent
         if (propagateSum() == CPOutcome.Failure) {
             return CPOutcome.Failure;

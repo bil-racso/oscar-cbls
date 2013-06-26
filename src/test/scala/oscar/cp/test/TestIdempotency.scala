@@ -35,9 +35,9 @@ class TestIdempotency extends FunSuite with ShouldMatchers  {
       
         var nbCallToPropagate = 0
              
-    	class MyCons(val X: CPVarInt,idempotent: Boolean) extends Constraint(X.s, "MyCons") {
+    	class MyCons(val X: CPVarInt,idempot: Boolean) extends Constraint(X.s, "MyCons") {
  
-           if (idempotent) setIdempotent()
+           idempotent = idempot
            override def setup(l: CPPropagStrength): CPOutcome =  {  
              
             X.callPropagateWhenDomainChanges(this)

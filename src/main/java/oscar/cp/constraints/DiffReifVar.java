@@ -46,7 +46,7 @@ public class DiffReifVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (b.isBound()) {
 			return valBind(b);
 		} 
@@ -67,29 +67,29 @@ public class DiffReifVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				// x != y
-				if (s.post(new DiffVar(x,y)) == CPOutcome.Failure) {
+				if (s().post(new DiffVar(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			} else {
 				//x == y
-				if (s.post(new Eq(x,y))  == CPOutcome.Failure) {
+				if (s().post(new Eq(x,y))  == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}
 			return CPOutcome.Success;
 		}	
 		else if (x.isBound()) {
-			if (s.post(new DiffReif(y,x.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new DiffReif(y,x.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		else if (y.isBound()) {
-			if (s.post(new DiffReif(x,y.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new DiffReif(x,y.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -100,7 +100,7 @@ public class DiffReifVar extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		// if the domains of x and y are disjoint we can set b to false and return success
 		if (x.getMax() < x.getMin()) {
 			if (b.assign(1) == CPOutcome.Failure) {

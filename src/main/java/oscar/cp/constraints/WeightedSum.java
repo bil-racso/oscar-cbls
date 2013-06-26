@@ -58,13 +58,13 @@ public class WeightedSum extends Constraint {
     }
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		CPVarInt [] prod = new CPVarInt[w.length];
 		for (int i = 0; i < w.length; i++) {
 			prod[i] = x[i].mul(w[i]);
 		}
-		if (s.post(new Sum(prod,y)) == CPOutcome.Failure) {
+		if (s().post(new Sum(prod,y)) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;
@@ -88,7 +88,7 @@ public class WeightedSum extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		int maxsumx = 0;
 		int minsumx = 0;
 		for (int i = 0; i < x.length; i++) {

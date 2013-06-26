@@ -34,7 +34,7 @@ public class DiffVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome oc = propagate();
 		if(oc != CPOutcome.Success){
 			x.callPropagateWhenBind(this);
@@ -44,7 +44,7 @@ public class DiffVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if(x.isBound()){
 			//System.out.println("x bound to "+x.getValue()+" remove from "+y);
 			if(y.removeValue(x.getValue()) == CPOutcome.Failure){

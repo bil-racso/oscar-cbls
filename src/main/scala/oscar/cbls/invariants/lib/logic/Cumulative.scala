@@ -54,6 +54,7 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
 
   def insert(start:Int, duration:Int, amount:Int, index:Int){
     for (t <- start until (start + duration)){
+      //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
       profile(t) :+= amount
       active(t).insertValue(indices(index))
     }

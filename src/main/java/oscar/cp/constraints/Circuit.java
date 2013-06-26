@@ -50,16 +50,16 @@ public class Circuit extends Constraint {
 		lengthToDest = new ReversibleInt[succ.length];
 		
 		for (int i = 0; i < succ.length; i++) {
-			dest[i]  = new ReversibleInt(s,i);
-			orig[i]  = new ReversibleInt(s,i);
-			lengthToDest[i] = new ReversibleInt(s,0);	
+			dest[i]  = new ReversibleInt(s(),i);
+			orig[i]  = new ReversibleInt(s(),i);
+			lengthToDest[i] = new ReversibleInt(s(),0);	
 		}	
 	}
 	
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(new AllDifferent(succ),l) ==  CPOutcome.Failure) {
+	public CPOutcome setup(CPPropagStrength l) {
+		if (s().post(new AllDifferent(succ),l) ==  CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		if (succ.length > 0) {
@@ -82,7 +82,7 @@ public class Circuit extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int i) {
+	public CPOutcome valBindIdx(CPVarInt var, int i) {
 		int j = var.getValue();
 		// We have a new assigned path because of new edge i->j:
 		// o *-> i -> j *-> d

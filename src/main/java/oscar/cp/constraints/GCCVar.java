@@ -90,11 +90,11 @@ public class GCCVar extends Constraint {
 		this.minVal = minval;
 		this.maxVal = minval+o.length-1;
 		nbVals = maxVal-minVal+1;
-		this.priorityL2 =  CPStore.MAXPRIORL2()-3;
+		this.priorityL2_$eq(CPStore.MAXPRIORL2()-3);
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
 		if (!findValueRange()) {
 			return CPOutcome.Failure; //failure update the bounds of variables o
@@ -126,7 +126,7 @@ public class GCCVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 	   updateBounds();
 	   for(int k = 0; k < x.length; k++) {
 	      if (varMatch[k] != NONE) {

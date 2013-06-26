@@ -33,8 +33,8 @@ public class AllDiffAC extends Constraint {
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		CPVarInt nvalues = CPVarInt.apply(s,x.length,x.length);
-		CPOutcome ok = s.post(new AtLeastNValueAC(x,nvalues));
+		CPVarInt nvalues = CPVarInt.apply(s(),x.length,x.length);
+		CPOutcome ok = s().post(new AtLeastNValueAC(x,nvalues));
 		if (ok == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		} else {

@@ -41,7 +41,7 @@ class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeAct
 	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
-		setPriorityL2(0)
+		priorityL2 = 0
 		
         val oc = propagate()
         

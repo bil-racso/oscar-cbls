@@ -51,7 +51,7 @@ class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constr
    * Initialization, input checks and registration to events
    */
   override def setup(l: CPPropagStrength): CPOutcome = {    
-    setIdempotent()
+    idempotent = true
     if (propagate() == CPOutcome.Failure) return CPOutcome.Failure
     X.filter(!_.isBound).foreach(_.callPropagateWhenDomainChanges(this))
     return CPOutcome.Suspend

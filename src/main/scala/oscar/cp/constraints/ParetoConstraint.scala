@@ -85,7 +85,7 @@ class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars:
   }
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    setIdempotent()
+    idempotent = true
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs if !objVars(o).isBound) {

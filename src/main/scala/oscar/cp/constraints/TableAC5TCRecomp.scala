@@ -60,7 +60,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
    * Initialization, input checks and registration to events
    */
   override def setup(l: CPPropagStrength): CPOutcome = {    
-    setIdempotent()
+    idempotent = true
 	data.setup()
 	
 	for ((y,i) <- x.zipWithIndex) {

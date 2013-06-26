@@ -44,7 +44,7 @@ public class SumLeEq extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -58,7 +58,7 @@ public class SumLeEq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		int maxsumx = 0;
 		int minsumx = 0;
 		for (int i = 0; i < x.length; i++) {

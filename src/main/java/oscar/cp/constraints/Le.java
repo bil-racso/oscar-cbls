@@ -43,9 +43,9 @@ public class Le extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		// y > x
-		if(s.post(new Gr(y,x)) == CPOutcome.Failure) {
+		if(s().post(new Gr(y,x)) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;

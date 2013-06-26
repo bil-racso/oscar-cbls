@@ -35,7 +35,7 @@ public class DiffVal extends Constraint {
 	}
 		
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (x.removeValue(y) ==  CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}

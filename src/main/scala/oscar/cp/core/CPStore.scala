@@ -80,8 +80,8 @@ class CPStore extends ReversibleSearchNode {
 	def addQueueL2(c: Constraint): Int = {
         if ((c.isActive() && !c.isInQueue()) && (!c.inPropagate() || !c.idempotent)) {
 			c.setInQueue()
-			propagQueueL2(c.getPriorityL2()).add(c)
-			c.getPriorityL2()
+			propagQueueL2(c.priorityL2).add(c)
+			c.priorityL2
 		} else {
 			0
 		}
@@ -121,7 +121,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityRemoveL1(), c.valRemove(x,v+delta));
+				addQueueL1(c,c.priorityRemoveL1, c.valRemove(x,v+delta));
 			}
 			q = q.next
 		}
@@ -135,7 +135,7 @@ class CPStore extends ReversibleSearchNode {
 		    val idx = q.idx
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityRemoveL1(), c.valRemoveIdx(x,idx,v+delta))
+				addQueueL1(c,c.priorityRemoveL1, c.valRemoveIdx(x,idx,v+delta))
 			}
 			q = q.next
 		}
@@ -149,7 +149,7 @@ class CPStore extends ReversibleSearchNode {
 		    val idx = q.idx
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMin(x,v+delta))
+				addQueueL1(c,c.priorityBoundsL1, c.updateMin(x,v+delta))
 			}
 			q = q.next;
 		}
@@ -163,7 +163,7 @@ class CPStore extends ReversibleSearchNode {
 		    val idx = q.idx
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMinIdx(x,idx,v+delta));
+				addQueueL1(c,c.priorityBoundsL1, c.updateMinIdx(x,idx,v+delta));
 			}
 			q = q.next;
 		}
@@ -178,7 +178,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMax(x,v+delta))
+				addQueueL1(c,c.priorityBoundsL1, c.updateMax(x,v+delta))
 			}
 			q = q.next;
 		}
@@ -192,7 +192,7 @@ class CPStore extends ReversibleSearchNode {
 		    val idx = q.idx
 		    val delta = q.delta
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateMaxIdx(x,idx,v+delta));
+				addQueueL1(c,c.priorityBoundsL1, c.updateMaxIdx(x,idx,v+delta));
 			}
 			q = q.next;
 		}
@@ -204,7 +204,7 @@ class CPStore extends ReversibleSearchNode {
 		    val c = q.cons
 		    val x = q.x
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateBounds(x))
+				addQueueL1(c,c.priorityBoundsL1, c.updateBounds(x))
 			}
 			q = q.next;
 		}
@@ -217,7 +217,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBoundsL1(), c.updateBoundsIdx(x,idx))
+				addQueueL1(c,c.priorityBoundsL1, c.updateBoundsIdx(x,idx))
 			}
 			q = q.next;
 		}
@@ -229,7 +229,7 @@ class CPStore extends ReversibleSearchNode {
 			val c = q.cons
 		    val x = q.x
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valBind(x))
+				addQueueL1(c,c.priorityBindL1, c.valBind(x))
 			}
 			q = q.next
 		}
@@ -242,7 +242,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valBindIdx(x,idx))
+				addQueueL1(c,c.priorityBindL1, c.valBindIdx(x,idx))
 			}
 			q = q.next
 		}
@@ -257,7 +257,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valRequired(x,v))
+				addQueueL1(c,c.priorityBindL1, c.valRequired(x,v))
 			}
 			q = q.next
 		}
@@ -270,7 +270,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valRequiredIdx(x,idx,v))
+				addQueueL1(c,c.priorityBindL1, c.valRequiredIdx(x,idx,v))
 			}
 			q = q.next
 		}
@@ -283,7 +283,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valExcluded(x,v))
+				addQueueL1(c,c.priorityBindL1, c.valExcluded(x,v))
 			}
 			q = q.next
 		}
@@ -296,7 +296,7 @@ class CPStore extends ReversibleSearchNode {
 		    val x = q.x
 		    val idx = q.idx
 			if (c.isActive()) {
-				addQueueL1(c,c.getPriorityBindL1(), c.valExcludedIdx(x,idx,v))
+				addQueueL1(c,c.priorityBindL1, c.valExcludedIdx(x,idx,v))
 			}
 			q = q.next
 		}

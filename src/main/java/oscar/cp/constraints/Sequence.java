@@ -59,14 +59,14 @@ public class Sequence extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength cl) {
+	public CPOutcome setup(CPPropagStrength cl) {
         // creates the bool vars and create the channeling constraints
         x = new CPVarBool[xinit.length];
         for (int i = 0; i < x.length; i++) {
-        	x[i] = CPVarBool.apply(s);
+        	x[i] = CPVarBool.apply(s());
         }
         for (int i = 0; i < x.length; i++) {
-            if (s.post(new MemberReif(xinit[i],values,x[i])) == CPOutcome.Failure) {
+            if (s().post(new MemberReif(xinit[i],values,x[i])) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
             }
         }
@@ -88,17 +88,17 @@ public class Sequence extends Constraint {
         for (int i = 0; i < x.length; i++) {
             for (int j = i+1; j < Math.min(x.length, i+len); j++) {
                 for (int m = i; m < j; m++) {
-                    if (s.post(new Sum(new CPVarInt[]{P[i][m],P[m+1][j]},P[i][j])) == CPOutcome.Failure) {
+                    if (s().post(new Sum(new CPVarInt[]{P[i][m],P[m+1][j]},P[i][j])) == CPOutcome.Failure) {
                         return CPOutcome.Failure;
                     }
                 }
             }
 
             if (i <= x.length-len) {
-               if (s.post(new GrEq(P[i][i+len-1],min)) == CPOutcome.Failure) {
+               if (s().post(new GrEq(P[i][i+len-1],min)) == CPOutcome.Failure) {
                    return CPOutcome.Failure;
                }
-               if (s.post(new LeEq(P[i][i+len-1],max)) == CPOutcome.Failure) {
+               if (s().post(new LeEq(P[i][i+len-1],max)) == CPOutcome.Failure) {
                    return CPOutcome.Failure;
                }
             }

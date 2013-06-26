@@ -161,6 +161,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   }
 
   def RandomFlatten() {
+    
     while (!p.EarliestOvershotResources.value.isEmpty) {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value

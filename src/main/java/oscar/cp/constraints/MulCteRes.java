@@ -45,10 +45,10 @@ public class MulCteRes extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s.post(new Square(x,CPVarInt.apply(s,c,c))) == CPOutcome.Failure) {
+			if (s().post(new Square(x,CPVarInt.apply(s(),c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -71,7 +71,7 @@ public class MulCteRes extends Constraint {
 	}
 		
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		
 		if (c != 0) {
 			if (x.removeValue(0) == CPOutcome.Failure) {
@@ -82,12 +82,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s.post(new MulCte(y,x.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s.post(new MulCte(x,y.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

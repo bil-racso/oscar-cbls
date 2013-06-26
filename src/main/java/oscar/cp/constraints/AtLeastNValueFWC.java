@@ -54,12 +54,12 @@ public class AtLeastNValueFWC extends Constraint {
 	     //initialize trails and counters
 	     isValueUsed   = new ReversibleBool[valSize];
 	     for (int v = 0; v < valSize; v++) {
-	    	 isValueUsed[v] = new ReversibleBool(s);
+	    	 isValueUsed[v] = new ReversibleBool(s());
 	    	 isValueUsed[v].setValue(false);
 	     }
-	     nbValueUsed = new ReversibleInt(s);
+	     nbValueUsed = new ReversibleInt(s());
 	     nbValueUsed.setValue(0);
-	     nbBound = new ReversibleInt(s);
+	     nbBound = new ReversibleInt(s());
 	     nbBound.setValue(0);
 	     	    
 	     for (int k = 0; k < x.length; k++) {

@@ -39,14 +39,14 @@ public class Disjunctive extends Constraint {
 	private CPOutcome notOverlap(Activity act1, Activity act2) {
         CPVarBool b1 = act2.start().isGrEq(act1.end());
         CPVarBool b2 = act1.start().isGrEq(act2.end());
-        if (s.post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
+        if (super.s().post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
         }
         return CPOutcome.Suspend;
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this);
 		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this);
@@ -63,7 +63,7 @@ public class Disjunctive extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		
 		if (act1.ect() > act2.lst()) { // act1 cannot precede act2, so act1 must come after act2
 			if (act1.start().updateMin(act2.end().getMin()) == CPOutcome.Failure) {

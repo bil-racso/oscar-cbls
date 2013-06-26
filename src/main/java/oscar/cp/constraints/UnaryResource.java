@@ -61,7 +61,6 @@ public class UnaryResource extends Constraint {
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
 		super(activities[0].start().store(),name);
 		assert(activities.length == required.length);
-		this.name = name;
 		this.activities = activities;
 		this.required = required;
 		this.nbAct = activities.length;
@@ -136,7 +135,7 @@ public class UnaryResource extends Constraint {
 
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
 		
 		for (int i = 0; i < nbAct; i++) {
@@ -171,12 +170,12 @@ public class UnaryResource extends Constraint {
 
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt x, int idx) { 
+	public CPOutcome valBindIdx(CPVarInt x, int idx) { 
 		if (required[idx].isTrue()) {
 			// activity idx is mandatory
 			for (int i = 0; i < nbAct; i++) {
 				if (i != idx && required[i].isTrue()) {
-					if (s.post(new Disjunctive(activities[i], activities[idx])) == CPOutcome.Failure) {
+					if (s().post(new Disjunctive(activities[i], activities[idx])) == CPOutcome.Failure) {
 						return CPOutcome.Failure;
 					}
 				}
@@ -187,7 +186,7 @@ public class UnaryResource extends Constraint {
 
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		for (int i = 0; i < nbAct; i++) {
 			activities[i].update(); // forces update of start, end, dur
 		}

@@ -72,7 +72,7 @@ abstract class Constraint extends IntInvariant{
   }
 
   def registerConstrainedVariables(v: Variable*){
-    for (vv <- v){registerConstrainedVariable(vv)}
+    registerConstrainedVariables(v.toSeq)
   }
 
   def registerConstrainedVariables(v: Iterable[Variable]){

@@ -42,7 +42,7 @@ public class Not extends Constraint {
 
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
         if (y.isBound()) {
             return valBind(y);
         }
@@ -55,7 +55,7 @@ public class Not extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
         if (y.isBound()) {
             if (x.assign(1-y.getValue()) == CPOutcome.Failure) {
                 return CPOutcome.Failure;

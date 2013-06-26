@@ -42,16 +42,16 @@ public class Or extends Constraint {
      * @param y
      */
 	public Or(CPVarBool [] x, CPVarBool y) {
-		super(x[0].s());
+		super(x[0].s(),"Or");
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s,0); // number of values assigned to false
-		ytrue = new ReversibleBool(s);
+		nbBound = new ReversibleInt(s(),0); // number of values assigned to false
+		ytrue = new ReversibleBool(s());
 		ytrue.setValue(false);
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isTrue()) {
 				if (y.assign(1) == CPOutcome.Failure) {
@@ -105,7 +105,7 @@ public class Or extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPVarInt var, int idx) {
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -133,7 +133,7 @@ public class Or extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt yvar) {
+	public CPOutcome valBind(CPVarInt yvar) {
 		if (yvar.getValue() == 0) {
 			for (int i = 0; i < x.length; i++) {
 					if (x[i].assign(0) == CPOutcome.Failure) {

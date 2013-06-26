@@ -48,7 +48,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
         if (y.isBound()) {
             if (x.assign(y.getValue()) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
@@ -111,7 +111,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if(var == x){
 			if (y.assign(x.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -127,7 +127,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt var) {
+	public CPOutcome updateBounds(CPVarInt var) {
 		if (var == y) {
 			if(x.updateMax(y.getMax()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -148,7 +148,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPVarInt var, int val) {
 		if (var == x) {
 			if (y.removeValue(val) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

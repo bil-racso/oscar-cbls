@@ -50,7 +50,7 @@ public class BinPacking extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength cl) {
+	public CPOutcome setup(CPPropagStrength cl) {
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].updateMin(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -71,7 +71,7 @@ public class BinPacking extends Constraint {
 			for (int j = 0; j < x.length; j++) {
 				b[i][j] = x[j].isEq(i);
 			}
-			if (s.post(new BinaryKnapsack(b[i],w,l[i]),cl) == CPOutcome.Failure) {
+			if (s().post(new BinaryKnapsack(b[i],w,l[i]),cl) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}
@@ -82,7 +82,7 @@ public class BinPacking extends Constraint {
 			}
 		}
 		//redundant constraint
-		if (s.post(new Sum(l,CPVarInt.apply(s,totW,totW))) == CPOutcome.Failure) {
+		if (s().post(new Sum(l,CPVarInt.apply(s(),totW,totW))) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;
