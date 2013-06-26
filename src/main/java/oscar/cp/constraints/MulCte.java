@@ -44,7 +44,7 @@ public class MulCte extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = propagate();
 		if (ok == CPOutcome.Suspend) {
 			x.callPropagateWhenBoundsChange(this);
@@ -66,7 +66,7 @@ public class MulCte extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if (x.isBound()) {
 			
 			if (z.assign(NumberUtils.safeMul(c , x.getValue())) == CPOutcome.Failure) {

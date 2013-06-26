@@ -159,7 +159,7 @@ abstract class SweepCumulativeA(cp: CPStore, allTasks : Array[CumulativeActivity
 	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
-		setPriorityL2(0)
+		priorityL2 = 0
 		
         val oc = propagate()
         

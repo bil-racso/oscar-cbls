@@ -46,7 +46,7 @@ public class Implication extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (A.isBound()) {
 			if (valBind(A) == CPOutcome.Failure) return CPOutcome.Failure;
 		}
@@ -73,7 +73,7 @@ public class Implication extends Constraint {
 
 
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (A.isBound()) {
 			if (A.isBoundTo(0)) {
 				// F => X is always true

@@ -45,7 +45,7 @@ public class GrEq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			if (!y.isBound()) y.callPropagateWhenMinChanges(this);
@@ -55,7 +55,7 @@ public class GrEq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if (x.getMin() >= y.getMax()) {
 			return CPOutcome.Success;
 		}

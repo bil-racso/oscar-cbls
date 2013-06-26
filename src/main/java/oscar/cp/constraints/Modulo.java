@@ -47,7 +47,7 @@ public class Modulo extends Constraint{
 	 * @param y
 	 */
 	public Modulo(CPVarInt x, int v, CPVarInt y) {
-		super(x.s());
+		super(x.s(),"Modulo");
 		assert( v > 0);
 		if (v <= 0) throw new RuntimeException("v must be > 0");
 		this.x = x;
@@ -56,7 +56,7 @@ public class Modulo extends Constraint{
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (y.updateMin(-v+1) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -70,7 +70,7 @@ public class Modulo extends Constraint{
 				if (x.hasValue(val)) {
 					if ((val % v) == i) {
 						if (supportSet[i+v-1] == null) {
-							supportSet[i+v-1] = new ReversibleSetIndexedArray(s, x.getMin(), x.getMax(),true); // contains no values initially
+							supportSet[i+v-1] = new ReversibleSetIndexedArray(s(), x.getMin(), x.getMax(),true); // contains no values initially
 						}
 						supportSet[i+v-1].insert(val);
 					}
@@ -114,7 +114,7 @@ public class Modulo extends Constraint{
 	}
 
 	@Override
-	protected CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPVarInt var, int val) {
 		if (var == x) {
 			int i = val % v;
 			supportSet[i+v-1].removeValue(val);

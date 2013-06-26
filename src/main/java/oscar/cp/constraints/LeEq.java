@@ -33,7 +33,7 @@ public class LeEq extends Constraint {
      * @param y
      */
 	public LeEq(CPVarInt x, CPVarInt y) {
-		super(x.s());
+		super(x.s(),"LeEq");
 		this.x = x;
 		this.y = y;
 	}
@@ -43,8 +43,8 @@ public class LeEq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if(s.post(new GrEq(y,x)) == CPOutcome.Failure) {
+	public CPOutcome setup(CPPropagStrength l) {
+		if(s().post(new GrEq(y,x)) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;

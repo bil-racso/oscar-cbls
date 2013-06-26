@@ -52,14 +52,14 @@ public class Regular extends Constraint {
 	    acceptingStates = automaton.getAcceptingStates();
 	    q = new CPVarInt[x.length];
 	    for (int i = 0; i < q.length; i++) {
-			q[i] = CPVarInt.apply(s,0,nbStates-1);
+			q[i] = CPVarInt.apply(s(),0,nbStates-1);
 		}		
 	}
 
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(ElementCst2D.apply(T,CPVarInt.apply(s,initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
+	public CPOutcome setup(CPPropagStrength l) {
+		if (s().post(ElementCst2D.apply(T,CPVarInt.apply(s(),initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		
@@ -72,7 +72,7 @@ public class Regular extends Constraint {
 		}
 		
 		for (int i = 1; i < x.length; i++) {
-			if (s.post(ElementCst2D.apply(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
+			if (s().post(ElementCst2D.apply(T,q[i-1],x[i],q[i])) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}

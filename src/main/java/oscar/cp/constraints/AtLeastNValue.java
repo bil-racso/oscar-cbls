@@ -44,14 +44,14 @@ public class AtLeastNValue extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if(l == CPPropagStrength.Weak) {
-			if (s.post(new AtLeastNValueFWC(x,nval)) == CPOutcome.Failure) {
+			if (s().post(new AtLeastNValueFWC(x,nval)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		} else {
-			if (s.post(new AtLeastNValueAC(x,nval)) == CPOutcome.Failure) {
+			if (s().post(new AtLeastNValueAC(x,nval)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}

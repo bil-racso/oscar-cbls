@@ -63,9 +63,9 @@ class NewMaxCumulative(cp: CPSolver, allTasks : Array[CumulativeActivity], limit
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 		
 		// Treat this constraint at the end of the propagation queue
-		setPriorityL2(0)
+		priorityL2 = 0
 		// Propagate is sufficient to reach the fix point of this constraint
-		setIdempotent
+		idempotent = true
 		
         val oc = propagate()
         

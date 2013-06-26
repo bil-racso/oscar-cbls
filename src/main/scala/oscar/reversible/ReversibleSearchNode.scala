@@ -1,5 +1,5 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
+" * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
@@ -40,6 +40,8 @@ import oscar.search.DummyObjective
 import oscar.search.Objective
 import oscar.search._
 import oscar.search.Tree
+import java.util.LinkedList
+import scala.collection.JavaConversions._
 
 /**
  * Class representing a reversible search node, that is a node able to restore all
@@ -59,6 +61,13 @@ class ReversibleSearchNode {
   val failed = new ReversibleBool(this, false)
 
   var sc: SearchController = new DFSSearchController(this)
+  
+  val popListeners = new LinkedList[() => Unit]()
+  
+  def onPop(action: => Unit) {
+    popListeners.add(() => action)
+  }
+  
 
   /**
    * time (ms) spend in last exploration
@@ -132,6 +141,10 @@ class ReversibleSearchNode {
    * Restore state on top of the stack of states and remove it from the stack.
    */
   def pop() {
+   
+    for (l <- popListeners) {
+      l()
+    }
     trail.restoreUntil(pointerStack.pop())
     magic += 1 // increment the magic because we want to trail again
   }

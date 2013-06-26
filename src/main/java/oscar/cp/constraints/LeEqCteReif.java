@@ -46,7 +46,8 @@ public class LeEqCteReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
+		priorityBindL1_$eq(CPStore.MAXPRIORL1());
 		CPOutcome oc = updateBounds(x);
 		if(oc == CPOutcome.Suspend){
 			b.callValBindWhenBind(this);
@@ -59,7 +60,7 @@ public class LeEqCteReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPVarInt x) {
 		if (x.getMax() <= v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -75,14 +76,9 @@ public class LeEqCteReif extends Constraint {
 			return CPOutcome.Suspend;
 		}
 	}
-	
-	
-	protected int getPriorityBindL1(){
-		return CPStore.MAXPRIORL1();
-	}
 		
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.getValue() == 0) {
 			//x > v
 			if (x.updateMin(v+1) == CPOutcome.Failure) {

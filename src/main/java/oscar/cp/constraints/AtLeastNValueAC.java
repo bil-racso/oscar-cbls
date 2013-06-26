@@ -65,7 +65,7 @@ public class AtLeastNValueAC extends Constraint {
 		this.x = x;
 		this.posted = false;
 		this.nValueVar = nval;
-		this.priorityL2 = CPStore.MAXPRIORL2()-1;
+		this.priorityL2_$eq(CPStore.MAXPRIORL2()-1);
 		//setIdempotent();
 	}
 	
@@ -81,11 +81,11 @@ public class AtLeastNValueAC extends Constraint {
 		posted = true;
 		
 		if (nValueVar.getMin() < x.length) {
-			if (s.post(new AtLeastNValueFWC(x,nValueVar)) == CPOutcome.Failure) {
+			if (s().post(new AtLeastNValueFWC(x,nValueVar)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		} else { //allDifferent (AtLeastNValueAC is also used to implement the AllDiffAC)
-			if (s.post(new AllDiffFWC(x)) == CPOutcome.Failure) {
+			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}

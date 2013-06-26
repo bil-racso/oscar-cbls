@@ -12,110 +12,62 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core;
 
-import oscar.cp.constraints.Garded;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.Constraint;
-import oscar.reversible.ReversibleBool;
+package oscar.cp.core
+
+import oscar.reversible.ReversibleBool
+import oscar.cp.constraints.Garded
+
 
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class Constraint {
-	protected CPStore s;	
+abstract class Constraint(val s: CPStore, val name: String = "cons") {
+
 	
-	protected int priorityL2 = 7;//CPStore.MAXPRIORL2;
+	val active = new ReversibleBool(s,true)
+	val inQueue = new ReversibleBool(s,false)
+
 	
-	private ReversibleBool active;
-	private ReversibleBool inQueue;
-	
-	
-	protected int priorityBindL1 = CPStore.MAXPRIORL1()-1;
-	protected int prioritBoundsL1 = CPStore.MAXPRIORL1()-2;
-	protected int priorityRemoveL1= CPStore.MAXPRIORL1()-2;
-	protected int priorityRequireL1 = CPStore.MAXPRIORL1()-1;
-	protected int priorityExcludeL1 = CPStore.MAXPRIORL1()-2;
-	
-	protected String name="cons";
+	private var priorL2 = CPStore.MAXPRIORL2
+	private var priorBindL1 = CPStore.MAXPRIORL1-1
+	private var priorBoundsL1 = CPStore.MAXPRIORL1-2
+	private var priorRemoveL1 = CPStore.MAXPRIORL1-2
+	private var priorRequireL1 = CPStore.MAXPRIORL1-1
+	private var priorExcludeL1 = CPStore.MAXPRIORL1-2
 	
 	/**
 	 * Set to true when it is currently exexuting the propagate method
 	 */
-	private boolean executingPropagate = false;
+	var executingPropagate = false;
 	
 	
 	/**
 	 * True if the constraint is idempotent i.e. calling two times propagate is useless if no other changes occurred
 	 * sigma(store) = sigma(sigma(store))
 	 */
-	protected boolean idempotent = false;
-	
-	public Constraint(CPStore s){
-		this.s = s;
-		active = new ReversibleBool(s);
-		active.setValue(true);
-		inQueue = new ReversibleBool(s);
-		inQueue.setValue(false);
-	}
-	
-	public Constraint(CPStore s,String name){
-		this(s);
-		this.name = name;
-	}
+	var idempotent = false
 	
 	/**
 	 * @return true if it is currently executing the propagate method.
 	 */
-	protected boolean inPropagate() {
-		return executingPropagate;
-	}
+	def inPropagate() = executingPropagate
 	
-	/**
-	 * Tells the store that this constraint is idempotent which means that if a changes occur during propagate method,
-	 * it will not be called again because you know it would be useless.
-	 */
-	public void setIdempotent() {
-		this.idempotent = true;
-	}
-	
-	public boolean isIdempotent() {
-		return this.isIdempotent();
-	}
-	
-	/**
-	 * Tells the store that this constraint is idempotent or not, which means that if a changes occur during propagate method,
-	 * it will not be called again because you know it would be useless
-	 */
-	public void setIdempotent(boolean idempotent) {
-		this.idempotent = idempotent;
-	}	
-	
+
 	/**
 	 * @param b
 	 * @return a garded version of this constraint i.e. that will only be posted when b is true
 	 */
-	public Constraint when(CPVarBool b) {
-		return new Garded(b,this,true);
-	}
+	def when(b: CPVarBool): Constraint = new Garded(b,this,true)
 	
 	/**
 	 * @param b
 	 * @return a garded version of this constraint i.e. that will only be posted when b is false
 	 */
-	public Constraint whenNot(CPVarBool b) {
-		return new Garded(b,this,false);
-	}
+	def whenNot(b: CPVarBool) = new Garded(b,this,false)
 	
-	@Override
-	public String toString() {
-		return "constraint:"+name;
-	}
-	
-	public String getName() {
-		return name;
-	}
+	override def toString = "constraint:"+name
 	
 	/**
 	 * setup the constraint, typically this is the place where 
@@ -124,88 +76,76 @@ public abstract class Constraint {
 	 * @param l
 	 * @return The outcome of the first propagation and consistency check
 	 */
-	protected abstract CPOutcome setup(CPPropagStrength l);
-
-	/**
-	 * Get the level 2 priority
-	 * @return
-	 */
-    protected  int getPriorityL2() {
-        return priorityL2;
-    }
-
+	def setup(l: CPPropagStrength): CPOutcome
+	
 	/**
 	 * 
 	 * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and CPStore.MAXPRIORL2 
 	 */
-	protected void setPriorityL2(int priority) {
-		this.priorityL2 = priority;
+	def priorityL2_=(priority: Int) {
+		priorL2 = priority;
 	}
 	
-	private int checkL1Prior(int priority) {
-		return Math.max(0,Math.min(priority,CPStore.MAXPRIORL1()));
+	private def checkL1Prior(priority: Int) = 0 max (priority min CPStore.MAXPRIORL1)
+	
+	
+	
+	def priorityBindL1_=(priority: Int) {
+		priorBindL1 = checkL1Prior(priority)
 	}
 	
-	protected void setPriorityBindL1(int priority) {
-		this.priorityBindL1 = checkL1Prior(priority);
+	def priorityRemoveL1_=(priority: Int) {
+		priorRemoveL1 = checkL1Prior(priority)
 	}
 	
-	protected void setPriorityRemoveL1(int priority) {
-		this.priorityRemoveL1 = checkL1Prior(priority);
+	def priorityBoundsL1_=(priority: Int) {
+		priorBoundsL1 = checkL1Prior(priority)
 	}
 	
-	protected void setPriorityBoundsL1(int priority) {
-		this.prioritBoundsL1 = checkL1Prior(priority);
+	def priorityRequireL1_=(priority: Int) {
+		priorRequireL1 = checkL1Prior(priority)
 	}
 	
-	protected int getPriorityBindL1() {
-		return this.priorityBindL1;
+	def priorityExcludeL1_=(priority: Int) {
+		priorExcludeL1 = checkL1Prior(priority)
 	}
 	
-	protected int getPriorityRemoveL1() {
-		return this.priorityRemoveL1;
-	}
+	def priorityL2 = priorL2
 	
-	protected int getPriorityBoundsL1() {
-		return this.prioritBoundsL1;
-	}	
+	def priorityBindL1 = priorBindL1
 	
-	protected int getPriorityRequireL1() {
-		return this.priorityRequireL1;
-	}
+	def priorityRemoveL1 = priorRemoveL1
 	
-	protected int getPriorityExcludeL1() {
-		return this.priorityExcludeL1;
-	}	
+	def priorityBoundsL1 = priorBoundsL1
 	
+	def priorityRequireL1 = priorRequireL1
+	
+	def priorityExcludeL1 = priorExcludeL1
 	
 	/**
 	 * @return true if the constraint is still active
 	 */
-	protected boolean isActive() {
-		return active.getValue();
-	}
+	def isActive() = active.value
+	
 	
 	/**
 	 * @return true if the constraint is still in the propagation queue, false otherwise
 	 */
-	protected boolean isInQueue() {
-		return inQueue.getValue();
-	}
+	def isInQueue() = inQueue.value
 	
 	/**
 	 * Disable the constraint such that it is not propagated any more (will not enter into the propagation queue).
 	 * Note that this state is reversible (trailable).
 	 */
-	protected void deactivate() {
-		active.setValue(false);
+	def deactivate() {
+		active.value = false
 	}
 	
 	/**
 	 * Reactivate the constraint
 	 */
-	protected void activate() {
-		active.setValue(true);
+	def activate() {
+		active.value = true
 	}
 	
 	/**
@@ -219,9 +159,7 @@ public abstract class Constraint {
 	 * on which of the method(s) above was used 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome propagate() {
-		return CPOutcome.Suspend;
-	}
+	def propagate(): CPOutcome = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -229,9 +167,7 @@ public abstract class Constraint {
 	 * @param x has a new minimum and/or maximum value in its domain since last call
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateBounds(CPVarInt x) {
-		return CPOutcome.Suspend;
-	}
+	def updateBounds(x: CPVarInt) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -241,32 +177,25 @@ public abstract class Constraint {
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateBoundsIdx(CPVarInt x, int idx) {
-		return CPOutcome.Suspend;
-	}
+	def updateBoundsIdx(x: CPVarInt, idx: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked so
 	 * with the method call x.callUpdateMaxWhenMaxChanges(this)
-	 * @param val is the old maximum of x that has changed
+	 * @param value is the old maximum of x that has changed
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateMax(CPVarInt x, int val) {
-		return CPOutcome.Suspend;
-	}
-	
+	def updateMax(x: CPVarInt, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
-	 * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-	 * @param val is the old maximum of x that has changed 
+	 * with the method call x.callUpdateMinIdxWhenMaxChanges(this,idx)
+	 * @param value is the old maximum of x that has changed 
 	 * @param idx is a key value that was given to callUpdateMaxIdxWhenMaxChanges(x,this,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateMaxIdx(CPVarInt x, int idx, int val) {
-		return CPOutcome.Suspend;
-	}
+	def updateMaxIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked so
@@ -274,21 +203,18 @@ public abstract class Constraint {
 	 * @param val is the old minimum of x that has changed 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateMin(CPVarInt x, int val) {
-		return CPOutcome.Suspend;
-	}
+	def updateMin(x: CPVarInt, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-	 * @param val is the old minimum of x that has changed 
-	 * @param idx is a key value that was given to callUpdateMinIdxWhenMinChanges(x,this,idx) attached to variable x. 
+	 * @param value is the old maximum of x that has changed 
+	 * @param idx is a key value that was given to callUpdateMaxIdxWhenMinChanges(x,this,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome updateMinIdx(CPVarInt x, int idx, int val) {
-		return CPOutcome.Suspend;
-	}
+	def updateMinIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend	
+	
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -296,9 +222,8 @@ public abstract class Constraint {
 	 * @param x is bind 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valBind(CPVarInt x) {
-		return CPOutcome.Suspend;
-	}
+	def valBind(x: CPVarInt) = CPOutcome.Suspend	
+	
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -308,32 +233,25 @@ public abstract class Constraint {
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time 
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valBindIdx(CPVarInt x, int idx) {
-		return CPOutcome.Suspend;
-	}
+	def valBindIdx(x: CPVarInt, idx: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callValRemoveWhenValueRemoved(this)
-	 * @param val is a value that has been removed from the domain of x since last call
+	 * @param value is a value that has been removed from the domain of x since last call
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valRemove(CPVarInt x, int val) {
-		return CPOutcome.Suspend;
-	}
+	def valRemove(x: CPVarInt, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
 	 * with the method call x.callValRemoveIdxWhenValueRemoved(this)
-	 * @param val is a value that has been removed from the domain of x since last call
+	 * @param value is a value that has been removed from the domain of x since last call
 	 * @param idx is a key value that was given to callValBind(x,idx) attached to variable x. 
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time  
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valRemoveIdx(CPVarInt x, int idx, int val) {
-		return CPOutcome.Suspend;
-	}
-	
+	def valRemoveIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -341,9 +259,7 @@ public abstract class Constraint {
 	 * @param val is a value that has been put as required in the domain of x since last call
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valRequired(CPVarSet x, int val) {
-		return CPOutcome.Suspend;
-	}
+	def valRequired(x: CPVarSet, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -353,9 +269,7 @@ public abstract class Constraint {
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time  
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valRequiredIdx(CPVarSet x, int idx, int val) {
-		return CPOutcome.Suspend;
-	}
+	def valRequiredIdx(x: CPVarSet, idx: Int, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -363,9 +277,7 @@ public abstract class Constraint {
 	 * @param val is a value that has been excluded in the domain of x since last call
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valExcluded(CPVarSet x, int val) {
-		return CPOutcome.Suspend;
-	}
+	def valExcluded(x: CPVarSet, value: Int) = CPOutcome.Suspend
 	
 	/**
 	 * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -375,25 +287,21 @@ public abstract class Constraint {
 	 *        This is typically used to retrieve the index of x in an array of variables in constant time  
 	 * @return the outcome i.e. Failure, Success or Suspend
 	 */
-	protected CPOutcome valExcludedIdx(CPVarSet x, int idx, int val) {
-		return CPOutcome.Suspend;
-	}	
-
+	def valExcludedIdx(x: CPVarSet, idx: Int, value: Int) = CPOutcome.Suspend
 	
-	
-	protected CPOutcome execute() {
-		inQueue.setValue(false);
-		executingPropagate = true;
-		CPOutcome oc = propagate();
-		executingPropagate = false;
+	def execute(): CPOutcome = {
+		inQueue.value = false
+		executingPropagate = true
+		val oc = propagate()
+		executingPropagate = false
 		if (oc == CPOutcome.Success) {
-			deactivate();
+			deactivate()
 		}
-		return oc;
+		oc
 	}
 
-    protected  void setInQueue() {
-        inQueue.setValue(true);
+    def setInQueue() {
+        inQueue.value = true
     }
-
+  
 }

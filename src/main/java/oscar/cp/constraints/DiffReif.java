@@ -46,7 +46,10 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
+		priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		priorityRemoveL1_$eq(CPStore.MAXPRIORL1());
+		
 		if (x.isBound() || b.isBound())
 			return valBind(x);
 		else if (b.isBound())
@@ -61,7 +64,7 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPVarInt x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -71,22 +74,9 @@ public class DiffReif extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	
+
 	@Override
-	protected int getPriorityBindL1(){
-		return CPStore.MAXPRIORL1();
-	}
-	
-	@Override
-	protected int getPriorityRemoveL1(){
-		return CPStore.MAXPRIORL1();
-	}
-	
-//	public int getPriorityAC5Bounds(){
-//		return CPStore.MAXPRIORAC5;
-//	}	
-	
-	@Override
-	protected CPOutcome valRemove(CPVarInt x, int val) {
+	public CPOutcome valRemove(CPVarInt x, int val) {
 		if (val == v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -98,7 +88,7 @@ public class DiffReif extends Constraint {
 	
 
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				//x != v

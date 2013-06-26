@@ -47,7 +47,7 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (x.isBound())
 			return valBind(x);
 		else if (b.isBound())
@@ -62,7 +62,7 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPVarInt x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -86,7 +86,7 @@ public class EqReif extends Constraint {
 //	}	
 	
 	@Override
-	protected CPOutcome valRemove(CPVarInt x, int val) {
+	public CPOutcome valRemove(CPVarInt x, int val) {
 		if (val == v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -98,7 +98,7 @@ public class EqReif extends Constraint {
 	
 
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.isBound()) {
 			if (b.isFalse()) {
 				//x != v

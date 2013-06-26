@@ -41,7 +41,7 @@ public class Abs extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (y.updateMin(0) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -64,7 +64,7 @@ public class Abs extends Constraint {
 
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		// y = |x|	
 		
 		if (x.getMin() >= 0) {
@@ -111,7 +111,7 @@ public class Abs extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		//return CPOutcome.Suspend;
 		
 		if (x.isBound()) {

@@ -111,7 +111,7 @@ public class SoftGCC extends Constraint{
 		this.low = low;
 		this.up = up;
 		this.viol = viol;
-		this.priorityL2 =  CPStore.MAXPRIORL2()-2;
+		this.priorityL2_$eq(CPStore.MAXPRIORL2()-2);
 		check();		
 	}
 	
@@ -137,7 +137,7 @@ public class SoftGCC extends Constraint{
 	
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		posted = true;
 
@@ -166,7 +166,7 @@ public class SoftGCC extends Constraint{
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		for(int k = 0; k < x.length ; k++) {
 			if (varMatch_uf[k] != NONE) {
 				if (!x[k].hasValue(varMatch_uf[k])) {

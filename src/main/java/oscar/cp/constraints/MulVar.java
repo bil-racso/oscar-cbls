@@ -44,10 +44,10 @@ public class MulVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s.post(new Square(x,z)) == CPOutcome.Failure) {
+			if (s().post(new Square(x,z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -75,7 +75,7 @@ public class MulVar extends Constraint {
 	}
 		
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if (!z.hasValue(0)) {
 			
 			if (x.removeValue(0) == CPOutcome.Failure) {
@@ -86,17 +86,17 @@ public class MulVar extends Constraint {
 			}
 		} 
 		if (x.isBound()) { // y * c = z
-			if (s.post(new MulCte(y,x.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.getValue(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) { // x *c = z
-			if (s.post(new MulCte(x,y.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.getValue(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (z.isBound()) { // x * y = c
-			if (s.post(new MulCteRes(x,y,z.getValue())) == CPOutcome.Failure) {
+			if (s().post(new MulCteRes(x,y,z.getValue())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

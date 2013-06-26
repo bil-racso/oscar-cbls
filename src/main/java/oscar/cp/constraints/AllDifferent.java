@@ -41,13 +41,13 @@ public class AllDifferent extends Constraint {
 
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (l == CPPropagStrength.Weak) {
-			if (s.post(new AllDiffFWC(x)) == CPOutcome.Failure) {
+			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		} else {
-			if (s.post(new AllDiffAC(x)) == CPOutcome.Failure) {
+			if (s().post(new AllDiffAC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}
