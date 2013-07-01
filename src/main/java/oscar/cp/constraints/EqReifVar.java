@@ -59,8 +59,8 @@ public class EqReifVar extends Constraint {
 			return valBind(y);
 		}
 		else {
-			x.callPropagateWhenDomainChanges(this);
-			y.callPropagateWhenDomainChanges(this);	
+			x.callPropagateWhenDomainChanges(this,false);
+			y.callPropagateWhenDomainChanges(this,false);	
 			b.callValBindWhenBind(this);
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);

@@ -37,8 +37,8 @@ public class DiffVar extends Constraint {
 	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome oc = propagate();
 		if(oc != CPOutcome.Success){
-			x.callPropagateWhenBind(this);
-			y.callPropagateWhenBind(this);
+			x.callPropagateWhenBind(this,false);
+			y.callPropagateWhenBind(this,false);
 		}
 		return oc;
 	}

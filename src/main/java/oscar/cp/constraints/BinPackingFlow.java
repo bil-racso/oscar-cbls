@@ -66,7 +66,7 @@ public class BinPackingFlow extends Constraint {
 			return CPOutcome.Failure;
 		}
 		for (int j = 0; j < l.length; j++) {
-			l[j].callPropagateWhenBoundsChange(this);
+			l[j].callPropagateWhenBoundsChange(this,false);
 		}
 		for (int i = 0; i < sizes.length; i++) {
 			if (x[i].isBound()) {
@@ -76,7 +76,7 @@ public class BinPackingFlow extends Constraint {
 			}
 			else {
 				x[i].callValBindIdxWhenBind(this,i);
-				x[i].callPropagateWhenBind(this);
+				x[i].callPropagateWhenBind(this,false);
 			}
 		}
 		return propagate();

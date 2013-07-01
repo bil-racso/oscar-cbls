@@ -20,52 +20,37 @@ import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 
 /**
- * Greater or Equal Constraint
+ * Equality Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class GrEq extends Constraint {
+public class EqVal extends Constraint {
 
-	CPVarInt x, y;
+	CPVarInt x;
+	int v;
 
     /**
-     * Constraint x >= y
+     * Constraint x to take value v
      * @param x
-     * @param y
-     * @see GrEqCteReif
-     * @see GrEqVarReif
+     * @param v
      */
-	public GrEq(CPVarInt x, CPVarInt y) {
-		super(x.s(),"GrEq");
+	public EqVal(CPVarInt x, int v) {
+		super(x.s(),"EqVal");
 		this.x = x;
-		this.y = y;
-	}
-	
-	public GrEq(CPVarInt x, int v) {
-		this(x, CPVarInt.apply(x.s(),v,v));
+		this.v = v;
 	}
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		CPOutcome oc = propagate();
-		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);
-			if (!x.isBound()) x.callPropagateWhenMaxChanges(this,false);
+
+		if (x.assign(v) == CPOutcome.Failure) {
+			return CPOutcome.Failure;
 		}
-		return oc;
+		return CPOutcome.Success;
+
 	}
 	
-	@Override
-	public CPOutcome propagate() {
-		if (x.getMin() >= y.getMax()) {
-			return CPOutcome.Success;
-		}
-		if (x.updateMin(y.getMin()) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		if (y.updateMax(x.getMax()) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Suspend;
-	}
 
 }
+
+
+

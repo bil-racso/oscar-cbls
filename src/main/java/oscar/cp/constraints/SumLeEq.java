@@ -50,10 +50,10 @@ public class SumLeEq extends Constraint {
 		}
 		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) 
-				x[i].callPropagateWhenMinChanges(this);
+				x[i].callPropagateWhenMinChanges(this,false);
 		}
 		if (!y.isBound())
-			y.callPropagateWhenMaxChanges(this);
+			y.callPropagateWhenMaxChanges(this,false);
 		return CPOutcome.Suspend;
 	}
 	

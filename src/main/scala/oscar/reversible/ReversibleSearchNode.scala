@@ -42,6 +42,7 @@ import oscar.search._
 import oscar.search.Tree
 import java.util.LinkedList
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Class representing a reversible search node, that is a node able to restore all
@@ -62,7 +63,7 @@ class ReversibleSearchNode {
 
   var sc: SearchController = new DFSSearchController(this)
   
-  val popListeners = new LinkedList[() => Unit]()
+  val popListeners = new ArrayBuffer[() => Unit]()
   
   def onPop(action: => Unit) {
     popListeners.add(() => action)
@@ -141,11 +142,13 @@ class ReversibleSearchNode {
    * Restore state on top of the stack of states and remove it from the stack.
    */
   def pop() {
-   
+    trail.restoreUntil(pointerStack.pop())
+    popListeners.foreach(_())
+    /*
     for (l <- popListeners) {
       l()
     }
-    trail.restoreUntil(pointerStack.pop())
+    */
     magic += 1 // increment the magic because we want to trail again
   }
 

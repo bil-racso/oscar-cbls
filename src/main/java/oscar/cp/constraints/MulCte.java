@@ -47,8 +47,8 @@ public class MulCte extends Constraint {
 	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = propagate();
 		if (ok == CPOutcome.Suspend) {
-			x.callPropagateWhenBoundsChange(this);
-			z.callPropagateWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
+			z.callPropagateWhenBoundsChange(this,false);
 		}
 		/*
 		if (l == CPPropagStrength.Strong) {

@@ -139,12 +139,12 @@ public class UnaryResource extends Constraint {
 
 		
 		for (int i = 0; i < nbAct; i++) {
-			activities[i].start().callPropagateWhenBoundsChange(this);
-			activities[i].end().callPropagateWhenBoundsChange(this);
+			activities[i].start().callPropagateWhenBoundsChange(this,false);
+			activities[i].end().callPropagateWhenBoundsChange(this,false);
 			
 			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
 				//required[i].callValBindIdxWhenBind(this,i);
-				required[i].callPropagateWhenBind(this);
+				required[i].callPropagateWhenBind(this,false);
 			}
 		}
 		

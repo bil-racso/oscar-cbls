@@ -55,11 +55,11 @@ public class MulCteRes extends Constraint {
 		}
 		
 		if (c == 0 && x.hasValue(0) && y.hasValue(0)) {
-			x.callPropagateWhenDomainChanges(this);
-			y.callPropagateWhenDomainChanges(this);
+			x.callPropagateWhenDomainChanges(this,false);
+			y.callPropagateWhenDomainChanges(this,false);
 		} else {
-			x.callPropagateWhenBoundsChange(this);
-			y.callPropagateWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this,false);
 		}
 		// propagate must be called after attaching events because this propagator may not reach fix-point it-self.
 		CPOutcome ok = propagate();

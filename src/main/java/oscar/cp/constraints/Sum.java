@@ -50,10 +50,10 @@ public class Sum extends Constraint {
 		}
 		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) 
-				x[i].callPropagateWhenBoundsChange(this);
+				x[i].callPropagateWhenBoundsChange(this,false);
 		}
 		if (!y.isBound())
-			y.callPropagateWhenBoundsChange(this);
+			y.callPropagateWhenBoundsChange(this,false);
 		return CPOutcome.Suspend;
 	}
 	

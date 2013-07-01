@@ -149,10 +149,10 @@ public class BinaryKnapsack extends Constraint {
 			}
 			else {
 				x[i].callValBindIdxWhenBind(this, i); // valBindIdx
-				x[i].callPropagateWhenDomainChanges(this); // propagate
+				x[i].callPropagateWhenDomainChanges(this,false); // propagate
 			}
 		}
-		if (!c.isBound()) c.callPropagateWhenBoundsChange(this);
+		if (!c.isBound()) c.callPropagateWhenBoundsChange(this,false);
 		
 		alpha_ = 0;
 		beta_ = 0;
@@ -404,12 +404,12 @@ class LightBinaryKnapsack extends Constraint {
 		for (int i = 0; i < w.length; i++) {
 			if (!x[i].isBound()) {
 				x[i].callValBindIdxWhenBind(this, i);
-				x[i].callPropagateWhenBind(this);
+				x[i].callPropagateWhenBind(this,false);
 			}
 		}
 		
 		if (!c.isBound()) {
-			c.callPropagateWhenBoundsChange(this);
+			c.callPropagateWhenBoundsChange(this,false);
 		}
 
 		return propagate();
@@ -510,7 +510,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
                 nPacked.incr();
             } else {
                 x[i].callValBindIdxWhenBind(this,i);
-                x[i].callPropagateWhenBind(this);
+                x[i].callPropagateWhenBind(this,false);
             }
 
         }
