@@ -47,7 +47,7 @@ class VisualRectangle(d: VisualDrawing, shape: Rectangle2D.Double) extends Color
 
   def rect: Rectangle2D.Double = shape
 
-  def this(d: VisualDrawing, x: Double, y: Double, w: Double, h: Double) {
+  def this(d: VisualDrawing, x: Double = 0, y: Double = 0, w: Double = 0, h: Double = 0) {
 
     this(d, new Rectangle2D.Double(x, y, w, h))
   }

@@ -70,9 +70,9 @@ public class Deviation extends Constraint {
     public CPOutcome setup(CPPropagStrength l) {
         for (int i = 0; i < x.length; i++) {
             if (!x[i].isBound())
-                x[i].callPropagateWhenBoundsChange(this);
+                x[i].callPropagateWhenBoundsChange(this,false);
         }
-        nd.callPropagateWhenMaxChanges(this);
+        nd.callPropagateWhenMaxChanges(this,false);
         return propagate();
     }
 

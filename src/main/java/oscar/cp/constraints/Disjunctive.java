@@ -48,10 +48,10 @@ public class Disjunctive extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		
-		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this);
-		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this);
-		if (!act2.start().isBound()) act2.start().callPropagateWhenBoundsChange(this);
-		if (!act2.dur().isBound()) act2.dur().callPropagateWhenBoundsChange(this);
+		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this,false);
+		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this,false);
+		if (!act2.start().isBound()) act2.start().callPropagateWhenBoundsChange(this,false);
+		if (!act2.dur().isBound()) act2.dur().callPropagateWhenBoundsChange(this,false);
 		
 		
 		if (propagate() == CPOutcome.Failure) {

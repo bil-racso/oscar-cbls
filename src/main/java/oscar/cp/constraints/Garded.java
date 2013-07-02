@@ -42,7 +42,7 @@ public class Garded extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		if (!b.isBound()) {
-			b.callPropagateWhenBind(this);
+			b.callPropagateWhenBind(this,false);
 			return CPOutcome.Suspend;
 		} else {
 			if ((b.getValue() == 1 && onTrue) || (b.getValue() == 0 && !onTrue)) {

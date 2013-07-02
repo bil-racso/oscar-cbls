@@ -50,20 +50,23 @@ class CumulativeResource(scheduler: CPScheduler, maxCapa: Int = Int.MaxValue, mi
 
   def capacity = maxCapa
 
-  def cumulativeActivities = activitiesSet.values.toArray
-
+  protected var _cumulActs: Array[CumulativeActivity] = Array()
+  def cumulativeActivities = if(!activitiesSet.isEmpty) activitiesSet.values.toArray else _cumulActs
+  def cumulativeActivities_= (a: Array[CumulativeActivity]): Unit = _cumulActs = a
 
   val rand = new scala.util.Random()
 
   override def setup() {
-	val act = activitiesSet.values.toArray
-    if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
-      scheduler.add(cumulative(act, id, max = maxCapa, min = minCapa))
-    } else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
-      scheduler.add(cumulative(act, id, max = maxCapa))
-    } else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
-      scheduler.add(cumulative(act, id, min = minCapa))
-    } else throw new InvalidParameterException("cumulative constraint bounded between -Infinity and Infinity")
+	val act = cumulativeActivities
+	if(act.length > 0){
+	    if (minCapa != Int.MinValue && maxCapa != Int.MaxValue) {
+	      scheduler.add(cumulative(act, id, max = maxCapa, min = minCapa))
+	    } else if (minCapa == Int.MinValue && maxCapa != Int.MaxValue) {
+	      scheduler.add(cumulative(act, id, max = maxCapa))
+	    } else if (minCapa != Int.MinValue && maxCapa == Int.MaxValue) {
+	      scheduler.add(cumulative(act, id, min = minCapa))
+	    } else throw new InvalidParameterException("cumulative constraint bounded between -Infinity and Infinity")
+	}
   }
 
   // Adding an activity

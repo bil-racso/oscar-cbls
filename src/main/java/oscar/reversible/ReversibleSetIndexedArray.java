@@ -20,7 +20,7 @@ import java.util.Arrays;
 import oscar.cp.core.CPStore;
 
 
-public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet{
+public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet {
 	
 
 	private ReversibleInt size;

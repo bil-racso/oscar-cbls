@@ -21,12 +21,13 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 
 class TestCPVarInt extends FunSuite with ShouldMatchers {
-
+	
 	test("Test1 : Median") {
 
 		val cp = CPSolver()
 		
 		val a = CPVarInt(cp, Array(0, 1, 2, 3, 4))
+
 		
 		a.median should be(2)
 		
@@ -37,6 +38,8 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 		a.removeValue(4)
 		
 		a.median should be(2)
+		
+		
 	}
 	
 
@@ -67,11 +70,22 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	  x.toSet should be(Set(1,2,3,4))
 	}	
 	
+  
+  	test("Iterator3a") {
+	  val cp = CPSolver()
+	  val x = CPVarInt(cp,Set(1,3))
+	  x.toSet should be(Set(1,3))
+	}
+	
+
+	
+	
 	test("Iterator3") {
 	  val cp = CPSolver()
 	  val x = CPVarInt(cp,Set(1,3))-1
 	  x.toSet should be(Set(0,2))
 	}
+	
 	
 	test("Iterator4") {
 	  val cp = CPSolver()

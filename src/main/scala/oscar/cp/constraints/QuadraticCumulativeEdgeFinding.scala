@@ -72,8 +72,9 @@ class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeAct
 
 		// Adjusts starting time
 		if (nTasks > 0) {
-			if (edgeFind(lToRTasks) == CPOutcome.Failure)
+			if (edgeFind(lToRTasks) == CPOutcome.Failure) {
 				return CPOutcome.Failure
+			}
 		}
 				
 		var t = 0
@@ -86,8 +87,10 @@ class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeAct
 			
 		// Adjusts ending time
 		if (nTasks > 0) {
-			if (edgeFind(rToLTasks) == CPOutcome.Failure)
-				return CPOutcome.Failure
+			if (edgeFind(rToLTasks) == CPOutcome.Failure) {
+			  return CPOutcome.Failure
+			}
+				
 		}
 			
 		return CPOutcome.Suspend

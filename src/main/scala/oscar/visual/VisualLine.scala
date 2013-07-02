@@ -26,7 +26,7 @@ class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line
 	
 	def line:Line2D.Double = shape
 	
-	def this(d:VisualDrawing,xorig:Double, yorig:Double, xdest:Double, ydest:Double) {
+	def this(d:VisualDrawing,xorig:Double = 0, yorig:Double = 0, xdest:Double = 0, ydest:Double =0) {
 		this(d, new Line2D.Double(xorig,yorig,xdest,ydest))
 		
 	}

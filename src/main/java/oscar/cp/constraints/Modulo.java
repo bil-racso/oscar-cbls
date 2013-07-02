@@ -14,10 +14,6 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import java.util.Arrays;
-
-import javax.management.RuntimeErrorException;
-
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;

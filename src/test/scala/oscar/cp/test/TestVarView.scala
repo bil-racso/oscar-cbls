@@ -162,7 +162,9 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     y.min should be(-2)
     cp.add(y <= -2) // now it's bind to -2
     y.value should be(-2)
-  }  
+  }
+  
+   
   
 
 }

@@ -46,8 +46,8 @@ public class Gr extends Constraint {
 	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenMinChanges(this);
-			if (!x.isBound()) x.callPropagateWhenMaxChanges(this);
+			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);
+			if (!x.isBound()) x.callPropagateWhenMaxChanges(this,false);
 		}
 		return oc;
 	}

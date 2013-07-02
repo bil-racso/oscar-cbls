@@ -86,10 +86,10 @@ public class AtLeastNValueFWC extends Constraint {
 	     for (int k=0; k < x.length; k++) {
 	       if (!x[k].isBound())
 	         x[k].callValBindIdxWhenBind(this,k);
-	       	 x[k].callPropagateWhenBind(this);
+	       	 x[k].callPropagateWhenBind(this,false);
 	     }
 	     if (!nValueVar.isBound()) {
-	       nValueVar.callPropagateWhenBoundsChange(this);
+	       nValueVar.callPropagateWhenBoundsChange(this,false);
 	     }
 
 	     int ubNbValueUsed = nbValueUsed.getValue() + (x.length -nbBound.getValue());

@@ -47,6 +47,7 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
   def move(x: Int, y: Int) {
     this.x = x;
     this.y = y;
+    
     shape.setRect(x,y,shape.getWidth(),shape.getHeight())
     d.repaint();
   }

@@ -144,7 +144,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenBind(c: Constraint): Unit
+	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false): Unit
 
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -152,7 +152,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenBoundsChange(c: Constraint): Unit
+	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false): Unit
 
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -160,7 +160,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenMaxChanges(c: Constraint): Unit
+	def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -168,7 +168,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenMinChanges(c: Constraint): Unit
+	def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -176,7 +176,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @param c
      * @see oscar.cp.core.Constraint#propagate()
      */
-	def callPropagateWhenDomainChanges(c: Constraint): Unit
+	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
     /**
      * Level 1 registration: ask that the valBind(CPVarInt) method of the constraint c is called whenever
@@ -312,6 +312,27 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
      */
 	def removeValue(value: Int): CPOutcome
+	
+	
+	// ------ delta methods to be called in propagate -------
+	
+	def changed(c: Constraint): Boolean
+	
+	def minChanged(c: Constraint): Boolean
+	
+	def maxChanged(c: Constraint): Boolean
+	
+	def boundsChanged(c: Constraint): Boolean
+	
+	def oldMin(c: Constraint): Int
+	
+	def oldMax(c: Constraint): Int
+	
+	def oldSize(c: Constraint): Int
+	
+	def deltaSize(c: Constraint): Int
+	
+	def delta(c: Constraint): Stream[Int]
 	
 	
 	// ------------------------ some useful methods for java -------------------------
@@ -539,7 +560,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
     /**
      * x==y
      */
-    def ==(y: Int) = new oscar.cp.constraints.Eq(this,y)     
+    def ==(y: Int) = new oscar.cp.constraints.EqVal(this,y)     
     /**
      * x<y
      */

@@ -73,14 +73,14 @@ class VisualDrawing(flipped:Boolean) extends JPanel (new BorderLayout()) {
         }.max
         val scx = getWidth() / (maxX.toDouble * 1.1)
         val scy = getHeight() / (maxY.toDouble * 1.1)
-
+       
         if (flipped) {
           g.translate(0, getHeight());
           (g.asInstanceOf[Graphics2D]).scale(scx, -scy);
         } else {
           (g.asInstanceOf[Graphics2D]).scale(scx, scy);
         }
-        super.paintComponent(g);
+        //super.paintComponent(g);
         for (s <- shapes) {
           s.draw(g.asInstanceOf[Graphics2D]);
         }

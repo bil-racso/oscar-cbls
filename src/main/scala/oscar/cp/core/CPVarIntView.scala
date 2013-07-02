@@ -54,15 +54,15 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	
 	override def toString() = "view with shift "+b+" on ("+v+")";
 		
-	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
+	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
+	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
 	
-	def callPropagateWhenMaxChanges(c: Constraint) = v.callPropagateWhenMaxChanges(c)
+	def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenMaxChanges(c,trackDelta)
 	
-	def callPropagateWhenMinChanges(c: Constraint) = v.callPropagateWhenMinChanges(c);
+	def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenMinChanges(c,trackDelta)
 	
-	def callPropagateWhenDomainChanges(c: Constraint) = v.callPropagateWhenDomainChanges(c);
+	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
 	
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int) = v.callValBindWhenBind(c, variable, b+delta)
@@ -115,5 +115,25 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	
 	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,this,idx,b);
 
+	// ----------------------------------
+	
+	def changed(c: Constraint): Boolean = v.changed(c)
+	
+	def minChanged(c: Constraint): Boolean = v.minChanged(c)
+	
+	def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
+	
+	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
+	
+	def oldMin(c: Constraint): Int = v.oldMin(c)-b
+	
+	def oldMax(c: Constraint): Int = v.oldMax(c)-b
+	
+	def oldSize(c: Constraint): Int = v.oldSize(c)
+	
+	def deltaSize(c: Constraint): Int = v.deltaSize(c)
+	
+	def delta(c: Constraint): Stream[Int] = v.delta(c).map(_-b)
+	
 }
   

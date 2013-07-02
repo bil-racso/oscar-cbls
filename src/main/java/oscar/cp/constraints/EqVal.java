@@ -12,14 +12,45 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
- ******************************************************************************/
-//import sbt._
-//
-//object LinProgPluginDef extends Build {
-//  lazy val root = Project("plugins", file(".")) dependsOn(junitXmlListener)
-//  /* This is not published in a Maven repository, so we get it from GitHub directly */
-//  lazy val junitXmlListener = uri("git://github.com/ijuma/junit_xml_listener.git#cb0a6d40d44adc28ddbee00436bd814e65bf0487")
-//}
-//
+package oscar.cp.constraints;
+
+import oscar.cp.core.CPOutcome;
+import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.CPVarInt;
+import oscar.cp.core.Constraint;
+
+/**
+ * Equality Constraint
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+public class EqVal extends Constraint {
+
+	CPVarInt x;
+	int v;
+
+    /**
+     * Constraint x to take value v
+     * @param x
+     * @param v
+     */
+	public EqVal(CPVarInt x, int v) {
+		super(x.s(),"EqVal");
+		this.x = x;
+		this.v = v;
+	}
+	
+	@Override
+	public CPOutcome setup(CPPropagStrength l) {
+
+		if (x.assign(v) == CPOutcome.Failure) {
+			return CPOutcome.Failure;
+		}
+		return CPOutcome.Success;
+
+	}
+	
+
+}
+
 
 

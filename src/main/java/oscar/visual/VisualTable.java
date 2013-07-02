@@ -195,8 +195,6 @@ public class VisualTable extends JPanel  {
 		setValueAt(val, row, -1);
 	}
 
-
-
 	public static void main(String[] args) {
 
 		oscar.visual.VisualFrame frame = new VisualFrame("hello");

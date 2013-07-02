@@ -112,12 +112,12 @@ public class AtLeastNValueAC extends Constraint {
 
 		for (int k = 0 ; k < x.length; k++) {
 			if (!x[k].isBound()) {
-				x[k].callPropagateWhenDomainChanges(this);
+				x[k].callPropagateWhenDomainChanges(this,false);
 			}
 		}
 
 		if (!nValueVar.isBound()) {
-			nValueVar.callPropagateWhenBoundsChange(this);
+			nValueVar.callPropagateWhenBoundsChange(this,false);
 		}
 
 		return CPOutcome.Suspend;

@@ -203,8 +203,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
       cp.binary(Array(x2), cp.minVar, _.max)
       println(x1 + " " + x2)
       nbsol += 1
-
-    } run ()
+    } run()
     nbsol should be(3)
   }
 
