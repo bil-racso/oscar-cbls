@@ -26,7 +26,7 @@ import scala.collection.Iterator
  * @param max >= min
  * @author Pierre Schaus
  */
-class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int) extends Iterable[Int] {
+class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
 
   val offset = minValue
   val _min = new ReversibleInt(s,minValue)
@@ -242,7 +242,22 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
           interIndex < _size.value
         }
       }
-  }  
+  }
+
+  def delta(oldSize: Int): Iterator[Int] = {
+    var ind = size
+    //println("size:"+size+" valuessize:"+values.size)
+    new Iterator[Int] {
+      def next(): Int = {
+        val v = values(ind)
+        ind += 1
+        v + offset
+      }
+      def hasNext: Boolean = {
+        ind < oldSize && ind < values.size
+      }
+    }
+  }
   
 
   

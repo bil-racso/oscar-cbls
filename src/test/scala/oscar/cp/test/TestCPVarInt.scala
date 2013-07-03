@@ -120,4 +120,5 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 			cp.add(a < 10)
 		} should produce [NoSolutionException]
 	}
+
 }

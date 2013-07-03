@@ -250,5 +250,13 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
       }
     }
   }
+  
+  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    if (_withHoles.value) {
+      (oldMin until _values.minValue).iterator ++ _values.delta(oldSize) ++ (_values.maxValue+1 to oldMax).iterator
+    } else {
+      (oldMin to min-1).iterator ++ (max+1 to oldMax).iterator
+    }
+  }
 
 }

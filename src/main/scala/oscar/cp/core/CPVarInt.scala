@@ -332,7 +332,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	
 	def deltaSize(c: Constraint): Int
 	
-	def delta(c: Constraint): Stream[Int]
+	def delta(c: Constraint): Iterator[Int]
 	
 	
 	// ------------------------ some useful methods for java -------------------------

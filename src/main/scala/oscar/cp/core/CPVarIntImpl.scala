@@ -51,8 +51,6 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	
 
 	def iterator = {
-	  //println("iterator varimpl")
-	  println(Thread.currentThread().getStackTrace())
 	  dom.iterator
 	}
 	
@@ -560,15 +558,17 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	// ----------------------------------
 	
 	def changed(c: Constraint): Boolean = {
-	   c.snapshots(this).oldSize == size
+	   c.snapshots(this).oldSize != size
 	}
 	
 	def minChanged(c: Constraint): Boolean = {
-	  c.snapshots(this).oldMin == min
+	  assert(c.snapshots(this).oldMin <= min)
+	  c.snapshots(this).oldMin < min
 	}
 	
 	def maxChanged(c: Constraint): Boolean = {
-	  c.snapshots(this).oldMax == max
+	  assert(c.snapshots(this).oldMax >= max)
+	  c.snapshots(this).oldMax > max
 	}
 	
 	def boundsChanged(c: Constraint): Boolean = {
@@ -594,8 +594,9 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	  c.snapshots(this).oldSize - size
 	}
 	
-	def delta(c: Constraint): Stream[Int] = {
-	  Stream(1)
+	def delta(c: Constraint): Iterator[Int] = {
+	  val snapshot = c.snapshots(this)
+	  dom.delta(snapshot.oldMin,snapshot.oldMax,snapshot.oldSize)
 	}
 		
 }

@@ -49,7 +49,7 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	def max = v.max + b
 	
 	def iterator = {
-		v.iterator.map(_+b)
+		v.iterator.map(_ + b)
 	}
 	
 	override def toString() = "view with shift "+b+" on ("+v+")";
@@ -125,15 +125,15 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	
 	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
 	
-	def oldMin(c: Constraint): Int = v.oldMin(c)-b
+	def oldMin(c: Constraint): Int = v.oldMin(c) + b
 	
-	def oldMax(c: Constraint): Int = v.oldMax(c)-b
+	def oldMax(c: Constraint): Int = v.oldMax(c) + b
 	
 	def oldSize(c: Constraint): Int = v.oldSize(c)
 	
 	def deltaSize(c: Constraint): Int = v.deltaSize(c)
 	
-	def delta(c: Constraint): Stream[Int] = v.delta(c).map(_-b)
+	def delta(c: Constraint): Iterator[Int] = v.delta(c).map(_ + b)
 	
 }
   
