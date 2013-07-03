@@ -13,8 +13,7 @@ class TestNeedsResource extends FunSuite with ShouldMatchers {
   /*Test that checks big ints are used properly in QuadraticCumulativeEdgeFinding.scala 
    *(in this case particular case : not using a BigInt implies getting the following wrong computation : 2147483603 * 12 = -540)
    */
-	test("Test : TestNeedsResourceBigInt")
-	{
+	test("Test : TestNeedsResourceBigInt"){
 
     val instance = 
       Array(
