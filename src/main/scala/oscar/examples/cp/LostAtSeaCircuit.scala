@@ -78,7 +78,7 @@ object LostAtSeaCircuit  {
          cp.binaryFirstFail(path)
          println(path.mkString(","))
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
-       }
+       } run()
        
        cp.printStats()
        

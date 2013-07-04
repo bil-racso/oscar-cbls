@@ -14,7 +14,6 @@
  ******************************************************************************/
 
 
-package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
@@ -41,11 +40,12 @@ import collection.immutable.SortedSet
  * of jars can be completely emptied.
  *
  * Let's look at an example. Suppose that S is the set {15, 13, 12, 4, 2, 1}, meaning that there
- * are six jars, containing 1, 2, 4, 12, 13 and 15 cookies each. 
- * 
+ * are six jars, containing 1, 2, 4, 12, 13 and 15 cookies each.
+ *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object CookieMonster extends App {
+object CookieMonster {
+  def main(args: Array[String]) {
 
   val cp = CPSolver()
 
@@ -83,10 +83,12 @@ object CookieMonster extends App {
     })
     cp.binaryFirstFail(x)
     cp.binary(b.flatten)
-    //printSol()
     nbSol += 1
-  } run(1)
+  } run(100000)
   
   println("nbSol="+nbSol)
   cp.printStats()
+
+  }
+
 }

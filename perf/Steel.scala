@@ -13,7 +13,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.search._
@@ -46,7 +45,7 @@ import java.awt.Color
 object Steel {
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("../data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)
@@ -83,23 +82,7 @@ object Steel {
     val x = (for (s <- Slabs) yield CPVarInt(cp, 0 until nbSlab))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
     val l = for (s <- Slabs) yield CPVarInt(cp, 0 to capa.max)
-    val xsol = Array.fill(nbSlab)(0) //current best solution
-
-    // -------------visual components ------------
-    val colors = VisualUtil.getRandomColorArray(nbCol)
-    val scale = 7
-    val f = new VisualFrame("Steel Mill Slab")
-    // creates the plot and place it into the frame
-    val plot = new Plot2D("", "Solution number", "Loss")
-    f.createFrame("Objective").add(plot)
-    // creates the tour visu and place it into the frame
-    val drawing: VisualBinPacking = new VisualBinPacking(nbSlab, 12)
-    val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
-    Slabs.foreach(o => items(o).innerCol = colors(col(o)))
-    f.createFrame("Steel Mill Slab").add(drawing)
-    capa.foreach(c => new VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
-    f.pack()
-    // ------------------------------------------
+  
 
     val rnd = new Random(0)
     var nbSol = 0
@@ -114,25 +97,12 @@ object Steel {
     } exploration {
       while (!allBounds(x)) {
         val maxUsed = x.maxBoundOrElse(-1)
-        val y = selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)).get
+        val y = x.find(!_.isBound).get
         cp.branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.post(y == v))
       }
-      Slabs.foreach(o => {
-        xsol(o) = x(o).value
-        items(o).setBin(xsol(o))
-      })
-      plot.addPoint(nbSol, obj.value)
       nbSol += 1
       println("sol #fail:" + cp.nFail)
-    } run(1)
-
-    for (r <- 1 to 100) {
-      cp.runSubjectTo(Int.MaxValue, 200) {
-        for (s <- Slabs; if rnd.nextInt(100) > 70) {
-          cp.post(x(s) == xsol(s))
-        }
-      }
-    }
+    } run()
 
     println("end--------------")
 
