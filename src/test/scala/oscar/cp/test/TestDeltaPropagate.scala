@@ -34,6 +34,14 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
 
       override def setup(l: CPPropagStrength): CPOutcome = {
+       
+        /*
+        X.callWhenChange ( d =>
+          X.changed(d)
+          
+        	// ca cree une contrainte
+        )*/
+        
         X.callPropagateWhenDomainChanges(this,true)
         CPOutcome.Suspend
       }
@@ -70,7 +78,7 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        X.callPropagateWhenDomainChanges(this,true)
+        X.callPropagateWhenDomainChanges(this,trackDelta = true)
         CPOutcome.Suspend
       }
       
@@ -92,7 +100,7 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -3 // -2,0,2,4
+    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     cp.add(x < 2)
     propag should be(true)
@@ -126,7 +134,43 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -3 // -2,0,2,4
+    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
+    cp.add(new MyCons(x))
+    val cons = new LinkedList[Constraint]()
+    cons.add(x < 4)
+    cons.add(x < 2)
+    cp.add(cons)
+    println("x dom:"+x.toSet)
+    propag should be(true)
+  }    
+  
+
+
+
+  test("test delta 4") {
+    var propag = false
+    
+    class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
+      priorityL2 = CPStore.MAXPRIORL2-5 
+      override def setup(l: CPPropagStrength): CPOutcome = {
+        X.filterWhenDomainChanges { delta =>
+          propag = true
+          delta.changed() should be(true)
+          println("currsize:"+X.size+" oldSize:"+d.sn.oldSize+" oldmin:"+d.sn.oldMin+" oldMax:"+d.sn.oldMax+" dom:"+X.toSet)
+          delta.size() should be(2)
+          delta.values().toSet should be(Set(2,4))
+          delta.maxChanged() should be(true)
+          delta.minChanged() should be(false)
+          delta.oldMin() should be(-2)
+          delta.oldMax() should be(4)
+          CPOutcome.Suspend
+        }
+        CPOutcome.Suspend
+      }
+    }
+
+    val cp = CPSolver()
+    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     val cons = new LinkedList[Constraint]()
     cons.add(x < 4)

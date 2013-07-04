@@ -50,6 +50,11 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	def this(st: CPStore, r: Range) = this(st, r.start,if (r.isInclusive) r.end else r.end-1)	
 	
 
+	def rootVar: CPVarInt = this
+    
+    def offset: Int = 0
+    
+	
 	def iterator = {
 	  dom.iterator
 	}
@@ -158,6 +163,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 		else if (isBound) name+" "+value
 		else name+" "+dom.toString()
 	}
+		
 	
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -557,46 +563,31 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	
 	// ----------------------------------
 	
-	def changed(c: Constraint): Boolean = {
-	   c.snapshots(this).oldSize != size
+	
+	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+	  dom.delta(oldMin,oldMax,oldSize)
 	}
 	
-	def minChanged(c: Constraint): Boolean = {
-	  assert(c.snapshots(this).oldMin <= min)
-	  c.snapshots(this).oldMin < min
-	}
+
+	def changed(c: Constraint): Boolean = changed(c.snapshots(this))
 	
-	def maxChanged(c: Constraint): Boolean = {
-	  assert(c.snapshots(this).oldMax >= max)
-	  c.snapshots(this).oldMax > max
-	}
+	def minChanged(c: Constraint): Boolean = minChanged(c.snapshots(this))
 	
-	def boundsChanged(c: Constraint): Boolean = {
-	  c.snapshots(this).oldMax == max	  
-	}
+	def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshots(this))
 	
-	def oldMin(c: Constraint): Int = {
-	  assert(c.snapshots(this).oldMin <= min)
-	  c.snapshots(this).oldMin
-	}
+	def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshots(this))
 	
-	def oldMax(c: Constraint): Int = {
-	  assert(c.snapshots(this).oldMax >= max)
-	  c.snapshots(this).oldMax
-	}
+	def oldMin(c: Constraint): Int = oldMin(c.snapshots(this))
 	
-	def oldSize(c: Constraint): Int = {
-	  assert(c.snapshots(this).oldSize >= size)
-	  c.snapshots(this).oldSize
-	}
+	def oldMax(c: Constraint): Int = oldMax(c.snapshots(this))
 	
-	def deltaSize(c: Constraint): Int = {
-	  c.snapshots(this).oldSize - size
-	}
+	def oldSize(c: Constraint): Int = oldSize(c.snapshots(this))
+	
+	def deltaSize(c: Constraint): Int = deltaSize(c.snapshots(this))
 	
 	def delta(c: Constraint): Iterator[Int] = {
-	  val snapshot = c.snapshots(this)
-	  dom.delta(snapshot.oldMin,snapshot.oldMax,snapshot.oldSize)
+	  val sn = c.snapshots(this)
+	  delta(sn.oldMin,sn.oldMax,sn.oldSize)
 	}
 		
 }
