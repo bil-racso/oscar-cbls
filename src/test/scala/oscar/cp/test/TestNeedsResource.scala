@@ -42,9 +42,7 @@ class TestNeedsResource extends FunSuite with ShouldMatchers {
 
   }
   
-  
-  
-  test("Test : TestNeedsResource2") {
+  test("Test : TestNeedsResourceNoConstraint") {
 
     val instance = 
       Array(

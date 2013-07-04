@@ -16,12 +16,10 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.MirrorCumulativeActivity
 
@@ -188,8 +186,8 @@ class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeAct
 		
 		for (i <- 0 until nTasks)
 			if (tasks(i).adjustStart(LB(i)) == CPOutcome.Failure)
-				return CPOutcome.Failure	
-        
+				return CPOutcome.Failure
+				
 		return CPOutcome.Suspend
 	}
 
