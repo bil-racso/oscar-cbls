@@ -34,14 +34,6 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
 
       override def setup(l: CPPropagStrength): CPOutcome = {
-       
-        /*
-        X.callWhenChange ( d =>
-          X.changed(d)
-          
-        	// ca cree une contrainte
-        )*/
-        
         X.callPropagateWhenDomainChanges(this,true)
         CPOutcome.Suspend
       }
@@ -156,7 +148,6 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
         X.filterWhenDomainChanges { delta =>
           propag = true
           delta.changed() should be(true)
-          println("currsize:"+X.size+" oldSize:"+d.sn.oldSize+" oldmin:"+d.sn.oldMin+" oldMax:"+d.sn.oldMax+" dom:"+X.toSet)
           delta.size() should be(2)
           delta.values().toSet should be(Set(2,4))
           delta.maxChanged() should be(true)
