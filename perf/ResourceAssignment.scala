@@ -41,7 +41,7 @@ import oscar.cp.constraints.ElementVarAC
 object ResourceAssignment extends App {
 
     val cp = CPSolver()
-
+    cp.silent = true
     val binCapa = 20
     val partition = Array(Set(2,3,7),Set(0,4),Set(5,6),Set(1,8))
     

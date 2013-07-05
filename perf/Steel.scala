@@ -78,7 +78,8 @@ object Steel {
     val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
     val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
-    val cp = new CPSolver
+    val cp = new CPSolver()
+    cp.silent = true
     val x = (for (s <- Slabs) yield CPVarInt(cp, 0 until nbSlab))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
     val l = for (s <- Slabs) yield CPVarInt(cp, 0 to capa.max)

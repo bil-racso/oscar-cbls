@@ -58,7 +58,7 @@ object LostAtSeaCircuit  {
        // --------------- model -------------------
        
        val cp = CPSolver()
-       
+       cp.silent = true
        val succ = Array.tabulate(64)(i => CPVarInt(cp,neighbors(i)))
        
        val path = Array.fill(10)(CPVarInt(cp,0 until 64)) // represent the path of length ten which is the solution

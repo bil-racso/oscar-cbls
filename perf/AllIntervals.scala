@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cp.hakank
+
 
 import oscar.cp.modeling._
 
@@ -59,8 +59,7 @@ object AllIntervals {
     //
     // data
     //
-    val n = if (args.length > 0) args(0).toInt else 11;
-    val num_to_show = if (args.length > 1) args(1).toInt else 1;
+    val n = 14
 
     println("n: " + n)
 
@@ -68,8 +67,8 @@ object AllIntervals {
     // variables
     //
 
-    val x = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-    val diffs = Array.fill(n-1)(CPVarInt(cp, 1 to n-1))
+    val x = Array.fill(n)(CPVarInt(cp, 0 to n - 1))
+    val diffs = Array.fill(n - 1)(CPVarInt(cp, 1 to n - 1))
 
     //
     // constraints
@@ -79,18 +78,17 @@ object AllIntervals {
 
       cp.add(allDifferent(diffs), Strong)
       cp.add(allDifferent(x), Strong)
-      
-      for(k <- 0 until n-1) {
-        cp.add(diffs(k) == (x(k+1)-(x(k))).abs()) 
+
+      for (k <- 0 until n - 1) {
+        cp.add(diffs(k) == (x(k + 1) - (x(k))).abs())
       }
 
       // symmetry breaking
-      cp.add(x(0) < x(n-1))
+      cp.add(x(0) < x(n - 1))
       cp.add(diffs(0) < diffs(1))
 
-
     } exploration {
-       
+
       cp.binary(x)
 
       print("x:" + x.mkString(""))
@@ -99,7 +97,7 @@ object AllIntervals {
 
       numSols += 1
 
-   } run(num_to_show)
+    } run (1)
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

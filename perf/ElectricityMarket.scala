@@ -25,7 +25,7 @@ object ElectricityMarket {
 	def main(args: Array[String]) {
 	  
 	  val cp = CPSolver()
-	  
+	  cp.silent = true
 	  case class Order(data: Array[Int]) {
 	    
 	    val qty = data(0) // amount of electricity he is ready to produce (>0) or consume (<0)

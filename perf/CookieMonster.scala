@@ -48,7 +48,7 @@ object CookieMonster {
   def main(args: Array[String]) {
 
   val cp = CPSolver()
-
+  cp.silent = true
   val numCubes = 4
   val numFaces = 6
 

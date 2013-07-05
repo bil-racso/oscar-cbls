@@ -31,40 +31,70 @@
  * ****************************************************************************
  */
 
+package oscar.cp.test
+
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
+
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
 
-/**
- *
- *  @authors: Pierre Schaus pschaus@gmail.com
- */
-object RCPSP {
+class TestAllIntervals extends FunSuite with ShouldMatchers {
 
-	def main(args : Array[String]) {
+  test("AllIntervals") {
 
-		// (duration, consumption)
-		val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
-		val capa = 4
-		val horizon = instance.map(_._1).sum
-		val Times = 0 to horizon
+    val cp = CPSolver()
 
-		val cp = CPScheduler(horizon)
-		cp.silent = true
-		val x = CPVarInt(cp, 0 to 3)
+    //
+    // data
+    //
+    val n = 6
 
-		val tasks : Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
-		val makespan = maximum(tasks.map(_.end))
-		cp.minimize(makespan) subjectTo {
-			cp.add(new MaxSweepCumulative(cp, tasks, capa, 0))
-		} exploration {
-		    cp.setTimes(tasks)
-		    println("here")
-			//
-		} run()
-		cp.printStats()
+    println("n: " + n)
 
-	}
+    //
+    // variables
+    //
+
+    val x = Array.fill(n)(CPVarInt(cp, 0 to n - 1))
+    val diffs = Array.fill(n - 1)(CPVarInt(cp, 1 to n - 1))
+
+    //
+    // constraints
+    //
+    var numSols = 0
+    cp.solve subjectTo {
+
+      cp.add(allDifferent(diffs), Strong)
+      cp.add(allDifferent(x), Strong)
+
+      for (k <- 0 until n - 1) {
+        cp.add(diffs(k) == (x(k + 1) - (x(k))).abs())
+      }
+
+      // symmetry breaking
+      cp.add(x(0) < x(n - 1))
+      cp.add(diffs(0) < diffs(1))
+
+    } exploration {
+
+      cp.binary(x)
+
+      print("x:" + x.mkString(""))
+      print("  diffs:" + diffs.mkString(""))
+      println()
+
+      numSols += 1
+
+    } run ()
+    numSols should be(8)
+    println("\nIt was " + numSols + " solutions.")
+    cp.printStats()
+
+  }
+
+ 
 }

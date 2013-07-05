@@ -360,7 +360,7 @@ class ReversibleSearchNode {
         k1() // exit the exploration block       
       }
     }
-    bkts = sc.nFail
+    bkts = sc.nFail max bkts
     time = System.currentTimeMillis() - t1
     if (!sc.isLimitReached && n < nbSolMax) {
       explorationCompleted = true
