@@ -14,8 +14,6 @@
  ******************************************************************************/
 
 
-package oscar.examples.cp
-
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
@@ -44,9 +42,10 @@ import oscar.visual._
  * An optimal balanced curriculum balances academic load for all periods. 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object BACP extends App{
-
-    val lines = Source.fromFile("data/bacp/instances12/inst0.txt").getLines.reduceLeft(_ + " " + _)
+object BACP {
+  def main(args: Array[String]) {
+  
+    val lines = Source.fromFile("../data/bacp/instances12/inst3.txt").getLines.reduceLeft(_ + " " + _)
     val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     var index = 0
     def next() = {
@@ -71,16 +70,20 @@ object BACP extends App{
 
 
 
-    cp.minimize(vari) subjectTo {
+    cp.minimize(maximum(l)) subjectTo {
         cp.add(spread(l,credits.sum, vari))
-        cp.add(binPacking(x, credits, l))
+        cp.add(binPacking(x, credits, l),Strong)
         for ((i,j) <- prerequisites) {
           cp.add(x(i) < x(j)) // precedence constraint
-        } 
+        }
+        cp.add(gcc(x,periods,5,7),Strong)
     } exploration {
         cp.binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
     } run()
     
     cp.printStats
+    
+  }
+
 
 }
