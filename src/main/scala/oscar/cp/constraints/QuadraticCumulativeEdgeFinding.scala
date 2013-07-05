@@ -139,8 +139,8 @@ class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeAct
 							r_rho = tasks(i).est
 						}
 					} else {
-						
-						val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - r_rho)
+						val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - BigInt(r_rho))
+						//val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - r_rho)
 						
 						if (rest > 0) {
 							Dupd(i) = max(Dupd(i), r_rho + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
