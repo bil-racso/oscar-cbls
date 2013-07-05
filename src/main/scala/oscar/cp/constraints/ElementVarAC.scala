@@ -157,7 +157,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   // Removes v from all the intersections
   private def removeFromZ(v: Int): CPOutcome = {
     nSupports(v) setValue 0
-    for (i <- x.min to x.max; if x hasValue i) {
+    for (i <- x.min to x.max; if x.hasValue(i)) {
       if (reduceIntersect(i, v) == Failure) return Failure
     }
     Suspend
@@ -168,7 +168,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   private def removeFromX(i: Int): CPOutcome = {
     if (x.isBound) bindX()
     else {
-      for (v <- y(i).min to y(i).max; if y(i) hasValue v; if v < zRange.max) {
+      for (v <- y(i).min to y(i).max; if y(i).hasValue(v); if v < zRange.max) {
         if (reduceSupports(v) == Failure) return Failure
       }
       Suspend

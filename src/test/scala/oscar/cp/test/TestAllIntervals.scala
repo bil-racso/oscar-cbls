@@ -80,7 +80,7 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
       cp.add(diffs(0) < diffs(1))
 
     } exploration {
-
+      println("exploration")
       cp.binary(x)
 
       print("x:" + x.mkString(""))

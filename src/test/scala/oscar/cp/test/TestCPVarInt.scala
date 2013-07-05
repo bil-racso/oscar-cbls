@@ -120,5 +120,41 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 			cp.add(a < 10)
 		} should produce [NoSolutionException]
 	}
+	
+  test("min max size methods test") {
+
+    val cp = CPSolver()
+
+    var x = CPVarInt(cp, -2 to 4)
+    
+    x.min should be(-2)
+    x.max should be(4)
+    
+
+    for (i <- 0 to 5) {
+
+      cp.pushState()
+      cp.add(x != 0)
+      cp.add(x != 2)
+
+      x.size should be(5)
+      x.min should be(-2)
+      x.max should be(4)
+
+      cp.add(x != -1)
+      cp.add(x != -2)
+
+      x.size should be(3)
+      x.min should be(1)
+      x.max should be(4)
+
+      cp.pop()
+
+      x.size should be(7)
+      x.min should be(-2)
+      x.max should be(4)
+    }
+
+  }	
 
 }
