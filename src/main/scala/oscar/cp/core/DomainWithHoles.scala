@@ -18,6 +18,8 @@ package oscar.cp.core;
 import oscar.reversible._
 import scala.collection.Iterator
 
+
+
 /**
  * Creates a domain that can contain holes in it (by opposition to a simple range domain). <br>
  * The data structure used to represent the holes is created in a lazy way. <br>
@@ -45,7 +47,6 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
   def getSize() = size
 
   override def size = {
-    //println("size:+ withHoles:"+withHoles)
     if (withHoles) _values.size
     else _interval.size 
   }
@@ -210,6 +211,8 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
       _interval.iterator
     }
   }
+  
+
   
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
     if (_withHoles.value) {

@@ -15,6 +15,11 @@
 package oscar.cp.core
 
 
+trait DomainIterator extends Iterator[Int] {
+  def removeValue: CPOutcome
+  def execute()
+}
+
 abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[Int] {
 
     def store = s
@@ -140,6 +145,40 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	def max: Int
 	
 	def getMax = max
+	
+  def domainIterator: DomainIterator = {
+    new DomainIterator {
+      private val it = iterator
+      private var ok = false
+      private var v = Int.MinValue
+      private var collect: List[Int] = Nil
+      private var maxRemove = CPVarInt.this.size
+      
+      def next(): Int = {
+          v = it.next()
+          ok = true
+          v  
+      }
+      def hasNext: Boolean = {
+        it.hasNext
+      }
+      
+      def removeValue(): CPOutcome = {
+        assert(ok == true)
+        ok = false
+        collect = v :: collect
+        maxRemove -= 1
+        if (maxRemove <= 0) 
+          CPOutcome.Failure 
+        else
+          CPOutcome.Suspend
+      }
+      
+      def execute() = {
+        for (v <- collect) CPVarInt.this.removeValue(v)
+      }
+    }
+  }	
 	
 	
     /**

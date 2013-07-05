@@ -235,16 +235,15 @@ class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxVal
   }
 
   def iterator: Iterator[Int] = {
-      var interIndex = 0
+      var iterIndex = 0
       new Iterator[Int] {
         def next(): Int = {
-          val i = interIndex
-          interIndex += 1
-          values(i) + offset
-            
+          val i = iterIndex
+          iterIndex += 1
+          values(i) + offset  
         }
         def hasNext: Boolean = {
-          interIndex < _size.value
+          iterIndex < _size.value
         }
       }
   }
