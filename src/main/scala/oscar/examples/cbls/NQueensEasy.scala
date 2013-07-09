@@ -53,15 +53,15 @@ object NQueensEasy extends App{
     c.close()
     ls.close()
 
-  //this tabu search is a bit simplistic: does not use the invariants for maintining Tabu...
-  //and max violated queens might be all tabu
+    //this tabu search is a bit simplistic: does not use the invariants for maintaining Tabu...
+    //and max violated queens might be all tabu
 
     val pairs = (0 until N) x  (0 until N)
-    
+   
     var it = 0
     val tabu = Array.fill(N,N)(0)
     val tenure = 3
-    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) >= it 
+    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) <= it 
     
     while(c.violation.value > 0){
       val (q1,q2) = selectMin(pairs)(q => isNotTabu(q))(q => c.swapVal(queens(q._1),queens(q._2))).get      
@@ -71,6 +71,4 @@ object NQueensEasy extends App{
     }
     println("number of iterations:"+it)
     println(queens.mkString(","))
-
-  
 }

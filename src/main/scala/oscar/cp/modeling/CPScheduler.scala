@@ -76,12 +76,13 @@ class CPScheduler(val horizon : Int) extends CPSolver {
 	def resources  = resourcesMap.values.toArray
 
 	def addResourceConstraints() = {
-
-		try {
-			resourcesMap foreach (r => r._2.setup)
-		} catch {
-			case ex : NoSolutionException => println("No Solution, inconsistent model (resource constraints)")
-		}
+        for(r <- resourcesMap){
+			try {
+			  r._2.setup
+			} catch {
+				case ex : NoSolutionException => println(s"No Solution, inconsistent model (resource constraints failed on Resource ${r._1})")
+			}
+        }
 	}
 
 	override def subjectTo(constraintsBlock : => Unit) : CPSolver = {

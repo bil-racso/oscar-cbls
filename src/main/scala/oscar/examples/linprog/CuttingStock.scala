@@ -17,6 +17,7 @@ package oscar.examples.linprog
 import oscar.linprog.modeling._
 import oscar.linprog._
 import oscar.algebra._
+import oscar.visual.VisualFrame
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -84,5 +85,7 @@ object CuttingStock {
 	  println("-----------------------------------")
 	  println("total #boards:" + C.map(_.number).sum)
 	  
+	  val f = new VisualFrame("Yo")
+	  f.pack()
   }
 }
