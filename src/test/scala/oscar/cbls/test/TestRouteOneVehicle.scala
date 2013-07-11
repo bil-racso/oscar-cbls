@@ -37,8 +37,8 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
       val nbPoints = 6
       val nbCars = 1
       val model = new Model(false,None,false,false)
-      val next = Array.tabulate(nbPoints)(i => if(i<nbCars) new IntVar(model, i, nbPoints-1, i, "next" + i)
-      else new IntVar(model, 0, nbPoints, i, "next" + i))
+      val next = Array.tabulate(nbPoints)(i => if(i<nbCars) IntVar(model, i, nbPoints-1, i, "next" + i)
+      else IntVar(model, 0, nbPoints, i, "next" + i))
       // 0->1->2->3->4->5(->0)
       next(0):= 1
       next(1):= 2
