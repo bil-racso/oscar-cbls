@@ -101,7 +101,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
         	vinit=k
     	    squareSet += k
     	}  
-        grid(i)=new IntVar(m, 1, N, vinit, "v_"+i)
+        grid(i)=IntVar(m, 1, N, vinit, "v_"+i)
       }
     }
     showGrid(grid,N)
@@ -120,7 +120,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     c.close
     
     // working variables
-    val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
+    val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
     var it:Int=1
     
     // closing model

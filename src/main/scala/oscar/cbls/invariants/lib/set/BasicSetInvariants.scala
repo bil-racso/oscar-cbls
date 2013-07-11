@@ -269,8 +269,8 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
    assert(ub != lb)
    var output:IntSetVar = null
 
-  def myMax = ub.MaxVal
-  def myMin = lb.MinVal
+  def myMax = ub.maxVal
+  def myMin = lb.minVal
 
   registerStaticAndDynamicDependency(lb)
   registerStaticAndDynamicDependency(ub)

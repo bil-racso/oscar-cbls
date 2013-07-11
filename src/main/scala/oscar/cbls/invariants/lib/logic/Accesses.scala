@@ -39,8 +39,8 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
   KeyToCurrentVar = registerDynamicDependency((if(ifVar.value > 0) thenVar else elseVar))
   finishInitialization()
 
-  def myMax = thenVar.MaxVal.max(elseVar.MaxVal)
-  def myMin = thenVar.MinVal.min(elseVar.MinVal)
+  def myMax = thenVar.maxVal.max(elseVar.maxVal)
+  def myMin = thenVar.minVal.min(elseVar.minVal)
 
   override def setOutputVar(v:IntVar){
     output = v
@@ -98,8 +98,8 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- bulkedVar){
-      if (MyMax < v.MaxVal) MyMax = v.MaxVal
-      if (MyMin > v.MinVal) MyMin = v.MinVal
+      if (MyMax < v.maxVal) MyMax = v.maxVal
+      if (MyMin > v.minVal) MyMin = v.minVal
     }
     (MyMin,MyMax)
   }
@@ -157,8 +157,8 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- bulkedVar){
-      if (MyMax < v.MaxVal) MyMax = v.MaxVal
-      if (MyMin > v.MinVal) MyMin = v.MinVal
+      if (MyMax < v.maxVal) MyMax = v.maxVal
+      if (MyMin > v.minVal) MyMin = v.minVal
     }
     (MyMin,MyMax)
   }

@@ -30,6 +30,7 @@ import oscar.cbls.invariants.lib.minmax._
 import util.Random
 import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
 import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 ;
 
 //Beware: this requires a lot of memory, so I use to put this in the command line.
@@ -78,7 +79,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
 
     val m: Model = new Model(false,None,true)
     val it = Random.shuffle(range.toList).iterator
-    val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
+    val Queens:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
     val c:ConstraintSystem = new ConstraintSystem(m)
 
@@ -89,8 +90,8 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
     c.close()
 
-    val Tabu:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
-    val It = new IntVar(m,0,Int.MaxValue,1,"it")
+    val Tabu:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
+    val It = IntVar(m,0,Int.MaxValue,1,"it")
     val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
     val NonTabuMaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
 

@@ -161,7 +161,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     println("NQueens(" + N + ")")
     val Queens: Array[IntVar] = new Array[IntVar](N)
     for (q <- range) {
-      Queens(q) = new IntVar(m, min, max, q, "queen" + q)
+      Queens(q) = IntVar(m, min, max, q, "queen" + q)
       tab(q)(q).icon = CONFLICT
     }
 

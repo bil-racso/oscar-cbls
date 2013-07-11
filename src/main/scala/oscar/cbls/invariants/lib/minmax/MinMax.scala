@@ -29,7 +29,7 @@ import collection.immutable.SortedSet;
 import oscar.cbls.invariants.lib.logic._;
 
 abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
-  assert(vars.size > 0, "Invariant " + name + " declared with zero vars to max")
+  require(vars.size > 0, "Invariant " + name + " declared with zero vars to max")
 
   def name: String
   var output: IntVar = null
@@ -37,8 +37,8 @@ abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
   for(v <- vars)registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def myMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
-  override def myMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
+  override def myMax = vars.foldLeft(vars.head.maxVal)((acc, intvar) => if (Better(intvar.maxVal,acc)) intvar.maxVal else acc)
+  override def myMin = vars.foldLeft(vars.head.minVal)((acc, intvar) => if (Better(intvar.minVal,acc)) intvar.minVal else acc)
 
   var MiaxCount: Int = 0
 
@@ -107,8 +107,8 @@ case class MinLin(vars: SortedSet[IntVar]) extends MiaxLin(vars) {
 abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
   def name: String
 
-  override def myMax = vars.foldLeft(vars.head.MaxVal)((acc, intvar) => if (Better(intvar.MaxVal,acc)) intvar.MaxVal else acc)
-  override def myMin = vars.foldLeft(vars.head.MinVal)((acc, intvar) => if (Better(intvar.MinVal,acc)) intvar.MinVal else acc)
+  override def myMax = vars.foldLeft(vars.head.maxVal)((acc, intvar) => if (Better(intvar.maxVal,acc)) intvar.maxVal else acc)
+  override def myMin = vars.foldLeft(vars.head.minVal)((acc, intvar) => if (Better(intvar.minVal,acc)) intvar.minVal else acc)
 
   for(v <- vars)registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -173,14 +173,14 @@ case class Max(vars: SortedSet[IntVar]) extends Miax(vars) {
 
 /** maintains output = Max(a,b)
  * where output, a, and b are an IntVar
- * use this if you only have two variables to max, otherwise, refer to log iplementations
+ * use this if you only have two variables to max, otherwise, refer to log implementations
  * */
 case class Max2(val a: IntVar, val b: IntVar)
-  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.MinVal.max(b.MinVal), a.MaxVal.max(b.MaxVal))
+  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.minVal.max(b.minVal), a.maxVal.max(b.maxVal))
 
 /** maintains output = Min(a,b)
  * where output, a, and b are an IntVar
- * use this if you only have two variables to max, otherwise, refer to log iplementations
+ * use this if you only have two variables to max, otherwise, refer to log implementations
  * */
 case class Min2(val a: IntVar, val b: IntVar)
-  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.MinVal.min(b.MinVal), a.MaxVal.min(b.MaxVal))
+  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.minVal.min(b.minVal), a.maxVal.min(b.maxVal))

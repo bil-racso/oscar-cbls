@@ -90,8 +90,8 @@ abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) ext
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntVar])={
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.MinVal < acc) intvar.MinVal else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.MaxVal > acc) intvar.MaxVal else acc))
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
   }
 
   def name: String

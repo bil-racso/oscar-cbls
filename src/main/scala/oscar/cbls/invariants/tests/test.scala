@@ -37,10 +37,10 @@ object test extends SearchEngine {
     val min = 0
     val max = 100
 
-    val a:IntVar = new IntVar(m, min, max, 9, "a")
-    val b:IntVar = new IntVar(m, min, max, 5, "b")
-    val c:IntVar = new IntVar(m, min, max, 6, "c")
-    val d:IntVar = new IntVar(m, min, max, 6, "d")
+    val a:IntVar = IntVar(m, min, max, 9, "a")
+    val b:IntVar = IntVar(m, min, max, 5, "b")
+    val c:IntVar = IntVar(m, min, max, 6, "c")
+    val d:IntVar = IntVar(m, min, max, 6, "d")
     val e:IntSetVar = new IntSetVar(m, min, max, "e", SortedSet.empty[Int])
 
     d <== (5 + c + 5 + (b * (4 - 3)))

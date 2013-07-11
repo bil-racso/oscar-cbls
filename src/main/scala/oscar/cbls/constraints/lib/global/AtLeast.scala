@@ -43,22 +43,22 @@ case class AtLeast(variables:Iterable[IntVar], bounds:SortedMap[Int, IntVar]) ex
   registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()
 
-  private val Violation:IntVar = new IntVar(model,0,Int.MaxValue,0,"ViolationsOfAtLeast")
+  private val Violation:IntVar = new IntVar(model, (0 to Int.MaxValue),0,"ViolationsOfAtLeast")
   Violation.setDefiningInvariant(this)
 
-  private val N0:Int = variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MaxVal > acc) intvar.MaxVal else acc))
-  private val offset:Int = - variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MinVal < acc) intvar.MinVal else acc))
+  private val N0:Int = variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.maxVal > acc) intvar.maxVal else acc))
+  private val offset:Int = - variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.minVal < acc) intvar.minVal else acc))
   private val N = N0 + offset
   private val range = 0 until N
 
   private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
   => {
-    val newvar = new IntVar(model,0,1,1,"Violation_AtLeast_"+intvar.name)
+    val newvar = IntVar(model,0,1,1,"Violation_AtLeast_"+intvar.name)
     acc + ((intvar,newvar))
   })
 
   private val ValueCount: Array[IntVar] = (for (i <- 0 to N) yield {
-    val tmp = new IntVar(model, -1, variables.size, 0, "AtLeast_count_of_value_" + (i - offset))
+    val tmp = IntVar(model, -1, variables.size, 0, "AtLeast_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
   }

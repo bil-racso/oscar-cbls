@@ -24,6 +24,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.core._
 import oscar.cbls.modeling._
 import oscar.util._
+import oscar.cbls.invariants.core.computation.IntVar
 
 /**
  * Local Search for NQueens
@@ -40,7 +41,7 @@ object NQueensEasy extends App{
     
     val ls = new LSSolver()
     val init = rand.shuffle((0 to N-1).toList).toArray // initial solution
-    val queens = Array.tabulate(N)(q => new LSVarInt(ls, 0, N-1,init(q),"queen" + q))
+    val queens = Array.tabulate(N)(q => IntVar(ls, 0, N-1,init(q),"queen" + q))
     val c = new ConstraintSystem(ls)
 
     //alldiff on rows in enforced because we swap queens initially different

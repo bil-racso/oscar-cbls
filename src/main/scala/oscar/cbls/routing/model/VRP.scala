@@ -45,8 +45,8 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * like that each vehicle is considered like a deposit. Other indexes
    * are used to modelise customers. Finally the value N is used for unrouted node.
    */
-  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) new IntVar(m, i, N-1, i, "next" + i)
-    else new IntVar(m, 0, N, N, "next" + i))
+  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) IntVar(m, i, N-1, i, "next" + i)
+    else IntVar(m, 0, N, N, "next" + i))
 
   /**
    * the range of nodes (customers and deposits including) of the problem.
@@ -304,7 +304,7 @@ trait WeightedNode extends VRP {
   /**
    * the data structure array which maintains weights.
    */
-  val weightNode : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
+  val weightNode : Array[IntVar] = Array.tabulate(N)(i => IntVar(m, Int.MinValue, Int.MaxValue, 0,
     "weight of node " + i))
 
   /**
@@ -328,7 +328,7 @@ trait PenaltyForUnrouted extends Unrouted {
   /**
    * the data structure array which maintains penalty of nodes.
    */
-  val weightUnroutedPenalty : Array[IntVar] = Array.tabulate(N)(i => new IntVar(m, Int.MinValue, Int.MaxValue, 0,
+  val weightUnroutedPenalty : Array[IntVar] = Array.tabulate(N)(i => IntVar(m, Int.MinValue, Int.MaxValue, 0,
     "penality of node " + i))
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
@@ -439,7 +439,7 @@ trait HopDistance extends VRP {
    * Info : the domain max is (Int.MaxValue / N) to avoid problem with domain. (allow us to use sum invariant without
    * throw over flow exception to save the distance of all vehicle).
    */
-  val hopDistance = Array.tabulate(N) {(i:Int) => new IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i)}
+  val hopDistance = Array.tabulate(N) {(i:Int) => IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i)}
 
   /**
    * maintains the total distance of all vehicle, linked on the actual next hop of each node.
@@ -495,7 +495,7 @@ trait HopDistanceAsObjective extends HopDistance with ObjectiveFunction {
 */
 trait ObjectiveFunction extends VRP with ObjectiveTrait{
   // Initialize the objective function with 0 as value.
-  setObjectiveVar(new IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
+  setObjectiveVar(IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP"))
 }
 
 //TODO: this class should be the single point of entry for objective fct in the VRP. no need to a ObjectiveFunction Trait in addition to this one.
@@ -507,7 +507,7 @@ trait OtherFunctionToObjective extends ObjectiveFunction {
   /**
    * variable which maintains the sum of all additional cost functions.
    */
-  var AddedObjectiveFunctions:IntVar = new IntVar(m,Int.MinValue,Int.MaxValue,0,"added functions Objective")
+  var AddedObjectiveFunctions:IntVar = IntVar(m,Int.MinValue,Int.MaxValue,0,"added functions Objective")
   /**
    * Adds news cost functions to the the actual objective of the VRP.
    * Functions cost are given as IntVar.

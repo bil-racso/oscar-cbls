@@ -46,7 +46,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   val IndexForLocalViolationINSU = model.getStorageIndex
   val IndexForGlobalViolationINSU = model.getStorageIndex
 
-  val Violation:IntVar = new IntVar(this.model,0,Int.MaxValue,0,"Violation")
+  val Violation:IntVar = IntVar(this.model,0,Int.MaxValue,0,"Violation")
   private var Violations:SortedMap[Variable,IntVar] = SortedMap.empty[Variable,IntVar]
   private var PostedConstraints:List[(Constraint,IntVar)] = List.empty
   //private var AllVars:SortedMap[Variable,List[(Constraint,IntVar)]]=SortedMap.empty
@@ -157,7 +157,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationvariable = new IntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
+      val violationvariable = IntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
       v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationvariable))
       registerConstrainedVariable(v)
       violationvariable

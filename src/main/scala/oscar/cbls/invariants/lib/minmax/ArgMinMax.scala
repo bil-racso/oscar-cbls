@@ -103,14 +103,14 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
     }
   }
 
-  Miax = new IntVar(model,minOfMiax,maxOfMiax,
+  Miax = new IntVar(model,(minOfMiax to maxOfMiax),
     if (cond != null && cond.value.isEmpty) default else vars(h.getFirst).value, ExtremumName)
 
   Miax.setDefiningInvariant(this)
 
   override def performBulkComputation(bulkedVar: Array[IntVar])={
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.MinVal < acc) intvar.MinVal else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.MaxVal > acc) intvar.MaxVal else acc))
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
   }
 
   def name: String

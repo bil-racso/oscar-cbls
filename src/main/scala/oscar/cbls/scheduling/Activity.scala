@@ -29,7 +29,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
 class SuperTask(start: Activity, end: Activity, override val name: String = "")
-  extends Activity(new IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
+  extends Activity(IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
   start precedes end
@@ -141,13 +141,13 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
     r.notifyUsedBy(this, amount)
   }
 
-  var EarliestStartDate: IntVar = new IntVar(planning.model, 0,
+  var EarliestStartDate: IntVar = IntVar(planning.model, 0,
     planning.maxduration, duration.value, "esd(" + name + ")")
-  val EarliestEndDate: IntVar = new IntVar(planning.model, 0,
+  val EarliestEndDate: IntVar = IntVar(planning.model, 0,
     planning.maxduration, duration.value, "eed(" + name + ")")
   EarliestEndDate <== EarliestStartDate + duration
 
-  val LatestEndDate: IntVar = new IntVar(planning.model, 0,
+  val LatestEndDate: IntVar = IntVar(planning.model, 0,
     planning.maxduration, planning.maxduration, "led(" + name + ")")
 
   val LatestStartDate: IntVar = LatestEndDate - duration

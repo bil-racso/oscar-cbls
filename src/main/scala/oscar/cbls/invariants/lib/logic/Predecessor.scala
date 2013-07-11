@@ -37,8 +37,8 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization();
-  val preds = for(i<- 0 until N) yield if (i<V) new IntVar(model, 0, N, i, "preds" + i)
-    else new IntVar(model, 0, N, N, "preds" + i)
+  val preds = for(i<- 0 until N) yield if (i<V) IntVar(model, 0, N, i, "preds" + i)
+    else IntVar(model, 0, N, N, "preds" + i)
 
   for(p <- preds) p.setDefiningInvariant(this)
 

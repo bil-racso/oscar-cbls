@@ -56,7 +56,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     val m: Model = new Model(false,None,true)
        
     // holes
-    val holes:Array[IntVar] = (for(i <- range) yield new IntVar(m, 0, N, 0, "h" + (i+1))).toArray
+    val holes:Array[IntVar] = (for(i <- range) yield IntVar(m, 0, N, 0, "h" + (i+1))).toArray
     
     // initially all pigeons are in the first hole...
     holes(0).setValue(N)

@@ -119,7 +119,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       for(ps <- Indexes) {
         val v=Square(ns)(ps)
         val vinit=perm.next()+1
-        grid(v)=new IntVar(m, 1, N, vinit, "v_"+v)
+        grid(v)= IntVar(m, 1, N, vinit, "v_"+v)
         tab(v/N)(v%N).text=vinit+""
       }
     }
@@ -139,7 +139,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     c.close
     
     // working variables
-    val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
+    val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
     
     // closing model
     m.close()
