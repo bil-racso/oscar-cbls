@@ -56,7 +56,7 @@ class ReversiblePointer[T](n: ReversibleSearchNode, v: T) extends Reversible(n) 
     pointer = value.asInstanceOf[T]
   }
 
-  override def toString(): String = if (hasValue) pointer  + "" else ""
+  override def toString(): String = if (hasValue) pointer + "" else ""
 }
 
 object ReversiblePointer {
