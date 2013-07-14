@@ -50,6 +50,7 @@ class VisualLabelledPoint(d:VisualDrawing, shape:Ellipse2D.Double, label: String
   
   override def draw(g: Graphics2D) {
 	g.draw(point);
+	println(xText + " " + yText)
     g.drawString(label, xText, yText);
   }
 }
@@ -69,7 +70,7 @@ object VisualLabelledPoint {
 	Thread.sleep(1000);
 	point.innerCol_$eq(Color.red);
 	Thread.sleep(1000);
-	point.move(100, 20);
+	point.move(100, 100);
 	for (i <- 0 until 20) {
 	  Thread.sleep(50);
 	  point.move(point.x+5, point.y);

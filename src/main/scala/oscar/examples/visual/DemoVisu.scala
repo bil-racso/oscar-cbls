@@ -44,10 +44,10 @@ object DemoVisu {
    
 	val tb = f.createToolBar()
 	
-	/*tb.addButton("rectangles",{runInThread(demoRectangles)})
+	tb.addButton("rectangles",{runInThread(demoRectangles)})
 	tb.addButton("plot",{runInThread(demoPlot)})	
 	tb.addButton("bin packing",{runInThread(demoBinPacking)})
-	tb.addButton("map",{runInThread(demoMap)})*/	
+	tb.addButton("map",{runInThread(demoMap)})	
 	f.pack()
     
   }

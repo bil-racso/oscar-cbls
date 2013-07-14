@@ -17,15 +17,13 @@ package oscar.visual.shapes
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import oscar.visual.VisualDrawing
-
-
-
-
+import oscar.visual.VisualFrame
+import oscar.visual.VisualArrow
 
 /**
  * @author Pierre Schaus, pschaus@gmail.com
  */
-class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, private var t: String, var centered: Boolean, shape: Rectangle2D.Double) extends VisualShape[Rectangle2D](d, shape) {
+class VisualText(d: VisualDrawing, private var x: Double, private var y: Double, private var t: String, var centered: Boolean, s: Rectangle2D.Double) extends VisualShape[Rectangle2D.Double](d, s) {
   
   def this(d: VisualDrawing, x: Int, y: Int, t: String, centered: Boolean = false) {
     this(d, x,y,t,centered,new Rectangle2D.Double(x, y, 1, 1))
@@ -40,11 +38,11 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
    * @param x
    * @param y
    */
-  def move(x: Int, y: Int) {
+  def move(x: Double, y: Double) {
     this.x = x;
     this.y = y;
     shape.setRect(x,y,shape.getWidth(),shape.getHeight())
-    d.repaint();
+    drawing.repaint();
   }
   
   def text = t
@@ -56,9 +54,9 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
 
   override def draw(g: Graphics2D) {
     if (centered)
-      drawCenteredString(text, x, y, g);
+      drawCenteredString(text, x.toInt, y.toInt, g);
     else
-      g.drawString(text, x, y);
+      g.drawString(text, x.toInt, y.toInt);
     
     shape.setRect(x,y, fm.stringWidth(text),fm.getHeight())
   }
@@ -72,8 +70,8 @@ class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, priva
 }
 
 object VisualText extends App {
-/*
-    val  f = new VisualFrame("toto");
+
+    /*val  f = new VisualFrame("toto");
     val d = new VisualDrawing(false);
     val inf = f.createFrame("Drawing");
     inf.add(d);
@@ -85,6 +83,6 @@ object VisualText extends App {
     Thread.sleep(1000);
 
     arrow.dest = ((100.0, 100.0));
-    text.move(100, 100);
-*/
+    text.move(100, 100);*/
+
 }

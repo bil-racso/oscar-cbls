@@ -6,7 +6,7 @@ import java.awt.Graphics2D
 import java.awt.geom.Point2D
 import oscar.visual.VisualDrawing
 
-class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, val shape: S) {
+abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, val shape: S) {
 
   private var _fillColor = Color.white
   private var _borderColor = Color.black
@@ -72,6 +72,8 @@ class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, val shape: 
       drawing.showToolTip(toolTip);
     }
   }
+  
+  def move(x: Double, y: Double): Unit
 }
 
 
