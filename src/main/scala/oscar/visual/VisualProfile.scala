@@ -16,10 +16,11 @@ package oscar.visual
 
 import java.awt.geom.Line2D
 import java.awt.Color
-
 import oscar.algo.CumulativeProfile
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
+import oscar.visual.shapes.VisualPolygon
+import oscar.visual.shapes.VisualLine
 
 class VisualProfile(res : CumulativeResource, makespan : CPVarInt, color : Color = Color.WHITE) extends VisualDrawing(true) {
 	

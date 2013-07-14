@@ -19,7 +19,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 
 import scala.Tuple2;
-
+import oscar.visual.shapes.*;
 
 /**
  * 

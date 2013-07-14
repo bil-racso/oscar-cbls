@@ -20,7 +20,8 @@
 package oscar.cbls.routing.visual
 
 import javax.swing.{BorderFactory, JFrame}
-import oscar.visual.{VisualLine, VisualArrow, VisualCircle, VisualDrawing}
+import oscar.visual.{VisualArrow, VisualCircle, VisualDrawing}
+import oscar.visual.shapes.VisualLine
 import java.awt.{Color, Dimension}
 
 class SmartSolution(myPanelVRP:PanelVRP) extends JFrame{

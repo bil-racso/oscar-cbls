@@ -30,20 +30,21 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  * ****************************************************************************
  */
-package oscar.visual;
+package oscar.visual.shapes
 
-import java.awt.Color;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-
-import javax.swing.JInternalFrame;
+import java.awt.Color
+import java.awt.geom.Line2D
+import java.awt.geom.Rectangle2D
+import javax.swing.JInternalFrame
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualFrame
 
 /**
  *
  * @author Pierre Schaus
  *
  */
-class VisualRectangle(d: VisualDrawing, shape: Rectangle2D.Double) extends ColoredShape[Rectangle2D.Double](d, shape) {
+class VisualRectangle(d: VisualDrawing, shape: Rectangle2D.Double) extends VisualShape[Rectangle2D.Double](d, shape) {
 
   def rect: Rectangle2D.Double = shape
 

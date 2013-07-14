@@ -18,15 +18,18 @@ import java.awt.Color
 import java.awt.geom.Line2D
 import java.awt.geom.RoundRectangle2D
 import java.awt.FontMetrics
-import javax.swing.JInternalFrame;
+import javax.swing.JInternalFrame
 import java.awt.Graphics2D
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualRectangle
+import oscar.visual.shapes.VisualShape
 
 /**
  * 
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  *
  */
-class VisualLabelledRectangle(d: VisualDrawing, shape: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends ColoredShape[RoundRectangle2D.Double](d, shape){
+class VisualLabelledRectangle(d: VisualDrawing, shape: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends VisualShape[RoundRectangle2D.Double](d, shape){
   
   def rect: RoundRectangle2D.Double = shape
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)

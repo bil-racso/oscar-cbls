@@ -12,19 +12,11 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual
-
-import javax.swing.JPanel
-import java.awt.BorderLayout
-import org.jfree.data.xy.XYSeries
-import org.jfree.data.xy.XYDataset
-import org.jfree.chart.JFreeChart
-import org.jfree.chart.ChartPanel
-import org.jfree.data.xy.XYSeriesCollection
+package oscar.visual.plot
 import org.jfree.chart.ChartFactory
-import java.awt.Color
 import org.jfree.chart.plot.PlotOrientation
-import org.jfree.chart.plot.XYPlot
+import oscar.visual.plot.Plot
+import oscar.visual.VisualFrame
 
 
 /**

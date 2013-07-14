@@ -24,6 +24,7 @@ import scala.io.Source
 import oscar.util._
 import oscar.visual._
 import java.awt.Color
+import oscar.visual.shapes.VisualLine
 
 /**
  * P-Median Problem

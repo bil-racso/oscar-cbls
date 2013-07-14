@@ -12,46 +12,25 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual;
+package oscar.visual.shapes
 
-import java.awt.geom.Line2D;
+import java.awt.Polygon
+import oscar.visual.VisualDrawing
 
-
-/**
- * 
- * @author Pierre Schaus
- *
- */
-class VisualLine(d:VisualDrawing, shape:Line2D.Double) extends ColoredShape[Line2D.Double](d,shape){
+class VisualPolygon(d : VisualDrawing) extends VisualShape(d, new Polygon) {
 	
-	def line:Line2D.Double = shape
+	def reset = { shape.reset }
 	
-	def this(d:VisualDrawing,xorig:Double, yorig:Double, xdest:Double, ydest:Double) {
-		this(d, new Line2D.Double(xorig,yorig,xdest,ydest))
+	def draw(points : Array[Tuple2[Int, Int]]) = {
 		
+		for (i <- 0 until points.size)
+			shape.addPoint(points(i)._1, points(i)._2)
 	}
 	
-	/**
-	 * Move the destination point
-	 * @param x
-	 * @param y
-	 */
-	def dest_=(d:(Double,Double)) : Unit = {
-		line.setLine(line.getX1(),line.getY1(),d._1,d._2)
-		drawing.repaint()
+	def update(points : Array[Tuple2[Int, Int]]) = {
+		
+		reset
+		for (i <- 0 until points.size)
+			shape.addPoint(points(i)._1, points(i)._2)
 	}
-	
-	/**
-	 * Move the origin point
-	 * @param x
-	 * @param y
-	 */
-	def orig_=(d:(Double,Double)) : Unit = {
-		line.setLine(d._1,d._2,line.getX2(),line.getY2())
-		drawing.repaint()
-	}
-	
-	def orig = (line.getX2(),line.getY2())
-	def dest = (line.getX1(),line.getY1())
-	
 }

@@ -21,6 +21,7 @@ import oscar.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
 import oscar.cp.constraints.BinPackingFlow
+import oscar.visual.shapes.VisualRectangle
 
 
 

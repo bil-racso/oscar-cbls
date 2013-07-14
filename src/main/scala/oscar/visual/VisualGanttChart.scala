@@ -17,9 +17,11 @@ package oscar.visual
 import oscar.visual._
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
-
 import java.awt.geom.Line2D
 import java.awt.Color
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualRectangle
 
 class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (Int) => Color = i => Color.WHITE) extends VisualDrawing(false) {
 	

@@ -39,6 +39,7 @@ import java.awt.Color
 import oscar.algo.CumulativeProfile
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
+import oscar.visual.shapes.VisualRectangle
 
 /**
  * @author Pierre Schaus, pschaus@gmail.com

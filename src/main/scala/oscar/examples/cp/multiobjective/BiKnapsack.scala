@@ -36,7 +36,7 @@ package oscar.examples.cp.multiobjective
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.visual.VisualFrame
-import oscar.visual.PlotPareto
+import oscar.visual.plot.PlotPareto
 import java.awt.Color
 import oscar.util.selectMin
 import oscar.util.time

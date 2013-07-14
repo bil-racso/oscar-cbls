@@ -19,6 +19,8 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 import java.awt.Font
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualLine
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com

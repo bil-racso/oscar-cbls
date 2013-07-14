@@ -12,16 +12,11 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual
+package oscar.visual.shapes
 
-import java.awt.FontMetrics
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
-import javax.swing.JInternalFrame
-import java.awt.Color
-import java.awt.Font
-import java.awt.Graphics
-import java.awt.image.BufferedImage
+import oscar.visual.VisualDrawing
 
 
 
@@ -30,7 +25,8 @@ import java.awt.image.BufferedImage
 /**
  * @author Pierre Schaus, pschaus@gmail.com
  */
-class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, private var t: String, var centered: Boolean, shape: Rectangle2D.Double) extends ColoredShape[Rectangle2D](d, shape) {
+class VisualText(d: VisualDrawing, private var x: Int, private var y: Int, private var t: String, var centered: Boolean, shape: Rectangle2D.Double) extends VisualShape[Rectangle2D](d, shape) {
+  
   def this(d: VisualDrawing, x: Int, y: Int, t: String, centered: Boolean = false) {
     this(d, x,y,t,centered,new Rectangle2D.Double(x, y, 1, 1))
   }

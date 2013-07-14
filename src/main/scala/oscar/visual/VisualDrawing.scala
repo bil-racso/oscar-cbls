@@ -14,20 +14,23 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.visual;
+package oscar.visual
 
 import javax.swing.JPanel
 import java.awt.Color
 import java.awt.Shape
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.BorderLayout
 import java.awt.event.MouseMotionListener
-import java.awt.FlowLayout
-import java.awt.geom.Rectangle2D
-import java.awt.geom.Line2D
 import java.awt.event.MouseEvent
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualRectangle
+import oscar.visual.shapes.VisualShape
 
+/** VisualDrawing
+ *  
+ *  Contains and draws VisualShapes. 
+ */
 class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
 
   // For backward compatibility
@@ -36,7 +39,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   setBackground(Color.white)
 
   // Shapes contained in the panel
-  private var shapes: Array[ColoredShape[Shape]] = Array() // TODO change the structure
+  private var shapes: Array[VisualShape[Shape]] = Array() // TODO change the structure
 
   private var marginT: Double = 0
   private var marginR: Double = 0
@@ -58,7 +61,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   def margin(m: Double): Unit = margin(m, m, m, m)
 
   // Returns the bounds of the bounding box containing all the shapes.
-  private def findBounds(shapes: Array[ColoredShape[Shape]]): (Double, Double, Double, Double) = {
+  private def findBounds(shapes: Array[VisualShape[Shape]]): (Double, Double, Double, Double) = {
     var minX = Double.MaxValue
     var maxX = Double.MinValue
     var minY = Double.MaxValue
@@ -127,7 +130,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   }
 
   /** Adds a new non null colored shape in the panel. */
-  def addShape(shape: ColoredShape[Shape], repaintAfter: Boolean = true): Unit = {
+  def addShape(shape: VisualShape[Shape], repaintAfter: Boolean = true): Unit = {
     if (shape == null) throw new IllegalArgumentException("The added shape is null.")
     else {
       shapes :+= shape
@@ -158,25 +161,23 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   def showToolTip(text: String): Unit = setToolTipText(text)
 }
 
-object VisualDrawingTest {
-  def main(args: Array[String]) {
+object VisualDrawingTest extends App {
 
-    val f = new VisualFrame("toto");
-    val d = new VisualDrawing(false);
-    val inf = f.createFrame("Drawing");
-    inf.add(d);
-    f.pack();
-    val r = new Rectangle2D.Double(0, 0, 100, 100);
-
-    val rect = new ColoredShape[Rectangle2D](d, r);
-    rect.toolTip = "RECTANGLE"
-    val l = new ColoredShape[Line2D](d, new Line2D.Double(0, 0, 100, 100));
+    val frame = new VisualFrame("Example");
+    val drawing = new VisualDrawing(false, true, false);
+    val inFrame = frame.createFrame("Drawing");
+    inFrame.add(drawing);
+    frame.pack();
+    
+    val rect = new VisualRectangle(drawing, 50, 50, 100, 100)
+    val line = new VisualLine(drawing, 50, 50, 150, 150)
 
     try {
       Thread.sleep(1000);
     } catch {
       case e: InterruptedException => e.printStackTrace();
     }
+    
     rect.innerCol = Color.red;
   }
-}
+

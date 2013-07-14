@@ -18,13 +18,14 @@ import java.awt.Color;
 import java.awt.geom.Ellipse2D;
 
 import javax.swing.JInternalFrame;
+import oscar.visual.shapes.VisualShape;
 
 /**
  * 
  * @author Pierre Schaus
  *
  */
-public class VisualCircle extends ColoredShape<Ellipse2D.Double>{
+public class VisualCircle extends VisualShape<Ellipse2D.Double>{
 
 	Ellipse2D.Double ellipse;
 	private double radius;

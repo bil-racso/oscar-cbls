@@ -19,13 +19,15 @@ import java.awt.geom.Ellipse2D
 import java.awt.Graphics2D
 import java.awt.Color
 
+import oscar.visual.shapes.VisualShape
+
 
 /**
  * 
  * @author Pierre Schaus
  *
  */
-class VisualLabelledPoint(d:VisualDrawing, shape:Ellipse2D.Double, label: String, angle: Double) extends ColoredShape[Ellipse2D.Double](d, shape){
+class VisualLabelledPoint(d:VisualDrawing, shape:Ellipse2D.Double, label: String, angle: Double) extends VisualShape[Ellipse2D.Double](d, shape){
   val distFromPoint = 5
   
   def point: Ellipse2D.Double = shape

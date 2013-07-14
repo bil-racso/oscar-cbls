@@ -31,57 +31,39 @@
  * ****************************************************************************
  */
 
-package oscar.visual
+package oscar.visual.plot
 
 import oscar.visual._
 import javax.swing.SwingUtilities
-import oscar.util.mo.ParetoFront
-import oscar.util.mo.ArchiveElement
-import oscar.util.mo.MOOPoint
+import oscar.cp.multiobjective.ListPareto
+import oscar.visual.plot.PlotScatter
 
 /**
- * @author Cyrille Dejemeppe
  * @author Pierre Schaus
  */
-class PlotDFOPareto2D[E <% Ordered[E]] (
-  title: String,
-  xlab: String, 
-  ylab: String, 
-  nbPareto: Int, 
-  objMax1: Boolean, 
-  objMax2: Boolean
+class PlotPareto(
+  title: String = "Pareto",
+  xlab: String = "Obj1",
+  ylab: String = "Obj2",
+  nbPareto: Int = 1,
+  objMax1: Boolean = false, // true if obj1 is a maximization objective
+  objMax2: Boolean = false  // true if obj2 is a maximization objective
 ) extends PlotScatter(title, xlab, ylab, nbPareto) {
-  
-  var currentIterate: MOOPoint[E] = null
 
-  def highLightIterate(iterate: ArchiveElement[E]) {
-    currentIterate = iterate.getMOOPoint
-    highlight(iterate.getMOOPoint.getEvaluation(0).asInstanceOf[Double], iterate.getMOOPoint.getEvaluation(1).asInstanceOf[Double])
-  }
-
-  def update(archive: ParetoFront[E], paretoIndex: Int = 0) {
+  val paretos = Array.fill(nbPareto)(new ListPareto[Object](Array(objMax1, objMax2)))
+ 
+  def insert(obj1: Int, obj2: Int, paretoIdx: Int = 0) {
+    paretos(paretoIdx).insert(null, obj1, obj2)
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
-        removeAllPoints(paretoIndex)
-        addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
-        highLightIterate(currentIterate)
-        for (p <- archive.toSet) {
-          val x = p.getEvaluation(0).asInstanceOf[Double]
-          val y = p.getEvaluation(1).asInstanceOf[Double]
-          addPoint(x, y, paretoIndex)
+        removeAllPoints(paretoIdx)
+        for (p <- paretos(paretoIdx).objectiveSols) {
+          val x = p(0)
+          val y = p(1)
+          addPoint(x, y, paretoIdx)
         }
       }
     })
   }
-}
 
-object PlotDFOPareto2D {
-  def apply[E <% Ordered[E]] (
-    title: String = "Pareto",
-    xlab: String = "Obj1",
-    ylab: String = "Obj2",
-    nbPareto: Int = 1,
-    objMax1: Boolean = false, // true if obj1 is a maximization objective
-    objMax2: Boolean = false // true if obj2 is a maximization objective
-  ) = new PlotDFOPareto2D[E](title, xlab, ylab, nbPareto, objMax1, objMax2)
 }

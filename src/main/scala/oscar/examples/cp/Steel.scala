@@ -20,13 +20,12 @@ import oscar.search._
 import oscar.cp.core._
 import oscar.visual._
 import oscar.util._
-
 import scala.collection.JavaConversions._
 import scala.io.Source
 import scala.util.Random
-
 import java.lang._
 import java.awt.Color
+import oscar.visual.shapes.VisualLine
 
 /**
  * Model for the steel mill slab problem:

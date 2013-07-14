@@ -22,7 +22,7 @@ import java.util.Random;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
-import oscar.visual.VisualRectangle;
+import oscar.visual.shapes.VisualRectangle;
 /**
  * 
  * @author Pierre Schaus

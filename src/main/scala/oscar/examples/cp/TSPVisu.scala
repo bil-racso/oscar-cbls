@@ -43,6 +43,7 @@ import scala.io.Source
 import java.lang._
 import java.awt.Color
 import oscar.cp.constraints.MinAssignment
+import oscar.visual.shapes.VisualLine
 
 /**
  * Traveling Salesman Problem with Visualization

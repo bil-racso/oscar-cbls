@@ -15,7 +15,11 @@
 package oscar.cbls.scheduling
 
 import java.awt.Color
-import oscar.visual.{VisualLine, VisualText, VisualRectangle, VisualDrawing, VisualUtil}
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualUtil
+import oscar.visual.shapes.VisualRectangle
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualText
 
 class Gantt(p:Planning) extends VisualDrawing(false) {
 

@@ -20,6 +20,9 @@ import oscar.cp.core._
 import oscar.search._
 import oscar.visual._
 import java.awt.Color
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualRectangle
 
 /**
  * Little Problem given by my n-Side colleague Audrey Timmermans:

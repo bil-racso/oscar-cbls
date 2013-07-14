@@ -16,6 +16,7 @@ package oscar.examples.linprog
 
 
 import oscar.visual._
+import oscar.visual.shapes.VisualRectangle
 import scala.collection.JavaConversions._
 import oscar.linprog.modeling.MIPSolver
 import oscar.linprog.modeling.MIPVar

@@ -16,8 +16,7 @@ package oscar.examples.visual
 
 import oscar.visual.VisualFrame
 import oscar.visual.VisualDrawing
-import oscar.visual.ColoredShape
-import oscar.visual.VisualRectangle
+import oscar.visual.shapes.VisualRectangle
 import java.awt.Color
 import oscar.visual.VisualBinPacking
 import scala.util.Random
@@ -45,10 +44,10 @@ object DemoVisu {
    
 	val tb = f.createToolBar()
 	
-	tb.addButton("rectangles",{runInThread(demoRectangles)})
+	/*tb.addButton("rectangles",{runInThread(demoRectangles)})
 	tb.addButton("plot",{runInThread(demoPlot)})	
 	tb.addButton("bin packing",{runInThread(demoBinPacking)})
-	tb.addButton("map",{runInThread(demoMap)})	
+	tb.addButton("map",{runInThread(demoMap)})*/	
 	f.pack()
     
   }
