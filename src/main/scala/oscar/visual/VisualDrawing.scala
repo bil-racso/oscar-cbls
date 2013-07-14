@@ -30,6 +30,8 @@ import oscar.visual.shapes.VisualShape
 /** VisualDrawing
  *  
  *  Contains and draws VisualShapes. 
+ *  
+ *  TODO : VisualDrawing should allow to manipulate its VisualShapes (remove, add, setBack, setFront, ...)
  */
 class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
 
@@ -67,11 +69,11 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
     var minY = Double.MaxValue
     var maxY = Double.MinValue
     for (shape <- shapes) {
-      val bounds = shape.shape.getBounds()
-      if (bounds.x < minX) minX = bounds.x
-      if (bounds.x + bounds.width > maxX) maxX = bounds.x + bounds.width
-      if (bounds.y < minY) minY = bounds.y
-      if (bounds.y + bounds.height > maxY) maxY = bounds.y + bounds.height
+      val bounds = shape.getBounds
+      if (bounds._1 < minX) minX = bounds._1
+      if (bounds._2 > maxX) maxX = bounds._2
+      if (bounds._3 < minY) minY = bounds._3
+      if (bounds._4 > maxY) maxY = bounds._4
     }
     (minX, maxX, minY, maxY)
   }

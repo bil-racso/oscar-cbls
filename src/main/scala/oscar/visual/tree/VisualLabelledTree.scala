@@ -17,7 +17,7 @@ package oscar.visual.tree
 import oscar.util.tree.Node
 import oscar.util.tree.PositionedNode
 import javax.swing.SwingUtilities
-import oscar.visual.shapes.VisualLabelledRectangle
+import oscar.visual.shapes.VisualLabelledRoundRectangle
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
 
@@ -25,7 +25,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   
   private def levelHeight = 4 * this.getFontMetrics(this.getFont()).getHeight()
   private def baseOffset = this.getFontMetrics(this.getFont()).stringWidth(tree.label.toString) + tree.minOffset
-  var rectSet = Set[VisualLabelledRectangle]()
+  var rectSet = Set[VisualLabelledRoundRectangle]()
   var branchSet = Set[VisualLabelledBranch]()
   getRectangles
   
@@ -52,7 +52,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   
   def getRectangles = {
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
-      val newNode = new VisualLabelledRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
+      val newNode = new VisualLabelledRoundRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
       newNode.innerCol = node.col
       rectSet += newNode
       for (i <- 0 until node.sons.length) {
