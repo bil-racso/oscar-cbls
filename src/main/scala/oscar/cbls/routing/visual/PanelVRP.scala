@@ -179,7 +179,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def cleanMapPanel(){
-    mapPanel.shapes = Array()
+    mapPanel.clear()
   }
 
   def newBoardPanel():Dashboard = {

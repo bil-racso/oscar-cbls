@@ -42,7 +42,7 @@ class SmartSolution(myPanelVRP:PanelVRP) extends JFrame{
   displayArrows()
 
   def cleanMapPanel(){
-    mapPanel.shapes = Array()
+    mapPanel.clear()
   }
 
   def setColorToRoute(l:VisualLine ,i:Int){

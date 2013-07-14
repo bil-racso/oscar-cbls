@@ -64,7 +64,7 @@ object VisualLabelledPoint {
 	f.pack();
 	
 	val point = new VisualLabelledPoint(d, 200, 0, 1, "Yolo", 180);
-	point.toolTip_$eq("Yolo");
+	point.toolTip = "Yolo";
 			
 	Thread.sleep(1000);
 	point.innerCol_$eq(Color.red);
