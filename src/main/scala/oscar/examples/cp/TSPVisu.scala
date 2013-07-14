@@ -44,6 +44,7 @@ import java.lang._
 import java.awt.Color
 import oscar.cp.constraints.MinAssignment
 import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
 
 /**
  * Traveling Salesman Problem with Visualization

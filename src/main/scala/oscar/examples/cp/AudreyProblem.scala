@@ -23,6 +23,7 @@ import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
+import oscar.visual.shapes.VisualCircle
 
 /**
  * Little Problem given by my n-Side colleague Audrey Timmermans:

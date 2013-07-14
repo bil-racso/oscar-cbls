@@ -24,6 +24,7 @@ import oscar.cbls.routing._
 import neighborhood._
 import oscar.visual._
 import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
 
 /*
 object PanelVRP {
