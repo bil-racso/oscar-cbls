@@ -28,11 +28,11 @@ import java.awt.geom.Rectangle2D
 import java.awt.geom.Line2D
 import java.awt.event.MouseEvent
 
-class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel(new BorderLayout()) {
+class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
 
   // For backward compatibility
   def this(flip: Boolean) = this(flip, false, false)
-  
+
   setBackground(Color.white)
 
   // Shapes contained in the panel
@@ -73,58 +73,55 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
     (minX, maxX, minY, maxY)
   }
 
-  // TODO this should be done directly in VisualDrawing
-  val drawingPanel: JPanel = new JPanel() {
-    override def paint(g: Graphics): Unit = {
+  override def paint(g: Graphics): Unit = {
 
-      super.paintComponent(g)
-      val g2d = g.asInstanceOf[Graphics2D]
+    super.paintComponent(g)
+    val g2d = g.asInstanceOf[Graphics2D]
 
-      if (!shapes.isEmpty) {
+    if (!shapes.isEmpty) {
 
-        // Shapes size
-        val (minX, maxX, minY, maxY) = findBounds(shapes)
-        val sWidth = maxX - minX
-        val sHeight = maxY - minY
+      // Shapes size
+      val (minX, maxX, minY, maxY) = findBounds(shapes)
+      val sWidth = maxX - minX
+      val sHeight = maxY - minY
 
-        // Drawing size
-        val dWidth = getWidth()
-        val dHeight = getHeight()
+      // Drawing size
+      val dWidth = getWidth()
+      val dHeight = getHeight()
 
-        // Compute the scaling ratio
-        val ratio: Double = if (!scale) 1
-        else {
-          val ratioX = dWidth / (marginR + marginL + sWidth)
-          val ratioY = dHeight / (marginT + marginB + sHeight)
-          math.min(ratioX, ratioY) // Maintain proportions
-        }
+      // Compute the scaling ratio
+      val ratio: Double = if (!scale) 1
+      else {
+        val ratioX = dWidth / (marginR + marginL + sWidth)
+        val ratioY = dHeight / (marginT + marginB + sHeight)
+        math.min(ratioX, ratioY) // Maintain proportions
+      }
 
-        val translateX: Int = if (!translate) 0
-        else (marginL - minX).toInt
+      val translateX: Int = if (!translate) 0
+      else (marginL - minX).toInt
 
-        val translateY: Int = if (!translate) 0
-        else if (flip) (marginB - minY).toInt
-        else (marginT - minY).toInt
+      val translateY: Int = if (!translate) 0
+      else if (flip) (marginB - minY).toInt
+      else (marginT - minY).toInt
 
-        // Flip
-        if (flip) {
-          g2d.translate(0, dHeight)
-          g2d.scale(1, -1)
-        }
+      // Flip
+      if (flip) {
+        g2d.translate(0, dHeight)
+        g2d.scale(1, -1)
+      }
 
-        // Scale
-        if (scale) {
-          g2d.scale(ratio, ratio)
-        }
+      // Scale
+      if (scale) {
+        g2d.scale(ratio, ratio)
+      }
 
-        // Translate
-        if (translate) {
-          g2d.translate(translateX, translateY)
-        }
+      // Translate
+      if (translate) {
+        g2d.translate(translateX, translateY)
+      }
 
-        for (s <- shapes) {
-          s.draw(g.asInstanceOf[Graphics2D]);
-        }
+      for (s <- shapes) {
+        s.draw(g.asInstanceOf[Graphics2D]);
       }
     }
   }
@@ -134,7 +131,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
     if (shape == null) throw new IllegalArgumentException("The added shape is null.")
     else {
       shapes :+= shape
-      if (repaintAfter) repaint() 
+      if (repaintAfter) repaint()
     }
   }
 
@@ -145,31 +142,20 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
     if (repaintAfter) repaint()
   }
 
-  
-  drawingPanel.addMouseMotionListener(new MouseMotionListener() {
-    override def mouseMoved(e: MouseEvent) {
-      drawingPanel.setToolTipText("");
-      for (s <- shapes) {
-        s.showToolTip(e.getPoint());
+  addMouseMotionListener {
+    val drawingPanel = this
+    new MouseMotionListener() {
+      override def mouseMoved(e: MouseEvent) {
+        drawingPanel.setToolTipText("");
+        for (s <- shapes) {
+          s.showToolTip(e.getPoint());
+        }
       }
+      override def mouseDragged(arg0: MouseEvent) {}
     }
-
-    override def mouseDragged(arg0: MouseEvent) {
-    }
-  })
-  
-  def showToolTip(text: String) {
-    drawingPanel.setToolTipText(text);
   }
 
-  
-  // Should be in a top level container class !
-  // ------------------------------------------
-  drawingPanel.setBackground(Color.white)
-  add(drawingPanel, BorderLayout.CENTER)
-  val buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT))
-  buttonPanel.setBackground(Color.white)
-  // ------------------------------------------
+  def showToolTip(text: String): Unit = setToolTipText(text)
 }
 
 object VisualDrawingTest {
@@ -192,6 +178,5 @@ object VisualDrawingTest {
       case e: InterruptedException => e.printStackTrace();
     }
     rect.innerCol = Color.red;
-
   }
 }
