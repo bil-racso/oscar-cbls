@@ -109,7 +109,7 @@ object Nurses extends App  {
  // --- model ---
  
  val f = new VisualFrame("Steel Mill Slab")
- val colors = VisualUtil.getRandomColorArray(nbZones)
+ val colors = VisualUtil.getRandomColors(nbZones, true)
  colors(0) = java.awt.Color.GREEN
  colors(1) = java.awt.Color.RED
  val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,10)    

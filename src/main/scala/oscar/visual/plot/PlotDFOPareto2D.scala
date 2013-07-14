@@ -38,7 +38,6 @@ import javax.swing.SwingUtilities
 import oscar.util.mo.ParetoFront
 import oscar.util.mo.ArchiveElement
 import oscar.util.mo.MOOPoint
-import oscar.visual.plot.PlotScatter
 
 /**
  * @author Cyrille Dejemeppe

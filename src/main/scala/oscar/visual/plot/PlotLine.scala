@@ -15,7 +15,6 @@
 package oscar.visual.plot
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.plot.PlotOrientation
-import oscar.visual.plot.Plot
 import oscar.visual.VisualFrame
 
 

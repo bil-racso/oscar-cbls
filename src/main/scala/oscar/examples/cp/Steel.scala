@@ -85,7 +85,7 @@ object Steel {
     val xsol = Array.fill(nbSlab)(0) //current best solution
 
     // -------------visual components ------------
-    val colors = VisualUtil.getRandomColorArray(nbCol)
+    val colors = VisualUtil.getRandomColors(nbCol, true)
     val scale = 7
     val f = new VisualFrame("Steel Mill Slab")
     // creates the plot and place it into the frame

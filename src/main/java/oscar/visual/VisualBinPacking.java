@@ -14,14 +14,10 @@
  ******************************************************************************/
 package oscar.visual;
 
-import java.awt.Color;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JInternalFrame;
-import javax.swing.JPanel;
 import oscar.visual.shapes.VisualRectangle;
 /**
  * 

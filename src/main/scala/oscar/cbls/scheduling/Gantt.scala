@@ -25,7 +25,7 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
 
   var LineCount = 0
   val LineArray:Array[Int] = makeLineArray(p)
-  val colors:Array[Color] = Array.tabulate(p.ActivityArray.size)(_ => VisualUtil.getRandomColor())
+  val colors:Array[Color] = Array.tabulate(p.ActivityArray.size)(_ => VisualUtil.getRandomColor)
   def makeLineArray(p:Planning):Array[Int] = {
     var currentline = -1
     var Front:List[Int] = List.empty

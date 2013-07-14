@@ -12,17 +12,12 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual;
+package oscar.visual.shapes
 
 import java.awt.Color
-import java.awt.geom.Line2D
 import java.awt.geom.RoundRectangle2D
-import java.awt.FontMetrics
-import javax.swing.JInternalFrame
-import java.awt.Graphics2D
-import oscar.visual.shapes.VisualText
-import oscar.visual.shapes.VisualRectangle
-import oscar.visual.shapes.VisualShape
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualFrame
 
 /**
  * 

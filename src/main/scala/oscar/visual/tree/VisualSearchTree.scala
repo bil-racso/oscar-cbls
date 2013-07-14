@@ -12,32 +12,39 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual;
+package oscar.visual.tree
+import oscar.reversible.ReversibleSearchNode
+import oscar.util.tree.Node
+import javax.swing.JPanel
+import java.awt.BorderLayout
 
-import java.awt.Color;
-import java.util.Random;
 
-public class VisualUtil {
+/**
+ * Class to show a visual search tree (currently only available for binary search trees)
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+
+
+class VisualSearchTree(node: ReversibleSearchNode) extends JPanel (new BorderLayout()) {
 	
-	private static Random rand = new Random(2001);
+	var root = Node.design( node.tree.toNode(0), 42)
+	var visualTree = new VisualLabelledTree(root)
+	add(visualTree)
+
 	
-	public static Color[] getRandomColorArray(int n) {
-		Color [] myColors =  new Color[n];
-		for(int i = 0; i < n; i++){
-			//fill our array with random colors
-			myColors[i] = getRandomColor();//.brighter();
-		}
-		return myColors;
+	def update() {
+	  root = Node.design( node.tree.toNode(0), 42)
+	  visualTree.update(root)	  
 	}
 	
-	private static double next() {
-		return rand.nextDouble()*0.5 + 0.4;
+}
+
+object VisualSearchTree{
+  def main(args : Array[String]) {
 		
-	}
-	
-	
-	public static Color getRandomColor() {
-		return new Color((int)(next() * 255),(int)(next() * 255), (int)(next() * 255));
-	}
-
+		
+		
+		
+		
+  }
 }

@@ -36,7 +36,6 @@ package oscar.visual.plot
 import oscar.visual._
 import javax.swing.SwingUtilities
 import oscar.cp.multiobjective.ListPareto
-import oscar.visual.plot.PlotScatter
 
 /**
  * @author Pierre Schaus

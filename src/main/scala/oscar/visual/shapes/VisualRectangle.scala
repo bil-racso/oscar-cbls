@@ -38,6 +38,7 @@ import java.awt.geom.Rectangle2D
 import javax.swing.JInternalFrame
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
+import oscar.visual.VisualUtil
 
 /**
  *

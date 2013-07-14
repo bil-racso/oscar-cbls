@@ -102,7 +102,7 @@ object PerfectSquare extends App {
   bg.innerCol = Color.black
   (Square).foreach { i =>
     val r = new VisualRectangle(d, activitiesX(i).start.value * scale, activitiesY(i).start.value * scale, side(i) * scale, side(i) * scale)
-    r.innerCol = VisualUtil.getRandomColor()
+    r.innerCol = VisualUtil.getRandomColor
   }
 }
 

@@ -12,12 +12,14 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual
+package oscar.visual.tree
 
 import oscar.util.tree.Node
 import oscar.util.tree.PositionedNode
-import oscar.util.tree.Extent
 import javax.swing.SwingUtilities
+import oscar.visual.shapes.VisualLabelledRectangle
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualFrame
 
 class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false) {
   
