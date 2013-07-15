@@ -5,20 +5,36 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.geom.Point2D
 import oscar.visual.VisualDrawing
+import java.awt.BasicStroke
 
 abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, protected val shape: S) {
+  
+  private var _dashedBorder: Boolean = false // TODO
+  private var _widthBorder: Float = 1 // TODO
 
-  private var _fillColor = Color.white
-  private var _borderColor = Color.black
+  private var _fillColor: Color = Color.white
+  private var _borderColor: Color = Color.black
 
-  private var _visible = true
-  private var _fill = true
-  private var _border = true
+  private var _visible: Boolean = true
+  private var _fill: Boolean = true
+  private var _border: Boolean = true
 
   private var _toolTipText: String = null
   
   // If true, the drawing repaints after each modification of the shape
   private var _autoRepaint: Boolean = true
+  
+  def dashed: Boolean = _dashedBorder
+  def dashed_= (dashed: Boolean): Unit = {
+    _dashedBorder = dashed
+    if (autoRepaint) repaint()
+  }
+  
+  def borderWidth: Double = _widthBorder
+  def borderWidth_= (width: Float): Unit = {
+    _widthBorder = width
+    if (autoRepaint) repaint()
+  }
   
   def autoRepaint: Boolean = _autoRepaint
   def autoRepaint_= (b: Boolean): Unit = { _autoRepaint = b }
@@ -67,8 +83,11 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
         g.fill(shape)
       }
       if (border) {
+        val oldStroke = g.getStroke
+        g.setStroke(stroke)
         g.setColor(_borderColor)
         g.draw(shape)
+        g.setStroke(oldStroke)
       }
     }
   }
@@ -77,6 +96,18 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
     if (toolTip != null && shape.contains(mousePoint)) {
       drawing.showToolTip(toolTip);
     }
+  }
+  
+  protected def dashedStroke: BasicStroke = {
+    new BasicStroke(_widthBorder, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, Array(_widthBorder), 0)       
+  }
+  
+  protected def plainStroke: BasicStroke = {
+    new BasicStroke(_widthBorder.toFloat)
+  }
+  
+  protected def stroke: BasicStroke = {
+    if (_dashedBorder) dashedStroke else plainStroke
   }
   
   def repaint(): Unit = drawing.repaint()

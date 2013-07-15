@@ -28,8 +28,6 @@ import java.awt.BasicStroke
  */
 class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape[Line2D.Double](d, s) {
   
-  private var _width: Double = 1
-  
   def orig = (shape.getX2(), shape.getY2())
   def dest = (shape.getX1(), shape.getY1())
 
@@ -51,20 +49,6 @@ class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape[Line2D.
   def orig_=(orig: (Double, Double)): Unit = {
     shape.setLine(orig._1, orig._2, shape.getX2(), shape.getY2())
     if (autoRepaint) repaint()
-  }
-  
-  def width_=(width: Double): Unit = { 
-    _width = width
-    if (autoRepaint) repaint()
-  }
-  
-  def width: Double = _width
-  
-  override def draw(g2d: Graphics2D) {
-    val stroke = g2d.getStroke()
-    g2d.setStroke(new BasicStroke(width.toFloat))
-    super.draw(g2d)
-    g2d.setStroke(stroke)
   }
   
   def move(x: Double, y: Double): Unit = {

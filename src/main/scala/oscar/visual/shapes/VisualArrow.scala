@@ -32,13 +32,13 @@ class VisualArrow(d: VisualDrawing, s: Line2D.Double, dim: Int) extends VisualLi
     transform.rotate(angle - math.Pi / 2)
     val transformedHead = transform.createTransformedShape(arrowHead)
     // Draw setup
-    val stroke = g2d.getStroke()    
-    g2d.setStroke(new BasicStroke(width.toFloat))
+    val oldStroke = g2d.getStroke()    
+    g2d.setStroke(stroke)
     g2d.setColor(innerCol)
     g2d.fill(transformedHead)
     g2d.setColor(outerCol)
     g2d.draw(transformedHead)
-    g2d.setStroke(stroke)
+    g2d.setStroke(oldStroke)
   }
 }
 
@@ -62,5 +62,5 @@ object VisualArrowTest extends App {
   Thread.sleep(1000)
   arrow.dest = (100, 100)
   Thread.sleep(1000)
-  arrow.width = 3
+  arrow.borderWidth = 3
 }

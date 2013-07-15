@@ -37,8 +37,8 @@ class VisualTour(nodesPos: Array[(Int, Int)], scale: Boolean) extends VisualDraw
     edgeDest(i, (nodes(j).getX, nodes(j).getY))
   }
 
-  def edgeWidth(i: Int, width: Double): Unit = {
-    edges(i).width = width
+  def edgeWidth(i: Int, width: Float): Unit = {
+    edges(i).borderWidth = width
   }
 
   def edgeColor(i: Int, color: Color): Unit = {

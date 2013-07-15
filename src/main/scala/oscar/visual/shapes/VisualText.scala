@@ -18,7 +18,6 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
-import oscar.visual.VisualArrow
 
 /**
  * @author Pierre Schaus, pschaus@gmail.com
