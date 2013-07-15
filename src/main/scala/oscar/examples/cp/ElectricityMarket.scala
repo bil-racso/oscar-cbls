@@ -61,7 +61,7 @@ object ElectricityMarket {
 		// creates the plot and place it into the frame
 	  val plot = new Plot2D("","Solution number","Qty")
 	  f.createFrame("Objective").add(plot)
-	  val barPlot = new BarChart("","Time","Qty",tmax-tmin+1)	
+	  val barPlot = BarChart("","Time","Qty",tmax-tmin+1)	
 	  f.createFrame("Qty Exchange").add(barPlot)
 	  f.pack()
 	  // ------------------------------------------

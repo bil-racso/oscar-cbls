@@ -123,6 +123,6 @@ object TSPVisu extends App {
     // Updates the visualization
     updateVisu()
   } run()
-
+  
   cp.printStats()
 }

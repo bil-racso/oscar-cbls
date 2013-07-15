@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import oscar.cp.constraints.GCCFWC;
 import oscar.cp.core.*;
 
 /**
@@ -50,9 +49,9 @@ public class GCC extends Constraint {
 		CPOutcome ok = CPOutcome.Success;
 		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy
 			ok = s().post(new SoftGCC(x, minval, low, up, CPVarInt.apply(s(),0,0)));
-		} else {
+		} /*else {
 			ok = s().post(new GCCFWC(x, minval, low, up));
-		}
+		}*/
 		if (ok == CPOutcome.Failure) return CPOutcome.Failure;
 		else return ok;
 	}
