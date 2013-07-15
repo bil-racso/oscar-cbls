@@ -60,7 +60,7 @@ object Euler  {
 		//  -----------visualization of the euler tour ----------
 	
 		val f = new VisualFrame("Euler",1,1)
-		val drawing = new VisualDrawing(false)
+		val drawing = new VisualDrawing(false, true, true)
 		f.createFrame("Euler Tour").add(drawing)
 		val scale = 100
 		
@@ -76,7 +76,7 @@ object Euler  {
 		  val v = x(i).value
 		  val (c,l) = (v/8, v%8)
 		  new VisualCircle(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,3).innerCol = Color.RED
-		  new VisualLine(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,scale/2+c*scale,scale/2+l*scale)
+		  VisualLine(drawing,scale/2+(i/8)*scale,scale/2+(i%8)*scale,scale/2+c*scale,scale/2+l*scale)
 		}
 		f.pack()
 		drawing.repaint()

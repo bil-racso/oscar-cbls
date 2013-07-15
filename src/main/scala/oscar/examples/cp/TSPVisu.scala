@@ -95,20 +95,14 @@ object TSPVisu extends App {
   f.createFrame("TSP Objective Function").add(plot)
 
   // Creates the visualization of the tour and place it into the frame
-  val drawing = new VisualDrawing(false)
-  f.createFrame("TSP Tour").add(drawing)
+  val tour = VisualTour(coord)
+  f.createFrame("TSP Tour").add(tour)
   f.pack()
-
-  // Routes
-  val lines = Array.tabulate(nCities)(i => new VisualLine(drawing, coord(i)._1, coord(i)._2, 0, 0))
-
-  // Cities
-  coord.foreach(c => new VisualCircle(drawing, c._1, c._2, 2, Color.blue))
   
   // Updates the visualization
   def updateVisu() {
-    (Cities).foreach(i => lines(i).dest = (coord(succ(i).value)._1, coord(succ(i).value)._2))
-    drawing.repaint()
+    Cities.foreach(i => tour.edgeDest(i, succ(i).value))
+    tour.repaint()
     plot.addPoint(nbSol, totDist.value)
   }
 
@@ -124,17 +118,6 @@ object TSPVisu extends App {
 
   } exploration {
     cp.deterministicBinaryFirstFail(succ)
-    /*
-	cp.binaryFirstFail(succ, _.randomValue)
-    // Greedy heuristic
-    while (!allBounds(succ)) {
-      // Selects the not yet bound city with the smallest number of possible successors
-      val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
-      // Selects the closest successors of the city x
-      val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }
-    */
     // One additional solution
     nbSol += 1
     // Updates the visualization

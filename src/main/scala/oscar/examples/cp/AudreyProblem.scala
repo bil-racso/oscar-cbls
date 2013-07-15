@@ -78,7 +78,7 @@ object AudreyProblem  {
 		  val v = x(i).value
 		  val (c,l) = (v/10, v%10)
 		  new VisualCircle(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,3).innerCol = Color.RED
-		  new VisualLine(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,scale/2+c*scale,scale/2+l*scale)
+		  VisualLine(drawing,scale/2+(i/10)*scale,scale/2+(i%10)*scale,scale/2+c*scale,scale/2+l*scale)
 		}
 		var curr = 0
 		for (i <- 0 until 100) {

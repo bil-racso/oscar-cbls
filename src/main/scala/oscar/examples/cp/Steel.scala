@@ -96,7 +96,7 @@ object Steel {
     val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
     Slabs.foreach(o => items(o).innerCol = colors(col(o)))
     f.createFrame("Steel Mill Slab").add(drawing)
-    capa.foreach(c => new VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
+    capa.foreach(c => VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
     f.pack()
     // ------------------------------------------
 

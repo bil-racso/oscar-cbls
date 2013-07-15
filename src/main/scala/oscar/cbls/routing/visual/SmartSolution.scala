@@ -20,9 +20,10 @@
 package oscar.cbls.routing.visual
 
 import javax.swing.{BorderFactory, JFrame}
-import oscar.visual.{VisualArrow, VisualDrawing}
+import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
+import oscar.visual.shapes.VisualArrow
 
 import java.awt.{Color, Dimension}
 
@@ -89,9 +90,9 @@ class SmartSolution(myPanelVRP:PanelVRP) extends JFrame{
 
     arrows = Array.tabulate(myPanelVRP.vrpModel.N)(i => {
       val arrow =
-        if (vrp.isRouted(i)) new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
+        if (vrp.isRouted(i)) VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
           nodes(vrp.Next(i).value).long,nodes(vrp.Next(i).value).lat,4)
-        else new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
+        else VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
       if(vrp.isRouted(i)) setColorToRoute(arrow,vrp.RouteNr(i).value)
       arrow
     })

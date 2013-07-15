@@ -26,12 +26,11 @@ import java.awt.event.MouseEvent
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualShape
+import scala.collection.mutable.Queue
 
 /** VisualDrawing
  *  
  *  Contains and draws VisualShapes. 
- *  
- *  TODO : VisualDrawing should allow to manipulate its VisualShapes (remove, add, setBack, setFront, ...)
  */
 class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
 
@@ -41,7 +40,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   setBackground(Color.white)
 
   // Shapes contained in the panel
-  private var shapes: Array[VisualShape[Shape]] = Array() // TODO change the structure
+  private val shapes: Queue[VisualShape[Shape]] = Queue()
 
   private var marginT: Double = 0
   private var marginR: Double = 0
@@ -52,6 +51,9 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   def margin = (marginT, marginR, marginB, marginL)
 
   /** Sets the margins of the panel. */
+  def margin(m: Double): Unit = margin(m, m, m, m)
+  
+  /** Sets the margins of the panel. */
   def margin(top: Double, right: Double, bottom: Double, left: Double): Unit = {
     marginT = top
     marginR = right
@@ -59,11 +61,8 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
     marginL = left
   }
 
-  /** Sets the margins of the panel. */
-  def margin(m: Double): Unit = margin(m, m, m, m)
-
   // Returns the bounds of the bounding box containing all the shapes.
-  private def findBounds(shapes: Array[VisualShape[Shape]]): (Double, Double, Double, Double) = {
+  private def findBounds(shapes: Iterable[VisualShape[Shape]]): (Double, Double, Double, Double) = {
     var minX = Double.MaxValue
     var maxX = Double.MinValue
     var minY = Double.MaxValue
@@ -135,14 +134,14 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   def addShape(shape: VisualShape[Shape], repaintAfter: Boolean = true): Unit = {
     if (shape == null) throw new IllegalArgumentException("The added shape is null.")
     else {
-      shapes :+= shape
+      shapes.enqueue(shape)
       if (repaintAfter) repaint()
     }
   }
 
   /** Removes all the shapes contained in the panel. */
   def clear(repaintAfter: Boolean = true): Unit = {
-    shapes = Array()
+    shapes.clear()
     revalidate()
     if (repaintAfter) repaint()
   }
@@ -172,7 +171,7 @@ object VisualDrawingTest extends App {
     frame.pack();
     
     val rect = new VisualRectangle(drawing, 50, 50, 100, 100)
-    val line = new VisualLine(drawing, 50, 50, 150, 150)
+    val line = VisualLine(drawing, 50, 50, 150, 150)
 
     try {
       Thread.sleep(1000);

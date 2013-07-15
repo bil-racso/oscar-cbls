@@ -16,31 +16,31 @@
  */
 package oscar.visual.shapes
 
-import java.awt.geom.Line2D;
+import java.awt.geom.Line2D
 import oscar.visual.VisualDrawing
+import java.awt.Graphics2D
+import java.awt.BasicStroke
 
 /**
  *
  * @author Pierre Schaus
  *
  */
-class VisualLine(d: VisualDrawing, shape: Line2D.Double) extends VisualShape[Line2D.Double](d, shape) {
-
-  def line: Line2D.Double = shape
-
-  def this(d: VisualDrawing, xorig: Double, yorig: Double, xdest: Double, ydest: Double) {
-    this(d, new Line2D.Double(xorig, yorig, xdest, ydest))
-
-  }
+class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape[Line2D.Double](d, s) {
+  
+  private var _width: Double = 1
+  
+  def orig = (shape.getX2(), shape.getY2())
+  def dest = (shape.getX1(), shape.getY1())
 
   /**
    * Move the destination point
    * @param x
    * @param y
    */
-  def dest_=(d: (Double, Double)): Unit = {
-    line.setLine(line.getX1(), line.getY1(), d._1, d._2)
-    drawing.repaint()
+  def dest_=(dest: (Double, Double)): Unit = { 
+    shape.setLine(shape.getX1(), shape.getY1(), dest._1, dest._2)
+    if (autoRepaint) repaint()
   }
 
   /**
@@ -48,20 +48,37 @@ class VisualLine(d: VisualDrawing, shape: Line2D.Double) extends VisualShape[Lin
    * @param x
    * @param y
    */
-  def orig_=(d: (Double, Double)): Unit = {
-    line.setLine(d._1, d._2, line.getX2(), line.getY2())
-    drawing.repaint()
+  def orig_=(orig: (Double, Double)): Unit = {
+    shape.setLine(orig._1, orig._2, shape.getX2(), shape.getY2())
+    if (autoRepaint) repaint()
   }
-
-  def orig = (line.getX2(), line.getY2())
-  def dest = (line.getX1(), line.getY1())
+  
+  def width_=(width: Double): Unit = { 
+    _width = width
+    if (autoRepaint) repaint()
+  }
+  
+  def width: Double = _width
+  
+  override def draw(g2d: Graphics2D) {
+    val stroke = g2d.getStroke()
+    g2d.setStroke(new BasicStroke(width.toFloat))
+    super.draw(g2d)
+    g2d.setStroke(stroke)
+  }
   
   def move(x: Double, y: Double): Unit = {
     val (xOrig, yOrig) = orig
     val (xDest, yDest) = dest
     orig = (xOrig + x, yOrig + y)
     dest = (xDest + x, yOrig + y)
-    drawing.repaint()
+    if (autoRepaint) repaint()
   }
+}
 
+object VisualLine {
+  
+  def apply(drawing: VisualDrawing, xOrig: Double, yOrig: Double, xDest: Double, yDest: Double): VisualLine = {
+    new VisualLine(drawing, new Line2D.Double(xOrig, yOrig, xDest, yDest))
+  }
 }

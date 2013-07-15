@@ -19,6 +19,7 @@ import java.util.Random;
 
 import javax.swing.JInternalFrame;
 import oscar.visual.shapes.VisualRectangle;
+import oscar.visual.shapes.VisualRoundRectangle;
 /**
  * 
  * @author Pierre Schaus

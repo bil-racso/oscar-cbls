@@ -37,7 +37,7 @@ class VisualGanttChart(activities: Array[Activity], f : (Int) => Int, colors : (
 	text.innerCol = Color.RED
 	text.centered = true
 	   												               
-	private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+	private val makespanLine : VisualLine = VisualLine(this, 0, 0, 0, 0)
 	makespanLine.outerCol = Color.RED;
 	
 	def update(xScale : Int, yScale: Int) {

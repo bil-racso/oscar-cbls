@@ -25,6 +25,7 @@ import neighborhood._
 import oscar.visual._
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
+import oscar.visual.shapes.VisualArrow
 
 /*
 object PanelVRP {
@@ -114,9 +115,9 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
 
     vrpModel.arrows = Array.tabulate(vrpModel.N)(i => {
       val arrow =
-        if (vrp.isRouted(i)) new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
+        if (vrp.isRouted(i)) VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
           nodes(vrp.Next(i).value).long,nodes(vrp.Next(i).value).lat,4)
-        else new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
+        else VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
       if(vrp.isRouted(i)) setColorToRoute(arrow,vrp.RouteNr(i).value)
       arrow
     })

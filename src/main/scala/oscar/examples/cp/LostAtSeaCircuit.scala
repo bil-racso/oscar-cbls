@@ -101,7 +101,7 @@ object LostAtSeaCircuit  {
        for (i <- 0 until 9) {
          val (li,ci) = getLineCol(sol(i))
          val (li1,ci1) = getLineCol(sol(i+1))
-         new VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
+         VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
        }
        
 

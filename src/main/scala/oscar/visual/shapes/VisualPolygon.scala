@@ -19,12 +19,13 @@ package oscar.visual.shapes
 import java.awt.Polygon
 import oscar.visual.VisualDrawing
 
-class VisualPolygon(d: VisualDrawing) extends VisualShape(d, new Polygon) {
+class VisualPolygon(d: VisualDrawing, s: Polygon) extends VisualShape(d, s) {
 
   def reset(): Unit = shape.reset
 
   def addVertices(vertices: Iterable[(Int, Int)]): Unit = {
     for (v <- vertices) shape.addPoint(v._1, v._2)
+    if (autoRepaint) repaint()
   }
 
   def update(vertices: Iterable[(Int, Int)]): Unit = {
@@ -33,4 +34,17 @@ class VisualPolygon(d: VisualDrawing) extends VisualShape(d, new Polygon) {
   }
 
   def move(x: Double, y: Double): Unit = shape.translate(x.toInt, y.toInt)
+}
+
+object VisualPolygon {
+  
+  def apply(drawing: VisualDrawing): VisualPolygon = {
+    new VisualPolygon(drawing, new Polygon)
+  }
+  
+  def apply(drawing: VisualDrawing, vertices: Iterable[(Int, Int)]): VisualPolygon = {
+    val polygon = new VisualPolygon(drawing, new Polygon)
+    polygon.addVertices(vertices)
+    polygon
+  }
 }

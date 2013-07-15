@@ -27,15 +27,16 @@ import oscar.visual.shapes.VisualLine
 class VisualProfile(res: CumulativeResource, makespan: CPVarInt, color: Color = Color.WHITE) extends VisualDrawing(true) {
 
   // The profile is represented by a polygon
-  private val polygon: VisualPolygon = new VisualPolygon(this)
+  private val polygon: VisualPolygon = VisualPolygon(this)
   polygon.innerCol = color
+  polygon.autoRepaint = false
 
   // The capacity limit
-  private val capaLine: VisualLine = new VisualLine(this, 0, 0, 0, 0)
+  private val capaLine: VisualLine = VisualLine(this, 0, 0, 0, 0)
   capaLine.outerCol = Color.RED;
 
   // The zero line
-  private val zeroLine: VisualLine = new VisualLine(this, 0, 0, 0, 0)
+  private val zeroLine: VisualLine = VisualLine(this, 0, 0, 0, 0)
   zeroLine.outerCol = Color.BLUE;
 
   def resource = res
