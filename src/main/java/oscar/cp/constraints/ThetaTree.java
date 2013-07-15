@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import oscar.cp.core.CPVarInt;
 import oscar.cp.scheduling.Activity;
 
 /**
