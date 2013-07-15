@@ -32,13 +32,12 @@ class VisualToolBar(withVisuController: Boolean = false) extends JToolBar {
     inPause = true
   }
 
-  def addButton(label:String,actionOnClick : => Unit){
+  def addButton(label:String,actionOnClick : => Unit): Unit ={
     val button = new JButton(label)
     button.addActionListener( new ActionListener() {
 		override def actionPerformed(e:ActionEvent) { actionOnClick }
 	})
 	add(button)
-	button
   }
 }
 
