@@ -26,6 +26,7 @@ import scala.util.Random
 import java.lang._
 import java.awt.Color
 import oscar.visual.shapes.VisualLine
+import oscar.visual.plot.PlotLine
 
 /**
  * Model for the steel mill slab problem:
@@ -89,7 +90,7 @@ object Steel {
     val scale = 7
     val f = new VisualFrame("Steel Mill Slab")
     // creates the plot and place it into the frame
-    val plot = new Plot2D("", "Solution number", "Loss")
+    val plot = new PlotLine("", "Solution number", "Loss")
     f.createFrame("Objective").add(plot)
     // creates the tour visu and place it into the frame
     val drawing: VisualBinPacking = new VisualBinPacking(nbSlab, 12)

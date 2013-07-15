@@ -40,6 +40,7 @@ import oscar.visual._
 import oscar.util._
 import scala.io.Source
 import java.awt.Color
+import oscar.visual.plot.PlotLine
 
 /**
  * tsp model with visualization:
@@ -54,7 +55,7 @@ object TSPDemo extends App {
   // -------------
   val f = new VisualFrame("TSP")
   // creates the plot and place it into the frame
-  val plot = new Plot2D("", "Solution number", "Distance")
+  val plot = new PlotLine("", "Solution number", "Distance")
   f.createFrame("TSP Objective Function").add(plot)
   // creates the tour visu and place it into the frame
   val map = new VisualMap();

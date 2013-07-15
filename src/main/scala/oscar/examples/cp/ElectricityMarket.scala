@@ -20,6 +20,7 @@ import oscar.visual._
 import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
+import oscar.visual.plot.PlotLine
 
 /** 
  * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
@@ -59,7 +60,7 @@ object ElectricityMarket {
 	  // -------------visual components ------------
 	  val f = new VisualFrame("Electricity Market")
 		// creates the plot and place it into the frame
-	  val plot = new Plot2D("","Solution number","Qty")
+	  val plot = new PlotLine("","Solution number","Qty")
 	  f.createFrame("Objective").add(plot)
 	  val barPlot = BarChart("","Time","Qty",tmax-tmin+1)	
 	  f.createFrame("Qty Exchange").add(barPlot)

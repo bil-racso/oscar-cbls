@@ -22,6 +22,7 @@ import oscar.visual._
 import scala.collection.JavaConversions._
 import oscar.cp.constraints.BinPackingFlow
 import oscar.visual.shapes.VisualRectangle
+import oscar.visual.plot.PlotLine
 
 
 
@@ -41,7 +42,7 @@ object ChemicalTanker extends App {
     // -------------visual components ------------
     val f = new VisualFrame("ChemicalTanker")
     // creates the plot and place it into the frame
-	val plot = new Plot2D("","Solution number","Unused Volume")
+	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)
     // creates the tour visu and place it into the frame
     val drawing = new VisualDrawing(false)

@@ -45,6 +45,7 @@ import java.awt.Color
 import oscar.cp.constraints.MinAssignment
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
+import oscar.visual.plot.PlotLine
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -91,7 +92,7 @@ object TSPVisu extends App {
   val f = new VisualFrame("TSP")
 
   // Creates the plot and place it into the frame
-  val plot = new Plot2D("", "Solution number", "Distance")
+  val plot = new PlotLine("", "Solution number", "Distance")
   f.createFrame("TSP Objective Function").add(plot)
 
   // Creates the visualization of the tour and place it into the frame

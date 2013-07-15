@@ -23,6 +23,7 @@ import oscar.linprog.modeling.MIPVar
 import oscar.linprog.modeling._
 import oscar.linprog._
 import oscar.algebra._
+import oscar.visual.plot.PlotLine
 
 
 /**
@@ -41,7 +42,7 @@ object ChemicalTanker extends App {
     // -------------visual components ------------
     val f = new VisualFrame("ChemicalTanker")
     // creates the plot and place it into the frame
-	val plot = new Plot2D("","Solution number","Unused Volume")
+	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)
     // creates the tour visu and place it into the frame
     val drawing = new VisualDrawing(false)

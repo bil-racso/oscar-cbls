@@ -20,11 +20,11 @@ import oscar.visual.shapes.VisualRectangle
 import java.awt.Color
 import oscar.visual.VisualBinPacking
 import scala.util.Random
-import oscar.visual.Plot2D
 import oscar.visual.VisualMap
 import oscar.visual.Geocoder
 import oscar.visual.Location
 import java.io.IOException
+import oscar.visual.plot.PlotLine
 
 
 
@@ -97,7 +97,7 @@ object DemoVisu {
   
   def demoPlot = {
 	val inf = f.createFrame("Plot");
-	val demo = new Plot2D("My Plot","xlab","ylab");
+	val demo = new PlotLine("My Plot","xlab","ylab");
 	inf.add(demo);
 	inf.pack();
 	

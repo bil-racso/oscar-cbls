@@ -26,6 +26,7 @@ import oscar.visual._
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
 import oscar.visual.shapes.VisualArrow
+import oscar.visual.plot.PlotLine
 
 /*
 object PanelVRP {
@@ -51,7 +52,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   var myConstraints:GridBagConstraints=null;
 
   val mapPanel:VisualDrawing = newMapPanel
-  val plotPanel:Plot2D = newPlotPanel()
+  val plotPanel:PlotLine = newPlotPanel()
   val boardPanel:Dashboard = newBoardPanel
   val vrpModel = new ModelVRP()
   val colorsManagement = new ColorManagement()
@@ -162,8 +163,8 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     mapPanel
   }
 
-  def newPlotPanel():Plot2D = {
-    val plotPanel = new Plot2D("","Iteration nbr","Distance")
+  def newPlotPanel():PlotLine = {
+    val plotPanel = new PlotLine("","Iteration nbr","Distance")
     if(!easyMode){
       plotPanel.setPreferredSize(new Dimension(500,300))
       plotPanel.setMinimumSize(new Dimension(420,200))
