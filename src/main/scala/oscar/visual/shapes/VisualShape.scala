@@ -99,7 +99,7 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
   }
   
   protected def dashedStroke: BasicStroke = {
-    new BasicStroke(_widthBorder, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, Array(_widthBorder), 0)       
+    new BasicStroke(_widthBorder, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_widthBorder,_widthBorder*2), 0)       
   }
   
   protected def plainStroke: BasicStroke = {

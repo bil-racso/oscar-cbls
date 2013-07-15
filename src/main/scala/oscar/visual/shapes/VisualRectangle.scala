@@ -109,20 +109,21 @@ class VisualRectangle(d: VisualDrawing, shape: Rectangle2D.Double) extends Visua
 
 object VisualRectangle {
 
-  def main(args: Array[String])  {
+  def main(args: Array[String])  {   
+    
+    import oscar.util.VisualController._
+    import scala.util.continuations._
+    
     val f = new VisualFrame("toto");
     val d = new VisualDrawing(false);
     val inf = f.createFrame("Drawing");
+    val toolBar = f.createToolBar(withVisuController = true)
     inf.add(d);
     f.pack();
 
     val rect = new VisualRectangle(d, 50, 50, 100, 50);
     rect.toolTip = "Hello";
 
-    import oscar.util.VisualController._
-
-    val toolBar = f.createToolBar(withVisuController = true)
-    import scala.util.continuations._
 
     withController {
       rect.innerCol = Color.red
@@ -132,6 +133,10 @@ object VisualRectangle {
       rect.height = 100;
       pause()
       rect.move(100, 20);
+      pause()
+      rect.borderWidth = 3
+      pause()
+      rect.dashed = true
 
       for (i <- (0 until 20).suspendable) {
         pause()

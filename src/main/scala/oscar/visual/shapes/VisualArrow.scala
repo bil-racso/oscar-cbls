@@ -12,6 +12,13 @@ import java.awt.BasicStroke
 class VisualArrow(d: VisualDrawing, s: Line2D.Double, dim: Int) extends VisualLine(d, s) {
 
   private val arrowHead: Polygon = new Polygon
+  private var headColor: Color = innerCol
+  
+  def arrowHeadCol: Color = headColor
+  def arrowHeadCol_=(color: Color): Unit = {
+    headColor = color
+    if (autoRepaint) repaint()
+  }
 
   arrowHead.addPoint(0, dim)
   arrowHead.addPoint(-dim, -dim)
@@ -33,8 +40,8 @@ class VisualArrow(d: VisualDrawing, s: Line2D.Double, dim: Int) extends VisualLi
     val transformedHead = transform.createTransformedShape(arrowHead)
     // Draw setup
     val oldStroke = g2d.getStroke()    
-    g2d.setStroke(stroke)
-    g2d.setColor(innerCol)
+    g2d.setStroke(plainStroke)
+    g2d.setColor(headColor)
     g2d.fill(transformedHead)
     g2d.setColor(outerCol)
     g2d.draw(transformedHead)
@@ -58,9 +65,11 @@ object VisualArrowTest extends App {
   frame.pack()
   
   val arrow = VisualArrow(drawing, 50, 50, 100, 50, 5)
-  arrow.innerCol = Color.red
+  arrow.arrowHeadCol = Color.red
   Thread.sleep(1000)
   arrow.dest = (100, 100)
   Thread.sleep(1000)
   arrow.borderWidth = 3
+  Thread.sleep(1000)
+  arrow.dashed = true
 }
