@@ -20,7 +20,7 @@ object Geocoder {
       // Format: 200,6,42.730070,-73.690570
       statusCode = line.substring(0, 3).toInt
       if (statusCode == 200) {
-        location = new Location(line.substring ("200,6,".length, line.indexOf(',', "200,6,".length)), line.substring (line.indexOf(',', "200,6,".length)+1, line.length))
+        location = Location(line.substring ("200,6,".length, line.indexOf(',', "200,6,".length)), line.substring (line.indexOf(',', "200,6,".length)+1, line.length))
       }
       line = input.readLine()
     }
