@@ -9,8 +9,10 @@ import java.awt.BasicStroke
 
 abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, protected val shape: S) {
   
-  private var _dashedBorder: Boolean = false // TODO
-  private var _widthBorder: Float = 1 // TODO
+  // True if the border is dashed
+  private var _dashed: Boolean = false 
+  // Width of the border
+  private var _bWidth: Float = 1 
 
   private var _fillColor: Color = Color.white
   private var _borderColor: Color = Color.black
@@ -24,15 +26,15 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
   // If true, the drawing repaints after each modification of the shape
   private var _autoRepaint: Boolean = true
   
-  def dashed: Boolean = _dashedBorder
+  def dashed: Boolean = _dashed
   def dashed_= (dashed: Boolean): Unit = {
-    _dashedBorder = dashed
+    _dashed = dashed
     if (autoRepaint) repaint()
   }
   
-  def borderWidth: Double = _widthBorder
+  def borderWidth: Double = _bWidth
   def borderWidth_= (width: Float): Unit = {
-    _widthBorder = width
+    _bWidth = width
     if (autoRepaint) repaint()
   }
   
@@ -99,15 +101,15 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
   }
   
   protected def dashedStroke: BasicStroke = {
-    new BasicStroke(_widthBorder, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_widthBorder,_widthBorder*2), 0)       
+    new BasicStroke(_bWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_bWidth/2,2*_bWidth), 0)       
   }
   
   protected def plainStroke: BasicStroke = {
-    new BasicStroke(_widthBorder.toFloat)
+    new BasicStroke(_bWidth.toFloat)
   }
   
   protected def stroke: BasicStroke = {
-    if (_dashedBorder) dashedStroke else plainStroke
+    if (_dashed) dashedStroke else plainStroke
   }
   
   def repaint(): Unit = drawing.repaint()

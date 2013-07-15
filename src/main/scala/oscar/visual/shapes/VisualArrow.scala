@@ -29,7 +29,7 @@ class VisualArrow(d: VisualDrawing, s: Line2D.Double, dim: Int) extends VisualLi
     drawArrowHead(g2d)
   }
 
-  private def drawArrowHead(g2d: Graphics2D): Unit = {
+  private def drawArrowHead(g2d: Graphics2D): Unit = {    
     // Position of the head
     val transform = new AffineTransform()
     val (x1, y1) = dest
