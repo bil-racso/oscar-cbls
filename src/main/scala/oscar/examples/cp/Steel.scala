@@ -93,7 +93,7 @@ object Steel {
     val plot = new PlotLine("", "Solution number", "Loss")
     f.createFrame("Objective").add(plot)
     // creates the tour visu and place it into the frame
-    val drawing: VisualBinPacking = new VisualBinPacking(nbSlab, 12)
+    val drawing: VisualBinPacking = VisualBinPacking(binWidth = 12)
     val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
     Slabs.foreach(o => items(o).innerCol = colors(col(o)))
     f.createFrame("Steel Mill Slab").add(drawing)
@@ -119,7 +119,7 @@ object Steel {
       }
       Slabs.foreach(o => {
         xsol(o) = x(o).value
-        items(o).setBin(xsol(o))
+        items(o).bin = xsol(o)
       })
       plot.addPoint(nbSol, obj.value)
       nbSol += 1

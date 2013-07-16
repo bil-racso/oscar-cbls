@@ -112,7 +112,7 @@ object Nurses extends App  {
  val colors = VisualUtil.getRandomColors(nbZones, true)
  colors(0) = java.awt.Color.GREEN
  colors(1) = java.awt.Color.RED
- val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,10)    
+ val drawing: VisualBinPacking = VisualBinPacking(binWidth = 10)    
  f.createFrame("Nurses").add(drawing)
  
  val scale = 3
@@ -141,7 +141,7 @@ object Nurses extends App  {
 		    val y = x.minDomNotBound
 		    cp.branchAll(0 to maxUsed+1)(v => cp.post(y == v))
      }
-     x.zipWithIndex.foreach{case(n,j) => items(j).setBin(n.value + nbNursesInZone.take(i).sum)}
+     x.zipWithIndex.foreach{case(n,j) => items(j).bin = (n.value + nbNursesInZone.take(i).sum)}
      
      best = spreadAcuity.value
    } run()
