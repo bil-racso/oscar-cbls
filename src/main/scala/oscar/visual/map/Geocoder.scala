@@ -1,4 +1,4 @@
-package oscar.visual
+package oscar.visual.map
 
 import java.io.BufferedReader
 import java.io.InputStreamReader

@@ -22,11 +22,12 @@ import oscar.visual.shapes.VisualRectangle
 import java.awt.Color
 import oscar.visual.VisualBinPacking
 import scala.util.Random
-import oscar.visual.VisualMap
-import oscar.visual.Geocoder
-import oscar.visual.Location
+import oscar.visual.map.VisualMap
+import oscar.visual.map.Geocoder
+import oscar.visual.map.Location
 import java.io.IOException
 import oscar.visual.plot.PlotLine
+import oscar.visual.map.Geocoder
 
 object DemoVisu {
 

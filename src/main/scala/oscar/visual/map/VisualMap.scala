@@ -30,36 +30,18 @@
  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  * ****************************************************************************
  */
-package oscar.visual;
-
-import java.awt.BasicStroke
+package oscar.visual.map
 import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Rectangle
-import java.awt.RenderingHints
-import java.awt.geom.Point2D
 import java.io.IOException
-import java.util.ArrayList
-import java.util.HashSet
-import java.util.Iterator
-import java.util.Set
-import javax.swing.JInternalFrame
 import javax.swing.JPanel
-import org.jdesktop.swingx.JXMapKit
-import org.jdesktop.swingx.JXMapKit.DefaultProviders
 import org.jdesktop.swingx.JXMapViewer
 import org.jdesktop.swingx.mapviewer.DefaultTileFactory
-import org.jdesktop.swingx.mapviewer.DefaultWaypointRenderer
 import org.jdesktop.swingx.mapviewer.GeoPosition
 import org.jdesktop.swingx.mapviewer.TileFactoryInfo
-import org.jdesktop.swingx.mapviewer.Waypoint
-import org.jdesktop.swingx.mapviewer.WaypointPainter
-import org.jdesktop.swingx.mapviewer.WaypointRenderer
-import org.jdesktop.swingx.painter.Painter
-import scala.swing.BorderPanel
 import java.lang.InterruptedException
 import java.awt.Toolkit
+import oscar.visual.VisualFrame
 
 /**
  * @author Pierre Schaus

@@ -41,6 +41,8 @@ import oscar.util._
 import scala.io.Source
 import java.awt.Color
 import oscar.visual.plot.PlotLine
+import oscar.visual.map.Location
+import oscar.visual.map.VisualMap
 
 /**
  * tsp model with visualization:

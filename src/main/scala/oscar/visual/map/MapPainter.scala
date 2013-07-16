@@ -12,23 +12,17 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual;
+package oscar.visual.map
 
 import java.awt.BasicStroke
 import java.awt.Color
-import java.awt.Dimension
 import java.awt.Graphics2D
-import java.awt.Rectangle
 import java.awt.RenderingHints
-import java.awt.geom.Point2D
-import java.awt.geom.Rectangle2D
-import java.util.Set
 import org.jdesktop.swingx.JXMapViewer
 import org.jdesktop.swingx.mapviewer.DefaultWaypointRenderer
 import org.jdesktop.swingx.mapviewer.GeoPosition
 import org.jdesktop.swingx.mapviewer.Waypoint
-import org.jdesktop.swingx.mapviewer.WaypointRenderer
-import org.jdesktop.swingx.painter.Painter;
+import org.jdesktop.swingx.painter.Painter
 import java.awt.Font
 
 /**

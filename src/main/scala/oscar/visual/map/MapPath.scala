@@ -12,13 +12,13 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual
+package oscar.visual.map
 
 import java.net.URL
 import scala.io.Source
 import scala.collection.mutable.{ HashMap, SynchronizedMap }
 import scala.xml._
-import java.io.IOException;
+import java.io.IOException
 import java.awt.Color
 
 /*

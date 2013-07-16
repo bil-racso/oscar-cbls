@@ -1,4 +1,4 @@
-package oscar.visual
+package oscar.visual.map
 
 class Location(val lat: Double, val lon: Double) {
   
