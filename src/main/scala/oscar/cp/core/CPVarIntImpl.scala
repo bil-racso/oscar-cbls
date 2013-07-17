@@ -151,12 +151,18 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
     /**
      * @return  the minimum value in the domain
      */
-	def min = dom.min
+	def min = {
+	  assert(!dom.isEmpty)
+	  dom.min
+	}
 
 	 /**
      * @return  the maximum value in the domain
      */
-	def max = dom.max
+	def max = {
+	  assert(!dom.isEmpty)
+	  dom.max
+	}
 
 	override def toString(): String =  {
 		if (isEmpty) name+" phi"
