@@ -127,13 +127,17 @@ object Nurses extends App  {
    val spreadAcuity = CPVarInt(cp,0 to Int.MaxValue)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
-   
+   println("spreadacuity:"+spreadAcuity)
    var best = Int.MaxValue
    // each nurse can have at most 3 and at least one patient
    cp.minimize(spreadAcuity) subjectTo {
+     println("spreadacuity:"+spreadAcuity)
      cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
+     
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
+     
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
+     
    } exploration {
      val x = nurseOfPatient
      while (!allBounds(x)) {
