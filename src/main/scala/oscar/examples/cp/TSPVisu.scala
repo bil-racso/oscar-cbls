@@ -89,7 +89,7 @@ object TSPVisu extends App {
 
   // Visual Components
   // -----------------
-  val f = new VisualFrame("TSP")
+  val f = VisualFrame("TSP")
 
   // Creates the plot and place it into the frame
   val plot = new PlotLine("", "Solution number", "Distance")

@@ -44,7 +44,7 @@ class VisualToolBar(withVisuController: Boolean = false) extends JToolBar {
 object VisualToolBar{
   	
   def main(args : Array[String]) {
-		val f = new VisualFrame("toto");
+		val f = VisualFrame("toto");
 		val tb = f.createToolBar(false)
 		val d = VisualDrawing(false);
 		val inf = f.createFrame("Drawing");

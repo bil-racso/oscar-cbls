@@ -31,7 +31,7 @@ import oscar.visual.map.Geocoder
 
 object DemoVisu {
 
-  val f = new VisualFrame("Results");
+  val f = VisualFrame("Results");
   def runInThread(p: => Unit) = {
     val thread = new Thread(new Runnable {
       def run = p

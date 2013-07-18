@@ -136,7 +136,7 @@ class VisualMap extends JPanel(new BorderLayout()) {
 object VisualMap {
   def main(args: Array[String]) = {
 
-    val f = new VisualFrame("toto")
+    val f = VisualFrame("toto")
     var inf = f.createFrame("tmap")
 
     val map = new VisualMap()

@@ -24,7 +24,7 @@ object BasicVisu {
 
   def main(args: Array[String]): Unit = {
 
-    val f = new VisualFrame("Basic");
+    val f = VisualFrame("Basic");
     val tb = f.createToolBar()
     tb.addButton("foo", println("bar"))
     val d = VisualDrawing(false);

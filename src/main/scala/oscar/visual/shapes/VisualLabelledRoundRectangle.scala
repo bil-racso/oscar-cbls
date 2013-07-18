@@ -72,7 +72,7 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
 object VisualLabelledRoundRectangle {
 
   def main(args: Array[String]) {
-    val f = new VisualFrame("toto");
+    val f = VisualFrame("toto");
     val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
 

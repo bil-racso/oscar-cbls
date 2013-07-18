@@ -65,7 +65,7 @@ class VisualLabelledBranch(d: VisualDrawing, shapes: (VisualLine, VisualLine, Vi
 object VisualLabelledBranch {
   	
   def main(args : Array[String]) {
-	val f = new VisualFrame("toto");
+	val f = VisualFrame("toto");
 	val d = VisualDrawing(false);
 	val inf = f.createFrame("Drawing");
 	inf.add(d);

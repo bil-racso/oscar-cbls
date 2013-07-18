@@ -49,7 +49,7 @@ object VisualBinPacking {
 
 object VisualBinPackingExample extends App {
   
-  val frame = new VisualFrame("Example")
+  val frame = VisualFrame("Example")
   val inFrame = frame.createFrame("Bin Packing")
   val binPacking = VisualBinPacking()  
   inFrame.add(binPacking)

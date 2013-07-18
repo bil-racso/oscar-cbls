@@ -183,7 +183,7 @@ class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = fa
 
 object VisualSimplex2D extends App {
   val waitingDelay = 2000
-  val f = new VisualFrame("toto");
+  val f = VisualFrame("toto");
   val inf1 = f.createFrame("Simplex Input")
   val inf2 = f.createFrame("Simplex Output")
   val simplex = Array(MOOPoint(Array(10.0, 10.0), Array(1.0, 1.0)), MOOPoint(Array(42.0, 10.0), Array(1.0, 2.0)), MOOPoint(Array(10.0, 42.0), Array(2.0, 1.0)))

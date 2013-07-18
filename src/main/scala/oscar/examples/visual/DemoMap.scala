@@ -43,7 +43,7 @@ object DemoMap {
   
   //display components
   
-  val f = new VisualFrame("Map visualization demo")
+  val f = VisualFrame("Map visualization demo")
   val m = new VisualMap()
   val inf = f.createFrame("VisualMap")
   

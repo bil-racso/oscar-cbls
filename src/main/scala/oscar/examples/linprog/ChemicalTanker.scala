@@ -40,7 +40,7 @@ import oscar.visual.plot.PlotLine
 object ChemicalTanker extends App {
 
     // -------------visual components ------------
-    val f = new VisualFrame("ChemicalTanker")
+    val f = VisualFrame("ChemicalTanker")
     // creates the plot and place it into the frame
 	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)

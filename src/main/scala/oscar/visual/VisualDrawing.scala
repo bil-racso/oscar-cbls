@@ -160,7 +160,7 @@ object VisualDrawing {
 
 object VisualDrawingTest extends App {
 
-  val frame = new VisualFrame("Example");
+  val frame = VisualFrame("Example");
   val drawing = new VisualDrawing(false, true, false);
   val inFrame = frame.createFrame("Drawing");
   inFrame.add(drawing);

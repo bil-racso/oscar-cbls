@@ -55,7 +55,7 @@ object TSPDemo extends App {
 
   // Visualization
   // -------------
-  val f = new VisualFrame("TSP")
+  val f = VisualFrame("TSP")
   // creates the plot and place it into the frame
   val plot = new PlotLine("", "Solution number", "Distance")
   f.createFrame("TSP Objective Function").add(plot)

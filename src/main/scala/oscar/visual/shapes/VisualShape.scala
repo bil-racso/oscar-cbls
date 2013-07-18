@@ -8,11 +8,14 @@ import oscar.visual.VisualDrawing
 import java.awt.BasicStroke
 
 abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, protected val shape: S) {
-  
+
+  // Adds the visual shape in the drawing
+  drawing.addShape(this);
+
   // True if the border is dashed
-  private var _dashed: Boolean = false 
+  private var _dashed: Boolean = false
   // Width of the border
-  private var _bWidth: Float = 1 
+  private var _bWidth: Float = 1
 
   private var _fillColor: Color = Color.white
   private var _borderColor: Color = Color.black
@@ -22,61 +25,86 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
   private var _border: Boolean = true
 
   private var _toolTipText: String = null
-  
+
   // If true, the drawing repaints after each modification of the shape
   private var _autoRepaint: Boolean = true
+
+  def autoRepaint: Boolean = _autoRepaint
   
+  def autoRepaint_=(b: Boolean): Unit = { _autoRepaint = b }
+
   def dashed: Boolean = _dashed
-  def dashed_= (dashed: Boolean): Unit = {
+  
+  def dashed_=(dashed: Boolean): Unit = {
     _dashed = dashed
     if (autoRepaint) repaint()
   }
-  
+
   def borderWidth: Double = _bWidth
-  def borderWidth_= (width: Float): Unit = {
+  
+  def borderWidth_=(width: Float): Unit = {
     _bWidth = width
     if (autoRepaint) repaint()
   }
-  
-  def autoRepaint: Boolean = _autoRepaint
-  def autoRepaint_= (b: Boolean): Unit = { _autoRepaint = b }
-  
-  // Adds the visual shape in the drawing
-  drawing.addShape(this);
 
   def innerCol: Color = _fillColor
-  def outerCol: Color = _borderColor
-  def visible: Boolean = _visible
-  def fill: Boolean = _fill
-  def border: Boolean = _border
-  def toolTip: String = _toolTipText
-  
-  def visible_=(visible: Boolean): Unit = {
-    _visible = visible
-    if (autoRepaint) repaint()
-  }
-
-  def border_=(border: Boolean): Unit = {
-    _border = border
-    if (autoRepaint) repaint()
-  }
-
-  def fill_=(fill: Boolean): Unit = {
-    _fill = fill
-    if (autoRepaint) repaint()
-  }
 
   def innerCol_=(innerCol: Color): Unit = {
     _fillColor = innerCol
     if (autoRepaint) repaint()
   }
 
+  def outerCol: Color = _borderColor
+
   def outerCol_=(outerCol: Color): Unit = {
     _borderColor = outerCol
     if (autoRepaint) repaint()
   }
 
+  def visible: Boolean = _visible
+
+  def visible_=(visible: Boolean): Unit = {
+    _visible = visible
+    if (autoRepaint) repaint()
+  }
+
+  def border: Boolean = _border
+
+  def border_=(border: Boolean): Unit = {
+    _border = border
+    if (autoRepaint) repaint()
+  }
+
+  def fill: Boolean = _fill
+
+  def fill_=(fill: Boolean): Unit = {
+    _fill = fill
+    if (autoRepaint) repaint()
+  }
+
+  def toolTip: String = _toolTipText
+
   def toolTip_=(s: String): Unit = { _toolTipText = s }
+
+  def showToolTip(mousePoint: Point2D) = {
+    if (toolTip != null && shape.contains(mousePoint)) {
+      drawing.showToolTip(toolTip);
+    }
+  }
+
+  protected def dashedStroke: BasicStroke = {
+    new BasicStroke(_bWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_bWidth / 2, 2 * _bWidth), 0)
+  }
+
+  protected def plainStroke: BasicStroke = {
+    new BasicStroke(_bWidth.toFloat)
+  }
+
+  protected def stroke: BasicStroke = {
+    if (_dashed) dashedStroke else plainStroke
+  }
+
+  def repaint(): Unit = drawing.repaint()
 
   def draw(g: Graphics2D) {
     if (visible) {
@@ -94,26 +122,6 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
     }
   }
 
-  def showToolTip(mousePoint: Point2D) = {
-    if (toolTip != null && shape.contains(mousePoint)) {
-      drawing.showToolTip(toolTip);
-    }
-  }
-  
-  protected def dashedStroke: BasicStroke = {
-    new BasicStroke(_bWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_bWidth/2,2*_bWidth), 0)       
-  }
-  
-  protected def plainStroke: BasicStroke = {
-    new BasicStroke(_bWidth.toFloat)
-  }
-  
-  protected def stroke: BasicStroke = {
-    if (_dashed) dashedStroke else plainStroke
-  }
-  
-  def repaint(): Unit = drawing.repaint()
-  
   def getBounds: (Int, Int, Int, Int) = {
     val bounds = shape.getBounds()
     val xMin = bounds.x
@@ -122,7 +130,7 @@ abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, pr
     val yMax = yMin + bounds.height
     (xMin, xMax, yMin, yMax)
   }
-  
+
   def move(x: Double, y: Double): Unit
 }
 

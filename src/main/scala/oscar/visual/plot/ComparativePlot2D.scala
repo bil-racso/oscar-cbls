@@ -58,7 +58,7 @@ object ComparativePlot2D {
 
 object ComparativePlot2DExample extends App {
   
-  val frame = new VisualFrame("Example")
+  val frame = VisualFrame("Example")
   val inFrame = frame.createFrame("ComparativePlot2D")
   val plot = ComparativePlot2D("My Plot", "xlab", "ylab", Array("First", "Second", "Third"), Array(true, false, true), Array(true, true, false))
   inFrame.add(plot)

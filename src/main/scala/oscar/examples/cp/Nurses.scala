@@ -108,7 +108,7 @@ object Nurses extends App  {
  
  // --- model ---
  
- val f = new VisualFrame("Steel Mill Slab")
+ val f = VisualFrame("Steel Mill Slab")
  val colors = VisualUtil.getRandomColors(nbZones, true)
  colors(0) = java.awt.Color.GREEN
  colors(1) = java.awt.Color.RED

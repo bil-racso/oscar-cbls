@@ -28,6 +28,9 @@ import java.awt.BasicStroke
  */
 class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape[Line2D.Double](d, s) {
   
+  // No need to fill the line
+  fill = false
+  
   def orig = (shape.getX2(), shape.getY2())
   def dest = (shape.getX1(), shape.getY1())
 

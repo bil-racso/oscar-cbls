@@ -85,7 +85,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
 object VisualLabelledTree{
   	
   def main(args : Array[String]) {
-	val f = new VisualFrame("toto");
+	val f = VisualFrame("toto");
 	val inf = f.createFrame("Drawing");
 	
 	val C = Node("C")

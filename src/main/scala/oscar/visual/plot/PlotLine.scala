@@ -27,7 +27,7 @@ class PlotLine(title: String, xlab: String, ylab: String, nbSeries: Int = 1) ext
 }
 
 object PlotLine extends App {
-		val f = new VisualFrame("toto");
+		val f = VisualFrame("toto");
 		val inf = f.createFrame("Drawing");
 		val myplot = new PlotLine("My Line Plot","xlab","ylab",2);
 		inf.add(myplot);

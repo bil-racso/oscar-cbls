@@ -63,7 +63,7 @@ object BarChart {
 
 object BarChartExample extends App {
   
-  val frame = new VisualFrame("Example")
+  val frame = VisualFrame("Example")
   
   val inFrame1 = frame.createFrame("BarChart 1")
   val barChart1 = BarChart("MyPlot 1", "xLabel", "yLabel", Array("One", "Two"), Array("1", "2"), true)

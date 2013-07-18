@@ -114,7 +114,7 @@ object VisualRectangle {
     import oscar.util.VisualController._
     import scala.util.continuations._
     
-    val f = new VisualFrame("toto");
+    val f = VisualFrame("toto");
     val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
     val toolBar = f.createToolBar(withVisuController = true)

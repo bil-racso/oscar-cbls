@@ -93,7 +93,7 @@ object PerfectSquare extends App {
   cp.printStats()
 
   // Visualization
-  val f = new VisualFrame("Pefect Square")
+  val f = VisualFrame("Pefect Square")
   val ff = f.createFrame("Square")
   val d = VisualDrawing(false)
   ff.add(d)

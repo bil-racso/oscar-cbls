@@ -58,7 +58,7 @@ object ElectricityMarket {
 	  
 	  
 	  // -------------visual components ------------
-	  val f = new VisualFrame("Electricity Market")
+	  val f = VisualFrame("Electricity Market")
 		// creates the plot and place it into the frame
 	  val plot = new PlotLine("","Solution number","Qty")
 	  f.createFrame("Objective").add(plot)

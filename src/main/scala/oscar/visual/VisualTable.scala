@@ -121,7 +121,7 @@ class VisualTable(n: Int, m: Int) extends JPanel(new BorderLayout()) {
 
 object VisualTableExample extends App {
   
-  val frame = new VisualFrame("Example")
+  val frame = VisualFrame("Example")
   val inFrame = frame.createFrame("Table")
   val table = new VisualTable(3, 4)
   table.setValueAt("toto", 0, 0)

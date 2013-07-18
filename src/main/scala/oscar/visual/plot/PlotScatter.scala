@@ -30,7 +30,7 @@ class PlotScatter(title: String, xlab: String, ylab: String, nbSeries: Int = 1) 
 }
 
 object PlotScatter extends App {
-		val f = new VisualFrame("toto");
+		val f = VisualFrame("toto");
 		val inf = f.createFrame("Drawing");
 		val myPlot = new PlotScatter("My Scatter Plot","xlab","ylab",2);
 		inf.add(myPlot);

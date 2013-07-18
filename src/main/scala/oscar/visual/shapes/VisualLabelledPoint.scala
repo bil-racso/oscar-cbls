@@ -58,7 +58,7 @@ class VisualLabelledPoint(d:VisualDrawing, shape:Ellipse2D.Double, label: String
 object VisualLabelledPoint {
   	
   def main(args : Array[String]) {
-	val f = new VisualFrame("toto");
+	val f = VisualFrame("toto");
 	val d = VisualDrawing(true);
 	val inf = f.createFrame("Drawing");
 	inf.add(d);
