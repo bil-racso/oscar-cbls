@@ -21,7 +21,7 @@ import oscar.visual.shapes.VisualLabelledRoundRectangle
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
 
-class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false) {
+class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false, false, false) {
   
   private def levelHeight = 4 * this.getFontMetrics(this.getFont()).getHeight()
   private def baseOffset = this.getFontMetrics(this.getFont()).stringWidth(tree.label.toString) + tree.minOffset

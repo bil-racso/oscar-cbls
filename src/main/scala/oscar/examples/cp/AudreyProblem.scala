@@ -62,7 +62,7 @@ object AudreyProblem  {
 		//  -----------visualization of the euler tour ----------
 	
 		val f = new VisualFrame("Audrey",1,1)
-		val drawing = new VisualDrawing(false)
+		val drawing = VisualDrawing(false)
 		f.createFrame("Audrey").add(drawing)
 		val scale = 60
 

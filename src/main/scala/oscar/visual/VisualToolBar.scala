@@ -46,7 +46,7 @@ object VisualToolBar{
   def main(args : Array[String]) {
 		val f = new VisualFrame("toto");
 		val tb = f.createToolBar(false)
-		val d = new VisualDrawing(false);
+		val d = VisualDrawing(false);
 		val inf = f.createFrame("Drawing");
 		inf.add(d);
 		f.pack();

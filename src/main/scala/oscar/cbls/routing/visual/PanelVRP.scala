@@ -155,7 +155,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def newMapPanel:VisualDrawing = {
-    val mapPanel : VisualDrawing = new VisualDrawing(false);
+    val mapPanel : VisualDrawing = VisualDrawing(false);
     mapPanel.setPreferredSize(new Dimension(700,700))
     mapPanel.setMinimumSize(new Dimension(500,500))
     mapPanel.setBorder(BorderFactory.createTitledBorder("Map"))

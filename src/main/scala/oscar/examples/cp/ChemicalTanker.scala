@@ -45,7 +45,7 @@ object ChemicalTanker extends App {
 	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)
     // creates the tour visu and place it into the frame
-    val drawing = new VisualDrawing(false)
+    val drawing = VisualDrawing(false)
     f.createFrame("Cargo-Tank Layout").add(drawing)
     
     

@@ -59,7 +59,7 @@ object VisualArrow {
 object VisualArrowTest extends App {
   
   val frame = new VisualFrame("Example")
-  val drawing = new VisualDrawing(false)
+  val drawing = VisualDrawing(false)
   val inFrame = frame.createFrame("Arrow")
   inFrame.add(drawing)
   frame.pack()

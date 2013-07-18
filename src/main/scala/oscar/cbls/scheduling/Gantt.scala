@@ -21,7 +21,7 @@ import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualText
 
-class Gantt(p:Planning) extends VisualDrawing(false) {
+class Gantt(p:Planning) extends VisualDrawing(false, false, false) {
 
   var LineCount = 0
   val LineArray:Array[Int] = makeLineArray(p)

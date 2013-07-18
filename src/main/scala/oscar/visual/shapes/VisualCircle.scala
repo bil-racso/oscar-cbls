@@ -44,7 +44,7 @@ class VisualCircle(d: VisualDrawing, x: Double, y: Double, r: Double, c: Color) 
 object VisualCircleExample extends App {
   
   val frame = new VisualFrame("Example")
-  val drawing = new VisualDrawing(false)
+  val drawing = VisualDrawing(false)
   val inFrame = frame.createFrame("Drawing")
   inFrame.add(drawing)
   frame.pack()

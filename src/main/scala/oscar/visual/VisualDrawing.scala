@@ -28,14 +28,12 @@ import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualShape
 import scala.collection.mutable.Queue
 
-/** VisualDrawing
- *  
- *  Contains and draws VisualShapes. 
+/**
+ * VisualDrawing
+ *
+ *  Contains and draws VisualShapes.
  */
 class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
-
-  // For backward compatibility
-  def this(flip: Boolean) = this(flip, false, false)
 
   setBackground(Color.white)
 
@@ -52,7 +50,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
 
   /** Sets the margins of the panel. */
   def margin(m: Double): Unit = margin(m, m, m, m)
-  
+
   /** Sets the margins of the panel. */
   def margin(top: Double, right: Double, bottom: Double, left: Double): Unit = {
     marginT = top
@@ -93,21 +91,6 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
       val dWidth = getWidth()
       val dHeight = getHeight()
 
-      // Compute the scaling ratio
-      val ratio: Double = if (!scale) 1
-      else {
-        val ratioX = dWidth / (marginR + marginL + sWidth)
-        val ratioY = dHeight / (marginT + marginB + sHeight)
-        math.min(ratioX, ratioY) // Maintain proportions
-      }
-
-      val translateX: Int = if (!translate) 0
-      else (marginL - minX).toInt
-
-      val translateY: Int = if (!translate) 0
-      else if (flip) (marginB - minY).toInt
-      else (marginT - minY).toInt
-
       // Flip
       if (flip) {
         g2d.translate(0, dHeight)
@@ -116,11 +99,17 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
 
       // Scale
       if (scale) {
+        // Compute the scaling ratio
+        val ratioX = dWidth / (marginR + marginL + sWidth)
+        val ratioY = dHeight / (marginT + marginB + sHeight)
+        val ratio = math.min(ratioX, ratioY) // Maintain proportions
         g2d.scale(ratio, ratio)
       }
 
       // Translate
       if (translate) {
+        val translateX: Int = (marginL - minX).toInt
+        val translateY: Int = ((if (flip) marginB else marginT) - minY).toInt 
         g2d.translate(translateX, translateY)
       }
 
@@ -162,23 +151,30 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   def showToolTip(text: String): Unit = setToolTipText(text)
 }
 
+object VisualDrawing {
+  
+  def apply(flip: Boolean = true, translate: Boolean = false, scale: Boolean = false): VisualDrawing = {
+    new VisualDrawing(flip, translate, scale)
+  }
+}
+
 object VisualDrawingTest extends App {
 
-    val frame = new VisualFrame("Example");
-    val drawing = new VisualDrawing(false, true, false);
-    val inFrame = frame.createFrame("Drawing");
-    inFrame.add(drawing);
-    frame.pack();
-    
-    val rect = new VisualRectangle(drawing, 50, 50, 100, 100)
-    val line = VisualLine(drawing, 50, 50, 150, 150)
+  val frame = new VisualFrame("Example");
+  val drawing = new VisualDrawing(false, true, false);
+  val inFrame = frame.createFrame("Drawing");
+  inFrame.add(drawing);
+  frame.pack();
 
-    try {
-      Thread.sleep(1000);
-    } catch {
-      case e: InterruptedException => e.printStackTrace();
-    }
-    
-    rect.innerCol = Color.red;
+  val rect = new VisualRectangle(drawing, 50, 50, 100, 100)
+  val line = VisualLine(drawing, 50, 50, 150, 150)
+
+  try {
+    Thread.sleep(1000);
+  } catch {
+    case e: InterruptedException => e.printStackTrace();
   }
+
+  rect.innerCol = Color.red;
+}
 

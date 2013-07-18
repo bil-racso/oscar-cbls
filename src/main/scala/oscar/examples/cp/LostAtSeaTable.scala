@@ -103,7 +103,7 @@ object LostAtSea  {
        // ---------------- make a small visu ---------------	
        
        val f = new VisualFrame("Lost At Sea",1,1)
-	   val drawing = new VisualDrawing(true)
+	   val drawing = VisualDrawing(true)
 	   f.createFrame("Solution").add(drawing)
 	   val scale = 60
 

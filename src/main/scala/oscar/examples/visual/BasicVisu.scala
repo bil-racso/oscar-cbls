@@ -27,7 +27,7 @@ object BasicVisu {
     val f = new VisualFrame("Basic");
     val tb = f.createToolBar()
     tb.addButton("foo", println("bar"))
-    val d = new VisualDrawing(false);
+    val d = VisualDrawing(false);
     val inf = f.createFrame("Rectangle");
     inf.add(d);
     val rect = new VisualRectangle(d, 50, 50, 100, 50);

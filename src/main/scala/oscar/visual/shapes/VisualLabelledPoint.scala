@@ -59,7 +59,7 @@ object VisualLabelledPoint {
   	
   def main(args : Array[String]) {
 	val f = new VisualFrame("toto");
-	val d = new VisualDrawing(true);
+	val d = VisualDrawing(true);
 	val inf = f.createFrame("Drawing");
 	inf.add(d);
 	f.pack();

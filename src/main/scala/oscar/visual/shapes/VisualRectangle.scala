@@ -115,7 +115,7 @@ object VisualRectangle {
     import scala.util.continuations._
     
     val f = new VisualFrame("toto");
-    val d = new VisualDrawing(false);
+    val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
     val toolBar = f.createToolBar(withVisuController = true)
     inf.add(d);

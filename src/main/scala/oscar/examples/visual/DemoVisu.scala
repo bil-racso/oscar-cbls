@@ -69,7 +69,7 @@ object DemoVisu {
   }
 
   def demoRectangles = {
-    val d = new VisualDrawing(false);
+    val d = VisualDrawing(false);
     val inf = f.createFrame("Rectangle");
     inf.add(d);
     f.pack();

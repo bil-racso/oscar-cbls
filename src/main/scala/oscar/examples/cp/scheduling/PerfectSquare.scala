@@ -95,7 +95,7 @@ object PerfectSquare extends App {
   // Visualization
   val f = new VisualFrame("Pefect Square")
   val ff = f.createFrame("Square")
-  val d = new VisualDrawing(false)
+  val d = VisualDrawing(false)
   ff.add(d)
   def scale = 5
   val bg = new VisualRectangle(d, 0, 0, s * scale, s * scale)

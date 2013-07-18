@@ -66,7 +66,7 @@ object VisualLabelledBranch {
   	
   def main(args : Array[String]) {
 	val f = new VisualFrame("toto");
-	val d = new VisualDrawing(false);
+	val d = VisualDrawing(false);
 	val inf = f.createFrame("Drawing");
 	inf.add(d);
 	f.pack();

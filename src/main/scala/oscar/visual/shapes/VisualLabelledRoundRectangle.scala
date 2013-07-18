@@ -73,7 +73,7 @@ object VisualLabelledRoundRectangle {
 
   def main(args: Array[String]) {
     val f = new VisualFrame("toto");
-    val d = new VisualDrawing(false);
+    val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
 
     val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", 10);
