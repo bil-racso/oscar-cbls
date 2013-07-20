@@ -9,7 +9,7 @@ import java.awt.BasicStroke
 abstract class VisualShape(protected val drawing: VisualDrawing) {
 
   type S <: java.awt.Shape
-  protected def shape: S
+  protected val shape: S
   
   // Adds the visual shape in the drawing
   drawing.addShape(this);

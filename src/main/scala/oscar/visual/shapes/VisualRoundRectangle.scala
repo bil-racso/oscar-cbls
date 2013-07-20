@@ -6,7 +6,7 @@ import oscar.visual.VisualDrawing
 class VisualRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double) extends VisualShape(d) {
 
   type S = RoundRectangle2D.Double
-  def shape = s
+  protected val shape = s
   
   def x: Double = shape.getX()
   def y: Double = shape.getY()

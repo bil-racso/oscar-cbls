@@ -29,7 +29,7 @@ import java.awt.BasicStroke
 class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape(d) {
   
   type S = Line2D.Double
-  def shape = s
+  protected val shape = s
   
   // No need to fill the line
   fill = false

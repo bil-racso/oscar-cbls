@@ -22,7 +22,7 @@ import oscar.visual.VisualDrawing
 class VisualPolygon(d: VisualDrawing, s: Polygon) extends VisualShape(d) {
   
   type S = Polygon
-  def shape = s
+  protected val shape = s
 
   def reset(): Unit = shape.reset
 

@@ -48,7 +48,7 @@ import oscar.visual.VisualUtil
 class VisualRectangle(d: VisualDrawing, s: Rectangle2D.Double) extends VisualShape(d) {
 
   type S = Rectangle2D.Double
-  def shape = s
+  protected val shape = s
   
   def rect: Rectangle2D.Double = shape
 
