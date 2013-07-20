@@ -19,7 +19,10 @@ package oscar.visual.shapes
 import java.awt.Polygon
 import oscar.visual.VisualDrawing
 
-class VisualPolygon(d: VisualDrawing, s: Polygon) extends VisualShape(d, s) {
+class VisualPolygon(d: VisualDrawing, s: Polygon) extends VisualShape(d) {
+  
+  type S = Polygon
+  def shape = s
 
   def reset(): Unit = shape.reset
 

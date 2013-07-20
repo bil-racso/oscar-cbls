@@ -26,7 +26,10 @@ import java.awt.BasicStroke
  * @author Pierre Schaus
  *
  */
-class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape[Line2D.Double](d, s) {
+class VisualLine(d: VisualDrawing, s: Line2D.Double) extends VisualShape(d) {
+  
+  type S = Line2D.Double
+  def shape = s
   
   // No need to fill the line
   fill = false

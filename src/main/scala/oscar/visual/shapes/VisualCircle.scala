@@ -5,8 +5,11 @@ import java.awt.Color
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
 
-class VisualCircle(d: VisualDrawing, x: Double, y: Double, r: Double, c: Color) extends VisualShape[Ellipse2D.Double](d, new Ellipse2D.Double(x-r,y-r,2*r,2*r)) {
+class VisualCircle(d: VisualDrawing, x: Double, y: Double, r: Double, c: Color) extends VisualShape(d) {
 
+  type S = Ellipse2D.Double
+  def shape = new Ellipse2D.Double(x-r,y-r,2*r,2*r)
+  
   // Backward compatibility
   def this(d: VisualDrawing, x: Double, y: Double, r: Double) = {
     this(d: VisualDrawing, x: Double, y: Double, r: Double, Color.white)

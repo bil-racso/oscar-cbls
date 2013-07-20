@@ -1,14 +1,16 @@
 package oscar.visual.shapes
 
-import java.awt.Shape
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.geom.Point2D
 import oscar.visual.VisualDrawing
 import java.awt.BasicStroke
 
-abstract class VisualShape[+S <: Shape](protected val drawing: VisualDrawing, protected val shape: S) {
+abstract class VisualShape(protected val drawing: VisualDrawing) {
 
+  type S <: java.awt.Shape
+  protected def shape: S
+  
   // Adds the visual shape in the drawing
   drawing.addShape(this);
 

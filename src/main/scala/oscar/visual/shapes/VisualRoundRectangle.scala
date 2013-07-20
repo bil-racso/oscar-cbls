@@ -3,8 +3,11 @@ package oscar.visual.shapes
 import java.awt.geom.RoundRectangle2D
 import oscar.visual.VisualDrawing
 
-class VisualRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double) extends VisualShape[RoundRectangle2D.Double](d, s) {
+class VisualRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double) extends VisualShape(d) {
 
+  type S = RoundRectangle2D.Double
+  def shape = s
+  
   def x: Double = shape.getX()
   def y: Double = shape.getY()
   

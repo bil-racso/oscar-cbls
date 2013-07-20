@@ -22,7 +22,10 @@ import oscar.visual.VisualFrame
 /**
  * @author Pierre Schaus, pschaus@gmail.com
  */
-class VisualText(d: VisualDrawing, private var x: Double, private var y: Double, private var t: String, var centered: Boolean, s: Rectangle2D.Double) extends VisualShape[Rectangle2D.Double](d, s) {
+class VisualText(d: VisualDrawing, private var x: Double, private var y: Double, private var t: String, var centered: Boolean, s: Rectangle2D.Double) extends VisualShape(d) {
+  
+  type S = Rectangle2D.Double
+  def shape = s
   
   def this(d: VisualDrawing, x: Int, y: Int, t: String, centered: Boolean = false) {
     this(d, x,y,t,centered,new Rectangle2D.Double(x, y, 1, 1))

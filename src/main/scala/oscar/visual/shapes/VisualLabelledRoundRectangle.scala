@@ -27,7 +27,7 @@ import oscar.visual.VisualFrame
  *
  */
 class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends VisualRoundRectangle(d, s) {
-
+  
   def rect: RoundRectangle2D.Double = shape
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
   var marginWidth = _marginWidth

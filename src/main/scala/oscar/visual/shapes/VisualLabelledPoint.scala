@@ -25,7 +25,11 @@ import oscar.visual.VisualFrame
  * @author Pierre Schaus
  *
  */
-class VisualLabelledPoint(d:VisualDrawing, shape:Ellipse2D.Double, label: String, angle: Double) extends VisualShape[Ellipse2D.Double](d, shape){
+class VisualLabelledPoint(d:VisualDrawing, s:Ellipse2D.Double, label: String, angle: Double) extends VisualShape(d){
+  
+  type S = Ellipse2D.Double
+  def shape = s
+  
   val distFromPoint = 5
   
   def point: Ellipse2D.Double = shape

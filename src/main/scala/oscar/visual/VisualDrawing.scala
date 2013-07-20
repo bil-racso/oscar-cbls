@@ -38,7 +38,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   setBackground(Color.white)
 
   // Shapes contained in the panel
-  private val shapes: Queue[VisualShape[Shape]] = Queue()
+  private val shapes: Queue[VisualShape] = Queue()
 
   private var marginT: Double = 0
   private var marginR: Double = 0
@@ -60,7 +60,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   }
 
   // Returns the bounds of the bounding box containing all the shapes.
-  private def findBounds(shapes: Iterable[VisualShape[Shape]]): (Double, Double, Double, Double) = {
+  private def findBounds(shapes: Iterable[VisualShape]): (Double, Double, Double, Double) = {
     var minX = Double.MaxValue
     var maxX = Double.MinValue
     var minY = Double.MaxValue
@@ -120,7 +120,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
   }
 
   /** Adds a new non null colored shape in the panel. */
-  def addShape(shape: VisualShape[Shape], repaintAfter: Boolean = true): Unit = {
+  def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit = {
     if (shape == null) throw new IllegalArgumentException("The added shape is null.")
     else {
       shapes.enqueue(shape)
