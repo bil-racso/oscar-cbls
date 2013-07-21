@@ -4,7 +4,7 @@ import oscar.visual.shapes.VisualRectangle
 import java.awt.geom.Rectangle2D
 import java.awt.Color
 
-class VisualBinPacking(binWidth: Int, autoRepaint: Boolean) extends VisualDrawing(true, false, false) {
+class VisualBinPacking(binWidth: Int, autoRepaint: Boolean) extends VisualDrawing(true, false) {
   
   private var items: List[VisualBinItem] = List()
   

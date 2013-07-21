@@ -33,7 +33,7 @@ import scala.collection.mutable.Queue
  *
  *  Contains and draws VisualShapes.
  */
-class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends JPanel {
+class VisualDrawing(flip: Boolean, scale: Boolean) extends JPanel {
 
   setBackground(Color.white)
 
@@ -107,7 +107,7 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
       }
 
       // Translate
-      if (translate) {
+      if (scale) {
         val translateX: Int = (marginL - minX).toInt
         val translateY: Int = ((if (flip) marginB else marginT) - minY).toInt 
         g2d.translate(translateX, translateY)
@@ -153,15 +153,15 @@ class VisualDrawing(flip: Boolean, translate: Boolean, scale: Boolean) extends J
 
 object VisualDrawing {
   
-  def apply(flip: Boolean = true, translate: Boolean = false, scale: Boolean = false): VisualDrawing = {
-    new VisualDrawing(flip, translate, scale)
+  def apply(flip: Boolean = true, scale: Boolean = false): VisualDrawing = {
+    new VisualDrawing(flip, scale)
   }
 }
 
 object VisualDrawingTest extends App {
 
   val frame = VisualFrame("Example");
-  val drawing = new VisualDrawing(false, true, false);
+  val drawing = VisualDrawing();
   val inFrame = frame.createFrame("Drawing");
   inFrame.add(drawing);
   frame.pack();

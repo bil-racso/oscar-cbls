@@ -24,7 +24,7 @@ import oscar.cp.core.CPVarInt
 import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
 
-class VisualProfile(res: CumulativeResource, makespan: CPVarInt, color: Color = Color.WHITE) extends VisualDrawing(true, false, false) {
+class VisualProfile(res: CumulativeResource, makespan: CPVarInt, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
 
   // The profile is represented by a polygon
   private val polygon: VisualPolygon = VisualPolygon(this)

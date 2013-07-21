@@ -8,7 +8,7 @@ import java.awt.Color
  * 
  * 
  */
-class VisualTour(nodesPos: Array[(Int, Int)], scale: Boolean, autoRepaint: Boolean) extends VisualDrawing(true, true, scale) {
+class VisualTour(nodesPos: Array[(Int, Int)], scale: Boolean, autoRepaint: Boolean) extends VisualDrawing(true, scale) {
 
   margin(20) // Prevents nodes from being positioned on the borders of the panel
 

@@ -25,7 +25,7 @@ import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 
-class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false, false) {
+class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
 
   private val rectangles: Array[VisualRectangle] = Array.tabulate(activities.size)(a => {
     val rect = new VisualRectangle(this, 0, 0, 0, 0)

@@ -60,7 +60,7 @@ object Euler  {
 		//  -----------visualization of the euler tour ----------
 	
 		val f = new VisualFrame("Euler",1,1)
-		val drawing = new VisualDrawing(false, true, true)
+		val drawing = new VisualDrawing(false, true)
 		f.createFrame("Euler Tour").add(drawing)
 		val scale = 100
 		
