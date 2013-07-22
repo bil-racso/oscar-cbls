@@ -99,10 +99,8 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     colorsManagement.setDifferentColors(vrpModel.V)
     for(i <- 0 until nodes.length){
       val t = nodes(i)
-      if (i<vrpModel.V)
-        new VisualCircle(mapPanel, t.long,t.lat,10,Color.blue).innerCol = colorsManagement(i+1)
-      else
-        new VisualCircle(mapPanel, t.long,t.lat,6,Color.white)
+      if (i<vrpModel.V) VisualCircle(mapPanel, t.long,t.lat,10).innerCol = colorsManagement(i+1)
+      else VisualCircle(mapPanel, t.long,t.lat,6).innerCol = Color.white
     }
   }
 

@@ -77,10 +77,8 @@ class SmartSolution(myPanelVRP:PanelVRP) extends JFrame{
     myPanelVRP.colorsManagement.setDifferentColors(myPanelVRP.vrpModel.V)
     for(i <- 0 until nodes.length){
       val t = nodes(i)
-      if (i<myPanelVRP.vrpModel.V)
-        new VisualCircle(mapPanel, t.long,t.lat,10,Color.blue).innerCol = myPanelVRP.colorsManagement(i+1)
-      else
-        new VisualCircle(mapPanel, t.long,t.lat,6,Color.white)
+      if (i<myPanelVRP.vrpModel.V) new VisualCircle(mapPanel, t.long,t.lat,10).innerCol = myPanelVRP.colorsManagement(i+1)
+      else new VisualCircle(mapPanel, t.long,t.lat,6).innerCol = Color.white
     }
   }
 
