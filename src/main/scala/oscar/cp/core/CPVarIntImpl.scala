@@ -51,8 +51,6 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	
 
 	def iterator = {
-	  //println("iterator varimpl")
-	  println(Thread.currentThread().getStackTrace())
 	  dom.iterator
 	}
 	
