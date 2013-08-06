@@ -149,8 +149,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
 	def annotation : Parser[Annotation] = (
-	    pred_ann_id ^^ (new Annotation(_))
-	    | pred_ann_id<~"("~rep1sep(expr, ",")~")" ^^ (new Annotation(_))
+	    pred_ann_id~"("~rep1sep(expr, ",")~")" ^^ {
+	      case ann~"("~list~")" => new Annotation(ann, list)
+	    }
+	    | pred_ann_id ^^ (new Annotation(_, null))
 	)// some notes, see syntax
+	
 	
 }
