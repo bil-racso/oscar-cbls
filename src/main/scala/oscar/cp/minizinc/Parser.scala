@@ -18,10 +18,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "float"
 		| "int"
 		| "set of int"
-		| "array"~opt(index_set)~"of bool"
-		| "array"~opt(index_set)~"of float"
-		| "array"~opt(index_set)~"of int"
-		| "array"~opt(index_set)~"of set of int"
+		| "array ["~index_set~"] of bool"
+		| "array ["~index_set~"] of float"
+		| "array ["~index_set~"] of int"
+		| "array ["~index_set~"] of set of int"
 	)
 	def par_pred_param_type : Parser[Any] = (
 		par_type
@@ -30,11 +30,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "{"~rep1sep(int_const, ",")~"}"
 		| "set of"~int_const~".."~int_const
 		| "set of"~"{"~rep1sep(int_const, ",")~"}"
-		| "array"~opt(index_set)~"of"~float_const~".."~float_const
-		| "array"~opt(index_set)~"of"~int_const~".."~int_const
-		| "array"~opt(index_set)~"of"~"{"~rep1sep(int_const, ",")~"}"
-		| "array"~opt(index_set)~"of"~"set of"~int_const~".."~int_const
-		| "array"~opt(index_set)~"of"~"set of"~"{"~rep1sep(int_const, ",")~"}"
+		| "array ["~index_set~"] of"~float_const~".."~float_const
+		| "array ["~index_set~"] of"~int_const~".."~int_const
+		| "array ["~index_set~"] of"~"{"~rep1sep(int_const, ",")~"}"
+		| "array ["~index_set~"] of"~"set of"~int_const~".."~int_const
+		| "array ["~index_set~"] of"~"set of"~"{"~rep1sep(int_const, ",")~"}"
 	)
 	def var_type : Parser[Any] = (
 	    "var"~int_const~".."~int_const
@@ -44,29 +44,34 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "var"~"{"~rep1sep(int_const, ",")~"}"
 	    | "var set of"~int_const~".."~int_const
 	    | "var set of"~"{"~rep1sep(int_const, ",")~"}"
-	    | "array"~opt(index_set)~"of var bool"
-	    | "array"~opt(index_set)~"of var float"
-	    | "array"~opt(index_set)~"of var"~float_const~".."~float_const
-	    | "array"~opt(index_set)~"of var int"
-	    | "array"~opt(index_set)~"of var"~int_const~".."~int_const
-	    | "array"~opt(index_set)~"of var"~"{"~rep1sep(int_const, ",")~"}"
-	    | "array"~opt(index_set)~"of var set of"~int_const~".."~int_const
-	    | "array"~opt(index_set)~"of var set of"~"{"~rep1sep(int_const, ",")~"}"
+	    | "array ["~index_set~"] of var bool"
+	    | "array ["~index_set~"] of var float"
+	    | "array ["~index_set~"] of var"~float_const~".."~float_const
+	    | "array ["~index_set~"] of var int"
+	    | "array ["~index_set~"] of var"~int_const~".."~int_const
+	    | "array ["~index_set~"] of var"~"{"~rep1sep(int_const, ",")~"}"
+	    | "array ["~index_set~"] of var set of"~int_const~".."~int_const
+	    | "array ["~index_set~"] of var set of"~"{"~rep1sep(int_const, ",")~"}"
 	)
 	def var_pred_param_type : Parser[Any] = (
 		var_type
 		| "var set of int"
-		| "array"~opt(index_set)~"of var set of int"
+		| "array ["~index_set~"] of var set of int"
 	)
-	def index_set : Parser[Any] = "1.."~int_const | "int" // what about the fact that "int" is only allowed in predicates ?
+	def index_set : Parser[Any] = (
+	    "1.."~int_const ^^ {
+	      case "1.."~i => Range(1, i, 1)
+	    }
+	    | "int" ^^ (_.toString())// what about the fact that "int" is only allowed in predicates ?
+	)
 	
 	def expr : Parser[Any] = (
 		bool_const
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
 		| float_const
-		| int_const
+		| int_const //^^ (_.toInt) how to avoid the casts when using an expr that is an Any
 		| var_par_id
-		| var_par_id~opt(int_const) // why two entries for var_par_id ?
+		| var_par_id~"["~int_const~"]" // why two entries for var_par_id ?
 		| array_expr
 		| annotation
 		| "...string constant..." //???
@@ -85,7 +90,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | int_const~"[eE]".r~int_const ^^ (_.toString.toFloat)
 	)
 	
-	def int_const : Parser[Int] = "[0-9][0-9]*".r ^^ (_.toInt)// [+-] at the begining of the regex in the grammar, what does that mean ?
+	def int_const : Parser[Int] = "[+-]?[0-9][0-9]*".r ^^ (_.toInt)// [+-] at the begining of the regex in the grammar, what does that mean ?
 	
 	def set_const : Parser[Any] = ( 
 	    int_const~".."~int_const ^^ { 
@@ -94,9 +99,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "{"~>rep1sep(int_const, ",")<~"}" 
 	)
 	
-	def array_expr : Parser[Any] = (
-	    "[]"
-	    | "["~rep1sep(expr, ",")~"]"
+	def array_expr : Parser[List[Any]] = (
+	    //"[]" | not useful since repsep is used instead of rep1sep
+	    "["~>repsep(expr, ",")<~"]"
 	)
 	
 	def param_decl : Parser[Any] = par_type~":"~var_par_id~"="~expr~";" ^^ 
@@ -119,9 +124,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          	case x:List[Any] => new ParamSetOfInt(e, false, id)
 	          }
 	        )))
-	      case "array"~iset~"of bool" => model.dict += 
+	        
+	      //code duplication can be easily avioded but what's better ?
+	      case "array ["~iset~"] of bool" => model.dict += 
 	        ((id, (FZType.P_ARRAY_BOOL, 
-	            new ParamInt(e.toString.toInt, id)))) // tested, works, but needs to create the array and store the values
+	            new ParamArrayBool(e, 
+	                iset match {
+	                	case x:Range => iset
+	                	case _ => None
+	            	}, id))))
+	      case "array ["~iset~"] of float" => model.dict += 
+	        ((id, (FZType.P_ARRAY_FLOAT, 
+	            new ParamArrayBool(e, 
+	                iset match {
+	                	case x:Range => iset
+	                	case _ => None
+	            	}, id))))
 	    }
 	}
 	  //the expr has restriction... what about it ?

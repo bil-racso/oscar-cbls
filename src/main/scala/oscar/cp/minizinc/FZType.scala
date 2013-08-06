@@ -7,6 +7,7 @@ object FZType extends Enumeration {
 		P_INT,
 		P_SET_INT,
 		P_ARRAY_BOOL,
+		P_ARRAY_FLOAT,
 		V_BOOL,
 		V_FLOAT,
 		V_INT,
