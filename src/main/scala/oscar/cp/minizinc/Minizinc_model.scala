@@ -1,7 +1,8 @@
 package oscar.cp.minizinc
 
-import scala.collection.mutable.Map
+import scala.collection.mutable.HashMap
 
-class minizinc_model {
-	var param:Map[String, Int]
+class Minizinc_model {
+	var param = new HashMap[String, Int]
+	var variables = new HashMap[String, Int]
 }
