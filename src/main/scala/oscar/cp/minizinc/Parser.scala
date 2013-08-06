@@ -71,7 +71,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| annotation
 		| "...string constant..." //???
 	)
-	def pred_ann_id : Parser[Any] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
+	def pred_ann_id : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
 	def var_par_id : Parser[String] = "-*[A-Za-z][A-Za-z0-9_]*".r
 	
@@ -131,10 +131,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    tp match {
 	      case "var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_INT_RANGE,
-	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt, 1), ann.toString, id))))
+	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt, 1), ann, id))))
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
-	      		new VarInt(0, ann.toString, id))))
+	      		new VarInt(0, ann, id))))
 	    }
 	    
 	    
@@ -146,7 +146,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "solve"~annotations~"minimize"~expr~";"
 	    | "solve"~annotations~"maximize"~expr~";"
 	) // expr must be a var name of var array element
-	def annotations : Parser[Any] = rep("::"~annotation)
-	def annotation : Parser[Any] = pred_ann_id | pred_ann_id~"("~rep1sep(expr, ",")~")" // some notes, see syntax
+	
+	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
+	def annotation : Parser[Annotation] = (
+	    pred_ann_id ^^ (new Annotation(_))
+	    | pred_ann_id<~"("~rep1sep(expr, ",")~")" ^^ (new Annotation(_))
+	)// some notes, see syntax
 	
 }

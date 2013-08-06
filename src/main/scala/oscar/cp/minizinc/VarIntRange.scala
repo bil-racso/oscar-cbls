@@ -2,9 +2,9 @@ package oscar.cp.minizinc
 
 class VarIntRange (
     val range: Range,
-    val annotation: String,
+    val annotations: List[Annotation],
     override val name: String
     ) extends FZObject (name) {
 
-	override def toString() = name + " " + annotation + " " + range
+	override def toString() = name + " " + annotations + " " + range
 }
