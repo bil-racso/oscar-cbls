@@ -94,35 +94,40 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "{"~>rep1sep(int_const, ",")<~"}" 
 	)
 	
-	def array_expr : Parser[Any] = "[]" | "["~rep1sep(expr, ",")~"]"
+	def array_expr : Parser[Any] = (
+	    "[]"
+	    | "["~rep1sep(expr, ",")~"]"
+	)
 	
 	def param_decl : Parser[Any] = par_type~":"~var_par_id~"="~expr~";" ^^ 
 	{
 	  case tp~":"~id~"="~e~";" =>
 	    tp match {
 	      case "bool" => model.dict += 
-	        ((id.toString, (FZType.P_BOOL, 
+	        ((id, (FZType.P_BOOL, 
 	            new ParamBool(e.toString.toBoolean, id))))
 	      case "int" => model.dict += 
-	        ((id.toString, (FZType.P_INT, 
+	        ((id, (FZType.P_INT, 
 	            new ParamInt(e.toString.toInt, id))))
 	      case "float" => model.dict += 
-	        ((id.toString, (FZType.P_FLOAT,
+	        ((id, (FZType.P_FLOAT,
 	            new ParamFloat(e.toString.toFloat, id)))) // ! no floats in oscar, what to do ?
 	      case "set of int" => model.dict += 
-	        ((id.toString, (FZType.P_SET_INT,
+	        ((id, (FZType.P_SET_INT,
 	          e match {
 	          	case x:Range => new ParamSetOfInt(e, true, id)
 	          	case x:List[Any] => new ParamSetOfInt(e, false, id)
 	          }
 	        )))
+	      case "array"~iset~"of bool" => model.dict += 
+	        ((id, (FZType.P_ARRAY_BOOL, 
+	            new ParamInt(e.toString.toInt, id)))) // tested, works, but needs to create the array and store the values
 	    }
 	}
 	  //the expr has restriction... what about it ?
 	
 	def var_decl : Parser[Any] = var_type~":"~var_par_id~annotations~opt("="~expr)~";" ^^
-	{
-	  
+	{ 
 //to be done when assignment of var is understood
 //	  case tp~":"~id~ann~Some("="~e)~";" => model.dict.get(id) match {
 //	    case Some((tp, fzo)) => model.dict += ((id, (tp, fzo)))
@@ -141,6 +146,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}// the vars in assignment must be declared earlier
 	
 	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";"
+	
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;"
 	    | "solve"~annotations~"minimize"~expr~";"
