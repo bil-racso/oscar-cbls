@@ -86,8 +86,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	)
 	
 	def float_const : Parser[Float] = (
-	    int_const~"."~"[0-9][0-9]*".r~opt("[eE]".r~int_const) ^^ (_.toString.toFloat)
-	    | int_const~"[eE]".r~int_const ^^ (_.toString.toFloat)
+	    int_const~"."~"[0-9][0-9]*".r~opt("[eE]".r~int_const) ^^ {
+	      case i1~"."~i2~exp => exp match {
+	        case Some(e~i3) => (i1+"."+i2+e+i3).toFloat
+	        case None => (i1+"."+i2).toFloat
+	      } //(_.toString.toFloat)
+	    }
+	    | int_const~"[eE]".r~int_const ^^ {
+	      case i1~e~i2 => (i1+e+i2).toFloat
+	    }
 	)
 	
 	def int_const : Parser[Int] = "[+-]?[0-9][0-9]*".r ^^ (_.toInt)// [+-] at the begining of the regex in the grammar, what does that mean ?

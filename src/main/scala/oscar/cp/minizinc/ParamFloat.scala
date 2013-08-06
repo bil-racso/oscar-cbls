@@ -5,4 +5,5 @@ class ParamFloat (
     override val name: String
     ) extends FZObject (name){
 	
+	override def toString() = name + " " + value
 }
