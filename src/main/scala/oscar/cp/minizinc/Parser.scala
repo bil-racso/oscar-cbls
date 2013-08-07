@@ -2,9 +2,11 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
+import oscar.cp.modeling.CPSolver
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
+	val cp = CPSolver
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");"
@@ -13,6 +15,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id // what about no space before the ":" and one after ?
 	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type
+	
+	//def myParseAll(input: String) = {parseAll(var_decl, input)}
+	//def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
+	def myParseAll(input: String) = {parseAll(constraint, input)}
+	
+	
 	def par_type : Parser[Any] = (
 	    "bool"
 		| "float"
@@ -41,6 +49,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "var float"
 	    | "var"~float_const~".."~float_const
 	    | "var int"
+	    | "var"~int_const~".."~int_const
 	    | "var"~"{"~rep1sep(int_const, ",")~"}"
 	    | "var set of"~int_const~".."~int_const
 	    | "var set of"~"{"~rep1sep(int_const, ",")~"}"
@@ -65,7 +74,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "int" ^^ (_.toString())// what about the fact that "int" is only allowed in predicates ?
 	)
 	
-	def expr : Parser[Any] = (
+	def expr : Parser[Any] = ( //need to find a way to return something else than any
 		bool_const
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
 		| float_const
@@ -90,7 +99,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case i1~"."~i2~exp => exp match {
 	        case Some(e~i3) => (i1+"."+i2+e+i3).toFloat
 	        case None => (i1+"."+i2).toFloat
-	      } //(_.toString.toFloat)
+	      }
 	    }
 	    | int_const~"[eE]".r~int_const ^^ {
 	      case i1~e~i2 => (i1+e+i2).toFloat
@@ -142,7 +151,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            	}, id))))
 	      case "array ["~iset~"] of float" => model.dict += 
 	        ((id, (FZType.P_ARRAY_FLOAT, 
-	            new ParamArrayBool(e, 
+	            new ParamArrayFloat(e, 
 	                iset match {
 	                	case x:Range => iset
 	                	case _ => None
@@ -170,7 +179,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    
 	}// the vars in assignment must be declared earlier
 	
-	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";"
+	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";" ^^ {
+	  case "constraint"~cst~"("~varList~")"~ann~";" => cst match {
+	    case "int_le" => "constraint"
+	  }
+	}
 	
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;"

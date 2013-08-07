@@ -7,7 +7,7 @@ object test extends Parser with App{
 		//val input = "bool: name = true;"
     	//val input = new FileReader(args(0))
     	val input = args(0)
-		println(parseAll(param_decl, input))
+		println(myParseAll(input))
 		//println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
