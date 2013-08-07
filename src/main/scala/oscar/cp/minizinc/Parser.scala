@@ -10,6 +10,7 @@ import oscar.cp.modeling._
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
+	cp.silent = true
 	
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
