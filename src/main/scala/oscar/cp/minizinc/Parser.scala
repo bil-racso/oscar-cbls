@@ -82,8 +82,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
 		| float_const
 		| int_const //^^ (_.toInt) how to avoid the casts when using an expr that is an Any
+		| var_par_id~"["~int_const~"]"
 		| var_par_id
-		| var_par_id~"["~int_const~"]" // why two entries for var_par_id ?
 		| array_expr
 		| annotation
 		| "...string constant..." //???
@@ -220,8 +220,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
 	    case "int_lin_ne" =>
+	      assert(varList.length == 3, "To many arguments for int_lin_ne")
+	      
 	      varList match {
-	        
 	        case _ => None
 	      }
 	      //that match can be avoided by using a self made mutable tuple
@@ -281,8 +282,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        first = true // only used for formating the output
 	        print(";\n----------\n")
 	        //println(x.mkString(","))
-	      //} run ()
-	      } run (nbSolMax = 2)
+	      } run ()
+	      //} run (nbSolMax = 2)
 	      print("==========")
 	      //println(model.dict.toString)
 	    }
