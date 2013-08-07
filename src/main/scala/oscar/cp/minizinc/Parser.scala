@@ -177,7 +177,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        ((id, (FZType.V_INT_RANGE,
 	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-	            println("cpvar created")
+	            //println("cpvar created")
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
 	      		new VarInt(0, ann, id))))
@@ -197,7 +197,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
 	          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
 	          cp.add(fzo0.asInstanceOf[VarIntRange].cpvar <= fzo1.asInstanceOf[VarIntRange].cpvar)
-	          println("Constraint int_le added")
+	          //println("Constraint int_le added")
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
 	      //that match can be avoided by using a self made mutable tuple
@@ -209,23 +209,36 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;" ^^ { case _ => //println(model.dict.toString) 
 	      var x = Array[CPVarInt]()
+	      var name = Array[String]()
+	      var output = Array[Boolean]()
 	      model.dict.foreach { e => 
 	        //println(x.mkString(","))
 	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            //println(fzo.asInstanceOf[VarIntRange].cpvar + " " + fzo.asInstanceOf[VarIntRange].name)
 	            x :+= fzo.asInstanceOf[VarIntRange].cpvar
+	            name :+= fzo.asInstanceOf[VarIntRange].name
+	            fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
+	            	if ( ann.name == "output_var" ) { output :+= true }
+	            }
+	            //println(output.length + "  " + x.length)
+	            if ( output.length < x.length) { output :+= false }
 	        }
-	        //x :+= e._2.asInstanceOf[VarIntRange].cpvar
-	        println("done")
+	        //println("done")
 	      }
-	      println(x.mkString(","))
+	      //println(x.mkString(","))
 	      cp.solve subjectTo {
 	      } exploration {
 	        cp.binary(x)
-	        println(x.mkString(","))
+	        Range(0, x.length, 1).foreach { i =>
+	        	if ( output(i) ) { print(name(1) + " =" + x(i).toString) }
+	        }
+	        //x.foreach (cpvar => print(cpvar.toString +" "))
+	        print(";\n----------\n")
+	        //println(x.mkString(","))
 	      } run ()
-	      println(model.dict.toString)
+	      print("==========")
+	      //println(model.dict.toString)
 	    }
 	    | "solve"~annotations~"minimize"~expr~";"
 	    | "solve"~annotations~"maximize"~expr~";"
