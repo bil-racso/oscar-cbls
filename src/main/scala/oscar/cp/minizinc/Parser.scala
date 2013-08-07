@@ -163,6 +163,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case x:Range => iset
 	                	case _ => None
 	            	}, id))))
+	      case "array ["~iset~"] of int" => model.dict += 
+	        ((id, (FZType.P_ARRAY_INT, 
+	            new ParamArrayInt(e, 
+	                iset match {
+	                	case x:Range => iset
+	                	case _ => None
+	            	}, id))))
 	    }
 	}
 	  //the expr has restriction... what about it ?
@@ -265,7 +272,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                }
 	              }
 	              case _ => {
-	                println("The type " + tp.toString() + " is not supported")
+	                println("The type " + tp.toString() + " is not supported/relevant for the solver")
 	              }
 	            }
 	            
