@@ -11,8 +11,8 @@ class TestParamDecl extends FunSuite with ShouldMatchers {
 	 test ("mytest"){
 		//val input = "bool: name = true;"
     	//val input = new FileReader(args(0))
-    	val input = "bool : name = false; solve satisfy;"
-		println(new Parser().myParseAll(input))
+    	val input = "bool : name = false;"
+		println(new Parser().parseParam(input))
 		//println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
