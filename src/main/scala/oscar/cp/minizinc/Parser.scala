@@ -211,7 +211,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          //println("Constraint int_le added")
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
-	    case "set_ne" =>
+	    case "int_ne" => // /!\ VARSETOFINT must be in arg, not VARINT
 	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
 	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
 	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
@@ -237,7 +237,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      var x = Array[CPVarInt]()
 	      var name = Array[String]() // only used for formating the output
 	      var output = Array[Boolean]() // only used for formating the output
-	      var first = true // only used for formating the output
+	      //var first = true // only used for formating the output
 	      model.dict.foreach { e => 
 	        //println(x.mkString(","))
 	        e._2 match {
@@ -264,28 +264,34 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	if ( output.length < x.length) { output :+= false }
 	                }
 	              }
+	              case _ => {
+	                println("The type " + tp.toString() + " is not supported")
+	              }
 	            }
 	            
 	        }
-	        println("done")
+	        //println("done")
 	      }
-	      println(x.mkString(","))
+	      //println(x.mkString(","))
+	      x = x.reverse
+	      name = name.reverse
+	      output = output.reverse
 	      cp.solve subjectTo {
 	      } exploration {
 	        cp.binary(x)
 	        Range(0, x.length, 1).foreach { i =>
 	        	if ( output(i) ) { 
-	        	  if(!first) { print(" ")}
-	        	  print(name(i) + " =" + x(i).toString) 
-	        	  first = false // only used for formating the output
+	        	  //if(!first) { print(" ")}
+	        	  println(name(i) + " =" + x(i).toString + ";") 
+	        	  //first = false // only used for formating the output
 	        	}
 	        }
-	        first = true // only used for formating the output
-	        print(";\n----------\n")
+	        //first = true // only used for formating the output
+	        println("----------")
 	        //println(x.mkString(","))
 	      } run ()
 	      //} run (nbSolMax = 2)
-	      print("==========")
+	      println("==========")
 	      //println(model.dict.toString)
 	    }
 	    | "solve"~annotations~"minimize"~expr~";"

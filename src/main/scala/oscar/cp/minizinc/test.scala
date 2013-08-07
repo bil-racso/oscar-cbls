@@ -6,13 +6,14 @@ object test extends Parser with App{
 	def test {
 		//val input = "bool: name = true;"
     	//val input = new FileReader(args(0))
-    	val input = "var 2..3: x :: output_var;"+
-    			"var 1..4: y :: output_var;" +
-    			"constraint int_le(x, y);" +
-    			"constraint set_ne(x, y);" +
+    	val input = "bool: b = true;" +
+    			"int: i = 42;" +
+    			"float: f1 = 2.3;" +
+    			"float: f2 = 2.3e2;" +
+    			"float: f3 = 2e3;" +
     			"solve satisfy;"
-		println(myParseAll(input))
-		//myParseAll(input)
+		//println(myParseAll(input))
+		myParseAll(input)
 		println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
