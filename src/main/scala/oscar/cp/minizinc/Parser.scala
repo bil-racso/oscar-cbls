@@ -72,7 +72,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	)
 	def index_set : Parser[Any] = (
 	    "1.."~int_const ^^ {
-	      case "1.."~i => Range(1, i, 1)
+	      case "1.."~i => Range(1, i+1, 1)
 	    }
 	    | "int" ^^ (_.toString())// what about the fact that "int" is only allowed in predicates ?
 	)
@@ -182,8 +182,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
 	      		new VarInt(0, ann, id))))
+	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
+	        ((id, (FZType.V_ARRAY_INT_R, 
+	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
+	                iset match {
+	                	case x:Range => for(i <- iset.asInstanceOf[Range]) 
+	                	  yield CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)
+	                	case _ => null
+	            	}
+	            	, id))))
+	        println("cpvarArray created")
 	    }
-	    
 	    
 	}// the vars in assignment must be declared earlier
 	
@@ -210,6 +219,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          //println("Constraint set_ne added")
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
+	    case "int_lin_ne" =>
+	      varList match {
+	        
+	        case _ => None
+	      }
 	      //that match can be avoided by using a self made mutable tuple
 	      //"constraint"
 	  }
@@ -227,16 +241,33 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            //println(fzo.asInstanceOf[VarIntRange].cpvar + " " + fzo.asInstanceOf[VarIntRange].name)
-	            x :+= fzo.asInstanceOf[VarIntRange].cpvar
-	            name :+= fzo.asInstanceOf[VarIntRange].name
-	            fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
-	            	if ( ann.name == "output_var" ) { output :+= true }
+	            tp match {
+	              case FZType.V_INT_RANGE => {
+	                x :+= fzo.asInstanceOf[VarIntRange].cpvar
+	                name :+= fzo.asInstanceOf[VarIntRange].name
+	                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
+	            		if ( ann.name == "output_var" ) { output :+= true }
+	                }
+	                //println(output.length + "  " + x.length)
+	                if ( output.length < x.length) { output :+= false }
+	              }
+	              case FZType.V_ARRAY_INT_R => {
+	                var c = 0
+	                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
+	                	x :+= e
+	                	name :+= fzo.asInstanceOf[VarArrayIntRange].name + "[" + c.toString + "]"
+	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output :+= true }
+	                	}
+	                	if ( output.length < x.length) { output :+= false }
+	                }
+	              }
 	            }
-	            //println(output.length + "  " + x.length)
-	            if ( output.length < x.length) { output :+= false }
+	            
 	        }
-	        //println("done")
+	        println("done")
 	      }
+	      println(x.mkString(","))
 	      cp.solve subjectTo {
 	      } exploration {
 	        cp.binary(x)
@@ -250,7 +281,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        first = true // only used for formating the output
 	        print(";\n----------\n")
 	        //println(x.mkString(","))
-	      } run ()
+	      //} run ()
+	      } run (nbSolMax = 2)
 	      print("==========")
 	      //println(model.dict.toString)
 	    }
