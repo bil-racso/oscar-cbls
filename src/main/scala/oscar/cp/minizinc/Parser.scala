@@ -2,11 +2,18 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
+
 import oscar.cp.modeling.CPSolver
+import oscar.cp.core._
+import oscar.cp.modeling._
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
-	val cp = CPSolver
+	val cp = CPSolver()
+	
+	//def myParseAll(input: String) = {parseAll(var_decl, input)}
+	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
+	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");"
@@ -14,12 +21,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def identifier : Parser[Any] = index_set
 	
 	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id // what about no space before the ":" and one after ?
-	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type
-	
-	//def myParseAll(input: String) = {parseAll(var_decl, input)}
-	//def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
-	def myParseAll(input: String) = {parseAll(constraint, input)}
-	
+	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type	
 	
 	def par_type : Parser[Any] = (
 	    "bool"
@@ -89,11 +91,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def var_par_id : Parser[String] = "-*[A-Za-z][A-Za-z0-9_]*".r
 	
+	
+	//definition of the constants
+	
 	def bool_const : Parser[Boolean] = (
 	    "true" ^^ (x => true)
 	    | "false" ^^ (x => false)
 	)
-	
 	def float_const : Parser[Float] = (
 	    int_const~"."~"[0-9][0-9]*".r~opt("[eE]".r~int_const) ^^ {
 	      case i1~"."~i2~exp => exp match {
@@ -105,12 +109,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case i1~e~i2 => (i1+e+i2).toFloat
 	    }
 	)
-	
 	def int_const : Parser[Int] = "[+-]?[0-9][0-9]*".r ^^ (_.toInt)// [+-] at the begining of the regex in the grammar, what does that mean ?
-	
 	def set_const : Parser[Any] = ( 
 	    int_const~".."~int_const ^^ { 
-	    	case int1~".."~int2 => Range(int1, int2, 1) 
+	    	case int1~".."~int2 => Range(int1, int2+1, 1) 
 	    } 
 	    | "{"~>rep1sep(int_const, ",")<~"}" 
 	)
@@ -119,6 +121,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    //"[]" | not useful since repsep is used instead of rep1sep
 	    "["~>repsep(expr, ",")<~"]"
 	)
+	
+	
+	//Parameter and variable declarations
 	
 	def param_decl : Parser[Any] = par_type~":"~var_par_id~"="~expr~";" ^^ 
 	{
@@ -141,7 +146,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	        )))
 	        
-	      //code duplication can be easily avioded but what's better ?
+	      //code duplication can be easily avoided but what's better ?
 	      case "array ["~iset~"] of bool" => model.dict += 
 	        ((id, (FZType.P_ARRAY_BOOL, 
 	            new ParamArrayBool(e, 
@@ -170,7 +175,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    tp match {
 	      case "var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_INT_RANGE,
-	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt, 1), ann, id))))
+	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
+	            println("cpvar created")
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
 	      		new VarInt(0, ann, id))))
@@ -179,25 +186,58 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    
 	}// the vars in assignment must be declared earlier
 	
+	
+	// Constraint declaration (every constraint should be a case below the match
+	
 	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";" ^^ {
 	  case "constraint"~cst~"("~varList~")"~ann~";" => cst match {
-	    case "int_le" => "constraint"
+	    case "int_le" => 
+	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
+	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
+	          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
+	          cp.add(fzo0.asInstanceOf[VarIntRange].cpvar <= fzo1.asInstanceOf[VarIntRange].cpvar)
+	          println("Constraint int_le added")
+	        case _ => assert(false, "varList didn't contains enough varibles")
+	      }
+	      //that match can be avoided by using a self made mutable tuple
+	      //"constraint"
 	  }
 	}
 	
+	
 	def solve_goal : Parser[Any] = (
-	    "solve"~annotations~"satisfy;"
+	    "solve"~annotations~"satisfy;" ^^ { case _ => //println(model.dict.toString) 
+	      var x = Array[CPVarInt]()
+	      model.dict.foreach { e => 
+	        //println(x.mkString(","))
+	        e._2 match {
+	          case (tp, fzo) => // /!\ not always CPVarInt
+	            //println(fzo.asInstanceOf[VarIntRange].cpvar + " " + fzo.asInstanceOf[VarIntRange].name)
+	            x :+= fzo.asInstanceOf[VarIntRange].cpvar
+	        }
+	        //x :+= e._2.asInstanceOf[VarIntRange].cpvar
+	        println("done")
+	      }
+	      println(x.mkString(","))
+	      cp.solve subjectTo {
+	      } exploration {
+	        cp.binary(x)
+	        println(x.mkString(","))
+	      } run ()
+	      println(model.dict.toString)
+	    }
 	    | "solve"~annotations~"minimize"~expr~";"
 	    | "solve"~annotations~"maximize"~expr~";"
 	) // expr must be a var name of var array element
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
+	// is there a list of annotations ?
 	def annotation : Parser[Annotation] = (
 	    pred_ann_id~"("~rep1sep(expr, ",")~")" ^^ {
 	      case ann~"("~list~")" => new Annotation(ann, list)
 	    }
 	    | pred_ann_id ^^ (new Annotation(_, null))
 	)// some notes, see syntax
-	
 	
 }
