@@ -6,11 +6,11 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.minizinc.Parser
 
 class TestParamDecl extends FunSuite with ShouldMatchers {
-	def test {
+	 test ("mytest"){
 		//val input = "bool: name = true;"
     	//val input = new FileReader(args(0))
-    	val input = "bool : name = false;"
-		//println(parseAll(param_decl, input))
+    	val input = "bool : name = false; solve satisfy;"
+		println(new Parser().myParseAll(input))
 		//println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
