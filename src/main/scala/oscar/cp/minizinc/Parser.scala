@@ -200,6 +200,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          //println("Constraint int_le added")
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
+	    case "set_ne" =>
+	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
+	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
+	          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
+	          cp.add(fzo0.asInstanceOf[VarIntRange].cpvar != fzo1.asInstanceOf[VarIntRange].cpvar)
+	          //println("Constraint set_ne added")
+	        case _ => assert(false, "varList didn't contains enough varibles")
+	      }
 	      //that match can be avoided by using a self made mutable tuple
 	      //"constraint"
 	  }
@@ -209,8 +218,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;" ^^ { case _ => //println(model.dict.toString) 
 	      var x = Array[CPVarInt]()
-	      var name = Array[String]()
-	      var output = Array[Boolean]()
+	      var name = Array[String]() // only used for formating the output
+	      var output = Array[Boolean]() // only used for formating the output
+	      var first = true // only used for formating the output
 	      model.dict.foreach { e => 
 	        //println(x.mkString(","))
 	        e._2 match {
@@ -226,14 +236,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	        //println("done")
 	      }
-	      //println(x.mkString(","))
 	      cp.solve subjectTo {
 	      } exploration {
 	        cp.binary(x)
 	        Range(0, x.length, 1).foreach { i =>
-	        	if ( output(i) ) { print(name(1) + " =" + x(i).toString) }
+	        	if ( output(i) ) { 
+	        	  if(!first) { print(" ")}
+	        	  print(name(i) + " =" + x(i).toString) 
+	        	  first = false // only used for formating the output
+	        	}
 	        }
-	        //x.foreach (cpvar => print(cpvar.toString +" "))
+	        first = true // only used for formating the output
 	        print(";\n----------\n")
 	        //println(x.mkString(","))
 	      } run ()
