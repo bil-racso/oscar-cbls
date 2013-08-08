@@ -8,15 +8,60 @@ import oscar.cp.minizinc.Parser
 
 // /!\ check if myParseAll in oscar.cp.minizinc.Parser tries to parse a flat_zinc model
 class TestParamDecl extends FunSuite with ShouldMatchers {
-	 test ("mytest"){
-		//val input = "bool: name = true;"
-    	//val input = new FileReader(args(0))
-    	val input = "bool : name = false;"
-		println(new Parser().parseParam(input))
-		//println(model.dict.toString)
-		//println(model.dict.get("name"))
-//		model.dict.get("name") match {
-//		  case Some(p) => println(p.toString)
-//		}
+  
+	var input: String = " "
+	  
+	  
+	test ("Test param bool") {
+		val p = new Parser()
+    	input = "bool : b = false;"
+		p.parseParam(input)
+		p.model.dict.toString should be("Map(b -> (P_BOOL,b false))")
 	}
+	
+	
+	test ("Test param Float1") {
+		val p = new Parser()
+		input = "float: f1 = 5.2;"
+		p.parseParam(input)
+		p.model.dict.toString should be("Map(f1 -> (P_FLOAT,f1 5.2))")
+	}
+	
+	test ("Test param Float2") {
+		val p = new Parser()
+		input = "float: f2 = 5.2e3;"
+		p.parseParam(input)
+		p.model.dict.toString should be("Map(f2 -> (P_FLOAT,f2 5200.0))")
+	}
+	
+	test ("Test param Float3") {
+		val p = new Parser()
+		input = "float: f3 = 5E3;"
+		p.parseParam(input)
+		p.model.dict.toString should be("Map(f3 -> (P_FLOAT,f3 5000.0))")
+	}
+	
+	
+	test ("Test param Int") {
+		val p = new Parser()
+		input = "int: i = 42;"
+		p.parseParam(input) 
+		p.model.dict.toString should be("Map(i -> (P_INT,i 42))")
+	}
+	
+	
+	test ("Test param Set of Int1") {
+		val p = new Parser()
+		input = "set of int: sI1 = {4,6,9};"
+		p.parseParam(input) 
+		p.model.dict.toString should be("Map(sI1 -> (P_SET_INT,sI1 List(4, 6, 9) false))")
+	}
+	
+	test ("Test param Set of Int2") {
+		val p = new Parser()
+		input = "set of int: sI2 = 4..7;"
+		p.parseParam(input) 
+		p.model.dict.toString should be("Map(sI2 -> (P_SET_INT,sI2 Range(4, 5, 6, 7) true))")
+	}
+	
 }
