@@ -6,7 +6,6 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.minizinc.Parser
 
 
-// /!\ check if myParseAll in oscar.cp.minizinc.Parser tries to parse a flat_zinc model
 class TestParamDecl extends FunSuite with ShouldMatchers {
   
 	var input: String = " "
