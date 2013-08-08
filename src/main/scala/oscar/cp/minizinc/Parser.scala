@@ -173,7 +173,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case x:Range => iset
 	                	case _ => None
 	            	}, id))))
-	      case "array ["~iset~"] of set of int" => println("object to be created")
+	      case "array ["~iset~"] of set of int" => model.dict +=
+	        ((id, (FZType.P_ARRAY_SET_INT, 
+	            new ParamArraySetOfInt(e,
+	                iset match {
+	                	case x:Range => iset
+	                	case _ => None
+	            	}, id))))
 	    }
 	}
 	  //the expr has restriction... what about it ?
@@ -198,9 +204,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
 	                iset match {
-	              //TODO: replace the yield by an Array.fill
-	                	case x:Range => for(i <- iset.asInstanceOf[Range]) 
-	                	  yield CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)} 
 	                	case _ => null
 	            	}
 	            	, id))))
