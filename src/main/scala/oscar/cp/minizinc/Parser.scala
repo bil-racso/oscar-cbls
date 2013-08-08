@@ -2,10 +2,10 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
-
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core._
 import oscar.cp.modeling._
+import java.io.FileReader
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -13,6 +13,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	cp.silent = true
 	
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
+	def myParseAll(input: FileReader) = {parseAll(flatzinc_model, input)}
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
 	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	def parseParam(input: String) = {parseAll(param_decl, input)}
@@ -83,7 +84,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
 		| float_const
 		| int_const //^^ (_.toInt) how to avoid the casts when using an expr that is an Any
-		| var_par_id~"["~int_const~"]"
+		| var_par_id~"["~int_const~"]" ^^ {
+		  case id~"["~i~"]" => List(id, i)
+		}
 		| var_par_id
 		| array_expr
 		| annotation
@@ -170,6 +173,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case x:Range => iset
 	                	case _ => None
 	            	}, id))))
+	      case "array ["~iset~"] of set of int" => println("object to be created")
 	    }
 	}
 	  //the expr has restriction... what about it ?
@@ -194,6 +198,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
 	                iset match {
+	              //TODO: replace the yield by an Array.fill
 	                	case x:Range => for(i <- iset.asInstanceOf[Range]) 
 	                	  yield CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)
 	                	case _ => null
@@ -219,6 +224,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
 	    case "int_ne" => // /!\ VARSETOFINT must be in arg, not VARINT
+	      println(varList(0).toString + "  " + varList(1).toString)
 	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
 	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
 	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
@@ -229,7 +235,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      }
 	    case "int_lin_ne" =>
 	      assert(varList.length == 3, "To many arguments for int_lin_ne")
-	      
+	      //println(varList(1).toString)
+	      var x = Array[CPVarInt]()
+	      //can be optimized if access to the CPVar is done outside of the loop
+	      varList(1).asInstanceOf[List[List[Any]]].foreach { e =>
+	        //println(e)
+	        model.dict.get(e(0).toString) match {
+	          case Some((tp, fzo)) => 
+	            assert(tp == FZType.V_ARRAY_INT_R, "The fzo doesn't have the type V_ARRAY_INT_R")
+	            x :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(e(1).toString.toInt-1)
+	        }
+	      }
+	      //println(x.mkString(","))
+	      var cst: Array[Int] = varList(0).asInstanceOf[List[Int]].toArray
+	      //println(cst.mkString(","))
+	      cp.add(weightedSum(cst, x) != varList(2).toString.toInt)
 	      varList match {
 	        case _ => None
 	      }
@@ -259,6 +279,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                }
 	                //println(output.length + "  " + x.length)
 	                if ( output.length < x.length) { output :+= false }
+	                x = x.reverse
+	                name = name.reverse
+            		output = output.reverse
 	              }
 	              case FZType.V_ARRAY_INT_R => {
 	                var c = 0
@@ -269,6 +292,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			if ( ann.name == "output_array" ) { output :+= true }
 	                	}
 	                	if ( output.length < x.length) { output :+= false }
+	                	c += 1
 	                }
 	              }
 	              case _ => {
@@ -280,9 +304,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //println("done")
 	      }
 	      //println(x.mkString(","))
-	      x = x.reverse
-	      name = name.reverse
-	      output = output.reverse
 	      cp.solve subjectTo {
 	      } exploration {
 	        cp.binary(x)
@@ -296,7 +317,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //first = true // only used for formating the output
 	        println("----------")
 	        //println(x.mkString(","))
-	      } run ()
+	      } run (1)
 	      //} run (nbSolMax = 2)
 	      println("==========")
 	      //println(model.dict.toString)
