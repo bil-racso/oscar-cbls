@@ -204,7 +204,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	            	, id))))
-	        println("cpvarArray created")
+	        //println("cpvarArray created")
 	    }
 	    
 	}// the vars in assignment must be declared earlier
@@ -224,15 +224,54 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        case _ => assert(false, "varList didn't contains enough varibles")
 	      }
 	    case "int_ne" => // /!\ VARSETOFINT must be in arg, not VARINT
-	      println(varList(0).toString + "  " + varList(1).toString)
-	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
-	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
-	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
-	          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
-	          cp.add(fzo0.asInstanceOf[VarIntRange].cpvar != fzo1.asInstanceOf[VarIntRange].cpvar)
-	          //println("Constraint set_ne added")
-	        case _ => assert(false, "varList didn't contains enough varibles")
+	      var x = Array[CPVarInt]()
+	      //println(varList.toString)
+	      if(varList(0).isInstanceOf[List[Any]] && varList(1).isInstanceOf[List[Any]]) {
+	        //var c = 0
+	        varList.asInstanceOf[List[List[Any]]].foreach { e =>
+	          model.dict.get(e(0).toString) match {
+	          	case Some((tp, fzo)) => 
+	          		assert(tp == FZType.V_ARRAY_INT_R, "The fzo doesn't have the type V_ARRAY_INT_R")
+	          		x :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(e(1).toString.toInt-1)
+	          	}
+	        }
+	        //println(x.mkString(","))
+	        //println("list")
+	        //println("do nothing yet")
 	      }
+	      else {
+	        (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
+	        	case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+	        		assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
+	        		assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
+	        		//cp.add(fzo0.asInstanceOf[VarIntRange].cpvar != fzo1.asInstanceOf[VarIntRange].cpvar)
+	        		x :+= fzo0.asInstanceOf[VarIntRange].cpvar
+	        		x :+= fzo1.asInstanceOf[VarIntRange].cpvar
+	        		//println(x.mkString(","))
+	        		//println("lit")
+	        		//println("Constraint set_ne added")
+	        	case _ => assert(false, "varList didn't contains enough varibles")
+	        }
+	      }
+	      cp.add(x(0) != x(1))
+	      /*
+	      println(varList(0).toString + "  " + varList(1).toString)
+	      if(varList(0).isInstanceOf[List[Any]] && varList(1).isInstanceOf[List[Any]]) {
+	        
+	        println("do nothing yet")
+	      }
+	      else {
+	        (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
+	        	case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+	        		assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
+	        		assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
+	        		cp.add(fzo0.asInstanceOf[VarIntRange].cpvar != fzo1.asInstanceOf[VarIntRange].cpvar)
+	        		//println("Constraint set_ne added")
+	        	case _ => assert(false, "varList didn't contains enough varibles")
+	        }
+	      }
+	      */
+	      
 	    case "int_lin_ne" =>
 	      assert(varList.length == 3, "To many arguments for int_lin_ne")
 	      //println(varList(1).toString)
