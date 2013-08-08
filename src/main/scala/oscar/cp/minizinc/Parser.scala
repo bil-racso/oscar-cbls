@@ -307,8 +307,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;" ^^ { case _ => //println(model.dict.toString) 
 	      var x = Array[CPVarInt]()
-	      var name = Array[String]() // only used for formating the output
-	      var output = Array[Boolean]() // only used for formating the output
+	      var state = Array[VarState]()
+	      //var name = Array[String]() // only used for formating the output
+	      var output: Boolean = false // only used for formating the output
+	      var c = 0
+	      //var array = Array[Boolean]()
+	      //var previousName: String = null
 	      //var first = true // only used for formating the output
 	      model.dict.foreach { e => 
 	        //println(x.mkString(","))
@@ -318,26 +322,41 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            tp match {
 	              case FZType.V_INT_RANGE => {
 	                x :+= fzo.asInstanceOf[VarIntRange].cpvar
-	                name :+= fzo.asInstanceOf[VarIntRange].name
 	                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
-	            		if ( ann.name == "output_var" ) { output :+= true }
+	            		if ( ann.name == "output_var" ) { output = true }
 	                }
+	                state :+= new VarState(fzo.asInstanceOf[VarIntRange].name,
+	                    output, false, false, 1)
+	                output = false
+	                //name :+= fzo.asInstanceOf[VarIntRange].name
 	                //println(output.length + "  " + x.length)
-	                if ( output.length < x.length) { output :+= false }
-	                x = x.reverse
-	                name = name.reverse
-            		output = output.reverse
+	                //if ( output.length < x.length) { output :+= false }
+	                //array :+= false
+	                
 	              }
 	              case FZType.V_ARRAY_INT_R => {
-	                var c = 0
+	                //var c = 0
+	                var first = true
 	                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
 	                	x :+= e
-	                	name :+= fzo.asInstanceOf[VarArrayIntRange].name + "[" + c.toString + "]"
+	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output = true }
+	                	}
+	                	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
+	                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].range.length)
+	                	
+	                	first = false
+	                	/*
+	                	//name :+= fzo.asInstanceOf[VarArrayIntRange].name + "[" + c.toString + "]"
+	                	name :+= fzo.asInstanceOf[VarArrayIntRange].name
 	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output :+= true }
 	                	}
 	                	if ( output.length < x.length) { output :+= false }
+	                	array :+= true
 	                	c += 1
+	                	* 
+	                	*/
 	                }
 	              }
 	              case _ => {
@@ -353,16 +372,28 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      } exploration {
 	        cp.binary(x)
 	        Range(0, x.length, 1).foreach { i =>
-	        	if ( output(i) ) { 
+	        	if ( state(i).output ) { 
+	        	  if ( state(i).array ) {
+	        	    c += 1
+	        	    if (state(i).first) {
+	        	    	print(state(i).name + " = array1d(1.." + state(i).size + ", [" + x(i).toString.split(" ")(1))
+	        	    } else if( c == state(i).size ) {
+	        	    	println("," + x(i).toString + "]);")
+	        	    	c = 0
+	        	    } else {
+	        	    	print("," + x(i).toString)
+	        	    }
+	        	  } else {
 	        	  //if(!first) { print(" ")}
-	        	  println(name(i) + " =" + x(i).toString + ";") 
+	        	  	print(state(i).name + " =" + x(i).toString + ";") 
+	        	  }
 	        	  //first = false // only used for formating the output
 	        	}
 	        }
 	        //first = true // only used for formating the output
 	        println("----------")
 	        //println(x.mkString(","))
-	      } run (1)
+	      } run (2)
 	      //} run (nbSolMax = 2)
 	      println("==========")
 	      //println(model.dict.toString)
