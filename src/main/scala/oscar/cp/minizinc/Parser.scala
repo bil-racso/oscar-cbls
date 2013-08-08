@@ -17,6 +17,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
 	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	def parseParam(input: String) = {parseAll(param_decl, input)}
+	def parseVar(input: String) = {parseAll(var_decl, input)}
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");"
