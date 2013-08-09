@@ -200,7 +200,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            //println("cpvar created")
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
-	      		new VarInt(0, ann, id))))
+	      		new VarInt(ann, CPVarInt(cp, -10000, 10000), id)))) // what should I do when no assign ?
+	      	//println(model.dict.toString)
 	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
@@ -210,7 +211,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	            	, id))))
-	        //println("cpvarArray created")
+	      case "array ["~iset~"] of var int" => model.dict +=
+	        ((id, (FZType.V_ARRAY_INT,
+	            new VarArrayInt(ann, 
+	            	iset match {
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarInt(cp, -10000, 10000)} 
+	                	case _ => null
+	            	}
+	                , id))))
+	        //println(model.dict.toString)
+	      //case "array ["~iset~"] of var bool" =>
 	    }
 	    
 	}// the vars in assignment must be declared earlier
@@ -219,21 +230,81 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	// Constraint declaration (every constraint should be a case below the match
 	
 	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";" ^^ {
-	  case "constraint"~cst~"("~varList~")"~ann~";" => cst match {
+	  case "constraint"~cstr~"("~varList~")"~ann~";" => cstr match {
 	    case "int_le" => 
-	      (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
-	        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
-	          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
-	          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
-	          cp.add(fzo0.asInstanceOf[VarIntRange].cpvar <= fzo1.asInstanceOf[VarIntRange].cpvar)
-	          //println("Constraint int_le added")
-	        case _ => assert(false, "varList didn't contains enough varibles")
+	      var cpvar = Array[CPVarInt]()
+	      //println(varList.toString)
+	      //println(varList(0))
+	      (varList(0), varList(1)) match {
+	        case (x:Int, y:List[Any]) => {
+	          model.dict.get(y(0).toString) match {
+	            case Some((tp, fzo)) => {
+	              //assert(tp == FZType.V_ARRAY_INT_R, "The FZObject doesn't have the type V_INT_RANGE")
+	              cpvar :+= CPVarInt(cp, x.toInt)
+	              tp match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(y(1).toString.toInt-1)
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayInt].cpvar(y(1).toString.toInt-1)
+	                }
+	              }
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	          //println("int le cst added")
+	        }
+	        case (x:Int, y:String) => {
+	          println("is a is")
+	          model.dict.get(y.toString) match {
+	            case Some((tp, fzo)) => {
+	              assert(tp == FZType.V_INT_RANGE, "The FZObject doesn't have the type V_INT_RANGE")
+	              cpvar :+= CPVarInt(cp, x)
+	              cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	        }
+	        //to be added later 
+	        case (x:List[Any], y:Int) => {
+	          println("is a li")
+	        }
+	        case (x:List[Any], y:List[Any]) => {
+	          println("is a ll")
+	        }
+	        case (x:List[Any], y:String) => {
+	          println("is a ls")
+	        }
+	        case (x:String, y:Int) => {
+	          println("is a si")
+	          model.dict.get(x.toString) match {
+	            case Some((tp, fzo)) => {
+	              assert(tp == FZType.V_INT_RANGE, "The FZObject doesn't have the type V_INT_RANGE")
+	              cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+	              cpvar :+= CPVarInt(cp, y)
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	        }
+	        case (x:String, y:List[Any]) => {
+	          println("is a sl")
+	        }
+	        case (x:String, y:String) => {
+	          println("is a ss")
+	          (model.dict.get(x.toString), model.dict.get(y.toString)) match {
+		        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+		          assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
+		          assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
+		          cpvar :+= fzo0.asInstanceOf[VarIntRange].cpvar
+		          cpvar :+= fzo1.asInstanceOf[VarIntRange].cpvar
+		        case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	        }
 	      }
+	      cp.add(cpvar(0) <= cpvar(1))
 	    case "int_ne" => // /!\ VARSETOFINT must be in arg, not VARINT
 	      var x = Array[CPVarInt]()
-	      //println(varList.toString)
 	      if(varList(0).isInstanceOf[List[Any]] && varList(1).isInstanceOf[List[Any]]) {
-	        //var c = 0
 	        varList.asInstanceOf[List[List[Any]]].foreach { e =>
 	          model.dict.get(e(0).toString) match {
 	          	case Some((tp, fzo)) => 
@@ -241,9 +312,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          		x :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(e(1).toString.toInt-1)
 	          	}
 	        }
-	        //println(x.mkString(","))
-	        //println("list")
-	        //println("do nothing yet")
 	      }
 	      else {
 	        (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
@@ -255,57 +323,75 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        		x :+= fzo1.asInstanceOf[VarIntRange].cpvar
 	        		//println(x.mkString(","))
 	        		//println("lit")
-	        		//println("Constraint set_ne added")
+	        		//println("Constraint int_ne added")
 	        	case _ => assert(false, "varList didn't contains enough varibles")
 	        }
 	      }
 	      cp.add(x(0) != x(1))
-	      /*
-	      println(varList(0).toString + "  " + varList(1).toString)
-	      if(varList(0).isInstanceOf[List[Any]] && varList(1).isInstanceOf[List[Any]]) {
-	        
-	        println("do nothing yet")
-	      }
-	      else {
-	        (model.dict.get(varList(0).toString), model.dict.get(varList(1).toString)) match {
-	        	case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
-	        		assert(tp0 == FZType.V_INT_RANGE, "The FZObject 0 doesn't have the type V_INT_RANGE")
-	        		assert(tp1 == FZType.V_INT_RANGE, "The FZObject 1 doesn't have the type V_INT_RANGE")
-	        		cp.add(fzo0.asInstanceOf[VarIntRange].cpvar != fzo1.asInstanceOf[VarIntRange].cpvar)
-	        		//println("Constraint set_ne added")
-	        	case _ => assert(false, "varList didn't contains enough varibles")
-	        }
-	      }
-	      */
 	      
 	    case "int_lin_ne" =>
-	      assert(varList.length == 3, "To many arguments for int_lin_ne")
-	      //println(varList(1).toString)
-	      var x = Array[CPVarInt]()
-	      //can be optimized if access to the CPVar is done outside of the loop
-	      varList(1).asInstanceOf[List[List[Any]]].foreach { e =>
-	        //println(e)
-	        model.dict.get(e(0).toString) match {
-	          case Some((tp, fzo)) => 
-	            assert(tp == FZType.V_ARRAY_INT_R, "The fzo doesn't have the type V_ARRAY_INT_R")
-	            x :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(e(1).toString.toInt-1)
-	        }
-	      }
-	      //println(x.mkString(","))
-	      var cst: Array[Int] = varList(0).asInstanceOf[List[Int]].toArray
-	      //println(cst.mkString(","))
-	      cp.add(weightedSum(cst, x) != varList(2).toString.toInt)
-	      varList match {
-	        case _ => None
-	      }
-	      //that match can be avoided by using a self made mutable tuple
-	      //"constraint"
+	      int_lin_cstr(varList, ann, cstr)
+	    case "int_lin_eq" => 
+	      int_lin_cstr(varList, ann, cstr)
+	    case "int_lin_le" =>
+	      int_lin_cstr(varList, ann, cstr)
+
 	  }
 	}
 	
+	def int_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
+	  assert(varList.length == 3, "To many arguments for int_lin_ne")
+	      var cpvar = Array[CPVarInt]()
+	      varList(1).asInstanceOf[List[Any]].foreach { e =>
+	        e match {
+	          case x:List[Any] => {
+	            model.dict.get(x(0).toString) match {
+		          case Some((tp, fzo)) => 
+		            tp match {
+		                case FZType.V_ARRAY_INT_R => {
+		                  cpvar :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+		                }
+		                case FZType.V_ARRAY_INT => {
+		                  cpvar :+= fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+		                }
+		            }
+		        }
+	          }
+	          case x:Int => {
+	            cpvar :+= CPVarInt(cp, x)
+	          }
+	          case x:String => {
+	            model.dict.get(x) match {
+		          case Some((tp, fzo)) => 
+		            tp match {
+		                case FZType.V_INT => {
+		                  cpvar :+= fzo.asInstanceOf[VarInt].cpvar
+		                }
+		                case FZType.V_INT_RANGE => {
+		                  cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+		                }
+		            }
+	            }
+	          }
+	        }
+	      }
+	      var cst: Array[Int] = varList(0).asInstanceOf[List[Int]].toArray
+	      cstr match {
+	        case "int_lin_ne" => 
+	          cp.add(weightedSum(cst, cpvar) != varList(2).toString.toInt)
+	        case "int_lin_eq" =>
+	          cp.add(weightedSum(cst, cpvar) == varList(2).toString.toInt)
+	        case "int_lin_le" => 
+	          cp.add(weightedSum(cst, cpvar) <= varList(2).toString.toInt) 
+	      }
+	      //println(cstr + " added")
+	}
 	
 	def solve_goal : Parser[Any] = (
-	    "solve"~annotations~"satisfy;" ^^ { case _ => //println(model.dict.toString) 
+	    "solve"~annotations~"satisfy;" ^^ { 
+	      case "solve"~ann~"satisfy;" => solver("sat", null)
+	      /*
+	      case _ => //println(model.dict.toString) 
 	      var x = Array[CPVarInt]()
 	      var state = Array[VarState]()
 	      //var name = Array[String]() // only used for formating the output
@@ -359,6 +445,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	*/
 	                }
 	              }
+	              case FZType.V_INT => {
+	                
+	              }
+	              case FZType.V_ARRAY_INT => {
+	                
+	              }
 	              case _ => {
 	                println("The type " + tp.toString() + " is not supported/relevant for the solver")
 	              }
@@ -385,7 +477,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        	    }
 	        	  } else {
 	        	  //if(!first) { print(" ")}
-	        	  	print(state(i).name + " =" + x(i).toString + ";") 
+	        	  	println(state(i).name + " =" + x(i).toString + ";") 
 	        	  }
 	        	  //first = false // only used for formating the output
 	        	}
@@ -393,14 +485,140 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //first = true // only used for formating the output
 	        println("----------")
 	        //println(x.mkString(","))
-	      } run (2)
+	      } run (1)
 	      //} run (nbSolMax = 2)
 	      println("==========")
 	      //println(model.dict.toString)
+	       * 
+	       */
 	    }
 	    | "solve"~annotations~"minimize"~expr~";"
-	    | "solve"~annotations~"maximize"~expr~";"
+	    | "solve"~annotations~"maximize"~expr~";" ^^ { 
+	      case "solve"~ann~"maximize"~e~";" => solver("max", e)
+	    }
 	) // expr must be a var name of var array element
+	
+	def solver(tp: String, expr: Any) {
+	  var x = Array[CPVarInt]()
+      var state = Array[VarState]()
+      var output: Boolean = false // only used for formating the output
+      var c = 0
+      model.dict.foreach { e => 
+        e._2 match {
+          case (tp, fzo) => // /!\ not always CPVarInt
+            tp match {
+              case FZType.V_INT_RANGE => {
+                x :+= fzo.asInstanceOf[VarIntRange].cpvar
+                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
+            		if ( ann.name == "output_var" ) { output = true }
+                }
+                state :+= new VarState(fzo.asInstanceOf[VarIntRange].name,
+                    output, false, false, 1)
+                output = false
+                
+              }
+              case FZType.V_ARRAY_INT_R => {
+                //var c = 0
+                var first = true
+                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
+                	x :+= e
+                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
+            			if ( ann.name == "output_array" ) { output = true }
+                	}
+                	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
+                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].range.length)
+                	
+                	first = false
+                }
+              }
+              case FZType.V_INT => {
+                
+              }
+              case FZType.V_ARRAY_INT => {
+                
+              }
+              case _ => {
+                println("The type " + tp.toString() + " is not supported/relevant for the solver")
+              }
+            }
+            
+        }
+      }
+	  tp match {
+	    case "sat" => {
+	      cp.solve subjectTo {
+	      } exploration {
+	        cp.binary(x)
+	        format_output(x, state)
+	      } run (1)
+	      println("==========")
+	    }
+	    case "max" => {
+	      var cpvar: CPVarInt = null
+	      println(expr.toString)
+	      expr match {
+	        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
+	        case x:List[Any] => {
+	          model.dict.get(x(0).toString) match {
+		          case Some((tp, fzo)) => 
+		            tp match {
+		                case FZType.V_ARRAY_INT_R => {
+		                  cpvar = fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+		                }
+		                case FZType.V_ARRAY_INT => {
+		                  cpvar = fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+		                }
+		            }
+		      }
+	        }
+	        case x:String => 
+	          model.dict.get(x) match {
+		          case Some((tp, fzo)) => 
+		            tp match {
+		                case FZType.V_INT => {
+		                  cpvar = fzo.asInstanceOf[VarInt].cpvar
+		                }
+		                case FZType.V_INT_RANGE => {
+		                  cpvar = fzo.asInstanceOf[VarIntRange].cpvar
+		                }
+		            }
+	          }
+	      }
+	      cp.maximize(cpvar) subjectTo {
+	        //what is the right way yo do it ? I dont know OscaR !
+	      } exploration {
+	        println(model.dict.toString)
+	        cp.binary(x)
+	        format_output(x, state)
+	        println(model.dict.toString)
+	      } run ()
+	      println("==========")
+	    }
+	    case "min" =>
+	  }   
+	}
+	
+	def format_output(x: Array[CPVarInt], state: Array[VarState]) {
+		var c = 0
+		Range(0, x.length, 1).foreach { i =>
+	    	if ( state(i).output ) { 
+	    	  if ( state(i).array ) {
+	    	    c += 1
+	    	    if (state(i).first) {
+	    	    	print(state(i).name + " = array1d(1.." + state(i).size + ", [" + x(i).toString.split(" ")(1))
+	    	    } else if( c == state(i).size ) {
+	    	    	println("," + x(i).toString + "]);")
+	    	    	c = 0
+	    	    } else {
+	    	    	print("," + x(i).toString)
+	    	    }
+	    	  } else {
+	    	  	println(state(i).name + " =" + x(i).toString + ";") 
+	    	  }
+	    	}
+	    }
+	    println("----------")
+	}
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
 	// is there a list of annotations ?
