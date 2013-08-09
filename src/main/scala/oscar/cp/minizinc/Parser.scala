@@ -237,10 +237,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      //println(varList(0))
 	      (varList(0), varList(1)) match {
 	        case (x:Int, y:List[Any]) => {
+	          cpvar :+= CPVarInt(cp, x.toInt)
+	          cpvar :+= getCPFromList(y)
+	          /*
 	          model.dict.get(y(0).toString) match {
 	            case Some((tp, fzo)) => {
 	              //assert(tp == FZType.V_ARRAY_INT_R, "The FZObject doesn't have the type V_INT_RANGE")
-	              cpvar :+= CPVarInt(cp, x.toInt)
 	              tp match {
 	                case FZType.V_ARRAY_INT_R => {
 	                  cpvar :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(y(1).toString.toInt-1)
@@ -252,15 +254,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            }
 	            case _ => assert(false, "varList didn't contains enough varibles")
 	          }
+	          * */
 	          //println("int le cst added")
 	        }
 	        case (x:Int, y:String) => {
 	          //println("is a is")
+	          cpvar :+= CPVarInt(cp, x)
 	          model.dict.get(y.toString) match {
 	            case Some((tp, fzo)) => {
-	              assert(tp == FZType.V_INT_RANGE, "The FZObject doesn't have the type V_INT_RANGE")
-	              cpvar :+= CPVarInt(cp, x)
-	              cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+	              tp match {
+	                case FZType.V_INT_RANGE => {
+	                  cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+	                }
+	                case FZType.V_INT => {
+	                  cpvar :+= fzo.asInstanceOf[VarInt].cpvar
+	                }
+	              }
 	            }
 	            case _ => assert(false, "varList didn't contains enough varibles")
 	          }
@@ -308,7 +317,26 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	        }
 	        case (x:List[Any], y:String) => {
-	          println("is a ls")
+	          model.dict.get(x(0).toString) match {
+	            case Some((tp, fzo)) => {
+	              tp match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+	                }
+	              }
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	          model.dict.get(x.toString) match {
+	            case Some((tp, fzo)) => {
+	              assert(tp == FZType.V_INT_RANGE, "The FZObject doesn't have the type V_INT_RANGE")
+	              cpvar :+= fzo.asInstanceOf[VarIntRange].cpvar
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
 	        }
 	        case (x:String, y:Int) => {
 	          println("is a si")
@@ -380,6 +408,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      varList(1).asInstanceOf[List[Any]].foreach { e =>
 	        e match {
 	          case x:List[Any] => {
+	            cpvar :+= getCPFromList(x)
+	            /*
 	            model.dict.get(x(0).toString) match {
 		          case Some((tp, fzo)) => 
 		            tp match {
@@ -391,11 +421,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		                }
 		            }
 		        }
+		        * 
+		        */
 	          }
 	          case x:Int => {
 	            cpvar :+= CPVarInt(cp, x)
 	          }
 	          case x:String => {
+	            cpvar :+= getCPFromString(x)
+	            /*
 	            model.dict.get(x) match {
 		          case Some((tp, fzo)) => 
 		            tp match {
@@ -407,6 +441,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		                }
 		            }
 	            }
+	            * 
+	            */
 	          }
 	        }
 	      }
@@ -420,6 +456,34 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          cp.add(weightedSum(cst, cpvar) <= varList(2).toString.toInt) 
 	      }
 	      //println(cstr + " added")
+	}
+	
+	def getCPFromString(x: String): CPVarInt = {
+	  model.dict.get(x) match {
+	      case Some((tp, fzo)) => 
+	        tp match {
+	            case FZType.V_INT => {
+	              fzo.asInstanceOf[VarInt].cpvar
+	            }
+	            case FZType.V_INT_RANGE => {
+	              fzo.asInstanceOf[VarIntRange].cpvar
+	            }
+	        }
+	    }
+	}
+	
+	def getCPFromList(x: List[Any]): CPVarInt = {
+	  model.dict.get(x(0).toString) match {
+          case Some((tp, fzo)) => 
+            tp match {
+                case FZType.V_ARRAY_INT_R => {
+                  fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+                }
+                case FZType.V_ARRAY_INT => {
+                  fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+                }
+            }
+        }
 	}
 	
 	def solve_goal : Parser[Any] = (
