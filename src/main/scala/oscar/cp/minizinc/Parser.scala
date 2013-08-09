@@ -187,10 +187,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def var_decl : Parser[Any] = var_type~":"~var_par_id~annotations~opt("="~expr)~";" ^^
 	{ 
-//to be done when assignment of var is understood
-//	  case tp~":"~id~ann~Some("="~e)~";" => model.dict.get(id) match {
-//	    case Some((tp, fzo)) => model.dict += ((id, (tp, fzo)))
-//	  }
+
+	  case tp~":"~id~ann~Some("="~e)~";" => 
+	    e match {
+	      case x:Int => model.dict += 
+	        ((id, (FZType.V_INT, 
+	            new VarInt(ann, CPVarInt(cp, x), id))))
+	    }
 	  case tp~":"~id~ann~None~";" => 
 	    tp match {
 	      case "var"~i1~".."~i2 => model.dict +=
@@ -239,6 +242,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_cstr(varList, ann, cstr)
 	    case "int_ne" => 
 	      int_cstr(varList, ann, cstr)
+	    case "int_plus" => 
+	      int_cstr(varList, ann, cstr)
+	    case "int_times" => 
+	      int_cstr(varList, ann, cstr)
 	    case "int_lin_ne" =>
 	      int_lin_cstr(varList, ann, cstr)
 	    case "int_lin_eq" => 
@@ -250,45 +257,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def int_cstr(varList: List[Any], ann: Any, cstr: String) {
 	  var cpvar = Array[CPVarInt]()
-      (varList(0), varList(1)) match {
-        case (x:Int, y:List[Any]) => {
-          cpvar :+= CPVarInt(cp, x.toInt)
-          cpvar :+= getCPFromList(y)
-        }
-        case (x:Int, y:String) => {
-          cpvar :+= CPVarInt(cp, x)
-          cpvar :+= getCPFromString(y)
-        }
-        case (x:List[Any], y:Int) => {
-          cpvar :+= getCPFromList(x)
-          cpvar :+= CPVarInt(cp, y.toInt)
-          
-        }
-        case (x:List[Any], y:List[Any]) => {
-          cpvar :+= getCPFromList(x)
-          cpvar :+= getCPFromList(y)
-        }
-        case (x:List[Any], y:String) => {
-          cpvar :+= getCPFromList(x)
-          cpvar :+= getCPFromString(y)
-        }
-        case (x:String, y:Int) => {
-          cpvar :+= getCPFromString(x)
-          cpvar :+= CPVarInt(cp, y)
-        }
-        case (x:String, y:List[Any]) => {
-          cpvar :+= getCPFromString(x)
-          cpvar :+= getCPFromList(y)
-        }
-        case (x:String, y:String) => {
-          cpvar :+= getCPFromString(x)
-          cpvar :+= getCPFromString(y)
-        }
-      }
+	  varList.foreach{ e => 
+	  	e match {
+	  	  	case x:Int => cpvar :+= CPVarInt(cp, x)
+		    case x:List[Any] => cpvar :+= getCPFromList(x)
+		    case x:String => cpvar :+= getCPFromString(x)
+	  	}
+	  }
 	  cstr match {
 	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
 	    case "int_le" => cp.add(cpvar(0) <= cpvar(1))
 	    case "int_ne" => cp.add(cpvar(0) != cpvar(1))
+	    case "int_plus" => cp.add(cpvar(0) + cpvar(1) == cpvar(2))
+	    case "int_times" => cp.add(cpvar(0) * cpvar(1) == cpvar(2))
 	  }
 	}
 	
@@ -417,39 +398,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      println(expr.toString)
 	      expr match {
 	        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
-	        case x:List[Any] => {
+	        case x:List[Any] =>
 	          cpvar = getCPFromList(x)
-	          /*
-	          model.dict.get(x(0).toString) match {
-		          case Some((tp, fzo)) => 
-		            tp match {
-		                case FZType.V_ARRAY_INT_R => {
-		                  cpvar = fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
-		                }
-		                case FZType.V_ARRAY_INT => {
-		                  cpvar = fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
-		                }
-		            }
-		      }
-		      * 
-		      */
-	        }
 	        case x:String => 
 	          cpvar = getCPFromString(x)
-	          /*
-	          model.dict.get(x) match {
-		          case Some((tp, fzo)) => 
-		            tp match {
-		                case FZType.V_INT => {
-		                  cpvar = fzo.asInstanceOf[VarInt].cpvar
-		                }
-		                case FZType.V_INT_RANGE => {
-		                  cpvar = fzo.asInstanceOf[VarIntRange].cpvar
-		                }
-		            }
-	          }
-	          * 
-	          */
 	      }
 	      cp.maximize(cpvar) subjectTo {
 	        //what is the right way yo do it ? I dont know OscaR !
