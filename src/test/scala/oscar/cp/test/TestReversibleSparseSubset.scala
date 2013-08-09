@@ -21,14 +21,14 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
 import oscar.reversible.ReversibleSetIndexedArray
-import oscar.reversible.ReversibleSubsetIndexedArray
+import oscar.reversible.ReversibleSparseSubset
 
 
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
+class TestReversibleSparseSubset extends FunSuite with ShouldMatchers  {
 
 
   
@@ -37,7 +37,7 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
 		
 		val cp = CPSolver()
     	
-		val s = new ReversibleSubsetIndexedArray(cp,5, 10)
+		val s = new ReversibleSparseSubset(cp,5, 10)
 		s.requires(8)
 		s.possibleSet should be(Set(5,6,7,8,9,10))
 		s.requiredSet should be(Set(8))
@@ -78,7 +78,7 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
   	
 		val cp = CPSolver()
     	
-		val s = new ReversibleSubsetIndexedArray(cp,5, 10)
+		val s = new ReversibleSparseSubset(cp,5, 10)
 		(5 to 10).forall(!s.isRequired(_)) should be(true)
 		s.requires(8)
 		s.possibleSet should be(Set(5,6,7,8,9,10))
@@ -126,7 +126,7 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
    	
 		val cp = CPSolver()
     	
-		val s = new ReversibleSubsetIndexedArray(cp,-2, 2)
+		val s = new ReversibleSparseSubset(cp,-2, 2)
 		s.possibleSet should be(Set(-2,-1,0,1,2))
 		s.requiredSet should be(Set())
 		(-2 to 2).forall(s.isPossible(_)) should be(true)
@@ -134,14 +134,14 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
 		s.isPossible(-3) should be(false)
 		s.isPossible(3) should be(false)
 	
-		s.excludes(3)
-		s.excludes(-3)
+
 		s.possibleSet should be(Set(-2,-1,0,1,2))
-		
+		s.possibleNotRequired.toSet should be(Set(-2,-1,0,1,2))
 		
 		s.excludes(0)
 		s.requires(-2)
 		s.possibleSet should be(Set(-2,-1,1,2))
+		s.possibleNotRequired.toSet should be(Set(-1,1,2))
 		s.requiredSet should be(Set(-2))
 		s.isPossible(-2) should be(true)
 
@@ -151,10 +151,11 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
    	
 		val cp = CPSolver()
     	
-		val s = ReversibleSubsetIndexedArray(cp,Set(-2, 2))
+		val s = ReversibleSparseSubset(cp,Set(-2, 2))
 		s.possibleSet should be(Set(-2,2))
 		s.requiredSet should be(Set())
 		s.requires(2)
+		s.possibleNotRequired.toSet should be(Set(-2))
 		s.possibleSet should be(Set(-2,2))
 		s.requiredSet should be(Set(2))
 
@@ -167,7 +168,7 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
 		
 		val cp = CPSolver()
     	
-		val s = ReversibleSubsetIndexedArray(cp,Set(-6,-10,1,5,9,11))
+		val s = ReversibleSparseSubset(cp,Set(-6,-10,1,5,9,11))
 		
 		intercept[RuntimeException] {
 			s.requires(8)
@@ -189,7 +190,7 @@ class TestSubsetIndexedArray extends FunSuite with ShouldMatchers  {
    
 		
 		val cp = CPSolver()
-		val s = ReversibleSubsetIndexedArray(cp,Set(-6,-10,1,5,9,11))
+		val s = ReversibleSparseSubset(cp,Set(-6,-10,1,5,9,11))
 		
 		s.excludes(1)
 		s.excludes(5)

@@ -26,7 +26,7 @@ import java.util.LinkedList
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class DeltaPropagate extends FunSuite with ShouldMatchers {
+class TestDeltaPropagate extends FunSuite with ShouldMatchers {
   
   test("test delta 1") {
     var propag = false
@@ -169,6 +169,8 @@ class DeltaPropagate extends FunSuite with ShouldMatchers {
     cp.add(cons)
     println("x dom:"+x.toSet)
     propag should be(true)
-  }    
+  } 
+  
+  
   
 }

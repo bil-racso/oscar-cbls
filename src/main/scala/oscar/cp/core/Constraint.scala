@@ -20,7 +20,11 @@ import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 
 
-class Snapshot(x: CPVarInt) {
+abstract class Snapshot {
+  def update()
+}
+
+class SnapshotVarInt(x: CPVarInt) extends Snapshot {
   var oldMin: Int = x.min 
   var oldMax: Int = x.max
   var oldSize: Int = x.size
@@ -28,6 +32,15 @@ class Snapshot(x: CPVarInt) {
     oldMin = x.min
     oldMax = x.max
     oldSize = x.size
+  }
+}
+
+class SnapshotVarSet(x: CPVarSet) extends Snapshot {
+  var oldSizePossible: Int = x.possibleSize
+  var oldSizeRequired: Int = x.requiredSize
+  def update() {
+    oldSizePossible = x.possibleSize
+    oldSizeRequired = x.requiredSize
   }
 }
 
@@ -40,26 +53,45 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   val active = new ReversibleBool(s, true)
   val inQueue = new ReversibleBool(s, false)
 
-  val snapshots = scala.collection.mutable.Map[CPVarInt, Snapshot]() // min/max/size
-  val toSnapshot = scala.collection.mutable.Set[CPVarInt]()
+  val snapshotsVarInt = scala.collection.mutable.Map[CPVarInt, SnapshotVarInt]() // min/max/size
+  val snapshotsVarSet = scala.collection.mutable.Map[CPVarSet, SnapshotVarSet]()
+  val toSnapshotVarInt = scala.collection.mutable.Set[CPVarInt]()
+  val toSnapshotVarSet = scala.collection.mutable.Set[CPVarSet]()
 
   private var _mustSnapshot = false
 
   def addSnapshot(x: CPVarInt): Unit = {
-    toSnapshot += x
-    snapshots(x) = new Snapshot(x)
-    snapshots(x).update()
+    toSnapshotVarInt += x
+    snapshotsVarInt(x) = new SnapshotVarInt(x)
+    snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
       s.onPop {
-        snapshot()
+        snapshotVarInt()
       }
       _mustSnapshot = true
     }    
   }
 
-  def snapshot(): Unit = {
-    toSnapshot.foreach(x => snapshots(x).update())
+  protected def snapshotVarInt(): Unit = {
+    toSnapshotVarInt.foreach(x => snapshotsVarInt(x).update())
   }
+  
+
+  def addSnapshot(x: CPVarSet): Unit = {
+    toSnapshotVarSet += x
+    snapshotsVarSet(x) = new SnapshotVarSet(x)
+    snapshotsVarSet(x).update()
+    if (!_mustSnapshot) {
+      s.onPop {
+        snapshotVarSet()
+      }
+      _mustSnapshot = true
+    }    
+  }
+
+  protected def snapshotVarSet(): Unit = {
+    toSnapshotVarSet.foreach(x => snapshotsVarSet(x).update())
+  }  
 
   private var priorL2 = CPStore.MAXPRIORL2
   private var priorBindL1 = CPStore.MAXPRIORL1 - 1
@@ -318,7 +350,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     executingPropagate = true
     val oc = propagate()
     if (oc != CPOutcome.Failure) {
-      snapshot()
+      snapshotVarInt()
+      snapshotVarSet()
     }
     executingPropagate = false
     if (oc == CPOutcome.Success) {
@@ -336,13 +369,13 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
 abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends Constraint(x.s, "DeltaVarInt") {
   
-  val sn = new Snapshot(x)
+  val sn = new SnapshotVarInt(x)
   s.onPop {
     sn.update()
   }
   
-  override def snapshot() {
-    super.snapshot()
+  override def snapshotVarInt() {
+    super.snapshotVarInt()
     sn.update()
   }
   
@@ -355,5 +388,29 @@ abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends
   def maxChanged() = x.maxChanged(sn)
   def oldMin() = x.oldMin(sn)
   def oldMax() = x.oldMax(sn)
+  
+}
+
+abstract class DeltaVarSet(x: CPVarSet,filter: DeltaVarSet => CPOutcome) extends Constraint(x.s, "DeltaVarSet") {
+  
+  val sn = new SnapshotVarSet(x)
+  s.onPop {
+    sn.update()
+  }
+  
+  override def snapshotVarSet() {
+    super.snapshotVarSet()
+    sn.update()
+  }
+  
+  override def propagate() = filter(this)
+  
+  def changed() = x.changed(sn)
+  def possibleChanged() = x.possibleChanged(sn)
+  def requiredChanged() = x.requiredChanged(sn)
+  def deltaPossibleSize() = x.deltaPossibleSize(sn)
+  def deltaRequiredSize() = x.deltaRequiredSize(sn)
+  def deltaPossible(): Iterator[Int] = x.deltaPossible(sn)
+  def deltaRequired(): Iterator[Int] = x.deltaRequired(sn)
   
 }

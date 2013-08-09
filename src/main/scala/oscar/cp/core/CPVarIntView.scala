@@ -144,7 +144,7 @@ class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
 	def deltaSize(c: Constraint): Int = root.deltaSize(c)
 	
 	def delta(c: Constraint): Iterator[Int] = {
-	  val sn = c.snapshots(root)
+	  val sn = c.snapshotsVarInt(root)
 	  root.delta(sn.oldMin,sn.oldMax,sn.oldSize).map(_ + btot)
 	}
 	
