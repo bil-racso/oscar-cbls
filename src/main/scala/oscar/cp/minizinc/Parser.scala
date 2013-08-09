@@ -84,7 +84,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		bool_const
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
 		| float_const
-		| int_const //^^ (_.toInt) how to avoid the casts when using an expr that is an Any
+		| int_const
 		| var_par_id~"["~int_const~"]" ^^ {
 		  case id~"["~i~"]" => List(id, i)
 		}
@@ -152,7 +152,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	        )))
 	        
-	      //code duplication can be easily avoided but what's better ?
+	      //code duplication can be easily avoided but what's better 
 	      case "array ["~iset~"] of bool" => model.dict += 
 	        ((id, (FZType.P_ARRAY_BOOL, 
 	            new ParamArrayBool(e, 
@@ -189,6 +189,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	{ 
 
 	  case tp~":"~id~ann~Some("="~e)~";" => 
+	    //include a match on tp to know if array or not
 	    e match {
 	      case x:Int => model.dict += 
 	        ((id, (FZType.V_INT, 
@@ -204,7 +205,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case "var int" => model.dict += 
 	      	((id, (FZType.V_INT, 
 	      		new VarInt(ann, CPVarInt(cp, -10000, 10000), id)))) // what should I do when no assign ?
-	      	//println(model.dict.toString)
+	      	//println(model.dict.toString)	      		
+	      case "var set of"~i1~".."~i2 => 
+	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
+//	        model.dict +=
+//	        ((id, (FZType.V_SET_INT_R, 
+//	            new VarSetIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
+//	                ))))
+	        
+	        println(id + " " + i1 + " " + i2)
+	      case "var set of"~"{"~intList~"}" => println(id + " " + intList.toString)
 	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
@@ -226,7 +236,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //println(model.dict.toString)
 	      //case "array ["~iset~"] of var bool" =>
 	    }
-	    
+	  //case tp~":"~id~";" => println(tp.toString)
 	}// the vars in assignment must be declared earlier
 	
 	
