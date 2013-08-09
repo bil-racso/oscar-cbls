@@ -255,7 +255,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          //println("int le cst added")
 	        }
 	        case (x:Int, y:String) => {
-	          println("is a is")
+	          //println("is a is")
 	          model.dict.get(y.toString) match {
 	            case Some((tp, fzo)) => {
 	              assert(tp == FZType.V_INT_RANGE, "The FZObject doesn't have the type V_INT_RANGE")
@@ -267,10 +267,45 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	        //to be added later 
 	        case (x:List[Any], y:Int) => {
-	          println("is a li")
+	          model.dict.get(x(0).toString) match {
+	            case Some((tp, fzo)) => {
+	              //assert(tp == FZType.V_ARRAY_INT_R, "The FZObject doesn't have the type V_INT_RANGE")
+	              tp match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  cpvar :+= fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+	                }
+	              }
+	            }
+	            case _ => assert(false, "varList didn't contains enough varibles")
+	          }
+	          cpvar :+= CPVarInt(cp, y.toInt)
+	          
 	        }
 	        case (x:List[Any], y:List[Any]) => {
 	          println("is a ll")
+	          (model.dict.get(x(0).toString), model.dict.get(y(1).toString)) match {
+		        case (Some((tp0, fzo0)), Some((tp1, fzo1))) => 
+		          tp0 match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  cpvar :+= fzo0.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  cpvar :+= fzo0.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
+	                }
+	              }
+		          tp1 match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  cpvar :+= fzo1.asInstanceOf[VarArrayIntRange].cpvar(y(1).toString.toInt-1)
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  cpvar :+= fzo1.asInstanceOf[VarArrayInt].cpvar(y(1).toString.toInt-1)
+	                }
+	              }
+		        case _ => assert(false, "varList didn't contains enough varibles")
+	          }
 	        }
 	        case (x:List[Any], y:String) => {
 	          println("is a ls")
