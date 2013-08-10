@@ -45,14 +45,14 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
    * @param val
    * @return  true if value is in the possible values false otherwise
    */
-  def isPossibleValue(value: Int) = dom.isPossible(value)
+  def isPossible(value: Int) = dom.isPossible(value)
 
   /**
    * Test if a value is in the required values
    * @param val
    * @return  true if value is in the required values false otherwise
    */
-  def isRequiredValue(value: Int) = dom.isRequired(value)
+  def isRequired(value: Int) = dom.isRequired(value)
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever the domain of the variable changes
