@@ -40,8 +40,9 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.visual.{Plot2D, VisualFrame}
-;
+import oscar.visual.VisualFrame
+import oscar.visual.plot.PlotLine
+
 
 class Planning(val model: Model, val maxduration: Int) {
 
@@ -123,7 +124,7 @@ class Planning(val model: Model, val maxduration: Int) {
   }
 
   var gantt:Gantt = null
-  var plot:Plot2D = null
+  var plot:PlotLine = null
   def getVisual(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)

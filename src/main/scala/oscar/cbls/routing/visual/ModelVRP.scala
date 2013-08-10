@@ -23,7 +23,8 @@ package oscar.cbls.routing.visual
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
 import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
-import oscar.visual.{VisualDrawing, VisualArrow}
+import oscar.visual.VisualDrawing
+import oscar.visual.shapes.VisualArrow
 import oscar.cbls.constraints.core.ConstraintSystem
 import math._
 import oscar.cbls.constraints.lib.basic.{EQ, LE}

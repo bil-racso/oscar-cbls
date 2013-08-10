@@ -21,7 +21,7 @@ import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.multiobjective.ListPareto
-import oscar.visual.PlotPareto
+import oscar.visual.plot.PlotPareto
 import oscar.util.reader.TSPUtils
 
 object BiTSP extends App {

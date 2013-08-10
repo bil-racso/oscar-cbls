@@ -12,24 +12,6 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.examples.cp.scheduling
 
@@ -41,6 +23,7 @@ import scala.math
 import java.awt.Color
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
+import oscar.visual.shapes.VisualRectangle
 
 /**
  * Perfect Square Problem
@@ -110,16 +93,16 @@ object PerfectSquare extends App {
   cp.printStats()
 
   // Visualization
-  val f = new VisualFrame("Pefect Square")
+  val f = VisualFrame("Pefect Square")
   val ff = f.createFrame("Square")
-  val d = new VisualDrawing(false)
+  val d = VisualDrawing(false)
   ff.add(d)
   def scale = 5
   val bg = new VisualRectangle(d, 0, 0, s * scale, s * scale)
   bg.innerCol = Color.black
   (Square).foreach { i =>
     val r = new VisualRectangle(d, activitiesX(i).start.value * scale, activitiesY(i).start.value * scale, side(i) * scale, side(i) * scale)
-    r.innerCol = VisualUtil.getRandomColor()
+    r.innerCol = VisualUtil.getRandomColor
   }
 }
 

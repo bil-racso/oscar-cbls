@@ -16,24 +16,9 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import junit.framework.TestCase;
-import java.util.Arrays;
-
-import oscar.cp.constraints.AllDifferent;
-import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.constraints.Deviation;
-import oscar.cp.constraints.GCC;
-import oscar.cp.constraints.MulVar;
-import oscar.cp.constraints.Sequence;
-import oscar.cp.constraints.Sum;
-import oscar.cp.constraints.WeightedSum;
-import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.CPStore;
-import oscar.cp.util.ArrayUtils;
-import oscar.cp.util.Counter;
-import oscar.reversible.SetIndexedArray;
 
 
 

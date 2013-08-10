@@ -16,12 +16,14 @@ package oscar.examples.linprog
 
 
 import oscar.visual._
+import oscar.visual.shapes.VisualRectangle
 import scala.collection.JavaConversions._
 import oscar.linprog.modeling.MIPSolver
 import oscar.linprog.modeling.MIPVar
 import oscar.linprog.modeling._
 import oscar.linprog._
 import oscar.algebra._
+import oscar.visual.plot.PlotLine
 
 
 /**
@@ -38,12 +40,12 @@ import oscar.algebra._
 object ChemicalTanker extends App {
 
     // -------------visual components ------------
-    val f = new VisualFrame("ChemicalTanker")
+    val f = VisualFrame("ChemicalTanker")
     // creates the plot and place it into the frame
-	val plot = new Plot2D("","Solution number","Unused Volume")
+	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)
     // creates the tour visu and place it into the frame
-    val drawing = new VisualDrawing(false)
+    val drawing = VisualDrawing(false)
     f.createFrame("Cargo-Tank Layout").add(drawing)
     
     f.pack()
@@ -54,7 +56,7 @@ object ChemicalTanker extends App {
      * Class representing a cargo object and its related data.
      * The constructor parses the xml cargo node
      */
-    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor()) {
+    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor) {
       val id = (node \ "@id").text.toInt
       val name = (node \ "@name").text
       val volume = (node \ "@volume").text.toInt

@@ -15,13 +15,17 @@
 package oscar.cbls.scheduling
 
 import java.awt.Color
-import oscar.visual.{VisualLine, VisualText, VisualRectangle, VisualDrawing, VisualUtil}
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualUtil
+import oscar.visual.shapes.VisualRectangle
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualText
 
-class Gantt(p:Planning) extends VisualDrawing(false) {
+class Gantt(p:Planning) extends VisualDrawing(false, false) {
 
   var LineCount = 0
   val LineArray:Array[Int] = makeLineArray(p)
-  val colors:Array[Color] = Array.tabulate(p.ActivityArray.size)(_ => VisualUtil.getRandomColor())
+  val colors:Array[Color] = Array.tabulate(p.ActivityArray.size)(_ => VisualUtil.getRandomColor)
   def makeLineArray(p:Planning):Array[Int] = {
     var currentline = -1
     var Front:List[Int] = List.empty
@@ -59,7 +63,7 @@ class Gantt(p:Planning) extends VisualDrawing(false) {
   private val text : VisualText = new VisualText(this, 50, 50, "",true)
   text.innerCol = Color.RED
 
-  private val makespanLine : VisualLine = new VisualLine(this, 0, 0, 0, 0)
+  private val makespanLine : VisualLine = VisualLine(this, 0, 0, 0, 0)
   makespanLine.outerCol = Color.RED;
 
   def update(xScale : Float, yScale: Int) {
