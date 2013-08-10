@@ -1,4 +1,0 @@
-var 2..3: x :: output_var;
-var 2..4: y :: output_var;
-constraint int_le(x, y);
-solve satisfy;
