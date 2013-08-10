@@ -16,8 +16,8 @@
 
 package oscar.cp.core
 
-import oscar.reversible.ReversibleSubsetIndexedArray
 import oscar.cp.core.CPOutcome._
+import oscar.reversible.ReversibleSparseSubset
 
 
 /**
@@ -25,7 +25,7 @@ import oscar.cp.core.CPOutcome._
  */
 class SetDomain(s: CPStore, min: Int, max: Int) {
   
-   val values = new ReversibleSubsetIndexedArray(s,min,max)
+   val values = new ReversibleSparseSubset(s,min,max)
    
    def requires(value: Int): CPOutcome = {
      if (!values.isPossible(value)) Failure
@@ -44,6 +44,16 @@ class SetDomain(s: CPStore, min: Int, max: Int) {
      }
    }
    
+   def requiresAll(): CPOutcome = {
+     values.requiresAll()
+     Suspend
+   }
+   
+   def excludesAll(): CPOutcome = {
+     values.excludesAll()
+     Suspend
+   }
+   
    def possibleSize = values.possibleSize
    def requiredSize = values.requiredSize
    
@@ -52,5 +62,16 @@ class SetDomain(s: CPStore, min: Int, max: Int) {
    
    def possibleSet = values.possibleSet
    def requiredSet = values.requiredSet
+   
+   def possibleNotRequired: Iterator[Int] = values.possibleNotRequired
+   
+   def arbitraryPossibleNotRequired: Int = values.arbitraryPossibleNotRequired
+  
+   def randomPossibleNotRequired: Int = values.randomPossibleNotRequired  
+   
+
+   def deltaRequired(oldRequiredSize: Int): Iterator[Int] = values.deltaRequired(oldRequiredSize)
+   
+   def deltaPossible(oldPossibleSize: Int): Iterator[Int] = values.deltaPossible(oldPossibleSize)
 	
 }

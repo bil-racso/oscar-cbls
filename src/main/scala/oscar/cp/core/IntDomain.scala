@@ -26,7 +26,7 @@ import scala.collection.Iterator
  * It means that as long as a no hole is present, the internal representation of the domain is a range (a min and max value). <br>
  * @author Pierre Schaus pschaus@gmail.com
  */
-class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable[Int] {
+class IntDomain(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable[Int] {
 
   private val _interval = new ReversibleInterval(s,minVal,maxVal)
   private val _withHoles = new ReversibleBool(s, false)

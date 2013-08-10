@@ -24,7 +24,7 @@ import scala.collection.generic._
  */
 class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
   
-	val dom = new DomainWithHoles(s,minimum,maximum)
+	val dom = new IntDomain(s,minimum,maximum)
 	val onMinL2    = new ReversiblePointer[ConstraintQueue](s,null)
 	val onMaxL2    = new ReversiblePointer[ConstraintQueue](s,null)
 	val onBoundsL2 = new ReversiblePointer[ConstraintQueue](s,null)
@@ -575,24 +575,24 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 	
 
-	def changed(c: Constraint): Boolean = changed(c.snapshots(this))
+	def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
 	
-	def minChanged(c: Constraint): Boolean = minChanged(c.snapshots(this))
+	def minChanged(c: Constraint): Boolean = minChanged(c.snapshotsVarInt(this))
 	
-	def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshots(this))
+	def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshotsVarInt(this))
 	
-	def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshots(this))
+	def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshotsVarInt(this))
 	
-	def oldMin(c: Constraint): Int = oldMin(c.snapshots(this))
+	def oldMin(c: Constraint): Int = oldMin(c.snapshotsVarInt(this))
 	
-	def oldMax(c: Constraint): Int = oldMax(c.snapshots(this))
+	def oldMax(c: Constraint): Int = oldMax(c.snapshotsVarInt(this))
 	
-	def oldSize(c: Constraint): Int = oldSize(c.snapshots(this))
+	def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
 	
-	def deltaSize(c: Constraint): Int = deltaSize(c.snapshots(this))
+	def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
 	
 	def delta(c: Constraint): Iterator[Int] = {
-	  val sn = c.snapshots(this)
+	  val sn = c.snapshotsVarInt(this)
 	  delta(sn.oldMin,sn.oldMax,sn.oldSize)
 	}
 		

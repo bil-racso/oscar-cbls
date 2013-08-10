@@ -28,14 +28,14 @@ import collection.immutable.SortedSet
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestDomainWithHoles extends FunSuite with ShouldMatchers  {
+class TestIntDomain extends FunSuite with ShouldMatchers  {
 
 
   test("Test Dom1") {
  
 	val cp = CPSolver()
 	
-	val dom = new DomainWithHoles(cp,-5,5)
+	val dom = new IntDomain(cp,-5,5)
 	val oldSize = dom.size
 	val oldMin = dom.min
 	val oldMax = dom.max
@@ -53,7 +53,7 @@ class TestDomainWithHoles extends FunSuite with ShouldMatchers  {
  
 	val cp = CPSolver()
 	
-	val dom = new DomainWithHoles(cp,-5,5)
+	val dom = new IntDomain(cp,-5,5)
 	val oldSize = dom.size
 	val oldMin = dom.min
 	val oldMax = dom.max
@@ -87,7 +87,7 @@ class TestDomainWithHoles extends FunSuite with ShouldMatchers  {
  
 	val cp = CPSolver()
 	
-	val dom = new DomainWithHoles(cp,-5,5)
+	val dom = new IntDomain(cp,-5,5)
 	val oldSize = dom.size
 	val oldMin = dom.min
 	val oldMax = dom.max
@@ -104,7 +104,7 @@ class TestDomainWithHoles extends FunSuite with ShouldMatchers  {
  
 	val cp = CPSolver()
 	
-	val dom = new DomainWithHoles(cp,-5,5)
+	val dom = new IntDomain(cp,-5,5)
 	
 	dom.removeValue(-1)
 	dom.removeValue(0)
