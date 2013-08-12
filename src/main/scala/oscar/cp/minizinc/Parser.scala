@@ -272,8 +272,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	      
 	    // global constraints defined in minizinc/mznlib/
-	    case "alldiff" =>
-	      //println(getCPArray(varList(0).toString).mkString(","))
+	    case "oscar_alldiff" =>
 	      cp.add(allDifferent(getCPArray(varList(0).toString)))
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
@@ -285,7 +284,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "bin_packing" => 
 	    case "bin_packing_capa" =>
 	    case "bin_packing_load" =>
-	    case "circuit" =>
+	    case "circuit" => 
+	      cp.add(circuit(getCPArray(varList(0).toString)))
 	    case "count_eq" =>
 	    case "count_geq" =>
 	    case "count_gt" =>
@@ -298,6 +298,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "disjoint" =>
 	    case "distribute" =>
 	    case "element_int" =>
+	      cp.add(elementVar(getCPArray(varList(1).toString), getCPVar(varList(0)), getCPVar(varList(2))))
 	    case "exactly_int" =>
 	    case "global_cardinality" =>
 	    case "global_cardinality_closed" =>
@@ -310,20 +311,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "lex_greater_int" =>
 	    case "lex_greatereq_int" =>
 	    case "lex_less_int" =>
+	      cp.add(lexLeq(getCPArray(varList(0).toString), getCPArray(varList(1).toString)))
 	    case "lex_lesseq_int" =>
-	    case "lex2" => //2D -> 1D needed
+	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	    case "link_set_to_booleans" =>
 	    case "maximum_int" =>
-	      cp.add(maximum(getCPArray(varList(0).toString), varList(1) match {
-	        case x:List[Any] => getCPFromList(x)
-	        case x:String => getCPFromString(x)
-	      }))
+	      cp.add(maximum(getCPArray(varList(0).toString), getCPVar(varList(1))))
 	    case "member_int" =>
-	    case "minimum_int" =>
-	      cp.add(minimum(getCPArray(varList(0).toString), varList(1) match {
-	        case x:List[Any] => getCPFromList(x)
-	        case x:String => getCPFromString(x)
-	      }))
+	    case "oscar_minimum_int" =>
+	      cp.add(minimum(getCPArray(varList(0).toString), getCPVar(varList(1))))
 	    case "nvalue" =>
 	    case "partition_set" =>
 	    case "range" =>
@@ -334,7 +330,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "strict_lex2" => //2D -> 1D needed
 	    case "subcircuit" =>
 	    case "sum_pred" =>
-	    case "table_int" =>
+	    case "table_int" => //2D -> 1D needed
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
 	  }
@@ -383,6 +379,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         case "int_lin_le" => 
           cp.add(weightedSum(cst, cpvar) <= varList(2).toString.toInt) 
       }
+	}
+	
+	def getCPVar(x: Any): CPVarInt = {
+	  x match {
+	    case x:List[Any] => getCPFromList(x)
+	    case x:String => getCPFromString(x)
+	  }
 	}
 	
 	def getCPFromString(x: String): CPVarInt = {
