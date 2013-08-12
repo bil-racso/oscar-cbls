@@ -272,20 +272,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	      
 	    // global constraints defined in minizinc/mznlib/
-	    case "oscar_alldiff" =>
+	    case "alldiff" =>
 	      //println(getCPArray(varList(0).toString).mkString(","))
 	      cp.add(allDifferent(getCPArray(varList(0).toString)))
-	    case "oscar_maximum" =>
-	      cp.add(maximum(getCPArray(varList(0).toString), varList(1) match {
-	        case x:List[Any] => getCPFromList(x)
-	        case x:String => getCPFromString(x)
-	      }))
-	    case "oscar_minimum" =>
-	      cp.add(minimum(getCPArray(varList(0).toString), varList(1) match {
-	        case x:List[Any] => getCPFromList(x)
-	        case x:String => getCPFromString(x)
-	      }))
-	    case "oscar_alldiff_0" =>
+	    case "alldiff_0" =>
 	    case "all_disjoint" =>
 	    case "all_equal_int" =>
 	    case "among" =>
@@ -321,8 +311,32 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "lex_greatereq_int" =>
 	    case "lex_less_int" =>
 	    case "lex_lesseq_int" =>
-	    case "lex2" =>
+	    case "lex2" => //2D -> 1D needed
 	    case "link_set_to_booleans" =>
+	    case "maximum_int" =>
+	      cp.add(maximum(getCPArray(varList(0).toString), varList(1) match {
+	        case x:List[Any] => getCPFromList(x)
+	        case x:String => getCPFromString(x)
+	      }))
+	    case "member_int" =>
+	    case "minimum_int" =>
+	      cp.add(minimum(getCPArray(varList(0).toString), varList(1) match {
+	        case x:List[Any] => getCPFromList(x)
+	        case x:String => getCPFromString(x)
+	      }))
+	    case "nvalue" =>
+	    case "partition_set" =>
+	    case "range" =>
+	    case "regular" => //2D -> 1D needed
+	    case "roots" =>
+	    case "sliding_sum" =>
+	    case "sort" =>
+	    case "strict_lex2" => //2D -> 1D needed
+	    case "subcircuit" =>
+	    case "sum_pred" =>
+	    case "table_int" =>
+	    case "value_precede_int" =>
+	    case "value_precede_chain_int" =>
 	  }
 	}
 	
