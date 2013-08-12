@@ -6,6 +6,7 @@ import oscar.cp.modeling.CPSolver
 import oscar.cp.core._
 import oscar.cp.modeling._
 import java.io.FileReader
+import oscar.cbls.invariants.lib.set.Cardinality
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -20,9 +21,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def parseVar(input: String) = {parseAll(var_decl, input)}
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
-	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");"
+	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");" ^^ {
+	  case "predicate"~id~"("~parList~");" => println("predicate " + id)
+	  case _ => println("error in predicate")
+	}
 
-	def identifier : Parser[Any] = index_set
+	def identifier : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
 	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id // what about no space before the ":" and one after ?
 	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type	
@@ -266,6 +270,59 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	    case "int_lin_le" =>
 	      int_lin_cstr(varList, ann, cstr)
+	      
+	    // global constraints defined in minizinc/mznlib/
+	    case "oscar_alldiff" =>
+	      //println(getCPArray(varList(0).toString).mkString(","))
+	      cp.add(allDifferent(getCPArray(varList(0).toString)))
+	    case "oscar_maximum" =>
+	      cp.add(maximum(getCPArray(varList(0).toString), varList(1) match {
+	        case x:List[Any] => getCPFromList(x)
+	        case x:String => getCPFromString(x)
+	      }))
+	    case "oscar_minimum" =>
+	      cp.add(minimum(getCPArray(varList(0).toString), varList(1) match {
+	        case x:List[Any] => getCPFromList(x)
+	        case x:String => getCPFromString(x)
+	      }))
+	    case "oscar_alldiff_0" =>
+	    case "all_disjoint" =>
+	    case "all_equal_int" =>
+	    case "among" =>
+	    case "at_least_int" => 
+	    case "at most_int" =>
+	    case "at_most1" =>
+	    case "bin_packing" => 
+	    case "bin_packing_capa" =>
+	    case "bin_packing_load" =>
+	    case "circuit" =>
+	    case "count_eq" =>
+	    case "count_geq" =>
+	    case "count_gt" =>
+	    case "count_leq" =>
+	    case "count_lt" =>
+	    case "count_neq" =>
+	    case "cumulative" =>
+	    case "decreasing_int" =>
+	    case "diffn" =>
+	    case "disjoint" =>
+	    case "distribute" =>
+	    case "element_int" =>
+	    case "exactly_int" =>
+	    case "global_cardinality" =>
+	    case "global_cardinality_closed" =>
+	    case "global_cardinality_low_up" => 
+	    case "global_cardinality_low_up_closed" =>
+	    case "increasing_int" =>
+	    case "int_set_channel" =>
+	    case "inverse" =>
+	    case "inverse_set" =>
+	    case "lex_greater_int" =>
+	    case "lex_greatereq_int" =>
+	    case "lex_less_int" =>
+	    case "lex_lesseq_int" =>
+	    case "lex2" =>
+	    case "link_set_to_booleans" =>
 	  }
 	}
 	
@@ -340,6 +397,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                 }
             }
         }
+	}
+	
+	def getCPArray(x: String): Array[CPVarInt] = {
+	  model.dict.get(x) match {
+		  case Some((tp, fzo)) => 
+            tp match {
+                case FZType.V_ARRAY_INT_R => {
+                  fzo.asInstanceOf[VarArrayIntRange].cpvar
+                }
+                case FZType.V_ARRAY_INT => {
+                  fzo.asInstanceOf[VarArrayInt].cpvar
+                }
+            }
+	  }
 	}
 	
 	def solve_goal : Parser[Any] = (
