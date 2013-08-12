@@ -1,3 +1,3 @@
-predicate maximum(array[int] of var int: x, var int: m) = oscar_maximum(x, m);
+predicate maximum_int(array[int] of var int: x, var int: m) = maximum_int(x, m);
 
-predicate oscar_maximum(array[int] of var int: x, var int: m);
+predicate maximum_int(array[int] of var int: x, var int: m);
