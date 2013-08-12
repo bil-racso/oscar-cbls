@@ -218,6 +218,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        
 	        println(id + " " + i1 + " " + i2)
 	      case "var set of"~"{"~intList~"}" => println(id + " " + intList.toString)
+	      
 	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
@@ -243,7 +244,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}// the vars in assignment must be declared earlier
 	
 	
-	// Constraint declaration (every constraint should be a case below the match
+	// Constraint declaration (every constraint should be a case below the match)
 	
 	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";" ^^ {
 	  case "constraint"~cstr~"("~varList~")"~ann~";" => cstr match {
@@ -359,8 +360,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       model.dict.foreach { e => 
         e._2 match {
           case (tp, fzo) => // /!\ not always CPVarInt
+            //println("ici")
             tp match {
               case FZType.V_INT_RANGE => {
+                //println(fzo.asInstanceOf[VarIntRange].cpvar)
                 x :+= fzo.asInstanceOf[VarIntRange].cpvar
                 fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
             		if ( ann.name == "output_var" ) { output = true }
@@ -374,21 +377,41 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                 //var c = 0
                 var first = true
                 fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
+                	//println(e)
                 	x :+= e
                 	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
             			if ( ann.name == "output_array" ) { output = true }
                 	}
                 	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
-                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].range.length)
+                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].cpvar.length)
                 	
                 	first = false
                 }
+                output = false
               }
               case FZType.V_INT => {
-                
+                x :+= fzo.asInstanceOf[VarInt].cpvar
+                fzo.asInstanceOf[VarInt].annotations.foreach { ann =>
+            		if ( ann.name == "output_var" ) { output = true }
+                }
+                state :+= new VarState(fzo.asInstanceOf[VarInt].name,
+                    output, false, false, 1)
+                output = false
               }
               case FZType.V_ARRAY_INT => {
-                
+                var first = true
+                fzo.asInstanceOf[VarArrayInt].cpvar.foreach { e =>
+                	//println(e)
+                	x :+= e
+                	fzo.asInstanceOf[VarArrayInt].annotations.foreach { ann =>
+            			if ( ann.name == "output_array" ) { output = true }
+                	}
+                	state :+= new VarState(fzo.asInstanceOf[VarArrayInt].name,
+                    output, true, first, fzo.asInstanceOf[VarArrayInt].cpvar.length)
+                	
+                	first = false
+                }
+                output = false
               }
               case _ => {
                 println("The type " + tp.toString() + " is not supported/relevant for the solver")
@@ -407,6 +430,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      println("==========")
 	    }
 	    case "max" => {
+	      /*
 	      var cpvar: CPVarInt = null
 	      println(expr.toString)
 	      expr match {
@@ -417,12 +441,25 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          cpvar = getCPFromString(x)
 	      }
 	      cp.maximize(cpvar) subjectTo {
+	      * 
+	      */
+	      //println(expr.toString)
+	      cp.maximize(
+	          expr match {
+		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
+		        case x:List[Any] =>
+		          getCPFromList(x)
+		        case x:String => 
+		          getCPFromString(x)
+	          }
+	      ) subjectTo {
 	        //what is the right way yo do it ? I dont know OscaR !
 	      } exploration {
-	        println(model.dict.toString)
+	        //println(model.dict.toString)
 	        cp.binary(x)
 	        format_output(x, state)
-	        println(model.dict.toString)
+	        //println(x.mkString(","))
+	        //println(model.dict.toString)
 	      } run ()
 	      println("==========")
 	    }
