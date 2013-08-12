@@ -194,18 +194,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case x:Int => model.dict += 
 	        ((id, (FZType.V_INT, 
 	            new VarInt(ann, CPVarInt(cp, x), id))))
+	      case _ => println(tp + " not yet supported when followed by an assignment")
 	    }
 	  case tp~":"~id~ann~None~";" => 
 	    tp match {
+	      case "var bool" => model.dict +=
+	        ((id, (FZType.V_BOOL,
+	            new VarBool(ann, CPVarBool(cp), id))))
+	      case "var int" => model.dict += 
+	      	((id, (FZType.V_INT, 
+	      		new VarInt(ann, CPVarInt(cp, -10000, 10000), id)))) // what should I do when no assign ?
 	      case "var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_INT_RANGE,
 	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-	            //println("cpvar created")
-	      case "var int" => model.dict += 
-	      	((id, (FZType.V_INT, 
-	      		new VarInt(ann, CPVarInt(cp, -10000, 10000), id)))) // what should I do when no assign ?
-	      	//println(model.dict.toString)	      		
+	            //println("cpvar created")    		
 	      case "var set of"~i1~".."~i2 => 
 	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
 //	        model.dict +=
