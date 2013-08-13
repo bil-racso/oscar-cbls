@@ -7,6 +7,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import java.io.FileReader
 import oscar.cbls.invariants.lib.set.Cardinality
+import scala.Equals
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -310,10 +311,55 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "inverse_set" =>
 	    case "lex_greater_int" =>
 	    case "lex_greatereq_int" =>
-	    case "lex_less_int" =>
+	    case "oscar_lex_less_int" =>
+	      val t1 = getCPArray(varList(0).toString)
+	      val t2 = getCPArray(varList(1).toString)
+	      cp.add(lexLeq(t1, t2))
+	      cp.add(sum(t1) != sum(t2))
+	      //how to ask for the two arrays to be different ?
+	    case "oscar_lex_lesseq_int" =>
 	      cp.add(lexLeq(getCPArray(varList(0).toString), getCPArray(varList(1).toString)))
-	    case "lex_lesseq_int" =>
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
+	      //could maybe be done by recreating the orginal array and working on it...
+	      val rows = varList(1).toString.toInt
+	      val cols = varList(2).toString.toInt
+	      var array = Array[CPVarInt]()
+	      varList(0) match {
+	        case x:List[Any] => {
+	          x.foreach{ e => 
+			  	e match {
+				    case x:List[Any] => array :+= getCPFromList(x)
+			  	}
+	          }
+	        }
+	      }
+	      //val array = getCPArray(varList(0).toString)
+	      var x = Array[CPVarInt]()
+	      var y = Array[CPVarInt]()
+	      //rows
+	      //index = i*cols + j
+	      for( i <- 0 until rows-1; j <- 0 to cols-1){
+	        x :+= array(i*cols+j)
+	        y :+= array((i+1)*cols+j)
+	        if(j == cols-1) {
+	          //posting the constraint for two consecutive rows and reseting the arrays
+	          cp.add(lexLeq(x, y))
+	          x = Array[CPVarInt]()
+	          y = Array[CPVarInt]()
+	        }
+	      }
+	      //cols
+	      //intx : = j*cols + i
+	      for( i <- 0 until cols-1; j <- 0 to rows-1){
+	        x :+= array(j*cols+i)
+	        y :+= array(j*cols+i+1)
+	        if(j == rows-1) {
+	          //posting the constraint for two consecutive rows and reseting the arrays
+	          cp.add(lexLeq(x, y))
+	          x = Array[CPVarInt]()
+	          y = Array[CPVarInt]()
+	        }
+	      }
 	    case "link_set_to_booleans" =>
 	    case "maximum_int" =>
 	      cp.add(maximum(getCPArray(varList(0).toString), getCPVar(varList(1))))
@@ -348,6 +394,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cstr match {
 	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
 	    case "int_le" => cp.add(cpvar(0) <= cpvar(1))
+	    case "int_lt" => cp.add(cpvar(0) < cpvar(1))
 	    case "int_ne" => cp.add(cpvar(0) != cpvar(1))
 	    case "int_plus" => cp.add(cpvar(0) + cpvar(1) == cpvar(2))
 	    case "int_times" => cp.add(cpvar(0) * cpvar(1) == cpvar(2))
@@ -403,6 +450,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	def getCPFromList(x: List[Any]): CPVarInt = {
+	  println(model.dict.toString)
+	  println(x)
 	  model.dict.get(x(0).toString) match {
           case Some((tp, fzo)) => 
             tp match {
@@ -518,20 +567,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      println("==========")
 	    }
 	    case "max" => {
-	      /*
-	      var cpvar: CPVarInt = null
-	      println(expr.toString)
-	      expr match {
-	        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
-	        case x:List[Any] =>
-	          cpvar = getCPFromList(x)
-	        case x:String => 
-	          cpvar = getCPFromString(x)
-	      }
-	      cp.maximize(cpvar) subjectTo {
-	      * 
-	      */
-	      //println(expr.toString)
 	      cp.maximize(
 	          expr match {
 		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
@@ -541,17 +576,28 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		          getCPFromString(x)
 	          }
 	      ) subjectTo {
-	        //what is the right way yo do it ? I dont know OscaR !
 	      } exploration {
-	        //println(model.dict.toString)
 	        cp.binary(x)
 	        format_output(x, state)
-	        //println(x.mkString(","))
-	        //println(model.dict.toString)
 	      } run ()
 	      println("==========")
 	    }
-	    case "min" =>
+	    case "min" => {
+	      cp.minimize(
+	          expr match {
+		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
+		        case x:List[Any] =>
+		          getCPFromList(x)
+		        case x:String => 
+		          getCPFromString(x)
+	          }
+	      ) subjectTo {
+	      } exploration {
+	        cp.binary(x)
+	        format_output(x, state)
+	      } run ()
+	      println("==========")
+	    }
 	  }   
 	}
 	
