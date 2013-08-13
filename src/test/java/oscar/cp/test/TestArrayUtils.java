@@ -14,8 +14,6 @@
  ******************************************************************************/
 package oscar.cp.test;
 
-import oscar.cp.core.*;
-import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;

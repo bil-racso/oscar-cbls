@@ -39,9 +39,9 @@ import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
 import oscar.visual.VisualFrame
-import oscar.visual.VisualSearchTree
+import oscar.visual.tree.VisualSearchTree
 import oscar.util.tree.Node
-import oscar.visual.VisualLabelledTree
+import oscar.visual.tree.VisualLabelledTree
 
 /**
  * Parcel Shipment Problem (found in the examples of Jacop).

@@ -14,13 +14,9 @@
  ******************************************************************************/
 package oscar.cp.test;
 import oscar.cp.constraints.BinPackingFlow;
-import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.constraints.Eq;
-import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.CPStore;
-import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;
 

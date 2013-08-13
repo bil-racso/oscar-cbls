@@ -107,7 +107,7 @@ object JobShop extends App {
 	// -----------------------------------------------------------------------
 
 	val frame = new VisualFrame("Job-Shop Problem", 2, 1)
-	val colors = VisualUtil.getRandomColorArray(nResources)
+	val colors = VisualUtil.getRandomColors(nResources, true)
 
 	val gantt1 = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
 	val gantt2 = new VisualGanttChart(activities, i => machines(i), colors = i => colors(machines(i)))

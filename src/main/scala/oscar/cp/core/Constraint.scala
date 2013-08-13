@@ -21,9 +21,9 @@ import scala.collection.mutable.ArrayBuffer
 
 
 class Snapshot(x: CPVarInt) {
-  var oldMin: Int = 0 
-  var oldMax: Int = 0
-  var oldSize: Int = 0
+  var oldMin: Int = x.min 
+  var oldMax: Int = x.max
+  var oldSize: Int = x.size
   def update() {
     oldMin = x.min
     oldMax = x.max
@@ -331,4 +331,29 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     inQueue.value = true
   }
 
+}
+
+
+abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends Constraint(x.s, "DeltaVarInt") {
+  
+  val sn = new Snapshot(x)
+  s.onPop {
+    sn.update()
+  }
+  
+  override def snapshot() {
+    super.snapshot()
+    sn.update()
+  }
+  
+  override def propagate() = filter(this)
+  
+  def changed() = x.changed(sn)
+  def size() = x.deltaSize(sn)
+  def values() = x.delta(sn.oldMin,sn.oldMax,sn.oldSize)
+  def minChanged() = x.minChanged(sn)
+  def maxChanged() = x.maxChanged(sn)
+  def oldMin() = x.oldMin(sn)
+  def oldMax() = x.oldMax(sn)
+  
 }

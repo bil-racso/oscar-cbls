@@ -24,7 +24,7 @@ import oscar.cp.modeling._
 
 
 class TestGCC extends FunSuite with ShouldMatchers  {
-	val rand = new scala.util.Random()
+	val rand = new scala.util.Random(0)
   
     def randomDom(n: Int): Array[Array[Int]] = {
 	  val low = Array.tabulate(n)(i => rand.nextInt(2))

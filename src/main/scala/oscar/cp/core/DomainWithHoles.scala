@@ -18,6 +18,8 @@ package oscar.cp.core;
 import oscar.reversible._
 import scala.collection.Iterator
 
+
+
 /**
  * Creates a domain that can contain holes in it (by opposition to a simple range domain). <br>
  * The data structure used to represent the holes is created in a lazy way. <br>
@@ -26,18 +28,18 @@ import scala.collection.Iterator
  */
 class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable[Int] {
 
+  private val _interval = new ReversibleInterval(s,minVal,maxVal)
   private val _withHoles = new ReversibleBool(s, false)
 
   private var _values: ReversibleSparseSet = null; //instantiated and used lazily only if there are holes in the domain
 
-  private val _min = new ReversibleInt(s, minVal)
-
-  private val _max = new ReversibleInt(s, maxVal)
-
-  private val _size = new ReversibleInt(s, maxVal - minVal + 1)
+  //if (maxVal - minVal == 1) createValueSet()
+  
+  private def withHoles: Boolean = _withHoles.value
 
   private def createValueSet() {
     _values = new ReversibleSparseSet(s, min, max)
+    _withHoles.value = true
   }
 
   /**
@@ -46,35 +48,46 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    */
   def getSize() = size
 
-  override def size = 0 max _size.value
+  override def size = {
+    if (withHoles) _values.size
+    else _interval.size 
+  }
 
   /**
    *
    * @return true if the domain is empty, false otherwise
    */
-  override def isEmpty = _size.value <= 0
+  override def isEmpty = {
+    if(withHoles) _values.isEmpty
+    else {
+      _interval.isEmpty
+    }
+  }
 
   /**
    *
    * @return the largest value in the domain
    */
-  def getMax() = max
+  def getMax(): Int = max
 
-  def max = _max.value
+  def max: Int = {
+    // lazy update of max 
+    if (withHoles) _values.max
+    else _interval.max
+  }
 
-  private def max_=(v: Int) = _max.value = v
-
-  private def min_=(v: Int) = _min.value = v
-
-  private def size_=(v: Int) = _size.value = v
 
   /**
    *
    * @return the smallest value in the domain
    */
-  def getMin() = min
+  def getMin(): Int = min
 
-  def min = _min.value
+  def min: Int = {
+    // lazy update of min 
+    if (withHoles) _values.min
+    else _interval.min
+  }
 
   /**
    * Test if a value is present in the domain
@@ -82,12 +95,8 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    * @return true if val is present in the domain, false otherwise
    */
   def hasValue(value: Int): Boolean = {
-    if (value > max || value < min || isEmpty) return false;
-    if (!_withHoles.value) {
-      return true
-    } else {
-      return _values.hasValue(value)
-    }
+    if (withHoles) _values.hasValue(value)
+    else _interval.hasValue(value)
   }
 
   /**
@@ -96,39 +105,25 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    * @return Failure if the domain is empty, Suspend otherwise
    */
   def removeValue(value: Int): CPOutcome = {
-    var minChanged = false
-    var maxChanged = false
-    if (value < min || value > max) {
-      return CPOutcome.Suspend;
-    } else if (min == value) {
-      min = value + 1
-      minChanged = true
-    } else if (max == value) {
-      max = value - 1
-      maxChanged = true;
-    } else if (!_withHoles.value) {
-      //create the set of values since there are holes in the domain
-      _withHoles.value = true
-      createValueSet();
+    if (!withHoles && value > _interval.min && value < _interval.max ) {
+      createValueSet()
+    }
+    
+    if (withHoles) {
+      _values.removeValue(value)
+      if (_values.isEmpty) CPOutcome.Failure
+      else CPOutcome.Suspend
+    }    
+    else {
+      if (_interval.isEmpty) {
+        CPOutcome.Failure
+      } else {
+        _interval.removeValue(value)
+        if (_interval.isEmpty) CPOutcome.Failure
+        else CPOutcome.Suspend
+      }
     }
 
-    if (_withHoles.value) {
-      if (_values.removeValue(value)) {
-        _size.decr()
-      }
-    } else {
-      _size.decr()
-    }
-
-    if (isEmpty) {
-      return CPOutcome.Failure;
-    } else {
-      if (_withHoles.getValue()) {
-        if (minChanged) min = _values.updateMin(min)
-        if (maxChanged) max = _values.updateMax(max)
-      }
-      return CPOutcome.Suspend;
-    }
   }
 
   /**
@@ -137,17 +132,19 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    * @return Failure if the domain is empty, Suspend otherwise
    */
   def assign(value: Int): CPOutcome = {
-    if (!hasValue(value)) {
-      size = 0
-      return CPOutcome.Failure;
-    } else {
-      size = 1
-      min = value
-      max = value
-      if (_withHoles.value) {
-        _values.removeAllBut(value);
+    if (withHoles) {
+      if (!_values.hasValue(value)) CPOutcome.Failure
+      else {
+        _values.removeAllBut(value)
+        CPOutcome.Suspend
       }
-      return CPOutcome.Suspend;
+    }    
+    else {
+      if (!_interval.hasValue(value)) CPOutcome.Failure
+      else {
+        _interval.assign(value)
+        CPOutcome.Suspend
+      }
     }
   }
 
@@ -157,19 +154,15 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    * @return Failure if the domain is empty, Suspend otherwise
    */
   def updateMin(value: Int): CPOutcome = {
-    if (value <= min) return CPOutcome.Suspend;
-    else if (value > max) return CPOutcome.Failure;
-    else if (_withHoles.value) {
-      min = _values.updateMin(value)
-      size = _values.size
-    } else {
-      size = 0.max(max - value + 1)
-      min = value
-    }
-    if (isEmpty) {
-      return CPOutcome.Failure;
-    } else {
-      return CPOutcome.Suspend;
+    if (withHoles) {
+      _values.updateMin(value)
+      if (_values.isEmpty) CPOutcome.Failure
+      else CPOutcome.Suspend
+    }    
+    else {
+      _interval.updateMin(value)
+      if (_interval.isEmpty) CPOutcome.Failure
+      else CPOutcome.Suspend
     }
   }
 
@@ -179,76 +172,63 @@ class DomainWithHoles(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable
    * @return Failure if the domain is empty, Suspend otherwise
    */
   def updateMax(value: Int): CPOutcome = {
-    if (value >= max) return CPOutcome.Suspend;
-    else if (value < min) return CPOutcome.Failure;
-    else if (_withHoles.value) {
-      max = _values.updateMax(value)
-      size = _values.size
-    } else {
-      _size.value = 0.max(value - min + 1);
-      max = value
-    }
-    if (isEmpty) {
-      return CPOutcome.Failure;
-    } else {
-      return CPOutcome.Suspend;
+    if (withHoles) {
+      _values.updateMax(value)
+      if (_values.isEmpty) CPOutcome.Failure
+      else CPOutcome.Suspend
+    }    
+    else {
+      _interval.updateMax(value)
+      if (_interval.isEmpty) CPOutcome.Failure
+      else CPOutcome.Suspend
     }
   }
 
-  def getNextValue(value: Int): Int = nextValue(value)
+  def getNextValue(value: Int): Int = {
+      nextValue(value)
+  }
 
   /**
    * @param value
-   * @return smallest value in the domain >= value, value is returned if no such value
+   * @return smallest value in the domain >= value, value-1 is returned if no such value
    */
   def nextValue(value: Int): Int = {
-    if (value >= max) {
-      value
-    } else if (value <= min) {
-      return min
-    } // min < val < max
-    else if (!_withHoles.value) {
-      value
-    } else {
-      _values.getNextValue(value)
-    }
+      if (withHoles) _values.nextValue(value)
+      else _interval.nextValue(value)
   }
 
   def getPrevValue(value: Int): Int = prevValue(value)
 
   /**
    * @param value
-   * @return largest value in the domain < value, value is returned if no such value
+   * @return largest value in the domain <= value, value+1 is returned if no such value
    */
   def prevValue(value: Int): Int = {
-    if (value <= min) {
-      value
-    } else if (value > max) {
-      max
-    } else if (!_withHoles.value) {
-      value;
-    } else {
-      _values.getPreValue(value)
-    }
+      if (withHoles) _values.prevValue(value)
+      else _interval.prevValue(value)
   }
 
   def iterator: Iterator[Int] = {
-    //println("iterator domain")
     if (_withHoles.value) {
       return _values.iterator
     } else {
-      var curr: Int = min
-      new Iterator[Int] {
-        def next(): Int = {
-          val res = curr
-          curr += 1
-          res
-        }
-        def hasNext: Boolean = {
-          curr <= _max.value
-        }
-      }
+      _interval.iterator
     }
   }
+  
+
+  
+  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    if (_withHoles.value) {
+      (oldMin until _values.minValue).iterator ++ _values.delta(oldSize) ++ (_values.maxValue+1 to oldMax).iterator
+    } else {
+      (oldMin to min-1).iterator ++ (max+1 to oldMax).iterator
+    }
+  }
+
+  override def toString(): String = {
+    if (_withHoles.value) _values.toString
+    else _interval.min+".."+_interval.max
+  }  
 
 }

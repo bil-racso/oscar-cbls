@@ -15,9 +15,18 @@
 package oscar.cp.core
 
 
+trait DomainIterator extends Iterator[Int] {
+  def removeValue: CPOutcome
+  def execute()
+}
+
 abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[Int] {
 
     def store = s
+    
+    def rootVar: CPVarInt
+    
+    def offset: Int
   
 	def constraintDegree(): Int
 	
@@ -137,6 +146,40 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	
 	def getMax = max
 	
+  def domainIterator: DomainIterator = {
+    new DomainIterator {
+      private val it = iterator
+      private var ok = false
+      private var v = Int.MinValue
+      private var collect: List[Int] = Nil
+      private var maxRemove = CPVarInt.this.size
+      
+      def next(): Int = {
+          v = it.next()
+          ok = true
+          v  
+      }
+      def hasNext: Boolean = {
+        it.hasNext
+      }
+      
+      def removeValue(): CPOutcome = {
+        assert(ok == true)
+        ok = false
+        collect = v :: collect
+        maxRemove -= 1
+        if (maxRemove <= 0) 
+          CPOutcome.Failure 
+        else
+          CPOutcome.Suspend
+      }
+      
+      def execute() = {
+        for (v <- collect) CPVarInt.this.removeValue(v)
+      }
+    }
+  }	
+	
 	
     /**
      * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -177,6 +220,67 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
      * @see oscar.cp.core.Constraint#propagate()
      */
 	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
+	
+	
+	
+	
+	def filterWhenBind(filter: DeltaVarInt => CPOutcome) {
+	  s.post(
+		  new DeltaVarInt(this,filter) {
+		    def setup(l: CPPropagStrength) = {
+		      callPropagateWhenBind(this)
+		      CPOutcome.Suspend
+		    }
+		  }
+	  ) // should not fail
+	}
+	
+	def filterWhenBoundsChanges(filter: DeltaVarInt => CPOutcome) {
+	  s.post(
+		  new DeltaVarInt(this,filter) {
+		    def setup(l: CPPropagStrength) = {
+		      callPropagateWhenBoundsChange(this)
+		      CPOutcome.Suspend
+		    }
+		  }
+	  ) // should not fail
+	}	
+	
+	def filterWhenMaxChanges(filter: DeltaVarInt => CPOutcome) {
+	  s.post(
+		  new DeltaVarInt(this,filter) {
+		    def setup(l: CPPropagStrength) = {
+		      callPropagateWhenMaxChanges(this)
+		      CPOutcome.Suspend
+		    }
+		  }
+	  ) // should not fail
+	}
+	
+	def filterWhenMinChanges(filter: DeltaVarInt => CPOutcome) {
+	  s.post(
+		  new DeltaVarInt(this,filter) {
+		    def setup(l: CPPropagStrength) = {
+		      callPropagateWhenMinChanges(this)
+		      CPOutcome.Suspend
+		    }
+		  }
+	  ) // should not fail
+	}		
+	
+	def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
+	  s.post(
+		  new DeltaVarInt(this,filter) { 
+		    def setup(l: CPPropagStrength) = {
+		      callPropagateWhenDomainChanges(this)
+		      CPOutcome.Suspend
+		    }
+		  }
+	  ) // should not fail
+	}	
+	
+	
+	
 
     /**
      * Level 1 registration: ask that the valBind(CPVarInt) method of the constraint c is called whenever
@@ -316,6 +420,47 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	
 	// ------ delta methods to be called in propagate -------
 	
+	def changed(sn: Snapshot): Boolean = {
+	   sn.oldSize != size
+	}
+	
+	def minChanged(sn: Snapshot): Boolean = {
+	  assert(sn.oldMin <= min)
+	  sn.oldMin < min
+	}
+	
+	def maxChanged(sn: Snapshot): Boolean = {
+	  assert(sn.oldMax >= max)
+	  sn.oldMax > max
+	}
+	
+	def boundsChanged(sn: Snapshot): Boolean = {
+	  sn.oldMax == max	  
+	}
+	
+	def oldMin(sn: Snapshot): Int = {
+	  assert(sn.oldMin <= min)
+	  sn.oldMin
+	}
+	
+	def oldMax(sn: Snapshot): Int = {
+	  assert(sn.oldMax >= max)
+	  sn.oldMax
+	}
+	
+	def oldSize(sn: Snapshot): Int = {
+	  assert(sn.oldSize >= size)
+	  sn.oldSize
+	}
+	
+	def deltaSize(sn: Snapshot): Int = {
+	  sn.oldSize - size
+	}
+	
+	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
+	
+	// --------------------------------------------
+	
 	def changed(c: Constraint): Boolean
 	
 	def minChanged(c: Constraint): Boolean
@@ -332,7 +477,7 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	
 	def deltaSize(c: Constraint): Int
 	
-	def delta(c: Constraint): Stream[Int]
+	def delta(c: Constraint): Iterator[Int]
 	
 	
 	// ------------------------ some useful methods for java -------------------------

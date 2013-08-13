@@ -26,7 +26,7 @@ import scala.collection.Iterator
  * @param max >= min
  * @author Pierre Schaus
  */
-class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int) extends Iterable[Int] {
+class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
 
   val offset = minValue
   val _min = new ReversibleInt(s,minValue)
@@ -42,12 +42,20 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
     _size.value = v
   }
   
-  def min: Int = _min.value
+  def min: Int = {
+    if (!hasValue(_min.value)) updateMinValRemoved(_min.value)
+    _min.value
+  }
   private def min_=(v: Int) {
     _min.value = v
   }
 
-  def max: Int = _max.value
+  def max: Int = {
+    if (!hasValue(_max.value)) updateMaxValRemoved(_max.value)
+    _max.value
+  }
+  
+  
   private def max_=(v: Int) {
     _max.value = v
   }
@@ -84,22 +92,6 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
     indexes(v1) = i2
     indexes(v2) = i1
   }
-
-  def insert(v: Int) {
-    assert(checkVal(v));
-    if (hasValue(v)) return ;
-    else if (isEmpty) {
-      min = v
-      max = v
-    } else {
-      if (v > max) max = v
-      if (v < min) min = v
-    }
-
-    exchangePositions(v, values(size) + offset);
-    _size.incr()
-    assert(size <= values.size);
-  }
   
   private def updateBoundsValRemoved(v: Int) {
 	updateMaxValRemoved(v)
@@ -107,33 +99,38 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
   }
 
   private def updateMaxValRemoved(v: Int) {
-    if (!isEmpty && max == v) {
+    
+    /*
+    if (!isEmpty) {
       assert(!hasValue(v));
-      //the maximum was removed, search the new one
-      var cv = v - 1
-      while (cv >= min) {
+      var cv = v
+      while (cv >= _min.value) {
         if (hasValue(cv)) {
           max = cv
           return
         }
         cv -= 1
       }
-    }
+    }*/
+    
+    if (!isEmpty) max = iterator.max
   }
 
   private def updateMinValRemoved(v: Int) {
-    if (!isEmpty && min == v) {
-      assert(!hasValue(v));
-      //the minimum was removed, search the new one
-      var cv = v + 1
-      while (cv <= max) {
+    
+    /*
+    if (!isEmpty) {
+      var cv = v
+      while (cv <= _max.value) {
         if (hasValue(cv)) {
           min = cv
           return
         }
         cv += 1
       }
-    }
+    }*/
+    
+    if (!isEmpty) min = iterator.min
   }
 
   def removeValue(v: Int): Boolean = {
@@ -141,11 +138,14 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
     if (!hasValue(v)) return false; //the value has already been removed
     exchangePositions(v, values(size - 1) + offset)
     _size.decr()
-    updateBoundsValRemoved(v)
     return true;
   }
 
-  def getNextValue(v: Int): Int = {
+  /**
+   * @param value
+   * @return smallest value in the domain >= value, value-1 is returned if no such value
+   */  
+  def nextValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
     var cv = v
@@ -158,7 +158,11 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
     v - 1
   }
 
-  def getPreValue(v: Int): Int = {
+  /**
+   * @param value
+   * @return largest value in the domain <= value, value+1 is returned if no such value
+   */  
+  def prevValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
     var cv = v
@@ -186,14 +190,13 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
     size = 1
   } 
 
-  def updateMin(minv: Int): Int = {
+  def updateMin(minv: Int): Unit = {
     assert(checkVal(minv))
     assert(!isEmpty)
     if (minv < min) {
-      return min // the min does not change
+      return // the min does not change
     } else if (minv > max) {
-      size = 0
-      return Int.MaxValue // the set becomes empty since the new min is larger than the current max
+      size = 0 // the set becomes empty since the new min is larger than the current max
     } else if (minv == max) {
       // the new min is equal to the current max hence only one value in the set
       removeAllBut(minv)
@@ -203,18 +206,19 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
         removeValue(cv)
         cv += 1
       }
+      if (hasValue(minv)) {
+        min = minv
+      }
     }
-    return min
   }
 
-  def updateMax(maxv: Int): Int = {
+  def updateMax(maxv: Int): Unit = {
     assert(checkVal(max));
     assert(!isEmpty);
     if (maxv >= max) {
-      return max // the max does not change
+      return
     } else if (maxv < min) {
-      size = 0
-      return Int.MinValue // the set becomes empty since the new max is smaller than the current min
+      size = 0 // the set becomes empty since the new max is smaller than the current min
     } else if (maxv == min) {
       // the new max is equal to the current min hence only one value in the set
       removeAllBut(maxv)
@@ -224,25 +228,39 @@ class ReversibleSparseSet(s: ReversibleSearchNode, minValue: Int, maxValue: Int)
         removeValue(cv)
         cv -= 1
       }
+      if (hasValue(maxv)) {
+        max = maxv
+      }
     }
-    return max
   }
 
   def iterator: Iterator[Int] = {
-      //println("iterator sparseset")
-      var interIndex = 0
+      var iterIndex = 0
       new Iterator[Int] {
         def next(): Int = {
-          val i = interIndex
-          interIndex += 1
-          values(i) + offset
-            
+          val i = iterIndex
+          iterIndex += 1
+          values(i) + offset  
         }
         def hasNext: Boolean = {
-          interIndex < _size.value
+          iterIndex < _size.value
         }
       }
-  }  
+  }
+
+  def delta(oldSize: Int): Iterator[Int] = {
+    var ind = size
+    new Iterator[Int] {
+      def next(): Int = {
+        val v = values(ind)
+        ind += 1
+        v + offset
+      }
+      def hasNext: Boolean = {
+        ind < oldSize && ind < values.size
+      }
+    }
+  }
   
 
   

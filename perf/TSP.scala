@@ -57,6 +57,7 @@ object TSP {
     val distMatrix = lines.grouped(n).map(i => i.map(j => j.toInt).toArray).toArray
 
     val cp = new CPSolver()
+    cp.silent = true
     //array of successors
     val succ = Array.tabulate(n)(_ => CPVarInt(cp, 0 until n))
     //total distance

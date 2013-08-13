@@ -120,4 +120,75 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 			cp.add(a < 10)
 		} should produce [NoSolutionException]
 	}
+	
+  test("min max size methods test") {
+
+    val cp = CPSolver()
+
+    var x = CPVarInt(cp, -2 to 4)
+    
+    x.min should be(-2)
+    x.max should be(4)
+    
+
+    for (i <- 0 to 5) {
+
+      cp.pushState()
+      cp.add(x != 0)
+      cp.add(x != 2)
+
+      x.size should be(5)
+      x.min should be(-2)
+      x.max should be(4)
+
+      cp.add(x != -1)
+      cp.add(x != -2)
+
+      x.size should be(3)
+      x.min should be(1)
+      x.max should be(4)
+
+      cp.pop()
+
+      x.size should be(7)
+      x.min should be(-2)
+      x.max should be(4)
+    }
+
+  }
+  
+  test("domain iterator 1") {
+    val cp = CPSolver()
+    var x = CPVarInt(cp, Set(1,3,5))
+  
+    val d = x.domainIterator
+    println(d.next)
+    d.removeValue should be(CPOutcome.Suspend)
+    println(d.next)
+    d.removeValue should be(CPOutcome.Suspend)
+    println(d.next)
+    d.removeValue should be(CPOutcome.Failure)
+    d.hasNext should be(false)
+  }
+  
+  
+  test("domain iterator 2") {
+    val cp = CPSolver()
+    var x = CPVarInt(cp, Set(1,3,5,11))
+    val initVals = x.toSet
+    val d = x.domainIterator
+    val removed = (for (i <- 1 to x.size-1) yield {
+      val v = d.next
+      d.removeValue should be(CPOutcome.Suspend)
+      v
+    }).toSet
+    
+    
+    removed.size should be(x.size-1)
+    d.execute()
+    x.size should be(1)
+    x.isBound should be(true)
+    (initVals -- removed).contains(x.value) should be (true)
+  }  
+
 }

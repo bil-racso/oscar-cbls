@@ -328,8 +328,16 @@ class CPStore extends ReversibleSearchNode {
 		}
 	}
 	
-   val q1 = propagQueueL1.reverse
-   val q2 = propagQueueL2.reverse
+	val q1 = propagQueueL1.reverse
+	val q2 = propagQueueL2.reverse
+	
+	private def printQueue() {
+	  println("--- L1 queue ---")
+	  q1.foreach(q => println(q.mkString("[",",","]")))
+	  println("--- L2 queue ---")
+	  q2.foreach(q => println(q.mkString("[",",","]")))
+	  println("---")
+	}
 	
     /**
      * Fix Point algorithm
@@ -337,15 +345,13 @@ class CPStore extends ReversibleSearchNode {
      */
    
 	protected def propagate(): CPOutcome = {
-		assert(status.value != Failure);
-		
+		assert(status.value != Failure)
 		val t0 = System.currentTimeMillis();
-		inPropagate = true;
-		var ok = CPOutcome.Suspend;
-		addCutConstraints();
+		inPropagate = true
+		var ok = CPOutcome.Suspend
+		addCutConstraints()
 		var fixed = false
 		while (ok != Failure && !fixed) {
-			//var p = int p;
 		    if (q1.exists(!_.isEmpty())) {
 		      val queue = q1.find(!_.isEmpty()).get
 		      ok = queue.removeFirst()()
@@ -356,8 +362,8 @@ class CPStore extends ReversibleSearchNode {
 		      fixed = true
 		    }
 		}
-		inPropagate = false;
-		timeInFixPoint += System.currentTimeMillis()-t0;
+		inPropagate = false
+		timeInFixPoint += System.currentTimeMillis() - t0
 		status.value = if (ok == Failure) ok else Suspend
 		status.value
 	}

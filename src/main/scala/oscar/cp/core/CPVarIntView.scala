@@ -19,121 +19,134 @@ package oscar.cp.core;
  * @author Pierre Schaus pschaus@gmail.com
  */
 class CPVarIntView(v: CPVarInt,val b: Int) extends CPVarInt(v.s) {
+  
+    def rootVar: CPVarInt = v.rootVar
+    
+    def offset: Int = b + v.offset
+  
+    val root = rootVar
+    
+    val btot = offset
 	
-	def isBound = v.isBound
+	def isBound = root.isBound
 	
-	override def size = v.size
+	override def size = root.size
 	
-	override def isEmpty = v.isEmpty
+	override def isEmpty = root.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	def constraintDegree = root.constraintDegree()
 	
-	def isBoundTo(value: Int): Boolean = v.isBoundTo(value-b)
+	def isBoundTo(value: Int): Boolean = root.isBoundTo(value-btot)
 	
-	def hasValue(value: Int): Boolean = v.hasValue(value-b)
+	def hasValue(value: Int): Boolean = root.hasValue(value-btot)
 	
-	def valueAfter(value: Int): Int = v.valueAfter(value-b) + b
+	def valueAfter(value: Int): Int = root.valueAfter(value-btot) + btot
 	
-	def valueBefore(value: Int): Int = v.valueBefore(value-b) + b
+	def valueBefore(value: Int): Int = root.valueBefore(value-btot) + btot
 	
-	def updateMin(value: Int) = v.updateMin(value-b);
+	def updateMin(value: Int) = root.updateMin(value-btot);
 	
-	def assign(value: Int) = v.assign(value-b)
+	def assign(value: Int) = root.assign(value-btot)
 
-	def updateMax(value: Int) = v.updateMax(value-b)
+	def updateMax(value: Int) = root.updateMax(value-btot)
 	
-	def removeValue(value: Int) = v.removeValue(value-b)
+	def removeValue(value: Int) = root.removeValue(value-btot)
 	
-	def min = v.min +b
+	def min = root.min + btot
 	
-	def max = v.max + b
+	def max = root.max + btot
 	
 	def iterator = {
-		v.iterator.map(_+b)
+		root.iterator.map(_ + btot)
 	}
 	
-	override def toString() = "view with shift "+b+" on ("+v+")";
+	override def toString() = "view with shift "+btot+" on ("+root+")";
 		
-	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
+	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = root.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
+	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = root.callPropagateWhenBoundsChange(c,trackDelta)
 	
-	def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenMaxChanges(c,trackDelta)
+	def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false) = root.callPropagateWhenMaxChanges(c,trackDelta)
 	
-	def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenMinChanges(c,trackDelta)
+	def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false) = root.callPropagateWhenMinChanges(c,trackDelta)
 	
-	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
-	
-	// this method is useful when you have a view defined on a view
-	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int) = v.callValBindWhenBind(c, variable, b+delta)
-	
-	def callValBindWhenBind(c: Constraint) = v.callValBindWhenBind(c,this,b)
-	
+	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = root.callPropagateWhenDomainChanges(c,trackDelta)
 	
 	// this method is useful when you have a view defined on a view
-	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt, delta: Int) = v.callUpdateBoundsWhenBoundsChange(c, variable, b+delta)
+	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int) = root.callValBindWhenBind(c, variable, btot)
 	
-	def callUpdateBoundsWhenBoundsChange(c: Constraint) = v.callUpdateBoundsWhenBoundsChange(c,this,b)
+	def callValBindWhenBind(c: Constraint) = root.callValBindWhenBind(c,this,btot)
 	
-	// this method is useful when you have a view defined on a view
-	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int) = v.callUpdateMaxWhenMaxChanges(c,variable,b+delta)
-	
-	def callUpdateMaxWhenMaxChanges(c: Constraint) = v.callUpdateMaxWhenMaxChanges(c,this,b)
 	
 	// this method is useful when you have a view defined on a view
-	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int) = v.callUpdateMinWhenMinChanges(c,variable,b+delta);
+	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt, delta: Int) = root.callUpdateBoundsWhenBoundsChange(c, variable, btot)
 	
-	def callUpdateMinWhenMinChanges(c: Constraint) = v.callUpdateMinWhenMinChanges(c,this,b);
+	def callUpdateBoundsWhenBoundsChange(c: Constraint) = root.callUpdateBoundsWhenBoundsChange(c,this,btot)
 	
 	// this method is useful when you have a view defined on a view
-	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int) = v.callValRemoveWhenValueIsRemoved(c,variable,b+delta);
+	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int) = root.callUpdateMaxWhenMaxChanges(c,variable,btot)
+	
+	def callUpdateMaxWhenMaxChanges(c: Constraint) = root.callUpdateMaxWhenMaxChanges(c,this,btot)
+	
+	// this method is useful when you have a view defined on a view
+	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int) = root.callUpdateMinWhenMinChanges(c,variable,btot);
+	
+	def callUpdateMinWhenMinChanges(c: Constraint) = root.callUpdateMinWhenMinChanges(c,this,btot);
+	
+	// this method is useful when you have a view defined on a view
+	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int) = root.callValRemoveWhenValueIsRemoved(c,variable,btot);
 		
-	def callValRemoveWhenValueIsRemoved(c: Constraint) = v.callValRemoveWhenValueIsRemoved(c,this,b);
+	def callValRemoveWhenValueIsRemoved(c: Constraint) = root.callValRemoveWhenValueIsRemoved(c,this,btot);
 	
 	// this method is useful when you have a view defined on a view
-	def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt,idx: Int, delta: Int) = v.callValBindIdxWhenBind(c, variable,idx, b+delta);
+	def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt,idx: Int, delta: Int) = root.callValBindIdxWhenBind(c, variable,idx, btot);
 	
-	def callValBindIdxWhenBind(c: Constraint, idx: Int) = v.callValBindIdxWhenBind(c,this,idx,b);
+	def callValBindIdxWhenBind(c: Constraint, idx: Int) = root.callValBindIdxWhenBind(c,this,idx,btot);
 	
 	// this method is useful when you have a view defined on a view
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx, b+delta);	
+	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = root.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx, btot);	
 		
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx,b);
+	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = root.callUpdateBoundsIdxWhenBoundsChange(c,this,idx,btot);
 	
 	// this method is useful when you have a view defined on a view
-	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = v.callUpdateMaxIdxWhenMaxChanges(c,variable,idx,b+delta);	
+	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = root.callUpdateMaxIdxWhenMaxChanges(c,variable,idx,btot);	
 	
-	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, idx: Int) = v.callUpdateMaxIdxWhenMaxChanges(c,this,idx,b);
-	
-	// this method is useful when you have a view defined on a view
-	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = v.callUpdateMinIdxWhenMinChanges(c,variable,idx,b+delta);
-	
-	def callUpdateMinIdxWhenMinChanges(c: Constraint, idx: Int) = v.callUpdateMinIdxWhenMinChanges(c,this,idx,b);
+	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, idx: Int) = root.callUpdateMaxIdxWhenMaxChanges(c,this,idx,btot);
 	
 	// this method is useful when you have a view defined on a view
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,variable,idx,b+delta);
+	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = root.callUpdateMinIdxWhenMinChanges(c,variable,idx,btot);
 	
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,this,idx,b);
+	def callUpdateMinIdxWhenMinChanges(c: Constraint, idx: Int) = root.callUpdateMinIdxWhenMinChanges(c,this,idx,btot);
+	
+	// this method is useful when you have a view defined on a view
+	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) = root.callValRemoveIdxWhenValueIsRemoved(c,variable,idx,btot);
+	
+	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = root.callValRemoveIdxWhenValueIsRemoved(c,this,idx,btot);
 
 	// ----------------------------------
 	
-	def changed(c: Constraint): Boolean = v.changed(c)
+	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = root.delta(oldMin-btot,oldMax-btot,oldSize).map(_ + btot)
 	
-	def minChanged(c: Constraint): Boolean = v.minChanged(c)
+	def changed(c: Constraint): Boolean = root.changed(c)
 	
-	def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
+	def minChanged(c: Constraint): Boolean = root.minChanged(c)
 	
-	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
+	def maxChanged(c: Constraint): Boolean = root.maxChanged(c)
 	
-	def oldMin(c: Constraint): Int = v.oldMin(c)-b
+	def boundsChanged(c: Constraint): Boolean = root.boundsChanged(c)
 	
-	def oldMax(c: Constraint): Int = v.oldMax(c)-b
+	def oldMin(c: Constraint): Int = root.oldMin(c) + btot
 	
-	def oldSize(c: Constraint): Int = v.oldSize(c)
+	def oldMax(c: Constraint): Int = root.oldMax(c) + btot
 	
-	def deltaSize(c: Constraint): Int = v.deltaSize(c)
+	def oldSize(c: Constraint): Int = root.oldSize(c)
 	
-	def delta(c: Constraint): Stream[Int] = v.delta(c).map(_-b)
+	def deltaSize(c: Constraint): Int = root.deltaSize(c)
+	
+	def delta(c: Constraint): Iterator[Int] = {
+	  val sn = c.snapshots(root)
+	  root.delta(sn.oldMin,sn.oldMax,sn.oldSize).map(_ + btot)
+	}
 	
 }
   

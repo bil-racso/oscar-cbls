@@ -33,7 +33,7 @@ public class Gr extends Constraint {
      * @param y
      */
 	public Gr(CPVarInt x, CPVarInt y) {
-		super(x.s(),"Gr");
+		super(x.s(),">");
 		this.x = x;
 		this.y = y;
 	}

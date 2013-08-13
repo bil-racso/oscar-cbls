@@ -60,7 +60,7 @@ object AllIntervals {
     // data
     //
     val n = if (args.length > 0) args(0).toInt else 11;
-    val num_to_show = if (args.length > 1) args(1).toInt else 0;
+    val num_to_show = if (args.length > 1) args(1).toInt else 1;
 
     println("n: " + n)
 
@@ -98,11 +98,8 @@ object AllIntervals {
       println()
 
       numSols += 1
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop()
-      }
 
-   } run()
+   } run(num_to_show)
 
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

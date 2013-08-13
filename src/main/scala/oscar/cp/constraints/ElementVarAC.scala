@@ -12,24 +12,6 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.cp.constraints;
 
@@ -119,14 +101,12 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
 
   // Initializes data structures
   private def initData() {
-    for (i <- x.min to x.max; if x hasValue i) {
-      for (v <- y(i).min to y(i).max; if y(i) hasValue v) {
-        if (z hasValue v) {
-          nSupports(v).incr()
-          intersect(i) insert v
+    for (i <- x)
+      for (v <- y(i))
+        if (z.hasValue(v)) {
+        	nSupports(v).incr()
+        	intersect(i).insert(v)
         }
-      }
-    }
   }
   
   // Reset the content of both data structures
@@ -157,7 +137,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   // Removes v from all the intersections
   private def removeFromZ(v: Int): CPOutcome = {
     nSupports(v) setValue 0
-    for (i <- x.min to x.max; if x hasValue i) {
+    for (i <- x.min to x.max; if x.hasValue(i)) {
       if (reduceIntersect(i, v) == Failure) return Failure
     }
     Suspend
@@ -168,7 +148,7 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
   private def removeFromX(i: Int): CPOutcome = {
     if (x.isBound) bindX()
     else {
-      for (v <- y(i).min to y(i).max; if y(i) hasValue v; if v < zRange.max) {
+      for (v <- y(i).min to y(i).max; if y(i).hasValue(v); if v < zRange.max) {
         if (reduceSupports(v) == Failure) return Failure
       }
       Suspend

@@ -9,40 +9,10 @@ import oscar.cp.scheduling.MaxResource
 
 class TestNeedsResource extends FunSuite with ShouldMatchers {
 
-/*
-  // problematic test
-  test("Test : TestNeedsResource1") {
+  test("Test : TestNeedsResourceBigInt") {
 
     val instance = 
       Array(
-    		(0,1,1),
-    		(0,1,1),
-    		(0,1,1),
-    		(10,17,7),
-    		(1,7,6),
-    		(1,5,4),
-    		(5,10,5),
-    		(5,13,8),
-    		(17,24,7),
-    		(13,21,8),
-    		(5,6,1),
-    		(16,18,2),
-    		(10,13,3),
-    		(6,16,10),
-    		(28,38,10),
-    		(21,23,2),
-    		(13,23,10),
-    		(13,14,1),
-    		(1,2,1),
-    		(23,30,7),
-    		(36,45,9),
-    		(10,19,9),
-    		(23,27,4),
-    		(38,42,4),
-    		(42,43,1),
-    		(27,28,1),
-    		(28,36,8),
-    		(45,46,1),
     		(45,47,2),
     		(36,43,7)
     )
@@ -59,8 +29,8 @@ class TestNeedsResource extends FunSuite with ShouldMatchers {
     
     cp.solve subjectTo {
 
-    	activities(28) needs 0 ofResource resource
-    	activities(29) needs 0 ofResource resource
+    	activities(0) needs 0 ofResource resource
+    	activities(1) needs 0 ofResource resource
     
     } exploration {
     	cp.binaryFirstFail(cp.activities)
@@ -71,10 +41,8 @@ class TestNeedsResource extends FunSuite with ShouldMatchers {
     num_sol shouldBe 1
 
   }
-  */
   
-  
-  test("Test : TestNeedsResource2") {
+  test("Test : TestNeedsResourceNoConstraint") {
 
     val instance = 
       Array(

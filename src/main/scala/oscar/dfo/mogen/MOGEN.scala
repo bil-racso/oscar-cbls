@@ -26,7 +26,7 @@ import oscar.util.mo.MOOComparator
 import oscar.util.mo.MOOPoint
 import oscar.util.mo.ParetoFront
 import oscar.util.mo.RandomGenerator
-import oscar.visual.PlotDFOPareto2D
+import oscar.visual.plot.PlotDFOPareto2D
 import oscar.visual.VisualFrame
 
 class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E]) {
