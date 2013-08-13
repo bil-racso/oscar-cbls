@@ -12,7 +12,7 @@ object test extends Parser with App{
     				"solve satisfy;"
 		//println(myParseAll(input))
 		myParseAll(input)
-		//println(model.dict.toString)
+		println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
 //		  case Some(p) => println(p.toString)

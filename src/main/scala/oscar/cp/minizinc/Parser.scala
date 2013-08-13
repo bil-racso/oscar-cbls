@@ -5,6 +5,7 @@ import FZType._
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core._
 import oscar.cp.modeling._
+//import oscar.cp.modeling.Constraints._
 import java.io.FileReader
 import oscar.cbls.invariants.lib.set.Cardinality
 import scala.Equals
@@ -23,8 +24,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");" ^^ {
-	  case "predicate"~id~"("~parList~");" => println("predicate " + id)
-	  case _ => println("error in predicate")
+	  case "predicate"~id~"("~parList~");" => //println("predicate " + id)
+	  case _ => //println("error in predicate")
 	}
 
 	def identifier : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
@@ -284,7 +285,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "at_most1" =>
 	    case "bin_packing" => 
 	    case "bin_packing_capa" =>
-	    case "bin_packing_load" =>
+	    case "oscar_bin_packing_load" =>
+	      println(getCPArray(varList(1).toString).mkString(","))
+          println(getIntArray(varList(2).toString).mkString(","))
+          println(getCPArray(varList(0).toString).mkString(","))
+	      cp.add(binpacking(getCPArray(varList(1).toString), 
+	          getIntArray(varList(2).toString), getCPArray(varList(0).toString)))
 	    case "circuit" => 
 	      cp.add(circuit(getCPArray(varList(0).toString)))
 	    case "count_eq" =>
@@ -309,59 +315,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "int_set_channel" =>
 	    case "inverse" =>
 	    case "inverse_set" =>
-	    case "lex_greater_int" =>
-	    case "lex_greatereq_int" =>
+	    case "lex_greater_int" => //not used, done with lex_less
+	    case "lex_greatereq_int" => //not used, done with lex_lesseq
 	    case "oscar_lex_less_int" =>
 	      val t1 = getCPArray(varList(0).toString)
 	      val t2 = getCPArray(varList(1).toString)
 	      cp.add(lexLeq(t1, t2))
-	      cp.add(sum(t1) != sum(t2))
+	      diff_array_cstr(t1, t2)
 	      //how to ask for the two arrays to be different ?
 	    case "oscar_lex_lesseq_int" =>
 	      cp.add(lexLeq(getCPArray(varList(0).toString), getCPArray(varList(1).toString)))
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
-	      //could maybe be done by recreating the orginal array and working on it...
-	      val rows = varList(1).toString.toInt
-	      val cols = varList(2).toString.toInt
-	      var array = Array[CPVarInt]()
-	      varList(0) match {
-	        case x:List[Any] => {
-	          x.foreach{ e => 
-			  	e match {
-				    case x:List[Any] => array :+= getCPFromList(x)
-			  	}
-	          }
-	        }
-	      }
-	      //val array = getCPArray(varList(0).toString)
-	      var x = Array[CPVarInt]()
-	      var y = Array[CPVarInt]()
-	      //rows
-	      //index = i*cols + j
-	      for( i <- 0 until rows-1; j <- 0 to cols-1){
-	        x :+= array(i*cols+j)
-	        y :+= array((i+1)*cols+j)
-	        if(j == cols-1) {
-	          //posting the constraint for two consecutive rows and reseting the arrays
-	          cp.add(lexLeq(x, y))
-	          x = Array[CPVarInt]()
-	          y = Array[CPVarInt]()
-	        }
-	      }
-	      //cols
-	      //intx : = j*cols + i
-	      for( i <- 0 until cols-1; j <- 0 to rows-1){
-	        x :+= array(j*cols+i)
-	        y :+= array(j*cols+i+1)
-	        if(j == rows-1) {
-	          //posting the constraint for two consecutive rows and reseting the arrays
-	          cp.add(lexLeq(x, y))
-	          x = Array[CPVarInt]()
-	          y = Array[CPVarInt]()
-	        }
-	      }
+	      lex2_cstr(varList, false)
 	    case "link_set_to_booleans" =>
-	    case "maximum_int" =>
+	    case "oscar_maximum_int" =>
 	      cp.add(maximum(getCPArray(varList(0).toString), getCPVar(varList(1))))
 	    case "member_int" =>
 	    case "oscar_minimum_int" =>
@@ -373,13 +340,71 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "roots" =>
 	    case "sliding_sum" =>
 	    case "sort" =>
-	    case "strict_lex2" => //2D -> 1D needed
+	    case "oscar_strict_lex2" => //2D -> 1D needed
+	      lex2_cstr(varList, true)
 	    case "subcircuit" =>
 	    case "sum_pred" =>
 	    case "table_int" => //2D -> 1D needed
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
 	  }
+	}
+	
+	def lex2_cstr(varList: List[Any], strict: Boolean) {
+	  //could maybe be done by recreating the orginal array and working on it...
+      val rows = varList(1).toString.toInt
+      val cols = varList(2).toString.toInt
+      var array = Array[CPVarInt]()
+      varList(0) match {
+        case x:List[Any] => {
+          x.foreach{ e => 
+		  	e match {
+			    case x:List[Any] => array :+= getCPFromList(x)
+		  	}
+          }
+        }
+      }
+      //val array = getCPArray(varList(0).toString)
+      var x = Array[CPVarInt]()
+      var y = Array[CPVarInt]()
+      //rows
+      //index = i*cols + j
+      for( i <- 0 until rows-1; j <- 0 to cols-1){
+        x :+= array(i*cols+j)
+        y :+= array((i+1)*cols+j)
+        if(j == cols-1) {
+          //posting the constraint for two consecutive rows and reseting the arrays
+          cp.add(lexLeq(x, y))
+          if(strict) {
+//            println("rows cols")
+//            println(x.mkString(","))
+//            println(y.mkString(","))
+            diff_array_cstr(x, y)
+          }
+          x = Array[CPVarInt]()
+          y = Array[CPVarInt]()
+        }
+      }
+      //cols
+      //intx : = j*cols + i
+      for( i <- 0 until cols-1; j <- 0 to rows-1){
+        x :+= array(j*cols+i)
+        y :+= array(j*cols+i+1)
+        if(j == rows-1) {
+          //posting the constraint for two consecutive rows and reseting the arrays
+          cp.add(lexLeq(x, y))
+          if(strict) {
+            println("cols rows")
+            diff_array_cstr(x, y)
+          }
+          x = Array[CPVarInt]()
+          y = Array[CPVarInt]()
+        }
+      }
+	}
+	
+	def diff_array_cstr(x: Array[CPVarInt], y: Array[CPVarInt]) {
+	  cp.add(sum(x) != sum(y))
 	}
 	
 	def int_cstr(varList: List[Any], ann: Any, cstr: String) {
@@ -426,6 +451,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         case "int_lin_le" => 
           cp.add(weightedSum(cst, cpvar) <= varList(2).toString.toInt) 
       }
+	}
+	
+	def getIntArray(x: String): Array[Int] = {
+	  model.dict.get(x) match {
+	      case Some((tp, fzo)) => 
+	        tp match {
+	            case FZType.P_ARRAY_INT => {
+	              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
+	              (list map (_.toInt)).toArray
+	            }
+	        }
+	    }
 	}
 	
 	def getCPVar(x: Any): CPVarInt = {
