@@ -4,6 +4,6 @@ predicate lex2(array[int, int] of var int: x) =
 	  		[ x[i, j] | i in index_set_1of2(x), j in index_set_2of2(x)]
 		}
 		in 
-	  	oscar_lex2(x2, length(x));   % use length(x) or length(index_set_1of2(x)) ?
+	  	oscar_lex2(x2, card(index_set_1of2(x)), card(index_set_2of2(x)));   % use length(x) or length(index_set_1of2(x)) ?
 		
-predicate oscar_lex2(array[int] of var int: x2, int: i);
+predicate oscar_lex2(array[int] of var int: x2, int: i, int: j);
