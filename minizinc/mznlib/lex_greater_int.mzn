@@ -1,3 +1,3 @@
-predicate lex_greater_int(array[int] of var int: x, array[int] of var int: y) = lex_greater_int(x, y);
+predicate lex_greater_int(array[int] of var int: x, array[int] of var int: y) = oscar_lex_less_int(y, x);
 
-predicate lex_greater_int(array[int] of var int: x, array[int] of var int: y);
+predicate oscar_lex_less_int(array[int] of var int: x, array[int] of var int: y);
