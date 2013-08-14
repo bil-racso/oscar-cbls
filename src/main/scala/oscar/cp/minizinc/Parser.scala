@@ -283,13 +283,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "at_least_int" => 
 	    case "at most_int" =>
 	    case "at_most1" =>
-	    case "bin_packing" => 
+	    case "oscar_bin_packing" => 
+	      //println("bin s")
+	      //println(varList(0).toString)
+	      //val x = getCPArray(varList(1).toString)
+	      val nbBin = getCPArrayRangeSize(varList(1).toString)
+	      //println(nbBin)
+	      val l = Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
+	      cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
+	          getIntArray(varList(2).toString), l))
 	    case "bin_packing_capa" =>
 	    case "oscar_bin_packing_load" =>
-	      println(getCPArray(varList(1).toString).mkString(","))
-          println(getIntArray(varList(2).toString).mkString(","))
-          println(getCPArray(varList(0).toString).mkString(","))
-	      cp.add(binpacking(getCPArray(varList(1).toString), 
+//	      println(getCPArray(varList(1).toString).mkString(","))
+//          println(getIntArray(varList(2).toString).mkString(","))
+//          println(getCPArray(varList(0).toString).mkString(","))
+	      cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
 	          getIntArray(varList(2).toString), getCPArray(varList(0).toString)))
 	    case "circuit" => 
 	      cp.add(circuit(getCPArray(varList(0).toString)))
@@ -511,6 +519,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                 }
                 case FZType.V_ARRAY_INT => {
                   fzo.asInstanceOf[VarArrayInt].cpvar
+                }
+            }
+	  }
+	}
+	
+	def getCPArrayRangeSize(x: String): Int = {
+	  model.dict.get(x) match {
+		  case Some((tp, fzo)) => 
+            tp match {
+                case FZType.V_ARRAY_INT_R => {
+                  fzo.asInstanceOf[VarArrayIntRange].range.length
                 }
             }
 	  }
