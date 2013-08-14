@@ -284,21 +284,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "at most_int" =>
 	    case "at_most1" =>
 	    case "oscar_bin_packing" => 
-	      //println("bin s")
-	      //println(varList(0).toString)
-	      //val x = getCPArray(varList(1).toString)
-	      val nbBin = getCPArrayRangeSize(varList(1).toString)
-	      //println(nbBin)
-	      val l = Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
-	      cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
-	          getIntArray(varList(2).toString), l))
-	    case "bin_packing_capa" =>
+	      bin_packing(varList, "def")
+	    case "oscar_bin_packing_capa" => 	
+	      bin_packing(varList, "capa")
 	    case "oscar_bin_packing_load" =>
-//	      println(getCPArray(varList(1).toString).mkString(","))
-//          println(getIntArray(varList(2).toString).mkString(","))
-//          println(getCPArray(varList(0).toString).mkString(","))
-	      cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
-	          getIntArray(varList(2).toString), getCPArray(varList(0).toString)))
+	      bin_packing(varList, "load")
 	    case "circuit" => 
 	      cp.add(circuit(getCPArray(varList(0).toString)))
 	    case "count_eq" =>
@@ -358,11 +348,31 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	}
 	
+	def bin_packing(varList: List[Any], tp: String) {
+	  val l =
+	  tp match {
+	    case "def" => 
+	      val nbBin = getCPArrayRangeSize(varList(1).toString)
+	      Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
+	    case "load" => getCPArray(varList(0).toString)
+	    case "capa" =>
+	      var capaCP = Array[CPVarInt]()
+	      val capaInt = getIntArray(varList(0).toString)
+	      capaInt.foreach { e =>
+	        capaCP :+= CPVarInt(cp, 0, e)
+	      }
+	      capaCP
+	  }
+	  cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
+	          getIntArray(varList(2).toString), l))
+	}
+	
 	def lex2_cstr(varList: List[Any], strict: Boolean) {
 	  //could maybe be done by recreating the orginal array and working on it...
       val rows = varList(1).toString.toInt
       val cols = varList(2).toString.toInt
       var array = Array[CPVarInt]()
+      // how to convert a list to an array
       varList(0) match {
         case x:List[Any] => {
           x.foreach{ e => 
@@ -384,9 +394,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           //posting the constraint for two consecutive rows and reseting the arrays
           cp.add(lexLeq(x, y))
           if(strict) {
-//            println("rows cols")
-//            println(x.mkString(","))
-//            println(y.mkString(","))
             diff_array_cstr(x, y)
           }
           x = Array[CPVarInt]()
