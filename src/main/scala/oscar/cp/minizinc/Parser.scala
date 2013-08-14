@@ -260,6 +260,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_cstr(varList, ann, cstr)
 	    case "int_lt" => 
 	      int_cstr(varList, ann, cstr)
+	    case "int_max" =>
+	      val CPArray = Array[CPVarInt](getCPVarInt(varList(0)), getCPVarInt(varList(1)))
+	      cp.add(maximum(CPArray, getCPVarInt(varList(2))))
+	    case "int_min" =>
+	      val CPArray = Array[CPVarInt](getCPVarInt(varList(0)), getCPVarInt(varList(1)))
+	      cp.add(minimum(CPArray, getCPVarInt(varList(2))))
 	    case "int_ne" => 
 	      int_cstr(varList, ann, cstr)
 	    case "int_plus" => 
@@ -275,7 +281,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      
 	    // global constraints defined in minizinc/mznlib/
 	    case "oscar_alldiff" =>
-	      cp.add(allDifferent(getCPArray(varList(0).toString)))
+	      cp.add(allDifferent(getCPVarIntArray(varList(0).toString)))
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
 	    case "all_equal_int" =>
@@ -290,7 +296,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_bin_packing_load" =>
 	      bin_packing(varList, "load")
 	    case "circuit" => 
-	      cp.add(circuit(getCPArray(varList(0).toString)))
+	      cp.add(circuit(getCPVarIntArray(varList(0).toString)))
 	    case "count_eq" =>
 	    case "count_geq" =>
 	    case "count_gt" =>
@@ -303,7 +309,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "disjoint" =>
 	    case "distribute" =>
 	    case "element_int" =>
-	      cp.add(elementVar(getCPArray(varList(1).toString), getCPVar(varList(0)), getCPVar(varList(2))))
+	      cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "exactly_int" =>
 	    case "global_cardinality" =>
 	    case "global_cardinality_closed" =>
@@ -316,21 +322,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "lex_greater_int" => //not used, done with lex_less
 	    case "lex_greatereq_int" => //not used, done with lex_lesseq
 	    case "oscar_lex_less_int" =>
-	      val t1 = getCPArray(varList(0).toString)
-	      val t2 = getCPArray(varList(1).toString)
+	      val t1 = getCPVarIntArray(varList(0).toString)
+	      val t2 = getCPVarIntArray(varList(1).toString)
 	      cp.add(lexLeq(t1, t2))
 	      diff_array_cstr(t1, t2)
-	      //how to ask for the two arrays to be different ?
 	    case "oscar_lex_lesseq_int" =>
-	      cp.add(lexLeq(getCPArray(varList(0).toString), getCPArray(varList(1).toString)))
+	      cp.add(lexLeq(getCPVarIntArray(varList(0).toString), getCPVarIntArray(varList(1).toString)))
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	      lex2_cstr(varList, false)
 	    case "link_set_to_booleans" =>
 	    case "oscar_maximum_int" =>
-	      cp.add(maximum(getCPArray(varList(0).toString), getCPVar(varList(1))))
+	      cp.add(maximum(getCPVarIntArray(varList(0).toString), getCPVarInt(varList(1))))
 	    case "member_int" =>
 	    case "oscar_minimum_int" =>
-	      cp.add(minimum(getCPArray(varList(0).toString), getCPVar(varList(1))))
+	      cp.add(minimum(getCPVarIntArray(varList(0).toString), getCPVarInt(varList(1))))
 	    case "nvalue" =>
 	    case "partition_set" =>
 	    case "range" =>
@@ -338,11 +343,24 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "roots" =>
 	    case "sliding_sum" =>
 	    case "sort" =>
-	    case "oscar_strict_lex2" => //2D -> 1D needed
+	    case "oscar_strict_lex2" =>
 	      lex2_cstr(varList, true)
 	    case "subcircuit" =>
 	    case "sum_pred" =>
-	    case "table_int" => //2D -> 1D needed
+	    case "oscar_table_int" => //2D -> 1D needed
+	      val CPArray = getCPVarIntArray((varList(0).toString))
+	      val tupleLength = CPArray.length
+	      val intArray = varList(1).asInstanceOf[List[Int]]
+	      var temp = Array[Int]()
+	      var tuples = Array[Array[Int]]()
+	      for( i <- 0 to (intArray.length/tupleLength)-1){
+	        for( j <- 0 to tupleLength-1) {
+	          temp :+= intArray(i*tupleLength + j)
+	        }
+	        tuples :+= temp
+	        temp = Array[Int]()
+	      }
+	      cp.add(table(CPArray, tuples))
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
 	  }
@@ -354,7 +372,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "def" => 
 	      val nbBin = getCPArrayRangeSize(varList(1).toString)
 	      Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
-	    case "load" => getCPArray(varList(0).toString)
+	    case "load" => getCPVarIntArray(varList(0).toString)
 	    case "capa" =>
 	      var capaCP = Array[CPVarInt]()
 	      val capaInt = getIntArray(varList(0).toString)
@@ -363,7 +381,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      }
 	      capaCP
 	  }
-	  cp.add(binpacking(getCPArray(varList(1).toString).map(_-1), 
+	  cp.add(binpacking(getCPVarIntArray(varList(1).toString).map(_-1), 
 	          getIntArray(varList(2).toString), l))
 	}
 	
@@ -372,17 +390,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       val rows = varList(1).toString.toInt
       val cols = varList(2).toString.toInt
       var array = Array[CPVarInt]()
-      // how to convert a list to an array
       varList(0) match {
         case x:List[Any] => {
           x.foreach{ e => 
 		  	e match {
-			    case x:List[Any] => array :+= getCPFromList(x)
+			    case x:List[Any] => array :+= getCPVarIntFromList(x)
 		  	}
           }
         }
       }
-      //val array = getCPArray(varList(0).toString)
       var x = Array[CPVarInt]()
       var y = Array[CPVarInt]()
       //rows
@@ -409,7 +425,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           //posting the constraint for two consecutive rows and reseting the arrays
           cp.add(lexLeq(x, y))
           if(strict) {
-            println("cols rows")
             diff_array_cstr(x, y)
           }
           x = Array[CPVarInt]()
@@ -427,8 +442,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  varList.foreach{ e => 
 	  	e match {
 	  	  	case x:Int => cpvar :+= CPVarInt(cp, x)
-		    case x:List[Any] => cpvar :+= getCPFromList(x)
-		    case x:String => cpvar :+= getCPFromString(x)
+		    case x:List[Any] => cpvar :+= getCPVarIntFromList(x)
+		    case x:String => cpvar :+= getCPVarIntFromString(x)
 	  	}
 	  }
 	  cstr match {
@@ -447,13 +462,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       varList(1).asInstanceOf[List[Any]].foreach { e =>
         e match {
           case x:List[Any] => {
-            cpvar :+= getCPFromList(x)
+            cpvar :+= getCPVarIntFromList(x)
           }
           case x:Int => {
             cpvar :+= CPVarInt(cp, x)
           }
           case x:String => {
-            cpvar :+= getCPFromString(x)
+            cpvar :+= getCPVarIntFromString(x)
           }
         }
       }
@@ -480,14 +495,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    }
 	}
 	
-	def getCPVar(x: Any): CPVarInt = {
+	def getCPVarInt(x: Any): CPVarInt = {
 	  x match {
-	    case x:List[Any] => getCPFromList(x)
-	    case x:String => getCPFromString(x)
+	    case x:List[Any] => getCPVarIntFromList(x)
+	    case x:String => getCPVarIntFromString(x)
 	  }
 	}
 	
-	def getCPFromString(x: String): CPVarInt = {
+	def getCPVarIntFromString(x: String): CPVarInt = {
 	  model.dict.get(x) match {
 	      case Some((tp, fzo)) => 
 	        tp match {
@@ -501,9 +516,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    }
 	}
 	
-	def getCPFromList(x: List[Any]): CPVarInt = {
-	  println(model.dict.toString)
-	  println(x)
+	def getCPVarIntFromList(x: List[Any]): CPVarInt = {
 	  model.dict.get(x(0).toString) match {
           case Some((tp, fzo)) => 
             tp match {
@@ -517,7 +530,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
 	}
 	
-	def getCPArray(x: String): Array[CPVarInt] = {
+	def getCPVarIntArray(x: String): Array[CPVarInt] = {
 	  model.dict.get(x) match {
 		  case Some((tp, fzo)) => 
             tp match {
@@ -634,9 +647,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          expr match {
 		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
 		        case x:List[Any] =>
-		          getCPFromList(x)
+		          getCPVarIntFromList(x)
 		        case x:String => 
-		          getCPFromString(x)
+		          getCPVarIntFromString(x)
 	          }
 	      ) subjectTo {
 	      } exploration {
@@ -650,9 +663,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          expr match {
 		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
 		        case x:List[Any] =>
-		          getCPFromList(x)
+		          getCPVarIntFromList(x)
 		        case x:String => 
-		          getCPFromString(x)
+		          getCPVarIntFromString(x)
 	          }
 	      ) subjectTo {
 	      } exploration {
