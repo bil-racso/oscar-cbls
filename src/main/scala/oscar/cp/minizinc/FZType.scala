@@ -14,6 +14,7 @@ object FZType extends Enumeration {
 		V_FLOAT,
 		V_INT,
 		V_INT_RANGE,
+		V_ARRAY_BOOL,
 		V_ARRAY_INT_R,
 		V_ARRAY_INT,
 		V_SET_INT_R,

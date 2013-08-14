@@ -10,8 +10,8 @@ object test extends Parser with App{
     	val input = new FileReader(args(0))
     	//val input = "array [1..7] of set of int: name = [2..5, {8, 7, 5}, {3}];" +
     				"solve satisfy;"
-		//println(myParseAll(input))
-		myParseAll(input)
+		println(myParseAll(input))
+		//myParseAll(input)
 		println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
