@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.visual;
+package oscar.visual.shapes;
 
 import java.awt.geom.Line2D
 import oscar.visual.VisualDrawing

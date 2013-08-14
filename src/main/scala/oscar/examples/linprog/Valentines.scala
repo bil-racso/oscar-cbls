@@ -55,19 +55,19 @@ object Valentines extends App {
   (1 to 2).foreach(f => table.setRowName("", Florists + f))
   
   for(f <- 0 until Florists){
-    table.setValueAt(0, f, Valentines)
+    table.setValueAt("0", f, Valentines)
     table.setValueAt("=", f, Valentines + 1)
-    table.setValueAt(stock(f), f, Valentines + 2)
+    table.setValueAt(stock(f).toString, f, Valentines + 2)
   }
   
   for(v <- 0 until Valentines){
-	  table.setValueAt(0, Florists, v)
+	  table.setValueAt("0", Florists, v)
 	  table.setValueAt("=", Florists + 1, v)
-	  table.setValueAt(requests(v), Florists + 2, v)
+	  table.setValueAt(requests(v).toString, Florists + 2, v)
   }
   
   table.setValueAt("Total Cost", Florists + 1, Valentines)
-  table.setValueAt(0, Florists + 2, Valentines)
+  table.setValueAt("0", Florists + 2, Valentines)
   
   (0 until Florists).foreach(f => (0 until Valentines).foreach(v => table.setColorAt(Color.PINK, f, v)))
   
@@ -93,8 +93,8 @@ object Valentines extends App {
   lp.release() // Frees up the memory held by the external solver.
   
   // Update the GUI to show the (romantic) solution. 
-  (0 until Florists).foreach(f => table.setValueAt(sum(0 until Valentines)(v => x(f)(v)).value.get, f, Valentines))
-  (0 until Valentines).foreach(v => table.setValueAt(sum(0 until Florists)(f => x(f)(v)).value.get, Florists, v))
+  (0 until Florists).foreach(f => table.setValueAt(sum(0 until Valentines)(v => x(f)(v)).value.get.toString, f, Valentines))
+  (0 until Valentines).foreach(v => table.setValueAt(sum(0 until Florists)(f => x(f)(v)).value.get.toString, Florists, v))
   (0 until Florists).foreach(f => (0 until Valentines).filter(x(f)(_).getValue.ceil < 1).foreach(v => table.setColorAt(Color.WHITE, f, v)))
-  table.setValueAt(lp.getObjectiveValue, Florists + 2, Valentines)
+  table.setValueAt(lp.getObjectiveValue.toString, Florists + 2, Valentines)
 }
