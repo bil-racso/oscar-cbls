@@ -31,7 +31,7 @@ class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max:
   def requires(value: Int) {
     assert(checkVal(value));
     if (isRequired(value)) return ;
-    if (!isPossible(value)) throw new RuntimeException(value + " cannot be required since it is event not possible")
+    if (!isPossible(value)) throw new RuntimeException(value + " cannot be required since it is even not possible")
     exchangePositions(value, values(size1.value) + min);
     size1.incr()
     assert(size1.value <= values.length);
@@ -91,13 +91,13 @@ class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max:
 
   def isPossible(value: Int): Boolean = {
     if (value < min || value > max) false;
-    else indexes(value - min) < size2.value;
+    else indexes(value - min) < size2.value
   }
 
   def checkVal(value: Int) = {
     assert(value >= min);
     assert(value <= max);
-    true;
+    true
   }
 
   def deltaRequired(oldRequiredSize: Int): Iterator[Int] = {
@@ -130,7 +130,7 @@ class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max:
     }
   }
   
-  def possibleNotRequired(): Iterator[Int] = {
+  def possibleNotRequiredValues(): Iterator[Int] = {
     var ind = requiredSize
     new Iterator[Int] {
       def next(): Int = {
@@ -143,6 +143,20 @@ class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max:
       }
     }
   }
+  
+  def requiredValues(): Iterator[Int] = {
+    var ind = 0
+    new Iterator[Int] {
+      def next(): Int = {
+        val v = values(ind)
+        ind += 1
+        v + ReversibleSparseSubset.this.min
+      }
+      def hasNext: Boolean = {
+        ind < requiredSize && ind < values.size
+      }
+    }
+  }  
   
   def arbitraryPossibleNotRequired: Int = {
     if (possibleSize == requiredSize) Int.MinValue

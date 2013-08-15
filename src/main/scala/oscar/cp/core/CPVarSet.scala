@@ -137,7 +137,7 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
     if (possibleSize > requiredSize) s.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
     if (onRequiredL1.hasValue() || onRequiredIdxL1.hasValue) {
-      for (v <- dom.possibleNotRequired) {
+      for (v <- dom.possibleNotRequiredValues) {
         if (onRequiredL1.hasValue()) s.notifyRequired(onRequiredL1.value, this, v)
         if (onRequiredIdxL1.hasValue) s.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
       }
@@ -150,7 +150,7 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
     if (possibleSize > requiredSize) s.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
     if (onExcludedL1.hasValue() || onExcludedIdxL1.hasValue) {
-      for (v <- dom.possibleNotRequired) {
+      for (v <- dom.possibleNotRequiredValues) {
         if (onExcludedL1.hasValue()) s.notifyExcluded(onExcludedL1.value, this, v)
         if (onExcludedIdxL1.hasValue) s.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
       }
@@ -168,6 +168,11 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
   def requiredSet(): Set[Int] = dom.requiredSet
 
   def possibleSet(): Set[Int] = dom.possibleSet
+  
+  def possibleNotRequiredValues: Iterator[Int] = dom.possibleNotRequiredValues
+   
+  def requiredValues: Iterator[Int] = dom.requiredValues
+  
 
   def possibleSize = dom.possibleSize
 
@@ -175,6 +180,10 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
 
   def include(v: Int) = new Requires(this, v)
   def exclude(v: Int) = new Excludes(this, v)
+  
+  override def toString = {
+    ""+requiredValues.toSet+" "+possibleNotRequiredValues.toSet
+  }
 
   // --------------------------------------------
 

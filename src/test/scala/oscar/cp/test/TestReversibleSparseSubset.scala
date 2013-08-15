@@ -136,12 +136,12 @@ class TestReversibleSparseSubset extends FunSuite with ShouldMatchers  {
 	
 
 		s.possibleSet should be(Set(-2,-1,0,1,2))
-		s.possibleNotRequired.toSet should be(Set(-2,-1,0,1,2))
+		s.possibleNotRequiredValues.toSet should be(Set(-2,-1,0,1,2))
 		
 		s.excludes(0)
 		s.requires(-2)
 		s.possibleSet should be(Set(-2,-1,1,2))
-		s.possibleNotRequired.toSet should be(Set(-1,1,2))
+		s.possibleNotRequiredValues.toSet should be(Set(-1,1,2))
 		s.requiredSet should be(Set(-2))
 		s.isPossible(-2) should be(true)
 
@@ -155,7 +155,7 @@ class TestReversibleSparseSubset extends FunSuite with ShouldMatchers  {
 		s.possibleSet should be(Set(-2,2))
 		s.requiredSet should be(Set())
 		s.requires(2)
-		s.possibleNotRequired.toSet should be(Set(-2))
+		s.possibleNotRequiredValues.toSet should be(Set(-2))
 		s.possibleSet should be(Set(-2,2))
 		s.requiredSet should be(Set(2))
 

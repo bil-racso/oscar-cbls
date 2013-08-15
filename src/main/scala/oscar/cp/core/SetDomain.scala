@@ -39,7 +39,8 @@ class SetDomain(s: CPStore, min: Int, max: Int) {
    def excludes(value: Int): CPOutcome = {
      if (values.isRequired(value)) Failure
      else {
-       values.excludes(value)
+       if (value <= max && value >= min)
+    	   values.excludes(value)
        Suspend
      }
    }
@@ -63,7 +64,9 @@ class SetDomain(s: CPStore, min: Int, max: Int) {
    def possibleSet = values.possibleSet
    def requiredSet = values.requiredSet
    
-   def possibleNotRequired: Iterator[Int] = values.possibleNotRequired
+   def possibleNotRequiredValues: Iterator[Int] = values.possibleNotRequiredValues
+   
+   def requiredValues: Iterator[Int] = values.requiredValues
    
    def arbitraryPossibleNotRequired: Int = values.arbitraryPossibleNotRequired
   
