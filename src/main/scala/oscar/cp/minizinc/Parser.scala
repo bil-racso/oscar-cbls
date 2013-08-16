@@ -14,6 +14,10 @@ import oscar.cp.constraints.DiffReifVar
 import oscar.cp.constraints.EqReif
 import oscar.cp.constraints.GrEqCteReif
 import oscar.cp.constraints.DiffReif
+import oscar.cp.constraints.Abs
+import oscar.cp.constraints.Automaton
+import oscar.cp.constraints.Or
+import oscar.cp.constraints.Sum
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -321,17 +325,40 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def constraint : Parser[Any] = "constraint"~pred_ann_id~"("~rep1sep(expr, ",")~")"~annotations~";" ^^ {
 	  case "constraint"~cstr~"("~varList~")"~ann~";" => cstr match {
+	    
+	  	case "array_bool_and" =>
+	      array_bool_cstr(varList, ann, cstr)
+	    case "array_bool_or" =>
+	      array_bool_cstr(varList, ann, cstr)
+	    
+	    case "bool_and" =>
+	      bool_cstr(varList, ann, cstr)
 	    case "bool_eq" =>
+	      bool_cstr(varList, ann, cstr)
+	    case "bool_eq_reif" =>
 	      bool_cstr(varList, ann, cstr)
 	    case "bool_le" =>
 	      bool_cstr(varList, ann, cstr)
+	    case "bool_le_reif" =>
+	      bool_cstr(varList, ann, cstr)
 	    case "bool_lt" =>
+	      bool_cstr(varList, ann, cstr)
+	    case "bool_lt_reif" =>
 	      bool_cstr(varList, ann, cstr)
 	    case "bool_not" =>
 	      bool_cstr(varList, ann, cstr)
+	    case "bool_or" =>
+	      bool_cstr(varList, ann, cstr)
+	    case "bool_xor" =>
+	      bool_cstr(varList, ann, cstr)
+	      
+	    case "bool_lin_eq" => 
+	      int_lin_cstr(varList, ann, cstr)
+	    case "bool_lin_le" => 
+	      int_lin_cstr(varList, ann, cstr)
 	      
 	    case "int_abs" =>
-	      
+	      int_cstr(varList, ann, cstr)
 	    case "int_eq" => 
 	      int_cstr(varList, ann, cstr)
 	    case "int_eq_reif" => 
@@ -374,7 +401,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      
 	    // global constraints defined in minizinc/mznlib/
 	    case "oscar_alldiff" =>
-	      cp.add(allDifferent(getCPVarIntArray(varList(0).toString)))
+	      cp.add(allDifferent(getCPVarIntArray(varList(0))))
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
 	    case "all_equal_int" =>
@@ -389,7 +416,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_bin_packing_load" =>
 	      bin_packing(varList, "load")
 	    case "circuit" => 
-	      cp.add(circuit(getCPVarIntArray(varList(0).toString)))
+	      cp.add(circuit(getCPVarIntArray(varList(0))))
 	    case "count_eq" =>
 	    case "count_geq" =>
 	    case "count_gt" =>
@@ -397,44 +424,77 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "count_lt" =>
 	    case "count_neq" =>
 	    case "cumulative" =>
-	    case "decreasing_int" =>
-	    case "diffn" =>
+	    case "oscar_decreasing_int" =>
+	      val array = getCPVarIntArray(varList(0))
+	      for(i <- 0 to array.length - 2) {
+	        cp.add(array(i) >= array(i+1))
+	      }
+	    case "diffn" =>case "bool_and" =>
 	    case "disjoint" =>
 	    case "distribute" =>
 	    case "oscar_element_bool" =>
 	      //cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "oscar_element_int" =>
-	      cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
+	      cp.add(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "exactly_int" =>
 	    case "global_cardinality" =>
 	    case "global_cardinality_closed" =>
 	    case "global_cardinality_low_up" => 
 	    case "global_cardinality_low_up_closed" =>
-	    case "increasing_int" =>
+	    case "oscar_increasing_int" =>
+	      val array = getCPVarIntArray(varList(0))
+	      for(i <- 0 to array.length - 2) {
+	        cp.add(array(i) <= array(i+1))
+	      }
 	    case "int_set_channel" =>
 	    case "inverse" =>
 	    case "inverse_set" =>
 	    case "lex_greater_int" => //not used, done with lex_less
 	    case "lex_greatereq_int" => //not used, done with lex_lesseq
 	    case "oscar_lex_less_int" =>
-	      val t1 = getCPVarIntArray(varList(0).toString)
-	      val t2 = getCPVarIntArray(varList(1).toString)
+	      val t1 = getCPVarIntArray(varList(0))
+	      val t2 = getCPVarIntArray(varList(1))
 	      cp.add(lexLeq(t1, t2))
 	      diff_array_cstr(t1, t2)
 	    case "oscar_lex_lesseq_int" =>
-	      cp.add(lexLeq(getCPVarIntArray(varList(0).toString), getCPVarIntArray(varList(1).toString)))
+	      cp.add(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))))
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	      lex2_cstr(varList, false)
 	    case "link_set_to_booleans" =>
 	    case "oscar_maximum_int" =>
-	      cp.add(maximum(getCPVarIntArray(varList(0).toString), getCPVarInt(varList(1))))
+	      cp.add(maximum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
 	    case "member_int" =>
 	    case "oscar_minimum_int" =>
-	      cp.add(minimum(getCPVarIntArray(varList(0).toString), getCPVarInt(varList(1))))
+	      cp.add(minimum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
 	    case "nvalue" =>
 	    case "partition_set" =>
 	    case "range" =>
-	    case "regular" => //2D -> 1D needed
+	    case "oscar_regular" => //2D -> 1D done
+	      var set : java.util.Set[Integer] = new java.util.TreeSet[Integer]()
+	      //var s: Set<Integer> = new Set<Integer>()
+	      varList(5) match {
+	        case x:Range => 
+	          x.foreach{ e =>
+	          	set.add(e-1)
+	          }
+	        case x:List[Any] =>
+	          x.foreach{ e =>
+	          	set.add(e.toString.toInt-1)
+	          }
+	      }
+	      val Q = varList(1).toString.toInt
+	      val S = varList(2).toString.toInt
+	      val q0 = varList(4).toString.toInt-1
+	      val x = getCPVarIntArray(varList(0)).map(_-1)
+	      val a = new Automaton(Q, S, q0, set)
+	      var next = 0
+	      for(q <- 0 until Q; s <- 0 until S) {
+	        next = varList(3).asInstanceOf[List[Int]](q*S + s)
+	        if(next != 0){
+	          a.addTransition(q, next-1, s)
+	        }
+	      }
+	      cp.add(regular(x, a))
 	    case "roots" =>
 	    case "sliding_sum" =>
 	    case "sort" =>
@@ -442,8 +502,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      lex2_cstr(varList, true)
 	    case "subcircuit" =>
 	    case "sum_pred" =>
-	    case "oscar_table_int" => //2D -> 1D needed
-	      val CPArray = getCPVarIntArray((varList(0).toString))
+	    case "oscar_table_int" => //2D -> 1D done
+	      val CPArray = getCPVarIntArray((varList(0)))
 	      val tupleLength = CPArray.length
 	      val intArray = varList(1).asInstanceOf[List[Int]]
 	      var temp = Array[Int]()
@@ -467,7 +527,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "def" => 
 	      val nbBin = getCPArrayRangeSize(varList(1).toString)
 	      Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
-	    case "load" => getCPVarIntArray(varList(0).toString)
+	    case "load" => getCPVarIntArray(varList(0))
 	    case "capa" =>
 	      var capaCP = Array[CPVarInt]()
 	      val capaInt = getIntArray(varList(0).toString)
@@ -476,7 +536,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      }
 	      capaCP
 	  }
-	  cp.add(binpacking(getCPVarIntArray(varList(1).toString).map(_-1), 
+	  cp.add(binpacking(getCPVarIntArray(varList(1)).map(_-1), 
 	          getIntArray(varList(2).toString), l))
 	}
 	
@@ -532,16 +592,41 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cp.add(sum(x) != sum(y))
 	}
 	
+	def array_bool_cstr(varList: List[Any], ann: Any, cstr: String){
+	  cstr match {
+	    case "array_bool_element" =>
+	    case _ => {
+	      val array = getCPVarBoolArray(varList(0))
+	      cstr match {
+	        case "array_bool_xor" =>
+	        case _ =>
+	          val boolvar = getCPVarBool(varList(1))
+	          cstr match {
+	            case "array_bool_and" => cp.add(new GrEqVarReif(sum(array), 
+	                CPVarInt(cp, array.length), boolvar))
+	            case "array_bool_or" => cp.add(new Or(array, boolvar))
+	          }
+	      }
+	    }
+	  }
+	}
+	
 	def bool_cstr(varList: List[Any], ann: Any, cstr: String) {
 	  var cpvar = Array[CPVarBool]()
 	  varList.foreach{ e =>
 	    cpvar :+= getCPVarBool(e)
 	  }
 	  cstr match {
+	    case "bool_and" => 
 	    case "bool_eq" => cp.add(cpvar(0) == cpvar(1))
+	    case "bool_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), cpvar(3)))
 	    case "bool_le" => cp.add(!cpvar(0) || cpvar(1))
+	    case "bool_le_reif" => cp.add((!cpvar(0) || cpvar(1)) == cpvar(2))
 	    case "bool_lt" => cp.add(!cpvar(0) && cpvar(1))
+	    case "bool_lt_reif" => cp.add((!cpvar(0) && cpvar(1)) == cpvar(2))
 	    case "bool_not" => cp.add(!cpvar(0) == cpvar(1))
+	    case "bool_or" => cp.add((cpvar(0) || cpvar(1)) == cpvar(2))
+	    case "bool_xor" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), cpvar(3)))
 	  }
 	}
 	
@@ -551,6 +636,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar :+= getCPVarInt(e)
 	  }
 	  cstr match {
+	    case "int_abs" => cp.add(new Abs(cpvar(0), cpvar(1)))
 	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
 	    case "int_le" => cp.add(cpvar(0) <= cpvar(1))
 	    case "int_lt" => cp.add(cpvar(0) < cpvar(1))
@@ -571,21 +657,29 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "int_le_reif" => cp.add(new GrEqVarReif(cpvar(1), cpvar(0), boolvar))
 	    case "int_lt_reif" => cp.add(new GrEqVarReif(cpvar(1), cpvar(0)+1, boolvar))
 	    case "int_ne_reif" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), boolvar))
-	  }
-	  
+	  } 
 	}
 	
 	def int_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
 	  //assert(varList.length == 3, "To many arguments for int_lin_ne")
-      var cpvar = Array[CPVarInt]()
-      varList(1) match {
-	    case x:List[Any] =>
-	      x.asInstanceOf[List[Any]].foreach { e =>
-	      	cpvar :+= getCPVarInt(e)
-	      }
-	    case x:String =>
-	      cpvar = getCPVarIntArray(x)
+	  var cpvar = Array[CPVarInt]()
+	  if(cstr == "bool_lin_eq" || cstr == "bool_lin_le") {
+	    cpvar = getCPVarBoolArray(varList(1)).map(_.asInstanceOf[CPVarBool])
+	  } else {
+	    cpvar = getCPVarIntArray(varList(1))
 	  }
+	  
+	  //var cpvar = getCPVarIntArray(varList(1))
+	  
+//      var cpvar = Array[CPVarInt]()
+//      varList(1) match {
+//	    case x:List[Any] =>
+//	      x.asInstanceOf[List[Any]].foreach { e =>
+//	      	cpvar :+= getCPVarInt(e)
+//	      }
+//	    case x:String =>
+//	      cpvar = getCPVarIntArray(x)
+//	  }
 	  var cst = varList(0) match {
         case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
         case x:String => getIntArray(x)
@@ -608,8 +702,24 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
         case "int_lin_ne_reif" =>
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
+       case "bool_lin_eq" => 
+         cp.add(weightedSum(cst, cpvar) == c)
+	   case "bool_lin_le" => 
+	     cp.add(weightedSum(cst, cpvar) <= c)
       }
 	}
+	
+//	def bool_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
+//	  var cpvar = getCPVarBoolArray(varList(1))
+//	  var cst = varList(0) match {
+//        case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
+//        case x:String => getIntArray(x)
+//      }
+//	  val c = varList(2) match {
+//        case x:Int => x
+//        case x:String => getInt(x)
+//      }
+//	}
 	
 	def int_lin_reif_cstr(cpvar: Array[CPVarInt], cst: Array[Int], c: Int, 
 	    varList: List[Any], ann: Any, cstr: String) {
@@ -713,8 +823,39 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
 	}
 	
-	def getCPVarIntArray(x: String): Array[CPVarInt] = {
-	  model.dict.get(x) match {
+	def getCPVarBoolArray(x: Any): Array[CPVarBool] = {
+	  x match {
+	    case y:List[Any] =>
+	      var array = Array[CPVarBool]()
+	      //println("List Any")
+	      y.foreach { e =>
+	      	array :+= getCPVarBool(e)
+	      }
+	      array
+	    case y:String =>
+	      model.dict.get(y) match {
+		  case Some((tp, fzo)) => 
+            tp match {
+                case FZType.V_ARRAY_BOOL => {
+                  fzo.asInstanceOf[VarArrayBool].cpvar
+                }
+            }
+	      }
+	  }
+//	  null
+	}
+	
+	def getCPVarIntArray(x: Any): Array[CPVarInt] = {
+	  x match {
+	    case y:List[Any] =>
+	      var array = Array[CPVarInt]()
+	      //println("List Any")
+	      y.foreach { e =>
+	      	array :+= getCPVarInt(e)
+	      }
+	      array
+	    case y:String =>
+	      model.dict.get(y) match {
 		  case Some((tp, fzo)) => 
             tp match {
                 case FZType.V_ARRAY_INT_R => {
@@ -724,6 +865,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   fzo.asInstanceOf[VarArrayInt].cpvar
                 }
             }
+	      }
 	  }
 	}
 	
