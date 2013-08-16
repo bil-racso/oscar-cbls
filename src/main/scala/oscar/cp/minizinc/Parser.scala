@@ -198,22 +198,29 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def var_decl : Parser[Any] = var_type~":"~var_par_id~annotations~opt("="~expr)~";" ^^
 	{ 
-	  
-	  case tp~":"~id~ann~Some("="~e)~";" => 
-	    //include a match on tp to know if array or not
-	    e match {
-	      case x:Int => model.dict += 
-	        ((id, (FZType.V_INT, 
-	            new VarInt(ann, CPVarInt(cp, x), id))))
-	      case _ => println(tp + " not yet supported when followed by an assignment")
-	    }
-	  case tp~":"~id~ann~None~";" => 
+	  case tp~":"~id~ann~e~";" => 
+	    var t: FZType = null
 	    tp match {
+	      // must match on e to know if decl is followed by an assign
 	      case "var bool" => 
-	        //println("varbool")
-	        model.dict +=
-	        ((id, (FZType.V_BOOL,
-	            new VarBool(ann, CPVarBool(cp), id))))
+	        e match {
+	          case Some("="~assign) =>
+	            assign match {
+		      	  case x:Boolean => model.dict +=
+			        ((id, (FZType.V_BOOL,
+			            new VarBool(ann, CPVarBool(cp, x), id))))
+		      	  case x:String => 
+		      	    model.dict +=
+		      	    ((id, (FZType.V_BOOL,
+			            new VarBool(ann, CPVarBool(cp), id))))
+			  		cp.add(getCPVarBoolFromString(id) == getCPVarBoolFromString(x))
+		      	}
+	          case None =>
+	            model.dict +=
+			      ((id, (FZType.V_BOOL,
+			        new VarBool(ann, CPVarBool(cp), id))))
+	        }
+	        
 	      case "array ["~iset~"] of var bool" => model.dict +=
 	        ((id, (FZType.V_ARRAY_BOOL, 
 	            new VarArrayBool(ann,
@@ -223,14 +230,46 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	            	, id))))
-	      case "var int" => model.dict += 
-	      	((id, (FZType.V_INT, 
-	      		new VarInt(ann, CPVarInt(cp, -10000, 10000), id)))) // what should I do when no assign ?
-	      case "var"~i1~".."~i2 => model.dict +=
-	        ((id, (FZType.V_INT_RANGE,
-	            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+	            	
+	      case "var int" => 
+	        e match {
+	          case Some("="~assign) =>
+	            assign match {
+		      	  case x:Int => model.dict += 
+		      		((id, (FZType.V_INT, 
+		      			new VarInt(ann, CPVarInt(cp, x), id))))
+		      	  case x:String => 
+		      	    model.dict += 
+		      	    	((id, (FZType.V_INT, 
+		      	    		new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
+			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
+		      	}
+	          case None =>
+	            model.dict += 
+			      ((id, (FZType.V_INT, 
+			      	new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
+	        }
+	        
+	      case "var"~i1~".."~i2 => 
+	        e match {
+	          case Some("="~assign) =>
+	            assign match {
+		      	  case x:Int => model.dict += 
+		      		((id, (FZType.V_INT, 
+		      			new VarInt(ann, CPVarInt(cp, x), id))))
+		      	  case x:String => 
+		      	    model.dict +=
+			        ((id, (FZType.V_INT_RANGE,
+			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
+			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
+		      	}
+	          case None => model.dict +=
+	            ((id, (FZType.V_INT_RANGE,
+	            	new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-	            //println("cpvar created")    		
+	        }	      
+	      
 	      case "var set of"~i1~".."~i2 => 
 	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
 //	        model.dict +=
@@ -262,8 +301,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //println(model.dict.toString)
 	      //case "array ["~iset~"] of var bool" =>
 	    }
-	  //case tp~":"~id~";" => println(tp.toString)
-	}// the vars in assignment must be declared earlier
+//	    e match {
+//	      case None => println("no assign")
+//	      case Some("="~assign) => {
+//	      	assign match {
+//	      	  case x:Boolean => cp.add(getCPVarBool(id) == CPVarBool(cp, x))
+//	      	  case x:Int => cp.add(getCPVarIntFromString(id) == CPVarInt(cp, x))
+//	      	  case x:String => 
+//	      	    // need to check the kind of variable that was added
+//		  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
+//	      	  case _ => println(tp + " not yet supported when followed by an assignment")
+//	      	}
+//	      }
+//	    }
+	}
 	
 	
 	// Constraint declaration (every constraint should be a case below the match)
@@ -278,6 +329,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      bool_cstr(varList, ann, cstr)
 	    case "bool_not" =>
 	      bool_cstr(varList, ann, cstr)
+	      
+	    case "int_abs" =>
 	      
 	    case "int_eq" => 
 	      int_cstr(varList, ann, cstr)
@@ -714,6 +767,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                     output, false, false, 1)
                 output = false
               }
+              case FZType.V_ARRAY_BOOL => {
+                var first = true
+                fzo.asInstanceOf[VarArrayBool].cpvar.foreach { e =>
+                	//println(e)
+                	x :+= e
+                	fzo.asInstanceOf[VarArrayBool].annotations.foreach { ann =>
+            			if ( ann.name == "output_array" ) { output = true }
+                	}
+                	state :+= new VarState(fzo.asInstanceOf[VarArrayBool].name,
+                    output, true, first, fzo.asInstanceOf[VarArrayBool].cpvar.length)
+                	
+                	first = false
+                }
+                output = false
+              }
               case FZType.V_INT_RANGE => {
                 //println(fzo.asInstanceOf[VarIntRange].cpvar)
                 x :+= fzo.asInstanceOf[VarIntRange].cpvar
@@ -823,7 +891,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	  if ( state(i).array ) {
 	    	    c += 1
 	    	    if (state(i).first) {
-	    	    	print(state(i).name + " = array1d(1.." + state(i).size + ", [" + x(i).toString.split(" ")(1))
+	    	    	print(state(i).name + 
+	    	    	    " = array1d(1.." + state(i).size + 
+	    	    	    ", [" + x(i).toString)
 	    	    } else if( c == state(i).size ) {
 	    	    	println("," + x(i).toString + "]);")
 	    	    	c = 0
