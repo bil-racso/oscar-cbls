@@ -18,6 +18,7 @@ import oscar.cp.constraints.Abs
 import oscar.cp.constraints.Automaton
 import oscar.cp.constraints.Or
 import oscar.cp.constraints.Sum
+import scala.util.continuations._
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -106,7 +107,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| var_par_id
 		| array_expr
 		| annotation
-		| "...string constant..." //???
+		| "[A-Z_a-z][A-Z_a-z0-9_]*".r //"...string constant..." //???
 	)
 	def pred_ann_id : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
@@ -213,11 +214,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      	  case x:Boolean => model.dict +=
 			        ((id, (FZType.V_BOOL,
 			            new VarBool(ann, CPVarBool(cp, x), id))))
-		      	  case x:String => 
+			      case _ => 
 		      	    model.dict +=
 		      	    ((id, (FZType.V_BOOL,
 			            new VarBool(ann, CPVarBool(cp), id))))
-			  		cp.add(getCPVarBoolFromString(id) == getCPVarBoolFromString(x))
+			  		cp.add(getCPVarBoolFromString(id) == getCPVarBool(assign))
+//		      	  case x:String => 
+//		      	    model.dict +=
+//		      	    ((id, (FZType.V_BOOL,
+//			            new VarBool(ann, CPVarBool(cp), id))))
+//			  		cp.add(getCPVarBoolFromString(id) == getCPVarBoolFromString(x))
 		      	}
 	          case None =>
 	            model.dict +=
@@ -242,11 +248,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      	  case x:Int => model.dict += 
 		      		((id, (FZType.V_INT, 
 		      			new VarInt(ann, CPVarInt(cp, x), id))))
-		      	  case x:String => 
+		      	  case _ => 
 		      	    model.dict += 
 		      	    	((id, (FZType.V_INT, 
 		      	    		new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
-			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
+			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
+//		      	  case x:String => 
+//		      	    model.dict += 
+//		      	    	((id, (FZType.V_INT, 
+//		      	    		new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
+//			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
 		      	}
 	          case None =>
 	            model.dict += 
@@ -261,12 +272,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      	  case x:Int => model.dict += 
 		      		((id, (FZType.V_INT, 
 		      			new VarInt(ann, CPVarInt(cp, x), id))))
-		      	  case x:String => 
-		      	    model.dict +=
+		      	  case _ => model.dict +=
 			        ((id, (FZType.V_INT_RANGE,
 			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
+			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
+//		      	  case x:String => 
+//		      	    model.dict +=
+//			        ((id, (FZType.V_INT_RANGE,
+//			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+//			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
+//			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
 		      	}
 	          case None => model.dict +=
 	            ((id, (FZType.V_INT_RANGE,
@@ -470,31 +486,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "partition_set" =>
 	    case "range" =>
 	    case "oscar_regular" => //2D -> 1D done
-	      var set : java.util.Set[Integer] = new java.util.TreeSet[Integer]()
-	      //var s: Set<Integer> = new Set<Integer>()
-	      varList(5) match {
-	        case x:Range => 
-	          x.foreach{ e =>
-	          	set.add(e-1)
-	          }
-	        case x:List[Any] =>
-	          x.foreach{ e =>
-	          	set.add(e.toString.toInt-1)
-	          }
-	      }
-	      val Q = varList(1).toString.toInt
-	      val S = varList(2).toString.toInt
-	      val q0 = varList(4).toString.toInt-1
-	      val x = getCPVarIntArray(varList(0)).map(_-1)
-	      val a = new Automaton(Q, S, q0, set)
-	      var next = 0
-	      for(q <- 0 until Q; s <- 0 until S) {
-	        next = varList(3).asInstanceOf[List[Int]](q*S + s)
-	        if(next != 0){
-	          a.addTransition(q, next-1, s)
-	        }
-	      }
-	      cp.add(regular(x, a))
+	      regular_cstr(varList)
 	    case "roots" =>
 	    case "sliding_sum" =>
 	    case "sort" =>
@@ -503,19 +495,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "subcircuit" =>
 	    case "sum_pred" =>
 	    case "oscar_table_int" => //2D -> 1D done
-	      val CPArray = getCPVarIntArray((varList(0)))
-	      val tupleLength = CPArray.length
-	      val intArray = varList(1).asInstanceOf[List[Int]]
-	      var temp = Array[Int]()
-	      var tuples = Array[Array[Int]]()
-	      for( i <- 0 to (intArray.length/tupleLength)-1){
-	        for( j <- 0 to tupleLength-1) {
-	          temp :+= intArray(i*tupleLength + j)
-	        }
-	        tuples :+= temp
-	        temp = Array[Int]()
-	      }
-	      cp.add(table(CPArray, tuples))
+	      table_cstr(varList)
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
 	  }
@@ -588,6 +568,50 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
 	}
 	
+	def regular_cstr(varList: List[Any]) {
+	  var set : java.util.Set[Integer] = new java.util.TreeSet[Integer]()
+      //var s: Set<Integer> = new Set<Integer>()
+      varList(5) match {
+        case x:Range => 
+          x.foreach{ e =>
+          	set.add(e-1)
+          }
+        case x:List[Any] =>
+          x.foreach{ e =>
+          	set.add(e.toString.toInt-1)
+          }
+      }
+      val Q = varList(1).toString.toInt
+      val S = varList(2).toString.toInt
+      val q0 = varList(4).toString.toInt-1
+      val x = getCPVarIntArray(varList(0)).map(_-1)
+      val a = new Automaton(Q, S, q0, set)
+      var next = 0
+      for(q <- 0 until Q; s <- 0 until S) {
+        next = varList(3).asInstanceOf[List[Int]](q*S + s)
+        if(next != 0){
+          a.addTransition(q, next-1, s)
+        }
+      }
+      cp.add(regular(x, a))
+	}
+	
+	def table_cstr(varList: List[Any]) {
+	  val CPArray = getCPVarIntArray((varList(0)))
+      val tupleLength = CPArray.length
+      val intArray = varList(1).asInstanceOf[List[Int]]
+      var temp = Array[Int]()
+      var tuples = Array[Array[Int]]()
+      for( i <- 0 to (intArray.length/tupleLength)-1){
+        for( j <- 0 to tupleLength-1) {
+          temp :+= intArray(i*tupleLength + j)
+        }
+        tuples :+= temp
+        temp = Array[Int]()
+      }
+      cp.add(table(CPArray, tuples))
+	}
+	
 	def diff_array_cstr(x: Array[CPVarInt], y: Array[CPVarInt]) {
 	  cp.add(sum(x) != sum(y))
 	}
@@ -617,7 +641,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar :+= getCPVarBool(e)
 	  }
 	  cstr match {
-	    case "bool_and" => 
+	    case "bool_and" => cp.add((cpvar(0) && cpvar(1)) == cpvar(2))
 	    case "bool_eq" => cp.add(cpvar(0) == cpvar(1))
 	    case "bool_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), cpvar(3)))
 	    case "bool_le" => cp.add(!cpvar(0) || cpvar(1))
@@ -669,17 +693,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar = getCPVarIntArray(varList(1))
 	  }
 	  
-	  //var cpvar = getCPVarIntArray(varList(1))
-	  
-//      var cpvar = Array[CPVarInt]()
-//      varList(1) match {
-//	    case x:List[Any] =>
-//	      x.asInstanceOf[List[Any]].foreach { e =>
-//	      	cpvar :+= getCPVarInt(e)
-//	      }
-//	    case x:String =>
-//	      cpvar = getCPVarIntArray(x)
-//	  }
 	  var cst = varList(0) match {
         case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
         case x:String => getIntArray(x)
@@ -702,24 +715,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
         case "int_lin_ne_reif" =>
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
-       case "bool_lin_eq" => 
-         cp.add(weightedSum(cst, cpvar) == c)
-	   case "bool_lin_le" => 
-	     cp.add(weightedSum(cst, cpvar) <= c)
+          
+        case "bool_lin_eq" => 
+          cp.add(weightedSum(cst, cpvar) == c)
+        case "bool_lin_le" => 
+          cp.add(weightedSum(cst, cpvar) <= c)
       }
 	}
-	
-//	def bool_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
-//	  var cpvar = getCPVarBoolArray(varList(1))
-//	  var cst = varList(0) match {
-//        case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
-//        case x:String => getIntArray(x)
-//      }
-//	  val c = varList(2) match {
-//        case x:Int => x
-//        case x:String => getInt(x)
-//      }
-//	}
 	
 	def int_lin_reif_cstr(cpvar: Array[CPVarInt], cst: Array[Int], c: Int, 
 	    varList: List[Any], ann: Any, cstr: String) {
@@ -827,7 +829,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x match {
 	    case y:List[Any] =>
 	      var array = Array[CPVarBool]()
-	      //println("List Any")
 	      y.foreach { e =>
 	      	array :+= getCPVarBool(e)
 	      }
@@ -842,14 +843,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             }
 	      }
 	  }
-//	  null
 	}
 	
 	def getCPVarIntArray(x: Any): Array[CPVarInt] = {
 	  x match {
 	    case y:List[Any] =>
 	      var array = Array[CPVarInt]()
-	      //println("List Any")
 	      y.foreach { e =>
 	      	array :+= getCPVarInt(e)
 	      }
@@ -882,111 +881,115 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;" ^^ { 
-	      case "solve"~ann~"satisfy;" => solver("sat", null)
+	      case "solve"~ann~"satisfy;" => solver("sat", null, ann)
 	    }
 	    | "solve"~annotations~"minimize"~expr~";"
 	    | "solve"~annotations~"maximize"~expr~";" ^^ { 
-	      case "solve"~ann~"maximize"~e~";" => solver("max", e)
+	      case "solve"~ann~"maximize"~e~";" => solver("max", e, ann)
 	    }
 	) // expr must be a var name of var array element
 	
-	def solver(tp: String, expr: Any) {
-	  var x = Array[CPVarInt]() //
-      var state = Array[VarState]()
-      var output: Boolean = false // only used for formating the output
-      var c = 0
-      model.dict.foreach { e => 
-        e._2 match {
-          case (tp, fzo) => // /!\ not always CPVarInt
-            //println("ici")
-            tp match {
-              case FZType.V_BOOL => {
-                x :+= fzo.asInstanceOf[VarBool].cpvar
-                fzo.asInstanceOf[VarBool].annotations.foreach { ann =>
-            		if ( ann.name == "output_var" ) { output = true }
-                }
-                state :+= new VarState(fzo.asInstanceOf[VarBool].name,
-                    output, false, false, 1)
-                output = false
-              }
-              case FZType.V_ARRAY_BOOL => {
-                var first = true
-                fzo.asInstanceOf[VarArrayBool].cpvar.foreach { e =>
-                	//println(e)
-                	x :+= e
-                	fzo.asInstanceOf[VarArrayBool].annotations.foreach { ann =>
-            			if ( ann.name == "output_array" ) { output = true }
-                	}
-                	state :+= new VarState(fzo.asInstanceOf[VarArrayBool].name,
-                    output, true, first, fzo.asInstanceOf[VarArrayBool].cpvar.length)
-                	
-                	first = false
-                }
-                output = false
-              }
-              case FZType.V_INT_RANGE => {
-                //println(fzo.asInstanceOf[VarIntRange].cpvar)
-                x :+= fzo.asInstanceOf[VarIntRange].cpvar
-                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
-            		if ( ann.name == "output_var" ) { output = true }
-                }
-                state :+= new VarState(fzo.asInstanceOf[VarIntRange].name,
-                    output, false, false, 1)
-                output = false
-                
-              }
-              case FZType.V_ARRAY_INT_R => {
-                //var c = 0
-                var first = true
-                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
-                	//println(e)
-                	x :+= e
-                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
-            			if ( ann.name == "output_array" ) { output = true }
-                	}
-                	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
-                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].cpvar.length)
-                	
-                	first = false
-                }
-                output = false
-              }
-              case FZType.V_INT => {
-                x :+= fzo.asInstanceOf[VarInt].cpvar
-                fzo.asInstanceOf[VarInt].annotations.foreach { ann =>
-            		if ( ann.name == "output_var" ) { output = true }
-                }
-                state :+= new VarState(fzo.asInstanceOf[VarInt].name,
-                    output, false, false, 1)
-                output = false
-              }
-              case FZType.V_ARRAY_INT => {
-                var first = true
-                fzo.asInstanceOf[VarArrayInt].cpvar.foreach { e =>
-                	//println(e)
-                	x :+= e
-                	fzo.asInstanceOf[VarArrayInt].annotations.foreach { ann =>
-            			if ( ann.name == "output_array" ) { output = true }
-                	}
-                	state :+= new VarState(fzo.asInstanceOf[VarArrayInt].name,
-                    output, true, first, fzo.asInstanceOf[VarArrayInt].cpvar.length)
-                	
-                	first = false
-                }
-                output = false
-              }
-              case _ => {
-                println("The type " + tp.toString() + " is not supported/relevant for the solver")
-              }
-            }
-            
-        }
-      }
+	
+	def solver(tp: String, expr: Any, ann: List[Annotation]) {
+	  println(ann)
+	  var x = Array[CPVarInt]()
+	  var state = Array[VarState]()
+	  if(true) { // array with all the variable so that it is possible to output correctly
+	      var output: Boolean = false // only used for formating the output
+	      var c = 0
+	      model.dict.foreach { e => 
+	        e._2 match {
+	          case (tp, fzo) => // /!\ not always CPVarInt
+	            //println("ici")
+	            tp match {
+	              case FZType.V_BOOL => {
+	                x :+= fzo.asInstanceOf[VarBool].cpvar
+	                fzo.asInstanceOf[VarBool].annotations.foreach { ann =>
+	            		if ( ann.name == "output_var" ) { output = true }
+	                }
+	                state :+= new VarState(fzo.asInstanceOf[VarBool].name,
+	                    output, false, false, 1)
+	                output = false
+	              }
+	              case FZType.V_ARRAY_BOOL => {
+	                var first = true
+	                fzo.asInstanceOf[VarArrayBool].cpvar.foreach { e =>
+	                	//println(e)
+	                	x :+= e
+	                	fzo.asInstanceOf[VarArrayBool].annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output = true }
+	                	}
+	                	state :+= new VarState(fzo.asInstanceOf[VarArrayBool].name,
+	                    output, true, first, fzo.asInstanceOf[VarArrayBool].cpvar.length)
+	                	
+	                	first = false
+	                }
+	                output = false
+	              }
+	              case FZType.V_INT_RANGE => {
+	                //println(fzo.asInstanceOf[VarIntRange].cpvar)
+	                x :+= fzo.asInstanceOf[VarIntRange].cpvar
+	                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
+	            		if ( ann.name == "output_var" ) { output = true }
+	                }
+	                state :+= new VarState(fzo.asInstanceOf[VarIntRange].name,
+	                    output, false, false, 1)
+	                output = false
+	                
+	              }
+	              case FZType.V_ARRAY_INT_R => {
+	                //var c = 0
+	                var first = true
+	                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
+	                	//println(e)
+	                	x :+= e
+	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output = true }
+	                	}
+	                	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
+	                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].cpvar.length)
+	                	
+	                	first = false
+	                }
+	                output = false
+	              }
+	              case FZType.V_INT => {
+	                x :+= fzo.asInstanceOf[VarInt].cpvar
+	                fzo.asInstanceOf[VarInt].annotations.foreach { ann =>
+	            		if ( ann.name == "output_var" ) { output = true }
+	                }
+	                state :+= new VarState(fzo.asInstanceOf[VarInt].name,
+	                    output, false, false, 1)
+	                output = false
+	              }
+	              case FZType.V_ARRAY_INT => {
+	                var first = true
+	                fzo.asInstanceOf[VarArrayInt].cpvar.foreach { e =>
+	                	//println(e)
+	                	x :+= e
+	                	fzo.asInstanceOf[VarArrayInt].annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output = true }
+	                	}
+	                	state :+= new VarState(fzo.asInstanceOf[VarArrayInt].name,
+	                    output, true, first, fzo.asInstanceOf[VarArrayInt].cpvar.length)
+	                	
+	                	first = false
+	                }
+	                output = false
+	              }
+	              case _ => {
+	                println("The type " + tp.toString() + " is not supported/relevant for the solver")
+	              }
+	            }  
+	        }
+	      }
+	  } 
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
 	      } exploration {
-	        cp.binary(x)
+	        //println(ann)
+	        explo(ann, x)
 	        format_output(x, state)
 	      } run (1)
 	      println("==========")
@@ -1026,9 +1029,59 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }   
 	}
 	
+	def explo(ann: List[Annotation], x: Array[CPVarInt]): Unit @suspendable = {
+		if(ann.isEmpty) {
+          cp.binary(x)
+        }
+        else {
+          for(a <- ann.suspendable) {
+        	  a.name match {
+		      case "int_search" =>
+		        val array = getCPVarIntArray(a.args(0))
+		        varChoiceAnn(a.args, array)
+		      case "bool_search" =>
+		        //check that this mapping works :/, it seems to work fine
+		        val array = getCPVarBoolArray(a.args(0)).map(_.asInstanceOf[CPVarInt])
+		        varChoiceAnn(a.args, array)
+	//	      case "set_search" =>
+			}
+          }
+        }
+	}
+	
+	def varChoiceAnn(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
+		args(1) match {
+	      case "input_order" => cp.binary(array, array.indexOf(_), assignAnn(args))
+	      case "first_fail" => cp.binaryFirstFail(array, assignAnn(args))
+	      case "anti_first_fail" => cp.binary(array, -_.size, assignAnn(args)) //correct ?
+	      case "smallest" => cp.binary(array, _.min, assignAnn(args))
+	      case "largest" => cp.binary(array, _.max, assignAnn(args))
+	      case "occurence" => cp.binary(array, _.constraintDegree, assignAnn(args))
+	      case "most_constrained" =>
+	      case "max_regret" =>
+	    }
+	}
+	
+	def assignAnn(args: List[Any]): CPVarInt => Int = {
+		args(2) match {
+		  case "indomain_min" => _.min
+		  case "indomain_max" => _.max
+//		  case "indomain_middle" =>
+		  case "indomain_median" => _.median
+//		  case "indomain" =>
+		  case "indomain_random" => _.randomValue
+		  /*
+		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn
+		  case "indomain_reverse_split" =>
+		  case "indomain_interval" =>
+		  */
+		}
+	}
+	
 	def format_output(x: Array[CPVarInt], state: Array[VarState]) {
 		var c = 0
-		Range(0, x.length, 1).foreach { i =>
+		for(i <- 0 until x.length) {
+		//Range(0, x.length, 1).foreach { i =>
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
 	    	    c += 1
