@@ -32,8 +32,8 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
     var nbSol = 0
     val cp = CPSolver()
     var x = new CPVarSet(cp, 1 , 5)
-    val card = CPVarInt(cp,1 to 2)
-    cp.post(new SetCard(x,card))
+    cp.post(x.card <= 2)
+    cp.post(x.card >= 1)
     cp.exploration {
       println("exploration")
       cp.binary(x)
@@ -46,14 +46,14 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
   test("Test SetCard 2") {
     val cp = CPSolver()
     val x = CPVarSet(cp,Set(1,3),Set(4))
-    cp.post(new SetCard(x,CPVarInt(cp,2)))
+    cp.post(x.card == 2)
     x.isBound should be(true)
   }
   
   test("Test SetCard 3") {
     val cp = CPSolver()
     val x = CPVarSet(cp,Set(1,3),Set(4))
-    cp.post(new SetCard(x,CPVarInt(cp,3)))
+    cp.post(x.card == 3)
     x.isBound should be(true)
     x.value.size should be(3)
   } 
@@ -63,7 +63,7 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     val x = CPVarSet(cp,Set(1,3),Set(4))
     val c = CPVarInt(cp,-100,100)
-    cp.post(new SetCard(x,c))
+    cp.post(x.card == c)
     c.min should be(2)
     c.max should be(3)
   }  

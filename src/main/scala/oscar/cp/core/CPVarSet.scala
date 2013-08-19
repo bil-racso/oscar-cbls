@@ -19,6 +19,7 @@ import oscar.reversible.ReversiblePointer
 import oscar.cp.core.CPOutcome._
 import oscar.cp.constraints.Requires
 import oscar.cp.constraints.Excludes
+import oscar.cp.constraints.SetCard
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -26,7 +27,7 @@ import oscar.cp.constraints.Excludes
 class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
 
   def store = s
-  val dom = new SetDomain(s, min, max);
+  private val dom = new SetDomain(s, min, max);
 
   val onDomainL2 = new ReversiblePointer[ConstraintQueue](s, null)
 
@@ -34,6 +35,10 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
   val onExcludedL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
   val onRequiredIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
   val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
+
+  // cardinality variable
+  val card = CPVarInt(s,0,max-min+1);
+  s.post(new SetCard(this,card));
 
   /**
    * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
@@ -118,7 +123,17 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
       s.notifyRequired(onRequiredL1.value, this, v)
       s.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
     }
-    dom.requires(v)
+    val oc = dom.requires(v)
+    if (oc != CPOutcome.Failure) {
+      if (requiredSize == card.max) {
+        for (a: Int <- possibleNotRequiredValues.toSet) {
+          val r = excludes(a)
+          assert(r != CPOutcome.Failure)
+        }
+      }
+      card.updateMin(requiredSize)
+    }
+    else oc
   }
 
   def excludes(v: Int): CPOutcome = {
@@ -129,7 +144,17 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
       s.notifyExcluded(onExcludedL1.value, this, v)
       s.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
     }
-    dom.excludes(v)
+    val oc = dom.excludes(v)
+    if (oc != CPOutcome.Failure) {
+      if (possibleSize == card.min) {
+        for (a: Int <- possibleNotRequiredValues.toSet) {
+          val r = requires(a)
+           assert(r != CPOutcome.Failure)
+        }
+      }
+      card.updateMax(possibleSize)
+    }    
+    else oc
   }
 
   def requiresAll(): CPOutcome = {
@@ -142,7 +167,9 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
         if (onRequiredIdxL1.hasValue) s.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
       }
     }
-    dom.requiresAll()
+    val oc = dom.requiresAll()
+    assert(oc != CPOutcome.Failure)
+    card.assign(requiredSize)
   }
 
   def excludesAll(): CPOutcome = {
@@ -155,7 +182,9 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
         if (onExcludedIdxL1.hasValue) s.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
       }
     }    
-    dom.excludesAll()
+    val oc = dom.excludesAll()
+    assert(oc != CPOutcome.Failure)
+    card.assign(requiredSize)
   }
   
    
