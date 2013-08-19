@@ -16,14 +16,7 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import java.util.Arrays;
-import java.util.Random;
-
-import oscar.cp.constraints.*;
 import oscar.cp.core.*;
-import oscar.cp.util.*;
-import oscar.reversible.*;
-import oscar.search.*;
 
 
 /**

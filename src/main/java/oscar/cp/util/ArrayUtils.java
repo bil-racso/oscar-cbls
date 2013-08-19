@@ -20,7 +20,6 @@ import java.util.Comparator;
 import java.util.Random;
 
 import oscar.cp.core.CPVarInt;
-import oscar.search.Objective;
 
 
 /**

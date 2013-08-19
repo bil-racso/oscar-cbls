@@ -24,7 +24,6 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
-import oscar.cp.constraints.QuadraticCumulativeEdgeFinding
 
 /** This abstract class contains the main parts of the cumulative constraint described 
  *  in [1]. 

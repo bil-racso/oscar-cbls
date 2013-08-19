@@ -90,7 +90,7 @@ object CumulativeJobShopLNS extends App {
   // -----------------------------------------------------------------------
 
   val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
-  val colors = VisualUtil.getRandomColorArray(nResources)
+  val colors = VisualUtil.getRandomColors(nResources, true)
 
   val jobsFlat = js.jobMatrix.flatten
 

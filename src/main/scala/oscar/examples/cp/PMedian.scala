@@ -24,6 +24,8 @@ import scala.io.Source
 import oscar.util._
 import oscar.visual._
 import java.awt.Color
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
 
 /**
  * P-Median Problem
@@ -76,13 +78,13 @@ object PMedian extends App {
   val scale = 5
   val offsetx = 100
   val offsety = 100
-  val drawing = new VisualDrawing(true)
+  val drawing = VisualDrawing(true)
   w.add(drawing)
   val vcircles = for (i <- 0 until nbCust) yield {
     new VisualCircle(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale  + offsety, demand(i))
   }
   val vlines = for (i <- 0 until nbCust) yield {
-    new VisualLine(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, 0, 0)
+    VisualLine(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, 0, 0)
   }
   f.pack()
 

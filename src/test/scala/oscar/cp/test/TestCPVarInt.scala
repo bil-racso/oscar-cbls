@@ -190,5 +190,18 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
     x.isBound should be(true)
     (initVals -- removed).contains(x.value) should be (true)
   }  
+  
+  test("domain iterator 3") {
+    val cp = CPSolver()
+    var x = CPVarInt(cp, Set(1,3,5,11,15,17))
+    x.removeValue(15)
+    val d = x.domainIterator
+    val toRemove = Set(3,11,17)
+    for (v <- d; if (toRemove.contains(v))) {
+      d.removeValue
+    }
+    d.execute
+    x.toSet should be(Set(1,5))
+  }    
 
 }

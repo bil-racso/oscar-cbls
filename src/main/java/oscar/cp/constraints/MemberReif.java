@@ -14,8 +14,6 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import java.util.Set;
-
 import oscar.cp.core.*;
 import oscar.reversible.ReversibleInt;
 import oscar.reversible.SetIndexedArray;

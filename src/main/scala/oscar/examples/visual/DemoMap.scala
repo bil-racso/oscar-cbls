@@ -14,14 +14,14 @@
  ******************************************************************************/
 package oscar.examples.visual
 
-import oscar.visual.VisualMap
-import oscar.visual.MapWaypoint
+import oscar.visual.map.VisualMap
+import oscar.visual.map.MapWaypoint
 import oscar.visual.VisualFrame
-import oscar.visual.Location
-import oscar.visual.Geocoder
+import oscar.visual.map.Location
+import oscar.visual.map.Geocoder
 import java.io.IOException
 import java.awt.Toolkit
-import oscar.visual.MapPath
+import oscar.visual.map.MapPath
 import java.awt.Color
 import org.jdesktop.swingx.mapviewer.Waypoint
 
@@ -43,7 +43,7 @@ object DemoMap {
   
   //display components
   
-  val f = new VisualFrame("Map visualization demo")
+  val f = VisualFrame("Map visualization demo")
   val m = new VisualMap()
   val inf = f.createFrame("VisualMap")
   

@@ -22,6 +22,7 @@ import oscar.cp.scheduling._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
+import scala.collection.immutable.Set
 
 trait Constraints {
 
@@ -459,7 +460,59 @@ trait Constraints {
   def modulo(x: CPVarInt, v: Int, y: Int): Constraint = {
     return new Modulo(x, v, CPVarInt(x.store, y))
   }
+  
+ 
+  /**
+   * Among Constraint: n is the number of variables from x in set s.
+   * @param n counter variable
+   * @param x array of variables
+   * @param s set of values
+   * @return a constraint enforcing that n = #{ i | x(i) in s }
+   */  
+  def among(n: CPVarInt, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
+    new Among(n,x,s)
+  }
+  
+  /**
+   * AtLeast Constraint: at least n variables take their value in s
+   * @param n counter variable
+   * @param x array of variables
+   * @param s set of values
+   * @return a constraint enforcing that  #{ i | x(i) in s } >= n
+   */  
+  def atLeast(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
+    among(CPVarInt(x(0).s,n,x.size),x,s)
+  }
 
+  /**
+   * AtLeast Constraint: at least n variables equal to v
+   * @param n counter variable
+   * @param x array of variables
+   * @param v a value
+   * @return a constraint enforcing that  #{ i | x(i) = v } >= n
+   */  
+  def atLeast(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atLeast(n,x,Set(v)) 
+  
+  /**
+   * AtMost Constraint: at most n variables take their value in s
+   * @param n counter variable
+   * @param x array of variables
+   * @param s set of values
+   * @return a constraint enforcing that  #{ i | x(i) in s } <= n
+   */  
+  def atMost(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
+    among(CPVarInt(x(0).s,0,n),x,s)
+  }
+
+  /**
+   * AtMost Constraint: at least n variables equal to v
+   * @param n counter variable
+   * @param x array of variables
+   * @param v a value
+   * @return a constraint enforcing that  #{ i | x(i) = v } <= n
+   */  
+  def atMost(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atMost(n,x,Set(v)) 
+  
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
    * @param x an non empty array of variables
@@ -520,7 +573,7 @@ trait Constraints {
 
   
   def gcc(x: Array[CPVarInt], valueOccurrence: Array[(Int,CPVarInt)]): Constraint = {
-    gcc(x.toIndexedSeq, valueOccurrence)
+    gcc(x.toIndexedSeq, valueOccurrence.toIterable)
   }
 
   // regular and automatons

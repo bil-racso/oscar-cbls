@@ -298,7 +298,10 @@ public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
 
 			@Override
 			public void remove() {
-				throw new RuntimeException("not implemented");
+				if(removeValue(values[iterIndex-1]+_min)) {
+					iterIndex--;
+				}
+				//throw new RuntimeException("not implemented");
 			}
 		};
 	}

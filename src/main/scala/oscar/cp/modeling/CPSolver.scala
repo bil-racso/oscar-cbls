@@ -242,6 +242,16 @@ class CPSolver() extends CPStore() {
       branch(post(x <= median))(post(x > median))
     }
   }
+  
+   /**
+   * Binary Branching for SetVar
+   */
+  def binary(x: CPVarSet): Unit @suspendable = {
+    while (!x.isBound) {
+      val v = x.arbitraryPossibleNotRequired
+      branch(post(x.include(v)))(post(x.exclude(v)))
+    }
+  } 
 
   override def update() = propagate()
   override def solFound() = {

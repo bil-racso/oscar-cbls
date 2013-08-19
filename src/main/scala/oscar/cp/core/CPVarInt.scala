@@ -20,7 +20,7 @@ trait DomainIterator extends Iterator[Int] {
   def execute()
 }
 
-abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[Int] {
+abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with Iterable[Int] {
 
     def store = s
     
@@ -420,40 +420,40 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends Iterable[I
 	
 	// ------ delta methods to be called in propagate -------
 	
-	def changed(sn: Snapshot): Boolean = {
+	def changed(sn: SnapshotVarInt): Boolean = {
 	   sn.oldSize != size
 	}
 	
-	def minChanged(sn: Snapshot): Boolean = {
+	def minChanged(sn: SnapshotVarInt): Boolean = {
 	  assert(sn.oldMin <= min)
 	  sn.oldMin < min
 	}
 	
-	def maxChanged(sn: Snapshot): Boolean = {
+	def maxChanged(sn: SnapshotVarInt): Boolean = {
 	  assert(sn.oldMax >= max)
 	  sn.oldMax > max
 	}
 	
-	def boundsChanged(sn: Snapshot): Boolean = {
+	def boundsChanged(sn: SnapshotVarInt): Boolean = {
 	  sn.oldMax == max	  
 	}
 	
-	def oldMin(sn: Snapshot): Int = {
+	def oldMin(sn: SnapshotVarInt): Int = {
 	  assert(sn.oldMin <= min)
 	  sn.oldMin
 	}
 	
-	def oldMax(sn: Snapshot): Int = {
+	def oldMax(sn: SnapshotVarInt): Int = {
 	  assert(sn.oldMax >= max)
 	  sn.oldMax
 	}
 	
-	def oldSize(sn: Snapshot): Int = {
+	def oldSize(sn: SnapshotVarInt): Int = {
 	  assert(sn.oldSize >= size)
 	  sn.oldSize
 	}
 	
-	def deltaSize(sn: Snapshot): Int = {
+	def deltaSize(sn: SnapshotVarInt): Int = {
 	  sn.oldSize - size
 	}
 	

@@ -43,7 +43,7 @@ object ChemicalTanker  {
      * Class representing a cargo object and its related data.
      * The constructor parses the xml cargo node
      */
-    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor()) {
+    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomLegacyColor) {
       val id = (node \ "@id").text.toInt
       val name = (node \ "@name").text
       val volume = (node \ "@volume").text.toInt

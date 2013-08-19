@@ -23,7 +23,7 @@ import oscar.dfo.mogen.MOGEN
 import oscar.util.mo.MOEvaluator
 import oscar.util.mo.MinMOOComparator
 import oscar.dfo.mogen.algos.NelderMead
-import oscar.visual.PlotDFOPareto2D
+import oscar.visual.plot.PlotDFOPareto2D
 import oscar.visual.VisualFrame
 import oscar.dfo.mogen.MOGENTriplet
 import oscar.util.mo.ParetoFront
