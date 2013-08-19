@@ -421,9 +421,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
 	    case "all_equal_int" =>
-	    case "among" =>
-	    case "at_least_int" => 
-	    case "at most_int" =>
+	    case "oscar_among" =>
+	    case "at_least_int" => //not used, done with among
+	    case "at most_int" => //not used, done with among
 	    case "at_most1" =>
 	    case "oscar_bin_packing" => 
 	      bin_packing(varList, "def")
@@ -445,14 +445,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      for(i <- 0 to array.length - 2) {
 	        cp.add(array(i) >= array(i+1))
 	      }
-	    case "diffn" =>case "bool_and" =>
+	    case "diffn" =>
 	    case "disjoint" =>
 	    case "distribute" =>
 	    case "oscar_element_bool" =>
 	      //cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "oscar_element_int" =>
 	      cp.add(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
-	    case "exactly_int" =>
+	    case "exactly_int" => //not used, done with among
 	      
 	    case "oscar_global_cardinality" =>
 	      gcc_cstr(varList)
@@ -709,16 +709,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	  
 	  var cst = getIntArray(varList(0))
-//	  var cst = varList(0) match {
-//        case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
-//        case x:String => getIntArray(x)
-//      }
-
 	  val c = getInt(varList(2))
-//	  val c = varList(2) match {
-//        case x:Int => x
-//        case x:String => getInt(x)
-//      }
+
       cstr match {
         case "int_lin_ne" => 
           cp.add(weightedSum(cst, cpvar) != c)
@@ -766,14 +758,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        }
 		    }
 	  }
-//	  model.dict.get(x) match {
-//	      case Some((tp, fzo)) => 
-//	        tp match {
-//	            case FZType.P_INT => {
-//	              fzo.asInstanceOf[ParamInt].value
-//	            }
-//	        }
-//	    }
 	}
 	
 	def getIntArray(x: Any): Array[Int] = {
@@ -790,16 +774,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        }
 		    }
 	  }
-	  
-//	  model.dict.get(x) match {
-//	      case Some((tp, fzo)) => 
-//	        tp match {
-//	            case FZType.P_ARRAY_INT => {
-//	              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
-//	              (list map (_.toInt)).toArray
-//	            }
-//	        }
-//	    }
 	}
 	
 	def getCPVarBool(x: Any): CPVarBool = {
@@ -934,7 +908,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
-	  println(ann)
+	  //println(ann)
 	  var x = Array[CPVarInt]()
 	  var state = Array[VarState]()
 	  if(true) { // array with all the variable so that it is possible to output correctly
@@ -943,7 +917,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      model.dict.foreach { e => 
 	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
-	            //println("ici")
 	            tp match {
 	              case FZType.V_BOOL => {
 	                x :+= fzo.asInstanceOf[VarBool].cpvar
@@ -957,7 +930,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case FZType.V_ARRAY_BOOL => {
 	                var first = true
 	                fzo.asInstanceOf[VarArrayBool].cpvar.foreach { e =>
-	                	//println(e)
 	                	x :+= e
 	                	fzo.asInstanceOf[VarArrayBool].annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
@@ -970,7 +942,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                output = false
 	              }
 	              case FZType.V_INT_RANGE => {
-	                //println(fzo.asInstanceOf[VarIntRange].cpvar)
 	                x :+= fzo.asInstanceOf[VarIntRange].cpvar
 	                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
@@ -981,10 +952,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                
 	              }
 	              case FZType.V_ARRAY_INT_R => {
-	                //var c = 0
 	                var first = true
 	                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
-	                	//println(e)
 	                	x :+= e
 	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
@@ -1008,7 +977,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case FZType.V_ARRAY_INT => {
 	                var first = true
 	                fzo.asInstanceOf[VarArrayInt].cpvar.foreach { e =>
-	                	//println(e)
 	                	x :+= e
 	                	fzo.asInstanceOf[VarArrayInt].annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
@@ -1031,7 +999,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "sat" => {
 	      cp.solve subjectTo {
 	      } exploration {
-	        //println(ann)
 	        explo(ann, x)
 	        format_output(x, state)
 	      } run (1)
@@ -1056,7 +1023,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "min" => {
 	      cp.minimize(
 	          expr match {
-		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
+		        //case x:List[List[Any]] => //can oscar min several values,... can it be done in cp ?
 		        case x:List[Any] =>
 		          getCPVarIntFromList(x)
 		        case x:String => 
@@ -1124,7 +1091,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def format_output(x: Array[CPVarInt], state: Array[VarState]) {
 		var c = 0
 		for(i <- 0 until x.length) {
-		//Range(0, x.length, 1).foreach { i =>
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
 	    	    c += 1
@@ -1147,7 +1113,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
-	// is there a list of annotations ?
+	// is there a list of annotations ? in flatzinc spec pg10
 	def annotation : Parser[Annotation] = (
 	    pred_ann_id~"("~rep1sep(expr, ",")~")" ^^ {
 	      case ann~"("~list~")" => new Annotation(ann, list)
