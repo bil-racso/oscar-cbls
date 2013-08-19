@@ -453,7 +453,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_element_int" =>
 	      cp.add(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "exactly_int" =>
-	    case "global_cardinality" =>
+	      
+	    case "oscar_global_cardinality" =>
+	      gcc_cstr(varList)
+	      
 	    case "global_cardinality_closed" =>
 	    case "global_cardinality_low_up" => 
 	    case "global_cardinality_low_up_closed" =>
@@ -517,7 +520,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      capaCP
 	  }
 	  cp.add(binpacking(getCPVarIntArray(varList(1)).map(_-1), 
-	          getIntArray(varList(2).toString), l))
+	          getIntArray(varList(2)), l))
 	}
 	
 	def lex2_cstr(varList: List[Any], strict: Boolean) {
@@ -566,6 +569,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           y = Array[CPVarInt]()
         }
       }
+	}
+	
+	def gcc_cstr(varList: List[Any]) {
+      val cover = getIntArray(varList(1))
+      val count = getCPVarIntArray(varList(2))
+      assert(cover.length == count.length, "Count has not the same size as cover")
+      var valueOccurrence = Array[(Int, CPVarInt)]()
+      for(i <- 0 until cover.length) {
+        valueOccurrence :+= (cover(i), count(i))
+      }
+      val x = getCPVarIntArray(varList(0))
+      cp.add(gcc(x, valueOccurrence))
 	}
 	
 	def regular_cstr(varList: List[Any]) {
@@ -693,15 +708,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar = getCPVarIntArray(varList(1))
 	  }
 	  
-	  var cst = varList(0) match {
-        case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
-        case x:String => getIntArray(x)
-      }
-      //val cst: Array[Int] = varList(0).asInstanceOf[List[Int]].toArray
-      val c = varList(2) match {
-        case x:Int => x
-        case x:String => getInt(x)
-      }
+	  var cst = getIntArray(varList(0))
+//	  var cst = varList(0) match {
+//        case x:List[Any] => varList(0).asInstanceOf[List[Int]].toArray
+//        case x:String => getIntArray(x)
+//      }
+
+	  val c = getInt(varList(2))
+//	  val c = varList(2) match {
+//        case x:Int => x
+//        case x:String => getInt(x)
+//      }
       cstr match {
         case "int_lin_ne" => 
           cp.add(weightedSum(cst, cpvar) != c)
@@ -736,27 +753,53 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
 	}
 	
-	def getInt(x:String): Int = {
-	  model.dict.get(x) match {
-	      case Some((tp, fzo)) => 
-	        tp match {
-	            case FZType.P_INT => {
-	              fzo.asInstanceOf[ParamInt].value
-	            }
-	        }
-	    }
+	def getInt(x:Any): Int = {
+	  x match {
+	    case y:Int => y
+        case y:String => 
+          model.dict.get(y) match {
+		      case Some((tp, fzo)) => 
+		        tp match {
+		            case FZType.P_INT => {
+		              fzo.asInstanceOf[ParamInt].value
+		            }
+		        }
+		    }
+	  }
+//	  model.dict.get(x) match {
+//	      case Some((tp, fzo)) => 
+//	        tp match {
+//	            case FZType.P_INT => {
+//	              fzo.asInstanceOf[ParamInt].value
+//	            }
+//	        }
+//	    }
 	}
 	
-	def getIntArray(x: String): Array[Int] = {
-	  model.dict.get(x) match {
-	      case Some((tp, fzo)) => 
-	        tp match {
-	            case FZType.P_ARRAY_INT => {
-	              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
-	              (list map (_.toInt)).toArray
-	            }
-	        }
-	    }
+	def getIntArray(x: Any): Array[Int] = {
+	  x match {
+	    case y:List[Any] => y.asInstanceOf[List[Int]].toArray
+        case y:String => 
+          model.dict.get(y) match {
+		      case Some((tp, fzo)) => 
+		        tp match {
+		            case FZType.P_ARRAY_INT => {
+		              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
+		              (list map (_.toInt)).toArray
+		            }
+		        }
+		    }
+	  }
+	  
+//	  model.dict.get(x) match {
+//	      case Some((tp, fzo)) => 
+//	        tp match {
+//	            case FZType.P_ARRAY_INT => {
+//	              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
+//	              (list map (_.toInt)).toArray
+//	            }
+//	        }
+//	    }
 	}
 	
 	def getCPVarBool(x: Any): CPVarBool = {
