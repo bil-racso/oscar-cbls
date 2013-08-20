@@ -19,6 +19,7 @@ import oscar.cp.constraints.Automaton
 import oscar.cp.constraints.Or
 import oscar.cp.constraints.Sum
 import scala.util.continuations._
+import oscar.cp.constraints.SetDiff
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
@@ -163,8 +164,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case "set of int" => model.dict += 
 	        ((id, (FZType.P_SET_INT,
 	          e match {
-	          	case x:Range => new ParamSetOfInt(e, true, id)
-	          	case x:List[Any] => new ParamSetOfInt(e, false, id)
+	          	case x:Range => new ParamSetOfInt(x.toSet[Int], true, id)
+	          	case x:List[Int] => new ParamSetOfInt(x.toSet[Int], false, id)
+	          	case _ => throw new Exception("Error in parsing of set of int")
 	          }
 	        )))
 	        
@@ -219,11 +221,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      	    ((id, (FZType.V_BOOL,
 			            new VarBool(ann, CPVarBool(cp), id))))
 			  		cp.add(getCPVarBoolFromString(id) == getCPVarBool(assign))
-//		      	  case x:String => 
-//		      	    model.dict +=
-//		      	    ((id, (FZType.V_BOOL,
-//			            new VarBool(ann, CPVarBool(cp), id))))
-//			  		cp.add(getCPVarBoolFromString(id) == getCPVarBoolFromString(x))
 		      	}
 	          case None =>
 	            model.dict +=
@@ -253,11 +250,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      	    	((id, (FZType.V_INT, 
 		      	    		new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
 			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
-//		      	  case x:String => 
-//		      	    model.dict += 
-//		      	    	((id, (FZType.V_INT, 
-//		      	    		new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
-//			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
 		      	}
 	          case None =>
 	            model.dict += 
@@ -277,29 +269,36 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
 			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
-//		      	  case x:String => 
-//		      	    model.dict +=
-//			        ((id, (FZType.V_INT_RANGE,
-//			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
-//			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-//			  		cp.add(getCPVarIntFromString(id) == getCPVarIntFromString(x))
 		      	}
 	          case None => model.dict +=
 	            ((id, (FZType.V_INT_RANGE,
 	            	new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
+	          case _ => throw new Exception("Error in parsing of var range")
 	        }	      
 	      
 	      case "var set of"~i1~".."~i2 => 
 	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
-//	        model.dict +=
-//	        ((id, (FZType.V_SET_INT_R, 
-//	            new VarSetIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
-//	                ))))
+	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
+	        model.dict +=
+	        ((id, (FZType.V_SET_INT, 
+	            new VarSetInt(s, true, ann, CPVarSet(cp, Set[Int](), s), id)
+	        )))
+	        //println(id + " " + i1 + " " + i2)
 	        
-	        println(id + " " + i1 + " " + i2)
-	      case "var set of"~"{"~intList~"}" => println(id + " " + intList.toString)
-	      
+	      case "var set of"~"{"~intList~"}" => 
+	        //println(id + " " + intList.toString)
+	        var s = Set[Int]()
+	      	intList match {
+		        case x:List[Int] => 
+		          //println("in case" + intList.toString)
+		          s = x.toSet[Int]
+		      }
+	        model.dict +=
+	        ((id, (FZType.V_SET_INT, 
+	            new VarSetInt(s, false, ann, CPVarSet(cp, Set[Int](), s), id)
+	        )))
+	      	//println(intList.toString)
 	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
 	        ((id, (FZType.V_ARRAY_INT_R, 
 	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
@@ -319,7 +318,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            	}
 	                , id))))
 	        //println(model.dict.toString)
-	      //case "array ["~iset~"] of var bool" =>
+	      //case "array ["~iset~"] of var bool" => 
+	      case _ => throw new Exception("Error in parsing of var")
 	    }
 //	    e match {
 //	      case None => println("no assign")
@@ -414,7 +414,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	    case "int_lin_le_reif" =>
 	      int_lin_cstr(varList, ann, cstr)
-	      
+	     
+	    case "set_card" =>
+	      println("set card")
+	      val s = getCPVarSet(varList(0))
+	      val i = getCPVarInt(varList(1))
+	      cp.add(s.card == i)
+	    case "set_diff" =>
+	      set_cstr(varList, ann, cstr)
+	    case "set_eq" =>
+	      set_cstr(varList, ann, cstr)
+	    	      
 	    // global constraints defined in minizinc/mznlib/
 	    case "oscar_alldiff" =>
 	      cp.add(allDifferent(getCPVarIntArray(varList(0))))
@@ -422,8 +432,26 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "all_disjoint" =>
 	    case "all_equal_int" =>
 	    case "oscar_among" =>
-	    case "at_least_int" => //not used, done with among
-	    case "at most_int" => //not used, done with among
+	      //must be tested
+	      //the gets can be done in the constraint adding
+	      val n = getCPVarInt(varList(0))
+	      val x = getCPVarIntArray(varList(1))
+	      val s = getSetOfInt(varList(2))
+	      cp.add(among(n, x, s))
+	    case "oscar_at_least_int" => 
+	      //must be tested
+	      //the gets can be done in the constraint adding
+	      val n = getInt(varList(0))
+	      val x = getCPVarIntArray(varList(1))
+	      val v = getInt(varList(2))
+	      cp.add(atLeast(n, x, v))
+	    case "oscar_at most_int" =>
+	      //must be tested
+	      //the gets can be done in the constraint adding
+	      val n = getInt(varList(0))
+	      val x = getCPVarIntArray(varList(1))
+	      val v = getInt(varList(2))
+	      cp.add(atMost(n, x, v))
 	    case "at_most1" =>
 	    case "oscar_bin_packing" => 
 	      bin_packing(varList, "def")
@@ -745,6 +773,33 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
 	}
 	
+	def set_cstr(varList: List[Any], ann: Any, cstr: String) {
+	  var cpvar = Array[CPVarSet]()
+	  varList.foreach{ e => 
+	    cpvar :+= getCPVarSet(e)
+	  }
+	  cstr match {
+	    case "set_diff" =>
+	      cp.add(new SetDiff(cpvar(0), cpvar(1), cpvar(2)))
+	    case "set_eq" => // need contraint
+	  }
+	}
+	
+	def getBool(x:Any): Boolean = {
+	  x match {
+	    case y:Boolean => y
+        case y:String => 
+          model.dict.get(y) match {
+		      case Some((tp, fzo)) => 
+		        tp match {
+		            case FZType.P_BOOL => {
+		              fzo.asInstanceOf[ParamBool].value
+		            }
+		        }
+		    }
+	  }
+	}
+	
 	def getInt(x:Any): Int = {
 	  x match {
 	    case y:Int => y
@@ -756,12 +811,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		              fzo.asInstanceOf[ParamInt].value
 		            }
 		        }
+		      case None => throw new Exception("Error in getInt")
 		    }
 	  }
 	}
 	
+	//TODO : create a getter for array of bool (param)
+	
 	def getIntArray(x: Any): Array[Int] = {
 	  x match {
+	    //TODO : cant I say that it is a y:List[Int], the parser should return a List[Int]
 	    case y:List[Any] => y.asInstanceOf[List[Int]].toArray
         case y:String => 
           model.dict.get(y) match {
@@ -770,6 +829,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		            case FZType.P_ARRAY_INT => {
 		              val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
 		              (list map (_.toInt)).toArray
+		            }
+		        }
+		    }
+	  }
+	}
+	
+	def getSetOfInt(x:Any): Set[Int] = {
+	  x match {
+	    case y:Range => y.toSet[Int]
+	    case y:List[Int] => y.toSet[Int] //TODO : check that a declared set can be a list of int
+        case y:String => 
+          model.dict.get(y) match {
+		      case Some((tp, fzo)) => 
+		        tp match {
+		            case FZType.P_SET_INT => {
+		              fzo.asInstanceOf[ParamSetOfInt].value
 		            }
 		        }
 		    }
@@ -789,6 +864,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case x:Int => CPVarInt(cp, x)
 	    case x:List[Any] => getCPVarIntFromList(x)
 	    case x:String => getCPVarIntFromString(x)
+	  }
+	}
+	
+	def getCPVarSet(x: Any): CPVarSet = {
+	  x match {
+	    case x:String => getCPVarSetFromString(x)
 	  }
 	}
 	
@@ -812,6 +893,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            }
 	            case FZType.V_INT_RANGE => {
 	              fzo.asInstanceOf[VarIntRange].cpvar
+	            }
+	        }
+	    }
+	}
+	
+	def getCPVarSetFromString(x: String): CPVarSet = {
+	  model.dict.get(x) match {
+	      case Some((tp, fzo)) => 
+	        tp match {
+	            case FZType.V_SET_INT => {
+	              fzo.asInstanceOf[VarSetInt].cpvar
 	            }
 	        }
 	    }
@@ -909,8 +1001,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
 	  //println(ann)
+	  //var xs = (Array[CPVarInt](), Array[VarState]())
 	  var x = Array[CPVarInt]()
+	  var s = Array[CPVarSet]()
 	  var state = Array[VarState]()
+	  var setstate = Array[VarState]()
 	  if(true) { // array with all the variable so that it is possible to output correctly
 	      var output: Boolean = false // only used for formating the output
 	      var c = 0
@@ -919,73 +1014,93 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            tp match {
 	              case FZType.V_BOOL => {
-	                x :+= fzo.asInstanceOf[VarBool].cpvar
-	                fzo.asInstanceOf[VarBool].annotations.foreach { ann =>
+	                val obj = fzo.asInstanceOf[VarBool]
+	                x :+= obj.cpvar
+	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-	                state :+= new VarState(fzo.asInstanceOf[VarBool].name,
+	                state :+= new VarState(obj.name,
 	                    output, false, false, 1)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_BOOL => {
+	                val obj = fzo.asInstanceOf[VarArrayBool]
 	                var first = true
-	                fzo.asInstanceOf[VarArrayBool].cpvar.foreach { e =>
+	                obj.cpvar.foreach { e =>
 	                	x :+= e
-	                	fzo.asInstanceOf[VarArrayBool].annotations.foreach { ann =>
+	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
 	                	}
-	                	state :+= new VarState(fzo.asInstanceOf[VarArrayBool].name,
-	                    output, true, first, fzo.asInstanceOf[VarArrayBool].cpvar.length)
+	                	state :+= new VarState(obj.name,
+	                    output, true, first, obj.cpvar.length)
 	                	
 	                	first = false
 	                }
 	                output = false
 	              }
 	              case FZType.V_INT_RANGE => {
-	                x :+= fzo.asInstanceOf[VarIntRange].cpvar
-	                fzo.asInstanceOf[VarIntRange].annotations.foreach { ann =>
+	                //xs = getVariable2(fzo, tp, xs)
+	                val obj = fzo.asInstanceOf[VarIntRange]
+	                x :+= obj.cpvar
+	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-	                state :+= new VarState(fzo.asInstanceOf[VarIntRange].name,
+	                state :+= new VarState(obj.name,
 	                    output, false, false, 1)
 	                output = false
-	                
 	              }
 	              case FZType.V_ARRAY_INT_R => {
+	                val obj = fzo.asInstanceOf[VarArrayIntRange]
 	                var first = true
-	                fzo.asInstanceOf[VarArrayIntRange].cpvar.foreach { e =>
+	                obj.cpvar.foreach { e =>
 	                	x :+= e
-	                	fzo.asInstanceOf[VarArrayIntRange].annotations.foreach { ann =>
+	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
 	                	}
-	                	state :+= new VarState(fzo.asInstanceOf[VarArrayIntRange].name,
-	                    output, true, first, fzo.asInstanceOf[VarArrayIntRange].cpvar.length)
+	                	state :+= new VarState(obj.name,
+	                    output, true, first, obj.cpvar.length)
 	                	
 	                	first = false
 	                }
 	                output = false
 	              }
 	              case FZType.V_INT => {
-	                x :+= fzo.asInstanceOf[VarInt].cpvar
-	                fzo.asInstanceOf[VarInt].annotations.foreach { ann =>
+	                val obj = fzo.asInstanceOf[VarInt]
+	                x :+= obj.cpvar
+	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-	                state :+= new VarState(fzo.asInstanceOf[VarInt].name,
+	                state :+= new VarState(obj.name,
 	                    output, false, false, 1)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_INT => {
+	                val obj = fzo.asInstanceOf[VarArrayInt]
 	                var first = true
-	                fzo.asInstanceOf[VarArrayInt].cpvar.foreach { e =>
+	                obj.cpvar.foreach { e =>
 	                	x :+= e
-	                	fzo.asInstanceOf[VarArrayInt].annotations.foreach { ann =>
+	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { output = true }
 	                	}
-	                	state :+= new VarState(fzo.asInstanceOf[VarArrayInt].name,
-	                    output, true, first, fzo.asInstanceOf[VarArrayInt].cpvar.length)
+	                	state :+= new VarState(obj.name,
+	                    output, true, first, obj.cpvar.length)
 	                	
 	                	first = false
 	                }
+	                output = false
+	              }
+	              case FZType.V_SET_INT => {
+	                val obj = fzo.asInstanceOf[VarSetInt]
+	                //println(obj.name)
+	                s :+= obj.cpvar
+	                obj.annotations.foreach { ann =>
+	            		if ( ann.name == "output_var" ) {
+	            		  output = true 
+	            		  //println("output " +obj.name)	  
+	            		}
+	                }
+	                setstate :+= new VarState(obj.name,
+	                    output, false, false, 1)
 	                output = false
 	              }
 	              case _ => {
@@ -995,12 +1110,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	      }
 	  } 
+	  //println(s.mkString(" - "))
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
 	      } exploration {
-	        explo(ann, x)
-	        format_output(x, state)
+	        explo(ann, x, s)
+	        //explo(ann, xs._1)
+	        //format_output2(xs)
+	        format_output(x, state, s, setstate)
 	      } run (1)
 	      println("==========")
 	    }
@@ -1016,7 +1134,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      ) subjectTo {
 	      } exploration {
 	        cp.binary(x)
-	        format_output(x, state)
+	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
 	    }
@@ -1032,14 +1150,30 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      ) subjectTo {
 	      } exploration {
 	        cp.binary(x)
-	        format_output(x, state)
+	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
 	    }
 	  }   
 	}
 	
-	def explo(ann: List[Annotation], x: Array[CPVarInt]): Unit @suspendable = {
+//	def getVariable2(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
+//	(Array[CPVarInt], Array[VarState]) = {
+//		var output = false
+//		/*
+//		 * Need to be able to cast fzo in the type tp, I don't know how to do that
+//		 */
+//		val obj = fzo.asInstanceOf[VarIntRange]
+//	    val a = xs._1 :+ obj.cpvar
+//	    obj.annotations.foreach { ann =>
+//			if ( ann.name == "output_var" ) { output = true }
+//	    }
+//		val s = xs._2 :+ new VarState(obj.name,
+//            output, false, false, 1)
+//	    (a, s)
+//	}
+	
+	def explo(ann: List[Annotation], x: Array[CPVarInt], s: Array[CPVarSet]): Unit @suspendable = {
 		if(ann.isEmpty) {
           cp.binary(x)
         }
@@ -1055,6 +1189,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        varChoiceAnn(a.args, array)
 	//	      case "set_search" =>
 			}
+          }
+        }
+		if(!s.isEmpty) {
+          for(e <- s.toList.suspendable){
+            cp.binary(e)
           }
         }
 	}
@@ -1088,8 +1227,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		}
 	}
 	
-	def format_output(x: Array[CPVarInt], state: Array[VarState]) {
-		var c = 0
+	def format_output(x: Array[CPVarInt], state: Array[VarState], s: Array[CPVarSet], setstate: Array[VarState]) {
+		/*
+		 * can be a half the size by creating two tuple (x, state) 
+		 * and (s, setstate) and iterating on both one after the other
+		 */
+	  var c = 0
 		for(i <- 0 until x.length) {
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
@@ -1106,6 +1249,49 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    }
 	    	  } else {
 	    	  	println(state(i).name + " =" + x(i).toString + ";") 
+	    	  }
+	    	}
+	    }
+		for(i <- 0 until s.length) {
+	    	if ( setstate(i).output ) { 
+	    	  if ( setstate(i).array ) {
+	    	    c += 1
+	    	    if (setstate(i).first) {
+	    	    	print(setstate(i).name + 
+	    	    	    " = array1d(1.." + setstate(i).size + 
+	    	    	    ", [" + s(i).toString)
+	    	    } else if( c == setstate(i).size ) {
+	    	    	println("," + s(i).toString + "]);")
+	    	    	c = 0
+	    	    } else {
+	    	    	print("," + s(i).toString)
+	    	    }
+	    	  } else {
+	    	  	println(setstate(i).name + " =" + s(i).toString + ";") 
+	    	  }
+	    	}
+	    }
+	    println("----------")
+	}
+	
+	def format_output2(xs: (Array[CPVarInt], Array[VarState])) {
+		var c = 0
+		for(i <- 0 until xs._1.length) {
+	    	if ( xs._2(i).output ) { 
+	    	  if ( xs._2(i).array ) {
+	    	    c += 1
+	    	    if (xs._2(i).first) {
+	    	    	print(xs._2(i).name + 
+	    	    	    " = array1d(1.." + xs._2(i).size + 
+	    	    	    ", [" + xs._1(i).toString)
+	    	    } else if( c == xs._2(i).size ) {
+	    	    	println("," + xs._1(i).toString + "]);")
+	    	    	c = 0
+	    	    } else {
+	    	    	print("," + xs._1(i).toString)
+	    	    }
+	    	  } else {
+	    	  	println(xs._2(i).name + " =" + xs._1(i).toString + ";") 
 	    	  }
 	    	}
 	    }

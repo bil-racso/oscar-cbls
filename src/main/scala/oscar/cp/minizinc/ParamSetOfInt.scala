@@ -1,7 +1,7 @@
 package oscar.cp.minizinc
 
 class ParamSetOfInt (
-    val value: Any,
+    val value: Set[Int],
     val range: Boolean,
     override val name: String
     ) extends FZObject (name) {
