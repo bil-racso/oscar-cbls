@@ -3,7 +3,8 @@ package oscar.cp.minizinc
 import oscar.cp.core.CPVarInt
 
 class VarIntRange (
-    val range: Range,
+    val value: Set[Int],
+    val range: Boolean,
     val annotations: List[Annotation],
     val cpvar: CPVarInt,
     override val name: String

@@ -17,6 +17,6 @@ object FZType extends Enumeration {
 		V_ARRAY_BOOL,
 		V_ARRAY_INT_R,
 		V_ARRAY_INT,
-		V_SET_INT,
-		V_SET_SET_INT = Value
+		V_ARRAY_SET,
+		V_SET_INT = Value
 }

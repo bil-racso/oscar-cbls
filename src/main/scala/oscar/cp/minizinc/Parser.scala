@@ -228,7 +228,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 			        new VarBool(ann, CPVarBool(cp), id))))
 	        }
 	        
-	      case "array ["~iset~"] of var bool" => model.dict +=
+	      case "array ["~iset~"] of var bool" =>
+	        // TODO : add assignment
+	        model.dict +=
 	        ((id, (FZType.V_ARRAY_BOOL, 
 	            new VarArrayBool(ann,
 	                iset match {
@@ -266,18 +268,32 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      			new VarInt(ann, CPVarInt(cp, x), id))))
 		      	  case _ => model.dict +=
 			        ((id, (FZType.V_INT_RANGE,
-			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+			            new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet, true, ann, 
 			                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
 			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
 		      	}
 	          case None => model.dict +=
 	            ((id, (FZType.V_INT_RANGE,
-	            	new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann, 
+	            	new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet, true, ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
 	          case _ => throw new Exception("Error in parsing of var range")
 	        }	      
-	      
+	      case "var "~"{"~intList~"}" =>
+	        // TODO : add assignment
+	        // to be tested
+	        val s = getSetFromList(intList)
+//	        var s = Set[Int]()
+//	      	intList match {
+//		      case x:List[Int] => 
+//		          s = x.toSet[Int]
+//		      }
+	        model.dict +=
+	        ((id, (FZType.V_INT_RANGE, 
+	            new VarIntRange(s, false, ann, CPVarInt(cp, s), id)
+	        )))
+	        
 	      case "var set of"~i1~".."~i2 => 
+	        // TODO : add assignment
 	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
 	        model.dict +=
@@ -287,28 +303,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //println(id + " " + i1 + " " + i2)
 	        
 	      case "var set of"~"{"~intList~"}" => 
+	        // TODO : add assignment
 	        //println(id + " " + intList.toString)
-	        var s = Set[Int]()
-	      	intList match {
-		        case x:List[Int] => 
-		          //println("in case" + intList.toString)
-		          s = x.toSet[Int]
-		      }
+	        val s = getSetFromList(intList)
+//	      	intList match {
+//		        case x:List[Int] => 
+//		          //println("in case" + intList.toString)
+//		          s = x.toSet[Int]
+//		      }
 	        model.dict +=
 	        ((id, (FZType.V_SET_INT, 
 	            new VarSetInt(s, false, ann, CPVarSet(cp, Set[Int](), s), id)
 	        )))
 	      	//println(intList.toString)
-	      case "array ["~iset~"] of var"~i1~".."~i2 => model.dict +=
-	        ((id, (FZType.V_ARRAY_INT_R, 
-	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1), ann,
-	                iset match {
-	                	case x:Range => 
-	                	  Array.fill(x.length){CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)} 
-	                	case _ => null
-	            	}
-	            	, id))))
-	      case "array ["~iset~"] of var int" => model.dict +=
+	      case "array ["~iset~"] of var int" => 
+	        // TODO : add assignment
+	        model.dict +=
 	        ((id, (FZType.V_ARRAY_INT,
 	            new VarArrayInt(ann, 
 	            	iset match {
@@ -317,8 +327,61 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	                , id))))
-	        //println(model.dict.toString)
-	      //case "array ["~iset~"] of var bool" => 
+	      case "array ["~iset~"] of var"~i1~".."~i2 => 
+	        // TODO : add assignment
+	        model.dict +=
+	        ((id, (FZType.V_ARRAY_INT_R, 
+	            new VarArrayIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet, true, ann,
+	                iset match {
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarInt(cp, i1.toString.toInt to i2.toString.toInt)} 
+	                	case _ => null
+	            	}
+	            	, id))))
+	      case "array ["~iset~"] of var"~"{"~intList~"}" => 
+	        // TODO : add assignment
+	        // to be tested
+	        val s = getSetFromList(intList)
+	        //println(s)
+//	        var s = Set[Int]()
+//	        intList match {
+//		        case x:List[Int] => 
+//		          //println("in case" + intList.toString)
+//		          s = x.toSet[Int]
+//		      }
+	        model.dict += 
+	          ((id, (FZType.V_ARRAY_INT_R, 
+	              new VarArrayIntRange(s, false, ann, 
+	            	iset match {
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarInt(cp, s)} 
+	                	case _ => null
+	            	}
+	                  , id))))
+	      case "array ["~iset~"] of var set of"~i1~".."~i2 => 
+	        // TODO : add assignment
+	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
+	        model.dict +=
+	        ((id, (FZType.V_ARRAY_SET, 
+	            new VarArraySet(Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet, true, ann,
+	                iset match {
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarSet(cp, Set[Int](), s)} 
+	                	case _ => null
+	            	}
+	            	, id))))
+	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
+	        // TODO : add assignment
+	        val s = getSetFromList(intList)
+	        model.dict += 
+	          ((id, (FZType.V_ARRAY_SET, 
+	              new VarArraySet(s, false, ann, 
+	            	iset match {
+	                	case x:Range => 
+	                	  Array.fill(x.length){CPVarSet(cp, Set[Int](), s)} 
+	                	case _ => null
+	            	}
+	                  , id))))
 	      case _ => throw new Exception("Error in parsing of var")
 	    }
 //	    e match {
@@ -430,7 +493,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      cp.add(allDifferent(getCPVarIntArray(varList(0))))
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
-	    case "all_equal_int" =>
+	    case "oscar_all_equal_int" =>
+	      // to be tested
+	      val array = getCPVarIntArray(varList(0))
+	      for(i <- 0 to array.length - 2) {
+	        cp.add(array(i) == array(i+1))
+	      }
 	    case "oscar_among" =>
 	      //must be tested
 	      //the gets can be done in the constraint adding
@@ -816,6 +884,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	}
 	
+	def getBoolArray() {
+	  
+	}
 	//TODO : create a getter for array of bool (param)
 	
 	def getIntArray(x: Any): Array[Int] = {
@@ -982,10 +1053,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  case Some((tp, fzo)) => 
             tp match {
                 case FZType.V_ARRAY_INT_R => {
-                  fzo.asInstanceOf[VarArrayIntRange].range.length
+                  fzo.asInstanceOf[VarArrayIntRange].value.size
                 }
             }
 	  }
+	}
+	
+	def getSetFromList(intList: Any): Set[Int] = {
+	  	intList match {
+	        case x:List[Int] => 
+	          //println("in case" + intList.toString)
+	          x.toSet[Int]
+	      }
 	}
 	
 	def solve_goal : Parser[Any] = (
@@ -1101,6 +1180,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                }
 	                setstate :+= new VarState(obj.name,
 	                    output, false, false, 1)
+	                output = false
+	              }
+	              case FZType.V_ARRAY_SET => {
+	                val obj = fzo.asInstanceOf[VarArraySet]
+	                var first = true
+	                obj.cpvar.foreach { e =>
+	                	s :+= e
+	                	obj.annotations.foreach { ann =>
+	            			if ( ann.name == "output_array" ) { output = true }
+	                	}
+	                	setstate :+= new VarState(obj.name,
+	                    output, true, first, obj.cpvar.length)
+	                	
+	                	first = false
+	                }
 	                output = false
 	              }
 	              case _ => {
