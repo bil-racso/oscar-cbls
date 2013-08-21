@@ -209,6 +209,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    var t: FZType = null
 	    tp match {
 	      // must match on e to know if decl is followed by an assign
+	      /*
+	       * pattern for match on e :
+	       * 
+	       * e match
+	       * 	case Some(assign)
+	       *  		assign match
+	       *    		case value of the right type
+	       *      			create cpvar with right value 
+	       * 			case else
+	       *    			create cpvar as asked and add == constraint
+	       *  	case None
+	       *   		create cpvar normaly
+	       */
 	      case "var bool" => 
 	        e match {
 	          case Some("="~assign) =>
@@ -222,10 +235,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 			            new VarBool(ann, CPVarBool(cp), id))))
 			  		cp.add(getCPVarBoolFromString(id) == getCPVarBool(assign))
 		      	}
-	          case None =>
+	          case None => 
 	            model.dict +=
 			      ((id, (FZType.V_BOOL,
 			        new VarBool(ann, CPVarBool(cp), id))))
+			  case _ => throw new Exception("Error in var bool creation")
 	        }
 	        
 	      case "array ["~iset~"] of var bool" =>
@@ -257,6 +271,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            model.dict += 
 			      ((id, (FZType.V_INT, 
 			      	new VarInt(ann, CPVarInt(cp, -10000, 10000), id))))
+	          case _ => throw new Exception("Error in var int creation")
 	        }
 	        
 	      case "var"~i1~".."~i2 => 
@@ -276,17 +291,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            ((id, (FZType.V_INT_RANGE,
 	            	new VarIntRange(Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet, true, ann, 
 	                CPVarInt(cp, i1.toString.toInt to i2.toString.toInt), id))))
-	          case _ => throw new Exception("Error in parsing of var range")
+	          case _ => throw new Exception("Error in var int creation")
 	        }	      
-	      case "var "~"{"~intList~"}" =>
+	        
+	      case "var"~"{"~intList~"}" =>
 	        // TODO : add assignment
-	        // to be tested
 	        val s = getSetFromList(intList)
-//	        var s = Set[Int]()
-//	      	intList match {
-//		      case x:List[Int] => 
-//		          s = x.toSet[Int]
-//		      }
 	        model.dict +=
 	        ((id, (FZType.V_INT_RANGE, 
 	            new VarIntRange(s, false, ann, CPVarInt(cp, s), id)
@@ -300,22 +310,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        ((id, (FZType.V_SET_INT, 
 	            new VarSetInt(s, true, ann, CPVarSet(cp, Set[Int](), s), id)
 	        )))
-	        //println(id + " " + i1 + " " + i2)
 	        
 	      case "var set of"~"{"~intList~"}" => 
 	        // TODO : add assignment
-	        //println(id + " " + intList.toString)
 	        val s = getSetFromList(intList)
-//	      	intList match {
-//		        case x:List[Int] => 
-//		          //println("in case" + intList.toString)
-//		          s = x.toSet[Int]
-//		      }
 	        model.dict +=
 	        ((id, (FZType.V_SET_INT, 
 	            new VarSetInt(s, false, ann, CPVarSet(cp, Set[Int](), s), id)
 	        )))
-	      	//println(intList.toString)
+
 	      case "array ["~iset~"] of var int" => 
 	        // TODO : add assignment
 	        model.dict +=
@@ -327,6 +330,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	                , id))))
+	                
 	      case "array ["~iset~"] of var"~i1~".."~i2 => 
 	        // TODO : add assignment
 	        model.dict +=
@@ -338,17 +342,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	            	, id))))
+	            	
 	      case "array ["~iset~"] of var"~"{"~intList~"}" => 
 	        // TODO : add assignment
-	        // to be tested
 	        val s = getSetFromList(intList)
-	        //println(s)
-//	        var s = Set[Int]()
-//	        intList match {
-//		        case x:List[Int] => 
-//		          //println("in case" + intList.toString)
-//		          s = x.toSet[Int]
-//		      }
 	        model.dict += 
 	          ((id, (FZType.V_ARRAY_INT_R, 
 	              new VarArrayIntRange(s, false, ann, 
@@ -358,6 +355,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	                  , id))))
+	                  
 	      case "array ["~iset~"] of var set of"~i1~".."~i2 => 
 	        // TODO : add assignment
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
@@ -370,6 +368,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	            	, id))))
+	            	
 	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
 	        // TODO : add assignment
 	        val s = getSetFromList(intList)
@@ -382,6 +381,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	case _ => null
 	            	}
 	                  , id))))
+	                  
 	      case _ => throw new Exception("Error in parsing of var")
 	    }
 //	    e match {
@@ -500,22 +500,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        cp.add(array(i) == array(i+1))
 	      }
 	    case "oscar_among" =>
-	      //must be tested
-	      //the gets can be done in the constraint adding
+	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getCPVarInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val s = getSetOfInt(varList(2))
 	      cp.add(among(n, x, s))
 	    case "oscar_at_least_int" => 
-	      //must be tested
-	      //the gets can be done in the constraint adding
+	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val v = getInt(varList(2))
 	      cp.add(atLeast(n, x, v))
 	    case "oscar_at most_int" =>
-	      //must be tested
-	      //the gets can be done in the constraint adding
+	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val v = getInt(varList(2))
@@ -554,7 +551,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      gcc_cstr(varList)
 	      
 	    case "global_cardinality_closed" =>
-	    case "global_cardinality_low_up" => 
+	    case "oscar_global_cardinality_low_up" => 
 	    case "global_cardinality_low_up_closed" =>
 	    case "oscar_increasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
@@ -677,6 +674,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
       val x = getCPVarIntArray(varList(0))
       cp.add(gcc(x, valueOccurrence))
+	}
+	
+	def gcc_lbub_cstr(varList: List[Any]) {
+	  //is not the same in mzn and in oscar
+	  //array in mzn and range in oscar
+      val cover = getIntArray(varList(1))
+      val lb = getIntArray(varList(2))
+      val ub = getIntArray(varList(3))
+      assert(cover.length == lb.length, "Cover has not the same size as lb")
+      assert(cover.length == ub.length, "Cover has not the same size as ub")
+      //var valueOccurrence = Array[(Int, CPVarInt)]()
+//      for(i <- 0 until cover.length) {
+//        valueOccurrence :+= (cover(i), count(i))
+//      }
+      val x = getCPVarIntArray(varList(0))
+      //cp.add(gcc(x, valueOccurrence))
 	}
 	
 	def regular_cstr(varList: List[Any]) {
@@ -864,6 +877,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		              fzo.asInstanceOf[ParamBool].value
 		            }
 		        }
+		      case None => throw new Exception("Param " + x + " does not exist")
 		    }
 	  }
 	}
@@ -879,19 +893,31 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		              fzo.asInstanceOf[ParamInt].value
 		            }
 		        }
-		      case None => throw new Exception("Error in getInt")
+		      case None => throw new Exception("Param " + x + " does not exist")
 		    }
 	  }
 	}
 	
-	def getBoolArray() {
-	  
+	def getBoolArray(x: Any): Array[Boolean] = {
+	  // to be tested
+	  x match {
+	    case y:List[Any] => y.asInstanceOf[List[Boolean]].toArray
+        case y:String => 
+          model.dict.get(y) match {
+		      case Some((tp, fzo)) => 
+		        tp match {
+		            case FZType.P_ARRAY_BOOL => {
+		              val list = fzo.asInstanceOf[ParamArrayBool].value.asInstanceOf[List[Boolean]]
+		              list.toArray
+		            }
+		        }
+		      case None => throw new Exception("Param " + x + " does not exist")
+		    }
+	  }
 	}
-	//TODO : create a getter for array of bool (param)
 	
 	def getIntArray(x: Any): Array[Int] = {
 	  x match {
-	    //TODO : cant I say that it is a y:List[Int], the parser should return a List[Int]
 	    case y:List[Any] => y.asInstanceOf[List[Int]].toArray
         case y:String => 
           model.dict.get(y) match {
@@ -902,6 +928,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		              (list map (_.toInt)).toArray
 		            }
 		        }
+		      case None => throw new Exception("Param " + x + " does not exist")
 		    }
 	  }
 	}
@@ -909,7 +936,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def getSetOfInt(x:Any): Set[Int] = {
 	  x match {
 	    case y:Range => y.toSet[Int]
-	    case y:List[Int] => y.toSet[Int] //TODO : check that a declared set can be a list of int
+	    case y:List[Int] => y.toSet[Int]
         case y:String => 
           model.dict.get(y) match {
 		      case Some((tp, fzo)) => 
@@ -918,6 +945,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		              fzo.asInstanceOf[ParamSetOfInt].value
 		            }
 		        }
+		      case None => throw new Exception("Param " + x + " does not exist")
 		    }
 	  }
 	}
@@ -952,6 +980,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 	        }
+	      case None => throw new Exception("Var " + x + " does not exist")
 	    }
 	}
 	
@@ -966,6 +995,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarIntRange].cpvar
 	            }
 	        }
+	      case None => throw new Exception("Var " + x + " does not exist")
 	    }
 	}
 	
@@ -977,6 +1007,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarSetInt].cpvar
 	            }
 	        }
+	      case None => throw new Exception("Var " + x + " does not exist")
 	    }
 	}
 	
@@ -988,6 +1019,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   fzo.asInstanceOf[VarArrayBool].cpvar(x(1).toString.toInt-1)
                 }
             }
+          case None => throw new Exception("Var " + x + " does not exist")
         }
 	}
 	
@@ -1002,6 +1034,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
                 }
             }
+          case None => throw new Exception("Var " + x + " does not exist")
         }
 	}
 	
@@ -1015,12 +1048,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      array
 	    case y:String =>
 	      model.dict.get(y) match {
-		  case Some((tp, fzo)) => 
-            tp match {
-                case FZType.V_ARRAY_BOOL => {
-                  fzo.asInstanceOf[VarArrayBool].cpvar
-                }
-            }
+			  case Some((tp, fzo)) => 
+	            tp match {
+	                case FZType.V_ARRAY_BOOL => {
+	                  fzo.asInstanceOf[VarArrayBool].cpvar
+	                }
+	            }
+	          case None => throw new Exception("Var " + x + " does not exist")
 	      }
 	  }
 	}
@@ -1035,15 +1069,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      array
 	    case y:String =>
 	      model.dict.get(y) match {
-		  case Some((tp, fzo)) => 
-            tp match {
-                case FZType.V_ARRAY_INT_R => {
-                  fzo.asInstanceOf[VarArrayIntRange].cpvar
-                }
-                case FZType.V_ARRAY_INT => {
-                  fzo.asInstanceOf[VarArrayInt].cpvar
-                }
-            }
+			  case Some((tp, fzo)) => 
+	            tp match {
+	                case FZType.V_ARRAY_INT_R => {
+	                  fzo.asInstanceOf[VarArrayIntRange].cpvar
+	                }
+	                case FZType.V_ARRAY_INT => {
+	                  fzo.asInstanceOf[VarArrayInt].cpvar
+	                }
+	            }
+	          case None => throw new Exception("Var " + x + " does not exist")
 	      }
 	  }
 	}
@@ -1056,6 +1091,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   fzo.asInstanceOf[VarArrayIntRange].value.size
                 }
             }
+          case None => throw new Exception("Var " + x + " does not exist")
 	  }
 	}
 	
@@ -1071,7 +1107,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    "solve"~annotations~"satisfy;" ^^ { 
 	      case "solve"~ann~"satisfy;" => solver("sat", null, ann)
 	    }
-	    | "solve"~annotations~"minimize"~expr~";"
+	    | "solve"~annotations~"minimize"~expr~";" ^^ { 
+	      case "solve"~ann~"minimize"~e~";" => solver("min", e, ann)
+	    }
 	    | "solve"~annotations~"maximize"~expr~";" ^^ { 
 	      case "solve"~ann~"maximize"~e~";" => solver("max", e, ann)
 	    }
@@ -1079,7 +1117,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
-	  //println(ann)
 	  //var xs = (Array[CPVarInt](), Array[VarState]())
 	  var x = Array[CPVarInt]()
 	  var s = Array[CPVarSet]()
@@ -1204,7 +1241,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	      }
 	  } 
-	  //println(s.mkString(" - "))
+	  	  
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
@@ -1227,7 +1264,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	      ) subjectTo {
 	      } exploration {
-	        cp.binary(x)
+	        explo(ann, x, s)
+	        //cp.binary(x)
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
@@ -1243,7 +1281,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	      ) subjectTo {
 	      } exploration {
-	        cp.binary(x)
+	        explo(ann, x, s)
+	        //cp.binary(x)
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
@@ -1251,7 +1290,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }   
 	}
 	
-//	def getVariable2(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
+//	def getVariable(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
 //	(Array[CPVarInt], Array[VarState]) = {
 //		var output = false
 //		/*
@@ -1273,14 +1312,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
         else {
           for(a <- ann.suspendable) {
-        	  a.name match {
+        	a.name match {
 		      case "int_search" =>
 		        val array = getCPVarIntArray(a.args(0))
-		        varChoiceAnn(a.args, array)
+		        varChoiceAnn2(a.args, array)
 		      case "bool_search" =>
 		        //check that this mapping works :/, it seems to work fine
 		        val array = getCPVarBoolArray(a.args(0)).map(_.asInstanceOf[CPVarInt])
-		        varChoiceAnn(a.args, array)
+		        varChoiceAnn2(a.args, array)
 	//	      case "set_search" =>
 			}
           }
@@ -1292,17 +1331,49 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
 	}
 	
-	def varChoiceAnn(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
+//	def varChoiceAnn(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
+//		args(1) match {
+//	      case "input_order" => cp.binary(array, array.indexOf(_), assignAnn(args))
+//	      case "first_fail" => cp.binaryFirstFail(array, assignAnn(args))
+//	      case "anti_first_fail" => cp.binary(array, -_.size, assignAnn(args))
+//	      case "smallest" => cp.binary(array, _.min, assignAnn(args))
+//	      case "largest" => cp.binary(array, _.max, assignAnn(args))
+//	      case "occurence" => cp.binary(array, _.constraintDegree, assignAnn(args))
+//	      case "most_constrained" =>
+//	      case "max_regret" =>
+//	    }
+//	}
+	
+	def varChoiceAnn2(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
 		args(1) match {
-	      case "input_order" => cp.binary(array, array.indexOf(_), assignAnn(args))
-	      case "first_fail" => cp.binaryFirstFail(array, assignAnn(args))
-	      case "anti_first_fail" => cp.binary(array, -_.size, assignAnn(args)) //correct ?
-	      case "smallest" => cp.binary(array, _.min, assignAnn(args))
-	      case "largest" => cp.binary(array, _.max, assignAnn(args))
-	      case "occurence" => cp.binary(array, _.constraintDegree, assignAnn(args))
+	      case "input_order" => assignAnn2(args, array, array.indexOf(_))
+	      case "first_fail" => 
+	        //use of assignAnn can be avoid by using a binary() and not binaryFirstFail()
+	        cp.binaryFirstFail(array, assignAnn(args))
+	      case "anti_first_fail" => assignAnn2(args, array, -_.size)
+	      case "smallest" => assignAnn2(args, array, _.min)
+	      case "largest" => assignAnn2(args, array, _.max)
+	      case "occurence" => assignAnn2(args, array, _.constraintDegree)
 	      case "most_constrained" =>
 	      case "max_regret" =>
 	    }
+	}
+	
+	def assignAnn2(args: List[Any], array: Array[CPVarInt], 
+	    varheur: CPVarInt => Int): Unit@suspendable  = {
+		args(2) match {
+		  case "indomain_min" => cp.binary(array, varheur, _.min)
+		  case "indomain_max" => cp.binary(array, varheur, _.max)
+//		  case "indomain_middle" =>
+		  case "indomain_median" => cp.binary(array, varheur, _.median)
+//		  case "indomain" =>
+		  case "indomain_random" => cp.binary(array, varheur, _.randomValue)
+		  /*
+		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn
+		  case "indomain_reverse_split" =>
+		  case "indomain_interval" =>
+		  */
+		}
 	}
 	
 	def assignAnn(args: List[Any]): CPVarInt => Int = {
@@ -1368,29 +1439,29 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    println("----------")
 	}
 	
-	def format_output2(xs: (Array[CPVarInt], Array[VarState])) {
-		var c = 0
-		for(i <- 0 until xs._1.length) {
-	    	if ( xs._2(i).output ) { 
-	    	  if ( xs._2(i).array ) {
-	    	    c += 1
-	    	    if (xs._2(i).first) {
-	    	    	print(xs._2(i).name + 
-	    	    	    " = array1d(1.." + xs._2(i).size + 
-	    	    	    ", [" + xs._1(i).toString)
-	    	    } else if( c == xs._2(i).size ) {
-	    	    	println("," + xs._1(i).toString + "]);")
-	    	    	c = 0
-	    	    } else {
-	    	    	print("," + xs._1(i).toString)
-	    	    }
-	    	  } else {
-	    	  	println(xs._2(i).name + " =" + xs._1(i).toString + ";") 
-	    	  }
-	    	}
-	    }
-	    println("----------")
-	}
+//	def format_output2(xs: (Array[CPVarInt], Array[VarState])) {
+//		var c = 0
+//		for(i <- 0 until xs._1.length) {
+//	    	if ( xs._2(i).output ) { 
+//	    	  if ( xs._2(i).array ) {
+//	    	    c += 1
+//	    	    if (xs._2(i).first) {
+//	    	    	print(xs._2(i).name + 
+//	    	    	    " = array1d(1.." + xs._2(i).size + 
+//	    	    	    ", [" + xs._1(i).toString)
+//	    	    } else if( c == xs._2(i).size ) {
+//	    	    	println("," + xs._1(i).toString + "]);")
+//	    	    	c = 0
+//	    	    } else {
+//	    	    	print("," + xs._1(i).toString)
+//	    	    }
+//	    	  } else {
+//	    	  	println(xs._2(i).name + " =" + xs._1(i).toString + ";") 
+//	    	  }
+//	    	}
+//	    }
+//	    println("----------")
+//	}
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
 	// is there a list of annotations ? in flatzinc spec pg10
