@@ -170,7 +170,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          }
 	        )))
 	        
-	      //code duplication can be easily avoided but what's better 
 	      case "array ["~iset~"] of bool" => model.dict += 
 	        ((id, (FZType.P_ARRAY_BOOL, 
 	            new ParamArrayBool(e, 
@@ -409,7 +408,25 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      array_bool_cstr(varList, ann, cstr)
 	    case "array_bool_or" =>
 	      array_bool_cstr(varList, ann, cstr)
-	    
+	      
+	    case "array_int_element" =>
+	      val b = getCPVarInt(varList(0))
+	      val as = getIntArray(varList(1))
+	      val c = getCPVarInt(varList(2))
+	      //println(b + " --- " + as.mkString(" - ") + " --- " + c)
+	      cp.add(element(as, b-1, c))
+	      
+	    case "array_var_bool_element" =>
+	      val b = getCPVarInt(varList(0))
+	      val as = getCPVarBoolArray(varList(1))
+	      val c = getCPVarBool(varList(2))
+	      cp.add(elementVar(as, b-1, c))
+	    case "array_var_int_element" =>
+	      val b = getCPVarInt(varList(0))
+	      val as = getCPVarIntArray(varList(1))
+	      val c = getCPVarInt(varList(2))
+	      cp.add(elementVar(as, b-1, c))
+	      
 	    case "bool_and" =>
 	      bool_cstr(varList, ann, cstr)
 	    case "bool_eq" =>
@@ -524,8 +541,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      bin_packing(varList, "capa")
 	    case "oscar_bin_packing_load" =>
 	      bin_packing(varList, "load")
-	    case "circuit" => 
-	      cp.add(circuit(getCPVarIntArray(varList(0))))
+	    case "oscar_circuit" => 
+	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)))
 	    case "count_eq" =>
 	    case "count_geq" =>
 	    case "count_gt" =>
@@ -684,17 +701,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       val ub = getIntArray(varList(3))
       assert(cover.length == lb.length, "Cover has not the same size as lb")
       assert(cover.length == ub.length, "Cover has not the same size as ub")
-      //var valueOccurrence = Array[(Int, CPVarInt)]()
-//      for(i <- 0 until cover.length) {
-//        valueOccurrence :+= (cover(i), count(i))
-//      }
       val x = getCPVarIntArray(varList(0))
-      //cp.add(gcc(x, valueOccurrence))
+      // add constraint
 	}
 	
 	def regular_cstr(varList: List[Any]) {
 	  var set : java.util.Set[Integer] = new java.util.TreeSet[Integer]()
-      //var s: Set<Integer> = new Set<Integer>()
       varList(5) match {
         case x:Range => 
           x.foreach{ e =>
@@ -1394,7 +1406,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def format_output(x: Array[CPVarInt], state: Array[VarState], s: Array[CPVarSet], setstate: Array[VarState]) {
 		/*
-		 * can be a half the size by creating two tuple (x, state) 
+		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
 		 */
 	  var c = 0
