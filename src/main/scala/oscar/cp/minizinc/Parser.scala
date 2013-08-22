@@ -496,7 +496,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	     
 	    case "set_card" =>
-	      println("set card")
+	      //println("set card")
 	      val s = getCPVarSet(varList(0))
 	      val i = getCPVarInt(varList(1))
 	      cp.add(s.card == i)
@@ -555,7 +555,25 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      for(i <- 0 to array.length - 2) {
 	        cp.add(array(i) >= array(i+1))
 	      }
-	    case "diffn" =>
+	    case "oscar_diffn" =>
+	      val x = getCPVarIntArray(varList(0))
+	      val y = getCPVarIntArray(varList(1))
+	      val dx = getCPVarIntArray(varList(2))
+	      val dy = getCPVarIntArray(varList(3))
+	      for(i <- 0 until x.length; j <- i+1 until x.length) {
+	        //println(i + " - " + j)
+	        //must be || between the two constraints below
+//	        cp.add((x(i) + dx(i) <== x(j)) || (x(j)+dx(j) <== x(i))) 
+//	        cp.add((y(i) + dy(i) <== y(j)) || (y(j)+dy(j) <== y(i)))
+	        cp.add( 
+	            ((x(i) + dx(i) <== x(j)) || (x(j)+dx(j) <== x(i))) ||
+	            ((y(i) + dy(i) <== y(j)) || (y(j)+dy(j) <== y(i)))
+	        ) 
+	        
+	      }
+//	      for(i <- 0 until y.length; j <- i until y.length) {
+//	        cp.add((y(i) + dy(i) <== y(j)) || (y(j)+dy(j) <== y(i))) 
+//	      }
 	    case "disjoint" =>
 	    case "distribute" =>
 	    case "oscar_element_bool" =>
@@ -569,6 +587,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      
 	    case "global_cardinality_closed" =>
 	    case "oscar_global_cardinality_low_up" => 
+	      gcc_lbub_cstr(varList)
 	    case "global_cardinality_low_up_closed" =>
 	    case "oscar_increasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
@@ -694,15 +713,22 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	def gcc_lbub_cstr(varList: List[Any]) {
-	  //is not the same in mzn and in oscar
-	  //array in mzn and range in oscar
+	  // to be tested
       val cover = getIntArray(varList(1))
       val lb = getIntArray(varList(2))
       val ub = getIntArray(varList(3))
+      val x = getCPVarIntArray(varList(0))
       assert(cover.length == lb.length, "Cover has not the same size as lb")
       assert(cover.length == ub.length, "Cover has not the same size as ub")
-      val x = getCPVarIntArray(varList(0))
-      // add constraint
+      val r = Range(cover.min, cover.max+1)
+      var min = Array.fill(r.size){0}
+      var max = Array.fill(r.size){x.length}
+      // Array.fill(x.length){CPVarBool(cp)} 
+      for(i <- 0 until cover.length) {
+        min(cover(i)-cover.min) = lb(i)
+        max(cover(i)-cover.max) = ub(i)
+      }
+      cp.add(gcc(x, r, min, max))
 	}
 	
 	def regular_cstr(varList: List[Any]) {
@@ -776,17 +802,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  varList.foreach{ e =>
 	    cpvar :+= getCPVarBool(e)
 	  }
+	  //println(varList)
 	  cstr match {
 	    case "bool_and" => cp.add((cpvar(0) && cpvar(1)) == cpvar(2))
 	    case "bool_eq" => cp.add(cpvar(0) == cpvar(1))
-	    case "bool_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), cpvar(3)))
+	    case "bool_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
 	    case "bool_le" => cp.add(!cpvar(0) || cpvar(1))
 	    case "bool_le_reif" => cp.add((!cpvar(0) || cpvar(1)) == cpvar(2))
 	    case "bool_lt" => cp.add(!cpvar(0) && cpvar(1))
 	    case "bool_lt_reif" => cp.add((!cpvar(0) && cpvar(1)) == cpvar(2))
 	    case "bool_not" => cp.add(!cpvar(0) == cpvar(1))
 	    case "bool_or" => cp.add((cpvar(0) || cpvar(1)) == cpvar(2))
-	    case "bool_xor" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), cpvar(3)))
+	    case "bool_xor" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), cpvar(2)))
 	  }
 	}
 	

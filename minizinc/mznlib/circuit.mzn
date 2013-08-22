@@ -1,3 +1,3 @@
-predicate circuit(array[int] of var int: x) = circuit(x);
+predicate circuit(array[int] of var int: x) = oscar_circuit(x);
 
-predicate circuit(array[int] of var int: x);
+predicate oscar_circuit(array[int] of var int: x);
