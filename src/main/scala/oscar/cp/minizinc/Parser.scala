@@ -207,20 +207,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  case tp~":"~id~ann~e~";" => 
 	    var t: FZType = null
 	    tp match {
-	      // must match on e to know if decl is followed by an assign
-	      /*
-	       * pattern for match on e :
-	       * 
-	       * e match
-	       * 	case Some(assign)
-	       *  		assign match
-	       *    		case value of the right type
-	       *      			create cpvar with right value 
-	       * 			case else
-	       *    			create cpvar as asked and add == constraint
-	       *  	case None
-	       *   		create cpvar normaly
-	       */
 	      case "var bool" => 
 	        e match {
 	          case Some("="~assign) =>
@@ -251,131 +237,28 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            	
 	      case "var int" => 
 	        createCPVarInt(e, id, Set[Int](), ann, false)
-//	        e match {
-//	          case Some("="~assign) =>
-//	            assign match {
-//		      	  case x:Int => model.dict += 
-//		      		((id, (FZType.V_INT, 
-//		      			new VarInt(ann, CPVarInt(cp, x), id))))
-//		      	  case _ => 
-//		      	    addCPVarInt(ann, id, Set[Int](), false)
-//		      	    cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
-//		      	}
-//	          case None =>
-//	            addCPVarInt(ann, id, Set[Int](), false)
-//	          case _ => throw new Exception("Error in var int creation")
-//	        }
 	        
 	      case "var"~i1~".."~i2 => 
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-	        createCPVarInt(e, id, s, ann, true)
-//	        e match {
-//	          case Some("="~assign) =>
-//	            assign match {
-//		      	  case x:Int => model.dict += 
-//		      		((id, (FZType.V_INT, 
-//		      			new VarInt(ann, CPVarInt(cp, x), id))))
-//		      	  case _ => 
-//		      	    //val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-//		      	    addCPVarInt(ann, id, s, true)
-//			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
-//		      	}
-//	          case None => 
-//	            //val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-//	            addCPVarInt(ann, id, s, true)
-//	          case _ => throw new Exception("Error in var int creation")
-//	        }	      
+	        createCPVarInt(e, id, s, ann, true)	      
 	        
 	      case "var"~"{"~intList~"}" =>
 	        // TODO : test assign
 	        val s = getSetFromList(intList)
 	        createCPVarInt(e, id, s, ann, true)
-//	        e match {
-//	          case Some("="~assign) =>
-//	            assign match {
-//		      	  case x:Int => model.dict += 
-//		      		((id, (FZType.V_INT, 
-//		      			new VarInt(ann, CPVarInt(cp, x), id))))
-//		      	  case _ => 
-//		      	    //val s = getSetFromList(intList)
-//		      	    addCPVarInt(ann, id, s, true)
-//			  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
-//		      	}
-//	          case None => 
-//	            //val s = getSetFromList(intList)
-//	            addCPVarInt(ann, id, s, true)
-//	          case _ => throw new Exception("Error in var int creation")
-//	        }
-	        
-//	        val s = getSetFromList(intList)
-//	        model.dict +=
-//	        ((id, (FZType.V_INT_RANGE, 
-//	            new VarIntRange(s, false, ann, CPVarInt(cp, s), id)
-//	        )))
 	        
 	      case "var set of"~i1~".."~i2 => 
 	        // TODO : test assign : cannot be done as eq on set doesnt exist
-	        //var set of int_const..int_const means a setof ranges ...? same as array so what does that mean ?
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
 	        createCPVarSet(e, id, s, ann)
-//	        e match {
-//	          case Some("="~assign) =>
-//	            assign match {
-//	              case x:List[Int] => model.dict += 
-//		      		((id, (FZType.V_SET_INT, 
-//		      			new VarSetInt(x.toSet, ann, 
-//		      			    CPVarSet(cp, Set[Int](), x.toSet), id)
-//		      		)))
-//	              case _ => 
-//	                val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-//			        addCPVarSet(ann, id, s)
-//			        // need to post a constraint obout eq on set
-//			        // cp.add(getCPVarSetFromString(id) == getCPVarSet(assign))
-//	            }
-//	          case None =>
-//	            val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-//		        addCPVarSet(ann, id, s)
-//	          case _ => throw new Exception("Error in var set creation")
-//	        }
-	        
-//	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
-//	        model.dict +=
-//	        ((id, (FZType.V_SET_INT, 
-//	            new VarSetInt(s, true, ann, CPVarSet(cp, Set[Int](), s), id)
-//	        )))
 	        
 	      case "var set of"~"{"~intList~"}" => 
 	        // TODO : test assign : cannot be done as eq on set doesnt exist
 	        val s = getSetFromList(intList)
 	        createCPVarSet(e, id, s, ann)
-//	        e match {
-//	          case Some("="~assign) =>
-//	            assign match {
-//	              case x:List[Int] => model.dict += 
-//		      		((id, (FZType.V_SET_INT, 
-//		      			new VarSetInt(x.toSet, ann, 
-//		      			    CPVarSet(cp, Set[Int](), x.toSet), id)
-//		      		)))
-//	              case _ => 
-//	                val s = getSetFromList(intList)
-//			        addCPVarSet(ann, id, s)
-//			        // need to post a constraint obout eq on set
-//			        // cp.add(getCPVarSetFromString(id) == getCPVarSet(assign))
-//	            }
-//	          case None =>
-//	            val s = getSetFromList(intList)
-//		        addCPVarSet(ann, id, s)
-//		      case _ => throw new Exception("Error in var set creation")
-//	        }
-	        
-//	        val s = getSetFromList(intList)
-//	        model.dict +=
-//	        ((id, (FZType.V_SET_INT, 
-//	            new VarSetInt(s, false, ann, CPVarSet(cp, Set[Int](), s), id)
-//	        )))
 
 	      case "array ["~iset~"] of var int" => 
-	        // TODO : add assignment
+	        // TODO : need testing
 	        createCPVarIntArray(e, id, Set[Int](), ann, getRangeLength(iset), false)
 //	         e match {
 //	          case Some("="~assign) =>
@@ -1331,13 +1214,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x match {
 	    case y:List[Any] =>
 	      //need testing
-	      //println("getCPVarIntArray")
 	      (y) map(getCPVarInt(_)) toArray
-//	      var array = Array[CPVarInt]()
-//	      y.foreach { e =>
-//	      	array :+= getCPVarInt(e)
-//	      }
-//	      array
 	    case y:String =>
 	      model.dict.get(y) match {
 			  case Some((tp, fzo)) => 
