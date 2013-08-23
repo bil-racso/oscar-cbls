@@ -41,7 +41,6 @@ public class EqReifVar extends Constraint {
 		super(x.s(),"DiffReif");
 		this.x = x;
 		this.y = y;
-		System.out.println("x:"+x+" y:"+y);
 		this.b = b;
 	}
 	
