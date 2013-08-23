@@ -4,11 +4,10 @@ import oscar.cp.core.CPVarInt
 
 class VarIntRange (
     val value: Set[Int],
-    val range: Boolean,
     val annotations: List[Annotation],
     val cpvar: CPVarInt,
     override val name: String
     ) extends FZObject (name) {
 
-	override def toString() = name + " " + annotations + " " + range
+	override def toString() = name + " " + annotations
 }
