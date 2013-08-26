@@ -20,11 +20,13 @@ import oscar.cp.constraints.Or
 import oscar.cp.constraints.Sum
 import scala.util.continuations._
 import oscar.cp.constraints.SetDiff
+import java.sql.Time
 
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
 	cp.silent = true
+	val timestamp: Long = System.currentTimeMillis / 1000
 	
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
 	def myParseAll(input: FileReader) = {parseAll(flatzinc_model, input)}
@@ -200,7 +202,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            	}, id))))
 	    }
 	}
-	  //the expr has restriction... what about it ?
 	
 	def var_decl : Parser[Any] = var_type~":"~var_par_id~annotations~opt("="~expr)~";" ^^
 	{ 
@@ -224,16 +225,23 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	        
 	      case "array ["~iset~"] of var bool" =>
-	        // TODO : add assignment
-	        model.dict +=
-	        ((id, (FZType.V_ARRAY_BOOL, 
-	            new VarArrayBool(ann,
-	                iset match {
-	                	case x:Range => 
-	                	  Array.fill(x.length){CPVarBool(cp)} 
-	                	case _ => null
-	            	}
-	            	, id))))
+	        e match {
+	          case Some("="~assign) =>
+	            assign match {
+	              case x:List[Boolean] => model.dict +=
+			        ((id, (FZType.V_ARRAY_BOOL, 
+			            new VarArrayBool(ann,
+			                (x) map(CPVarBool(cp, _)) toArray
+			                , id)))) 
+	              case _ => 
+	                addCPVarBoolArray(ann, id, getRangeLength(iset))
+	                val current = getCPVarBoolArray(id)
+	                val value = getCPVarBoolArray(assign)
+	                //TODO : express equality between 2 arrays
+	            }
+	          case None =>
+	           	addCPVarBoolArray(ann, id, getRangeLength(iset)) 
+	        }
 	            	
 	      case "var int" => 
 	        createCPVarInt(e, id, Set[Int](), ann, false)
@@ -243,7 +251,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarInt(e, id, s, ann, true)	      
 	        
 	      case "var"~"{"~intList~"}" =>
-	        // TODO : test assign
+	        // TODO : check value of e and d in test varAssign
 	        val s = getSetFromList(intList)
 	        createCPVarInt(e, id, s, ann, true)
 	        
@@ -258,26 +266,26 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarSet(e, id, s, ann)
 
 	      case "array ["~iset~"] of var int" => 
-	        // TODO : need testing
+	        // TODO : need testing, need eq on arrays
 	        createCPVarIntArray(e, id, Set[Int](), ann, getRangeLength(iset), false)
 	                
 	      case "array ["~iset~"] of var"~i1~".."~i2 => 
-	        // TODO : need testing
+	        // TODO : need testing, need eq on arrays
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet
 	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
 	            	
 	      case "array ["~iset~"] of var"~"{"~intList~"}" => 
-	        // TODO : need testing
+	        // TODO : need testing, nees eq on arrays
 	        val s = getSetFromList(intList)
 	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
 	                  
 	      case "array ["~iset~"] of var set of"~i1~".."~i2 => 
-	        // TODO : need testing
+	        // TODO : need testing, need eq on arrays
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	            	
 	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
-	        // TODO : need testing
+	        // TODO : need testing, need eq on arrays
 	        val s = getSetFromList(intList)
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	                  
@@ -316,7 +324,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      		)))
               case _ => 
 		        addCPVarSet(ann, id, s)
-		        // TODO : need to post a constraint obout eq on set
+		        // TODO : need to post a constraint about eq on set
 		        // cp.add(getCPVarSetFromString(id) == getCPVarSet(assign))
             }
           case None =>
@@ -349,7 +357,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def createCPVarSetArray(e: Any, id: String, s: Set[Int], ann: List[Annotation], 
 	    l: Int) {
-	  //TODO : test adding 
 	  e match {
 	    case Some("="~assign) =>
 	      assign match {
@@ -389,6 +396,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  model.dict +=
         ((id, (FZType.V_SET_INT, 
             new VarSetInt(s, ann, CPVarSet(cp, Set[Int](), s), id))))
+	}
+	
+	def addCPVarBoolArray(ann: List[Annotation], id: String, l: Int) {
+	  model.dict +=
+        ((id, (FZType.V_ARRAY_BOOL, 
+            new VarArrayBool(ann, Array.fill(l){CPVarBool(cp)} , id))))
 	}
 	
 	def addCPVarIntArray(ann: List[Annotation], id: String, s: Set[Int], 
@@ -434,7 +447,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      val b = getCPVarInt(varList(0))
 	      val as = getIntArray(varList(1))
 	      val c = getCPVarInt(varList(2))
-	      //println(b + " --- " + as.mkString(" - ") + " --- " + c)
 	      cp.add(element(as, b-1, c))
 	      
 	    case "array_var_bool_element" =>
@@ -816,7 +828,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  varList.foreach{ e =>
 	    cpvar :+= getCPVarBool(e)
 	  }
-	  //println(varList)
 	  cstr match {
 	    case "bool_and" => cp.add((cpvar(0) && cpvar(1)) == cpvar(2))
 	    case "bool_eq" => cp.add(cpvar(0) == cpvar(1))
@@ -862,7 +873,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	def int_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
-	  //assert(varList.length == 3, "To many arguments for int_lin_ne")
 	  var cpvar = Array[CPVarInt]()
 	  if(cstr == "bool_lin_eq" || cstr == "bool_lin_le") {
 	    cpvar = getCPVarBoolArray(varList(1)).map(_.asInstanceOf[CPVarBool])
@@ -1168,7 +1178,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def getSetFromList(intList: Any): Set[Int] = {
 	  	intList match {
 	        case x:List[Int] => 
-	          //println("in case" + intList.toString)
 	          x.toSet[Int]
 	      }
 	}
@@ -1356,6 +1365,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
+	      println(System.currentTimeMillis/1000 - timestamp)
 	    }
 	  }   
 	}
@@ -1382,6 +1392,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
         else {
           for(a <- ann.suspendable) {
+            //TODO : support the "complete" annotation
         	a.name match {
 		      case "int_search" =>
 		        val array = getCPVarIntArray(a.args(0))
@@ -1391,7 +1402,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        val array = getCPVarBoolArray(a.args(0)).map(_.asInstanceOf[CPVarInt])
 		        varChoiceAnn2(a.args, array)
 	//	      case "set_search" =>
-		        //TODO look for seq_search in doc cfr jacop examples
 			}
           }
         }
