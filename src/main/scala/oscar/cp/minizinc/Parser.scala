@@ -592,12 +592,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      bin_packing(varList, "load")
 	    case "oscar_circuit" => 
 	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)))
-	    case "count_eq" =>
-	    case "count_geq" =>
-	    case "count_gt" =>
-	    case "count_leq" =>
-	    case "count_lt" =>
-	    case "count_neq" =>
+	    case "oscar_count_eq" => {
+	      println("oscar_count_eq!!!!!!!!!!!!!!!!!!!!!")
+	      val x = getCPVarIntArray(varList(0))
+	      val y = getCPVarInt(getCPVarInt(varList(1)))
+	      val n = getCPVarInt(getCPVarInt(varList(2)))
+	      cp.add(countEq(n,x,y))
+	    }
+	    case "oscar_count_geq" =>
+	    case "oscar_count_gt" =>
+	    case "oscar_count_leq" =>
+	    case "oscar_count_lt" =>
+	    case "oscar_count_neq" =>
 	    case "cumulative" =>
 	    case "oscar_decreasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
