@@ -25,11 +25,15 @@ import java.sql.Time
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
-	cp.silent = true
-	val timestamp: Long = System.currentTimeMillis / 1000
 	
+	val timestamp: Long = System.currentTimeMillis / 1000
+	var options: Options = null
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
-	def myParseAll(input: FileReader) = {parseAll(flatzinc_model, input)}
+	
+	def myParseAll(opts: Options) = {
+	  options = opts
+	  parseAll(flatzinc_model, opts.file)
+	}
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
 	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	def parseParam(input: String) = {parseAll(param_decl, input)}
@@ -1355,7 +1359,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	      }
 	  } 
-	  	  
+	  cp.silent = !options.verbose 
+	  
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
@@ -1364,7 +1369,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //explo(ann, xs._1)
 	        //format_output2(xs)
 	        format_output(x, state, s, setstate)
-	      } run (1)
+	      } run {
+	        if (options.all) Int.MaxValue 
+	        else if (options.nSolutions > 0) options.nSolutions 
+	        else 1
+	      }
 	      println("==========")
 	    }
 	    case "max" => {
@@ -1402,7 +1411,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      println("==========")
 	      println(System.currentTimeMillis/1000 - timestamp)
 	    }
-	  }   
+	  }
+      if (options.statistics) {
+        cp.printStats()
+      }
 	}
 	
 //	def getVariable(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
