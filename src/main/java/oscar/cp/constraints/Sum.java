@@ -16,6 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 
@@ -41,6 +42,10 @@ public class Sum extends Constraint {
      */
 	public Sum(CPVarInt [] x, int y) {
 		this(x,CPVarInt.apply(x[0].s(),y,y));
+	}
+	
+	public Sum(CPVarBool [] x, CPVarInt y) {
+		this((CPVarInt[]) x,y);
 	}
 
 	@Override

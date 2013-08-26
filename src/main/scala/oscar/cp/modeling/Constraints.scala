@@ -511,7 +511,88 @@ trait Constraints {
    * @param v a value
    * @return a constraint enforcing that  #{ i | x(i) = v } <= n
    */  
-  def atMost(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atMost(n,x,Set(v)) 
+  def atMost(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atMost(n,x,Set(v))
+  
+  /**
+   * Count Constraint: n is the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n = #{ i | x(i) = y }
+   */  
+  def countEq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    new Count(n,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is greater or equal to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n >= #{ i | x(i) = y }
+   */  
+  def countGeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n >= c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is greater than the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n > #{ i | x(i) = y }
+   */  
+  def countGt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n > c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is less or equal to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n <= #{ i | x(i) = y }
+   */  
+  def countLeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n <= c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is less than the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n <= #{ i | x(i) = y }
+   */  
+  def countLt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n < c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }  
+  
+  /**
+   * Count Constraint: n is different to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n != #{ i | x(i) = y }
+   */  
+  def countNeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n != c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }   
   
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
