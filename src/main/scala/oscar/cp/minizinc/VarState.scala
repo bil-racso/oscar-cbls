@@ -5,6 +5,7 @@ class VarState (
     val output: Boolean,
     val array: Boolean,
     val first: Boolean,
+    val last: Boolean,
     val size: Int){
 
 }
