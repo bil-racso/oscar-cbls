@@ -392,6 +392,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			    (x) map(d => CPVarSet(cp, Set[Int](), d.toSet)) toArray
 	      		, id))))
 	      		// need to test when sets and createdsets are given
+	      		// first need to be albe to express set_equality
 	        case _ =>
 		        addCPVarSetArray(ann, id, s, l)
 		        val current = getCPVarSetArray(id)
@@ -1269,8 +1270,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  if(true) { // array with all the variable so that it is possible to output correctly
 	      var output: Boolean = false // only used for formating the output
 	      var c = 0
-	      model.dict.foreach { e => 
-	        e._2 match {
+	      //how to get them in alphabetical order ?
+	      model.dict.toSeq.sortBy(_._1) foreach {
+		    case (key, value) =>
+//		        println(key + " = " + value)
+//			}
+//	      model.dict.foreach { e => 
+//	        e._2 match {
+		    value match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            tp match {
 	              case FZType.V_BOOL => {
@@ -1298,6 +1305,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             			      	ran = y(0)(0)
             			    	if (y(0)(0) contains i+1) {
             			    	  output = true
+            			    	  //TODO : cfr battleships_6.fzn, 2D output
             			    	  if(i+1 == y(0)(0).max) {
             			    	    last = true
             			    	  }
@@ -1337,11 +1345,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	x :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
+	            			  //println(ann.args)
 	            			  ann.args match {
 	            			    case y:List[List[Range]] => 
 	            			      	ran = y(0)(0)
 	            			    	if (y(0)(0) contains i+1) {
 	            			    	  output = true
+	            			    	  //TODO : cfr battleships_6.fzn, 2D output
 	            			    	  if(i+1 == y(0)(0).max) {
 	            			    	    last = true
 	            			    	  }
@@ -1421,7 +1431,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //explo(ann, xs._1)
 	        //format_output2(xs)
 	        format_output(x, state, s, setstate)
-	      } run ()
+	      } run (1)
 	      println("==========")
 	      println(System.currentTimeMillis - timestamp)
 	    }
@@ -1578,10 +1588,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    	//must be modified to get along with what is printed
 	    	    	//need to be able to get the fzo then, 
 	    	    	//get the arg of the annotation... or I could put in in the VarState object
-//	    	    	val cpvar = 
-//	    	    	print(state(i).name + 
-//	    	    	    " = array1d(1.." + state(i).size + 
-//	    	    	    ", [" + x(i).toString)
+	    	    	val cpvar = 
+	    	    	print(state(i).name + 
+	    	    	    " = array1d(1.." + state(i).size + 
+	    	    	    ", [" + x(i).toString)
 	    	    	print(state(i).name)
 	    	    	state(i).printArray()
 	    	    	print(", [" + x(i).toString)
@@ -1594,7 +1604,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    	print("," + x(i).toString)
 	    	    }
 	    	  } else {
-	    	  	println(state(i).name + " =" + x(i).toString + ";") 
+	    	    //TODO : there is a space " " before a CPVarInt when printing it
+	    	  	println(state(i).name + " = " + x(i).toString + ";") 
 	    	  }
 	    	}
 	    }
@@ -1614,7 +1625,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    	print("," + s(i).toString)
 	    	    }
 	    	  } else {
-	    	  	println(setstate(i).name + " =" + s(i).toString + ";") 
+	    	  	println(setstate(i).name + " = " + s(i).toString + ";") 
 	    	  }
 	    	}
 	    }
