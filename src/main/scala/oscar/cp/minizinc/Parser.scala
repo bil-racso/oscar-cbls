@@ -235,8 +235,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case x:List[Boolean] => model.dict +=
 			        ((id, (FZType.V_ARRAY_BOOL, 
 			            new VarArrayBool(ann,
-			                (x) map(CPVarBool(cp, _)) toArray
-			                , id)))) 
+			                (x) map(getCPVarBool(_)) toArray
+			        , id)))) 
 	              case _ => 
 	                addCPVarBoolArray(ann, id, getRangeLength(iset))
 	                val current = getCPVarBoolArray(id)
@@ -350,7 +350,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	  case x:List[Int] => model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
 	      			new VarArrayInt(x.toSet, ann, 
-	      			    (x) map(CPVarInt(cp, _)) toArray
+	      			    (x) map(getCPVarInt(_)) toArray
 	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
@@ -1076,9 +1076,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            case FZType.V_INT => {
 	              fzo.asInstanceOf[VarInt].cpvar
 	            }
-	            case FZType.V_INT_RANGE => {
-	              fzo.asInstanceOf[VarIntRange].cpvar
-	            }
+//	            case FZType.V_INT_RANGE => {
+//	              fzo.asInstanceOf[VarIntRange].cpvar
+//	            }
 	        }
 	      case None => throw new Exception("Var " + x + " does not exist")
 	    }
@@ -1112,9 +1112,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  model.dict.get(x(0).toString) match {
           case Some((tp, fzo)) => 
             tp match {
-                case FZType.V_ARRAY_INT_R => {
-                  fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
-                }
+//                case FZType.V_ARRAY_INT_R => {
+//                  fzo.asInstanceOf[VarArrayIntRange].cpvar(x(1).toString.toInt-1)
+//                }
                 case FZType.V_ARRAY_INT => {
                   fzo.asInstanceOf[VarArrayInt].cpvar(x(1).toString.toInt-1)
                 }
@@ -1153,9 +1153,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      model.dict.get(y) match {
 			  case Some((tp, fzo)) => 
 	            tp match {
-	                case FZType.V_ARRAY_INT_R => {
-	                  fzo.asInstanceOf[VarArrayIntRange].cpvar
-	                }
+//	                case FZType.V_ARRAY_INT_R => {
+//	                  fzo.asInstanceOf[VarArrayIntRange].cpvar
+//	                }
 	                case FZType.V_ARRAY_INT => {
 	                  fzo.asInstanceOf[VarArrayInt].cpvar
 	                }
@@ -1186,15 +1186,46 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  model.dict.get(x) match {
 		  case Some((tp, fzo)) => 
             tp match {
-                case FZType.V_ARRAY_INT_R => {
-                  fzo.asInstanceOf[VarArrayIntRange].value.size
-                }
+//                case FZType.V_ARRAY_INT_R => {
+//                  fzo.asInstanceOf[VarArrayIntRange].value.size
+//                }
                 case FZType.V_ARRAY_INT => {
                   fzo.asInstanceOf[VarArrayInt].value.size
                 }
             }
           case None => throw new Exception("Var " + x + " does not exist")
 	  }
+	}
+	
+	def getCPArrayOutputAnnotations(x: String): List[Range] = {
+		var l = List[Range]()
+		model.dict.get(x) match {
+		  case Some((tp, fzo)) => 
+            tp match {
+                case FZType.V_ARRAY_BOOL => {
+                  for (ann <- fzo.asInstanceOf[VarArrayBool].annotations 
+                      if (ann.name == "output_array")) {
+                      	l = ann.args.asInstanceOf[List[List[Range]]](0)   	
+                  }
+                }
+                case FZType.V_ARRAY_INT => {
+                  for (ann <- fzo.asInstanceOf[VarArrayInt].annotations 
+                      if (ann.name == "output_array")) {
+                      	l = ann.args.asInstanceOf[List[List[Range]]](0)
+                      	println(ann.args)
+                      	println(l)
+                  }
+                }
+                case FZType.V_ARRAY_SET => {
+                  for (ann <- fzo.asInstanceOf[VarArraySet].annotations 
+                      if (ann.name == "output_array")) {
+                      	l = ann.args.asInstanceOf[List[List[Range]]](0)
+                  }
+                }
+            }
+          case None => throw new Exception("Var " + x + " does not exist")
+		}
+		l
 	}
 	
 	def getSetFromList(intList: Any): Set[Int] = {
@@ -1237,31 +1268,42 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
 	                state :+= new VarState(obj.name,
-	                    output, false, false, false, 1)
+	                    output, false, false, false, 1, FZType.V_BOOL)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_BOOL => {
 	                val obj = fzo.asInstanceOf[VarArrayBool]
 	                var first = true
 	                var last = false
-	                for(i <- 0 until obj.cpvar.length) {
-	                  val e = obj.cpvar(i)
+	                obj.cpvar.foreach { e =>
+//	                for(i <- 0 until obj.cpvar.length) {
+//	                  val e = obj.cpvar(i)
 	                  x :+= e
 	                  obj.annotations.foreach { ann =>
             			if ( ann.name == "output_array" ) { 
             			  ann.args match {
             			    case y:List[List[Range]] => 
-            			    	if (y(0)(0) contains i+1) {
-            			    	  output = true
-            			    	  if(i+1 == y(0)(0).max) {
-            			    	    last = true
-            			    	  }
-            			    	}
+//	            			    y(0) foreach { f =>
+//            			      	  ran :+= f
+//            			      	}
+            			      	output = true
+            			      	if (e == obj.cpvar.last){
+            			      	  last = true
+            			      	}
+//	        			      	ran = y(0)(0)
+//	        			    	if (y(0)(0) contains i+1) {
+//	        			    	  output = true
+//	        			    	  //TODO : cfr battleships_6.fzn, 2D output
+//	        			    	  if(i+1 == y(0)(0).max) {
+//	        			    	    last = true
+//	        			    	  }
+//	        			    	}
             			  }
             			}
 	                  }
 	                  state :+= new VarState(obj.name,
-	                  output, true, first, last, obj.cpvar.length)
+	                		  output, true, first, last, 
+	                		  obj.cpvar.length, FZType.V_ARRAY_BOOL)
 	                  if(output) {
 	                    first = false
 	                  }
@@ -1278,32 +1320,37 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
 	                state :+= new VarState(obj.name,
-	                    output, false, false, false, 1)
+	                    output, false, false, false, 1, FZType.V_INT)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_INT => {
 	                val obj = fzo.asInstanceOf[VarArrayInt]
 	                var first = true
 	                var last = false
-	                //obj.cpvar.foreach { e =>
-	                for(i <- 0 until obj.cpvar.length) {
-	                    val e = obj.cpvar(i)
+	                obj.cpvar.foreach { e =>
+//	                for(i <- 0 until obj.cpvar.length) {
+//	                    val e = obj.cpvar(i)
 	                	x :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
 	            			  ann.args match {
 	            			    case y:List[List[Range]] => 
-	            			    	if (y(0)(0) contains i+1) {
-	            			    	  output = true
-	            			    	  if(i+1 == y(0)(0).max) {
-	            			    	    last = true
-	            			    	  }
-	            			    	}
+	            			      	output = true
+	            			      	if (e == obj.cpvar.last){
+	            			      	  last = true
+	            			      	}
+//	            			    	if (y(0)(0) contains i+1) {
+//	            			    	  output = true
+//	            			    	  if(i+1 == y(0)(0).max) {
+//	            			    	    last = true
+//	            			    	  }
+//	            			    	}
 	            			  }
 	            			}
 	                	}
 	                	state :+= new VarState(obj.name,
-	                    output, true, first, last, obj.cpvar.length)
+	                			output, true, first, last, 
+	                			obj.cpvar.length, FZType.V_ARRAY_INT)
 	                	if(output) {
 	                		first = false
 	                	}
@@ -1323,33 +1370,38 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            		}
 	                }
 	                setstate :+= new VarState(obj.name,
-	                    output, false, false, false, 1)
+	                    output, false, false, false, 1, FZType.V_SET_INT)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_SET => {
 	                val obj = fzo.asInstanceOf[VarArraySet]
 	                var first = true
 	                var last = false
-	                //obj.cpvar.foreach { e =>
-	                for(i <- 0 until obj.cpvar.length) {
-	                    val e = obj.cpvar(i)
+	                obj.cpvar.foreach { e =>
+//	                for(i <- 0 until obj.cpvar.length) {
+//	                    val e = obj.cpvar(i)
 	                	s :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
 	            			  ann.args match {
 	            			    case y:List[List[Range]] => 
-	            			    	if (y(0)(0) contains i+1) {
-	            			    	  output = true
-	            			    	  if(i+1 == y(0)(0).max) {
-	            			    	    last = true
-	            			    	  }
-	            			    	}
+	            			      	output = true
+	            			      	if (e == obj.cpvar.last){
+	            			      	  last = true
+	            			      	}
+//	            			    	if (y(0)(0) contains i+1) {
+//	            			    	  output = true
+//	            			    	  if(i+1 == y(0)(0).max) {
+//	            			    	    last = true
+//	            			    	  }
+//	            			    	}
 	            			  } 
 	            			  
 	            			}
 	                	}
 	                	setstate :+= new VarState(obj.name,
-	                    output, true, first, last, obj.cpvar.length)
+	                			output, true, first, last, 
+	                			obj.cpvar.length, FZType.V_ARRAY_SET)
 	                	if(output) {
 	                		first = false
 	                	}
@@ -1538,6 +1590,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    c += 1
 	    	    if (state(i).first) {
 	    	    	//must be modified to get along with what is printed
+//	    	    	state(i).tp match {
+//	    	    	  case FZType.V_ARRAY_INT => 
+//	    	    	    val ann = getCPArrayOutputAnnotations(state(i).name)
+//	    	    	    println(ann(0))
+//	    	    	  case FZType.V_ARRAY_BOOL =>
+//	    	    	}
+//	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
+//	    	    	println(ann)
+//	    	    	print(" = array")
+	    	    	
 	    	    	print(state(i).name + 
 	    	    	    " = array1d(1.." + state(i).size + 
 	    	    	    ", [" + x(i).toString)
