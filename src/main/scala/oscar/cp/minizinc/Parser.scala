@@ -331,7 +331,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
               //care with this case, can be wrong if assign is not in the domain  
               case x:List[Int] => model.dict += 
 	      		((id, (FZType.V_SET_INT, 
-	      			new VarSetInt(x.toSet, ann, 
+	      			new VarSetInt(/*x.toSet, */ann, 
 	      			    CPVarSet(cp, Set[Int](), x.toSet), id)
 	      		)))
               case _ => 
@@ -417,7 +417,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def addCPVarSet(ann: List[Annotation], id: String, s: Set[Int]) {
 	  model.dict +=
         ((id, (FZType.V_SET_INT, 
-            new VarSetInt(s, ann, CPVarSet(cp, Set[Int](), s), id))))
+            new VarSetInt(/*s, */ann, CPVarSet(cp, Set[Int](), s), id))))
 	}
 	
 	def addCPVarBoolArray(ann: List[Annotation], id: String, l: Int) {
@@ -832,7 +832,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cp.add(sum(x) != sum(y))
 	}
 	
-	def array_bool_cstr(varList: List[Any], ann: Any, cstr: String){
+	def addCstr(c: Constraint, ann: List[Annotation]) {
+	  assert(ann.length <= 1, "One annotation max on constraint")
+	  if(ann.length > 0) {
+		  ann(0).name match {
+		    case "domain" => cp.add(c, Strong)
+		    case "boundsR" => cp.add(c, Medium)
+		    case "boundsD" => cp.add(c, Medium)
+		    case _ => cp.add(c)
+		  }
+	  } else {
+	    cp.add(c)
+	  }
+	}
+	
+	def array_bool_cstr(varList: List[Any], ann: List[Annotation], cstr: String){
 	  cstr match {
 	    case "array_bool_element" =>
 	    case _ => {
@@ -851,7 +865,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	}
 	
-	def bool_cstr(varList: List[Any], ann: Any, cstr: String) {
+	def bool_cstr(varList: List[Any], ann: List[Annotation], cstr: String) {
 	  var cpvar = Array[CPVarBool]()
 	  varList.foreach{ e =>
 	    cpvar :+= getCPVarBool(e)
@@ -870,7 +884,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	}
 	
-	def int_cstr(varList: List[Any], ann: Any, cstr: String) {
+	def int_cstr(varList: List[Any], ann: List[Annotation], cstr: String) {
 	  var cpvar = Array[CPVarInt]()
 	  varList.foreach{ e => 
 	    cpvar :+= getCPVarInt(e)
@@ -878,7 +892,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cstr match {
 	    case "int_abs" => cp.add(new Abs(cpvar(0), cpvar(1)))
 	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
-	    case "int_le" => cp.add(cpvar(0) <= cpvar(1))
+	    case "int_le" => 
+	      //addCstr(cpvar(0) <= cpvar(1), ann) //example of adding constraint with annotation
+	      cp.add(cpvar(0) <= cpvar(1))
 	    case "int_lt" => cp.add(cpvar(0) < cpvar(1))
 	    case "int_ne" => cp.add(cpvar(0) != cpvar(1))
 	    case "int_plus" => cp.add(cpvar(0) + cpvar(1) == cpvar(2))
@@ -886,7 +902,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	}
 	
-	def int_reif(varList: List[Any], ann: Any, cstr: String) {
+	def int_reif(varList: List[Any], ann: List[Annotation], cstr: String) {
 	  var cpvar = Array[CPVarInt]()
 	  for(i <- 0 until varList.length-1) {
 	    cpvar :+= getCPVarInt(varList(i))
@@ -900,7 +916,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  } 
 	}
 	
-	def int_lin_cstr(varList: List[Any], ann: Any, cstr: String) {
+	def int_lin_cstr(varList: List[Any], ann: List[Annotation], cstr: String) {
 	  var cpvar = Array[CPVarInt]()
 	  if(cstr == "bool_lin_eq" || cstr == "bool_lin_le") {
 	    cpvar = getCPVarBoolArray(varList(1)).map(_.asInstanceOf[CPVarBool])
@@ -933,7 +949,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	def int_lin_reif_cstr(cpvar: Array[CPVarInt], cst: Array[Int], c: Int, 
-	    varList: List[Any], ann: Any, cstr: String) {
+	    varList: List[Any], ann: List[Annotation], cstr: String) {
       val boolvar = getCPVarBool(varList(varList.length-1))
       cstr match {
         case "int_lin_eq_reif" => 
@@ -945,7 +961,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
 	}
 	
-	def set_cstr(varList: List[Any], ann: Any, cstr: String) {
+	def set_cstr(varList: List[Any], ann: List[Annotation], cstr: String) {
 	  var cpvar = Array[CPVarSet]()
 	  varList.foreach{ e => 
 	    cpvar :+= getCPVarSet(e)
@@ -1262,9 +1278,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  var setstate = Array[VarState]()
 	  if(true) { // array with all the variable so that it is possible to output correctly
 	      var output: Boolean = false // only used for formating the output
-	      var c = 0
-	      model.dict.foreach { e => 
-	        e._2 match {
+	      //var c = 0
+	      model.dict.toSeq.sortBy(_._1) foreach {
+		    case (key, value) =>
+		     value match {
+//	      model.dict.foreach { e => 
+//	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            tp match {
 	              case FZType.V_BOOL => {
@@ -1282,28 +1301,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var first = true
 	                var last = false
 	                obj.cpvar.foreach { e =>
-//	                for(i <- 0 until obj.cpvar.length) {
-//	                  val e = obj.cpvar(i)
 	                  x :+= e
 	                  obj.annotations.foreach { ann =>
             			if ( ann.name == "output_array" ) { 
             			  ann.args match {
             			    case y:List[List[Range]] => 
-//	            			    y(0) foreach { f =>
-//            			      	  ran :+= f
-//            			      	}
             			      	output = true
             			      	if (e == obj.cpvar.last){
             			      	  last = true
             			      	}
-//	        			      	ran = y(0)(0)
-//	        			    	if (y(0)(0) contains i+1) {
-//	        			    	  output = true
-//	        			    	  //TODO : cfr battleships_6.fzn, 2D output
-//	        			    	  if(i+1 == y(0)(0).max) {
-//	        			    	    last = true
-//	        			    	  }
-//	        			    	}
             			  }
             			}
 	                  }
@@ -1320,6 +1326,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              }
 	                
 	              case FZType.V_INT => {
+//	                val res = getVariable(FZType.V_INT, fzo, (x, state))
+//	                x = res._1
+//	                state = res._2
 	                val obj = fzo.asInstanceOf[VarInt]
 	                x :+= obj.cpvar
 	                obj.annotations.foreach { ann =>
@@ -1334,8 +1343,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var first = true
 	                var last = false
 	                obj.cpvar.foreach { e =>
-//	                for(i <- 0 until obj.cpvar.length) {
-//	                    val e = obj.cpvar(i)
 	                	x :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
@@ -1345,12 +1352,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			      	if (e == obj.cpvar.last){
 	            			      	  last = true
 	            			      	}
-//	            			    	if (y(0)(0) contains i+1) {
-//	            			    	  output = true
-//	            			    	  if(i+1 == y(0)(0).max) {
-//	            			    	    last = true
-//	            			    	  }
-//	            			    	}
 	            			  }
 	            			}
 	                	}
@@ -1384,8 +1385,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var first = true
 	                var last = false
 	                obj.cpvar.foreach { e =>
-//	                for(i <- 0 until obj.cpvar.length) {
-//	                    val e = obj.cpvar(i)
 	                	s :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
@@ -1395,12 +1394,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			      	if (e == obj.cpvar.last){
 	            			      	  last = true
 	            			      	}
-//	            			    	if (y(0)(0) contains i+1) {
-//	            			    	  output = true
-//	            			    	  if(i+1 == y(0)(0).max) {
-//	            			    	    last = true
-//	            			    	  }
-//	            			    	}
 	            			  } 
 	            			  
 	            			}
@@ -1481,20 +1474,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       }
 	}
 	
-//	def getVariable(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
-//	(Array[CPVarInt], Array[VarState]) = {
-//		var output = false
-//		/*
-//		 * Need to be able to cast fzo in the type tp, I don't know how to do that
-//		 */
-//		val obj = fzo.asInstanceOf[VarIntRange]
-//	    val a = xs._1 :+ obj.cpvar
-//	    obj.annotations.foreach { ann =>
-//			if ( ann.name == "output_var" ) { output = true }
-//	    }
-//		val s = xs._2 :+ new VarState(obj.name,
-//            output, false, false, 1)
-//	    (a, s)
+//	def getVariable(tp: FZType, fzo: FZObject, xs: (Array[CPVarInt], Array[VarState])): 
+//		(Array[CPVarInt], Array[VarState]) = {
+//	  var output = false
+//	  val obj = fzo.asInstanceOf[FZVarObject]
+//	  val a = xs._1 :+ obj.cpvar.asInstanceOf[CPVarInt]
+//	  obj.annotations.foreach { ann =>
+//	  	if ( ann.name == "output_var" ) { output = true }
+//	  }
+//	  val s = xs._2 :+ new VarState(obj.name,
+//	        output, false, false, false, 1, tp)
+//	  (a, s)
 //	}
 	
 	def explo(ann: List[Annotation], x: Array[CPVarInt], s: Array[CPVarSet]): Unit @suspendable = {
