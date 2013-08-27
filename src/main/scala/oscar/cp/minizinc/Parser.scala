@@ -309,6 +309,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
+              //care with this case, can be wrong if assign is not in the domain
 //	      	  case x:Int => model.dict += 
 //	      		((id, (FZType.V_INT, 
 //	      			new VarInt(ann, CPVarInt(cp, x), id))))
@@ -327,6 +328,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           case Some("="~assign) =>
             assign match {
               // possible bug if an assign is made of named cpvarint (that are already declared)
+              //care with this case, can be wrong if assign is not in the domain  
               case x:List[Int] => model.dict += 
 	      		((id, (FZType.V_SET_INT, 
 	      			new VarSetInt(x.toSet, ann, 
@@ -348,12 +350,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-	      	  case x:List[Any] => 
-	      	    model.dict += 
-	      		((id, (FZType.V_ARRAY_INT, 
-	      			new VarArrayInt(Set[Int](), ann, 
-	      			    (x) map(getCPVarInt(_)) toArray
-	      		, id))))
+              //care with this case, can be wrong if assign is not in the domain
+//	      	  case x:List[Any] => 
+//	      	    model.dict += 
+//	      		((id, (FZType.V_ARRAY_INT, 
+//	      			new VarArrayInt(Set[Int](), ann, 
+//	      			    (x) map(getCPVarInt(_)) toArray
+//	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
 		  		val current = getCPVarIntArray(id)
@@ -376,6 +379,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
 	    case Some("="~assign) =>
 	      assign match {
+	        //care with this case, can be wrong if assign is not in the domain
 	        case x:List[List[Int]] => model.dict += 
 	      		((id, (FZType.V_ARRAY_SET, 
 	      			new VarArraySet(s, ann, 
