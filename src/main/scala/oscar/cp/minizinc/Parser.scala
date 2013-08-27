@@ -25,11 +25,15 @@ import java.sql.Time
 class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
-	cp.silent = true
-	val timestamp: Long = System.currentTimeMillis
 	
+	val timestamp: Long = System.currentTimeMillis / 1000
+	var options: Options = null
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
-	def myParseAll(input: FileReader) = {parseAll(flatzinc_model, input)}
+	
+	def myParseAll(opts: Options) = {
+	  options = opts
+	  parseAll(flatzinc_model, opts.file)
+	}
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
 	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	def parseParam(input: String) = {parseAll(param_decl, input)}
@@ -231,7 +235,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case x:List[Boolean] => model.dict +=
 			        ((id, (FZType.V_ARRAY_BOOL, 
 			            new VarArrayBool(ann,
-			                (x) map(getCPVarBool(_)) toArray
+			                (x) map(CPVarBool(cp, _)) toArray
 			                , id)))) 
 	              case _ => 
 	                addCPVarBoolArray(ann, id, getRangeLength(iset))
@@ -343,14 +347,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-	      	  case x:List[Any] => 
-	      	    //TODO : problem, any list gets here, 
-	      	    //must check if Int or String inside of the case 
-	      	    //println(x)
-	      	    model.dict += 
+	      	  case x:List[Int] => model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
-	      			new VarArrayInt(Set[Int](), ann, 
-	      			    (x) map(getCPVarInt(_)) toArray
+	      			new VarArrayInt(x.toSet, ann, 
+	      			    (x) map(CPVarInt(cp, _)) toArray
 	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
@@ -379,8 +379,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			new VarArraySet(s, ann, 
 	      			    (x) map(d => CPVarSet(cp, Set[Int](), d.toSet)) toArray
 	      		, id))))
-	      		// need to test when sets and createdsets are given
-	      		// first need to be albe to express set_equality
 	        case _ =>
 		        addCPVarSetArray(ann, id, s, l)
 		        val current = getCPVarSetArray(id)
@@ -594,18 +592,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      bin_packing(varList, "load")
 	    case "oscar_circuit" => 
 	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)))
-	    case "oscar_count_eq" =>
-	      count_cstr(varList, ann, cstr)
+	    case "oscar_count_eq" => {
+	      println("oscar_count_eq!!!!!!!!!!!!!!!!!!!!!")
+	      val x = getCPVarIntArray(varList(0))
+	      val y = getCPVarInt(getCPVarInt(varList(1)))
+	      val n = getCPVarInt(getCPVarInt(varList(2)))
+	      cp.add(countEq(n,x,y))
+	    }
 	    case "oscar_count_geq" =>
-	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_gt" =>
-	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_leq" =>
-	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_lt" =>
-	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_neq" =>
-	      count_cstr(varList, ann, cstr)
 	    case "cumulative" =>
 	    case "oscar_decreasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
@@ -656,7 +654,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      diff_array_cstr(t1, t2)
 	    case "oscar_lex_lesseq_int" =>
 	      cp.add(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))))
-	    case "oscar_lex2" => 
+	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	      lex2_cstr(varList, false)
 	    case "link_set_to_booleans" =>
 	    case "oscar_maximum_int" =>
@@ -667,7 +665,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "nvalue" =>
 	    case "partition_set" =>
 	    case "range" =>
-	    case "oscar_regular" => 
+	    case "oscar_regular" => //2D -> 1D done
 	      regular_cstr(varList)
 	    case "roots" =>
 	    case "sliding_sum" =>
@@ -676,7 +674,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      lex2_cstr(varList, true)
 	    case "subcircuit" =>
 	    case "sum_pred" =>
-	    case "oscar_table_int" => 
+	    case "oscar_table_int" => //2D -> 1D done
 	      table_cstr(varList)
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
@@ -700,20 +698,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	  cp.add(binpacking(getCPVarIntArray(varList(1)).map(_-1), 
 	          getIntArray(varList(2)), l))
-	}
-	
-	def count_cstr(varList: List[Any], ann: Any, cstr: String) {
-      val x = getCPVarIntArray(varList(0))
-      val y = getCPVarInt(varList(1))
-      val n = getCPVarInt(varList(2))
-	  cstr match {
-	    case "oscar_count_eq" => cp.add(countEq(n, x, y))
-	    case "oscar_count_geq" => cp.add(countGeq(n, x, y))
-	    case "oscar_count_gt" => cp.add(countGt(n, x, y))
-	    case "oscar_count_leq" => cp.add(countLeq(n, x, y))
-	    case "oscar_count_lt" => cp.add(countLt(n, x, y))
-	    case "oscar_count_neq" => cp.add(countNeq(n, x, y))
-	  }
 	}
 	
 	def lex2_cstr(varList: List[Any], strict: Boolean) {
@@ -842,15 +826,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cp.add(sum(x) != sum(y))
 	}
 	
-	def addCstr(c: Constraint, str: String) {
-	  str match {
-	    case "domain" => cp.add(c, Strong)
-	    case "boundsR" => cp.add(c, Medium)
-	    case "boundsD" => cp.add(c, Medium)
-	    case _ => cp.add(c)
-	  }
-	}
-	
 	def array_bool_cstr(varList: List[Any], ann: Any, cstr: String){
 	  cstr match {
 	    case "array_bool_element" =>
@@ -895,7 +870,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar :+= getCPVarInt(e)
 	  }
 	  cstr match {
-	    //TODO : check what an ann looks like and use it to yield the annotation to addCstr
 	    case "int_abs" => cp.add(new Abs(cpvar(0), cpvar(1)))
 	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
 	    case "int_le" => cp.add(cpvar(0) <= cpvar(1))
@@ -1245,12 +1219,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
 	  //var xs = (Array[CPVarInt](), Array[VarState]())
-	  /*
-	   * create FZArrayObject that takes as cpvar an array of FZVarObject
-	   * both of those FZ.. extends FZObject
-	   * all VarInt, VarSet, ...extends FZVarObject
-	   * all VarArray... extends FZArrayObject
-	   */
 	  var x = Array[CPVarInt]()
 	  var s = Array[CPVarSet]()
 	  var state = Array[VarState]()
@@ -1258,14 +1226,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  if(true) { // array with all the variable so that it is possible to output correctly
 	      var output: Boolean = false // only used for formating the output
 	      var c = 0
-	      //how to get them in alphabetical order ?
-	      model.dict.toSeq.sortBy(_._1) foreach {
-		    case (key, value) =>
-//		        println(key + " = " + value)
-//			}
-//	      model.dict.foreach { e => 
-//	        e._2 match {
-		    value match {
+	      model.dict.foreach { e => 
+	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            tp match {
 	              case FZType.V_BOOL => {
@@ -1282,7 +1244,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                val obj = fzo.asInstanceOf[VarArrayBool]
 	                var first = true
 	                var last = false
-	                var ran:Any = null
 	                for(i <- 0 until obj.cpvar.length) {
 	                  val e = obj.cpvar(i)
 	                  x :+= e
@@ -1290,10 +1251,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             			if ( ann.name == "output_array" ) { 
             			  ann.args match {
             			    case y:List[List[Range]] => 
-            			      	ran = y(0)(0)
             			    	if (y(0)(0) contains i+1) {
             			    	  output = true
-            			    	  //TODO : cfr battleships_6.fzn, 2D output
             			    	  if(i+1 == y(0)(0).max) {
             			    	    last = true
             			    	  }
@@ -1302,7 +1261,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             			}
 	                  }
 	                  state :+= new VarState(obj.name,
-	                  output, true, first, last, ran)
+	                  output, true, first, last, obj.cpvar.length)
 	                  if(output) {
 	                    first = false
 	                  }
@@ -1326,20 +1285,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                val obj = fzo.asInstanceOf[VarArrayInt]
 	                var first = true
 	                var last = false
-	                var ran:Any = null
 	                //obj.cpvar.foreach { e =>
 	                for(i <- 0 until obj.cpvar.length) {
 	                    val e = obj.cpvar(i)
 	                	x :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
-	            			  //println(ann.args)
 	            			  ann.args match {
 	            			    case y:List[List[Range]] => 
-	            			      	ran = y(0)(0)
 	            			    	if (y(0)(0) contains i+1) {
 	            			    	  output = true
-	            			    	  //TODO : cfr battleships_6.fzn, 2D output
 	            			    	  if(i+1 == y(0)(0).max) {
 	            			    	    last = true
 	            			    	  }
@@ -1348,7 +1303,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			}
 	                	}
 	                	state :+= new VarState(obj.name,
-	                    output, true, first, last, ran)
+	                    output, true, first, last, obj.cpvar.length)
 	                	if(output) {
 	                		first = false
 	                	}
@@ -1410,7 +1365,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	      }
 	  } 
-	  	  
+	  cp.silent = !options.verbose 
+	  
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
@@ -1419,9 +1375,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //explo(ann, xs._1)
 	        //format_output2(xs)
 	        format_output(x, state, s, setstate)
-	      } run (1)
+	      } run {
+	        if (options.all) Int.MaxValue 
+	        else if (options.nSolutions > 0) options.nSolutions 
+	        else 1
+	      }
 	      println("==========")
-	      println(System.currentTimeMillis - timestamp)
 	    }
 	    case "max" => {
 	      cp.maximize(
@@ -1439,7 +1398,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
-	      println(System.currentTimeMillis - timestamp)
 	    }
 	    case "min" => {
 	      cp.minimize(
@@ -1457,9 +1415,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
-	      println(System.currentTimeMillis - timestamp)
+	      println(System.currentTimeMillis/1000 - timestamp)
 	    }
-	  }   
+	  }
+      if (options.statistics) {
+        cp.printStats()
+      }
 	}
 	
 //	def getVariable(fzo: FZObject, tp: FZType, xs: (Array[CPVarInt], Array[VarState])): 
@@ -1484,6 +1445,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
         else {
           for(a <- ann.suspendable) {
+            //TODO : support the "complete" annotation
         	a.name match {
 		      case "int_search" =>
 		        val array = getCPVarIntArray(a.args(0))
@@ -1569,37 +1531,35 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
 		 */
+	  var c = 0
 		for(i <- 0 until x.length) {
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
+	    	    c += 1
 	    	    if (state(i).first) {
 	    	    	//must be modified to get along with what is printed
-	    	    	//need to be able to get the fzo then, 
-	    	    	//get the arg of the annotation... or I could put in in the VarState object
-	    	    	val cpvar = 
 	    	    	print(state(i).name + 
 	    	    	    " = array1d(1.." + state(i).size + 
 	    	    	    ", [" + x(i).toString)
-	    	    	print(state(i).name)
-	    	    	state(i).printArray()
-	    	    	print(", [" + x(i).toString)
 	    	    	if( state(i).last ) {
 		    	    	println("]);")
 		    	    }
+	    	    //} else if( c == state(i).size ) {
 	    	    } else if( state(i).last ) {
 	    	    	println("," + x(i).toString + "]);")
+	    	    	c = 0
 	    	    } else {
 	    	    	print("," + x(i).toString)
 	    	    }
 	    	  } else {
-	    	    //TODO : there is a space " " before a CPVarInt when printing it
-	    	  	println(state(i).name + " = " + x(i).toString + ";") 
+	    	  	println(state(i).name + " =" + x(i).toString + ";") 
 	    	  }
 	    	}
 	    }
 		for(i <- 0 until s.length) {
 	    	if ( setstate(i).output ) { 
 	    	  if ( setstate(i).array ) {
+	    	    c += 1
 	    	    if (setstate(i).first) {
 	    	    	print(setstate(i).name + 
 	    	    	    " = array1d(1.." + setstate(i).size + 
@@ -1609,11 +1569,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		    	    }
 	    	    } else if( setstate(i).last ) {
 	    	    	println("," + s(i).toString + "]);")
+	    	    	c = 0
 	    	    } else {
 	    	    	print("," + s(i).toString)
 	    	    }
 	    	  } else {
-	    	  	println(setstate(i).name + " = " + s(i).toString + ";") 
+	    	  	println(setstate(i).name + " =" + s(i).toString + ";") 
 	    	  }
 	    	}
 	    }
