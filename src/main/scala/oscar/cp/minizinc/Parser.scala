@@ -26,7 +26,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
 	
-	val timestamp: Long = System.currentTimeMillis / 1000
+	//val timestamp: Long = System.currentTimeMillis / 1000
 	var options: Options = null
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
 	
@@ -246,7 +246,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                for(i <- 0 until current.length) {
 			  		  cp.add(current(i) == value(i))
 			  		}
-	                //TODO : express equality between 2 arrays
 	            }
 	          case None =>
 	           	addCPVarBoolArray(ann, id, getRangeLength(iset)) 
@@ -275,26 +274,23 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarSet(e, id, s, ann)
 
 	      case "array ["~iset~"] of var int" => 
-	        // TODO : need testing, need eq on arrays
 	        createCPVarIntArray(e, id, Set[Int](), ann, getRangeLength(iset), false)
 	                
 	      case "array ["~iset~"] of var"~i1~".."~i2 => 
-	        // TODO : need testing, need eq on arrays
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet
 	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
 	            	
 	      case "array ["~iset~"] of var"~"{"~intList~"}" => 
-	        // TODO : need testing, nees eq on arrays
 	        val s = getSetFromList(intList)
 	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
 	                  
 	      case "array ["~iset~"] of var set of"~i1~".."~i2 => 
-	        // TODO : need testing, need eq on arrays
+	        // TODO : need testing, need eq on set
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1, 1).toSet[Int]
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	            	
 	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
-	        // TODO : need testing, need eq on arrays
+	        // TODO : need testing, need eq on set
 	        val s = getSetFromList(intList)
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	                  
@@ -366,7 +362,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  		for(i <- 0 until current.length) {
 		  		  cp.add(current(i) == value(i))
 		  		}
-		  		//TODO: express the equality between two arrays, use a loop ?
 	      	}
           case None => 
             addCPVarIntArray(ann, id, s, l, hasDomain)
@@ -380,7 +375,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case Some("="~assign) =>
 	      assign match {
 	        //care with this case, can be wrong if assign is not in the domain
-	        case x:List[List[Int]] => model.dict += 
+	        case x:List[List[Int]] => 
+	          //println(x)
+	          model.dict += 
 	      		((id, (FZType.V_ARRAY_SET, 
 	      			new VarArraySet(s, ann, 
 	      			    (x) map(d => CPVarSet(cp, Set[Int](), d.toSet)) toArray
@@ -626,7 +623,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            ((x(i) + dx(i) <== x(j)) || (x(j)+dx(j) <== x(i))) ||
 	            ((y(i) + dy(i) <== y(j)) || (y(j)+dy(j) <== y(i)))
 	        ) 
-	        
 	      }
 	    case "disjoint" =>
 	    case "distribute" =>
@@ -1466,7 +1462,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
-	      println(System.currentTimeMillis/1000 - timestamp)
+	      //println(System.currentTimeMillis/1000 - timestamp)
 	    }
 	  }
       if (options.statistics) {
@@ -1493,7 +1489,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         }
         else {
           for(a <- ann.suspendable) {
-            //TODO : support the "complete" annotation
         	a.name match {
 		      case "int_search" =>
 		        val array = getCPVarIntArray(a.args(0))
@@ -1579,14 +1574,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
 		 */
-	  var c = 0
 		for(i <- 0 until x.length) {
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
-	    	    c += 1
 	    	    if (state(i).first) {
 	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
-	    	    	//println(ann)
 	    	    	print(state(i).name + " = array" + ann.length + "d(")
 	    	    	for(a <- ann) {
 	    	    	  print(a.min + ".." + a.max + ", ")
@@ -1597,7 +1589,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		    	    }
 	    	    } else if( state(i).last ) {
 	    	    	println(", " + x(i).toString + "]);")
-	    	    	c = 0
 	    	    } else {
 	    	    	print(", " + x(i).toString)
 	    	    }
@@ -1609,26 +1600,69 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		for(i <- 0 until s.length) {
 	    	if ( setstate(i).output ) { 
 	    	  if ( setstate(i).array ) {
-	    	    c += 1
 	    	    if (setstate(i).first) {
-	    	    	print(setstate(i).name + 
-	    	    	    " = array1d(1.." + setstate(i).size + 
-	    	    	    ", [" + s(i).toString)
+	    	    	val ann = getCPArrayOutputAnnotations(setstate(i).name)
+	    	    	print(setstate(i).name + " = array" + ann.length + "d(")
+	    	    	for(a <- ann) {
+	    	    	  print(a.min + ".." + a.max + ", ")
+	    	    	}
+	    	    	print("[")
+	    	    	printSet(s(i))
     	    	    if( setstate(i).last ) {
     	    	    	println("]);")
 		    	    }
 	    	    } else if( setstate(i).last ) {
-	    	    	println("," + s(i).toString + "]);")
-	    	    	c = 0
+	    	    	print(",")
+	    	    	printSet(s(i)) 
+	    	    	println("]);")
 	    	    } else {
-	    	    	print("," + s(i).toString)
+	    	    	print(",")
+	    	    	printSet(s(i))
 	    	    }
 	    	  } else {
-	    	  	println(setstate(i).name + " = " + s(i).toString + ";") 
+	    	    print(setstate(i).name + " = ")
+	    	    printSet(s(i))
+	    	    println(";")
 	    	  }
 	    	}
 	    }
 	    println("----------")
+	}
+	
+	def printSet(cpset: CPVarSet) {
+		val set = cpset.requiredValues.toSeq.sorted
+	    var r2 = 0
+	    var r = false
+	    var pred = 0
+	    for (v <- set) { 
+	      if (v == set.head) {
+	        print("{" + v)
+	      }
+	      else if (v != set.last) {
+	        if(pred == v-1) {
+	          if(!r) { r = true } 
+	          r2 = v
+	        } else {
+	          if(r) {
+	            print(".." + r2 + ", " + v)
+	            r = false
+	          } else {
+    	        print(", " + v)
+	          }
+	        }
+	      } else {
+	        if(pred == v-1) {
+	          print(".." + v + "}")
+	        } else {
+	          if(r) {
+	            print(".." + r2 + ", " + v + "}")
+	          } else {
+	            print(", " + v + "}")
+	          }
+	        }
+	      }
+	      pred = v
+	    }
 	}
 	
 //	def format_output2(xs: (Array[CPVarInt], Array[VarState])) {
