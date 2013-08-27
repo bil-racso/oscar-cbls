@@ -309,9 +309,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-	      	  case x:Int => model.dict += 
-	      		((id, (FZType.V_INT, 
-	      			new VarInt(ann, CPVarInt(cp, x), id))))
+//	      	  case x:Int => model.dict += 
+//	      		((id, (FZType.V_INT, 
+//	      			new VarInt(ann, CPVarInt(cp, x), id))))
 	      	  case _ => 
 	      	    addCPVarInt(ann, id, s, hasDomain)
 		  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
@@ -352,9 +352,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
 	      			new VarArrayInt(Set[Int](), ann, 
-	      			    (x) map(
-	      			        getCPVarInt(_)
-	      			    ) toArray
+	      			    (x) map(getCPVarInt(_)) toArray
 	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
@@ -1216,8 +1214,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   for (ann <- fzo.asInstanceOf[VarArrayInt].annotations 
                       if (ann.name == "output_array")) {
                       	l = ann.args.asInstanceOf[List[List[Range]]](0)
-                      	println(ann.args)
-                      	println(l)
+                      	//println(ann.args)
+                      	//println(l)
                   }
                 }
                 case FZType.V_ARRAY_SET => {
@@ -1593,32 +1591,24 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	  if ( state(i).array ) {
 	    	    c += 1
 	    	    if (state(i).first) {
-	    	    	//must be modified to get along with what is printed
-//	    	    	state(i).tp match {
-//	    	    	  case FZType.V_ARRAY_INT => 
-//	    	    	    val ann = getCPArrayOutputAnnotations(state(i).name)
-//	    	    	    println(ann(0))
-//	    	    	  case FZType.V_ARRAY_BOOL =>
-//	    	    	}
-//	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
-//	    	    	println(ann)
-//	    	    	print(" = array")
-	    	    	
-	    	    	print(state(i).name + 
-	    	    	    " = array1d(1.." + state(i).size + 
-	    	    	    ", [" + x(i).toString)
+	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
+	    	    	//println(ann)
+	    	    	print(state(i).name + " = array" + ann.length + "d(")
+	    	    	for(a <- ann) {
+	    	    	  print(a.min + ".." + a.max + ", ")
+	    	    	}
+	    	    	print("[" + x(i).toString)
 	    	    	if( state(i).last ) {
 		    	    	println("]);")
 		    	    }
-	    	    //} else if( c == state(i).size ) {
 	    	    } else if( state(i).last ) {
-	    	    	println("," + x(i).toString + "]);")
+	    	    	println(", " + x(i).toString + "]);")
 	    	    	c = 0
 	    	    } else {
-	    	    	print("," + x(i).toString)
+	    	    	print(", " + x(i).toString)
 	    	    }
 	    	  } else {
-	    	  	println(state(i).name + " =" + x(i).toString + ";") 
+	    	  	println(state(i).name + " = " + x(i).toString + ";") 
 	    	  }
 	    	}
 	    }
@@ -1640,7 +1630,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	    	print("," + s(i).toString)
 	    	    }
 	    	  } else {
-	    	  	println(setstate(i).name + " =" + s(i).toString + ";") 
+	    	  	println(setstate(i).name + " = " + s(i).toString + ";") 
 	    	  }
 	    	}
 	    }
