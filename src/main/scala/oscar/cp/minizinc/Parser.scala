@@ -232,7 +232,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        e match {
 	          case Some("="~assign) =>
 	            assign match {
-	              case x:List[Boolean] => model.dict +=
+	              case x:List[Any] => model.dict +=
 			        ((id, (FZType.V_ARRAY_BOOL, 
 			            new VarArrayBool(ann,
 			                (x) map(getCPVarBool(_)) toArray
@@ -326,6 +326,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
+              // possible bug if an assign is made of named cpvarint (that are already declared)
               case x:List[Int] => model.dict += 
 	      		((id, (FZType.V_SET_INT, 
 	      			new VarSetInt(x.toSet, ann, 
@@ -347,10 +348,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-	      	  case x:List[Int] => model.dict += 
+	      	  case x:List[Any] => 
+	      	    model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
-	      			new VarArrayInt(x.toSet, ann, 
-	      			    (x) map(getCPVarInt(_)) toArray
+	      			new VarArrayInt(Set[Int](), ann, 
+	      			    (x) map(
+	      			        getCPVarInt(_)
+	      			    ) toArray
 	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
