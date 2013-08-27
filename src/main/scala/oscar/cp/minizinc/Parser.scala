@@ -231,10 +231,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case x:List[Boolean] => model.dict +=
 			        ((id, (FZType.V_ARRAY_BOOL, 
 			            new VarArrayBool(ann,
-			                (x) map(
-		      			    	d => getCPVarBool(d)
-		      			    ) toArray
-			                //(x) map(CPVarBool(cp, _)) toArray
+			                (x) map(getCPVarBool(_)) toArray
 			                , id)))) 
 	              case _ => 
 	                addCPVarBoolArray(ann, id, getRangeLength(iset))
@@ -353,16 +350,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
 	      			new VarArrayInt(Set[Int](), ann, 
-	      			    //(x) map(CPVarInt(cp, _)) toArray
-	      			    (x) map(
-	      			    	d => getCPVarInt(d)
-	      			    ) toArray
-//	      			    (x) map(
-//	      			    		d => d match {
-//	      			    		  case y:Int => CPVarInt(cp, y)
-//	      			    		  case y:String => getCPVarInt(y)
-//	      			    		}
-//	      			    ) toArray
+	      			    (x) map(getCPVarInt(_)) toArray
 	      		, id))))
 	      	  case _ => 
 	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
@@ -668,7 +656,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      diff_array_cstr(t1, t2)
 	    case "oscar_lex_lesseq_int" =>
 	      cp.add(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))))
-	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
+	    case "oscar_lex2" => 
 	      lex2_cstr(varList, false)
 	    case "link_set_to_booleans" =>
 	    case "oscar_maximum_int" =>
@@ -679,7 +667,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "nvalue" =>
 	    case "partition_set" =>
 	    case "range" =>
-	    case "oscar_regular" => //2D -> 1D done
+	    case "oscar_regular" => 
 	      regular_cstr(varList)
 	    case "roots" =>
 	    case "sliding_sum" =>
@@ -688,7 +676,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      lex2_cstr(varList, true)
 	    case "subcircuit" =>
 	    case "sum_pred" =>
-	    case "oscar_table_int" => //2D -> 1D done
+	    case "oscar_table_int" => 
 	      table_cstr(varList)
 	    case "value_precede_int" =>
 	    case "value_precede_chain_int" =>
