@@ -53,7 +53,6 @@ public class EqReifVar extends Constraint {
 			return valBind(x);
 		} 
 		else if (y.isBound()) {
-			System.out.println("val bind y");
 			return valBind(y);
 		}
 		else {
@@ -102,7 +101,7 @@ public class EqReifVar extends Constraint {
 	@Override
 	public CPOutcome propagate() {
 		// if the domains of x and y are disjoint we can set b to false and return success
-		if (x.getMax() < x.getMin()) {
+		if (x.getMax() < y.getMin()) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -120,6 +119,7 @@ public class EqReifVar extends Constraint {
 			int start = Math.max(x.getMin(), y.getMin());
 			int end = Math.min(x.getMax(), y.getMax());
 			boolean commonValues = false;
+			if (x.isRange() || y.isRange()) return CPOutcome.Suspend;
 			for (int i = start; i <= end; i++) {
  				if (x.hasValue(i) && y.hasValue(i)) {
 					commonValues = true;
