@@ -40,6 +40,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def parseVar(input: String) = {parseAll(var_decl, input)}
 	
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
+	
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");" ^^ {
 	  case "predicate"~id~"("~parList~");" => //println("predicate " + id)
 	  case _ => //println("error in predicate")
@@ -144,7 +145,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    int_const~".."~int_const ^^ { 
 	    	case int1~".."~int2 => Range(int1, int2+1, 1) 
 	    } 
-	    | "{"~>rep1sep(int_const, ",")<~"}" 
+	    | "{"~>repsep(int_const, ",")<~"}" 
+	    //| "{"~>rep1sep(int_const, ",")<~"}" // -> according to the grammar, bt doesn't parse some models
 	)
 	
 	def array_expr : Parser[List[Any]] = (
@@ -310,8 +312,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    hasDomain: Boolean) {
 	  //hasDomain not realy usefull, can check if the set is empty, 
 	  //is it possible to add in the model a var int with an empty domain ? for what ?
-	  //TODO : format output of : var {8, 5, 42}: e :: output_var; ... if needed
-	  // check what does jacop on varAssign
 	  e match {
           case Some("="~assign) =>
             assign match {
@@ -1818,7 +1818,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	//	      case "set_search" =>
 			}
           }
-          //cp.binary(x)
+          /*
+           * comment the line below to get the admissible domains for the variable in the solution
+           * uncomment it to have a particular solution
+           * if commented, the output won't necessarily be readable for the formatting tool of minizinc
+           */
+          cp.binary(x)
         }
 		if(!s.isEmpty) {
           for(e <- s.toList.suspendable){
@@ -1826,19 +1831,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           }
         }
 	}
-	
-//	def varChoiceAnn(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
-//		args(1) match {
-//	      case "input_order" => cp.binary(array, array.indexOf(_), assignAnn(args))
-//	      case "first_fail" => cp.binaryFirstFail(array, assignAnn(args))
-//	      case "anti_first_fail" => cp.binary(array, -_.size, assignAnn(args))
-//	      case "smallest" => cp.binary(array, _.min, assignAnn(args))
-//	      case "largest" => cp.binary(array, _.max, assignAnn(args))
-//	      case "occurence" => cp.binary(array, _.constraintDegree, assignAnn(args))
-//	      case "most_constrained" =>
-//	      case "max_regret" =>
-//	    }
-//	}
 	
 	/**
 	 * Matches the variable heuristic to use on the variables in array

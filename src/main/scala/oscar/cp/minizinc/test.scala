@@ -12,6 +12,7 @@ object test extends Parser with App{
     				"solve satisfy;"
 		//println(myParseAll(input))
 		myParseAll(new Options(args))
+		//println(myParseAll(new Options(args)))
 		//println(model.dict.toString)
 		//println(model.dict.get("name"))
 //		model.dict.get("name") match {
