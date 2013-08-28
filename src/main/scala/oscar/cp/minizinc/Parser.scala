@@ -309,12 +309,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarInt(e, id, s, ann)
 	        
 	      case "var set of"~i1~".."~i2 => 
-	        // TODO : test assign : cannot be done as eq on set doesnt exist
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
 	        createCPVarSet(e, id, s, ann)
 	        
 	      case "var set of"~"{"~intList~"}" => 
-	        // TODO : test assign : cannot be done as eq on set doesnt exist
 	        val s = getSetFromList(intList)
 	        createCPVarSet(e, id, s, ann)
 
@@ -431,23 +429,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    model.dict += 
 	      		((id, (FZType.V_ARRAY_INT, 
 	      			new VarArrayInt(Set[Int](), ann, 
-	      			    (x) map(
-	      			    		d =>
-	      			    		  d match {
-	      			    		    case y:Int => 
-	      			    		      if((s contains y) || s.isEmpty) {
-							      	    getCPVarInt(y)
-							      	  } else {
-							      	    throw new Exception(y + " not in the domain of " + id)
-							      	  }
-//	      			    		      if((hasDomain && (s contains y)) || !hasDomain) { getCPVarInt(y) } 
-//	      			    		      else {throw new Exception(y + " not in the domain of " + id)}
-	      			    		    case _ => 
-	      			    		      val cpvar = CPVarInt(cp, s)
-	      			    		      cp.add(cpvar == getCPVarInt(d))
-	      			    		      cpvar
-	      			    		  }
-//	      			    		getCPVarInt(_)
+	      			    (x) map(d =>
+      			    		  d match {
+      			    		    case y:Int => 
+      			    		      if((s contains y) || s.isEmpty) {
+						      	    getCPVarInt(y)
+						      	  } else {
+						      	    throw new Exception(y + " not in the domain of " + id)
+						      	  }
+      			    		    case _ => 
+      			    		      val cpvar = CPVarInt(cp, s)
+      			    		      cp.add(cpvar == getCPVarInt(d))
+      			    		      cpvar
+      			    		  }
 	      			        ) toArray
 	      		, id))))
 	      	  case _ => 
@@ -479,23 +473,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case Some("="~assign) =>
 	      assign match {
 	        //care with this case, can be wrong if assign is not in the domain
-	        case x:List[List[Int]] => 
-	          //println(x)
+	        case x:List[Any] => 
 	          model.dict += 
 	      		((id, (FZType.V_ARRAY_SET, 
 	      			new VarArraySet(s, ann, 
-	      			    (x) map(
-	      			    		d =>
-	      			    		  d match {
-	      			    		    case y:List[Int] => 
-	      			    		      if(y.toSet.subsetOf(s)) { getCPVarSet(y) } 
-	      			    		      else {throw new Exception(y + " not in the domain of " + id)}
-	      			    		    case _ => 
-	      			    		      val cpvar = CPVarSet(cp, Set[Int](), s)
-	      			    		      //need the equality between sets
-	      			    		      //cp.add(cpvar == getCPVarSet(d))
-	      			    		      cpvar
-	      			    		  }
+	      			    (x) map(d =>
+      			    		  d match {
+      			    		    case y:List[Int] => 
+      			    		      if(y.toSet.subsetOf(s)) { getCPVarSet(y) } 
+      			    		      else {throw new Exception(y + " not in the domain of " + id)}
+      			    		    case _ => 
+      			    		      val cpvar = CPVarSet(cp, Set[Int](), s)
+      			    		      cp.add(cpvar == getCPVarSet(d))
+      			    		      cpvar
+      			    		  }
 //	      			    		d => CPVarSet(cp, Set[Int](), d.toSet)
 	      			    	) toArray
 	      		, id))))
@@ -2076,11 +2067,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
     	    	    	println("]);")
 		    	    }
 	    	    } else if( setstate(i).last ) {
-	    	    	print(",")
+	    	    	print(", ")
 	    	    	printSet(s(i)) 
 	    	    	println("]);")
 	    	    } else {
-	    	    	print(",")
+	    	    	print(", ")
 	    	    	printSet(s(i))
 	    	    }
 	    	  } else {
@@ -2105,6 +2096,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    for (v <- set) { 
 	      if (v == set.head) {
 	        print("{" + v)
+	        if(v == set.last) {
+	          print("}")
+	        }
 	      }
 	      else if (v != set.last) {
 	        if(pred == v-1) {
