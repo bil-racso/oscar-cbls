@@ -670,7 +670,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	      
 	    // global constraints defined in minizinc/mznlib/
 	    case "oscar_alldiff" =>
-	      cp.add(allDifferent(getCPVarIntArray(varList(0))))
+	      cp.add(allDifferent(getCPVarIntArray(varList(0))), Strong)
 	    case "alldiff_0" =>
 	    case "all_disjoint" =>
 	    case "oscar_all_equal_int" =>
@@ -705,7 +705,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_bin_packing_load" =>
 	      bin_packing(varList, "load")
 	    case "oscar_circuit" => 
-	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)))
+	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)),Strong)
 	    case "oscar_count_eq" => {
 	      println(varList.mkString(","))
 	      val x = getCPVarIntArray(varList(0))
@@ -1146,8 +1146,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       cstr match {
         case "int_lin_ne" => 
           cp.add(weightedSum(cst, cpvar) != c)
-        case "int_lin_eq" =>
-          cp.add(weightedSum(cst, cpvar) == c)
+        case "int_lin_eq" => {
+          cp.add(new WeightedSum(cst,cpvar,c))
+          //cp.add(weightedSum(cst, cpvar) == c)
+        }
+          
         case "int_lin_le" => 
           cp.add(weightedSum(cst, cpvar) <= c) 
         case "int_lin_eq_reif" => 
@@ -1896,10 +1899,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        //cp.binaryFirstFail(array, assignAnn(args))
 	      case "anti_first_fail" => assignAnn(args, array, -_.size)
 	      case "smallest" => assignAnn(args, array, _.min)
-	      case "largest" => assignAnn(args, array, _.max)
-	      case "occurence" => assignAnn(args, array, _.constraintDegree)
+	      case "largest" => assignAnn(args, array, -_.max)
+	      case "occurence" => assignAnn(args, array, -_.constraintDegree)
 	      case "most_constrained" =>
-	      case "max_regret" =>
+	      case "max_regret" => {
+	        assignAnn(args, array, -_.regret)
+	      }
 	    }
 	}
 	
@@ -1918,7 +1923,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  }
 //		  case "indomain_middle" =>
 		  case "indomain_median" => cp.binary(array, varheur, _.median)
-//		  case "indomain" =>
+		  case "indomain" => cp.binary(array, varheur, _.min)
 		  case "indomain_random" => cp.binary(array, varheur, _.randomValue)
 		  /*
 		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn
@@ -1936,7 +1941,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  }
 //		  case "indomain_middle" =>
 		  case "indomain_median" => _.median
-//		  case "indomain" =>
+		  case "indomain" => _.min
 		  case "indomain_random" => _.randomValue
 		  /*
 		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn

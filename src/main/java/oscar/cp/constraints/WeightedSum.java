@@ -28,6 +28,7 @@ public class WeightedSum extends Constraint {
 	private int [] w;
 	private CPVarInt [] x;
 	private CPVarInt y;
+	
 
     /**
      * sum_i w[i]*x[i] == y
@@ -59,29 +60,16 @@ public class WeightedSum extends Constraint {
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		
-		CPVarInt [] prod = new CPVarInt[w.length];
-		for (int i = 0; i < w.length; i++) {
-			prod[i] = x[i].mul(w[i]);
-		}
-		if (s().post(new Sum(prod,y)) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Success;
-		
-		
-		/*
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) 
-				x[i].addBounds(this);
+				x[i].callPropagateWhenBoundsChange(this,false);
 		}
 		if (!y.isBound())
-			y.addBounds(this);
+			y.callPropagateWhenBoundsChange(this,false);
 		return CPOutcome.Suspend;
-		*/
 	}
 	
 
@@ -96,7 +84,6 @@ public class WeightedSum extends Constraint {
 			maxsumx += w[i] >= 0 ? w[i] * x[i].getMax() : w[i] * x[i].getMin();
 			minsumx += w[i] >= 0 ? w[i] * x[i].getMin() : w[i] * x[i].getMax();
 		}
-		
 		if (y.updateMax(maxsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -109,32 +96,34 @@ public class WeightedSum extends Constraint {
 	    //x1 = (y - w2 x2)/w1
 		
 		for (int i = 0; i < x.length; i++) {
+			if (x[i].isBound()) continue;
 			if (w[i] != 0) { //if w[i] == 0 we cannot prune x[i]
 				int maxsumxi = maxsumx - (w[i] >= 0 ? w[i] * x[i].getMax() : w[i] * x[i].getMin());
 				int minsumxi = minsumx - (w[i] >= 0 ? w[i] * x[i].getMin() : w[i] * x[i].getMax());
-
-				int maxi = 0;
-				int mini = 0;
+				if (w[i] >= 0) {
+					int maxi = (int) Math.floor(((double)(y.getMax() - minsumxi))/w[i]);
+					int mini = (int) Math.ceil(((double)(y.getMin() - maxsumxi))/w[i]);
 				
-				if (w[i] > 0) {
-					
-					maxi = (y.getMax() - minsumxi)/w[i];
-					mini = (y.getMin() - maxsumxi)/w[i];
-					if ((y.getMin() - maxsumxi) % w[i] !=0) {
-						//mini++;
+					//System.out.println("i="+i+" maxi:"+maxi+" mini:"+mini);
+					if (x[i].updateMax(maxi) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
+					if (x[i].updateMin(mini) ==  CPOutcome.Failure) {
+						return CPOutcome.Failure;
 					}
 					
-				} else { //w[i] < 0
-					maxi = (y.getMin() - maxsumxi)/w[i];
-					mini = (y.getMax() - minsumxi)/w[i];
-				}
-							
+				} else {
+					int maxi = (int) Math.floor(((double)(y.getMin() - maxsumxi))/w[i]);
+					int mini = (int) Math.ceil(((double)(y.getMax() - minsumxi))/w[i]);
 				
-				if (x[i].updateMax(maxi) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
-				}
-				if (x[i].updateMin(mini) ==  CPOutcome.Failure) {
-					return CPOutcome.Failure;
+					//System.out.println("i="+i+" maxi:"+maxi+" mini:"+mini);
+					if (x[i].updateMax(maxi) == CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
+					if (x[i].updateMin(mini) ==  CPOutcome.Failure) {
+						return CPOutcome.Failure;
+					}
+					
 				}
 			}
 		}

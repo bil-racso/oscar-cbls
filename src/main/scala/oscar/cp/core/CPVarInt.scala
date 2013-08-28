@@ -30,6 +30,11 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
   
 	def constraintDegree(): Int
 	
+	/**
+	 * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
+	 */
+	def regret: Int = if (isBound) Int.MaxValue else valueAfter(min) - min
+	
     /**
      * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
      */

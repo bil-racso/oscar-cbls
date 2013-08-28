@@ -58,7 +58,34 @@ class TestWeightedSum extends FunSuite with ShouldMatchers  {
     // 0*0 + 1*1 + 2*2 + 3*3
     val y = weightedSum(0 until x.size,0 until w.size){case(i,j) => (w(i)(j),x(i)(j))}
     y.value should be(14)
-  }  
+  }
+  
+  def nbsol(w: Array[Int], domx: Array[Set[Int]], ymin: Int, ymax: Int, decomp: Boolean = false): Int = {
+    val cp = CPSolver()
+    val x = domx.map(dom => CPVarInt(cp,dom))
+    val y = CPVarInt(cp, ymin to ymax)
+    var n: Int = 0
+    cp.solve subjectTo {
+      if (!decomp)
+    	  cp.add(weightedSum(w,x,y))
+      else 
+        cp.add(sum(w.zip(x).map{case(wi,xi) => xi*wi}) == y)
+    } exploration {
+      cp.binaryFirstFail(x)
+      n +=  1
+    } run()
+    n
+  }
+  
+  
+  
+  
+  test("Weighted Sum 5") {
+    val x = Array(Set(1,2),Set(4,6,8),Set(-6,-4,0,6))
+    val w = Array(4,-3,2)
+    println("=>"+nbsol(w,x,-100,100,true))
+    println("=>"+nbsol(w,x,-100,100,false))
+  }    
   
  
 }

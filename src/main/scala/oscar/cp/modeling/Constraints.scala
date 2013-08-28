@@ -323,33 +323,49 @@ trait Constraints {
    * @return a variable S linked with the relation S = sum(i in indexes) (w_i * x_i)
    */
   def weightedSum[A](indexes: Iterable[A])(f: A => (Int, CPVarInt)): CPVarInt = {
-    sum(indexes) { i =>
-      val (w, x) = f(i)
-      x * w
-    }
+    val (w,x) = (for (i <- indexes) yield f(i)).unzip
+    weightedSum(w.toArray,x.toArray)
   }
 
   /**
    * Weighted Sum Constraint
    * @param indexes1 an iterable of index values
    * @param indexes2 an iterable of index values
-   * @param a function: (i,j) => (w_ij, x_ij) where i is an index from indexes
+   * @param a function: (i,j) => (w_ij, x_ij) where i is an index from indexes1, j is an index from indexes2
    * @return a variable S linked with the relation S = sum(i in indexes1,j in indexes2) (w_ij * x_ij)
    */
   def weightedSum[A, B](indexes1: Iterable[A], indexes2: Iterable[B])(f: (A, B) => (Int, CPVarInt)): CPVarInt = {
-    sum(indexes1, indexes2) {
-      case (i, j) =>
-        val (w, x) = f(i, j)
-        x * w
-    }
+    val (w,x) = (for (i <- indexes1; j <- indexes2) yield f(i,j)).unzip
+    weightedSum(w.toArray,x.toArray)
   }
+  
+  /**
+   * Weighted Sum Constraint
+   * @return y == sum(i)(w_i * x_i)
+   */
+  def weightedSum(w: Array[Int], x: Array[CPVarInt], y: CPVarInt): Constraint = {
+    new WeightedSum(w,x,y)
+  }
+  
+  /**
+   * Weighted Sum Constraint
+   * @return y==sum(i)(w_i * x_i)
+   */
+  def weightedSum(w: Array[Int], x: Array[CPVarInt], y: Int): Constraint = {
+    new WeightedSum(w,x,y)
+  }  
 
   /**
    * Weighted Sum Constraint
    * @return sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt]): CPVarInt = {
-    sum(w.zip(x)) { case (w_, x_) => x_ * w_ }
+    val cp = x(0).s
+    val m = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.max else wi*xi.min}.sum
+    val M = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.min else wi*xi.max}.sum
+    val y = CPVarInt(cp,m to M)
+    cp.post(weightedSum(w,x,y))
+    y
   }
 
   /**
@@ -357,7 +373,7 @@ trait Constraints {
    * @return sum(ij)(w_ij * x_ij)
    */
   def weightedSum(w: Array[Array[Int]], x: Array[Array[CPVarInt]]): CPVarInt = {
-    sum((0 until w.size).map(i => sum(w(i).zip(x(i))) { case (w_, x_) => x_ * w_ }))
+    weightedSum(w.flatten,x.flatten)
   }
 
   /**
