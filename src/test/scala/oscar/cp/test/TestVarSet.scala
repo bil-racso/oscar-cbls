@@ -51,27 +51,27 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     inpropag = false
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(true)
     
     inpropag = false
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(false)    
     
     inpropag = false
-    cp.add(x.include(-2))
+    cp.add(x -- -2)
     inpropag should be(true)
 
     inpropag = false
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(true)
 
     inpropag = false
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(false)
 
     inpropag = false
-    cp.add(x.exclude(1))
+    cp.add(x -- 1)
     inpropag should be(true)       
 
   }
@@ -120,39 +120,39 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(false)    
     inrequire should be(false)
     inexclude should be(false)
     
     
     reset()
-    cp.add(x.include(-2))
+    cp.add(x ++ -2)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(true)
     inrequire should be(false)
     inexclude should be(true)
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(false)
     inrequire should be(false)
     inexclude should be(false)
     
 
     reset()
-    cp.add(x.exclude(1))
+    cp.add(x -- 1)
     inpropag should be(true) 
     inrequire should be(false)
     inexclude should be(true)    
@@ -211,7 +211,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
@@ -219,7 +219,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     value should be(0)
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(false)    
     inrequire should be(false)
     inexclude should be(false)
@@ -228,7 +228,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     
     
     reset()
-    cp.add(x.include(-2))
+    cp.add(x ++ -2)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
@@ -236,7 +236,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     value should be(-2)    
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(true)
     inrequire should be(false)
     inexclude should be(true)
@@ -244,7 +244,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     value should be(4)     
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(false)
     inrequire should be(false)
     inexclude should be(false)
@@ -253,7 +253,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     
 
     reset()
-    cp.add(x.exclude(1))
+    cp.add(x -- 1)
     inpropag should be(true) 
     inrequire should be(false)
     inexclude should be(true)
@@ -306,39 +306,39 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     inpropag should be(false)    
     inrequire should be(false)
     inexclude should be(false)
     
     
     reset()
-    cp.add(x.include(-2))
+    cp.add(x ++ -2)
     inpropag should be(true)
     inrequire should be(true)
     inexclude should be(false)
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(true)
     inrequire should be(false)
     inexclude should be(true)
 
     reset()
-    cp.add(x.exclude(4))
+    cp.add(x -- 4)
     inpropag should be(false)
     inrequire should be(false)
     inexclude should be(false)
     
 
     reset()
-    cp.add(x.exclude(1))
+    cp.add(x -- 1)
     inpropag should be(true) 
     inrequire should be(false)
     inexclude should be(true)    
@@ -395,7 +395,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     reset()
-    cp.add(x.include(0))
+    cp.add(x ++ 0)
     cp.add(new Constraint(cp, "TestSet") {
       override def setup(l: CPPropagStrength): CPOutcome = x.excludesAll()  // -2,-1,1,2,3,4 should be notified as removed
     })
@@ -461,7 +461,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     cp.add(new SetCons(x))
     
     reset()
-    cp.add(x.exclude(0))
+    cp.add(x -- 0)
     cp.add(new Constraint(cp, "TestSet") {
       override def setup(l: CPPropagStrength): CPOutcome = x.requiresAll()  // -2,-1,1,2,3,4 should be notified as removed
     })

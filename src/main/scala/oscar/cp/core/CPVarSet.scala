@@ -207,8 +207,8 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
 
   def requiredSize = dom.requiredSize
 
-  def include(v: Int) = new Requires(this, v)
-  def exclude(v: Int) = new Excludes(this, v)
+  def ++(v: Int) = new Requires(this, v)
+  def --(v: Int) = new Excludes(this, v)
   
   override def toString = {
     ""+requiredValues.toSet+" "+possibleNotRequiredValues.toSet

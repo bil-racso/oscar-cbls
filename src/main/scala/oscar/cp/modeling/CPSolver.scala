@@ -249,7 +249,7 @@ class CPSolver() extends CPStore() {
   def binary(x: CPVarSet): Unit @suspendable = {
     while (!x.isBound) {
       val v = x.arbitraryPossibleNotRequired
-      branch(post(x.include(v)))(post(x.exclude(v)))
+      branch(post(x ++ v))(post(x -- v))
     }
   } 
 

@@ -891,4 +891,11 @@ trait Constraints {
 
     throw new IllegalArgumentException("Bounds are not specified")
   }
+  
+  /**
+   * Constraint x and y to be disjoint (no common values)
+   * @param x:
+   * @param y:
+   */
+  def disjoint(x: CPVarSet, y: CPVarSet): Constraint = new Disjoint(x,y)
 }
