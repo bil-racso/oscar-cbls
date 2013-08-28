@@ -2037,6 +2037,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
 		 */
+	  // check the output for an array (test with tsp.mzn, compare with jacop
 		for(i <- 0 until x.length) {
 	    	if ( state(i).output ) { 
 	    	  if ( state(i).array ) {
