@@ -40,18 +40,30 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def parseParam(input: String) = {parseAll(param_decl, input)}
 	def parseVar(input: String) = {parseAll(var_decl, input)}
 	
+	/**
+	 * flatzinc model parsing
+	 */
 	def flatzinc_model : Parser[Any] = rep(pred_decl)~rep(param_decl)~rep(var_decl)~rep(constraint)~solve_goal
 	
+	/**
+	 * predicate declaration parsing
+	 */
 	def pred_decl : Parser[Any] = "predicate"~identifier~"("~rep1sep(pred_param, ",")~");" ^^ {
 	  case "predicate"~id~"("~parList~");" => //println("predicate " + id)
 	  case _ => //println("error in predicate")
 	}
 
+	/**
+	 * identifier parsing (predicates)
+	 */
 	def identifier : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
 	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id // what about no space before the ":" and one after ?
 	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type	
 	
+	/**
+	 * parameters types parsing
+	 */
 	def par_type : Parser[Any] = (
 	    "bool"
 		| "float"
@@ -62,6 +74,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "array ["~index_set~"] of int"
 		| "array ["~index_set~"] of set of int"
 	)
+	
+	/**
+	 * predicate parameters types parsing
+	 */
 	def par_pred_param_type : Parser[Any] = (
 		par_type
 		| float_const~".."~float_const
@@ -75,6 +91,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "array ["~index_set~"] of"~"set of"~int_const~".."~int_const
 		| "array ["~index_set~"] of"~"set of"~"{"~rep1sep(int_const, ",")~"}"
 	)
+	
+	/**
+	 * variables types parsing
+	 */
 	def var_type : Parser[Any] = (
 	    "var bool"
 		| "var float"
@@ -98,6 +118,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| "var set of int"
 		| "array ["~index_set~"] of var set of int"
 	)
+	
+	/**
+	 * parses index_set, used in array declarations
+	 */
 	def index_set : Parser[Any] = (
 	    "1.."~int_const ^^ {
 	      case "1.."~i => Range(1, i+1, 1)
@@ -105,6 +129,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    | "int" ^^ (_.toString())// what about the fact that "int" is only allowed in predicates ?
 	)
 	
+	/**
+	 * expression parsing
+	 */
 	def expr : Parser[Any] = ( //need to find a way to return something else than any
 		bool_const
 		| set_const //should be float -> int -> set, inverted for set to work, need testing
@@ -118,13 +145,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		| annotation
 		| "[A-Z_a-z][A-Z_a-z0-9_]*".r //"...string constant..." //???
 	)
+	
+	/**
+	 * identifiers, used for constraints and annotations
+	 */
 	def pred_ann_id : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
+	/**
+	 * identifiers, used for parameters and variables declarations
+	 */
 	def var_par_id : Parser[String] = "-*[A-Za-z][A-Za-z0-9_]*".r
 	
-	
-	//definition of the constants
-	
+	/**
+	 * definition of the constants
+	 */
 	def bool_const : Parser[Boolean] = (
 	    "true" ^^ (x => true)
 	    | "false" ^^ (x => false)
@@ -155,9 +189,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    "["~>repsep(expr, ",")<~"]"
 	)
 	
-	
-	//Parameter and variable declarations
-	
+	/**
+	 * Parameter declarations
+	 */
 	def param_decl : Parser[Any] = par_type~":"~var_par_id~"="~expr~";" ^^ 
 	{
 	  case tp~":"~id~"="~e~";" =>
@@ -211,6 +245,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    }
 	}
 	
+	/**
+	 * Variables declarations
+	 */
 	def var_decl : Parser[Any] = var_type~":"~var_par_id~annotations~opt("="~expr)~";" ^^
 	{ 
 	  case tp~":"~id~ann~e~";" => 
@@ -256,16 +293,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        }
 	            	
 	      case "var int" => 
-	        createCPVarInt(e, id, Set[Int](), ann, false)
+	        createCPVarInt(e, id, Set[Int](), ann)
 	        
 	      case "var"~i1~".."~i2 => 
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet[Int]
-	        createCPVarInt(e, id, s, ann, true)	      
+	        if(!s.isEmpty) {
+	          createCPVarInt(e, id, s, ann)
+	        } else {
+	          throw new Exception("A var int can not have an empty domain")
+	        }      
 	        
 	      case "var"~"{"~intList~"}" =>
-	        // TODO : check value of e and d in test varAssign
+	        // no need to check if s is empty as the grammar doesn't allow it
 	        val s = getSetFromList(intList)
-	        createCPVarInt(e, id, s, ann, true)
+	        createCPVarInt(e, id, s, ann)
 	        
 	      case "var set of"~i1~".."~i2 => 
 	        // TODO : test assign : cannot be done as eq on set doesnt exist
@@ -278,15 +319,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarSet(e, id, s, ann)
 
 	      case "array ["~iset~"] of var int" => 
-	        createCPVarIntArray(e, id, Set[Int](), ann, getRangeLength(iset), false)
+	        createCPVarIntArray(e, id, Set[Int](), ann, getRangeLength(iset))
 	                
 	      case "array ["~iset~"] of var"~i1~".."~i2 => 
 	        val s = Range(i1.toString.toInt, i2.toString.toInt+1).toSet
-	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
+	        if(!s.isEmpty) {
+	          createCPVarIntArray(e, id, s, ann, getRangeLength(iset))
+	        } else {
+	          throw new Exception("A var int can not have an empty domain")
+	        } 
 	            	
 	      case "array ["~iset~"] of var"~"{"~intList~"}" => 
 	        val s = getSetFromList(intList)
-	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset), true)
+	        createCPVarIntArray(e, id, s, ann, getRangeLength(iset))
 	                  
 	      case "array ["~iset~"] of var set of"~i1~".."~i2 => 
 	        // TODO : need testing, need eq on set
@@ -294,6 +339,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	            	
 	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
+	        // TODO : grammar doesn't allow to create an empty set, should it be modified ? (cfr var_type)
 	        // TODO : need testing, need eq on set
 	        val s = getSetFromList(intList)
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
@@ -309,8 +355,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param s : a set, the initial domain of the variable 
 	 * @param ann : the list of annotation for the variable
 	 */
-	def createCPVarInt(e: Any, id: String, s: Set[Int], ann: List[Annotation],
-	    hasDomain: Boolean) {
+	def createCPVarInt(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
 	  //hasDomain not realy usefull, can check if the set is empty, 
 	  //is it possible to add in the model a var int with an empty domain ? for what ?
 	  e match {
@@ -318,7 +363,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             assign match {
               //care with this case, can be wrong if assign is not in the domain
 	      	  case x:Int => 
-	      	    if((hasDomain && (s contains x)) || !hasDomain) {
+	      	    if((s contains x) || s.isEmpty) {
 	      	      model.dict += 
 	      	        ((id, (FZType.V_INT, 
 	      	            new VarInt(ann, CPVarInt(cp, x), id))))
@@ -326,11 +371,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	      throw new Exception(x + " not in the domain of " + id)
 	      	    }
 	      	  case _ => 
-	      	    addCPVarInt(ann, id, s, hasDomain)
+	      	    addCPVarInt(ann, id, s)
 		  		cp.add(getCPVarIntFromString(id) == getCPVarInt(assign))
 	      	}
           case None => 
-            addCPVarInt(ann, id, s, hasDomain)
+            addCPVarInt(ann, id, s)
           case _ => throw new Exception("Error in var int creation")
         }
 	}
@@ -376,7 +421,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param ann : the list of annotation for the array of variables
 	 */
 	def createCPVarIntArray(e: Any, id: String, s: Set[Int], ann: List[Annotation], 
-	    l: Int, hasDomain: Boolean) {
+	    l: Int) {
 	  e match {
           case Some("="~assign) =>
             assign match {
@@ -390,8 +435,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			    		d =>
 	      			    		  d match {
 	      			    		    case y:Int => 
-	      			    		      if((hasDomain && (s contains y)) || !hasDomain) { getCPVarInt(y) } 
-	      			    		      else {throw new Exception(y + " not in the domain of " + id)}
+	      			    		      if((s contains y) || s.isEmpty) {
+							      	    getCPVarInt(y)
+							      	  } else {
+							      	    throw new Exception(y + " not in the domain of " + id)
+							      	  }
+//	      			    		      if((hasDomain && (s contains y)) || !hasDomain) { getCPVarInt(y) } 
+//	      			    		      else {throw new Exception(y + " not in the domain of " + id)}
 	      			    		    case _ => 
 	      			    		      val cpvar = CPVarInt(cp, s)
 	      			    		      cp.add(cpvar == getCPVarInt(d))
@@ -401,7 +451,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			        ) toArray
 	      		, id))))
 	      	  case _ => 
-	      	    addCPVarIntArray(ann, id, s, l, hasDomain)
+	      	    addCPVarIntArray(ann, id, s, l)
 		  		val current = getCPVarIntArray(id)
 		  		val value = getCPVarIntArray(assign)
 		  		assert(current.length == value.length, 
@@ -411,7 +461,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  		}
 	      	}
           case None => 
-            addCPVarIntArray(ann, id, s, l, hasDomain)
+            addCPVarIntArray(ann, id, s, l)
           case _ => throw new Exception("Error in var int array creation")
         }
 	}
@@ -479,14 +529,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param s : the inital domain of the variable
 	 * @param hasDomain : true of the inital domain is given
 	 */
-	def addCPVarInt(ann: List[Annotation], id: String, s: Set[Int], 
-	    hasDomain: Boolean) {
+	def addCPVarInt(ann: List[Annotation], id: String, s: Set[Int]) {
 	  model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
-	          hasDomain match {
-		        case true => CPVarInt(cp, s)
-		        case false => CPVarInt(cp, -10000, 10000)
-		      }
+	          if(s.isEmpty) {
+	            CPVarInt(cp, -10000, 10000)
+	          } else {
+	            CPVarInt(cp, s)
+	          }
 	      	, id))))
 	}
 	
@@ -523,14 +573,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param hasDomain : true of the inital domain is given
 	 */
 	def addCPVarIntArray(ann: List[Annotation], id: String, s: Set[Int], 
-	    l: Int, hasDomain: Boolean) {
+	    l: Int) {
 	  model.dict +=
       ((id, (FZType.V_ARRAY_INT,
         new VarArrayInt(s, ann, 
-            hasDomain match {
-	          case true => Array.fill(l){CPVarInt(cp, s)} 
-	          case false => Array.fill(l){CPVarInt(cp, -10000, 10000)}
-            }
+            if(s.isEmpty) {
+            	Array.fill(l){CPVarInt(cp, -10000, 10000)}
+	          } else {
+	            Array.fill(l){CPVarInt(cp, s)}
+	          }
+//            hasDomain match {
+//	          case true => Array.fill(l){CPVarInt(cp, s)} 
+//	          case false => Array.fill(l){CPVarInt(cp, -10000, 10000)}
+//            }
         	, id))))
 	}
 	
@@ -659,7 +714,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_lin_cstr(varList, ann, cstr)
 	     
 	    case "set_card" =>
-	      //println("set card")
 	      val s = getCPVarSet(varList(0))
 	      val i = getCPVarInt(varList(1))
 	      cp.add(s.card == i)
