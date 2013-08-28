@@ -4,10 +4,10 @@ import oscar.cp.core.CPVarBool
 
 class VarBool (
     //var value: Boolean, 
-    val annotations: List[Annotation],
-    val cpvar: CPVarBool,
+    override val annotations: List[Annotation],
+    override val cpvar: CPVarBool,
     override val name: String
-    ) extends FZObject (name){
+    ) extends FZVarObject (annotations, cpvar, name){
 
 	override def toString() = name + " " + annotations + " " + cpvar
 }
