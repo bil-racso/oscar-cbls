@@ -236,6 +236,8 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
 
   def deltaRequired(sn: SnapshotVarSet): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
 
+  def ==(y: CPVarSet) = new oscar.cp.constraints.SetEq(this,y)
+  
   // --------------------------------------------
 
 }
