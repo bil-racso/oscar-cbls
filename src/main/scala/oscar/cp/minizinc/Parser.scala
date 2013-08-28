@@ -760,23 +760,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      bin_packing(varList, "load")
 	    case "oscar_circuit" => 
 	      cp.add(circuit(getCPVarIntArray(varList(0)).map(_-1)))
-	    case "oscar_count_eq" => {
-	      println(varList.mkString(","))
-	      val x = getCPVarIntArray(varList(0))
-	      val y = getCPVarInt(varList(1))
-	      val n = getCPVarInt(varList(2))
-	      cp.add(countEq(n,x,y))
-	    }
+	    case "oscar_count_eq" =>
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_geq" =>
-	      System.err.println(cstr+" not implemented")
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_gt" =>
-	      System.err.println(cstr+" not implemented")
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_leq" =>
-	      System.err.println(cstr+" not implemented")
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_lt" =>
-	      System.err.println(cstr+" not implemented")
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_neq" =>
-	      System.err.println(cstr+" not implemented")
+	      count_cstr(varList, ann, cstr)
 	    case "oscar_cumulative" =>
 	      System.err.println("oscar_cumulative not implemented")
 	    case "oscar_decreasing_int" =>
@@ -898,6 +893,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	  cp.add(binpacking(getCPVarIntArray(varList(1)).map(_-1), 
 	          getIntArray(varList(2)), l))
+	}
+	
+	//TODO : comment
+	def count_cstr(varList: List[Any], ann: Any, cstr: String) {
+      val x = getCPVarIntArray(varList(0))
+      val y = getCPVarInt(varList(1))
+      val n = getCPVarInt(varList(2))
+	  cstr match {
+	    case "oscar_count_eq" => cp.add(countEq(n, x, y))
+	    case "oscar_count_geq" => cp.add(countGeq(n, x, y))
+	    case "oscar_count_gt" => cp.add(countGt(n, x, y))
+	    case "oscar_count_leq" => cp.add(countLeq(n, x, y))
+	    case "oscar_count_lt" => cp.add(countLt(n, x, y))
+	    case "oscar_count_neq" => cp.add(countNeq(n, x, y))
+	  }
 	}
 	
 	/**
