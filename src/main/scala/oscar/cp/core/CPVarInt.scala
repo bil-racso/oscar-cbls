@@ -662,6 +662,8 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
 		return b;
 	}
 	
+	def isRange: Boolean = (max-min+1) == size
+	
     /**
      * -x
      */

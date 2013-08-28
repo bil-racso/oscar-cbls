@@ -73,7 +73,7 @@ public class Eq extends Constraint {
 		if(y.updateMin(x.getMin()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		if (l == CPPropagStrength.Strong) {
+		if (l == CPPropagStrength.Strong && (!x.isRange() || !y.isRange())) {
 			for (int v = x.min(); v < x.max(); v++) {
 				if (x.hasValue(v)) {
 					if(!y.hasValue(v)) {
