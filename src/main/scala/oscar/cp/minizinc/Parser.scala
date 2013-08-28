@@ -1256,7 +1256,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  cstr match {
 	    case "set_diff" =>
 	      cp.add(new SetDiff(cpvar(0), cpvar(1), cpvar(2)))
-	    case "set_eq" => // need contraint
+	    case "set_eq" => cp.add(cpvar(0) == cpvar(1))
 	  }
 	}
 	
@@ -1953,8 +1953,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case "smallest" => assignAnn(args, array, _.min)
 	      case "largest" => assignAnn(args, array, _.max)
 	      case "occurence" => assignAnn(args, array, _.constraintDegree)
-	      case "most_constrained" =>
-	      case "max_regret" =>
+	      case "most_constrained" => System.err.println(args(1) + " not suppported so far")
+	      case "max_regret" => System.err.println(args(1) + " not suppported so far")
 	    }
 	}
 	
@@ -1971,39 +1971,23 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		  case "indomain_max" => {
 		    cp.binary(array, varheur, _.max)
 		  }
-//		  case "indomain_middle" =>
+		  case "indomain_middle" => System.err.println(args(2) + " not suppportedso far")
 		  case "indomain_median" => cp.binary(array, varheur, _.median)
-//		  case "indomain" =>
+		  case "indomain" => System.err.println(args(2) + " not suppportedso far")
 		  case "indomain_random" => cp.binary(array, varheur, _.randomValue)
-		  /*
-		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn
-		  case "indomain_reverse_split" =>
-		  case "indomain_interval" =>
-		  */
+		  case "indomain_split" => System.err.println(args(2) + " not suppportedso far")
+		  		//should use binary domain split... should thus be checked in varChoiceAnn
+		  case "indomain_reverse_split" => System.err.println(args(2) + " not suppportedso far")
+		  case "indomain_interval" => System.err.println(args(2) + " not suppportedso far")
 		}
 	}
 	
-	def assignAnn(args: List[Any]): CPVarInt => Int = {
-		args(2) match {
-		  case "indomain_min" => _.min
-		  case "indomain_max" => {
-		    _.max
-		  }
-//		  case "indomain_middle" =>
-		  case "indomain_median" => _.median
-//		  case "indomain" =>
-		  case "indomain_random" => _.randomValue
-		  /*
-		  case "indomain_split" => should use binary domain split... should thus be checked in varChoiceAnn
-		  case "indomain_reverse_split" =>
-		  case "indomain_interval" =>
-		  */
-		}
-	}
 //	def assignAnn(args: List[Any]): CPVarInt => Int = {
 //		args(2) match {
 //		  case "indomain_min" => _.min
-//		  case "indomain_max" => _.max
+//		  case "indomain_max" => {
+//		    _.max
+//		  }
 ////		  case "indomain_middle" =>
 //		  case "indomain_median" => _.median
 ////		  case "indomain" =>
