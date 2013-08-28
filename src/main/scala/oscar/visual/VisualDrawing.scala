@@ -28,6 +28,7 @@ import java.awt.datatransfer.Clipboard
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.awt.event.MouseMotionListener
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
@@ -52,6 +53,7 @@ import java.awt.geom.AffineTransform
 import javax.swing.JSlider
 import javax.swing.event.ChangeListener
 import javax.swing.event.ChangeEvent
+import scala.swing.event.MouseClicked
 
 class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(new BorderLayout()) {
 
@@ -112,8 +114,8 @@ class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(
   }
 
 
-  drawingPanel.addMouseMotionListener(new MouseMotionListener() {
-    override def mouseMoved(e: MouseEvent) {
+  drawingPanel.addMouseListener(new MouseListener() {
+    override def mouseClicked(e: MouseEvent) {
       drawingPanel.setToolTipText("");
       for (s <- shapes) {
         //s.showToolTip(e.getPoint());
@@ -124,8 +126,13 @@ class VisualDrawing(flipped: Boolean, resizable: Boolean = true) extends JPanel(
       }
     }
 
-    override def mouseDragged(arg0: MouseEvent) {
-    }
+     override def mousePressed(e:MouseEvent ){}
+    override def mouseReleased(e:MouseEvent ){}
+    override def mouseEntered(e:MouseEvent ){}
+    override def mouseExited(e:MouseEvent ){}
+    
+    //override def mouseDragged(arg0: MouseEvent) {
+    //}
   })
 
   drawingPanel.setBackground(Color.white)

@@ -37,6 +37,7 @@ package oscar.linprog.modeling
 
 import oscar.algebra._
 import scala.collection._
+import com.typesafe.scalalogging.slf4j._
 
 object LPStatus extends Enumeration {
   val NOT_SOLVED = Value("not solved yet")
@@ -49,7 +50,7 @@ object LPStatus extends Enumeration {
 /**
  * Abstract class that must be extended to define a new LP solver
  */
-abstract class AbstractLP {
+abstract class AbstractLP extends Logging{
 
   /**
    * Number of rows in the model
@@ -95,7 +96,7 @@ abstract class AbstractLP {
       i <- cons.keys.toSeq.sortWith(_ < _)
       c = cons(i)
     } {
-      if (nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
+      if (nbC % 1000 == 0) logger.debug("Added " + nbC + " constraints. Currently at constraint index " + i)
       c.cstr.consType match {
         case ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
         case ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
@@ -336,7 +337,7 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
   def isTight(tol: Double = 10e-6) = slack.abs <= tol
 }
 
-abstract class AbstractLPSolver {
+abstract class AbstractLPSolver extends Logging{
 
   // map from the index of variables to their implementation
   protected val vars = mutable.HashMap.empty[Int, AbstractLPVar]
@@ -431,19 +432,19 @@ abstract class AbstractLPSolver {
 
     solver.startModelBuilding(cons.size, vars.size)
 
-    println("Setting variable bounds...")
+    logger.debug("Setting variable bounds...")
     setVarProperties() //set the the var bounds correctly
     val e = objective.coef.toList
     val coef: Array[Double] = e.map(_._2).toArray
     val varIds: Array[Int] = e.map(_._1.index).toArray
 
-    println("Creating objective...")
+    logger.debug("Creating objective...")
     solver.addObjective(coef, varIds, minimize)
 
-    println("Creating constraints...")
+    logger.debug("Creating constraints...")
     val t0 = System.currentTimeMillis()
     addAllConstraints()
-    println("time to add constraints:" + (System.currentTimeMillis() - t0))
+    logger.debug("time to add constraints:" + (System.currentTimeMillis() - t0))
 
     //close the model and optimize
     if (autoSolve) solveModel()
@@ -458,7 +459,7 @@ abstract class AbstractLPSolver {
 
   def solveModel() {
     solver.endModelBuilding()
-    println("Solving ...")
+    logger.debug("Solving ...")
     statuss = solver.solveModel()
     if ((statuss == LPStatus.OPTIMAL) || (statuss == LPStatus.SUBOPTIMAL)) {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }

@@ -22,8 +22,9 @@ import lpsolve._
  * @author Pierre Schaus pschaus@gmail.com
  */
 class LPSolve extends AbstractLP {
-  println("LPSolve")
+  logger.debug("LPSolve")
   var lp: LpSolve = null
+  
   var nbRows = 0
   var nbCols = 0
   var sol = Array[Double]()
@@ -39,6 +40,7 @@ class LPSolve extends AbstractLP {
     lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
     lp.setInfinite(Double.MaxValue)
     lp.setAddRowmode(true)
+    lp.setVerbose(3)
     if (configFile.exists()) {
       lp.readParams(configFile.getAbsolutePath, "[Default]");
     }

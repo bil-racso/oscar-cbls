@@ -1,6 +1,5 @@
 package oscar.distributed
 
-
 import akka.actor._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -11,7 +10,8 @@ import ExecutionContext.Implicits.global
 import akka.util.Timeout
 
 import akka.pattern.ask
-
+import akka._
+import ExecutionContext.Implicits.global
 import scala.collection.immutable.Stack
 
 object DistributedComputation{
@@ -20,6 +20,8 @@ object DistributedComputation{
 class DistributedComputation[I,R](block: I=> R){
     
   implicit val system = ActorSystem.apply()
+  //implicit val myExecutionContext: ExecutionContext = system.dispatchers.lookup("my-context")
+
   // create the master
   //val master = system.actorOf(Props(new Master(nbWorkers)), name = "master")
   

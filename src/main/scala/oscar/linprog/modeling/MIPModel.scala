@@ -17,6 +17,7 @@ package oscar.linprog.modeling
 
 import oscar.linprog._
 import oscar.algebra._
+import com.typesafe.scalalogging.slf4j._
 
 
 /**
@@ -77,7 +78,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
   
     // Linear functions
     private def linpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
-      println("***** Piecewise linear function : LINEAR ***********")
+      logger.debug("***** Piecewise linear function : LINEAR ***********")
       val Z = MIPVar(this,"Z_"+name,0,Double.PositiveInfinity)
       add(Z == rates(0)*Q,Some("Z_"+name))
       Z
@@ -86,7 +87,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     // Convex functions
     private def convpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
       val num = limits.size;
-      println("***** Piecewise linear function : CONVEX ***********")
+      logger.debug("***** Piecewise linear function : CONVEX ***********")
       val Z = MIPVar(this,"Z_"+name,0,Double.PositiveInfinity)
       /* Way proposed by AMPL : more variables !
        * =======================================
@@ -117,7 +118,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     // Non-convex functions 
     private def ncpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
       val num = limits.size 
-      println("***** Piecewise linear function : NON-CONVEX *******")
+      logger.debug("***** Piecewise linear function : NON-CONVEX *******")
       // If a limit is too big, it can generate serious numerical errors.
       if (!(0 until limits.size-1).forall(k => limits(k) <= 10000000.0)) {
         println("limits out of bounds => Risk of numerical errors.")
