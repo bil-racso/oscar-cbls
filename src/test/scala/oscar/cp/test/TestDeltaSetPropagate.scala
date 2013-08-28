@@ -62,10 +62,10 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
     cp.add(new MyCons(x))
     
     val cons = new LinkedList[Constraint]()
-    cons.add(x.include(1))
-    cons.add(x.include(3))
-    cons.add(x.exclude(2))
-    cons.add(x.exclude(4))
+    cons.add(x ++ 1)
+    cons.add(x ++ 3)
+    cons.add(x -- 2)
+    cons.add(x -- 4)
     
     cp.add(cons)
     

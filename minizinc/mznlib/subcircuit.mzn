@@ -1,3 +1,3 @@
-predicate subcircuit(array[int] of var int: x) = subcircuit(x);
+predicate subcircuit(array[int] of var int: x) = oscar_subcircuit(x);
 
-predicate subcircuit(array[int] of var int: x);
+predicate oscar_subcircuit(array[int] of var int: x);

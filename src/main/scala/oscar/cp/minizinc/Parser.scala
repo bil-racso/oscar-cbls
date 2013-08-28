@@ -714,11 +714,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      cp.add(countEq(n,x,y))
 	    }
 	    case "oscar_count_geq" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_count_gt" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_count_leq" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_count_lt" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_count_neq" =>
-	    case "cumulative" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_cumulative" =>
+	      System.err.println("oscar_cumulative not implemented")
 	    case "oscar_decreasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
@@ -735,9 +741,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            ((y(i) + dy(i) <== y(j)) || (y(j)+dy(j) <== y(i)))
 	        ) 
 	      }
-	    case "disjoint" =>
-	    case "distribute" =>
+	    case "oscar_disjoint" =>
+	      cp.add(disjoint(getCPVarSet(varList(0)),getCPVarSet(varList(1))))
+	    case "oscar_distribute" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_element_bool" =>
+	      System.err.println(cstr+" not implemented")
 	      //cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "oscar_element_int" =>
 	      cp.add(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
@@ -746,20 +755,27 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_global_cardinality" =>
 	      gcc_cstr(varList)
 	      
-	    case "global_cardinality_closed" =>
+	    case "oscar_global_cardinality_closed" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_global_cardinality_low_up" => 
 	      gcc_lbub_cstr(varList)
-	    case "global_cardinality_low_up_closed" =>
+	    case "oscar_global_cardinality_low_up_closed" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_increasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
 	        cp.add(array(i) <= array(i+1))
 	      }
-	    case "int_set_channel" =>
-	    case "inverse" =>
-	    case "inverse_set" =>
+	    case "oscar_int_set_channel" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_inverse" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_inverse_set" =>
+	      System.err.println(cstr+" not implemented")
 	    case "lex_greater_int" => //not used, done with lex_less
+	      System.err.println(cstr+" not implemented")
 	    case "lex_greatereq_int" => //not used, done with lex_lesseq
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_lex_less_int" =>
 	      val t1 = getCPVarIntArray(varList(0))
 	      val t2 = getCPVarIntArray(varList(1))
@@ -769,29 +785,40 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      cp.add(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))))
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	      lex2_cstr(varList, false)
-	    case "link_set_to_booleans" =>
+	    case "oscar_link_set_to_booleans" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_maximum_int" =>
 	      cp.add(maximum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
-	    case "member_int" =>
+	    case "oscar_member_int" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_minimum_int" =>
 	      cp.add(minimum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
-	    case "nvalue" =>
-	    case "partition_set" =>
-	    case "range" =>
+	    case "oscar_nvalue" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_partition_set" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_range" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_regular" => //2D -> 1D done
 	      regular_cstr(varList)
-	    case "roots" =>
-	    case "sliding_sum" =>
+	    case "oscar_roots" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_sliding_sum" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_sort" => 
 	      sort_cstr(varList)
 	    case "oscar_strict_lex2" =>
 	      lex2_cstr(varList, true)
-	    case "subcircuit" =>
-	    case "sum_pred" =>
+	    case "oscar_subcircuit" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_sum_pred" =>
+	      System.err.println(cstr+" not implemented")
 	    case "oscar_table_int" => //2D -> 1D done
 	      table_cstr(varList)
-	    case "value_precede_int" =>
-	    case "value_precede_chain_int" =>
+	    case "oscar_value_precede_int" =>
+	      System.err.println(cstr+" not implemented")
+	    case "oscar_value_precede_chain_int" =>
+	      System.err.println(cstr+" not implemented")
 	  }
 	}
 	
@@ -1740,7 +1767,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                output = false
 	              }
 	              case _ => {
-	                println("The type " + tp.toString() + " is not supported/relevant for the solver")
+	                System.err.println("The type " + tp.toString() + " is not supported/relevant for the solver")
 	              }
 	            }  
 	        }
@@ -1865,7 +1892,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		args(1) match {
 	      case "input_order" => assignAnn(args, array, array.indexOf(_))
 	      case "first_fail" => assignAnn(args, array, _.size)
-	        println("first fail")
 	        //use of assignAnn can be avoid by using a binary() and not binaryFirstFail()
 	        //cp.binaryFirstFail(array, assignAnn(args))
 	      case "anti_first_fail" => assignAnn(args, array, -_.size)
@@ -1906,7 +1932,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		args(2) match {
 		  case "indomain_min" => _.min
 		  case "indomain_max" => {
-		    println("max value")
 		    _.max
 		  }
 //		  case "indomain_middle" =>

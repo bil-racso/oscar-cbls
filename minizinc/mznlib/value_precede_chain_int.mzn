@@ -1,3 +1,3 @@
-predicate value_precede_chain_int(array[int] of int: c, array[int] of var int: x) = value_precede_chain_int(c, x);
+predicate value_precede_chain_int(array[int] of int: c, array[int] of var int: x) = oscar_value_precede_chain_int(c, x);
 
-predicate value_precede_chain_int(array[int] of int: c, array[int] of var int: x);
+predicate oscar_value_precede_chain_int(array[int] of int: c, array[int] of var int: x);
