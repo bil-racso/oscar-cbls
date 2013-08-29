@@ -878,11 +878,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_link_set_to_booleans" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_maximum_int" =>
-	      cp.add(maximum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
+	      cp.add(maximum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))))
 	    case "oscar_member_int" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_minimum_int" =>
-	      cp.add(minimum(getCPVarIntArray(varList(0)), getCPVarInt(varList(1))))
+	      cp.add(minimum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))))
 	    case "oscar_nvalue" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_partition_set" =>
