@@ -1737,8 +1737,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  //var xs = (Array[CPVarInt](), Array[VarState]())
 	  var x = Array[CPVarInt]()
 	  var s = Array[CPVarSet]()
+	  var xs = Array[CPVar]()
 	  var state = Array[VarState]()
 	  var setstate = Array[VarState]()
+	  var xsstate = Array[VarState]()
 	  if(true) { // array with all the variable so that it is possible to output correctly
 	      var output: Boolean = false // only used for formating the output
 	      //var c = 0
@@ -1752,10 +1754,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case FZType.V_BOOL => {
 	                val obj = fzo.asInstanceOf[VarBool]
 	                x :+= obj.cpvar
+	                xs :+= obj.cpvar
 	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-	                state :+= new VarState(obj.name,
+//	                state :+= new VarState(obj.name,
+//	                    output, false, false, false, 1, FZType.V_BOOL)
+	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_BOOL)
 	                output = false
 	              }
@@ -1765,6 +1770,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var last = false
 	                obj.cpvar.foreach { e =>
 	                  x :+= e
+	                  xs :+= e
 	                  obj.annotations.foreach { ann =>
             			if ( ann.name == "output_array" ) { 
             			  ann.args match {
@@ -1776,9 +1782,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
             			  }
             			}
 	                  }
-	                  state :+= new VarState(obj.name,
+	                  xsstate :+= new VarState(obj.name,
 	                		  output, true, first, last, 
 	                		  obj.cpvar.length, FZType.V_ARRAY_BOOL)
+//	                  state :+= new VarState(obj.name,
+//	                		  output, true, first, last, 
+//	                		  obj.cpvar.length, FZType.V_ARRAY_BOOL)
 	                  if(output) {
 	                    first = false
 	                  }
@@ -1794,11 +1803,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 //	                state = res._2
 	                val obj = fzo.asInstanceOf[VarInt]
 	                x :+= obj.cpvar
+	                xs :+= obj.cpvar
 	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-	                state :+= new VarState(obj.name,
+	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_INT)
+//	                state :+= new VarState(obj.name,
+//	                    output, false, false, false, 1, FZType.V_INT)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_INT => {
@@ -1807,6 +1819,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var last = false
 	                obj.cpvar.foreach { e =>
 	                	x :+= e
+	                	xs :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
 	            			  ann.args match {
@@ -1818,7 +1831,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			  }
 	            			}
 	                	}
-	                	state :+= new VarState(obj.name,
+//	                	state :+= new VarState(obj.name,
+//	                			output, true, first, last, 
+//	                			obj.cpvar.length, FZType.V_ARRAY_INT)
+	                	xsstate :+= new VarState(obj.name,
 	                			output, true, first, last, 
 	                			obj.cpvar.length, FZType.V_ARRAY_INT)
 	                	if(output) {
@@ -1833,13 +1849,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                val obj = fzo.asInstanceOf[VarSetInt]
 	                //println(obj.name)
 	                s :+= obj.cpvar
+	                xs :+= obj.cpvar
 	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) {
 	            		  output = true 
 	            		  //println("output " +obj.name)	  
 	            		}
 	                }
-	                setstate :+= new VarState(obj.name,
+//	                setstate :+= new VarState(obj.name,
+//	                    output, false, false, false, 1, FZType.V_SET_INT)
+	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_SET_INT)
 	                output = false
 	              }
@@ -1849,6 +1868,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                var last = false
 	                obj.cpvar.foreach { e =>
 	                	s :+= e
+	                	xs :+= e
 	                	obj.annotations.foreach { ann =>
 	            			if ( ann.name == "output_array" ) { 
 	            			  ann.args match {
@@ -1861,9 +1881,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			  
 	            			}
 	                	}
-	                	setstate :+= new VarState(obj.name,
+	                	xsstate :+= new VarState(obj.name,
 	                			output, true, first, last, 
 	                			obj.cpvar.length, FZType.V_ARRAY_SET)
+//	                	setstate :+= new VarState(obj.name,
+//	                			output, true, first, last, 
+//	                			obj.cpvar.length, FZType.V_ARRAY_SET)
 	                	if(output) {
 	                		first = false
 	                	}
@@ -1888,7 +1911,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        explo(ann, x, s)
 	        //explo(ann, xs._1)
 	        //format_output2(xs)
-	        format_output(x, state, s, setstate)
+	        format_output(xs, xsstate)
+	        //format_output(x, state, s, setstate)
 	      } run {
 	        if (options.all) Int.MaxValue 
 	        else if (options.nSolutions > 0) options.nSolutions 
@@ -1909,7 +1933,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      } exploration {
 	        explo(ann, x, s)
 	        //cp.binary(x)
-	        format_output(x, state, s, setstate)
+	        format_output(xs, xsstate)
+	        //format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
 	    }
@@ -1926,7 +1951,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      } exploration {
 	        explo(ann, x, s)
 	        //cp.binary(x)
-	        format_output(x, state, s, setstate)
+	        format_output(xs, xsstate)
+	        //format_output(x, state, s, setstate)
 	      } run ()
 	      println("==========")
 	      //println(System.currentTimeMillis/1000 - timestamp)
@@ -2058,72 +2084,118 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 //		}
 //	}
 	
-	/**
-	 * Print the output according to the mzn spec
-	 * @param x : array containing all CPVarInt and CPVarBool in the model
-	 * @param state : array of VarState containing information on the CPVarInt and CPVarBool
-	 * @param s : array containing all CPVarSet in the model
-	 * @param setstate : array of VarState containing information on the CPVarSet
-	 */
-	def format_output(x: Array[CPVarInt], state: Array[VarState], s: Array[CPVarSet], setstate: Array[VarState]) {
+//	/**
+//	 * Print the output according to the mzn spec
+//	 * @param x : array containing all CPVarInt and CPVarBool in the model
+//	 * @param state : array of VarState containing information on the CPVarInt and CPVarBool
+//	 * @param s : array containing all CPVarSet in the model
+//	 * @param setstate : array of VarState containing information on the CPVarSet
+//	 */
+//	def format_output(x: Array[CPVarInt], state: Array[VarState], s: Array[CPVarSet], setstate: Array[VarState]) {
+//		/*
+//		 * can be half the size by creating two tuple (x, state) 
+//		 * and (s, setstate) and iterating on both one after the other
+//		 */
+//	  // check the output for an array (test with tsp.mzn, compare with jacop
+//		for(i <- 0 until x.length) {
+//	    	if ( state(i).output ) { 
+//	    	  if ( state(i).array ) {
+//	    	    if (state(i).first) {
+//	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
+//	    	    	print(state(i).name + " = array" + ann.length + "d(")
+//	    	    	for(a <- ann) {
+//	    	    	  print(a.min + ".." + a.max + ", ")
+//	    	    	}
+//	    	    	print("[" + x(i).toString)
+//	    	    	if( state(i).last ) {
+//		    	    	println("]);")
+//		    	    }
+//	    	    } else if( state(i).last ) {
+//	    	    	println(", " + x(i).toString + "]);")
+//	    	    } else {
+//	    	    	print(", " + x(i).toString)
+//	    	    }
+//	    	  } else {
+//	    	  	println(state(i).name + " = " + x(i).toString + ";") 
+//	    	  }
+//	    	}
+//	    }
+//		for(i <- 0 until s.length) {
+//	    	if ( setstate(i).output ) { 
+//	    	  if ( setstate(i).array ) {
+//	    	    if (setstate(i).first) {
+//	    	    	val ann = getCPArrayOutputAnnotations(setstate(i).name)
+//	    	    	print(setstate(i).name + " = array" + ann.length + "d(")
+//	    	    	for(a <- ann) {
+//	    	    	  print(a.min + ".." + a.max + ", ")
+//	    	    	}
+//	    	    	print("[")
+//	    	    	printSet(s(i))
+//    	    	    if( setstate(i).last ) {
+//    	    	    	println("]);")
+//		    	    }
+//	    	    } else if( setstate(i).last ) {
+//	    	    	print(", ")
+//	    	    	printSet(s(i)) 
+//	    	    	println("]);")
+//	    	    } else {
+//	    	    	print(", ")
+//	    	    	printSet(s(i))
+//	    	    }
+//	    	  } else {
+//	    	    print(setstate(i).name + " = ")
+//	    	    printSet(s(i))
+//	    	    println(";")
+//	    	  }
+//	    	}
+//	    }
+//	    println("----------")
+//	}
+	
+	def format_output(x: Array[CPVar], state: Array[VarState]) {
 		/*
 		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
 		 */
 	  // check the output for an array (test with tsp.mzn, compare with jacop
-		for(i <- 0 until x.length) {
-	    	if ( state(i).output ) { 
-	    	  if ( state(i).array ) {
-	    	    if (state(i).first) {
-	    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
-	    	    	print(state(i).name + " = array" + ann.length + "d(")
-	    	    	for(a <- ann) {
-	    	    	  print(a.min + ".." + a.max + ", ")
-	    	    	}
-	    	    	print("[" + x(i).toString)
-	    	    	if( state(i).last ) {
-		    	    	println("]);")
-		    	    }
-	    	    } else if( state(i).last ) {
-	    	    	println(", " + x(i).toString + "]);")
-	    	    } else {
-	    	    	print(", " + x(i).toString)
-	    	    }
-	    	  } else {
-	    	  	println(state(i).name + " = " + x(i).toString + ";") 
-	    	  }
-	    	}
-	    }
-		for(i <- 0 until s.length) {
-	    	if ( setstate(i).output ) { 
-	    	  if ( setstate(i).array ) {
-	    	    if (setstate(i).first) {
-	    	    	val ann = getCPArrayOutputAnnotations(setstate(i).name)
-	    	    	print(setstate(i).name + " = array" + ann.length + "d(")
-	    	    	for(a <- ann) {
-	    	    	  print(a.min + ".." + a.max + ", ")
-	    	    	}
-	    	    	print("[")
-	    	    	printSet(s(i))
-    	    	    if( setstate(i).last ) {
-    	    	    	println("]);")
-		    	    }
-	    	    } else if( setstate(i).last ) {
-	    	    	print(", ")
-	    	    	printSet(s(i)) 
+	  def printCPVar(cpvar: CPVar) {
+	    if(cpvar.isInstanceOf[CPVarSet]) {
+    	  printSet(cpvar.asInstanceOf[CPVarSet]	)
+    	} else {
+    	  print(cpvar.toString)
+    	}
+	  }
+	  
+	  for(i <- 0 until x.length) {
+    	if ( state(i).output ) { 
+    	  if ( state(i).array ) {
+    	    if (state(i).first) {
+    	    	val ann = getCPArrayOutputAnnotations(state(i).name)
+    	    	print(state(i).name + " = array" + ann.length + "d(")
+    	    	for(a <- ann) {
+    	    	  print(a.min + ".." + a.max + ", ")
+    	    	}
+    	    	print("[")
+    	    	printCPVar(x(i))
+    	    	if( state(i).last ) {
 	    	    	println("]);")
-	    	    } else {
-	    	    	print(", ")
-	    	    	printSet(s(i))
 	    	    }
-	    	  } else {
-	    	    print(setstate(i).name + " = ")
-	    	    printSet(s(i))
-	    	    println(";")
-	    	  }
-	    	}
-	    }
-	    println("----------")
+    	    } else if( state(i).last ) {
+    	    	print(", ")
+    	    	printCPVar(x(i))
+    	    	println("]);")
+    	    } else {
+    	    	print(", ")
+    	    	printCPVar(x(i))
+    	    }
+    	  } else {
+    	    print(state(i).name + " = ")
+    	    printCPVar(x(i))
+    	    println(";")
+    	  }
+    	}
+	  }
+	  println("----------")
 	}
 	
 	/**
