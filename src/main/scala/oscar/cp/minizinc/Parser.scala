@@ -25,6 +25,11 @@ import java.sql.Time
 import oscar.cp.constraints.WeightedSum
 
 class Parser extends JavaTokenParsers {// RegexParsers {
+  
+	val UNDEFINED_VARINT_RANGE_MAX = 10000000
+	val UNDEFINED_VARINT_RANGE_MIN = -10000000
+	val PARTICULAR_SOLUTIONS = true
+	
 	var model : Minizinc_model = new Minizinc_model
 	val cp = CPSolver()
 	
@@ -541,7 +546,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
 	          if(s.isEmpty) {
-	            CPVarInt(cp, -10000000, 10000000)
+	            CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
 	          } else {
 	            CPVarInt(cp, s)
 	          }
@@ -593,7 +598,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       ((id, (FZType.V_ARRAY_INT,
         new VarArrayInt(s, ann, 
             if(s.isEmpty) {
-            	Array.fill(l){CPVarInt(cp, -10000000, 10000000)}
+            	Array.fill(l){CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)}
 	          } else {
 	            Array.fill(l){CPVarInt(cp, s)}
 	          }
@@ -1970,11 +1975,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 			}
           }
           /*
-           * comment the line below to get the admissible domains for the variable in the solution
-           * uncomment it to have a particular solution
-           * if commented, the output won't necessarily be readable for the formatting tool of minizinc
+           * PARTICULAR_SOLUTIONS == false  to get the admissible domains for the variable in the solution
+           * PARTICULAR_SOLUTIONS == true  to have a particular solution
+           * if false, the output won't necessarily be readable for the formatting tool of minizinc
            */
-          //cp.binary(x)
+          if(PARTICULAR_SOLUTIONS) {
+        	  cp.binary(x)
+          }
         }
 		if(!s.isEmpty) {
           for(e <- s.toList.suspendable){
