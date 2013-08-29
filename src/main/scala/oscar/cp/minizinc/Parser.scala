@@ -438,9 +438,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 						      	    throw new Exception(y + " not in the domain of " + id)
 						      	  }
       			    		    case _ => 
-      			    		      val cpvar = CPVarInt(cp, s)
-      			    		      cp.add(cpvar == getCPVarInt(d))
-      			    		      cpvar
+      			    		      getCPVarInt(d)
       			    		  }
 	      			        ) toArray
 	      		, id))))
@@ -524,7 +522,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
 	          if(s.isEmpty) {
-	            CPVarInt(cp, -10000, 10000)
+	            CPVarInt(cp, -10000000, 10000000)
 	          } else {
 	            CPVarInt(cp, s)
 	          }
@@ -569,7 +567,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       ((id, (FZType.V_ARRAY_INT,
         new VarArrayInt(s, ann, 
             if(s.isEmpty) {
-            	Array.fill(l){CPVarInt(cp, -10000, 10000)}
+            	Array.fill(l){CPVarInt(cp, -10000000, 10000000)}
 	          } else {
 	            Array.fill(l){CPVarInt(cp, s)}
 	          }
