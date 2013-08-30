@@ -358,7 +358,7 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt], y: CPVarInt): Constraint = {
-    new WeightedSum(w,x,y)
+    new WeightedSum2(w,x,y)
   }
   
   /**
@@ -366,7 +366,7 @@ trait Constraints {
    * @return y==sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt], y: Int): Constraint = {
-    new WeightedSum(w,x,y)
+    weightedSum(w,x,CPVarInt(x(0).s,y))
   }  
 
   /**

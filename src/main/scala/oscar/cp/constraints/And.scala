@@ -25,6 +25,8 @@ import oscar.cp.core.CPOutcome._
 class And(val X: Array[CPVarBool], val b: CPVarBool) extends Constraint(b.s, "AndReif") {
 
   var unbound: ReversibleSparseSet = null
+  priorityBindL1 = CPStore.MAXPRIORL1-1
+  
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (X.size == 2) {

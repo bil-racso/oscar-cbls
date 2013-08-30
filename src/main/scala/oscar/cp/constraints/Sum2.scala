@@ -81,10 +81,8 @@ class Sum2(val X: Array[CPVarInt], val y: CPVarInt) extends Constraint(y.s, "Sum
         if (!x(i).isBound) {
           val ymini = ymin - x(i).min
           val ximax = y.max - ymini
-          if (x(i).updateMax(ximax) == Failure) {
-            return Failure
-          }
-          // if (x(i).max == ximax) pruneMin = false
+          val oc = x(i).updateMax(ximax) // cannot fail
+          assert(oc != Failure)
         } else setBound(i)
         i += 1
       }
@@ -96,9 +94,8 @@ class Sum2(val X: Array[CPVarInt], val y: CPVarInt) extends Constraint(y.s, "Sum
         if (!x(i).isBound) {
           val ymaxi = ymax - x(i).max
           val ximin = y.min - ymaxi
-          if (x(i).updateMin(ximin) == Failure) {
-            return Failure
-          }
+          val oc = x(i).updateMin(ximin) // cannot fail
+          assert(oc != Failure)
         } else setBound(i)
         i += 1
       }
