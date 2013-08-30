@@ -1145,8 +1145,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          val boolvar = getCPVarBool(varList(1))
 	          cstr match {
 	            case "array_bool_and" => {
-	              //cp.add(new oscar.cp.constraints.AndReif(array,boolvar))
-	              cp.add(new GrEqVarReif(sum(array), CPVarInt(cp, array.length), boolvar))
+	              cp.add(new oscar.cp.constraints.And(array,boolvar))
+	              //cp.add(new GrEqVarReif(sum(array), CPVarInt(cp, array.length), boolvar))
 	            }
 	            case "array_bool_or" => cp.add(new Or(array, boolvar))
 	          }
@@ -1252,7 +1252,25 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         case "int_lin_ne" => 
           cp.add(weightedSum(cst, cpvar) != c)
         case "int_lin_eq" => {
-          cp.add(weightedSum(cst,cpvar,c))
+          if (c == 0 && cst(0) == -1 && cst.tail.forall(_==1)) {
+            // sum constraint
+            System.err.println("int_lin_eq, sum identified")
+            cp.add(sum(cpvar.tail,cpvar.head))
+          } else if (c == 0 && cst(0) == 1 && cst.tail.forall(_ == -1)) {
+            System.err.println("int_lin_eq, sum identified")
+            cp.add(sum(cpvar.tail,cpvar.head))            
+          } else if (c == 0 && cst.last == -1 && cst.reverse.tail.forall(_ == 1)) {
+            System.err.println("int_lin_eq, sum identified")
+            cp.add(sum(cpvar.reverse.tail,cpvar.last))
+          }
+          else if (c == 0 && cst.last == 1 && cst.reverse.tail.forall(_ == -1)) {
+            System.err.println("int_lin_eq, sum identified")
+            cp.add(sum(cpvar.reverse.tail,cpvar.last))
+          }
+          else {
+            cp.add(weightedSum(cst,cpvar,c))
+          }
+          
         }
         case "int_lin_le" => 
           cp.add(weightedSum(cst, cpvar) <= c) 

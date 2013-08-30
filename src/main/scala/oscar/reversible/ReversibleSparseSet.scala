@@ -113,7 +113,19 @@ class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxVal
       }
     }*/
     
-    if (!isEmpty) max = iterator.max
+    if (!isEmpty) {
+      // max = iterator.max
+      var i = 0
+      var M = values(i)
+      val s = _size.value
+      while (i < s) {
+        if (values(i) > M) {
+          M = values(i)
+        }
+        i += 1
+      }
+      max = M + offset
+    }
   }
 
   private def updateMinValRemoved(v: Int) {
@@ -130,7 +142,20 @@ class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxVal
       }
     }*/
     
-    if (!isEmpty) min = iterator.min
+    if (!isEmpty) {
+      // min = iterator.min
+      var i = 0
+      var m = values(i)
+      val s = _size.value
+      while (i < s) {
+        if (values(i) < m) {
+          m = values(i)
+        }
+        i += 1
+      }
+      min = m + offset
+    }
+     
   }
 
   def removeValue(v: Int): Boolean = {

@@ -19,38 +19,40 @@ import oscar.reversible._
 import oscar.cp.core.CPOutcome._
 
 /**
- * and_i x_i <--> bi 
+ * x || y <--> b 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class AndReif(val X: Array[CPVarBool], val b: CPVarBool) extends Constraint(b.s, "AndReif") {
+class BinaryOr(val x: CPVarBool, val y: CPVarBool, val b: CPVarBool) extends Constraint(b.s, "BinaryOrReif") {
 
+  
   override def setup(l: CPPropagStrength): CPOutcome = {
-    X.foreach(_.callPropagateWhenBind(this))
+    x.callPropagateWhenBind(this)
+    y.callPropagateWhenBind(this)
     b.callPropagateWhenBind(this)
     propagate()
   }
-  
-  override def propagate(): CPOutcome = {
-    if (b.isBoundTo(1)) {
-      for (x <- X) {
-        if (x.assign(1) == Failure) return Failure
-      }
-      Success
-    }
-    else if (b.isBoundTo(0)) {
-      if (X.exists(_.isBoundTo(0))) Success
-      else Suspend
-    }
-    else if (X.exists(_.isBoundTo(0))) {
-      b.assign(0)
-      Success
-    } else if (X.forall(_.isBoundTo(1))) {
-      b.assign(1)
-      Success
-    } else {
-      Suspend
-    }
 
+  override def propagate(): CPOutcome = {
+    if (b.isBoundTo(0)) {
+      if (x.assign(0) == Failure || y.assign(0) == Failure) Failure
+      else Success
+    } 
+    else if (b.isBoundTo(1)) {
+      if (x.isBoundTo(0)) y.assign(1)
+      else if (y.isBoundTo(0)) x.assign(1)
+      else Suspend
+    } else {
+      // b is not bound
+      if (x.isBoundTo(1) || y.isBoundTo(1)) {
+        if (b.assign(1) == Failure) Failure
+        else Success
+      } else if (x.isBoundTo(0) && y.isBoundTo(0)) {
+        b.assign(0)
+        Success
+      } else {
+        Suspend
+      }
+    }
   }
 }
 
