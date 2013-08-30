@@ -1,4 +1,0 @@
-var set of {2, 6, 8}: listset;
-var set of 5..9: range;
-var 12..12: t = 12;
-solve satisfy;
