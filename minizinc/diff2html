@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#TODO check result of m01, still buggy
+#the deletion is not working properly
+
 orig=$1
 new=$2
 aColor="#88FF88"
@@ -7,16 +10,23 @@ cColor="#8888FF"
 dColor="#FF8888"
 noCol="#FFFFFF"
 
+current=0
+
 RES=$(diff $orig $new)
 # echo "$RES"
 
+#should print the part of the document that is not changed
+
 function getBlock {
+  f=$1
+  start=$2
+  end=$3
+  color=$4
   # $1 is file
-  # $2 are the lines numbers separeted by a coma
-  i1=$( echo "$2" |cut -d, -f1 )
-  i2=$( echo "$2" |cut -d, -f2 )
-  block=$(sed -n "${i1},${i2}p" < $1)
-  echo "<td bgcolor=$3>"
+  # $2 is the line where the block begins
+  # $3 is the line where the bloch ends
+  block=$(sed -n "${start},${end}p" < $f)
+  echo "<td bgcolor=$color>"
   # echo "<table>"
   while read -r line; do
     # echo "<tr><td>$line</td></tr>"
@@ -27,16 +37,45 @@ function getBlock {
   # echo "<td>$(sed -n "${i1},${i2}p" < $1)</td>"
 }
 
+function unchangedContent {
+  sep=$3
+  if [[ $sep = "a" ]]; then
+    s=$(($1 + 1))
+  else
+    s=$1
+  fi
+  e=$2
+  # echo $current + $s + $e
+  if [[ $(($current + 2)) = $s ]]; then
+    # echo unchanged
+    unchanged=$(sed -n "$(($current + 1))p" < $orig)
+    echo "<tr><td>$unchanged</td>"
+    echo "<td>$unchanged</td></tr>"
+  elif [[ $(($current + 2)) -lt $s ]]; then
+    # echo several lines
+    getBlock $orig $(($current + 1)) $(($s - 1)) $noCol
+    getBlock $orig $(($current + 1)) $(($s - 1)) $noCol
+    echo "</tr>"
+    if [[ $sep != "e" ]]; then
+      echo "<tr>"
+    fi
+    # echo "<tr>"
+  fi
+  let current=$e
+}
+
 function newFileContent {
   p2=$1
   sep=$2
   if [[ "$p2" == *,* ]]; then
+    i1=$( echo "$p2" |cut -d, -f1 )
+    i2=$( echo "$p2" |cut -d, -f2 )
     if [[ "$sep" = "a" ]]; then
-      getBlock $new $p2 $aColor
+      getBlock $new $i1 $i2 $aColor
     elif [[ "$sep" = "c" ]]; then
-      getBlock $new $p2 $cColor
+      getBlock $new $i1 $i2 $cColor
     elif [[ "$sep" = "d" ]]; then
-      getBlock $new $p2 $dColor
+      getBlock $new $i1 $i2 $dColor
     fi
     # getBlock $new $p2 $noCol
   else
@@ -62,19 +101,25 @@ function origFileContent {
   p1=$1
   sep=$2
   if [[ "$p1" == *,* ]]; then
+    i1=$( echo "$p1" |cut -d, -f1 )
+    i2=$( echo "$p1" |cut -d, -f2 )
+    unchangedContent $i1 $i2 $sep
     # Maybe need to split the two case to set colors
     if [[ $sep = "c" ]]; then
-      getBlock $orig $p1 $cColor
+      getBlock $orig $i1 $i2 $cColor
     elif [[ $sep = "d" ]]; then
-      getBlock $orig $p1 $dColor
+      getBlock $orig $i1 $i2 $dColor
     fi
   else
     if [[ $sep = "a" ]]; then
+      unchangedContent $p1 $p1 $sep
       echo "<td bgcolor=$aColor>Line added here</td>"
     # Maybe need to split the two case to set colors
     elif [[ $sep = "c" ]]; then
+      unchangedContent $p1 $p1 $sep
       echo "<td bgcolor=${cColor}>$(sed -n "${p1}p" < $orig)</td>"
     elif [[ $sep = "d" ]]; then
+      unchangedContent $p1 $p1 $sep
       echo "<td bgcolor=${dColor}>$(sed -n "${p1}p" < $orig)</td>"
     fi
   fi
@@ -94,7 +139,7 @@ function printToHtml {
 
 echo "<table border="0.5" width="50%">"
 echo "<tr><th width="50%">${orig}</th><th width="50%">${new}</th></tr>" 
-echo "$RES" | while read line; do 
+while read line; do 
   # echo $a
   i=[0-9][0-9]*
   if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
@@ -106,6 +151,8 @@ echo "$RES" | while read line; do
       printToHtml $line d
     fi
   fi
-done
+done < <(echo "$RES")
+nbLines=$(($(echo "$RES" | wc -l) + 2))
+unchangedContent $nbLines $nbLines e
 echo "</table>"
 
