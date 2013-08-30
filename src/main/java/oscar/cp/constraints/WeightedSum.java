@@ -91,6 +91,7 @@ public class WeightedSum extends Constraint {
 		if (y.updateMin(minsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
+		if (y.max() == maxsumx && y.min() == minsumx) return CPOutcome.Suspend;
 		
 		//w1 x1 + w2 x2 = y
 	    //x1 = (y - w2 x2)/w1

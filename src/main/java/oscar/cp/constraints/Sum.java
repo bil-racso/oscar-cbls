@@ -14,11 +14,14 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
+import java.util.Arrays;
+
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
+import oscar.reversible.ReversibleInt;
 
 /**
  * Sum Constraint: x[0]+x[1]+...+x[n] = y
@@ -28,6 +31,7 @@ public class Sum extends Constraint {
 	
 	private CPVarInt [] x;
 	private CPVarInt y;
+
 
 	public Sum(CPVarInt [] x, CPVarInt y) {
 		super(x[0].s(),"Sum");
@@ -47,9 +51,13 @@ public class Sum extends Constraint {
 	public Sum(CPVarBool [] x, CPVarInt y) {
 		this((CPVarInt[]) x,y);
 	}
+	
+
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
+
+		//idempotent_$eq(true);
 		if (propagate() == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -76,18 +84,29 @@ public class Sum extends Constraint {
 		if (y.updateMin(minsumx) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
+		boolean pruneMin = y.min() != minsumx;
+		boolean pruneMax = y.max() != maxsumx;
+		// prune max
+		if (pruneMax) {
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isBound()) continue;
-			int maxsumxi = maxsumx - x[i].getMax();
 			int minsumxi = minsumx - x[i].getMin();
 			int maxi = y.getMax() - minsumxi;
-			int mini = y.getMin() - maxsumxi;
 			if (x[i].updateMax(maxi) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
+		}
+		}
+		// prune min
+		if (pruneMin) {
+		for (int i = 0; i < x.length; i++) {
+			if (x[i].isBound()) continue;
+			int maxsumxi = maxsumx - x[i].getMax();
+			int mini = y.getMin() - maxsumxi;
 			if (x[i].updateMin(mini) ==  CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
+		}		
 		}
 			
 		return CPOutcome.Suspend;

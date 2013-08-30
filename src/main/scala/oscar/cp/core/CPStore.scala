@@ -78,6 +78,7 @@ class CPStore extends ReversibleSearchNode {
 	}
 	
 	def addQueueL2(c: Constraint): Int = {
+	    //println(c+" active:"+c.isActive()+" inqueue:"+c.isInQueue() + " in propagate"+ c.inPropagate()+ " indempotent:"+c.idempotent)
         if ((c.isActive() && !c.isInQueue()) && (!c.inPropagate() || !c.idempotent)) {
 			c.setInQueue()
 			propagQueueL2(c.priorityL2).add(c)
@@ -94,12 +95,16 @@ class CPStore extends ReversibleSearchNode {
      */
 	def notifyL2(constraints: ConstraintQueue) {
 		var q = constraints;
+		//println("constraints before notifyL2:"+constraints)
 		while (q != null) {
+			
 			val c = q.cons;
+			//println("add constraint "+c+" on L2 queue")
 			val p = addQueueL2(c);
 			highestPriorL2 = Math.max(p, highestPriorL2);
 			q = q.next
 		}
+		//println("constraints after notifyL2:"+constraints)
 	}
 	
 	private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome) {

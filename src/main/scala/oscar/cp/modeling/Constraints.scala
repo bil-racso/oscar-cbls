@@ -265,7 +265,21 @@ trait Constraints {
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
   def sum(vars: Array[CPVarInt], s: CPVarInt): Constraint = {
-    new Sum(vars, s)
+    /*
+    var x = vars
+    while (x.size > 2) {
+      //System.err.println("sum"+x.size)
+      val y = x.sliding(2, 2).toArray
+      x = y.map{ arg =>
+      	if (arg.size == 2) arg(0)+arg(1)
+      	else arg(0)
+      }.reverse
+    }
+    if (x.size == 2) new BinarySum(x(0),x(1),s)
+    else x(0) == s
+    */
+    
+    new oscar.cp.constraints.Sum2(vars, s)
   }
 
   /**

@@ -45,12 +45,17 @@ public class Or extends Constraint {
 		super(x[0].s(),"Or");
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s(),0); // number of values assigned to false
-		ytrue = new ReversibleBool(s(),false);
+
 	}
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
+	    if (x.length == 2) {
+	        if (s().post(new BinaryOr(x[0],x[1],y)) == CPOutcome.Failure) return CPOutcome.Failure;
+	        else return CPOutcome.Success;
+	    }
+		nbBound = new ReversibleInt(s(),0); // number of values assigned to false
+		ytrue = new ReversibleBool(s(),false);
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isTrue()) {
 				if (y.assign(1) == CPOutcome.Failure) {

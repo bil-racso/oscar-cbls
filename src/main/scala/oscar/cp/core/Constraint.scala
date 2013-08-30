@@ -93,7 +93,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     toSnapshotVarSet.foreach(x => snapshotsVarSet(x).update())
   }  
 
-  private var priorL2 = CPStore.MAXPRIORL2
+  private var priorL2 = CPStore.MAXPRIORL2 - 2
   private var priorBindL1 = CPStore.MAXPRIORL1 - 1
   private var priorBoundsL1 = CPStore.MAXPRIORL1 - 2
   private var priorRemoveL1 = CPStore.MAXPRIORL1 - 2
