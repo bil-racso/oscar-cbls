@@ -1,0 +1,78 @@
+#!/bin/bash
+
+orig=$1
+new=$2
+
+RES=$(diff $orig $new)
+# echo "$RES"
+
+function getBlock {
+  # $1 is file
+  # $2 are the lines numbers separeted by a coma
+  i1=$( echo "$2" |cut -d, -f1 )
+  i2=$( echo "$2" |cut -d, -f2 )
+  echo "<td>$(sed -n "${i1},${i2}p" < $1)</td>" >> test_result.html
+}
+
+function newFileContent {
+  p2=$1
+  if [[ "$p2" == *,* ]]; then
+    getBlock $new $p2
+  else
+    echo "<td>" >> test_result.html
+    echo $(sed -n "${p2}p" < $new) >> test_result.html
+    echo "</td>" >> test_result.html
+  fi
+}
+
+function origFileContent {
+  p1=$1
+  sep=$2
+  if [[ "$p1" == *,* ]]; then
+    # Maybe need to split the two case to set colors
+    if [[ $sep = "c" || $sep = "d" ]]; then
+      getBlock $orig $p1
+    fi
+  else
+    if [[ $sep = "a" ]]; then
+      echo "<td>Line added here</td>" >> test_result.html
+    # Maybe need to split the two case to set colors
+    elif [[ $sep = "c" || $sep = "d" ]]; then
+      echo "<td>$(sed -n "${p1}p" < $orig)</td>" >> test_result.html
+    fi
+  fi
+}
+
+function printToHtml {
+  line=$1
+  del=$2
+  echo "<tr>" >> test_result.html
+  p1=$( echo "$line" |cut -d$del -f1 )
+  p2=$( echo "$line" |cut -d$del -f2 )
+
+  origFileContent $p1 $del
+  newFileContent $p2
+  echo "</tr>" >> test_result.html
+}
+
+echo "<html>" > test_result.html
+echo "<title>Test of flatzinc models</title>" >> test_result.html
+echo "<body>" >> test_result.html
+#echo "$RES"
+echo "<table>" >> test_result.html
+echo "$RES" | while read line; do 
+	# echo $a
+	i=[0-9][0-9]*
+  if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
+    if [[ "$line" == *a* ]]; then
+      printToHtml $line a
+    elif [[ "$line" == *c* ]]; then
+      printToHtml $line c
+    elif [[ "$line" == *d* ]]; then
+      printToHtml $line d
+    fi
+  fi
+done
+echo "</table>" >> test_result.html
+echo "</html>" >> test_result.html
+echo "</body>" >> test_result.html
