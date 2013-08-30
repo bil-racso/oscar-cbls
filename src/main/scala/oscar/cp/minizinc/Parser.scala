@@ -1896,7 +1896,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                output = false
 	              }
 	              case _ => {
-	                System.err.println("The type " + tp.toString() + " is not supported/relevant for the solver")
+	                //System.err.println("The type " + tp.toString() + " is not supported/relevant for the solver")
 	              }
 	            }  
 	        }
@@ -2153,6 +2153,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 //	}
 	
 	def format_output(x: Array[CPVar], state: Array[VarState]) {
+	  //TODO : print the right output when no solution is found
 		/*
 		 * can be half the size by creating two tuple (x, state) 
 		 * and (s, setstate) and iterating on both one after the other
