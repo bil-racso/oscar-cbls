@@ -1,0 +1,111 @@
+#!/bin/bash
+
+orig=$1
+new=$2
+aColor="#88FF88"
+cColor="#8888FF"
+dColor="#FF8888"
+noCol="#FFFFFF"
+
+RES=$(diff $orig $new)
+# echo "$RES"
+
+function getBlock {
+  # $1 is file
+  # $2 are the lines numbers separeted by a coma
+  i1=$( echo "$2" |cut -d, -f1 )
+  i2=$( echo "$2" |cut -d, -f2 )
+  block=$(sed -n "${i1},${i2}p" < $1)
+  echo "<td bgcolor=$3>"
+  # echo "<table>"
+  while read -r line; do
+    # echo "<tr><td>$line</td></tr>"
+    echo "$line<br/>"
+  done <<< "$block"
+  # echo "</table>"
+  echo "</td>"
+  # echo "<td>$(sed -n "${i1},${i2}p" < $1)</td>"
+}
+
+function newFileContent {
+  p2=$1
+  sep=$2
+  if [[ "$p2" == *,* ]]; then
+    if [[ "$sep" = "a" ]]; then
+      getBlock $new $p2 $aColor
+    elif [[ "$sep" = "c" ]]; then
+      getBlock $new $p2 $cColor
+    elif [[ "$sep" = "d" ]]; then
+      getBlock $new $p2 $dColor
+    fi
+    # getBlock $new $p2 $noCol
+  else
+    if [[ "$sep" = "a" ]]; then
+      echo "<td bgcolor=$aColor>"
+    elif [[ "$sep" = "c" ]]; then
+      echo "<td bgcolor=$cColor>"
+    elif [[ "$sep" = "d" ]]; then
+      echo "<td bgcolor=$dColor>"
+    else
+      echo "<td>"
+    fi
+    if [[ $p2 = 0 ]]; then
+      echo "Line deleted"
+    else
+      echo $(sed -n "${p2}p" < $new)
+    fi
+    echo "</td>"
+  fi
+}
+
+function origFileContent {
+  p1=$1
+  sep=$2
+  if [[ "$p1" == *,* ]]; then
+    # Maybe need to split the two case to set colors
+    if [[ $sep = "c" ]]; then
+      getBlock $orig $p1 $cColor
+    elif [[ $sep = "d" ]]; then
+      getBlock $orig $p1 $dColor
+    fi
+  else
+    if [[ $sep = "a" ]]; then
+      echo "<td bgcolor=$aColor>Line added here</td>"
+    # Maybe need to split the two case to set colors
+    elif [[ $sep = "c" ]]; then
+      echo "<td bgcolor=${cColor}>$(sed -n "${p1}p" < $orig)</td>"
+    elif [[ $sep = "d" ]]; then
+      echo "<td bgcolor=${dColor}>$(sed -n "${p1}p" < $orig)</td>"
+    fi
+  fi
+}
+
+function printToHtml {
+  line=$1
+  del=$2
+  echo "<tr>"
+  p1=$( echo "$line" |cut -d$del -f1 )
+  p2=$( echo "$line" |cut -d$del -f2 )
+
+  origFileContent $p1 $del
+  newFileContent $p2 $del
+  echo "</tr>"
+}
+
+echo "<table border="0.5" width="50%">"
+echo "<tr><th width="50%">${orig}</th><th width="50%">${new}</th></tr>" 
+echo "$RES" | while read line; do 
+  # echo $a
+  i=[0-9][0-9]*
+  if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
+    if [[ "$line" == *a* ]]; then
+      printToHtml $line a
+    elif [[ "$line" == *c* ]]; then
+      printToHtml $line c
+    elif [[ "$line" == *d* ]]; then
+      printToHtml $line d
+    fi
+  fi
+done
+echo "</table>"
+
