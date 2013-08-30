@@ -26,9 +26,10 @@ class BinarySum(val x: CPVarInt, val y: CPVarInt, val z: CPVarInt) extends Const
 
   
   override def setup(l: CPPropagStrength): CPOutcome = {
-    x.callPropagateWhenBoundsChange(this)
-    y.callPropagateWhenBoundsChange(this)
-    z.callPropagateWhenBoundsChange(this)
+    priorityL2 = CPStore.MAXPRIORL2 - 1
+    if (!x.isBound) x.callPropagateWhenBoundsChange(this)
+    if (!y.isBound) y.callPropagateWhenBoundsChange(this)
+    if (!z.isBound) z.callPropagateWhenBoundsChange(this)
     propagate()
   }
 

@@ -138,7 +138,7 @@ public class AtLeastNValueAC extends Constraint {
 
 
 	public CPOutcome propagate() {		
-		for(int k = 0; k < x.length; k++) {
+		for (int k = 0; k < x.length; k++) {
 			if (match[k] != NONE) {
 				if (!x[k].hasValue(match[k])) {
 					valMatch[match[k]-min] = -1;
@@ -154,7 +154,7 @@ public class AtLeastNValueAC extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (nValueVar.getMin() > maxMatching) {
-			System.out.println("fail detected");
+			//System.out.println("fail detected");
 			return CPOutcome.Failure;
 		}
 		//lower bound of nValueVar is pruned by CotCPAtLeastNValueIFW

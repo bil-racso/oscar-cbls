@@ -278,8 +278,8 @@ trait Constraints {
     if (x.size == 2) new BinarySum(x(0),x(1),s)
     else x(0) == s
     */
-    
-    new oscar.cp.constraints.Sum2(vars, s)
+    if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
+    else new oscar.cp.constraints.Sum2(vars, s)
   }
 
   /**
