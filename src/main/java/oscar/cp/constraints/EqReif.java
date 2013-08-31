@@ -45,8 +45,8 @@ public class EqReif extends Constraint {
 		this.v = v;
 		this.b = b;
 		
-		priorityBindL1_$eq(CPStore.MAXPRIORL1());
-		priorityL2_$eq(CPStore.MAXPRIORL2());
+		//priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		//priorityL2_$eq(CPStore.MAXPRIORL2());
 	}
 	
 	@Override

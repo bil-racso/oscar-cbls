@@ -32,7 +32,7 @@ public class EqReifVar extends Constraint {
 	
 
 	/**
-     * Ask that x and v take different values if and only if b is true. <br>
+     * Ask that x and v take equals values if and only if b is true. <br>
      * (x == y) <=> b
      * @param x
      * @param y
