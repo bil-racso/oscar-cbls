@@ -94,8 +94,11 @@ public class Eq extends Constraint {
 			}
 		}
 		if (!x.isBound() && !y.isBound()){
-			x.callUpdateBoundsWhenBoundsChange(this);
-			y.callUpdateBoundsWhenBoundsChange(this);
+			if (!(x.min() >= 0  && x.max() <= 1 && y.min() >= 0 && y.max() <= 1)) {
+				x.callUpdateBoundsWhenBoundsChange(this);
+				y.callUpdateBoundsWhenBoundsChange(this);
+			}
+			
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);
 			
