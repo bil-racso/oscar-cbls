@@ -1,42 +1,45 @@
 #!/bin/bash
+#author       : Debroux Léonard : leonard.debroux@gmail.com 
+#description  : Outputs an html version of the diff 
+#                     of the two files in arg
+#date         : 31/08/2013
+#===========================================================
 
-#TODO check result of m01, still buggy
-#the deletion is not working properly
-
+# Constant declaration
 orig=$1
 new=$2
 aColor="#88FF88"
 cColor="#8888FF"
 dColor="#FF8888"
 noCol="#FFFFFF"
-
 current=0
 
+# Result of the diff of the two files
 RES=$(diff $orig $new)
-# echo "$RES"
 
-#should print the part of the document that is not changed
-
+# echoes a part of a file from a begining lines to an ending line
+# $1 : the file
+# $2 : the line where the block begins
+# $3 : the line where the bloch ends
+# $4 : the color of the cell
 function getBlock {
   f=$1
   start=$2
   end=$3
   color=$4
-  # $1 is file
-  # $2 is the line where the block begins
-  # $3 is the line where the bloch ends
   block=$(sed -n "${start},${end}p" < $f)
-  echo "<td bgcolor=$color>"
-  # echo "<table>"
+  echo -n "<td bgcolor=$color>"
   while read -r line; do
-    # echo "<tr><td>$line</td></tr>"
     echo "$line<br/>"
   done <<< "$block"
-  # echo "</table>"
-  echo "</td>"
-  # echo "<td>$(sed -n "${i1},${i2}p" < $1)</td>"
+  echo -n "</td>"
 }
 
+# Checks if some content in the original file wasn't change and 
+#   echoes if in a white cell
+# $1 : where a new different block of lines begins
+# $1 : where that different block ends
+# $3 : the type of change (addition, change or deletion)
 function unchangedContent {
   sep=$3
   if [[ $sep = "a" ]]; then
@@ -45,58 +48,25 @@ function unchangedContent {
     s=$1
   fi
   e=$2
-  # echo $current + $s + $e
   if [[ $(($current + 2)) = $s ]]; then
-    # echo unchanged
     unchanged=$(sed -n "$(($current + 1))p" < $orig)
-    echo "<tr><td>$unchanged</td>"
+    echo -n "<td>$unchanged</td>"
     echo "<td>$unchanged</td></tr>"
   elif [[ $(($current + 2)) -lt $s ]]; then
-    # echo several lines
     getBlock $orig $(($current + 1)) $(($s - 1)) $noCol
     getBlock $orig $(($current + 1)) $(($s - 1)) $noCol
     echo "</tr>"
-    if [[ $sep != "e" ]]; then
-      echo "<tr>"
-    fi
-    # echo "<tr>"
+  fi
+  if [[ "$sep" -ne "e" ]]; then
+    echo -n "<tr>"
   fi
   let current=$e
 }
 
-function newFileContent {
-  p2=$1
-  sep=$2
-  if [[ "$p2" == *,* ]]; then
-    i1=$( echo "$p2" |cut -d, -f1 )
-    i2=$( echo "$p2" |cut -d, -f2 )
-    if [[ "$sep" = "a" ]]; then
-      getBlock $new $i1 $i2 $aColor
-    elif [[ "$sep" = "c" ]]; then
-      getBlock $new $i1 $i2 $cColor
-    elif [[ "$sep" = "d" ]]; then
-      getBlock $new $i1 $i2 $dColor
-    fi
-    # getBlock $new $p2 $noCol
-  else
-    if [[ "$sep" = "a" ]]; then
-      echo "<td bgcolor=$aColor>"
-    elif [[ "$sep" = "c" ]]; then
-      echo "<td bgcolor=$cColor>"
-    elif [[ "$sep" = "d" ]]; then
-      echo "<td bgcolor=$dColor>"
-    else
-      echo "<td>"
-    fi
-    if [[ $p2 = 0 ]]; then
-      echo "Line deleted"
-    else
-      echo $(sed -n "${p2}p" < $new)
-    fi
-    echo "</td>"
-  fi
-}
-
+# Given some line(s) indices and a type of changes, 
+#   echoes that original content
+# $1 : the line(s) indices (can be # or #,#)
+# $2 : the type of change (addition, change or deletion)
 function origFileContent {
   p1=$1
   sep=$2
@@ -113,22 +83,62 @@ function origFileContent {
   else
     if [[ $sep = "a" ]]; then
       unchangedContent $p1 $p1 $sep
-      echo "<td bgcolor=$aColor>Line added here</td>"
+      echo -n "<td bgcolor=$aColor>Line(s) added here</td>"
     # Maybe need to split the two case to set colors
     elif [[ $sep = "c" ]]; then
       unchangedContent $p1 $p1 $sep
-      echo "<td bgcolor=${cColor}>$(sed -n "${p1}p" < $orig)</td>"
+      echo -n "<td bgcolor=${cColor}>$(sed -n "${p1}p" < $orig)</td>"
     elif [[ $sep = "d" ]]; then
       unchangedContent $p1 $p1 $sep
-      echo "<td bgcolor=${dColor}>$(sed -n "${p1}p" < $orig)</td>"
+      echo -n "<td bgcolor=${dColor}>$(sed -n "${p1}p" < $orig)</td>"
     fi
   fi
 }
 
+# Given some line(s) indices and a type of changes, 
+#   echoes that new content
+# $1 : the line(s) indices (can be # or #,#)
+# $2 : the type of change (addition, change or deletion)
+function newFileContent {
+  p2=$1
+  sep=$2
+  if [[ "$p2" == *,* ]]; then
+    i1=$( echo "$p2" |cut -d, -f1 )
+    i2=$( echo "$p2" |cut -d, -f2 )
+    if [[ "$sep" = "a" ]]; then
+      getBlock $new $i1 $i2 $aColor
+    elif [[ "$sep" = "c" ]]; then
+      getBlock $new $i1 $i2 $cColor
+    # elif [[ "$sep" = "d" ]]; then
+    #   getBlock $new $i1 $i2 $dColor
+    fi
+    # getBlock $new $p2 $noCol
+  else
+    if [[ "$sep" = "a" ]]; then
+      echo -n "<td bgcolor=$aColor>"
+    elif [[ "$sep" = "c" ]]; then
+      echo -n "<td bgcolor=$cColor>"
+    elif [[ "$sep" = "d" ]]; then
+      echo -n "<td bgcolor=$dColor>"
+    else
+      echo -n "<td>"
+    fi
+    if [[ $p2 = 0 || "$sep" = "d" ]]; then
+      echo -n "Line(s) deleted"
+    else
+      echo -n $(sed -n "${p2}p" < $new)
+    fi
+    echo -n "</td>"
+  fi
+}
+
+# Take a line of the diff and echoes the changes
+# $1 : the line (#(,#)?[acd](#(,#)?))
+# $2 : the separetor (a, c or d)
 function printToHtml {
   line=$1
   del=$2
-  echo "<tr>"
+  echo -n "<tr>"
   p1=$( echo "$line" |cut -d$del -f1 )
   p2=$( echo "$line" |cut -d$del -f2 )
 
@@ -137,6 +147,7 @@ function printToHtml {
   echo "</tr>"
 }
 
+# Iterates over the lines of the diff
 echo "<table border="0.5" width="50%">"
 echo "<tr><th width="50%">${orig}</th><th width="50%">${new}</th></tr>" 
 while read line; do 
@@ -152,7 +163,8 @@ while read line; do
     fi
   fi
 done < <(echo "$RES")
-nbLines=$(($(echo "$RES" | wc -l) + 2))
-unchangedContent $nbLines $nbLines e
+# Echo the remaining lines of the file that were unchanged, if any
+nbLines=$(($(wc -l $orig | cut -d' ' -f1) + 1 ))
+unchangedContent $nbLines $nbLines "e"
 echo "</table>"
 
