@@ -35,10 +35,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	//val timestamp: Long = System.currentTimeMillis / 1000
 	var options: Options = null
+	var bool2Int: Map[String,String] = null
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
 	
-	def myParseAll(opts: Options) = {
+	def myParseAll(opts: Options,b2i: Map[String,String]) = {
 	  options = opts
+	  bool2Int = b2i
 	  parseAll(flatzinc_model, opts.file)
 	}
 	def myParseAll(input: String) = {parseAll(flatzinc_model, input)}
@@ -933,7 +935,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      capaCP
 	  }
 	  cp.add(binpacking(getCPVarIntArray(varList(1)).map(_-1), 
-	          getIntArray(varList(2)), l))
+	          getIntArray(varList(2)), l),Strong)
 	}
 	
 	//TODO : comment
@@ -1500,11 +1502,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @return CPVarInt
 	 */
 	def getCPVarIntFromString(x: String): CPVarInt = {
-	  model.dict.get(x) match {
+	  if (bool2Int.contains(x)) System.err.println("mmmh, I know this bool")
+	  model.dict.get(bool2Int.getOrElse(x, x)) match {
 	      case Some((tp, fzo)) => 
 	        tp match {
 	            case FZType.V_INT => {
 	              fzo.asInstanceOf[VarInt].cpvar
+	            }
+	            case FZType.V_BOOL => {
+	              System.err.println("found it!!")
+	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 //	            case FZType.V_INT_RANGE => {
 //	              fzo.asInstanceOf[VarIntRange].cpvar

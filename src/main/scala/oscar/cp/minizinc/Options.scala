@@ -20,6 +20,8 @@ import java.io.FileReader
 class Options(args: Array[String]) {
 
   var file: FileReader = null
+  
+  var fileName: String = null
 
   var all = false
 
@@ -52,6 +54,7 @@ class Options(args: Array[String]) {
           "        <value> - limit on solution number.\n")
       System.exit(0);
     } else { // input file
+      fileName = args(0)
       file = new FileReader(args(0))
     }
   } else { // args.length > 1
@@ -79,6 +82,7 @@ class Options(args: Array[String]) {
       }
     }
     try {
+      fileName = args.last
       file = new FileReader(args.last);
     } catch {
       case e: java.io.FileNotFoundException => {
