@@ -74,7 +74,6 @@ function origFileContent {
     i1=$( echo "$p1" |cut -d, -f1 )
     i2=$( echo "$p1" |cut -d, -f2 )
     unchangedContent $i1 $i2 $sep
-    # Maybe need to split the two case to set colors
     if [[ $sep = "c" ]]; then
       getBlock $orig $i1 $i2 $cColor
     elif [[ $sep = "d" ]]; then
@@ -84,7 +83,6 @@ function origFileContent {
     if [[ $sep = "a" ]]; then
       unchangedContent $p1 $p1 $sep
       echo -n "<td bgcolor=$aColor>Line(s) added here</td>"
-    # Maybe need to split the two case to set colors
     elif [[ $sep = "c" ]]; then
       unchangedContent $p1 $p1 $sep
       echo -n "<td bgcolor=${cColor}>$(sed -n "${p1}p" < $orig)</td>"
@@ -109,10 +107,7 @@ function newFileContent {
       getBlock $new $i1 $i2 $aColor
     elif [[ "$sep" = "c" ]]; then
       getBlock $new $i1 $i2 $cColor
-    # elif [[ "$sep" = "d" ]]; then
-    #   getBlock $new $i1 $i2 $dColor
     fi
-    # getBlock $new $p2 $noCol
   else
     if [[ "$sep" = "a" ]]; then
       echo -n "<td bgcolor=$aColor>"
@@ -151,7 +146,6 @@ function printToHtml {
 echo "<table border="0.5" width="50%">"
 echo "<tr><th width="50%">${orig}</th><th width="50%">${new}</th></tr>" 
 while read line; do 
-  # echo $a
   i=[0-9][0-9]*
   if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
     if [[ "$line" == *a* ]]; then
