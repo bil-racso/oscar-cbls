@@ -1,4 +1,10 @@
 #!/bin/sh
+#author       : Debroux Léonard : leonard.debroux@gmail.com 
+#description  : Outputs an html version of the diff 
+#                     of the two files in arg
+#date         : 30/08/2013
+#===========================================================
+
 cd test/flatzinc
 result="../../test_result.html"
 touch $result

@@ -347,6 +347,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def createCPVarInt(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
 	  //hasDomain not realy usefull, can check if the set is empty, 
 	  //is it possible to add in the model a var int with an empty domain ? for what ?
+	  println(id)
 	  e match {
           case Some("="~assign) =>
             assign match {
@@ -361,7 +362,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    }
 	      	  case _ => 
 	      	    val cpvar = getCPVarInt(assign)
-	      	    shrinkDom(s, cpvar)
+	      	    if(!s.isEmpty) {
+	      	      shrinkDom(s, cpvar)
+	      	    }
 	      	    addCPVarInt(ann, id, cpvar)
 	      	}
           case None => 
@@ -456,7 +459,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 						      	  }
       			    		    case _ => 
       			    		      val cpvar = getCPVarInt(d)
-						      	  shrinkDom(s, cpvar)
+						      	  if(!s.isEmpty) {
+						      	    shrinkDom(s, cpvar)
+						      	  }
 						      	  cpvar
       			    		  }
 	      			        ) toArray
