@@ -545,7 +545,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param hasDomain : true of the inital domain is given
 	 */
 	def addCPVarInt(ann: List[Annotation], id: String, s: Set[Int]) {
-	  model.dict += ((id, (FZType.V_INT, 
+	  if (!bool2Int.contains(id)) {
+	    model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
 	          if(s.isEmpty) {
 	            CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
@@ -553,6 +554,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            CPVarInt(cp, s)
 	          }
 	      	, id))))
+	  }
 	}
 	
 	def addCPVarInt(ann: List[Annotation], id: String, cpvar: CPVarInt) {
@@ -687,7 +689,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      val c = getCPVarInt(varList(2))
 	      cp.add(elementVar(as, b-1, c))
 	    case "bool2int" =>
-	      cp.add(getCPVarBool(varList(0)) == getCPVarInt(varList(1)))      
+	      //cp.add(getCPVarBool(varList(0)) == getCPVarInt(varList(1)))      
 	    case "bool_and" =>
 	      bool_cstr(varList, ann, cstr)
 	    case "bool_eq" =>
@@ -1256,17 +1258,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         case "int_lin_eq" => {
           if (c == 0 && cst(0) == -1 && cst.tail.forall(_==1)) {
             // sum constraint
-            System.err.println("int_lin_eq, sum identified")
+            //System.err.println("int_lin_eq, sum identified")
             cp.add(sum(cpvar.tail,cpvar.head))
           } else if (c == 0 && cst(0) == 1 && cst.tail.forall(_ == -1)) {
-            System.err.println("int_lin_eq, sum identified")
+            //System.err.println("int_lin_eq, sum identified")
             cp.add(sum(cpvar.tail,cpvar.head))            
           } else if (c == 0 && cst.last == -1 && cst.reverse.tail.forall(_ == 1)) {
-            System.err.println("int_lin_eq, sum identified")
+            //System.err.println("int_lin_eq, sum identified")
             cp.add(sum(cpvar.reverse.tail,cpvar.last))
           }
           else if (c == 0 && cst.last == 1 && cst.reverse.tail.forall(_ == -1)) {
-            System.err.println("int_lin_eq, sum identified")
+            //System.err.println("int_lin_eq, sum identified")
             cp.add(sum(cpvar.reverse.tail,cpvar.last))
           }
           else {
@@ -1502,7 +1504,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @return CPVarInt
 	 */
 	def getCPVarIntFromString(x: String): CPVarInt = {
-	  if (bool2Int.contains(x)) System.err.println("mmmh, I know this bool")
+	  //if (bool2Int.contains(x)) System.err.println("mmmh, I know this bool")
 	  model.dict.get(bool2Int.getOrElse(x, x)) match {
 	      case Some((tp, fzo)) => 
 	        tp match {
@@ -1510,8 +1512,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarInt].cpvar
 	            }
 	            case FZType.V_BOOL => {
-	              System.err.println("found it!!")
+	              //System.err.println("found it!!")
 	              fzo.asInstanceOf[VarBool].cpvar
+	            }
+	            case _ => {
+	              throw new Exception("Var " + x + " does not match")
 	            }
 //	            case FZType.V_INT_RANGE => {
 //	              fzo.asInstanceOf[VarIntRange].cpvar
