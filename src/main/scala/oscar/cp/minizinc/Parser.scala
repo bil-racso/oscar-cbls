@@ -347,7 +347,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def createCPVarInt(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
 	  //hasDomain not realy usefull, can check if the set is empty, 
 	  //is it possible to add in the model a var int with an empty domain ? for what ?
-	  println(id)
 	  e match {
           case Some("="~assign) =>
             assign match {

@@ -30,8 +30,8 @@ class Sum2(val X: Array[CPVarInt], val y: CPVarInt) extends Constraint(y.s, "Sum
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     priorityL2 = CPStore.MAXPRIORL2 - 1
-    X.foreach(_.callPropagateWhenBoundsChange(this, true))
-    y.callPropagateWhenBoundsChange(this, true)
+    X.foreach(_.callPropagateWhenBoundsChange(this, false))
+    y.callPropagateWhenBoundsChange(this, false)
     val oc = propagate()
     //println("oc:"+oc)
     oc
