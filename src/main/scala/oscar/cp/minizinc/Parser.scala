@@ -764,7 +764,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  	case "array_bool_and" =>
 	      array_bool_cstr(varList, ann, cstr)
 	  	case "array_bool_element" =>
-	  	  // TODO
+	  	  System.err.println(cstr+" not implemented")
 	    case "array_bool_or" =>
 	      array_bool_cstr(varList, ann, cstr)
 	      
@@ -1751,7 +1751,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def getCPVarIntArray(x: Any): Array[CPVarInt] = {
 	  x match {
 	    case y:List[Any] =>
-	      //need testing
 	      (y) map(getCPVarInt(_)) toArray
 	    case y:String =>
 	      model.dict.get(y) match {
@@ -2232,7 +2231,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  //TODO : print the right output when no solution is found
 	  def printCPVar(cpvar: CPVar) {
 	    if(cpvar.isInstanceOf[CPVarSet]) {
-    	  printSet(cpvar.asInstanceOf[CPVarSet]	)
+    	  printSet(cpvar.asInstanceOf[CPVarSet])
     	} else {
     	  print(cpvar.toString)
     	}
@@ -2279,38 +2278,43 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    var r2 = 0
 	    var r = false
 	    var pred = 0
-	    for (v <- set) { 
-	      if (v == set.head) {
-	        print("{" + v)
-	        if(v == set.last) {
-	          print("}")
-	        }
-	      }
-	      else if (v != set.last) {
-	        if(pred == v-1) {
-	          if(!r) { r = true } 
-	          r2 = v
-	        } else {
-	          if(r) {
-	            print(".." + r2 + ", " + v)
-	            r = false
-	          } else {
-    	        print(", " + v)
-	          }
-	        }
-	      } else {
-	        if(pred == v-1) {
-	          print(".." + v + "}")
-	        } else {
-	          if(r) {
-	            print(".." + r2 + ", " + v + "}")
-	          } else {
-	            print(", " + v + "}")
-	          }
-	        }
-	      }
-	      pred = v
+	    if (set.isEmpty) {
+	      print("{}")
+	    } else {
+	      for (v <- set) { 
+		      if (v == set.head) {
+		        print("{" + v)
+		        if(v == set.last) {
+		          print("}")
+		        }
+		      }
+		      else if (v != set.last) {
+		        if(pred == v-1) {
+		          if(!r) { r = true } 
+		          r2 = v
+		        } else {
+		          if(r) {
+		            print(".." + r2 + ", " + v)
+		            r = false
+		          } else {
+	    	        print(", " + v)
+		          }
+		        }
+		      } else {
+		        if(pred == v-1) {
+		          print(".." + v + "}")
+		        } else {
+		          if(r) {
+		            print(".." + r2 + ", " + v + "}")
+		          } else {
+		            print(", " + v + "}")
+		          }
+		        }
+		      }
+		      pred = v
+		    }
 	    }
+	    
 	}
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
@@ -2320,6 +2324,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case ann~"("~list~")" => new Annotation(ann, list)
 	    }
 	    | pred_ann_id ^^ (new Annotation(_, null))
-	)// some notes, see syntax
+	)
 	
 }
