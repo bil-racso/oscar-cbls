@@ -28,7 +28,7 @@ do
 	name=${f%%.*}
 	#¢all solver on $f > res
 	java -cp /home/inekar/Documents/hg/oscar/target/oscar.jar oscar.cp.minizinc.FlatZinc2OscaR -a $f > res.tmp
-	../../diff2html ../output/${name}.output res.tmp >> $result
+	../../diff2html ../output/${name}.output res.tmp $f >> $result
 done
 rm res.tmp
 # rm diff_result

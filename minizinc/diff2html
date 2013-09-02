@@ -8,10 +8,18 @@
 # Constant declaration
 orig=$1
 new=$2
-aColor="#88FF88"
-cColor="#8888FF"
-dColor="#FF8888"
+name=
+if [[ $# = 3 ]]; then
+  name=$3
+else
+  name=$2
+fi
+
+aColor="#AAFFAA"
+cColor="#AAAAFF"
+dColor="#FFAAAA"
 noCol="#FFFFFF"
+black="#000000"
 current=0
 
 # Result of the diff of the two files
@@ -144,7 +152,8 @@ function printToHtml {
 
 # Iterates over the lines of the diff
 echo "<table border="0.5" width="50%">"
-echo "<tr><th width="50%">${orig}</th><th width="50%">${new}</th></tr>" 
+echo -n "<tr><th width="50%" bgcolor=$black>${orig}</th>"
+echo "<th width="50%" bgcolor=$black>${name}</th></tr>" 
 while read line; do 
   i=[0-9][0-9]*
   if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
