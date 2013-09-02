@@ -311,8 +311,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	            	
 	      case "array ["~iset~"] of var set of"~"{"~intList~"}" => 
-	        // TODO : grammar doesn't allow to create an empty set, should it be modified ? (cfr var_type)
-	        // TODO : need testing, need eq on set
+	        // grammar doesn't allow to create an empty set, should it be modified ? (cfr var_type)
 	        val s = getSetFromList(intList)
 	        createCPVarSetArray(e, id, s, ann, getRangeLength(iset))
 	                  
@@ -349,7 +348,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param ann : the list of annotation for the variable
 	 */
 	def createCPVarInt(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
-	  //println(id)
 	  e match {
           case Some("="~assign) =>
             assign match {
@@ -385,12 +383,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-              // possible bug if an assign is made of named cpvarint (that is already declared)
-              // care with this case, can be wrong if assign is not in the domain  
-              // need to check if value in assign is in an array
-              case x:List[Int] => 
-                // need to match on the content of the list.. (x) map ... 
-                // can it be something else than ints ? like cpvar
+              case x:List[Int] if(x(0).isInstanceOf[Int]) => 
                 if(x.toSet.subsetOf(s)) {
                   model.dict += 
 		      		((id, (FZType.V_SET_INT, 
@@ -638,7 +631,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	/**
-	 * TODO
+	 * Adds an array of VarBool to the dictionnary of var, given an array of CPVarBool
+	 * @param ann : the list of annotations for the variable
+	 * @param id : the name of the variable
+	 * @param array : array of CPVarBool
 	 */
 	def addCPVarBoolArray(ann: List[Annotation], id: String, array: Array[CPVarBool]) {
 	  model.dict +=
@@ -666,7 +662,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	/**
-	 * TODO
+	 * Adds an array of VarInt to the dictionnary of var, given an array of CPVarInt
+	 * @param ann : the list of annotations for the variable
+	 * @param id : the name of the variable
+	 * @param array : array of CPVarInt
 	 */
 	def addCPVarIntArray(ann: List[Annotation], id: String, s: Set[Int], array: Array[CPVarInt]) {
 	  model.dict +=
@@ -690,7 +689,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	}
 	
 	/**
-	 * TODO
+	 * Adds an array of VarSet to the dictionnary of var, given an array of CPVarSet
+	 * @param ann : the list of annotations for the variable
+	 * @param id : the name of the variable
+	 * @param array : array of CPVarSet
 	 */
 	def addCPVarSetArray(ann: List[Annotation], id: String, s: Set[Int], array: Array[CPVarSet]) {
 	  model.dict += 
@@ -1691,7 +1693,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @return CPVarInt
 	 */
 	def getCPVarSetFromList(x: List[Any]): CPVarSet = {
-	  //TODO test
 	  x(0) match {
 	    case y:Int => 
 	      // x is here a requiered set for the cpvarset
