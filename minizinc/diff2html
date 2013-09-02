@@ -21,6 +21,7 @@ dColor="#FFAAAA"
 noCol="#FFFFFF"
 black="#000000"
 current=0
+nodiff=1
 
 # Result of the diff of the two files
 RES=$(diff $orig $new)
@@ -151,12 +152,18 @@ function printToHtml {
 }
 
 # Iterates over the lines of the diff
-echo "<table border="0.5" width="50%">"
-echo -n "<tr><th width="50%" bgcolor=$black>${orig}</th>"
-echo "<th width="50%" bgcolor=$black>${name}</th></tr>" 
+# echo "<table border="0.5" width="50%">"
+# echo -n "<tr><th width="50%" bgcolor=$black>${orig}</th>"
+# echo "<th width="50%" bgcolor=$black>${name}</th></tr>" 
 while read line; do 
   i=[0-9][0-9]*
   if [[ "$line" =~ $i(,$i)?[acd]$i(,$i)? ]]; then
+    if [[ $nodiff = 1 ]]; then
+      nodiff=0
+      echo "<table border="0.5" width="50%">"
+      echo -n "<tr><th width="50%" bgcolor=$black>${orig}</th>"
+      echo "<th width="50%" bgcolor=$black>${name}</th></tr>" 
+    fi
     if [[ "$line" == *a* ]]; then
       printToHtml $line a
     elif [[ "$line" == *c* ]]; then
@@ -168,6 +175,14 @@ while read line; do
 done < <(echo "$RES")
 # Echo the remaining lines of the file that were unchanged, if any
 nbLines=$(($(wc -l $orig | cut -d' ' -f1) + 1 ))
-unchangedContent $nbLines $nbLines "e"
-echo "</table>"
+# unchangedContent $nbLines $nbLines "e"
+if [[ $nodiff = 1 ]]; then
+  echo "<font size="2">No changes</font>"
+else
+  unchangedContent $nbLines $nbLines "e"
+  echo "</table>"
+  echo "<font size="2">BUILD FAILED</font>"
+fi
+# echo "</table>"
+
 
