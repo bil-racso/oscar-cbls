@@ -152,7 +152,17 @@ class CPSolver() extends CPStore() {
   /**
    * return true if every variable is bound
    */
-  def allBounds(vars: IndexedSeq[CPVarInt]) = vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
+  def allBounds(vars: IndexedSeq[CPVarInt]): Boolean = {
+    //vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
+	var i = 0 
+	val s = vars.size
+	while (i < s) {
+	  if (!vars(i).isBound) return false
+	  i += 1
+	}
+    true
+    
+  }
 
   def minDom(x: CPVarInt): Int = x.size
   def minRegret(x: CPVarInt): Int = x.max - x.min
@@ -171,7 +181,7 @@ class CPSolver() extends CPStore() {
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
   def deterministicBinaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    binary(vars,x => (x.size,vars.indexOf(x)),valHeuris)
+    binary(vars,x => x.size,valHeuris)
   }
   
   
@@ -203,13 +213,114 @@ class CPSolver() extends CPStore() {
    * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binary[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
+  def binary2[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
     while (!allBounds(vars)) {
-      val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
+      //val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
+      val x = selectMinDeterministic(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }
   }
+  
+  def binaryStaticOrder(vars: Array[_ <: CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    var y = vars.asInstanceOf[Array[CPVarInt]]
+    var i = new ReversibleInt(this,0)
+    while (i.value < y.size) {
+      val x: CPVarInt = y(i.value)
+      val v = valHeuris(x)
+      branch {
+        	   post(x == v)
+        	   i.incr()
+      } {
+      		   post(x != v)
+      }
+      
+    }
+    /*
+    var allB = true
+    do {
+      allB = true
+      var i = 0
+      while (i < vars.length && !allB) {
+        if (!vars(i).isBound) allB = false
+        else i+=1
+      }
+      if (!allB) {
+        val x= vars(i)
+        val v = valHeuris(x)
+        branch(post(x == v))(post(x != v))
+      }
+      
+    } while (!allB)
+    */
+    
+  }
+  
+  def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    /*
+    val x_ = vars.asInstanceOf[Array[CPVarInt]].map(i => i).toArray
+    val nbBounds = new ReversibleInt(this,0)
+    
+    def bound(i: Int) {
+      val ind = nbBounds.value
+      val tmp = x_(ind)
+      x_(ind) = x_(i)
+      x_(i) = tmp
+      nbBounds.incr()
+    }
+
+    def allBounds(): Boolean = {
+      var i = nbBounds.value
+      while (i < x_.size) {
+        if (!x_(i).isBound) return false
+        else bound(i)
+        i += 1
+      }
+      true
+    }
+    
+    while (!allBounds) {
+      var i = nbBounds.value
+      var x = x_(i)
+      var fbest = varHeuris(x)
+      val s = x_.size
+      while (i < s) {
+        val y = x_(i)
+        if (varHeuris(y) < fbest) {
+          x = y
+          fbest = varHeuris(x)
+        }
+        i += 1
+      }
+      val v = valHeuris(x)
+      branch(post(x == v))(post(x != v)) // right alternative
+    }    
+    */
+
+    
+    
+    while (!allBounds(vars)) {
+      //val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
+      
+      val x = selectMinDeterministicInt(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)
+    	/*
+      var i = 0
+      var x: CPVarInt = null
+      var fbest = Int.MaxValue
+      val s = vars.size
+      while (i < s) {
+        val y = vars(i)
+        if (!y.isBound && varHeuris(y) < fbest) {
+          x = y
+          fbest = varHeuris(x)
+        }
+        i += 1
+      }*/
+      
+      val v = valHeuris(x)
+      branch(post(x == v))(post(x != v)) // right alternative
+    }
+  }  
 
 
   def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
