@@ -1260,7 +1260,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         case "int_lin_ne" => 
           cp.add(weightedSum(cst, cpvar) != c)
         case "int_lin_eq" => {
-          if (c == 0 && cst(0) == -1 && cst.tail.forall(_==1)) {
+          if (cst.forall(_==1) ) {
+            //System.err.println("int_lin_eq,  sum identified")
+            cp.add(sum(cpvar,CPVarInt(cp,c)))
+          }
+          else if (c == 0 && cst(0) == -1 && cst.tail.forall(_==1)) {
             // sum constraint
             //System.err.println("int_lin_eq, sum identified")
             cp.add(sum(cpvar.tail,cpvar.head))
@@ -2058,7 +2062,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def varChoiceAnn2(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
 		args(1) match {
-	      case "input_order" => assignAnn(args, array, array.indexOf(_))
+	      case "input_order" => cp.binaryStaticOrder(array, _.min)//assignAnn(args, array, array.indexOf(_))
 	      case "first_fail" => assignAnn(args, array, _.size)
 	        //use of assignAnn can be avoid by using a binary() and not binaryFirstFail()
 	        //cp.binaryFirstFail(array, assignAnn(args))
