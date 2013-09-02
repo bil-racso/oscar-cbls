@@ -389,10 +389,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
               // care with this case, can be wrong if assign is not in the domain  
               // need to check if value in assign is in an array
               case x:List[Int] => 
+                // need to match on the content of the list.. (x) map ... 
+                // can it be something else than ints ? like cpvar
                 if(x.toSet.subsetOf(s)) {
                   model.dict += 
 		      		((id, (FZType.V_SET_INT, 
-		      			new VarSetInt(ann, CPVarSet(cp, Set[Int](), x.toSet), id)
+		      		    // it is an assignment, so x is a requiered set for the CPVarSet
+		      			new VarSetInt(ann, CPVarSet(cp, x.toSet, Set[Int]()), id)
 		      		)))
                 } else {
                   throw new Exception(x.toSet.toString + " not in the domain of " + id)
@@ -696,6 +699,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        CPOutcome.Failure}
 	    }
 	  }	
+	  for(e <- cpvar.requiredValues.toSet[Int]) {
+	    if(!(s contains e)) {
+	      // TODO : should return a failure or something, the model is unfeasable
+	      throw new Exception("Sets domains are incompatible")
+	    }
+	  }
 	}
 	
 	/**
@@ -1630,7 +1639,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def getCPVarSetFromList(x: List[Any]): CPVarSet = {
 	  //TODO test
 	  x(0) match {
-	    case y:Int => CPVarSet(cp, Set[Int](), x map(_.toString.toInt) toSet)
+	    case y:Int => 
+	      // x is here a requiered set for the cpvarset
+	      CPVarSet(cp, x map(_.toString.toInt) toSet, Set[Int]())
 	    case y:String => 
 	      model.dict.get(y) match {
 		      case Some((tp, fzo)) => 
@@ -1684,9 +1695,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      model.dict.get(y) match {
 			  case Some((tp, fzo)) => 
 	            tp match {
-//	                case FZType.V_ARRAY_INT_R => {
-//	                  fzo.asInstanceOf[VarArrayIntRange].cpvar
-//	                }
 	                case FZType.V_ARRAY_INT => {
 	                  fzo.asInstanceOf[VarArrayInt].cpvar
 	                }
