@@ -352,7 +352,7 @@ class CPStore extends ReversibleSearchNode {
      * @return Failure is the fix point detects a failure that is one of the domain became empty, Suspend otherwise
      */
    
-	protected def propagate(): CPOutcome = {
+	protected def propagate2(): CPOutcome = {
 		assert(status.value != Failure)
 		val t0 = System.currentTimeMillis();
 		inPropagate = true
@@ -376,7 +376,7 @@ class CPStore extends ReversibleSearchNode {
 		status.value
 	}
 	
-	protected def propagate3(): CPOutcome = {
+	protected def propagate(): CPOutcome = {
 	    //println("------propagate------")
 	  	assert(status.value != Failure)
 		val t0 = System.currentTimeMillis();

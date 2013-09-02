@@ -228,32 +228,17 @@ class CPSolver() extends CPStore() {
     while (i.value < y.size) {
       val x: CPVarInt = y(i.value)
       val v = valHeuris(x)
+      if (x.isBound) {
+        branchOne(i.incr())
+      } else {
       branch {
         	   post(x == v)
         	   i.incr()
       } {
       		   post(x != v)
       }
-      
+      }
     }
-    /*
-    var allB = true
-    do {
-      allB = true
-      var i = 0
-      while (i < vars.length && !allB) {
-        if (!vars(i).isBound) allB = false
-        else i+=1
-      }
-      if (!allB) {
-        val x= vars(i)
-        val v = valHeuris(x)
-        branch(post(x == v))(post(x != v))
-      }
-      
-    } while (!allB)
-    */
-    
   }
   
   def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
@@ -268,10 +253,11 @@ class CPSolver() extends CPStore() {
       x_(i) = tmp
       nbBounds.incr()
     }
-
+    val size = x_.size
+    
     def allBounds(): Boolean = {
       var i = nbBounds.value
-      while (i < x_.size) {
+      while (i < size) {
         if (!x_(i).isBound) return false
         else bound(i)
         i += 1
@@ -279,21 +265,23 @@ class CPSolver() extends CPStore() {
       true
     }
     
-    while (!allBounds) {
+    while (!allBounds()) {
       var i = nbBounds.value
       var x = x_(i)
       var fbest = varHeuris(x)
-      val s = x_.size
-      while (i < s) {
+      
+      while (i < size) {
         val y = x_(i)
-        if (varHeuris(y) < fbest) {
+        val h = varHeuris(y)
+        if (h < fbest) {
           x = y
-          fbest = varHeuris(x)
+          fbest = h
         }
         i += 1
       }
-      val v = valHeuris(x)
-      branch(post(x == v))(post(x != v)) // right alternative
+      val y = x
+      val v = valHeuris(y)
+      branch(post(y == v))(post(y != v)) // right alternative
     }    
     */
 
@@ -301,22 +289,7 @@ class CPSolver() extends CPStore() {
     
     while (!allBounds(vars)) {
       //val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
-      
-      val x = selectMinDeterministicInt(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)
-    	/*
-      var i = 0
-      var x: CPVarInt = null
-      var fbest = Int.MaxValue
-      val s = vars.size
-      while (i < s) {
-        val y = vars(i)
-        if (!y.isBound && varHeuris(y) < fbest) {
-          x = y
-          fbest = varHeuris(x)
-        }
-        i += 1
-      }*/
-      
+      val x = selectMinDeterministicInt(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)    
       val v = valHeuris(x)
       branch(post(x == v))(post(x != v)) // right alternative
     }

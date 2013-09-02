@@ -2096,18 +2096,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def varChoiceAnn2(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
 		args(1) match {
-	      case "input_order" => cp.binaryStaticOrder(array, _.min)//assignAnn(args, array, array.indexOf(_))
-	      case "first_fail" => assignAnn(args, array, _.size)
-	        //use of assignAnn can be avoid by using a binary() and not binaryFirstFail()
-	        //cp.binaryFirstFail(array, assignAnn(args))
-	      case "anti_first_fail" => assignAnn(args, array, -_.size)
-	      case "smallest" => assignAnn(args, array, _.min)
-	      case "largest" => assignAnn(args, array, -_.max)
-	      case "occurence" => assignAnn(args, array, -_.constraintDegree)
-	      case "most_constrained" => System.err.println(args(1) + " not suppported so far")
-	      case "max_regret" => {
-	        assignAnn(args, array, -_.regret)
+	      case "input_order" => cp.binaryStaticOrder(array, assignAnn(args))//assignAnn(args, array, array.indexOf(_))
+	      case "first_fail" => cp.binary(array, _.size,assignAnn(args))
+	      case "anti_first_fail" => cp.binary(array, -_.size,assignAnn(args))
+	      case "smallest" => cp.binary(array, _.min,assignAnn(args))
+	      case "largest" => cp.binary(array, -_.max,assignAnn(args))
+	      case "occurence" => cp.binary(array, -_.constraintDegree,assignAnn(args))
+	      case "most_constrained" => {
+	        System.err.println(args(1) + " not suppported so far occurence instead")
+	        cp.binary(array, -_.constraintDegree,assignAnn(args))
 	      }
+	      case "max_regret" => cp.binary(array, -_.regret,assignAnn(args))
 	    }
 	}
 	
@@ -2117,24 +2116,32 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param array : an array containing the variable related to the search annotation
 	 * @return Unit
 	 */
-	def assignAnn(args: List[Any], array: Array[CPVarInt], 
-	    varheur: CPVarInt => Int): Unit@suspendable  = {		
+	def assignAnn(args: List[Any]): (CPVarInt) => Int  = {		
 		args(2) match {
-		  case "indomain_min" => cp.binary(array, varheur, _.min)
-		  case "indomain_max" => {
-		    cp.binary(array, varheur, _.max)
+		  case "indomain_min" => _.min
+		  case "indomain_max" => _.max
+		  case "indomain_middle" => {
+			  System.err.println(args(2) + " not suppported so far, in_domain_median used instead")
+			  _.median
 		  }
-		  case "indomain_middle" => System.err.println(args(2) + " not suppported so far")
-		  case "indomain_median" => cp.binary(array, varheur, _.median)
+		  case "indomain_median" => _.median
 		  case "indomain" => {
 			  System.err.println(args(2) + " not suppported so far, in_domain_min used instead")
-			  cp.binary(array, varheur, _.min)
+			  _.min
 		  }
-		  case "indomain_random" => cp.binary(array, varheur, _.randomValue)
-		  case "indomain_split" => System.err.println(args(2) + " not suppported so far")
-		  		//should use binary domain split... need to check that the bound used on the intervals (with binarySplit the same as in the spec
-		  case "indomain_reverse_split" => System.err.println(args(2) + " not suppported so far")
-		  case "indomain_interval" => System.err.println(args(2) + " not suppported so far")
+		  case "indomain_random" => _.randomValue
+		  case "indomain_split" => {
+			  System.err.println(args(2) + " not suppported so far, in_domain_min used instead")
+			  _.min
+		  }		  		//should use binary domain split... need to check that the bound used on the intervals (with binarySplit the same as in the spec
+		  case "indomain_reverse_split" => {
+			  System.err.println(args(2) + " not suppported so far, in_domain_min used instead")
+			  _.min
+		  }
+		  case "indomain_interval" => {
+			  System.err.println(args(2) + " not suppported so far, in_domain_min used instead")
+			  _.min
+		  }
 		}
 	}
 	
