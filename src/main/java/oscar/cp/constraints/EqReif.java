@@ -56,7 +56,7 @@ public class EqReif extends Constraint {
 		else if (b.isBound())
 			return valBind(b);
 		else {
-			//x.callValBindWhenBind(this);
+			x.callValBindWhenBind(this);
 			b.callValBindWhenBind(this);
 			//x.addAC5Bounds(this);
 			//x.callValRemoveWhenValueIsRemoved(this);
