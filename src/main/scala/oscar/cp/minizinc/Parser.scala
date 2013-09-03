@@ -414,11 +414,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  e match {
           case Some("="~assign) =>
             assign match {
-              case x:List[Any] => model.dict +=
-		        ((id, (FZType.V_ARRAY_BOOL, 
-		            new VarArrayBool(ann,
-		                (x) map(getCPVarBool(_)) toArray
-		        , id)))) 
+              case x:List[Any] => {
+                val boolArray = new VarArrayBool(ann, (x) map(getCPVarBool(_)) toArray,id)
+                model.dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
+		        /*
+                // also add each individual entries
+                for (i <- 1 to boolArray.cpvar.size) {
+                  println("adding artificially:"+id+"["+i+"]")
+                  model.dict += (id+"["+i+"]" -> (FZType.V_BOOL, new VarBool(ann,boolArray.cpvar(i-1),id)))
+                }
+                */
+              }
+		         
               case _ => 
 	      	    val value = getCPVarBoolArray(assign)
 	      	    addCPVarBoolArray(ann, id, value)
@@ -431,8 +438,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 //		  		  cp.add(current(i) == value(i))
 //		  		}
             }
-          case None =>
-           	addCPVarBoolArray(ann, id, l) 
+          case None => {
+            addCPVarBoolArray(ann, id, l)
+            
+          }
+           	 
         }
 	}
 	
@@ -625,9 +635,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param l : the length of the array
 	 */
 	def addCPVarBoolArray(ann: List[Annotation], id: String, l: Int) {
-	  model.dict +=
-        ((id, (FZType.V_ARRAY_BOOL, 
-            new VarArrayBool(ann, Array.fill(l){CPVarBool(cp)} , id))))
+	  	val boolArray =  new VarArrayBool(ann, Array.fill(l){CPVarBool(cp)}, id)
+        model.dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
+		// also add each individual entries
+        for (i <- 1 to boolArray.cpvar.size) {
+          model.dict += (id+"["+i+"]" -> (FZType.V_BOOL, new VarBool(ann,boolArray.cpvar(i-1),id)))
+        }
 	}
 	
 	/**
@@ -636,10 +649,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param id : the name of the variable
 	 * @param array : array of CPVarBool
 	 */
-	def addCPVarBoolArray(ann: List[Annotation], id: String, array: Array[CPVarBool]) {
+	def addCPVarBoolArray(ann: List[Annotation], id: String, array: Array[CPVarBool]) {  
 	  model.dict +=
         ((id, (FZType.V_ARRAY_BOOL, 
             new VarArrayBool(ann, array, id))))
+            
+            
 	}
 	/**
 	 * Adds an array of CPVarInt to the store
@@ -1612,6 +1627,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def getCPVarIntFromString(x: String): CPVarInt = {
 	  //if (bool2Int.contains(x)) System.err.println("mmmh, I know this bool")
+	  
 	  model.dict.get(bool2Int.getOrElse(x, x)) match {
 	      case Some((tp, fzo)) => 
 	        tp match {
