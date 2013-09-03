@@ -82,7 +82,7 @@ public class BinPacking extends Constraint {
 			}
 		}
 		//redundant constraint
-		if (s().post(new Sum(l,CPVarInt.apply(s(),totW,totW))) == CPOutcome.Failure) {
+		if (s().post(new Sum2(l,CPVarInt.apply(s(),totW,totW))) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;
