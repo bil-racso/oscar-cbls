@@ -161,8 +161,8 @@ while read line; do
     if [[ $nodiff = 1 ]]; then
       nodiff=0
       echo "<table border="0.5" width="50%">"
-      echo -n "<tr><th width="50%" bgcolor=$black>${orig}</th>"
-      echo "<th width="50%" bgcolor=$black>${name}</th></tr>" 
+      echo -n "<tr><th width="50%" bgcolor=$black><font color=$noCol>${orig}</font></th>"
+      echo "<th width="50%" bgcolor=$black><font color=$noCol>${name}</font></th></tr>" 
     fi
     if [[ "$line" == *a* ]]; then
       printToHtml $line a
