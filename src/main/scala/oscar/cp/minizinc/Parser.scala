@@ -5,7 +5,6 @@ import FZType._
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core._
 import oscar.cp.modeling._
-//import oscar.cp.core.CPOutcome._
 import java.io.FileReader
 import oscar.cbls.invariants.lib.set.Cardinality
 import scala.Equals
@@ -23,6 +22,7 @@ import scala.util.continuations._
 import oscar.cp.constraints.SetDiff
 import java.sql.Time
 import oscar.cp.constraints.WeightedSum
+import scala.collection.mutable.HashMap
 
 class Parser extends JavaTokenParsers {// RegexParsers {
   
@@ -31,7 +31,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	val PARTICULAR_SOLUTIONS = true
 	
 	var model : Minizinc_model = new Minizinc_model
-	val cp = CPSolver()
+	var cp = CPSolver()
 	
 	//val timestamp: Long = System.currentTimeMillis / 1000
 	var options: Options = null
@@ -47,6 +47,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	//def myParseAll(input: String) = {parseAll(constraint, input)}
 	def parseParam(input: String) = {parseAll(param_decl, input)}
 	def parseVar(input: String) = {parseAll(var_decl, input)}
+	
+	def reset() {
+	  model = new Minizinc_model
+	  cp = CPSolver()
+	}
 	
 	/**
 	 * flatzinc model parsing

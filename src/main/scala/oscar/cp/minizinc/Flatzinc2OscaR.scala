@@ -21,6 +21,9 @@ import java.util.regex.Pattern
 
 object FlatZinc2OscaR extends Parser with App{
   
+  parse(args)
+  
+  def parse(args: Array[String]) {
         // "constraint bool2int(BOOL____00771, INT____00772) :: defines_var(INT____00772);"
 		val opts = new Options(args)
 		val  pattern = Pattern.compile("\\(.*\\)");
@@ -29,6 +32,6 @@ object FlatZinc2OscaR extends Parser with App{
 		
 		
 		myParseAll(opts,mapBool2Int)
-
-
+		reset
+  }
 }
