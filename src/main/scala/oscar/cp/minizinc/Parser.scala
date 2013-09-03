@@ -882,7 +882,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      set_cstr(varList, ann, cstr)
 	    case "set_eq" =>
 	      set_cstr(varList, ann, cstr)
-	    	      
+	    case "set_in" => {
+	      val x = getCPVarInt(varList(0))
+	      val s = getSetOfInt(varList(1))
+	      for (v <- x.min to x.max; if !s.contains(v)) {
+	        x.removeValue(v)
+	      }
+	    }      
 	    // global constraints defined in minizinc/mznlib/
 	    case "oscar_alldiff" =>
 	      cp.add(allDifferent(getCPVarIntArray(varList(0))), Strong)
@@ -933,8 +939,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      count_cstr(varList, ann, cstr)
 	    case "oscar_count_neq" =>
 	      count_cstr(varList, ann, cstr)
-	    case "oscar_cumulative" =>
+	    case "oscar_cumulative" => {
 	      System.err.println("oscar_cumulative not implemented")
+	    }
 	    case "oscar_decreasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
