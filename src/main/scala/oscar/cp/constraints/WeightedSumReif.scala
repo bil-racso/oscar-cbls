@@ -32,7 +32,7 @@ class WeightedSumReif(val a: Array[Int], val x: Array[CPVarInt], val c: Int, val
 
   override def propagate(): CPOutcome = {
     if (b.isBoundTo(1)) {
-      if (s.post(new oscar.cp.constraints.WeightedSum(a,x,c)) == Failure) Failure
+      if (s.post(new oscar.cp.constraints.WeightedSum(a,x,CPVarInt(s,c))) == Failure) Failure
       else Success
     } else {
       val m = a.zip(x).map{case(ai,xi) => if (ai < 0) ai*xi.max else ai*xi.min}.sum
