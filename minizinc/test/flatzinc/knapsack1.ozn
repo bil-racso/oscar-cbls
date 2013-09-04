@@ -1,0 +1,2 @@
+array[1 .. 5] of var int: take;
+output [ show(take), "\n" ];
