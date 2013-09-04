@@ -24,17 +24,18 @@ import java.sql.Time
 import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
 import oscar.cp.scheduling.CumulativeActivity
+import java.util.Collection
 
 class Parser extends JavaTokenParsers {// RegexParsers {
   
 	val UNDEFINED_VARINT_RANGE_MAX = 10000000
 	val UNDEFINED_VARINT_RANGE_MIN = -10000000
 	val PARTICULAR_SOLUTIONS = true
+	var sol_found = false
 	
 	var model : Minizinc_model = new Minizinc_model
 	var cp = CPSolver()
 	
-	//val timestamp: Long = System.currentTimeMillis / 1000
 	var options: Options = null
 	var bool2Int: Map[String,String] = null
 	//def myParseAll(input: String) = {parseAll(var_decl, input)}
@@ -72,7 +73,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def identifier : Parser[String] = "[A-Z_a-z][A-Z_a-z0-9_]*".r
 	
-	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id // what about no space before the ":" and one after ?
+	def pred_param : Parser[Any] = pred_param_type~":"~pred_ann_id 
 	def pred_param_type : Parser[Any] = par_pred_param_type | var_pred_param_type	
 	
 	/**
@@ -146,9 +147,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	/**
 	 * expression parsing
 	 */
-	def expr : Parser[Any] = ( //need to find a way to return something else than any
+	def expr : Parser[Any] = ( 
 		bool_const
-		| set_const //should be float -> int -> set, inverted for set to work, need testing
+		| set_const //should be float -> int -> set, inverted for set to work
 		| float_const
 		| int_const
 		| var_par_id~"["~int_const~"]" ^^ {
@@ -188,7 +189,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      case i1~e~i2 => (i1+e+i2).toFloat
 	    }
 	)
-	def int_const : Parser[Int] = "[+-]?[0-9][0-9]*".r ^^ (_.toInt)// [+-] at the begining of the regex in the grammar, what does that mean ?
+	def int_const : Parser[Int] = "[+-]?[0-9][0-9]*".r ^^ (_.toInt) // "?" added in the regex, as it wasn't in the grammar
 	
 	def set_const : Parser[Any] = ( 
 	    int_const~".."~int_const ^^ { 
@@ -218,7 +219,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            new ParamInt(e.toString.toInt, id))))
 	      case "float" => model.dict += 
 	        ((id, (FZType.P_FLOAT,
-	            new ParamFloat(e.toString.toFloat, id)))) // ! no floats in oscar, what to do ?
+	            new ParamFloat(e.toString.toFloat, id))))
 	      case "set of int" => model.dict += 
 	        ((id, (FZType.P_SET_INT,
 	          e match {
@@ -435,14 +436,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
               case _ => 
 	      	    val value = getCPVarBoolArray(assign)
 	      	    addCPVarBoolArray(ann, id, value)
-//                addCPVarBoolArray(ann, id, l)
-//                val current = getCPVarBoolArray(id)
-//                val value = getCPVarBoolArray(assign)
-//                assert(current.length == value.length, 
-//                	"Arrays must have the same length to express equality")
-//                for(i <- 0 until current.length) {
-//		  		  cp.add(current(i) == value(i))
-//		  		}
             }
           case None => {
             addCPVarBoolArray(ann, id, l)
@@ -486,14 +479,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			        ) toArray
 	      		, id))))
 	      	  case _ => 
-	      	    //addCPVarIntArray(ann, id, s, l)
-//		  		val current = getCPVarIntArray(id)
-//		  		val value = getCPVarIntArray(assign)
-//		  		assert(current.length == value.length, 
-//		  		    "Arrays must have the same length to express equality")
-//		  		for(i <- 0 until current.length) {
-//		  		  cp.add(current(i) == value(i))
-//		  		}
 	      	    var array = Array[CPVarInt]()
 	      	    val value = getCPVarIntArray(assign)
 	      	    value.foreach { cpvar =>
@@ -540,14 +525,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      			    	) toArray
 	      		, id))))
 	        case _ =>
-//		        addCPVarSetArray(ann, id, s, l)
-//		        val current = getCPVarSetArray(id)
-//		        val value = getCPVarSetArray(assign)
-//		        assert(current.length == value.length, 
-//		  		    "Arrays must have the same length to express equality")
-//		  		for(i <- 0 until current.length) {
-//		  		  cp.add(current(i) == value(i))
-//		  		}
 	          	var array = Array[CPVarSet]()
       	    	val value = getCPVarSetArray(assign)
       	    	value.foreach { cpvar =>
@@ -739,16 +716,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def shrinkDom(s: Set[Int], cpvar: CPVarInt) {
 	  if(cpvar.updateMax(s.max) == CPOutcome.Failure) { 
-	    throw new Exception("VarInt domains are incompatible")
+	    throw new NoSolutionException("VarInt domains are incompatible")
 	  }
 	  if(cpvar.updateMin(s.min)  == CPOutcome.Failure) { 
-	    throw new Exception("VarInt domains are incompatible")
+	    throw new NoSolutionException("VarInt domains are incompatible")
 	  }
 	  if(!(s.max - s.min + 1 == s.size)) {
 	    for(e <- cpvar.domainIterator) {
 	      if(!(s contains e)) {
 	        if(cpvar.removeValue(e) == CPOutcome.Failure) {
-	          throw new Exception("VarInt domains are incompatible")
+	          throw new NoSolutionException("VarInt domains are incompatible")
 	        }
 	      }
 	    }
@@ -764,14 +741,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  for(e <- cpvar.possibleNotRequiredValues.toSet[Int]) {
 	    if(!(s contains e)) {
 	      if(cpvar.excludes(e) == CPOutcome.Failure) { 
-	        throw new Exception("Sets domains are incompatible")
+	        throw new NoSolutionException("Sets domains are incompatible")
 	      }
 	    }
 	  }	
 	  for(e <- cpvar.requiredValues.toSet[Int]) {
 	    if(!(s contains e)) {
-	      // TODO : should return a failure or something, the model is unfeasable
-	      throw new Exception("Sets domains are incompatible")
+	      throw new NoSolutionException("Sets domains are incompatible")
 	    }
 	  }
 	}
@@ -793,18 +769,18 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      val b = getCPVarInt(varList(0))
 	      val as = getIntArray(varList(1))
 	      val c = getCPVarInt(varList(2))
-	      cp.add(element(as, b-1, c))
+	      addCstr(element(as, b-1, c), ann)
 	      
 	    case "array_var_bool_element" =>
 	      val b = getCPVarInt(varList(0))
 	      val as = getCPVarBoolArray(varList(1))
 	      val c = getCPVarBool(varList(2))
-	      cp.add(elementVar(as, b-1, c))
+	      addCstr(elementVar(as, b-1, c), ann)
 	    case "array_var_int_element" =>
 	      val b = getCPVarInt(varList(0))
 	      val as = getCPVarIntArray(varList(1))
 	      val c = getCPVarInt(varList(2))
-	      cp.add(elementVar(as, b-1, c))
+	      addCstr(elementVar(as, b-1, c), ann)
 	    case "bool2int" =>
 	      //cp.add(getCPVarBool(varList(0)) == getCPVarInt(varList(1)))      
 	    case "bool_and" =>
@@ -849,10 +825,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      int_reif(varList, ann, cstr)
 	    case "int_max" =>
 	      val CPArray = Array[CPVarInt](getCPVarInt(varList(0)), getCPVarInt(varList(1)))
-	      cp.add(maximum(CPArray, getCPVarInt(varList(2))))
+	      addCstr(maximum(CPArray, getCPVarInt(varList(2))), ann)
 	    case "int_min" =>
 	      val CPArray = Array[CPVarInt](getCPVarInt(varList(0)), getCPVarInt(varList(1)))
-	      cp.add(minimum(CPArray, getCPVarInt(varList(2))))
+	      addCstr(minimum(CPArray, getCPVarInt(varList(2))), ann)
 	    case "int_ne" => 
 	      int_cstr(varList, ann, cstr)
 	    case "int_ne_reif" =>
@@ -878,7 +854,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "set_card" =>
 	      val s = getCPVarSet(varList(0))
 	      val i = getCPVarInt(varList(1))
-	      cp.add(s.card == i)
+	      addCstr(s.card == i, ann)
 	    case "set_diff" =>
 	      set_cstr(varList, ann, cstr)
 	    case "set_eq" =>
@@ -899,26 +875,26 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      // to be tested
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
-	        cp.add(array(i) == array(i+1))
+	        addCstr(array(i) == array(i+1), ann)
 	      }
 	    case "oscar_among" =>
 	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getCPVarInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val s = getSetOfInt(varList(2))
-	      cp.add(among(n, x, s))
+	      addCstr(among(n, x, s), ann)
 	    case "oscar_at_least_int" => 
 	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val v = getInt(varList(2))
-	      cp.add(atLeast(n, x, v))
+	      addCstr(atLeast(n, x, v), ann)
 	    case "oscar_at most_int" =>
 	      // no need to create the vals, can get while adding constraint, what is better ?
 	      val n = getInt(varList(0))
 	      val x = getCPVarIntArray(varList(1))
 	      val v = getInt(varList(2))
-	      cp.add(atMost(n, x, v))
+	      addCstr(atMost(n, x, v), ann)
 	    case "at_most1" =>
 	    case "oscar_bin_packing" => 
 	      bin_packing(varList, "def")
@@ -952,7 +928,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_decreasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
-	        cp.add(array(i) >= array(i+1))
+	        addCstr(array(i) >= array(i+1), ann)
 	      }
 	    case "oscar_diffn" =>
 	      val x = getCPVarIntArray(varList(0))
@@ -966,14 +942,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        ) 
 	      }
 	    case "oscar_disjoint" =>
-	      cp.add(disjoint(getCPVarSet(varList(0)),getCPVarSet(varList(1))))
+	      addCstr(disjoint(getCPVarSet(varList(0)),getCPVarSet(varList(1))), ann)
 	    case "oscar_distribute" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_element_bool" =>
 	      System.err.println(cstr+" not implemented")
 	      //cp.add(elementVar(getCPVarIntArray(varList(1).toString), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
 	    case "oscar_element_int" =>
-	      cp.add(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))))
+	      addCstr(elementVar(getCPVarIntArray(varList(1)), getCPVarInt(varList(0)), getCPVarInt(varList(2))), ann)
 	    case "exactly_int" => //not used, done with among
 	      
 	    case "oscar_global_cardinality" =>
@@ -988,7 +964,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_increasing_int" =>
 	      val array = getCPVarIntArray(varList(0))
 	      for(i <- 0 to array.length - 2) {
-	        cp.add(array(i) <= array(i+1))
+	        addCstr(array(i) <= array(i+1), ann)
 	      }
 	    case "oscar_int_set_channel" =>
 	      System.err.println(cstr+" not implemented")
@@ -1003,20 +979,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_lex_less_int" =>
 	      val t1 = getCPVarIntArray(varList(0))
 	      val t2 = getCPVarIntArray(varList(1))
-	      cp.add(lexLeq(t1, t2))
+	      addCstr(lexLeq(t1, t2), ann)
 	      diff_array_cstr(t1, t2)
 	    case "oscar_lex_lesseq_int" =>
-	      cp.add(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))))
+	      addCstr(lexLeq(getCPVarIntArray(varList(0)), getCPVarIntArray(varList(1))), ann)
 	    case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
 	      lex2_cstr(varList, false)
 	    case "oscar_link_set_to_booleans" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_maximum_int" =>
-	      cp.add(maximum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))))
+	      addCstr(maximum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))), ann)
 	    case "oscar_member_int" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_minimum_int" =>
-	      cp.add(minimum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))))
+	      addCstr(minimum(getCPVarIntArray(varList(1)), getCPVarInt(varList(0))), ann)
 	    case "oscar_nvalue" =>
 	      System.err.println(cstr+" not implemented")
 	    case "oscar_partition_set" =>
@@ -1081,12 +1057,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       val y = getCPVarInt(varList(1))
       val n = getCPVarInt(varList(2))
 	  cstr match {
-	    case "oscar_count_eq" => cp.add(countEq(n, x, y))
-	    case "oscar_count_geq" => cp.add(countGeq(n, x, y))
-	    case "oscar_count_gt" => cp.add(countGt(n, x, y))
-	    case "oscar_count_leq" => cp.add(countLeq(n, x, y))
-	    case "oscar_count_lt" => cp.add(countLt(n, x, y))
-	    case "oscar_count_neq" => cp.add(countNeq(n, x, y))
+	    case "oscar_count_eq" => addCstr(countEq(n, x, y))
+	    case "oscar_count_geq" => addCstr(countGeq(n, x, y))
+	    case "oscar_count_gt" => addCstr(countGt(n, x, y))
+	    case "oscar_count_leq" => addCstr(countLeq(n, x, y))
+	    case "oscar_count_lt" => addCstr(countLt(n, x, y))
+	    case "oscar_count_neq" => addCstr(countNeq(n, x, y))
 	  }
 	}
 	
@@ -1118,7 +1094,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         y :+= array((i+1)*cols+j)
         if(j == cols-1) {
           //posting the constraint for two consecutive rows and reseting the arrays
-          cp.add(lexLeq(x, y))
+          addCstr(lexLeq(x, y))
           if(strict) {
             diff_array_cstr(x, y)
           }
@@ -1133,7 +1109,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         y :+= array(j*cols+i+1)
         if(j == rows-1) {
           //posting the constraint for two consecutive rows and reseting the arrays
-          cp.add(lexLeq(x, y))
+          addCstr(lexLeq(x, y))
           if(strict) {
             diff_array_cstr(x, y)
           }
@@ -1156,7 +1132,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         valueOccurrence :+= (cover(i), count(i))
       }
       val x = getCPVarIntArray(varList(0))
-      cp.add(gcc(x, valueOccurrence))
+      addCstr(gcc(x, valueOccurrence))
 	}
 	
 	/**
@@ -1179,7 +1155,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         min(cover(i)-cover.min) = lb(i)
         max(cover(i)-cover.max) = ub(i)
       }
-      cp.add(gcc(x, r, min, max))
+      addCstr(gcc(x, r, min, max))
 	}
 	
 	/**
@@ -1221,7 +1197,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           a.addTransition(q, next-1, s)
         }
       }
-      cp.add(regular(x, a))
+      addCstr(regular(x, a))
 	}
 	
 	/**
@@ -1241,7 +1217,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
         tuples :+= temp
         temp = Array[Int]()
       }
-      cp.add(table(CPArray, tuples))
+      addCstr(table(CPArray, tuples))
 	}
 	
 	/**
@@ -1249,7 +1225,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param x, y
 	 */
 	def diff_array_cstr(x: Array[CPVarInt], y: Array[CPVarInt]) {
-	  cp.add(sum(x) != sum(y))
+	  addCstr(sum(x) != sum(y))
 	}
 	
 	/**
@@ -1262,17 +1238,26 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * all the "cp.add(cstr)" must be replaced by "addCstr(cstr, ann)"
 	 * ann or the variable representing the list of annotations
 	 */
-	def addCstr(c: Constraint, ann: List[Annotation]) {
+	/*
+	 * For it to work with global constraints, the list must be given 
+	 * as arg when calling the functions responsible for the constraints
+	 */
+	def addCstr(c: Constraint, ann: List[Annotation] = List[Annotation]()) {
 	  assert(ann.length <= 1, "One annotation max on constraint")
-	  if(ann.length > 0) {
-		  ann(0).name match {
-		    case "domain" => cp.add(c, Strong)
-		    case "boundsR" => cp.add(c, Medium)
-		    case "boundsD" => cp.add(c, Medium)
-		    case _ => cp.add(c)
+	  try {
+		  if(ann.length > 0) {
+			  ann(0).name match {
+			    case "domain" => cp.add(c, Strong)
+			    case "boundsR" => cp.add(c, Medium)
+			    case "boundsD" => cp.add(c, Medium)
+			    case _ => cp.add(c)
+			  }
+		  } else {
+		    cp.add(c)
 		  }
-	  } else {
-	    cp.add(c)
+	  } catch {
+	      case e:NoSolutionException => println("=====UNSATISFIABLE=====")
+	      case _:Throwable => throw new Exception("adding the constraint failed")
 	  }
 	}
 	
@@ -1293,10 +1278,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          val boolvar = getCPVarBool(varList(1))
 	          cstr match {
 	            case "array_bool_and" => {
-	              cp.add(new oscar.cp.constraints.And(array,boolvar))
+	              addCstr(new oscar.cp.constraints.And(array,boolvar))
 	              //cp.add(new GrEqVarReif(sum(array), CPVarInt(cp, array.length), boolvar))
 	            }
-	            case "array_bool_or" => cp.add(new Or(array, boolvar))
+	            case "array_bool_or" => addCstr(new Or(array, boolvar))
 	          }
 	      }
 	    }
@@ -1315,23 +1300,23 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar :+= getCPVarBool(e)
 	  }
 	  cstr match {
-	    case "bool_and" => cp.add((cpvar(0) && cpvar(1)) == cpvar(2))
-	    case "bool_eq" => cp.add(cpvar(0) == cpvar(1))
-	    case "bool_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
-	    case "bool_le" => cp.add(cpvar(0) <= cpvar(1))
-	    case "bool_le_reif" => cp.add(new GrEqVarReif(cpvar(1),cpvar(0),cpvar(2)))
+	    case "bool_and" => addCstr((cpvar(0) && cpvar(1)) == cpvar(2))
+	    case "bool_eq" => addCstr(cpvar(0) == cpvar(1))
+	    case "bool_eq_reif" => addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
+	    case "bool_le" => addCstr(cpvar(0) <= cpvar(1))
+	    case "bool_le_reif" => addCstr(new GrEqVarReif(cpvar(1),cpvar(0),cpvar(2)))
 	    case "bool_lt" => {
-	      cp.add(cpvar(0) == 0)
-	      cp.add(cpvar(1) == 1)
+	      addCstr(cpvar(0) == 0)
+	      addCstr(cpvar(1) == 1)
 	      //cp.add(!cpvar(0) && cpvar(1))
 	    }
 	    case "bool_lt_reif" => {
-	      cp.add(new GrEqVarReif(cpvar(1)-1,cpvar(0),cpvar(2)))
+	      addCstr(new GrEqVarReif(cpvar(1)-1,cpvar(0),cpvar(2)))
 	      //cp.add((!cpvar(0) && cpvar(1)) == cpvar(2))
 	    }
-	    case "bool_not" => cp.add(!cpvar(0) == cpvar(1))
-	    case "bool_or" => cp.add((cpvar(0) || cpvar(1)) == cpvar(2))
-	    case "bool_xor" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), cpvar(2)))
+	    case "bool_not" => addCstr(!cpvar(0) == cpvar(1))
+	    case "bool_or" => addCstr((cpvar(0) || cpvar(1)) == cpvar(2))
+	    case "bool_xor" => addCstr(new DiffReifVar(cpvar(0), cpvar(1), cpvar(2)))
 	  }
 	}
 	
@@ -1347,15 +1332,15 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    cpvar :+= getCPVarInt(e)
 	  }
 	  cstr match {
-	    case "int_abs" => cp.add(new Abs(cpvar(0), cpvar(1)))
-	    case "int_eq" => cp.add(cpvar(0) == cpvar(1))
+	    case "int_abs" => addCstr(new Abs(cpvar(0), cpvar(1)))
+	    case "int_eq" => addCstr(cpvar(0) == cpvar(1))
 	    case "int_le" => 
 	      //addCstr(cpvar(0) <= cpvar(1), ann) //example of adding constraint with annotation
-	      cp.add(cpvar(0) <= cpvar(1))
-	    case "int_lt" => cp.add(cpvar(0) < cpvar(1))
-	    case "int_ne" => cp.add(cpvar(0) != cpvar(1))
-	    case "int_plus" => cp.add(cpvar(0) + cpvar(1) == cpvar(2))
-	    case "int_times" => cp.add(cpvar(0) * cpvar(1) == cpvar(2))
+	      addCstr(cpvar(0) <= cpvar(1))
+	    case "int_lt" => addCstr(cpvar(0) < cpvar(1))
+	    case "int_ne" => addCstr(cpvar(0) != cpvar(1))
+	    case "int_plus" => addCstr(cpvar(0) + cpvar(1) == cpvar(2))
+	    case "int_times" => addCstr(cpvar(0) * cpvar(1) == cpvar(2))
 	  }
 	}
 	
@@ -1372,10 +1357,10 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	  val boolvar = getCPVarBool(varList.last)
 	  cstr match {
-	    case "int_eq_reif" => cp.add(new EqReifVar(cpvar(0), cpvar(1), boolvar))
-	    case "int_le_reif" => cp.add(new GrEqVarReif(cpvar(1), cpvar(0), boolvar))
-	    case "int_lt_reif" => cp.add(new GrEqVarReif(cpvar(1), cpvar(0)+1, boolvar))
-	    case "int_ne_reif" => cp.add(new DiffReifVar(cpvar(0), cpvar(1), boolvar))
+	    case "int_eq_reif" => addCstr(new EqReifVar(cpvar(0), cpvar(1), boolvar))
+	    case "int_le_reif" => addCstr(new GrEqVarReif(cpvar(1), cpvar(0), boolvar))
+	    case "int_lt_reif" => addCstr(new GrEqVarReif(cpvar(1), cpvar(0)+1, boolvar))
+	    case "int_ne_reif" => addCstr(new DiffReifVar(cpvar(0), cpvar(1), boolvar))
 	  } 
 	}
 	
@@ -1398,30 +1383,30 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 
       cstr match {
         case "int_lin_ne" => 
-          cp.add(weightedSum(cst, cpvar) != c)
+          addCstr(weightedSum(cst, cpvar) != c)
         case "int_lin_eq" => {
           if (c == 0 && cst(0) == -1 && cst.tail.forall(_==1)) {
             // sum constraint
             //System.err.println("int_lin_eq, sum identified")
-            cp.add(sum(cpvar.tail,cpvar.head))
+            addCstr(sum(cpvar.tail,cpvar.head))
           } else if (c == 0 && cst(0) == 1 && cst.tail.forall(_ == -1)) {
             //System.err.println("int_lin_eq, sum identified")
-            cp.add(sum(cpvar.tail,cpvar.head))            
+            addCstr(sum(cpvar.tail,cpvar.head))            
           } else if (c == 0 && cst.last == -1 && cst.reverse.tail.forall(_ == 1)) {
             //System.err.println("int_lin_eq, sum identified")
-            cp.add(sum(cpvar.reverse.tail,cpvar.last))
+            addCstr(sum(cpvar.reverse.tail,cpvar.last))
           }
           else if (c == 0 && cst.last == 1 && cst.reverse.tail.forall(_ == -1)) {
             //System.err.println("int_lin_eq, sum identified")
-            cp.add(sum(cpvar.reverse.tail,cpvar.last))
+            addCstr(sum(cpvar.reverse.tail,cpvar.last))
           }
           else {
-            cp.add(weightedSum(cst,cpvar,c))
+            addCstr(weightedSum(cst,cpvar,c))
           }
           
         }
         case "int_lin_le" => 
-          cp.add(weightedSum(cst, cpvar) <= c) 
+          addCstr(weightedSum(cst, cpvar) <= c, ann) 
         case "int_lin_eq_reif" => 
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
         case "int_lin_le_reif" =>
@@ -1430,9 +1415,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
           
         case "bool_lin_eq" => 
-          cp.add(weightedSum(cst, cpvar) == c)
+          addCstr(weightedSum(cst, cpvar) == c)
         case "bool_lin_le" => 
-          cp.add(weightedSum(cst, cpvar) <= c)
+          addCstr(weightedSum(cst, cpvar) <= c)
       }
 	}
 	
@@ -1450,12 +1435,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
           //cp.add(new WeightedSum(cst,cpvar,c))
           //cp.add(new EqReif(weightedSum(cst, cpvar), c, boolvar))
           //cp.add(new oscar.cp.constraints.WeightedSumReif(cst,cpvar,c,boolvar))
-          cp.add(new EqReif(weightedSum(cst, cpvar), c, boolvar))
+          addCstr(new EqReif(weightedSum(cst, cpvar), c, boolvar))
         }
         case "int_lin_le_reif" =>
-          cp.add(new GrEqCteReif(weightedSum(cst.map(-_),cpvar),-c, boolvar))
+          addCstr(new GrEqCteReif(weightedSum(cst.map(-_),cpvar),-c, boolvar))
         case "int_lin_ne_reif" =>
-          cp.add(new DiffReif(weightedSum(cst, cpvar), c, boolvar))
+          addCstr(new DiffReif(weightedSum(cst, cpvar), c, boolvar))
       }
 	}
 	
@@ -1472,8 +1457,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  }
 	  cstr match {
 	    case "set_diff" =>
-	      cp.add(new SetDiff(cpvar(0), cpvar(1), cpvar(2)))
-	    case "set_eq" => cp.add(cpvar(0) == cpvar(1))
+	      addCstr(new SetDiff(cpvar(0), cpvar(1), cpvar(2)))
+	    case "set_eq" => addCstr(cpvar(0) == cpvar(1))
 	  }
 	}
 	
@@ -1941,10 +1926,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  if(true) { 
 	      var output: Boolean = false // only used for formating the output
 	      model.dict.toSeq.sortBy(_._1) foreach {
+	        // the condition that key mustn't contain "[" is to avoid adding twice the CPVarBool created to avoid the bool2int constraints
 		    case (key, value) if(!(key contains "[")) =>
 		     value match {
-//	      model.dict.foreach { e => 
-//	        e._2 match {
 	          case (tp, fzo) => // /!\ not always CPVarInt
 	            tp match {
 	              case FZType.V_BOOL => {
@@ -1954,8 +1938,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) { output = true }
 	                }
-//	                state :+= new VarState(obj.name,
-//	                    output, false, false, false, 1, FZType.V_BOOL)
 	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_BOOL)
 	                output = false
@@ -1981,9 +1963,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                  xsstate :+= new VarState(obj.name,
 	                		  output, true, first, last, 
 	                		  obj.cpvar.length, FZType.V_ARRAY_BOOL)
-//	                  state :+= new VarState(obj.name,
-//	                		  output, true, first, last, 
-//	                		  obj.cpvar.length, FZType.V_ARRAY_BOOL)
 	                  if(output) {
 	                    first = false
 	                  }
@@ -1994,9 +1973,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              }
 	                
 	              case FZType.V_INT => {
-//	                val res = getVariable(FZType.V_INT, fzo, (x, state))
-//	                x = res._1
-//	                state = res._2
 	                val obj = fzo.asInstanceOf[VarInt]
 	                x :+= obj.cpvar
 	                xs :+= obj.cpvar
@@ -2005,8 +1981,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                }
 	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_INT)
-//	                state :+= new VarState(obj.name,
-//	                    output, false, false, false, 1, FZType.V_INT)
 	                output = false
 	              }
 	              case FZType.V_ARRAY_INT => {
@@ -2027,9 +2001,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	            			  }
 	            			}
 	                	}
-//	                	state :+= new VarState(obj.name,
-//	                			output, true, first, last, 
-//	                			obj.cpvar.length, FZType.V_ARRAY_INT)
 	                	xsstate :+= new VarState(obj.name,
 	                			output, true, first, last, 
 	                			obj.cpvar.length, FZType.V_ARRAY_INT)
@@ -2043,17 +2014,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              }
 	              case FZType.V_SET_INT => {
 	                val obj = fzo.asInstanceOf[VarSetInt]
-	                //println(obj.name)
 	                s :+= obj.cpvar
 	                xs :+= obj.cpvar
 	                obj.annotations.foreach { ann =>
 	            		if ( ann.name == "output_var" ) {
 	            		  output = true 
-	            		  //println("output " +obj.name)	  
 	            		}
 	                }
-//	                setstate :+= new VarState(obj.name,
-//	                    output, false, false, false, 1, FZType.V_SET_INT)
 	                xsstate :+= new VarState(obj.name,
 	                    output, false, false, false, 1, FZType.V_SET_INT)
 	                output = false
@@ -2080,9 +2047,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                	xsstate :+= new VarState(obj.name,
 	                			output, true, first, last, 
 	                			obj.cpvar.length, FZType.V_ARRAY_SET)
-//	                	setstate :+= new VarState(obj.name,
-//	                			output, true, first, last, 
-//	                			obj.cpvar.length, FZType.V_ARRAY_SET)
 	                	if(output) {
 	                		first = false
 	                	}
@@ -2100,25 +2064,25 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  } 
 	  cp.silent = !options.verbose 
 	  
+	  /*
+	   * need to catch exceptions when objective is not bound
+	   */
 	  tp match {
 	    case "sat" => {
 	      cp.solve subjectTo {
 	      } exploration {
 	        explo(ann, x, s)
-	        //explo(ann, xs._1)
+	        sol_found = true
 	        format_output(xs, xsstate)
-	        //format_output(x, state, s, setstate)
 	      } run {
 	        if (options.all) Int.MaxValue 
 	        else if (options.nSolutions > 0) options.nSolutions 
 	        else 1
 	      }
-	      println("==========")
 	    }
 	    case "max" => {
 	      cp.maximize(
 	          expr match {
-		        //case x:List[List[Any]] => //can oscar max several values,... can it be done in cp ?
 		        case x:List[Any] =>
 		          getCPVarIntFromList(x)
 		        case x:String => 
@@ -2127,15 +2091,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      ) subjectTo {
 	      } exploration {
 	        explo(ann, x, s)
+	        sol_found = true
 	        format_output(xs, xsstate)
-	        //format_output(x, state, s, setstate)
 	      } run ()
-	      println("==========")
 	    }
 	    case "min" => {
 	      cp.minimize(
 	          expr match {
-		        //case x:List[List[Any]] => //can oscar min several values,... can it be done in cp ?
 		        case x:List[Any] =>
 		          getCPVarIntFromList(x)
 		        case x:String => 
@@ -2144,18 +2106,23 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      ) subjectTo {
 	      } exploration {
 	        explo(ann, x, s)
+	        sol_found = true
 	        format_output(xs, xsstate)
-	        //format_output(x, state, s, setstate)
 	      } run ()
-	      println("==========")
-	      //println(System.currentTimeMillis/1000 - timestamp)
 	    }
+	  }
+	  if(sol_found) {
+	    println("==========")
+	  } else {
+	    println("=====UNSATISFIABLE=====")
 	  }
       if (options.statistics) {
         cp.printStats()
       }
 	}
 	
+	
+	// should be used to factorize the code in solver(), thx to the different types of fzobjects
 //	def getVariable(tp: FZType, fzo: FZObject, xs: (Array[CPVarInt], Array[VarState])): 
 //		(Array[CPVarInt], Array[VarState]) = {
 //	  var output = false
@@ -2271,7 +2238,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param state : array of VarState containing information on the CPVarInt, CPVarBool and CPVarSet
 	 */
 	def format_output(x: Array[CPVar], state: Array[VarState]) {
-	  //TODO : print the right output when no solution is found
 	  def printCPVar(cpvar: CPVar) {
 	    if(cpvar.isInstanceOf[CPVarSet]) {
     	  printSet(cpvar.asInstanceOf[CPVarSet])
@@ -2356,8 +2322,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		      }
 		      pred = v
 		    }
-	    }
-	    
+	    } 
 	}
 	
 	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
