@@ -1,0 +1,3 @@
+array[1 .. 10] of var 1 .. 10: cities;
+var int: tour_length;
+output [ show(cities), show(tour_length) ];

@@ -195,7 +195,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    	case int1~".."~int2 => Range(int1, int2+1) 
 	    } 
 	    | "{"~>repsep(int_const, ",")<~"}" 
-	    //| "{"~>rep1sep(int_const, ",")<~"}" // -> according to the grammar, bt doesn't parse some models
+	    //| "{"~>rep1sep(int_const, ",")<~"}" // -> according to the grammar, but doesn't parse some models
 	)
 	
 	def array_expr : Parser[List[Any]] = (
@@ -1257,6 +1257,11 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param c : constraint
 	 * @param ann : list of annotations in which the strengh may be specified
 	 */
+	/*
+	 * TODO : to take the constraint annotations into account, 
+	 * all the "cp.add(cstr)" must be replaced by "addCstr(cstr, ann)"
+	 * ann or the variable representing the list of annotations
+	 */
 	def addCstr(c: Constraint, ann: List[Annotation]) {
 	  assert(ann.length <= 1, "One annotation max on constraint")
 	  if(ann.length > 0) {
@@ -1520,7 +1525,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @return an array of booleans
 	 */
 	def getBoolArray(x: Any): Array[Boolean] = {
-	  // to be tested
 	  x match {
 	    case y:List[Any] => y.asInstanceOf[List[Boolean]].toArray
         case y:String => 
@@ -1927,18 +1931,17 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param ann : the list of annotations related to the search
 	 */
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
-	  //var xs = (Array[CPVarInt](), Array[VarState]())
 	  var x = Array[CPVarInt]()
 	  var s = Array[CPVarSet]()
+	  // array with all the variable so that it is possible to output correctly
 	  var xs = Array[CPVar]()
 	  var state = Array[VarState]()
 	  var setstate = Array[VarState]()
 	  var xsstate = Array[VarState]()
-	  if(true) { // array with all the variable so that it is possible to output correctly
+	  if(true) { 
 	      var output: Boolean = false // only used for formating the output
-	      //var c = 0
 	      model.dict.toSeq.sortBy(_._1) foreach {
-		    case (key, value) =>
+		    case (key, value) if(!(key contains "[")) =>
 		     value match {
 //	      model.dict.foreach { e => 
 //	        e._2 match {
@@ -2184,7 +2187,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        val array = getCPVarIntArray(a.args(0))
 		        varChoiceAnn2(a.args, array)
 		      case "bool_search" =>
-		        //check that this mapping works :/, it seems to work fine
 		        val array = getCPVarBoolArray(a.args(0)).map(_.asInstanceOf[CPVarInt])
 		        varChoiceAnn2(a.args, array)
 	//	      case "set_search" =>
