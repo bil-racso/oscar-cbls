@@ -23,6 +23,7 @@ import oscar.cp.constraints.SetDiff
 import java.sql.Time
 import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
+import oscar.cp.scheduling.CumulativeActivity
 
 class Parser extends JavaTokenParsers {// RegexParsers {
   
@@ -940,6 +941,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "oscar_count_neq" =>
 	      count_cstr(varList, ann, cstr)
 	    case "oscar_cumulative" => {
+	      val s = getCPVarIntArray(varList(0))
+	      val d = getCPVarIntArray(varList(1))
+	      val r = getCPVarIntArray(varList(2))
+	      
+	      //scheduler : CPScheduler, startVar : CPVarInt, durVar : CPVarInt, endVar : CPVarInt, resourceVar : CPVarInt, heightVar : CPVarInt,
+	      
 	      System.err.println("oscar_cumulative not implemented")
 	    }
 	    case "oscar_decreasing_int" =>
@@ -1639,7 +1646,6 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def getCPVarIntFromString(x: String): CPVarInt = {
 	  //if (bool2Int.contains(x)) System.err.println("mmmh, I know this bool")
-	  
 	  model.dict.get(bool2Int.getOrElse(x, x)) match {
 	      case Some((tp, fzo)) => 
 	        tp match {

@@ -88,25 +88,24 @@ class WeightedSum2(val W: Array[Int], val X: Array[CPVarInt], val y: CPVarInt) e
             val maxi = (num1.toDouble / w(i)).floor.toInt
             //val maxi = if (num1 % w(i) == 0) num1 / w(i) else (num1.toDouble/w(i)).floor.toInt
             val oc1 = x(i).updateMax(maxi)
-            assert(oc1 != Failure)
-            
+            if (oc1 == Failure) return Failure
             val num2 = y.min - maxsumxi
             val mini = (num2.toDouble / w(i)).ceil.toInt
             //val mini = if (num2 % w(i) == 0) num2/w(i) else (num2.toDouble/w(i)).ceil.toInt
             val oc2 = x(i).updateMin(mini)
-            assert(oc2 != Failure)
+            if (oc1 == Failure) return Failure
 
           } else {
             val num1 = y.min - maxsumxi
             val maxi = (num1.toDouble / w(i)).floor.toInt
             //val maxi = if (num1 % w(i) == 0) num1 / w(i) else (num1.toDouble/w(i)).floor.toInt 
             val oc1 = x(i).updateMax(maxi)
-            assert(oc1 != Failure)
+            if (oc1 == Failure) return Failure
             val num2 = y.max - minsumxi
             val mini = (num2.toDouble / w(i)).ceil.toInt
             //val mini = if (num2 % w(i) == 0) num2/w(i) else (num2.toDouble/w(i)).ceil.toInt
             val oc2 = x(i).updateMin(mini)
-            assert(oc2 != Failure)
+            if (oc2 == Failure) return Failure
 
           }
         }
