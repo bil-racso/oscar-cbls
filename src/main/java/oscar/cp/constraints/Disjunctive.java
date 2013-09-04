@@ -17,6 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
+import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 import oscar.cp.scheduling.Activity;
 
@@ -38,7 +39,7 @@ public class Disjunctive extends Constraint {
 	private CPOutcome notOverlap(Activity act1, Activity act2) {
         CPVarBool b1 = act2.start().isGrEq(act1.end());
         CPVarBool b2 = act1.start().isGrEq(act2.end());
-        if (super.s().post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
+        if (super.s().post(new BinarySum(b1,b2,CPVarInt.apply(b1.s(),1))) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
         }
         return CPOutcome.Suspend;
