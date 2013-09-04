@@ -279,7 +279,7 @@ trait Constraints {
     else x(0) == s
     */
     if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
-    else new oscar.cp.constraints.Sum2(vars, s)
+    else new oscar.cp.constraints.Sum(vars, s)
   }
 
   /**
@@ -358,7 +358,7 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt], y: CPVarInt): Constraint = {
-    new WeightedSum2(w,x,y)
+    new WeightedSum(w,x,y)
   }
   
   /**

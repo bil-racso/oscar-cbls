@@ -303,7 +303,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
   def decomposition(x: Array[CPVarInt], sum: Int, sum2: CPVarInt): CPOutcome = {
     if (sum2.store.post(new Sum(x.map(i => i * i), sum2)) == CPOutcome.Failure) {
       CPOutcome.Failure
-    } else if (sum2.store.post(new Sum(x, sum)) == CPOutcome.Failure) {
+    } else if (sum2.store.post(new Sum(x, CPVarInt(sum2.s,sum))) == CPOutcome.Failure) {
       CPOutcome.Failure
     } else {
       CPOutcome.Suspend

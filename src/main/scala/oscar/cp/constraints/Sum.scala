@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of Sum Constraint:
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Sum2(val X: Array[CPVarInt], val y: CPVarInt) extends Constraint(y.s, "Sum2") {
+class Sum(val X: Array[CPVarInt], val y: CPVarInt) extends Constraint(y.s, "Sum2") {
 
   val x = X.map(i => i)
   val sumBounds = new ReversibleInt(s, 0)
