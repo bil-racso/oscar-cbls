@@ -84,6 +84,42 @@ package object util {
       case None => None
     }
   }
+  
+  
+  /**
+   * Deterministic min selector
+   * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
+   * @author pschaus
+   */
+  def selectMinDeterministic[R, T](r: Iterable[R])(f: R => T)(implicit orderer: T => Ordered[T]): R = {
+    var best = r.head
+    var fbest = f(best)
+    val it = r.iterator
+    while (it.hasNext) {
+      val i = it.next()
+      val fi = f(i)
+      if (fi < fbest) {
+        best = i
+        fbest = fi
+      }
+    }
+    best
+  }
+  
+  def selectMinDeterministicInt[R](r: Array[R])(f: R => Int): R = {
+    var best = r.head
+    var fbest = f(best)
+    var i = 0
+    while (i < r.size) {
+      val fi = f(r(i))
+      if (fi < fbest) {
+        best = r(i)
+        fbest = fi
+      }
+      i += 1
+    }
+    best
+  }  
 
   /**
    * Random min selector

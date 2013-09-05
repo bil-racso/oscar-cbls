@@ -16,6 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.CPStore;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
 
@@ -46,6 +47,7 @@ public class GrEq extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
+		priorityL2_$eq(CPStore.MAXPRIORL2());
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);

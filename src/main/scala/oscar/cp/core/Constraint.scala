@@ -73,7 +73,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   protected def snapshotVarInt(): Unit = {
-    toSnapshotVarInt.foreach(x => snapshotsVarInt(x).update())
+    if (toSnapshotVarInt.size > 0)
+    	toSnapshotVarInt.foreach(x => snapshotsVarInt(x).update())
   }
   
 
@@ -90,10 +91,11 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   protected def snapshotVarSet(): Unit = {
-    toSnapshotVarSet.foreach(x => snapshotsVarSet(x).update())
+    if (toSnapshotVarSet.size > 0)
+    	toSnapshotVarSet.foreach(x => snapshotsVarSet(x).update())
   }  
 
-  private var priorL2 = CPStore.MAXPRIORL2
+  private var priorL2 = CPStore.MAXPRIORL2 - 2
   private var priorBindL1 = CPStore.MAXPRIORL1 - 1
   private var priorBoundsL1 = CPStore.MAXPRIORL1 - 2
   private var priorRemoveL1 = CPStore.MAXPRIORL1 - 2

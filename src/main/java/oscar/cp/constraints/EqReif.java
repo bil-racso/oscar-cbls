@@ -44,6 +44,9 @@ public class EqReif extends Constraint {
 		this.x = x;
 		this.v = v;
 		this.b = b;
+		
+		//priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		//priorityL2_$eq(CPStore.MAXPRIORL2());
 	}
 	
 	@Override
@@ -56,8 +59,9 @@ public class EqReif extends Constraint {
 			x.callValBindWhenBind(this);
 			b.callValBindWhenBind(this);
 			//x.addAC5Bounds(this);
-			x.callValRemoveWhenValueIsRemoved(this);
-			return updateBounds(x);
+			//x.callValRemoveWhenValueIsRemoved(this);
+			x.callPropagateWhenDomainChanges(this,false);
+			return propagate();
 		}
 	}
 	
@@ -72,18 +76,16 @@ public class EqReif extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	
-	
-	protected int getPriorityBindL1(){
-		return CPStore.MAXPRIORL1();
+	@Override
+	public CPOutcome propagate() {
+		if (!x.hasValue(v)) {
+			if (b.assign(0) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			return CPOutcome.Success;
+		}
+		return CPOutcome.Suspend;
 	}
-	
-	protected int getPriorityRemoveL1(){
-		return CPStore.MAXPRIORL1();
-	}
-	
-//	public int getPriorityAC5Bounds(){
-//		return CPStore.MAXPRIORAC5;
-//	}	
 	
 	@Override
 	public CPOutcome valRemove(CPVarInt x, int val) {

@@ -265,7 +265,21 @@ trait Constraints {
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
   def sum(vars: Array[CPVarInt], s: CPVarInt): Constraint = {
-    new Sum(vars, s)
+    /*
+    var x = vars
+    while (x.size > 2) {
+      //System.err.println("sum"+x.size)
+      val y = x.sliding(2, 2).toArray
+      x = y.map{ arg =>
+      	if (arg.size == 2) arg(0)+arg(1)
+      	else arg(0)
+      }.reverse
+    }
+    if (x.size == 2) new BinarySum(x(0),x(1),s)
+    else x(0) == s
+    */
+    if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
+    else new oscar.cp.constraints.Sum(vars, s)
   }
 
   /**
@@ -323,33 +337,49 @@ trait Constraints {
    * @return a variable S linked with the relation S = sum(i in indexes) (w_i * x_i)
    */
   def weightedSum[A](indexes: Iterable[A])(f: A => (Int, CPVarInt)): CPVarInt = {
-    sum(indexes) { i =>
-      val (w, x) = f(i)
-      x * w
-    }
+    val (w,x) = (for (i <- indexes) yield f(i)).unzip
+    weightedSum(w.toArray,x.toArray)
   }
 
   /**
    * Weighted Sum Constraint
    * @param indexes1 an iterable of index values
    * @param indexes2 an iterable of index values
-   * @param a function: (i,j) => (w_ij, x_ij) where i is an index from indexes
+   * @param a function: (i,j) => (w_ij, x_ij) where i is an index from indexes1, j is an index from indexes2
    * @return a variable S linked with the relation S = sum(i in indexes1,j in indexes2) (w_ij * x_ij)
    */
   def weightedSum[A, B](indexes1: Iterable[A], indexes2: Iterable[B])(f: (A, B) => (Int, CPVarInt)): CPVarInt = {
-    sum(indexes1, indexes2) {
-      case (i, j) =>
-        val (w, x) = f(i, j)
-        x * w
-    }
+    val (w,x) = (for (i <- indexes1; j <- indexes2) yield f(i,j)).unzip
+    weightedSum(w.toArray,x.toArray)
   }
+  
+  /**
+   * Weighted Sum Constraint
+   * @return y == sum(i)(w_i * x_i)
+   */
+  def weightedSum(w: Array[Int], x: Array[CPVarInt], y: CPVarInt): Constraint = {
+    new WeightedSum(w,x,y)
+  }
+  
+  /**
+   * Weighted Sum Constraint
+   * @return y==sum(i)(w_i * x_i)
+   */
+  def weightedSum(w: Array[Int], x: Array[CPVarInt], y: Int): Constraint = {
+    weightedSum(w,x,CPVarInt(x(0).s,y))
+  }  
 
   /**
    * Weighted Sum Constraint
    * @return sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt]): CPVarInt = {
-    sum(w.zip(x)) { case (w_, x_) => x_ * w_ }
+    val cp = x(0).s
+    val m = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.max else wi*xi.min}.sum
+    val M = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.min else wi*xi.max}.sum
+    val y = CPVarInt(cp,m to M)
+    cp.post(weightedSum(w,x,y))
+    y
   }
 
   /**
@@ -357,7 +387,7 @@ trait Constraints {
    * @return sum(ij)(w_ij * x_ij)
    */
   def weightedSum(w: Array[Array[Int]], x: Array[Array[CPVarInt]]): CPVarInt = {
-    sum((0 until w.size).map(i => sum(w(i).zip(x(i))) { case (w_, x_) => x_ * w_ }))
+    weightedSum(w.flatten,x.flatten)
   }
 
   /**
@@ -511,7 +541,88 @@ trait Constraints {
    * @param v a value
    * @return a constraint enforcing that  #{ i | x(i) = v } <= n
    */  
-  def atMost(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atMost(n,x,Set(v)) 
+  def atMost(n: Int, x: IndexedSeq[CPVarInt], v: Int): Constraint = atMost(n,x,Set(v))
+  
+  /**
+   * Count Constraint: n is the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n = #{ i | x(i) = y }
+   */  
+  def countEq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    new Count(n,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is greater or equal to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n >= #{ i | x(i) = y }
+   */  
+  def countGeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n >= c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is greater than the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n > #{ i | x(i) = y }
+   */  
+  def countGt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n > c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is less or equal to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n <= #{ i | x(i) = y }
+   */  
+  def countLeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n <= c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }
+  
+  /**
+   * Count Constraint: n is less than the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n <= #{ i | x(i) = y }
+   */  
+  def countLt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n < c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }  
+  
+  /**
+   * Count Constraint: n is different to the number of variables from x equal to y.
+   * @param n is a counter variable
+   * @param x is an array of variables
+   * @param y is a variable
+   * @return a constraint enforcing that n != #{ i | x(i) = y }
+   */  
+  def countNeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
+    val c = CPVarInt(n.s,0 to x.size)
+    val ok = n.s.post(n != c)
+    assert(ok != CPOutcome.Failure)
+    new Count(c,x,y)
+  }   
   
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
@@ -810,4 +921,11 @@ trait Constraints {
 
     throw new IllegalArgumentException("Bounds are not specified")
   }
+  
+  /**
+   * Constraint x and y to be disjoint (no common values)
+   * @param x:
+   * @param y:
+   */
+  def disjoint(x: CPVarSet, y: CPVarSet): Constraint = new Disjoint(x,y)
 }

@@ -30,6 +30,11 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
   
 	def constraintDegree(): Int
 	
+	/**
+	 * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
+	 */
+	def regret: Int = if (isBound) Int.MaxValue else valueAfter(min) - min
+	
     /**
      * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
      */
@@ -528,8 +533,8 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
 	      this.plus(y.value)
 	    }
 	    else {
-	     val	c = new CPVarIntImpl(s,min + y.min, max + y.max);
-		 val ok = s.post(new oscar.cp.constraints.Sum(Array(this,y),c));
+	     val c = new CPVarIntImpl(s,min + y.min, max + y.max);
+		 val ok = s.post(new oscar.cp.constraints.BinarySum(this,y,c));
          assert (ok != CPOutcome.Failure);
 		 c
 	    }
@@ -661,6 +666,8 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
         assert (ok != CPOutcome.Failure);
 		return b;
 	}
+	
+	def isRange: Boolean = (max-min+1) == size
 	
     /**
      * -x
@@ -806,9 +813,13 @@ object CPVarInt {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
-  def apply(cp: CPStore, value: Int): CPVarInt = {
-    new CPVarIntImpl(cp, value, value)
+  def apply(cp: CPStore, value: Int, name: String): CPVarInt = {
+    new CPVarIntImpl(cp, value, value, name)
   }
+  
+  def apply(cp: CPStore, value: Int): CPVarInt = {
+    new CPVarIntImpl(cp, value, value, "")
+  }  
   
   /**
    * Creates a new CP Integer Variable instantiated to a value
@@ -816,9 +827,13 @@ object CPVarInt {
    * @param value is the value to which the variable is instantiated
    * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
    */
+  def apply(cp: CPStore, valueMin: Int, valueMax: Int, name: String): CPVarInt = {
+    new CPVarIntImpl(cp, valueMin, valueMax,name)
+  }
+  
   def apply(cp: CPStore, valueMin: Int, valueMax: Int): CPVarInt = {
-    new CPVarIntImpl(cp, valueMin, valueMax)
-  }  
+    new CPVarIntImpl(cp, valueMin, valueMax,"")
+  }    
 
   /**
    * Creates a new CP Integer Variable with a set of values as initial domain
@@ -827,18 +842,26 @@ object CPVarInt {
    * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
    */
   
-  def apply(cp: CPStore, values: Set[Int]): CPVarInt = {
+  def apply(cp: CPStore, values: Set[Int], name: String): CPVarInt = {
     val (minv,maxv) = (values.min,values.max)
-    val x = new CPVarIntImpl(cp, minv,maxv)
+    val x = new CPVarIntImpl(cp, minv,maxv,name)
     for (v <- minv to maxv; if (!values.contains(v))) {
       x.removeValue(v)
     }
     x
   }
   
-  def apply(cp: CPStore, values: Array[Int]): CPVarInt = {
-    CPVarInt(cp,values.toSet)
+  def apply(cp: CPStore, values: Set[Int]): CPVarInt = {
+    apply(cp,values,"")
   }
+  
+  def apply(cp: CPStore, values: Array[Int], name: String): CPVarInt = {
+    CPVarInt(cp,values.toSet,name)
+  }
+  
+  def apply(cp: CPStore, values: Array[Int]): CPVarInt = {
+    CPVarInt(cp,values.toSet,"")
+  }  
   
   
 }

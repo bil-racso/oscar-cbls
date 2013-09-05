@@ -48,10 +48,11 @@ public class LeEqCteReif extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		priorityBindL1_$eq(CPStore.MAXPRIORL1());
-		CPOutcome oc = updateBounds(x);
+		priorityL2_$eq(CPStore.MAXPRIORL2()-1);
+		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			b.callValBindWhenBind(this);
-			x.callUpdateBoundsWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
@@ -60,7 +61,7 @@ public class LeEqCteReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome propagate() {
 		if (x.getMax() <= v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

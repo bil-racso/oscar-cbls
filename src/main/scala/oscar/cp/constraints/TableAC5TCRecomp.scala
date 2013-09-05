@@ -67,6 +67,20 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
 	  if (!filterAndInitSupport(i)) return CPOutcome.Failure
 	  if (!y.isBound) {
 	    y.callValRemoveIdxWhenValueIsRemoved(this,i);
+	    /*
+	    y.filterWhenDomainChanges{ d =>
+	      var it = d.values
+	      var ok = true
+	      while (it.hasNext && ok) {
+	        val v = it.next
+	        if ( valRemoveIdx(y, i, v) == CPOutcome.Failure) 
+	          ok = false
+	      }
+	      if (!ok) CPOutcome.Failure
+	      else CPOutcome.Suspend
+	    }
+	    */
+	    
 	  }
 	}
     CPOutcome.Suspend

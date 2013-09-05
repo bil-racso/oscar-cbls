@@ -1,0 +1,2 @@
+array[1 .. 5] of var 0 .. 25: mark;
+output [ show(mark) ];

@@ -46,11 +46,24 @@ public class GrEqVarReif extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		CPOutcome oc = updateBounds(x);
-		if(oc == CPOutcome.Suspend){
-			b.callValBindWhenBind(this);
-			x.callUpdateBoundsWhenBoundsChange(this);
-			y.callUpdateBoundsWhenBoundsChange(this);
+		
+		if (x.isBound()) {
+			if (s().post(new LeEqCteReif(y, x.value(), b)) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			return CPOutcome.Success;
+		} else if (y.isBound()) {
+			if (s().post(new GrEqCteReif(x, y.value(), b)) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			return CPOutcome.Success;
+		}
+		
+		CPOutcome oc = propagate();
+		if (oc == CPOutcome.Suspend){
+			if (!b.isBound()) b.callValBindWhenBind(this);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
@@ -59,7 +72,7 @@ public class GrEqVarReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt var) {
+	public CPOutcome propagate() {
 		if (x.getMin() >= y.getMax()) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

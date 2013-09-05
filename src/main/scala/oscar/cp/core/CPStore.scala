@@ -56,6 +56,8 @@ class CPStore extends ReversibleSearchNode {
 	private var highestPriorL1 = 0
 	private var highestPriorL2 = 0;
 	
+	private var isL1QueueEmpty = true
+	
 	override def fail() { status.setValue(Failure) }
 	
 	
@@ -78,6 +80,7 @@ class CPStore extends ReversibleSearchNode {
 	}
 	
 	def addQueueL2(c: Constraint): Int = {
+	    //println(c+" active:"+c.isActive()+" inqueue:"+c.isInQueue() + " in propagate"+ c.inPropagate()+ " indempotent:"+c.idempotent)
         if ((c.isActive() && !c.isInQueue()) && (!c.inPropagate() || !c.idempotent)) {
 			c.setInQueue()
 			propagQueueL2(c.priorityL2).add(c)
@@ -94,12 +97,16 @@ class CPStore extends ReversibleSearchNode {
      */
 	def notifyL2(constraints: ConstraintQueue) {
 		var q = constraints;
+		//println("constraints before notifyL2:"+constraints)
 		while (q != null) {
+			
 			val c = q.cons;
+			//println("add constraint "+c+" on L2 queue")
 			val p = addQueueL2(c);
 			highestPriorL2 = Math.max(p, highestPriorL2);
 			q = q.next
 		}
+		//println("constraints after notifyL2:"+constraints)
 	}
 	
 	private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome) {
@@ -111,6 +118,7 @@ class CPStore extends ReversibleSearchNode {
 			}
 			else Suspend
 		);
+		isL1QueueEmpty = false
 		highestPriorL1 = Math.max(highestPriorL1, prior);
 	}
 	
@@ -344,7 +352,7 @@ class CPStore extends ReversibleSearchNode {
      * @return Failure is the fix point detects a failure that is one of the domain became empty, Suspend otherwise
      */
    
-	protected def propagate(): CPOutcome = {
+	protected def propagate3(): CPOutcome = {
 		assert(status.value != Failure)
 		val t0 = System.currentTimeMillis();
 		inPropagate = true
@@ -367,6 +375,120 @@ class CPStore extends ReversibleSearchNode {
 		status.value = if (ok == Failure) ok else Suspend
 		status.value
 	}
+	
+	protected def propagate(): CPOutcome = {
+	    //println("------propagate------")
+	  	assert(status.value != Failure)
+		val t0 = System.currentTimeMillis();
+		inPropagate = true
+		var ok = CPOutcome.Suspend
+		addCutConstraints()
+		var fixed = false
+		highestPriorL1 = CPStore.MAXPRIORL1
+		highestPriorL2 = CPStore.MAXPRIORL2
+		
+		while (ok != CPOutcome.Failure && !fixed) {
+					//printQueues()
+					var p = highestPriorL1
+					while (!isL1QueueEmpty && ok != CPOutcome.Failure) {
+							//print("*")
+							//printQueues()
+					  		p = highestPriorL1
+					  		while (p >= 0 && propagQueueL1(p).isEmpty())  p -= 1;
+					  		if (p < 0) isL1QueueEmpty = true
+					  		else {
+					  		 highestPriorL1 = p
+					         while (highestPriorL1 <= p && !propagQueueL1(p).isEmpty() && ok != CPOutcome.Failure) {
+					        	//print("_")
+					            var event = propagQueueL1(p).removeFirst()
+					        	isL1QueueEmpty = (p == 0 && propagQueueL1(p).isEmpty())
+					        	highestPriorL1 = p
+					        	ok = event()
+					         }					  		  
+					  		}
+
+					  
+					}
+
+                    p = highestPriorL2
+                    while (p >= 0 && propagQueueL2(p).isEmpty())  p -= 1;
+                    if (p < 0) fixed = true
+                    else {
+                    	highestPriorL2 = p
+                        while (highestPriorL2 <= p && isL1QueueEmpty  && !propagQueueL2(p).isEmpty() && ok != CPOutcome.Failure) {
+                        		//print(".")
+                                val c = propagQueueL2(p).removeFirst();
+                                highestPriorL2 = p;
+                                nbPropag += 1;
+                                ok = c.execute();
+                        }
+                    }
+		  
+		}
+		//println("--------------->fixed")
+		inPropagate = false
+		timeInFixPoint += System.currentTimeMillis() - t0
+		status.value = if (ok == Failure) ok else Suspend
+		status.value
+	}
+	
+	def printQueues() = {
+	  println("----------")
+	  for (q <- propagQueueL1)
+	    println("L1:"+q.size())
+	  for (q <- propagQueueL2)
+	    println("L2:"+q.size())
+	}
+	
+	
+	/*
+    /**
+     * Fix Point algorithm
+     * @return Failure is the fix point detects a failure that is one of the domain became empty, Suspend otherwise
+     */
+        protected CPOutcome propagate() {
+                assert(status.getValue() != CPOutcome.Failure);
+                
+                long t0 = System.currentTimeMillis();
+                inPropagate = true;
+                CPOutcome ok = objective.propagate();
+                while (ok != CPOutcome.Failure) {
+                        int p;
+                        
+                        while (ok != CPOutcome.Failure && !isL1QueueEmpty()) {
+                                for (int i = MAXPRIORL1; i >= 0; i--) {
+                                        if(!propagQueueL1[i].isEmpty()) {
+                                                PropagEvent event = propagQueueL1[i].removeFirst();
+                                                ok = event.propagate();
+                                                break;
+                                        }
+                                }
+                        }
+                        p = MAXPRIORL2;
+                        while (p >= 0 && propagQueueL2[p].isEmpty())  --p;
+                        if (p < 0) break;
+                        while (ok != CPOutcome.Failure && !propagQueueL2[p].isEmpty()) {
+                                Constraint c = propagQueueL2[p].removeFirst();
+                                highestPriorL2 = p;
+                                nbPropag++;
+                                ok = c.execute();
+                                if (highestPriorL2 > p || !isL1QueueEmpty()) break;
+                        }
+                }
+                inPropagate = false;
+                timeInFixPoint += System.currentTimeMillis()-t0;
+                status.setValue( ok == CPOutcome.Failure ? ok : CPOutcome.Suspend);
+                return ok == CPOutcome.Failure ? ok : CPOutcome.Suspend;
+        }
+        
+        private boolean isL1QueueEmpty() {
+                for(int i = 0; i <= MAXPRIORL1; i++) {
+                        if (!propagQueueL1[i].isEmpty()) return false;
+                }
+                return true;
+        }
+	 */
+	
    
     /**
      * Add a constraint to the store in a reversible way and trigger the fix-point algorithm. <br>

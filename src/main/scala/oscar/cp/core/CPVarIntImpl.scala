@@ -166,8 +166,8 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 
 	override def toString(): String =  {
 		if (isEmpty) name+" phi"
-		else if (isBound) name+" "+value
-		else name+" "+dom.toString()
+		else if (isBound) name + (if(name.isEmpty) "" else " ") + value
+		else name + (if(name.isEmpty) "" else " ") + dom.toString()
 	}
 		
 	
@@ -389,6 +389,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
                 s.notifyL2(onMaxL2.value)
 			if (!assignToMin)
                 s.notifyL2(onMinL2.value)
+            //println(this+" notifyL2 onBounds "+onBoundsL2.value)
 			s.notifyL2(onBoundsL2.value)
 			s.notifyL2(onDomainL2.value)
 			s.notifyL2(onBindL2.value)

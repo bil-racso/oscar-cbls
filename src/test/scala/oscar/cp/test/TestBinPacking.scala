@@ -60,6 +60,35 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     nbSol should be(1)
   }
   
+  test("BP 2") {
+
+    val itemsSizes = Array(6, 6, 6, 6, 6)
+   
+
+    val items = 0 until itemsSizes.length
+    val bins = 0 until 5
+
+    val cp = new CPSolver()
+    val x = (for (i <- items) yield CPVarInt(cp,bins )).toArray
+    val l = bins.map(i => CPVarInt(cp, 0 to 10)).toArray
+    var nbSol = 0
+    cp.solve 
+    cp.exploration {
+      cp.binary(x)
+      nbSol += 1
+    }
+    nbSol = 0
+    cp.runSubjectTo() {
+      cp.add(new BinPacking(x, itemsSizes, l), Weak)
+    }
+    nbSol should be(120)
+    nbSol = 0
+    cp.runSubjectTo() {
+      cp.add(new BinPacking(x, itemsSizes, l), Strong)
+    }
+    nbSol should be(120)
+  }  
+  
  
   
  
