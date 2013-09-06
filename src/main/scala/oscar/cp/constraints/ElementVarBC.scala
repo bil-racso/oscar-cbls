@@ -90,10 +90,21 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
   }
   
   def filterX(): CPOutcome = {
-	val toRemove = x.filter(i => y(i).max < z.min || y(i).min > z.max).toArray
+	
+    val toRemove = x.filter(i => y(i).max < z.min || y(i).min > z.max)
 	for (v <- toRemove) {
 	  if (x.removeValue(v) == Failure) return Failure
 	}
+	
+	/*  
+	var i = x.min	
+	while (i <= x.max) {
+	  if (x.hasValue(i) && y(i).max < z.min || y(i).min > z.max) {
+	    if (x.removeValue(i) == Failure) return Failure
+	  }
+	  i += 1
+	}*/
+	
 	Suspend
   }  
   

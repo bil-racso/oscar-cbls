@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.cp.core
 
+import oscar.cp.constraints.InSet
+
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -668,6 +670,11 @@ abstract class CPVarInt(val s: CPStore,val name: String = "") extends CPVar with
 	}
 	
 	def isRange: Boolean = (max-min+1) == size
+	
+	/**
+	 * x must take a value from set
+	 */
+	def in(set: Set[Int]): Constraint = new InSet(this,set)
 	
     /**
      * -x

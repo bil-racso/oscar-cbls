@@ -47,8 +47,13 @@ import scala.util.control.Breaks._
  * This code is adapted to CP from an original implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
  */
-class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val cost: CPVarInt) extends Constraint(x(0).s, "MinAssignment") {
-  val n = weights.size
+class MinAssignment(val xarg: Array[CPVarInt], val weightsarg: Array[Array[Int]], val cost: CPVarInt) extends Constraint(xarg(0).s, "MinAssignment") {
+  if (weightsarg.size != xarg.size) throw new IllegalArgumentException("MinAssignment: dim of x and weights must match")
+  val n = weightsarg(0).size
+  val x = xarg ++ Array.fill(n-xarg.size)(CPVarInt(s,0 until n)) 
+  val weights = weightsarg ++ Array.fill(n-xarg.size)(Array.fill(n)(0))
+  val Jmax = n
+  val Wmax = n
   val J = 0 until n
   val W = 0 until n
   val M = (weights.flatten.max + 1) * n
@@ -252,25 +257,65 @@ class MinAssignment(val x: Array[CPVarInt], val weights: Array[Array[Int]], val 
    * This is a heuristic to jump-start the augmentation algorithm.
    */
   private def greedyMatch() {
+    var w = 0
+    var j = 0
+    while (w < Wmax) {
+      j = 0
+      while (j < Jmax) {
+        if (matchJobByWorker(w).value == -1 && matchWorkerByJob(j).value == -1 && slack(w, j) == 0)
+        assign(w, j);
+        j += 1
+      }
+      w += 1
+    }
+    
+    
+    /*
     for (w <- W; j <- J)
       if (matchJobByWorker(w).value == -1 && matchWorkerByJob(j).value == -1 && slack(w, j) == 0)
         assign(w, j);
+       
+    */
   }
 
   private def filter(): CPOutcome = {
-    //println("filter")
+
     //printAll()
-    val sum = (W).foldLeft(0)((tot, w) => tot + weights(w)(matchJobByWorker(w).value))
+    //val sum = (W).foldLeft(0)((tot, w) => tot + weights(w)(matchJobByWorker(w).value))
+    var sum = 0
+    var w = 0
+    while (w < Wmax) {
+      sum += weights(w)(matchJobByWorker(w).value)
+      w += 1
+    }
+    
+    
     if (cost.updateMin(sum) == CPOutcome.Failure) return CPOutcome.Failure
     val maxSlack = cost.max - sum
+    
+    /*
     for (w <- W; j <- J; if x(w).hasValue(j)) {
-        //println("slack of "+w+"->"+j+":"+slack(w,j))
     	if (slack(w,j) > maxSlack) {
     	  if (x(w).removeValue(j) == CPOutcome.Failure) {
     	    return CPOutcome.Failure
     	  }
     	}
-    }    
+    }
+    */
+    w = 0
+    var j = 0
+    while (w < Wmax) {
+      j = 0
+      while (j < Jmax) {
+    	if (slack(w,j) > maxSlack) {
+    	  if (x(w).removeValue(j) == CPOutcome.Failure) {
+    	    return CPOutcome.Failure
+    	  }
+    	}        
+        j += 1
+      }
+      w += 1
+    }
     CPOutcome.Suspend
   }
   
