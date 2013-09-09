@@ -84,13 +84,13 @@ abstract class Model[S] extends DistrSolver[S] {
     clock.setTime(dateTime)
   }
   def setTime(d: String) { setTime(new DateTime(d)) }
-  
+
   def simulate(simuStopper: Occuring[_], verbose: Boolean = true) {
     // make all the process alive
     //reset{
 
-    once(simuStopper){endSimulate}
-    
+    once(simuStopper) { endSimulate }
+
     while ((!processes.isEmpty() || clock.nonEmpty)) {
       while (!processes.isEmpty()) {
 
@@ -100,14 +100,15 @@ abstract class Model[S] extends DistrSolver[S] {
           it.next().simulate()
         }
       }
+      if (clock nonEmpty) {
+        val e = clock.next
 
-      val e = clock.next
+        if (verbose) {
+          println("-----------> time: " + e.time)
+        }
 
-      if (verbose) {
-        println("-----------> time: " + e.time)
+        e.process
       }
-
-      e.process
     }
     //}
   }
@@ -115,7 +116,7 @@ abstract class Model[S] extends DistrSolver[S] {
   def simulate(horizon: DateTime, verbose: Boolean) {
     simulate(clock === horizon, verbose)
   }
-  
+
   @elidable(INFO) def print(s: String) {
     println(clock().toString() + ": " + s)
   }
