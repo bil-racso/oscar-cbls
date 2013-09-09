@@ -39,4 +39,6 @@ trait ComparativeAlgorithm {
   
   /** Function to be called after the algorithm performed a successful iteration */
   var onImprovement: () => Unit = () => {}
+  
+  val algoName: String
 }

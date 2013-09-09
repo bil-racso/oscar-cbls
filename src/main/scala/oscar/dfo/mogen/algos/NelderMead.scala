@@ -24,7 +24,7 @@ import oscar.util.mo.ParetoFront
 import oscar.dfo.mogen.utils.ArrayUtils
 
 object NelderMead extends ComparativeAlgorithm {
-  
+  val algoName = "NelderMead"
   var tolerance = math.pow(10.0, -3.0)
   
   def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]] = {

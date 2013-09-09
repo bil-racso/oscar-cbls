@@ -73,7 +73,6 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]], val inte
     for (i <- 1 until simplexSize) {
       simplex(i) = evaluator.eval(ArrayUtils.arraySum(simplexCoordinates(0), ArrayUtils.arrayProd(ArrayUtils.arrayDiff(simplexCoordinates(i), simplexCoordinates(0)), gammaS)), feasibleReg)
     }
-    printSimplex
     orderSimplex(comparator)
   }
   

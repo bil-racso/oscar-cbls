@@ -15,7 +15,6 @@
 package oscar.dfo.mogen
 
 import scala.reflect.ClassTag
-
 import oscar.dfo.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
 import oscar.util.mo.ArchiveElement
@@ -29,6 +28,7 @@ import oscar.util.mo.RandomGenerator
 import oscar.visual.PlotDFOPareto2D
 import oscar.visual.VisualFrame
 import scala.util.continuations._
+import oscar.util.mo.ArchiveUtils
 
 class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E], suspendable: Boolean = false) {
 
@@ -37,9 +37,13 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
   /** The set of non-dominated points (approximation of the Pareto front) */
   val archive = LinearList[E]()
   /** The iterate selection heuristic */
-  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.combinationWithProbas(List((MOGEN.hyperPlaneSelect, 10.0), (MOGEN.fairSelect, 15.0), (MOGEN.randomSelect, 1.0)))//MOGEN.randomSelect//MOGEN.hyperPlaneSelect//MOGEN.fairSelect
+  var selectionHeuristic: ParetoFront[E] => MOGENTriplet[E] = MOGEN.combinationWithProbas(List(/*(MOGEN.hyperPlaneSelect, 10.0),*/ (MOGEN.mostIsolatedSelect, 15.0), (MOGEN.fairSelect, 15.0), (MOGEN.randomSelect, 1.0)))//MOGEN.randomSelect//MOGEN.hyperPlaneSelect//MOGEN.fairSelect
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
+  
+  def setSelectionHeuristic(heuristic: ParetoFront[E] => MOGENTriplet[E]): Unit = {
+    selectionHeuristic = heuristic
+  }
 
   def initArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
     for (i <- 1 to maxNbPoints) {
@@ -67,15 +71,13 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
     algorithms(0)._1
   }
 
-  def optimizeMOO(maxIters: Int): Set[MOOPoint[E]] = {
+  def optimizeMOO(maxEvals: Int, maxIters: Int = Int.MaxValue): Set[MOOPoint[E]] = {
     MOGEN.onArchChan(archive)
     var nbIterations = 1
-    while (nbIterations <= maxIters) {
-      println("Iteration nb: " + nbIterations + "  (nb evaluations: " + evaluator.nbCallToEvalFunction + ")")
+    while (evaluator.nbCallToEvalFunction <= maxEvals && nbIterations <= maxIters) {
       performIteration(nbIterations)
       nbIterations += 1
     }
-    println("NB EVALS: " + evaluator.nbCallToEvalFunction)
     archive.toSet
   }
   
@@ -88,11 +90,9 @@ class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOCompa
       newPoint.iter = iterationNumber
       val newTriplet = MOGENTriplet(newPoint, currentTriplet.getAlgorithm, currentTriplet.getAlgorithmState.getNewState(newPoint, comparator))
       archiveChanged = archiveChanged || archive.insert(newTriplet, comparator)
-      //if (archive.insert(newTriplet, comparator) && visu) {paretoPlot.update(archive); Thread.sleep(500)}
     }
     archive.insert(currentTriplet, comparator)
     if (archiveChanged) MOGEN.onArchChan(archive)
-    println("MOGEN: nb iterations: " + evaluator.nbCallToEvalFunction)
   }
 
   def selectIterate: MOGENTriplet[E] = {
@@ -139,6 +139,17 @@ object MOGEN {
     }
   }
   
+  def mostIsolatedSelect[E](archive: ParetoFront[E]): MOGENTriplet[E] = {
+    val mostDistantConsecutivePoints = ArchiveUtils.getMostDistantConsecutivePoints(archive)
+    val randNum = RandomGenerator.nextDouble * mostDistantConsecutivePoints.length
+    for (i <- 0 until mostDistantConsecutivePoints.length) {
+      if (randNum < i + 1) {
+        return mostDistantConsecutivePoints(i).asInstanceOf[MOGENTriplet[E]]
+      }
+    }
+    return mostDistantConsecutivePoints(mostDistantConsecutivePoints.length - 1).asInstanceOf[MOGENTriplet[E]]
+  }
+  
   def hyperPlaneSelect[E](archive: ParetoFront[E]): MOGENTriplet[E] = {
     val points = archive.getExtremePoints
     //TODO Change these lines here to get the multi-dimensional case
@@ -179,7 +190,7 @@ object MOGEN {
 	onIterSel = newFun
   }
   
-  def onArchiveChanged(newFun: ParetoFront[_] => Unit) {
+  def onArchiveChanged[E](newFun: ParetoFront[_] => Unit) {
 	onArchChan = newFun
   }
 }

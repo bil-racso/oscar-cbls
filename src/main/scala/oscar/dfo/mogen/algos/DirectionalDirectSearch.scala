@@ -23,6 +23,7 @@ import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
 import oscar.dfo.mogen.algos.states.DirectionalDirectSearchState
 
 object DirectionalDirectSearch extends ComparativeAlgorithm {
+  val algoName = "DirectionalDirectSearch"
   var tolerance = math.pow(10.0, -3.0)
   
   def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]] = {
@@ -31,12 +32,10 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
         for (i <- 0 until ddsState.basisSize) {
           val newPoint = ddsState.getNewPoint(i, evaluator, feasReg)
           if (comparator.cmpWithArchive(newPoint, ddsState.bestPoint, currentArchive)) {
-            ddsState.updateBasis
             ddsState.increaseStepSizes
             return List(newPoint)
           }
         }
-        ddsState.updateBasis
         ddsState.decreaseStepSizes
         if (minimalSizeOfStepSizes(ddsState.stepSizes) < tolerance) ddsState.reInitializeStepSizes
         List[MOOPoint[E]]()
