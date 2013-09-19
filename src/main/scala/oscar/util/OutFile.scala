@@ -38,14 +38,20 @@ class OutFile(filepath: String, critical: Boolean, verbous: Boolean) {
     if (critical) System.exit(-1)
   }
 
-  def write(line: String) = {
+  def write(line: String): Unit = {
     try file.write(line)
     catch {
       case e: Error => errorHandling(e)
     }
   }
+  
+  def write(line: Int): Unit = {
+    write(line+"")
+  }
 
-  def writeln(line: String) = write(line + "\n")
+  def writeln(line: String): Unit = write(line + "\n")
+  
+  def writeln(line: Int): Unit = writeln(line+"")
   
   def writeln() = write("\n")
 

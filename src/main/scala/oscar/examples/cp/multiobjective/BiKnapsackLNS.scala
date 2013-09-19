@@ -13,6 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
+
 package oscar.examples.cp.multiobjective
 
 import oscar.cp.modeling._
@@ -29,7 +30,7 @@ import oscar.cp.multiobjective.SolSelect._
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object BiKnapsack extends App {
+object BiKnapsackLNS extends App {
 
   val dataFile = "data/mo-knapsack/2KP100A.txt"
   val solutionFile = "data/mo-knapsack/solution/2KP100A.txt"
@@ -87,12 +88,27 @@ object BiKnapsack extends App {
       cp.branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
     paretoPlot.insert(profitVar1.value, profitVar2.value)
+  } run (1)
+
+  val rand = new scala.util.Random()
+  // MO LNS PARAMETERS
+  val maxRestarts = 1000000 // number of restarts
+  val maxFailures = 200 // max number of failures at each restart
+  val relaxSize = 5 // number of relaxed variables at each restart
+  val probaIntensify = 30 // probability (%) of intensification 
+  // MO LNS FRAMEWORK
+  for (restart <- 1 to maxRestarts) {
+    // next solution to restart from
+    val sols = cp.nonDominatedSolutions
+    val r = rand.nextInt(sols.size)
+    val sol = sols(r)
+    // random selection between intensification or diversification
+    if (rand.nextInt(100) < probaIntensify) cp.objective.intensify(sol)
+    else cp.objective.diversify()
+    // search
+    cp.runSubjectTo(failureLimit = maxFailures) {
+      relaxRandomly(x, sol, relaxSize)
+    }
   }
 
-  val t = time { 
-    cp.run() 
-  }
-
-  println("time " + t)
-  println("size " + cp.nonDominatedSolutions.size)
 }
