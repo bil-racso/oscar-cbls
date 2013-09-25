@@ -30,20 +30,24 @@ object Queens extends App {
 		
       val cp = CPSolver()
       
-      val n = 12 //number of queens
+      val n = 14 //number of queens
       val Queens = 0 until n
       //variables
       val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
       
       var nbsol = 0
       cp.solve subjectTo {
-    	  cp.add(allDifferent(queens),Strong)
-    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
-    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } exploration {           
+    	  cp.add(allDifferent(queens)/*,Strong*/)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i)/*,Strong*/)
+    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i)/*,Strong*/)
+      } exploration {   
+        cp.binaryFirstFail(queens)
+        /*
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }
+        
+        */
         nbsol += 1
       } run()
   

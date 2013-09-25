@@ -130,7 +130,7 @@ public class AtLeastNValueFWC extends Constraint {
 	public CPOutcome propagate() {
 		//_nValueVar has changed
 		int ubNbValueUsed = nbValueUsed.getValue() + (x.length - nbBound.getValue());
-		if(ubNbValueUsed == nValueVar.getMin()){
+		if (ubNbValueUsed == nValueVar.getMin()) {
 			return prune();
 		}
 		return CPOutcome.Suspend;
@@ -140,16 +140,16 @@ public class AtLeastNValueFWC extends Constraint {
 		  //remove used values from unbound variables
 		  int [] values = new int[x.length];
 		  int nb = 0;
-		  for(int k = 0; k < x.length; k++){
-		    if(x[k].isBound()){
+		  for (int k = 0; k < x.length; k++) {
+		    if (x[k].isBound()) {
 		      values[nb] = x[k].getValue();
 		      nb++;
 		    }
 		  }
-		  for(int k = 0; k < x.length; k++){
-		    if(!x[k].isBound()){
-		      for(int i = 0; i < nb; i++){
-		        if(x[k].removeValue(values[i]) == CPOutcome.Failure){
+		  for (int k = 0; k < x.length; k++) {
+		    if (!x[k].isBound()) {
+		      for (int i = 0; i < nb; i++) {
+		        if (x[k].removeValue(values[i]) == CPOutcome.Failure) {
 		          return CPOutcome.Failure;
 		        }
 		      }
