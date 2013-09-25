@@ -41,7 +41,7 @@ class TestQueens extends FunSuite with ShouldMatchers  {
            cp.solve subjectTo {
     	     cp.add(allDifferent(queens),l)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),l)
-    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),cl)
+    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),l)
            } exploration {        
              for (q <- Queens.suspendable) {
                cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
