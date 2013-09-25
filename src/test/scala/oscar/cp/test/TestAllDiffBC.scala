@@ -21,47 +21,19 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 
 import oscar.cp.modeling._
-import collection.immutable.SortedSet
-
-/**
- * @author Pierre Schaus pschaus@gmail.com
- */
-class TestQueens extends FunSuite with ShouldMatchers  {
 
 
-  test("Queens") {
-    
-    
-    def nbSol(n: Int,l: CPPropagStrength) = {
-           val cp = CPSolver()
-           val Queens = 0 until n
-           //variables
-           val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
-           var nbsol = 0
-           cp.solve subjectTo {
-    	     cp.add(allDifferent(queens),l)
-    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),l)
-    	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),cl)
-           } exploration {        
-             for (q <- Queens.suspendable) {
-               cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
-             }
-             nbsol += 1
-           } run()
-           nbsol
-    }
-    
-    nbSol(7,Weak) should be(40)
-    nbSol(7,Medium) should be(40)
-    nbSol(7,Strong) should be(40)  
-    
-    
- 
-    
+class TestAllDiffBC extends FunSuite with ShouldMatchers  {
+  
+  
+  test("test1") { 
+	  val cp = CPSolver()
+	  val x = Array(CPVarInt(cp,3 to 4),CPVarInt(cp,2 to 4),CPVarInt(cp,3 to 4),CPVarInt(cp,2 to 5),CPVarInt(cp,1 to 6))
+	  cp.add(new AllDiffBC(x))
+	  
+	  println(x.mkString(","))
   }  
-  
 
   
-
 
 }

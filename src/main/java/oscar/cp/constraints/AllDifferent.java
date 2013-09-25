@@ -46,7 +46,16 @@ public class AllDifferent extends Constraint {
 			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
-		} else {
+		} 
+		else if (l == CPPropagStrength.Medium) {
+			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+			if (s().post(new AllDiffBC(x)) == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}			
+		}
+		else {
 			/*
 			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

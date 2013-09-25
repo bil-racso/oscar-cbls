@@ -852,8 +852,10 @@ object CPVarInt {
   def apply(cp: CPStore, values: Set[Int], name: String): CPVarInt = {
     val (minv,maxv) = (values.min,values.max)
     val x = new CPVarIntImpl(cp, minv,maxv,name)
-    for (v <- minv to maxv; if (!values.contains(v))) {
-      x.removeValue(v)
+    if (maxv - minv + 1 > values.size) {
+      for (v <- minv to maxv; if (!values.contains(v))) {
+        x.removeValue(v)
+      }
     }
     x
   }
