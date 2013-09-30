@@ -608,6 +608,12 @@ class CPStore extends ReversibleSearchNode {
   }
 
   def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, CPPropagStrength.Weak)
+  
+  def add(constraints: Iterable[Constraint]): CPOutcome = {
+    val cs = new LinkedList[Constraint]()
+    constraints.foreach(cs.add(_))
+    add(cs, CPPropagStrength.Weak)
+  }
 
   def addCut(c: Constraint): CPOutcome = {
     val res = postCut(c);
@@ -616,6 +622,28 @@ class CPStore extends ReversibleSearchNode {
     }
     res;
   }
+  
+  def assign(x: CPVarInt, v: Int): CPOutcome = {
+    if (status.getValue() == Failure) return Failure
+    var oc = x.assign(v)
+    if (oc != Failure) {
+      oc = propagate()
+    }
+    cleanQueues()
+    status.value = oc
+    return status.value
+  }
+  
+  def remove(x: CPVarInt, v: Int): CPOutcome = {
+    if (status.getValue() == Failure) return Failure
+    var oc = x.removeValue(v)
+    if (oc != Failure) {
+      oc = propagate()
+    }
+    cleanQueues()
+    status.value = oc
+    return status.value
+  }  
 
 }
 

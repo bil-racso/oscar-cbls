@@ -118,7 +118,7 @@ object TSPVisu extends App {
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
   } exploration {
-    cp.deterministicBinaryFirstFail(succ)
+    cp.binaryFirstFail(succ)
     // One additional solution
     nbSol += 1
     // Updates the visualization

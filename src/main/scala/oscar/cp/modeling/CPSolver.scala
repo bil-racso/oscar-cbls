@@ -174,78 +174,40 @@ class CPSolver() extends CPStore() {
   def maxVal(x: CPVarInt): Int = x.max
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
-  /**
-   * Deterministic branching
-   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
-   * @param vars: the array of variables to assign during the search
-   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
-   */
-  def deterministicBinaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    binary(vars,x => x.size,valHeuris)
-  }
-  
+
+    
+
   
   /**
-   * Randomized branching
-   * Binary First Fail (min dom size) on the decision variables vars. Ties are broken randomly
-   * @param vars: the array of variables to assign during the search
-   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
-   */
-  def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    binary(vars,_.size,valHeuris)
-  }
-  
-  /**
-   * Deterministic branching:
    * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
   def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
-    binary(vars,vars.indexOf(_),minVal)
+    binaryStaticOrder(vars)
   }
   
-  
-  /**
-   * Randomized branching (unless you use a deterministic varHeuris,valHeuris selection rules):
-   * Binary search on the decision variables vars with custom variable/value heuristic (random tie breaking)
-   * @param vars: the array of variables to assign during the search
-   * @param varHeuris: for each variable, it's priority. 
-   *        The non-instantiated variable with the smallest priority is chosen first (random tie break).
-   * 		Note that a tuple can be used as variable priority to get lexicographical tie breaking rule.
-   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
-   */
-  def binary2[T](vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => T), valHeuris: (CPVarInt => Int) = minVal)(implicit orderer: T => Ordered[T]): Unit @suspendable = {
-    while (!allBounds(vars)) {
-      //val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
-      val x = selectMinDeterministic(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)
-      val v = valHeuris(x)
-      branch(post(x == v))(post(x != v)) // right alternative
-    }
-  }
-  
+
   def binaryStaticOrder(vars: Array[_ <: CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
     var y = vars.asInstanceOf[Array[CPVarInt]]
-    var i = new ReversibleInt(this,0)
+    var i = new ReversibleInt(this, 0)
     while (i.value < y.size) {
       val x: CPVarInt = y(i.value)
       val v = valHeuris(x)
       if (x.isBound) {
         branchOne(i.incr())
       } else {
-      branch {
-        	   post(x == v)
-        	   i.incr()
-      } {
-      		   post(x != v)
-      }
+        branch {
+          assign(x, v)
+          i.incr()
+        } {
+          remove(x, v)
+        }
       }
     }
   }
   
-  def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    /*
-    val x_ = vars.asInstanceOf[Array[CPVarInt]].map(i => i).toArray
+  def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {    
+    val x_ = vars.asInstanceOf[Array[CPVarInt]].zipWithIndex
     val nbBounds = new ReversibleInt(this,0)
-    
     def bound(i: Int) {
       val ind = nbBounds.value
       val tmp = x_(ind)
@@ -258,7 +220,7 @@ class CPSolver() extends CPStore() {
     def allBounds(): Boolean = {
       var i = nbBounds.value
       while (i < size) {
-        if (!x_(i).isBound) return false
+        if (!x_(i)._1.isBound) return false
         else bound(i)
         i += 1
       }
@@ -267,32 +229,36 @@ class CPSolver() extends CPStore() {
     
     while (!allBounds()) {
       var i = nbBounds.value
-      var x = x_(i)
+      var (x,ind) = x_(i)
       var fbest = varHeuris(x)
-      
+      i += 1
       while (i < size) {
-        val y = x_(i)
-        val h = varHeuris(y)
-        if (h < fbest) {
-          x = y
-          fbest = h
+        if (!x_(i)._1.isBound) {
+          val (y,indy) = x_(i)
+          val h = varHeuris(y)
+          if (h < fbest || (h==fbest && indy < ind)) {
+            x = y
+            fbest = h
+            ind = indy
+          }
+        } else {
+          bound(i)
         }
         i += 1
       }
       val y = x
       val v = valHeuris(y)
-      branch(post(y == v))(post(y != v)) // right alternative
-    }    
-    */
-
-    
-    
-    while (!allBounds(vars)) {
-      //val x = selectMin(vars.asInstanceOf[Array[CPVarInt]])(!_.isBound)(varHeuris).get
-      val x = selectMinDeterministicInt(vars.asInstanceOf[Array[CPVarInt]].filter(!_.isBound))(varHeuris)    
-      val v = valHeuris(x)
-      branch(post(x == v))(post(x != v)) // right alternative
+      branch(assign(y,v))(remove(y,v)) // right alternative
     }
+  } 
+  
+  /**
+   * Binary First Fail (min dom size) on the decision variables vars.
+   * @param vars: the array of variables to assign during the search
+   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
+   */
+  def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
+    binary(vars,_.size,valHeuris)
   }  
 
 

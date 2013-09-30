@@ -90,7 +90,7 @@ object LongestPath {
       cp.add(allDifferent(path), Weak)
 
     } exploration {
-      cp.deterministicBinaryFirstFail(path)
+      cp.binaryFirstFail(path)
     } run()
     cp.printStats
 
