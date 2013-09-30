@@ -37,6 +37,8 @@ class AlternativeCumulativeResource(scheduler : CPScheduler) {
 	def resourcesOf(act : Activity) : CPVarInt = activitiesMap(act).resource
 	def heightOf(act : Activity)    : CPVarInt = activitiesMap(act).height
 	
+	def apply(index: ImplicitVarInt) = index.toCPVarInt(scheduler) + resources.map(_.id).min
+	
 	def addAlternative(resource : CumulativeResource) { 
 		
 		checkId(resource.id)
