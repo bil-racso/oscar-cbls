@@ -20,7 +20,6 @@ object MyJobShop extends JobShop("data/memScheduling/jobshop/ft10") with App {
 	  
 	  
 	  // The makespan to minimize
-	  val makespan = maximum(activities)(_.end)
 	  cp.minimize(makespan) subjectTo defaultConstraints
 	  
 	  cp.exploration {

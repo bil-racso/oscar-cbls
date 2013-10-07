@@ -47,6 +47,7 @@ class JobShop(filepath: String) {
 	  // Activities & Resources
 	  val activities = Array.tabulate(requirements.length)(i => Activity(cp, durations(i)))
 	  val resources  = Array.tabulate(nbMachines)(r => UnitResource(cp))
+	  val makespan = maximum(activities)(_.end)
 	  
 	  // Constraints
 	  def defaultConstraints {
