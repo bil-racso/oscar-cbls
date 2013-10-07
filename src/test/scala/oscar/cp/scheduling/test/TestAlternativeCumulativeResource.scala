@@ -12,16 +12,15 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.test
+package oscar.cp.scheduling.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.constraints._
 import oscar.cp.core._
-
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
+import scala.Array.canBuildFrom
 
 class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 	

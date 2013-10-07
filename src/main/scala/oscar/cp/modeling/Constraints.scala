@@ -905,18 +905,18 @@ trait Constraints {
   /**
    * Cumulative
    */
-  def cumulative(activities: Array[CumulativeActivity], machine: Int, min: Int = Int.MinValue, max: Int = Int.MaxValue): Constraint = {
+  def cumulative(activities: Array[CumulativeActivity], machine: Int, min: Int = Int.MinValue, max: Int = Int.MaxValue): Array[Constraint] = {
 
     val cp = activities(0).store
 
     if (max != Int.MaxValue) {
       if (min != Int.MinValue) {
-        return new BoundedSweepCumulative(cp, activities, min, max, machine)
+        return Array(SweepMaxCumulative(cp, activities, CPVarInt(cp, max), machine), SweepMinCumulative(cp, activities, CPVarInt(cp, min), machine))
       } else {
-        return new MaxSweepCumulative(cp, activities, max, machine)
+        return Array(SweepMaxCumulative(cp, activities, CPVarInt(cp, max), machine))
       }
     } else if (min != Int.MinValue) {
-      return new MinSweepCumulative(cp, activities, min, machine)
+      return Array(SweepMinCumulative(cp, activities, CPVarInt(cp, min), machine))
     }
 
     throw new IllegalArgumentException("Bounds are not specified")
