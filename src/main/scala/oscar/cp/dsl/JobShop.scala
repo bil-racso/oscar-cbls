@@ -28,35 +28,35 @@ class JobShop(filepath: String) {
     val Array(nbJobs, nbMachines) = nextLineAsInt
     val jobs					=		new ArrayBuffer[Int]
     val requirements 	= 	new ArrayBuffer[Int]
-		val durations	 		= 	new ArrayBuffer[Int]
+    val durations	 		= 	new ArrayBuffer[Int]
   
-		for (job <- 0 until nbJobs){
-			for (Array(req, dur) <- nextLineAsInt.grouped(2)){
-      	jobs += job
+	for (job <- 0 until nbJobs){
+		for (Array(req, dur) <- nextLineAsInt.grouped(2)){
+			jobs += job
   			requirements += req
   			durations += dur
-			}
 		}
+	}
   
-	  // Modeling	
+	// Modeling	
     // ----------------------------------------------------------------------
 		
-	  val horizon = durations.sum
-	  val cp = new CPScheduler(horizon)
+	val horizon = durations.sum
+	val cp = new CPScheduler(horizon)
 	
-	  // Activities & Resources
-	  val activities = Array.tabulate(requirements.length)(i => Activity(cp, durations(i)))
-	  val resources  = Array.tabulate(nbMachines)(r => UnitResource(cp))
-	  val makespan = maximum(activities)(_.end)
+	// Activities & Resources
+	val activities = Array.tabulate(requirements.length)(i => Activity(cp, durations(i)))
+	val resources  = Array.tabulate(nbMachines)(r => UnitResource(cp))
+	val makespan = maximum(activities)(_.end)
 	  
-	  // Constraints
-	  def defaultConstraints {
-	    // Resource allocation
-	  	for (i <- 0 until activities.length) 
+	// Constraints
+	def defaultConstraints {
+	// Resource allocation
+		for (i <- 0 until activities.length) 
 	  		activities(i) needs resources(requirements(i))
 		  
-		  // Precedence constraints
-		  for (i <- 0 until activities.length - 1; if (jobs(i) == jobs(i + 1)))
+		// Precedence constraints
+		for (i <- 0 until activities.length - 1; if (jobs(i) == jobs(i + 1)))
 		      activities(i) precedes activities(i + 1)
 	  }
 	  
