@@ -132,8 +132,10 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     val oc = propagate()
 
     if (oc == CPOutcome.Suspend) {
+      capacity.callPropagateWhenBoundsChange(this)
       for (i <- Tasks) {
         if (!starts(i).isBound) starts(i).callPropagateWhenBoundsChange(this)
+        if (!durations(i).isBound) durations(i).callPropagateWhenBoundsChange(this)
         if (!ends(i).isBound) ends(i).callPropagateWhenBoundsChange(this)
         if (!demands(i).isBound) demands(i).callPropagateWhenBoundsChange(this)
         if (!resources(i).isBound) resources(i).callPropagateWhenDomainChanges(this)

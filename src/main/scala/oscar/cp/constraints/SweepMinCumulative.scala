@@ -140,17 +140,13 @@ class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     val oc = propagate()
 
     if (oc == CPOutcome.Suspend) {
+      capacity.callPropagateWhenBoundsChange(this)
       for (t <- Tasks) {
-        if (!starts(t).isBound)
-          starts(t).callPropagateWhenBoundsChange(this)
-        if (!durations(t).isBound)
-          durations(t).callPropagateWhenBoundsChange(this)
-        if (!ends(t).isBound)
-          ends(t).callPropagateWhenBoundsChange(this)
-        if (!demands(t).isBound)
-          demands(t).callPropagateWhenBoundsChange(this)
-        if (!resources(t).isBound)
-          resources(t).callPropagateWhenDomainChanges(this)
+        if (!starts(t).isBound) starts(t).callPropagateWhenBoundsChange(this)
+        if (!durations(t).isBound) durations(t).callPropagateWhenBoundsChange(this)
+        if (!ends(t).isBound) ends(t).callPropagateWhenBoundsChange(this)
+        if (!demands(t).isBound) demands(t).callPropagateWhenBoundsChange(this)
+        if (!resources(t).isBound) resources(t).callPropagateWhenDomainChanges(this)
       }
     }
 
