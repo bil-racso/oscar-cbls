@@ -527,4 +527,15 @@ object SweepMinCumulative {
     val resources = tasks.map(_.resource)
     new SweepMinCumulative(starts, ends, durations, demands, resources, capacity, id)
   }
+  
+  def apply(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): SweepMinCumulative = {
+    val nTasks = starts.size
+    if (nTasks == 0) throw new Exception("no tasks")
+    else if (ends.size != nTasks) throw new Exception("the number of end variables should be " + nTasks)
+    else if (durations.size != nTasks) throw new Exception("the number of duration variables should be " + nTasks)
+    else if (demands.size != nTasks) throw new Exception("the number of demand variables should be " + nTasks)
+    else if (resources.size != nTasks) throw new Exception("the number of resource variables should be " + nTasks)
+    else if (durations.exists(_.min < 0)) throw new Exception("durations have to be superior or equal to 0")
+    else new SweepMinCumulative(starts, ends, durations, demands, resources, capacity, id)
+  }
 } 
