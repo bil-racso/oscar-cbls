@@ -32,17 +32,19 @@ object RCPSP extends App {
 
   // (duration, consumption)
   val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
+  val durationsData = instance.map(_._1)
+  val demandsData = instance.map(_._2)
   val capa = 4
   val nTasks = instance.size
   val Tasks = 0 until nTasks
 
-  val horizon = instance.map(_._1).sum
+  val horizon = durationsData.sum
   val cp = CPSolver()
   
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, instance(t)._1))
+  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsData(t)))
   val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
   val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, instance(t)._2))
+  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, demandsData))
   val resources = Array.tabulate(nTasks)(t => CPVarInt(cp, 0))
 
   val makespan = maximum(ends)
