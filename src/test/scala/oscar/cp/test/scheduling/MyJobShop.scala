@@ -6,8 +6,10 @@ import oscar.cp.scheduling._
 import oscar.visual._
 
 object MyJobShop extends JobShopInstance("data/memScheduling/jobshop/ft10") with App {
-    
-  // Well we actually need all those functions on arrays instead of just elements themselves...
+  
+  // Well we actually need all those functions defined on arrays instead of just elements themselves...
+  // Couldn't the activities and machines definitions go into the instance like makespan?
+  // We need to find a way to get rid of that cp in the functions.
   
   // Need something the like of "Activities(cp, duration: Array[Int])" because using tabulate is hideous!
   val activities = Array.tabulate(durations.length)(i => Activity(cp, durations(i)))
