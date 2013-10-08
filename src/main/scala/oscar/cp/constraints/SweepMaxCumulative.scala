@@ -57,57 +57,39 @@ import oscar.algo.SortUtils.stableSort
  */
 class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int) extends Constraint(starts.head.store, "MaxSweepCumulative") {
 
-  protected val nTasks = starts.size
-  protected val Tasks = 0 until nTasks
+  private val nTasks = starts.size
+  private val Tasks = 0 until nTasks
 
   // Contains all the events representing the tasks (needs to be initialized)
   private val eventPointSeries = new Array[Event](nTasks * 3)
 
   // Current size of eventPointSeries
-  protected var nEvents = 0
+  private var nEvents = 0
 
   // Current position of the sweep line
-  protected var delta = 0
+  private var delta = 0
   // Sum of the height of the tasks that overlap the sweep line
-  protected var consSumHeight = 0
+  private var consSumHeight = 0
   // Sum of the height of the tasks that overlap the sweep line
-  protected var capaSumHeight = 0
+  private var capaSumHeight = 0
   // Number of tasks that overlap the sweep line
-  protected var nCurrentTasks = 0
+  private var nCurrentTasks = 0
   // Number of tasks in stackPrune
-  protected var nTasksToPrune = 0
+  private var nTasksToPrune = 0
 
   // Tasks that could intersect the sweep line
-  protected val stackPrune = new Array[Int](nTasks)
+  private val stackPrune = new Array[Int](nTasks)
   // Contribution of all the tasks that are added to consSumHeight
-  protected val consContrib = new Array[Int](nTasks)
+  private val consContrib = new Array[Int](nTasks)
   // Contribution of all the tasks that are added to capaSumHeight
-  protected val capaContrib = new Array[Int](nTasks)
+  private val capaContrib = new Array[Int](nTasks)
 
   // Contains all the possible events of each task (used for speed-up)
-  protected val eventList = Array.tabulate(nTasks) { e => new EventList(e) }
+  private val eventList = Array.tabulate(nTasks) { e => new EventList(e) }
 
-  /**
-   * Checks the necessary conditions to add the check events of the task `t`
-   *  in the array `eventPointSeries` at the position `nEvents`.
-   *
-   *  $addEvent
-   *
-   *  @param $idOfT
-   */
-  protected def generateCheck(i: Int): Unit = {}
+  private def generateCheck(i: Int): Unit = {}
 
-  /**
-   * Checks the necessary conditions to add the bad profile events of the
-   *  task `t` in the array `eventPointSeries` at the position `nEvents`.
-   *
-   *  $addEvent
-   *
-   *  $badEvents
-   *
-   *  @param $idOfT
-   */
-  protected def generateProfileBad(i: Int): Boolean = {
+  private def generateProfileBad(i: Int): Boolean = {
 
     if (demands(i).min > 0) {
 
@@ -122,17 +104,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     return false
   }
 
-  /**
-   * Checks the necessary conditions to add the good profile events of the
-   *  task `t` in the array `eventPointSeries` at the position `nEvents`.
-   *
-   *  $addEvent
-   *
-   *  $goodEvents
-   *
-   *  @param $idOfT
-   */
-  protected def generateProfileGood(i: Int): Boolean = {
+  private def generateProfileGood(i: Int): Boolean = {
 
     if (demands(i).min < 0) {
 
@@ -147,44 +119,11 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     return false
   }
 
-  /**
-   * Checks the consistency of the total consumption of the height `r` for
-   *  the current position of the sweep line `delta`.
-   *
-   *  For example, in the case of a Max cumulative:
-   *  {{{capaSumHeight > ub}}}
-   *
-   *  @return `true` if the consumption exceeds the limit(s), `false` otherwise.
-   */
-  protected def consistencyCheck: Boolean = (capaSumHeight > capacity.max)
+  private def consistencyCheck: Boolean = (capaSumHeight > capacity.max)
 
-  /**
-   * Checks that the contribution of the task `t` in the total consumption of
-   *  the height `r` at the current position of the sweep line `delta` is not
-   *  mandatory to respect the consistency.
-   *
-   *  For example, in the case of a Max cumulative:
-   *  {{{capaSumHeight - capaContrib(t) <= ub}}}
-   *
-   *  @param $idOfT
-   *
-   *  @return `true` if the tasks `t` is mandatory, `false` otherwise.
-   */
-  protected def mandatoryCheck(t: Int): Boolean = capaSumHeight - capaContrib(t) > capacity.max
+  private def mandatoryCheck(t: Int): Boolean = capaSumHeight - capaContrib(t) > capacity.max
 
-  /**
-   * Checks that the task `t` is inconsistent with the total consumption of the
-   *  height `r` at the current position of the sweep line `delta` no matter
-   *  the height of its consumption.
-   *
-   *  For example, in the case of a Max cumulative:
-   *  {{{capaSumHeight - capaContrib(t) + tasks(t).minResource > ub}}}
-   *
-   *  @param $idOfT
-   *
-   *  @return `true` if the tasks `t` is inconsistent, `false` otherwise.
-   */
-  protected def forbidenCheck(t: Int): Boolean = capaSumHeight - capaContrib(t) + demands(t).min > capacity.max
+  private def forbidenCheck(t: Int): Boolean = capaSumHeight - capaContrib(t) + demands(t).min > capacity.max
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -466,10 +405,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     return CPOutcome.Suspend
   }
 
-  /**
-   *
-   */
-  protected object EventType {
+  private object EventType {
     val check = 0
     val profile = 1
     val pruning = 2
@@ -484,7 +420,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     }
   }
 
-  protected class Event(e: Int, t: Int, private var d: Int, private var consomation: Int, private var capacity: Int) {
+  private class Event(e: Int, t: Int, private var d: Int, private var consomation: Int, private var capacity: Int) {
 
     def date = d
     def eType = e
@@ -499,10 +435,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     override def toString = { "<" + EventType.eventToString(e) + ", " + t + ", " + d + ", " + capa + ", " + cons + ">" }
   }
 
-  /**
-   *
-   */
-  protected class EventList(t: Int) {
+  private class EventList(t: Int) {
 
     val sCheckEv: Event = new Event(EventType.check, t, 0, 1, 1)
     val eCheckEv: Event = new Event(EventType.check, t, 0, -1, -1)
