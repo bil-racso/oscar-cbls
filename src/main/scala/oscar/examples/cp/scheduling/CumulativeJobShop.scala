@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -36,8 +38,9 @@ package oscar.examples.cp.scheduling
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.visual._
-
 import scala.io.Source
+import oscar.cp.core.CPVarInt
+import oscar.cp.constraints.SweepMaxCumulative
 
 object CumulativeJobShop extends App {
 
@@ -64,16 +67,16 @@ object CumulativeJobShop extends App {
 
   lines = lines.drop(1)
 
-  val jobs = new Array[Int](nActivities)
-  val machines = new Array[Int](nActivities)
-  val durations = new Array[Int](nActivities)
+  val jobs = Array.fill(nActivities)(0)
+  val resources = Array.fill(nActivities)(0)
+  val durations = Array.fill(nActivities)(0)
 
   for (i <- Activities) {
 
     val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
 
     jobs(i) = l(0)
-    machines(i) = l(1)
+    resources(i) = l(1)
     durations(i) = l(2)
 
     lines = lines.drop(1)
@@ -86,44 +89,42 @@ object CumulativeJobShop extends App {
   val cp = CPScheduler(horizon)
 
   // Activities & Resources
-  val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
-  val resources = Array.tabulate(nResources)(m => MaxResource(cp, 2))
+  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durations(t)))
+  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
+  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durationsVar(t).min to horizon))
+  val demandsVar = Array.fill(nActivities)(CPVarInt(cp, 1))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(cp, resources(t)))
 
-  // Resource allocation
-  for (i <- Activities)
-    activities(i) needs 1 ofResource resources(machines(i))
-
-  // The makespan to minimize
-  val makespan = maximum(0 until nActivities)(i => activities(i).end)
+  val makespan = maximum(endsVar)
 
   // Visualization  
   // -----------------------------------------------------------------------
 
   val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
   val colors = VisualUtil.getRandomColors(nResources, true)
-
-  val gantt = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
-  val profiles = Array.tabulate(nResources)(i => new VisualProfile(resources(i), makespan, color = colors(i)))
-
+  val gantt = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
   frame.createFrame("Gantt chart").add(gantt)
-  for (p <- profiles) frame.createFrame(p.resource.toString).add(p)
   frame.pack
 
   // Constraints & Search
   // -----------------------------------------------------------------------
 
   cp.minimize(makespan) subjectTo {
-
-    for (i <- 1 to Activities.max; if (jobs(i - 1) == jobs(i)))
-      activities(i - 1) precedes activities(i)
-
+    // Consistency 
+    for (t <- Activities) {
+      cp.add(endsVar(t) == startsVar(t) + durationsVar(t))
+    }
+    // Precedences
+    for (t <- 1 to Activities.max if jobs(t - 1) == jobs(t)) {
+      cp.add(endsVar(t - 1) <= startsVar(t))
+    }
+    // Cumulative
+    for (r <- Resources) {
+      cp.add(new SweepMaxCumulative(startsVar, durationsVar, endsVar, demandsVar, resourcesVar, CPVarInt(cp, 2), r))
+    }
   } exploration {
-
-    
-    cp.setTimes(activities)
-
-    for (p <- profiles) p.update(1, 100)
-    gantt.update(1, 100)
+    cp.binaryFirstFail(startsVar)
+    gantt.update(1, 20)
   }
 
   cp.run()

@@ -1,33 +1,17 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
  * ****************************************************************************
  */
 
@@ -46,26 +30,35 @@ import oscar.cp.core.CPVarInt
  */
 object RCPSP extends App {
 
-	// (duration, consumption)
-	val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
-	val capa = 4
+  // (duration, consumption)
+  val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
+  val capa = 4
+  val nTasks = instance.size
+  val Tasks = 0 until nTasks
 
-	val horizon = instance.map(_._1).sum
-	val cp = CPScheduler(horizon)
+  val horizon = instance.map(_._1).sum
+  val cp = CPSolver()
+  
+  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, instance(t)._1))
+  val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
+  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, instance(t)._2))
+  val resources = Array.tabulate(nTasks)(t => CPVarInt(cp, 0))
 
-	val resource   = MaxResource(cp, capa)
-	val activities = instance.map(a => Activity(cp, a._1))
+  val makespan = maximum(ends)
 
-	val makespan = cp.makespan
-	
-	cp.minimize(makespan) subjectTo {
+  cp.minimize(makespan) subjectTo {
+    
+    // Consistency
+    for (t <- Tasks) {
+      cp.add(ends(t) == starts(t) + durations(t))
+    }
+    
+    // Cumulative
+    cp.add(new SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capa), 0))
 
-		for (a <- 0 until instance.size)
-			activities(a) needs instance(a)._2 ofResource resource
-
-	} exploration {
-
-		cp.setTimes(cp.activities)
-	} run()
-	cp.printStats()
+  } exploration {
+    cp.binaryFirstFail(starts)
+  } run ()
+  cp.printStats()
 }
