@@ -89,7 +89,9 @@ class CPObjective(val st: CPStore, val objs: CPObjectiveUnit*) extends Constrain
    *  its tighten mode) than its best so far value. */
   override def propagate(): CPOutcome = {
     if (objs.forall(_.ensureBest() != CPOutcome.Failure)) CPOutcome.Suspend
-    else CPOutcome.Failure
+    else {
+      CPOutcome.Failure
+    }
   }
   
   override def setup(l: CPPropagStrength): CPOutcome = propagate()

@@ -101,8 +101,8 @@ abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends
   
   /** Restores the lower and upper bounds of the objective as well as its best so far value */
   def relax() {
-    lb = Int.MinValue
-    ub = Int.MaxValue
+    lb = Int.MinValue+1000
+    ub = Int.MaxValue-1000
     best = bestBound
   }
   
@@ -128,13 +128,15 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt,n: String = "") extends CPObjecti
   def domWorst: Int = objVar.max 
   def isMax: Boolean = false
   def isMin: Boolean = true 
-  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMax(newBound-delta) 
+  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = {
+    objVar.updateMax(newBound-delta) 
+  }
   def updateBestBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMin(newBound+delta)
   def worstBound: Int = ub
   def bestBound: Int = lb
   
   // Init best
-  best = Int.MaxValue
+  best = Int.MaxValue-1000
 }
 
 /** Best  : largest values
@@ -152,5 +154,5 @@ class CPObjectiveUnitMaximize(objVar: CPVarInt, n: String = "") extends CPObject
   def bestBound: Int = ub
   
   // Init best
-  best = Int.MinValue
+  best = Int.MinValue+1000
 }
