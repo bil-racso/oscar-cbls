@@ -1,9 +1,9 @@
 package oscar.cp.test.scheduling
 
-import oscar.cp.dsl.reader._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.visual._
+import oscar.cp.dsl.instances.JobShopInstance
 
 object MyJobShop extends JobShopInstance("data/memScheduling/jobshop/ft10") with App {
   
@@ -23,9 +23,11 @@ object MyJobShop extends JobShopInstance("data/memScheduling/jobshop/ft10") with
   }
   
   // Need something the like of "activities precedes precedences"
-  for (i <- 0 until activities.length) {
-    if(precedences(i) != -1) activities(i) precedes activities(precedences(i))
-  }
+  for (i <- 0 until activities.length - 1; if (jobs(i) == jobs(i + 1)))
+			activities(i) precedes activities(i + 1)
+  //for (i <- 0 until activities.length) {
+  //  if(precedences(i) != -1) activities(i) precedes activities(precedences(i))
+  //}
   
   
   // Visualization coding is hideous, but that's not a priority right now.
