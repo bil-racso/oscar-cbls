@@ -8,18 +8,19 @@ class AircraftLandingInstance(filepath: String) {
   val reader = new InstanceReader(filepath)
   
   val Array(nbPlanes, freezeTime) = reader.readLine
-  val datas = reader.readDatas(16, 3)
+  val datas = reader.readDatas(16, 3) // Planes are described by 16 values spread on 3 lines
   
-  val Array(planes,
-      			appearanceTimes, 
-      			earliestLandingTimes, 
-      			targetLandingTimes, 
-      			latestLandingTimes, 
-      			costsForEarlyLanding, 
-      			costsForLateLanding
-      			) = datas.slice(0, 7)
-  
-  val separationTimes = datas.slice(7, datas.length) 
+  val Array(
+      	planes,
+      	appearanceTimes, 
+      	earliestLandingTimes, 
+      	targetLandingTimes, 
+      	latestLandingTimes, 
+      	costsForEarlyLanding, 
+      	costsForLateLanding
+      ) = datas.dropRight(nbPlanes)
+      			
+  val separationTimes = datas.drop(datas.length - nbPlanes) 
   
   val cp = CPScheduler(latestLandingTimes.sum)
 
