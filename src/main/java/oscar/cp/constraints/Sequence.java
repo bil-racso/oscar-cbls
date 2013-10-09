@@ -46,7 +46,7 @@ public class Sequence extends Constraint {
 	public Sequence(CPVarInt [] x, SetIndexedArray values, int l, int min, int max) {
 		super(x[0].s(),"Sequence");
 		assert (!(values.getSize() == 0));
-		assert(l >= x.length);
+		assert(l < x.length);
         assert(l > 0);
 		assert(min <= max);
 		assert(min > 0);
