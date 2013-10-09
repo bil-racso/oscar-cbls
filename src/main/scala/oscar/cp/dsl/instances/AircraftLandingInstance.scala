@@ -18,9 +18,9 @@ class AircraftLandingInstance(filepath: String) {
       	latestLandingTimes, 
       	costsForEarlyLanding, 
       	costsForLateLanding
-      ) = datas.dropRight(nbPlanes)
+      ) = datas.dropRight(nbPlanes) // The last nbPlanes arrays are actually a matrix of planes and times, not simple arrays.
       			
-  val separationTimes = datas.drop(datas.length - nbPlanes) 
+  val separationTimes = datas.drop(datas.length - nbPlanes)	// Now we select the last nbPlanes arrays as a matrix.
   
   val cp = CPScheduler(latestLandingTimes.sum)
 

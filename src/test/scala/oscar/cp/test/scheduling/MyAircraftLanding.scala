@@ -11,5 +11,6 @@ object MyAircraftLanding extends AircraftLandingInstance("data/memScheduling/air
       			latestLandingTimes.map(println)
       			costsForEarlyLanding.map(println)
       			costsForLateLanding.map(println)
+      			separationTimes.map(_.map(println))
   
 }
