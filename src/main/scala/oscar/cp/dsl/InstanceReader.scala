@@ -1,27 +1,34 @@
 package oscar.cp.dsl
 
 import scala.io.Source
-import scala.collection.mutable.ArrayBuilder
-import scala.Array.canBuildFrom
+import scala.collection.mutable.ListBuffer
 
 class InstanceReader(filepath: String) {
   val file = Source.fromFile(filepath).getLines
+  val splitRegexp = " +"
   
-  implicit def stringToIntArray(line: String) = new { 
-    def toIntArray = line.trim.split(" +").map(_.stripSuffix(".00")).map(_.toInt) 
+  implicit def parsedNumericalStringArray(s: Array[String]) = new {
+    def asInt = s.map(_.toInt)
+    def asDouble = s.map(_.toDouble)
   }
+  
+  implicit def parsedNumericalFile(s: Array[Array[String]]) = new {
+    def asInt = s.map(_.map(_.toInt))
+    def asDouble = s.map(_.map(_.toDouble))
+  }
+  
+  def nextLine = file.next.trim
   
   /**
-   * Reads the next line of the file as an array of Int.
+   * Return the next line of the file split on spaces as an array of String.
    */
-  def readLine: Array[Int] = {
-    file.next.toIntArray
-  }
+  def readLine: Array[String] = nextLine.split(splitRegexp)
   
   /**
    * Reads the file by batches of batchLines lines and builds an array of nbColumns+1 arrays.
    * The first array contains the batch numbers from which the other datas have been read.
    * The following arrays contains the datas read from the nbColumns columns.
+   * All returned values are String so they can be converted to the right type afterwards.
    * 
    * Example:
    * --------
@@ -41,27 +48,29 @@ class InstanceReader(filepath: String) {
    *  [7 9 4]		// Values found in the fourth column of the three batches of lines we read.
    *  [1 3 2]]	// Values found in the fifth column of the three batches of lines we read.
    */
-  def readDatas(nbColumns: Int, batchLines: Int = 1): Array[Array[Int]] = {
-    val datas = Array.fill(nbColumns+1){new ArrayBuilder.ofInt}
+  def readDatas(nbColumns: Int): Array[Array[String]] = {
+    val datas = Array.fill(nbColumns+1){new ListBuffer[String]}
     var batchIndex = 0
     
     while (file.hasNext) {
       // Read lines by batches
-      val lines = new StringBuilder()
-	    for (line <- 0 until batchLines) {
-	      lines append file.next
+      val readValues = new ListBuffer[String]
+	    while (readValues.length < nbColumns && file.hasNext) {
+	      val line = nextLine
+	      // TODO Test if line is comment or something else!
+	      if (! "".equals(line)) readValues ++= line.split(splitRegexp)
 	    }
 	    
 	    // Classify values into their respectful arrays
-	    for (values <- lines.toString.toIntArray.grouped(nbColumns)){
-	      datas(0) += batchIndex
+	    for (values <- readValues.grouped(nbColumns)){
+	      datas(0) append batchIndex.toString
 	    	for (dataIndex <- 0 until nbColumns){
 	    		datas(dataIndex+1) += values(dataIndex)
 	    	}
 	    }
 	    batchIndex += 1
 	  }
-    return datas.map(_.result)
+    return datas.map(_.toArray)
   }
 
 }

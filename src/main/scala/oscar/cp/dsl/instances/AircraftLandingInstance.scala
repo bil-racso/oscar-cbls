@@ -3,24 +3,29 @@ package oscar.cp.dsl.instances
 import oscar.cp.modeling.CPScheduler
 import oscar.cp.dsl.InstanceReader
 
-class AircraftLandingInstance(filepath: String) {
- 
-  val reader = new InstanceReader(filepath)
+class AircraftLandingInstance(filepath: String) extends InstanceReader(filepath) {
   
-  val Array(nbPlanes, freezeTime) = reader.readLine
-  val datas = reader.readDatas(16, 3) // Planes are described by 16 values spread on 3 lines
+  val Array(nbPlanes, freezeTime) = readLine asInt
   
+  val datas = readDatas(6+nbPlanes) 		// Planes are described by 6 values plus an array of nbPlanes values.
+  
+  // First 4 columns, alongside the plane number, are integers.
   val Array(
       	planes,
       	appearanceTimes, 
       	earliestLandingTimes, 
       	targetLandingTimes, 
-      	latestLandingTimes, 
+      	latestLandingTimes
+      ) = datas.slice(0, 5) asInt
+      
+  // Next two ones are costs and are doubles.    
+  val Array(
       	costsForEarlyLanding, 
       	costsForLateLanding
-      ) = datas.dropRight(nbPlanes) // The last nbPlanes arrays are actually a matrix of planes and times, not simple arrays.
-      			
-  val separationTimes = datas.drop(datas.length - nbPlanes)	// Now we select the last nbPlanes arrays as a matrix.
+      ) = datas.slice(5, 7) asDouble
+      
+  // The last columns are actually a matrix of integers.    
+  val separationTimes: Array[Array[Int]] = datas.slice(7, datas.length).asInt transpose
   
   val cp = CPScheduler(latestLandingTimes.sum)
 
