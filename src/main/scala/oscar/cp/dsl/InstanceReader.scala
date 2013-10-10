@@ -25,14 +25,17 @@ class InstanceReader(filepath: String) {
   def readLine: Array[String] = nextLine.split(splitRegexp)
   
   /**
-   * Reads the file by batches of batchLines lines and builds an array of nbColumns+1 arrays.
+   * Reads lines of the file by batches and builds an array of nbColumns+1 arrays containing
+   * the nbColumns values describing each of the nbElement elements, prepended of the array
+   * of elements indices.
+   * For each element, it will read lines until it has read nbColumns values.
    * The first array contains the batch numbers from which the other datas have been read.
    * The following arrays contains the datas read from the nbColumns columns.
    * All returned values are String so they can be converted to the right type afterwards.
    * 
    * Example:
    * --------
-   * Calling readDatas(5, 2) on the following file
+   * Calling readDatas(2, 5) on the following file
    * 2 4 6
    * 7 1
    * 8 0 2
@@ -41,18 +44,17 @@ class InstanceReader(filepath: String) {
    * 4 2
    * 
    * Will try to read 5 columns in batches of 2 lines and will lead to the following array:
-   * [[0 1 2]		// Batches index other datas are coming from. In this example we read 3 bathes of 2 lines.
-   *  [2 8 0]		// Values found in the first column of the three batches of lines we read. 
-   *  [4 0 9]		// Values found in the second column of the three batches of lines we read.
-   *  [6 2 1]		// Values found in the third column of the three batches of lines we read.
-   *  [7 9 4]		// Values found in the fourth column of the three batches of lines we read.
-   *  [1 3 2]]	// Values found in the fifth column of the three batches of lines we read.
+   * [[0 1]		// Batches index other datas are coming from. In this example we read 3 bathes of 2 lines.
+   *  [2 8]		// Values found in the first column of the three batches of lines we read. 
+   *  [4 0]		// Values found in the second column of the three batches of lines we read.
+   *  [6 2]		// Values found in the third column of the three batches of lines we read.
+   *  [7 9]		// Values found in the fourth column of the three batches of lines we read.
+   *  [1 3]]	// Values found in the fifth column of the three batches of lines we read.
    */
-  def readDatas(nbColumns: Int): Array[Array[String]] = {
+  def readDatas(nbElement: Int, nbColumns: Int): Array[Array[String]] = {
     val datas = Array.fill(nbColumns+1){new ListBuffer[String]}
-    var batchIndex = 0
     
-    while (file.hasNext) {
+    for (elementIndex <- 0 to nbElement) {
       // Read lines by batches
       val readValues = new ListBuffer[String]
 	    while (readValues.length < nbColumns && file.hasNext) {
@@ -63,12 +65,11 @@ class InstanceReader(filepath: String) {
 	    
 	    // Classify values into their respectful arrays
 	    for (values <- readValues.grouped(nbColumns)){
-	      datas(0) append batchIndex.toString
+	      datas(0) append elementIndex.toString
 	    	for (dataIndex <- 0 until nbColumns){
 	    		datas(dataIndex+1) += values(dataIndex)
 	    	}
 	    }
-	    batchIndex += 1
 	  }
     return datas.map(_.toArray)
   }
