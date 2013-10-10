@@ -14,8 +14,14 @@ import java.io.BufferedReader
 import java.io.FileReader
 import java.io.File
 import scala.io.Source
+import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPVarInt
 
 class TestBuild extends FunSuite with ShouldMatchers {
+  
+
+  
+  
 	test("Test fzn models") {
 	  val pwd = new java.io.File(".").getCanonicalPath
 	  val modelFileList = new File(pwd+"/minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
@@ -27,7 +33,7 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    // redirect Console.out
 	    var baos = new ByteArrayOutputStream();
 	    var ps = new PrintStream(baos);
-	    Console.setOut(ps);
+	    //Console.setOut(ps);
 	    
 	    val args = Array[String]("-a", f.toString())
 	    
@@ -56,4 +62,6 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    baos.close()
 	  }
 	}
+	
+ 	
 }

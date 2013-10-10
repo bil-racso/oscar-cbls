@@ -208,4 +208,19 @@ class TestObjective extends FunSuite with ShouldMatchers {
     nbsol should be(3)
   }
 
+  test("Obj8") {
+
+    val cp = new CPSolver();
+    val x = CPVarInt(cp, Array(1, 5, 9, 10));
+    var nbSol = 0
+    cp.minimize(x) subjectTo {
+
+    }
+    cp.exploration {
+      cp.binaryFirstFail(Array(x), valHeuris = (x: CPVarInt) => x.max)
+      nbSol += 1
+    } run ()
+    nbSol should be(4)
+  }   
+
 }

@@ -108,7 +108,9 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt, n: String = "") extends CPObject
   def domWorst: Int = objVar.max 
   def isMax: Boolean = false
   def isMin: Boolean = true 
-  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMax(newBound-delta) 
+  def updateWorstBound(newBound: Int, delta: Int = 0): CPOutcome = {
+    objVar.updateMax(newBound-delta) 
+  }
   def updateBestBound(newBound: Int, delta: Int = 0): CPOutcome = objVar.updateMin(newBound+delta)
   def worstBound: Int = ub
   def bestBound: Int = lb
