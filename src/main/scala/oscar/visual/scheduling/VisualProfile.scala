@@ -14,15 +14,16 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.visual
-
-import java.awt.geom.Line2D
+package oscar.visual.scheduling
 import java.awt.Color
 import oscar.algo.CumulativeProfile
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
 import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
+import oscar.visual.VisualDrawing
+import scala.Array.canBuildFrom
+import scala.Array.fallbackCanBuildFrom
 
 class VisualProfile(res: CumulativeResource, makespan: CPVarInt, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
 

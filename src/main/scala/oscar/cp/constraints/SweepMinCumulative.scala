@@ -28,32 +28,6 @@ import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**
- * This abstract class contains the main parts of the cumulative constraint described
- *  in [1].
- *
- *  The abstract methods in this class allow to specialize the constraint in a Max, Min
- *  or Bounded cumulative constraint.
- *
- *  [1] A New Multi-Resource cumulative Constraint with Negative Heights, Nicolas Beldiceanu and Mats Carlsson
- * 	[2] Choco's class CumulSweep.java
- *
- * 	@define originalTasks
- * 	the tasks that could be originally assigned to the height `r`
- *  @define idOfT
- *  t The id `t` of the considered task in the array `tasks`.
- *  @define addEvent
- *  If the conditions are met, the events are added.
- *
- *  @define badEvents
- *
- *  Note: bad events are defined over the compulsory part of the task.
- *
- *  @define goodEvents
- *
- *  Note: good events are defined over the entire execution's domain of the task.
- *
- *  @author Renaud Hartert ren.hartert@gmail.com
- *  @version 28/07/2012
  */
 class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
 

@@ -14,16 +14,16 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.visual
+package oscar.visual.scheduling
 
 import oscar.visual._
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
-import java.awt.geom.Line2D
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
+import scala.Array.canBuildFrom
 
 class VisualGanttChart(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
 

@@ -26,6 +26,7 @@ import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
 import oscar.cp.constraints.SweepMaxCumulative
+import oscar.visual.scheduling.VisualGanttChart
 
 /**
  * Job-Shop Problem

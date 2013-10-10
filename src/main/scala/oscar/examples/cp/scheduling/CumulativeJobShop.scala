@@ -23,6 +23,7 @@ import oscar.visual._
 import scala.io.Source
 import oscar.cp.core.CPVarInt
 import oscar.cp.constraints.SweepMaxCumulative
+import oscar.visual.scheduling.VisualGanttChart
 
 object CumulativeJobShop extends App {
 
