@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 class InstanceReader(filepath: String) {
   val file = Source.fromFile(filepath).getLines
   val splitRegexp = " +"
+  val allRemaining = Int.MaxValue
   
   implicit def parsedNumericalStringArray(s: Array[String]) = new {
     def asInt = s.map(_.toInt)
@@ -53,8 +54,8 @@ class InstanceReader(filepath: String) {
    */
   def readDatas(nbElement: Int, nbColumns: Int): Array[Array[String]] = {
     val datas = Array.fill(nbColumns+1){new ListBuffer[String]}
-    
-    for (elementIndex <- 0 to nbElement) {
+    var elementIndex = 0
+    while(elementIndex < nbElement && file.hasNext) {
       // Read lines by batches
       val readValues = new ListBuffer[String]
 	    while (readValues.length < nbColumns && file.hasNext) {
@@ -70,6 +71,7 @@ class InstanceReader(filepath: String) {
 	    		datas(dataIndex+1) += values(dataIndex)
 	    	}
 	    }
+	    elementIndex += 1
 	  }
     return datas.map(_.toArray)
   }
