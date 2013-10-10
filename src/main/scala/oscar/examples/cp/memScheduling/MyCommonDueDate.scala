@@ -2,7 +2,7 @@ package oscar.examples.cp.memScheduling
 
 import oscar.cp.dsl.instances.CommonDueDateInstance
 
-object MyCommonDueDate extends CommonDueDateInstance("data/memScheduling/common-due-date/sch10/1.txt") with App {
+object MyCommonDueDate extends CommonDueDateInstance("data/memScheduling/common-due-date/sch1000/cdd1000_8.txt") with App {
 
   // Testing parsed values
   println(nbJobs)
