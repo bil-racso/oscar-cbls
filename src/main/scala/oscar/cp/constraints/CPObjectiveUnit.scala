@@ -31,9 +31,9 @@ import oscar.cp.core.CPPropagStrength
 abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Objective {
   
   // Upper bound of the objective
-  protected val lb = objVar.min
+  protected val lb = objVar.min - 1 // Avoids to remove the max value in the first propagate
   // Lower bound of the objective
-  protected val ub = objVar.max
+  protected val ub = objVar.max + 1 // Avoids to remove the max value in the first propagate
   // Tightening mode of the objective
   protected var tightenType = StrongTighten
   // Best so far value of the objective (the one recorded on the last tighten)
