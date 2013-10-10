@@ -7,9 +7,9 @@ class AircraftLandingInstance(filepath: String) extends InstanceReader(filepath)
   
   val Array(nbPlanes, freezeTime) = readLine asInt
   
-  val nbValues = 6 + nbPlanes 	// Planes are described by 6 values plus an array of nbPlanes values.
+  val planeValues = 6 + nbPlanes 	// Planes are described by 6 values plus an array of nbPlanes values.
   
-  val datas = readDatas(nbPlanes, nbValues)
+  val datas = readDatas(nbPlanes, planeValues)
   
   // First 4 columns, alongside the plane number, are integers.
   val Array(

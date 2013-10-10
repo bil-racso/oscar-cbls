@@ -6,9 +6,9 @@ class JobShopInstance(filepath: String) extends InstanceReader(filepath) {
   
   val Array(nbJobs, nbMachines) = readLine asInt
   
-  val nbValues = 2		// Tasks are described by 2 values.
+  val tasksValues = 2		// Tasks are described by 2 values.
   
-  val Array(jobs, requirements, durations) = readDatas(nbJobs, nbValues) asInt
+  val Array(jobs, requirements, durations) = readDatas(nbJobs, tasksValues) asInt
   
   val cp = CPScheduler(durations.sum)
   
