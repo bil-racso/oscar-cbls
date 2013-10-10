@@ -20,10 +20,22 @@ class InstanceReader(filepath: String) {
   
   def nextLine = file.next.trim
   
+  def isValid(line: String) = {
+    ! "".equals(line) &&
+    ! line.startsWith("++") &&
+    ! line.startsWith("--") &&
+    ! line.startsWith("//") &&
+    ! line.startsWith("#")
+  }
+  
   /**
    * Return the next line of the file split on spaces as an array of String.
    */
-  def readLine: Array[String] = nextLine.split(splitRegexp)
+  def readLine: Array[String] = {
+    var line: String = nextLine
+    while(! isValid(line)) line = nextLine
+    line.split(splitRegexp)
+  }
   
   /**
    * Reads lines of the file by batches and builds an array of nbColumns+1 arrays containing
@@ -61,8 +73,7 @@ class InstanceReader(filepath: String) {
       val readValues = new ListBuffer[String]
 	    while (readValues.length < nbColumns && file.hasNext) {
 	      val line = nextLine
-	      // TODO Test if line is comment or something else, if it is actually valid!
-	      if (! "".equals(line)) readValues ++= line.split(splitRegexp)
+	      if (isValid(line)) readValues ++= line.split(splitRegexp)
 	    }
 	    
 	    // Classify values into their respectful arrays
