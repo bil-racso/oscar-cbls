@@ -33,7 +33,7 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    // redirect Console.out
 	    var baos = new ByteArrayOutputStream();
 	    var ps = new PrintStream(baos);
-	    //Console.setOut(ps);
+	    Console.setOut(ps);
 	    
 	    val args = Array[String]("-a", f.toString())
 	    
