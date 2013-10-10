@@ -75,7 +75,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
       CPVarInt(cp, 65),
       CPVarInt(cp, 73))
 
-    var s2 = CPVarInt(cp, 0 to 1000000)
+    var s2 = CPVarInt(cp, 0 to x.map(y => y.max*y.max).sum)
     cp.add(new Spread(x, 591, s2))
     cp.isFailed should be(false)
   }
