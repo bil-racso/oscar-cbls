@@ -1,4 +1,4 @@
-package oscar.cp.test.scheduling
+package oscar.examples.cp.memScheduling
 
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
