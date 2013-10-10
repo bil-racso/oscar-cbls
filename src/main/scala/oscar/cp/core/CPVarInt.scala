@@ -804,11 +804,12 @@ object CPVarInt {
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
   def apply(cp: CPStore, domain: Range, name: String): CPVarInt = {
-    CPVarInt(cp, domain.toSet, name)
+    if (domain.max - domain.min == domain.size - 1) CPVarInt(cp, domain.min, domain.max, name)
+    else CPVarInt(cp, domain.toSet, name)
   }
 
   def apply(cp: CPStore, domain: Range): CPVarInt = {
-    CPVarInt(cp, domain.toSet)
+    CPVarInt(cp, domain, "")
   }
 
   /**
