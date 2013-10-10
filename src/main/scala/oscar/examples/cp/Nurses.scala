@@ -29,7 +29,7 @@ import oscar.visual._
 object Nurses extends App  {
   
   // --- reading the data ---
-
+	
   val lines = Source.fromFile("data/nurses/6zones.txt").getLines.reduceLeft(_ + " " + _)
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
   var index = 0
