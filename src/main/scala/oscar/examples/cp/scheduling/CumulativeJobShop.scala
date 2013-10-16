@@ -88,7 +88,8 @@ object CumulativeJobShop extends App {
   // ------
   
   cp.exploration {
-    cp.binaryFirstFail(startsVar)
+    SchedulingUtils.setTimes(startsVar, durationsVar, endsVar)
+    //cp.binaryFirstFail(startsVar)
     gantt.update(1, 20)
   }
 
