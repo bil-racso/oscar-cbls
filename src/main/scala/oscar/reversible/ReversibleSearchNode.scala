@@ -326,7 +326,6 @@ class ReversibleSearchNode {
         val b = () => {
           sc.start()
           update()
-          //propagate()
           if (!isFailed()) {
             exploBlock.get.exploration()
           } else {
