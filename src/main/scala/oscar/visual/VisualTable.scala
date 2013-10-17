@@ -88,7 +88,11 @@ class VisualTable(n: Int, m: Int) extends JPanel(new BorderLayout()) {
   }
   
   jtable.getTableHeader().setVisible(false)
-  val jscr = new JScrollPane(jtable)
+  
+  val jscr = new JScrollPane(jtable,javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
+  
+  jtable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+  
   add(jscr, BorderLayout.CENTER)
   
   def getTable: JTable = jtable
