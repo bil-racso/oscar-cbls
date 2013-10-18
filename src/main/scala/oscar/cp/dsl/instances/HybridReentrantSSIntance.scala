@@ -13,6 +13,9 @@ class HybridReentrantSSIntance(filepath: String) extends InstanceReader(filepath
   // Les jobs c'est le numéro de la colonne en fait, la ligne c'est l'opération!
   
   val nbOperations 	= 3		// Each job is divided in 3 operations, see the definition of the instance files.
+  												// Unfortunately, this cannot be found out from the instance file itself.
+  												// Well, it could be feasible though, but it would require reading until the end of the file,
+  												// thus dropping every line, then returning to where we were on the saved/rebuilt iterator.
   
   val firstOpTime 	= readLine asIntArrayFillerOfLength nbJobs
   val secondOpTime 	= readLine asInt
