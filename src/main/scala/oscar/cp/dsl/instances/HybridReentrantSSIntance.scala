@@ -17,7 +17,7 @@ class HybridReentrantSSIntance(filepath: String) extends InstanceReader(filepath
   												// Well, it could be feasible though, but it would require reading until the end of the file,
   												// thus dropping every line, then returning to where we were on the saved/rebuilt iterator.
   
-  val firstOpTime 	= readLine asIntArrayFillerOfLength nbJobs
+  val firstOpTime 	= readLine asIntArrayFillerOf nbJobs
   val secondOpTime 	= readLine asInt
   val thirdOpTime 	= readLine asInt
   

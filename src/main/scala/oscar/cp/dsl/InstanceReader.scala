@@ -11,11 +11,11 @@ class InstanceReader(filepath: String) {
   implicit def parsedNumericalStringArray(s: Array[String]) = new {
     def asInt: Array[Int] 			= s.map(_.toInt)
     def asDouble: Array[Double] = s.map(_.toDouble)
-    def asIntArrayFillerOfLength(nbElements: Int): Array[Int] = {
+    def asIntArrayFillerOf(nbElements: Int): Array[Int] = {
       val baseIntArray = s.map(_.toInt)
       Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
     }
-    def asDoubleArrayFillerOfLength(nbElements: Int): Array[Double] = {
+    def asDoubleArrayFillerOf(nbElements: Int): Array[Double] = {
       val baseIntArray = s.map(_.toDouble)
       Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
     }
