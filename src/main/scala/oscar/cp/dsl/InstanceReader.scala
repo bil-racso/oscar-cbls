@@ -26,16 +26,6 @@ class InstanceReader(filepath: String) {
     def asDouble: Array[Array[Double]] 	= s.map(_.map(_.toDouble))
   }
   
-  implicit def arrayFillingInt(s: Array[Int]) = new {
-    def toArray(nbElements: Int): Array[Int] = {
-      Array.tabulate(nbElements)(index => s(index % s.length))
-    }
-  }
-  
-  implicit def arrayFillingDouble(s: Array[Double]) = new {
-    
-  }
-  
   def nextLine = file.next.trim
   
   def isValid(line: String) = {
