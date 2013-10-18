@@ -9,13 +9,31 @@ class InstanceReader(filepath: String) {
   val allRemaining = Int.MaxValue
   
   implicit def parsedNumericalStringArray(s: Array[String]) = new {
-    def asInt = s.map(_.toInt)
-    def asDouble = s.map(_.toDouble)
+    def asInt: Array[Int] 			= s.map(_.toInt)
+    def asDouble: Array[Double] = s.map(_.toDouble)
+    def asIntArrayFillerOfLength(nbElements: Int): Array[Int] = {
+      val baseIntArray = s.map(_.toInt)
+      Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
+    }
+    def asDoubleArrayFillerOfLength(nbElements: Int): Array[Double] = {
+      val baseIntArray = s.map(_.toDouble)
+      Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
+    }
   }
   
   implicit def parsedNumericalFile(s: Array[Array[String]]) = new {
-    def asInt = s.map(_.map(_.toInt))
-    def asDouble = s.map(_.map(_.toDouble))
+    def asInt: Array[Array[Int]] 				= s.map(_.map(_.toInt))
+    def asDouble: Array[Array[Double]] 	= s.map(_.map(_.toDouble))
+  }
+  
+  implicit def arrayFillingInt(s: Array[Int]) = new {
+    def toArray(nbElements: Int): Array[Int] = {
+      Array.tabulate(nbElements)(index => s(index % s.length))
+    }
+  }
+  
+  implicit def arrayFillingDouble(s: Array[Double]) = new {
+    
   }
   
   def nextLine = file.next.trim
@@ -29,7 +47,7 @@ class InstanceReader(filepath: String) {
   }
   
   /**
-   * Return the next line of the file split on spaces as an array of String.
+   * Returns the next line of the file split on spaces as an array of String.
    */
   def readLine: Array[String] = {
     var line: String = nextLine
