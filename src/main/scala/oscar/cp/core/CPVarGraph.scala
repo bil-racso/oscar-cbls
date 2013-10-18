@@ -20,23 +20,54 @@ package oscar.cp.core
 
 /**
  * Build a graph CPVar
- * @param 	nodes : nodes of the graph interval
- * 			edges : edges of the graph interval
+ * @param 	nNodes : number of nodes of the maximal graph
+ * 			inputEdges : list of tuple/pair (source, destination) representing the edges of the maximal graph
  */
-class CPVarGraph(val s: CPStore, nodes: CPVarSet, edges: CPVarSet, val name: String = "") extends CPVar {
+class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val name: String = "") extends CPVar {
   
-  def store = s
+  def store = s 
+  val nedges = inputEdges.length
   
-  val order = nodes.card
+  // N and E will hold current graph interval
+  private val N = new CPVarSet(store,0,nNodes)
+  private val E = new CPVarSet(store,0,nedges)
   
-  val possibleNodes : Array[Int] = nodes.possibleNotRequiredValues.toArray
-  val possibleEdges : Array[Int] = edges.possibleNotRequiredValues.toArray
+  // define some useful inner class
+  // Edge() take 3 param to have immutable src and destination
+  class Edge(index : Int, source : Int, destination : Int){
+    val i = index
+    val src = source
+    val dest= destination
+  }
+  class Node(index : Int){
+    val i = index
+    var inEdges  : List[Int] = Nil
+    var outEdges : List[Int] = Nil
+  }
   
-  val requiredNodes : Array[Int] = nodes.requiredValues.toArray
-  val requiredEdges : Array[Int] = edges.requiredValues.toArray
+  // the following structures will be used to access easily to the hidden graph
+  val nodes : Array[Node] = Array.tabulate(nNodes)(i => new Node(i))
+  val edges : Array[Edge] = Array.tabulate(nedges)(i => new Edge(i,inputEdges(i)._1,inputEdges(i)._2 ) )
+  // fill array nodes with inEdges and outEdges
+  for(i <- 0 to nedges){
+    val e = edges(i)
+    e.i :: nodes(e.src ).inEdges
+    e.i :: nodes(e.dest).outEdges
+  }
   
+   /**
+   * Gives mandatory outer edges from a node n
+   * @param node
+   * @return Return an array with the index of all mandatory outgoing edges
+   */
+  def mandatoryOutEdges(node : Int) : Array[Int] = Array()
   
-  /* TODO implement methods + add new ones */
+  /**
+   * Gives mandatory inner edges from a node n
+   * @param node
+   * @return Return an array with the index of all mandatory incoming edges
+   */
+  def mandatoryInEdges(node : Int) : Array[Int] = Array()
   
   /**
    * Gives possible outer edges from a node n
@@ -51,19 +82,5 @@ class CPVarGraph(val s: CPStore, nodes: CPVarSet, edges: CPVarSet, val name: Str
    * @return Return an array with the index of all possible incoming edges
    */
   def possibleInEdges(node : Int) : Array[Int] = Array()
-  
-  /**
-   * Gives mandatory outer edges from a node n
-   * @param node
-   * @return Return an array with the index of all mandatory outgoing edges
-   */
-  def mandatoryOutEdges(node : Int) : Array[Int] = Array()
-  
-  /**
-   * Gives mandatory inner edges from a node n
-   * @param node
-   * @return Return an array with the index of all mandatory incoming edges
-   */
-  def mandatoryInEdges(node : Int) : Array[Int] = Array()
 
 }

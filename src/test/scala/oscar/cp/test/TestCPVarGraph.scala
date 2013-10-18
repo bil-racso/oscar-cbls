@@ -29,18 +29,12 @@ class TestCPVarGraph extends FunSuite with ShouldMatchers  {
 
   test("Test Set 1") {
     val cp = CPSolver()
-    var nodes = new CPVarSet(cp, 0 , 2)
-    var edges = new CPVarSet(cp, 1 , 2)
-    cp.add(edges ++ 5)
+    val nodes : Int = 3
+    val edges = List((0,1),(1,2))
     
     val graph = new CPVarGraph(cp, nodes, edges)
-    /* according to definition, there are 3 nodes with id = 0 to 2
-     * there are 3 arcs :
-     * 		id = 1 -> (0,1); id = 2 -> (0,2); id = 5 -> (1,2) */
     
-    graph.possibleEdges should be (Array(1,2,5))
-    graph.possibleInEdges(0) should be(Array())
-    graph.possibleOutEdges(0) should be(Array(1,2))
+    graph.mandatoryInEdges(0) should be (Array())
     
   }
 
