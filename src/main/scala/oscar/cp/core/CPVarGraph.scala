@@ -92,6 +92,17 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
    */
   def possibleEdges(nodeId: Int) : Array[Int] = possibleInEdges(nodeId) ++ possibleOutEdges(nodeId)
   
+  /**
+   * @return Return an array with the index of all mandatory nodes
+   */
+  def mandatoryNodes() : Array[Int] = N.requiredSet.toArray
+  
+  /**
+   * @return Return an array with the index of all possible nodes
+   */
+  def possibleNodes() : Array[Int] = N.possibleSet.toArray
+  
+  
   /* TODO : HANDLE ERROR CASES IN ADD/REMOVE FUNCTIONS */
   
   /**
