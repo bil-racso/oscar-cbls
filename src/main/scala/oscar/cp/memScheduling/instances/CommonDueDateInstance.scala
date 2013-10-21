@@ -1,7 +1,6 @@
-package oscar.cp.dsl.instances
+package oscar.cp.memScheduling.instances
 
-import oscar.cp.dsl.InstanceReader
-import math.round
+import oscar.cp.memScheduling.InstanceReader
 
 class CommonDueDateInstance(filepath: String) extends InstanceReader(filepath){
 

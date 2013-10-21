@@ -1,6 +1,6 @@
 package oscar.examples.cp.memScheduling
 
-import oscar.cp.dsl.instances.CrewSchedulingInstance
+import oscar.cp.memScheduling.instances.CrewSchedulingInstance
 
 object MyCrewScheduling extends CrewSchedulingInstance("data/memScheduling/crew-scheduling/csp50.txt") with App{
 	

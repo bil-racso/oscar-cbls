@@ -1,6 +1,6 @@
 package oscar.examples.cp.memScheduling
 
-import oscar.cp.dsl.instances.AircraftLandingInstance
+import oscar.cp.memScheduling.instances.AircraftLandingInstance
 import scala.Array.canBuildFrom
 
 object MyAircraftLanding extends AircraftLandingInstance("data/memScheduling/aircraft-landing/airland9.txt") with App{

@@ -1,6 +1,6 @@
 package oscar.examples.cp.memScheduling
 
-import oscar.cp.dsl.instances.SemiconductorTestingInstance
+import oscar.cp.memScheduling.instances.SemiconductorTestingInstance
 
 object MySemiconductorTesting extends SemiconductorTestingInstance("data/memScheduling/semiconductor-testing/semi305/semi305_1.txt") with App {
 

@@ -1,7 +1,8 @@
-package oscar.cp.dsl
+package oscar.cp.memScheduling
 
 import scala.io.Source
 import scala.collection.mutable.ListBuffer
+import scala.Array.canBuildFrom
 
 class InstanceReader(filepath: String) {
   val file = Source.fromFile(filepath).getLines

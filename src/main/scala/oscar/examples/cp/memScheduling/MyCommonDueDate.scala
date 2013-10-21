@@ -1,6 +1,6 @@
 package oscar.examples.cp.memScheduling
 
-import oscar.cp.dsl.instances.CommonDueDateInstance
+import oscar.cp.memScheduling.instances.CommonDueDateInstance
 
 object MyCommonDueDate extends CommonDueDateInstance("data/memScheduling/common-due-date/sch1000/cdd1000_8.txt") with App {
 
