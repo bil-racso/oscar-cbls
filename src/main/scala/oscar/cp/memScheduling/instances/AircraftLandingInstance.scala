@@ -1,13 +1,15 @@
-package oscar.cp.dsl.instances
+package oscar.cp.memScheduling.instances
 
 import oscar.cp.modeling.CPScheduler
-import oscar.cp.dsl.InstanceReader
+import oscar.cp.memScheduling.InstanceReader
 
 class AircraftLandingInstance(filepath: String) extends InstanceReader(filepath) {
   
   val Array(nbPlanes, freezeTime) = readLine asInt
   
-  val datas = readDatas(6+nbPlanes) 		// Planes are described by 6 values plus an array of nbPlanes values.
+  val planeValues = 6 + nbPlanes 	// Planes are described by 6 values plus an array of nbPlanes values.
+  
+  val datas = readDatas(nbPlanes, planeValues)
   
   // First 4 columns, alongside the plane number, are integers.
   val Array(

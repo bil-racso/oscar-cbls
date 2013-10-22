@@ -16,6 +16,7 @@
 package oscar.cp.core
 
 import oscar.cp.constraints.InSet
+import oscar.cp.constraints.InSetReif
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -782,6 +783,16 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * b <=> x > y
    */
   def <<=(y: CPVarInt) = this <== (y - 1)
+
+  /**
+   * b <=> x belongs to set
+   */
+  def isIn(set: Set[Int]): CPVarBool = {
+    val b = CPVarBool(s)
+    s.post(new InSetReif(this, set, b))
+    b
+  }
+
 }
 
 object CPVarInt {
@@ -793,11 +804,12 @@ object CPVarInt {
    * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
    */
   def apply(cp: CPStore, domain: Range, name: String): CPVarInt = {
-    CPVarInt(cp, domain.toSet, name)
+    if (domain.max - domain.min == domain.size - 1) CPVarInt(cp, domain.min, domain.max, name)
+    else CPVarInt(cp, domain.toSet, name)
   }
 
   def apply(cp: CPStore, domain: Range): CPVarInt = {
-    CPVarInt(cp, domain.toSet)
+    CPVarInt(cp, domain, "")
   }
 
   /**
