@@ -1,27 +1,28 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-package oscar.cp.test
+ * ****************************************************************************
+ */
+package oscar.cp.scheduling.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.constraints._
 import oscar.cp.core._
-
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
+import scala.Array.canBuildFrom
 
 class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
@@ -44,8 +45,8 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
     val acts = Array(cumAct1, cumAct2)
 
-    val constraint1 = new MinSweepCumulative(cp, acts, 4, 0)
-    val constraint2 = new MinSweepCumulative(cp, acts, 3, 1)
+    val constraint1 = SweepMinCumulative(cp, acts, CPVarInt(cp, 4), 0)
+    val constraint2 = SweepMinCumulative(cp, acts, CPVarInt(cp, 3), 1)
 
     cp.add(constraint1)
     cp.add(constraint2)
@@ -76,18 +77,18 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
     cp.solve subjectTo {
 
-      cp.add(new MaxSweepCumulative(cp, acts, 5, 0))
-      cp.add(new MaxSweepCumulative(cp, acts, 5, 1))
-      cp.add(new MinSweepCumulative(cp, acts, 5, 0))
-      cp.add(new MinSweepCumulative(cp, acts, 5, 1))
+      cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 0))
+      cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 1))
+      cp.add(SweepMinCumulative(cp, acts, CPVarInt(cp, 5), 0))
+      cp.add(SweepMinCumulative(cp, acts, CPVarInt(cp, 5), 1))
 
     } exploration {
       cp.binary(acts.map(_.resource))
       val sol = (acts(0).resource.value, acts(1).resource.value, acts(2).resource.value, acts(3).resource.value)
       expectedSol.contains(sol) should be(true)
       nbSol += 1
-    } run()
-      nbSol should be(2)
+    } run ()
+    nbSol should be(2)
   }
 
   test("Test 3: alternatives") {
@@ -106,8 +107,8 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
     cp.solve subjectTo {
 
-      cp.add(new MaxSweepCumulative(cp, acts, 5, 0))
-      cp.add(new MaxSweepCumulative(cp, acts, 5, 1))
+      cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 0))
+      cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 1))
       cp.add(acts(1).resource == 0)
 
       acts(0).resource.value should be(0)
@@ -117,7 +118,7 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     } exploration {
       cp.binary(acts.map(_.resource))
       nbSol += 1
-    } run()
+    } run ()
     nbSol should be(1)
   }
 
@@ -138,8 +139,8 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     cp.add(act3.start == 0)
     cp.add(act4.start == 0)
 
-    cp.add(new MaxSweepCumulative(cp, acts, 5, 0))
-    cp.add(new MaxSweepCumulative(cp, acts, 5, 1))
+    cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 0))
+    cp.add(SweepMaxCumulative(cp, acts, CPVarInt(cp, 5), 1))
     cp.add(acts(1).resource == 0)
 
     acts(0).resource.value should be(0)
@@ -159,7 +160,7 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     val act1 = CumulativeActivity(Activity(cp, 6), 0 to 1, 0 to 5)
     val act2 = CumulativeActivity(Activity(cp, 6), 0 to 1, -2 to 5)
 
-    cp.add(new MaxSweepCumulative(cp, Array(act1, act2), 3, 0))
+    cp.add(SweepMaxCumulative(cp, Array(act1, act2), CPVarInt(cp, 3), 0))
 
     cp.add(act1.resource == 0)
     cp.add(act2.resource == 0)
@@ -177,7 +178,7 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     val act1 = CumulativeActivity(Activity(cp, 0 to 5), 0 to 1, 0 to 5)
     val act2 = CumulativeActivity(Activity(cp, 6), 0 to 1, 0 to 5)
 
-    cp.add(new MaxSweepCumulative(cp, Array(act1, act2), 3, 0))
+    cp.add(SweepMaxCumulative(cp, Array(act1, act2), CPVarInt(cp, 3), 0))
 
     cp.add(act1.resource == 0)
     cp.add(act1.height == 2)
@@ -187,6 +188,61 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
 
     act1.dur.min should be(0)
     act1.dur.max should be(3)
+
+  }
+  
+  test("RCPSP1") {
+
+    // (duration, consumption)
+    val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2))
+    val capa = 4
+    val horizon = instance.map(_._1).sum
+    val Times = 0 to horizon
+
+    val cp = CPScheduler(horizon)
+
+    var bestObj = horizon
+    val tasks: Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
+    val makespan = maximum(tasks.map(_.end))
+    cp.minimize(makespan) subjectTo {
+      cp.add(SweepMaxCumulative(cp, tasks, CPVarInt(cp, capa), 0))
+    } exploration {
+      cp.setTimes(tasks)
+      bestObj = makespan.value
+    } run ()
+    cp.printStats()
+
+    bestObj should be(160)
+
+  }
+
+  test("RCPSP2") {
+	println("test2")
+    // (duration, consumption)
+    val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2))
+    val capa = 4
+    val horizon = instance.map(_._1).sum
+    val Times = 0 to horizon
+
+    val cp = CPScheduler(horizon)
+
+    var bestObj = horizon
+
+    val resource = MaxResource(cp, capa)
+    val activities = instance.map(a => Activity(cp, a._1))
+
+    val makespan = cp.makespan
+
+    cp.minimize(makespan) subjectTo {
+		for (a <- 0 until instance.size)
+			activities(a) needs instance(a)._2 ofResource resource
+    } exploration {
+      cp.setTimes(cp.activities)
+      bestObj = makespan.value
+    } run ()
+    println("=>"+bestObj)
+    cp.printStats()
+    bestObj should be(160)
 
   }
 }

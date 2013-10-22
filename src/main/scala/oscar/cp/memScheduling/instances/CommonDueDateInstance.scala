@@ -2,7 +2,7 @@ package oscar.cp.memScheduling.instances
 
 import oscar.cp.memScheduling.InstanceReader
 
-class CommonDueDateInstance(filepath: String) extends InstanceReader(filepath){
+class CommonDueDateInstance(filepath: String) extends InstanceReader(filepath) {
 
   val Array(nbJobs) = readLine asInt
   

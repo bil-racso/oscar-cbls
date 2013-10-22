@@ -1,17 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -31,16 +17,16 @@
  * ****************************************************************************
  */
 
-package oscar.cp.test
+package oscar.cp.scheduling.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.modeling._
 import oscar.search._
 import oscar.cp.core._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
+import scala.Array.canBuildFrom
 
 class TestRCPSP extends FunSuite with ShouldMatchers {
 
@@ -58,7 +44,7 @@ class TestRCPSP extends FunSuite with ShouldMatchers {
     val tasks: Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
     val makespan = maximum(tasks.map(_.end))
     cp.minimize(makespan) subjectTo {
-      cp.add(new MaxSweepCumulative(cp, tasks, capa, 0))
+      cp.add(SweepMaxCumulative(cp, tasks, CPVarInt(cp, capa), 0))
     } exploration {
       cp.setTimes(tasks)
       bestObj = makespan.value

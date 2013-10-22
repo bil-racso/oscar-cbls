@@ -6,7 +6,7 @@ import oscar.cp.scheduling.Activity
 
 object Activities {
 	
-  def apply(scheduler : CPScheduler, durations : Array[ImplicitVarInt]): Array[Activity] = {
+  def apply(durations : Array[ImplicitVarInt])(implicit scheduler: CPScheduler): Array[Activity] = {
 	  Array.tabulate(durations.length)(i => Activity(scheduler, durations(i)))
 	}
 }

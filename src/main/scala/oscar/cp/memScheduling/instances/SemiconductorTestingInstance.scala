@@ -1,6 +1,6 @@
 package oscar.cp.memScheduling.instances
 
-import oscar.cp.memScheduling.InstanceReader
+import oscar.cp.memScheduling._
 
 class SemiconductorTestingInstance(filepath: String) extends InstanceReader(filepath) {
   

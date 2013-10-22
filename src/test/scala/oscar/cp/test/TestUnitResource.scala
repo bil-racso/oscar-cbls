@@ -25,7 +25,7 @@ import oscar.cp.scheduling._
 import oscar.reversible._
 
 
-class TestUnitResource extends FunSuite with ShouldMatchers {
+/*class TestUnitResource extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: packing") {	
 		
@@ -165,4 +165,4 @@ class TestUnitResource extends FunSuite with ShouldMatchers {
 		act1.dur.value should be(3)
 		nSol should be(24)
 	}
-}
+}*/

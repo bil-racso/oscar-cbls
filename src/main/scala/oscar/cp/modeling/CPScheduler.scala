@@ -42,7 +42,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 import oscar.cp.core.NoSolutionException
 
-class CPScheduler(val horizon : Int) extends CPSolver {
+class CPScheduler(var horizon : Int) extends CPSolver {
 
 	private var nResource = 0
 	private var nActivity = 0
