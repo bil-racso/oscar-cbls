@@ -27,7 +27,7 @@ object MyAircraftLanding extends App with Scheduler with Reader{
   // The last columns are actually a matrix of integers.    
   val separationTimes: Array[Array[Int]] = datas extractMatrixOf nbPlanes int
   
-  setHorizonTo(latestLandingTimes.sum)
+  horizon setTo latestLandingTimes.sum
   
   planes.map(println)
   appearanceTimes.map(println) 

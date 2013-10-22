@@ -10,7 +10,7 @@ object HybridReentrantShopScheduling extends App with Scheduler with Reader {
   val secondOpTime	= read fileFor nbJobs int
   val thirdOpTime 	= read fileFor nbJobs int
   
-  setHorizonTo(firstOpTime.sum + secondOpTime.sum + thirdOpTime.sum)
+  horizon setTo firstOpTime.sum + secondOpTime.sum + thirdOpTime.sum
 
   println(nbJobs)
   println(nbMachines)
