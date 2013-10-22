@@ -9,18 +9,14 @@ import oscar.cp.scheduling._
 
 
 object MyJobShop extends App with Scheduler with Reader {
-  
-  // Extending App yields a strange bug of Scala. We are overriding main until it is fixed.
-  override def main(args: Array[String]) {
     
     // Parsing
-	  readFromFile("data/memScheduling/jobshop/ft10")
-	  val Array(nbJobs, nbMachines) = readLine asInt
-	  val tasksValues = 2		// Tasks are described by 2 values.
-	  val Array(jobs, requirements, durations) = readDatas(nbJobs, tasksValues) asInt
+	  read fromFile "data/memScheduling/jobshop/ft10"
+	  val Array(nbJobs, nbMachines) = read fileFor 2 int
+	  val Array(jobs, requirements, durations) = read fileFor nbJobs unitsOf 2 int
 	  
 	  // Modeling
-	  setHorizonTo(durations.sum)
+	  this setHorizonTo durations.sum
 	  val activities = Activities(durations)
 	  val machines = UnitResources(nbMachines)
 	  
@@ -33,7 +29,7 @@ object MyJobShop extends App with Scheduler with Reader {
 	  //  if(precedences(i) != -1) activities(i) precedes activities(precedences(i))
 	  //}
 	  
-	  
+	  /*
 	  // Visualization coding is hideous, but that's not a priority right now.
 	  // Visualization  
 		// -----------------------------------------------------------------------
@@ -47,6 +43,7 @@ object MyJobShop extends App with Scheduler with Reader {
 		frame.createFrame("Gantt chart").add(gantt1)
 		frame.createFrame("Resources utilization").add(gantt2)
 		frame.pack
+	  */
 	  
 	  // TODO: review
 	  val makespan = maximum(activities)(_.end)
@@ -58,10 +55,11 @@ object MyJobShop extends App with Scheduler with Reader {
 				machines(r).rank()
 		}
 			binary(Array(makespan))
+			/*
 			gantt1.update(1, 20)
 			gantt2.update(1, 20)
+			*/
 		} run()
 	
 		printStats()
-	}
 }

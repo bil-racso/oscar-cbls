@@ -4,34 +4,37 @@ import scala.io.Source
 import scala.collection.mutable.ListBuffer
 
 trait Reader {
+  val read =  new ReaderDSL()
+  val allRemaining = Int.MaxValue
   
-  var file = Iterator[String]()
+  implicit def simpleValues(batcher: Batcher): ParsedLine = {
+    ParsedLine(new Batcher(batcher.file, 1) unitsOf batcher.nbElements simpleValue)
+  }
+}
+
+class ReaderDSL() {
+  var file: Iterator[String] = Iterator[String]()
   
-  def readFromFile(filepath: String) {
+  def fromFile(filepath: String) {
     file = Source.fromFile(filepath).getLines
   }
   
+  /*
+  /**
+   * Returns the next line of the file split on spaces as an array of String.
+   */
+  def nextLineAs(nbValues: Int): ParsedLine = {
+    var line: String = nextLine
+    while(! isValid(line)) line = nextLine
+    return ParsedLine(line.split(splitRegexp).slice(0, nbValues))
+  }
+   */
+  def fileFor(nbElements: Int) = new Batcher(file, nbElements)
+}
+
+class Batcher(val file: Iterator[String], val nbElements: Int) {
   val splitRegexp = " +"
   val allRemaining = Int.MaxValue
-  
-  // Converting Parsed Arrays of Strings
-	implicit def parsedNumericalStringArray(s: Array[String]) = new {
-    def asInt: Array[Int] 			= s.map(_.toInt)
-    def asDouble: Array[Double] = s.map(_.toDouble)
-    def asIntArrayFillerOf(nbElements: Int): Array[Int] = {
-      val baseIntArray = s.map(_.toInt)
-      Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
-    }
-    def asDoubleArrayFillerOf(nbElements: Int): Array[Double] = {
-      val baseIntArray = s.map(_.toDouble)
-      Array.tabulate(nbElements)(index => baseIntArray(index % s.length))
-    }
-  }
-  
-  implicit def parsedNumericalFile(s: Array[Array[String]]) = new {
-    def asInt: Array[Array[Int]] 				= s.map(_.map(_.toInt))
-    def asDouble: Array[Array[Double]] 	= s.map(_.map(_.toDouble))
-  }
   
   def nextLine = file.next.trim
   
@@ -43,13 +46,13 @@ trait Reader {
     ! line.startsWith("#")
   }
   
-  /**
-   * Returns the next line of the file split on spaces as an array of String.
-   */
-  def readLine: Array[String] = {
-    var line: String = nextLine
-    while(! isValid(line)) line = nextLine
-    line.split(splitRegexp)
+  def unitsOf(nbValues: Int): ParsedData = {
+    ParsedData(readDatas(nbElements, nbValues))
+  }
+  
+  def fillerForArrayOf(length: Int): ParsedLine = {
+    val filler = readDatas(1, nbElements)(1)
+    ParsedLine(Array.tabulate(length)(index => filler(index % filler.length)))
   }
   
   /**
@@ -102,5 +105,4 @@ trait Reader {
 	  }
     return datas.map(_.toArray)
   }
-  
 }
