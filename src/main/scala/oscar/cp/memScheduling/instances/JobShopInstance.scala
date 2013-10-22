@@ -1,6 +1,6 @@
 package oscar.cp.memScheduling.instances
 import oscar.cp.modeling.CPScheduler
-import oscar.cp.memScheduling.InstanceReader
+import oscar.cp.memScheduling._
 
 class JobShopInstance(filepath: String) extends InstanceReader(filepath) {
   

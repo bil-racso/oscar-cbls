@@ -4,7 +4,7 @@ import oscar.cp.modeling.CPScheduler
 import oscar.cp.scheduling.UnitResource
 
 object UnitResources {
-	def apply(scheduler: CPScheduler, nbResources: Int): Array[UnitResource] = {
+	def apply(nbResources: Int)(implicit scheduler: CPScheduler): Array[UnitResource] = {
 	  Array.tabulate(nbResources)(i => UnitResource(scheduler))
 	}
 }
