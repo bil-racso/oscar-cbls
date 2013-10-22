@@ -1,9 +1,13 @@
-package oscar.cp.test.scheduling
+package oscar.examples.cp.memScheduling
 
 import oscar.cp.modeling._
-import oscar.cp.scheduling._
+import oscar.cp.memScheduling._
 import oscar.visual._
-import oscar.cp.dsl.instances.JobShopInstance
+import oscar.cp.memScheduling.instances.JobShopInstance
+import oscar.cp.scheduling.Activity
+import oscar.cp.scheduling.UnitResource
+
+
 
 object MyJobShop extends JobShopInstance("data/memScheduling/jobshop/ft10") with App {
   
@@ -13,14 +17,17 @@ object MyJobShop extends JobShopInstance("data/memScheduling/jobshop/ft10") with
   
   // Need something the like of "Activities(cp, duration: Array[Int])" because using tabulate is hideous!
   val activities = Array.tabulate(durations.length)(i => Activity(cp, durations(i)))
+  //val activities = Activities(cp, durations)
   
   // Need something the like of "UnitResources(cp, nbMachines)", because... well, tabulate again.
   val machines = Array.tabulate(nbMachines)(i => UnitResource(cp))
+  //val machines = UnitResources(cp, nbMachines)
   
   // Need something the like of "activities needs requirements machines"
   for (i <- 0 until activities.length) {
     activities(i) needs machines(requirements(i))
   }
+  //activities needs requirements ofResources machines
   
   // Need something the like of "activities precedes precedences"
   for (i <- 0 until activities.length - 1; if (jobs(i) == jobs(i + 1)))
