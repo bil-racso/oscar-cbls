@@ -25,7 +25,7 @@ import oscar.cp.scheduling._
 
 
 
-class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
+/*class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 	
 	test("Test 1: Example") {
 
@@ -164,6 +164,4 @@ class TestQuadraticCumulativeEdgeFinding extends FunSuite with ShouldMatchers {
 			activities1(a).lct should be(horizon - activities2(a).est)
 		}
 	}
-}
-
-object TestQuadraticCumulativeEdgeFinding extends App {}
+}*/

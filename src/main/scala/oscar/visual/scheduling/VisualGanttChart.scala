@@ -14,26 +14,26 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.visual
+package oscar.visual.scheduling
 
 import oscar.visual._
 import oscar.cp.scheduling._
 import oscar.cp.core.CPVarInt
-import java.awt.geom.Line2D
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
+import scala.Array.canBuildFrom
 
-class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
+class VisualGanttChart(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
 
-  private val rectangles: Array[VisualRectangle] = Array.tabulate(activities.size)(a => {
+  private val rectangles: Array[VisualRectangle] = Array.tabulate(starts.size)(a => {
     val rect = new VisualRectangle(this, 0, 0, 0, 0)
     rect.innerCol = colors(a)
     rect
   })
 
-  private val max = (0 until activities.size).map(i => f(i)).max
+  private val max = (0 until starts.size).map(i => f(i)).max
 
   private val text: VisualText = new VisualText(this, 50, 50, "")
   text.innerCol = Color.RED
@@ -44,17 +44,17 @@ class VisualGanttChart(activities: Array[Activity], f: (Int) => Int, colors: (In
 
   def update(xScale: Int, yScale: Int) {
 
-    for (i <- 0 until activities.size) {
+    for (i <- 0 until starts.size) {
 
-      rectangles(i).width = (activities(i).maxDuration) * xScale
+      rectangles(i).width = (durations(i).max) * xScale
       rectangles(i).height = yScale
 
-      rectangles(i).move(activities(i).est * xScale, f(i) * yScale)
+      rectangles(i).move(starts(i).min * xScale, f(i) * yScale)
 
       rectangles(i).innerCol = colors(i)
     }
 
-    val makespan = activities.map(_.lct).max
+    val makespan = ends.map(_.max).max
 
     makespanLine.orig = (makespan * xScale, 0)
     makespanLine.dest = (makespan * xScale, (max + 1) * yScale)

@@ -36,7 +36,6 @@ package oscar.cp.scheduling
 import scala.collection.mutable.Set
 import scala.collection.mutable.Map
 import oscar.cp.modeling._
-import oscar.cp.constraints.MaxSweepCumulative
 import oscar.cp.core.CPVarInt
 import oscar.reversible.ReversibleBool
 import java.security.InvalidParameterException
