@@ -17,23 +17,23 @@ object MyCommonDueDate extends App with Scheduler with Reader {
   override def main(args: Array[String]) {
     
   // Parsing
-	  readFromFile("data/memScheduling/common-due-date/sch1000/cdd1000_8.txt")
-	  val Array(nbJobs) = readLine asInt
-	  val jobsValues = 3		// Jobs are described by 3 values.
-	  val Array(jobs, processingTimes, earliness, tardiness) = readDatas(nbJobs, jobsValues) asInt
+	  read fromFile("data/memScheduling/common-due-date/sch1000/cdd1000_8.txt")
+	  val Array(nbJobs) = read fileFor 3 int
+	  val Array(jobs, processingTimes, earliness, tardiness) = read fileFor nbJobs unitsOf 3 int
 	  val h = 0.8		// External parameter to set a more or less restrictive due date, to be set by user.
 	  val dueDate = (processingTimes.sum * h) toInt
 	  
 	  //Modeling
-	  val horizon = processingTimes.sum
-	  setHorizonTo(horizon) // Since there is only one machine, the horizon will be the sum of all duration
+	  val hor = processingTimes.sum
+	  horizon setTo hor // Since there is only one machine, the horizon will be the sum of all duration
+	  val cp = CPScheduler(hor)
 	  
 	  //val activities = Activities(processingTimes)
 	  val durationsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp,processingTimes(t)))
 	  val startsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
-	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to horizon))
-	  val earlypen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon*earliness(t)))
-	  val tardipen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon*tardiness(t)))
+	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to hor))
+	  val earlypen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to hor*earliness(t)))
+	  val tardipen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to hor*tardiness(t)))
 	  val max = maximum(earlypen)
 	  val min = maximum(tardipen)
 	  val makespan = max+min
