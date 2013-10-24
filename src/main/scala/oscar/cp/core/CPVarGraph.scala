@@ -21,7 +21,7 @@ package oscar.cp.core
 
 /**
  * Build a graph CPVar
- * @param 	nNodes : number of nodes of the maximal graph
+ * @param 	nNodes : number of nodes of the maximal graph, nodes are indexes as : [0,1,...,nNodes-1]
  * 			inputEdges : list of tuple/pair (source, destination) representing the edges of the maximal graph
  */
 class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val name: String = "") extends CPVar {
@@ -30,18 +30,18 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   val nedges = inputEdges.length
   
   // N and E will hold current graph interval
-  private val N = new CPVarSet(store,0,nNodes)
-  private val E = new CPVarSet(store,0,nedges)
+  private val N = new CPVarSet(store,0,nNodes-1)
+  private val E = new CPVarSet(store,0,nedges-1)
   
   // define some useful inner class
   // Edge() take 3 param to have immutable src and destination
-  class Edge(index : Int, source : Int, destination : Int){
-    val i = index
+  class Edge(idx : Int, source : Int, destination : Int){
+    val index = idx
     val src = source
     val dest= destination
   }
-  class Node(index : Int){
-    val i = index
+  class Node(idx : Int){
+    val index = idx
     var inEdges  : List[Int] = Nil
     var outEdges : List[Int] = Nil
   }
@@ -50,57 +50,57 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   val nodes : Array[Node] = Array.tabulate(nNodes)(i => new Node(i))
   val edges : Array[Edge] = Array.tabulate(nedges)(i => new Edge(i,inputEdges(i)._1,inputEdges(i)._2 ) )
   // fill array nodes with inEdges and outEdges
-  for(i <- 0 to nedges){
+  for(i <- 0 to (nedges-1)){
     val e = edges(i)
-    e.i :: nodes(e.src ).inEdges
-    e.i :: nodes(e.dest).outEdges
+    nodes(e.src ).outEdges = e.index :: nodes(e.src ).outEdges
+    nodes(e.dest).inEdges  = e.index :: nodes(e.dest).inEdges
   }
   
    /**
    * @param node Id
-   * @return Return an array with the index of all mandatory outgoing edges from the node
+   * @return Return a list with the index of all mandatory outgoing edges from the node
    */
-  def mandatoryOutEdges(nodeId: Int) : Array[Int] = nodes(nodeId).outEdges.filter( E isRequired _ ).toArray
+  def mandatoryOutEdges(nodeId: Int) : List[Int] = nodes(nodeId).outEdges.filter( E isRequired _ )
   
   /**
    * @param node Id
-   * @return Return an array with the index of all mandatory incoming edges from the node
+   * @return Return a list with the index of all mandatory incoming edges from the node
    */
-  def mandatoryInEdges(nodeId: Int) : Array[Int] = nodes(nodeId).inEdges.filter( E isRequired _ ).toArray
+  def mandatoryInEdges(nodeId: Int) : List[Int] = nodes(nodeId).inEdges.filter( E isRequired _ )
 
   /**
    * @param node Id
-   * @return Return an array with the index of all mandatory edges from the node
+   * @return Return a list with the index of all mandatory edges from the node
    */
-  def mandatoryEdges(nodeId: Int) : Array[Int] = mandatoryInEdges(nodeId) ++ mandatoryOutEdges(nodeId)
+  def mandatoryEdges(nodeId: Int) : List[Int] = mandatoryInEdges(nodeId) ++ mandatoryOutEdges(nodeId)
   
   /**
    * @param node Id
-   * @return Return an array with the index of all possible outgoing edges from the node
+   * @return Return a list with the index of all possible outgoing edges from the node
    */
-  def possibleOutEdges(nodeId: Int) : Array[Int] = nodes(nodeId).outEdges.filter( E isPossible _ ).toArray
+  def possibleOutEdges(nodeId: Int) : List[Int] = nodes(nodeId).outEdges.filter( E isPossible _ )
   
   /**
    * @param node Id
-   * @return Return an array with the index of all possible incoming edgesfrom the node
+   * @return Return a list with the index of all possible incoming edges from the node
    */
-  def possibleInEdges(nodeId: Int) : Array[Int] = nodes(nodeId).inEdges.filter( E isPossible _ ).toArray
+  def possibleInEdges(nodeId: Int) : List[Int] = nodes(nodeId).inEdges.filter( E isPossible _ )
 
   /**
    * @param node Id
-   * @return Return an array with the index of all possible edges from the node
+   * @return Return a list with the index of all possible edges from the node
    */
-  def possibleEdges(nodeId: Int) : Array[Int] = possibleInEdges(nodeId) ++ possibleOutEdges(nodeId)
+  def possibleEdges(nodeId: Int) : List[Int] = possibleInEdges(nodeId) ++ possibleOutEdges(nodeId)
   
   /**
-   * @return Return an array with the index of all mandatory nodes
+   * @return Return a list with the index of all mandatory nodes
    */
-  def mandatoryNodes() : Array[Int] = N.requiredSet.toArray
+  def mandatoryNodes() : List[Int] = N.requiredSet.toList
   
   /**
-   * @return Return an array with the index of all possible nodes
+   * @return Return a list with the index of all possible nodes
    */
-  def possibleNodes() : Array[Int] = N.possibleSet.toArray
+  def possibleNodes() : List[Int] = N.possibleSet.toList
   
   
   /* TODO : HANDLE ERROR CASES IN ADD/REMOVE FUNCTIONS */
@@ -144,7 +144,7 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   private def indexOfEdge(src: Int, dest: Int) : Int = {
     val edge = edges.filter(e => (e.src == src && e.dest == dest))
     if (edge.isEmpty) -1
-    else edge(0).i
+    else edge(0).index
   }
   
 }

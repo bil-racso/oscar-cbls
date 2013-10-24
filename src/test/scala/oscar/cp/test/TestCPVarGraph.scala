@@ -29,34 +29,49 @@ class TestCPVarGraph extends FunSuite with ShouldMatchers  {
 
   test("Test Set 1") { // Test Getters of CPVarGraph
     val cp = CPSolver()
-    val nnodes : Int = 3
-    val edges = List((0,1),(1,2),(2,0))
+    val nnodes : Int = 4
+    val edges = List((0,1),(1,2),(0,2))
     
     val graph = new CPVarGraph(cp, nnodes, edges)
     
     // nothing should be mandatory at start, all should be possible
-    for (n <- 0 to nnodes ){
+    for (n <- 0 to (nnodes-1)){
       graph.mandatoryInEdges(n).isEmpty should be (true)
       graph.mandatoryOutEdges(n).isEmpty should be (true)
       graph.mandatoryEdges(n).isEmpty should be (true)
     }
+
     graph.mandatoryNodes.isEmpty should be (true)
+    graph.possibleNodes should be ((0 to (nnodes-1)))
     
     // edges are : 0 = (0,1), 1 = (1,2), 2 = (0,2)
-    graph.possibleNodes should be ((0 to nnodes).toArray)
-    graph.possibleEdges(0) 		should be (Array(0,2))
-    graph.possibleInEdges(0) 	should be (Array())
-    graph.possibleOutEdges(0) 	should be (Array(0,2))
-    graph.possibleEdges(1) 		should be (Array(0,1))
-    graph.possibleInEdges(1) 	should be (Array(0))
-    graph.possibleOutEdges(1) 	should be (Array(1))
-    graph.possibleEdges(2) 		should be (Array(1,2))
-    graph.possibleInEdges(2) 	should be (Array(1,2))
-    graph.possibleOutEdges(2) 	should be (Array())
-    graph.possibleEdges(3) 		should be (Array())
-    graph.possibleInEdges(3) 	should be (Array())
-    graph.possibleOutEdges(3) 	should be (Array())
+    graph.mandatoryInEdges(0).sorted	should be (List())
+    graph.mandatoryOutEdges(0).sorted	should be (List())
+    graph.mandatoryEdges(0).sorted		should be (List())
+    graph.possibleInEdges(0).sorted		should be (List())
+    graph.possibleOutEdges(0).sorted 	should be (List(0,2))
+    graph.possibleEdges(0).sorted 		should be (List(0,2))
     
+    graph.mandatoryInEdges(1).sorted	should be (List())
+    graph.mandatoryOutEdges(1).sorted	should be (List())
+    graph.mandatoryEdges(1).sorted		should be (List())
+    graph.possibleInEdges(1).sorted		should be (List(0))
+    graph.possibleOutEdges(1).sorted 	should be (List(1))
+    graph.possibleEdges(1).sorted 		should be (List(0,1))
+    
+    graph.mandatoryInEdges(2).sorted	should be (List())
+    graph.mandatoryOutEdges(2).sorted	should be (List())
+    graph.mandatoryEdges(2).sorted		should be (List())
+    graph.possibleInEdges(2).sorted		should be (List(1,2))
+    graph.possibleOutEdges(2).sorted 	should be (List())
+    graph.possibleEdges(2).sorted 		should be (List(1,2))
+    
+    graph.mandatoryInEdges(3).sorted	should be (List())
+    graph.mandatoryOutEdges(3).sorted	should be (List())
+    graph.mandatoryEdges(3).sorted		should be (List())
+    graph.possibleInEdges(3).sorted		should be (List())
+    graph.possibleOutEdges(3).sorted 	should be (List())
+    graph.possibleEdges(3).sorted 		should be (List())
   }
 
 }
