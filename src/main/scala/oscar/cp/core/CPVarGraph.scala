@@ -58,21 +58,21 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   
    /**
    * @param node Id
-   * @return Return a list with the index of all mandatory outgoing edges from the node
+   * @return Return a list with the index of all required outgoing edges from the node
    */
-  def mandatoryOutEdges(nodeId: Int) : List[Int] = nodes(nodeId).outEdges.filter( E isRequired _ )
+  def requiredOutEdges(nodeId: Int) : List[Int] = nodes(nodeId).outEdges.filter( E isRequired _ )
   
   /**
    * @param node Id
-   * @return Return a list with the index of all mandatory incoming edges from the node
+   * @return Return a list with the index of all required incoming edges from the node
    */
-  def mandatoryInEdges(nodeId: Int) : List[Int] = nodes(nodeId).inEdges.filter( E isRequired _ )
+  def requiredInEdges(nodeId: Int) : List[Int] = nodes(nodeId).inEdges.filter( E isRequired _ )
 
   /**
    * @param node Id
-   * @return Return a list with the index of all mandatory edges from the node
+   * @return Return a list with the index of all required edges from the node
    */
-  def mandatoryEdges(nodeId: Int) : List[Int] = mandatoryInEdges(nodeId) ++ mandatoryOutEdges(nodeId)
+  def requiredEdges(nodeId: Int) : List[Int] = requiredInEdges(nodeId) ++ requiredOutEdges(nodeId)
   
   /**
    * @param node Id
@@ -93,49 +93,56 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   def possibleEdges(nodeId: Int) : List[Int] = possibleInEdges(nodeId) ++ possibleOutEdges(nodeId)
   
   /**
-   * @return Return a list with the index of all mandatory nodes
+   * @return Return a list with the index of all required nodes
    */
-  def mandatoryNodes() : List[Int] = N.requiredSet.toList
+  def requiredNodes() : List[Int] = N.requiredSet.toList
   
   /**
    * @return Return a list with the index of all possible nodes
    */
   def possibleNodes() : List[Int] = N.possibleSet.toList
   
-  
-  /* TODO : HANDLE ERROR CASES IN ADD/REMOVE FUNCTIONS */
-  
   /**
-   * Add a node into mandatory nodes from graph interval
+   * Add a node into required nodes from graph interval
    * @param node Id
    */
-  def addMandatoryNode(nodeId: Int) : CPOutcome = N.requires(nodeId)
+  def addNode(nodeId: Int) : CPOutcome = N.requires(nodeId)
   
   /**
-   * Remove a node from possible nodes from graph interval
+   * Remove a node from possible nodes from graph interval and connected edges to this node
    * @param node Id
    */
-  def removeNode(nodeId: Int) : CPOutcome = N.excludes(nodeId)
+  def removeNode(nodeId: Int) : CPOutcome = {
+    if (N.isRequired(nodeId)){
+      CPOutcome.Failure
+    } 
+    if (N.isPossible(nodeId)){
+	   	N.excludes(nodeId)
+	   	for (e <- possibleEdges(nodeId)) E.excludes(e)
+	}
+    CPOutcome.Success
+  }
   
   /**
-   * Add an edge into mandatory edges from graph interval
+   * Add an edge into required edges from graph interval, also add in required nodes connected nodes to that edge
    * @param source and destination of the edge
    */
-  def addMandatoryEdge(src: Int, dest: Int) : CPOutcome = {
+  def addEdge(src: Int, dest: Int) : CPOutcome = {
     val index = indexOfEdge(src, dest)
-    if (index == -1) CPOutcome.Failure
-    else E.requires(index)
+    if (! E.isPossible(index)) CPOutcome.Failure
+    else {
+      E.requires(index)
+      N.requires(edges(index).src)
+      N.requires(edges(index).dest)
+      CPOutcome.Success
+    }
   }
   
   /**
    * Remove an edge from possible edges from graph interval
    * @param source and destination of the edge
    */
-  def removeEdge(src: Int, dest: Int) : CPOutcome = {
-    val index = indexOfEdge(src, dest)
-    if (index == -1) CPOutcome.Failure
-    else E.excludes(index)
-  }
+  def removeEdge(src: Int, dest: Int) : CPOutcome = E.excludes(indexOfEdge(src, dest)) 
   
   /**
    * @return the index of the edge (src,dest)
