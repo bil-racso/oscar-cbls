@@ -54,6 +54,8 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 			  cp.add(endsVar(t - 1) <= startsVar(t))
 		  }
 		  
+		  // !!!! I added .getMax to endsVar to get the maximum possible value for the CPVarInt endsVar(t).
+		  // THIS MAY NOT ACHIEVE WHAT YOU WANTED! I just wanted to get rid of the errors, so beware!
 		  for (t <- Array(nbJobs)) {
 		    if (endsVar(t).getMax < dueDate) {
 		      cp.add(earlypen(t) == earliness(t)*(dueDate - endsVar(t).getMax))
