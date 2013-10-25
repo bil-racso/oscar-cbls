@@ -14,7 +14,6 @@ import oscar.cp.constraints.SweepMaxCumulative
 object MyCommonDueDate extends App with Scheduler with Reader {
   
   // Extending App yields a strange bug of Scala. We are overriding main until it is fixed.
-  override def main(args: Array[String]) {
     
   // Parsing
 	  read fromFile("data/memScheduling/common-due-date/sch1000/cdd1000_8.txt")
@@ -36,15 +35,15 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  val tardipen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to hor*tardiness(t)))
 	  val max = maximum(earlypen)
 	  val min = maximum(tardipen)
-	  val makespan = max+min
+	  val makespan_ = max+min
 
-	  // Creer une val calculant le earliness et le tardiness de chaque jobs par rapport à l'heure temps assigné
+	  // Creer une val calculant le earliness et le tardiness de chaque jobs par rapport ï¿½ l'heure temps assignï¿½
 	  // Additionner les penalites
 	  // Puis minimiser ce makespan durant la recherche.
 	  
 	  // Constraints & Search
 	  
-	  cp.minimize(makespan) subjectTo {
+	  cp.minimize(makespan_) subjectTo {
 	    
 	    // Consistency 
 		  for (t <- Array(nbJobs)) {
@@ -56,11 +55,11 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 		  }
 		  
 		  for (t <- Array(nbJobs)) {
-		    if endsVar(t) < dueDate {
-		      cp.add(earlypen(t) == earliness(t)*(dueDate - endsVar(t)))
+		    if (endsVar(t).getMax < dueDate) {
+		      cp.add(earlypen(t) == earliness(t)*(dueDate - endsVar(t).getMax))
 		    }
-		    else if (dueDate < endsVar(t)){
-		      cp.add(tardipen(t) == tardiness(t)*(endsVar(t) - dueDate))
+		    else if (dueDate < endsVar(t).getMax){
+		      cp.add(tardipen(t) == tardiness(t)*(endsVar(t).getMax - dueDate))
 		    }
 		  }
 	  } exploration {
@@ -79,6 +78,5 @@ object MyCommonDueDate extends App with Scheduler with Reader {
   println(dueDate)
   
   // TODO: Well... you know what to do, right? :)
-  }
   
 }

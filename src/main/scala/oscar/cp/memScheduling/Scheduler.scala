@@ -16,8 +16,6 @@ trait Scheduler {
   //val objective		 			= scheduler
   //val exploration 			= scheduler
   
-  val makespan = scheduler.makespan
-  
   implicit def cp2Horizon(cp: CPScheduler): Int = cp.horizon
   
   /*
