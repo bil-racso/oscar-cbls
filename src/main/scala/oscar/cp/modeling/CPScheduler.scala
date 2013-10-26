@@ -54,7 +54,7 @@ class CPScheduler(var horizon : Int) extends CPSolver {
 	
 	// Start Added
 	def setTo(horizon: Int) = this.horizon = horizon
-	def method(block: => Unit @scala.util.continuations.cpsParam[Unit,Unit]) = exploration(block)
+	def run:Unit = run(Int.MaxValue, Int.MaxValue, Int.MaxValue)
 	// End added
 	def makespan = maximum(activities.map(_.end))
 	

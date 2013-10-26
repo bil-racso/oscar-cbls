@@ -23,18 +23,17 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  val dueDate = (processingTimes.sum * h) toInt
 	  
 	  //Modeling
-	  val hor = processingTimes.sum
-	  horizon setTo hor // Since there is only one machine, the horizon will be the sum of all duration
+	  horizon setTo processingTimes.sum // Since there is only one machine, the horizon will be the sum of all duration
 	  
 	  //val activities = Activities(processingTimes)
 	  val durationsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp,processingTimes(t)))
 	  val startsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
-	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to hor))
-	  val earlypen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to hor*earliness(t)))
-	  val tardipen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to hor*tardiness(t)))
+	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to horizon))
+	  val earlypen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon*earliness(t)))
+	  val tardipen = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon*tardiness(t)))
 	  val max = maximum(earlypen)
 	  val min = maximum(tardipen)
-	  val makespan_ = max+min
+	  val makespan = max+min
 
 	  // Creer une val calculant le earliness et le tardiness de chaque jobs par rapport � l'heure temps assign�
 	  // Additionner les penalites
@@ -42,7 +41,7 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  
 	  // Constraints & Search
 	  
-	  cp.minimize(makespan_) subjectTo {
+	  cp.minimize(makespan) subjectTo {
 	    
 	    // Consistency 
 		  for (t <- Array(nbJobs)) {
@@ -64,10 +63,10 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 		    }
 		  }
 	  } exploration {
-		  cp.binaryFirstFail(startsVar)
+		  cp binaryFirstFail startsVar
 	  }
 	  
-	  cp.run()
+	  cp run
 	  
 	  
   // Testing parsed values
