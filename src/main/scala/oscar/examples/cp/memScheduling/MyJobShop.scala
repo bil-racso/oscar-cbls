@@ -2,9 +2,6 @@ package oscar.examples.cp.memScheduling
 
 import oscar.cp.modeling._
 import oscar.cp.memScheduling._
-import oscar.cp.memScheduling.instances._
-import oscar.visual._
-import oscar.cp.scheduling._
 
 
 
@@ -58,4 +55,5 @@ object MyJobShop extends App with Scheduler with Reader {
 		} run()
 		
 		scheduler printStats
+
 }

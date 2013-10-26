@@ -2,9 +2,7 @@ package oscar.cp.memScheduling
 
 import scala.collection.mutable.ListBuffer
 import oscar.cp.core._
-import oscar.cp.scheduling._
 import scala.util.continuations._
-import oscar.cp.modeling._
 import scala.collection.mutable.Map
 import oscar.reversible.ReversibleBool
 import oscar.reversible.ReversibleInt

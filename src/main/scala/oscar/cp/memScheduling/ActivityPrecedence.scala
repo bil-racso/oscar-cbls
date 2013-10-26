@@ -12,29 +12,19 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp
+package oscar.cp.memScheduling
 
 import oscar.cp.core.CPVarInt
-import scala.collection.TraversableLike
 
-/**
- * @author Renaud Hartert : ren.hartert@gmail.com
- */
-package object memScheduling {
+class ActivityPrecedence(v : CPVarInt, d : Int, exactly : Boolean) {
 	
-	// ImplicitVarInt
-	implicit def var2ImplicitVarInt(v : CPVarInt)     = VarImplicitVarInt(v)
-	implicit def array2ImplicitVarInt(a : Array[Int]) = ArrayImplicitVarInt(a)
-	implicit def range2ImplicitVarInt(r : Range)      = RangeImplicitVarInt(r)
-	implicit def int2ImplicitVarInt(i : Int)          = IntImplicitVarInt(i)
-	
-	// ImplicitVarInt over arrays
-	implicit def intArray2ImplicitVarIntArray(a: Array[Int]): Array[ImplicitVarInt]  = a.map(IntImplicitVarInt(_))
-	
-	// Adding functions over Activity arrays
-	implicit def arrayActivityOps(activities: Array[Activity]) = new {
-	  def needs(requirements: Array[Int]): ActivitiesRequirements = {
-	    ActivitiesRequirements(activities, requirements)
-	  }
-	}
+	private val cp = v.store
+
+	def beforeEndOf(act : Activity)   = if (exactly) cp.add(v + d == act.end) else cp.add(v + d <= act.end)
+	def beforeStartOf(act : Activity) = if (exactly) cp.add(v + d == act.start) else cp.add(v + d <= act.start)
+}
+
+object ActivityPrecedence {
+
+	def apply(v : CPVarInt, i : Int, b : Boolean = false) = new ActivityPrecedence(v, i, b)
 }
