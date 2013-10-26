@@ -35,6 +35,7 @@ object MyJobShop extends App with Scheduler with Reader {
 		frame.createFrame("Resources utilization").add(gantt2)
 		frame.pack
 	  */
+	  
 	  val makespan = maximum(activities.map(_.end))
 	  scheduler minimize makespan subjectTo {
 	    

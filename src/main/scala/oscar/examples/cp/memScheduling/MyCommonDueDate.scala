@@ -25,7 +25,6 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  //Modeling
 	  val hor = processingTimes.sum
 	  horizon setTo hor // Since there is only one machine, the horizon will be the sum of all duration
-	  val cp = CPScheduler(hor)
 	  
 	  //val activities = Activities(processingTimes)
 	  val durationsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp,processingTimes(t)))
