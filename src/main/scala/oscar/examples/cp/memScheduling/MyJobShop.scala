@@ -47,6 +47,7 @@ object MyJobShop extends App with Scheduler with Reader {
 				machines(r).rank()
 			}
 			// TODO: explore binary? What's that binary actually?
+			// Pas plus simple de repartir de leur nouvel version avec un simple first fail ?
 			scheduler binary(Array(makespan))
 			/*
 			gantt1.update(1, 20)
