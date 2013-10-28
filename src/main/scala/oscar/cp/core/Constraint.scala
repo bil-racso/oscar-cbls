@@ -53,46 +53,45 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   val active = new ReversibleBool(s, true)
   val inQueue = new ReversibleBool(s, false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPVarInt, SnapshotVarInt]() // min/max/size
+  val snapshotsVarInt = scala.collection.mutable.Map[CPVarInt, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPVarSet, SnapshotVarSet]()
-  val toSnapshotVarInt = scala.collection.mutable.Set[CPVarInt]()
-  val toSnapshotVarSet = scala.collection.mutable.Set[CPVarSet]()
+
 
   private var _mustSnapshot = false
 
   def addSnapshot(x: CPVarInt): Unit = {
-    toSnapshotVarInt += x
     snapshotsVarInt(x) = new SnapshotVarInt(x)
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
-      s.onPop {
-        snapshotVarInt()
-      }
+      s.onPop { snapShot() }
       _mustSnapshot = true
-    }    
+    } 
+  }
+
+  private def snapShot() {
+    snapshotVarInt()
+    snapshotVarSet()
   }
 
   protected def snapshotVarInt(): Unit = {
-    if (toSnapshotVarInt.size > 0)
-    	toSnapshotVarInt.foreach(x => snapshotsVarInt(x).update())
+    if (snapshotsVarInt.size > 0) {
+      snapshotsVarInt.values.foreach(_.update())
+    }
   }
   
 
   def addSnapshot(x: CPVarSet): Unit = {
-    toSnapshotVarSet += x
     snapshotsVarSet(x) = new SnapshotVarSet(x)
     snapshotsVarSet(x).update()
     if (!_mustSnapshot) {
-      s.onPop {
-        snapshotVarSet()
-      }
+      s.onPop { snapShot() }
       _mustSnapshot = true
     }    
   }
 
   protected def snapshotVarSet(): Unit = {
-    if (toSnapshotVarSet.size > 0)
-    	toSnapshotVarSet.foreach(x => snapshotsVarSet(x).update())
+    if (snapshotsVarSet.size > 0)
+      snapshotsVarSet.values.foreach(_.update())
   }  
 
   private var priorL2 = CPStore.MAXPRIORL2 - 2
