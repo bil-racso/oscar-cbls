@@ -15,7 +15,6 @@
 package oscar.cp
 
 import oscar.cp.core.CPVarInt
-import scala.collection.TraversableLike
 
 /**
  * @author Renaud Hartert : ren.hartert@gmail.com
