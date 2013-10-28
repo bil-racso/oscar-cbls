@@ -598,7 +598,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     while (!h.isEmpty) {
       val x = h.popFirst()
       x.propagate()
-      assert(x.Position <= maxposition,"non monotonic propagation detected in SCC")
+      assert(x.Position >= maxposition,"non monotonic propagation detected in SCC")
       assert({maxposition = x.Position; true})
 
       for (e <- ScheduledElements) {
