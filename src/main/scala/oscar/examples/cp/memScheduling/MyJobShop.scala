@@ -3,6 +3,7 @@ package oscar.examples.cp.memScheduling
 import oscar.cp.modeling._
 import oscar.cp.memScheduling._
 import oscar.cp.memScheduling.instances._
+import oscar.visual.scheduling._
 import oscar.visual._
 import oscar.cp.scheduling._
 
@@ -40,12 +41,13 @@ object MyJobShop extends App with Scheduler with Reader {
 	
 		val frame = new VisualFrame("Job-Shop Problem", 2, 1)
 		val colors = VisualUtil.getRandomColors(nbMachines, true)
+
+		// TODO fix broken VisualGanttChart (API change)
+//		val gantt1 = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(requirements(i)))
+//		val gantt2 = new VisualGanttChart(activities, i => requirements(i), colors = i => colors(requirements(i)))
 	
-		val gantt1 = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(requirements(i)))
-		val gantt2 = new VisualGanttChart(activities, i => requirements(i), colors = i => colors(requirements(i)))
-	
-		frame.createFrame("Gantt chart").add(gantt1)
-		frame.createFrame("Resources utilization").add(gantt2)
+//		frame.createFrame("Gantt chart").add(gantt1)
+//		frame.createFrame("Resources utilization").add(gantt2)
 		frame.pack
 	  
 	  // TODO: review
@@ -58,8 +60,8 @@ object MyJobShop extends App with Scheduler with Reader {
 				machines(r).rank()
 		}
 			binary(Array(makespan))
-			gantt1.update(1, 20)
-			gantt2.update(1, 20)
+//			gantt1.update(1, 20)
+//			gantt2.update(1, 20)
 		} run()
 	
 		printStats()
