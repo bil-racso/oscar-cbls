@@ -36,4 +36,10 @@ package object memScheduling {
 	    ActivitiesRequirements(activities, requirements)
 	  }
 	}
+	
+	implicit def refActArrayOps(activities: Array[Activity]) = new {
+    def start = activities.map(_.start)
+    def end 	= activities.map(_.end)
+    def dur 	= activities.map(_.dur)
+  }
 }
