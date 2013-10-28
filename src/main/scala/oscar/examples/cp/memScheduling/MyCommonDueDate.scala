@@ -49,7 +49,7 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  val makespan = CPVarInt(cp, 0 to temp)
 	  println(makespan)
 
-	  // Creer une val calculant le earliness et le tardiness de chaque jobs par rapport à l'heure temps assigné
+	  // Creer une val calculant le earliness et le tardiness de chaque jobs par rapport Ã  l'heure temps assignÃ© (ce serait pas "leur" plutot?)
 	  // Additionner les penalites
 	  // Puis minimiser ce makespan durant la recherche.
 	  
