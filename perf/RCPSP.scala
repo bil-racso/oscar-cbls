@@ -58,7 +58,7 @@ object RCPSP {
 		val tasks : Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
 		val makespan = maximum(tasks.map(_.end))
 		cp.minimize(makespan) subjectTo {
-			cp.add(new MaxSweepCumulative(cp, tasks, capa, 0))
+			cp.add(new NewMaxCumulative(cp, tasks, capa, 0))
 		} exploration {
 		    cp.setTimes(tasks)
 		    println("here")
