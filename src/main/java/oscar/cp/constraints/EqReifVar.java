@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -21,7 +19,6 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
 
 /**
  * Reified constraint.
@@ -35,7 +32,7 @@ public class EqReifVar extends Constraint {
 	
 
 	/**
-     * Ask that x and v take different values if and only if b is true. <br>
+     * Ask that x and v take equals values if and only if b is true. <br>
      * (x == y) <=> b
      * @param x
      * @param y
@@ -44,12 +41,11 @@ public class EqReifVar extends Constraint {
 		super(x.s(),"DiffReif");
 		this.x = x;
 		this.y = y;
-		System.out.println("x:"+x+" y:"+y);
 		this.b = b;
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (b.isBound()) {
 			return valBind(b);
 		} 
@@ -57,12 +53,11 @@ public class EqReifVar extends Constraint {
 			return valBind(x);
 		} 
 		else if (y.isBound()) {
-			System.out.println("val bind y");
 			return valBind(y);
 		}
 		else {
-			x.callPropagateWhenDomainChanges(this);
-			y.callPropagateWhenDomainChanges(this);	
+			x.callPropagateWhenDomainChanges(this,false);
+			y.callPropagateWhenDomainChanges(this,false);	
 			b.callValBindWhenBind(this);
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);
@@ -71,30 +66,29 @@ public class EqReifVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				// x == y
-				if (s.post(new Eq(x,y)) == CPOutcome.Failure) {
+				if (s().post(new Eq(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			} else {
 				//x != y
-				if (s.post(new Diff(x,y))  == CPOutcome.Failure) {
+				if (s().post(new DiffVar(x,y))  == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}
 			return CPOutcome.Success;
 		}	
 		else if (x.isBound()) {
-			if (s.post(new EqReif(y,x.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(y,x.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		else if (y.isBound()) {
-			System.out.println("yvalue:"+y.value());
-			if (s.post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -105,9 +99,9 @@ public class EqReifVar extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		// if the domains of x and y are disjoint we can set b to false and return success
-		if (x.getMax() < x.getMin()) {
+		if (x.getMax() < y.getMin()) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -125,6 +119,7 @@ public class EqReifVar extends Constraint {
 			int start = Math.max(x.getMin(), y.getMin());
 			int end = Math.min(x.getMax(), y.getMax());
 			boolean commonValues = false;
+			if (x.isRange() || y.isRange()) return CPOutcome.Suspend;
 			for (int i = start; i <= end; i++) {
  				if (x.hasValue(i) && y.hasValue(i)) {
 					commonValues = true;

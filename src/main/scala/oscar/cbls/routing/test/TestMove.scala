@@ -1,20 +1,17 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
@@ -29,7 +26,7 @@ import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import scala.Array
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-
+import scala.language.reflectiveCalls
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -55,7 +52,7 @@ class TestMove extends FunSuite with ShouldMatchers{
       val N:Int = 9
 
       val matrix = getDistanceMatrix(Array(0,1,2,3,4,5,6,7,8),Array(0,0,0,0,0,0,0,0,0))
-      val model: Model = new Model(false,false,false,false)
+      val model: Model = new Model(false,None,false,false)
 
       val vrp = new VRP(N, V, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPoints
         with Unrouted

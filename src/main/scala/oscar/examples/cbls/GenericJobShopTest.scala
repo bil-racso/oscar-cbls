@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.examples.cbls
 
 /*******************************************************************************
@@ -26,8 +40,9 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
-import oscar.visual.{VisualProfile, VisualGanttChart, VisualUtil, VisualFrame}
-import oscar.visual.VisualProfile._
+import oscar.visual.{VisualUtil, VisualFrame}
+import oscar.visual.scheduling.VisualProfile
+import oscar.visual.scheduling.VisualGanttChart
 import oscar.cbls.scheduling._
 
 /**this class loads JobShop problems as defined in
@@ -62,19 +77,19 @@ object GenericJobShopTest extends StopWatch with App {
   println("Machines: " + MachineCount)
   println("Tasks: " + JobCount * MachineCount + "\n")
 
-  val model = new Model(false, false, false)
+  val model = new Model(false, None, false)
   val planning = new Planning(model, maxDuration)
 
   val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
     => CumulativeResource(planning, 1, "Machine" + MachineID))
 
   for (JobID <- 0 until JobCount) {
-    var PreviousTask: Task = null
+    var PreviousTask: Activity = null
     for (TaskID <- MachineArray.indices) {
       val MachineID = WordReader.next().toInt
       val Duration = WordReader.next().toInt
 
-      val NewTask = Task(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      val NewTask = Activity(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
       NewTask uses 1 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
@@ -89,7 +104,7 @@ object GenericJobShopTest extends StopWatch with App {
   val solver = new IFlatIRelax(planning, false)
 
   model.close()
-  planning.getVisual
+  planning.getVisual()
 
   println("start search")
   //println(model.dumpToDot(true,true))

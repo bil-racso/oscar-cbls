@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -20,7 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -67,8 +65,8 @@ public class AtLeastNValueAC extends Constraint {
 		this.x = x;
 		this.posted = false;
 		this.nValueVar = nval;
-		this.priorityL2 = Store.MAXPRIORL2-1;
-		//setIdempotent();
+		this.priorityL2_$eq(CPStore.MAXPRIORL2()-3);
+		//this.idempotent_$eq(true);
 	}
 	
 	public AtLeastNValueAC(CPVarInt [] x, CPVarInt nval, boolean dontPostFWC) {
@@ -83,11 +81,11 @@ public class AtLeastNValueAC extends Constraint {
 		posted = true;
 		
 		if (nValueVar.getMin() < x.length) {
-			if (s.post(new AtLeastNValueFWC(x,nValueVar)) == CPOutcome.Failure) {
+			if (s().post(new AtLeastNValueFWC(x,nValueVar)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		} else { //allDifferent (AtLeastNValueAC is also used to implement the AllDiffAC)
-			if (s.post(new AllDiffFWC(x)) == CPOutcome.Failure) {
+			if (s().post(new AllDiffFWC(x)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 		}
@@ -114,12 +112,12 @@ public class AtLeastNValueAC extends Constraint {
 
 		for (int k = 0 ; k < x.length; k++) {
 			if (!x[k].isBound()) {
-				x[k].callPropagateWhenDomainChanges(this);
+				x[k].callPropagateWhenDomainChanges(this,false);
 			}
 		}
 
 		if (!nValueVar.isBound()) {
-			nValueVar.callPropagateWhenBoundsChange(this);
+			nValueVar.callPropagateWhenBoundsChange(this,false);
 		}
 
 		return CPOutcome.Suspend;
@@ -140,7 +138,7 @@ public class AtLeastNValueAC extends Constraint {
 
 
 	public CPOutcome propagate() {		
-		for(int k = 0; k < x.length; k++) {
+		for (int k = 0; k < x.length; k++) {
 			if (match[k] != NONE) {
 				if (!x[k].hasValue(match[k])) {
 					valMatch[match[k]-min] = -1;
@@ -156,7 +154,7 @@ public class AtLeastNValueAC extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (nValueVar.getMin() > maxMatching) {
-			System.out.println("fail detected");
+			//System.out.println("fail detected");
 			return CPOutcome.Failure;
 		}
 		//lower bound of nValueVar is pruned by CotCPAtLeastNValueIFW

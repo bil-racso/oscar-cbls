@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -52,7 +49,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  This an be useful when checking the behavior of partial propagation.
  *
  *  A self-check method is called by the propagation structure after propagation is performed.
- *  This is activated by the DebugMode parameter.
+ *  This is activated by the Checker parameter.
  *  You should ensure that Asteroid is compiled with assert activated if you are using the debug mode.
  *  It will considerably slow down Asteroid, as other checks are implemented in the base modules.
  *
@@ -63,11 +60,11 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing.
- * @param DebugMode to active the debug mode
+ * @param Checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -103,9 +100,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
    * this happens when dependencies are modified with transient cycles
    * @return the summed number of stalls for all the SCC
    */
-  def getStalls = StrognlyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
+  def getStalls = StronglyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
-  private var StrognlyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
+  private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**To call when one has defined all the propagation elements on which propagation will ever be triggered.
    * It must be called before any propagation is triggered,
@@ -142,14 +139,14 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
 
     //tri topologique sur les composantes fortement connexes
     acyclic = true;
-    StrognlyConnexComponentsList = List.empty;
+    StronglyConnexComponentsList = List.empty;
     val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {
         acyclic = false;
         val c = new StronglyConnectedComponent(a, this, GetNextID())
-        StrognlyConnexComponentsList = c :: StrognlyConnexComponentsList
+        StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
     })
@@ -193,7 +190,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
     for (e <- getPropagationElements) {
       e.rescheduleIfNeeded
     }
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
     }
     //propagate() we do not propagate anymore here since the first query might require a partial propagation only
@@ -336,7 +333,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
         }
     }
 
-    for (scc <- StrognlyConnexComponentsList) {
+    for (scc <- StronglyConnexComponentsList) {
       Track(scc.UniqueID) = Track(scc.Elements.head.UniqueID)
     }
     Track
@@ -397,9 +394,13 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
 
     if (Verbose) println("PropagationStruture: end propagation")
 
-    if (DebugMode && Track == null) {
-      for (p <- getPropagationElements) {
-        p.checkInternals()
+    if (Track == null) {
+      Checker match{
+        case Some(c) =>
+          for (p <- getPropagationElements) {
+            p.checkInternals(c)
+          }
+        case None =>
       }
     }
     Propagating = false
@@ -445,7 +446,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val DebugMode: Boolean
         ToReturn += "   " + nodeName(e) + e.getDotNode + "\n"
     }
 
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       ToReturn += "   subgraph " + "cluster_"+nodeName(scc) + "{" + "\n"
       for (f <- scc.Elements) {
         ToReturn += "      " + nodeName(f) + f.getDotNode + "\n"
@@ -597,7 +598,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     while (!h.isEmpty) {
       val x = h.popFirst()
       x.propagate()
-      assert(x.Position <= maxposition,"non monotonic propagation detected in SCC")
+      assert(x.Position >= maxposition,"non monotonic propagation detected in SCC")
       assert({maxposition = x.Position; true})
 
       for (e <- ScheduledElements) {
@@ -628,8 +629,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override private[core] def rescheduleIfNeeded() {}
   //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
 
-  override def checkInternals(){
-    for(e <-Elements){e.checkInternals()}
+  override def checkInternals(c:checker){
+    for(e <-Elements){e.checkInternals(c)}
   }
 }
 
@@ -912,7 +913,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
    * that the incremental computation they perform through the performPropagation method is correct
    * overriding this method is optional, so an empty body is provided by default
    */
-  def checkInternals() {
+  def checkInternals(c:checker) {
     ;
   }
 
@@ -926,3 +927,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 /**This is the node type to be used for bulking
  **/
 trait BulkPropagator extends PropagationElement
+
+abstract trait checker{
+  def check(b:Boolean)
+}

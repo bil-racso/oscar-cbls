@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -56,12 +54,12 @@ public class AtLeastNValueFWC extends Constraint {
 	     //initialize trails and counters
 	     isValueUsed   = new ReversibleBool[valSize];
 	     for (int v = 0; v < valSize; v++) {
-	    	 isValueUsed[v] = new ReversibleBool(s);
+	    	 isValueUsed[v] = new ReversibleBool(s());
 	    	 isValueUsed[v].setValue(false);
 	     }
-	     nbValueUsed = new ReversibleInt(s);
+	     nbValueUsed = new ReversibleInt(s());
 	     nbValueUsed.setValue(0);
-	     nbBound = new ReversibleInt(s);
+	     nbBound = new ReversibleInt(s());
 	     nbBound.setValue(0);
 	     	    
 	     for (int k = 0; k < x.length; k++) {
@@ -88,10 +86,10 @@ public class AtLeastNValueFWC extends Constraint {
 	     for (int k=0; k < x.length; k++) {
 	       if (!x[k].isBound())
 	         x[k].callValBindIdxWhenBind(this,k);
-	       	 x[k].callPropagateWhenBind(this);
+	       	 x[k].callPropagateWhenBind(this,false);
 	     }
 	     if (!nValueVar.isBound()) {
-	       nValueVar.callPropagateWhenBoundsChange(this);
+	       nValueVar.callPropagateWhenBoundsChange(this,false);
 	     }
 
 	     int ubNbValueUsed = nbValueUsed.getValue() + (x.length -nbBound.getValue());
@@ -132,7 +130,7 @@ public class AtLeastNValueFWC extends Constraint {
 	public CPOutcome propagate() {
 		//_nValueVar has changed
 		int ubNbValueUsed = nbValueUsed.getValue() + (x.length - nbBound.getValue());
-		if(ubNbValueUsed == nValueVar.getMin()){
+		if (ubNbValueUsed == nValueVar.getMin()) {
 			return prune();
 		}
 		return CPOutcome.Suspend;
@@ -142,16 +140,16 @@ public class AtLeastNValueFWC extends Constraint {
 		  //remove used values from unbound variables
 		  int [] values = new int[x.length];
 		  int nb = 0;
-		  for(int k = 0; k < x.length; k++){
-		    if(x[k].isBound()){
+		  for (int k = 0; k < x.length; k++) {
+		    if (x[k].isBound()) {
 		      values[nb] = x[k].getValue();
 		      nb++;
 		    }
 		  }
-		  for(int k = 0; k < x.length; k++){
-		    if(!x[k].isBound()){
-		      for(int i = 0; i < nb; i++){
-		        if(x[k].removeValue(values[i]) == CPOutcome.Failure){
+		  for (int k = 0; k < x.length; k++) {
+		    if (!x[k].isBound()) {
+		      for (int i = 0; i < nb; i++) {
+		        if (x[k].removeValue(values[i]) == CPOutcome.Failure) {
 		          return CPOutcome.Failure;
 		        }
 		      }

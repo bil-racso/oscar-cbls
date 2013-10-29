@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -22,6 +19,9 @@ import oscar.search._
 import oscar.cp.core._
 import oscar.visual._
 import java.awt.Color
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualRectangle
 
 
 /**
@@ -81,14 +81,14 @@ object LostAtSeaCircuit  {
          cp.binaryFirstFail(path)
          println(path.mkString(","))
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
-       }
+       } run()
        
        cp.printStats()
        
        // ---------------- make a small visu ---------------	
        
        val f = new VisualFrame("Lost At Sea",1,2)
-	   val drawing = new VisualDrawing(true)
+	   val drawing = VisualDrawing(true)
 	   f.createFrame("Solution").add(drawing)
 	   val scale = 60
 
@@ -101,7 +101,7 @@ object LostAtSeaCircuit  {
        for (i <- 0 until 9) {
          val (li,ci) = getLineCol(sol(i))
          val (li1,ci1) = getLineCol(sol(i+1))
-         new VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
+         VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
        }
        
 

@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -25,11 +22,12 @@ package oscar.cbls.invariants.core.algo.heap
 
 import collection.immutable.SortedMap
 import collection.Iterator
+import oscar.cbls.invariants.core.propagation.checker
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
  * smallest first
- * @param initialGetKey a function that returns an integer for each element inserted i nthe heap this value is used to sort the heap content
+ * @param initialGetKey a function that returns an integer for each element inserted in the heap this value is used to sort the heap content
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
@@ -65,7 +63,7 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   }
 
   /**makes the datastruct empty, but does not frees the space*/
-  override def dropAll{
+  override def dropAll(){
     msize = 0;
   }
 
@@ -199,7 +197,7 @@ class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Or
 
   def isEmpty = (size==0)
 
-  def checkInternals(){
+  def checkInternals(c:checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)
@@ -352,7 +350,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
 
-  def checkInternals(){
+  def checkInternals(c:checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)

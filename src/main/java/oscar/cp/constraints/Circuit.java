@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -52,16 +50,16 @@ public class Circuit extends Constraint {
 		lengthToDest = new ReversibleInt[succ.length];
 		
 		for (int i = 0; i < succ.length; i++) {
-			dest[i]  = new ReversibleInt(s,i);
-			orig[i]  = new ReversibleInt(s,i);
-			lengthToDest[i] = new ReversibleInt(s,0);	
+			dest[i]  = new ReversibleInt(s(),i);
+			orig[i]  = new ReversibleInt(s(),i);
+			lengthToDest[i] = new ReversibleInt(s(),0);	
 		}	
 	}
 	
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		if (s.post(new AllDifferent(succ),l) ==  CPOutcome.Failure) {
+	public CPOutcome setup(CPPropagStrength l) {
+		if (s().post(new AllDifferent(succ),l) ==  CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		if (succ.length > 0) {
@@ -84,7 +82,7 @@ public class Circuit extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int i) {
+	public CPOutcome valBindIdx(CPVarInt var, int i) {
 		int j = var.getValue();
 		// We have a new assigned path because of new edge i->j:
 		// o *-> i -> j *-> d

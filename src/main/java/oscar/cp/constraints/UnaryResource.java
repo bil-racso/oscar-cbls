@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -24,7 +22,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.scheduling.Activity;
 import oscar.cp.scheduling.MirrorActivity;
 
@@ -63,7 +61,6 @@ public class UnaryResource extends Constraint {
 	public UnaryResource(Activity [] activities, CPVarBool [] required,String name) {
 		super(activities[0].start().store(),name);
 		assert(activities.length == required.length);
-		this.name = name;
 		this.activities = activities;
 		this.required = required;
 		this.nbAct = activities.length;
@@ -114,7 +111,7 @@ public class UnaryResource extends Constraint {
 		this(activities, makeRequiredArray(activities.length,activities[0].start().store()), name);
 	}
 	
-	private static CPVarBool[] makeRequiredArray(int n, Store s) {
+	private static CPVarBool[] makeRequiredArray(int n, CPStore s) {
 		CPVarBool [] res = new CPVarBool[n];
 		for (int i = 0; i < res.length; i++) {
 			res[i] = new CPVarBool(s);
@@ -138,16 +135,16 @@ public class UnaryResource extends Constraint {
 
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
 		
 		for (int i = 0; i < nbAct; i++) {
-			activities[i].start().callPropagateWhenBoundsChange(this);
-			activities[i].end().callPropagateWhenBoundsChange(this);
+			activities[i].start().callPropagateWhenBoundsChange(this,false);
+			activities[i].end().callPropagateWhenBoundsChange(this,false);
 			
 			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
 				//required[i].callValBindIdxWhenBind(this,i);
-				required[i].callPropagateWhenBind(this);
+				required[i].callPropagateWhenBind(this,false);
 			}
 		}
 		
@@ -173,12 +170,12 @@ public class UnaryResource extends Constraint {
 
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt x, int idx) { 
+	public CPOutcome valBindIdx(CPVarInt x, int idx) { 
 		if (required[idx].isTrue()) {
 			// activity idx is mandatory
 			for (int i = 0; i < nbAct; i++) {
 				if (i != idx && required[i].isTrue()) {
-					if (s.post(new Disjunctive(activities[i], activities[idx])) == CPOutcome.Failure) {
+					if (s().post(new Disjunctive(activities[i], activities[idx])) == CPOutcome.Failure) {
 						return CPOutcome.Failure;
 					}
 				}
@@ -189,7 +186,7 @@ public class UnaryResource extends Constraint {
 
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		for (int i = 0; i < nbAct; i++) {
 			activities[i].update(); // forces update of start, end, dur
 		}

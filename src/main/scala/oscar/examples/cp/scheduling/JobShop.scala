@@ -25,6 +25,8 @@ import oscar.search._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
+import oscar.cp.constraints.SweepMaxCumulative
+import oscar.visual.scheduling.VisualGanttChart
 
 /**
  * Job-Shop Problem
@@ -40,86 +42,87 @@ import scala.io.Source
  */
 object JobShop extends App {
 
-	// Parsing		
-	// -----------------------------------------------------------------------
+  // Parsing		
+  // -----------------------------------------------------------------------
 
-	var lines = Source.fromFile("data/ft10.txt").getLines.toList
+  var lines = Source.fromFile("data/ft10.txt").getLines.toList
 
-	val nJobs        = lines.head.trim().split(" ")(0).toInt
-	val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-	val nResources   = lines.head.trim().split(" ")(2).toInt
+  val nJobs = lines.head.trim().split(" ")(0).toInt
+  val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
+  val nResources = lines.head.trim().split(" ")(2).toInt
 
-	val nActivities = nJobs * nTasksPerJob
+  val nActivities = nJobs * nTasksPerJob
 
-	val Activities = 0 until nActivities
-	val Jobs       = 0 until nJobs
-	val Resources  = 0 until nResources
+  val Activities = 0 until nActivities
+  val Jobs = 0 until nJobs
+  val Resources = 0 until nResources
 
-	lines = lines.drop(1)
+  lines = lines.drop(1)
 
-	val jobs      = new Array[Int](nActivities)
-	val machines  = new Array[Int](nActivities)
-	val durations = new Array[Int](nActivities)
+  val jobs = Array.fill(nActivities)(0)
+  val resources = Array.fill(nActivities)(0)
+  val durations = Array.fill(nActivities)(0)
 
-	for (i <- Activities) {
+  for (i <- Activities) {
 
-		val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
+    val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
 
-		jobs(i)      = l(0)
-		machines(i)  = l(1)
-		durations(i) = l(2)
+    jobs(i) = l(0)
+    resources(i) = l(1)
+    durations(i) = l(2)
 
-		lines = lines.drop(1)
-	}
+    lines = lines.drop(1)
+  }
 
-	// Modeling	
-	// -----------------------------------------------------------------------
+  // Modeling	
+  // -----------------------------------------------------------------------
 
-	val horizon = durations.sum
-	val cp = new CPScheduler(horizon)
+  val horizon = durations.sum
+  val cp = CPScheduler(horizon)
 
-	// Activities & Resources
-	val activities = Array.tabulate(nActivities)(i => Activity(cp, durations(i)))
-	val resources  = Array.tabulate(nResources)(r => UnitResource(cp))
+  // Activities & Resources
+  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durations(t)))
+  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
+  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durationsVar(t).min to horizon))
+  val demandsVar = Array.fill(nActivities)(CPVarInt(cp, 1))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(cp, resources(t)))
 
-	// Resource allocation
-	for (i <- Activities) 
-		activities(i) needs resources(machines(i))
+  val makespan = maximum(endsVar)
 
-	// The makespan to minimize
-	val makespan = maximum(activities)(_.end)
-	
-	// Visualization  
-	// -----------------------------------------------------------------------
+  // Visualization  
+  // -----------------------------------------------------------------------
 
-	val frame = new VisualFrame("Job-Shop Problem", 2, 1)
-	val colors = VisualUtil.getRandomColorArray(nResources)
+  val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
+  val colors = VisualUtil.getRandomColors(nResources, true)
+  val gantt1 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
+  val gantt2 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => resources(i), colors = i => colors(resources(i)))
+  frame.createFrame("Gantt chart").add(gantt1)
+  frame.createFrame("Gantt chart").add(gantt2)
+  frame.pack
 
-	val gantt1 = new VisualGanttChart(activities, i => jobs(i), colors = i => colors(machines(i)))
-	val gantt2 = new VisualGanttChart(activities, i => machines(i), colors = i => colors(machines(i)))
+  // Constraints & Search
+  // -----------------------------------------------------------------------
 
-	frame.createFrame("Gantt chart").add(gantt1)
-	frame.createFrame("Resources utilization").add(gantt2)
-	frame.pack
+  cp.minimize(makespan) subjectTo {
+    // Consistency 
+    for (t <- Activities) {
+      cp.add(endsVar(t) == startsVar(t) + durationsVar(t))
+    }
+    // Precedences
+    for (t <- 1 to Activities.max if jobs(t - 1) == jobs(t)) {
+      cp.add(endsVar(t - 1) <= startsVar(t))
+    }
+    // Cumulative
+    for (r <- Resources) {
+      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
+    }
+  } exploration {
+    cp.binaryFirstFail(startsVar)
+    gantt1.update(1, 20)
+    gantt2.update(1, 20)
+  }
 
-	// Constraints & Search
-	// -----------------------------------------------------------------------
-
-	cp.minimize(makespan) subjectTo {
-
-		for (i <- 0 until nActivities - 1; if (jobs(i) == jobs(i + 1)))
-			activities(i) precedes activities(i + 1)
-
-	} exploration {
-
-		for (r <- (0 until nResources).sortBy(-resources(_).criticality).suspendable) {
-			resources(r).rank()
-		}
-		cp.binary(Array(makespan))
-		gantt1.update(1, 20)
-		gantt2.update(1, 20)
-	}
-
-	cp.printStats()
+  cp.run()
+  cp.printStats()
 }
 	  

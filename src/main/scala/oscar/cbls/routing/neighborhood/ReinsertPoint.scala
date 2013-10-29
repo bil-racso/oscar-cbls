@@ -1,20 +1,17 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
@@ -125,7 +122,7 @@ object ReinsertPoint extends SearchEngine{
 
       for (beforeReinsertedPoint <- if (!onlyFrom) (0 until vrp.N startBy hotRestart) else Range(hotRestart,hotRestart+1)
         if vrp.isRouted(beforeReinsertedPoint)){
-          for(reinsertedPoint <- vrp.Unrouted.value){
+          for(reinsertedPoint <- vrp.Unrouted.value){ //TODO: use the closes neighbor if possible to speed up the story here
             val newObj = getObjAfterMove(beforeReinsertedPoint,reinsertedPoint, vrp)
             if (newObj < BestObj){
               if (FirstImprove) return ReinsertPoint(beforeReinsertedPoint,reinsertedPoint, newObj, vrp)
@@ -177,7 +174,7 @@ object ReinsertPoint extends SearchEngine{
  */
 case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfter:Int, vrp:VRP) extends Neighbor{
   // overriding methods
-  def comit {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
+  def comit() {ReinsertPoint.doMove(beforeReinsertedPoint, reinsertedPoint, vrp)}
   def getObjAfter = objAfter
   def startNodeForNextExploration: Int = reinsertedPoint
   def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)

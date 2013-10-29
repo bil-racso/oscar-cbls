@@ -1,51 +1,50 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.scheduling.algo
 
-/**
- *Implements the famous quickXplain algorithm in a generic way
- * [Ulrich Junker and F- Valbonne, QuickXPlain: Conflict Detection for Arbitrary Constraint Propagation Algorithms, 2001]
- * and proposes a faster implementation in case additional operation can be performed on the state
- */
+/** a class that proposes several conflict search algorithms.
+  * given a set of items I, and a condition over subsets of I that is monotonic (forall X, Y subset of I, conflict(X) => conflict(X U Y)
+  * a minimal conflict C is a subset of I such that conflict(C) and if any part of C is removed, C is not in conflict anymore.
+  */
 object ConflictSearch {
 
   /**Computes a minimal conflict over a list of thinks.
+   *Implements the famous quickXplain algorithm in a generic way
+   *[Ulrich Junker and F Valbonne, QuickXPlain: Conflict Detection for Arbitrary Constraint Propagation Algorithms, 2001]
+   * and proposes a faster implementation in case additional operation can be performed on the state
+    *
    * @param init the initial S, typically empty
-   * @param toinject a list of C among which the minimal conflict must be searched
+   * @param toInject a list of C among which the minimal conflict must be searched
    * @param inject the procedure to inject a C into the S, going towards conflict
    * @param isConflict the procedure to check whether or not the S is in conflict
-   * @return a minimal subset of toinject such that, when injected into init, they cause a conflict
+   * @return a minimal subset of toInject such that, when injected into init, they cause a conflict
    */
-  def apply[S,C](init:S, toinject:List[C], inject:(S, C)=>S, isConflict:S=>Boolean):List[C] = {
-    search[S,C](init,  List.empty, toinject, inject, isConflict)
+  def apply[S,C](init:S, toInject:List[C], inject:(S, C)=>S, isConflict:S=>Boolean):List[C] = {
+    search[S,C](init,  List.empty, toInject, inject, isConflict)
   }
 
   /**init includes items*/
   private def search[S,C](init:S,
                           items:List[C],
-                          toinject:List[C],
+                          toInject:List[C],
                           inject:(S, C)=>S,
                           isConflict:S=>Boolean):List[C] = {
 
@@ -55,7 +54,7 @@ object ConflictSearch {
     var ListA:List[C] = List.empty
     var ListB:List[C] = List.empty
     var fillA = true;
-    var remaining = toinject;
+    var remaining = toInject;
     
     while(true){
       if(remaining.isEmpty) throw new Exception("no conflict")
@@ -90,18 +89,18 @@ object ConflictSearch {
   /**Computes a minimal conflict over a list of thinks.
    * This version is faster : O(n) because it benefits from a remove operation
    * @param init the initial S, typically empty
-   * @param toinject a list of C among which the minimal conflict must be searched
+   * @param toInject a list of C among which the minimal conflict must be searched
    * @param inject the procedure to inject a C into the S, going towards conflict
    * @param remove the procedure to remove a C from the S, possibly removing the conflict
    * @param isConflict the procedure to check whether or not the S is in conflict
-   * @return a minimal subset of toinject such that, when injected into init, they cause a conflict
+   * @return a minimal subset of toInject such that, when injected into init, they cause a conflict
    */
-  def apply[S,C](init:S, toinject:List[C], inject:(S, C)=>S, remove:(S,C) => S,  isConflict:S=>Boolean):List[C] = {
+  def apply[S,C](init:S, toInject:List[C], inject:(S, C)=>S, remove:(S,C) => S,  isConflict:S=>Boolean):List[C] = {
     if (isConflict(init)) return List.empty
 
     var accumulatorList:List[C] = List.empty
     var accumulatorState = init
-    var remaining = toinject
+    var remaining = toInject
     while(!isConflict(accumulatorState)){
       if(remaining.isEmpty) throw new Exception("no conflict")
       val item = remaining.head

@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -70,13 +84,49 @@ package object util {
       case None => None
     }
   }
+  
+  
+  /**
+   * Deterministic min selector
+   * @return some randomly selected value i in r, minimizing f(i) and satisfying st(i)
+   * @author pschaus
+   */
+  def selectMinDeterministic[R, T](r: Iterable[R])(f: R => T)(implicit orderer: T => Ordered[T]): R = {
+    var best = r.head
+    var fbest = f(best)
+    val it = r.iterator
+    while (it.hasNext) {
+      val i = it.next()
+      val fi = f(i)
+      if (fi < fbest) {
+        best = i
+        fbest = fi
+      }
+    }
+    best
+  }
+  
+  def selectMinDeterministicInt[R](r: Array[R])(f: R => Int): R = {
+    var best = r.head
+    var fbest = f(best)
+    var i = 0
+    while (i < r.size) {
+      val fi = f(r(i))
+      if (fi < fbest) {
+        best = r(i)
+        fbest = fi
+      }
+      i += 1
+    }
+    best
+  }  
 
   /**
    * Random min selector
    * @return the k value i in r minimizing f(i) and satisfying st(i). In case of tie, those are broken randomly.
    * @author pschaus
    */
-  def selectMinK[R, T](r: Seq[R], k: Int)(st: (R => Boolean) = ((r: R) => true))(f: R => T)(implicit orderer: T => Ordered[T]): Iterable[R] = {
+  def selectMinK[R, T](r: Iterable[R], k: Int)(st: (R => Boolean) = ((r: R) => true))(f: R => T)(implicit orderer: T => Ordered[T]): Iterable[R] = {
     val potentials = r.filter(st(_))
     if (potentials.size <= k) potentials
     else {

@@ -1,35 +1,33 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.reversible;
 
 
 import java.util.Arrays;
 
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
-public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet{
+public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet {
 	
 
 	private ReversibleInt size;
 	private ReversibleInt maxV;
 	private ReversibleInt minV;
 
-	private Store s;
+	private CPStore s;
 	
 	/**
 	 * Initializes a set with all values min..max in it
@@ -37,7 +35,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(Store s, int min, int max) {
+	public ReversibleSetIndexedArray(CPStore s, int min, int max) {
 		this(s,min,max,false);
 	}
 	
@@ -47,7 +45,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(Store s, int min, int max, boolean empty) {
+	public ReversibleSetIndexedArray(CPStore s, int min, int max, boolean empty) {
 		this.s = s;
 		initIndexes(min, max, empty);
 	}

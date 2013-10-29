@@ -1,21 +1,17 @@
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 
 package oscar.examples.cp
 
@@ -24,13 +20,13 @@ import oscar.search._
 import oscar.cp.core._
 import oscar.visual._
 import oscar.util._
-
 import scala.collection.JavaConversions._
 import scala.io.Source
 import scala.util.Random
-
 import java.lang._
 import java.awt.Color
+import oscar.visual.shapes.VisualLine
+import oscar.visual.plot.PlotLine
 
 /**
  * Model for the steel mill slab problem:
@@ -90,18 +86,18 @@ object Steel {
     val xsol = Array.fill(nbSlab)(0) //current best solution
 
     // -------------visual components ------------
-    val colors = VisualUtil.getRandomColorArray(nbCol)
+    val colors = VisualUtil.getRandomColors(nbCol, true)
     val scale = 7
-    val f = new VisualFrame("Steel Mill Slab")
+    val f = VisualFrame("Steel Mill Slab")
     // creates the plot and place it into the frame
-    val plot = new Plot2D("", "Solution number", "Loss")
+    val plot = new PlotLine("", "Solution number", "Loss")
     f.createFrame("Objective").add(plot)
     // creates the tour visu and place it into the frame
-    val drawing: VisualBinPacking = new VisualBinPacking(nbSlab, 12)
+    val drawing: VisualBinPacking = VisualBinPacking(binWidth = 12)
     val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
     Slabs.foreach(o => items(o).innerCol = colors(col(o)))
     f.createFrame("Steel Mill Slab").add(drawing)
-    capa.foreach(c => new VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
+    capa.foreach(c => VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
     f.pack()
     // ------------------------------------------
 
@@ -123,12 +119,12 @@ object Steel {
       }
       Slabs.foreach(o => {
         xsol(o) = x(o).value
-        items(o).setBin(xsol(o))
+        items(o).bin = xsol(o)
       })
       plot.addPoint(nbSol, obj.value)
       nbSol += 1
       println("sol #fail:" + cp.nFail)
-    } run (1)
+    } run(1)
 
     for (r <- 1 to 100) {
       cp.runSubjectTo(Int.MaxValue, 200) {

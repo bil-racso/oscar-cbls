@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -21,7 +19,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * Reified Greater or Equal Constraint
@@ -48,11 +46,13 @@ public class LeEqCteReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
-		CPOutcome oc = updateBounds(x);
+	public CPOutcome setup(CPPropagStrength l) {
+		priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		priorityL2_$eq(CPStore.MAXPRIORL2()-1);
+		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			b.callValBindWhenBind(this);
-			x.callUpdateBoundsWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
@@ -61,7 +61,7 @@ public class LeEqCteReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome propagate() {
 		if (x.getMax() <= v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -77,14 +77,9 @@ public class LeEqCteReif extends Constraint {
 			return CPOutcome.Suspend;
 		}
 	}
-	
-	
-	protected int getPriorityBindL1(){
-		return Store.MAXPRIORL1;
-	}
 		
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.getValue() == 0) {
 			//x > v
 			if (x.updateMin(v+1) == CPOutcome.Failure) {

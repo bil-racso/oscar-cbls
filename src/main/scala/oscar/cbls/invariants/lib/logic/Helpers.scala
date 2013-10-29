@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -25,6 +22,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
+import oscar.cbls.invariants.core.propagation.checker
 
 /** This is a helper to define an invariant from an Int -> Int function.
  * Ths invariant is not incremental, so it should only be used for very simple functions.
@@ -54,8 +52,8 @@ class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.Mi
     output := fun(NewVal)
   }
 
-  override def checkInternals(){
-    assert(output.value == fun(a.value))
+  override def checkInternals(c:checker){
+    c.check(output.value == fun(a.value))
   }
 }
 
@@ -85,8 +83,8 @@ class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), overri
     output := fun(a.value,b.value)
   }
 
-  override def checkInternals(){
-    assert(output.value == fun(a.value,b.value))
+  override def checkInternals(c:checker){
+    c.check(output.value == fun(a.value,b.value))
   }
 }
 

@@ -1,23 +1,21 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
+  *     Corrected by Renaud De Landtsheer (removed statics)
   ******************************************************************************/
 
 package oscar.cbls.routing.visual
@@ -25,7 +23,8 @@ package oscar.cbls.routing.visual
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
 import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
-import oscar.visual.{VisualDrawing, VisualArrow}
+import oscar.visual.VisualDrawing
+import oscar.visual.shapes.VisualArrow
 import oscar.cbls.constraints.core.ConstraintSystem
 import math._
 import oscar.cbls.constraints.lib.basic.{EQ, LE}
@@ -33,10 +32,6 @@ import oscar.cbls.search.StopWatch
 import model._
 import test.data.{Point, InstanceVisualVRP}
 import util.Random
-
-object ModelVRP {
-  val model = new ModelVRP()
-}
 
 class ModelVRP() extends StopWatch{
 
@@ -77,7 +72,7 @@ class ModelVRP() extends StopWatch{
 
   //clone the Next array in case of new test on the same instance
   var clonedNext:Array[Int] = null
-  def cloneHeuristic {
+  def cloneHeuristic() {
     clonedNext = new Array[Int](N)
     for(i <- 0 until N)
       clonedNext(i) = vrp.Next(i).value
@@ -118,7 +113,7 @@ class ModelVRP() extends StopWatch{
     N = boardPanel.nbNodes.getText.toInt
 
     closeNeighbor = boardPanel.klimited.getText.toInt
-    m = new Model(false,false,false,false)
+    m = new Model(false,None,false,false)
     vrp = new VRP(N, V, m) with HopDistanceAsObjective with PositionInRouteAndRouteNr
       with ClosestNeighborPoints with Predecessors with Unrouted
       with WeightedNode with WeakConstraints with StrongConstraints
@@ -171,7 +166,7 @@ class ModelVRP() extends StopWatch{
       }
     }
     m.propagate()
-    cloneHeuristic
+    cloneHeuristic()
     it = 0
     this
   }

@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -24,7 +22,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.reversible.ReversibleBool;
 import oscar.reversible.ReversibleInt;
 
@@ -73,8 +71,7 @@ public class BinaryKnapsack extends Constraint {
 	public BinaryKnapsack(CPVarBool [] b, final int [] weights, CPVarInt load) {
 		super(b[0].s(),"BinaryKnapsack");
         assert(b.length == weights.length);
-		setPriorityL2(Store.MAXPRIORL2-2);
-		
+		priorityL2_$eq(CPStore.MAXPRIORL2()-2);
 		Integer [] perm = new Integer [weights.length];
 		for (int i = 0; i < perm.length; i++) {
             assert (weights[i] >= 0);
@@ -111,14 +108,14 @@ public class BinaryKnapsack extends Constraint {
     }
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (n > 0) {
-            if (s.post(new BinaryKnapsackWithCardinality(x,w,c,n)) == CPOutcome.Failure) {
+            if (s().post(new BinaryKnapsackWithCardinality(x,w,c,n)) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
             }
         }
 
-		if (s.post(new LightBinaryKnapsack(x,w,c)) == CPOutcome.Failure) {
+		if (s().post(new LightBinaryKnapsack(x,w,c)) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		if (l == CPPropagStrength.Weak)
@@ -126,7 +123,7 @@ public class BinaryKnapsack extends Constraint {
 		
 		candidate = new ReversibleInt[x.length];
 		for (int i = 0; i < candidate.length; i++) {
-			candidate[i] = new ReversibleInt(s,0);
+			candidate[i] = new ReversibleInt(s(),0);
 		}
 		
 		int S = 0;
@@ -135,9 +132,9 @@ public class BinaryKnapsack extends Constraint {
 			candidate[i].setValue(1);
 		}
 		
-		rcap = new ReversibleInt(s,0);
-		pcap = new ReversibleInt(s,S);
-		nb = new ReversibleInt(s,x.length);
+		rcap = new ReversibleInt(s(),0);
+		pcap = new ReversibleInt(s(),S);
+		nb = new ReversibleInt(s(),x.length);
 		
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isBound()) {
@@ -152,10 +149,10 @@ public class BinaryKnapsack extends Constraint {
 			}
 			else {
 				x[i].callValBindIdxWhenBind(this, i); // valBindIdx
-				x[i].callPropagateWhenDomainChanges(this); // propagate
+				x[i].callPropagateWhenDomainChanges(this,false); // propagate
 			}
 		}
-		if (!c.isBound()) c.callPropagateWhenBoundsChange(this);
+		if (!c.isBound()) c.callPropagateWhenBoundsChange(this,false);
 		
 		alpha_ = 0;
 		beta_ = 0;
@@ -170,7 +167,7 @@ public class BinaryKnapsack extends Constraint {
 	
 
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPVarInt var, int idx) {
 		if (var.getValue() == 1)
 			return bind(idx);
 		else
@@ -202,7 +199,7 @@ public class BinaryKnapsack extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		this.alpha_ = 0;
 		this.beta_ = 0;
 		int leftover = c.getMax() - rcap.getValue();
@@ -373,17 +370,17 @@ class LightBinaryKnapsack extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		candidate = new ReversibleBool[x.length];
 		for (int i = 0; i < candidate.length; i++) {
-			candidate[i] = new ReversibleBool(s);
+			candidate[i] = new ReversibleBool(s());
 			candidate[i].setValue(true);
 		}
 		
-		rsum = new ReversibleInt(s);
+		rsum = new ReversibleInt(s());
 		rsum.setValue(0);
-		psum = new ReversibleInt(s);
+		psum = new ReversibleInt(s());
 		psum.setValue(0);
 		
 		for (int i = 0; i < w.length; i++) {
@@ -403,27 +400,23 @@ class LightBinaryKnapsack extends Constraint {
 		if (c.updateMin(rsum.getValue()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-			
-		if (propagate() == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		
+
 		for (int i = 0; i < w.length; i++) {
 			if (!x[i].isBound()) {
 				x[i].callValBindIdxWhenBind(this, i);
-				x[i].callPropagateWhenBind(this);
+				x[i].callPropagateWhenBind(this,false);
 			}
 		}
 		
 		if (!c.isBound()) {
-			c.callPropagateWhenBoundsChange(this);
+			c.callPropagateWhenBoundsChange(this,false);
 		}
-		
-		return CPOutcome.Suspend;
+
+		return propagate();
 	}
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPVarInt var, int idx) {
 		candidate[idx].setValue(false);
 		psum.setValue(psum.getValue()-w[idx]);
 		if (var.getValue() == 1) {
@@ -441,7 +434,7 @@ class LightBinaryKnapsack extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if (c.updateMax(rsum.getValue()+psum.getValue()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -507,17 +500,17 @@ class BinaryKnapsackWithCardinality extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
-        packed = new ReversibleInt(s,0);
-        nPacked = new ReversibleInt(s,0);
+        packed = new ReversibleInt(s(),0);
+        nPacked = new ReversibleInt(s(),0);
         for (int i = 0; i < x.length; i++) {
             if (x[i].isBound()) {
                 packed.setValue(packed.getValue() + w[i]);
                 nPacked.incr();
             } else {
                 x[i].callValBindIdxWhenBind(this,i);
-                x[i].callPropagateWhenBind(this);
+                x[i].callPropagateWhenBind(this,false);
             }
 
         }
@@ -526,7 +519,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPVarInt var, int idx) {
         if (var.getValue() == 1) {
             nPacked.incr();
             packed.setValue(packed.getValue() + w[idx]);
@@ -537,7 +530,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
 
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 
         int curn = nPacked.getValue();
         int curw = packed.getValue();

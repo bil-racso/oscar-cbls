@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -27,7 +24,7 @@ package oscar.cbls.invariants.lib.minmax
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
 import oscar.cbls.invariants.core.computation.Invariant._
-import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.propagation.{checker, KeyForElementRemoval}
 import oscar.cbls.invariants.core.computation._
 
 /** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
@@ -205,22 +202,22 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
     cost = cost + System.currentTimeMillis()
   }
 
-  override def checkInternals() {
+  override def checkInternals(c:checker) {
     var count: Int = 0;
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
         if (vars(i).value == this.Miax.value) {
-          assert(output.value.contains(i))
+          c.check(output.value.contains(i))
           count += 1
         } else {
-          assert(Ord(Miax.value) < Ord(vars(i).value))
+          c.check(Ord(Miax.value) < Ord(vars(i).value))
         }
       }
     }
-    assert(output.value.size == count)
-    h.checkInternals()
-    assert(h.getFirsts.length == output.value.size)
+    c.check(output.value.size == count)
+    h.checkInternals(c:checker)
+    c.check(h.getFirsts.length == output.value.size)
     if (cond != null)
-      assert(output.getValue(true).subsetOf(cond.getValue(true)))
+      c.check(output.getValue(true).subsetOf(cond.getValue(true)))
   }
 }

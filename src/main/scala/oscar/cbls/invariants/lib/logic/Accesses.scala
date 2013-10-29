@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -25,7 +22,7 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.propagation.{checker, KeyForElementRemoval}
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -74,8 +71,8 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
     "ITE(" + ifVar + ',' + thenVar + "," + elseVar + ")"
   }
 
-  override def checkInternals(){
-    assert(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value),this)
+  override def checkInternals(c:checker){
+    c.check(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value))
   }
 }
 
@@ -126,8 +123,8 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(){
-    assert(output.value == inputarray(index.value).value, this)
+  override def checkInternals(c:checker){
+    c.check(output.value == inputarray(index.value).value)
   }
 
   override def toString:String= {
@@ -235,11 +232,11 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(){
-    assert(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
-    assert(index.value.forall((i:Int) =>
-      output.value.contains(inputarray(i).value)), "" + index + inputarray.toList + output)
-    assert(output.value.size == index.value.size)
+  override def checkInternals(c:checker){
+    c.check(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
+    c.check(index.value.forall((i:Int) =>
+      output.value.contains(inputarray(i).value)))
+    c.check(output.value.size == index.value.size)
   }
 }
 
@@ -299,7 +296,7 @@ case class IntSetElement(index:IntVar, inputarray:Array[IntSetVar])
     output.insertValue(value)
   }
 
-  override def checkInternals(){
-    assert(output.value.intersect(inputarray(index.value).value).size == output.value.size)
+  override def checkInternals(c:checker){
+    c.check(output.value.intersect(inputarray(index.value).value).size == output.value.size)
   }
 }

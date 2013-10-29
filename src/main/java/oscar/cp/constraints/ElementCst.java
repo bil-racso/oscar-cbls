@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -25,7 +23,6 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.util.ArrayUtils;
 import oscar.reversible.ReversibleInt;
 
 
@@ -69,15 +66,15 @@ public class ElementCst extends Constraint {
 			public int compare(Integer i1, Integer i2) {
 				return (y[i1]-y[i2]);
 			}});
-		minIndSupp = new ReversibleInt(s);
+		minIndSupp = new ReversibleInt(s());
 		minIndSupp.setValue(0);
-		maxIndSupp = new ReversibleInt(s);
+		maxIndSupp = new ReversibleInt(s());
 		maxIndSupp.setValue(y.length-1);
 		
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
 		if (x.updateMin(0) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
@@ -94,8 +91,8 @@ public class ElementCst extends Constraint {
 			x.callValRemoveWhenValueIsRemoved(this);
 			z.callValRemoveWhenValueIsRemoved(this);
 		}
-		z.callPropagateWhenBoundsChange(this);
-		x.callPropagateWhenDomainChanges(this);		
+		z.callPropagateWhenBoundsChange(this,false);
+		x.callPropagateWhenDomainChanges(this,false);		
 		x.callValBindWhenBind(this);
 
 		return CPOutcome.Suspend;
@@ -106,7 +103,7 @@ public class ElementCst extends Constraint {
 		for (int i = 0; i < y.length; i++) {
 			ReversibleInt counter = counters.get(y[i]);
 			if (counter == null) {
-				counter = new ReversibleInt(s,1);
+				counter = new ReversibleInt(s(),1);
 				counters.put(y[i], counter);
 			} else {
 				counter.incr();
@@ -115,7 +112,7 @@ public class ElementCst extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPVarInt var, int val) {
 		if (var == z) {
 			for (int i = 0; i < y.length; i++) {
 				if (y[i] == val) {
@@ -138,7 +135,7 @@ public class ElementCst extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		// z = y[x] 
 		int i = minIndSupp.getValue();
 		while (i<y.length && (y[sortedPerm[i]] < z.getMin() || !x.hasValue(sortedPerm[i]))) {
@@ -168,7 +165,7 @@ public class ElementCst extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	
-	protected CPOutcome valBind(CPVarInt x) {
+	public CPOutcome valBind(CPVarInt x) {
 		// x is bound
 		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;

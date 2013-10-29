@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.linprog.modeling
 
 
@@ -59,7 +56,6 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     val solver = solverLib match {
       case LPSolverLib.lp_solve => new LPSolve()
       case LPSolverLib.glpk => new GlpkMIP()
-      case LPSolverLib.cplex => new CplexLP()
       case LPSolverLib.gurobi => new GurobiLP()
       case _ => new LPSolve()
     }
@@ -151,9 +147,9 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
       }
             
       // Binary constraints, sum of the X, and fitting to the curve
-      add(sum(0 until num)(i=>X(i)) == Q,Some(name+"_nc_sommeX=Q"))
-      add(sum(0 until num)(i=>Y(i)) == 1,Some(name+"_nc_sommeY=1"))
-      add(sum(0 until num)(i=>(rates(i)*X(i) + c(i) * Y(i))) <= Z,Some(name+"_nc_coller a la courbe"))
+      add(sum(0 until num)(i=>X(i)) == Q,name+"_nc_sommeX=Q")
+      add(sum(0 until num)(i=>Y(i)) == 1)// ,name+"_nc_sommeY=1"
+      add(sum(0 until num)(i=>(rates(i)*X(i) + c(i) * Y(i))) <= Z,name+"_nc_coller a la courbe")
       Z
     } 
     

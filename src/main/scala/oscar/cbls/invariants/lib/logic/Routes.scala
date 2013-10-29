@@ -1,20 +1,17 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by CETIC www.cetic.be
@@ -25,6 +22,7 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.invariants.core.propagation.checker
 
 
 /**
@@ -157,23 +155,23 @@ case class Routes(V: Int,
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(n <- Next.indices){
       val next = Next(n).value
       if (next != UNROUTED){
-        assert(RouteNr(next).value == RouteNr(n).value)
+        c.check(RouteNr(next).value == RouteNr(n).value)
         if(next < V){
-          assert(PositionInRoute(next).value == 0)
-          assert(RouteNr(next).value == next)
+          c.check(PositionInRoute(next).value == 0)
+          c.check(RouteNr(next).value == next)
         }
         else{
-          assert(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value))
-          assert(RouteNr(n).value == RouteNr(next).value)
+          c.check(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value))
+          c.check(RouteNr(n).value == RouteNr(next).value)
         }
       }
       else{
-        assert(RouteNr(n).value == V)
-        assert(PositionInRoute(n).value == UNROUTED)
+        c.check(RouteNr(n).value == V)
+        c.check(PositionInRoute(n).value == UNROUTED)
       }
     }
   }

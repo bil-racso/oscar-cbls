@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -25,6 +22,7 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
+import oscar.cbls.invariants.core.propagation.checker
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
@@ -96,11 +94,11 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     if (v.value.isEmpty){
-      assert(output.value == Default)
+      c.check(output.value == Default)
     }else{
-      assert(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
     }
   }
 }
@@ -125,11 +123,11 @@ case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     if (v.value.isEmpty){
-      assert(output.value == Default)
+      c.check(output.value == Default)
     }else{
-      assert(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
     }
   }
 }

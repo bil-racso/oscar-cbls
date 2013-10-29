@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -33,6 +30,7 @@ import oscar.cbls.invariants.lib.numeric.{Abs, Minus}
 
 /**
  * implements left <= right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
@@ -53,17 +51,20 @@ protected class LEA(val left:IntVar, val right:IntVar) extends Constraint {
 
 /**
  * implements left <= right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class LE(l:IntVar,r:IntVar) extends LEA(l,r)
 
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class GE(l:IntVar,r:IntVar) extends LEA(r,l)
 
 /**
  * implements left < right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
@@ -82,16 +83,19 @@ protected class LA(val left:IntVar, val right:IntVar) extends Constraint{
 /**
  * implements left > right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class L(l:IntVar,r:IntVar) extends LA(l,r)
 
 /**
  * implements left < right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class G(l:IntVar,r:IntVar) extends LA(r,l)
 
 /**
  * implements left != right
+ * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class NE(left:IntVar, right:IntVar) extends Constraint{
   registerConstrainedVariables(left,right)
@@ -115,7 +119,9 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
 
 /**constraints left == right
  * this is considered as a primitive constraint and used in the [[oscar.cbls.constraints.core.Constraint]]
- * class, so that it is part of the core instead of the library*/
+ * class, so that it is part of the core instead of the library
+ * @author  Renaud De Landtsheer rdl@cetic.be
+ */
 case class EQ(left:IntVar, right:IntVar) extends Constraint{
 
   registerConstrainedVariables(left,right)

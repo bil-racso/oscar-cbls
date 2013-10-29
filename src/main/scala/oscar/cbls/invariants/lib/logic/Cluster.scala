@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -29,7 +26,9 @@ import collection.immutable.SortedSet;
 import collection.immutable.SortedMap;
 import oscar.cbls.invariants.core.computation.IntVar._
 
-import oscar.cbls.invariants.core.computation._;
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.checker
+;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
  * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
@@ -55,13 +54,13 @@ case class SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]
     if(y != null) y.insertValue(index)
   }
 
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v).value)){assert(Clusters(values(v).value).value.contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)){c.check(Clusters(values(v).value).value.contains(v))}
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
-        assert(values(indices).value == value)
+        c.check(values(indices).value == value)
       }
     }
   }
@@ -104,13 +103,13 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
 
   //This method is optionnal, it is called by the model when its debug mode is activated (see the contructor of model)
   //In this method, we check that the outputs are correct, based on non-incremental code
-  override def checkInternals(){
+  override def checkInternals(c:checker){
     for(v <- values.indices){
-      assert(clusters(values(v).value).value.contains(v))
+      c.check(clusters(values(v).value).value.contains(v))
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
-        assert(values(indices).value == value)
+        c.check(values(indices).value == value)
       }
     }
   }

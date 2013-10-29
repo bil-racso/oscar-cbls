@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -41,19 +39,19 @@ public class Disjunctive extends Constraint {
 	private CPOutcome notOverlap(Activity act1, Activity act2) {
         CPVarBool b1 = act2.start().isGrEq(act1.end());
         CPVarBool b2 = act1.start().isGrEq(act2.end());
-        if (s.post(new Sum(new CPVarBool [] {b1,b2}, 1)) == CPOutcome.Failure) {
+        if (super.s().post(new BinarySum(b1,b2,CPVarInt.apply(b1.s(),1))) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
         }
         return CPOutcome.Suspend;
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
-		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this);
-		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this);
-		if (!act2.start().isBound()) act2.start().callPropagateWhenBoundsChange(this);
-		if (!act2.dur().isBound()) act2.dur().callPropagateWhenBoundsChange(this);
+		if (!act1.start().isBound()) act1.start().callPropagateWhenBoundsChange(this,false);
+		if (!act1.dur().isBound()) act1.dur().callPropagateWhenBoundsChange(this,false);
+		if (!act2.start().isBound()) act2.start().callPropagateWhenBoundsChange(this,false);
+		if (!act2.dur().isBound()) act2.dur().callPropagateWhenBoundsChange(this,false);
 		
 		
 		if (propagate() == CPOutcome.Failure) {
@@ -65,7 +63,7 @@ public class Disjunctive extends Constraint {
 	}
 
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		
 		if (act1.ect() > act2.lst()) { // act1 cannot precede act2, so act1 must come after act2
 			if (act1.start().updateMin(act2.end().getMin()) == CPOutcome.Failure) {

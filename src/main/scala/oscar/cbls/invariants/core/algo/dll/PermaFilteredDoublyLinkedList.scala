@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -30,7 +27,7 @@ package oscar.cbls.invariants.core.algo.dll
  * You should not perform any operation on the slave DLL,
  * although this will not be detected and reported as an error
  *
- * Beware that this is a mutable data structure, hence you should not perform delete on it while iterating on it. 
+ * Beware that this is a mutable data structure, hence you should not perform any update on it while iterating on it.
  * */
  class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
@@ -64,7 +61,7 @@ package oscar.cbls.invariants.core.algo.dll
     }
     d
   }
-   
+
   def addAny(elem:AnyRef):AnyRef =  addElem(elem.asInstanceOf[T])
 
   /**adds an element to the data structure, cfr. method addElem*/

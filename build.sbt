@@ -1,6 +1,8 @@
 import AssemblyKeys._
 import de.johoop.jacoco4sbt._
 import JacocoPlugin._
+import sbt._
+
 
 
 name := "oscar"
@@ -9,7 +11,7 @@ version := "1.0"
 
 organization := ""
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.0"
 
 autoCompilerPlugins := true
 
@@ -20,7 +22,7 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
 unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "lib_commercial") }
 
 
-scalacOptions ++= Seq("-P:continuations:enable") //,"-optimize"
+scalacOptions ++= Seq("-P:continuations:enable", "-Xdisable-assertions") //,"-optimize"
 
 seq(assemblySettings: _*)
 
@@ -56,6 +58,8 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 testOptions in Test <+= (target in Test) map {
   t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports"))
 }
+
+TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
 
 
 

@@ -1,20 +1,17 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
@@ -31,6 +28,8 @@ import oscar.cbls.search.StopWatch
 class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
   var actualNeighbor = 0
   var ended = false
+
+  var mySmartSolution:SmartSolution=null;
 
   def getSelectedNeighborhood(kLimit:Int,n:Neighbor) = panelVRP.getSelectedNeighborhood(kLimit,n)
 
@@ -56,6 +55,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         if (n==null){ended =true} else actualNeighbor = 0;n}
       }
   }
+
   def run(){
     var smartIt = 1
     var bestObj = panelVRP.vrpModel.vrp.ObjectiveVar.value
@@ -86,10 +86,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
           previousMove.comit
           updateVisualisation(it)
         }
-
       }
-
-
 
       boardPanel.iteration = false
       boardPanel.start.setText("Start")
@@ -99,16 +96,11 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         println("Nouveau meilleur objectif: \n" +
           "-----------   ite: "+smartIt+"\n"+
           "-----------   obj: "+bestObj+"\n")
-        if(smartIt == 1)
-          SmartSolution(true)
-        else SmartSolution(false)
+
+        if(smartIt == 1) mySmartSolution = new SmartSolution(panelVRP)
+        else mySmartSolution.updateUI()
       }
       smartIt = smartIt +1
     }
-
-
   }
-
-
-
 }

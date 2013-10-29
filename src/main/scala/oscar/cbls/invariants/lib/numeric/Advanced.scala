@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -85,8 +82,8 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
     output :-= vars(value).value
   }
 
-  override def checkInternals() {
-    assert(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
+  override def checkInternals(c:checker) {
+    c.check(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
   }
 }
 
@@ -189,7 +186,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     }
   }
 
-  override def checkInternals() {
-    assert(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value))
+  override def checkInternals(c:checker) {
+    c.check(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value))
   }
 }

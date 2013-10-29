@@ -1,21 +1,18 @@
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 
 package oscar.examples.cp
 
@@ -27,9 +24,18 @@ import scala.io.Source
 import oscar.util._
 import oscar.visual._
 import java.awt.Color
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
 
 /**
  * P-Median Problem
+ * 
+ * Let us consider a set I={1,..., n} of potential locations for p facilities, 
+ * a set J={1,..., m} of customers, and  n x m matrix of transportations costs 
+ * for satisfying the demands of the customers from the facilities.  
+ * The p-median problem is to locate the p facilities at locations of I in order 
+ * to minimize the total transportation cost for satisfying the demand of the customers. 
+ * Also each location has fixed capacity for the demand that cannot be exceeded.
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -72,13 +78,13 @@ object PMedian extends App {
   val scale = 5
   val offsetx = 100
   val offsety = 100
-  val drawing = new VisualDrawing(false, true)
+  val drawing = VisualDrawing(true)
   w.add(drawing)
   val vcircles = for (i <- 0 until nbCust) yield {
     new VisualCircle(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale  + offsety, demand(i))
   }
   val vlines = for (i <- 0 until nbCust) yield {
-    new VisualLine(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, 0, 0)
+    VisualLine(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, 0, 0)
   }
   f.pack()
 
@@ -87,7 +93,7 @@ object PMedian extends App {
       val j = x(i).value
       vcircles(i).innerCol = Color.WHITE;
       vcircles(j).innerCol = Color.RED
-      vlines(i).setDest(cust(j)._1 * scale + offsetx, cust(j)._2 * scale  + offsety)
+      vlines(i).dest = (cust(j)._1 * scale + offsetx, cust(j)._2 * scale  + offsety)
     }
   }
   // ---------------------------
@@ -107,6 +113,6 @@ object PMedian extends App {
     for (i <- 0 until nbCust) xsol(i) = x(i).value
     updateVisu()
     println("\n"+totCost)
-  }
+  } run()
 
 }

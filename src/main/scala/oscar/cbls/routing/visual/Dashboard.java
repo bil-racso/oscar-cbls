@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cbls.routing.visual;
 
 
@@ -31,7 +45,6 @@ import java.util.concurrent.Semaphore;
  *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
 
-
 public class Dashboard extends JPanel {
 
     private JButton nextIte = null;
@@ -64,9 +77,11 @@ public class Dashboard extends JPanel {
     JTextField penaltySCField = null;
     JTextField penaltyWCField = null;
 
+    private PanelVRP myPanelVRP = null;
 
     private final JProgressBar progressBar = new JProgressBar(0, 100);
     private JFrame frameProgressBar;
+
 
     /**
      * Thread bounded to the progress bar.
@@ -74,7 +89,7 @@ public class Dashboard extends JPanel {
     private class ProgressThread implements Runnable {
         public void run(){
             frameProgressBar.setVisible(true);
-            //frameProgressBar.setLocationRelativeTo(PanelVRP.PanelVRP().mapPanel());
+            frameProgressBar.setLocationRelativeTo(myPanelVRP.mapPanel());
             /*
             while(HeuristicTimer.getPercentComplete() != 100){
                 try{
@@ -92,7 +107,9 @@ public class Dashboard extends JPanel {
 
     }
 
-    public Dashboard(boolean easyMode){
+    public Dashboard(boolean easyMode, PanelVRP myPanelVRP){
+
+        this.myPanelVRP = myPanelVRP;
 
         if(easyMode){
             setBackground(Color.white);
@@ -195,7 +212,7 @@ public class Dashboard extends JPanel {
                     //new Thread(new OldVisualMap.Search()).start();
                     firstIte = false;
                     iteration = true;
-                    //PanelVRP.startSearching();
+                    myPanelVRP.startSearching();
 
                 }
                 if(pause){
@@ -242,11 +259,13 @@ public class Dashboard extends JPanel {
     }
 
     void setMakeInstance(){
+        System.out.println("created make instance");
         makeInstance = new JButton("Make instance");
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new Thread(new ProgressThread()).start();
-                //PanelVRP.makeInstance(false);
+                System.out.println("pressed make instance");
+                myPanelVRP.makeInstance(false);
             }
         });
 
@@ -261,7 +280,7 @@ public class Dashboard extends JPanel {
         resetInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 firstIte = true;
-                //PanelVRP.makeInstance(true);
+                myPanelVRP.makeInstance(true);
             }});
         add(resetInstance);
     }
@@ -313,7 +332,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    //PanelVRP.startSmartSearching();
+                    myPanelVRP.startSmartSearching();
                     lock2();
                 }
                 pause = !pause;
@@ -338,7 +357,7 @@ public class Dashboard extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (firstIte) {
                     firstIte = false;
-                    //PanelVRP.startSearching();
+                    myPanelVRP.startSearching();
                     lock2();
                 }
                 pause = !pause;
@@ -418,7 +437,7 @@ public class Dashboard extends JPanel {
             heuristic.setSelectedIndex(0);
             writeRoute = new JCheckBox();
 
-            instances = new JComboBox(new String[]{"2D-2V-50P","4D-4V-100P","6D-6V-150P","1D-8V-200P","1D-8V-250P"});
+            instances = new JComboBox(new String[]{"2D-2V-50P","4D-4V-100P","6D-6V-150P","1D-8V-200P","1D-10V-250P"});
             instances.setPreferredSize(new Dimension(100,30));
             instances.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {

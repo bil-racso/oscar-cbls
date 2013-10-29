@@ -1,5 +1,17 @@
-
-
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cp.core
 
 
@@ -8,11 +20,11 @@ package oscar.cp.core
  * 1 is used for true, 0 for false.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVarBool(st: Store) extends CPVarIntImpl(st,0,1) {
+class CPVarBool(st: CPStore) extends CPVarIntImpl(st,0,1) {
 
 
     	
-	def this(s: Store, b: Boolean) = {
+	def this(s: CPStore, b: Boolean) = {
 		this(s)
 		if (b) assign(1)
 		else assign(0)
@@ -90,14 +102,14 @@ object CPVarBool {
    /**
     * Creates a new CP Boolean Variable
     */
-   def apply(cp: Store): CPVarBool = {
+   def apply(cp: CPStore): CPVarBool = {
     new CPVarBool(cp)
    }
    
-   def apply(cp: Store,b: Boolean): CPVarBool = {
+   def apply(cp: CPStore,b: Boolean): CPVarBool = {
     new CPVarBool(cp,b)
    }
    
-   def getArray(cp: Store,nb: Int) = Array.fill(nb)(CPVarBool(cp));
+   def getArray(cp: CPStore,nb: Int) = Array.fill(nb)(CPVarBool(cp));
 }  
   
