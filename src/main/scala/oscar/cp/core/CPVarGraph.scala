@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.cp.core
 
-
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be
  */
@@ -23,15 +22,20 @@ package oscar.cp.core
  * Build a graph CPVar
  * @param 	nNodes : number of nodes of the maximal graph, nodes are indexes as : [0,1,...,nNodes-1]
  * 			inputEdges : list of tuple/pair (source, destination) representing the edges of the maximal graph
+ *               if an tuple has values out of range (e.g. node value bigger than nNodes-1), this edge is ignored
  */
 class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val name: String = "") extends CPVar {
   
   def store = s 
-  val nedges = inputEdges.length
+  
+  // check if the edge is in range of nodes, otherwise ignore it
+  val r = 0 to nNodes
+  val correctInputEdges : List[(Int,Int)] = inputEdges.filter(x => (r.contains(x._1)) && (r.contains(x._2)))
+  val nEdges = correctInputEdges.length
   
   // N and E will hold current graph interval
   private val N = new CPVarSet(store,0,nNodes-1)
-  private val E = new CPVarSet(store,0,nedges-1)
+  private val E = new CPVarSet(store,0,nEdges-1)
   
   // define some useful inner class
   // Edge() take 3 param to have immutable src and destination
@@ -48,9 +52,9 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
   
   // the following structures will be used to access easily to the hidden graph
   val nodes : Array[Node] = Array.tabulate(nNodes)(i => new Node(i))
-  val edges : Array[Edge] = Array.tabulate(nedges)(i => new Edge(i,inputEdges(i)._1,inputEdges(i)._2 ) )
+  val edges : Array[Edge] = Array.tabulate(nEdges)(i => new Edge(i,correctInputEdges(i)._1,correctInputEdges(i)._2 ) )
   // fill array nodes with inEdges and outEdges
-  for(i <- 0 to (nedges-1)){
+  for(i <- 0 to (nEdges-1)){
     val e = edges(i)
     nodes(e.src ).outEdges = e.index :: nodes(e.src ).outEdges
     nodes(e.dest).inEdges  = e.index :: nodes(e.dest).inEdges
@@ -113,14 +117,14 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
    * @param node Id
    */
   def removeNode(nodeId: Int) : CPOutcome = {
-    if (N.isRequired(nodeId)){
-      CPOutcome.Failure
-    } 
-    if (N.isPossible(nodeId)){
-	   	N.excludes(nodeId)
-	   	for (e <- possibleEdges(nodeId)) E.excludes(e)
-	}
-    CPOutcome.Success
+    if (N.isRequired(nodeId)) CPOutcome.Failure
+    else {
+      if (N.isPossible(nodeId)){
+        N.excludes(nodeId)
+        for (e <- possibleEdges(nodeId)) E.excludes(e)
+      }
+      CPOutcome.Suspend
+    }
   }
   
   /**
@@ -134,7 +138,7 @@ class CPVarGraph(val s: CPStore, nNodes: Int, inputEdges: List[(Int,Int)], val n
       E.requires(index)
       N.requires(edges(index).src)
       N.requires(edges(index).dest)
-      CPOutcome.Success
+      CPOutcome.Suspend
     }
   }
   
