@@ -4,7 +4,6 @@ import oscar.cp.modeling._
 import oscar.cp.memScheduling._
 import oscar.cp.memScheduling.instances._
 import oscar.visual._
-import oscar.cp.scheduling._
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.search._
@@ -33,7 +32,9 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  //Modeling
 	  horizon setTo processingTimes.sum // Since there is only one machine, the horizon will be the sum of all duration
 	  
-	  //val activities = Activities(processingTimes)
+	  // Je pense que ça devrait marcher ça maintenant! Pour remplacer toutes tes lignes là... :p
+	  //val activities = Activities(processingTimes, earliness, tardiness)
+	  //activities needs Array(3) ofResources Array(UnitResource())
 	  val durationsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp,processingTimes(t)))
 	  val startsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
 	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to horizon))

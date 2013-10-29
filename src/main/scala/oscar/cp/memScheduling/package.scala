@@ -30,16 +30,18 @@ package object memScheduling {
 	// ImplicitVarInt over arrays
 	implicit def intArray2ImplicitVarIntArray(a: Array[Int]): Array[ImplicitVarInt]  = a.map(IntImplicitVarInt(_))
 	
-	// Adding functions over Activity arrays
-	implicit def arrayActivityOps(activities: Array[Activity]) = new {
-	  def needs(requirements: Array[Int]): ActivitiesRequirements = {
-	    ActivitiesRequirements(activities, requirements)
-	  }
-	}
-	
-	implicit def refActArrayOps(activities: Array[Activity]) = new {
+	implicit def refActArrayOps[A <: Activity](activities: Array[A]) = new {
     def start = activities.map(_.start)
     def end 	= activities.map(_.end)
     def dur 	= activities.map(_.dur)
+    
+    def needs(requirements: Array[Int]): ActivitiesRequirements[A] = {
+	    ActivitiesRequirements(activities, requirements)
+	  }
   }
+	
+	implicit def refActETArrayOps(activities: Array[ActivityET]) = new {
+	  def earlinessPenalty = activities.map(_.earlinessPenalty)
+	  def tardinessPenalty = activities.map(_.tardinessPenalty)
+	}
 }

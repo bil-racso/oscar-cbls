@@ -1,6 +1,6 @@
 package oscar.cp.memScheduling
 
-class ActivitiesRequirements(activities: Array[Activity], requirements: Array[Int]) {
+class ActivitiesRequirements[A <: Activity](activities: Array[A], requirements: Array[Int]) {
   
   def ofResources(resources: Array[UnitResource]) {
     for (i <- 0 until activities.length) {
@@ -11,5 +11,5 @@ class ActivitiesRequirements(activities: Array[Activity], requirements: Array[In
 }
 
 object ActivitiesRequirements {
-	def apply(activities : Array[Activity], requirements: Array[Int]) = new ActivitiesRequirements(activities, requirements)
+	def apply[A <: Activity](activities : Array[A], requirements: Array[Int]) = new ActivitiesRequirements(activities, requirements)
 }

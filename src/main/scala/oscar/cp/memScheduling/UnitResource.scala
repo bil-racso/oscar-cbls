@@ -97,5 +97,5 @@ class UnitResource(scheduler : CPScheduler, name : String = null) extends Resour
 
 object UnitResource {
 
-	def apply(scheduler : CPScheduler, name : String = null) = new UnitResource(scheduler, name)
+	def apply(name : String = null)(implicit scheduler : CPScheduler) = new UnitResource(scheduler, name)
 }
