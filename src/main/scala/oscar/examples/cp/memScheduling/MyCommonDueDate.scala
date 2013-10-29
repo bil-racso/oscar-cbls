@@ -35,6 +35,8 @@ object MyCommonDueDate extends App with Scheduler with Reader {
 	  // Je pense que ça devrait marcher ça maintenant! Pour remplacer toutes tes lignes là... :p
 	  //val activities = Activities(processingTimes, earliness, tardiness)
 	  //activities needs Array(3) ofResources Array(UnitResource())
+	  //val test1: Array[Int] = activities earlinessPenalty
+	  //val test2: Array[CPVarInt] = activities dur 	// Je renomerai peut être bien cette fonction "duration" plutot... 
 	  val durationsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp,processingTimes(t)))
 	  val startsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
 	  val endsVar = Array.tabulate(nbJobs)(t => CPVarInt(cp, durationsVar(t).min to horizon))
