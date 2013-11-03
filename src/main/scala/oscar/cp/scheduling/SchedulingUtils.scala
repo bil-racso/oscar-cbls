@@ -7,44 +7,84 @@ import oscar.reversible.ReversibleInt
 
 object SchedulingUtils {
 
+  /** Returns the id of the task with minimal EST (minimal ECT as tie breaker). */
+  private def minTask(tasks: Iterable[Int], starts: IndexedSeq[CPVarInt], ends: IndexedSeq[CPVarInt]): Int = {
+    var minTask = -1
+    var minEST = Int.MaxValue
+    var minECT = Int.MaxValue
+    for (t <- tasks) {
+      if (starts(t).min < minEST) {
+        minTask = t
+        minEST = starts(t).min
+        minECT = ends(t).min
+      } else if (starts(t).min == minEST && ends(t).min < minECT) {
+        minTask = t
+        minEST = starts(t).min
+        minECT = ends(t).min
+      }
+    }
+    minTask
+  }
+
   def setTimes(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]): Unit @suspendable = {
 
     val cp = starts.head.store
-    val n = starts.size
-    val Activities = 0 until n
+    val nTasks = starts.size
+    val Tasks = 0 until nTasks
 
-    val selectable = Array.fill(n)(new ReversibleBool(cp, true))
-    // non fixed activities (by setTimes)
-    val bound = Array.fill(n)(new ReversibleBool(cp, false))
+    // Tasks to schedule
+    val selectable = Array.fill(nTasks)(new ReversibleBool(cp, true))  
+    // Scheduled tasks
+    val scheduled = Array.fill(nTasks)(new ReversibleBool(cp, false))
+    // Value of the ESTs when tasks became postponed
+    val oldEST = Array.fill(nTasks)(new ReversibleInt(cp, -1))
+    
+    // Returns true if the task is bound
+    def isBound(t: Int): Boolean = starts(t).isBound && ends(t).isBound
+    // Returns true if all tasks are bound
+    def allBound: Boolean = Tasks.forall(isBound(_))
+    // Updates the status of the tasks
+    def updateSelectable() = {
+      for (t <- Tasks) {
+        if (isBound(t)) selectable(t).value = false
+        else if (oldEST(t).value < starts(t).min) selectable(t).value = true
+      }
+    }
+    // Returns the indices of the selectable tasks
+    def selectableIndices() = (Tasks).filter(i => selectable(i).value)
 
-    val oldEST = Array.fill(n)(new ReversibleInt(cp, -1))
-
-    // update the new ones becoming available because est has moved
-    def updateSelectable() = (Activities).filter(i => oldEST(i).value < starts(i).min || durations(i).max == 0).foreach(selectable(_).value = true)
-    def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
-    def allStartBounds() = bound.forall(i => i.value)
+    def checkDominance(t: Int): Boolean = {
+      for (j <- Tasks; if !selectable(j).value && !scheduled(j).value && ends(j).min <= starts(t).min && starts(j).max <= starts(t).min) {
+        return true
+      }
+      return false
+    }
 
     def updateAndCheck() = {
       updateSelectable()
-      if (selectableIndices().isEmpty && !allStartBounds()) cp.fail()
+      if (selectableIndices().isEmpty && !allBound) cp.fail()
     }
 
-    while (!allStartBounds()) {
+    updateSelectable()
 
-      updateSelectable()
-      val (est, ect) = selectableIndices().map(i => (starts(i).min, ends(i).min)).min
+    while (!allBound) {
 
-      // Select the activity with the smallest EST, ECT as tie breaker
-      val x = selectableIndices().filter(i => starts(i).min == est && ends(i).min == ect).head
+      val x = minTask(selectableIndices(), starts, ends)
+
+      if (checkDominance(x)) cp.fail()
 
       cp.branch {
-        cp.post(starts(x) == est)
-        bound(x).value = true
-        if (!cp.isFailed) updateAndCheck()
+        if (!cp.isFailed) {
+          cp.assign(starts(x), starts(x).min)
+          scheduled(x).value = true
+          if (!cp.isFailed) updateAndCheck()
+        }
       } {
-        selectable(x).value = false
-        oldEST(x).value = est
-        updateAndCheck()
+        if (!cp.isFailed) {
+          selectable(x).value = false
+          oldEST(x).value = starts(x).min
+          updateAndCheck()
+        }
       }
     }
   }
