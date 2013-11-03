@@ -652,7 +652,7 @@ trait Constraints {
    * Soft Global Cardinality Constraint = gcc with a violation variable
    * @see Revisiting the Soft Global Cardinality Constraint, Pierre Schaus, Pascal Van Hentenryck, Alessandro Zanarini: CPAIOR 2010
    */
-  def softGcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], viol: CPVarInt): Constraint = {
+  def softGcc(x: Array[CPVarInt], values: Range, min: Array[Int], max: Array[Int], viol: CPVarInt): SoftGCC = {
     return new SoftGCC(x, values.min, min, max, viol)
   }
 

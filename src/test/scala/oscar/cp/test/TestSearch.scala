@@ -82,7 +82,23 @@ class TestSearch extends FunSuite with ShouldMatchers  {
 	  cp.explorationCompleted should be(false)
 	  time should be <=(3)
 	  cp.explorationCompleted should be(false)
-  } 
+  }
+  
+  test("optimize") {
+
+		val cp = new CPSolver();
+		val x = CPVarInt(cp,Array(1,5,9,10));
+		cp.minimize(x)
+		cp.exploration {
+			cp.binary(Array(x),_.max)
+			println(x)
+			
+		}
+	
+  }   
+  
+  
+
   
     
   
