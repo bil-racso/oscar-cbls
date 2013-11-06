@@ -1,28 +1,25 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import java.util.Arrays;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 /**
@@ -93,11 +90,11 @@ public class GCCVar extends Constraint {
 		this.minVal = minval;
 		this.maxVal = minval+o.length-1;
 		nbVals = maxVal-minVal+1;
-		this.priorityL2 =  Store.MAXPRIORL2-3;
+		this.priorityL2_$eq(CPStore.MAXPRIORL2()-3);
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 
 		if (!findValueRange()) {
 			return CPOutcome.Failure; //failure update the bounds of variables o
@@ -119,17 +116,17 @@ public class GCCVar extends Constraint {
 		}
 		for(int k = 0 ; k < x.length; k++) {
 			if (!x[k].isBound()) {
-				x[k].callPropagateWhenDomainChanges(this);
+				x[k].callPropagateWhenDomainChanges(this,false);
 			}
 		}
 		for (int i = 0; i < o.length; i++) {
-			o[i].callPropagateWhenBoundsChange(this);
+			o[i].callPropagateWhenBoundsChange(this,false);
 		}
 		return CPOutcome.Suspend;
 	}
 	
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 	   updateBounds();
 	   for(int k = 0; k < x.length; k++) {
 	      if (varMatch[k] != NONE) {

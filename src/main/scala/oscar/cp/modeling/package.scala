@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cp
 
 import scala.util.continuations._
@@ -16,7 +30,7 @@ import oscar.util._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-package object modeling extends Constraints {
+package object modeling extends oscar.cp.modeling.Constraints {
 
   /**
    * Filtering power can be specified for some of the constraints.
@@ -30,6 +44,7 @@ package object modeling extends Constraints {
     val WeakTighten = Value("weak tighten")
     val StrongTighten = Value("strong tighten")
     val NoTighten = Value("no tighten")
+    val MaintainTighten = Value("maintain tighten")
   }
   import TightenType._
 
@@ -148,11 +163,11 @@ package object modeling extends Constraints {
     /**
      * x!=y
      */
-    def !=(y: CPVarInt) = new Diff(x, y)
+    def !=(y: CPVarInt) = new DiffVar(x, y)
     /**
      * x!=y
      */
-    def !=(y: Int) = new Diff(x, y)
+    def !=(y: Int) = new DiffVal(x, y)
     /**
      * x==y
      */
@@ -310,6 +325,17 @@ package object modeling extends Constraints {
   }
 
   //helper functions
+  
+  /**
+   * relax randomly k variables in x, others are assigned to the values they have in sol
+   */
+  def relaxRandomly(x: IndexedSeq[_ <: CPVarInt], sol: CPSol, k: Int): CPOutcome = {
+      val cp = x.head.s
+      val n = x.size
+      val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
+      cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
+  }
+  
 
   def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
 

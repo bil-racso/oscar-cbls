@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -50,7 +48,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
         if (y.isBound()) {
             if (x.assign(y.getValue()) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
@@ -63,19 +61,19 @@ public class Eq extends Constraint {
             }
             return CPOutcome.Success;
         }
-		if(x.updateMax(y.getMax()) == CPOutcome.Failure) {
+		if (x.updateMax(y.getMax()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		if(x.updateMin(y.getMin()) == CPOutcome.Failure) {
+		if (x.updateMin(y.getMin()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		if(y.updateMax(x.getMax()) == CPOutcome.Failure) {
+		if (y.updateMax(x.getMax()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		if(y.updateMin(x.getMin()) == CPOutcome.Failure) {
+		if (y.updateMin(x.getMin()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
-		if (l == CPPropagStrength.Strong) {
+		if (l == CPPropagStrength.Strong && (!x.isRange() || !y.isRange())) {
 			for (int v = x.min(); v < x.max(); v++) {
 				if (x.hasValue(v)) {
 					if(!y.hasValue(v)) {
@@ -95,9 +93,12 @@ public class Eq extends Constraint {
 				}
 			}
 		}
-		if(!x.isBound() && !y.isBound()){
-			x.callUpdateBoundsWhenBoundsChange(this);
-			y.callUpdateBoundsWhenBoundsChange(this);
+		if (!x.isBound() && !y.isBound()){
+			if (!(x.min() >= 0  && x.max() <= 1 && y.min() >= 0 && y.max() <= 1)) {
+				x.callUpdateBoundsWhenBoundsChange(this);
+				y.callUpdateBoundsWhenBoundsChange(this);
+			}
+			
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);
 			
@@ -113,14 +114,14 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
-		if(var == x){
+	public CPOutcome valBind(CPVarInt var) {
+		if (var == x){
 			if (y.assign(x.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
-		else{
+		else {
 			if (x.assign(y.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -129,7 +130,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt var) {
+	public CPOutcome updateBounds(CPVarInt var) {
 		if (var == y) {
 			if(x.updateMax(y.getMax()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -150,7 +151,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPVarInt var, int val) {
 		if (var == x) {
 			if (y.removeValue(val) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

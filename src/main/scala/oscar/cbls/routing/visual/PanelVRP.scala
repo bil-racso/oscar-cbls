@@ -1,20 +1,17 @@
 /*******************************************************************************
-  * This file is part of OscaR (Scala in OR).
-  *
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/gpl-3.0.html
-  ******************************************************************************/
-
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by Ghilain Florent.
@@ -26,6 +23,10 @@ import javax.swing._
 import oscar.cbls.routing._
 import neighborhood._
 import oscar.visual._
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
+import oscar.visual.shapes.VisualArrow
+import oscar.visual.plot.PlotLine
 
 /*
 object PanelVRP {
@@ -51,7 +52,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   var myConstraints:GridBagConstraints=null;
 
   val mapPanel:VisualDrawing = newMapPanel
-  val plotPanel:Plot2D = newPlotPanel()
+  val plotPanel:PlotLine = newPlotPanel()
   val boardPanel:Dashboard = newBoardPanel
   val vrpModel = new ModelVRP()
   val colorsManagement = new ColorManagement()
@@ -98,10 +99,8 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     colorsManagement.setDifferentColors(vrpModel.V)
     for(i <- 0 until nodes.length){
       val t = nodes(i)
-      if (i<vrpModel.V)
-        new VisualCircle(mapPanel, t.long,t.lat,10,Color.blue).innerCol = colorsManagement(i+1)
-      else
-        new VisualCircle(mapPanel, t.long,t.lat,6,Color.white)
+      if (i<vrpModel.V) VisualCircle(mapPanel, t.long,t.lat,10).innerCol = colorsManagement(i+1)
+      else VisualCircle(mapPanel, t.long,t.lat,6).innerCol = Color.white
     }
   }
 
@@ -115,9 +114,9 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
 
     vrpModel.arrows = Array.tabulate(vrpModel.N)(i => {
       val arrow =
-        if (vrp.isRouted(i)) new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
+        if (vrp.isRouted(i)) VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,
           nodes(vrp.Next(i).value).long,nodes(vrp.Next(i).value).lat,4)
-        else new VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
+        else VisualArrow(mapPanel,nodes(i).long,nodes(i).lat,nodes(i).long,nodes(i).lat,4)
       if(vrp.isRouted(i)) setColorToRoute(arrow,vrp.RouteNr(i).value)
       arrow
     })
@@ -154,7 +153,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def newMapPanel:VisualDrawing = {
-    val mapPanel : VisualDrawing = new VisualDrawing(false);
+    val mapPanel : VisualDrawing = VisualDrawing(false);
     mapPanel.setPreferredSize(new Dimension(700,700))
     mapPanel.setMinimumSize(new Dimension(500,500))
     mapPanel.setBorder(BorderFactory.createTitledBorder("Map"))
@@ -162,8 +161,8 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     mapPanel
   }
 
-  def newPlotPanel():Plot2D = {
-    val plotPanel = new Plot2D("","Iteration nbr","Distance")
+  def newPlotPanel():PlotLine = {
+    val plotPanel = new PlotLine("","Iteration nbr","Distance")
     if(!easyMode){
       plotPanel.setPreferredSize(new Dimension(500,300))
       plotPanel.setMinimumSize(new Dimension(420,200))
@@ -182,7 +181,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def cleanMapPanel(){
-    mapPanel.shapes = Array()
+    mapPanel.clear()
   }
 
   def newBoardPanel():Dashboard = {

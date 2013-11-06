@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -21,7 +19,7 @@ import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 /**
  * Reified constraint.
@@ -48,7 +46,10 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
+		priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		priorityRemoveL1_$eq(CPStore.MAXPRIORL1());
+		
 		if (x.isBound() || b.isBound())
 			return valBind(x);
 		else if (b.isBound())
@@ -63,7 +64,7 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPVarInt x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -73,22 +74,9 @@ public class DiffReif extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	
+
 	@Override
-	protected int getPriorityBindL1(){
-		return Store.MAXPRIORL1;
-	}
-	
-	@Override
-	protected int getPriorityRemoveL1(){
-		return Store.MAXPRIORL1;
-	}
-	
-//	public int getPriorityAC5Bounds(){
-//		return Store.MAXPRIORAC5;
-//	}	
-	
-	@Override
-	protected CPOutcome valRemove(CPVarInt x, int val) {
+	public CPOutcome valRemove(CPVarInt x, int val) {
 		if (val == v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -100,7 +88,7 @@ public class DiffReif extends Constraint {
 	
 
 	@Override
-	protected CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPVarInt var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				//x != v

@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -58,16 +56,16 @@ public class LexLeq extends Constraint {
 		
 		this.x = x;
 		this.y = y;
-		q = new ReversibleInt(super.s);
-		r = new ReversibleInt(super.s);		
-		s = new ReversibleInt(super.s);
-		u = new ReversibleInt(super.s);
+		q = new ReversibleInt(super.s());
+		r = new ReversibleInt(super.s());		
+		s = new ReversibleInt(super.s());
+		u = new ReversibleInt(super.s());
 		u.setValue(0);
 		
 		posted = false;
 	}
 
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		  CPOutcome ok = mySetup(l);
 		  posted = true;
 		  if (ok == CPOutcome.Failure) {
@@ -100,7 +98,7 @@ public class LexLeq extends Constraint {
 	}
 	
 	
-	protected CPOutcome updateBoundsIdx(CPVarInt var, int idx) {
+	public CPOutcome updateBoundsIdx(CPVarInt var, int idx) {
 		i = idx;
 		if (i == q.getValue()) return state1();
 		else if (i == r.getValue()) return state2();
@@ -135,11 +133,11 @@ public class LexLeq extends Constraint {
 			r.setValue(i = i + 1);
 		if (i >= x.length || x[i].getMax() < y[i].getMin()) {
 			if (posted) deactivate(); // deactivate the constraint since it is now replaced by a new one
-			CPOutcome ok = super.s.post(new LeEq(x[q.getValue()],y[q.getValue()])); // T3
+			CPOutcome ok = super.s().post(new LeEq(x[q.getValue()],y[q.getValue()])); // T3
 			return ok;
 		} else if (x[i].getMin() > y[i].getMax()) {
 			if (posted) deactivate();
-			CPOutcome ok = super.s.post(new Le(x[q.getValue()],y[q.getValue()])); // T2
+			CPOutcome ok = super.s().post(new Le(x[q.getValue()],y[q.getValue()])); // T2
 			return ok;
 		} else if (x[i].getMax() == y[i].getMin() && x[i].getMin() < y[i].getMax()) {
 			i = i+1 > s.getValue() ? i+1 : s.getValue();
@@ -161,7 +159,7 @@ public class LexLeq extends Constraint {
 		s.setValue(i);
 		if (i>= x.length || x[i].getMax() < y[i].getMin()) {
 			if (posted) super.deactivate();
-			CPOutcome ok = super.s.post(new LeEq(x[q.getValue()], y[q.getValue()])); // T3
+			CPOutcome ok = super.s().post(new LeEq(x[q.getValue()], y[q.getValue()])); // T3
 			return ok;
 		}
 		setupFrom(q.getValue());
@@ -175,7 +173,7 @@ public class LexLeq extends Constraint {
 		s.setValue(i);
 		if (i < x.length && x[i].getMin() > y[i].getMax()) {
 			if (posted) super.deactivate();
-			CPOutcome ok = super.s.post(new Le(x[q.getValue()], y[q.getValue()]));
+			CPOutcome ok = super.s().post(new Le(x[q.getValue()], y[q.getValue()]));
 			return ok;
 		}
 		setupFrom(q.getValue());

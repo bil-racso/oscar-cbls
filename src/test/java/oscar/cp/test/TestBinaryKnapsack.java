@@ -1,26 +1,23 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.test;
 import oscar.cp.constraints.BinaryKnapsack;
-import oscar.cp.constraints.Diff;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
 import junit.framework.TestCase;
@@ -54,7 +51,7 @@ public class TestBinaryKnapsack extends TestCase {
     
     public void testa() {
 
-        Store s = new Store();
+        CPStore s = new CPStore();
         CPVarBool [] b = new CPVarBool[111];
         for (int i = 0; i < b.length; i++) {
 			b[i] = CPVarBool.apply(s);
@@ -68,14 +65,14 @@ public class TestBinaryKnapsack extends TestCase {
         s.add(bkp, CPPropagStrength.Weak);
         s.add(bkp,CPPropagStrength.Strong);
 
-        s.add(new Diff(b[0],0));
+        s.add(new oscar.cp.constraints.DiffVal(b[0],0));
         assertFalse(s.isFailed());
     }
 
 
 
     public void testb() {
-        Store cp = new Store();
+        CPStore cp = new CPStore();
         int n = 20;
         CPVarBool [] x = CPVarBool.getArray(cp,n);
         int [] values = new int[n];
@@ -112,7 +109,7 @@ public class TestBinaryKnapsack extends TestCase {
     }
 
     public void testc() {
-        Store cp = new Store();
+        CPStore cp = new CPStore();
 
         CPVarBool [] x = CPVarBool.getArray(cp,3);
         int [] values = new int[]{43,23,23};

@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 /**
  * *****************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -29,6 +43,9 @@ import scala.io.Source
 import java.lang._
 import java.awt.Color
 import oscar.cp.constraints.MinAssignment
+import oscar.visual.shapes.VisualLine
+import oscar.visual.shapes.VisualCircle
+import oscar.visual.plot.PlotLine
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -72,27 +89,21 @@ object TSPVisu extends App {
 
   // Visual Components
   // -----------------
-  val f = new VisualFrame("TSP")
+  val f = VisualFrame("TSP")
 
   // Creates the plot and place it into the frame
-  val plot = new Plot2D("", "Solution number", "Distance")
+  val plot = new PlotLine("", "Solution number", "Distance")
   f.createFrame("TSP Objective Function").add(plot)
 
   // Creates the visualization of the tour and place it into the frame
-  val drawing = new VisualDrawing(false)
-  f.createFrame("TSP Tour").add(drawing)
+  val tour = VisualTour(coord)
+  f.createFrame("TSP Tour").add(tour)
   f.pack()
-
-  // Routes
-  val lines = Array.tabulate(nCities)(i => new VisualLine(drawing, coord(i)._1, coord(i)._2, 0, 0))
-
-  // Cities
-  coord.foreach(c => new VisualCircle(drawing, c._1, c._2, 2, Color.blue))
   
   // Updates the visualization
   def updateVisu() {
-    (Cities).foreach(i => lines(i).dest = (coord(succ(i).value)._1, coord(succ(i).value)._2))
-    drawing.repaint()
+    Cities.foreach(i => tour.edgeDest(i, succ(i).value))
+    tour.repaint()
     plot.addPoint(nbSol, totDist.value)
   }
 
@@ -107,23 +118,12 @@ object TSPVisu extends App {
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
   } exploration {
-    cp.deterministicBinaryFirstFail(succ)
-    /*
-	cp.binaryFirstFail(succ, _.randomValue)
-    // Greedy heuristic
-    while (!allBounds(succ)) {
-      // Selects the not yet bound city with the smallest number of possible successors
-      val x = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
-      // Selects the closest successors of the city x
-      val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
-      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }
-    */
+    cp.binaryFirstFail(succ)
     // One additional solution
     nbSol += 1
     // Updates the visualization
     updateVisu()
   } run()
-
+  
   cp.printStats()
 }

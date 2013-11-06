@@ -1,27 +1,24 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.reversible;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
-import oscar.cp.core.Store;
+import oscar.cp.core.CPStore;
 
 
 /**
@@ -36,7 +33,7 @@ import oscar.cp.core.Store;
 
 public class ReversibleSetBitVector implements ReversibleSet {
 	
-	private Store s;
+	private CPStore s;
 	
 	private int minBitSetVal;
 	private int bitSetSize = 32;
@@ -48,7 +45,7 @@ public class ReversibleSetBitVector implements ReversibleSet {
 	private int _min;
 	private int _max;
 	
-	public ReversibleSetBitVector(Store s, int min, int max) {
+	public ReversibleSetBitVector(CPStore s, int min, int max) {
 		assert(max >= min);
 		this.s = s;
 		this._min = min;

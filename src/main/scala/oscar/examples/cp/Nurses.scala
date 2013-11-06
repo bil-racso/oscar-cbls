@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -32,7 +29,7 @@ import oscar.visual._
 object Nurses extends App  {
   
   // --- reading the data ---
-
+	
   val lines = Source.fromFile("data/nurses/6zones.txt").getLines.reduceLeft(_ + " " + _)
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
   var index = 0
@@ -111,11 +108,11 @@ object Nurses extends App  {
  
  // --- model ---
  
- val f = new VisualFrame("Steel Mill Slab")
- val colors = VisualUtil.getRandomColorArray(nbZones)
+ val f = VisualFrame("Steel Mill Slab")
+ val colors = VisualUtil.getRandomColors(nbZones, true)
  colors(0) = java.awt.Color.GREEN
  colors(1) = java.awt.Color.RED
- val drawing: VisualBinPacking = new VisualBinPacking(nbNurses,10)    
+ val drawing: VisualBinPacking = VisualBinPacking(binWidth = 10)    
  f.createFrame("Nurses").add(drawing)
  
  val scale = 3
@@ -130,13 +127,17 @@ object Nurses extends App  {
    val spreadAcuity = CPVarInt(cp,0 to Int.MaxValue)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
-   
+   println("spreadacuity:"+spreadAcuity)
    var best = Int.MaxValue
    // each nurse can have at most 3 and at least one patient
    cp.minimize(spreadAcuity) subjectTo {
+     println("spreadacuity:"+spreadAcuity)
      cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
+     
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
+     
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
+     
    } exploration {
      val x = nurseOfPatient
      while (!allBounds(x)) {
@@ -144,7 +145,7 @@ object Nurses extends App  {
 		    val y = x.minDomNotBound
 		    cp.branchAll(0 to maxUsed+1)(v => cp.post(y == v))
      }
-     x.zipWithIndex.foreach{case(n,j) => items(j).setBin(n.value + nbNursesInZone.take(i).sum)}
+     x.zipWithIndex.foreach{case(n,j) => items(j).bin = (n.value + nbNursesInZone.take(i).sum)}
      
      best = spreadAcuity.value
    } run()

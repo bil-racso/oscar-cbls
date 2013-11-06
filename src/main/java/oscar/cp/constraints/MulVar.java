@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -46,26 +44,26 @@ public class MulVar extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s.post(new Square(x,z)) == CPOutcome.Failure) {
+			if (s().post(new Square(x,z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		if (z.isBound()) {
 			if (z.getValue() == 0 && x.hasValue(0) && y.hasValue(0)) {
-				x.callPropagateWhenDomainChanges(this);
-				y.callPropagateWhenDomainChanges(this);
+				x.callPropagateWhenDomainChanges(this,false);
+				y.callPropagateWhenDomainChanges(this,false);
 			} else {
-				x.callPropagateWhenBoundsChange(this);
-				y.callPropagateWhenBoundsChange(this);
+				x.callPropagateWhenBoundsChange(this,false);
+				y.callPropagateWhenBoundsChange(this,false);
 			}
 		} else {
-			x.callPropagateWhenBoundsChange(this);
-			y.callPropagateWhenBoundsChange(this);
-			z.callPropagateWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this,false);
+			z.callPropagateWhenBoundsChange(this,false);
 		}
 		
 		CPOutcome ok = propagate();
@@ -77,7 +75,7 @@ public class MulVar extends Constraint {
 	}
 		
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		if (!z.hasValue(0)) {
 			
 			if (x.removeValue(0) == CPOutcome.Failure) {
@@ -88,17 +86,17 @@ public class MulVar extends Constraint {
 			}
 		} 
 		if (x.isBound()) { // y * c = z
-			if (s.post(new MulCte(y,x.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.getValue(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) { // x *c = z
-			if (s.post(new MulCte(x,y.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.getValue(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (z.isBound()) { // x * y = c
-			if (s.post(new MulCteRes(x,y,z.getValue())) == CPOutcome.Failure) {
+			if (s().post(new MulCteRes(x,y,z.getValue())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

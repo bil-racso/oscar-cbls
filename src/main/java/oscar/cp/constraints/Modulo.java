@@ -1,24 +1,19 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import java.util.Arrays;
-
-import javax.management.RuntimeErrorException;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -49,7 +44,7 @@ public class Modulo extends Constraint{
 	 * @param y
 	 */
 	public Modulo(CPVarInt x, int v, CPVarInt y) {
-		super(x.s());
+		super(x.s(),"Modulo");
 		assert( v > 0);
 		if (v <= 0) throw new RuntimeException("v must be > 0");
 		this.x = x;
@@ -58,7 +53,7 @@ public class Modulo extends Constraint{
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (y.updateMin(-v+1) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
@@ -72,7 +67,7 @@ public class Modulo extends Constraint{
 				if (x.hasValue(val)) {
 					if ((val % v) == i) {
 						if (supportSet[i+v-1] == null) {
-							supportSet[i+v-1] = new ReversibleSetIndexedArray(s, x.getMin(), x.getMax(),true); // contains no values initially
+							supportSet[i+v-1] = new ReversibleSetIndexedArray(s(), x.getMin(), x.getMax(),true); // contains no values initially
 						}
 						supportSet[i+v-1].insert(val);
 					}
@@ -116,7 +111,7 @@ public class Modulo extends Constraint{
 	}
 
 	@Override
-	protected CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPVarInt var, int val) {
 		if (var == x) {
 			int i = val % v;
 			supportSet[i+v-1].removeValue(val);

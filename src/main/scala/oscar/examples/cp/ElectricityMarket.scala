@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.examples.cp
 
 
@@ -23,6 +20,7 @@ import oscar.visual._
 import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
+import oscar.visual.plot.PlotLine
 
 /** 
  * Game invented by Bertrand Cornelusse and Gilles Scouvart for the 10 years of n-Side:
@@ -60,11 +58,11 @@ object ElectricityMarket {
 	  
 	  
 	  // -------------visual components ------------
-	  val f = new VisualFrame("Electricity Market")
+	  val f = VisualFrame("Electricity Market")
 		// creates the plot and place it into the frame
-	  val plot = new Plot2D("","Solution number","Qty")
+	  val plot = new PlotLine("","Solution number","Qty")
 	  f.createFrame("Objective").add(plot)
-	  val barPlot = new BarChart("","Time","Qty",tmax-tmin+1)	
+	  val barPlot = BarChart("","Time","Qty",tmax-tmin+1)	
 	  f.createFrame("Qty Exchange").add(barPlot)
 	  f.pack()
 	  // ------------------------------------------
@@ -97,7 +95,7 @@ object ElectricityMarket {
 	      val unboundOrders = orders.filter(!_.bound)
 	      val order = argMax(unboundOrders)(_.energy).head
 	      // select orders on the left
-	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
+	      cp.branch {cp.add(order.selected == 1)} {cp.add(order.selected == 0)}
 	    }
 	    
 	    // update visualization

@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -44,16 +42,20 @@ public class Or extends Constraint {
      * @param y
      */
 	public Or(CPVarBool [] x, CPVarBool y) {
-		super(x[0].s());
+		super(x[0].s(),"Or");
 		this.x = x;
 		this.y = y;
-		nbBound = new ReversibleInt(s,0); // number of values assigned to false
-		ytrue = new ReversibleBool(s);
-		ytrue.setValue(false);
+
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
+	    if (x.length == 2) {
+	        if (s().post(new BinaryOr(x[0],x[1],y)) == CPOutcome.Failure) return CPOutcome.Failure;
+	        else return CPOutcome.Success;
+	    }
+		nbBound = new ReversibleInt(s(),0); // number of values assigned to false
+		ytrue = new ReversibleBool(s(),false);
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isTrue()) {
 				if (y.assign(1) == CPOutcome.Failure) {
@@ -88,9 +90,9 @@ public class Or extends Constraint {
 						}
 				}
 				return CPOutcome.Success;
-			} else {
+			} else { // y = true
 				ytrue.setValue(true);
-				if (nbBound.getValue() == x.length-1) {
+				if (nbBound.getValue() == x.length-1) { // only one is not bound to false, this one must be set to true
 					for (int i = 0; i < x.length; i++) {
 						if (!x[i].isBound()) {
 							if (x[i].assign(1) == CPOutcome.Failure) {
@@ -107,7 +109,7 @@ public class Or extends Constraint {
 	
 	
 	@Override
-	protected CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPVarInt var, int idx) {
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -135,7 +137,7 @@ public class Or extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome valBind(CPVarInt yvar) {
+	public CPOutcome valBind(CPVarInt yvar) {
 		if (yvar.getValue() == 0) {
 			for (int i = 0; i < x.length; i++) {
 					if (x[i].assign(0) == CPOutcome.Failure) {

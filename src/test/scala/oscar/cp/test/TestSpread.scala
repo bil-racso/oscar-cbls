@@ -1,21 +1,17 @@
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 
 package oscar.cp.test
 
@@ -79,7 +75,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
       CPVarInt(cp, 65),
       CPVarInt(cp, 73))
 
-    var s2 = CPVarInt(cp, 0 to Int.MaxValue)
+    var s2 = CPVarInt(cp, 0 to x.map(y => y.max*y.max).sum)
     cp.add(new Spread(x, 591, s2))
     cp.isFailed should be(false)
   }
@@ -289,7 +285,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
   def decomposition(x: Array[CPVarInt], sum: Int, sum2: CPVarInt): CPOutcome = {
     if (sum2.store.post(new Sum(x.map(i => i * i), sum2)) == CPOutcome.Failure) {
       CPOutcome.Failure
-    } else if (sum2.store.post(new Sum(x, sum)) == CPOutcome.Failure) {
+    } else if (sum2.store.post(new Sum(x, CPVarInt(sum2.s,sum))) == CPOutcome.Failure) {
       CPOutcome.Failure
     } else {
       CPOutcome.Suspend

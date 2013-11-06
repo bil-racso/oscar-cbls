@@ -1,22 +1,18 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
-
-import java.util.Set;
 
 import oscar.cp.core.*;
 import oscar.reversible.ReversibleInt;
@@ -41,14 +37,14 @@ public class MemberReif extends Constraint {
 	 * @param b
 	 */
 	public MemberReif(CPVarInt x, SetIndexedArray set, CPVarBool b) {
-		super(x.s());
+		super(x.s(),"MemberReif");
 		this.x = x;
 		this.set = set;
 		this.b = b;
 	}
 
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		if (b.isBound()) {
             return valBind(b);
         }
@@ -67,8 +63,8 @@ public class MemberReif extends Constraint {
         if (interSize >= x.getSize()) { // D(x) is included in set
            return fullIntersection();
         }
-        inter = new ReversibleInt(s,interSize);
-        xsize = new ReversibleInt(s,x.getSize());
+        inter = new ReversibleInt(s(),interSize);
+        xsize = new ReversibleInt(s(),x.getSize());
 
 		x.callValBindWhenBind(this);
         b.callValBindWhenBind(this);
@@ -79,7 +75,7 @@ public class MemberReif extends Constraint {
 	}
 
     @Override
-    protected CPOutcome valRemove(CPVarInt var, int val) {
+    public CPOutcome valRemove(CPVarInt var, int val) {
         xsize.decr();
         if (set.hasValue(val)) {
             inter.decr();
@@ -94,7 +90,7 @@ public class MemberReif extends Constraint {
     }
 
     @Override
-    protected CPOutcome valBind(CPVarInt var) {
+    public CPOutcome valBind(CPVarInt var) {
         assert(var.isBound());
 		if (var == x) {
              if (set.hasValue(x.getValue())) {

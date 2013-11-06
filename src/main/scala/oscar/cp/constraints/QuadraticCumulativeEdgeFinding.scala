@@ -1,17 +1,29 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-
-import oscar.cp.core.Store
+import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.MirrorCumulativeActivity
 
-class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
+class QuadraticCumulativeEdgeFinding(cp: CPStore, allTasks : Array[CumulativeActivity], C : Int, r : Int) extends Constraint(cp, "Quadratic Cumulative Edge-Finding") {
 
 	// The tasks
 	var lToRTasks : Array[CumulativeActivity] = allTasks
@@ -27,7 +39,7 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 	
 	override def setup(l: CPPropagStrength) : CPOutcome = {
 	
-		setPriorityL2(0)
+		priorityL2 = 0
 		
         val oc = propagate()
         
@@ -58,8 +70,9 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 
 		// Adjusts starting time
 		if (nTasks > 0) {
-			if (edgeFind(lToRTasks) == CPOutcome.Failure)
+			if (edgeFind(lToRTasks) == CPOutcome.Failure) {
 				return CPOutcome.Failure
+			}
 		}
 				
 		var t = 0
@@ -72,8 +85,10 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 			
 		// Adjusts ending time
 		if (nTasks > 0) {
-			if (edgeFind(rToLTasks) == CPOutcome.Failure)
-				return CPOutcome.Failure
+			if (edgeFind(rToLTasks) == CPOutcome.Failure) {
+			  return CPOutcome.Failure
+			}
+				
 		}
 			
 		return CPOutcome.Suspend
@@ -126,7 +141,7 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 						}
 					} else {
 						
-						val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - r_rho)
+						val rest = maxEnergy - (C - tasks(i).minHeight)*(tasks(U).lct - BigInt(r_rho))
 						
 						if (rest > 0) {
 							Dupd(i) = max(Dupd(i), r_rho + (rest.toFloat/tasks(i).minHeight).ceil.toInt)
@@ -171,8 +186,8 @@ class QuadraticCumulativeEdgeFinding(cp: Store, allTasks : Array[CumulativeActiv
 		
 		for (i <- 0 until nTasks)
 			if (tasks(i).adjustStart(LB(i)) == CPOutcome.Failure)
-				return CPOutcome.Failure	
-        
+				return CPOutcome.Failure
+				
 		return CPOutcome.Suspend
 	}
 

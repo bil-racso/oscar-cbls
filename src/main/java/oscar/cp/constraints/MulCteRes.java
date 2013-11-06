@@ -1,18 +1,16 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *   
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *  
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *  
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints;
 
@@ -47,21 +45,21 @@ public class MulCteRes extends Constraint {
 	}
 	
 	@Override
-	protected CPOutcome setup(CPPropagStrength l) {
+	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s.post(new Square(x,CPVarInt.apply(s,c,c))) == CPOutcome.Failure) {
+			if (s().post(new Square(x,CPVarInt.apply(s(),c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		
 		if (c == 0 && x.hasValue(0) && y.hasValue(0)) {
-			x.callPropagateWhenDomainChanges(this);
-			y.callPropagateWhenDomainChanges(this);
+			x.callPropagateWhenDomainChanges(this,false);
+			y.callPropagateWhenDomainChanges(this,false);
 		} else {
-			x.callPropagateWhenBoundsChange(this);
-			y.callPropagateWhenBoundsChange(this);
+			x.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this,false);
 		}
 		// propagate must be called after attaching events because this propagator may not reach fix-point it-self.
 		CPOutcome ok = propagate();
@@ -73,7 +71,7 @@ public class MulCteRes extends Constraint {
 	}
 		
 	@Override
-	protected CPOutcome propagate() {
+	public CPOutcome propagate() {
 		
 		if (c != 0) {
 			if (x.removeValue(0) == CPOutcome.Failure) {
@@ -84,12 +82,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s.post(new MulCte(y,x.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s.post(new MulCte(x,y.value(),CPVarInt.apply(s, c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

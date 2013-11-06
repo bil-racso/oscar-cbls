@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.cbls.scheduling
 
 /*******************************************************************************
@@ -26,8 +40,9 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.visual.{Plot2D, VisualFrame}
-;
+import oscar.visual.VisualFrame
+import oscar.visual.plot.PlotLine
+
 
 class Planning(val model: Model, val maxduration: Int) {
 
@@ -109,7 +124,7 @@ class Planning(val model: Model, val maxduration: Int) {
   }
 
   var gantt:Gantt = null
-  var plot:Plot2D = null
+  var plot:PlotLine = null
   def getVisual(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)

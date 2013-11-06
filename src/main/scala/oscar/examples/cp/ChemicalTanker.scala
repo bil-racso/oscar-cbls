@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -6,6 +20,9 @@ import oscar.cp.core._
 import oscar.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
+import oscar.cp.constraints.BinPackingFlow
+import oscar.visual.shapes.VisualRectangle
+import oscar.visual.plot.PlotLine
 
 
 
@@ -23,12 +40,12 @@ import scala.collection.JavaConversions._
 object ChemicalTanker extends App {
 
     // -------------visual components ------------
-    val f = new VisualFrame("ChemicalTanker")
+    val f = VisualFrame("ChemicalTanker")
     // creates the plot and place it into the frame
-	val plot = new Plot2D("","Solution number","Unused Volume")
+	val plot = new PlotLine("","Solution number","Unused Volume")
     f.createFrame("Objective Function: Unused Volume").add(plot)
     // creates the tour visu and place it into the frame
-    val drawing = new VisualDrawing(false)
+    val drawing = VisualDrawing(false)
     f.createFrame("Cargo-Tank Layout").add(drawing)
     
     
@@ -41,7 +58,7 @@ object ChemicalTanker extends App {
      * Class representing a cargo object and its related data.
      * The constructor parses the xml cargo node
      */
-    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor()) {
+    class Cargo(node: scala.xml.Node, val color: java.awt.Color = VisualUtil.getRandomColor) {
       val id = (node \ "@id").text.toInt
       val name = (node \ "@name").text
       val volume = (node \ "@volume").text.toInt
@@ -161,9 +178,6 @@ object ChemicalTanker extends App {
     val rnd = new scala.util.Random(0)		
     // ask to have a 100 LNS restarts every 50 backtracks
     
-	
-
-    
     var nbSol = 0
     
     val slack =  Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
@@ -171,7 +185,7 @@ object ChemicalTanker extends App {
     
     // --------------- state the objective, the constraints and the search -------------
 
-    cp.maximize(/*freeSpace*/ nbFreeTanks) subjectTo {
+    cp.maximize(freeSpace /*nbFreeTanks*/) subjectTo {
       // make the link between cargo and load vars with binPacking constraint
       cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
       cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
@@ -204,12 +218,12 @@ object ChemicalTanker extends App {
       println("total slack:"+(-(volumeLeft.sum-volumeLeft(0)))+" tanks capas:"+tanks.map(_.capa).mkString(","))
       cargos.zipWithIndex.foreach{case (c,i) => barChart.setValue("Slack",i.toString,-volumeLeft(i))}
       plot.addPoint(nbSol,freeSpace.value)
-    } run(1)
+    } run(0)
     
-    for (r <- 1 to 100) {
+    for (r <- 1 to 10000) {
       cp.runSubjectTo(Int.MaxValue,300) {
         //fix randomly 90% of the slabs to the position of the current best solution
-    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 50; if (!cp.isFailed)) {
+    	for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 70; if (!cp.isFailed)) {
     	   cp.post(cargo(i) == cargosol(i))
     	}
       }

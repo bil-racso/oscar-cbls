@@ -1,20 +1,17 @@
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *  
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- * 
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 /******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -103,9 +100,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
    * this happens when dependencies are modified with transient cycles
    * @return the summed number of stalls for all the SCC
    */
-  def getStalls = StrognlyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
+  def getStalls = StronglyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
-  private var StrognlyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
+  private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**To call when one has defined all the propagation elements on which propagation will ever be triggered.
    * It must be called before any propagation is triggered,
@@ -142,14 +139,14 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
     //tri topologique sur les composantes fortement connexes
     acyclic = true;
-    StrognlyConnexComponentsList = List.empty;
+    StronglyConnexComponentsList = List.empty;
     val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {
         acyclic = false;
         val c = new StronglyConnectedComponent(a, this, GetNextID())
-        StrognlyConnexComponentsList = c :: StrognlyConnexComponentsList
+        StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
     })
@@ -193,7 +190,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     for (e <- getPropagationElements) {
       e.rescheduleIfNeeded
     }
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
     }
     //propagate() we do not propagate anymore here since the first query might require a partial propagation only
@@ -336,7 +333,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
         }
     }
 
-    for (scc <- StrognlyConnexComponentsList) {
+    for (scc <- StronglyConnexComponentsList) {
       Track(scc.UniqueID) = Track(scc.Elements.head.UniqueID)
     }
     Track
@@ -449,7 +446,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
         ToReturn += "   " + nodeName(e) + e.getDotNode + "\n"
     }
 
-    for (scc <- StrognlyConnexComponentsList){
+    for (scc <- StronglyConnexComponentsList){
       ToReturn += "   subgraph " + "cluster_"+nodeName(scc) + "{" + "\n"
       for (f <- scc.Elements) {
         ToReturn += "      " + nodeName(f) + f.getDotNode + "\n"
@@ -601,7 +598,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     while (!h.isEmpty) {
       val x = h.popFirst()
       x.propagate()
-      assert(x.Position <= maxposition,"non monotonic propagation detected in SCC")
+      assert(x.Position >= maxposition,"non monotonic propagation detected in SCC")
       assert({maxposition = x.Position; true})
 
       for (e <- ScheduledElements) {
