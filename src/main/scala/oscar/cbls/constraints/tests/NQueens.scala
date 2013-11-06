@@ -57,7 +57,7 @@ object NQueens extends SearchEngine with StopWatch{
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
-    val Queens:Array[IntVar] = Array.tabulate(N)(q => new IntVar(m, min, max, q, "queen" + q))
+    val Queens:Array[IntVar] = Array.tabulate(N)(q => IntVar(m, min, max, q, "queen" + q))
 
     val c:ConstraintSystem = new ConstraintSystem(m)
 

@@ -18,7 +18,7 @@
  *         by Renaud De Landtsheer and Christophe Ponsard
  ******************************************************************************/
 
-package oscar.cbls.constraints.tests
+package oscar.examples.cbls
 
 import scala.swing.Applet
 import scala.swing.Button
@@ -154,7 +154,7 @@ class NQueensApplet extends Applet {
       println("NQueens(" + N + ")")
       val Queens: Array[IntVar] = new Array[IntVar](N)
       for (q <- range) {
-        Queens(q) = new IntVar(m, min, max, q, "queen" + q)
+        Queens(q) = IntVar(m, min, max, q, "queen" + q)
         tab(q)(q).icon = CONFLICT
       }
 

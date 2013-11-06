@@ -102,7 +102,7 @@ case class NE(left:IntVar, right:IntVar) extends Constraint{
   registerStaticAndDynamicDependenciesNoID(left,right)
   finishInitialization()
 
-  val Violation:IntVar = new IntVar(model,0,1,1,"equals")
+  val Violation:IntVar = IntVar(model,0,1,1,"equals")
 
   Violation.setDefiningInvariant(this)
 

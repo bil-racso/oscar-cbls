@@ -18,14 +18,13 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.examples.cbls
 
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.Model
 import util.Random
 import scala.math._
-
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution._
 import oscar.cbls.routing.neighborhood._

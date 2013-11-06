@@ -37,8 +37,8 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
   for(v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def myMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.MinVal)
-  def myMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.MaxVal)
+  def myMin = vars.foldLeft(0)((acc,intvar) => acc + intvar.minVal)
+  def myMax = vars.foldLeft(0)((acc,intvar) => acc + intvar.maxVal)
 
   var output:IntVar = null
 
@@ -73,7 +73,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   var output:IntVar = null
 
   //TODO: find better bound, this is far too much
-  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(math.abs(intvar.MaxVal) > math.abs(intvar.MinVal)) math.abs(intvar.MaxVal) else math.abs(intvar.MinVal)))
+  def myMax = vars.foldLeft(1)((acc,intvar) => acc * (if(math.abs(intvar.maxVal) > math.abs(intvar.minVal)) math.abs(intvar.maxVal) else math.abs(intvar.minVal)))
   def myMin = - myMax
 
   override def setOutputVar(v:IntVar){
@@ -116,14 +116,14 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
 /** left - right
  * where left, right, and output are IntVar*/
 case class Minus(left:IntVar, right:IntVar)
-  extends IntVarIntVar2IntVarFun(left, right, ((l:Int, r:Int) => l-r), left.MinVal - right.MaxVal, left.MaxVal - right.MinVal){
+  extends IntVarIntVar2IntVarFun(left, right, ((l:Int, r:Int) => l-r), left.minVal - right.maxVal, left.maxVal - right.minVal){
   assert(left != right)
 }
 
 /** left + right
  * where left, right, and output are IntVar*/
 case class Sum2(left:IntVar, right:IntVar)
-  extends IntVarIntVar2IntVarFun(left, right, ((l:Int, r:Int) => l+r), left.MinVal + right.MinVal, left.MaxVal + right.MaxVal)
+  extends IntVarIntVar2IntVarFun(left, right, ((l:Int, r:Int) => l+r), left.minVal + right.minVal, left.maxVal + right.maxVal)
 
 /** left * right
  * where left, right, and output are IntVar*/
@@ -145,7 +145,7 @@ case class Mod(left:IntVar, right:IntVar)
 /**abs(v) (absolute value)
  * where output and v are IntVar*/
 case class Abs(v:IntVar)
-  extends IntVar2IntVarFun(v, ((x:Int) => x.abs), (if(v.MinVal<=0)0 else v.MinVal), v.MaxVal.max(-v.MinVal))
+  extends IntVar2IntVarFun(v, ((x:Int) => x.abs), (if(v.minVal<=0)0 else v.minVal), v.maxVal.max(-v.minVal))
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval

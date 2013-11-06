@@ -41,8 +41,6 @@ import oscar.cbls.invariants.core.computation.Model
 import io.Source
 import oscar.cbls.search.StopWatch
 import oscar.visual.{VisualUtil, VisualFrame}
-import oscar.visual.scheduling.VisualProfile
-import oscar.visual.scheduling.VisualGanttChart
 import oscar.cbls.scheduling._
 
 /**this class loads JobShop problems as defined in

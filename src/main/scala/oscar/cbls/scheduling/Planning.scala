@@ -46,13 +46,13 @@ import oscar.visual.plot.PlotLine
 
 class Planning(val model: Model, val maxduration: Int) {
 
-  var Ressources: List[CumulativeResource] = List.empty
-  var ResourceCount: Int = 0
+  var resources: List[CumulativeResource] = List.empty
+  var resourceCount: Int = 0
   /**called by resources registers it in the planning, returns an ID, which is the one of the resource*/
-  def AddRessource(r: CumulativeResource): Int = {
-    Ressources = r :: Ressources;
-    ResourceCount += 1;
-    ResourceCount - 1
+  def addResource(r: CumulativeResource): Int = {
+    resources = r :: resources
+    resourceCount += 1
+    resourceCount - 1
   }
 
   var Activities: List[Activity] = List.empty
@@ -68,14 +68,14 @@ class Planning(val model: Model, val maxduration: Int) {
   var EarliestEndDates: Array[IntVar] = null
   var LatestStartDates: Array[IntVar] = null
 
-  val MakeSpan: IntVar = new IntVar(model, 0, maxduration, 0, "MakeSpan")
+  val MakeSpan: IntVar = IntVar(model, 0, maxduration, 0, "MakeSpan")
   var EarliestOvershotResources: IntSetVar = null
   var WorseOvershotResource: IntSetVar = null
 
   var ResourceArray: Array[CumulativeResource] = null
   var ActivityArray: Array[Activity] = null
 
-  var SentinelActivity: Activity = null //a taks that is added after all activities, to simplify algorithm construction
+  var SentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
   def close() {
     val ActivitiesNoSentinel = Activities
@@ -90,7 +90,7 @@ class Planning(val model: Model, val maxduration: Int) {
     EarliestEndDates = new Array[IntVar](activityCount)
     EarliestStartDates = new Array[IntVar](activityCount)
     LatestStartDates = new Array[IntVar](activityCount)
-
+  
     for (j <- Activities) {
       ActivityArray(j.ID) = j
       EarliestStartDates(j.ID) = j.EarliestStartDate
@@ -104,20 +104,20 @@ class Planning(val model: Model, val maxduration: Int) {
 
     MakeSpan <== SentinelActivity.EarliestStartDate
 
-    ResourceArray = new Array[CumulativeResource](ResourceCount)
-    for (r <- Ressources) {
+    ResourceArray = new Array[CumulativeResource](resourceCount)
+    for (r <- resources) {
       ResourceArray(r.ResourceID) = r; r.close()
     }
 
-    val FirstOvershootArray: Array[IntVar] = new Array[IntVar](ResourceCount)
-    for (r <- Ressources) {
+    val FirstOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
+    for (r <- resources) {
       FirstOvershootArray(r.ResourceID) = r.FirstOvershoot
     }
     val ResourceWithOvershoot: IntSetVar = Filter(FirstOvershootArray, (date: Int) => date <= maxduration)
     EarliestOvershotResources = ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
 
-    val WorseOvershootArray: Array[IntVar] = new Array[IntVar](ResourceCount)
-    for (r <- Ressources) {
+    val WorseOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
+    for (r <- resources) {
       WorseOvershootArray(r.ResourceID) = r.HighestUse
     }
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
@@ -181,11 +181,11 @@ class Planning(val model: Model, val maxduration: Int) {
 
 
   /**
-   * Checks taht a dependence from --> to can be added to the graph,
+   * Checks that a dependence from --> to can be added to the graph,
    * assuming that there is a resource conflict involving them
    * @param from
    * @param to
-   * @return true if a dependence can be addd, false otherwise.
+   * @return true if a dependence can be add, false otherwise.
    */
   def canAddPrecedenceAssumingResourceConflict(from:Activity,  to:Activity):Boolean = {
     (from != to) & !isThereDependency(to,from)

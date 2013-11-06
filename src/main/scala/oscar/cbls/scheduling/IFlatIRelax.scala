@@ -161,11 +161,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   }
 
   def RandomFlatten() {
+    
     while (!p.EarliestOvershotResources.value.isEmpty) {
       val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
       val t: Int = r.FirstOvershoot.value
 
-      val ActivitiesAndUse = r.ActivitiesAndUse.filter((taksAndamount: (Activity, IntVar)) => r.Use(t).value.contains(taksAndamount._1.ID))
+      val ActivitiesAndUse = r.ActivitiesAndUse.filter((taksAndamount: (Activity, IntVar)) => r.use(t).value.contains(taksAndamount._1.ID))
       val Activities: List[Activity] = ActivitiesAndUse.map((ActivityAndamount: (Activity, IntVar)) => ActivityAndamount._1)
 
       val a = selectFrom(Activities)

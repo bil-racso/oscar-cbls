@@ -17,9 +17,9 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.examples.cbls
 
-import data.{Point, BelgiumInstance}
+import oscar.examples.cbls.data.{Point, BelgiumInstance}
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.LE
@@ -28,8 +28,9 @@ import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
-import initialSolution.RandomNeighbor
-import model._
+import oscar.cbls.routing.initialSolution.RandomNeighbor
+import oscar.cbls.routing.model._
+import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 
 object ExConstraints extends App{
 
@@ -61,7 +62,7 @@ object ExConstraints extends App{
   // fix node penalty
   vrp.fixUnroutedPenaltyWeight(100)
   //vrp.fixUnroutedPenaltyWeight(2,222) //specific weight for a given node
-  val nbOfAllowedUnroutedNode = new IntVar(m,0,N,10,"nb of allowed unrouted node")
+  val nbOfAllowedUnroutedNode = IntVar(m,0,N,10,"nb of allowed unrouted node")
   // post and register the constraint
   weakConstraintSystem.post(LE(Cardinality(vrp.Unrouted),nbOfAllowedUnroutedNode),vrp.UnroutedPenalty)
   weakConstraintSystem.violation(vrp.Unrouted)
@@ -82,7 +83,7 @@ object ExConstraints extends App{
    */
   // fix a penalty (use node weight, or a penalty fixed by route or for all route, or anything else) and a length max.
 
-  val lengthMax = new IntVar(m,0,N,50,"length max for route")
+  val lengthMax = IntVar(m,0,N,50,"length max for route")
   // post and register the constraint
   for(i <- 0 until vrp.V){
     strongConstraintSystem.post(LE(vrp.RouteLength(i),lengthMax))
@@ -98,7 +99,7 @@ object ExConstraints extends App{
    */
 
   val cluster = Cluster.MakeDense(vrp.RouteNr)
-  val capacityOfRoute = new IntVar(m,0,Int.MaxValue,100,"Capacity of vehicle")
+  val capacityOfRoute = IntVar(m,0,Int.MaxValue,100,"Capacity of vehicle")
   vrp.fixWeightNode(50)
 
 

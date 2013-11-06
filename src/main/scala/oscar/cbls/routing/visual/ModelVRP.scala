@@ -30,8 +30,9 @@ import math._
 import oscar.cbls.constraints.lib.basic.{EQ, LE}
 import oscar.cbls.search.StopWatch
 import model._
-import test.data.{Point, InstanceVisualVRP}
+import oscar.examples.cbls.data.Point
 import util.Random
+import oscar.examples.cbls.data.InstanceVisualVRP
 
 class ModelVRP() extends StopWatch{
 
@@ -123,14 +124,14 @@ class ModelVRP() extends StopWatch{
     weakConstraintSystem = new ConstraintSystem(m)
     val maxNodes = boardPanel.strongCField.getText.toInt
     val minNodes = boardPanel.weakCField.getText.toInt
-    strongPenalty = new IntVar(m,Int.MinValue,Int.MaxValue,boardPanel.penaltySCField.getText.toInt,"StrongC. penality")
-    weakPenalty = new IntVar(m,Int.MinValue,Int.MaxValue,boardPanel.penaltyWCField.getText.toInt,"WeakC. penality")
+    strongPenalty = IntVar(m,Int.MinValue,Int.MaxValue,boardPanel.penaltySCField.getText.toInt,"StrongC. penality")
+    weakPenalty = IntVar(m,Int.MinValue,Int.MaxValue,boardPanel.penaltyWCField.getText.toInt,"WeakC. penality")
     // Example of constraint (with ConstraintSystem) on length of route.
     // It's also easy to fix a different penalty according to route number.
     for(i <- 0 until V)
-      strongConstraintSystem.post(LE(vrp.RouteLength(i),new IntVar(m,0,N,maxNodes,"max node in route "+i)))
+      strongConstraintSystem.post(LE(vrp.RouteLength(i),IntVar(m,0,N,maxNodes,"max node in route "+i)))
     for(i <- 0 until V){
-      weakConstraintSystem.post(EQ(vrp.RouteLength(i),new IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
+      weakConstraintSystem.post(EQ(vrp.RouteLength(i), IntVar(m,0,N,minNodes,"max node in route "+i)),weakPenalty)
       //weakConstraintSystem.registerForViolation(vrp.RouteLength(i))
       //pas utilisé pour le moment.
     }

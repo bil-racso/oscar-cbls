@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 
-package oscar.cbls.constraints.tests
+package oscar.examples.cbls
 
 import oscar.cbls.search._
 import oscar.cbls.constraints.core._
@@ -28,6 +28,9 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
+import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
+import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -72,8 +75,8 @@ object SendMoreMoney extends SearchEngine with StopWatch {
         
     // letter and carriage values
     // d initialised with 0..10, r with 0
-    val d:Array[IntVar]= (for(l <- Letter.list) yield new IntVar(m, 0, 9, l.id, l+"")).toArray
-    val r:Array[IntVar]= (for(c <- Carry.values) yield new IntVar(m, 0, 9, 0, c+"")).toArray
+    val d:Array[IntVar]= (for(l <- Letter.list) yield IntVar(m, 0, 9, l.id, l+"")).toArray
+    val r:Array[IntVar]= (for(c <- Carry.values) yield IntVar(m, 0, 9, 0, c+"")).toArray
           
     // constraint system
     val c:ConstraintSystem = new ConstraintSystem(m)
@@ -96,8 +99,8 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     // search variables
     val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
     c.close()
-    val Tabu:Array[IntVar] = (for (i <- Letter.list) yield new IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
-    val It = new IntVar(m,0,Int.MaxValue,0,"it")
+    val Tabu:Array[IntVar] = (for (i <- Letter.list) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
+    val It = IntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)
     val NonTabuMaxViolLetter:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
     

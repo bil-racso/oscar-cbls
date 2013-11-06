@@ -35,19 +35,19 @@ import oscar.cbls.invariants.core.propagation.checker
 case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
 
   registerStaticAndDynamicDependencyAllNoID(variables)
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
   finishInitialization()
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
-  private val Violation:IntVar = new IntVar(model,0,Int.MaxValue,0,"ViolationsOfAllDiff")
+  private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue),0,"ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
   private val N0:Int = variables.foldLeft(0)(
-    (acc:Int,intvar:IntVar) => (if(intvar.MaxVal > acc) intvar.MaxVal else acc))
+    (acc:Int,intvar:IntVar) => (if(intvar.maxVal > acc) intvar.maxVal else acc))
 
   private val offset:Int = - variables.foldLeft(0)(
-    (acc:Int,intvar:IntVar) => (if(intvar.MinVal < acc) intvar.MinVal else acc))
+    (acc:Int,intvar:IntVar) => (if(intvar.minVal < acc) intvar.minVal else acc))
 
   private val N = N0 + offset
   private val range = 0 to N
@@ -56,12 +56,12 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
   private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(
     SortedMap.empty[IntVar,IntVar])(
     (acc,intvar) => {
-      val newvar = new IntVar(model,0,1,1,"Violation_AllDiff_"+intvar.name)
+      val newvar = new IntVar(model,(0 to 1),1,"Violation_AllDiff_"+intvar.name)
       acc + ((intvar,newvar))
     })
 
   private val ValueCount: Array[IntVar] = Array.tabulate[IntVar](N+1)((i:Int) => {
-    val tmp = new IntVar(model, 0, 1, 0, "alldiff_count_of_value_" + (i - offset))
+    val tmp = new IntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
   })

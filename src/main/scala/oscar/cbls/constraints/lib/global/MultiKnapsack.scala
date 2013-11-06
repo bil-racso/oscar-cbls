@@ -40,9 +40,9 @@ import oscar.cbls.invariants.core.computation._
 case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar])
   extends Constraint {
 
-  registerConstrainedVariablesAll(items)
-  registerConstrainedVariablesAll(itemsizes)
-  registerConstrainedVariablesAll(binsizes)
+  registerConstrainedVariables(items)
+  registerConstrainedVariables(itemsizes)
+  registerConstrainedVariables(binsizes)
 
   finishInitialization()
 

@@ -39,12 +39,12 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   extends Constraint {
 
   registerStaticAndDynamicDependencyArrayIndex(variables)
-  registerConstrainedVariablesAll(variables)
+  registerConstrainedVariables(variables)
 
   finishInitialization()
 
-  val count = (for(i <- 0 until variables.length - length) yield new IntVar(model,0, length, 0 ,"sequence_count_" + i)).toArray
-  val violated = (for(i <- 0 until variables.length - length) yield new IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i)).toArray
+  val count = (for(i <- 0 until variables.length - length) yield IntVar(model,0, length, 0 ,"sequence_count_" + i)).toArray
+  val violated = (for(i <- 0 until variables.length - length) yield IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i)).toArray
   var Violations = SortedMap.empty[Variable, IntVar]
 
   for(i <- 0 until variables.length - length){
@@ -52,7 +52,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
     Violations = Violations + ((variables(i),Sum(violatedvars).toIntVar))
   }
 
-  val Violation = new IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
+  val Violation = IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
 
   for(i <- variables.indices){
     if(predicate(variables(i).value)){

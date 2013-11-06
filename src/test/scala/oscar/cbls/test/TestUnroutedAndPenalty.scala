@@ -17,7 +17,7 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.test
+package oscar.cbls.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
@@ -25,7 +25,6 @@ import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initialSolution.NearestNeighbor
-import scala.language.reflectiveCalls
 
 class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers{
 

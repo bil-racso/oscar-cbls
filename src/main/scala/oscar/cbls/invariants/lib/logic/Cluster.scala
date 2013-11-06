@@ -119,23 +119,23 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
 object Cluster{
 
   def MakeSparse(values:Array[IntVar], clusters: Iterable[Int]):SparseCluster = {
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:SortedMap[Int,IntSetVar] = clusters.foldLeft(SortedMap.empty[Int, IntSetVar])((acc,c) => acc + ((c,new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c))))
     SparseCluster(values,Clusters)
   }
 
   def MakeDense(values:Array[IntVar]):DenseCluster = {
-    val themax = values.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.MaxVal) intvar.MaxVal else acc)
-    val themin = values.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.MinVal) intvar.MinVal else acc)
+    val themax = values.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.maxVal) intvar.maxVal else acc)
+    val themin = values.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.minVal) intvar.minVal else acc)
     assert(themin == 0, "dense clusters must start at zero")
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray
     DenseCluster(values,Clusters)
   }
 
   def MakeDenseAssumingMinMax(values:Array[IntVar],themin:Int,themax:Int):DenseCluster = {
     assert(themin == 0, "dense clusters must start at zero")
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray
     DenseCluster(values,Clusters)
   }

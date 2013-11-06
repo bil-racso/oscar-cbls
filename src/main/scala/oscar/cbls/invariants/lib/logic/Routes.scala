@@ -178,12 +178,12 @@ case class Routes(V: Int,
 }
 object Routes{
   def buildRoutes(Next:Array[IntVar], V:Int):Routes = {
-    val m:Model = InvariantHelper.FindModel(Next)
+    val m:Model = InvariantHelper.findModel(Next)
 
-    val PositionInRoute = Array.tabulate(Next.length)(i => new IntVar(m, 0, Next.length,Next.length, "PositionInRouteOfPt" + i))
-    val RouteNr = Array.tabulate(Next.length)(i => new IntVar(m, 0, V,V, "RouteNrOfPt" + i))
-    val RouteLength = Array.tabulate(V)(i => new IntVar(m,0,Next.length,0,"Route "+i+"-Lenght"))
-    val lastInRoute = Array.tabulate(V)(i => new IntVar(m,0,Next.length,i,"LastInRoute "+i))
+    val PositionInRoute = Array.tabulate(Next.length)(i => IntVar(m, 0, Next.length,Next.length, "PositionInRouteOfPt" + i))
+    val RouteNr = Array.tabulate(Next.length)(i => IntVar(m, 0, V,V, "RouteNrOfPt" + i))
+    val RouteLength = Array.tabulate(V)(i => IntVar(m,0,Next.length,0,"Route "+i+"-Lenght"))
+    val lastInRoute = Array.tabulate(V)(i => IntVar(m,0,Next.length,i,"LastInRoute "+i))
 
     Routes(V, Next, PositionInRoute, RouteNr, RouteLength,lastInRoute)
   }

@@ -68,14 +68,14 @@ import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
       from + (period + zone - reducedfrom)
     else
       from
-  }, from.MinVal, from.MaxVal + zone)
+  }, from.minVal, from.maxVal + zone)
 
 
 case class RoundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)]) extends IntInvariant {
 
   def myMax = Zone.maxBy(_._2)._2 + 1
 
-  def myMin = from.MinVal
+  def myMin = from.minVal
 
   var output: IntVar = null
   registerStaticAndDynamicDependenciesNoID(from, length)
