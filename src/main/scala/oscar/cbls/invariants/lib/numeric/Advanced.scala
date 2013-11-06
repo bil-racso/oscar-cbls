@@ -82,7 +82,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
     output :-= vars(value).value
   }
 
-  override def checkInternals(c:checker) {
+  override def checkInternals(c:Checker) {
     c.check(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
   }
 }
@@ -186,7 +186,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     }
   }
 
-  override def checkInternals(c:checker) {
+  override def checkInternals(c:Checker) {
     c.check(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value))
   }
 }

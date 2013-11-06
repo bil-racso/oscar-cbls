@@ -22,7 +22,7 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 
 /**
@@ -155,7 +155,7 @@ case class Routes(V: Int,
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(n <- Next.indices){
       val next = Next(n).value
       if (next != UNROUTED){

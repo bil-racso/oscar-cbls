@@ -20,7 +20,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * This invariant maintains the predecessors of each node.
@@ -52,7 +52,7 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
     else preds(NewVal) := index
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(n<- 0 until N){
       //n is unrouted
       if(next(n).value==N) c.check(preds(n).value==N)

@@ -22,7 +22,7 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{checker, KeyForElementRemoval}
+import oscar.cbls.invariants.core.propagation.{ Checker, KeyForElementRemoval }
 
 /** if (ifVar >0) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -71,8 +71,8 @@ case class IntITE(ifVar:IntVar, thenVar:IntVar, elseVar:IntVar) extends IntInvar
     "ITE(" + ifVar + ',' + thenVar + "," + elseVar + ")"
   }
 
-  override def checkInternals(c:checker){
-    c.check(output.value == (if(ifVar.value <= 0) elseVar.value else thenVar.value))
+  override def checkInternals(c: Checker) {
+    c.check(output.value == (if (ifVar.value <= 0) elseVar.value else thenVar.value))
   }
 }
 
@@ -123,7 +123,7 @@ case class IntElement(index:IntVar, inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c: Checker) {
     c.check(output.value == inputarray(index.value).value)
   }
 
@@ -232,9 +232,9 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c: Checker) {
     c.check(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
-    c.check(index.value.forall((i:Int) =>
+    c.check(index.value.forall((i: Int) =>
       output.value.contains(inputarray(i).value)))
     c.check(output.value.size == index.value.size)
   }
@@ -296,7 +296,7 @@ case class IntSetElement(index:IntVar, inputarray:Array[IntSetVar])
     output.insertValue(value)
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c: Checker) {
     c.check(output.value.intersect(inputarray(index.value).value).size == output.value.size)
   }
 }

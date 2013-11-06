@@ -25,7 +25,7 @@ import collection.immutable.SortedSet
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /** {i in index of values | values[i] <= boundary}
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
@@ -98,7 +98,7 @@ case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntS
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(v <- output.value){
       c.check(values(v).value <= boundary.value)
     }
@@ -167,7 +167,7 @@ case class SelectLESetQueue(values:Array[IntVar], boundary: IntVar) extends IntS
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     var count:Int = 0
     for(i <- values.indices){
       if(values(i).value <= boundary.value){

@@ -24,9 +24,9 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.core.computation.{Variable, IntVar}
+import oscar.cbls.invariants.core.computation.{ Variable, IntVar }
 import oscar.cbls.invariants.core.computation.IntVar._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**Implement the AllDiff constraint on IntVars: all variables must have a different value.
  * @param variables the variable whose values should all be different.
@@ -105,18 +105,20 @@ case class AllDiff(variables:Iterable[IntVar]) extends Constraint{
     tmp
   }
 
-  override def checkInternals(c:checker){
-    var MyValueCount:Array[Int] = (for(i <- 0 to N) yield 0).toArray
-    for(v <- variables){MyValueCount(v.value + offset) += 1}
-    for(v <- range)assert(ValueCount(v).getValue(true) == MyValueCount(v))
+  override def checkInternals(c: Checker) {
+    var MyValueCount: Array[Int] = (for (i <- 0 to N) yield 0).toArray
+    for (v <- variables) MyValueCount(v.value + offset) += 1
+    for (v <- range) c.check(ValueCount(v).getValue(true) == MyValueCount(v))
 
-    for (v <- variables)
-      assert(violation(v).value == MyValueCount(v.value+offset)-1
-        ,"error on " + v + " " + violation(v).value + " " + MyValueCount(v.value+offset))
+    for (v <- variables) {
+      c.check(violation(v).value == MyValueCount(v.value + offset) - 1,
+        Some("violation(" + v.name + ").value != MyValueCount(" + v.name
+          + ".value + offset) - 1"))
+    }
 
-    var MyViol:Int = 0
-    for(v <- range)MyViol += 0.max(MyValueCount(v) -1)
-    assert(MyViol == Violation.value)
+    var MyViol: Int = 0
+    for (v <- range) MyViol += 0.max(MyValueCount(v) - 1)
+    c.check(MyViol == Violation.value)
   }
 }
 

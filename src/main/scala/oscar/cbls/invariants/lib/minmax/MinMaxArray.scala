@@ -25,6 +25,7 @@ import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMe
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.propagation.Checker
 
 /** Maintains Max(Var(i) | i in cond)
  * @param varss is an array of IntVar, which can be bulked
@@ -39,6 +40,12 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: 
   override def Ord(v: IntVar): Int = -v.value
 
   override def ExtremumName: String = "Max"
+    
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(output.value >= v.value, Some(output.value + " >= " + v.value))
+    }
+  }
 }
 
 /** Maintains Min(Var(i) | i in cond)

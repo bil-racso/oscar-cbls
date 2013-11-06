@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
@@ -94,7 +94,7 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
       c.check(output.value == Default)
     }else{
@@ -123,7 +123,7 @@ case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
       c.check(output.value == Default)
     }else{

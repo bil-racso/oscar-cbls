@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.minmax
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
 import oscar.cbls.invariants.core.computation.Invariant._
-import oscar.cbls.invariants.core.propagation.{checker, KeyForElementRemoval}
+import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
 import oscar.cbls.invariants.core.computation._
 
 /** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
@@ -202,7 +202,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
     cost = cost + System.currentTimeMillis()
   }
 
-  override def checkInternals(c:checker) {
+  override def checkInternals(c:Checker) {
     var count: Int = 0;
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
@@ -215,7 +215,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
       }
     }
     c.check(output.value.size == count)
-    h.checkInternals(c:checker)
+    h.checkInternals(c:Checker)
     c.check(h.getFirsts.length == output.value.size)
     if (cond != null)
       c.check(output.getValue(true).subsetOf(cond.getValue(true)))

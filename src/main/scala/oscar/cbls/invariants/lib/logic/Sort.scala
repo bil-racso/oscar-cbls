@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.logic
 
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**maintains a sorting of the ''values'' array:
  * @param ReversePerm   i < j => values(ReversePerm(i)) < values(ReversePerm(j))
@@ -93,7 +93,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     ForwardPerm(ReversePerm(Position2).getValue(true)) := Position2
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     val range = values.indices
     for(i <- range){
       c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i)

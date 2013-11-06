@@ -25,7 +25,7 @@ package oscar.cbls.invariants.lib.numeric
 import oscar.cbls.invariants.core.computation._;
 
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 /** sum(vars)
@@ -53,7 +53,7 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
     output :+= NewVal - OldVal
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     c.check(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
   }
 }
@@ -106,7 +106,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     var prod = 1;
     for (v <- vars) prod *= v.value
     c.check(output.value == prod)
