@@ -22,7 +22,7 @@ package oscar.cbls.invariants.lib.numeric
 
 
 
-import oscar.cbls.invariants.core.computation._;
+import oscar.cbls.invariants.core.computation._
 
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.propagation.checker
@@ -107,7 +107,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   }
 
   override def checkInternals(c:checker){
-    var prod = 1;
+    var prod = 1
     for (v <- vars) prod *= v.value
     c.check(output.value == prod)
   }

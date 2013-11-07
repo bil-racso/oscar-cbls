@@ -115,5 +115,5 @@ case class CompositeMove(move:Neighbor, objAfter:Int, vrp:VRP) extends Neighbor{
   def startNodeForNextExploration: Int = move.startNodeForNextExploration
   def getValuesToAssign = move.getValuesToAssign
 
-  override def toString():String = move.toString
+  override def toString:String = move.toString
 }

@@ -20,8 +20,8 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import oscar.cbls.invariants.core.computation._;
-import oscar.cbls.invariants.core.propagation._;
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation._
 
 /** sum(i in cond) vars(i)
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.

@@ -76,7 +76,7 @@ object NQueens extends SearchEngine with StopWatch{
 
     val Tabu = (for(q <- range)yield -1).toArray
 
-    var longueurplateau = 0;
+    var longueurplateau = 0
     while((c.Violation.value > 0) && (it < MaxIT)){
       val oldviolation:Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)

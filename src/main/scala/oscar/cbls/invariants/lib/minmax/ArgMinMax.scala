@@ -120,8 +120,8 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
   def myMin = vars.indices.start
   def myMax = vars.indices.end
 
-  var cost:Long = 0;
-  
+  var cost:Long = 0
+
   override def setOutputVar(v: IntSetVar) {
     output = v
     //collecter les counts et le max
@@ -203,7 +203,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
   }
 
   override def checkInternals(c:checker) {
-    var count: Int = 0;
+    var count: Int = 0
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
         if (vars(i).value == this.Miax.value) {

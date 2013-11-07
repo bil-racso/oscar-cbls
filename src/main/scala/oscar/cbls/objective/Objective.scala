@@ -20,7 +20,7 @@ package oscar.cbls.objective
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation._;
+import oscar.cbls.invariants.core.computation._
 
 case class Objective(Objective: IntVar) extends ObjectiveTrait {
   setObjectiveVar(Objective)

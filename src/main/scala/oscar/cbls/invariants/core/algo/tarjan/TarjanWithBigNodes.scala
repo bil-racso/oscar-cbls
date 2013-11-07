@@ -94,6 +94,6 @@ object TarjanWithBigNodes{
 
     for(n <- Nodes) {if(n.Index == -1) visit(n)}
 
-    Components;
+    Components
   }
 }

@@ -80,7 +80,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
     // closing constraints
-    c.close
+    c.close()
     
     // working variables - using flat arrays
     // conversion is: i=v/N, j=v%N
@@ -123,14 +123,14 @@ object MagicSquare extends SearchEngine with StopWatch {
   }
 
   def showSquare(tab:Array[Array[IntVar]]) {
-    println
+    println()
     for (i <- Range(0,tab.length)) {
       for (j <-Range(0,tab(i).length)) {
         print(tab(i)(j).value+" ")
       }
-      println
+      println()
     }
-    println
+    println()
   }
   
 }

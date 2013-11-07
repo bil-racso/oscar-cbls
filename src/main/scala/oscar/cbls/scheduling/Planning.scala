@@ -42,8 +42,8 @@ class Planning(val model: Model, val maxduration: Int) {
   var activityCount: Int = 0
   /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
   def AddActivity(j: Activity): Int = {
-    Activities = j :: Activities;
-    activityCount += 1;
+    Activities = j :: Activities
+    activityCount += 1
     activityCount - 1
   }
 
@@ -108,7 +108,7 @@ class Planning(val model: Model, val maxduration: Int) {
 
   var gantt:Gantt = null
   var plot:PlotLine = null
-  def getVisual(){
+  def displayVisualRendering(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)
     gantt = new Gantt(this)
@@ -218,7 +218,7 @@ class Planning(val model: Model, val maxduration: Int) {
     /**marks all activities on the path linking From to To
      * all market activities are also added to MArkekActivities*/
     def MarkPathes(from:Activity, to:Activity):Boolean = {
-      if (from == to) return true;
+      if (from == to) return true
       if (from.EarliestEndDate.value > to.EarliestStartDate.value){
         return false
       }

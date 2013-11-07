@@ -55,7 +55,7 @@ case class Routes(V: Int,
   for (v <- 0 until V) DecorateVehicleRoute(v)
 
 
-  override def toString():String ={
+  override def toString:String ={
     var toReturn:String = ""
     toReturn +="\nNext array: ["
     for (v <- Next){toReturn += (""+v.getValue(true) +",")}

@@ -36,7 +36,7 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
-  finishInitialization();
+  finishInitialization()
   val preds = for(i<- 0 until N) yield if (i<V) IntVar(model, 0, N, i, "preds" + i)
     else IntVar(model, 0, N, N, "preds" + i)
 
@@ -61,7 +61,7 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
       }
   }
 
-  override def toString()={
+  override def toString ={
     var toReturn = ""
     toReturn +="\npreds array: ["
     for (v <- preds){toReturn += (""+v.getValue(true) +",")}

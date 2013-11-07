@@ -45,9 +45,9 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     var it: Int = 0
 
     flatteningheursitics match {
-      case EarliestFirst() => FlattenEarliestFirst();
-      case WorseFirst() => FlattenWorseFirst();
-      case Random() => RandomFlatten();
+      case EarliestFirst() => FlattenEarliestFirst()
+      case WorseFirst() => FlattenWorseFirst()
+      case Random() => RandomFlatten()
     }
 
     var BestSolution: Solution = model.getSolution(true)
@@ -79,9 +79,9 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       }
 
       flatteningheursitics match {
-        case EarliestFirst() => FlattenEarliestFirst();
-        case WorseFirst() => FlattenWorseFirst();
-        case Random() => RandomFlatten();
+        case EarliestFirst() => FlattenEarliestFirst()
+        case WorseFirst() => FlattenWorseFirst()
+        case Random() => RandomFlatten()
       }
 
       println(p.MakeSpan)
@@ -134,7 +134,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
    */
   def RelaxUntilMakespanReduced(PKill:Int, min:Int = 3){
     val m = p.MakeSpan.value
-    var n = 0;
+    var n = 0
     while((p.MakeSpan.value == m) | (n < min)){
       n +=1
       Relax(PKill)

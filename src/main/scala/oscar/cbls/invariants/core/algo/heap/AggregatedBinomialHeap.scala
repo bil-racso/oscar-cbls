@@ -41,7 +41,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
   override def dropAll(){
     for (i <- b) a(i) = List.empty[T]
     msize = 0
-    b.dropAll
+    b.dropAll()
   }
 
   override def insert(elem:T){

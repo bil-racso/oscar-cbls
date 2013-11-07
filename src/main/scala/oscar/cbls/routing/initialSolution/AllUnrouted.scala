@@ -27,7 +27,7 @@ import oscar.cbls.routing.model._
  * Info : This heuristic does not take into account the possible constraints
  * the problem, such as a number of unrouted maximum node.
  */
-object AllUnrouted extends Heuristic{
+object AllUnrouted{
   /**
     * It applies the initial solution to a given vrp problem.
     * @param vrp : the vrp problem that we want to apply the initial solution.
@@ -40,9 +40,6 @@ object AllUnrouted extends Heuristic{
     for (p <- vrp.V until vrp.N)
       vrp.Next(p) := vrp.N
     vrp.m.propagate()
-
-    // update the timer (linked to progressBar)
-    heuristicTimer.setPercentComplete(100)
   }
 
 }

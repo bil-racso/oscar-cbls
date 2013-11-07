@@ -179,6 +179,6 @@ case class ReinsertPoint(beforeReinsertedPoint:Int, reinsertedPoint:Int, objAfte
   def startNodeForNextExploration: Int = reinsertedPoint
   def getValuesToAssign = vrp.add(beforeReinsertedPoint,reinsertedPoint)
 
-  override def toString():String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
+  override def toString:String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint+" )"
 }
 

@@ -282,7 +282,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * Redefine the toString method.
    * @return the VRP problem as a String.
    */
-  override def toString():String = {
+  override def toString:String = {
     var toReturn = ""
     for ( v <- 0 until V){
       toReturn += "Vehicle" + v + ":" + v
@@ -528,7 +528,9 @@ trait OtherFunctionToObjective extends ObjectiveFunction {
    * Function cost is given as IntVar.
    * @param function the additional cost function.
    */
-  def recordAddedFunction(function : IntVar) = recordAddedFunctions(Array[IntVar](function))
+  def recordAddedFunction(function : IntVar) {
+    recordAddedFunctions(Array[IntVar](function))
+  }
 }
 
 /**

@@ -75,7 +75,7 @@ object NQueens3 extends SearchEngine with StopWatch with App{
 
   println("run time after model close: "+ getWatchString)
 
-  var longueurplateau = 0;
+  var longueurplateau = 0
   var minviolationplateau = c.Violation.value
   while((c.Violation.value > 0) && (It.value < MaxIT)){
 
@@ -86,7 +86,7 @@ object NQueens3 extends SearchEngine with StopWatch with App{
     Tabu(q1) := It.value + tabulength
     Tabu(q2) := It.value + tabulength
 
-    It ++
+    It.++
 
     println("" + It + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
 

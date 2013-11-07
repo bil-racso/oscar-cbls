@@ -30,7 +30,7 @@ import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
  *
  * @param planning the [[oscar.cbls.scheduling.Planning]] where the task is located
  * @param MaxAmount the available amount of this resource that is available throughout the planning
- * @param name the name of the resource, used to annotate the internal variables of the problem
+ * @param n the name of the resource, used to annotate the internal variables of the problem
  */
 case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String = null) {
   require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
@@ -41,8 +41,8 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
   private val maxDuration = planning.maxduration
 
   /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration)(t => new IntSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_${t}"))
-  val useAmount = Array.tabulate(maxDuration)(t => IntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_${t}"))
+  val use = Array.tabulate(maxDuration)(t => new IntSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+  val useAmount = Array.tabulate(maxDuration)(t => IntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
  
   val FirstOvershoot: IntVar = MinSet(Filter(useAmount, x => x > MaxAmount))
   

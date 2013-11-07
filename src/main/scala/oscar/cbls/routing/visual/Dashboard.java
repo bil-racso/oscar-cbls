@@ -30,17 +30,12 @@ import java.util.concurrent.Semaphore;
 
 public class Dashboard extends JPanel {
 
-    private JButton nextIte = null;
     public JButton start = null;
-    private JButton smartStart = null;
-    private JScrollPane routeScroll = null;
     private JTextArea route = null;
     public JComboBox heuristic = null;
     public JTextField nbNodes = null;
     public JTextField nbVehicle = null;
     public JComboBox instances = null;
-    private JButton makeInstance = null;
-    private JButton resetInstance = null;
     public JComboBox neighborhood = null;
     public JTextField klimited = null;
 
@@ -50,9 +45,6 @@ public class Dashboard extends JPanel {
     private final Semaphore semPause = new Semaphore(0);
     private final Semaphore semSyncPause = new Semaphore(0);
     public Boolean firstIte = true;
-    private JPanel neighborhoodPanel = null;
-    private JLabel neighborLabel = null;
-    private JPanel constraintsPanel = null;
     JRadioButton strongCButton = null;
     JRadioButton weakCButton = null;
     JTextField strongCField = null;
@@ -132,9 +124,9 @@ public class Dashboard extends JPanel {
     }
 
     void setConstraintsPanel(){
-        constraintsPanel = new JPanel();
+        JPanel constraintsPanel = new JPanel();
         constraintsPanel.setBackground(Color.white);
-        constraintsPanel.setPreferredSize(new Dimension(350,100));
+        constraintsPanel.setPreferredSize(new Dimension(350, 100));
         JLabel strongC = new JLabel("Strong constraints");
         strongCButton = new JRadioButton();
         strongCButton.setBackground(Color.white);
@@ -142,7 +134,7 @@ public class Dashboard extends JPanel {
         strongCField = new JTextField("0");
         strongCField.setPreferredSize(new Dimension(30,20));
         JLabel maxNodeC = new JLabel("Max nodes:");
-        JLabel penaltyStrongC = new JLabel("Penalty:");
+        //JLabel penaltyStrongC = new JLabel("Penalty:");
         penaltySCField = new JTextField("0");
         penaltySCField.setPreferredSize(new Dimension(30,20));
 
@@ -187,18 +179,18 @@ public class Dashboard extends JPanel {
     }
 
     void setNextIteButton(){
-        nextIte = new JButton("Next iteration");
+        JButton nextIte = new JButton("Next iteration");
         nextIte.setBackground(Color.white);
         nextIte.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(firstIte){
+                if (firstIte) {
                     //new Thread(new OldVisualMap.Search()).start();
                     firstIte = false;
                     iteration = true;
                     myPanelVRP.startSearching();
 
                 }
-                if(pause){
+                if (pause) {
                     iteration = true;
                     unlock();
                 }
@@ -209,7 +201,7 @@ public class Dashboard extends JPanel {
 
     void setNeighborhood(boolean easyMode){
 
-        neighborLabel = new JLabel();
+        JLabel neighborLabel = new JLabel();
         neighborLabel.setText("Neighbor : ");
         neighborLabel.setBackground(Color.white);
         neighborhood = new JComboBox(new String[]{"OnePointMove","ReinsertPoint","RemovePoint","Swap","ThreeOpt (no reverse)"
@@ -225,7 +217,7 @@ public class Dashboard extends JPanel {
         klimited.setBackground(Color.white);
 
 
-        neighborhoodPanel = new JPanel();
+        JPanel neighborhoodPanel = new JPanel();
 
 
         neighborhoodPanel.add(neighborLabel);
@@ -243,7 +235,7 @@ public class Dashboard extends JPanel {
 
     void setMakeInstance(){
         System.out.println("created make instance");
-        makeInstance = new JButton("Make instance");
+        JButton makeInstance = new JButton("Make instance");
         makeInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new Thread(new ProgressThread()).start();
@@ -258,13 +250,14 @@ public class Dashboard extends JPanel {
 
     void setResetInstance(){
 
-        resetInstance = new JButton("Reset instance");
+        JButton resetInstance = new JButton("Reset instance");
         resetInstance.setBackground(Color.white);
         resetInstance.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 firstIte = true;
                 myPanelVRP.makeInstance(true);
-            }});
+            }
+        });
         add(resetInstance);
     }
 
@@ -297,7 +290,7 @@ public class Dashboard extends JPanel {
         route = new JTextArea("Route:\n");
         route.setSize(new Dimension(400, 100));
 
-        routeScroll = new JScrollPane();
+        JScrollPane routeScroll = new JScrollPane();
         routeScroll.setPreferredSize(new Dimension(300, 50));
         routeScroll.getViewport().add(route);
         add(routeScroll);
@@ -308,7 +301,7 @@ public class Dashboard extends JPanel {
         route.setCaretPosition(route.getDocument().getLength());
     }
     void setSmartButton(){
-        smartStart =  new JButton("Smart Search");
+        JButton smartStart = new JButton("Smart Search");
         smartStart.setBackground(Color.green);
         smartStart.setMaximumSize(new Dimension(100, 50));
         smartStart.addActionListener(new ActionListener() {

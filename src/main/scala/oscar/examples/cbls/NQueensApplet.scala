@@ -59,7 +59,7 @@ class NQueensApplet extends Applet {
   var solverRunning = false
 
   object ui extends UI with SearchEngineTrait {
-    def init() = {
+    def init() {
 
       contents = new BoxPanel(Orientation.Vertical) {
         gridPanel = new GridPanel(N, N) {
@@ -118,7 +118,7 @@ class NQueensApplet extends Applet {
           gridPanel.revalidate()
           repaint()
           lNQueen.text = "  " + N + "  "
-          PAUSE = 50 + 1000 / N;
+          PAUSE = 50 + 1000 / N
           startSolverInThread()
         }
       }.start()
@@ -170,7 +170,7 @@ class NQueensApplet extends Applet {
       var it: Int = 0
       val Tabu = (for (q <- range) yield -1).toArray
 
-      var longueurplateau = 0;
+      var longueurplateau = 0
       while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
         val oldviolation: Int = c.Violation.value
         val allowedqueens = range.filter(q => Tabu(q) < it)

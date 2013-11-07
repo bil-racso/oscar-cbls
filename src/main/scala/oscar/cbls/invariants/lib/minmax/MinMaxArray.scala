@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * */
-case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: Int = Int.MinValue)
+case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MaxArray"
@@ -46,7 +46,7 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: 
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * */
-case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: Int = Int.MaxValue)
+case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MinArray"

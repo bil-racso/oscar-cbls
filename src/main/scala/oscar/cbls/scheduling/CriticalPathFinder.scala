@@ -29,7 +29,7 @@ object CriticalPathFinder extends SearchEngine{
     */
   def criticalPath(p:Planning):List[Activity] = {
     def PrecedingNode(j: Activity): Activity = {
-      if (j.DefiningPredecessors.value isEmpty) null
+      if (j.DefiningPredecessors.value.isEmpty) null
       else p.ActivityArray(selectFrom(j.DefiningPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }
@@ -54,7 +54,7 @@ object CriticalPathFinder extends SearchEngine{
   def nonSolidCriticalPath(p:Planning):List[(Activity,Activity)] = {
 
     def PrecedingNode(j: Activity): Activity = {
-      if (j.DefiningPredecessors.value isEmpty) null
+      if (j.DefiningPredecessors.value.isEmpty) null
       else p.ActivityArray(selectFrom(j.DefiningPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }

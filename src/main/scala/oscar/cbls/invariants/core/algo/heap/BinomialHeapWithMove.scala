@@ -45,7 +45,7 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   def keyGetter_=(KeyGetter:T => Int){
     if(msize>0){
       val content:List[T] = this.toList
-      dropAll
+      dropAll()
       GetKey = KeyGetter
       content map insert
     }else{
@@ -58,13 +58,13 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   override def size = msize
   override def isEmpty:Boolean = (msize == 0)
 
-  override def toString:String = {
+  override def toString():String = {
     HeapArray.toList.toString()
   }
 
   /**makes the datastruct empty, but does not frees the space*/
   override def dropAll(){
-    msize = 0;
+    msize = 0
   }
 
   /**log(n)*/
@@ -336,7 +336,7 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   def iterator: Iterator[(Int, Int)] = {throw new Exception("enumeration not supported"); null}
 
   def +=(kv: (Int, Int)): this.type = {
-    array(kv._1) = kv._2.asInstanceOf[Int]
+    array(kv._1) = kv._2
     this
   }
 

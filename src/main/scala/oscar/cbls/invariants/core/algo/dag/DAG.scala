@@ -26,11 +26,11 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 trait DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
-  var Position: Int = 0;
+  var Position: Int = 0
 
   /**supposed to be false between each pass of the algorithm*/
-  var visited: Boolean = false;
-  var visited2:Boolean = false;
+  var visited: Boolean = false
+  var visited2:Boolean = false
 
   /**it gives the unique ID of the PropagationElement.
    * those uniqueID are expected to start at 0 and to increase continuously
@@ -56,7 +56,8 @@ class CycleException(n: DAGNode) extends Exception
  * The incremental topological sort in _autoSort(mAutoSort: Boolean){
  */
 trait DAG {
-  private var AutoSort: Boolean = false;
+  private var AutoSort: Boolean = false
+
   def nodes:Iterable[DAGNode]
 
   var HeapSort = true
@@ -96,13 +97,13 @@ trait DAG {
    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
-      doDAGSort();
+      doDAGSort()
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
-      AutoSort = true;
+      AutoSort = true
     } else if (AutoSort && ! mAutoSort) {
       //on sort de l'autosort
-      AutoSort = false;
+      AutoSort = false
     }
   }
 
@@ -228,7 +229,7 @@ trait DAG {
   private def findSortedForwardRegion(n: DAGNode, ub: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
-    h.dropAll
+    h.dropAll()
     h.keyGetter = ((n:DAGNode) => n.Position)
 
     var toreturn:List[DAGNode] = List.empty
@@ -272,7 +273,7 @@ trait DAG {
   private def findSortedBackwardRegion(n: DAGNode, lb: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
-    h.dropAll
+    h.dropAll()
     h.keyGetter = ((n:DAGNode) => -n.Position)
 
     var toreturn:List[DAGNode] = List.empty

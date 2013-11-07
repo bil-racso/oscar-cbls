@@ -40,7 +40,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
   def Default: Int
 
   override def setOutputVar(v: IntVar) {
-    output = v.asInstanceOf[IntVar]
+    output = v
     output.setDefiningInvariant(this)
     performPropagation()
   }
@@ -81,7 +81,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
+case class MinSet(v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
   override def name = "MinSet"
 
   override def Better(a:Int,b:Int):Boolean = a < b
@@ -110,7 +110,7 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
+case class MaxSet(v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
   override def name = "MaxSet"
 
   override def Better(a:Int,b:Int):Boolean = a > b

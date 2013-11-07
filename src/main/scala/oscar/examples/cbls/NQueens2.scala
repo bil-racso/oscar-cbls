@@ -53,7 +53,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
   def main(args: Array[String]) {
 
     if (args.length<1) {
-      println("Benchmarking NQueen - this takes time");
+      println("Benchmarking NQueen - this takes time")
       println("TClose, Ttotal, It")
     
       // first run could have some overhead so ignoring it
@@ -118,7 +118,7 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
       Tabu(q1) := It.getValue(true) + tabulength
       Tabu(q2) := It.getValue(true) + tabulength
       
-      It.++
+      It ++
     }
 
     println(", " + getWatch + ", " + It)

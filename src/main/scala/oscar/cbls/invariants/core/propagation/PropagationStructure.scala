@@ -20,9 +20,9 @@
 
 package oscar.cbls.invariants.core.propagation
 
-import oscar.cbls.invariants.core.algo.dag._;
+import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.tarjan._
-import oscar.cbls.invariants.core.algo.dll._;
+import oscar.cbls.invariants.core.algo.dll._
 import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
@@ -86,13 +86,13 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     MaxID
   }
 
-  private var acyclic: Boolean = false;
+  private var acyclic: Boolean = false
 
   /**@return true if the propagation structure consider that his graph is acyclic, false otherwise.
    * call this after the call to setupPropagationStructure
    * If the propagation structure has been created with NoCycle set to true, this will return true
    */
-  def isAcyclic: Boolean = acyclic;
+  def isAcyclic: Boolean = acyclic
 
   /**return the summed stalls of all SCC.
    * A stall is when the SCC is unable to maintain the topological sort incrementally,
@@ -138,13 +138,13 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
       ((acc, component) => acc + component.size))
 
     //tri topologique sur les composantes fortement connexes
-    acyclic = true;
-    StronglyConnexComponentsList = List.empty;
+    acyclic = true
+    StronglyConnexComponentsList = List.empty
     val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {
-        acyclic = false;
+        acyclic = false
         val c = new StronglyConnectedComponent(a, this, GetNextID())
         StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
@@ -153,7 +153,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
-    var LayerCount = 0;
+    var LayerCount = 0
     if (TopologicalSort){
       computePositionsThroughTopologialSort(ClusteredPropagationComponents)
     }else{
@@ -188,7 +188,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
     ScheduledElements = List.empty
     for (e <- getPropagationElements) {
-      e.rescheduleIfNeeded
+      e.rescheduleIfNeeded()
     }
     for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
@@ -518,8 +518,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
  * because the instantiated array will be very large compared to your benefits.
  * This might kill cache and RAM for nothing
  *
- * @param MaxNodeID
- * @tparam T
+ * @param MaxNodeID the maxial ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
+ * @tparam T the type stored in this structure
  */
 class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   private val storage:Array[T] = new Array[T](MaxNodeID-1)
@@ -593,12 +593,12 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
     ScheduledElements = List.empty
 
-    var maxposition:Int = -1;
-    
+    var maxposition:Int = -1
+
     while (!h.isEmpty) {
       val x = h.popFirst()
       x.propagate()
-      assert(x.Position <= maxposition,"non monotonic propagation detected in SCC")
+      assert(x.Position >= maxposition,"non monotonic propagation detected in SCC")
       assert({maxposition = x.Position; true})
 
       for (e <- ScheduledElements) {
@@ -796,7 +796,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
       if (p == q) return true
       if (q.isInstanceOf[BulkPropagator] && depth > 0 && q.isStaticPropagationGraphOrBulked(p, depth - 1)) return true
     }
-    false;
+    false
   }
 
   /**

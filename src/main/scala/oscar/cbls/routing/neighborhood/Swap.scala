@@ -145,6 +145,6 @@ case class Swap(predOfMovedPoint:Int, PutAfter:Int, objAfter:Int, vrp:VRP) exten
   def getValuesToAssign = vrp.swap(predOfMovedPoint,vrp.Next(predOfMovedPoint).value,PutAfter,
     vrp.Next(PutAfter).value)
 
-  override def toString():String = "SwapPoints(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
+  override def toString:String = "SwapPoints(beforeFirstSwapped = " + predOfMovedPoint + ", beforeSecondSwapped = " + PutAfter+" )"
 }
 

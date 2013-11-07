@@ -64,7 +64,7 @@ class Gantt(p:Planning) extends VisualDrawing(false, false) {
   text.innerCol = Color.RED
 
   private val makespanLine : VisualLine = VisualLine(this, 0, 0, 0, 0)
-  makespanLine.outerCol = Color.RED;
+  makespanLine.outerCol = Color.RED
 
   def update(xScale : Float, yScale: Int) {
 
@@ -81,7 +81,7 @@ class Gantt(p:Planning) extends VisualDrawing(false, false) {
     makespanLine.dest = ((p.MakeSpan.value*xScale).ceil, (LineCount+1)*yScale)
 
     text.text = p.MakeSpan.value.toString
-    text.move((p.MakeSpan.value*xScale).ceil.toInt, (LineCount+2)*yScale);
+    text.move((p.MakeSpan.value*xScale).ceil.toInt, (LineCount+2)*yScale)
     repaint()
   }
 }

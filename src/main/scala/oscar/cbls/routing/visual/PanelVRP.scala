@@ -49,11 +49,11 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   val isEasyMode = easyMode
 
   var myLayout:GridBagLayout = new GridBagLayout
-  var myConstraints:GridBagConstraints=null;
+  var myConstraints:GridBagConstraints=null
 
   val mapPanel:VisualDrawing = newMapPanel
   val plotPanel:PlotLine = newPlotPanel()
-  val boardPanel:Dashboard = newBoardPanel
+  val boardPanel:Dashboard = newBoardPanel()
   val vrpModel = new ModelVRP()
   val colorsManagement = new ColorManagement()
 
@@ -153,7 +153,7 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
   }
 
   def newMapPanel:VisualDrawing = {
-    val mapPanel : VisualDrawing = VisualDrawing(false);
+    val mapPanel : VisualDrawing = VisualDrawing(false)
     mapPanel.setPreferredSize(new Dimension(700,700))
     mapPanel.setMinimumSize(new Dimension(500,500))
     mapPanel.setBorder(BorderFactory.createTitledBorder("Map"))
@@ -189,11 +189,11 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     boardPanel.setBorder(BorderFactory.createTitledBorder("Board option"))
     boardPanel.setBackground(Color.white)
     if(!easyMode){
-      boardPanel.setPreferredSize(new Dimension(450, 500));
+      boardPanel.setPreferredSize(new Dimension(450, 500))
       boardPanel.setMinimumSize(new Dimension(400,350))
     }
     else{
-      boardPanel.setPreferredSize(new Dimension(250, 230));
+      boardPanel.setPreferredSize(new Dimension(250, 230))
       boardPanel.setMinimumSize(new Dimension(250,230))
     }
 
@@ -208,9 +208,9 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     myConstraints.gridy = 0
     myConstraints.gridheight = GridBagConstraints.RELATIVE
     myConstraints.anchor = GridBagConstraints.PAGE_START
-    myConstraints.fill = GridBagConstraints.BOTH;
+    myConstraints.fill = GridBagConstraints.BOTH
     val scrollBoard:JScrollPane = new JScrollPane(boardPanel,ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-      if(easyMode) ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER else ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      if(easyMode) ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER else ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
     scrollBoard.setViewportView(boardPanel)
 
 
@@ -236,16 +236,16 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     //constraints of map panel
     myConstraints.gridx = 1
     myConstraints.gridy =0
-    myConstraints.weightx = 1;
-    myConstraints.weighty = 1;
+    myConstraints.weightx = 1
+    myConstraints.weighty = 1
     myConstraints.gridheight = GridBagConstraints.REMAINDER
     myLayout.setConstraints(mapPanel,myConstraints)
     add(mapPanel)
   }
 
   //actions of board panel
-  def makeInstance(b:Boolean) = {
-    val a = this;
+  def makeInstance(b:Boolean) {
+    val a = this
     println("make instance pressed")
     class InstanceInThread(b:Boolean) extends Thread{
       override  def run(){
@@ -259,7 +259,11 @@ class PanelVRP(easyMode:Boolean) extends JPanel{
     new InstanceInThread(b).start()
   }
 
-  def startSearching() = new Thread(vrpSearch).start()
-  def startSmartSearching()= new Thread(vrpSmartSearch).start()
+  def startSearching() {
+    new Thread(vrpSearch).start()
+  }
+  def startSmartSearching() {
+    new Thread(vrpSmartSearch).start()
+  }
 }
 
