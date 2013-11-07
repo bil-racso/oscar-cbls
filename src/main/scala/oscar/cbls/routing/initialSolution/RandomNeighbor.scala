@@ -50,7 +50,5 @@ object RandomNeighbor{
         current(vehicle).comit()
       vehicle=(vehicle+1) % vrp.V
     }
-
   }
-
 }

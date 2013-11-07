@@ -100,7 +100,7 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
   m.close()
 
   println("closed " + getWatchString)
-  NearestNeighbor(vrp)
+  BestInsert(vrp)
   //RandomNeighbor(vrp)
   m.propagate()
 

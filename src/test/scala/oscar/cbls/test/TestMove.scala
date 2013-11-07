@@ -24,7 +24,7 @@ import org.scalatest.matchers.ShouldMatchers
 import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.NearestNeighbor
+import oscar.cbls.routing.initialSolution.BestInsert
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -56,7 +56,7 @@ class TestMove extends FunSuite with ShouldMatchers{
         with Unrouted
       vrp.installCostMatrix(matrix)
       model.close()
-      NearestNeighbor(vrp)
+      BestInsert(vrp)
       // 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (-> 0)
       model.propagate()
     }

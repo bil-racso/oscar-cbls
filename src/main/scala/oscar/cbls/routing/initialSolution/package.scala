@@ -22,5 +22,7 @@ package oscar.cbls.routing
 /**
  * It allows you to create different initial solutions respecting (or not)
  * constraints problems.
+ *
+ * notice that by default, VRP is instantiated with all nodes unrouted.
  */
 package object initialSolution {}
