@@ -61,6 +61,12 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, val default: 
   override def Ord(v: IntVar): Int = v.value
 
   override def ExtremumName: String = "Min"
+    
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(output.value <= v.value, Some(output.value + " <= " + v.value))
+    }
+  }
 }
 
 /** Maintains Miax(Var(i) | i in cond)
