@@ -15,80 +15,143 @@ import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.core.computation.Variable
 import oscar.cbls.invariants.core.computation.IntSetVar
 import oscar.cbls.invariants.core.computation.Event
+import oscar.cbls.invariants.lib.logic.IntElement
+import oscar.cbls.invariants.lib.logic.IntElement
+import oscar.cbls.invariants.lib.logic.IntElement
 
 class InvariantProperties extends PropSpec with PropertyChecks {
 
+  property("MinArray maintains min") {
+    val bench = new InvariantCheck
+    new MinArray(bench.genIntVarsArray(4, 0 to 100)).toIntVar
+    //    val minVar = new MinArray(bench.getIntVars)
+    //    Event(minVar, { println("Trigger : changed " + minVar) })
+    bench.run
+  }
+
   property("MaxArray maintains max") {
-    val bench = new InvariantCheck(Gen.choose(0, 100))
-    val maxVar = new MaxArray(bench.genVarsArray(4, 0 to 100))
-    Event(maxVar, { println("Trigger : changed : " + maxVar) })
+    val bench = new InvariantCheck
+    new MaxArray(bench.genIntVarsArray(2, 0 to 50)).toIntVar
+    //    val maxVar = new MaxArray(bench.getIntVars)
+    //    Event(maxVar, { println("Trigger : changed " + maxVar) })
+    bench.run
+  }
+
+  property("Access to int element...") {
+    val bench = new InvariantCheck
+    new IntElement(bench.genIntVar(0 to 20), bench.genIntVarsArray(20, 0 to 100)).toIntVar
     bench.run
   }
 }
 
-class Generators {
+abstract class Move
+
+case class PlusOne extends Move
+case class MinusOne extends Move
+case class ToZero extends Move
+case class ToMin extends Move
+case class ToMax extends Move
+case class Value(value: Int) extends Move
+
+object InvGen {
+  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax())
+
+  def randomValue(range: Range) = Gen.choose(range.min, range.max)
+
+  def randomIntVar(range: Range, model: Model) = for {
+    n <- randomValue(range)
+    c <- Gen.alphaChar
+  } yield new RandomIntVar(new IntVar(model, range, n, c.toString))
+
+  def randomIntVars(nbVars: Int, range: Range, model: Model) = {
+    Gen.containerOfN[List, RandomIntVar](nbVars, randomIntVar(range, model))
+  }
 }
 
 abstract class RandomVar {
   def getRandomVar(): Variable
 
-  def move(value: Int)
+  def move(move: Move)
 }
 
-class RandomIntVar(intVar: IntVar) extends RandomVar {
+case class RandomIntVar(intVar: IntVar) extends RandomVar {
   val randomVar = intVar
 
   override def getRandomVar(): IntVar = randomVar
 
-  override def move(value: Int) {
-    randomVar := value
-    println("Changed " + randomVar.name + " to " + value)
+  override def move(move: Move) = {
+    move match {
+      case PlusOne() => {
+        print(randomVar.name + " :+= " + 1)
+        randomVar :+= 1
+      }
+      case MinusOne() => {
+        print(randomVar.name + " :-= " + 1)
+        randomVar := randomVar.value - 1
+      }
+      case ToZero() => {
+        print(randomVar.name + " := " + 0)
+        randomVar := 0
+      }
+      case ToMax() => {
+        print(randomVar.name + " := " + randomVar.maxVal)
+        randomVar := randomVar.maxVal
+      }
+      case ToMin() => {
+        print(randomVar.name + " := " + randomVar.minVal)
+        randomVar := randomVar.minVal
+      }
+      case Value(value: Int) => randomVar := value
+    }
+    println(" (" + randomVar.name + " := " + randomVar.value + ")")
   }
 }
 
-class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
+abstract case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   val randomVar = intSetVar
 
   override def getRandomVar(): IntSetVar = randomVar
 
-  override def move(value: Int) {
-  }
+  //  override def move(move: Move) = move match {
+  //    case PlusOne() => randomVar := randomVar.insertValue(Gen.choose(randomVar.getMinVal, randomVar.getMaxVal))
+  //    case MinusOne() => randomVar :-= Gen.oneOf(randomVar.value)
+  //    case ToZero() => randomVar := 
+  //    case ToMax() => randomVar := 
+  //    case ToMin() => randomVar := 
+  //    case Value(value: Int) => 
+  //  }
 }
 
-class InvariantCheck(gen: Gen[Int]) {
+class InvariantCheck {
   val checker = new InvariantChecker
   val model = new Model(false, Some(checker))
-  var vars: Array[RandomVar] = new Array[RandomVar](0)
+  var randomIntVars: List[RandomIntVar] = List()
+  var randomIntSetVars: List[RandomIntSetVar] = List()
 
-  def genVarsArray(nbVars: Int, intVarRange: Range): Array[IntVar] = {
-    val minMaxValueGen = Gen.choose(intVarRange.min, intVarRange.max)
+  def genIntVar(range: Range): IntVar = {
+    val riVar = InvGen.randomIntVar(range, model).sample.get
+    randomIntVars = riVar :: randomIntVars
+    riVar.getRandomVar
+  }
 
-    val intVarGenerator = for {
-      n <- minMaxValueGen
-      c <- Gen.alphaChar
-    } yield new RandomIntVar(new IntVar(model, intVarRange, n, c.toString))
-
-    val genIntVarList = Gen.containerOfN[List, RandomIntVar](nbVars, intVarGenerator)
-
-    vars = genIntVarList.sample.get.toArray
-    vars.map((randomVar: RandomVar) =>
-      randomVar match {
-        case rv: RandomIntVar => {
-          println(rv.getRandomVar.toString)
-          rv.getRandomVar
-        }
-        case _ => throw new IllegalArgumentException("Wrong type.")
-      })
+  def genIntVarsArray(nbVars: Int = 4, range: Range = 0 to 100): Array[IntVar] = {
+    val riVars = InvGen.randomIntVars(nbVars, range, model).sample.get
+    randomIntVars = riVars ::: randomIntVars
+    randomIntVars.map((riv: RandomIntVar) => {
+      //println(riv.getRandomVar.toString)
+      riv.getRandomVar
+    }).toArray
   }
 
   def run() = {
     model.close()
-    println("Model closed")
+    //println("Model closed")
     model.propagate()
 
-    val property: Prop = org.scalacheck.Prop.forAll(gen) {
-      value: Int =>
-        Gen.oneOf(vars).sample.get.move(value)
+    val property: Prop = org.scalacheck.Prop.forAll(InvGen.move) {
+      randomMove: Move =>
+        val randomVar = Gen.oneOf(randomIntVars).sample.get
+        randomVar.move(randomMove)
         model.propagate()
         checker.isChecked
     }
