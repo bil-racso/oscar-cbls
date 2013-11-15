@@ -22,6 +22,7 @@ import oscar.cbls.invariants.lib.logic.IntITE
 import scala.collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.IntElements
 import oscar.cbls.invariants.lib.logic.IntSetElement
+import oscar.cbls.invariants.lib.logic.DenseCount
 
 class InvariantProperties extends PropSpec with PropertyChecks {
 
@@ -55,15 +56,28 @@ class InvariantProperties extends PropSpec with PropertyChecks {
 
   property("Access to int vars...") {
     val bench = new InvariantCheck
-    new IntElements(bench.genIntSetVar(0 to 19, 5), bench.genIntVarsArray(20, 0 to 100))
+    new IntElements(bench.genIntSetVar(0 to 19, 5), bench.genIntVarsArray(20, 0 to 100)).toIntSetVar
     bench.run
   }
 
   property("Access to int set var...") {
     val bench = new InvariantCheck
-    new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100))
+    new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
     bench.run
   }
+  
+  property("Clusters... TODO !!") {}
+  
+  property("Dense Count...") {
+    val bench = new InvariantCheck
+    new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 10))
+    bench.run
+  }
+  
+  property("Cross references... TODO !!") {}
+  
+  property("Cumulative... TODO !!") {}
+  
 }
 
 abstract class Move
