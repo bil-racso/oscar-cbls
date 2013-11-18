@@ -23,8 +23,110 @@ import scala.collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.IntElements
 import oscar.cbls.invariants.lib.logic.IntSetElement
 import oscar.cbls.invariants.lib.logic.DenseCount
+import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
+import oscar.cbls.invariants.lib.logic.SelectLESetQueue
+import oscar.cbls.invariants.lib.logic.Sort
+import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.ArgMinArray
+import oscar.cbls.invariants.lib.minmax.MinSet
+import oscar.cbls.invariants.lib.minmax.MaxSet
+import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.lib.numeric.ProdElements
+import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.numeric.Prod
+import oscar.cbls.invariants.lib.numeric.Minus
+import oscar.cbls.invariants.lib.numeric.Sum2
+import oscar.cbls.invariants.lib.numeric.Prod2
+import oscar.cbls.invariants.lib.numeric.Div
+import oscar.cbls.invariants.lib.numeric.Mod
+import oscar.cbls.invariants.lib.numeric.Abs
+import oscar.cbls.invariants.lib.numeric.Step
 
 class InvariantProperties extends PropSpec with PropertyChecks {
+
+  property("Access to ITE") {
+    val bench = new InvariantCheck
+    new IntITE(bench.genIntVar(0 to 20), bench.genIntVar(0 to 20), bench.genIntVar(0 to 20)).toIntVar
+    bench.run
+  }
+
+  property("Access to int var...") {
+    val bench = new InvariantCheck
+    new IntElement(bench.genIntVar(0 to 19), bench.genIntVarsArray(20, 0 to 100)).toIntVar
+    bench.run
+  }
+
+  property("Access to int vars...") {
+    val bench = new InvariantCheck
+    new IntElements(bench.genIntSetVar(0 to 19, 5), bench.genIntVarsArray(20, 0 to 100)).toIntSetVar
+    bench.run
+  }
+
+  property("Access to int set var...") {
+    val bench = new InvariantCheck
+    new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
+    bench.run
+  }
+
+  property("Clusters...")(pending)
+
+  ignore("Dense Count...") {
+    val bench = new InvariantCheck
+    new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 10))
+    bench.run
+  }
+
+  property("Cross references...")(pending)
+
+  property("Cumulative...")(pending)
+
+  property("Filter...")(pending)
+  
+  property("SelectLEHeapHeap") {
+    val bench = new InvariantCheck
+    new SelectLEHeapHeap(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
+    bench.run
+  }
+  
+  property("SelectLESetQueue") {
+    val bench = new InvariantCheck
+    new SelectLESetQueue(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
+    bench.run
+  }
+  
+  property("Predecessor")(pending)
+  
+  property("Routes")(pending)
+  
+  property("Sort") {
+    val bench = new InvariantCheck
+    new Sort(bench.genIntVarsArray(20, 0 to 30), bench.genIntVarsArray(20, 30 to 100))
+    bench.run
+  }
+  
+  property("ArgMaxArray") {
+    val bench = new InvariantCheck
+    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
+    bench.run
+  }
+  
+  property("ArgMinArray") {
+    val bench = new InvariantCheck
+    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
+    bench.run
+  }
+  
+  property("MaxLin")(pending)
+  
+  property("MinLin")(pending)
+  
+  property("Min")(pending)
+  
+  property("Max")(pending)
+  
+  property("Min2")(pending)
+  
+  property("Max2")(pending)
 
   property("MinArray maintains min") {
     val bench = new InvariantCheck
@@ -41,43 +143,106 @@ class InvariantProperties extends PropSpec with PropertyChecks {
     //    Event(maxVar, { println("Trigger : changed " + maxVar) })
     bench.run
   }
-
-  property("Access to ITE") {
+  
+  property("MinSet") {
     val bench = new InvariantCheck
-    new IntITE(bench.genIntVar(0 to 20), bench.genIntVar(0 to 20), bench.genIntVar(0 to 20)).toIntVar
-    bench.run
-  }
-
-  property("Access to int var...") {
-    val bench = new InvariantCheck
-    new IntElement(bench.genIntVar(0 to 20), bench.genIntVarsArray(20, 0 to 100)).toIntVar
-    bench.run
-  }
-
-  property("Access to int vars...") {
-    val bench = new InvariantCheck
-    new IntElements(bench.genIntSetVar(0 to 19, 5), bench.genIntVarsArray(20, 0 to 100)).toIntSetVar
-    bench.run
-  }
-
-  property("Access to int set var...") {
-    val bench = new InvariantCheck
-    new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
+    new MinSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
   }
   
-  property("Clusters... TODO !!") {}
-  
-  property("Dense Count...") {
+  property("MaxSet") {
     val bench = new InvariantCheck
-    new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 10))
+    new MaxSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
   }
   
-  property("Cross references... TODO !!") {}
+  property("SumElements") {
+    val bench = new InvariantCheck
+    new SumElements(bench.genIntVarsArray(10, 0 to 100), bench.genIntSetVar(0 to 9, 5)).toIntVar
+    bench.run
+  }
   
-  property("Cumulative... TODO !!") {}
+  property("ProdElements") {
+    val bench = new InvariantCheck
+    new ProdElements(bench.genIntVarsArray(10, 0 to 100), bench.genIntSetVar(0 to 9, 5)).toIntVar
+    bench.run
+  }
   
+  property("Sum") {
+    val bench = new InvariantCheck
+    new Sum(bench.genIntVarsArray(10, 0 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Prod") {
+    val bench = new InvariantCheck
+    new Prod(bench.genIntVarsArray(10, 0 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Minus") {
+    val bench = new InvariantCheck
+    new Minus(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Sum2") {
+    val bench = new InvariantCheck
+    new Sum2(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Prod2") {
+    val bench = new InvariantCheck
+    new Prod2(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Div") {
+    val bench = new InvariantCheck
+    new Div(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Mod") {
+    val bench = new InvariantCheck
+    new Mod(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Abs") {
+    val bench = new InvariantCheck
+    new Abs(bench.genIntVar(-100 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("Step") {
+    val bench = new InvariantCheck
+    new Step(bench.genIntVar(-100 to 100)).toIntVar
+    bench.run
+  }
+  
+  property("RoundUpModulo")(pending)
+  
+  property("RoundUpCustom")(pending)
+  
+  property("Union")(pending)
+  
+  property("Inter")(pending)
+  
+  property("Diff")(pending)
+  
+  property("Cardinality")(pending)
+  
+  property("MakeSet")(pending)
+  
+  property("Interval")(pending)
+  
+  property("TakeAny")(pending)
+  
+  property("SetSum")(pending)
+  
+  property("SetProd")(pending)
 }
 
 abstract class Move
@@ -183,19 +348,18 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
 class InvariantCheck {
   val checker = new InvariantChecker
   val model = new Model(false, Some(checker))
-  var randomIntVars: List[RandomIntVar] = List()
-  var randomIntSetVars: List[RandomIntSetVar] = List()
+  var randomVars: List[RandomVar] = List()
 
   def genIntVar(range: Range): IntVar = {
     val riVar = InvGen.randomIntVar(range, model).sample.get
-    randomIntVars = riVar :: randomIntVars
+    randomVars = riVar :: randomVars
     riVar.randomVar
   }
 
   def genIntVarsArray(nbVars: Int = 4, range: Range = 0 to 100): Array[IntVar] = {
     val riVars = InvGen.randomIntVars(nbVars, range, model).sample.get
-    randomIntVars = riVars ::: randomIntVars
-    randomIntVars.map((riv: RandomIntVar) => {
+    randomVars = riVars ::: randomVars
+    riVars.map((riv: RandomIntVar) => {
       //println(riv.getRandomVar.toString)
       riv.randomVar
     }).toArray
@@ -203,14 +367,14 @@ class InvariantCheck {
 
   def genIntSetVar(range: Range, size: Int) = {
     val risVar = InvGen.randomFixedIntSetVar(range, size, model).sample.get
-    randomIntSetVars = risVar :: randomIntSetVars
+    randomVars = risVar :: randomVars
     risVar.randomVar
   }
 
   def genIntSetVars(nbVars: Int = 4, upToSize: Int = 20, range: Range = 0 to 100): Array[IntSetVar] = {
     val risVars = InvGen.randomIntSetVars(nbVars, upToSize, range, model).sample.get
-    randomIntSetVars = risVars ::: randomIntSetVars
-    randomIntSetVars.map((risv: RandomIntSetVar) => {
+    randomVars = risVars ::: randomVars
+    risVars.map((risv: RandomIntSetVar) => {
       risv.randomVar
     }).toArray
   }
@@ -225,15 +389,16 @@ class InvariantCheck {
     try {
       property = org.scalacheck.Prop.forAll(InvGen.move) {
         randomMove: Move =>
-          val randomVar = Gen.oneOf(randomIntVars).sample.get
+          val randomVar = Gen.oneOf(randomVars).sample.get
           randomVar.move(randomMove)
           model.propagate()
           checker.isChecked
       }
     } catch {
-      case e: Exception => println("Exception caught: " + e)
+      case e: Exception =>
+        println("Exception caught: " + e)
+        false
     }
-
     property.check
   }
 }
