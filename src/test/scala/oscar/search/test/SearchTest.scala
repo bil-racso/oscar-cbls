@@ -12,18 +12,26 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.reversible;
+package oscar.search.test
 
 
-/**
- * Class representing a reversible queue pointer
- * @author Pierre Schaus pschaus@gmail.com
- */
-public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
+import oscar.search._
+import oscar.reversible._
+import oscar.cp.modeling._
+import oscar.cp.core.CPVarInt
+import oscar.search.SearchNode
 
-	public ReversibleQueue(ReversibleNode node) {
-		super(node,null);
-	}
+class SearchTest extends FunSuite with ShouldMatchers  {
+
+   
+ 
+    test("test 1 dfs") {
+   
+    }
+    
+
+
 }
-
 

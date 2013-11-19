@@ -1,5 +1,7 @@
 package oscar.reversible
 
+
+
 /**
  * ReversibleDisjointSets
  * 
@@ -8,7 +10,7 @@ package oscar.reversible
  *
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversibleDisjointSets(node: ReversibleSearchNode, private val n: Int) {
+class ReversibleDisjointSets(node: ReversibleNode, private val n: Int) {
 
   // Initially, each element is the root of its tree and has a rank of 0.
   private val father: Array[ReversibleInt] = Array.tabulate(n)(new ReversibleInt(node, _))
@@ -47,7 +49,7 @@ class ReversibleDisjointSets(node: ReversibleSearchNode, private val n: Int) {
 }
 
 object ReversibleDisjointSets {
-  def apply(node: ReversibleSearchNode, n: Int): ReversibleDisjointSets = {
+  def apply(node: ReversibleNode, n: Int): ReversibleDisjointSets = {
     new ReversibleDisjointSets(node, n)
   }
 }

@@ -338,6 +338,8 @@ package object modeling extends oscar.cp.modeling.Constraints {
   
 
   def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
+  
+  def branch(left: => Unit)(right: => Unit) = Seq(() => left,() => right)
 
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
     val max = indexes.map(f).max
@@ -355,5 +357,18 @@ package object modeling extends oscar.cp.modeling.Constraints {
     val min = indexes.map(f).min
     indexes.filter(f(_) == min)
   }
+  
+  
+  // helper functions to define searches
+  
+  def minDom(x: CPVarInt): Int = x.size
+  def minRegret(x: CPVarInt): Int = x.max - x.min
+  def minDomMaxDegree(x: CPVarInt): (Int, Int) = (x.size, -x.constraintDegree)
+  def minVar(x: CPVarInt): Int = 1
+  def maxDegree(x: CPVarInt): Int = -x.constraintDegree
+
+  def minVal(x: CPVarInt): Int = x.min
+  def maxVal(x: CPVarInt): Int = x.max
+  def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
 }

@@ -146,19 +146,6 @@ class CPSolver() extends CPStore() {
     
   }
 
-  def minDom(x: CPVarInt): Int = x.size
-  def minRegret(x: CPVarInt): Int = x.max - x.min
-  def minDomMaxDegree(x: CPVarInt): (Int, Int) = (x.size, -x.constraintDegree)
-  def minVar(x: CPVarInt): Int = 1
-  def maxDegree(x: CPVarInt): Int = -x.constraintDegree
-
-  def minVal(x: CPVarInt): Int = x.min
-  def maxVal(x: CPVarInt): Int = x.max
-  def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
-
-
-    
-
   
   /**
    * Instantiate variable in from the first to last one in vars, trying smallest value first
@@ -283,8 +270,8 @@ class CPSolver() extends CPStore() {
       val v = x.arbitraryPossibleNotRequired
       branch(post(x ++ v))(post(x -- v))
     }
-  } 
-
+  }
+  
   override def update() = propagate()
   override def solFound() = {
     super.solFound()

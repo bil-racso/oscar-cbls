@@ -22,7 +22,7 @@ import oscar.cp.constraints.CPObjective;
 import oscar.cp.constraints.CPObjectiveUnit;
 import oscar.cp.constraints.Eq;
 import oscar.reversible.ReversiblePointer;
-import oscar.reversible.ReversibleSearchNode;
+import oscar.search.SearchNode;
 import collection.JavaConversions._
 
 import oscar.cp.core.CPOutcome._
@@ -31,7 +31,7 @@ import oscar.cp.core.CPOutcome._
  * Constraint Programming CPStore
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPStore extends ReversibleSearchNode {
+class CPStore extends SearchNode {
   /**
    * Number of call to propagate method in any constraints
    */

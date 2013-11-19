@@ -16,12 +16,13 @@
  */
 package oscar.reversible;
 
+
 /**
  * Creates a generic reversible pointer
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[T](n: ReversibleSearchNode, v: T) extends Reversible(n) {
+class ReversiblePointer[T](n: ReversibleNode, v: T) extends Reversible(n) {
   
   // Pointer to the object to trail
   private var pointer: T = v
@@ -60,7 +61,7 @@ class ReversiblePointer[T](n: ReversibleSearchNode, v: T) extends Reversible(n) 
 }
 
 object ReversiblePointer {
-  def apply[T](node: ReversibleSearchNode, value: T): ReversiblePointer[T] = {
+  def apply[T](node: ReversibleNode, value: T): ReversiblePointer[T] = {
     new ReversiblePointer[T](node, value)
   }
 }

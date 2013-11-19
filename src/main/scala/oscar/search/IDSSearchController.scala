@@ -26,7 +26,7 @@ import oscar.util.VisualController
  * Controller for iterative discrepancy search
  * @author Pierre Schaus pschaus@gmail.com & Sebastien Mouthuy smouthuy@gmail.com
  */
-class IDSSearchController(node: ReversibleSearchNode, val maxDiscrepency: Int) extends SearchController(node) {
+class IDSSearchController(node: SearchNode, val maxDiscrepency: Int) extends SearchController(node) {
   
   val stack: Stack[MyContinuation] = new Stack()
   val discr = new ReversibleInt(node,0)

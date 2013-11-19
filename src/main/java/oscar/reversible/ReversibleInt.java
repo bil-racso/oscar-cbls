@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.reversible;
 
-import oscar.reversible.ReversibleSearchNode;
 
 /**
  * Reversible integer
@@ -26,11 +25,11 @@ public class ReversibleInt extends ReversiblePointer<Integer> {
      * creates a reversible integer
      * @param node
      */
-	public ReversibleInt(ReversibleSearchNode node) {
+	public ReversibleInt(ReversibleNode node) {
 		super(node,0);
 	}
 	
-	public ReversibleInt(ReversibleSearchNode node, int val) {
+	public ReversibleInt(ReversibleNode node, int val) {
 		super(node,val);
 	}
 

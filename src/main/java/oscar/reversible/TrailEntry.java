@@ -15,15 +15,21 @@
 package oscar.reversible;
 
 
+
 /**
- * Class representing a reversible queue pointer
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
-
-	public ReversibleQueue(ReversibleNode node) {
-		super(node,null);
+public class TrailEntry{
+	
+	Reversible trailable;
+	Object val;
+	
+	public TrailEntry(Reversible trailable,Object val) {
+		this.trailable = trailable;
+		this.val = val;
+	}
+	
+	protected void restore(){
+		trailable.restore(val);
 	}
 }
-
-

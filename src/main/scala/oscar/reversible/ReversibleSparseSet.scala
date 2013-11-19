@@ -26,7 +26,7 @@ import scala.collection.Iterator
  * @param max >= min
  * @author Pierre Schaus
  */
-class ReversibleSparseSet(s: ReversibleSearchNode, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
+class ReversibleSparseSet(s: ReversibleNode, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
 
   val offset = minValue
   val _min = new ReversibleInt(s,minValue)

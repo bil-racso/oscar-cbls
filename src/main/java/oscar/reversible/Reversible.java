@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.reversible;
 
-import oscar.reversible.ReversibleSearchNode;
 
 /**
  * Generic Reversible inside a reversible node
@@ -23,9 +22,9 @@ import oscar.reversible.ReversibleSearchNode;
 public abstract class Reversible {
 	
 	private int lastMagic;
-	protected ReversibleSearchNode node;
+	protected ReversibleNode node;
 	
-	public Reversible(ReversibleSearchNode node) {
+	public Reversible(ReversibleNode node) {
 		this.node = node;
 		lastMagic = -1;
 	}

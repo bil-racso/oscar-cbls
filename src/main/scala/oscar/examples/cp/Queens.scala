@@ -46,7 +46,7 @@ object Queens extends App {
         for (q <- Queens.suspendable) {
           cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
         }
-        
+        nothing
         */
         nbsol += 1
       } run()

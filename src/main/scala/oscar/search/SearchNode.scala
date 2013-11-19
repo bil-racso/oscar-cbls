@@ -12,62 +12,35 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
-package oscar.reversible;
+
+package oscar.search
 
 import java.util.Random
 import java.util.Stack
 import scala.util.continuations._
-import oscar.search.DummyObjective
-import oscar.search.Objective
-import oscar.search._
-import oscar.search.Tree
-import java.util.LinkedList
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
+import oscar.reversible.ReversibleBool
+import oscar.reversible.Trail
+import oscar.reversible.TrailEntry
+import oscar.reversible.ReversibleNode
 
 /**
- * Class representing a reversible search node, that is a node able to restore all
- * the reversible state attached to it (see Reversibles). <br>
- * A reversible search node is used to find solution by exploration of search tree (see Search).
+ * Class representing a (reversible search) node <br>
+ * A search node is used to find solution by exploration of search tree (see Search).
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleSearchNode {
+class SearchNode extends ReversibleNode {
 
   var silent = false
 
-  var magic = 0
-  var trail = new Trail();
-  val pointerStack = new Stack[TrailEntry]()
 
   val random: Random = new Random(0)
   val failed = new ReversibleBool(this, false)
 
   var sc: SearchController = new DFSSearchController(this)
   
-  val popListeners = new ArrayBuffer[() => Unit]()
-  
-  def onPop(action: => Unit) {
-    popListeners.add(() => action)
-  }
   
 
   /**
@@ -122,48 +95,13 @@ class ReversibleSearchNode {
     sc.stop()
   }
 
-  def getMagic() = magic
-
-  def getTrail() = trail
-
   def solFound() = {
     tree.addSuccess(currParent)
   }
 
-  /**
-   * CPStore the current state of the node on a stack.
-   */
-  def pushState() {
-    magic += 1
-    pointerStack.push(trail.getTopEntry())
-  }
-
-  /**
-   * Restore state on top of the stack of states and remove it from the stack.
-   */
-  def pop() {
-    trail.restoreUntil(pointerStack.pop())
-    popListeners.foreach(_())
-    /*
-    for (l <- popListeners) {
-      l()
-    }
-    */
-    magic += 1 // increment the magic because we want to trail again
-  }
-
-  /**
-   * Restore the node to its initial state
-   */
-  def popAll() {
-    while (!pointerStack.empty()) {
-      trail.restoreUntil(pointerStack.pop())
-    }
-    magic += 1 // increment the magic because we want to trail again
-  }
 
   override def toString() = {
-    "ReversibleSearchNode: nbPushed" + pointerStack.size() + " currentTrailSize:" + trail.getSize();
+    super.toString
   }
 
   /**
@@ -286,7 +224,7 @@ class ReversibleSearchNode {
   case class Exploration(val exploration: () => Unit @suspendable)
   private var exploBlock: Option[Exploration] = None
 
-  def exploration(block: => Unit @suspendable): ReversibleSearchNode = {
+  def exploration(block: => Unit @suspendable): SearchNode = {
     exploBlock = Option(Exploration(() => block))
     this
   }
@@ -369,6 +307,58 @@ class ReversibleSearchNode {
     } else {
       if (!silent) print("!")
     }
+  }
+  private var branchings = new BranchingCombinator()
+  
+  def search(block: => Seq[Alternative]): SearchNode = {
+    val b = new Branching() {
+      override def alternatives = {
+        block
+      }
+    }
+    branchings.addBranching(b)
+    this
+  }
+  
+  def search(branching: Branching): SearchNode = {
+    branchings.addBranching(branching)
+    this
+  }  
+  
+  private var solCallBacks = List[() => Unit]()
+  
+  def onSolution(block: => Unit): SearchNode = {
+    solCallBacks = (() => block) :: solCallBacks
+    this
+  }
+  
+  def startSubjectTo (nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): List[(String,Int)] = {
+    pushState()
+    reversibleBlock
+    val s = new Search(this,branchings)
+    solCallBacks.foreach(b => s.onSolution(b()))
+    s.onSolution(solFound())
+    
+    val t0 = System.currentTimeMillis()
+    val stats =  s.solveAll(nbSol = nbSolMax, maxDiscrepancy = Int.MaxValue)
+    stats ++ List(("time(ms)", (System.currentTimeMillis() - t0).toInt),
+      ("time in trail restore(ms)", getTrail().getTimeInRestore().toInt),
+      ("max trail size", getTrail().getMaxSize()))
+    
+    //List(("%% time in trail restore(ms) : ", getTrail().getTimeInRestore()))
+    
+    
+    /*
+    println("%% time(ms) : "+ time)
+    println("%% #bkts : "+ bkts)
+    println("%% time in fix point(ms) : "+ timeInFixPoint)
+    println("%% time in trail restore(ms) : "+ getTrail().getTimeInRestore())
+    println("%% max trail size : "+ getTrail().getMaxSize())
+    */
+  }
+  
+  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue): List[(String,Int)] = {
+    startSubjectTo(nbSolMax,failureLimit,timeLimit)()
   }
 
 }

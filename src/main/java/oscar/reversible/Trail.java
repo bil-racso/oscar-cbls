@@ -61,17 +61,3 @@ public class Trail {
 	}
 }
 
-class TrailEntry{
-	
-	Reversible trailable;
-	Object val;
-	
-	public TrailEntry(Reversible trailable,Object val) {
-		this.trailable = trailable;
-		this.val = val;
-	}
-	
-	protected void restore(){
-		trailable.restore(val);
-	}
-}

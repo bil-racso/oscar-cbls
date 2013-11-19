@@ -12,18 +12,16 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.reversible;
 
+package oscar
 
 /**
- * Class representing a reversible queue pointer
- * @author Pierre Schaus pschaus@gmail.com
+ * @author: Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
+package object search {
 
-	public ReversibleQueue(ReversibleNode node) {
-		super(node,null);
-	}
+  type Alternative = () => Unit
+  
+  val noAlternative = Seq[Alternative]()
+
 }
-
-

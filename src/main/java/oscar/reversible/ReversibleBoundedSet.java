@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import oscar.reversible.ReversibleSearchNode;
 
 
 /**
@@ -27,7 +26,7 @@ import oscar.reversible.ReversibleSearchNode;
  */
 public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer>{
 	
-	private ReversibleSearchNode node;
+	private ReversibleNode node;
 	
 	private ReversibleInt first;
 	
@@ -44,7 +43,7 @@ public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer
      * @param node
      * @param maxval
      */
-	public ReversibleBoundedSet(ReversibleSearchNode node, int maxval) {
+	public ReversibleBoundedSet(ReversibleNode node, int maxval) {
 		if (maxval <0) {
 			throw new  RuntimeException("maxval must be >= 0");
 		}

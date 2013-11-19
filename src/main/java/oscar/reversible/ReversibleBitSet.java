@@ -18,7 +18,6 @@ import java.util.BitSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import oscar.reversible.ReversibleSearchNode;
 
 
 /**
@@ -30,7 +29,7 @@ public class ReversibleBitSet extends Reversible {
 	private int min,max;
 	private BitSet bits;
 
-	public ReversibleBitSet(ReversibleSearchNode node,int min,int max) {
+	public ReversibleBitSet(ReversibleNode node,int min,int max) {
 		super(node);
 		this.min = min;
 		this.max = max;

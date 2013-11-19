@@ -16,7 +16,7 @@ package oscar.search
 
 
 import scala.util.continuations._
-import oscar.reversible.ReversibleSearchNode
+import oscar.search.SearchNode
 import scala.collection.mutable.Stack
 
 
@@ -34,7 +34,7 @@ class MyContinuation(msg: String, block: => Unit)  {
  * In their paper they introduce the nicest possible way to implement a search for CP (in Comet).
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class SearchController(val node: ReversibleSearchNode) {
+abstract class SearchController(val node: SearchNode) {
   
   
   

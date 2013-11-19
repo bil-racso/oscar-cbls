@@ -16,11 +16,10 @@
 package oscar.reversible
 
 import scala.util.Random
-
 /**
  * @author Pierre Schaus
  */
-class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max: Int) {
+class ReversibleSparseSubset(store: ReversibleNode, val min: Int, val max: Int) {
 
   val size1 = new ReversibleInt(store, 0) // subset initially empty
   val size2 = new ReversibleInt(store, max - min + 1) // superset contains everything
@@ -176,8 +175,8 @@ class ReversibleSparseSubset(store: ReversibleSearchNode, val min: Int, val max:
 }
 
 object ReversibleSparseSubset {
-  def apply(store: ReversibleSearchNode, min: Int, max: Int) = new ReversibleSparseSubset(store, min, max)
-  def apply(store: ReversibleSearchNode, possible: Set[Int]) = {
+  def apply(store: ReversibleNode, min: Int, max: Int) = new ReversibleSparseSubset(store, min, max)
+  def apply(store: ReversibleNode, possible: Set[Int]) = {
     val (min, max) = (possible.min, possible.max)
     val res = new ReversibleSparseSubset(store, min, max)
     for (i <- min to max; if !possible.contains(i)) {

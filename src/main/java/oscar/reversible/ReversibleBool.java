@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.reversible;
 
-import oscar.reversible.ReversibleSearchNode;
 
 
 /**
@@ -23,11 +22,11 @@ import oscar.reversible.ReversibleSearchNode;
  */
 public class ReversibleBool extends ReversiblePointer<Boolean> {
 
-	public ReversibleBool(ReversibleSearchNode node, boolean b) {
+	public ReversibleBool(ReversibleNode node, boolean b) {
 		super(node,b);
 	}
 	
-	public ReversibleBool(ReversibleSearchNode node) {
+	public ReversibleBool(ReversibleNode node) {
 		super(node, false);
 	}	
 	

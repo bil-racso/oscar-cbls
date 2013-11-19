@@ -21,6 +21,7 @@ import oscar.search._
 import oscar.reversible._
 import oscar.cp.modeling._
 import oscar.cp.core.CPVarInt
+import oscar.search.SearchNode
 
 class SearchControllerTest extends FunSuite with ShouldMatchers  {
 
@@ -28,7 +29,7 @@ class SearchControllerTest extends FunSuite with ShouldMatchers  {
  
     test("test 1 dfs") {
     			
-    	val n = new ReversibleSearchNode()
+    	val n = new SearchNode()
     	val v = Array.tabulate(3)(i => new ReversibleBool(n))
 	
 	    n.sc = new DFSSearchController(n)

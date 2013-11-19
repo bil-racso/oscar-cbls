@@ -14,8 +14,6 @@
  ******************************************************************************/
 package oscar.reversible;
 
-import oscar.reversible.ReversibleSearchNode;
-
 
 
 /**
@@ -29,9 +27,9 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	private ReversibleInt last;
 	private ReversibleInt [] prev;
 	private ReversibleInt [] next;
-	private ReversibleSearchNode n;
+	private ReversibleNode n;
 	
-	public ReversibleOrderedSet(ReversibleSearchNode n, int min, int max) {
+	public ReversibleOrderedSet(ReversibleNode n, int min, int max) {
 		super(min,max);
 		this.n = n;
 		prev = new ReversibleInt [max-min+1];
