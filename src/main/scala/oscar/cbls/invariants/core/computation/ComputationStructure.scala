@@ -135,11 +135,19 @@ class Model(override val Verbose:Boolean = false,
     PropagationElements
   }
 
+  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+
+  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+    toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
+  }
+
   /**calls this when you have declared all your invariants and variables.
    * This must be called before any query and update can be made on the model, and after all the invariants and variables have been declared.
    */
   def close(DropStaticGraph: Boolean = true){
     assert(!Closed, "cannot close a model twice")
+    for(p <- toCallBeforeClose) p()
+    toCallBeforeClose = List.empty
     setupPropagationStructure(DropStaticGraph)
     Closed=true
   }
@@ -791,7 +799,13 @@ object IntVar{
     require(!domain.isEmpty, "the domain supplied must be a valid increasing interval")
     new IntVar(model, domain, value, name)
   }
-  
+
+  def apply(model: Model, value:Int = 0, name:String) = {
+    val domain = Int.MinValue to Int.MaxValue
+    new IntVar(model, domain, value, name)
+  }
+
+
   implicit val ord:Ordering[IntVar] = new Ordering[IntVar]{
     def compare(o1: IntVar, o2: IntVar) = o1.compare(o2)
   }

@@ -574,7 +574,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
         //This can happen if we perform heavy changes to the dependencies in a careless way,
         // eg: reloading a previous model.
         // We wait for the dependencies to be stable, when the propagation is performed.
-
+        println("cycle in SCC, reverting to differed non-incremental sort")
         autoSort = false
         Stalls +=1
       }

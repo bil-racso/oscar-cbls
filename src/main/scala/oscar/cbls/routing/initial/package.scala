@@ -25,4 +25,4 @@ package oscar.cbls.routing
  *
  * notice that by default, VRP is instantiated with all nodes unrouted.
  */
-package object initialSolution {}
+package object initial {}

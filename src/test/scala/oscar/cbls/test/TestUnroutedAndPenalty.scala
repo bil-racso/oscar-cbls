@@ -24,7 +24,7 @@ import org.scalatest.matchers.ShouldMatchers
 import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.BestInsert
+import oscar.cbls.routing.initial.BestInsert
 
 class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers{
 

@@ -127,7 +127,7 @@ object ThreeOptA extends SearchEngine{
       // its start should be "close" to the insertion point
       //its end should be close to the next of the insertion point
       //begin and end should be on the same route and in this order
-      for (beforeSegmentStart <- relevantNeighborhoodOfNode(insertionPoint)  if (insertionPoint != beforeSegmentStart)
+      for (beforeSegmentStart:Int <- relevantNeighborhoodOfNode(insertionPoint)  if (insertionPoint != beforeSegmentStart)
         && vrp.isRouted(beforeSegmentStart))
       {
         for (segmentEnd <- relevantNeighborhoodOfNode(vrp.Next(insertionPoint).value)
@@ -136,7 +136,7 @@ object ThreeOptA extends SearchEngine{
                vrp.isAtLeastAsFarAs(beforeSegmentStart, segmentEnd,2) &&
                !vrp.isBetween(insertionPoint, beforeSegmentStart, segmentEnd) &&
                vrp.isAtMostAsFarAs(beforeSegmentStart,segmentEnd,limitLength+1)))
-        {
+        { //TODO: plutôt parcourir le segment?
           val newObj = getObjAfterMove(beforeSegmentStart ,segmentEnd, insertionPoint, vrp)
           if (newObj < BestObj){
             if (FirstImprove)

@@ -24,7 +24,7 @@ import org.scalatest.matchers.ShouldMatchers
 import math._
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.BestInsert
+import oscar.cbls.routing.initial.BestInsert
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which

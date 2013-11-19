@@ -26,7 +26,7 @@ import oscar.cbls.invariants.core.computation.Model
 import util.Random
 import scala.math._
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution._
+import oscar.cbls.routing.initial._
 import oscar.cbls.routing.neighborhood._
 
 /**supports only a single vehicle*/

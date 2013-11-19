@@ -14,40 +14,34 @@
  ******************************************************************************/
 /*******************************************************************************
   * Contributors:
-  *     This code has been initially developed by Ghilain Florent.
+  *     This code has been initially developed by De Landtsheer Renaud and Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.routing.initialSolution
+package oscar.cbls.routing.initial
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing._
-import neighborhood.{ReinsertPoint, Neighbor}
+import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
 
 /**
- * Constructs an initial solution randomly.
+ * Constructs an initial solution by repeatedly inserting points into the circuits.
+ * it performs a round-robin on vehicles, and every time performs the best possible insert
+ * by applying [[oscar.cbls.routing.neighborhood.ReinsertPoint]]
  */
-object RandomNeighbor{
+object BestInsert{
+
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp:VRP with ObjectiveFunction with Unrouted with PositionInRouteAndRouteNr
-    with HopDistance){
-
-    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
-    for (v <- 0 until vrp.V)
-      vrp.Next(v) := v
-    for (p <- vrp.V until vrp.N)
-      vrp.Next(p) := vrp.N
-    vrp.m.propagate()
+  def apply(vrp:VRP with ObjectiveFunction with Unrouted){
 
     var vehicle = 0
     val nodeToRoute = vrp.N-vrp.V
     for (p <- 0 until nodeToRoute){
-      current(vehicle) = ReinsertPoint.getRandomMove(vrp,current(vehicle),vehicle)
 
-      if (current(vehicle)!= null)
-        current(vehicle).comit()
+      val move = ReinsertPoint.getBestMove(vrp,null,vehicle)
+
+      if (move!= null) move.comit()
       vehicle=(vehicle+1) % vrp.V
     }
   }

@@ -22,7 +22,7 @@ package oscar.cbls.routing.visual
 
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
-import initialSolution.{BestInsert, RandomNeighbor}
+import initial.{BestInsert, RandomNeighbor}
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualArrow
 import oscar.cbls.constraints.core.ConstraintSystem

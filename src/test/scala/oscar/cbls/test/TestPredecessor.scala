@@ -23,7 +23,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initialSolution.RandomNeighbor
+import oscar.cbls.routing.initial.RandomNeighbor
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 
