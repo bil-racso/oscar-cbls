@@ -346,20 +346,20 @@ class VRP(val N: Int, val V: Int, val m: Model) {
  */
 class VRPObjectiveFunction(N: Int, V: Int, m: Model) extends VRP(N, V, m){
 
-  val landmarkArray: Array[Int] = Array.tabulate(N)( _ => -1)
-  var landmarkedList:List[Int] = List.empty
-  var landMarking:Boolean = false
-  val NodePositionAccessorKey:Int = m.getStorageIndex
+  private val landmarkArray: Array[Int] = Array.tabulate(N)( _ => -1)
+  private var landmarkedList:List[Int] = List.empty
+  private var landMarking:Boolean = false
+  private val NodePositionAccessorKey:Int = m.getStorageIndex
 
   for(i <- 0 to N-1){
     Next(i).storeAt(NodePositionAccessorKey,new Integer(i))
   }
 
-  var oldObjective:Int = 0
+  private var oldObjective:Int = 0
   val objectiveFunction = IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
-  var objectiveFunctionTerms:List[IntVar] = List.empty
+  private var objectiveFunctionTerms:List[IntVar] = List.empty
 
   /** adds a term top the objective function*/
   def addObjectiveTerm(o:IntVar){
@@ -628,18 +628,22 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with Unrouted{
  * the length of each route and their last node.
  */
 trait PositionInRouteAndRouteNr extends VRP {
+
   /**
    * the invariant Routes.
    */
   val routes = Routes.buildRoutes(Next, V)
+
   /**
    * the position in route of each node as an array of IntVar.
    */
   val PositionInRoute = routes.PositionInRoute
+
   /**
    * the route number of each node as an array of IntVar.
    */
   val RouteNr = routes.RouteNr
+
   /**
    * the route length of each route as an array of IntVar.
    */
@@ -730,10 +734,33 @@ trait StrongConstraints extends VRPObjectiveFunction {
    * the strong constraints system.
    */
   var strongConstraints:ConstraintSystem = new ConstraintSystem(m)
-  var violatedStrongConstraints = false
 
-  //TODO: faut changer le landmark et la manière de comparer l'ancienne valeur de la fct objectif
+  private var strongConstraintOnLandMark:Boolean = true
 
+  /**
+   * Sets current point as comparison point for the improves method
+   * @param withRestore set to true if you want the routes to be saved, so that you can restore them by calling restoreLandmark
+   */
+  override def defineLandmark(withRestore: Boolean) {
+    strongConstraintOnLandMark = strongConstraints.isTrue
+    super.defineLandmark(withRestore)
+  }
+
+  /**
+   * compares the current solution with the landmark
+   * returns the delta on the objectiveFunction
+   * @return
+   */
+  override def deltaFromLandMark: Int = {
+    val strongConstraint = strongConstraints.isTrue
+    if (strongConstraintOnLandMark && !strongConstraint){
+      Int.MaxValue
+    }else if(!strongConstraintOnLandMark && strongConstraint){
+      Int.MinValue
+    }else{
+      super.deltaFromLandMark
+    }
+  }
 }
 
 /**
@@ -747,6 +774,4 @@ trait WeakConstraints extends VRPObjectiveFunction {
 
   this.addObjectiveTerm(weakConstraints)
 }
-
-
 
