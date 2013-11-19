@@ -25,13 +25,36 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{Max2, Max}
 import oscar.cbls.routing.model.newVRP.{NodesOfVehicle, VRP}
 
+/**
+ * Maintains a integer weight on each node to help to form constraints (adding information).
+ */
+class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
+
+  /**
+   * the data structure array which maintains weights.
+   */
+  val nodeWeight : Array[IntVar] = Array.tabulate(vrp.N)(i => IntVar(vrp.m, Int.MinValue, Int.MaxValue, 0,
+    weightingName + "_" + i))
+
+  /**
+   * It allows you to set the weight of a given point.
+   * @param n the point.
+   * @param w the weight.
+   */
+  def fixNodeWeight(n:Int,w:Int) { nodeWeight(n) := w}
+
+  /**
+   * It allows you to set a specific weight for all points of the VRP.
+   * @param w the weight.
+   */
+  def fixNodeWeight(w:Int) {nodeWeight.foreach(p => p := w)}
+}
+
 /** maintains a cost associated to each vehicle
-  *the cost is the sum of the cost associated to each node
-  * @param vrp
-  * @param nodeCost
+  *the cost is the sum of the cost associated to each node crossed by the vehicle
   */
-class ComutativeCapacity(vrp:VRP with NodesOfVehicle, nodeCost:Array[IntVar]){
-  val CostOfVehicle = Array.tabulate(vrp.V)(v => SumElements(nodeCost,vrp.NodesOfVehicle(v)).toIntVar)
+class ComutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "CumulativeCapacity") extends NodeWeighting(vrp,CapacityName){
+  val CostOfVehicle = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
 }
 
 abstract class StatefulCapacity(val vrp:VRP with Predecessors,
@@ -64,29 +87,4 @@ class TimeWindow(vrp:VRP with Predecessors with StrongConstraints,
   //}
 */
 
-}
-
-
-/**
- * Maintains a integer weight on each node to help to form constraints (adding information).
- */
-trait WeightedNode extends VRP {
-  /**
-   * the data structure array which maintains weights.
-   */
-  val weightNode : Array[IntVar] = Array.tabulate(N)(i => IntVar(m, Int.MinValue, Int.MaxValue, 0,
-    "weight of node " + i))
-
-  /**
-   * It allows you to set the weight of a given point.
-   * @param n the point.
-   * @param w the weight.
-   */
-  def fixWeightNode(n:Int,w:Int) { weightNode(n) := w}
-
-  /**
-   * It allows you to set a specific weight for all points of the VRP.
-   * @param w the weight.
-   */
-  def fixWeightNode(w:Int) {weightNode.foreach(p => p := w)}
 }

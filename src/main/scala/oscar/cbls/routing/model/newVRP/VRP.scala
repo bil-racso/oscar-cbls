@@ -721,7 +721,6 @@ trait Predecessors extends VRP{
   val preds:Array[IntVar] = Predecessor(Next,V).preds
 
   //TODO: ajouter des moves plus simples, sans les neouds sprécédesseurs à chaque fois
-
 }
 
 /**
@@ -774,4 +773,3 @@ trait WeakConstraints extends VRPObjectiveFunction {
 
   this.addObjectiveTerm(weakConstraints)
 }
-
