@@ -58,7 +58,7 @@ class InvariantProperties extends PropSpec with PropertyChecks {
 
   property("Access to int vars...") {
     val bench = new InvariantCheck
-    new IntElements(bench.genIntSetVar(0 to 19, 5), bench.genIntVarsArray(20, 0 to 100)).toIntSetVar
+    new IntElements(bench.genIntSetVar(0 to 4, 3), bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
   }
 
@@ -317,7 +317,9 @@ case class RandomIntVar(intVar: IntVar) extends RandomVar {
         //print(randomVar.name + " := " + randomVar.minVal)
         randomVar := randomVar.minVal
       }
-      case Random() => Gen.choose(randomVar.minVal, randomVar.maxVal)
+      case Random() => {
+        randomVar := Gen.choose(randomVar.minVal, randomVar.maxVal).sample.get
+      }
     }
     //println(" (" + randomVar.name + " := " + randomVar.value + ")")
   }
@@ -389,9 +391,15 @@ class InvariantCheck {
     try {
       property = org.scalacheck.Prop.forAll(InvGen.move) {
         randomMove: Move =>
+          randomVars.foreach((rv: RandomVar) => println(rv.toString()))
+          print(randomMove.toString() + " ")
           val randomVar = Gen.oneOf(randomVars).sample.get
+          print(randomVar.toString() + " => ")
           randomVar.move(randomMove)
+          println(randomVar.toString())
           model.propagate()
+          println("result : " + checker.isChecked)
+          println
           checker.isChecked
       }
     } catch {

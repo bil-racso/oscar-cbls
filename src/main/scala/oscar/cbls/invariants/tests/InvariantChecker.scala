@@ -16,6 +16,7 @@ class InvariantChecker extends Checker {
     else {
       invariantChecked = invariantChecked && verity
     }
+    println(invariantChecked)
   }
 
   def isChecked() = {

@@ -233,9 +233,12 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
   }
 
   override def checkInternals(c: Checker) {
+    print("c.check(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i)))): ")
     c.check(KeysToInputArray.indices.forall(i => ((KeysToInputArray(i) != null) == index.value.contains(i))))
+    print("c.check(index.value.forall((i: Int) => output.value.contains(inputarray(i).value))): ")
     c.check(index.value.forall((i: Int) =>
       output.value.contains(inputarray(i).value)))
+    print("c.check(output.value.size (" + output.value.size + ") == index.value.size ("+ index.value.size + ") = ")
     c.check(output.value.size == index.value.size)
   }
 }
