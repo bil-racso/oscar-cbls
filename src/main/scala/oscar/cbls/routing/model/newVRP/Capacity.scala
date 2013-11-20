@@ -53,15 +53,21 @@ class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
 /** maintains a cost associated to each vehicle
   *the cost is the sum of the cost associated to each node crossed by the vehicle
   */
-class ComutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "CumulativeCapacity") extends NodeWeighting(vrp,CapacityName){
+class CommutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "CumulativeCapacity") extends NodeWeighting(vrp,CapacityName){
   val CostOfVehicle = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
 }
 
-abstract class StatefulCapacity(val vrp:VRP with Predecessors,
+abstract class Capacity(val vrp:VRP with Predecessors,
                                 val CapacityOut:Array[IntVar] = Array.tabulate(vrp.N)(n => IntVar(vrp.m,name = "CapacityOutOf_" + n))){
   //the capacity when leaving the predecessor of the node
 //  val CapacityOutPred:Array[IntVar] = Array.tabulate(vrp.N)(n => if (n < vrp.V) 0 else CapacityOut.element(vrp.preds(n)))
 }
+
+class SlidingUpwardToStrongBoundCapacity(vrp: VRP with StrongConstraints, MaxWaitingTime:Int){
+
+}
+
+class SlidingDownwardCapacityToStrongBound
 
 class TimeWindow(vrp:VRP with Predecessors with StrongConstraints,
                  earliestTime:Array[Int],
