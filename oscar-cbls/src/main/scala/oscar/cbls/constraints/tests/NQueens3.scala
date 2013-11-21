@@ -27,6 +27,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
 
 /**
  * Another variant of to solve the NQueen problem

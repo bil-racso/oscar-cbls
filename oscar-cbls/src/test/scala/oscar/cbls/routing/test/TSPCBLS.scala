@@ -31,6 +31,10 @@ import oscar.cbls.routing.initialSolution._
 import oscar.cbls.routing.neighborhood._
 
 /**supports only a single vehicle*/
+
+
+/*
+
 object TSPCBLS extends SearchEngine with StopWatch with App{
 
   // tester si l'objectif est bien la distance réel via la matrice de base des distances.
@@ -137,4 +141,4 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
 
   println(vrp.ObjectiveVar.value)
 }
-
+*/

@@ -28,6 +28,9 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
+import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
+import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY

@@ -30,7 +30,7 @@ import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
 import initialSolution.RandomNeighbor
 import model._
-
+/*
 object ExConstraints extends App{
 
   val N = 20
@@ -118,3 +118,4 @@ object ExConstraints extends App{
   m.propagate()
 
 }
+*/

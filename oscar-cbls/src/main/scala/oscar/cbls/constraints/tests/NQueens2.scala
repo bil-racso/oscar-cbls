@@ -28,6 +28,8 @@ import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import util.Random
+import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
+import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 ;
 
 //Beware: this requires a lot of memory, so I use to put this in the command line.
