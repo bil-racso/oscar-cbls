@@ -17,39 +17,14 @@
   *     This code has been initially developed by De Landtsheer Renaud and Ghilain Florent.
   ******************************************************************************/
 
-
-/**
- * Tous les VRP ont une fonction objectif et une contrainte forte.
- * le VRP a une fonction improves, qui prend en entrée une description de movement, et une fonction de correction,
- * et qui retourne true si ça améliore, false sinon. La description de mouvement est une liste d'affectation.
- * le VRP a une méthode unroute pour les points, et une pour l'entièreté du modèle
- * la fonction objectif est définie comme une somme de trucs, on peut en ajouter à gogo avec une méthode addObjectiveTerm
- * méthode landmark pour gérer la focntion objectif, qui prend la sol courante comme régférence, et peut éventuellement être restauré.
- *
- * la fonction objectif est basée sur deux routines: recordReference et
- * features optionnels:
- * closest neighbors uses HopDistance (hop ditance a une méthode addTotalHopsToObjective)
- * nodesOfVehicle uses PositionInRouteAndRouteNr
- * Unrouted (abstract)
- * SimpleUnrouted implements Unrouted
- * PenaltyForUnrouted uses Unrouted
- * Predecessor
- * PositionInRouteAndRouteNr implements Unrouted (V is the route Nr of unrouted nodes)
- * WeakConstraint (qui crée un weakCS et l'ajoute à l'objectif)
- *
- */
-
 package oscar.cbls.routing.model.newVRP
 
 
-import collection.immutable.{SortedSet, SortedMap}
+import collection.immutable.SortedMap
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{IntSetVar, Model, IntVar}
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.numeric.{SumElements, Sum}
-import oscar.cbls.objective.ObjectiveTrait
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -333,18 +308,8 @@ class VRP(val N: Int, val V: Int, val m: Model) {
 }
 
 /**
- * The class constructor models a VRP problem with N points (deposits and customers)
- * and V vehicles.
- *
- * Vehicles are supposed to leave from their depot, and come back to it.
- * they all have a different depot (but yo ucan put them at the same place if you want)
- *
- * Info: after instantiation, each customer point is unrouted, and each vehicle loop on his deposit.
- * @param N the number of points (deposits and customers) in the problem.
- * @param V the number of vehicles.
- * @param m the model.
  */
-class VRPObjectiveFunction(N: Int, V: Int, m: Model) extends VRP(N, V, m){
+trait VRPObjective extends VRP{
 
   private val landmarkArray: Array[Int] = Array.tabulate(N)( _ => -1)
   private var landmarkedList:List[Int] = List.empty
@@ -489,9 +454,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
 
 
 trait ClosestNEighborPointsHop extends ClosestNeighborPoints with HopDistance{
-  def getDistance(from: Int, to: Int) {
-    getHop(from,to)
-  }
+  def getDistance(from: Int, to: Int):Int = getHop(from,to)
 }
 
 /**
@@ -500,7 +463,7 @@ trait ClosestNEighborPointsHop extends ClosestNeighborPoints with HopDistance{
  */
 abstract trait ClosestNeighborPoints extends VRP {
 
-  def getDistance(from:Int,to:Int)
+  def getDistance(from:Int,to:Int):Int
   /**
    * the data structure which maintains the k closest neighbors of each point.
    */
@@ -530,12 +493,12 @@ abstract trait ClosestNeighborPoints extends VRP {
   def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean) = (_=>true)):List[Int]= {
 
     val reachableneigbors = Nodes.filter((next:Int)
-    => node != next && filter(next) && (getHop(node,next)!= Int.MaxValue || getHop(next, node)!= Int.MaxValue))
+    => node != next && filter(next) && (getDistance(node,next)!= Int.MaxValue || getDistance(next, node)!= Int.MaxValue))
 
     val heap = new BinomialHeap[(Int,Int)](-_._2,k+1)
 
     for(neigbor <- reachableneigbors){
-      heap.insert(neigbor, min(getHop(neigbor, node),getHop(node,neigbor)))
+      heap.insert(neigbor, min(getDistance(neigbor, node),getDistance(node,neigbor)))
       if (heap.size>k)heap.popFirst()
     }
 
@@ -619,7 +582,7 @@ trait HopDistance extends VRP {
  * It maintains it equal to the hop distance in the VRP,
  * based either on a matrix, or on another mechanism defined by the distance function.
  */
-trait HopDistanceAsObjective extends VRPObjectiveFunction with HopDistance{
+trait HopDistanceAsObjective extends VRPObjective with HopDistance{
   addObjectiveTerm(overallDistance)
 }
 
@@ -736,7 +699,7 @@ trait Predecessors extends VRP{
  * It redefines the propagation method of ObjectiveFunction trait,
  * that saves time by propagating partially.
  */
-trait StrongConstraints extends VRPObjectiveFunction {
+trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
    */
@@ -773,7 +736,7 @@ trait StrongConstraints extends VRPObjectiveFunction {
 /**
  * This trait maintains weak constraints system.
  */
-trait WeakConstraints extends VRPObjectiveFunction {
+trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.
    */
