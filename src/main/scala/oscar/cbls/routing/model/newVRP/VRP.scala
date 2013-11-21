@@ -487,12 +487,20 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
   def fixUnroutedPenaltyWeight(p:Int) {weightUnroutedPenalty.foreach(penalty => penalty := p)}
 }
 
+
+trait ClosestNEighborPointsHop extends ClosestNeighborPoints with HopDistance{
+  def getDistance(from: Int, to: Int) {
+    getHop(from,to)
+  }
+}
+
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait ClosestNeighborPoints extends VRP with HopDistance{
+abstract trait ClosestNeighborPoints extends VRP {
 
+  def getDistance(from:Int,to:Int)
   /**
    * the data structure which maintains the k closest neighbors of each point.
    */
