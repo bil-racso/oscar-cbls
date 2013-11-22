@@ -21,7 +21,7 @@ import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
 import oscar.visual.VisualFrame
-import oscar.search.VisualSearchTree
+import oscar.algo.search.VisualSearchTree
 import oscar.util.tree.Node
 import oscar.visual.tree.VisualLabelledTree
 

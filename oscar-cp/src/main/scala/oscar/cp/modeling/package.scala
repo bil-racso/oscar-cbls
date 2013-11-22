@@ -19,7 +19,7 @@ import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
 
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPVarBool

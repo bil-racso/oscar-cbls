@@ -21,7 +21,7 @@ package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source

@@ -18,12 +18,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Hashtable;
 
-
+import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.reversible.ReversibleInt;
 
 
 

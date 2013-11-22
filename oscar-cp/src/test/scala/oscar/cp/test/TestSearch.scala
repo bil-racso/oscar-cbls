@@ -19,7 +19,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
 import oscar.cp.core._
-import oscar.search.IDSSearchController
+import oscar.algo.search.IDSSearchController
 import oscar.cp.modeling._
 
 

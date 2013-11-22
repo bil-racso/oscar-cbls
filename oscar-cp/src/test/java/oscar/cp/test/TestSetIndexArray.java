@@ -16,9 +16,11 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
+
 import java.util.Arrays;
+
+import oscar.algo.reversible.*;
 import oscar.cp.core.*;
-import oscar.reversible.*;
 
 
 /**

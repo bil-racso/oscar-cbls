@@ -15,7 +15,7 @@
 
 package oscar.cp.core
 
-import oscar.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBool
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 

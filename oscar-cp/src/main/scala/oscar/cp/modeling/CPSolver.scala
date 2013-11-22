@@ -15,14 +15,14 @@
 
 package oscar.cp.modeling
 
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp._
 import oscar.cp.core._
 import oscar.cp.constraints._
 import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.cp.scheduling.CumulativeActivity
-import oscar.reversible._
+import oscar.algo.reversible._
 import oscar.util._
 import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto

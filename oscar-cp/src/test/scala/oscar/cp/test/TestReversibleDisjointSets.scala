@@ -2,7 +2,7 @@ package oscar.cp.test
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
-import oscar.reversible.ReversibleDisjointSets
+import oscar.algo.reversible.ReversibleDisjointSets
 import oscar.cp.modeling.CPSolver
 
 class TestReversibleDisjointSets extends FunSuite with ShouldMatchers {

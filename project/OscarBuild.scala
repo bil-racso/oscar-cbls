@@ -108,7 +108,7 @@ object OscarBuild extends Build {
     id = "oscar-cp",
     base = file("oscar-cp"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
-    dependencies = Seq(oscarSearch,oscarReversible,oscarVisual,oscarAlgo))  
+    dependencies = Seq(oscarAlgo,oscarVisual))  
     
   lazy val oscarDes = Project(
     id = "oscar-des",
@@ -141,12 +141,11 @@ object OscarBuild extends Build {
     
   oscarLinprog.settings(unmanagedBase := file("libo"))
   
-    
-  lazy val oscarSearch = Project(
-    id = "oscar-search",
-    base = file("oscar-search"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
-    dependencies = Seq(oscarReversible,oscarVisual))
+  lazy val oscarAlgo = Project(
+    id = "oscar-algo",
+    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
+    base = file("oscar-algo"),
+    dependencies= Seq(oscarUtil,oscarVisual))
     
   lazy val oscarVisual = Project(
     id = "oscar-visual",
@@ -159,20 +158,13 @@ object OscarBuild extends Build {
     settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
     base = file("oscar-invariants"))      
  
-  lazy val oscarReversible = Project(
-    id = "oscar-reversible",
-    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
-    base = file("oscar-reversible"))       
-
+ 
   lazy val oscarAlgebra = Project(
     id = "oscar-algebra",
     settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
     base = file("oscar-algebra"))       
 
-  lazy val oscarAlgo = Project(
-    id = "oscar-algo",
-    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
-    base = file("oscar-algo"))         
+      
     
   lazy val oscarUtil = Project(
     id = "oscar-util",

@@ -17,8 +17,9 @@ package oscar.cp.search
 
 import oscar.cp.modeling._
 import oscar.cp.core.CPVarInt
-import oscar.reversible._
-import oscar.search._
+import oscar.algo.reversible._
+import oscar.algo.search._
+import oscar.algo.search.Branching
 
 /**
  * Binary Branching: 

@@ -15,8 +15,10 @@
 package oscar.cp.core;
 
 
-import oscar.reversible._
+import oscar.algo.reversible._
 import scala.collection.Iterator
+import oscar.algo.reversible.ReversibleInterval
+import oscar.algo.reversible.ReversibleSparseSet
 
 
 

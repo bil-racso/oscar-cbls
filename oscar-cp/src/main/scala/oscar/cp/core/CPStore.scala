@@ -21,8 +21,8 @@ import java.util.Random;
 import oscar.cp.constraints.CPObjective;
 import oscar.cp.constraints.CPObjectiveUnit;
 import oscar.cp.constraints.Eq;
-import oscar.reversible.ReversiblePointer;
-import oscar.search.SearchNode;
+import oscar.algo.reversible.ReversiblePointer;
+import oscar.algo.search.SearchNode;
 import collection.JavaConversions._
 
 import oscar.cp.core.CPOutcome._

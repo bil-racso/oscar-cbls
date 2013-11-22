@@ -14,11 +14,11 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
+import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.Constraint;
-import oscar.reversible.ReversibleInt;
 
 /**
  * Lexicographic Less or Equal (LexLeq) Constraint

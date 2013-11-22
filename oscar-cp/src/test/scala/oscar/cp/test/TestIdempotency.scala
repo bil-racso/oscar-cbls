@@ -21,7 +21,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.core.Constraint
 import oscar.cp.core._
-import oscar.reversible._
+import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.cp.modeling._
 

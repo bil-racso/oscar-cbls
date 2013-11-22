@@ -22,7 +22,7 @@ import oscar.cp.core._
 
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
-import oscar.reversible._
+import oscar.algo.reversible._
 
 
 /*class TestUnitResource extends FunSuite with ShouldMatchers {

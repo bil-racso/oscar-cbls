@@ -20,7 +20,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils;
-import oscar.reversible.ReversibleInt
+import oscar.algo.reversible.ReversibleInt
 
 import scala.math.min
 import scala.math.max
@@ -28,8 +28,8 @@ import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.CPSolver
-import oscar.reversible.ReversibleInt
-import oscar.reversible.ReversibleSetIndexedArray
+import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.ReversibleSetIndexedArray
 
 
 /**

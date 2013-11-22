@@ -14,9 +14,9 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
+import oscar.algo.reversible.ReversibleInt;
+import oscar.algo.reversible.SetIndexedArray;
 import oscar.cp.core.*;
-import oscar.reversible.ReversibleInt;
-import oscar.reversible.SetIndexedArray;
 
 
 /**

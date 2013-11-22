@@ -19,7 +19,7 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
-import oscar.reversible.SetIndexedArray
+import oscar.algo.reversible.SetIndexedArray
 
 class TestCarSeq extends FunSuite with ShouldMatchers  {
 
@@ -40,7 +40,7 @@ class TestCarSeq extends FunSuite with ShouldMatchers  {
 							 Array(0, 1, 0, 1, 0),
 							 Array(1, 0, 1, 0, 0),
 							 Array(1, 1, 0, 0, 0));	
-		val options = Array.fill(nbOptions)(new oscar.reversible.SetIndexedArray(0,nbConfigs,true))
+		val options = Array.fill(nbOptions)(new oscar.algo.reversible.SetIndexedArray(0,nbConfigs,true))
 		for (o <- 0 until nbOptions; c <- 0 until nbConfigs; if (requires(c)(o) == 1)) {
 			options(o).insert(c);
 			

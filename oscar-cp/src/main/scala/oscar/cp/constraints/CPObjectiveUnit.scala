@@ -21,7 +21,7 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.search.Objective
+import oscar.algo.search.Objective
 import oscar.cp.core.CPPropagStrength
 
 /**

@@ -15,9 +15,10 @@
 
 package oscar.cp.constraints
 
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp.core._
 import oscar.cp.modeling._
+import oscar.algo.search.Objective
 
 /**
  * @author Pierre Schaus  pschaus@gmail.com

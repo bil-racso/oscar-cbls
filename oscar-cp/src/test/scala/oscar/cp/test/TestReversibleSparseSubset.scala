@@ -20,8 +20,8 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
-import oscar.reversible.ReversibleSetIndexedArray
-import oscar.reversible.ReversibleSparseSubset
+import oscar.algo.reversible.ReversibleSetIndexedArray
+import oscar.algo.reversible.ReversibleSparseSubset
 
 
 

@@ -17,7 +17,7 @@
 package oscar.cp.core
 
 import oscar.cp.core.CPOutcome._
-import oscar.reversible.ReversibleSparseSubset
+import oscar.algo.reversible.ReversibleSparseSubset
 
 
 /**

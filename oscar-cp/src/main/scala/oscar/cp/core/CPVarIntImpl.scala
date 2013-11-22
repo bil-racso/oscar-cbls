@@ -14,8 +14,8 @@
  ******************************************************************************/
 package oscar.cp.core
 
-import oscar.reversible.ReversibleQueue
-import oscar.reversible.ReversiblePointer
+import oscar.algo.reversible.ReversibleQueue
+import oscar.algo.reversible.ReversiblePointer
 import scala.collection._
 import scala.collection.generic._
 

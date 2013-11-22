@@ -15,8 +15,9 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
-import oscar.reversible._
+import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.algo.reversible.ReversibleSparseSet
 
 /**
  * and_i x_i <--> bi 
