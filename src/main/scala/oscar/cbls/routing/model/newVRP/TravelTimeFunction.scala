@@ -1,7 +1,7 @@
 package oscar.cbls.routing.model.newVRP
 
 import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.invariants.lib.logic.{Predecessor, IntVarIntVar2IntVarFun}
+import oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.constraints.lib.basic.GE
@@ -17,17 +17,14 @@ trait Time extends VRP with Predecessors{
   val ArrivalTime = Array.tabulate(N) {(i:Int) => IntVar(m, 0, Int.MaxValue / N, 0, "arrivalTimeAtNode" + i)}
   val LeaveTime = Array.tabulate(N) {(i:Int) => IntVar(m, 0, Int.MaxValue / N, 0, "leaveTimeAtNode" + i)}
   val TravelOutDuration = Array.tabulate(N) {(i:Int) => IntVar(m, 0, Int.MaxValue / N, 0, "travelDurationToLeave" + i)}
+  val ArrrivalToNext = Array.tabulate(N) (n => (TravelOutDuration(n) + LeaveTime(n)).toIntVar)
 
   def setFixedDurationNode(node:Int,duration:Int){
     LeaveTime(node) <== ArrivalTime(node) + duration
   }
 
-  {
-  val ArrrivalToNext = Array.tabulate(N) (n => (TravelOutDuration(n) + LeaveTime(n)).toIntVar)
-
   for (i <- 0 to N-1){
     ArrivalTime(i) <== ArrrivalToNext.element(preds(i))
-  }
   }
 }
 
@@ -51,6 +48,7 @@ trait TravelTimeFunction extends VRP with Time{
 }
 
 trait TimeWindow extends Time with StrongConstraints{
+
   def setEndWindow(node:Int,endWindow:Int){
     strongConstraints.post(LE(LeaveTime(node),endWindow))
   }
@@ -62,6 +60,20 @@ trait TimeWindow extends Time with StrongConstraints{
   def setFixedDurationNode(node:Int, duration:Int, startWindow:Int, maxWaiting:Int){
     setFixedDurationNode(node, duration, startWindow)
     strongConstraints.post(GE(ArrivalTime(node),startWindow - maxWaiting))
+  }
+}
+
+trait WaitingDuration extends TimeWindow{
+  val WaitingDuration = Array.tabulate(N) {(i:Int) => IntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)}
+
+  override def setFixedDurationNode(node:Int, duration:Int, startWindow:Int){
+    super.setFixedDurationNode(node, duration, startWindow)
+    WaitingDuration(node) <== Max2(0,startWindow - ArrivalTime(node))
+  }
+
+  override def setFixedDurationNode(node:Int, duration:Int, startWindow:Int, maxWaiting:Int){
+    setFixedDurationNode(node, duration, startWindow)
+    strongConstraints.post(LE(WaitingDuration(node),maxWaiting))
   }
 }
 

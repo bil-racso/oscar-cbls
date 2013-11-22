@@ -94,6 +94,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     for((v:IntVar,i:Int) <- move) v := i
   }
 
+  //TODO: tous les mouvements peuvent être réécrits en intégrant la notion de segment (from,to), et de segment (beforeFrom,BeforeTo)
   /**
    * Returns the list of variables to update with theirs new values in order to reverse
    * a segment of route.
@@ -307,8 +308,8 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   }
 }
 
-/**
- */
+
+
 trait VRPObjective extends VRP{
 
   private val landmarkArray: Array[Int] = Array.tabulate(N)( _ => -1)
@@ -403,6 +404,7 @@ trait VRPObjective extends VRP{
   }
 }
 
+
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
@@ -453,7 +455,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
 }
 
 
-trait ClosestNEighborPointsHop extends ClosestNeighborPoints with HopDistance{
+trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance{
   def getDistance(from: Int, to: Int):Int = getHop(from,to)
 }
 
