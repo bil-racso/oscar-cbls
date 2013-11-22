@@ -96,11 +96,13 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   override def checkInternals(c:Checker){
     val range = values.indices
     for(i <- range){
-      c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i)
+      c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i,
+          Some("ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i"))
     }
     for(i <- range){
       for(j <- range){
-        c.check(!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value))
+        c.check(!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value),
+            Some("!(i < j) || (values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value)"))
       }
     }
   }

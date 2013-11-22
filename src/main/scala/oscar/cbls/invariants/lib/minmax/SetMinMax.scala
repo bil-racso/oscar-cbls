@@ -96,9 +96,10 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
 
   override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc)"))
     }
   }
 }
@@ -125,9 +126,10 @@ case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet
 
   override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc)"))
     }
   }
 }

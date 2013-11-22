@@ -55,9 +55,9 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
   override def checkInternals(c:Checker){
     for(n<- 0 until N){
       //n is unrouted
-      if(next(n).value==N) c.check(preds(n).value==N)
+      if(next(n).value==N) c.check(preds(n).value==N, Some("preds(n).value==N"))
       // n is routed
-      else  c.check(n == preds(next(n).value).value)
+      else  c.check(n == preds(next(n).value).value, Some("n == preds(next(n).value).value"))
       }
   }
 

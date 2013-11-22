@@ -57,8 +57,10 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
 
   override def checkInternals(c:Checker){
     for(i <- values.indices){
-      c.check(!cond(values(i).value) ||output.value.contains(i))
-      c.check(cond(values(i).value) || !output.value.contains(i))
+      c.check(!cond(values(i).value) || output.value.contains(i),
+          Some("!cond(values(i).value) || output.value.contains(i)"))
+      c.check(cond(values(i).value) || !output.value.contains(i), 
+          Some("cond(values(i).value) || !output.value.contains(i)"))
     }
   }
 }

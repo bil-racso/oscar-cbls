@@ -397,7 +397,7 @@ trait Invariant extends PropagationElement{
    * this will be called for each invariant after propagation is performed.
    * It requires that the Model is instantiated with the variable debug set to true.
    */
-  override def checkInternals(c:Checker){c.check(false, Some(this.toString()))}
+  override def checkInternals(c:Checker){c.check(false, Some(this.toString() + ".checkInternals"))}
 
   def getDotNode = "[label = \"" + this.getClass.getSimpleName + "\" shape = box]"
 }
@@ -669,7 +669,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     }
   }
   
-  override def checkInternals(c: Checker) = c.check(true)
+  override def checkInternals(c: Checker) = c.check(true, Some("Event.checkInternals"))
 }
 
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Model]] whose type is integer.

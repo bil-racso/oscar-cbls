@@ -58,7 +58,7 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
   override def checkInternals(c:Checker){
     var count = 0;
     for (v <- on.value) count += fun(v)
-    c.check(output.value == count)
+    c.check(output.value == count, Some("output.value == count"))
   }
 }
 
@@ -118,6 +118,6 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
   override def checkInternals(c:Checker){
     var count = 1;
     for (v <- on.value) count *= v
-    c.check(output.value == count)
+    c.check(output.value == count, Some("output.value == count"))
   }
 }

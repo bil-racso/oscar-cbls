@@ -1,248 +1,253 @@
 package oscar.cbls.invariants.tests
 
-import org.scalacheck.Gen
-import org.scalacheck.Prop
-import org.scalacheck.Prop.propBoolean
-import org.scalatest.PropSpec
-import org.scalatest.prop.PropertyChecks
-import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
-import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.invariants.core.computation.Invariant
-import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.minmax.MiaxArray
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.core.computation.Variable
-import oscar.cbls.invariants.core.computation.IntSetVar
-import oscar.cbls.invariants.core.computation.Event
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.logic.IntITE
 import scala.collection.immutable.SortedSet
-import oscar.cbls.invariants.lib.logic.IntElements
-import oscar.cbls.invariants.lib.logic.IntSetElement
+import org.scalacheck.Gen
+import org.scalacheck.Gen.value
+import org.scalacheck.Prop
+import org.scalatest.PropSpec
+import org.scalatest.prop.Checkers
+import oscar.cbls.invariants.core.computation.IntSetVar
+import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Variable
 import oscar.cbls.invariants.lib.logic.DenseCount
+import oscar.cbls.invariants.lib.logic.IntElement
+import oscar.cbls.invariants.lib.logic.IntElements
+import oscar.cbls.invariants.lib.logic.IntITE
+import oscar.cbls.invariants.lib.logic.IntSetElement
 import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.logic.Sort
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.MinSet
+import oscar.cbls.invariants.lib.minmax.MaxArray
 import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Prod
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.numeric.Mod
+import oscar.cbls.invariants.lib.minmax.MinArray
+import oscar.cbls.invariants.lib.minmax.MinSet
 import oscar.cbls.invariants.lib.numeric.Abs
+import oscar.cbls.invariants.lib.numeric.Div
+import oscar.cbls.invariants.lib.numeric.Minus
+import oscar.cbls.invariants.lib.numeric.Mod
+import oscar.cbls.invariants.lib.numeric.Prod
+import oscar.cbls.invariants.lib.numeric.Prod2
+import oscar.cbls.invariants.lib.numeric.ProdElements
 import oscar.cbls.invariants.lib.numeric.Step
+import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.numeric.Sum2
+import oscar.cbls.invariants.lib.numeric.SumElements
+import org.scalatest.FunSuite
 
-class InvariantProperties extends PropSpec with PropertyChecks {
+class InvariantTests extends FunSuite with Checkers {
 
-  property("Access to ITE") {
-    val bench = new InvariantCheck
+  test("AllDiff")(pending)
+
+  test("AtLeast")(pending)
+
+  test("AtMost")(pending)
+
+  test("MultiKnapsack")(pending)
+
+  test("Sequence")(pending)
+
+  test("Access to ITE") {
+    val bench = new InvariantTestBench
     new IntITE(bench.genIntVar(0 to 20), bench.genIntVar(0 to 20), bench.genIntVar(0 to 20)).toIntVar
     bench.run
   }
 
-  property("Access to int var...") {
-    val bench = new InvariantCheck
+  test("Access to int var...") {
+    val bench = new InvariantTestBench
     new IntElement(bench.genIntVar(0 to 19), bench.genIntVarsArray(20, 0 to 100)).toIntVar
     bench.run
   }
 
-  property("Access to int vars...") {
-    val bench = new InvariantCheck
+  test("Access to int vars...") {
+    val bench = new InvariantTestBench(true)
     new IntElements(bench.genIntSetVar(0 to 4, 3), bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
   }
 
-  property("Access to int set var...") {
-    val bench = new InvariantCheck
+  test("Access to int set var...") {
+    val bench = new InvariantTestBench
     new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
     bench.run
   }
 
-  property("Clusters...")(pending)
+  test("Clusters...")(pending)
 
   ignore("Dense Count...") {
-    val bench = new InvariantCheck
+    val bench = new InvariantTestBench
     new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 10))
     bench.run
   }
 
-  property("Cross references...")(pending)
+  test("Cross references...")(pending)
 
-  property("Cumulative...")(pending)
+  test("Cumulative...")(pending)
 
-  property("Filter...")(pending)
-  
-  property("SelectLEHeapHeap") {
-    val bench = new InvariantCheck
+  test("Filter...")(pending)
+
+  test("SelectLEHeapHeap") {
+    val bench = new InvariantTestBench
     new SelectLEHeapHeap(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
     bench.run
   }
-  
-  property("SelectLESetQueue") {
-    val bench = new InvariantCheck
+
+  test("SelectLESetQueue") {
+    val bench = new InvariantTestBench
     new SelectLESetQueue(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
     bench.run
   }
-  
-  property("Predecessor")(pending)
-  
-  property("Routes")(pending)
-  
-  property("Sort") {
-    val bench = new InvariantCheck
+
+  test("Predecessor")(pending)
+
+  test("Routes")(pending)
+
+  test("Sort") {
+    val bench = new InvariantTestBench
     new Sort(bench.genIntVarsArray(20, 0 to 30), bench.genIntVarsArray(20, 30 to 100))
     bench.run
   }
-  
-  property("ArgMaxArray") {
-    val bench = new InvariantCheck
+
+  test("ArgMaxArray") {
+    val bench = new InvariantTestBench
     new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
     bench.run
   }
-  
-  property("ArgMinArray") {
-    val bench = new InvariantCheck
+
+  test("ArgMinArray") {
+    val bench = new InvariantTestBench
     new ArgMinArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
     bench.run
   }
-  
-  property("MaxLin")(pending)
-  
-  property("MinLin")(pending)
-  
-  property("Min")(pending)
-  
-  property("Max")(pending)
-  
-  property("Min2")(pending)
-  
-  property("Max2")(pending)
 
-  property("MinArray maintains min") {
-    val bench = new InvariantCheck
+  test("MaxLin")(pending)
+
+  test("MinLin")(pending)
+
+  test("Min")(pending)
+
+  test("Max")(pending)
+
+  test("Min2")(pending)
+
+  test("Max2")(pending)
+
+  test("MinArray maintains min") {
+    val bench = new InvariantTestBench
     new MinArray(bench.genIntVarsArray(4, 0 to 100)).toIntVar
     //    val minVar = new MinArray(bench.genIntVarsArray(4, 0 to 100))
     //    Event(minVar, { println("Trigger : changed " + minVar) })
     bench.run
   }
 
-  property("MaxArray maintains max") {
-    val bench = new InvariantCheck
+  test("MaxArray maintains max") {
+    val bench = new InvariantTestBench
     new MaxArray(bench.genIntVarsArray(2, 0 to 50)).toIntVar
     //    val maxVar = new MaxArray(bench.genIntVarsArray(2, 0 to 50))
     //    Event(maxVar, { println("Trigger : changed " + maxVar) })
     bench.run
   }
-  
-  property("MinSet") {
-    val bench = new InvariantCheck
+
+  test("MinSet") {
+    val bench = new InvariantTestBench
     new MinSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
   }
-  
-  property("MaxSet") {
-    val bench = new InvariantCheck
+
+  test("MaxSet") {
+    val bench = new InvariantTestBench
     new MaxSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
   }
-  
-  property("SumElements") {
-    val bench = new InvariantCheck
+
+  test("SumElements") {
+    val bench = new InvariantTestBench
     new SumElements(bench.genIntVarsArray(10, 0 to 100), bench.genIntSetVar(0 to 9, 5)).toIntVar
     bench.run
   }
-  
-  property("ProdElements") {
-    val bench = new InvariantCheck
+
+  test("ProdElements") {
+    val bench = new InvariantTestBench
     new ProdElements(bench.genIntVarsArray(10, 0 to 100), bench.genIntSetVar(0 to 9, 5)).toIntVar
     bench.run
   }
-  
-  property("Sum") {
-    val bench = new InvariantCheck
+
+  test("Sum") {
+    val bench = new InvariantTestBench
     new Sum(bench.genIntVarsArray(10, 0 to 100)).toIntVar
     bench.run
   }
-  
-  property("Prod") {
-    val bench = new InvariantCheck
+
+  test("Prod") {
+    val bench = new InvariantTestBench
     new Prod(bench.genIntVarsArray(10, 0 to 100)).toIntVar
     bench.run
   }
-  
-  property("Minus") {
-    val bench = new InvariantCheck
+
+  test("Minus") {
+    val bench = new InvariantTestBench
     new Minus(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
     bench.run
   }
-  
-  property("Sum2") {
-    val bench = new InvariantCheck
+
+  test("Sum2") {
+    val bench = new InvariantTestBench
     new Sum2(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
     bench.run
   }
-  
-  property("Prod2") {
-    val bench = new InvariantCheck
+
+  test("Prod2") {
+    val bench = new InvariantTestBench
     new Prod2(bench.genIntVar(0 to 100), bench.genIntVar(0 to 100)).toIntVar
     bench.run
   }
-  
-  property("Div") {
-    val bench = new InvariantCheck
+
+  test("Div") {
+    val bench = new InvariantTestBench
     new Div(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
     bench.run
   }
-  
-  property("Mod") {
-    val bench = new InvariantCheck
+
+  test("Mod") {
+    val bench = new InvariantTestBench
     new Mod(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
     bench.run
   }
-  
-  property("Abs") {
-    val bench = new InvariantCheck
+
+  test("Abs") {
+    val bench = new InvariantTestBench
     new Abs(bench.genIntVar(-100 to 100)).toIntVar
     bench.run
   }
-  
-  property("Step") {
-    val bench = new InvariantCheck
+
+  test("Step") {
+    val bench = new InvariantTestBench
     new Step(bench.genIntVar(-100 to 100)).toIntVar
     bench.run
   }
-  
-  property("RoundUpModulo")(pending)
-  
-  property("RoundUpCustom")(pending)
-  
-  property("Union")(pending)
-  
-  property("Inter")(pending)
-  
-  property("Diff")(pending)
-  
-  property("Cardinality")(pending)
-  
-  property("MakeSet")(pending)
-  
-  property("Interval")(pending)
-  
-  property("TakeAny")(pending)
-  
-  property("SetSum")(pending)
-  
-  property("SetProd")(pending)
+
+  test("RoundUpModulo")(pending)
+
+  test("RoundUpCustom")(pending)
+
+  test("Union")(pending)
+
+  test("Inter")(pending)
+
+  test("Diff")(pending)
+
+  test("Cardinality")(pending)
+
+  test("MakeSet")(pending)
+
+  test("Interval")(pending)
+
+  test("TakeAny")(pending)
+
+  test("SetSum")(pending)
+
+  test("SetProd")(pending)
 }
 
 abstract class Move
@@ -347,8 +352,9 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   }
 }
 
-class InvariantCheck {
-  val checker = new InvariantChecker
+class InvariantTestBench(verbose: Boolean = false) {
+  var property: Prop = false
+  val checker = new InvariantChecker(verbose)
   val model = new Model(false, Some(checker))
   var randomVars: List[RandomVar] = List()
 
@@ -386,27 +392,25 @@ class InvariantCheck {
     //println("Model closed")
     model.propagate()
 
-    var property: Prop = false
-
     try {
       property = org.scalacheck.Prop.forAll(InvGen.move) {
         randomMove: Move =>
-          randomVars.foreach((rv: RandomVar) => println(rv.toString()))
-          print(randomMove.toString() + " ")
+          if (verbose) {
+            if (randomVars.length > 1) randomVars.foreach((rv: RandomVar) => println(rv.toString()))
+            print(randomMove.toString() + " ")
+          }
           val randomVar = Gen.oneOf(randomVars).sample.get
-          print(randomVar.toString() + " => ")
+          if (verbose) print(randomVar.toString() + " => ")
           randomVar.move(randomMove)
-          println(randomVar.toString())
+          if (verbose) println(randomVar.toString())
           model.propagate()
-          println("result : " + checker.isChecked)
-          println
+          if (verbose) println
           checker.isChecked
       }
     } catch {
       case e: Exception =>
         println("Exception caught: " + e)
-        false
     }
-    property.check
+    Checkers.check(property)
   }
 }

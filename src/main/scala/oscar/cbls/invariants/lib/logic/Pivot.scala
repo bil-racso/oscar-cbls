@@ -100,15 +100,15 @@ case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntS
 
   override def checkInternals(c:Checker){
     for(v <- output.value){
-      c.check(values(v).value <= boundary.value)
+      c.check(values(v).value <= boundary.value, Some("values(v).value <= boundary.value"))
     }
     var count:Int = 0
     for(v <- values){
       if(v.value <= boundary.value)
         count +=1
     }
-    c.check(count == output.value.size)
-    c.check(HeapAbove.size + HeapBelowOrEqual.size == values.size)
+    c.check(count == output.value.size, Some("count == output.value.size"))
+    c.check(HeapAbove.size + HeapBelowOrEqual.size == values.size, Some("HeapAbove.size + HeapBelowOrEqual.size == values.size"))
   }
 }
 
@@ -171,10 +171,10 @@ case class SelectLESetQueue(values:Array[IntVar], boundary: IntVar) extends IntS
     var count:Int = 0
     for(i <- values.indices){
       if(values(i).value <= boundary.value){
-        c.check(output.value.contains(i))
+        c.check(output.value.contains(i), Some("output.value.contains(i (" + i + "))"))
         count +=1
       }
     }
-    c.check(output.value.size == count)
+    c.check(output.value.size == count, Some("output.value.size == count"))
   }
 }

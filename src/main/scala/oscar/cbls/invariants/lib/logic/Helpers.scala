@@ -53,7 +53,7 @@ class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.Mi
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value == fun(a.value))
+    c.check(output.value == fun(a.value), Some("output.value == fun(a.value)"))
   }
 }
 
@@ -84,7 +84,7 @@ class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), overri
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value == fun(a.value,b.value))
+    c.check(output.value == fun(a.value,b.value), Some("output.value == fun(a.value,b.value)"))
   }
 }
 

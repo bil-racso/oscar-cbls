@@ -54,7 +54,8 @@ case class Sum(vars:Iterable[IntVar]) extends IntInvariant {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value))
+    c.check(output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value),
+        Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
   }
 }
 
@@ -109,7 +110,7 @@ case class Prod(vars:Iterable[IntVar]) extends IntInvariant {
   override def checkInternals(c:Checker){
     var prod = 1;
     for (v <- vars) prod *= v.value
-    c.check(output.value == prod)
+    c.check(output.value == prod, Some("output.value == prod"))
   }
 }
 

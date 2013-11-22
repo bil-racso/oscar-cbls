@@ -207,17 +207,17 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar,default:Int) ex
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
         if (vars(i).value == this.Miax.value) {
-          c.check(output.value.contains(i))
+          c.check(output.value.contains(i), Some("output.value.contains(i)"))
           count += 1
         } else {
-          c.check(Ord(Miax.value) < Ord(vars(i).value))
+          c.check(Ord(Miax.value) < Ord(vars(i).value), Some("Ord(Miax.value) < Ord(vars(i).value)"))
         }
       }
     }
-    c.check(output.value.size == count)
+    c.check(output.value.size == count, Some("output.value.size == count"))
     h.checkInternals(c:Checker)
-    c.check(h.getFirsts.length == output.value.size)
+    c.check(h.getFirsts.length == output.value.size, Some("h.getFirsts.length == output.value.size"))
     if (cond != null)
-      c.check(output.getValue(true).subsetOf(cond.getValue(true)))
+      c.check(output.getValue(true).subsetOf(cond.getValue(true)), Some("output.getValue(true).subsetOf(cond.getValue(true))"))
   }
 }

@@ -72,7 +72,8 @@ case class Union(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value.intersect(left.value.union(right.value)).size == output.value.size)
+    c.check(output.value.intersect(left.value.union(right.value)).size == output.value.size,
+        Some("output.value.intersect(left.value.union(right.value)).size == output.value.size"))
   }
 }
 
@@ -119,7 +120,8 @@ case class Inter(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value.intersect(left.value.intersect(right.value)).size == output.value.size)
+    c.check(output.value.intersect(left.value.intersect(right.value)).size == output.value.size,
+        Some("output.value.intersect(left.value.intersect(right.value)).size == output.value.size"))
   }
 }
 
@@ -174,7 +176,8 @@ case class Diff(left:IntSetVar, right:IntSetVar) extends IntSetInvariant  {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value.intersect(left.value.diff(right.value)).size == output.value.size)
+    c.check(output.value.intersect(left.value.diff(right.value)).size == output.value.size,
+        Some("output.value.intersect(left.value.diff(right.value)).size == output.value.size"))
   }
 }
 
@@ -211,7 +214,7 @@ case class Cardinality(v:IntSetVar) extends IntInvariant {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value == v.value.size)
+    c.check(output.value == v.value.size, Some("output.value == v.value.size"))
   }
 }
 
@@ -256,8 +259,8 @@ case class MakeSet(on:SortedSet[IntVar]) extends IntSetInvariant {
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value.size == on.size)
-    for(v <- on) c.check(output.value.contains(v.value))
+    c.check(output.value.size == on.size, Some("output.value.size == on.size"))
+    for(v <- on) c.check(output.value.contains(v.value), Some("output.value.contains(v.value)"))
   }
 }
 
@@ -305,10 +308,10 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
   }
 
    override def checkInternals(c:Checker){
-    c.check(output.value.size == 0.max(ub.value - lb.value + 1))
+    c.check(output.value.size == 0.max(ub.value - lb.value + 1), Some("output.value.size == 0.max(ub.value - lb.value + 1)"))
      if(ub.value >= lb.value){
        for(i <- lb.value to ub.value)
-         c.check(output.value.contains(i))
+         c.check(output.value.contains(i), Some("output.value.contains(i)"))
      }
    }
 }
