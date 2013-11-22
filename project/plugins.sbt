@@ -9,3 +9,5 @@ addSbtPlugin("de.johoop" % "jacoco4sbt" % "2.1.2")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.6")
 
+addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.3.0")
+

@@ -5,6 +5,7 @@ import sbt.Keys._
 import java.lang.Boolean.getBoolean
 import de.johoop.jacoco4sbt.JacocoPlugin._
 import xerial.sbt.Pack._
+import sbtunidoc.Plugin._
 
 object OscarBuild extends Build {
 
@@ -60,11 +61,20 @@ object OscarBuild extends Build {
     println("Hello World")
   }
   
+    
+  val printLinprog = TaskKey[Unit]("printLinprog", "printLinProg")
+  
+  val printLinprogTask = printLinprog := {
+    println("base "+baseDirectory)
+    
+    println(baseDirectory.map { base => base })
+  }  
+  
   val zipsrc = TaskKey[Unit]("zipsrc","zip the source") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
 
   val foo = TaskKey[Unit]("foo","foo task") <<= baseDirectory map { bd => println(bd)}
 
-  val commonTasks = Seq(helloTask,foo,zipsrc)
+  val commonTasks = Seq(helloTask,foo,zipsrc,printLinprogTask)
   
   //
   lazy val jacoco_settings = Defaults.defaultSettings ++ Seq(jacoco.settings: _*)
@@ -77,7 +87,7 @@ object OscarBuild extends Build {
     id = "oscar",
     base = file("."),
     //
-    settings = buildSettings ++ jacoco_settings ++ packSettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ packSettings ++ unidocSettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
     aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo))
 
 
@@ -99,7 +109,7 @@ object OscarBuild extends Build {
     base = file("oscar-cp"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
     dependencies = Seq(oscarSearch,oscarReversible,oscarVisual,oscarAlgo))  
-
+    
   lazy val oscarDes = Project(
     id = "oscar-des",
     base = file("oscar-des"),
@@ -116,7 +126,21 @@ object OscarBuild extends Build {
     id = "oscar-linprog",
     base = file("oscar-linprog"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
-    dependencies = Seq(oscarAlgebra))    
+    dependencies = Seq(oscarAlgebra))   
+
+  oscarLinprog.settings(unmanagedBase <<= baseDirectory { base => base.asFile.getParentFile() } )    
+    
+   /* 
+  oscarLinprog.settings(unmanagedBase <<= baseDirectory { 
+    println("yahoo")
+    base => {
+      println(base.asFile.getParent())
+      base.asFile.getParentFile() } 
+    })
+  */
+    
+  oscarLinprog.settings(unmanagedBase := file("libo"))
+  
     
   lazy val oscarSearch = Project(
     id = "oscar-search",
