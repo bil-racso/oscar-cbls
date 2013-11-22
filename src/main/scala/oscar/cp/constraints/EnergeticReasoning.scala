@@ -72,8 +72,14 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
 
     //apply bound adjustements
     for (task <- tasks) {
-      starts(task).updateMax(newLsts(task))
-      ends(task).updateMin(newEets(task))
+      starts(task).updateMax(newLsts(task)) match {
+        	case Failure => return Failure
+        	case _ => 
+    	}
+      ends(task).updateMin(newEets(task)) match {
+        	case Failure => return Failure
+        	case _ => 
+    	}
     }
 
     Suspend
