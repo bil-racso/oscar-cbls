@@ -50,7 +50,7 @@ case class SelectLEHeapHeap(values:Array[IntVar], boundary: IntVar) extends IntS
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]
     for(v <- values.indices){
-      if(values(v).value <= boundary){
+      if(values(v).value <= boundary.value){
         HeapBelowOrEqual.insert(values(v).value)
         output.insertValue(v)
       }else{
