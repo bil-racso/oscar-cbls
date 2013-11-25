@@ -172,33 +172,14 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     output := SortedSet.empty
     for (arrayPosition <- index.value){
       val value = inputarray(arrayPosition).value
-      if (ValueCount(value -myMin) == 0){
-        ValueCount(value - myMin) = 1
-        output :+= value
-      }else{
-        ValueCount(value - myMin) +=1
-      }
+      internalInsert(value)
     }
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,indice:Int,OldVal:Int,NewVal:Int){
-    assert(inputarray(indice) == v)
-    assert(KeysToInputArray(indice) != null)
-
-    if (ValueCount(OldVal - myMin) == 1){
-      ValueCount(OldVal - myMin) = 0
-      output :-= OldVal
-    }else{
-      ValueCount(OldVal - myMin) -= 1
-    }
-
-    if (ValueCount(NewVal - myMin) == 0){
-      ValueCount(NewVal - myMin) = 1
-      output :+= NewVal
-    }else{
-      ValueCount(NewVal - myMin) += 1
-    }
+  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+    internalDelete(OldVal)
+    internalInsert(NewVal)
   }
 
   @inline
@@ -207,12 +188,7 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     KeysToInputArray(value) = registerDynamicDependency(inputarray(value))
     val NewVal:Int = inputarray(value).value
 
-    if (ValueCount(NewVal - myMin) == 0){
-      ValueCount(NewVal - myMin) = 1
-      output :+= NewVal
-    }else{
-      ValueCount(NewVal - myMin) += 1
-    }
+    internalInsert(NewVal)
   }
 
   @inline
@@ -224,11 +200,27 @@ case class IntElements(index:IntSetVar, inputarray:Array[IntVar])
     KeysToInputArray(value) = null
 
     val OldVal:Int = inputarray(value).value
-    if (ValueCount(OldVal - myMin) == 1){
-      ValueCount(OldVal - myMin) = 0
-      output :-= OldVal
+    internalDelete(OldVal)
+
+  }
+
+  private def internalInsert(value:Int){
+    if (ValueCount(value - myMin) == 0){
+      ValueCount(value - myMin) = 1
+      output :+= value
     }else{
-      ValueCount(OldVal - myMin) -= 1
+      ValueCount(value - myMin) += 1
+    }
+    assert(ValueCount(value - myMin) > 0)
+  }
+
+  private def internalDelete(value:Int){
+    assert(ValueCount(value - myMin) > 0)
+    if (ValueCount(value - myMin) == 1){
+      ValueCount(value - myMin) = 0
+      output :-= value
+    }else{
+      ValueCount(value - myMin) -= 1
     }
   }
 
