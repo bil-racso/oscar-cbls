@@ -33,19 +33,6 @@ class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
    */
   val nodeWeight : Array[IntVar] = Array.tabulate(vrp.N)(i => IntVar(vrp.m, Int.MinValue, Int.MaxValue, 0,
     weightingName + "_" + i))
-
-  /**
-   * It allows you to set the weight of a given point.
-   * @param n the point.
-   * @param w the weight.
-   */
-  def fixNodeWeight(n:Int,w:Int) { nodeWeight(n) := w}
-
-  /**
-   * It allows you to set a specific weight for all points of the VRP.
-   * @param w the weight.
-   */
-  def fixNodeWeight(w:Int) {nodeWeight.foreach(p => p := w)}
 }
 
 /** maintains a cost associated to each vehicle

@@ -59,11 +59,6 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     for (i <- V until N) Next(i) := N
   }
 
-  /**unroutes points of vehicle v*/
-  def unroute(v:Int){
-    doRemove(List((v,v)))
-  }
-
   /**
    * the range of nodes (customers and deposits including) of the problem.
    */
@@ -87,208 +82,6 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    */
   def isRouted(n:Int):Boolean = {Next(n).value != N}
 
-  /** performs the described move
-    * @param move a set of ssignments to perform on the road
-    */
-  def doIt(move:List[(IntVar,Int)]){
-    for((v:IntVar,i:Int) <- move) v := i
-  }
-
-  //TODO: tous les mouvements peuvent être réécrits en intégrant la notion de segment (from,to), et de segment (beforeFrom,BeforeTo)
-  /**
-   * Returns the list of variables to update with theirs new values in order to reverse
-   * a segment of route.
-   * @param from the start of segment to reverse.
-   * @param to the end of segment to reverse.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def reverse(from:Int, to:Int):List[(IntVar,Int)]={
-    var listToUpdate:List[(IntVar,Int)] = List.empty
-    var nodeStack:List[Int] = List.empty
-    var current:Int = from
-    while(current != to){
-      nodeStack = current :: nodeStack
-      current = Next(current).value
-    }
-    while(!nodeStack.isEmpty){
-      listToUpdate =(Next(current),nodeStack.head)::listToUpdate
-      current = nodeStack.head
-      nodeStack = nodeStack.tail
-    }
-    listToUpdate
-  }
-
-  /**
-   * reverses a segment of route.
-   * @param from the start of segment to reverse.
-   * @param to the end of segment to reverse.
-   */
-  def doReverse(from:Int, to:Int){
-    doIt(reverse(from, to))
-  }
-
-  /**
-   * Returns the list of variables to update with theirs new values in order to
-   * move a segment and reinsert it after a given point.
-   * @param beforeSegmentStart the predecessor of the start of segment.
-   * @param segmentEnd the end of segment.
-   * @param insertionPoint the point after which to insert the segment.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def moveTo(beforeSegmentStart:Int, segmentEnd:Int,  insertionPoint:Int):List[(IntVar,Int)] = {
-    assert(isRouted(insertionPoint))
-    val segmentStart:Int = Next(beforeSegmentStart).getValue(true)
-    val oldNextOfSegmentEnd:Int = Next(segmentEnd).getValue(true)
-    val oldNextOfbeforeSecondSwapPoint:Int = Next(insertionPoint).getValue(true)
-
-    (Next(beforeSegmentStart),oldNextOfSegmentEnd)::(Next(segmentEnd),oldNextOfbeforeSecondSwapPoint)::
-      (Next(insertionPoint),segmentStart)::List.empty
-  }
-
-  /**
-   * moves a segment and reinsert it after a given point.
-   * @param beforeSegmentStart the predecessor of the start of segment.
-   * @param segmentEnd the end of segment.
-   * @param insertionPoint the point after which to insert the segment.
-   */
-  def doMoveTo(beforeSegmentStart:Int, segmentEnd:Int,  insertionPoint:Int){
-    doIt(moveTo(beforeSegmentStart:Int, segmentEnd:Int,  insertionPoint:Int))
-  }
-
-  /** Returns the list of variables to update with theirs new values in order to
-    * remove points or points of segments of a route. The points or segment's points to remove
-    * are given in an iterable list of tuple (first,second) of Integer. The first Integer
-    * is the predecessor of the first point to remove, and the second is the last
-    * point to remove. This assumes that (first,second) is a segment, and
-    * the segments formed by the tuples of the list must be disjoint.
-    *
-    * Info: remove points of non disjoints segments throw an Exception (ArrayIndexOutOfBounds)
-    * you must then do the union of disjoints segments and remove the result.
-    * @param l iterable list of tuple of Integer.
-    * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-    */
-  def remove(l:Iterable[(Int,Int)]):List[(IntVar,Int)]={
-    l.foldLeft(List.empty[(IntVar,Int)])((acc:List[(IntVar,Int)],prec:(Int,Int)) =>
-    {
-      val beforeStart = prec._1
-      val end = prec._2
-
-      val insertion = Next(end).value
-      var list = (Next(beforeStart),insertion)::(Next(end),N) ::acc
-      var start = Next(beforeStart).value
-      while(start != end) {
-        list = (Next(start),N)::list
-        start = Next(start).value
-      }
-      list
-    })
-  }
-
-  /**
-   * remove points or points of segments of a route. The points or segment's points to remove
-   * are given in an iterable list of tuple (first,second) of Integer. The first Integer
-   * is the predecessor of the first point to remove, and the second is the last
-   * point to remove. This assumes that (first,second) is a segment, and
-   * the segments formed by the tuples of the list must be disjoint.
-   *
-   * Info: remove points of non disjoints segments throw an Exception (ArrayIndexOutOfBounds)
-   * you must then do the union of disjoints segments and remove the result.
-   * @param l iterable list of tuple of Integer.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def doRemove(l:Iterable[(Int,Int)]){
-    doIt(remove(l:Iterable[(Int,Int)]))
-  }
-
-  /**
-   * Returns the list of variables to update with theirs new values in order to
-   * add an unrouted point in a route at a given insertion point.
-   * Assumes that the point is an unrouted one.
-   * @param insertion the place where insert the unrouted node.
-   * @param point the unrouted node.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def add(insertion:Int,point:Int):List[(IntVar,Int)] = {
-    assert(!isRouted(point))
-    val next = Next(insertion).value
-    List((Next(insertion),point),(Next(point),next))
-  }
-
-  /**
-   * add an unrouted point in a route at a given insertion point.
-   * Assumes that the point is an unrouted one.
-   * @param insertion the place where insert the unrouted node.
-   * @param point the unrouted node.
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def doAdd(insertion:Int,point:Int){
-    doIt(add(insertion:Int,point:Int))
-  }
-
-  /**
-   * Returns the list of variables to update with theirs new values in order to
-   * update routes by swapping two nodes, a and b.
-   * @param before_a the node before node "a".
-   * @param a the node which one swap with node "b".
-   * @param before_b the node before node "b".
-   * @param b the node which one swap with node "a".
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def swap(before_a:Int,a:Int,before_b:Int,b:Int):List[(IntVar,Int)] = {
-    assert(Next(before_a).value == a && Next(before_b).value == b)
-    assert(before_a != before_b && isRouted(before_a) && isRouted(before_b)
-      && isRouted(a) && isRouted(b))
-    val next_a:Int = Next(a).value
-    val next_b:Int = Next(b).value
-    (Next(before_a),b)::(Next(b),next_a)::(Next(before_b),a)::(Next(a),next_b)::List.empty
-  }
-
-  /**
-   * update routes by swapping two nodes, a and b.
-   * @param before_a the node before node "a".
-   * @param a the node which one swap with node "b".
-   * @param before_b the node before node "b".
-   * @param b the node which one swap with node "a".
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def doSwap(before_a:Int,a:Int,before_b:Int,b:Int){
-    doIt(swap(before_a:Int,a:Int,before_b:Int,b:Int))
-  }
-
-  /**
-   * Returns the list of variables to update with theirs new values in order to
-   * update a route by replacing the edges (a,b) and (c,d) by the
-   * edges (a,c) and (b,d), and reverse the route's segment [b;c].
-   * This assumes that "b" is the successor of "a" and d is the successor of "c".
-   *
-   * Info: this is a 2-OPT move.
-   * @param a the start of edge (a,b).
-   * @param b the end of edge (a,b).
-   * @param c the start of edge (c,d).
-   * @param d the end of edge (c,d).
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def flip(a:Int,b:Int,c:Int,d:Int):List[(IntVar,Int)] = {
-    assert(c != b) // else useless to flip
-    (Next(a),c)::(Next(b),d)::reverse(b,c)
-  }
-
-  /**
-   * update a route by replacing the edges (a,b) and (c,d) by the
-   * edges (a,c) and (b,d), and reverse the route's segment [b;c].
-   * This assumes that "b" is the successor of "a" and d is the successor of "c".
-   *
-   * Info: this is a 2-OPT move.
-   * @param a the start of edge (a,b).
-   * @param b the end of edge (a,b).
-   * @param c the start of edge (c,d).
-   * @param d the end of edge (c,d).
-   * @return list of tuple (IntVar,Int) where IntVar is a variable to update and Int is his new value.
-   */
-  def doFlip(a:Int,b:Int,c:Int,d:Int){
-    doIt(flip(a:Int,b:Int,c:Int,d:Int))
-  }
-
   /**
    * Redefine the toString method.
    * @return the VRP problem as a String.
@@ -308,20 +101,180 @@ class VRP(val N: Int, val V: Int, val m: Model) {
   }
 }
 
+/**this records touched points when comit with no undo, or when cleaning move*/
+trait HotSpotRecording extends VRP with MoveDescription{
+
+  var hotspotList:List[Int]
+  val hotSpotArray:Array[Int] = Array.tabulate(N)(_ => 0)
+  var hotSpotValue:Int = 1 //the value for being in the hotspot, smller and you are not hotspotted
 
 
-trait VRPObjective extends VRP{
-
-  private val landmarkArray: Array[Int] = Array.tabulate(N)( _ => -1)
-  private var landmarkedList:List[Int] = List.empty
-  private var landMarking:Boolean = false
-  private val NodePositionAccessorKey:Int = m.getStorageIndex
-
-  for(i <- 0 to N-1){
-    Next(i).storeAt(NodePositionAccessorKey,new Integer(i))
+  override def commit(recordForUndo: Boolean) {
+    if (!recordForUndo) addMoveToHotSpot()
+    super.commit(recordForUndo)
   }
 
-  private var oldObjective:Int = 0
+  override def cleanRecordedMoves() {
+    addMoveToHotSpot()
+    super.cleanRecordedMoves()
+  }
+
+  def addMoveToHotSpot(){
+    for ((node,newval) <- affects){
+      hotSpot(node)
+      hotSpot(newval)
+    }
+  }
+
+  def hotSpot(n:Int){
+    if (hotSpotArray(n) != hotSpotValue){
+      hotSpotArray(n) = hotSpotValue
+      hotspotList = n :: hotspotList
+    }
+  }
+
+  def hotSpottedNodes():Iterable[Int] = hotspotList
+
+  def cleanHotSpot(){
+    hotSpotValue += 1
+    if (hotSpotValue == Int.MaxValue){
+      for (i <- 0 to N-1)hotSpotArray(i) = 0
+      hotSpotValue = 1
+    }
+  }
+}
+
+
+trait MoveDescription extends VRP{
+  var Recording = true //recording ou comitted
+
+  protected var affects:List[(Int,Int)] = List.empty
+
+  protected def addMove(node:Int,value:Int){
+    assert(Recording)
+    affects = (node,value) :: affects
+  }
+
+  protected case class Segment(start:Int,end:Int)
+
+  def cut(beforeStart:Int,end:Int):Segment = {
+    assert(!this.isInstanceOf[PositionInRouteAndRouteNr]
+      || this.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart,end))
+
+    addMove(beforeStart,Next(end).value)
+    Segment(Next(beforeStart).value,end)
+  }
+
+  def cutNodeAfter(beforeStart:Int):Segment = {
+    assert(isRouted(beforeStart))
+
+    val start = Next(beforeStart).value
+    addMove(beforeStart,Next(start).value)
+    Segment(start,start)
+  }
+
+  def segmentFromUnrouted(n:Int):Segment = {
+    assert(!isRouted(n))
+    Segment(n,n)
+  }
+
+  def reverse(s:Segment): Segment = {
+    var prev = s.start
+    var current:Int = Next(prev).value
+    while(current != s.end){
+      addMove(current,prev)
+      prev = current
+      current = Next(current).value
+    }
+    Segment(s.end,s.start)
+  }
+
+  def insert(s:Segment,node:Int){
+    addMove(node,s.start)
+    addMove(s.end,Next(s.start).value)
+  }
+
+  def append(s:Segment,t:Segment):Segment = {
+    addMove(s.end,t.start)
+    Segment(s.start,t.end)
+  }
+
+  def unroute(s:Segment){
+    def unroute(n:Int){
+      assert(n>=V,"you cannot unroute a depot: (depot=" + n + ")")
+      addMove(n,N)
+    }
+    var current = s.start
+    unroute(current)
+    while(current != s.end){
+      current = Next(current).value
+      unroute(current)
+    }
+  }
+
+  def commit(recordForUndo:Boolean = false){
+    assert(Recording)
+    if (recordForUndo){
+      affects = doAllMovesAndReturnRollBack()
+      assert({Recording = false; true})
+    }else{
+      doAllMoves()
+      affects = List.empty
+    }
+  }
+
+  private def doAllMovesAndReturnRollBack():List[(Int,Int)] = {
+    var undoList:List[(Int,Int)] = List.empty
+    def doIt(toDo:List[(Int,Int)]){
+      toDo match{
+        case head :: tail => {
+          doIt(tail)
+          undoList = (head._1,Next(head._1).value) :: undoList
+          Next(head._1) := head._2
+        }
+        case Nil => ;
+      }
+    }
+    doIt(affects)
+    undoList
+  }
+
+  private def doAllMoves(){
+    def doIt(toDo:List[(Int,Int)]){
+      toDo match{
+        case head :: tail => doIt(tail); Next(head._1) := head._2
+        case Nil => ;
+      }
+    }
+    doIt(affects)
+  }
+
+  def undo(recordForUndo:Boolean = false){
+    assert(!Recording)
+    assert({Recording = true ; true})
+    commit(recordForUndo)
+    assert({Recording = true ; true})
+  }
+
+  def cleanRecordedMoves(){
+    affects = List.empty
+    assert({Recording = true ; true})
+  }
+}
+
+trait MoveDescriptionSmarter extends MoveDescription with Predecessors{
+  def cutAt(start:Int,end:Int):Segment = {
+    cut(this.preds(start).value,end)
+  }
+
+  def cutNode(n:Int):Segment = {
+    cut(this.preds(n).value,n)
+  }
+}
+
+trait VRPObjective extends VRP with MoveDescription{
+
+
   val objectiveFunction = IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
@@ -342,65 +295,16 @@ trait VRPObjective extends VRP{
     objectiveFunction <= Sum(objectiveFunctionTerms)
   }
 
-  /**
-   * Sets current point as comparison point for the improves method
-   * @param withRestore set to true if you want the routes to be saved, so that you can restore them by calling restoreLandmark
-   */
-  def defineLandmark(withRestore:Boolean = false){
-    cleanLandMark
-    landMarking = withRestore
-    oldObjective = objectiveFunction.value
-  }
 
-  def cleanLandMark{
-    if (!landMarking) return
-    for(i <- landmarkedList){
-      landmarkArray(i) = -1
-    }
-    landmarkedList = List.empty
-  }
-
-  def forgetLandMark(){
-    cleanLandMark
-    landMarking = false
-  }
-
-  /**
-   * compares the current solution with the landmark
-   * returns the delta on the objectiveFunction
-   * @return
-   */
-  def deltaFromLandMark:Int = {
-    objectiveFunction.value - oldObjective
-  }
-
-  /** restores the state of the route as they ware when defineLandmark(true) was called for hte last time
-    * does not stop the landmarking
+  /** this returns the value of the objective function after the registered move is performed.
+    * The state of the recorded move is restored as it was, so you can simply re-comit it if you decide to keep this move.
+    * @return
     */
-  def restoreLandmark{
-    if (!landMarking) throw new Error("you cannot restore a landmark if you did not specify defineLandmark(true)")
-    for(i <- landmarkedList){
-      Next(i) := landmarkArray(i)
-      landmarkArray(i) = -1
-    }
-    landmarkedList = List.empty
-  }
-
-  /** performs the described move
-    * @param move a set of ssignments to perform on the road
-    */
-  override def doIt(move:List[(IntVar,Int)]){
-    for((v:IntVar,i:Int) <- move){
-      if(landMarking){
-        val position:Int = Next(i).storeAt(NodePositionAccessorKey,new Integer(i)).asInstanceOf[Integer]
-        if(landmarkArray(position) == -1){
-          //not landMarked yet
-          landmarkArray(position) = v.value
-          landmarkedList = position :: landmarkedList
-        }
-      }
-      v := i
-    }
+  def getObjectiveAfterRegisteredMove():Int = {
+    this.commit(true)
+    val toreturn = objectiveFunction.value
+    undo(true)
+    toreturn
   }
 }
 
@@ -707,31 +611,16 @@ trait StrongConstraints extends VRPObjective {
    */
   var strongConstraints:ConstraintSystem = new ConstraintSystem(m)
 
-  private var strongConstraintOnLandMark:Boolean = true
-
-  /**
-   * Sets current point as comparison point for the improves method
-   * @param withRestore set to true if you want the routes to be saved, so that you can restore them by calling restoreLandmark
-   */
-  override def defineLandmark(withRestore: Boolean) {
-    strongConstraintOnLandMark = strongConstraints.isTrue
-    super.defineLandmark(withRestore)
-  }
-
-  /**
-   * compares the current solution with the landmark
-   * returns the delta on the objectiveFunction
-   * @return
-   */
-  override def deltaFromLandMark: Int = {
-    val strongConstraint = strongConstraints.isTrue
-    if (strongConstraintOnLandMark && !strongConstraint){
-      Int.MaxValue
-    }else if(!strongConstraintOnLandMark && strongConstraint){
-      Int.MinValue
-    }else{
-      super.deltaFromLandMark
-    }
+  /** this returns the value of the objective function after the registered move is performed.
+    * This will also undo the registered move, and drop it
+    * by convension, a violation of the strong constraint returns Int.MaxValue
+    * @return
+    */
+  override def getObjectiveAfterRegisteredMove(): Int = {
+    commit(true)
+    val toreturn:Int =  (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
+    undo(true)
+    toreturn
   }
 }
 

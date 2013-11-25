@@ -8,9 +8,14 @@ import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
 
-abstract class ttfs{
-  def getTravelDuration(from:Int, leaveTime:Int,to:Int):Int
-  def getMinMaxTravelDuration(from:Int,to:Int):(Int,Int)
+abstract class TravelTimeFunction{
+  def getTravelDuration(from:Int, leaveTime:Int, to:Int):Int
+
+  def getMinMaxTravelDuration(from:Int,to:Int):(Int,Int) =
+    (getMinTravelDuration(from,to),getMaxTravelDuration(from,to))
+
+  def getMinTravelDuration(from:Int,to:Int):Int
+  def getMaxTravelDuration(from:Int,to:Int):Int
 }
 
 trait Time extends VRP with Predecessors{
@@ -32,14 +37,14 @@ trait Time extends VRP with Predecessors{
   * Beware, you must still define the leaveTime from the ArrivalTime (or not)
   * and you can post strong constraints on these values
   */
-trait TravelTimeFunction extends VRP with Time{
+trait TravelTimeAsFunction extends VRP with Time{
 
-  protected var travelCosts:ttfs = null
+  protected var travelCosts:TravelTimeFunction = null
 
   /** sets the cost function
     * @param travelCosts
     */
-  def setTravelTimeFunctions(travelCosts:ttfs){
+  def setTravelTimeFunctions(travelCosts:TravelTimeFunction){
     for (i <- 0 to N-1){
       TravelOutDuration(i) <== new IntVarIntVar2IntVarFun(LeaveTime(i), Next(i),
         (leaveTime,successor) =>  if (successor == N) 0 else travelCosts.getTravelDuration(i,leaveTime,successor))
@@ -81,20 +86,25 @@ trait WaitingDuration extends TimeWindow{
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait TimeClosesNeighborPoints extends ClosestNeighborPoints with TravelTimeFunction{
+trait TimeClosesNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction{
   override def getDistance(from: Int, to: Int):Int = {
-    travelCosts.getMinMaxTravelDuration(from,to)._1
+    travelCosts.getMinTravelDuration(from,to)
   }
 }
 
-trait TotalTimeSpentByVehicleSOutOfDepotAsObjective extends VRPObjective with Time{
+trait TotalTimeSpentByVehicleSOutOfDepotAsObjectiveTerm extends VRPObjective with Time{
   for(v <- 0 to V-1){
     addObjectiveTerm(ArrivalTime(v) - LeaveTime(v))
   }
 }
 
-trait TimeSpentOnRouteAsObjective extends VRPObjective with Time{
+trait TimeSpentOnRouteAsObjectiveTerm extends VRPObjective with Time{
   for(v <- 0 to V-1){
     addObjectiveTerm(Sum(TravelOutDuration))
   }
 }
+
+trait WaitingTimeAsObjectiveTerm extends VRPObjective with WaitingDuration{
+  addObjectiveTerm(Sum(WaitingDuration))
+}
+
