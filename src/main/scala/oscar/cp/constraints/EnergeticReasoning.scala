@@ -12,6 +12,11 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.modeling._
 import oscar.cp.modeling.CPScheduler
+import oscar.visual.VisualUtil
+import oscar.visual.scheduling.VisualGanttChart
+import oscar.cp.scheduling.SchedulingUtils
+import oscar.visual.VisualFrame
+import scala.io.Source
 
 class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int = 1) extends Constraint(starts.head.store, "Energetic Reasoning") {
   
@@ -24,7 +29,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
       durations(task).callPropagateWhenBoundsChange(this)
       ends(task).callPropagateWhenBoundsChange(this)
       demands(task).callPropagateWhenBoundsChange(this)
-      demands(task).callPropagateWhenBoundsChange(this)
+      resources(task).callPropagateWhenBind(this)
     }
     
     capacity.callPropagateWhenBoundsChange(this)
@@ -46,40 +51,35 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
       val currentIntervalEnergy = energyForInterval(t1, t2)
       val currentMaxIntervalEnergy = capacity.min * (t2 - t1) 
       if (currentIntervalEnergy > currentMaxIntervalEnergy) {
-    	capacity.updateMin(ceil(currentIntervalEnergy.toDouble/(t2 - t1)).toInt) match {
-        	case Failure => return Failure
-        	case _ => 
+        if (capacity.updateMin(ceil(currentIntervalEnergy.toDouble/(t2 - t1)).toInt) == Failure)
+          return Failure
+    	else
+    	  return Suspend
     	}
-      }
       else {
         //bound adjustements computation
-        var activityIndex = 0
         for (task <- tasks) {
           val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2)
           val leftShiftedEnergy = leftShiftedActivityEnergyForInterval(task, t1, t2)
           val rightShiftedEnergy = rightShiftedActivityEnergyForInterval(task, t1, t2)
 
           if (slackWithoutCurrentActivity < leftShiftedEnergy)
-            newEets(activityIndex)= max(newEets(activityIndex), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity)/demands(task).min).toInt)
+            newEets(task)= max(newEets(task), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity).toDouble/demands(task).min).toInt)
           
           if (slackWithoutCurrentActivity < rightShiftedEnergy)
-            newLsts(activityIndex) = min(newLsts(activityIndex), t1 - ceil((rightShiftedEnergy - slackWithoutCurrentActivity)/demands(task).min).toInt)
+            newLsts(task) = min(newLsts(task), t1 - ceil((rightShiftedEnergy - slackWithoutCurrentActivity).toDouble/demands(task).min).toInt)
 
-          activityIndex+=1
         }
       }
     }
 
     //apply bound adjustements
     for (task <- tasks) {
-      starts(task).updateMax(newLsts(task)) match {
-        	case Failure => return Failure
-        	case _ => 
-    	}
-      ends(task).updateMin(newEets(task)) match {
-        	case Failure => return Failure
-        	case _ => 
-    	}
+      if (starts(task).updateMax(newLsts(task)) == Failure)
+        return Failure
+      
+      if (ends(task).updateMin(newEets(task)) == Failure)
+        return Failure
     }
 
     Suspend
@@ -153,3 +153,4 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
   private def activityEnergyForInterval(task : Int, t1 : Int,t2: Int) = min(leftShiftedActivityEnergyForInterval(task, t1, t2), rightShiftedActivityEnergyForInterval(task, t1, t2))
       
 }
+
