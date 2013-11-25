@@ -20,8 +20,12 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.logic.Sort
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import oscar.cbls.invariants.lib.minmax.ArgMinArray
+import oscar.cbls.invariants.lib.minmax.Max
+import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.minmax.MaxArray
 import oscar.cbls.invariants.lib.minmax.MaxSet
+import oscar.cbls.invariants.lib.minmax.Min
+import oscar.cbls.invariants.lib.minmax.Min2
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.minmax.MinSet
 import oscar.cbls.invariants.lib.numeric.Abs
@@ -36,10 +40,26 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.numeric.Sum2
 import oscar.cbls.invariants.lib.numeric.SumElements
 import org.scalatest.FunSuite
+import oscar.cbls.constraints.lib.global.AllDiff
+import oscar.cbls.invariants.lib.minmax.MaxLin
+import oscar.cbls.invariants.lib.minmax.MinLin
+import oscar.cbls.invariants.lib.set.Union
+import oscar.cbls.invariants.lib.set.Inter
+import oscar.cbls.invariants.lib.set.Diff
+import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.invariants.lib.set.MakeSet
+import oscar.cbls.invariants.lib.set.Interval
+import oscar.cbls.invariants.lib.set.TakeAny
+import oscar.cbls.invariants.lib.set.SetSum
+import oscar.cbls.invariants.lib.set.SetProd
 
 class InvariantTests extends FunSuite with Checkers {
 
-  test("AllDiff")(pending)
+  test("AllDiff maintains output = all int vars have different values") {
+    val bench = new InvariantTestBench
+    new AllDiff(bench.genIntVarsArray(10, -10 to 10))
+    bench.run
+  }
 
   test("AtLeast")(pending)
 
@@ -49,35 +69,37 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Sequence")(pending)
 
-  test("Access to ITE") {
+  test("Access to ITE maintains output = if ifVar > 0 then thenVar else elseVar") {
     val bench = new InvariantTestBench
-    new IntITE(bench.genIntVar(0 to 20), bench.genIntVar(0 to 20), bench.genIntVar(0 to 20)).toIntVar
+    new IntITE(bench.genIntVar(-2 to 3), bench.genIntVar(1 to 2), bench.genIntVar(10 to 11)).toIntVar
     bench.run
   }
 
-  test("Access to int var...") {
+  test("Access to int element maintains output = array(index)") {
     val bench = new InvariantTestBench
     new IntElement(bench.genIntVar(0 to 19), bench.genIntVarsArray(20, 0 to 100)).toIntVar
     bench.run
   }
 
   test("Access to int vars...") {
-    val bench = new InvariantTestBench(true)
+    val bench = new InvariantTestBench
     new IntElements(bench.genIntSetVar(0 to 4, 3), bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
   }
 
-  test("Access to int set var...") {
+  test("Access to int set element maintains output = array(index)") {
     val bench = new InvariantTestBench
     new IntSetElement(bench.genIntVar(0 to 19), bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
     bench.run
   }
 
-  test("Clusters...")(pending)
+  test("Sparse Cluster...")(pending)
 
-  ignore("Dense Count...") {
+  test("Dense Cluster...")(pending)
+
+  test("Dense Count maintains count(j) = #{i in index of values | values[i] == j}") {
     val bench = new InvariantTestBench
-    new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 10))
+    new DenseCount(bench.genIntVarsArray(10, 0 to 19), bench.genIntVarsArray(20, 0 to 19, false))
     bench.run
   }
 
@@ -88,14 +110,14 @@ class InvariantTests extends FunSuite with Checkers {
   test("Filter...")(pending)
 
   test("SelectLEHeapHeap") {
-    val bench = new InvariantTestBench
-    new SelectLEHeapHeap(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
+    val bench = new InvariantTestBench(2)
+    new SelectLEHeapHeap(bench.genIntVarsArray(4, 0 to 5), bench.genIntVar(3 to 10)).toIntSetVar
     bench.run
   }
 
   test("SelectLESetQueue") {
-    val bench = new InvariantTestBench
-    new SelectLESetQueue(bench.genIntVarsArray(20, 0 to 30), bench.genIntVar(30 to 100)).toIntSetVar
+    val bench = new InvariantTestBench(2)
+    new SelectLESetQueue(bench.genIntVarsArray(5, 0 to 5), bench.genIntVar(3 to 10, false)).toIntSetVar
     bench.run
   }
 
@@ -104,58 +126,80 @@ class InvariantTests extends FunSuite with Checkers {
   test("Routes")(pending)
 
   test("Sort") {
-    val bench = new InvariantTestBench
+    val bench = new InvariantTestBench(2)
     new Sort(bench.genIntVarsArray(20, 0 to 30), bench.genIntVarsArray(20, 30 to 100))
     bench.run
   }
 
-  test("ArgMaxArray") {
+  // TODO test also with the other parameters of ArgMinArray
+  test("ArgMinArray maintains the set of min variables of the array") {
     val bench = new InvariantTestBench
-    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
+    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
     bench.run
   }
 
-  test("ArgMinArray") {
-    val bench = new InvariantTestBench
-    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30), bench.genIntSetVar(0 to 30, 3)).toIntSetVar
+  // TODO test also with the other parameters of ArgMaxArray
+  test("ArgMaxArray maintains the set of max variables of the array") {
+    val bench = new InvariantTestBench(2)
+    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
     bench.run
   }
 
-  test("MaxLin")(pending)
+  test("MaxLin") {
+    val bench = new InvariantTestBench(2)
+    new MaxLin(bench.genSortedIntVars(6, -10 to 10)).toIntVar
+    bench.run
+  }
 
-  test("MinLin")(pending)
+  test("MinLin") {
+    val bench = new InvariantTestBench(2)
+    new MinLin(bench.genSortedIntVars(6, 0 to 10)).toIntVar
+    bench.run
+  }
 
-  test("Min")(pending)
+  test("Min") {
+    val bench = new InvariantTestBench(2)
+    new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
+    bench.run
+  }
 
-  test("Max")(pending)
+  test("Max") {
+    val bench = new InvariantTestBench(2)
+    new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
+    bench.run
+  }
 
-  test("Min2")(pending)
+  test("Min2") {
+    val bench = new InvariantTestBench(2)
+    new Min2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+    bench.run
+  }
 
-  test("Max2")(pending)
+  test("Max2") {
+    val bench = new InvariantTestBench(2)
+    new Max2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+    bench.run
+  }
 
   test("MinArray maintains min") {
     val bench = new InvariantTestBench
     new MinArray(bench.genIntVarsArray(4, 0 to 100)).toIntVar
-    //    val minVar = new MinArray(bench.genIntVarsArray(4, 0 to 100))
-    //    Event(minVar, { println("Trigger : changed " + minVar) })
     bench.run
   }
 
   test("MaxArray maintains max") {
     val bench = new InvariantTestBench
     new MaxArray(bench.genIntVarsArray(2, 0 to 50)).toIntVar
-    //    val maxVar = new MaxArray(bench.genIntVarsArray(2, 0 to 50))
-    //    Event(maxVar, { println("Trigger : changed " + maxVar) })
     bench.run
   }
 
-  test("MinSet") {
+  test("MinSet maintains the minimum of a set.") {
     val bench = new InvariantTestBench
     new MinSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
   }
 
-  test("MaxSet") {
+  test("MaxSet maintains the maximum of a set") {
     val bench = new InvariantTestBench
     new MaxSet(bench.genIntSetVar(0 to 100, 5)).toIntVar
     bench.run
@@ -179,9 +223,10 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("Prod") {
-    val bench = new InvariantTestBench
-    new Prod(bench.genIntVarsArray(10, 0 to 100)).toIntVar
+  // FIXME problem when too much variables
+  test("Prod maintains the product of input vars.") {
+    val bench = new InvariantTestBench(2)
+    new Prod(bench.genIntVarsArray(3, 0 to 100)).toIntVar
     bench.run
   }
 
@@ -203,15 +248,17 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("Div") {
+  test("Div maintains the division of two integers") {
     val bench = new InvariantTestBench
-    new Div(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
+    new Div(bench.genIntVar(0 to 100),
+      bench.genIntVar(1 to 100, true, (v: Int) => v != 0)).toIntVar
     bench.run
   }
 
-  test("Mod") {
+  test("Mod maintains the modulo of two integers") {
     val bench = new InvariantTestBench
-    new Mod(bench.genIntVar(0 to 100), bench.genIntVar(1 to 100)).toIntVar
+    new Mod(bench.genIntVar(0 to 100),
+      bench.genIntVar(1 to 100, true, (v: Int) => v != 0)).toIntVar
     bench.run
   }
 
@@ -231,23 +278,59 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("RoundUpCustom")(pending)
 
-  test("Union")(pending)
+  test("Union") {
+    val bench = new InvariantTestBench(2)
+    new Union(bench.genIntSetVar(0 to 100, 5), bench.genIntSetVar(0 to 100, 5)).toIntSetVar
+    bench.run
+  }
 
-  test("Inter")(pending)
+  test("Inter") {
+    val bench = new InvariantTestBench(2)
+    new Inter(bench.genIntSetVar(0 to 100, 5), bench.genIntSetVar(0 to 100, 5)).toIntSetVar
+    bench.run
+  }
 
-  test("Diff")(pending)
+  test("Diff") {
+    val bench = new InvariantTestBench(2)
+    new Diff(bench.genIntSetVar(0 to 100, 5), bench.genIntSetVar(0 to 100, 5)).toIntSetVar
+    bench.run
+  }
 
-  test("Cardinality")(pending)
+  test("Cardinality") {
+    val bench = new InvariantTestBench(2)
+    new Cardinality(bench.genIntSetVar(0 to 100, 5)).toIntVar
+    bench.run
+  }
 
-  test("MakeSet")(pending)
+  test("MakeSet") {
+    val bench = new InvariantTestBench(2)
+    new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toIntSetVar
+    bench.run
+  }
 
-  test("Interval")(pending)
+  test("Interval") {
+    val bench = new InvariantTestBench(2)
+    new Interval(bench.genIntVar(0 to 10), bench.genIntVar(90 to 100)).toIntSetVar
+    bench.run
+  }
 
-  test("TakeAny")(pending)
+  test("TakeAny") {
+    val bench = new InvariantTestBench(2)
+    new TakeAny(bench.genIntSetVar(0 to 100, 5), Gen.choose(0, 100).sample.get).toIntVar
+    bench.run
+  }
 
-  test("SetSum")(pending)
+  test("SetSum") {
+    val bench = new InvariantTestBench(2)
+    new SetSum(bench.genIntSetVar(0 to 100, 5)).toIntVar
+    bench.run
+  }
 
-  test("SetProd")(pending)
+  test("SetProd") {
+    val bench = new InvariantTestBench(2)
+    new SetProd(bench.genIntSetVar(0 to 100, 5)).toIntVar
+    bench.run
+  }
 }
 
 abstract class Move
@@ -262,26 +345,24 @@ case class Random extends Move
 object InvGen {
   val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random())
 
-  def randomValue(range: Range) = Gen.choose(range.min, range.max)
-
-  def randomIntVar(range: Range, model: Model) = for {
-    v <- randomValue(range)
+  def randomIntVar(range: Range, model: Model, constraint: Int => Boolean) = for {
+    v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
     c <- Gen.alphaChar
-  } yield new RandomIntVar(new IntVar(model, range, v, c.toString))
+  } yield new RandomIntVar(new IntVar(model, range, v, c.toString), constraint)
 
-  def randomIntVars(nbVars: Int, range: Range, model: Model) = {
-    Gen.containerOfN[List, RandomIntVar](nbVars, randomIntVar(range, model))
+  def randomIntVars(nbVars: Int, range: Range, model: Model, constraint: Int => Boolean) = {
+    Gen.containerOfN[List, RandomIntVar](nbVars, randomIntVar(range, model, constraint))
   }
 
   def randomFixedIntSetVar(range: Range, size: Int, model: Model) = for {
     c <- Gen.alphaChar
-    v <- Gen.containerOfN[List, Int](size, randomValue(range))
+    v <- Gen.containerOfN[List, Int](size, Gen.choose(range.min, range.max))
   } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max, c.toString, SortedSet(v: _*)))
 
   def randomIntSetVar(range: Range, upToSize: Int, model: Model) = for {
     c <- Gen.alphaChar
-    s <- randomValue(1 to upToSize)
-    v <- Gen.containerOfN[List, Int](s, randomValue(range))
+    s <- Gen.choose(1, upToSize)
+    v <- Gen.containerOfN[List, Int](s, Gen.choose(range.min, range.max))
   } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max, c.toString, SortedSet(v: _*)))
 
   def randomIntSetVars(nbVars: Int, upToSize: Int, range: Range, model: Model) = {
@@ -295,38 +376,42 @@ abstract class RandomVar {
   def move(move: Move)
 }
 
-case class RandomIntVar(intVar: IntVar) extends RandomVar {
+case class RandomIntVar(intVar: IntVar,
+  constraint: Int => Boolean = (v: Int) => true) extends RandomVar {
+
   override def randomVar(): IntVar = intVar
+
+  def applyConstraint(newVal: Int) {
+    if (constraint(newVal)) {
+      randomVar := newVal
+    }
+  }
 
   override def move(move: Move) = {
     move match {
       case PlusOne() => {
-        //print(randomVar.name + " :+= " + 1)
-        if (randomVar.domain.contains(randomVar.value + 1)) randomVar :+= 1
-        else randomVar := randomVar.minVal
+        val newVal = randomVar.value + 1
+        if (randomVar.domain.contains(newVal)) applyConstraint(newVal)
+        else applyConstraint(randomVar.minVal)
       }
       case MinusOne() => {
-        //print(randomVar.name + " :-= " + 1)
-        if (randomVar.domain.contains(randomVar.value - 1)) randomVar :-= 1
-        else randomVar := randomVar.maxVal
+        val newVal = randomVar.value - 1
+        if (randomVar.domain.contains(newVal)) applyConstraint(newVal)
+        else applyConstraint(randomVar.maxVal)
       }
       case ToZero() => {
-        //print(randomVar.name + " := " + 0)
-        randomVar := 0
+        applyConstraint(0)
       }
       case ToMax() => {
-        //print(randomVar.name + " := " + randomVar.maxVal)
-        randomVar := randomVar.maxVal
+        applyConstraint(randomVar.maxVal)
       }
       case ToMin() => {
-        //print(randomVar.name + " := " + randomVar.minVal)
-        randomVar := randomVar.minVal
+        applyConstraint(randomVar.minVal)
       }
       case Random() => {
-        randomVar := Gen.choose(randomVar.minVal, randomVar.maxVal).sample.get
+        applyConstraint(Gen.choose(randomVar.minVal, randomVar.maxVal).sample.get)
       }
     }
-    //println(" (" + randomVar.name + " := " + randomVar.value + ")")
   }
 }
 
@@ -336,7 +421,7 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   override def move(move: Move) = {
     move match {
       case PlusOne() => {
-        randomVar :+= InvGen.randomValue(randomVar.getMinVal to randomVar.getMaxVal).sample.get
+        randomVar :+= Gen.choose(randomVar.getMinVal, randomVar.getMaxVal).sample.get
       }
       case MinusOne() => {
         if (!randomVar.value.isEmpty) randomVar :-= Gen.oneOf(randomVar.value.toSeq).sample.get
@@ -352,39 +437,78 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   }
 }
 
-class InvariantTestBench(verbose: Boolean = false) {
+class InvariantTestBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
   val model = new Model(false, Some(checker))
-  var randomVars: List[RandomVar] = List()
+  var inputVars: List[RandomVar] = List()
+  var outputVars: List[RandomVar] = List()
 
-  def genIntVar(range: Range): IntVar = {
-    val riVar = InvGen.randomIntVar(range, model).sample.get
-    randomVars = riVar :: randomVars
+  def addVar(input: Boolean, v: RandomVar) {
+    addVar(input, List(v))
+  }
+
+  def addVar(input: Boolean, vars: Iterable[RandomVar]) {
+    for (v <- vars) {
+      if (input) inputVars = v :: inputVars
+      else outputVars = v :: outputVars
+    }
+  }
+
+  def genIntVar(
+    range: Range,
+    isInput: Boolean = true,
+    constraint: Int => Boolean = (v: Int) => true): IntVar = {
+    val riVar = InvGen.randomIntVar(range, model, constraint).sample.get
+    addVar(isInput, riVar)
     riVar.randomVar
   }
 
-  def genIntVarsArray(nbVars: Int = 4, range: Range = 0 to 100): Array[IntVar] = {
-    val riVars = InvGen.randomIntVars(nbVars, range, model).sample.get
-    randomVars = riVars ::: randomVars
+  def genIntVarsArray(
+    nbVars: Int = 4,
+    range: Range = 0 to 100,
+    isInput: Boolean = true,
+    constraint: Int => Boolean = (v: Int) => true): Array[IntVar] = {
+    val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
+    addVar(isInput, riVars)
     riVars.map((riv: RandomIntVar) => {
-      //println(riv.getRandomVar.toString)
       riv.randomVar
     }).toArray
   }
+  
+  implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
 
-  def genIntSetVar(range: Range, size: Int) = {
+  def genSortedIntVars(
+      nbVars: Int,
+      range: Range,
+      isInput: Boolean = true,
+      constraint: Int => Boolean = (v: Int) => true): SortedSet[IntVar] = {
+    val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
+    addVar(isInput, riVars)
+    val iVars = riVars.map((riv: RandomIntVar) => {riv.randomVar})
+    SortedSet(iVars: _*)(intVarOrdering)
+  }
+
+  def genIntSetVar(range: Range, size: Int, isInput: Boolean = true) = {
     val risVar = InvGen.randomFixedIntSetVar(range, size, model).sample.get
-    randomVars = risVar :: randomVars
+    addVar(isInput, risVar)
     risVar.randomVar
   }
 
-  def genIntSetVars(nbVars: Int = 4, upToSize: Int = 20, range: Range = 0 to 100): Array[IntSetVar] = {
+  def genIntSetVars(nbVars: Int = 4, upToSize: Int = 20, range: Range = 0 to 100, isInput: Boolean = true): Array[IntSetVar] = {
     val risVars = InvGen.randomIntSetVars(nbVars, upToSize, range, model).sample.get
-    randomVars = risVars ::: randomVars
+    addVar(isInput, risVars)
     risVars.map((risv: RandomIntSetVar) => {
       risv.randomVar
     }).toArray
+  }
+
+  def printVars(name: String, vars: List[RandomVar]) {
+    if (vars.length > 0) {
+      println(name + " vars:")
+      vars.foreach((rv: RandomVar) => println(rv.toString()))
+      println
+    }
   }
 
   def run() = {
@@ -395,16 +519,18 @@ class InvariantTestBench(verbose: Boolean = false) {
     try {
       property = org.scalacheck.Prop.forAll(InvGen.move) {
         randomMove: Move =>
-          if (verbose) {
-            if (randomVars.length > 1) randomVars.foreach((rv: RandomVar) => println(rv.toString()))
+          if (verbose > 0) {
+            println("---------------------------------------------------")
+            printVars("Input", inputVars)
+            printVars("Output", outputVars)
             print(randomMove.toString() + " ")
           }
-          val randomVar = Gen.oneOf(randomVars).sample.get
-          if (verbose) print(randomVar.toString() + " => ")
+          val randomVar = Gen.oneOf(inputVars).sample.get
+          if (verbose > 0) print(randomVar.toString() + " => ")
           randomVar.move(randomMove)
-          if (verbose) println(randomVar.toString())
+          if (verbose > 0) println(randomVar.toString() + "\n")
           model.propagate()
-          if (verbose) println
+          if (verbose > 0) println
           checker.isChecked
       }
     } catch {
