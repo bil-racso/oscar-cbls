@@ -65,7 +65,7 @@ abstract class TestCumulativeConstraint(cumulativeName: String, nTests: Int = 10
     else sols1.forall(s => sols2 contains s)
   }
   
-  test("test " + cumulativeName) {
+  test("test solveAll " + cumulativeName) {
     (1 to nTests).forall(i => {
       print("test " + cumulativeName + " instance " + i + ": ")
       val instance = generateRandomSchedulingProblem(5)
@@ -94,6 +94,7 @@ abstract class TestCumulativeConstraint(cumulativeName: String, nTests: Int = 10
 }
 
 class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulative") {
+  
   override def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint = {
     new SweepMaxCumulative(starts, ends, durations, demands, resources, capacity, id: Int)
   }
@@ -105,6 +106,6 @@ class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulati
 
 class TestEnergeticReasoning extends TestCumulativeConstraint("Energetic") {
   override def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint = {
-    new EnergeticReasoning(starts, ends, durations, demands, resources, capacity, id: Int)
+    new EnergeticReasoning(starts, durations, ends, demands, resources, capacity, id: Int)
   }
 }
