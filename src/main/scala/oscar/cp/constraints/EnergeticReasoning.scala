@@ -40,28 +40,31 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
   override def propagate: CPOutcome = {
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = (0 until starts.length) filter(task => resources(task).isBound && resources(task).getValue == id)
+    val tasks = (0 until starts.length) filter(task => resources(task).isBound && resources(task).getValue == id && durations(task).min > 0 && demands(task).min > 0)
     
     val newEets = ends map(_.min)
     val newLsts = starts map(_.max)
     
-    val intervals = computeIntervals
+    val intervals = computeIntervals(tasks)
 
     for ((t1,t2) <- intervals) {
-      val currentIntervalEnergy = energyForInterval(t1, t2)
+      val currentIntervalEnergy = energyForInterval(t1, t2, tasks)
       val currentMaxIntervalEnergy = capacity.min * (t2 - t1) 
       if (currentIntervalEnergy > currentMaxIntervalEnergy) {
         if (capacity.updateMin(ceil(currentIntervalEnergy.toDouble/(t2 - t1)).toInt) == Failure)
+        {
           return Failure
+        }
+          
     	else
     	  return Suspend
     	}
       else {
         //bound adjustements computation
         for (task <- tasks) {
-          val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2)
-          val leftShiftedEnergy = leftShiftedActivityEnergyForInterval(task, t1, t2)
-          val rightShiftedEnergy = rightShiftedActivityEnergyForInterval(task, t1, t2)
+          val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2,tasks)
+          val leftShiftedEnergy = leftShiftedActivityEnergyForInterval(task, t1, t2,tasks)
+          val rightShiftedEnergy = rightShiftedActivityEnergyForInterval(task, t1, t2,tasks)
 
           if (slackWithoutCurrentActivity < leftShiftedEnergy)
             newEets(task)= max(newEets(task), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity).toDouble/demands(task).min).toInt)
@@ -76,18 +79,23 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
     //apply bound adjustements
     for (task <- tasks) {
       if (starts(task).updateMax(newLsts(task)) == Failure)
+      {
         return Failure
+      }
       
       if (ends(task).updateMin(newEets(task)) == Failure)
+      {
         return Failure
+      }
+        
     }
 
     Suspend
   }
     
   @inline
-  private def computeIntervals = {
-    val (o1, o2, ot) = getO1_O_2_Ot
+  private def computeIntervals(tasks : IndexedSeq[Int]) = {
+    val (o1, o2, ot) = getO1_O_2_Ot(tasks)
     val intervals = HashSet[Tuple2[Int,Int]]() 
       
     for(t1 <- o1 ; t2 <- o2 if t1 < t2)
@@ -104,10 +112,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
   }
     
   @inline
-  private def getO1_O_2_Ot = {
-    
-    //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = (0 until starts.length) filter(task => resources(task).isBound && resources(task).getValue == id)
+  private def getO1_O_2_Ot(tasks : IndexedSeq[Int]) = {
     
     val o1 = TreeSet[Int]()
     val o2 = TreeSet[Int]()
@@ -129,28 +134,25 @@ class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], en
   }
     
   @inline
-  private def energyForInterval(t1 : Int,t2: Int) = {
-    //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = (0 until starts.length) filter(task => resources(task).isBound && resources(task).getValue == id)
-    
+  private def energyForInterval(t1 : Int,t2: Int, tasks : IndexedSeq[Int]) = {
     var energy = 0
    
     for(task <- tasks) 
-      energy += activityEnergyForInterval(task, t1, t2)
+      energy += activityEnergyForInterval(task, t1, t2, tasks)
     	  
     energy
   }
     
   @inline
-  private def leftShiftedActivityEnergyForInterval(task : Int, t1 : Int,t2: Int) = min(t2 - t1, min(durations(task).min, max(0, ends(task).min - t1))) * demands(task).getMin
+  private def leftShiftedActivityEnergyForInterval(task : Int, t1 : Int,t2: Int, tasks : IndexedSeq[Int]) = min(t2 - t1, min(durations(task).min, max(0, ends(task).min - t1))) * demands(task).min
       
     
   @inline
-  private def rightShiftedActivityEnergyForInterval(task : Int, t1 : Int,t2: Int) = min(t2 - t1, min(durations(task).min, max(0, t2 - starts(task).max))) * demands(task).getMin
+  private def rightShiftedActivityEnergyForInterval(task : Int, t1 : Int,t2: Int, tasks : IndexedSeq[Int]) = min(t2 - t1, min(durations(task).min, max(0, t2 - starts(task).max))) * demands(task).min
       
     
   @inline
-  private def activityEnergyForInterval(task : Int, t1 : Int,t2: Int) = min(leftShiftedActivityEnergyForInterval(task, t1, t2), rightShiftedActivityEnergyForInterval(task, t1, t2))
+  private def activityEnergyForInterval(task : Int, t1 : Int,t2: Int, tasks : IndexedSeq[Int]) = min(leftShiftedActivityEnergyForInterval(task, t1, t2, tasks), rightShiftedActivityEnergyForInterval(task, t1, t2,tasks))
       
 }
 
