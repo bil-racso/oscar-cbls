@@ -25,6 +25,7 @@ package oscar.cbls.invariants.lib.logic
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{ Checker, KeyForElementRemoval }
+import scala.collection.immutable.Set
 
 /**
  * if (ifVar >0) then thenVar else elveVar
@@ -241,8 +242,8 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
     c.check(index.value.forall((i: Int) =>
       output.value.contains(inputarray(i).value)),
       Some("index.value.forall((i: Int) => output.value.contains(inputarray(i).value))"))
-    c.check(output.value.size == index.value.size,
-      Some("output.value.size (" + output.value.size + ") == index.value.size (" + index.value.size + ")"))
+    c.check(output.value.size <= index.value.size,
+      Some("output.value.size (" + output.value.size + ") <= index.value.size (" + index.value.size + ")"))
   }
 }
 
