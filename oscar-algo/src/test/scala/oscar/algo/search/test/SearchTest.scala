@@ -19,8 +19,6 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.algo.search._
 import oscar.algo.reversible._
-import oscar.cp.modeling._
-import oscar.cp.core.CPVarInt
 import oscar.algo.search.SearchNode
 
 class SearchTest extends FunSuite with ShouldMatchers  {
