@@ -82,7 +82,7 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("Access to int vars...") {
-    val bench = new InvariantTestBench
+    val bench = new InvariantTestBench(2)
     new IntElements(bench.genIntSetVar(0 to 4, 3), bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
   }
@@ -115,7 +115,7 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("SelectLESetQueue") {
+  ignore("SelectLESetQueue") { //TODO exclure les changements de valeurs interdits
     val bench = new InvariantTestBench(2)
     new SelectLESetQueue(bench.genIntVarsArray(5, 0 to 5), bench.genIntVar(3 to 10, false)).toIntSetVar
     bench.run
@@ -127,7 +127,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Sort") {
     val bench = new InvariantTestBench(2)
-    new Sort(bench.genIntVarsArray(20, 0 to 30), bench.genIntVarsArray(20, 30 to 100))
+    new Sort(bench.genIntVarsArray(6, 0 to 30), bench.genIntVarsArray(6, 0 to 5))
     bench.run
   }
 
@@ -341,9 +341,10 @@ case class ToZero extends Move
 case class ToMin extends Move
 case class ToMax extends Move
 case class Random extends Move
+case class RandomDiff extends Move
 
 object InvGen {
-  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random())
+  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff())
 
   def randomIntVar(range: Range, model: Model, constraint: Int => Boolean) = for {
     v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
@@ -374,6 +375,8 @@ abstract class RandomVar {
   def randomVar(): Variable
 
   def move(move: Move)
+
+  override def toString = randomVar.toString
 }
 
 case class RandomIntVar(intVar: IntVar,
@@ -411,6 +414,11 @@ case class RandomIntVar(intVar: IntVar,
       case Random() => {
         applyConstraint(Gen.choose(randomVar.minVal, randomVar.maxVal).sample.get)
       }
+      case RandomDiff() => {
+        val randomOpt = (Gen.choose(randomVar.minVal, randomVar.maxVal)
+          suchThat (_ != randomVar.value)).sample
+        if (randomOpt.isDefined) applyConstraint(randomOpt.get)
+      }
     }
   }
 }
@@ -420,19 +428,38 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
 
   override def move(move: Move) = {
     move match {
-      case PlusOne() => {
+      case PlusOne() => { // Adds an element to the set
         randomVar :+= Gen.choose(randomVar.getMinVal, randomVar.getMaxVal).sample.get
       }
-      case MinusOne() => {
+      case MinusOne() => { // Removes an element from the set
         if (!randomVar.value.isEmpty) randomVar :-= Gen.oneOf(randomVar.value.toSeq).sample.get
         //else randomVar.value = Seq.fill(randomVar.value.size)(util.Random.nextInt)
       }
-      case ToZero() => {
+      case ToZero() => { // Removes all elements from the set
         randomVar.value.foreach(value => randomVar.deleteValue(value))
       }
-      case ToMax() => // TODO
-      case ToMin() => // TODO
-      case Random() => // TODO
+      case ToMax() => { // Adds all elements between min and max to the set
+        (randomVar.getMinVal to randomVar.getMaxVal).foreach(v => randomVar :+= v)
+      }
+      case ToMin() => { // Reduces the set to a singleton
+        randomVar.value.foreach(value => randomVar.deleteValue(value))
+        randomVar :+= Gen.choose(randomVar.getMinVal, randomVar.getMaxVal).sample.get
+      }
+      case Random() => { // Replaces the set with a randomly generated one
+        val newSize = Gen.choose(1, randomVar.value.size + 1).sample.get
+        val newVal = Gen.containerOfN[List, Int](newSize,
+          Gen.choose(randomVar.getMinVal, randomVar.getMaxVal)).sample.get
+        randomVar := SortedSet(newVal: _*)
+      }
+      case RandomDiff() => {
+        // Replaces the set with a randomly generated one
+        // with which intersection is empty
+        val newSize = Gen.choose(1, randomVar.value.size + 1).sample.get
+        val newValOpt = Gen.containerOfN[List, Int](newSize,
+          Gen.choose(randomVar.getMinVal, randomVar.getMaxVal)
+            suchThat (!randomVar.value.contains(_))).sample
+        if (newValOpt.isDefined) randomVar := SortedSet(newValOpt.get: _*)
+      }
     }
   }
 }
@@ -475,17 +502,17 @@ class InvariantTestBench(verbose: Int = 0) {
       riv.randomVar
     }).toArray
   }
-  
+
   implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
 
   def genSortedIntVars(
-      nbVars: Int,
-      range: Range,
-      isInput: Boolean = true,
-      constraint: Int => Boolean = (v: Int) => true): SortedSet[IntVar] = {
+    nbVars: Int,
+    range: Range,
+    isInput: Boolean = true,
+    constraint: Int => Boolean = (v: Int) => true): SortedSet[IntVar] = {
     val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
     addVar(isInput, riVars)
-    val iVars = riVars.map((riv: RandomIntVar) => {riv.randomVar})
+    val iVars = riVars.map((riv: RandomIntVar) => { riv.randomVar })
     SortedSet(iVars: _*)(intVarOrdering)
   }
 
