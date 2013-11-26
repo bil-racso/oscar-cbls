@@ -23,7 +23,6 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
   assert(starts.length == durations.length && starts.length == ends.length && starts.length == demands.length && starts.length == resources.length, "starts, durations, ends, demands and resources must be of same length")
 
   def setup(l: CPPropagStrength): CPOutcome = {
-
     if (propagate == Failure) Failure
     else {
       for (task <- 0 until starts.length) {

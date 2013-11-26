@@ -106,6 +106,6 @@ class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulati
 
 class TestEnergeticReasoning extends TestCumulativeConstraint("Energetic") {
   override def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint = {
-    new EnergeticReasoning(starts, durations, ends, demands, resources, capacity, id: Int)
+    new EnergeticReasoning(starts, ends, durations, demands, resources, capacity, id: Int)
   }
 }
