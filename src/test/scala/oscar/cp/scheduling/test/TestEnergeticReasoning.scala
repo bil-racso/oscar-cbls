@@ -52,7 +52,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	var nb = 0
 	cp.solve subjectTo
 	{
-		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
 	} exploration {
 			cp.binaryFirstFail(starts)
     	    nb += 1
@@ -90,7 +90,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	  cp.add(starts(i) + durs(i) == ends(i))
 	}
 	
-	cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+	cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
     	
 	starts(2).getMin should be(4)
 	
@@ -125,7 +125,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
       for(i <- 0 until starts.length) {
 	  cp.add(starts(i) + durs(i) == ends(i))
 	}
-		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
 	} exploration {
 			cp.binaryFirstFail(starts)
     	    nb += 1
@@ -164,7 +164,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
       for(i <- 0 until starts.length) {
 	  cp.add(starts(i) + durs(i) == ends(i))
 	}
-		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
 	} exploration {
 			cp.binaryFirstFail(starts)
 			solutions(nb) = Tuple3(starts(0).value,starts(1).value,starts(2).value)
@@ -214,7 +214,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
       for(i <- 0 until starts.length) {
 	  cp.add(starts(i) + durs(i) == ends(i))
 	}
-		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
 	} exploration {
 			cp.binaryFirstFail(starts)
 			solutions(nb) = Tuple2(starts(0).value,starts(1).value)
@@ -260,7 +260,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
       for(i <- 0 until starts.length) {
 	  cp.add(starts(i) + durs(i) == ends(i))
 	}
-		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
 	} exploration {
 			cp.binaryFirstFail(starts)
 			cp.binaryFirstFail(durs)
@@ -268,9 +268,6 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     	    nb += 1
     	} run()
 
-    	
-    	solutions foreach {println(_)}
-    	
     nb should be(10)
     
     val realSolution = Array{
@@ -290,5 +287,49 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
   }
 
+  
+  test("ER : normal test") {
+    //a task : (startmin, endmax, dur, demand)
+  
+    val horizon = 5
+    
+    val activitiesDescription = Array((0,horizon,2,2), (0,horizon,3,2))
+	
+	val cp = CPScheduler(horizon)
+
+	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	
+	val resId = 0
+	
+	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+
+	val capa = CPVarInt(cp, 3 to 3)
+
+	var nb = 0
+	val solutions = new Array[Tuple2[Int,Int]](2)
+	
+	cp.solve subjectTo
+	{
+      for(i <- 0 until starts.length) {
+	  cp.add(starts(i) + durs(i) == ends(i))
+	}
+		cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
+	} exploration {
+			cp.binaryFirstFail(starts)
+			solutions(nb) = Tuple2(starts(0).value,starts(1).value)
+    	    nb += 1
+    	} run()
+    	
+    nb should be(2)
+    	
+    val realSolution = Array{Tuple2(0,2); 
+    						Tuple2(3,0);
+    						}	
+    realSolution foreach {sol => assert(solutions.contains(sol), s"$sol is a solution")}
+	
+  }
   
 }
