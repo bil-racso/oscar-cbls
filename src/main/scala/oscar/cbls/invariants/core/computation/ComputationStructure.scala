@@ -1,17 +1,17 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -21,9 +21,9 @@
 
 package oscar.cbls.invariants.core.computation
 
-import collection.immutable.{SortedSet, SortedMap};
+import collection.immutable.{SortedSet, SortedMap}
 
-import oscar.cbls.invariants.core.propagation._;
+import oscar.cbls.invariants.core.propagation._
 
 /**This class contains the model, namely, the invariants and variables
  * They are all modelled as propagation Elements, which are handled by the inherited [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
@@ -417,7 +417,7 @@ object InvariantHelper{
         }
       }
     })
-    return null
+    null
   }
 }
 
@@ -478,7 +478,7 @@ object Event{
   def apply(v:Variable,
             action: =>Unit):Event = {
     val toreturn = new Event(v,null,null)
-    toreturn.setAction((_:Unit) => {action})
+    toreturn.setAction((_:Unit) => action)
 //    if (intaction != null) toreturn.setIntAction(intaction)
  //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -488,7 +488,7 @@ object Event{
             action: =>Unit,
             ModifiedVars:Iterable[Variable]):Event = {
     val toreturn = new Event(v,null,ModifiedVars)
-    toreturn.setAction((_:Unit) => {action})
+    toreturn.setAction((_:Unit) => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -565,9 +565,9 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   private var actionIntParam: (Int=>Unit) = null
   private var actionIntSetParam: (SortedSet[Int] => Unit) = null
 
-  private var oldIntv = 0;
+  private var oldIntv = 0
   private var oldIntSetv:SortedSet[Int] = SortedSet.empty
-  private var oldIntw = 0;
+  private var oldIntw = 0
   private var oldIntSetw:SortedSet[Int] = SortedSet.empty
 
   private var intintaction: ((Int,Int) => Unit) = null
@@ -675,8 +675,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Model]] whose type is integer.
  *
  * @param model is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.IntConst]]
- * @param MinVal is the minimum value of the variable. Some invariants exploit this value to declare fixed size arrays
- * @param MaxVal is the maximum value of the variable. Some invariants exploit this value to declare fixed size arrays
+ * @param domain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
  * @param Value is the value of the variable
  * @param n is the name of the variable, used for pretty printing only
  */
@@ -755,7 +754,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
 
   /** increments the variable by one
     */
-  def ++() {
+  def ++ {
     setValue(1 + getValue(true))
   }
 
@@ -767,7 +766,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
   }
 
   /**this operator swaps the value of two IntVar*/
-  def swap(v: IntVar): Unit = {
+  def swap(v: IntVar) {
     this :=: v
   }
 

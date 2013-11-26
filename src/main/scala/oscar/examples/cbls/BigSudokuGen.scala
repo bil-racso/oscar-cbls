@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 
-package oscar.cbls.constraints.tests
+package oscar.examples.cbls
 
 import scala.swing.SimpleSwingApplication
 import scala.swing.MainFrame
@@ -136,7 +136,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // closing constraints
-    c.close
+    c.close()
     
     // working variables
     val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
@@ -189,10 +189,10 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
   
   def showGrid(tab:Array[IntVar],N:Int) {
     for (i <- Range(0,tab.length)) {
-      if ((i%N)==0) println
+      if ((i%N)==0) println()
       print(tab(i).value+" ")
     }
-    println
+    println()
   }
   
 //=====================================================================

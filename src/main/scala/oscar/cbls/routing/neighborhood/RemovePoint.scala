@@ -141,6 +141,6 @@ case class RemovePoint(beforeRemovedPoint:Int, removedPoint:Int, objAfter:Int, v
   def startNodeForNextExploration: Int = beforeRemovedPoint
   def getValuesToAssign = vrp.remove(List((beforeRemovedPoint,removedPoint)))
 
-  override def toString():String = "RemovePoint(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
+  override def toString:String = "RemovePoint(beforeRemovedPoint = " + beforeRemovedPoint + ", removedPoint = " + removedPoint+" )"
 }
 

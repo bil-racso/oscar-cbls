@@ -53,9 +53,9 @@ object ConflictSearch {
     var accumulator = init
     var ListA:List[C] = List.empty
     var ListB:List[C] = List.empty
-    var fillA = true;
-    var remaining = toInject;
-    
+    var fillA = true
+    var remaining = toInject
+
     while(true){
       if(remaining.isEmpty) throw new Exception("no conflict")
       val item = remaining.head

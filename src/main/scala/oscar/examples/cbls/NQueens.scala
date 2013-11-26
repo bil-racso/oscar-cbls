@@ -46,7 +46,7 @@ import oscar.cbls.invariants.core.computation.IntSetVar._
 object NQueens extends SearchEngine(true) with StopWatch with App{
 
   if (args.length<1) {
-    println("Benchmarking NQueen - this takes time");
+    println("Benchmarking NQueen - this takes time")
 
     // first run could have some overhead so ignoring it
     SolveNQueen(1000)

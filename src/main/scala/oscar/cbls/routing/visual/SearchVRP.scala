@@ -28,7 +28,9 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
 
 
   def getSelectedNeighborhood(kLimit:Int,n:Neighbor) = panelVRP.getSelectedNeighborhood(kLimit,n)
-  def updateVisualisation(iteration:Int, force:Boolean = false) = panelVRP.updateVisualisation(iteration,force)
+  def updateVisualisation(iteration:Int, force:Boolean = false) {
+    panelVRP.updateVisualisation(iteration, force)
+  }
 
   def run(){
       val boardPanel = panelVRP.boardPanel
@@ -50,7 +52,7 @@ class SearchVRP(panelVRP:PanelVRP) extends Runnable with StopWatch{
         previousMove = getSelectedNeighborhood(panelVRP.vrpModel.closeNeighbor,previousMove)
         if ((previousMove != null && previousMove.getObjAfter < oldObj) || previousMove.isInstanceOf[ReinsertPoint]){
           it += 1
-          previousMove.comit
+          previousMove.comit()
           updateVisualisation(it)
           //println("it: " + it + " | objective: "+ vrp.ObjectiveVar.value + " | move: "+previousMove +"\n M(ax)A(vg)U(nrouted)N(eighbor) ="+vrp.maxAvgUnrouted)
         }

@@ -52,7 +52,7 @@ class ColorManagement {
   /*
     Set n colors enough different.
    */
-  def setDifferentColors(n:Int)= {
+  def setDifferentColors(n:Int) {
     var enoughColor:Boolean =  false
     if(n<=21)
       enoughColor =true

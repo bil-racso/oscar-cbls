@@ -22,11 +22,11 @@
 package oscar.cbls.invariants.lib.minmax
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
-import oscar.cbls.invariants.core.computation._;
-import oscar.cbls.invariants.core.algo.heap._;
-import collection.immutable.SortedSet;
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.algo.heap._
+import collection.immutable.SortedSet
 
-import oscar.cbls.invariants.lib.logic._;
+import oscar.cbls.invariants.lib.logic._
 
 abstract class MiaxLin(vars: SortedSet[IntVar]) extends IntInvariant {
   require(vars.size > 0, "Invariant " + name + " declared with zero vars to max")
@@ -124,8 +124,8 @@ abstract class Miax(vars: SortedSet[IntVar]) extends IntInvariant{
   var output: IntVar = null
 
   override def setOutputVar(v: IntVar) {
-      output = v.asInstanceOf[IntVar]
-      output.setDefiningInvariant(this)
+      output = v
+    output.setDefiningInvariant(this)
       output := h.getFirst.value
   }
 
@@ -175,12 +175,12 @@ case class Max(vars: SortedSet[IntVar]) extends Miax(vars) {
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log implementations
  * */
-case class Max2(val a: IntVar, val b: IntVar)
+case class Max2(a: IntVar, b: IntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.minVal.max(b.minVal), a.maxVal.max(b.maxVal))
 
 /** maintains output = Min(a,b)
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log implementations
  * */
-case class Min2(val a: IntVar, val b: IntVar)
+case class Min2(a: IntVar, b: IntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.minVal.min(b.minVal), a.maxVal.min(b.maxVal))

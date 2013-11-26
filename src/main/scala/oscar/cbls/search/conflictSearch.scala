@@ -35,14 +35,14 @@ object conflictSearch extends SearchEngine{
    * @param MaxIt the maximal number of iterations
    */
   def apply(c:ConstraintSystem, MaxIt: Int) {
-    var it = 0;
-    val Variables:Array[IntVar] = c.constrainedVariables.asInstanceOf[Iterable[IntVar]].toArray;
+    var it = 0
+    val Variables:Array[IntVar] = c.constrainedVariables.asInstanceOf[Iterable[IntVar]].toArray
     val Violations:Array[IntVar] = Variables.clone().map(c.violation)
     while (!c.isTrue && it < MaxIt) {
       val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
       val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int),i => true)
       Variables(MaxViolVarID) := NewVal
-      it = it + 1;
+      it = it + 1
     }
   }
 }

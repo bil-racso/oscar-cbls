@@ -1,24 +1,22 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-/**
- * *****************************************************************************
+ ******************************************************************************/
+/*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
+ *            Yoann Guyot
  * ****************************************************************************
  */
 
@@ -185,33 +183,14 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
     output := SortedSet.empty
     for (arrayPosition <- index.value) {
       val value = inputarray(arrayPosition).value
-      if (ValueCount(value - myMin) == 0) {
-        ValueCount(value - myMin) = 1
-        output :+= value
-      } else {
-        ValueCount(value - myMin) += 1
-      }
+      internalInsert(value)
     }
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, indice: Int, OldVal: Int, NewVal: Int) {
-    assert(inputarray(indice) == v)
-    assert(KeysToInputArray(indice) != null)
-
-    if (ValueCount(OldVal - myMin) == 1) {
-      ValueCount(OldVal - myMin) = 0
-      output :-= OldVal
-    } else {
-      ValueCount(OldVal - myMin) -= 1
-    }
-
-    if (ValueCount(NewVal - myMin) == 0) {
-      ValueCount(NewVal - myMin) = 1
-      output :+= NewVal
-    } else {
-      ValueCount(NewVal - myMin) += 1
-    }
+  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+    internalDelete(OldVal)
+    internalInsert(NewVal)
   }
 
   @inline
@@ -220,12 +199,7 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
     KeysToInputArray(value) = registerDynamicDependency(inputarray(value))
     val NewVal: Int = inputarray(value).value
 
-    if (ValueCount(NewVal - myMin) == 0) {
-      ValueCount(NewVal - myMin) = 1
-      output :+= NewVal
-    } else {
-      ValueCount(NewVal - myMin) += 1
-    }
+    internalInsert(NewVal)
   }
 
   @inline
@@ -236,12 +210,28 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
     unregisterDynamicDependency(KeysToInputArray(value))
     KeysToInputArray(value) = null
 
-    val OldVal: Int = inputarray(value).value
-    if (ValueCount(OldVal - myMin) == 1) {
-      ValueCount(OldVal - myMin) = 0
-      output :-= OldVal
-    } else {
-      ValueCount(OldVal - myMin) -= 1
+    val OldVal:Int = inputarray(value).value
+    internalDelete(OldVal)
+
+  }
+
+  private def internalInsert(value:Int){
+    if (ValueCount(value - myMin) == 0){
+      ValueCount(value - myMin) = 1
+      output :+= value
+    }else{
+      ValueCount(value - myMin) += 1
+    }
+    assert(ValueCount(value - myMin) > 0)
+  }
+
+  private def internalDelete(value:Int){
+    assert(ValueCount(value - myMin) > 0)
+    if (ValueCount(value - myMin) == 1){
+      ValueCount(value - myMin) = 0
+      output :-= value
+    }else{
+      ValueCount(value - myMin) -= 1
     }
   }
 

@@ -21,8 +21,8 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation._;
-import collection.immutable.SortedSet;
+import oscar.cbls.invariants.core.computation._
+import collection.immutable.SortedSet
 import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.propagation.Checker
 ;
@@ -93,8 +93,8 @@ case class Inter(left:IntSetVar, right:IntSetVar) extends IntSetInvariant {
   finishInitialization()
 
   override def setOutputVar(v:IntSetVar){
-      output = v.asInstanceOf[IntSetVar]
-      output.setDefiningInvariant(this)
+      output = v
+    output.setDefiningInvariant(this)
       output := left.value.intersect(right.value)
   }
 
@@ -140,8 +140,8 @@ case class Diff(left:IntSetVar, right:IntSetVar) extends IntSetInvariant  {
   finishInitialization()
 
   override def setOutputVar(v:IntSetVar){
-      output = v.asInstanceOf[IntSetVar]
-      output.setDefiningInvariant(this)
+      output = v
+    output.setDefiningInvariant(this)
       output := left.value.diff(right.value)
   }
 
@@ -196,8 +196,8 @@ case class Cardinality(v:IntSetVar) extends IntInvariant {
   var output:IntVar = null
 
   override def setOutputVar(vv:IntVar){
-      output = vv.asInstanceOf[IntVar]
-      output.setDefiningInvariant(this)
+      output = vv
+    output.setDefiningInvariant(this)
       output := v.value.size
   }
 
@@ -318,8 +318,8 @@ case class Interval(lb:IntVar,ub:IntVar) extends IntSetInvariant {
 
 /**maintains the output as any value taken from the intset var parameter.
  * if this set is empty, puts the default value ni output.
- * @param from
- * @param default
+ * @param from where we take the value from
+ * @param default the default value in case from is empty
  */
 case class TakeAny(from:IntSetVar,  default:Int) extends IntInvariant{
   def myMin: Int = from.getMinVal

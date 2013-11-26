@@ -23,7 +23,7 @@ package oscar.cbls.search
 /**This trait implements simple stopwatch functionality used for benchmarking search scripts*/
 trait StopWatch {
 
-  private var starttime:Long = 0;
+  private var starttime:Long = 0
 
   /**starts or resets the stopwatch*/
   def startWatch(){

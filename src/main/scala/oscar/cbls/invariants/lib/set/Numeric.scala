@@ -16,6 +16,7 @@
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
+ *            Yoann Guyot
  ******************************************************************************/
 
 
@@ -38,7 +39,7 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
   finishInitialization()
 
   override def setOutputVar(v:IntVar){
-    output = v.asInstanceOf[IntVar]
+    output = v
     output.setDefiningInvariant(this)
     output := on.value.foldLeft(0)((a,b) => a+fun(b))
   }
@@ -56,7 +57,7 @@ case class SetSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntIn
   }
 
   override def checkInternals(c:Checker){
-    var count = 0;
+    var count = 0
     for (v <- on.value) count += fun(v)
     c.check(output.value == count, Some("output.value == count"))
   }
@@ -78,7 +79,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
   def myMin = Int.MinValue
 
   override def setOutputVar(v:IntVar){
-    output = v.asInstanceOf[IntVar]
+    output = v
     output.setDefiningInvariant(this)
     NonZeroProduct = on.value.foldLeft(1)((acc,value) => if(value==0){acc}else{acc*fun(value)})
     if(on.value.contains(0)){
@@ -116,7 +117,7 @@ case class SetProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) extends IntI
   }
 
   override def checkInternals(c:Checker){
-    var count = 1;
+    var count = 1
     for (v <- on.value) count *= v
     c.check(output.value == count, Some("output.value == count"))
   }

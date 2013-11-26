@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 package oscar.cbls.search
-import scala.util.Random;
+import scala.util.Random
 
 /**Provides a set of selectors to ease the development of search engines
  * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine*/
@@ -28,7 +28,7 @@ class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
 }
 
 trait SearchEngineTrait{
-  var RandomGenerator: Random = null;
+  var RandomGenerator: Random = null
 
   var Randomized:Boolean = true
   setRandomized(true)

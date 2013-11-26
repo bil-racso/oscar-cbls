@@ -15,23 +15,6 @@
 package oscar.cbls.scheduling
 
 /*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
-
-/*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
@@ -59,8 +42,8 @@ class Planning(val model: Model, val maxduration: Int) {
   var activityCount: Int = 0
   /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
   def AddActivity(j: Activity): Int = {
-    Activities = j :: Activities;
-    activityCount += 1;
+    Activities = j :: Activities
+    activityCount += 1
     activityCount - 1
   }
 
@@ -125,7 +108,7 @@ class Planning(val model: Model, val maxduration: Int) {
 
   var gantt:Gantt = null
   var plot:PlotLine = null
-  def getVisual(){
+  def displayVisualRendering(){
     val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
     frame.setBounds(0,0,500,800)
     gantt = new Gantt(this)
@@ -235,7 +218,7 @@ class Planning(val model: Model, val maxduration: Int) {
     /**marks all activities on the path linking From to To
      * all market activities are also added to MArkekActivities*/
     def MarkPathes(from:Activity, to:Activity):Boolean = {
-      if (from == to) return true;
+      if (from == to) return true
       if (from.EarliestEndDate.value > to.EarliestStartDate.value){
         return false
       }

@@ -25,7 +25,7 @@ import oscar.cbls.routing.neighborhood.{ReinsertPoint, Neighbor}
 /**
  * Constructs an initial solution according to the heuristic nearest-first.
  */
-object NearestNeighbor extends Heuristic{
+object NearestNeighbor{
 
   /**
    * It applies the initial solution to a given vrp problem.
@@ -44,14 +44,12 @@ object NearestNeighbor extends Heuristic{
     val nodeToRoute = vrp.N-vrp.V
     for (p <- 0 until nodeToRoute){
       current(vehicle) = ReinsertPoint.getBestMove(vrp,current(vehicle),vehicle)
-      // update the timer (linked to progressBar)
-      heuristicTimer.setPercentComplete((100*p)/(nodeToRoute-1))
+
       if (current(vehicle)!= null)
-        current(vehicle).comit
+        current(vehicle).comit()
       vehicle=(vehicle+1) % vrp.V
 
     }
-    // update the timer (linked to progressBar)
-    heuristicTimer.setPercentComplete(100)
+
   }
 }

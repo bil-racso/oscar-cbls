@@ -29,7 +29,7 @@ class Applet extends JApplet with App {
 
   override def init(){
     val easyMode = ("true" == this.getParameter("light"))
-    val myPanelVRP = new PanelVRP(easyMode);
+    val myPanelVRP = new PanelVRP(easyMode)
     setContentPane(myPanelVRP)
     setSize(new Dimension(800,500))
 

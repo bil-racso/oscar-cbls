@@ -91,9 +91,9 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   val ID: Int = planning.AddActivity(this)
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
-  var Mark:Boolean =  false;
+  var Mark:Boolean =  false
 
-  override def toString(): String = name
+  override def toString: String = name
 
   var StaticPredecessors: List[Activity] = List.empty
 

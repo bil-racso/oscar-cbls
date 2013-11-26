@@ -123,7 +123,7 @@ object TSPCBLS extends SearchEngine with StopWatch with App{
     //move = ThreeOptB.getFirstImprovingMove(vrp, vrp.getKNearest(nsize), move)
     if (move != null && move.getObjAfter < oldobj){
       it +=1
-      move.comit
+      move.comit()
       vrp.ObjectiveVar.value
       if(it % 100 == 0) println("it: " + it + " " + move + " " + vrp.ObjectiveVar.value + ": " + getWatch)
 

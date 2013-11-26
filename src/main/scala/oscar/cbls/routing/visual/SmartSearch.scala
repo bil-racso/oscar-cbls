@@ -29,11 +29,13 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
   var actualNeighbor = 0
   var ended = false
 
-  var mySmartSolution:SmartSolution=null;
+  var mySmartSolution:SmartSolution=null
 
   def getSelectedNeighborhood(kLimit:Int,n:Neighbor) = panelVRP.getSelectedNeighborhood(kLimit,n)
 
-  def updateVisualisation(iteration:Int) = panelVRP.updateVisualisation(iteration)
+  def updateVisualisation(iteration:Int) {
+    panelVRP.updateVisualisation(iteration)
+  }
 
   def getImprovingNeighbor(vrp:VRP with HopDistanceAsObjective with PositionInRouteAndRouteNr
     with ClosestNeighborPoints,kLimited:Int,previousMove:Neighbor):Neighbor =  {
@@ -75,7 +77,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         if(boardPanel.inPause || boardPanel.inIteration() ){ // visual interface
           boardPanel.unlock2()
           boardPanel.lock()
-          smartIt=1;
+          smartIt=1
         }
 
         val oldObj:Int = vrp.ObjectiveVar.value
@@ -83,7 +85,7 @@ class SmartSearch(panelVRP:PanelVRP) extends Runnable with StopWatch{
         previousMove = getImprovingNeighbor(vrp,kLimited,previousMove)
         if ((previousMove != null && previousMove.getObjAfter < oldObj) ){
           it += 1
-          previousMove.comit
+          previousMove.comit()
           updateVisualisation(it)
         }
       }

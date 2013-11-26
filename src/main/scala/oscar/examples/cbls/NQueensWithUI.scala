@@ -56,9 +56,9 @@ import oscar.cbls.invariants.core.computation._
 
 object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
-  var N: Int = 15;
+  var N: Int = 15
   var Dim = Range(0, N)
-  var PAUSE: Int = 50 + 1000 / N;
+  var PAUSE: Int = 50 + 1000 / N
 
   // UI stuff
   val cl = Thread.currentThread().getContextClassLoader()
@@ -120,7 +120,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     if (stopRequested) return // not reentering
 
     N = n
-    PAUSE = 50 + 1000 / N;
+    PAUSE = 50 + 1000 / N
 
     lNQueen.text = "  " + N + "  "
     stopRequested = true
@@ -193,7 +193,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     var it: Int = 0
     val Tabu = (for (q <- range) yield -1).toArray
 
-    var longueurplateau = 0;
+    var longueurplateau = 0
     while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
       val oldviolation: Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
