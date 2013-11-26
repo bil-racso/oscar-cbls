@@ -186,6 +186,51 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
   }
   
+  test("ER : zero duration 2") {
+    //a task : (startmin, endmax, dur, demand)
+  
+    val horizon = 2
+    
+    val activitiesDescription = Array((0,horizon,0,3), (0,horizon,2,3))
+	
+	val cp = CPScheduler(horizon)
+
+	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	
+	val resId = 0
+	
+	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+
+	val capa = CPVarInt(cp, 4 to 4)
+
+	var nb = 0
+	val solutions = new Array[Tuple2[Int,Int]](3)
+	
+	cp.solve subjectTo
+	{
+      for(i <- 0 until starts.length) {
+	  cp.add(starts(i) + durs(i) == ends(i))
+	}
+		cp.add(new EnergeticReasoning(starts,durs,ends,demands,resources,capa,resId))
+	} exploration {
+			cp.binaryFirstFail(starts)
+			solutions(nb) = Tuple2(starts(0).value,starts(1).value)
+    	    nb += 1
+    	} run()
+    	
+    nb should be(3)
+    	
+    val realSolution = Array{Tuple2(0,0); 
+    						Tuple2(1,0);
+    						Tuple2(2,0);
+    						}	
+    realSolution foreach {sol => assert(solutions.contains(sol), s"$sol is a solution")}
+	
+  }
+  
   test("ER : variable duration") {
     //a task : (startmin, endmax, dur, demand)
   
