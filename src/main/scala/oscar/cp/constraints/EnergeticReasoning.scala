@@ -18,7 +18,7 @@ import oscar.cp.scheduling.SchedulingUtils
 import oscar.visual.VisualFrame
 import scala.io.Source
 
-class EnergeticReasoning(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int = 1) extends Constraint(starts.head.store, "Energetic Reasoning") {
+class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int = 1) extends Constraint(starts.head.store, "Energetic Reasoning") {
 
   assert(starts.length == durations.length && starts.length == ends.length && starts.length == demands.length && starts.length == resources.length, "starts, durations, ends, demands and resources must be of same length")
 
