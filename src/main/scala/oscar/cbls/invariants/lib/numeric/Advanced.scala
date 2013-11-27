@@ -115,6 +115,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   var NullVarCount:Int = 0
   var NonNullProd:Int = 1
 
+  @inline
   private def affectOutput(){
     if (NullVarCount == 0){
       output := NonNullProd
