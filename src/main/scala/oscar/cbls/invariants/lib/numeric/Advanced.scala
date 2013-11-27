@@ -99,7 +99,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   def myMax = Int.MaxValue
   var output: IntVar = null
 
-  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
+  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}
 
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)
@@ -111,19 +111,24 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   }
 
   finishInitialization()
+
   var NullVarCount:Int = 0
-  var NonNullProd:Int = 0
+  var NonNullProd:Int = 1
+
+  private def affectOutput(){
+    if (NullVarCount == 0){
+      output := NonNullProd
+    }else{
+      output := 0
+    }
+  }
 
   override def setOutputVar(v: IntVar) {
     output = v
     output.setDefiningInvariant(this)
     NullVarCount = cond.value.count(i => vars(i).value == 0)
     NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i).value == 0){acc}else{acc*vars(i).value})
-    if (NullVarCount != 0){
-      output := 0
-    }else{
-      output := NonNullProd
-    }
+    affectOutput()
   }
 
   @inline
@@ -141,11 +146,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
       NonNullProd = NonNullProd/OldVal
       NonNullProd = NonNullProd * NewVal
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
   @inline
@@ -155,15 +156,11 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     if(vars(value).value == 0){
-      NullVarCount +=1
+      NullVarCount += 1
     }else{
-      NonNullProd *=vars(value).value
+      NonNullProd *= vars(value).value
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
   @inline
@@ -175,15 +172,11 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     keyForRemoval(value) = null
 
     if(vars(value).value == 0){
-      NullVarCount -=1
+      NullVarCount -= 1
     }else{
-      NonNullProd =NonNullProd / vars(value).value
+      NonNullProd = NonNullProd / vars(value).value
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
   override def checkInternals(c:checker) {
