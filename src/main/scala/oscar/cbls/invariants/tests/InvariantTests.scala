@@ -1,6 +1,7 @@
 package oscar.cbls.invariants.tests
 
 import scala.collection.immutable.SortedSet
+import collection.immutable.SortedMap
 import org.scalacheck.Gen
 import org.scalacheck.Gen.value
 import org.scalacheck.Prop
@@ -41,6 +42,10 @@ import oscar.cbls.invariants.lib.numeric.Sum2
 import oscar.cbls.invariants.lib.numeric.SumElements
 import org.scalatest.FunSuite
 import oscar.cbls.constraints.lib.global.AllDiff
+import oscar.cbls.constraints.lib.global.AtLeast
+import oscar.cbls.constraints.lib.global.AtMost
+import oscar.cbls.constraints.lib.global.MultiKnapsack
+import oscar.cbls.constraints.lib.global.Sequence
 import oscar.cbls.invariants.lib.minmax.MaxLin
 import oscar.cbls.invariants.lib.minmax.MinLin
 import oscar.cbls.invariants.lib.set.Union
@@ -62,13 +67,36 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("AtLeast")(pending)
+  test("AtLeast") {
+    val bench = new InvariantTestBench
+    new AtLeast(bench.genIntVars(10), bench.genBoundedValues(10, 0 to 30, 0 to 10)).toIntVar
+    bench.run
+  }
 
-  test("AtMost")(pending)
+  test("AtMost") {
+    val bench = new InvariantTestBench
+    new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
+    bench.run
+  }
 
-  test("MultiKnapsack")(pending)
+  test("MultiKnapsack") {
+    val bench = new InvariantTestBench
+    new MultiKnapsack(
+      bench.genIntVarsArray(),
+      bench.genIntVarsArray(),
+      bench.genIntVarsArray()).toIntVar
+    bench.run
+  }
 
-  test("Sequence")(pending)
+  test("Sequence") {
+    val bench = new InvariantTestBench
+    new Sequence(
+      bench.genIntVarsArray(),
+      Gen.choose(0, 10).sample.get,
+      Gen.choose(0, 10).sample.get,
+      (x: Int) => x > 1).toIntVar
+    bench.run
+  }
 
   test("Access to ITE maintains output = if ifVar > 0 then thenVar else elseVar") {
     val bench = new InvariantTestBench
@@ -77,7 +105,7 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("Access to int element maintains output = array(index)") {
-    val bench = new InvariantTestBench
+    val bench = new InvariantTestBench(2)
     new IntElement(bench.genIntVar(0 to 19), bench.genIntVarsArray(20, 0 to 100)).toIntVar
     bench.run
   }
@@ -343,9 +371,12 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
+  /**
+   * Won't pass when the product products an overflow.
+   */
   test("SetProd maintains the product of variables (after optionnaly appliying a function).") {
     val bench = new InvariantTestBench
-    new SetProd(bench.genIntSetVar(5, -3 to 3)).toIntVar
+    new SetProd(bench.genIntSetVar(10, -3 to 3)).toIntVar
     bench.run
   }
 }
@@ -377,6 +408,14 @@ object InvGen {
    */
   val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(),
     Random(), RandomDiff())
+
+  def randomIntSortedMap(nbVal: Int, valRange: Range, boundRange: Range): SortedMap[Int, Int] = {
+    val valList = Gen.containerOfN[List, Int](nbVal,
+      Gen.choose(valRange.min, valRange.max).sample.get).sample.get
+    val map = valList.map((value: Int) => (
+      value, Gen.choose(boundRange.min, boundRange.max).sample.get))
+    SortedMap(map: _*)
+  }
 
   /**
    * Method to generate a random IntVar:
@@ -615,16 +654,24 @@ class InvariantTestBench(verbose: Int = 0) {
    * Method for generating an array of random IntVar to add to the bench and to its
    * model.
    */
+  def genIntVars(
+    nbVars: Int = 4,
+    range: Range = 0 to 100,
+    isInput: Boolean = true,
+    constraint: Int => Boolean = (v: Int) => true): List[IntVar] = {
+    val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
+    addVar(isInput, riVars)
+    riVars.map((riv: RandomIntVar) => {
+      riv.randomVar
+    })
+  }
+
   def genIntVarsArray(
     nbVars: Int = 4,
     range: Range = 0 to 100,
     isInput: Boolean = true,
     constraint: Int => Boolean = (v: Int) => true): Array[IntVar] = {
-    val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
-    addVar(isInput, riVars)
-    riVars.map((riv: RandomIntVar) => {
-      riv.randomVar
-    }).toArray
+    genIntVars(nbVars, range, isInput, constraint).toArray
   }
 
   implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
@@ -642,6 +689,18 @@ class InvariantTestBench(verbose: Int = 0) {
     addVar(isInput, riVars)
     val iVars = riVars.map((riv: RandomIntVar) => { riv.randomVar })
     SortedSet(iVars: _*)(intVarOrdering)
+  }
+
+  def genBoundedValues(
+    nbVars: Int,
+    rangeValue: Range,
+    rangeBound: Range,
+    isInput: Boolean = true,
+    constraint: Int => Boolean = (v: Int) => true): SortedMap[Int, IntVar] = {
+    val boundVars = genIntVars(nbVars, rangeBound, isInput, constraint)
+    val map = boundVars.map((boundVar: IntVar) =>
+      (Gen.choose(rangeValue.min, rangeValue.max).sample.get, boundVar))
+    SortedMap(map: _*)
   }
 
   /**
