@@ -113,7 +113,6 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
     assert(v == on, "The given set (IntSetVar) should be SetProd.on.")
     if (value != 0) {
       NonZeroProduct /= fun(value)
-      if (NonZeroProduct == 0) NonZeroProduct = 1
     }
     if (on.value.contains(0)) {
       /**
