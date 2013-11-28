@@ -64,7 +64,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -395,7 +395,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     if (Verbose) println("PropagationStruture: end propagation")
 
     if (Track == null) {
-      Checker match{
+      checker match {
         case Some(c) =>
           for (p <- getPropagationElements) {
             p.checkInternals(c)
@@ -629,8 +629,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override private[core] def rescheduleIfNeeded() {}
   //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
 
-  override def checkInternals(c:checker){
-    for(e <-Elements){e.checkInternals(c)}
+  override def checkInternals(c: Checker) {
+    for (e <- Elements) { e.checkInternals(c) }
   }
 }
 
@@ -913,7 +913,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
    * that the incremental computation they perform through the performPropagation method is correct
    * overriding this method is optional, so an empty body is provided by default
    */
-  def checkInternals(c:checker) {
+  def checkInternals(c: Checker) {
     ;
   }
 
@@ -928,6 +928,6 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
  **/
 trait BulkPropagator extends PropagationElement
 
-abstract trait checker{
-  def check(b:Boolean)
+abstract trait Checker {
+  def check(verity: Boolean, traceOption: Option[String] = None)
 }

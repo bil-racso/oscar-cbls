@@ -71,10 +71,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
       }else{
         val m = p.MakeSpan.value
-        RelaxUntilMakespanReduced(PkillPerRelax,NbRelax)
-//        for (i <- 0 until NbRelax) {
-//          Relax(PkillPerRelax);
-//        }
+        if (!RelaxUntilMakespanReduced(PkillPerRelax,NbRelax)) return
         if(p.MakeSpan.value == m)println("skip")
       }
 
@@ -109,15 +106,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   /**
    * performs the relaxation of the critical path
    * @param PKill: the probability to kill a killable precedence constraint in percent
+   * @return true if something could be relaxed, false if makespan is solid (made only of dependencies that cannot be relaxed)
    */
-  def Relax(PKill: Int) {
+  def Relax(PKill: Int):Boolean = {
 
     val PotentiallykilledNodes = CriticalPathFinder.nonSolidCriticalPath(p)
-    if (PotentiallykilledNodes.isEmpty) return
-
-    //val (from, to) = selectFrom(PotentiallykilledNodes)
-    //if (Verbose) println("killed " + from + "->" + to)
-    //to.removeDynamicPredecessor(from)
+    if (PotentiallykilledNodes.isEmpty) return false
 
     for ((from,to) <- PotentiallykilledNodes){
       if (flip(PKill)){
@@ -125,22 +119,26 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         to.removeDynamicPredecessor(from)
       }
     }
+    true
   }
 
   /**
    * performs the relaxation of the critical path
    * @param PKill: the probability to kill a killable precedence constraint in percent
    * @param min: the minimal number of relaxation
+   * @return true if something could be relaxed, false if makespan is solid
    */
-  def RelaxUntilMakespanReduced(PKill:Int, min:Int = 3){
+  def RelaxUntilMakespanReduced(PKill:Int, min:Int = 3):Boolean = {
     val m = p.MakeSpan.value
     var n = 0
+    var SomethingCouldBeRelaxed = false
     while((p.MakeSpan.value == m) | (n < min)){
       n +=1
-      Relax(PKill)
+      SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | Relax(PKill)
+      if (!SomethingCouldBeRelaxed) return false
     }
     println("relaxed " + n + " times to shorten makespan")
-
+    return SomethingCouldBeRelaxed
   }
 
   def RandomFlatten() {

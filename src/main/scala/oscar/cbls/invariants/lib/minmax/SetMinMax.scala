@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
@@ -94,11 +94,12 @@ case class MinSet(v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) 
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc)"))
     }
   }
 }
@@ -123,11 +124,12 @@ case class MaxSet(v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) 
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc)"))
     }
   }
 }

@@ -25,7 +25,7 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /** { i in index(values) | cond(values[i] }
  * @param values is an array of IntVar
@@ -55,10 +55,12 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
     else if(NewCond && !OldCond) output.insertValue(index)
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(i <- values.indices){
-      c.check(!cond(values(i).value) ||output.value.contains(i))
-      c.check(cond(values(i).value) || !output.value.contains(i))
+      c.check(!cond(values(i).value) || output.value.contains(i),
+          Some("!cond(values(i).value) || output.value.contains(i)"))
+      c.check(cond(values(i).value) || !output.value.contains(i), 
+          Some("cond(values(i).value) || !output.value.contains(i)"))
     }
   }
 }
