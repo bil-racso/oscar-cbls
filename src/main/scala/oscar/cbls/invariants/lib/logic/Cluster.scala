@@ -27,7 +27,7 @@ import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.computation.IntVar._
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
@@ -54,13 +54,17 @@ case class SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]
     if(y != null) y.insertValue(index)
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v).value)){c.check(Clusters(values(v).value).value.contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)) {
+        c.check(Clusters(values(v).value).value.contains(v),
+          Some("Clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
+          }
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
-        c.check(values(indices).value == value)
+        c.check(values(indices).value == value,
+            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }
@@ -103,13 +107,15 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
 
   //This method is optionnal, it is called by the model when its debug mode is activated (see the contructor of model)
   //In this method, we check that the outputs are correct, based on non-incremental code
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(v <- values.indices){
-      c.check(clusters(values(v).value).value.contains(v))
+      c.check(clusters(values(v).value).value.contains(v),
+          Some("clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
-        c.check(values(indices).value == value)
+        c.check(values(indices).value == value,
+            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }

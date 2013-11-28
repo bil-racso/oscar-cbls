@@ -16,21 +16,24 @@
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
+ *            Yoann Guyot
  ******************************************************************************/
 
 package oscar.cbls.invariants.lib.minmax
 
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
+import oscar.cbls.invariants.core.algo.heap.{ ArrayMap, BinomialHeapWithMoveExtMem }
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.propagation.Checker
 
-/** Maintains Max(Var(i) | i in cond)
+/**
+ * Maintains Max(Var(i) | i in cond)
  * @param varss is an array of IntVar, which can be bulked
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
- * */
+ */
 case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
@@ -39,13 +42,21 @@ case class MaxArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int 
   override def Ord(v: IntVar): Int = -v.value
 
   override def ExtremumName: String = "Max"
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(output.value >= v.value,
+        Some("output.value (" + output.value + ") >= " + v.name + ".value (" + v.value + ")"))
+    }
+  }
 }
 
-/** Maintains Min(Var(i) | i in cond)
+/**
+ * Maintains Min(Var(i) | i in cond)
  * @param varss is an array of IntVar, which can be bulked
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
- * */
+ */
 case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) IntSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
@@ -54,42 +65,50 @@ case class MinArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int 
   override def Ord(v: IntVar): Int = v.value
 
   override def ExtremumName: String = "Min"
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(output.value <= v.value,
+        Some("output.value (" + output.value + ") <= " + v.name + ".value (" + v.value + ")"))
+    }
+  }
 }
 
-/** Maintains Miax(Var(i) | i in cond)
+/**
+ * Maintains Miax(Var(i) | i in cond)
  * Exact ordering is specified by implementing abstract methods of the class.
  * @param vars is an array of IntVar, which can be bulked
  * @param cond is the condition, cannot be null
  * update is O(log(n))
- * */
-abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int,Int)]{
+ */
+abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int, Int)] {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
   var output: IntVar = null
 
-  if(cond != null){ 
+  if (cond != null) {
     registerStaticDependency(cond)
     registerDeterminingDependency(cond)
   }
 
-  val (myMin,myMax) = bulkRegister(vars)
+  val (myMin, myMax) = bulkRegister(vars)
 
-  if(cond != null){
+  if (cond != null) {
     for (i <- cond.value) {
       h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
     }
-  }else{
+  } else {
     for (i <- vars.indices) {
       h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i),i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
     }
   }
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntVar])={
+  override def performBulkComputation(bulkedVar: Array[IntVar]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
   }
@@ -101,15 +120,15 @@ abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) ext
   override def setOutputVar(v: IntVar) {
     output = v
     output.setDefiningInvariant(this)
-    if(h.isEmpty){
+    if (h.isEmpty) {
       output := default
-    }else{
+    } else {
       output := vars(h.getFirst).value
     }
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
     output := vars(h.getFirst).value
@@ -118,11 +137,11 @@ abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) ext
   @inline
   override def notifyInsertOn(v: IntSetVar, value: Int) {
     assert(v == cond)
-    keyForRemoval(value) = registerDynamicDependency(vars(value),value)
+    keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
     //mettre a jour le heap
     h.insert(value)
-    output :=  vars(h.getFirst).value
+    output := vars(h.getFirst).value
   }
 
   @inline
@@ -134,9 +153,9 @@ abstract class MiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) ext
 
     //mettre a jour le heap
     h.delete(value)
-    if(h.isEmpty){
+    if (h.isEmpty) {
       output := default
-    }else{
+    } else {
       output := vars(h.getFirst).value
     }
   }

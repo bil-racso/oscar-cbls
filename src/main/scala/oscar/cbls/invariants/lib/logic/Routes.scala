@@ -22,7 +22,7 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 
 /**
@@ -155,23 +155,24 @@ case class Routes(V: Int,
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(n <- Next.indices){
       val next = Next(n).value
       if (next != UNROUTED){
-        c.check(RouteNr(next).value == RouteNr(n).value)
+        c.check(RouteNr(next).value == RouteNr(n).value, Some("RouteNr(next).value == RouteNr(n).value"))
         if(next < V){
-          c.check(PositionInRoute(next).value == 0)
-          c.check(RouteNr(next).value == next)
+          c.check(PositionInRoute(next).value == 0, Some("PositionInRoute(next).value == 0"))
+          c.check(RouteNr(next).value == next, Some("RouteNr(next).value == next"))
         }
         else{
-          c.check(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value))
-          c.check(RouteNr(n).value == RouteNr(next).value)
+          c.check(PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value),
+              Some("PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value)"))
+          c.check(RouteNr(n).value == RouteNr(next).value, Some("RouteNr(n).value == RouteNr(next).value"))
         }
       }
       else{
-        c.check(RouteNr(n).value == V)
-        c.check(PositionInRoute(n).value == UNROUTED)
+        c.check(RouteNr(n).value == V, Some("RouteNr(n).value == V"))
+        c.check(PositionInRoute(n).value == UNROUTED, Some("PositionInRoute(n).value == UNROUTED"))
       }
     }
   }
