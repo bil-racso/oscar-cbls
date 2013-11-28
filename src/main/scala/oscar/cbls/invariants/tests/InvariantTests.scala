@@ -333,6 +333,13 @@ class InvariantTests extends FunSuite with Checkers {
   }
 }
 
+/**
+ * This class represents a move in the model, that is, one or several
+ * modifications of the variables of the model.
+ *
+ * We distinguish between some identified "extremum" moves which can be used
+ * as well on IntVar as on IntSetVar.
+ */
 abstract class Move
 
 case class PlusOne extends Move
@@ -343,34 +350,78 @@ case class ToMax extends Move
 case class Random extends Move
 case class RandomDiff extends Move
 
+/**
+ * This object contains a set of functions and methods to generate random
+ * moves and variables, which we need for the tests.
+ */
 object InvGen {
-  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff())
+  /**
+   * Function to generate a random move.
+   */
+  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(),
+    Random(), RandomDiff())
 
-  def randomIntVar(range: Range, model: Model, constraint: Int => Boolean) = for {
-    v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
-    c <- Gen.alphaChar
-  } yield new RandomIntVar(new IntVar(model, range, v, c.toString), constraint)
+  /**
+   * Method to generate a random IntVar:
+   * - a random value which satisfies the given constraint is chosen in the
+   * given range
+   * - a random lower case character is chosen to be used
+   *  as the name of the variable
+   * The generated variable is added to the given model.
+   */
+  def randomIntVar(range: Range, model: Model, constraint: Int => Boolean) =
+    for {
+      v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
+      c <- Gen.alphaChar
+    } yield new RandomIntVar(
+      new IntVar(model, range, v, c.toString.toLowerCase), constraint)
 
+  /**
+   * Method to generate a list of nbVars random IntVar. Uses randomIntVar
+   * method to generate each variable.
+   */
   def randomIntVars(nbVars: Int, range: Range, model: Model, constraint: Int => Boolean) = {
     Gen.containerOfN[List, RandomIntVar](nbVars, randomIntVar(range, model, constraint))
   }
 
+  /**
+   * Method to generate a random IntSetVar of given size:
+   * - a list of nbVars random values are chosen in the given range
+   * - a random upper case character is chosen to be used
+   *  as the name of the variable
+   * A sorted set is made of the list of values, and the generated variable
+   * is added to the given model.
+   */
   def randomFixedIntSetVar(nbVars: Int, range: Range, model: Model) = for {
     c <- Gen.alphaChar
     v <- Gen.containerOfN[List, Int](nbVars, Gen.choose(range.min, range.max))
-  } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max, c.toString, SortedSet(v: _*)))
+  } yield new RandomIntSetVar(
+    new IntSetVar(model, range.min, range.max, c.toString.toUpperCase,
+      SortedSet(v: _*)))
 
+  /**
+   * Method to generate a random IntSetVar of size less or equal to the given
+   * limit. Same as randomFixedIntSetVar, except the size is chosen randomly.
+   */
   def randomIntSetVar(upToSize: Int, range: Range, model: Model) = for {
     c <- Gen.alphaChar
     s <- Gen.choose(1, upToSize)
     v <- Gen.containerOfN[List, Int](s, Gen.choose(range.min, range.max))
-  } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max, c.toString, SortedSet(v: _*)))
+  } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max,
+    c.toString.toUpperCase, SortedSet(v: _*)))
 
+  /**
+   * Method to generate a list of IntSetVars. Uses randomIntSetVar.
+   */
   def randomIntSetVars(nbVars: Int, upToSize: Int, range: Range, model: Model) = {
-    Gen.containerOfN[List, RandomIntSetVar](nbVars, randomIntSetVar(upToSize, range, model))
+    Gen.containerOfN[List, RandomIntSetVar](nbVars,
+      randomIntSetVar(upToSize, range, model))
   }
 }
 
+/**
+ * A RandomVar contains a variable which can be modified using a Move.
+ */
 abstract class RandomVar {
   def randomVar(): Variable
 
@@ -379,6 +430,11 @@ abstract class RandomVar {
   override def toString = randomVar.toString
 }
 
+/**
+ * A RandomIntVar is a RandomVar containing an IntVar.
+ * It can also contains a constraint which is applied when the variable is
+ * moving.
+ */
 case class RandomIntVar(intVar: IntVar,
   constraint: Int => Boolean = (v: Int) => true) extends RandomVar {
 
@@ -390,6 +446,14 @@ case class RandomIntVar(intVar: IntVar,
     }
   }
 
+  /**
+   * Defines the different possible moves for a RandomIntVar. Most are quite
+   * obvious: PlusOne applies +1 to the IntVar value, ToZero sets the value
+   * to zero, ToMax sets the value to the max value of the variable range.
+   * Random sets the value to a randomly chosen one (in the variable range).
+   * RandomDiff sets the value to a randomly chosen one, but different from
+   * the previous one.
+   */
   override def move(move: Move) = {
     move match {
       case PlusOne() => {
@@ -423,9 +487,23 @@ case class RandomIntVar(intVar: IntVar,
   }
 }
 
+/**
+ * A RandomIntSetVar is a RandomVar containing an IntSetVar.
+ */
 case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   override def randomVar(): IntSetVar = intSetVar
-
+  
+  /**
+   * Defines the different possible moves for a RandomIntSetVar.
+   * PlusOne adds a new random value to the set whereas MinusOne removes one,
+   * ToZero makes the set an empty one, ToMax adds all the values of the
+   * variable range to the set whereas ToMin makes the set a singleton (of
+   * which value is randomly chosen).
+   * Random replaces the set with a random one (values and size are random)
+   * but to avoid explosions, new size cannot be more than current size + 1.
+   * RandomDiff replaces it with a random one with which intersection is empty,
+   * if such a change is not possible, nothing's done.
+   */
   override def move(move: Move) = {
     move match {
       case PlusOne() => { // Adds an element to the set
@@ -464,6 +542,22 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   }
 }
 
+/**
+ * This class is intended to be used as a test bench for an invariant.
+ * It contains a property which is : "Given a model, for any move applied to
+ * its variables, its invariants hold.". In practice, we create a model with
+ * only one invariant, generate most possible extreme moves of its
+ * variables, and check this invariant at each move.
+ * 
+ * When the invariant is created, we distinguish between input variables on
+ * which moves can be applied, and output variables which will be updated by
+ * the invariant only.
+ * 
+ * Its argument 'verbose' is for debug messages printing :
+ * 0 (or less) for no debug
+ * 1 for a minimum debug
+ * 2 (or more) for total debug
+ */
 class InvariantTestBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
@@ -471,6 +565,11 @@ class InvariantTestBench(verbose: Int = 0) {
   var inputVars: List[RandomVar] = List()
   var outputVars: List[RandomVar] = List()
 
+  /**
+   * These methods add variables to the bench.
+   * input is true if the variable is an input variable, and false if it is an
+   * output variable.
+   */
   def addVar(input: Boolean, v: RandomVar) {
     addVar(input, List(v))
   }
@@ -482,6 +581,10 @@ class InvariantTestBench(verbose: Int = 0) {
     }
   }
 
+  /**
+   * Method for generating a new random IntVar to add to the bench and to its
+   * model.
+   */
   def genIntVar(
     range: Range,
     isInput: Boolean = true,
@@ -491,6 +594,10 @@ class InvariantTestBench(verbose: Int = 0) {
     riVar.randomVar
   }
 
+  /**
+   * Method for generating an array of random IntVar to add to the bench and to its
+   * model.
+   */
   def genIntVarsArray(
     nbVars: Int = 4,
     range: Range = 0 to 100,
@@ -505,6 +612,10 @@ class InvariantTestBench(verbose: Int = 0) {
 
   implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
 
+  /**
+   * Method for generating a sorted set of random IntVar to add to the bench
+   * and to its model.
+   */
   def genSortedIntVars(
     nbVars: Int,
     range: Range,
@@ -516,20 +627,28 @@ class InvariantTestBench(verbose: Int = 0) {
     SortedSet(iVars: _*)(intVarOrdering)
   }
 
+  /**
+   * Method for generating a random IntSetVar to add to the bench and to its
+   * model.
+   */
   def genIntSetVar(
-      nbVars: Int = 5,
-      range: Range = 0 to 100,
-      isInput: Boolean = true) = {
+    nbVars: Int = 5,
+    range: Range = 0 to 100,
+    isInput: Boolean = true) = {
     val risVar = InvGen.randomFixedIntSetVar(nbVars, range, model).sample.get
     addVar(isInput, risVar)
     risVar.randomVar
   }
 
+  /**
+   * Method for generating an array of random IntSetVar to add to the bench
+   * and to its model.
+   */
   def genIntSetVars(
-      nbVars: Int = 4,
-      upToSize: Int = 20,
-      range: Range = 0 to 100,
-      isInput: Boolean = true): Array[IntSetVar] = {
+    nbVars: Int = 4,
+    upToSize: Int = 20,
+    range: Range = 0 to 100,
+    isInput: Boolean = true): Array[IntSetVar] = {
     val risVars = InvGen.randomIntSetVars(nbVars, upToSize, range, model).sample.get
     addVar(isInput, risVars)
     risVars.map((risv: RandomIntSetVar) => {
@@ -537,6 +656,9 @@ class InvariantTestBench(verbose: Int = 0) {
     }).toArray
   }
 
+  /**
+   * For debug only
+   */
   def printVars(name: String, vars: List[RandomVar]) {
     if (vars.length > 0) {
       println(name + " vars:")
@@ -545,6 +667,9 @@ class InvariantTestBench(verbose: Int = 0) {
     }
   }
 
+  /**
+   * This method runs the bench.
+   */
   def run() = {
     model.close()
     //println("Model closed")
