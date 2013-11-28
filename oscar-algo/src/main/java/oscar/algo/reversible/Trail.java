@@ -40,7 +40,7 @@ public class Trail {
 		maxSize = Math.max(maxSize, stack.size());
 	}
 	
-	public long getTimeInRestore(){
+	public long getTimeInRestore() {
 		return timeInRestore;
 	}
 	

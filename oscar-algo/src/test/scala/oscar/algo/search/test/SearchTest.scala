@@ -23,11 +23,122 @@ import oscar.algo.search.SearchNode
 
 class SearchTest extends FunSuite with ShouldMatchers  {
 
-   
- 
-    test("test 1 dfs") {
-   
+  test("test search1") {
+    val node = new SearchNode()
+
+    def branch(left: => Unit)(right: => Unit) = Seq(() => left, () => right)
+
+    //def search
+    val b = new Branching() {
+      val i = new ReversibleInt(node, 0)
+
+      override def alternatives = {
+        if (i.value > 2) noAlternative
+        else {
+          branch {i.incr() } { i.incr() }
+        }
+      }
     }
+    
+    var nbSol = 0
+    val search = new Search(node, b)
+    search.onSolution {
+      nbSol +=1 
+    }
+    
+    nbSol = 0
+    search.solveAll().nbSols should be(8)
+    nbSol should be(8)
+    
+    nbSol = 0
+    search.solveAll(nbSols = 2).nbSols should be(2)
+    nbSol should be(2)
+    
+    nbSol = 0
+    search.solveAll(failureLimit = 5).nbSols should be(5)
+    nbSol should be(5)
+    
+    nbSol = 0
+    search.solveAll(maxDiscrepancy = 0).nbSols should be(1)
+    nbSol should be(1)
+    
+    nbSol = 0
+    search.solveAll(maxDiscrepancy = 1).nbSols should be(4)  
+    nbSol should be(4)
+    
+    nbSol = 0
+    search.solveAll(maxDiscrepancy = 2).nbSols should be(7)  
+    nbSol should be(7)    
+
+    nbSol = 0
+    search.solveAll(maxDiscrepancy = 3).nbSols should be(8)  
+    nbSol should be(8)     
+  }
+  
+  test("test search2") {
+    val node = new SearchNode()
+
+    val d = Array(false, false, false)
+
+    def branch(left: => Unit)(right: => Unit) = Seq(() => left, () => right)
+
+    //def search
+    val b = new Branching() {
+      val i = new ReversibleInt(node, 0)
+
+      override def alternatives = {
+        if (i.value >= d.size) noAlternative
+        else {
+          branch {
+            d(i.value) = true
+            i.incr()
+            if (d.count(v => v) == 2) node.fail() // if two values = true, we fail
+          } {
+            d(i.value) = false
+            i.incr()
+            if (d.count(v => v) == 2) node.fail() // if two values = true, we fail
+          }
+        }
+      }
+    }
+    // solutions
+    
+    var nbSol = 0
+    val search = new Search(node, b)
+    search.onSolution {
+      nbSol +=1 
+    }
+    nbSol = 0
+    search.solveAll().nbSols should be(4)
+    nbSol should be(4)
+    
+    nbSol = 0
+    search.solveAll(failureLimit = 1).nbSols should be(0)
+  }
+  
+  
+  test("test search3") {
+    val node = new SearchNode()
+
+    def branch(left: => Unit)(right: => Unit) = Seq(() => left, () => right)
+
+    //def search
+    val b = new Branching() {
+      val i = new ReversibleInt(node, 0)
+
+      override def alternatives = {
+        if (i.value > 30) noAlternative
+        else {
+          branch {i.incr() } { i.incr() }
+        }
+      }
+    }
+    
+    val search = new Search(node, b)
+     
+    search.solveAll(timeLimit = 1).time should be <= 15000L
+    
+  }
     
 
 

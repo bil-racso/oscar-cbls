@@ -32,12 +32,10 @@ class SearchNode extends ReversibleNode {
 
   var silent = false
 
-
   val random: Random = new Random(0)
   val failed = new ReversibleBool(this, false)
 
   var sc: SearchController = new DFSSearchController(this)
-  
   
 
   /**
@@ -86,7 +84,7 @@ class SearchNode extends ReversibleNode {
   def nFail() = sc.nFail()
 
   /**
-   * Exit the search in progress and/or the LNS if any
+   * Exit the search in progress
    */
   def stop() {
     sc.stop()
@@ -329,7 +327,7 @@ class SearchNode extends ReversibleNode {
     this
   }
   
-  def startSubjectTo (nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): List[(String,Int)] = {
+  def startSubjectTo (nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): List[(String,Int)] = {
     pushState()
     reversibleBlock
     val s = new Search(this,branchings)
@@ -337,8 +335,10 @@ class SearchNode extends ReversibleNode {
     s.onSolution(solFound())
     
     val t0 = System.currentTimeMillis()
-    val stats =  s.solveAll(nbSol = nbSolMax, maxDiscrepancy = Int.MaxValue)
-    stats ++ List(("time(ms)", (System.currentTimeMillis() - t0).toInt),
+    val stats =  s.solveAll(nbSols = nbSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
+    
+    
+    /*stats ++*/ List(("time(ms)", (System.currentTimeMillis() - t0).toInt),
       ("time in trail restore(ms)", getTrail().getTimeInRestore().toInt),
       ("max trail size", getTrail().getMaxSize()))
     

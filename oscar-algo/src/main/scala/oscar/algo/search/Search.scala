@@ -17,6 +17,21 @@ package oscar.algo.search
 
 import oscar.algo.reversible._
 
+class SearchStatistics(
+    val nbNodes: Int,
+    val nbFails: Int,
+    val time: Long,
+    val completed: Boolean,
+    val timeInTrail: Long,
+    val nbSols: Int) {
+  override def toString: String = {
+    "nbNode: "+nbNodes+" \n" + "nbFails: "+nbFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nbSols: "+nbSols+" \n"
+    
+  }
+}
+
+
+
 /**
  * DFS and Bounded Dicrepancy DFS 
  * @author: Pierre Schaus pschaus@gmail.com
@@ -33,8 +48,13 @@ class Search(node: SearchNode, branching: Branching) {
     solutionActions.foreach(_())
   }
 
-  def solveAll(nbSol: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): List[(String,Int)] = {
-   
+  def solveAll(nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+    val t0trail = node.trail.getTimeInRestore()
+    val t0 = System.currentTimeMillis()
+    def time = System.currentTimeMillis()-t0
+    def timeInTrail = node.trail.getTimeInRestore()-t0trail
+    
+    
     var stack = scala.collection.mutable.Stack[(Int,Alternative)]()
     val discrepancy = new ReversibleInt(node,0)
     node.pushState()
@@ -58,11 +78,13 @@ class Search(node: SearchNode, branching: Branching) {
     var nbNodes = 0
     var nbBkts = 0
     
+    def searchLimitReached = time/1000 >= timeLimit || nbBkts >= failureLimit
+    
     // add initial alternatives of the root node
     stackAlternatives()
     node.pushState()
     var done = false
-    while (!stack.isEmpty && !done) {
+    while (!stack.isEmpty && !done && !searchLimitReached) {
       nbNodes += 1
       val (d,a) = stack.pop() // (discrepancy,alternative)
       discrepancy.value = discrepancy.value + d
@@ -72,7 +94,7 @@ class Search(node: SearchNode, branching: Branching) {
             solFound()
             solCounter += 1
             nbBkts += 1 
-            if (nbSol == solCounter) done = true
+            if (nbSols == solCounter) done = true
             else node.pop()
         } else {
             node.pushState()
@@ -83,7 +105,8 @@ class Search(node: SearchNode, branching: Branching) {
         node.pop()
       }
     }
-    List(("#sol",solCounter),("#bkts",nbBkts),("#nodes",nbNodes))
+    node.popAll()
+    new SearchStatistics(nbNodes,nbFails = nbBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail ,nbSols = solCounter)
   }
 
 }
