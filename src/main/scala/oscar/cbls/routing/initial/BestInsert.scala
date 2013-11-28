@@ -33,7 +33,7 @@ object BestInsert{
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp:VRP with ObjectiveFunction with Unrouted){
+  def apply(vrp:VRP with VRPObjective with Unrouted){
 
     var vehicle = 0
     val nodeToRoute = vrp.N-vrp.V

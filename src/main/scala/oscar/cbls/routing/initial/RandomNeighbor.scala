@@ -27,11 +27,12 @@ import neighborhood.{ReinsertPoint, Neighbor}
  * Constructs an initial solution randomly.
  */
 object RandomNeighbor{
+
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp:VRP with ObjectiveFunction with Unrouted with PositionInRouteAndRouteNr
+  def apply(vrp:VRP with VRPObjective with Unrouted with PositionInRouteAndRouteNr
     with HopDistance){
 
     val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)

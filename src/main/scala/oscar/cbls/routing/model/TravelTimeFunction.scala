@@ -1,4 +1,4 @@
-package oscar.cbls.routing.model.newVRP
+package oscar.cbls.routing.model
 
 import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun
@@ -66,6 +66,7 @@ trait TimeWindow extends Time with StrongConstraints{
     setFixedDurationNode(node, duration, startWindow)
     strongConstraints.post(GE(ArrivalTime(node),startWindow - maxWaiting))
   }
+
 }
 
 trait WaitingDuration extends TimeWindow{

@@ -17,11 +17,12 @@
   *     This code has been initially developed by De Landtsheer Renaud
   ******************************************************************************/
 
-package oscar.cbls.routing.model.newVRP
+package oscar.cbls.routing.model
 
 import oscar.cbls.invariants.core.computation.IntVar
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.routing.model.VRP
 
 /**
  * Maintains a integer weight on each node to help to form constraints (adding information).
