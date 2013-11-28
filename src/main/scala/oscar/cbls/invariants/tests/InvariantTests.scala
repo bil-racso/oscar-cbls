@@ -52,6 +52,7 @@ import oscar.cbls.invariants.lib.set.Interval
 import oscar.cbls.invariants.lib.set.TakeAny
 import oscar.cbls.invariants.lib.set.SetSum
 import oscar.cbls.invariants.lib.set.SetProd
+import oscar.cbls.invariants.lib.logic.Cluster
 
 class InvariantTests extends FunSuite with Checkers {
 
@@ -93,9 +94,25 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("Sparse Cluster...")(pending)
+  test("Sparse Cluster maintains a cluster of the indexes of an array.") {
+    val bench = new InvariantTestBench
+    Cluster.MakeSparse(bench.genIntVarsArray(50),
+      (Gen.containerOfN[List, Int](100, Gen.choose(0, 100))).sample.get)
+    bench.run
+  }
 
-  test("Dense Cluster...")(pending)
+  test("Dense Cluster maintains a cluster of all the indexes of an array.") {
+    val bench = new InvariantTestBench
+    Cluster.MakeDense(bench.genIntVarsArray(50))
+    bench.run
+  }
+
+  test("Dense Cluster maintains a cluster of all the indexes of an array"
+    + " (assuming min and max).") {
+    val bench = new InvariantTestBench
+    Cluster.MakeDenseAssumingMinMax(bench.genIntVarsArray(50), 0, 100)
+    bench.run
+  }
 
   test("Dense Count maintains count(j) = #{i in index of values | values[i] == j}") {
     val bench = new InvariantTestBench
@@ -492,7 +509,7 @@ case class RandomIntVar(intVar: IntVar,
  */
 case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
   override def randomVar(): IntSetVar = intSetVar
-  
+
   /**
    * Defines the different possible moves for a RandomIntSetVar.
    * PlusOne adds a new random value to the set whereas MinusOne removes one,
@@ -548,11 +565,11 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
  * its variables, its invariants hold.". In practice, we create a model with
  * only one invariant, generate most possible extreme moves of its
  * variables, and check this invariant at each move.
- * 
+ *
  * When the invariant is created, we distinguish between input variables on
  * which moves can be applied, and output variables which will be updated by
  * the invariant only.
- * 
+ *
  * Its argument 'verbose' is for debug messages printing :
  * 0 (or less) for no debug
  * 1 for a minimum debug
