@@ -36,7 +36,10 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
 
   finishInitialization()
 
+  //position in initial array -> position in sort
   val ForwardPerm:Array[IntVar]=ReversePerm.map(i => IntVar(this.model,0,values.size,0,"ForwardPerm"))
+
+  //reverse perm: position in sort -> position in initial array
 
   assert(values.indices == ForwardPerm.indices)
   assert(values.indices == ReversePerm.indices)
@@ -46,6 +49,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   {
     //initial sort of the variables, this is in brackets to free Sorting asap
     val Sorting: Array[Int] = values.indices.toArray.sortBy(indice => values(indice).value)
+    //sorting is position in sorting -> position in initial array
     for (i <- values.indices) {
       ReversePerm(i) := Sorting(i)
       ForwardPerm(Sorting(i)) := i
@@ -62,8 +66,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   }
 
   @inline
-  private def BubbleUp(v: IntVar, index: Int) {
-    val PositionInInitialArray: Int = index
+  private def BubbleUp(v: IntVar, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == values.indices.last) return //last position
@@ -74,8 +77,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   }
 
   @inline
-  private def BubbleDown(v: IntVar, index: Int) {
-    val PositionInInitialArray: Int = index
+  private def BubbleDown(v: IntVar, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == 0) return //first position
@@ -86,13 +88,13 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   }
 
   @inline
-  private def swap(Position1: Int, Position2: Int) {
-    val old: Int = ReversePerm(Position1).getValue(true)
-    ReversePerm(Position1) := ReversePerm(Position2).getValue(true)
-    ReversePerm(Position2) := old
+  private def swap(PositionInSorting1: Int, PositionInSorting2: Int) {
+    val PositionInInitialArray1: Int = ReversePerm(PositionInSorting1).getValue(true)
+    ReversePerm(PositionInSorting1) := ReversePerm(PositionInSorting2).getValue(true)
+    ReversePerm(PositionInSorting2) := PositionInInitialArray1
 
-    ForwardPerm(ReversePerm(Position1).getValue(true)) := Position1
-    ForwardPerm(ReversePerm(Position2).getValue(true)) := Position2
+    ForwardPerm(ReversePerm(PositionInSorting1).getValue(true)) := PositionInSorting1
+    ForwardPerm(ReversePerm(PositionInSorting2).getValue(true)) := PositionInSorting2
   }
 
   override def checkInternals(c: Checker) {
