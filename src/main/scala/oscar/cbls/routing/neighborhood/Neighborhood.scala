@@ -15,21 +15,7 @@ abstract class Move(val objAfter:Int, val vrp:VRP with MoveDescription){
 
 //c'est toujours le first improve, jamais le best improve.
 
-abstract class neighborhood(){
-
-  abstract class SearchResult{
-    def found:Boolean
-  }
-  case class MovePerformed() extends SearchResult{
-    def found: Boolean = true
-  }
-  case class MoveFound(move:Move) extends SearchResult{
-    def found: Boolean = true
-  }
-  case class NoMoveFound() extends SearchResult{
-    def found = false
-  }
-
+abstract class Neighborhood(){
 
   /**
    * @param s the search zone, including the VRP that we are examining
@@ -61,13 +47,28 @@ abstract class neighborhood(){
    * @param s
    * @return
    */
-  final def getFirstImprovingMove(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
+  final def firstImprovingMove(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, true)
     match{
       case MoveFound(move) => Some(move)
       case _ => None
     }
+  }
+
+  final def bestImprovingMove(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
+    var bestMove:Option[Move]= None
+    var bestObj = Int.MaxValue
+    while (true){
+      firstImprovingMove(s, moveAcceptor)
+      match{
+        case None => return bestMove
+        case Some(move) if (move.objAfter < bestObj) =>
+          bestMove = Some(move)
+          bestObj = move.objAfter
+      }
+    }
+    None
   }
 
   /** effectue la recherche et s'arrête au premier mouvement trouvé qui améliore
@@ -77,6 +78,20 @@ abstract class neighborhood(){
     *@return
     */
   protected def doSearch(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove:Boolean):SearchResult
+
+  abstract class SearchResult{
+    def found:Boolean
+  }
+  case class MovePerformed() extends SearchResult{
+    def found: Boolean = true
+  }
+  case class MoveFound(move:Move) extends SearchResult{
+    def found: Boolean = true
+  }
+  case class NoMoveFound() extends SearchResult{
+    def found = false
+  }
+
 
   /**
    * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move

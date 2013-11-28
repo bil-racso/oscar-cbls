@@ -326,7 +326,7 @@ trait UnroutedImpl extends VRP with Unrouted{
   /**
    * the data structure set which maintains the unrouted node.
    */
-  final override val unrouted: IntSetVar = Filter(Next, (next: Int) => next == N)
+  final override val unrouted: IntSetVar = Filter(Next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 
