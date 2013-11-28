@@ -1,26 +1,23 @@
-/**
- * *****************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-/**
- * *****************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- * ****************************************************************************
- */
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+/*******************************************************************************
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
+
 
 package oscar.cbls.invariants.lib.set
 
@@ -292,7 +289,8 @@ case class Interval(lb: IntVar, ub: IntVar) extends IntSetInvariant {
     output = v
     output.setDefiningInvariant(this)
     output.setValue(SortedSet.empty[Int])
-    for (i <- lb.value to ub.value) output.insertValue(i)
+    if (lb.value <= ub.value)
+      for (i <- lb.value to ub.value) output.insertValue(i)
   }
 
   @inline
@@ -300,18 +298,22 @@ case class Interval(lb: IntVar, ub: IntVar) extends IntSetInvariant {
     if (v == lb) {
       if (OldVal < NewVal) {
         //intervale reduit
-        for (i <- OldVal to NewVal - 1) output.deleteValue(i)
-      } else {
+        if (OldVal <= ub.value)
+          for (i <- OldVal to (ub.value min (NewVal-1))) output.deleteValue(i)
+      }else{
         //intervale plus grand
-        for (i <- NewVal to OldVal - 1) output.insertValue(i)
+        if (NewVal <= ub.value)
+          for (i <- NewVal to (ub.value min (OldVal-1))) output.insertValue(i)
       }
     } else {
       if (OldVal > NewVal) {
         //intervale reduit
-        for (i <- NewVal + 1 to OldVal) output.deleteValue(i)
-      } else {
+        if (lb.value <= OldVal)
+          for (i <- (NewVal+1) max lb.value to OldVal) output.deleteValue(i)
+      }else{
         //intervale plus grand
-        for (i <- OldVal + 1 to NewVal) output.insertValue(i)
+        if (lb.value <= NewVal)
+          for (i <- (OldVal+1) max lb.value to NewVal) output.insertValue(i)
       }
     }
   }
