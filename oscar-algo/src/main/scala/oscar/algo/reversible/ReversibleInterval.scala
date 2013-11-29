@@ -18,7 +18,7 @@ package oscar.algo.reversible
 /**
  * @author pschaus
  */
-class ReversibleInterval(s: ReversibleNode, val minValue: Int, val maxValue: Int) {
+class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: Int) {
   val _maxValue = if (maxValue == Int.MaxValue) Int.MaxValue - 10 else maxValue 
   private val _min = new ReversibleInt(s, minValue)
 

@@ -27,9 +27,9 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 	private ReversibleInt last;
 	private ReversibleInt [] prev;
 	private ReversibleInt [] next;
-	private ReversibleNode n;
+	private ReversibleContext n;
 	
-	public ReversibleOrderedSet(ReversibleNode n, int min, int max) {
+	public ReversibleOrderedSet(ReversibleContext n, int min, int max) {
 		super(min,max);
 		this.n = n;
 		prev = new ReversibleInt [max-min+1];

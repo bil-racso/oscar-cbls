@@ -19,13 +19,13 @@ package oscar.algo.reversible;
  * Creates Reversible integer
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleInt(node: ReversibleNode ,value : Int) extends ReversiblePointer[Int](node,value) {
+class ReversibleInt(node: ReversibleContext ,value : Int) extends ReversiblePointer[Int](node,value) {
 
     /**
      * Creates a reversible Int initialized to 0
      * @param node
      */
-	def this(node: ReversibleNode) = this(node,0)
+	def this(node: ReversibleContext) = this(node,0)
 
     /**
      * increment the reversible integer by one

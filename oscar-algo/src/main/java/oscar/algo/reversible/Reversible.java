@@ -22,9 +22,9 @@ package oscar.algo.reversible;
 public abstract class Reversible {
 	
 	private int lastMagic;
-	protected ReversibleNode node;
+	protected ReversibleContext node;
 	
-	public Reversible(ReversibleNode node) {
+	public Reversible(ReversibleContext node) {
 		this.node = node;
 		lastMagic = -1;
 	}

@@ -21,7 +21,7 @@ package oscar.algo.reversible;
  */
 public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
 
-	public ReversibleQueue(ReversibleNode node) {
+	public ReversibleQueue(ReversibleContext node) {
 		super(node,null);
 	}
 }

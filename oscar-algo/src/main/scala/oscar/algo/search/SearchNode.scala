@@ -28,7 +28,7 @@ import oscar.util.tree.Tree
  * A search node is used to find solution by exploration of search tree (see Search).
  * @author Pierre Schaus pschaus@gmail.com
  */
-class SearchNode extends ReversibleNode {
+class SearchNode extends ReversibleContext {
 
   var silent = false
 

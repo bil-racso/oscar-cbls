@@ -29,7 +29,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	private ReversibleInt maxV;
 	private ReversibleInt minV;
 
-	private ReversibleNode s;
+	private ReversibleContext s;
 	
 	/**
 	 * Initializes a set with all values min..max in it
@@ -37,7 +37,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(ReversibleNode s, int min, int max) {
+	public ReversibleSetIndexedArray(ReversibleContext s, int min, int max) {
 		this(s,min,max,false);
 	}
 	
@@ -47,7 +47,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(ReversibleNode s, int min, int max, boolean empty) {
+	public ReversibleSetIndexedArray(ReversibleContext s, int min, int max, boolean empty) {
 		this.s = s;
 		initIndexes(min, max, empty);
 	}

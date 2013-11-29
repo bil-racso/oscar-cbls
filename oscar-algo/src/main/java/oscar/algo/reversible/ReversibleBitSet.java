@@ -29,7 +29,7 @@ public class ReversibleBitSet extends Reversible {
 	private int min,max;
 	private BitSet bits;
 
-	public ReversibleBitSet(ReversibleNode node,int min,int max) {
+	public ReversibleBitSet(ReversibleContext node,int min,int max) {
 		super(node);
 		this.min = min;
 		this.max = max;

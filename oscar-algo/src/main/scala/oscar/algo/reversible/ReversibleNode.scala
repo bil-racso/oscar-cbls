@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
  * the reversible state attached to it (see Reversibles). <br>
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleNode {
+class ReversibleContext {
 
   var magic = 0
   var trail = new Trail();

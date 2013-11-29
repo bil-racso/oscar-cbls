@@ -26,7 +26,7 @@ import java.util.TreeSet;
  */
 public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer>{
 	
-	private ReversibleNode node;
+	private ReversibleContext node;
 	
 	private ReversibleInt first;
 	
@@ -43,7 +43,7 @@ public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer
      * @param node
      * @param maxval
      */
-	public ReversibleBoundedSet(ReversibleNode node, int maxval) {
+	public ReversibleBoundedSet(ReversibleContext node, int maxval) {
 		if (maxval <0) {
 			throw new  RuntimeException("maxval must be >= 0");
 		}

@@ -24,7 +24,7 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[T](n: ReversibleNode, v: T) extends Reversible(n) {
+class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
   
   // Pointer to the object to trail
   private var pointer: T = v
@@ -74,7 +74,7 @@ class ReversiblePointer[T](n: ReversibleNode, v: T) extends Reversible(n) {
 }
 
 object ReversiblePointer {
-  def apply[T](node: ReversibleNode, value: T): ReversiblePointer[T] = {
+  def apply[T](node: ReversibleContext, value: T): ReversiblePointer[T] = {
     new ReversiblePointer[T](node, value)
   }
 }

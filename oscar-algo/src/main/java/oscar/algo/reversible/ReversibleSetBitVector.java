@@ -32,7 +32,7 @@ import java.util.TreeSet;
 
 public class ReversibleSetBitVector implements ReversibleSet {
 	
-	private ReversibleNode s;
+	private ReversibleContext s;
 	
 	private int minBitSetVal;
 	private int bitSetSize = 32;
@@ -44,7 +44,7 @@ public class ReversibleSetBitVector implements ReversibleSet {
 	private int _min;
 	private int _max;
 	
-	public ReversibleSetBitVector(ReversibleNode s, int min, int max) {
+	public ReversibleSetBitVector(ReversibleContext s, int min, int max) {
 		assert(max >= min);
 		this.s = s;
 		this._min = min;
