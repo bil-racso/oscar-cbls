@@ -36,8 +36,19 @@ class ReversiblePointer[T](n: ReversibleNode, v: T) extends Reversible(n) {
     }
   }
 
+  /**
+   * @param: value to assign
+   */
   def value_= (value: T): Unit = setValue(value)
   
+  /**
+   * @param: value to assign
+   */
+  def := (value: T): Unit = setValue(value)
+  
+  /**
+   * @return: current value
+   */
   def value = getValue
 
   /**

@@ -327,34 +327,17 @@ class SearchNode extends ReversibleNode {
     this
   }
   
-  def startSubjectTo (nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): List[(String,Int)] = {
+  def startSubjectTo (nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
     pushState()
     reversibleBlock
     val s = new Search(this,branchings)
     solCallBacks.foreach(b => s.onSolution(b()))
     s.onSolution(solFound())
-    
-    val t0 = System.currentTimeMillis()
     val stats =  s.solveAll(nbSols = nbSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
-    
-    
-    /*stats ++*/ List(("time(ms)", (System.currentTimeMillis() - t0).toInt),
-      ("time in trail restore(ms)", getTrail().getTimeInRestore().toInt),
-      ("max trail size", getTrail().getMaxSize()))
-    
-    //List(("%% time in trail restore(ms) : ", getTrail().getTimeInRestore()))
-    
-    
-    /*
-    println("%% time(ms) : "+ time)
-    println("%% #bkts : "+ bkts)
-    println("%% time in fix point(ms) : "+ timeInFixPoint)
-    println("%% time in trail restore(ms) : "+ getTrail().getTimeInRestore())
-    println("%% max trail size : "+ getTrail().getMaxSize())
-    */
+    stats
   }
   
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue): List[(String,Int)] = {
+  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue): SearchStatistics = {
     startSubjectTo(nbSolMax,failureLimit,timeLimit)()
   }
 

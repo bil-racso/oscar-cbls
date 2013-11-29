@@ -53,7 +53,8 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 
 	@Override
 	public int getSize() {
-		return this.size.getValue();
+		int siz =  this.size.getValue();
+		return siz;
 	}
 
 	@Override

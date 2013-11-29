@@ -19,7 +19,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.algo.search._
 import oscar.algo.reversible._
-import oscar.algo.search.SearchNode
+
 
 class SearchTest extends FunSuite with ShouldMatchers  {
 
@@ -139,6 +139,66 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     search.solveAll(timeLimit = 1).time should be <= 15000L
     
   }
+  
+  test("test search4") {
+    val node = new SearchNode()
+
+
+    //def search
+    val b1 = new Branching() {
+      val i = new ReversibleInt(node, 0)
+      override def alternatives = {
+        if (i.value > 2) noAlternative
+        else {
+          branch {i.incr() } { i.incr() }
+        }
+      }
+    }
+    
+    //def search
+    val b2 = new Branching() {
+      val i = new ReversibleInt(node, 0)
+      override def alternatives = {
+        if (i.value > 1) noAlternative
+        else {
+          branch {i.incr() } { i.incr() }
+        }
+      }
+    }  
+    
+    var c = 0
+    node.onSolution { c += 1 }
+    node.search(b1).search(b2)
+    node.start().nbSols should be(32)
+    c should be(32)    
+  }
+  
+  test("test search5") {
+    val node = new SearchNode()
+    
+    var c = 0
+    node.onSolution { c += 1 }
+
+    //def search
+    val i1 = new ReversibleInt(node, 0)
+    node.search {
+        if (i1.value > 2) noAlternative
+        else {
+          branch {i1 += 1 } { i1 += 1 }
+        }
+    }
+           
+    val i2 = new ReversibleInt(node, 0)
+    node.search {
+        if (i2.value > 1) noAlternative
+        else {
+          branch {i2 += 1 } { i2 += 1 }
+        }      
+    }
+
+    node.start().nbSols should be(32)
+    c should be(32)    
+  }  
     
 
 

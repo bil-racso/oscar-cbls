@@ -27,6 +27,11 @@ public class Trail {
 	private long timeInRestore = 0;
 	private int maxSize = 0;
 	
+	public void resetStats() {
+		timeInRestore = 0;
+		maxSize = 0;
+	}
+	
 	public Trail(){
 		stack.add(null);
 	}

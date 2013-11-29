@@ -23,6 +23,7 @@ class SearchStatistics(
     val time: Long,
     val completed: Boolean,
     val timeInTrail: Long,
+    val maxTrailSize: Int,
     val nbSols: Int) {
   override def toString: String = {
     "nbNode: "+nbNodes+" \n" + "nbFails: "+nbFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nbSols: "+nbSols+" \n"
@@ -51,6 +52,7 @@ class Search(node: SearchNode, branching: Branching) {
   def solveAll(nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
     val t0trail = node.trail.getTimeInRestore()
     val t0 = System.currentTimeMillis()
+    node.trail.resetStats()
     def time = System.currentTimeMillis()-t0
     def timeInTrail = node.trail.getTimeInRestore()-t0trail
     
@@ -106,7 +108,7 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
     node.popAll()
-    new SearchStatistics(nbNodes,nbFails = nbBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail ,nbSols = solCounter)
+    new SearchStatistics(nbNodes,nbFails = nbBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nbSols = solCounter)
   }
 
 }

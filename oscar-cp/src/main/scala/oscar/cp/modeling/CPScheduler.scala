@@ -17,8 +17,7 @@
 package oscar.cp.modeling
 
 import oscar.cp.scheduling._
-import oscar.algo.reversible.ReversibleBool
-import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible._
 import oscar.cp.core.CPVarInt
 import scala.util.continuations._
 import scala.collection.JavaConverters._
@@ -136,6 +135,5 @@ class CPScheduler(var horizon : Int) extends CPSolver {
 }
 
 object CPScheduler {
-
 	def apply(horizon : Int) = new CPScheduler(horizon)
 }

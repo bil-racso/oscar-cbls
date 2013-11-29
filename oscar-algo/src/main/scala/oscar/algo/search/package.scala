@@ -22,6 +22,8 @@ package object search {
 
   type Alternative = () => Unit
   
+  def branch(left: => Unit)(right: => Unit) = Seq(() => left,() => right)
+  
   val noAlternative = Seq[Alternative]()
 
 }

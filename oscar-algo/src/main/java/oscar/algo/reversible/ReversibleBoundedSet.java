@@ -72,7 +72,8 @@ public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer
 		if (val <0 || val >= n) {
 			throw new  RuntimeException("val must be between 0 and "+(n-1));
 		}
-		if (first.getValue() == n) { //currently empty
+		int i = first.getValue();
+		if (i == n) { //currently empty
 			first.setValue(val);
 			size.incr();
 		} else if (!contains(val)) {
@@ -84,8 +85,9 @@ public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer
 	}
 	
 	public void remove(int val){
-		if (first.getValue() != n) { //otherwise the list is empty
-			if (first.getValue() == val ) { //first element
+		int fv = first.getValue();
+		if (fv != n) { //otherwise the list is empty
+			if (fv == val ) { //first element
 				if (next[val].getValue() == n) { //the set has only this element
 					first.setValue(n);
 				} else { //the set has more than one element

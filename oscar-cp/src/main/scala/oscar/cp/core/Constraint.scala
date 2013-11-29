@@ -50,8 +50,8 @@ class SnapshotVarSet(x: CPVarSet) extends Snapshot {
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
-  val active = new ReversibleBool(s, true)
-  val inQueue = new ReversibleBool(s, false)
+  val active = new ReversibleBool(s,true)
+  val inQueue = new ReversibleBool(s,false)
 
   val snapshotsVarInt = scala.collection.mutable.Map[CPVarInt, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPVarSet, SnapshotVarSet]()

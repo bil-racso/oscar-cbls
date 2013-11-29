@@ -321,11 +321,8 @@ package object modeling extends oscar.cp.modeling.Constraints {
       val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
       cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
   }
-  
 
   def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
-  
-  def branch(left: => Unit)(right: => Unit) = Seq(() => left,() => right)
 
   def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
     val max = indexes.map(f).max

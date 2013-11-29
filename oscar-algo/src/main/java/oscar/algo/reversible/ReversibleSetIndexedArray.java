@@ -76,7 +76,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 
 	@Override
 	public int getSize() {
-		return size.getValue();
+		return (int) size.getValue();
 	}
 
 	@Override

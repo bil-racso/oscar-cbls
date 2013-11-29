@@ -16,41 +16,44 @@ package oscar.algo.reversible;
 
 
 /**
- * Reversible integer
+ * Creates Reversible integer
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleInt extends ReversiblePointer<Integer> {
+class ReversibleInt(node: ReversibleNode ,value : Int) extends ReversiblePointer[Int](node,value) {
 
     /**
-     * creates a reversible integer
+     * Creates a reversible Int initialized to 0
      * @param node
      */
-	public ReversibleInt(ReversibleNode node) {
-		super(node,0);
-	}
-	
-	public ReversibleInt(ReversibleNode node, int val) {
-		super(node,val);
-	}
+	def this(node: ReversibleNode) = this(node,0)
 
     /**
      * increment the reversible integer by one
      */
-	public int incr(){
-		assert(hasValue());
-		int v = getValue() + 1;
-		setValue(v);
-		return v;
+	def incr(): Int = {
+		assert(hasValue())
+		val v = getValue() + 1
+		setValue(v)
+		v
+	}
+	
+	// I have to add it for Java compatibility
+	override def getValue(): Int = super.getValue()
+
+	
+	def +=(i: Int): Unit = {
+	  val v: Int = getValue() + i
+	  setValue(v)
 	}
 
     /**
      * decrement the reversible integer by one
      */
-	public int decr(){
-		assert(hasValue());
-		int v = getValue() - 1;
-		setValue(v);
-		return v;
+	def decr(): Int = {
+		assert(hasValue())
+		val v = getValue() - 1
+		setValue(v)
+		v
 	}
 
 }
