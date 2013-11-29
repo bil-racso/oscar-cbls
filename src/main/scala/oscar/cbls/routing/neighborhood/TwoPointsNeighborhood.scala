@@ -57,7 +57,7 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp)
           match {
             case (true, newObj:Int) => {//this improved
-              if (returnMove) return MoveFound(OnePointMove(beforeMovedPoint,insertionPoint, newObj, vrp))
+              if (returnMove) return MoveFound(getMove(beforeMovedPoint,insertionPoint, newObj, vrp))
               else return MovePerformed()
             }
           }
@@ -66,6 +66,8 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
     }
     NoMoveFound()
   }
+  
+  def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription): Move
 
   def encode(beforeMovedPoint:Int, insertionPoint:Int, vrp:VRP with MoveDescription)
 }

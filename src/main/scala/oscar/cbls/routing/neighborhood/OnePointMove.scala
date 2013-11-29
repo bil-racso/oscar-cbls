@@ -38,6 +38,10 @@ object OnePointMove extends TwoPointsNeighborhood {
     val s = vrp.cutNodeAfter(predOfMovedPoint)
     vrp.insert(s, insertionPoint)
   }
+  
+  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) {
+    OnePointMove(beforeMovedPoint, insertionPoint, newObj, vrp)
+  }
 }
 
 /**
