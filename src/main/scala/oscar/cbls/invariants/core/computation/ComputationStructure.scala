@@ -714,11 +714,11 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
-      if (this.DefiningInvariant!= null && model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
+      if (model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
         model.propagate(this)
         OldValue
       }else{
-        Value
+        Value //this is buggy, you must obey the principle: return the old value
       }
     }
   }
@@ -727,7 +727,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
         val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
@@ -960,7 +960,7 @@ class IntSetVar(override val model:Model,
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
-      if(this.DefiningInvariant!= null && getModel != null){
+      if(getModel != null){
         getModel.propagate(this)
         if (!ToPerform.isEmpty){Perform()}
         OldValue

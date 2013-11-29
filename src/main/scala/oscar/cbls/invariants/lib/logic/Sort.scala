@@ -61,8 +61,8 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
 
   @inline
   override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
-    if (NewVal > OldVal) BubbleUp(v, index) //ca a augmente
-    else BubbleDown(v, index) //ca a baisse
+    if (NewVal > OldVal) BubbleUp(v, index)
+    else BubbleDown(v, index)
   }
 
   @inline
@@ -70,7 +70,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == values.indices.last) return //last position
-      val ValueAbove: Int = values(ReversePerm(PositionInSorting + 1).getValue(true)).value
+      val ValueAbove: Int = values(ReversePerm(PositionInSorting + 1).getValue(true)).value //this shit returns the new value!!
       if (ValueAbove < v.value) swap(PositionInSorting, PositionInSorting + 1)
       else return
     }
@@ -105,11 +105,9 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
           + ").getValue(true)).getValue(true) == " + i))
     }
     for (i <- range) {
-      for (j <- range) {
-        c.check(!(i < j) || (values(ReversePerm(i).getValue(true)).value
-          <= values(ReversePerm(j).getValue(true)).value),
-          Some("!(" + i + " < " + j
-            + ") || (values(ReversePerm(" + i + ").getValue(true)).value ("
+      for (j <- range if i < j) {
+        c.check((values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value),
+          Some("(values(ReversePerm(" + i + ").getValue(true)).value ("
             + values(ReversePerm(i).getValue(true)).value
             + ") <= values(ReversePerm(" + j + ").getValue(true)).value "
             + values(ReversePerm(j).getValue(true)).value + ")"))

@@ -286,7 +286,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    * the propagation will be partial, targeting this element.
    * @param UpTo: the optional target of partial propagation
    */
-  final def propagate(UpTo: PropagationElement = null) {
+  final def propagate(UpTo: PropagationElement = null) { //TODO: handle the case of input elements. just propagete it and done.
     if (!Propagating) {
       if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
@@ -890,7 +890,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   /**Performs the propagation, and some bookkeeping around it.
    */
   final def propagate() {
-    assert(isScheduled)
+    assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({getPropagationStructure.PropagatingElement = this; true})
     if (getPropagationStructure.Verbose) println("PropagationStruture: propagating [" + this + "]")
