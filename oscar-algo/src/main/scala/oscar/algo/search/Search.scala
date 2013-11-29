@@ -83,9 +83,16 @@ class Search(node: SearchNode, branching: Branching) {
     def searchLimitReached = time/1000 >= timeLimit || nbBkts >= failureLimit
     
     // add initial alternatives of the root node
-    stackAlternatives()
-    node.pushState()
+    if (!node.isFailed) {
+      node.pushState()
+      if (!stackAlternatives()) {
+         solFound() // it seems that the root node is a solution
+         solCounter += 1
+      }
+    }
+    
     var done = false
+    
     while (!stack.isEmpty && !done && !searchLimitReached) {
       nbNodes += 1
       val (d,a) = stack.pop() // (discrepancy,alternative)
