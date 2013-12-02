@@ -53,10 +53,10 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
     output := SortedSet.empty[Int]
     for(v <- values.indices){
       if(values(v).value <= boundary.value){
-        HeapBelowOrEqual.insert(values(v).value)
+        HeapBelowOrEqual.insert(v)
         output.insertValue(v)
       } else {
-        HeapAbove.insert(values(v).value)
+        HeapAbove.insert(v)
       }
     }
   }

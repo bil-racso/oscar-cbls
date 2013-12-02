@@ -29,7 +29,7 @@ import oscar.cbls.invariants.core.propagation._
  * They are all modelled as propagation Elements, which are handled by the inherited [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
- * @param Checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
+ * @param checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
  * @param NoCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  */
 class Model(override val Verbose:Boolean = false,
@@ -438,7 +438,7 @@ abstract class Variable(val model:Model, n:String = null) extends PropagationEle
   val name = Option(n) getOrElse (s"Var_$UniqueID")
   def getPropagationStructure = this.model
 
-  var DefiningInvariant:Invariant = null
+  protected var DefiningInvariant:Invariant = null
 
   def setDefiningInvariant(i:Invariant) {
     assert(i.model == model || i.model == null)
@@ -722,12 +722,10 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
-      if (this.DefiningInvariant!= null && model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
-        model.propagate(this)
-        OldValue
-      }else{
-        Value
-      }
+      if (model == null) return Value
+      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      model.propagate(this)
+      OldValue
     }
   }
 
@@ -735,7 +733,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
         val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
@@ -974,13 +972,11 @@ class IntSetVar(override val model:Model,
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
-      if(this.DefiningInvariant!= null && getModel != null){
-        getModel.propagate(this)
-        if (!ToPerform.isEmpty){Perform()}
-        OldValue
-      }else{
-        Value
-      }
+      if (model == null) return Value
+      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      model.propagate(this)
+      Perform()
+      OldValue
     }
   }
 

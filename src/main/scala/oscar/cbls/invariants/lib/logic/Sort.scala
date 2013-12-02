@@ -36,7 +36,10 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
 
   finishInitialization()
 
+  //position in initial array -> position in sort
   val ForwardPerm:Array[IntVar]=ReversePerm.map(i => IntVar(this.model,0,values.size,0,"ForwardPerm"))
+
+  //reverse perm: position in sort -> position in initial array
 
   assert(values.indices == ForwardPerm.indices)
   assert(values.indices == ReversePerm.indices)
@@ -46,6 +49,7 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
   {
     //initial sort of the variables, this is in brackets to free Sorting asap
     val Sorting: Array[Int] = values.indices.toArray.sortBy(indice => values(indice).value)
+    //sorting is position in sorting -> position in initial array
     for (i <- values.indices) {
       ReversePerm(i) := Sorting(i)
       ForwardPerm(Sorting(i)) := i
@@ -57,57 +61,58 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
 
   @inline
   override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
-    if (NewVal > OldVal) BubbleUp(v, index) //ca a augmente
-    else BubbleDown(v, index) //ca a baisse
+    if (NewVal > OldVal) BubbleUp(v, index)
+    else BubbleDown(v, index)
   }
 
   @inline
-  private def BubbleUp(v: IntVar, index: Int) {
-    val PositionInInitialArray: Int = index
+  private def BubbleUp(v: IntVar, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == values.indices.last) return //last position
-      val ValueAbove: Int = values(ReversePerm(PositionInSorting + 1).getValue(true)).value
+      val ValueAbove: Int = values(ReversePerm(PositionInSorting + 1).getValue(true)).value //this shit returns the new value!!
       if (ValueAbove < v.value) swap(PositionInSorting, PositionInSorting + 1)
       else return
     }
   }
 
   @inline
-  private def BubbleDown(v: IntVar, index: Int) {
-    val PositionInInitialArray: Int = index
+  private def BubbleDown(v: IntVar, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == 0) return //first position
       val ValueBelow: Int = values(ReversePerm(PositionInSorting - 1).getValue(true)).value
       if (ValueBelow > v.value) swap(PositionInSorting, PositionInSorting - 1)
-      else return
+      else  return
     }
   }
 
   @inline
-  private def swap(Position1: Int, Position2: Int) {
-    val old: Int = ReversePerm(Position1).getValue(true)
-    ReversePerm(Position1) := ReversePerm(Position2).getValue(true)
-    ReversePerm(Position2) := old
+  private def swap(PositionInSorting1: Int, PositionInSorting2: Int) {
+    val PositionInInitialArray1: Int = ReversePerm(PositionInSorting1).getValue(true)
+    val PositionInInitialArray2: Int = ReversePerm(PositionInSorting2).getValue(true)
 
-    ForwardPerm(ReversePerm(Position1).getValue(true)) := Position1
-    ForwardPerm(ReversePerm(Position2).getValue(true)) := Position2
+    ReversePerm(PositionInSorting1) := PositionInInitialArray2
+    ReversePerm(PositionInSorting2) := PositionInInitialArray1
+
+    ForwardPerm(PositionInInitialArray1) := PositionInSorting2
+    ForwardPerm(PositionInInitialArray2) := PositionInSorting1
   }
 
   override def checkInternals(c: Checker) {
     val range = values.indices
     for (i <- range) {
-      c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i,
+      c.check(ReversePerm(ForwardPerm(i).value).value == i,
         Some("ReversePerm(ForwardPerm(" + i
-          + ").getValue(true)).getValue(true) == " + i))
+          + ").value ("+ForwardPerm(i).value+")).value  ("+ ReversePerm(ForwardPerm(i).value).value+") == " + i))
+      c.check(ForwardPerm(ReversePerm(i).value).value == i,
+        Some("ForwardPerm(ReversePerm(" + i
+          + ").value ("+ReversePerm(i).value+")).value ("+ ForwardPerm(ReversePerm(i).value).value+ ") == " + i))
     }
     for (i <- range) {
-      for (j <- range) {
-        c.check(!(i < j) || (values(ReversePerm(i).getValue(true)).value
-          <= values(ReversePerm(j).getValue(true)).value),
-          Some("!(" + i + " < " + j
-            + ") || (values(ReversePerm(" + i + ").getValue(true)).value ("
+      for (j <- range if i < j) {
+        c.check((values(ReversePerm(i).getValue(true)).value <= values(ReversePerm(j).getValue(true)).value),
+          Some("(values(ReversePerm(" + i + ").getValue(true)).value ("
             + values(ReversePerm(i).getValue(true)).value
             + ") <= values(ReversePerm(" + j + ").getValue(true)).value "
             + values(ReversePerm(j).getValue(true)).value + ")"))

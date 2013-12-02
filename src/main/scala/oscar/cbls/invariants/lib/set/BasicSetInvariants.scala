@@ -226,7 +226,7 @@ case class Cardinality(v: IntSetVar) extends IntInvariant {
 case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
 
   var output: IntSetVar = null
-  var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc, intvar) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
+  var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc:SortedMap[Int,Int], intvar:IntVar) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
 
   for (v <- on) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -261,11 +261,15 @@ case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
   }
 
   override def checkInternals(c: Checker) {
-    c.check(output.value.size == on.size,
+    c.check(output.value.size <= on.size,
       Some("output.value.size (" + output.value.size
-        + ") == on.size (" + on.size + ")"))
+        + ") <= on.size (" + on.size + ")"))
     for (v <- on) c.check(output.value.contains(v.value),
       Some("output.value.contains(v.value (" + v.value + "))"))
+
+    for (v <- output.value) c.check(on.exists(i => i.value == v),
+      Some("on.exists(i => i.value == " + v +")"))
+
   }
 }
 
