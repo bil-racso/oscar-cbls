@@ -39,7 +39,7 @@ object OnePointMove extends TwoPointsNeighborhood {
     vrp.insert(s, insertionPoint)
   }
   
-  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) {
+  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) = {
     OnePointMove(beforeMovedPoint, insertionPoint, newObj, vrp)
   }
 }

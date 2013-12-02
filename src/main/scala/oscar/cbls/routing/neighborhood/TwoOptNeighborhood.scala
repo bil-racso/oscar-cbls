@@ -27,28 +27,44 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
-import scala.util.Random
 import oscar.cbls.search.SearchEngineTrait
 
 /**
- * Inserts an unrouted point in a route.
+ * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
+ *
  * The search complexity is O(n²).
  */
-object ReinsertPoint extends Neighborhood with SearchEngineTrait {
+case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
+
+  /**
+   * Removes two edges of a route and flips the obtained segment before
+   * reconnecting it.
+   * The search complexity is O(n²).
+   */
   override protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult = {
+
     val startObj: Int = s.vrp.getObjective()
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
-      val beforeReinsertedPoint: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(beforeReinsertedPoint)) {
+      val fstEdgeStartPoint: Int = s.primaryNodeIterator.next()
+      if (vrp.isRouted(fstEdgeStartPoint)) {
 
-        for (reinsertedPoint <- s.relevantNeighbors(beforeReinsertedPoint) if (!vrp.isRouted(reinsertedPoint))) {
-          encode(beforeReinsertedPoint, reinsertedPoint, vrp)
+        val fstEdgeEndPoint = vrp.Next(fstEdgeStartPoint).value
+
+        for (
+          sndEdgeStartPoint <- s.relevantNeighbors(fstEdgeStartPoint) if (vrp.isRouted(sndEdgeStartPoint)
+            && sndEdgeStartPoint != fstEdgeStartPoint
+            && sndEdgeStartPoint != fstEdgeEndPoint
+            && fstEdgeStartPoint != vrp.Next(sndEdgeStartPoint).value
+            && vrp.onTheSameRoute(fstEdgeStartPoint, sndEdgeStartPoint))
+        ) {
+
+          encode(fstEdgeStartPoint, sndEdgeStartPoint, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
             case (true, newObj: Int) => { //this improved
-              if (returnMove) return MoveFound(ReinsertPoint(beforeReinsertedPoint, reinsertedPoint, newObj, vrp))
+              if (returnMove) return MoveFound(TwoOptMove(fstEdgeStartPoint, sndEdgeStartPoint, newObj, vrp))
               else return MovePerformed()
             }
             case _ => ()
@@ -59,28 +75,34 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
     NoMoveFound()
   }
 
-  def encode(beforeReinsertedPoint: Int, reinsertedPoint: Int, vrp: VRP with MoveDescription) {
-    val s = vrp.segmentFromUnrouted(reinsertedPoint)
-    vrp.insert(s, beforeReinsertedPoint)
+  def encode(
+    fstEdgeStartPoint: Int,
+    sndEdgeStartPoint: Int,
+    vrp: VRP with MoveDescription) {
+    val seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
+    val rev_seg = vrp.reverse(seg)
+    vrp.insert(rev_seg, fstEdgeStartPoint)
   }
 }
 
 /**
- * Models a reinsert-point operator of a given VRP problem.
- * @param beforeReinsertedPoint the place where to insert an unrouted point.
- * @param reinsertedPoint an unrouted point.
- * @param objAfter the objective value if we performed this reinsert-point operator.
+ * Models a two-opt-move operator of a given VRP problem.
+ * @param fstEdgeStartPoint the start of first edge that we remove.
+ * @param sndEdgeStartPoint the start of second edge that we remove.
+ * @param objAfter the objective value if we performed this two-opt-move operator.
  * @param vrp the given VRP problem.
  */
-case class ReinsertPoint(
-  beforeReinsertedPoint: Int,
-  reinsertedPoint: Int,
+case class TwoOptMove(
+  fstEdgeStartPoint: Int,
+  sndEdgeStartPoint: Int,
   override val objAfter: Int,
   override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
   // overriding methods
   override def encodeMove() {
-    ReinsertPoint.encode(beforeReinsertedPoint, reinsertedPoint, vrp)
+    new TwoOptNeighborhood().encode(fstEdgeStartPoint, sndEdgeStartPoint, vrp)
   }
 
-  override def toString: String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint + " )"
+  override def toString: String = ("TwoOpt(first edge startpoint = "
+    + vrp.Next(fstEdgeStartPoint).value
+    + ", second edge startpoint = " + sndEdgeStartPoint + " )")
 }

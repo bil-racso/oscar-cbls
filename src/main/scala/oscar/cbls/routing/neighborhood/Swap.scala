@@ -41,7 +41,7 @@ object Swap extends TwoPointsNeighborhood {
     vrp.insert(sndSeg, fstPred)
   }
 
-  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) {
+  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) = {
     Swap(beforeMovedPoint, insertionPoint, newObj, vrp)
   }
 }

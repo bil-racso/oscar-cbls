@@ -55,6 +55,7 @@ object RemovePoint extends Neighborhood with SearchEngineTrait {
               if (returnMove) return MoveFound(RemovePoint(beforeRemovedPoint, newObj, vrp))
               else return MovePerformed()
             }
+            case _ => ()
           }
         }
       }
@@ -62,7 +63,7 @@ object RemovePoint extends Neighborhood with SearchEngineTrait {
     NoMoveFound()
   }
 
-  override def encode(beforeRemovedPoint: Int, vrp: VRP with MoveDescription) {
+  def encode(beforeRemovedPoint: Int, vrp: VRP with MoveDescription) {
     vrp.unroute(vrp.cutNodeAfter(beforeRemovedPoint))
   }
 }
