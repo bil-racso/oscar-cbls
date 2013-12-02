@@ -83,26 +83,31 @@ case class Sort(var values:Array[IntVar], ReversePerm:Array[IntVar]) extends Inv
       if (PositionInSorting == 0) return //first position
       val ValueBelow: Int = values(ReversePerm(PositionInSorting - 1).getValue(true)).value
       if (ValueBelow > v.value) swap(PositionInSorting, PositionInSorting - 1)
-      else return
+      else  return
     }
   }
 
   @inline
   private def swap(PositionInSorting1: Int, PositionInSorting2: Int) {
     val PositionInInitialArray1: Int = ReversePerm(PositionInSorting1).getValue(true)
-    ReversePerm(PositionInSorting1) := ReversePerm(PositionInSorting2).getValue(true)
+    val PositionInInitialArray2: Int = ReversePerm(PositionInSorting2).getValue(true)
+
+    ReversePerm(PositionInSorting1) := PositionInInitialArray2
     ReversePerm(PositionInSorting2) := PositionInInitialArray1
 
-    ForwardPerm(ReversePerm(PositionInSorting1).getValue(true)) := PositionInSorting1
-    ForwardPerm(ReversePerm(PositionInSorting2).getValue(true)) := PositionInSorting2
+    ForwardPerm(PositionInInitialArray1) := PositionInSorting2
+    ForwardPerm(PositionInInitialArray2) := PositionInSorting1
   }
 
   override def checkInternals(c: Checker) {
     val range = values.indices
     for (i <- range) {
-      c.check(ReversePerm(ForwardPerm(i).getValue(true)).getValue(true) == i,
+      c.check(ReversePerm(ForwardPerm(i).value).value == i,
         Some("ReversePerm(ForwardPerm(" + i
-          + ").getValue(true)).getValue(true) == " + i))
+          + ").value ("+ForwardPerm(i).value+")).value  ("+ ReversePerm(ForwardPerm(i).value).value+") == " + i))
+      c.check(ForwardPerm(ReversePerm(i).value).value == i,
+        Some("ForwardPerm(ReversePerm(" + i
+          + ").value ("+ReversePerm(i).value+")).value ("+ ForwardPerm(ReversePerm(i).value).value+ ") == " + i))
     }
     for (i <- range) {
       for (j <- range if i < j) {

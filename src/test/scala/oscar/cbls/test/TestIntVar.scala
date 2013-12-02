@@ -134,9 +134,13 @@ class TestIntVar extends FunSuite with ShouldMatchers {
     val solver = new LSSolver
     val x = IntVar(solver, (1 to 10), 1, "x")
     x.value should be(1)
-    x++()
+
+    x ++
+
     x.value should be(2)
-    x++() 
+
+    x ++
+
     x.value should be(3)
   }
 }
