@@ -26,7 +26,7 @@ class SearchStatistics(
     val maxTrailSize: Int,
     val nbSols: Int) {
   override def toString: String = {
-    "nbNode: "+nbNodes+" \n" + "nbFails: "+nbFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nbSols: "+nbSols+" \n"
+    "nbNodes: "+nbNodes+" \n" + "nbFails: "+nbFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nbSols: "+nbSols+" \n"
     
   }
 }
@@ -50,9 +50,9 @@ class Search(node: SearchNode, branching: Branching) {
   }
 
   def solveAll(nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+    node.trail.resetStats()
     val t0trail = node.trail.getTimeInRestore()
     val t0 = System.currentTimeMillis()
-    node.trail.resetStats()
     def time = System.currentTimeMillis()-t0
     def timeInTrail = node.trail.getTimeInRestore()-t0trail
     
@@ -80,7 +80,7 @@ class Search(node: SearchNode, branching: Branching) {
     var nbNodes = 0
     var nbBkts = 0
     
-    def searchLimitReached = time/1000 >= timeLimit || nbBkts >= failureLimit
+    def searchLimitReached = (time/1000 >= timeLimit) || (nbBkts >= failureLimit)
     
     // add initial alternatives of the root node
     if (!node.isFailed) {

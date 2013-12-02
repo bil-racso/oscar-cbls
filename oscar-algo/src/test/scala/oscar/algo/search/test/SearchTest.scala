@@ -23,10 +23,26 @@ import oscar.algo.reversible._
 
 class SearchTest extends FunSuite with ShouldMatchers  {
 
+  test("test search0") {
+    val node = new SearchNode()
+
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 2) noAlternative
+      else branch { i += 1} { if (i.value == 1) node.fail else i += 1}
+    } 
+    
+    val stat = node.start()
+    for (d <- 0 to 3) {
+      node.start()
+    }
+    stat.nbSols should be(4)
+    
+  }
+  
   test("test search1") {
     val node = new SearchNode()
 
-    def branch(left: => Unit)(right: => Unit) = Seq(() => left, () => right)
 
     //def search
     val b = new Branching() {

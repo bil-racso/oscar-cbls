@@ -64,7 +64,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers  {
   
   test("timelimit") {
 	  val cp = CPSolver()
-	  val x = Array.fill(20)(CPVarInt(cp,0 to 1))
+	  val x = Array.fill(40)(CPVarInt(cp,0 to 1))
 	  
 	  var t0 = System.currentTimeMillis()
 	  cp.solve subjectTo { } search {
@@ -76,7 +76,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers  {
 	  val time: Int = ((System.currentTimeMillis()-t0)/1000).toInt
 	  time should be >=(2)
 	  stat.completed should be(false)
-	  time should be <=(3)
+	  time should be <=(4)
 	  stat.completed should be(false)
   }
   
