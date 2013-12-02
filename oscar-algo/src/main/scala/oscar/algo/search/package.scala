@@ -18,11 +18,18 @@ package oscar.algo
 /**
  * @author: Pierre Schaus pschaus@gmail.com
  */
+import scala.collection.immutable.Seq
 package object search {
 
   type Alternative = () => Unit
   
-  def branch(left: => Unit)(right: => Unit) = Seq(() => left,() => right)
+  def branch(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
+  
+  def branchAll(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
+  
+  def branchAll[A](indexes: Seq[A])(f: A => Unit): Seq[Alternative] = {
+    indexes.map(i => () => f(i))
+  }
   
   val noAlternative = Seq[Alternative]()
 

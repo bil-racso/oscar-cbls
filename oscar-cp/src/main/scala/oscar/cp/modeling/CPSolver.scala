@@ -150,11 +150,12 @@ class CPSolver() extends CPStore() {
   /**
    * Instantiate variable in from the first to last one in vars, trying smallest value first
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
     binaryStaticOrder(vars)
   }
   
-
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binaryStaticOrder(vars: Array[_ <: CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
     var y = vars.asInstanceOf[Array[CPVarInt]]
     var i = new ReversibleInt(this, 0)
@@ -173,7 +174,8 @@ class CPSolver() extends CPStore() {
       }
     }
   }
-  
+
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {    
     val x_ = vars.asInstanceOf[Array[CPVarInt]].zipWithIndex
     val nbBounds = new ReversibleInt(this,0)
@@ -226,11 +228,12 @@ class CPSolver() extends CPStore() {
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
     binary(vars,_.size,valHeuris)
   }  
 
-
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
     binary(vars.toArray,_.size,minVal)
   }
@@ -239,6 +242,7 @@ class CPSolver() extends CPStore() {
    * Binary search on the decision variables vars, selecting first the variables having the max number
    * of propagation methods attached to it.
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
     binary(vars, varHeuris = maxDegree, valHeuris = minVal)
   }
@@ -247,6 +251,7 @@ class CPSolver() extends CPStore() {
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binaryDomainSplit(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (Int => Int) = i => i): Unit @suspendable = {
 
     while (!allBounds(vars)) {
@@ -262,9 +267,10 @@ class CPSolver() extends CPStore() {
     }
   }
   
-   /**
+  /**
    * Binary Branching for SetVar
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
   def binary(x: CPVarSet): Unit @suspendable = {
     while (!x.isBound) {
       val v = x.arbitraryPossibleNotRequired
@@ -283,6 +289,7 @@ class CPSolver() extends CPStore() {
     objective.tighten()
   }
 
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, start return a search statistic object", since = "1.0")
   def printStats() {
     println("%% time(ms) : "+ time)
     println("%% #bkts : "+ bkts)

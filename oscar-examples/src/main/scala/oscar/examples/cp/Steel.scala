@@ -105,29 +105,38 @@ object Steel {
     var nbSol = 0
 
     val obj = sum(Slabs)(s => element(loss, l(s)))
+    
+    cp.onSolution {
+      plot.addPoint(nbSol, obj.value)
+      nbSol += 1
+      println("sol #fail:" + cp.nFail)  
+      Slabs.foreach(o => {
+        xsol(o) = x(o).value
+        items(o).bin = xsol(o)
+      })
+      
+    }
+    
     cp.minimize(obj) subjectTo {
       cp.add(binPacking(x, weight, l), Strong)
       for (s <- Slabs) {
         def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
         cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
       }
-    } exploration {
-      while (!allBounds(x)) {
-        val maxUsed = x.maxBoundOrElse(-1)
-        val y = selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)).get
-        cp.branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.post(y == v))
+    } search {
+      selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)) match {
+        case None => noAlternative
+        case Some(y) => {
+          // dynamic symmetry breaking
+          val maxUsed = x.maxBoundOrElse(-1)
+          branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.add(y == v))
+        }
       }
-      Slabs.foreach(o => {
-        xsol(o) = x(o).value
-        items(o).bin = xsol(o)
-      })
-      plot.addPoint(nbSol, obj.value)
-      nbSol += 1
-      println("sol #fail:" + cp.nFail)
-    } run(1)
+
+    } start(1) // find firest feasible solution
 
     for (r <- 1 to 100) {
-      cp.runSubjectTo(Int.MaxValue, 200) {
+      cp.startSubjectTo(failureLimit = 200) {
         for (s <- Slabs; if rnd.nextInt(100) > 70) {
           cp.post(x(s) == xsol(s))
         }

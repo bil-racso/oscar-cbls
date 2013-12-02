@@ -26,6 +26,8 @@ import oscar.visual._
 import java.awt.Color
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
+import oscar.cp.search.BinaryBranching
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * P-Median Problem
@@ -104,15 +106,17 @@ object PMedian extends App {
   
   val costs = Array.tabulate(nbCust)(i => cost(i)(x(i)))
   val totCost = sum(costs) 
-
-  cp.minimize(totCost) subjectTo {
-    cp.add(binPacking(x, demand, load))
-    cp.add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
-  } exploration {
-    cp.binaryFirstFail(x,_.randomValue)
+  cp.onSolution {
     for (i <- 0 until nbCust) xsol(i) = x(i).value
     updateVisu()
     println("\n"+totCost)
-  } run()
+  }
+  
+  cp.minimize(totCost) subjectTo {
+    cp.add(binPacking(x, demand, load))
+    cp.add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
+  } search {
+    new BinaryFirstFailBranching(x,_.randomValue)
+  } start()
 
 }

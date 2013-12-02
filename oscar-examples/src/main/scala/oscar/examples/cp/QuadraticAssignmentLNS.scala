@@ -15,9 +15,9 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-
 import oscar.cp.core._
-
+import oscar.algo.search._
+import oscar.util._
 
 import scala.io.Source
 import java.lang._
@@ -59,30 +59,34 @@ object QuadraticAssignmentLNS {
     val x = N map (v => CPVarInt(cp, N))
 
     val rand = new scala.util.Random(0)
-    val bestSol = Array.fill(n)(0)
     
+    cp.onSolution {
+      println("solution"+x.mkString(","))
+    }
+    cp.addDecisionVariables(x)
     cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
       cp.add(allDifferent(x), Strong)
-    } exploration {
-        cp.binaryFirstFail(x)
-        println("solution"+x.mkString(","))
-        // store the current best solution
-        N.foreach(i => bestSol(i) = x(i).value)
-    } run(1) // find first feasible solution
+    } search {
+      selectMin(x)(y => !y.isBound)(y => y.size) match {
+        case None => noAlternative
+        case Some(y) => {
+          val v = y.min
+          branch(cp.add(y == v))(cp.add(y != v))
+        }
+      }
+    } start(nbSolMax = 1) // find first feasible solution
 
     var limit = 100 // set the limit to 100 backtracks for LNS restarts
-    for (r <- 1 to 20) {
-      // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
-      limit = if (cp.explorationCompleted) limit/2 else limit*2
-      println("set limit to "+limit)     
+    for (r <- 1 to 200) {   
       // relax randomly 50% of the variables and run again
-      cp.runSubjectTo(failureLimit = limit) {
-    	cp.post((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == cp.lastSol(x(i))))
+      val stat = cp.startSubjectTo(failureLimit = limit) {
+    	cp.add((N).filter(i => rand.nextInt(100) < 50).map(i => x(i) == cp.lastSol(x(i))))
       }
+      // adapt the backtrack limit for next run *2 is previous run reached the limit /2 otherwise
+      limit = if (stat.completed) limit/2 else limit*2
+      println("set limit to "+limit)  
     }
-
-    // Print some statistics
-    cp.printStats()
+    // print some statistics
   }
 
 }

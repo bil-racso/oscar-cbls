@@ -15,8 +15,9 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-
 import oscar.cp.core._
+import oscar.cp.search.BinaryFirstFailBranching
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * The problem consist of plugging a set of electronic cards into racks with electric connectors.
@@ -37,15 +38,10 @@ object Rack {
 
     // Data
 
-    val models = Array(new ModelType(0, 0, 0),
-      new ModelType(150, 8, 150),
-      new ModelType(200, 16, 200))
+    val models = Array(new ModelType(0, 0, 0),      new ModelType(150, 8, 150),      new ModelType(200, 16, 200))
 
     val cards = Array(
-      new CardType(20, 20),
-      new CardType(40, 8),
-      new CardType(50, 4),
-      new CardType(75, 2))
+      new CardType(20, 20),      new CardType(40, 8),      new CardType(50, 4),      new CardType(75, 2))
 
     val nbRack = 10
     val Racks = 0 until nbRack
@@ -91,13 +87,12 @@ object Rack {
       }
 
 
-    } exploration {
-      cp.binaryFirstFail(rack)
-      cp.binaryFirstFail(counters.flatten)
-    } run()
+    } search { 
+      new BinaryFirstFailBranching(rack) 
+    } search { new BinaryFirstFailBranching(counters.flatten)}
+      
+    println(cp.start())
 
-
-    cp.printStats()
 
 
   }

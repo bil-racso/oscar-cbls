@@ -19,6 +19,7 @@ import oscar.algo.search._
 import oscar.cp.core._
 import collection.immutable.SortedSet
 import oscar.cp.constraints.ElementVarAC
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * Problem statement :
@@ -67,9 +68,10 @@ object ResourceAssignment extends App {
 
     cp.minimize(maximum(0 until nbBins)(load(_))) subjectTo {
       cp.add(binPacking(x,taskWeight.map(_._2),load))
-    } exploration {
-      cp.binaryFirstFail(x)
-    } run()
+    } search {
+      new BinaryFirstFailBranching(x)
+    } 
+    
+    println(cp.start())
 
-    cp.printStats()
 }

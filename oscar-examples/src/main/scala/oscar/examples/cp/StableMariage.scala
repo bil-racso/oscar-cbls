@@ -16,9 +16,9 @@ package oscar.examples.cp
 
 
 import oscar.cp.modeling._
-
 import oscar.cp.core._
 import scala.util.Random
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
   * Stable Marriage problem:
@@ -58,6 +58,12 @@ object StableMariage {
     val husband = Array.fill(n)(CPVarInt(cp, Men)) // husband(j) is the man chosen for woman j
 
 
+    cp.onSolution {
+       println("wife   :" + wife.mkString(""))
+       println("husband:" + husband.mkString(""))
+       println()
+    }
+    
     cp.solve subjectTo {
       for (m <- Men) {
         cp.add(elementVar(husband, wife(m),m),Strong)
@@ -73,14 +79,12 @@ object StableMariage {
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
-     } exploration {
-       cp.binary(wife)
-       println("wife   :" + wife.mkString(""))
-       println("husband:" + husband.mkString(""))
-       println()
-     } run(1)
-
-     cp.printStats()    
+     } search {
+       new BinaryFirstFailBranching(wife)
+     } 
+     
+     println(cp.start(1))
+ 
 
   }
 

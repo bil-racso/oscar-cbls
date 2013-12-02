@@ -12,30 +12,13 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-
 import oscar.cp.core._
+import oscar.algo.search._
+import oscar.util._
 
 import scala.io.Source
 import java.lang._
@@ -71,24 +54,26 @@ object QuadraticAssignment extends App {
 
   // State the model and solve it
   val cp = CPSolver()
+  
+  cp.onSolution {
+    println("solution" + x.mkString(","))
+  }
   // for each facilities, the location chosen for it
   val x = N map (v => CPVarInt(cp, 0 until n))
   cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
     cp.add(allDifferent(x), Strong)
-  } exploration {
-    while (!allBounds(x)) {
-      val y = x.minDomNotBound
-      val v = y.min
-      cp.branch {
-        cp.post(y == v)
-      } {
-        cp.post(y != v)
-      }
+  } search {
+    selectMin(x)(y => !y.isBound)(y => y.size) match {
+       case None => noAlternative
+       case Some(y) => {
+          val v = y.min
+          branch(cp.add(y == v))(cp.add(y != v))
+       }
     }
-    println("solution" + x.mkString(","))
-  } run()
+  }
 
-  // Print some statistics
-  cp.printStats()
+  // start the search and print some statistics
+  println(cp.start())
+
 
 }

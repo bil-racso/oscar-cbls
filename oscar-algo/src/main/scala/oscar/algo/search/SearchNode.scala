@@ -109,11 +109,12 @@ class SearchNode extends ReversibleContext {
    */
   def afterBranch() = {}
   
-  
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def branch(left: => Unit)(right: => Unit):  Unit@suspendable =  {
     branchLabel("")(left)("")(right)
   }
   
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def branchLabel(leftLabel: String)(left: => Unit)( rightLabel: String)(right: => Unit) = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
@@ -153,6 +154,7 @@ class SearchNode extends ReversibleContext {
     }
   }
   
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def branchAllLabel[A](indexes: Seq[A])(l: A => String)(f: A => Unit) = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
@@ -181,6 +183,7 @@ class SearchNode extends ReversibleContext {
     }
   }  
 
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")  
   def branchAll[A](indexes: Seq[A])(f: A => Unit) = {
     val idleft = nodeMagic + 1
     val idright = nodeMagic + 2
@@ -209,6 +212,7 @@ class SearchNode extends ReversibleContext {
     }
   }
 
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")  
   def branchOne(left: => Unit): Unit @suspendable = {
     shift { k: (Unit => Unit) =>
       left
@@ -232,6 +236,7 @@ class SearchNode extends ReversibleContext {
    * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
    * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit, timeLimit)()
 
   protected def update() = {}
@@ -243,6 +248,7 @@ class SearchNode extends ReversibleContext {
    * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
    * @param: reversibleBlock is bloc of code such that every constraints posted in it are removed after the run
    */
+  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
     val t1 = System.currentTimeMillis()
     explorationCompleted = false
