@@ -279,6 +279,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
 
   private var PreviousPropagationTarget: PropagationElement = null
 
+
+  def isPropagating:Boolean = Propagating
+
   /**triggers the propagation in the graph.
    * this method will do nothing if called before setupPropagationStructure
    * if UpTo set to a PropagationElement,
