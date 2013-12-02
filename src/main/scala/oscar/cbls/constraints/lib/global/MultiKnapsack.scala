@@ -29,7 +29,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 ;
 
-//TODO: test this
+
 /**This is the standard bin packing constraint
  * WARNING: not tested!
  * @param items the items, designing the bins they are placed into
@@ -39,6 +39,10 @@ import oscar.cbls.invariants.core.computation._
  */
 case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar])
   extends Constraint {
+
+  assert(items.map(_.minVal).min == 0, "bin 0 must be included in possible bins of items")
+  assert(items.map(_.minVal).max <= binsizes.length-1, "the range of ite bins should be not bigger than the available bins")
+  assert(items.length == itemsizes.length)
 
   registerConstrainedVariables(items)
   registerConstrainedVariables(itemsizes)
@@ -53,7 +57,7 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
-  val itemviolations:Array[IntVar] = items.map(itemval => IntElement(itemval,binviolations).toIntVar)
+  val itemviolations:Array[IntVar] = items.map(itemval =>  binviolations.element(itemval))
 
   val Violation:IntVar = Sum(binviolations).toIntVar
 

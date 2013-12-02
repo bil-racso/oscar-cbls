@@ -25,13 +25,14 @@ import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 /**implments the sequence constraint:
  *
  * @param variables the "history variables"
  * @param length the length of the sequence
- * @param Max the max number of elements matchind pred in all sequences of the history
+ * @param Max the max number of elements matching pred in all sequences of the history
  * @param predicate a predicate to say which values belong to the constraint
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
@@ -43,22 +44,26 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
 
   finishInitialization()
 
-  val count = (for(i <- 0 until variables.length - length) yield IntVar(model,0, length, 0 ,"sequence_count_" + i)).toArray
-  val violated = (for(i <- 0 until variables.length - length) yield IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i)).toArray
+  /**the number of items in the sequence starting here that enforce the predicate*/
+  val count:Array[Int] = Array.tabulate(sequences.size)(i => 0)
+
+  /**the violation of the sequence starting here*/
+  val violated = Array.tabulate(sequences.size)(i => IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i))
+
+  /**the violation of a variable is the sum of the violation of each sequence it is involved in*/
   var Violations = SortedMap.empty[Variable, IntVar]
 
-  for(i <- 0 until variables.length - length){
-    val violatedvars = for(j <- i until min(variables.length,i + length)) yield violated(j)
-    Violations = Violations + ((variables(i),Sum(violatedvars).toIntVar))
+  for(i <- 0 to variables.length - length){
+    Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_))).toIntVar))
   }
 
   val Violation = IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
 
   for(i <- variables.indices){
     if(predicate(variables(i).value)){
-      for(j <- i until min(variables.length-1,i+length)){
-        count(j) :+= 1
-        if(count(j).getValue(true) > Max){
+      for(j <- sequencesInvolving(i)){
+        count(j) += 1
+        if(count(j) > Max){
           violated(j) :+=1
           Violation :+= 1
         }
@@ -66,14 +71,27 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
     }
   }
 
+  private def sequences = 0 to variables.length - length
+
+  /** returns the sequences that involve this position
+    *
+    * @param i the position
+    * @return
+    */
+  private def sequencesInvolving(i:Int):Range = {
+    val lb = 0 max 1+i-length
+    val ub = i min variables.length - length
+    lb to ub
+  }
+
   @inline
   override def notifyIntChanged(v: IntVar, i: Int, OldVal: Int, NewVal: Int){
     if (predicate(OldVal)){
       if(!predicate(NewVal)){
         //decrease the count
-        for(j <- i until min(variables.length-1,i+length)){
-          count(j) :-= 1
-          if(count(j).getValue(true) >= Max){
+        for(j <- sequencesInvolving(i)){
+          count(j) -= 1
+          if(count(j) >= Max){
             violated(j) :-=1
             Violation :-= 1
           }
@@ -82,9 +100,9 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
     }else{
       if(predicate(variables(i).value)){
         //increase the count
-        for(j <- i until min(variables.length-1,i+length)){
-          count(j) :+= 1
-          if(count(j).getValue(true) > Max){
+        for(j <- sequencesInvolving(i)){
+          count(j) += 1
+          if(count(j) > Max){
             violated(j) :+=1
             Violation :+= 1
           }
@@ -98,4 +116,32 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   def violation(v: Variable): IntVar = Violations.getOrElse(v,null)
 
   def violation: IntVar = Violation
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker) {
+    val countCheck:Array[Int] = Array.tabulate(sequences.size)(i => 0)
+    /**the violation of the sequence starting here*/
+    val violatedCheck = Array.tabulate(sequences.size)(i => 0)
+    var violationCheck = 0
+
+    for(i <- variables.indices){
+      if(predicate(variables(i).value)){
+        for(j <- sequencesInvolving(i)){
+          countCheck(j) += 1
+          if(countCheck(j) > Max){
+            violatedCheck(j) +=1
+            violationCheck += 1
+          }
+        }
+      }
+    }
+
+    for(s <- sequences)c.check(countCheck(s) == count(s),Some("countCheck(s) == count(s)"))
+    for(s <- sequences)c.check(violatedCheck(s) == violated(s).value,Some("violatedCheck(s) == violated(s).value"))
+    c.check(violationCheck == violation.value)
+
+  }
 }

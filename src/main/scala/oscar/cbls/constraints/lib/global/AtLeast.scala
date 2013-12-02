@@ -144,6 +144,7 @@ case class AtLeast(variables: Iterable[IntVar], bounds: SortedMap[Int, IntVar]) 
     }
     c.check(Violation.value == MyViol,
       Some("Violation.value (" + Violation.value + ") == MyViol (" + MyViol + ")"))
+
     for (v <- variables) {
       if (bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value))) {
         c.check(violation(v).value == 0,

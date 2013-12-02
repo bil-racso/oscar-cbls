@@ -5,102 +5,10 @@ import collection.immutable.SortedMap
 import org.scalacheck.Gen
 import org.scalacheck.Gen.value
 import org.scalacheck.Prop
-import org.scalatest.PropSpec
 import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.Max
-import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.minmax.Min
-import oscar.cbls.invariants.lib.minmax.Min2
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.minmax.MinSet
-import oscar.cbls.invariants.lib.numeric.Abs
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.invariants.lib.numeric.Mod
-import oscar.cbls.invariants.lib.numeric.Prod
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.lib.numeric.SumElements
 import org.scalatest.FunSuite
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.global.AtLeast
-import oscar.cbls.constraints.lib.global.AtMost
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.constraints.lib.global.Sequence
-import oscar.cbls.invariants.lib.minmax.MaxLin
-import oscar.cbls.invariants.lib.minmax.MinLin
-import oscar.cbls.invariants.lib.set.Union
-import oscar.cbls.invariants.lib.set.Inter
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.invariants.lib.set.MakeSet
-import oscar.cbls.invariants.lib.set.Interval
-import oscar.cbls.invariants.lib.set.TakeAny
-import oscar.cbls.invariants.lib.set.SetSum
-import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.lib.numeric.Mod
-import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.minmax.MinLin
-import oscar.cbls.invariants.tests.ToMax
-import oscar.cbls.invariants.lib.set.MakeSet
-import oscar.cbls.invariants.lib.minmax.MinSet
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.tests.RandomIntVar
-import oscar.cbls.invariants.lib.set.Inter
-import oscar.cbls.invariants.lib.set.SetSum
-import oscar.cbls.constraints.lib.global.Sequence
-import oscar.cbls.invariants.lib.logic.IntITE
-import oscar.cbls.invariants.lib.numeric.Prod
-import scala.Some
-import oscar.cbls.invariants.lib.set.Interval
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.tests.PlusOne
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.MaxLin
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.minmax.Min2
-import oscar.cbls.invariants.tests.RandomDiff
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.constraints.lib.global.AtMost
-import oscar.cbls.invariants.lib.numeric.Abs
-import oscar.cbls.invariants.lib.minmax.Max
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.logic.IntSetElement
-import oscar.cbls.invariants.lib.logic.IntElements
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.set.Union
-import oscar.cbls.invariants.tests.Random
-import oscar.cbls.invariants.lib.minmax.Min
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.tests.RandomIntSetVar
-import oscar.cbls.invariants.tests.ToZero
-import oscar.cbls.invariants.tests.ToMin
-import oscar.cbls.invariants.lib.logic.DenseCount
-import oscar.cbls.constraints.lib.global.AtLeast
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.lib.set.TakeAny
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.tests.MinusOne
-import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.Mod
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.minmax.MinLin
@@ -150,13 +58,16 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 
 class smalltest extends FunSuite with Checkers{
   //this is not working so far.
-  test("SelectLEHeapHeap") {
-    val bench = new InvariantTestBench(2)
-    new SelectLEHeapHeap(bench.genIntVarsArray(4, 0 to 5), bench.genIntVar(3 to 10)).toIntSetVar
+  test("Sequence") {
+    val bench = new InvariantTestBench
+    new Sequence(
+      bench.genIntVarsArray(20,0 to 10),
+      13,
+      5,
+      (x: Int) => x > 1).toIntVar
     bench.run
   }
 }
-
 
 class InvariantTests extends FunSuite with Checkers{
 
@@ -173,27 +84,30 @@ class InvariantTests extends FunSuite with Checkers{
     bench.run
   }
 
-  ignore("AtMost") {
+  test("AtMost") {
     val bench = new InvariantTestBench
     new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
     bench.run
   }
 
-  ignore("MultiKnapsack") {
+  test("MultiKnapsack") {
     val bench = new InvariantTestBench
+    //E elements, B bins
+    val e:Int = 10
+    val b:Int = 5
     new MultiKnapsack(
-      bench.genIntVarsArray(),
-      bench.genIntVarsArray(),
-      bench.genIntVarsArray()).toIntVar
+      bench.genIntVarsArray(e,0 to (b-1)),
+      bench.genIntVarsArray(e,0 to 100),
+      bench.genIntVarsArray(b,0 to 200)).toIntVar
     bench.run
   }
 
-  ignore("Sequence") {
+  test("Sequence") {
     val bench = new InvariantTestBench
     new Sequence(
-      bench.genIntVarsArray(),
-      Gen.choose(0, 10).sample.get,
-      Gen.choose(0, 10).sample.get,
+      bench.genIntVarsArray(20,0 to 10),
+      13,
+      5,
       (x: Int) => x > 1).toIntVar
     bench.run
   }
