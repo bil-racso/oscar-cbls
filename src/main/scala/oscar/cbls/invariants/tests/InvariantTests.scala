@@ -58,6 +58,8 @@ import oscar.cbls.invariants.lib.set.TakeAny
 import oscar.cbls.invariants.lib.set.SetSum
 import oscar.cbls.invariants.lib.set.SetProd
 import oscar.cbls.invariants.lib.logic.Cluster
+import oscar.cbls.invariants.lib.numeric.RoundUpModulo
+import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 
 class InvariantTests extends FunSuite with Checkers {
 
@@ -319,9 +321,17 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("RoundUpModulo")(pending)
+  test("RoundUpModulo") {
+    val bench = new InvariantTestBench(2)
+    new RoundUpModulo(bench.genIntVar(0 to 10), bench.genIntVar(0 to 10), Gen.choose(0, 10).sample.get, Gen.choose(0, 10).sample.get, Gen.choose(0, 10).sample.get).toIntVar
+    bench.run
+  }
 
-  test("RoundUpCustom")(pending)
+  test("RoundUpCustom") {
+    val bench = new InvariantTestBench
+    new RoundUpCustom(bench.genIntVar(0 to 10), bench.genIntVar(0 to 10), InvGen.randomTuples(10, 0 to 10)).toIntVar
+    bench.run
+  }
 
   test("Union maintains the union of two sets.") {
     val bench = new InvariantTestBench
@@ -408,6 +418,13 @@ object InvGen {
    */
   val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(),
     Random(), RandomDiff())
+
+  def randomTuples(nbVal: Int, range: Range): List[(Int, Int)] = {
+    val valList = Gen.containerOfN[List, Int](nbVal,
+      Gen.choose(range.min, range.max).sample.get).sample.get
+    valList.map((value: Int) => (
+      value, Gen.choose(range.min, range.max).sample.get))
+  }
 
   def randomIntSortedMap(nbVal: Int, valRange: Range, boundRange: Range): SortedMap[Int, Int] = {
     val valList = Gen.containerOfN[List, Int](nbVal,
