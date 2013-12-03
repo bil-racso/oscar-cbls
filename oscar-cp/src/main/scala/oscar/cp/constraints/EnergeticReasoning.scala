@@ -2,20 +2,15 @@ package oscar.cp.constraints
 
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.TreeSet
-import scala.math._
-import oscar.cp.constraints._
-import oscar.cp.core._
+import scala.math.min
+import scala.math.max
+import scala.math.ceil
+
+import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPStore
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
-import oscar.cp.modeling._
-import oscar.cp.modeling.CPScheduler
-import oscar.visual.VisualUtil
-import oscar.cp.scheduling.SchedulingUtils
-import oscar.visual.VisualFrame
-import scala.io.Source
 
 class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int = 1) extends Constraint(starts.head.store, "Energetic Reasoning") {
 
