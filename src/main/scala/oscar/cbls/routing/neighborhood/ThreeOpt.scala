@@ -48,16 +48,16 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
       val fstEdgeStartPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(fstEdgeStartPoint)) {
 
-        val fstEdgeEndPoint = vrp.Next(fstEdgeStartPoint).value
+        val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
 
-        var sndEdgeStartPoint = vrp.Next(fstEdgeEndPoint).value
-        while (vrp.Next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
+        var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
+        while (vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
           //            && !vrp.isADepot(sndEdgeStartPoint)) {
           assert(sndEdgeStartPoint != fstEdgeEndPoint)
-          val sndEdgeEndPoint = vrp.Next(sndEdgeStartPoint).value
+          val sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
 
-          var trdEdgeStartPoint = vrp.Next(sndEdgeEndPoint).value
-          while (vrp.Next(trdEdgeStartPoint).value != fstEdgeStartPoint) {
+          var trdEdgeStartPoint = vrp.next(sndEdgeEndPoint).value
+          while (vrp.next(trdEdgeStartPoint).value != fstEdgeStartPoint) {
             //             && !vrp.isADepot(trdEdgeStartPoint)) {
             assert(trdEdgeStartPoint != sndEdgeEndPoint)
 
@@ -70,9 +70,9 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
               }
               case _ => ()
             }
-            trdEdgeStartPoint = vrp.Next(trdEdgeStartPoint).value
+            trdEdgeStartPoint = vrp.next(trdEdgeStartPoint).value
           }
-          sndEdgeStartPoint = vrp.Next(sndEdgeStartPoint).value
+          sndEdgeStartPoint = vrp.next(sndEdgeStartPoint).value
         }
       }
 

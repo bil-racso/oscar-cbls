@@ -48,7 +48,7 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
       val beforeMovedPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(beforeMovedPoint)) {
 
-        val movedPoint = vrp.Next(beforeMovedPoint).value
+        val movedPoint = vrp.next(beforeMovedPoint).value
 
         for (
           insertionPoint <- s.relevantNeighbors(movedPoint) if (vrp.isRouted(insertionPoint)

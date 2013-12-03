@@ -49,19 +49,19 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * like that each vehicle is considered like a deposit. Other indexes
    * are used to modelise customers. Finally the value N is used for unrouted node.
    */
-  val Next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) IntVar(m, V to  N-1, i, "next" + i)
+  val next: Array[IntVar] = Array.tabulate(N)(i => if(i<V) IntVar(m, V to  N-1, i, "next" + i)
   else IntVar(m, 0, N, N, "next" + i))
 
   /**unroutes all points of the VRP*/
   def unroute(){
-    for (i <- 0 until V) Next(i) := i
-    for (i <- V until N) Next(i) := N
+    for (i <- 0 until V) next(i) := i
+    for (i <- V until N) next(i) := N
   }
 
   /**
    * the range of nodes (customers and deposits including) of the problem.
    */
-  val Nodes = 0 until N
+  val nodes = 0 until N
   /**
    * the range vehicle of the problem.
    */
@@ -79,20 +79,21 @@ class VRP(val N: Int, val V: Int, val m: Model) {
    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  def isRouted(n:Int):Boolean = {Next(n).value != N}
+  def isRouted(n:Int):Boolean = {next(n).value != N}
 
   /**
    * Redefine the toString method.
    * @return the VRP problem as a String.
    */
   override def toString:String = {
-    var toReturn = ""
-    for ( v <- 0 until V){
+    var toReturn = "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+      
+    for ( v <- 0 to V - 1){
       toReturn += "Vehicle" + v + ":" + v
-      var current = Next(v).value
+      var current = next(v).value
       while(current != v){
         toReturn += " -> " + current
-        current = Next(current).getValue(true)
+        current = next(current).getValue(true)
       }
       toReturn+="\n"
     }
@@ -160,15 +161,15 @@ trait MoveDescription extends VRP{
     assert(!this.isInstanceOf[PositionInRouteAndRouteNr]
       || this.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart,end))
 
-    addMove(beforeStart,Next(end).value)
-    Segment(Next(beforeStart).value,end)
+    addMove(beforeStart,next(end).value)
+    Segment(next(beforeStart).value,end)
   }
 
   def cutNodeAfter(beforeStart:Int):Segment = {
     assert(isRouted(beforeStart))
 
-    val start = Next(beforeStart).value
-    addMove(beforeStart,Next(start).value)
+    val start = next(beforeStart).value
+    addMove(beforeStart,next(start).value)
     Segment(start,start)
   }
 
@@ -179,18 +180,18 @@ trait MoveDescription extends VRP{
 
   def reverse(s:Segment): Segment = {
     var prev = s.start
-    var current:Int = Next(prev).value
+    var current:Int = next(prev).value
     while(current != s.end){
       addMove(current,prev)
       prev = current
-      current = Next(current).value
+      current = next(current).value
     }
     Segment(s.end,s.start)
   }
 
   def insert(s:Segment,node:Int){
     addMove(node,s.start)
-    addMove(s.end,Next(s.start).value)
+    addMove(s.end,next(node).value)
   }
 
   def append(s:Segment,t:Segment):Segment = {
@@ -206,7 +207,7 @@ trait MoveDescription extends VRP{
     var current = s.start
     unroute(current)
     while(current != s.end){
-      current = Next(current).value
+      current = next(current).value
       unroute(current)
     }
   }
@@ -228,8 +229,8 @@ trait MoveDescription extends VRP{
       toDo match{
         case head :: tail => {
           doIt(tail)
-          undoList = (head._1,Next(head._1).value) :: undoList
-          Next(head._1) := head._2
+          undoList = (head._1,next(head._1).value) :: undoList
+          next(head._1) := head._2
         }
         case Nil => ;
       }
@@ -241,7 +242,7 @@ trait MoveDescription extends VRP{
   private def doAllMoves(){
     def doIt(toDo:List[(Int,Int)]){
       toDo match{
-        case head :: tail => doIt(tail); Next(head._1) := head._2
+        case head :: tail => doIt(tail); next(head._1) := head._2
         case Nil => ;
       }
     }
@@ -290,7 +291,7 @@ trait VRPObjective extends VRP with MoveDescription{
     * it is called by the model on close
     */
   def closeObjectiveFunction(){
-    objectiveFunction <= Sum(objectiveFunctionTerms)
+    objectiveFunction <== Sum(objectiveFunctionTerms)
   }
 
 
@@ -326,7 +327,7 @@ trait UnroutedImpl extends VRP with Unrouted{
   /**
    * the data structure set which maintains the unrouted node.
    */
-  final override val unrouted: IntSetVar = Filter(Next, _ == N)
+  final override val unrouted: IntSetVar = Filter(next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 
@@ -349,13 +350,13 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
    * @param n the point.
    * @param p the penalty.
    */
-  def fixUnroutedPenaltyWeight(n:Int,p:Int) { weightUnroutedPenalty(n) := p}
+  def setUnroutedPenaltyWeight(n:Int,p:Int) { weightUnroutedPenalty(n) := p}
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
    * @param p the penlaty.
    */
-  def fixUnroutedPenaltyWeight(p:Int) {weightUnroutedPenalty.foreach(penalty => penalty := p)}
+  def setUnroutedPenaltyWeight(p:Int) {weightUnroutedPenalty.foreach(penalty => penalty := p)}
 }
 
 
@@ -398,7 +399,7 @@ abstract trait ClosestNeighborPoints extends VRP {
    */
   def computeKNearestNeighbors(node:Int,k:Int,filter:(Int => Boolean) = (_=>true)):List[Int]= {
 
-    val reachableneigbors = Nodes.filter((next:Int)
+    val reachableneigbors = nodes.filter((next:Int)
     => node != next && filter(next) && (getDistance(node,next)!= Int.MaxValue || getDistance(next, node)!= Int.MaxValue))
 
     val heap = new BinomialHeap[(Int,Int)](-_._2,k+1)
@@ -422,7 +423,7 @@ abstract trait ClosestNeighborPoints extends VRP {
    * @return the k nearest neighbor as an iterable list of Int.
    */
   def getKNearest(k:Int,filter:(Int => Boolean)=(_=>true))(node:Int):Iterable[Int] = {
-    if(k >= N-1) return Nodes
+    if(k >= N-1) return nodes
     if(!closestNeighbors.isDefinedAt(k)){
       saveKNearestPoints(k:Int,filter)
     }
@@ -461,7 +462,7 @@ trait HopDistance extends VRP {
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i:Int,j:Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N ) hopDistance(i) <== new IntVar2IntVarFun(Next(i), j => {if (j!= N) DistanceMatrix(i)(j) else 0})
+    for (i <- 0 until N ) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => {if (j!= N) DistanceMatrix(i)(j) else 0})
   }
 
   /**
@@ -471,7 +472,7 @@ trait HopDistance extends VRP {
    */
   def installCostFunction(fun:(Int, Int) => Int){
     distanceFunction = fun
-    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(Next(i), j => fun(i,j))
+    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => fun(i,j))
   }
 
   /**
@@ -509,7 +510,7 @@ trait PositionInRouteAndRouteNr extends VRP {
   /**
    * the invariant Routes.
    */
-  val routes = Routes.buildRoutes(Next, V)
+  val routes = Routes.buildRoutes(next, V)
 
   /**
    * the position in route of each node as an array of IntVar.
@@ -595,7 +596,7 @@ trait Predecessors extends VRP{
   /**
    * the data structure array which maintains the predecessors of each node.
    */
-  val preds:Array[IntVar] = Predecessor(Next,V).preds
+  val preds:Array[IntVar] = Predecessor(next,V).preds
 
   //TODO: ajouter des moves plus simples, sans les neouds sprécédesseurs à chaque fois
 }

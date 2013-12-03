@@ -50,13 +50,13 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
       val fstEdgeStartPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(fstEdgeStartPoint)) {
 
-        val fstEdgeEndPoint = vrp.Next(fstEdgeStartPoint).value
+        val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
 
         for (
           sndEdgeStartPoint <- s.relevantNeighbors(fstEdgeStartPoint) if (vrp.isRouted(sndEdgeStartPoint)
             && sndEdgeStartPoint != fstEdgeStartPoint
             && sndEdgeStartPoint != fstEdgeEndPoint
-            && fstEdgeStartPoint != vrp.Next(sndEdgeStartPoint).value
+            && fstEdgeStartPoint != vrp.next(sndEdgeStartPoint).value
             && vrp.onTheSameRoute(fstEdgeStartPoint, sndEdgeStartPoint))
         ) {
 
@@ -103,6 +103,6 @@ case class TwoOptMove(
   }
 
   override def toString: String = ("TwoOpt(first edge startpoint = "
-    + vrp.Next(fstEdgeStartPoint).value
+    + vrp.next(fstEdgeStartPoint).value
     + ", second edge startpoint = " + sndEdgeStartPoint + " )")
 }

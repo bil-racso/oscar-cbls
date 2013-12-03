@@ -4,10 +4,12 @@ import oscar.cbls.routing.model
 import oscar.cbls.modeling.Algebra._
 import java.nio.file.OpenOption
 import oscar.cbls.routing.model.{PositionInRouteAndRouteNr, VRPObjective, MoveDescription, VRP}
+import oscar.cbls.routing.model.UnroutedImpl
 
 abstract class Move(val objAfter:Int, val vrp:VRP with MoveDescription){
   def encodeMove()
   def doMove(){
+    vrp.cleanRecordedMoves
     encodeMove
     vrp.commit(false)
   }
@@ -56,7 +58,9 @@ abstract class Neighborhood(){
     }
   }
 
-  final def bestImprovingMove(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
+  final def bestImprovingMove(
+      s:SearchZone,
+      moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
     var bestMove:Option[Move]= None
     var bestObj = Int.MaxValue
     while (true){
@@ -66,6 +70,7 @@ abstract class Neighborhood(){
         case Some(move) if (move.objAfter < bestObj) =>
           bestMove = Some(move)
           bestObj = move.objAfter
+        case _ => ()
       }
     }
     None
@@ -104,7 +109,10 @@ abstract class Neighborhood(){
    * @param vrp
    * @return true if this improved, false otherwise, and the objective fucntion after the move
    */
-  def checkEncodedMove(moveAcceptor:Int => Boolean, StayIfAccept:Boolean, vrp:VRPObjective with VRPObjective):(Boolean,Int) = {
+  def checkEncodedMove(
+      moveAcceptor:Int => Boolean,
+      StayIfAccept:Boolean,
+      vrp:VRPObjective with VRPObjective):(Boolean,Int) = {
     vrp.commit(true)
     val obj = vrp.getObjective()
     val accept = moveAcceptor(obj)

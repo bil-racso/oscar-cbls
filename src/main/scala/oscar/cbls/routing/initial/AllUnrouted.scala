@@ -8,10 +8,10 @@ import oscar.cbls.routing.model.VRP
 object AllUnrouted {
   def apply(vrp:VRP){
     for (i <- 0 to vrp.V-1){
-      vrp.Next(i) := i
+      vrp.next(i) := i
     }
     for (i <- vrp.V to vrp.N-1){
-      vrp.Next(i) := vrp.N
+      vrp.next(i) := vrp.N
     }
   }
 }

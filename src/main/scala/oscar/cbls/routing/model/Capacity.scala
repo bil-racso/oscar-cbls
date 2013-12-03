@@ -20,9 +20,9 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntVar
 
 /**
  * Maintains a integer weight on each node to help to form constraints (adding information).

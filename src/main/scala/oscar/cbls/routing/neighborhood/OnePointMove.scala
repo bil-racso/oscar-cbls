@@ -59,5 +59,5 @@ case class OnePointMove(predOfMovedPoint: Int,
   override def encodeMove() {
     OnePointMove.encode(predOfMovedPoint, insertionPoint, vrp)
   }
-  override def toString: String = "OnePointMove(point = " + vrp.Next(predOfMovedPoint).value + ", insertion = " + insertionPoint + " )"
+  override def toString: String = "OnePointMove(point = " + vrp.next(predOfMovedPoint).value + ", insertion = " + insertionPoint + " )"
 }

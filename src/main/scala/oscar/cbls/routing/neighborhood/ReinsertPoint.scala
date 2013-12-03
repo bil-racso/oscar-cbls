@@ -35,21 +35,28 @@ import oscar.cbls.search.SearchEngineTrait
  * The search complexity is O(n²).
  */
 object ReinsertPoint extends Neighborhood with SearchEngineTrait {
-  override protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult = {
+  override protected def doSearch(
+      s: SearchZone,
+      moveAcceptor: (Int) => (Int) => Boolean,
+      returnMove: Boolean): SearchResult = {
     val startObj: Int = s.vrp.getObjective()
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
       val beforeReinsertedPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(beforeReinsertedPoint)) {
-
-        for (reinsertedPoint <- s.relevantNeighbors(beforeReinsertedPoint) if (!vrp.isRouted(reinsertedPoint))) {
+        for (
+          reinsertedPoint <- s.relevantNeighbors(beforeReinsertedPoint) if (
+            !vrp.isRouted(reinsertedPoint))
+        ) {
           encode(beforeReinsertedPoint, reinsertedPoint, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
             case (true, newObj: Int) => { //this improved
-              if (returnMove) return MoveFound(ReinsertPoint(beforeReinsertedPoint, reinsertedPoint, newObj, vrp))
-              else return MovePerformed()
+              if (returnMove) {
+                return MoveFound(ReinsertPoint(beforeReinsertedPoint,
+                  reinsertedPoint, newObj, vrp))
+              } else return MovePerformed()
             }
             case _ => ()
           }

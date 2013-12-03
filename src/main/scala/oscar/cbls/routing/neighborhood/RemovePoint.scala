@@ -43,7 +43,7 @@ object RemovePoint extends Neighborhood with SearchEngineTrait {
       val beforeRemovedPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(beforeRemovedPoint)) {
 
-        val removedPoint = vrp.Next(beforeRemovedPoint).value
+        val removedPoint = vrp.next(beforeRemovedPoint).value
 
         if (vrp.isRouted(removedPoint)
           && (!vrp.isADepot(removedPoint))) {
@@ -82,5 +82,5 @@ case class RemovePoint(
   override def encodeMove() {
     RemovePoint.encode(beforeRemovedPoint, vrp)
   }
-  override def toString: String = "RemovePoint(point = " + vrp.Next(beforeRemovedPoint).value + " )"
+  override def toString: String = "RemovePoint(point = " + vrp.next(beforeRemovedPoint).value + " )"
 }

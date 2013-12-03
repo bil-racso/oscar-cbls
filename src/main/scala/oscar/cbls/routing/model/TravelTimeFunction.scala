@@ -46,7 +46,7 @@ trait TravelTimeAsFunction extends VRP with Time{
     */
   def setTravelTimeFunctions(travelCosts:TravelTimeFunction){
     for (i <- 0 to N-1){
-      TravelOutDuration(i) <== new IntVarIntVar2IntVarFun(LeaveTime(i), Next(i),
+      TravelOutDuration(i) <== new IntVarIntVar2IntVarFun(LeaveTime(i), next(i),
         (leaveTime,successor) =>  if (successor == N) 0 else travelCosts.getTravelDuration(i,leaveTime,successor))
     }
   }

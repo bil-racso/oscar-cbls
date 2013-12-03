@@ -239,10 +239,3 @@ trait SearchEngineTrait{
     null //should not happen
   }
 }
-
-
-
-
-
-
-
