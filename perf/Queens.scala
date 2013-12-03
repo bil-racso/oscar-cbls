@@ -13,7 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 import oscar.cp.modeling._
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp.core._
 
 
