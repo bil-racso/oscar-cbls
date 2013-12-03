@@ -13,7 +13,6 @@ import oscar.cp.core.Constraint
 import oscar.cp.modeling._
 import oscar.cp.modeling.CPScheduler
 import oscar.visual.VisualUtil
-import oscar.visual.scheduling.VisualGanttChart
 import oscar.cp.scheduling.SchedulingUtils
 import oscar.visual.VisualFrame
 import scala.io.Source
