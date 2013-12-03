@@ -224,7 +224,6 @@ case class Cardinality(v: IntSetVar) extends IntInvariant {
  * @param on is a set of IntVar
  */
 case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
-  println("MakeSet(on:" + on.toList + ")")
 
   var output: IntSetVar = null
   var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc:SortedMap[Int,Int], intvar:IntVar) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))

@@ -9,6 +9,7 @@ import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import org.scalatest.FunSuite
+import oscar.cbls.invariants.lib.logic.DenseCount
 import oscar.cbls.invariants.lib.numeric.Mod
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.minmax.MinLin
@@ -26,6 +27,7 @@ import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.set.SetProd
 import oscar.cbls.invariants.lib.minmax.ArgMinArray
 import oscar.cbls.invariants.lib.minmax.MaxLin
+import oscar.cbls.invariants.lib.logic.DenseRef
 import oscar.cbls.invariants.lib.numeric.ProdElements
 import oscar.cbls.invariants.lib.minmax.Min2
 import oscar.cbls.invariants.lib.numeric.Prod2
@@ -48,7 +50,6 @@ import oscar.cbls.invariants.lib.numeric.Div
 import oscar.cbls.invariants.lib.set.Union
 import oscar.cbls.invariants.lib.minmax.Min
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic.DenseCount
 import oscar.cbls.constraints.lib.global.AtLeast
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.invariants.lib.set.TakeAny
@@ -160,7 +161,11 @@ class InvariantTests extends FunSuite with Checkers{
     bench.run
   }
 
-  ignore("Cross references...")(pending)
+  test("Cross references"){
+    val bench = new InvariantTestBench
+    DenseRef.makeDenseRef(bench.genIntSetVars(10,10,0 to 20))
+    bench.run
+  }
 
   ignore("Cumulative...")(pending)
 
