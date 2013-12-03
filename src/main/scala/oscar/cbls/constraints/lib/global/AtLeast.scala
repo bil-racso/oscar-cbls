@@ -23,7 +23,7 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{ Variable, IntVar }
+import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, IntVar}
 import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic.IntITE
@@ -41,6 +41,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  */
 case class AtLeast(variables: Iterable[IntVar], bounds: SortedMap[Int, IntVar]) extends Constraint {
 
+  model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
   registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()

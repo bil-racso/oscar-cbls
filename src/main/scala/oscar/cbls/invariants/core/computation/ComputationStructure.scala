@@ -452,7 +452,7 @@ abstract class Variable(val model:Model, n:String = null) extends PropagationEle
   protected var DefiningInvariant:Invariant = null
 
   def setDefiningInvariant(i:Invariant) {
-    assert(i.model == model || i.model == null)
+    assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
     if(DefiningInvariant == null){
       DefiningInvariant = i
       registerStaticallyListenedElement(i)

@@ -50,6 +50,8 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   /**the violation of the sequence starting here*/
   val violated = Array.tabulate(sequences.size)(i => IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i))
 
+  for(v <- violated) v.setDefiningInvariant(this)
+
   /**the violation of a variable is the sum of the violation of each sequence it is involved in*/
   var Violations = SortedMap.empty[Variable, IntVar]
 
@@ -58,6 +60,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   }
 
   val Violation = IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
+  Violation.setDefiningInvariant(this)
 
   for(i <- variables.indices){
     if(predicate(variables(i).value)){

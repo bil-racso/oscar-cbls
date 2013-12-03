@@ -40,6 +40,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
+  model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
   finishInitialization()
 

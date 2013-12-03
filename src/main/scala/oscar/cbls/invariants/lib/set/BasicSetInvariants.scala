@@ -224,6 +224,7 @@ case class Cardinality(v: IntSetVar) extends IntInvariant {
  * @param on is a set of IntVar
  */
 case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
+  println("MakeSet(on:" + on.toList + ")")
 
   var output: IntSetVar = null
   var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc:SortedMap[Int,Int], intvar:IntVar) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
@@ -242,7 +243,8 @@ case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
 
   @inline
   override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
-    assert(on.contains(v), "MakeSet notified for non interesting var")
+    assert(on.contains(v), "MakeSet notified for non interesting var :" + on.toList.exists(_==v) + " " + on.toList)
+
     assert(OldVal != NewVal)
     if (counts(OldVal) == 1) {
       //on va en supprimer un

@@ -58,13 +58,9 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 
 class smalltest extends FunSuite with Checkers{
   //this is not working so far.
-  test("Sequence") {
-    val bench = new InvariantTestBench
-    new Sequence(
-      bench.genIntVarsArray(20,0 to 10),
-      13,
-      5,
-      (x: Int) => x > 1).toIntVar
+  test("MakeSet maintains an IntSetVar given a set of IntVar.") {
+    val bench = new InvariantTestBench(2)
+    new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toIntSetVar
     bench.run
   }
 }
@@ -696,8 +692,6 @@ class InvariantTestBench(verbose: Int = 0) {
     genIntVars(nbVars, range, isInput, constraint).toArray
   }
 
-  implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
-
   /**
    * Method for generating a sorted set of random IntVar to add to the bench
    * and to its model.
@@ -710,7 +704,7 @@ class InvariantTestBench(verbose: Int = 0) {
     val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
     addVar(isInput, riVars)
     val iVars = riVars.map((riv: RandomIntVar) => { riv.randomVar })
-    SortedSet(iVars: _*)(intVarOrdering)
+    SortedSet(iVars: _*)
   }
 
   def genBoundedValues(

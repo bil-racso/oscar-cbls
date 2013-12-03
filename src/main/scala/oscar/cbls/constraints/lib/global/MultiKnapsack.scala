@@ -27,6 +27,7 @@ import oscar.cbls.invariants.lib.logic.{Cluster, IntElement}
 import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 
@@ -39,6 +40,8 @@ import oscar.cbls.invariants.core.computation._
  */
 case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar])
   extends Constraint {
+
+  model = InvariantHelper.findModel(items)
 
   assert(items.map(_.minVal).min == 0, "bin 0 must be included in possible bins of items")
   assert(items.map(_.minVal).max <= binsizes.length-1, "the range of ite bins should be not bigger than the available bins")
@@ -84,5 +87,13 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
     val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
     assert(tmp != null)
     tmp
+  }
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker) {
+    c.check(true,Some("nothing to check, invariant is discharged"))
   }
 }
