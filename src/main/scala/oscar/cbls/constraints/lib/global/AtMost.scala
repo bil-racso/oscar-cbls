@@ -49,13 +49,11 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   private val valueCount = countInvariant.counts //v => #occurrence of v+offset in variables
 
   private val noViolation:IntVar = 0
-  private val violationByVal=Array.tabulate(valueCount.length)(value => {
-    if(bounds.contains(value + offset)){
-      Max2(noViolation,valueCount(value) - bounds(value)).toIntVar
-    }else{
-      noViolation
-    }
-  })
+  private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
+
+  for((value,bound) <- bounds){
+    violationByVal(value) = Max2(noViolation,valueCount(value) - bound).toIntVar
+  }
 
   //the violation of each input variable
   private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
@@ -66,7 +64,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   })
 
   private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation <== Sum(violationByVal)
+  Violation <== Sum(bounds.keys.map(bound => violationByVal(bound)))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
     * the number of variable in excess is the max between zero and
