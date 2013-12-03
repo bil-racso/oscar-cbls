@@ -84,7 +84,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   override def checkInternals(c: Checker) {
     var checkBounds:SortedMap[Int, Int] = SortedMap.empty
     for(i <- bounds.keys) checkBounds += ((i,0))
-    for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value +1)))
+    for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value) +1))
 
     for (v <- variables){
       /*The violation of a variable is zero if its value is not the one of a bound.
@@ -92,7 +92,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
         */
       val violationOfV = violation(v)
       val expectedViolation =
-        if (checkBounds.isDefinedAt(v.value)) 0.max(bounds(v.value) - checkBounds(v.value))
+        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value))
         else 0
       c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + "== expectedViolation" + expectedViolation))
     }
