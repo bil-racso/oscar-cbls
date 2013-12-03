@@ -131,8 +131,7 @@ object Cluster{
   }
 
   def MakeDense(values:Array[IntVar]):DenseCluster = {
-    val themax = values.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.maxVal) intvar.maxVal else acc)
-    val themin = values.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.minVal) intvar.minVal else acc)
+    val (themin,themax) = InvariantHelper.getMinMaxBounds(values)
     assert(themin == 0, "dense clusters must start at zero")
     val m:Model = InvariantHelper.findModel(values)
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray

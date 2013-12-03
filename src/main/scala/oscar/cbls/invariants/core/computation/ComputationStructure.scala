@@ -419,6 +419,25 @@ object InvariantHelper{
     })
     null
   }
+
+  def getMinMaxBounds(variables:Iterable[IntVar]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.maxVal) MyMax = v.maxVal
+      if (MyMin > v.minVal) MyMin = v.minVal
+    }
+    (MyMin, MyMax)
+  }
+  def getMinMaxBoundsIntSetVar(variables:Iterable[IntSetVar]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.getMaxVal) MyMax = v.getMaxVal
+      if (MyMin > v.getMinVal) MyMin = v.getMinVal
+    }
+    (MyMin, MyMax)
+  }
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.

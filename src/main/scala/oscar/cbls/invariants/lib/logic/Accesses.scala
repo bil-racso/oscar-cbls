@@ -104,13 +104,7 @@ case class IntElement(index: IntVar, inputarray: Array[IntVar])
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntVar]): (Int, Int) = {
-    var MyMax = Int.MinValue
-    var MyMin = Int.MaxValue
-    for (v <- bulkedVar) {
-      if (MyMax < v.maxVal) MyMax = v.maxVal
-      if (MyMin > v.minVal) MyMin = v.minVal
-    }
-    (MyMin, MyMax)
+    InvariantHelper.getMinMaxBounds(bulkedVar)
   }
 
   override def setOutputVar(v: IntVar) {
@@ -165,15 +159,8 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntVar]): (Int, Int) = {
-    var MyMax = Int.MinValue
-    var MyMin = Int.MaxValue
-    for (v <- bulkedVar) {
-      if (MyMax < v.maxVal) MyMax = v.maxVal
-      if (MyMin > v.minVal) MyMin = v.minVal
-    }
-    (MyMin, MyMax)
-  }
+  override def performBulkComputation(bulkedVar: Array[IntVar]): (Int, Int) =
+    InvariantHelper.getMinMaxBounds(bulkedVar)
 
   override def setOutputVar(v: IntSetVar) {
     output = v
@@ -267,15 +254,8 @@ case class IntSetElement(index: IntVar, inputarray: Array[IntSetVar])
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntSetVar]): (Int, Int) = {
-    var MyMax = Int.MinValue
-    var MyMin = Int.MaxValue
-    for (v <- bulkedVar) {
-      if (MyMax < v.getMaxVal) MyMax = v.getMaxVal
-      if (MyMin > v.getMinVal) MyMin = v.getMinVal
-    }
-    (MyMin, MyMax)
-  }
+  override def performBulkComputation(bulkedVar: Array[IntSetVar]): (Int, Int) =
+    InvariantHelper.getMinMaxBoundsIntSetVar(bulkedVar)
 
   override def setOutputVar(v: IntSetVar) {
     output = v

@@ -85,7 +85,7 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("AtMost") {
-    val bench = new InvariantTestBench
+    val bench = new InvariantTestBench(2)
     new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
     bench.run
   }
@@ -281,7 +281,7 @@ class InvariantTests extends FunSuite with Checkers{
 
   test("ProdElements maintains the product of variables of which indices are in the given set.") {
     val bench = new InvariantTestBench(2)
-    new ProdElements(bench.genIntVarsArray(10, 0 to 100), bench.genIntSetVar(2, 0 to 9)).toIntVar
+    new ProdElements(bench.genIntVarsArray(5, 0 to 10), bench.genIntSetVar(2, 0 to 4)).toIntVar
     bench.run
   }
 

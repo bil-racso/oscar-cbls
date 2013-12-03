@@ -13,109 +13,96 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
-
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{Variable, IntVar}
-import oscar.cbls.invariants.lib.logic.{IntElement, IntVar2IntVarFun}
+import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, IntVar}
+import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, IntVar2IntVarFun}
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.minmax.Max2
+import oscar.cbls.invariants.lib.numeric.Sum
 
-//TODO: check
 /**Implements the AtMost constraint on IntVar.
- * There is a set of bounds, defined in the parameter bound as pair (value,bound).
- * The variables should be such that there is at most ''bound'' of them which have the value ''value''.
- * WARNING: not tested!
- * @param variables the variables that should be bounded
- * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
- * @author  Renaud De Landtsheer rdl@cetic.be
- */
+  * There is a set of bounds, defined in the parameter bound as pair (value,bound).
+  * The variables should be such that there is at most ''bound'' of them which have the value ''value''.
+  *
+  * @param variables the variables that should be bounded
+  * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
+  * @author  Renaud De Landtsheer rdl@cetic.be
+  */
 case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
   registerConstrainedVariables(variables)
-  registerStaticAndDynamicDependencyAllNoID(variables)
   finishInitialization()
 
-  private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation.setDefiningInvariant(this)
+  private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
+  private val offset:Int = countInvariant.offset
+  private val valueCount = countInvariant.counts //v => #occurrence of v+offset in variables
 
-  private val N0:Int = variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.maxVal > acc) intvar.maxVal else acc))
-  private val offset:Int = - variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.minVal < acc) intvar.minVal else acc))
-  private val N = N0 + offset
-  private val range = 0 until N
-
-  private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
-  => {
-    val newvar = new IntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
-    acc + ((intvar,newvar))
+  private val noViolation:IntVar = 0
+  private val violationByVal=Array.tabulate(valueCount.length)(value => {
+    if(bounds.contains(value + offset)){
+      Max2(noViolation,valueCount(value) - bounds(value)).toIntVar
+    }else{
+      noViolation
+    }
   })
 
-  private val ValueCount:Array[IntVar] = (for(i <- 0 to N) yield {
-    val tmp = new IntVar(model,(-1 to variables.size),(if(Bound(i) == -1) -1 else 0),"AtMost_count_of_value_" + (i-offset))
-    tmp.setDefiningInvariant(this)
-    tmp}
-    ).toArray
+  //the violation of each input variable
+  private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
+  => {
+    val newVar = new IntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
+    newVar <== violationByVal.element(intvar + offset)
+    acc + ((intvar,newVar))
+  })
 
-  private val Bound:Array[Int]= new Array[Int](N)
-  for(v <- range){Bound(v) = bounds.getOrElse(v,-1)}
-
-  for(v <- variables){
-    val varval = v.value
-    if(Bound(varval) != -1){
-      ValueCount(varval + offset) :+= 1
-    }
-    Violations(v) <== (IntElement(v + offset, ValueCount) - new IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
-  }
-
-  for(i <- range){
-    Violation :+= 0.max(ValueCount(i).getValue(true) - Bound(i))
-  }
-
-  @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    val NewBounded = (Bound(NewVal+offset) == -1)
-    val OldBounded = (Bound(OldVal+offset) == -1)
-
-    if (!OldBounded) ValueCount(OldVal+offset) := ValueCount(OldVal+offset).getValue(true) - 1
-    if (!NewBounded) ValueCount(NewVal+offset) := ValueCount(NewVal+offset).getValue(true) + 1
-
-    if(NewBounded){
-      if (OldBounded){
-        val DeltaOldVal = if(ValueCount(OldVal+offset).getValue(true) - Bound(OldVal+offset) == 0) 0 else -1
-        val DeltaNewVal = if(ValueCount(NewVal+offset).getValue(true) - Bound(NewVal+offset) == 1) 0 else 1
-        Violation :+= (DeltaNewVal + DeltaOldVal)
-      }else{
-        val DeltaNewVal = if(ValueCount(NewVal+offset).getValue(true) > Bound(NewVal+offset)) 1 else 0
-        Violation :+= DeltaNewVal
-      }
-    }else{
-      if (OldBounded){
-        val DeltaOldVal = if(ValueCount(OldVal+offset).getValue(true) >= Bound(OldVal+offset)) -1 else 0
-        Violation :+= DeltaOldVal
-      }
-    }
-  }
+  private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
+  Violation <== Sum(Violations.values)
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
-   * the number of variable in excess is the max between zero and
-   * (the number of variable that have the value of the bound minus the bound).
-   */
+    * the number of variable in excess is the max between zero and
+    * (the number of variable that have the value of the bound minus the bound).
+    */
   override def violation = Violation
 
   /**The violation of a variable is zero if its value is not the one of a bound.
-   * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
-   */
+    * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
+    */
   override def violation(v: Variable):IntVar = {
-    val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
-    assert(tmp != null)
-    tmp
+    Violations(v.asInstanceOf[IntVar])
   }
 
+  override def checkInternals(c: Checker) {
+    var checkBounds:SortedMap[Int, Int] = SortedMap.empty
+    for(i <- bounds.keys) checkBounds += ((i,0))
+    for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value +1)))
+
+    for (v <- variables){
+      /*The violation of a variable is zero if its value is not the one of a bound.
+        * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
+        */
+      val violationOfV = violation(v)
+      val expectedViolation =
+        if (checkBounds.isDefinedAt(v.value)) 0.max(bounds(v.value) - checkBounds(v.value))
+        else 0
+      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + "== expectedViolation" + expectedViolation))
+    }
+
+    /*The violation of the constraint is the sum on all bound of the number of variable that are in excess.
+      * the number of variable in excess is the max between zero and
+      * (the number of variable that have the value of the bound minus the bound).*/
+    var summedViolation = 0;
+    for(i <- bounds.keys){
+      if (checkBounds(i) > bounds(i)) summedViolation += checkBounds(i) - bounds(i)
+    }
+    c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
+  }
 }

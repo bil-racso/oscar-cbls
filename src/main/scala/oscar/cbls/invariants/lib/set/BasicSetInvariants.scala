@@ -275,6 +275,11 @@ case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
 
 /**
  * makes a set out of an interval specified by a lower bound and an upper bound. if lb > ub, the set is empty.
+ * output = if (lb <= ub) [lb; ub] else empty
+ *
+ * BEWARE: this invariant is not efficient because if you change a bound with a delta of N,
+ * it costs n*log(N) to update its output where N is the initial size of the interval
+ *
  * @param lb is the lower bound of the interval
  * @param ub is the upper bound of the interval
  */
