@@ -137,6 +137,13 @@ class VarList[A]() extends Var[Seq[A]](Nil) {
     this := this().drop(this().indexOf(elem))
     isDecreased emit (elem)
   }
+  def mymap[T](f: A => T) ={
+    val res = new VarList[T]
+    whenever(isIncreased){ v=> res.add(f(v))}
+    whenever(isDecreased){ v=> res.remove(f(v))}
+    res
+  } 
+    
 }
 
 abstract class StaticInvariant[R] extends Reactive {
@@ -203,6 +210,10 @@ class SumInvariantOnList(result: VarInt, list: VarList[Int]) extends StaticInvar
     result :+= w
     true
   }
+    dependsOn(list.isDecreased) { w =>
+    result :-= w
+    true
+    }
 }
 
 /**

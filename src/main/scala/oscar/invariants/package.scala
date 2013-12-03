@@ -51,11 +51,11 @@ package object invariants extends Logging {
 
   def and(occurings: scala.collection.Iterable[Occuring[_]]) = {
       def loop(occ: Occuring[_], others: scala.collection.Iterable[Occuring[_]]): Occuring[_] = {
-        if ( others.isEmpty ) occ
+        if (others.isEmpty) occ
         else loop(occ & others.head, others.tail)
       }
-      require(occurings nonEmpty)
-      loop(occurings.head, occurings.tail)
+    require(occurings nonEmpty)
+    loop(occurings.head, occurings.tail)
   }
 
   @inline def perform[A](rd: ReactionDescription[A]): Reaction[A] = {
@@ -126,8 +126,17 @@ package object invariants extends Logging {
     new ElementArray(at)
   }
   def sum(l: VarInt*) = { (v: VarInt) => new SumInvariant(v, l.toList) }
-  def sumOnList(l: VarList[Int]) = { (v: VarInt) => new SumInvariantOnList(v, l) }
+  def sumOnInt(l: VarList[Int]) = {
+    val v = new VarInt(0)
+    new SumInvariantOnList(v, l)
+    v
+  }
   def sumOnListOfVars(l: VarList[VarInt]) = { (v: VarInt) => new SumInvariantOnListOfVars(v, l) }
+  def sum(l: VarList[VarInt]) = {
+    val v = new VarInt(0)
+    new SumInvariantOnListOfVars(v, l)
+    v
+  }
 
   //  implicit def array2ElementArray2[A](at: IndexedSeq[IndexedSeq[Var[A]]]) = {
   //    new ElementArray2(at)

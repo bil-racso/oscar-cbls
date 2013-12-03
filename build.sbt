@@ -10,7 +10,7 @@ version := "1.0"
 
 organization := ""
 
-scalaVersion := "2.10.1-RC2"
+scalaVersion := "2.10.3"
 
 autoCompilerPlugins := true
 
@@ -35,6 +35,9 @@ jarName in assembly := "oscar.jar"
 
 test in assembly := {}
 
+libraryDependencies ++= Seq(
+  "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
+)
 
 //libraryDependencies += "org.scalatest" % "scalatest" % "1.4.RC2"
 
