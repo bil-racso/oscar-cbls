@@ -66,7 +66,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   })
 
   private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation <== Sum(Violations.values)
+  Violation <== Sum(violationByVal)
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
     * the number of variable in excess is the max between zero and
@@ -102,8 +102,9 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
       * (the number of variable that have the value of the bound minus the bound).*/
     var summedViolation = 0;
     for(i <- bounds.keys){
-      if (checkBounds(i) > bounds(i)) summedViolation += checkBounds(i) - bounds(i)
+      if (checkBounds(i) > bounds(i)) summedViolation += (checkBounds(i) - bounds(i))
     }
     c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
   }
 }
+
