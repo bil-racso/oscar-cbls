@@ -57,12 +57,14 @@ import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 
 class smalltest extends FunSuite with Checkers{
-  //this is not working so far.
-  test("MakeSet maintains an IntSetVar given a set of IntVar.") {
-    val bench = new InvariantTestBench(2)
-    new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toIntSetVar
+
+  test("AllDiff maintains output = all int vars have different values") {
+    val bench = new InvariantTestBench
+    new AllDiff(bench.genIntVarsArray(10, -10 to 10))
     bench.run
   }
+
+
 }
 
 class InvariantTests extends FunSuite with Checkers{
@@ -75,13 +77,13 @@ class InvariantTests extends FunSuite with Checkers{
 
 
   test("AtLeast") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new AtLeast(bench.genIntVars(10), bench.genBoundedValues(10, 0 to 30, 0 to 10)).toIntVar
     bench.run
   }
 
   test("AtMost") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
     bench.run
   }
@@ -115,13 +117,13 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("Access to int element maintains output = array(index)") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new IntElement(bench.genIntVar(0 to 19), bench.genIntVarsArray(20, 0 to 100)).toIntVar
     bench.run
   }
 
   test("Access to int vars...") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new IntElements(bench.genIntSetVar(3, 0 to 4), bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
   }
@@ -169,7 +171,7 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("SelectLEHeapHeap") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new SelectLEHeapHeap(bench.genIntVarsArray(4, 0 to 5), bench.genIntVar(3 to 10)).toIntSetVar
     bench.run
   }
@@ -179,7 +181,7 @@ class InvariantTests extends FunSuite with Checkers{
     //le pivot ne peut qu'augmenter
     //une valeur en dessous du pivot ne peut que prendre une valeur dépassant toutes les autres valeurs
     //les valeurs au dessus du pivot ne peuvent pas changer
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new SelectLESetQueue(bench.genIntVarsArray(5, 0 to 5), bench.genIntVar(3 to 10, false)).toIntSetVar
     bench.run
   }
@@ -190,57 +192,67 @@ class InvariantTests extends FunSuite with Checkers{
 
   //this is not working so far.
   test("Sort") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     Sort.MakeSort(bench.genIntVarsArray(4, 0 to 30))
     bench.run
   }
 
-  // TODO test also with the other parameters of ArgMinArray
-  test("ArgMinArray maintains the set of min variables of the array") {
+  test("ArgMinArray") {
     val bench = new InvariantTestBench
     new ArgMinArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
     bench.run
   }
 
-  // TODO test also with the other parameters of ArgMaxArray
+  test("ArgMinArray and playing with the index") {
+    val bench = new InvariantTestBench
+    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30),bench.genIntSetVar(1,0 to 19)).toIntSetVar
+    bench.run
+  }
+
   test("ArgMaxArray maintains the set of max variables of the array") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
     bench.run
   }
 
+  test("ArgMaxArray and playing with the Index") {
+    val bench = new InvariantTestBench
+    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30),bench.genIntSetVar(1,0 to 19)).toIntSetVar
+    bench.run
+  }
+
   test("MaxLin") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new MaxLin(bench.genSortedIntVars(6, -10 to 10)).toIntVar
     bench.run
   }
 
   test("MinLin") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new MinLin(bench.genSortedIntVars(6, 0 to 10)).toIntVar
     bench.run
   }
 
   test("Min") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
 
   test("Max") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
 
   test("Min2") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Min2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
     bench.run
   }
 
   test("Max2") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Max2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
     bench.run
   }
@@ -276,7 +288,7 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("ProdElements maintains the product of variables of which indices are in the given set.") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new ProdElements(bench.genIntVarsArray(5, 0 to 10), bench.genIntSetVar(2, 0 to 4)).toIntVar
     bench.run
   }
@@ -288,7 +300,7 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("Prod maintains the product of input variables.") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Prod(bench.genIntVarsArray(3, 0 to 100)).toIntVar
     bench.run
   }
@@ -366,25 +378,25 @@ class InvariantTests extends FunSuite with Checkers{
   }
 
   test("MakeSet maintains an IntSetVar given a set of IntVar.") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toIntSetVar
     bench.run
   }
 
   test("Interval maintains the set in the interval.") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new Interval(bench.genIntVar(-100 to 100), bench.genIntVar(-100 to 100)).toIntSetVar
     bench.run
   }
 
   test("TakeAny maintains a value taken from the set.") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new TakeAny(bench.genIntSetVar(), 0).toIntVar
     bench.run
   }
 
   test("SetSum maintains the sum of variables (after optionnaly appliying a function).") {
-    val bench = new InvariantTestBench(2)
+    val bench = new InvariantTestBench
     new SetSum(bench.genIntSetVar()).toIntVar
     bench.run
   }
@@ -635,7 +647,7 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
 class InvariantTestBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
-  val model = new Model(false, Some(checker))
+  val model = new Model(false, Some(checker),NoCycle = true)
   var inputVars: List[RandomVar] = List()
   var outputVars: List[RandomVar] = List()
 
