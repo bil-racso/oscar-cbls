@@ -87,7 +87,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     configLP.delete
   }
   test("Config file for Gurobi") {
-
+	assume(canInstantiateSolver(LPSolverLib.gurobi), "The test could not access Gurobi. Check you have it installed.")
     val configLP = new java.io.File("GurobiParam.txt")
     val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
 
