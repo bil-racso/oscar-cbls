@@ -24,7 +24,6 @@ import collection.immutable.{SortedSet, SortedMap}
 import org.scalacheck.{Prop, Gen}
 import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation.{Variable, IntSetVar, IntVar, Model}
-import oscar.cbls.invariants.tests.InvariantChecker
 
 
 /**

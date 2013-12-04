@@ -1,98 +1,36 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+/*******************************************************************************
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Yoann Guyot
+  ******************************************************************************/
+
 package oscar.cbls.invariants.tests
 
 import org.scalacheck.Gen
 import org.scalatest.prop.Checkers
-import oscar.cbls.invariants.lib.logic._
+
 import org.scalatest.FunSuite
-import oscar.cbls.invariants.lib.logic.DenseCount
-import oscar.cbls.invariants.lib.numeric.Mod
-import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.minmax.MinLin
-import oscar.cbls.invariants.lib.set.MakeSet
-import oscar.cbls.invariants.lib.minmax.MinSet
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.lib.set.Inter
-import oscar.cbls.invariants.lib.set.SetSum
-import oscar.cbls.constraints.lib.global.Sequence
-import oscar.cbls.invariants.lib.logic.IntITE
-import oscar.cbls.invariants.lib.numeric.Prod
-import oscar.cbls.invariants.lib.set.Interval
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.MaxLin
-import oscar.cbls.invariants.lib.logic.DenseRef
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.minmax.Min2
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.constraints.lib.global.AtMost
-import oscar.cbls.invariants.lib.numeric.Abs
-import oscar.cbls.invariants.lib.minmax.Max
-import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.logic.IntSetElement
-import oscar.cbls.invariants.lib.logic.IntElements
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.set.Union
-import oscar.cbls.invariants.lib.minmax.Min
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.global.AtLeast
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.lib.set.TakeAny
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.logic.SelectLESetQueue
+
+import oscar.cbls.invariants.lib.logic._
+import oscar.cbls.invariants.lib.numeric._
+import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.lib.set._
 
 class InvariantTests extends FunSuite with Checkers{
-
-  test("AllDiff maintains output = all int vars have different values") {
-    val bench = new InvariantTestBench
-    new AllDiff(bench.genIntVarsArray(10, -10 to 10))
-    bench.run
-  }
-
-
-  test("AtLeast") {
-    val bench = new InvariantTestBench
-    new AtLeast(bench.genIntVars(10), bench.genBoundedValues(10, 0 to 30, 0 to 10)).toIntVar
-    bench.run
-  }
-
-  test("AtMost") {
-    val bench = new InvariantTestBench
-    new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
-    bench.run
-  }
-
-  test("MultiKnapsack") {
-    val bench = new InvariantTestBench
-    //E elements, B bins
-    val e:Int = 10
-    val b:Int = 5
-    new MultiKnapsack(
-      bench.genIntVarsArray(e,0 to (b-1)),
-      bench.genIntVarsArray(e,0 to 100),
-      bench.genIntVarsArray(b,0 to 200)).toIntVar
-    bench.run
-  }
-
-  test("Sequence") {
-    val bench = new InvariantTestBench
-    new Sequence(
-      bench.genIntVarsArray(20,0 to 10),
-      13,
-      5,
-      (x: Int) => x > 1).toIntVar
-    bench.run
-  }
 
   test("Access to ITE maintains output = if ifVar > 0 then thenVar else elseVar") {
     val bench = new InvariantTestBench
