@@ -6,10 +6,9 @@ import java.lang.Boolean.getBoolean
 import de.johoop.jacoco4sbt.JacocoPlugin._
 import xerial.sbt.Pack._
 import sbtunidoc.Plugin._
+import com.typesafe.sbteclipse.plugin.EclipsePlugin.{EclipseKeys, EclipseCreateSrc}
 
 object OscarBuild extends Build {
-
-  
   
   object BuildSettings {
     val buildOrganization = "oscar"
@@ -36,13 +35,17 @@ object OscarBuild extends Build {
     val typesafe = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
     val artifactory = "Artifactory" at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"
     val sbtResolvers = Seq (artifactory)
+    val sonatype = "Sonatype Releases" at "http://oss.sonatype.org/content/repositories/releases"
   }
 
   object Dependencies {
 
-    val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
+    val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b" % "test"
     val junit = "junit" % "junit" % "4.8.1" % "test"
     val scalaswing = "org.scala-lang" % "scala-swing" % "2.10.0"
+
+    val scalaLogging = "com.typesafe" %% "scalalogging-slf4j" % "1.0.1"
+    val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
 
     // DSL for adding source dependencies ot projects.
     def dependsOnSource(dir: String): Seq[Setting[_]] = {
@@ -70,6 +73,8 @@ object OscarBuild extends Build {
 
   val commonDeps = Seq(scalatest,junit,scalaswing)
   
+  EclipseKeys.createSrc := EclipseCreateSrc.Managed + EclipseCreateSrc.Unmanaged
+
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
     
@@ -160,7 +165,7 @@ object OscarBuild extends Build {
 
   lazy val oscarInvariants = Project(
     id = "oscar-invariants",
-    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
+    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= (commonDeps :+ scalaLogging :+ scalaCheck) ) ++ commonTasks,    
     base = file("oscar-invariants")) dependsOnSource("lib")     
  
  

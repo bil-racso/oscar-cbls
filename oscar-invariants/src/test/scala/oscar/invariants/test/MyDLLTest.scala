@@ -19,7 +19,7 @@
 
 package oscar.invariants.test
 
-import oscar.stochastic._
+
 import scala.collection.immutable._
 import scala.math.abs
 import scala.collection._

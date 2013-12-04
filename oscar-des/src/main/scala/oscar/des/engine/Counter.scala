@@ -126,19 +126,6 @@ class PQCounter[A <% Ordered[A]](v: A) extends Signal[A](v) {
   private def removeEvent(ev: WaitEvent[A]) { pq.remove(ev) }
 }
 
-/**
- * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
- * @author Pierre Schaus, Sebastien Mouthuy
- */
-abstract class SimEvent[A <% Ordered[A]](val time: A) extends Ordered[SimEvent[A]] {
-  def compare(that: SimEvent[A]) = time.compare(that.time)
-}
-
-class WaitEvent[A <% Ordered[A]](time: A, block: A => Boolean) extends SimEvent[A](time) {
-  def process() {
-    block(time)
-  }
-}
 
 object Counter {
 

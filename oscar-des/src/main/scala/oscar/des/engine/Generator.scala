@@ -65,16 +65,3 @@ class Generator[T](m: Model[T], var dist: Distr[Double])(block: => Boolean) exte
     stop
   }
 }
-class NumberGenerator(dist: ProbabilityDistribution) {
-
-  val generator = new Random()
-
-  var generating = true
-
-  def stop() { generating = false }
-
-  def apply(): Double = dist.inverse(generator.nextDouble)
-  def generateNext = apply
-
-}
-
