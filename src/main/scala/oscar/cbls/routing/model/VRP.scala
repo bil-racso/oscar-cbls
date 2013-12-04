@@ -89,7 +89,7 @@ class VRP(val N: Int, val V: Int, val m: Model) {
     var toReturn = "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
       
     for ( v <- 0 to V - 1){
-      toReturn += "Vehicle" + v + ":" + v
+      toReturn += "Vehicle " + v + ": " + v
       var current = next(v).value
       while(current != v){
         toReturn += " -> " + current
