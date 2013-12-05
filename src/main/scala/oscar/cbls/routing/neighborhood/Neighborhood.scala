@@ -107,7 +107,7 @@ abstract class Neighborhood(){
    * @param moveAcceptor says if the move is accepted or not
    * @param StayIfAccept
    * @param vrp
-   * @return true if this improved, false otherwise, and the objective fucntion after the move
+   * @return true if this improved, false otherwise, and the objective function after the move
    */
   def checkEncodedMove(
       moveAcceptor:Int => Boolean,
@@ -116,10 +116,12 @@ abstract class Neighborhood(){
     vrp.commit(true)
     val obj = vrp.getObjective()
     val accept = moveAcceptor(obj)
-    if (!(accept & StayIfAccept)){
+    if(accept & StayIfAccept){
+      (accept, obj)
+    }else{
       vrp.undo(false)
+      (accept, obj)
     }
-    (accept, obj)
   }
 }
 
