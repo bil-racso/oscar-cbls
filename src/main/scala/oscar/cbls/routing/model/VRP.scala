@@ -148,11 +148,31 @@ trait HotSpotRecording extends VRP with MoveDescription{
 trait MoveDescription extends VRP{
   var Recording = true //recording ou comitted
 
-  protected var affects:List[(Int,Int)] = List.empty
+  protected var affects:List[Affect] = List.empty
 
-  protected def addMove(node:Int,value:Int){
+  protected def addMove(affect:Affect){
     assert(Recording)
-    affects = (node,value) :: affects
+    affects = affect :: affects
+  }
+
+  protected abstract class Affect{
+    def comit():Affect
+  }
+
+  case class affectFromVariable(variable:IntVar, takeValueFrom:IntVar) extends Affect{
+    def comit():Affect = {
+      val oldValue = variable.value
+      variable := takeValueFrom.value
+      affectFromConst(variable,oldValue)
+    }
+  }
+
+  case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
+    def comit():Affect = {
+      val oldValue = variable.value
+      variable := takeValue
+      affectFromConst(variable,oldValue)
+    }
   }
 
   protected case class Segment(start:Int,end:Int)
@@ -161,7 +181,7 @@ trait MoveDescription extends VRP{
     assert(!this.isInstanceOf[PositionInRouteAndRouteNr]
       || this.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart,end))
 
-    addMove(beforeStart,next(end).value)
+    addMove(affectFromVariable(next(beforeStart),next(end)))
     Segment(next(beforeStart).value,end)
   }
 
@@ -169,7 +189,7 @@ trait MoveDescription extends VRP{
     assert(isRouted(beforeStart))
 
     val start = next(beforeStart).value
-    addMove(beforeStart,next(start).value)
+    addMove(affectFromVariable(next(beforeStart),next(start)))
     Segment(start,start)
   }
 
@@ -182,7 +202,7 @@ trait MoveDescription extends VRP{
     var prev = s.start
     var current:Int = next(prev).value
     while(current != s.end){
-      addMove(current,prev)
+      addMove(affectFromConst(next(current),prev))
       prev = current
       current = next(current).value
     }
@@ -190,19 +210,19 @@ trait MoveDescription extends VRP{
   }
 
   def insert(s:Segment,node:Int){
-    addMove(node,s.start)
-    addMove(s.end,next(node).value)
+    addMove(affectFromVariable(next(s.end),next(node)))
+    addMove(affectFromConst(next(node),s.start))
   }
 
   def append(s:Segment,t:Segment):Segment = {
-    addMove(s.end,t.start)
+    addMove(affectFromConst(next(s.end),t.start))
     Segment(s.start,t.end)
   }
 
   def unroute(s:Segment){
     def unroute(n:Int){
       assert(n>=V,"you cannot unroute a depot: (depot=" + n + ")")
-      addMove(n,N)
+      addMove(affectFromConst(next(n),N))
     }
     var current = s.start
     unroute(current)
@@ -223,14 +243,13 @@ trait MoveDescription extends VRP{
     }
   }
 
-  private def doAllMovesAndReturnRollBack():List[(Int,Int)] = {
-    var undoList:List[(Int,Int)] = List.empty
-    def doIt(toDo:List[(Int,Int)]){
+  private def doAllMovesAndReturnRollBack():List[Affect] = {
+    var undoList:List[Affect] = List.empty
+    def doIt(toDo:List[Affect]){
       toDo match{
         case head :: tail => {
           doIt(tail)
-          undoList = (head._1,next(head._1).value) :: undoList
-          next(head._1) := head._2
+          undoList = head.comit() :: undoList
         }
         case Nil => ;
       }
@@ -240,9 +259,9 @@ trait MoveDescription extends VRP{
   }
 
   private def doAllMoves(){
-    def doIt(toDo:List[(Int,Int)]){
+    def doIt(toDo:List[Affect]){
       toDo match{
-        case head :: tail => doIt(tail); next(head._1) := head._2
+        case head :: tail => doIt(tail); head.comit
         case Nil => ;
       }
     }
