@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.examples.cp.scheduling
 
@@ -36,7 +34,6 @@ import oscar.visual.shapes.VisualRectangle
  *  @author Pierre Schaus  pschaus@gmail.com
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
-
 object PerfectSquare extends App {
 
   val s = 112
@@ -59,6 +56,21 @@ object PerfectSquare extends App {
   val demandsY = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t)))
   val resourcesY = Array.fill(nSquare)(CPVarInt(cp, 1))
 
+  cp.onSolution {
+    // Visualization
+    val f = VisualFrame("Pefect Square")
+    val ff = f.createFrame("Square")
+    val d = VisualDrawing(false)
+    ff.add(d)
+    def scale = 5
+    val bg = new VisualRectangle(d, 0, 0, s * scale, s * scale)
+    bg.innerCol = Color.black
+    (Square).foreach { i =>
+      val r = new VisualRectangle(d, startsX(i).value * scale, startsY(i).value * scale, side(i) * scale, side(i) * scale)
+      r.innerCol = VisualUtil.getRandomColor
+    }
+  }
+  
   cp.solve
   cp.subjectTo {
 
@@ -79,40 +91,25 @@ object PerfectSquare extends App {
       cp.add((endsX(i) <== startsX(j)) || (endsX(j) <== startsX(i)) || (endsY(i) <== startsY(j)) || (endsY(j) <== startsY(i)))
     }
   }
-
-  cp.exploration {
-
-    def label(w: Array[CPVarInt]) = {
-
-      while (!cp.allBounds(w)) {
-
-        // Minimum x position
-        val pos = w.filter(!_.isBound).map(_.min).min
-        val z = w.filter(w => !w.isBound && w.hasValue(pos)).head
-
-        cp.branch(cp.post(z == pos))(cp.post(z != pos))
+  
+  import oscar.util._
+  import oscar.algo.search._
+  
+  def myCustomBranching(w: Array[CPVarInt]) = Branching {
+    // Minimum x position
+    selectMin(w)(x => !x.isBound)(_.min) match {
+      case None => noAlternative
+      case Some(z) => {
+        val v = z.min
+        branch(cp.post(z == v))(cp.post(z != v))
       }
     }
-
-    label(startsX)
-    label(startsY)
   }
-
-  cp.run(1)
-
-  cp.printStats()
-
-  // Visualization
-  val f = VisualFrame("Pefect Square")
-  val ff = f.createFrame("Square")
-  val d = VisualDrawing(false)
-  ff.add(d)
-  def scale = 5
-  val bg = new VisualRectangle(d, 0, 0, s * scale, s * scale)
-  bg.innerCol = Color.black
-  (Square).foreach { i =>
-    val r = new VisualRectangle(d, startsX(i).value * scale, startsY(i).value * scale, side(i) * scale, side(i) * scale)
-    r.innerCol = VisualUtil.getRandomColor
+  cp.search {
+    myCustomBranching(startsX) ++ myCustomBranching(startsY)
   }
+  println(cp.start(1))
+  
+
 }
 

@@ -111,9 +111,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers  {
     	cp.onSolution { nbSol += 1}
     	
     	cp.search {
-    		new BinaryFirstFailBranching(x)
-    	} search {
-    	    new BinaryFirstFailBranching(y)
+    		new BinaryFirstFailBranching(x) ++ new BinaryFirstFailBranching(y)
     	}
     	
     	val stat = cp.start()

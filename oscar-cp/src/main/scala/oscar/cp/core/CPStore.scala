@@ -320,7 +320,7 @@ class CPStore extends SearchNode {
   }
 
   def addCutConstraints() {
-    for (c <- cutConstraints) {
+    for (c <- cutConstraints; if c.isActive) {
       c.setInQueue()
       propagQueueL2(c.priorityL2).add(c);
     }
@@ -485,11 +485,11 @@ class CPStore extends SearchNode {
    * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
    */
   def post(c: Constraint, st: CPPropagStrength): CPOutcome = {
-    if (status.getValue() == Failure) return Failure;
-    var oc = c.setup(st);
+    if (status.value == Failure) return Failure;
+    var oc = c.setup(st)
     if (oc != Failure) {
       if (oc == Success) {
-        c.deactivate();
+        c.deactivate()
       }
       //don't forget that posting a constraint can also post other constraints (e.g. reformulation)
       //so we must propagate because the queues may not be empty
@@ -497,10 +497,10 @@ class CPStore extends SearchNode {
       if (!inPropagate) oc = propagate();
     }
     if (oc == Failure) {
-      cleanQueues();
+      cleanQueues()
     }
-    status.value = oc;
-    return status.value;
+    status := oc
+    return status.value
   }
 
   def post(c: Constraint): CPOutcome = post(c, CPPropagStrength.Weak)
@@ -510,6 +510,14 @@ class CPStore extends SearchNode {
     cutConstraints.add(c);
     return ok;
   }
+  
+  def resetCuts(): Unit = {
+    for (c <- cutConstraints) {
+      c.deactivate() // we cannot really remove them because they were set-up
+    }
+    cutConstraints.clear()
+  }
+  
 
   /**
    * Add a constraint b == true to the store (with a Weak propagation strength) in a reversible way and trigger the fix-point algorithm. <br>
@@ -620,6 +628,8 @@ class CPStore extends SearchNode {
     }
     res;
   }
+  
+  
   
   def assign(x: CPVarInt, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure

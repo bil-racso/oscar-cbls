@@ -24,6 +24,7 @@ import scala.io.Source
 import oscar.cp.core.CPVarInt
 import oscar.cp.constraints.SweepMaxCumulative
 import oscar.cp.scheduling.visual.VisualGanttChart
+import oscar.cp.scheduling.search.SetTimesBranching
 
 object CumulativeJobShop extends App {
 
@@ -81,18 +82,17 @@ object CumulativeJobShop extends App {
   val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
   val colors = VisualUtil.getRandomColors(nResources, true)
   val gantt = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
+  cp.onSolution { gantt.update(1,20) }
   frame.createFrame("Gantt chart").add(gantt)
   frame.pack
+  
   
   // Search
   // ------
   
-  cp.exploration {
-    SchedulingUtils.setTimes(startsVar, durationsVar, endsVar)
-    //cp.binaryFirstFail(startsVar)
-    gantt.update(1, 20)
+  cp.search {
+    new SetTimesBranching(startsVar, durationsVar, endsVar)
   }
-
-  cp.run()
-  cp.printStats()
+  val stat = cp.start()
+  println(stat)
 }

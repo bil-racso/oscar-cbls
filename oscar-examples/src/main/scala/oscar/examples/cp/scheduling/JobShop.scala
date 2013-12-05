@@ -1,21 +1,17 @@
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
 
 package oscar.examples.cp.scheduling
 
@@ -27,6 +23,8 @@ import oscar.visual._
 import scala.io.Source
 import oscar.cp.constraints.SweepMaxCumulative
 import oscar.cp.scheduling.visual.VisualGanttChart
+import oscar.cp.search._
+import oscar.cp.search.BinaryFirstFailBranching
 
 
 /**
@@ -98,6 +96,10 @@ object JobShop extends App {
   val colors = VisualUtil.getRandomColors(nResources, true)
   val gantt1 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
   val gantt2 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => resources(i), colors = i => colors(resources(i)))
+  cp.onSolution {
+    gantt1.update(1, 20)
+    gantt2.update(1, 20)
+  }
   frame.createFrame("Gantt chart").add(gantt1)
   frame.createFrame("Gantt chart").add(gantt2)
   frame.pack
@@ -118,13 +120,8 @@ object JobShop extends App {
     for (r <- Resources) {
       cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
     }
-  } exploration {
-    cp.binaryFirstFail(startsVar)
-    gantt1.update(1, 20)
-    gantt2.update(1, 20)
+  } search {
+    new BinaryFirstFailBranching(startsVar)
   }
-
-  cp.run()
-  cp.printStats()
-}
-	  
+  println(cp.start())
+} 

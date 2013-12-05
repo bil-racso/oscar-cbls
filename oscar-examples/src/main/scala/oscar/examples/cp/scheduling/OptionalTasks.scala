@@ -3,6 +3,7 @@ package oscar.examples.cp.scheduling
 import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.constraints.SweepMaxCumulative
+import oscar.cp.search.BinaryFirstFailBranching
 
 object OptionalTasks extends App {
 
@@ -25,6 +26,13 @@ object OptionalTasks extends App {
 
   val profits = Array.tabulate(nTasks)(t => resources(t) * profitsData(t))
   val totalProfit = sum(profits)
+  
+  cp.onSolution {
+    println("Total profit of " + totalProfit.value)
+    for (t <- Tasks) {
+      if (resources(t).value == 1) println("Task " + t + " of profit " + profitsData(t) + " and duration " + durationsData(t) + " is executed at time " + starts(t).value)
+    }
+  }
 
   cp.maximize(totalProfit) subjectTo {
     // Consistency 
@@ -34,16 +42,10 @@ object OptionalTasks extends App {
     // Cumulative
     cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capaMax), 1))
 
-  } exploration {
-    cp.binaryFirstFail(resources)
-    cp.binaryFirstFail(starts)
-    println("Total profit of " + totalProfit.value)
-    for (t <- Tasks) {
-      if (resources(t).value == 1) println("Task " + t + " of profit " + profitsData(t) + " and duration " + durationsData(t) + " is executed at time " + starts(t).value)
-    }
-    println()
+  } search {
+    new BinaryFirstFailBranching(resources) ++  new BinaryFirstFailBranching(starts)
   }
-
-  cp.run()
-  cp.printStats
+  println(cp.start())
+  
+  
 }
