@@ -28,6 +28,16 @@ package object linprog {
   }
   
   // solvers used for test
-  val solvers = List(LPSolverLib.lp_solve, LPSolverLib.gurobi/*,LPSolverLib.cplex*/)
+  lazy val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.gurobi).filter(canInstantiateSolver(_))
 
+  def canInstantiateSolver(s: LPSolverLib.Value): Boolean = {
+	  try {
+	    val lp = LPSolver(s)
+	  } catch {
+	    case e: UnsatisfiedLinkError => { println(e.getMessage()); return false }
+	    case e: NoClassDefFoundError => { println(e.getMessage()); return false }
+	  }
+	  true
+  }
+  
 }
