@@ -58,7 +58,7 @@ case class Routes(V: Int,
   override def toString:String ={
     var toReturn:String = ""
     toReturn +="\nNext array: ["
-    for (v <- Next){toReturn += (""+v.getValue(true) +",")}
+    for (v <- Next){toReturn += (""+ v +",")}
     toReturn = toReturn.substring(0, toReturn.length - 1)+"]\n"
     toReturn +="Position array: ["
     for (v <- PositionInRoute){toReturn += (""+v.getValue(true) +",")}
