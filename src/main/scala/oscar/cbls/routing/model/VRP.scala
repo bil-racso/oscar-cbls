@@ -120,9 +120,8 @@ trait HotSpotRecording extends VRP with MoveDescription{
   }
 
   def addMoveToHotSpot(){
-    for ((node,newval) <- affects){
-      hotSpot(node)
-      hotSpot(newval)
+    for (a:Affect <- affects){
+      for(n:Int <- a) hotSpot(n)
     }
   }
 
@@ -155,8 +154,9 @@ trait MoveDescription extends VRP{
   affects = affect :: affects
 }
 
-protected abstract class Affect{
+protected abstract class Affect extends Iterable[Int]{
   def comit():Affect
+  def iterator:Iterator[Int] = null
 }
 
 case class affectFromVariable(variable:IntVar, takeValueFrom:IntVar) extends Affect{
@@ -237,7 +237,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
   def commit(recordForUndo:Boolean = false){
     assert(Recording)
     if (recordForUndo){
-      affects = doAllMovesAndReturnRollBack()
+      affects = doAllMovesAndReturnRollBack().reverse
       assert({Recording = false; true})
     }else{
       doAllMoves()

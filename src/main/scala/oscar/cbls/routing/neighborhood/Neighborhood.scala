@@ -10,10 +10,8 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
   def doMove() {
     vrp.cleanRecordedMoves
-    println("VRP.affects (before encodeMove): " + vrp.affects)
     encodeMove
     println("MoveDescription.Recording: " + vrp.Recording)
-    println("VRP.affects: " + vrp.affects)
     print("VRP before commit: ")
     println(vrp)
     vrp.commit(false)
