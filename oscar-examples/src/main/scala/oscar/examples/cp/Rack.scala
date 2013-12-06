@@ -88,8 +88,9 @@ object Rack {
 
 
     } search { 
-      new BinaryFirstFailBranching(rack) 
-    } search { new BinaryFirstFailBranching(counters.flatten)}
+      new BinaryFirstFailBranching(rack) ++ 
+      new BinaryFirstFailBranching(counters.flatten)
+    }
       
     println(cp.start())
 
