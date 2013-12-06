@@ -23,16 +23,24 @@
 
 package oscar.cbls.test
 
-import scala.math._
-
+import scala.math.pow
+import scala.math.round
+import scala.math.sqrt
+import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
-import org.scalacheck.Gen
-
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.initial.BestInsert
-import oscar.cbls.routing.model._
+import oscar.cbls.routing.model.ClosestNeighborPointsHop
+import oscar.cbls.routing.model.HopDistanceAsObjective
+import oscar.cbls.routing.model.PenaltyForUnrouted
+import oscar.cbls.routing.model.PositionInRouteAndRouteNr
+import oscar.cbls.routing.model.UnroutedImpl
+import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.neighborhood.Swap
+import oscar.cbls.routing.neighborhood.SearchZone
+import oscar.cbls.routing.neighborhood.OnePointMove
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -40,179 +48,159 @@ import oscar.cbls.routing.model._
  * These tests (with star) show the lack of robustness of the current framework.
  */
 class TestMove extends FunSuite with ShouldMatchers with Checkers {
-  moveTest("A node can be cut.", 1) {
-    checkRandomCutNodeAfter
+  ignore("A node can be cut.") {
+    (f: MoveFixture) =>
+      val cutNode = f.randomCutNodeAfter()
+      f.commitPropagate
+
+      f.mainRouteLength should be(f.nbNodes - 1)
+      checkUnrouted(f, cutNode.start :: Nil)
   }
 
-  moveTest("A segment can be cut.", 1) {
-    checkRandomCut
+  ignore("A segment can be cut.") {
+    (f: MoveFixture) =>
+      val (initLength, cutSeg, segLength, segNodes) = f.randomCut
+      f.commitPropagate
+
+      f.mainRouteLength should be(initLength - segLength)
+      checkUnrouted(f, segNodes)
   }
-  //  
-  //    test("remove points of 1-2 and 5"){
-  //      val f = fixture
-  //      val cutSeg02 = f.vrp.cut(0, 2)
-  //      f.vrp.unroute(cutSeg02)
-  //      val cutNode5 = f.vrp.cut(4, 5)
-  //      f.vrp.unroute(cutNode5)
-  ////      f.vrp.remove(List((0,2),(4,5))).foreach(t => t._1 := t._2)
-  //      f.model.propagate()
-  //  
-  //      f.vrp.routes.RouteLength(0).value should be(6)
-  //      f.vrp.routes.RouteNr(1).value should be(f.ROUTE_ARRAY_UNROUTED)
-  //      f.vrp.routes.RouteNr(2).value should be(f.ROUTE_ARRAY_UNROUTED)
-  //      f.vrp.routes.RouteNr(5).value should be(f.ROUTE_ARRAY_UNROUTED)
-  //      f.vrp.routes.PositionInRoute(1).value should be(f.UNROUTED)
-  //      f.vrp.routes.PositionInRoute(2).value should be(f.UNROUTED)
-  //      f.vrp.routes.PositionInRoute(5).value should be(f.UNROUTED)
-  //    }
-  //  
-  //    test("* remove points of an absent segment (3-1)"){
-  //      val f = fixture
-  //      evaluating{
-  //        val cutSeg21 = f.vrp.cut(2,1)
-  //        f.vrp.unroute(cutSeg21)
-  ////        f.vrp.remove(List((2,1))).foreach(t => t._1 := t._2)
-  //        f.model.propagate()
-  //      } should produce[AssertionError]
-  //    }
-  //  
-  //    test("remove points of non disjoints segments (1-2 and 3-4)"){
-  //      val f = fixture
-  //      evaluating{
-  //        val cutSeg02 = f.vrp.cut(0, 2)
-  //        val cutSeg24 = f.vrp.cut(2, 4)
-  //        f.vrp.unroute(cutSeg02)
-  //        f.vrp.unroute(cutSeg24)
-  ////        f.vrp.remove(List((0,2),(2,4))).foreach(t => t._1 := t._2)
-  //        f.model.propagate()
-  //      } should produce[ArrayIndexOutOfBoundsException]
-  //    }
-  //  
-  //    test("instead removing points of non disjoints segments, remove their union (1-4)"){
-  //      val f = fixture
-  //      val cutSeg04 = f.vrp.cut(0, 4)
-  //      f.vrp.unroute(cutSeg04)
-  ////      f.vrp.remove(List((0,4))).foreach(t => t._1 := t._2)
-  //      f.model.propagate()
-  //    }
-  //
-  //
-  //  test("insert 2 after 3"){
-  //    val f = fixture
-  //    f.vrp.remove(List((0,2),(4,5))).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
-  //    // 1,2 and 5 unrouted
-  //
-  //    f.vrp.add(3,2).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
-  //
-  //    f.vrp.routes.RouteLength(0).value should be(7)
-  //    f.vrp.routes.RouteNr(2).value should be(0)
-  //
-  //    f.vrp.routes.PositionInRoute(2).value should be(f.vrp.routes.PositionInRoute(3).value + 1)
-  //  }
-  //
-  //  test("insert a point already routed"){
-  //    val f = fixture
-  //    evaluating{
-  //      f.vrp.add(3,2).foreach(t => t._1 := t._2)
-  //      f.model.propagate()
-  //    } should produce [AssertionError]
-  //  }
-  //
-  //  test("reverse the route"){
-  //    val f = fixture
-  //    f.vrp.reverse(0,8).foreach(t => t._1 := t._2)
-  //    f.vrp.Next(0):=8
-  //    f.model.propagate()
-  //
-  //    f.vrp.routes.RouteLength(0).value should be(9)
-  //    for(i <- 0 to 8) f.vrp.routes.RouteNr(i).value should be(0)
-  //    for(i <- 1 to 8) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i+1)%9).value + 1)
-  //  }
-  //
-  //  test("reverse the route segment 2-6 and reattach it correctly"){
-  //    val f = fixture
-  //    f.vrp.reverse(2,6).foreach(t => t._1 := t._2)
-  //    f.vrp.Next(1):=6
-  //    f.vrp.Next(2):=7
-  //    f.model.propagate()
-  //
-  //    f.vrp.routes.RouteLength(0).value should be(9)
-  //    for(i <- 2 to 5) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i+1)%9).value + 1)
-  //
-  //  }
-  //
-  //  test("* reverse the route segment 2-6 and reattach it badly"){
-  //    val f = fixture
-  //    f.vrp.reverse(2,6).foreach(t => t._1 := t._2)
-  //    evaluating{
-  //      f.model.propagate()
-  //
-  //      f.vrp.routes.RouteLength(0).value should be(9)
-  //      for(i <- 2 to 5) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i+1)%9).value + 1)
-  //    } should produce [AssertionError]
-  //  }
-  //
-  //  test("move 1 after 2"){
-  //    val f = fixture
-  //    f.vrp.moveTo(0,1,2).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
-  //
-  //    f.vrp.routes.RouteLength(0).value should be(9)
-  //    for(i<- 0 to 8){
-  //      if(i==1)
-  //        f.vrp.routes.PositionInRoute(i).value should be(2)
-  //      else if(i==2)
-  //        f.vrp.routes.PositionInRoute(i).value should be(1)
-  //      else
-  //        f.vrp.routes.PositionInRoute(i).value should be(i)
-  //    }
-  //  }
-  //
-  //  test("move segment 1-4 after 8"){
-  //    val f = fixture
-  //    f.vrp.moveTo(0,4,8).foreach(t => t._1 := t._2)
-  //
-  //    f.model.propagate()
-  //
-  //    f.vrp.routes.RouteLength(0).value should be(9)
-  //    for(i<- 0 to 8){
-  //      if(i==0)
-  //        f.vrp.routes.PositionInRoute(i).value should be(0)
-  //      else if(i<=4){
-  //        f.vrp.routes.PositionInRoute(i).value should be(i+4)
-  //      }
-  //      else if(i<=8)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i-4)
-  //    }
-  //  }
-  //
-  //  test("move point 1 (segment 1-1) after an unrouted node (2)"){
-  //    val f = fixture
-  //    f.vrp.remove(List((1,2))).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
-  //    // unroute 2
-  //
-  //    evaluating{
-  //      f.vrp.moveTo(0,1,2).foreach(t => t._1 := t._2)
-  //    } should produce[AssertionError]
-  //  }
-  //
-  //  test("swap point 2 with point 6"){
-  //    val f = fixture
-  //
-  //    f.vrp.swap(1,2,5,6).foreach(t => t._1 := t._2)
-  //    f.vrp.routes.RouteLength(0).value should be(9)
-  //    for(i<- 0 to 8){
-  //      if(i==2)
-  //        f.vrp.routes.PositionInRoute(i).value should be(6)
-  //      else if(i==6)
-  //        f.vrp.routes.PositionInRoute(i).value should be(2)
-  //      else
-  //        f.vrp.routes.PositionInRoute(i).value should be(i)
-  //    }
-  //  }
+
+  // FIXME: sometimes fails
+  ignore("A segment and a node can be cut.") {
+    (f: MoveFixture) =>
+      val (initLength, cutSeg, segLength, segNodes) = f.randomCut
+      println(segNodes)
+      val cutNode = f.randomCutNodeAfter((n: Int) =>
+        !segNodes.contains(n) && !segNodes.contains(f.vrp.next(n).value))
+      println("segNodes.contains(" + cutNode + "): " + segNodes.contains(cutNode))
+      println("segNodes.contains(" + f.vrp.next(cutNode.start).value + "): " + segNodes.contains(f.vrp.next(cutNode.start).value))
+      f.commitPropagate
+
+      f.mainRouteLength should be(initLength - segLength - 1)
+      checkUnrouted(f, cutNode.start :: segNodes)
+  }
+
+  ignore("Non disjoint segments cannot be cut.") {
+    (f: MoveFixture) =>
+      evaluating {
+        val cutSeg07 = f.vrp.cut(0, 7)
+        val cutSeg94 = f.vrp.cut(9, 4)
+        f.vrp.unroute(cutSeg07)
+        f.vrp.unroute(cutSeg94)
+        f.commitPropagate
+      } should produce[ArrayIndexOutOfBoundsException]
+  }
+
+  ignore("Cut and insert is allright.") {
+    (f: MoveFixture) =>
+      val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
+      f.cutNodeAfter(4)
+      f.commitPropagate
+
+      val seg = f.vrp.segmentFromUnrouted(8)
+      f.vrp.insert(seg, 7)
+      f.commitPropagate
+
+      f.mainRouteLength should be(initLength - segLength + 1)
+      f.vrp.routes.RouteNr(8).value should be(0)
+      f.vrp.routes.PositionInRoute(8).value should be(f.vrp.routes.PositionInRoute(7).value + 1)
+  }
+
+  ignore("Cannot insert routed node.") {
+    (f: MoveFixture) =>
+      evaluating {
+        val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
+        f.commitPropagate
+        f.vrp.insert(cutSeg, 0)
+        f.commitPropagate
+      } should produce[AssertionError]
+  }
+
+  // TODO make this one generic
+  ignore("A segment can be reversed.") {
+    (f: MoveFixture) =>
+      val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 1)
+      val revSeg = f.vrp.reverse(cutSeg)
+      f.vrp.insert(revSeg, 0)
+      f.commitPropagate
+
+      f.mainRouteLength should be(initLength)
+      for (i <- 0 to 9) f.vrp.routes.RouteNr(i).value should be(0)
+      for (i <- 1 to 9) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i + 1) % 9).value + 1)
+  }
+
+  ignore("A segment cannot be inserted after an unrouted node.") {
+    (f: MoveFixture) =>
+      val cutNode = f.randomCutNodeAfter()
+      f.commitPropagate
+      val (initLength, cutSeg, segLength, segNodes) = f.randomCut
+      f.vrp.insert(cutSeg, cutNode.end)
+      f.commitPropagate
+  }
+
+  ignore("A node cannot be inserted after an unrouted node.") {
+    (f: MoveFixture) =>
+      val cutNode = f.randomCutNodeAfter()
+      f.commitPropagate
+      val cutNode2 = f.randomCutNodeAfter()
+      f.vrp.insert(cutNode2, cutNode.end)
+      f.commitPropagate
+  }
+
+//  moveTest("A one point move can be done.", 1, true) {
+  ignore("") {
+    (f: MoveFixture) =>
+      val pos = f.vrp.nodes.map((n: Int) => f.vrp.routes.PositionInRoute(n).value)
+      val initLength = f.mainRouteLength
+      val relevantNeighbors = (n: Int) => f.vrp.nodes
+      OnePointMove.firstImprovingMove(
+        SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+          case Some(m) => {
+            m.isInstanceOf[OnePointMove] should be(true)
+            val move = m.asInstanceOf[OnePointMove]
+            println("predOfMovedPoint: " + move.predOfMovedPoint)
+            println("insertionPoint: " + move.insertionPoint)
+            val movedPoint = f.vrp.next(move.predOfMovedPoint).value
+            val destPoint = f.vrp.next(move.insertionPoint).value
+            println("Will insert node " + movedPoint + " after " + move.insertionPoint)
+            m.doMove
+            f.mainRouteLength should be(initLength)
+            for (i <- f.vrp.nodes) {
+              if (i == movedPoint) f.vrp.routes.PositionInRoute(i).value should be(pos(destPoint))
+              else f.vrp.routes.PositionInRoute(i).value should be(pos(i))
+            }
+          }
+          case None => assert(false)
+        }
+  }
+
+  moveTest("Swap two points.", 1) {
+    (f: MoveFixture) =>
+      val pos = f.vrp.nodes.map((n: Int) => f.vrp.routes.PositionInRoute(n).value)
+      val initLength = f.mainRouteLength
+      val relevantNeighbors = (n: Int) => f.vrp.nodes
+      Swap.firstImprovingMove(
+        SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+          case Some(m) => {
+            m.isInstanceOf[Swap] should be(true)
+            val swap = m.asInstanceOf[Swap]
+            println("A move was found ! : " + swap)
+            val fst = f.vrp.next(swap.fstPred).value
+            val snd = f.vrp.next(swap.sndPred).value
+//            println("Will swap nodes " + fst + " and " + snd)
+            m.doMove
+            f.mainRouteLength should be(initLength)
+            for (i <- f.vrp.nodes) {
+              if (i == fst) f.vrp.routes.PositionInRoute(fst).value should be(pos(snd))
+              else if (i == snd) f.vrp.routes.PositionInRoute(snd).value should be(pos(fst))
+              else f.vrp.routes.PositionInRoute(i).value should be(pos(i))
+            }
+
+          }
+          case None => assert(false)
+        }
+  }
   //
   //  test("swap unrouted point 2 with 6"){
   //    val f = fixture
@@ -304,9 +292,12 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //    }
   //  }
 
-  def moveTest(name: String, verbose: Int = 0)(moveFun: MoveFixture => Unit): Unit = {
+  def moveTest(
+    name: String,
+    verbose: Int = 0,
+    randomWeight: Boolean = false)(moveFun: MoveFixture => Unit): Unit = {
     test(name) {
-      val f = new MoveFixture(verbose)
+      val f = new MoveFixture(verbose, randomWeight)
 
       if (verbose > 0) {
         println(f.vrp)
@@ -319,38 +310,30 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     }
   }
 
-  def checkRandomCut(f: MoveFixture) = {
-    val initLength = f.vrp.routes.RouteLength(0).value
-    val cutSeg = f.randomCut
-    val segLength = f.segLength(cutSeg.start, cutSeg.end)
-    val segNodes = f.segNodes(cutSeg.start, cutSeg.end)
-    f.commitPropagate
-
-    println("initLength: " + initLength + ", segLength: " + segLength)
-    f.vrp.routes.RouteLength(0).value should be(initLength - segLength)
-    segNodes.foreach {
-      (n: Int) =>
-        f.vrp.routes.RouteNr(n).value should be(f.ROUTE_ARRAY_UNROUTED)
-        f.vrp.routes.PositionInRoute(n).value should be(f.nbNodes)
-    }
-  }
-
-  def checkRandomCutNodeAfter(f: MoveFixture) = {
-    val cutNode = f.randomCutNodeAfter
-    f.commitPropagate
-
-    f.vrp.routes.RouteLength(0).value should be(f.nbNodes - 1)
-    f.vrp.routes.RouteNr(cutNode.start).value should be(f.ROUTE_ARRAY_UNROUTED)
-    f.vrp.routes.PositionInRoute(cutNode.start).value should be(f.nbNodes)
+  def checkUnrouted(f: MoveFixture, l: List[Int]) = l.foreach {
+    (n: Int) =>
+      f.vrp.routes.RouteNr(n).value should be(f.ROUTE_ARRAY_UNROUTED)
+      f.vrp.routes.PositionInRoute(n).value should be(f.nbNodes)
   }
 }
 
-class MoveFixture(verbose: Int = 0, val nbNodes: Int = 10, val nbVehicules: Int = 1) {
+class MoveFixture(
+  val verbose: Int = 0,
+  val randomWeight: Boolean = false,
+  val nbNodes: Int = 10,
+  val nbVehicules: Int = 1) {
 
   val ROUTE_ARRAY_UNROUTED = 1
 
   val abscissa = Array.iterate(0, nbNodes)(_ + 1)
-  val ordinate = Array.fill(nbNodes)(0)
+  val ordinate: Array[Int] =
+    if (randomWeight) {
+      Gen.containerOfN[Array, Int](nbNodes, Gen.choose(0, 100)).sample.get
+    } else {
+      Array.fill(nbNodes)(0)
+    }
+  for (i <- 0 to ordinate.length - 1) print(ordinate(i) + " ")
+  println()
   val matrix = getDistanceMatrix(abscissa, ordinate)
   val model: Model = new Model(false, None, false, false)
 
@@ -367,6 +350,8 @@ class MoveFixture(verbose: Int = 0, val nbNodes: Int = 10, val nbVehicules: Int 
   // 0 -> nbNodes - 1 -> ... -> 2 -> 1 (-> 0)
   model.propagate()
 
+  def mainRouteLength = vrp.routes.RouteLength(0).value
+
   /**
    * Gives a distance matrix by entering the abscissa and
    * ordinates of points in the plan.
@@ -377,41 +362,57 @@ class MoveFixture(verbose: Int = 0, val nbNodes: Int = 10, val nbVehicules: Int 
       + pow(ordinate(i) - ordinate(j), 2)).toFloat)).toInt)
   }
 
-  def genNodeIndex(constraint: Int => Boolean = (_: Int) => true): Int = {
-    (Gen.choose(0, nbNodes - 1) suchThat constraint).sample match {
-      case Some(index) => index
-      case None => genNodeIndex(constraint)
-    }
+  def genNodeOpt(constraint: Int => Boolean = (_: Int) => true): Option[Int] = {
+    (Gen.choose(0, nbNodes - 1) suchThat constraint).sample
   }
 
-  def genNodeToCutAfter = {
-    val constraint = (x: Int) => !vrp.isADepot(vrp.next(x).value)
+  def genNodeToCutAfter(constraint: Int => Boolean = (_: Int) => true) = {
+    def isNotADepotNextOf = (x: Int) => !vrp.isADepot(vrp.next(x).value)
     def aux: Int =
       (Gen.choose(0, nbNodes - 1)
-        suchThat { constraint }).sample match {
+        suchThat { (n: Int) => isNotADepotNextOf(n) && constraint(n) }).sample match {
           case Some(index) => index
           case None => aux
         }
     aux
   }
 
-  def randomCutNodeAfter = {
-    val beforeStart = genNodeToCutAfter
+  def genSegToCut: (Int, Int) = {
+    val beforeStart = genNodeOpt().get
+    genNodeOpt(
+      (n: Int) => n != vrp.next(beforeStart).value
+        && (!vrp.isInstanceOf[PositionInRouteAndRouteNr]
+          || vrp.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart, n))) match {
+        case Some(end) => (beforeStart, end)
+        case None => genSegToCut
+      }
+  }
+
+  def cutNodeAfter(beforeStart: Int, constraint: Int => Boolean = (_: Int) => true) = {
     println("Will cut after node number " + beforeStart)
     val cutNode = vrp.cutNodeAfter(beforeStart)
     vrp.unroute(cutNode)
     cutNode
   }
 
-  def randomCut = {
-    val beforeStart = genNodeIndex()
-    val end = genNodeIndex(
-      (n: Int) => n != vrp.next(beforeStart).value
-        && (!vrp.isInstanceOf[PositionInRouteAndRouteNr]
-          || vrp.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart, n)))
+  def randomCutNodeAfter(constraint: Int => Boolean = (_: Int) => true) = {
+    val beforeStart = genNodeToCutAfter(constraint)
+    cutNodeAfter(beforeStart, constraint)
+  }
+
+  def cut(beforeStart: Int, end: Int) = {
+    val initLength = vrp.routes.RouteLength(0).value
+    println("Will cut from after node number " + beforeStart + " to " + end)
     val cutSeg = vrp.cut(beforeStart, end)
+    val segLength = this.segLength(cutSeg.start, cutSeg.end)
+    val segNodes = this.segNodes(cutSeg.start, cutSeg.end)
     vrp.unroute(cutSeg)
-    cutSeg
+    (initLength, cutSeg, segLength, segNodes)
+  }
+
+  def randomCut = {
+    val (beforeStart, end) = genSegToCut
+    cut(beforeStart, end)
   }
 
   def segLength(start: Int, end: Int) = {
@@ -424,7 +425,6 @@ class MoveFixture(verbose: Int = 0, val nbNodes: Int = 10, val nbVehicules: Int 
 
   def segNodes(start: Int, end: Int) = {
     def aux(start: Int, nodes: List[Int]): List[Int] = {
-      println("aux(" + start + ", " + nodes + ")")
       if (start == end) (start :: nodes).reverse
       else aux(vrp.next(start).value, start :: nodes)
     }

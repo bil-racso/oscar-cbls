@@ -148,11 +148,13 @@ trait HotSpotRecording extends VRP with MoveDescription{
 trait MoveDescription extends VRP{
   var Recording = true //recording ou comitted
 
-  protected var affects:List[(Int,Int)] = List.empty
+  var affects:List[(Int,Int)] = List.empty
 
   protected def addMove(node:Int,value:Int){
     assert(Recording)
+    println("addMove(" + node + ", " + value + ")")
     affects = (node,value) :: affects
+    println("affects = " + affects)
   }
 
   protected case class Segment(start:Int,end:Int)
@@ -168,7 +170,9 @@ trait MoveDescription extends VRP{
   def cutNodeAfter(beforeStart:Int):Segment = {
     assert(isRouted(beforeStart))
 
+    println("cutNodeAfter(beforeStart (" + beforeStart + "))")
     val start = next(beforeStart).value
+    println("start = next(beforeStart).value (" + next(beforeStart).value + ")")
     addMove(beforeStart,next(start).value)
     Segment(start,start)
   }

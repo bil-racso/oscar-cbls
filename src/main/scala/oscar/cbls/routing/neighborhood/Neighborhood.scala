@@ -3,31 +3,36 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.routing.model
 import oscar.cbls.modeling.Algebra._
 import java.nio.file.OpenOption
-import oscar.cbls.routing.model.{PositionInRouteAndRouteNr, VRPObjective, MoveDescription, VRP}
+import oscar.cbls.routing.model.{ PositionInRouteAndRouteNr, VRPObjective, MoveDescription, VRP }
 import oscar.cbls.routing.model.UnroutedImpl
 
-abstract class Move(val objAfter:Int, val vrp:VRP with MoveDescription){
+abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
-  def doMove(){
+  def doMove() {
     vrp.cleanRecordedMoves
+    println("VRP.affects (before encodeMove): " + vrp.affects)
     encodeMove
+    println("MoveDescription.Recording: " + vrp.Recording)
+    println("VRP.affects: " + vrp.affects)
+    print("VRP before commit: ")
+    println(vrp)
     vrp.commit(false)
   }
 }
 
 //c'est toujours le first improve, jamais le best improve.
 
-abstract class Neighborhood(){
+abstract class Neighborhood() {
 
   /**
    * @param s the search zone, including the VRP that we are examining
    * @param moveAcceptor a function that given the old and new value of the objective function, tell whether the move is considered as an improvement or not.
    * @return
    */
-  final def climbAll(s:SearchZone,moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Int = {
+  final def climbAll(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Int = {
     var toreturn = 0;
 
-    while(doSearch(s, moveAcceptor, false).found){
+    while (doSearch(s, moveAcceptor, false).found) {
       toreturn += 1
     }
     return toreturn
@@ -39,7 +44,7 @@ abstract class Neighborhood(){
    * @param moveAcceptor a function that given the old and new value of the objective function, tell whether the move is considered as an improvement or not.
    * @return true if a move vans discovered, false otherwise
    */
-  final def climbFirst(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Boolean = {
+  final def climbFirst(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, false).found
   }
@@ -49,23 +54,21 @@ abstract class Neighborhood(){
    * @param s
    * @return
    */
-  final def firstImprovingMove(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
+  final def firstImprovingMove(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
     s.vrp.cleanRecordedMoves()
-    doSearch(s, moveAcceptor, true)
-    match{
+    doSearch(s, moveAcceptor, true) match {
       case MoveFound(move) => Some(move)
       case _ => None
     }
   }
 
   final def bestImprovingMove(
-      s:SearchZone,
-      moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal):Option[Move] = {
-    var bestMove:Option[Move]= None
+    s: SearchZone,
+    moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
+    var bestMove: Option[Move] = None
     var bestObj = Int.MaxValue
-    while (true){
-      firstImprovingMove(s, moveAcceptor)
-      match{
+    while (true) {
+      firstImprovingMove(s, moveAcceptor) match {
         case None => return bestMove
         case Some(move) if (move.objAfter < bestObj) =>
           bestMove = Some(move)
@@ -76,27 +79,27 @@ abstract class Neighborhood(){
     None
   }
 
-  /** effectue la recherche et s'arrête au premier mouvement trouvé qui améliore
+  /**
+   * effectue la recherche et s'arrête au premier mouvement trouvé qui améliore
+   *
+   * @param s the search zone, including the VRP that we are examining
+   * @param returnMove true: returns first improving move false: perform first improving move
+   * @return
+   */
+  protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult
 
-    * @param s the search zone, including the VRP that we are examining
-    * @param returnMove true: returns first improving move false: perform first improving move
-    *@return
-    */
-  protected def doSearch(s:SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove:Boolean):SearchResult
-
-  abstract class SearchResult{
-    def found:Boolean
+  abstract class SearchResult {
+    def found: Boolean
   }
-  case class MovePerformed() extends SearchResult{
+  case class MovePerformed() extends SearchResult {
     def found: Boolean = true
   }
-  case class MoveFound(move:Move) extends SearchResult{
+  case class MoveFound(move: Move) extends SearchResult {
     def found: Boolean = true
   }
-  case class NoMoveFound() extends SearchResult{
+  case class NoMoveFound() extends SearchResult {
     def found = false
   }
-
 
   /**
    * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move
@@ -110,20 +113,26 @@ abstract class Neighborhood(){
    * @return true if this improved, false otherwise, and the objective fucntion after the move
    */
   def checkEncodedMove(
-      moveAcceptor:Int => Boolean,
-      StayIfAccept:Boolean,
-      vrp:VRPObjective with VRPObjective):(Boolean,Int) = {
+    moveAcceptor: Int => Boolean,
+    StayIfAccept: Boolean,
+    vrp: VRPObjective with VRPObjective): (Boolean, Int) = {
+    println("vrp dans checkEncodeMove avant commit: " + vrp)
     vrp.commit(true)
+    println("vrp dans checkEncodeMove APRES commit: " + vrp)
     val obj = vrp.getObjective()
     val accept = moveAcceptor(obj)
-    if (!(accept & StayIfAccept)){
+    if (!(accept & StayIfAccept)) {
       vrp.undo(false)
+      println("UNDO")
+      println("vrp dans checkEncodeMove APRES undo: " + vrp)
+    } else {
+      println("pas de UNDO")
     }
     (accept, obj)
   }
 }
 
-case class SearchZone(relevantNeighbors:(Int=> Iterable[Int]),
-                      //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
-                      primaryNodeIterator:Iterator[Int],
-                      vrp:VRP with VRPObjective with PositionInRouteAndRouteNr)
+case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
+  //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
+  primaryNodeIterator: Iterator[Int],
+  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr)

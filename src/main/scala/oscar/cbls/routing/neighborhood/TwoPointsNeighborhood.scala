@@ -44,27 +44,36 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
     val startObj: Int = s.vrp.getObjective()
     val vrp = s.vrp
 
+    println("DEBUT DE LA RECHERCHE.")
     while (s.primaryNodeIterator.hasNext) {
       val beforeMovedPoint: Int = s.primaryNodeIterator.next()
+      println("BOUCLE1: beforeMovedPoint = " + beforeMovedPoint)
       if (vrp.isRouted(beforeMovedPoint)) {
 
         val movedPoint = vrp.next(beforeMovedPoint).value
+        println("movedPoint = " + movedPoint)
 
         for (
           insertionPoint <- s.relevantNeighbors(movedPoint) if (vrp.isRouted(insertionPoint)
             && beforeMovedPoint != insertionPoint
-            && movedPoint != insertionPoint)
+            && movedPoint != insertionPoint
+            && beforeMovedPoint != vrp.next(insertionPoint).value)
             && (!vrp.isADepot(movedPoint) || (vrp.onTheSameRoute(movedPoint, insertionPoint)))
         ) {
+          println("BOUCLE2: insertionPoint = " + insertionPoint)
+          print("VRP before encode dans la boucle de recherche: ")
+          println(vrp)
 
           encode(beforeMovedPoint, insertionPoint, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
             case (true, newObj: Int) => { //this improved
               if (returnMove) return MoveFound(getMove(beforeMovedPoint, insertionPoint, newObj, vrp))
-              else return MovePerformed()
+              else {
+                return MovePerformed()
+              }
             }
-            case _ => ()
+            case (false, _) => ()
           }
         }
       }
