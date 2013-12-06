@@ -184,7 +184,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     
     var c = 0
     node.onSolution { c += 1 }
-    node.search(b1).search(b2)
+    node.search(b1++b2)
     node.start().nbSols should be(32)
     c should be(32)    
   }
@@ -197,19 +197,19 @@ class SearchTest extends FunSuite with ShouldMatchers  {
 
     //def search
     val i1 = new ReversibleInt(node, 0)
-    node.search {
-        if (i1.value > 2) noAlternative
-        else {
-          branch {i1 += 1 } { i1 += 1 }
-        }
-    }
-           
     val i2 = new ReversibleInt(node, 0)
     node.search {
+      Branching {
+        if (i1.value > 2) noAlternative
+        else {
+          branch { i1 += 1 } { i1 += 1 }
+        } 
+      } ++ Branching {
         if (i2.value > 1) noAlternative
         else {
           branch {i2 += 1 } { i2 += 1 }
-        }      
+        }           
+      }
     }
 
     node.start().nbSols should be(32)
