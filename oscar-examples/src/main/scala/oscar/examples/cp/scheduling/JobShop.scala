@@ -27,6 +27,9 @@ import oscar.visual._
 import scala.io.Source
 import oscar.cp.constraints.SweepMaxCumulative
 import oscar.cp.scheduling.visual.VisualGanttChart
+import oscar.cp.constraints.EnergeticReasoning
+import oscar.cp.search.BinaryBranching
+import oscar.cp.search.BinaryStaticOrderBranching
 
 
 /**
@@ -116,15 +119,19 @@ object JobShop extends App {
     }
     // Cumulative
     for (r <- Resources) {
-      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
+      cp.add(new EnergeticReasoning(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
     }
-  } exploration {
-    cp.binaryFirstFail(startsVar)
+  } 
+  
+  cp.search(new BinaryStaticOrderBranching(startsVar))
+  
+  cp.onSolution {
     gantt1.update(1, 20)
     gantt2.update(1, 20)
   }
 
-  cp.run()
-  cp.printStats()
+  val stats = cp.start(timeLimit = 60)
+
+  println(stats)
 }
 	  
