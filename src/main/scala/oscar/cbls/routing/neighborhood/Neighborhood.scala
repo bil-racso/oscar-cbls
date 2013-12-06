@@ -121,14 +121,15 @@ abstract class Neighborhood() {
     println("vrp dans checkEncodeMove APRES commit: " + vrp)
     val obj = vrp.getObjective()
     val accept = moveAcceptor(obj)
-    if (!(accept & StayIfAccept)) {
-      vrp.undo(false)
-      println("UNDO")
-      println("vrp dans checkEncodeMove APRES undo: " + vrp)
-    } else {
-      println("pas de UNDO")
-    }
-    (accept, obj)
+    if (accept & StayIfAccept) {
+        println("pas de UNDO")
+        (accept, obj)
+      } else {
+        vrp.undo(false)
+        println("UNDO")
+        println("vrp dans checkEncodeMove APRES undo: " + vrp)
+        (accept, obj)
+      }
   }
 }
 

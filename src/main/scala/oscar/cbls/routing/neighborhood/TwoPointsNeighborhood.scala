@@ -30,7 +30,7 @@ import oscar.cbls.search.SearchEngineTrait
 
 /**
  * Moves some point of a route to another place in the same or in an other route.
- * The search complexity is O(n²).
+ * The search complexity is O(nï¿½).
  */
 abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait {
   /**
@@ -42,6 +42,7 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
   override protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult = {
 
     val startObj: Int = s.vrp.getObjective()
+    s.vrp.cleanRecordedMoves()
     val vrp = s.vrp
 
     println("DEBUT DE LA RECHERCHE.")
