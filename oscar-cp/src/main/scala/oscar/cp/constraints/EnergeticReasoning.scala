@@ -51,7 +51,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
           return Suspend
       } else {
         //bound adjustements computation
-        for (task <- tasks) {
+        for (task <- tasks if (durations(task).min <= t2 - t1)) {
           val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2, tasks)
           val leftShiftedEnergy = leftShiftedActivityEnergyForInterval(task, t1, t2, tasks)
           val rightShiftedEnergy = rightShiftedActivityEnergyForInterval(task, t1, t2, tasks)
@@ -83,6 +83,9 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
 
   @inline
   private def computeIntervals(tasks: IndexedSeq[Int]) = {
+    
+    val horizon = ends.map(_.max) max
+    
     val (o1, o2, ot) = getO1_O_2_Ot(tasks)
     val intervals = HashSet[Tuple2[Int, Int]]()
 
@@ -90,7 +93,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
       intervals += Tuple2(t1, t2)
 
     for (o <- ot) {
-      for (s <- o1 if (o(s) >= 0 && s < o(s)))
+      for (s <- o1 if (o(s) >= 0 && s < o(s) && o(s) <= horizon))
         intervals += Tuple2(s, o(s))
 
       for (e <- o2 if (o(e) >= 0 && e > o(e)))
