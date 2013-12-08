@@ -237,7 +237,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
   def commit(recordForUndo:Boolean = false){
     assert(Recording)
     if (recordForUndo){
-      affects = doAllMovesAndReturnRollBack().reverse
+      affects = doAllMovesAndReturnRollBack()
       assert({Recording = false; true})
     }else{
       doAllMoves()
@@ -257,7 +257,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
       }
     }
     doIt(affects)
-    undoList
+    undoList.reverse  //TODO: find a better ways to get it.
   }
 
   private def doAllMoves(){
