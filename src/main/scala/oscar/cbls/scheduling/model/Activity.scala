@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -19,7 +19,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.scheduling
+package oscar.cbls.scheduling.model
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
@@ -27,8 +27,9 @@ import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
+import oscar.cbls.scheduling.model.Planning
 
-class SuperTask(start: Activity, end: Activity, override val name: String = "")
+class SuperActivity(start: Activity, end: Activity, override val name: String = "")
   extends Activity(IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
@@ -76,8 +77,9 @@ class SuperTask(start: Activity, end: Activity, override val name: String = "")
 
   }
 
-object SuperTask {
-  def apply(start: Activity, end: Activity, name: String = "") = new SuperTask(start,end,name)
+object SuperActivity {
+  def apply(start: Activity, end: Activity, name: String) = new SuperActivity(start,end,name)
+  def apply(start: Activity, end: Activity) = new SuperActivity(start,end,"SuperActivity(" + start + "," + end + ")")
 }
 
 /**

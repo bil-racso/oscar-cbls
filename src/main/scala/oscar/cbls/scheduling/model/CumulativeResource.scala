@@ -3,16 +3,16 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cbls.scheduling
+package oscar.cbls.scheduling.model
 
 /*******************************************************************************
  * Contributors:
@@ -28,7 +28,7 @@ import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
 /**Maintains the resource usage at all time
  * the resource listens to the tasks using it, and maintains its overshoot times, and first overshoot
  *
- * @param planning the [[oscar.cbls.scheduling.Planning]] where the task is located
+ * @param planning the [[oscar.cbls.scheduling.model.Planning]] where the task is located
  * @param MaxAmount the available amount of this resource that is available throughout the planning
  * @param n the name of the resource, used to annotate the internal variables of the problem
  */
@@ -72,3 +72,4 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
     Cumulative(taskIDs, taskStarts, taskDurations, useAmounts, useAmount, use)
   }
 }
+

@@ -39,6 +39,8 @@ package oscar.examples.cbls
 
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.scheduling._
+import algo.IFlatIRelax
+import model.{Planning, SuperActivity, Activity, CumulativeResource}
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -70,7 +72,7 @@ object Reagan extends App {
   val Drink = Activity(3, planning, "drink")
   Drink uses 3 ofResource Reagan
 
-  val Digest = SuperTask(Eat, Sleep, "digest")
+  val Digest = SuperActivity(Eat, Sleep, "digest")
   Digest uses 1 ofResource Reagan
 
   Think precedes Drink

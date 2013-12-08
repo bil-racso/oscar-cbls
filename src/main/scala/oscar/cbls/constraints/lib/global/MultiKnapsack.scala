@@ -30,8 +30,6 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 ;
 
-//TODO: add a itemSelector IntSetVar to modulate the considered items.
-
 /**This is the standard bin packing constraint
  *
  * @param items the items, designing the bins they are placed into

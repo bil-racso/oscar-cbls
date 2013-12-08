@@ -42,6 +42,8 @@ import io.Source
 import oscar.cbls.search.StopWatch
 import oscar.visual.{VisualUtil, VisualFrame}
 import oscar.cbls.scheduling._
+import algo.IFlatIRelax
+import model.{Planning, Activity, CumulativeResource}
 
 /**this class loads JobShop problems as defined in
  * http://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/jobshop1.txt

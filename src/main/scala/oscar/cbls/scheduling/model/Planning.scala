@@ -3,16 +3,16 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cbls.scheduling
+package oscar.cbls.scheduling.model
 
 /*******************************************************************************
  * Contributors:
@@ -25,6 +25,7 @@ import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
+import oscar.cbls.scheduling.visu.Gantt
 
 
 class Planning(val model: Model, val maxduration: Int) {
@@ -38,6 +39,7 @@ class Planning(val model: Model, val maxduration: Int) {
     resourceCount - 1
   }
 
+  var superActivity = false
   var Activities: List[Activity] = List.empty
   var activityCount: Int = 0
   /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
@@ -79,6 +81,7 @@ class Planning(val model: Model, val maxduration: Int) {
       EarliestStartDates(j.ID) = j.EarliestStartDate
       EarliestEndDates(j.ID) = j.EarliestEndDate
       LatestStartDates(j.ID) = j.LatestStartDate
+      if (j.isInstanceOf[SuperActivity]) superActivity = true
     }
 
     for (j <- Activities) {j.post()}
@@ -170,8 +173,9 @@ class Planning(val model: Model, val maxduration: Int) {
    * @param to
    * @return true if a dependence can be add, false otherwise.
    */
-  def canAddPrecedenceAssumingResourceConflict(from:Activity,  to:Activity):Boolean = {
-    (from != to) & !isThereDependency(to,from)
+  def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
+    //this is not straigntworfward since there can be some SuperTasks.
+    (from != to) & (if (superActivity) !isThereDependency(to,from) else true)
   }
 
   /**Checks if there is a path leading from one activity to another one
