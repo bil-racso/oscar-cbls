@@ -49,17 +49,21 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
       if (vrp.isRouted(fstEdgeStartPoint)) {
 
         val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
+        assert(fstEdgeEndPoint != fstEdgeStartPoint, "3-opt: the VRP has only one node!?")
 
         var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
+        assert(sndEdgeStartPoint != fstEdgeStartPoint, "3-opt: the VRP has only two nodes!?")
+        assert(vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint,
+          "3-opt: the VRP has only three nodes !?")
         while (vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
           //            && !vrp.isADepot(sndEdgeStartPoint)) {
-          assert(sndEdgeStartPoint != fstEdgeEndPoint)
           val sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
 
-          var trdEdgeStartPoint = vrp.next(sndEdgeEndPoint).value
-          while (vrp.next(trdEdgeStartPoint).value != fstEdgeStartPoint) {
+          var trdEdgeStartPoint = sndEdgeEndPoint
+          while (trdEdgeStartPoint != fstEdgeStartPoint) {
+            assert(!vrp.isBetween(trdEdgeStartPoint, fstEdgeStartPoint, sndEdgeEndPoint),
+              "3-opt: third point was between the two others.")
             //             && !vrp.isADepot(trdEdgeStartPoint)) {
-            assert(trdEdgeStartPoint != sndEdgeEndPoint)
 
             encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
 
