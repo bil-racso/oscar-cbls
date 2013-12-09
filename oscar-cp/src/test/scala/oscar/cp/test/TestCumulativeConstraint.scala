@@ -144,7 +144,7 @@ class TestEnergeticReasoning extends TestCumulativeConstraint("Energetic", 20) {
       val bktsEnerg = solveBkts(cp1, instance.capacity, true)
       val bktsSweep = solveBkts(cp2, instance.capacity, false)
       if (bktsEnerg <= bktsSweep) {
-        println("success " + bktsEnerg + " " + bktsSweep)
+        println(s"success $bktsEnerg $bktsSweep")
         true
       } else {
         println("failed !")
