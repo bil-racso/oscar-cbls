@@ -47,24 +47,24 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
-      val fstEdgeStartPoint: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(fstEdgeStartPoint)) {
+      val fstPred: Int = s.primaryNodeIterator.next()
+      if (vrp.isRouted(fstPred)) {
 
-        val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
+        val fstEdgeStartPoint = vrp.next(fstPred).value
 
         for (
-          sndEdgeStartPoint <- s.relevantNeighbors(fstEdgeStartPoint) if (vrp.isRouted(sndEdgeStartPoint)
-            && sndEdgeStartPoint != fstEdgeStartPoint
-            && sndEdgeStartPoint != fstEdgeEndPoint
-            && fstEdgeStartPoint != vrp.next(sndEdgeStartPoint).value
-            && vrp.onTheSameRoute(fstEdgeStartPoint, sndEdgeStartPoint))
+          sndPred <- s.relevantNeighbors(fstPred) if (vrp.isRouted(sndPred)
+            && sndPred != fstPred
+            && sndPred != fstPred
+            && fstPred != vrp.next(sndPred).value
+            && vrp.onTheSameRoute(fstPred, sndPred)) //FIXME correct ?
         ) {
 
-          encode(fstEdgeStartPoint, sndEdgeStartPoint, vrp)
+          encode(fstPred, sndPred, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
             case (true, newObj: Int) => { //this improved
-              if (returnMove) return MoveFound(TwoOptMove(fstEdgeStartPoint, sndEdgeStartPoint, newObj, vrp))
+              if (returnMove) return MoveFound(TwoOptMove(fstPred, sndPred, newObj, vrp))
               else return MovePerformed()
             }
             case _ => ()
@@ -76,12 +76,12 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
   }
 
   def encode(
-    fstEdgeStartPoint: Int,
-    sndEdgeStartPoint: Int,
+    fstPred: Int,
+    sndPred: Int,
     vrp: VRP with MoveDescription) {
-    val seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
+    val seg = vrp.cut(fstPred, sndPred)
     val rev_seg = vrp.reverse(seg)
-    vrp.insert(rev_seg, fstEdgeStartPoint)
+    vrp.insert(rev_seg, fstPred)
   }
 }
 
@@ -93,16 +93,16 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
  * @param vrp the given VRP problem.
  */
 case class TwoOptMove(
-  fstEdgeStartPoint: Int,
-  sndEdgeStartPoint: Int,
+  fstPred: Int,
+  sndPred: Int,
   override val objAfter: Int,
   override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
   // overriding methods
   override def encodeMove() {
-    new TwoOptNeighborhood().encode(fstEdgeStartPoint, sndEdgeStartPoint, vrp)
+    new TwoOptNeighborhood().encode(fstPred, sndPred, vrp)
   }
 
-  override def toString: String = ("TwoOpt(first edge startpoint = "
-    + vrp.next(fstEdgeStartPoint).value
-    + ", second edge startpoint = " + sndEdgeStartPoint + " )")
+  override def toString: String = ("TwoOpt(first predecessor = "
+    + fstPred
+    + ", second predecessor = " + sndPred + " )")
 }

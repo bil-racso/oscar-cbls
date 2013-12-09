@@ -11,9 +11,6 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def doMove() {
     vrp.cleanRecordedMoves
     encodeMove
-    println("MoveDescription.Recording: " + vrp.Recording)
-    print("VRP before commit: ")
-    println(vrp)
     vrp.commit(false)
   }
 }
@@ -114,18 +111,16 @@ abstract class Neighborhood() {
     moveAcceptor: Int => Boolean,
     StayIfAccept: Boolean,
     vrp: VRPObjective with VRPObjective): (Boolean, Int) = {
-    println("vrp dans checkEncodeMove avant commit: " + vrp)
+//    println("vrp dans checkEncodeMove AVANT commit: " + vrp)
     vrp.commit(true)
-    println("vrp dans checkEncodeMove APRES commit: " + vrp)
+//    println("vrp dans checkEncodeMove APRES commit: " + vrp)
     val obj = vrp.getObjective()
     val accept = moveAcceptor(obj)
     if (accept & StayIfAccept) {
-        println("pas de UNDO")
         (accept, obj)
       } else {
         vrp.undo(false)
-        println("UNDO")
-        println("vrp dans checkEncodeMove APRES undo: " + vrp)
+//        println("vrp dans checkEncodeMove APRES undo: " + vrp)
         (accept, obj)
       }
   }

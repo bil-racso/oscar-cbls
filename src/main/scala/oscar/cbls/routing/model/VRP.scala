@@ -179,7 +179,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
 
   def cut(beforeStart:Int,end:Int):Segment = {
     assert(!this.isInstanceOf[PositionInRouteAndRouteNr]
-      || this.asInstanceOf[PositionInRouteAndRouteNr].isASegment(beforeStart,end))
+      || this.asInstanceOf[PositionInRouteAndRouteNr].onTheSameRoute(beforeStart,end))
 
     addMove(affectFromVariable(next(beforeStart),next(end)))
     Segment(next(beforeStart).value,end)
@@ -187,10 +187,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
 
   def cutNodeAfter(beforeStart:Int):Segment = {
     assert(isRouted(beforeStart))
-
-    println("cutNodeAfter(beforeStart (" + beforeStart + "))")
     val start = next(beforeStart).value
-    println("start = next(beforeStart).value (" + next(beforeStart).value + ")")
     addMove(affectFromVariable(next(beforeStart),next(start)))
     Segment(start,start)
   }
@@ -203,7 +200,7 @@ case class affectFromConst(variable:IntVar, takeValue:Int)extends Affect{
   def reverse(s:Segment): Segment = {
     var prev = s.start
     var current:Int = next(prev).value
-    while(current != s.end){
+    while(prev != s.end){
       addMove(affectFromConst(next(current),prev))
       prev = current
       current = next(current).value

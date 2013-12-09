@@ -142,7 +142,6 @@ case class Routes(V: Int,
    * @param nodeID is the node whose next hjas changed
    */
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID: Int) {
-    println(this)
     var currentNode = nodeID
     var nextNode = Next(currentNode).value
     while (!isUpToDate(currentNode) && nextNode >= V) {

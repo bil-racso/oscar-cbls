@@ -35,13 +35,13 @@ import oscar.cbls.routing.model._
  */
 object Swap extends TwoPointsNeighborhood {
   override def encode(fstPred: Int, sndPred: Int, vrp: VRP with MoveDescription) {
-    println("cutNodeAfter(fstPred (" + fstPred + "))")
+    //println("cutNodeAfter(fstPred (" + fstPred + "))")
     val fstSeg = vrp.cutNodeAfter(fstPred)
-    println("cutNodeAfter(sndPred (" + sndPred + "))")
+    //println("cutNodeAfter(sndPred (" + sndPred + "))")
     val sndSeg = vrp.cutNodeAfter(sndPred)
-    println("insert(fstSeg (" + fstSeg + "), sndPred (" + sndPred + "))")
+    //println("insert(fstSeg (" + fstSeg + "), sndPred (" + sndPred + "))")
     vrp.insert(fstSeg, sndPred)
-    println("insert(sndSeg (" + sndSeg + "), fstPred (" + fstPred + "))")
+    //println("insert(sndSeg (" + sndSeg + "), fstPred (" + fstPred + "))")
     vrp.insert(sndSeg, fstPred)
   }
 

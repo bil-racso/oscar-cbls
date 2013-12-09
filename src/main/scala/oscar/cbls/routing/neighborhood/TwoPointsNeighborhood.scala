@@ -48,11 +48,11 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
     println("DEBUT DE LA RECHERCHE.")
     while (s.primaryNodeIterator.hasNext) {
       val beforeMovedPoint: Int = s.primaryNodeIterator.next()
-      println("BOUCLE1: beforeMovedPoint = " + beforeMovedPoint)
+//      println("BOUCLE1: beforeMovedPoint = " + beforeMovedPoint)
       if (vrp.isRouted(beforeMovedPoint)) {
 
         val movedPoint = vrp.next(beforeMovedPoint).value
-        println("movedPoint = " + movedPoint)
+//        println("movedPoint = " + movedPoint)
 
         for (
           insertionPoint <- s.relevantNeighbors(movedPoint) if (vrp.isRouted(insertionPoint)
@@ -61,9 +61,9 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
             && beforeMovedPoint != vrp.next(insertionPoint).value)
             && (!vrp.isADepot(movedPoint) || (vrp.onTheSameRoute(movedPoint, insertionPoint)))
         ) {
-          println("BOUCLE2: insertionPoint = " + insertionPoint)
-          print("VRP before encode dans la boucle de recherche: ")
-          println(vrp)
+//          println("BOUCLE2: insertionPoint = " + insertionPoint)
+//          print("VRP before encode dans la boucle de recherche: ")
+//          println(vrp)
 
           encode(beforeMovedPoint, insertionPoint, vrp)
 
