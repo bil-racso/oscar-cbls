@@ -43,6 +43,9 @@ import oscar.cbls.routing.neighborhood.SearchZone
 import oscar.cbls.routing.neighborhood.Swap
 import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
 import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.ThreeOpt
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -246,6 +249,13 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
         }
   }
 
+  // FIXME
+  //  moveTest("The first improving swap 2 is done correctly.", 1, true) {
+  //    (f: MoveFixture) =>
+  //      val relevantNeighbors = (n: Int) => f.vrp.nodes
+  //      swap((sz: SearchZone) => Swap.firstImprovingMove(sz))(f)
+  //  }
+
   moveTest("The best improving swap is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
@@ -280,6 +290,13 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
         }
   }
 
+  // FIXME
+  //  moveTest("The best improving swap 2 is done correctly.", 1, true) {
+  //    (f: MoveFixture) =>
+  //      val relevantNeighbors = (n: Int) => f.vrp.nodes
+  //      swap((sz: SearchZone) => Swap.bestImprovingMove(sz))(f)
+  //  }
+
   //  test("swap unrouted point 2 with 6"){
   //    val f = fixture
   //    f.vrp.remove(List((0,2))).foreach(t => t._1 := t._2)
@@ -300,8 +317,8 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //    } should produce [AssertionError]
   //  }
   //
-  
-  moveTest("A two-opt move is done correctly.", 1, true) {
+
+  moveTest("A first two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
       new TwoOptNeighborhood().firstImprovingMove(
@@ -310,39 +327,44 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.isInstanceOf[TwoOptMove] should be(true)
             val move = m.asInstanceOf[TwoOptMove]
             println("An improving move was found ! : " + move)
-            val segStart = f.vrp.next(move.fstPred).value
-            val sndEdgeEnd = f.vrp.next(move.sndPred).value
+            m.doMove
 
-            /*
-             * To check points from next(segStart) to sndPred
-             */
-            def isInSeg(i: Int): Boolean = {
-              var cur = segStart
-              while (cur != move.sndPred) {
-                cur = f.initNext(cur)
-                if (i == cur) return true
-              }
-              false
-            }
+            check2OptMove(f, move)
+          }
+          case None => assert(false, "No improving move found, try launching this test again...")
+        }
+  }
+
+  moveTest("A best two-opt move is done correctly.", 1, true) {
+    (f: MoveFixture) =>
+      val relevantNeighbors = (n: Int) => f.vrp.nodes
+      new TwoOptNeighborhood().bestImprovingMove(
+        SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+          case Some(m) => {
+            m.isInstanceOf[TwoOptMove] should be(true)
+            val move = m.asInstanceOf[TwoOptMove]
+            println("An improving move was found ! : " + move)
+            m.doMove
+
+            check2OptMove(f, move)
+          }
+          case None => assert(false, "No improving move found, try launching this test again...")
+        }
+  }
+
+  moveTest("A three-opt move is done correctly.", 1, true) {
+    (f: MoveFixture) =>
+      val relevantNeighbors = (n: Int) => f.vrp.nodes
+      ThreeOpt.firstImprovingMove(
+        SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+          case Some(m) => {
+            m.isInstanceOf[ThreeOpt] should be(true)
+            val move = m.asInstanceOf[ThreeOpt]
+            println("An improving move was found ! : " + move)
 
             m.doMove
 
-            println("VRP after the move: " + f.vrp)
-            f.mainRouteLength should be(f.initLength)
-            f.vrp.routes.PositionInRoute(0).value should be(0)
-            for (i <- f.vrp.nodes) {
-              if (i == move.fstPred)
-                f.vrp.next(i).value should be(move.sndPred)
-              else if (i == segStart)
-                f.vrp.next(i).value should be(sndEdgeEnd)
-              else if (isInSeg(i)) f.vrp.nodes.find(f.initNext(_) == i) match {
-                case None => assert(false, "This case should not occur.")
-                case Some(initPred) => f.vrp.next(i).value should be(initPred)
-              }
-              else {
-                f.vrp.next(i).value should be (f.initNext(i))
-              }
-            }
+            check3OptMove(f, move)
           }
           case None => assert(false, "No improving move found, try launching this test again...")
         }
@@ -427,18 +449,26 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
         case Some(m) => {
           m.isInstanceOf[Swap] should be(true)
           val swap = m.asInstanceOf[Swap]
-          println("A move was found ! : " + swap)
+          println("An improving move was found ! : " + swap)
           val fst = f.vrp.next(swap.fstPred).value
           val snd = f.vrp.next(swap.sndPred).value
-          //            println("Will swap nodes " + fst + " and " + snd)
-          m.doMove
-          f.mainRouteLength should be(initLength)
+          val fstNext = f.vrp.next(fst).value
+          val sndNext = f.vrp.next(snd).value
+          println("VRP after the move: " + f.vrp)
+          f.mainRouteLength should be(f.initLength)
+          f.vrp.routes.PositionInRoute(0).value should be(0)
           for (i <- f.vrp.nodes) {
-            if (i == fst) f.vrp.routes.PositionInRoute(fst).value should be(pos(snd))
-            else if (i == snd) f.vrp.routes.PositionInRoute(snd).value should be(pos(fst))
-            else f.vrp.routes.PositionInRoute(i).value should be(pos(i))
+            if (i == swap.fstPred)
+              f.vrp.next(i).value should be(snd)
+            else if (i == snd)
+              f.vrp.next(i).value should be(fstNext)
+            else if (i == swap.sndPred)
+              f.vrp.next(i).value should be(fst)
+            else if (i == fst)
+              f.vrp.next(i).value should be(sndNext)
+            else
+              f.vrp.next(i).value should be(f.initNext(i))
           }
-
         }
         case None => assert(false)
       }
@@ -448,6 +478,47 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     (n: Int) =>
       f.vrp.routes.RouteNr(n).value should be(f.ROUTE_ARRAY_UNROUTED)
       f.vrp.routes.PositionInRoute(n).value should be(f.nbNodes)
+  }
+
+  def check2OptMove(f: MoveFixture, move: TwoOptMove) = {
+    val segStart = f.initNext(move.fstPred)
+    val sndEdgeEnd = f.initNext(move.sndPred)
+    println("VRP after the move: " + f.vrp)
+    f.mainRouteLength should be(f.initLength)
+    f.vrp.routes.PositionInRoute(0).value should be(0)
+    for (i <- f.vrp.nodes) {
+      if (i == move.fstPred)
+        f.vrp.next(i).value should be(move.sndPred)
+      else if (i == segStart)
+        f.vrp.next(i).value should be(sndEdgeEnd)
+      else if (f.isInSeg(i, segStart, move)) f.vrp.nodes.find(f.initNext(_) == i) match {
+        case None => assert(false, "This case should not occur.")
+        case Some(initPred) => f.vrp.next(i).value should be(initPred)
+      }
+      else {
+        f.vrp.next(i).value should be(f.initNext(i))
+      }
+    }
+  }
+
+  def check3OptMove(f: MoveFixture, move: ThreeOpt) {
+    val segStart = f.initNext(move.fstEdgeStartPoint)
+    val sndEdgeEnd = f.initNext(move.sndEdgeStartPoint)
+    val trdEdgeEnd = f.initNext(move.trdEdgeStartPoint)
+    println("VRP after the move: " + f.vrp)
+    f.mainRouteLength should be(f.initLength)
+    f.vrp.routes.PositionInRoute(0).value should be(0)
+    for (i <- f.vrp.nodes) {
+      if (i == move.fstEdgeStartPoint)
+        f.vrp.next(i).value should be(f.initNext(move.sndEdgeStartPoint))
+      else if (i == move.sndEdgeStartPoint)
+        f.vrp.next(i).value should be(f.initNext(move.trdEdgeStartPoint))
+      else if (i == move.trdEdgeStartPoint)
+        f.vrp.next(i).value should be(f.initNext(move.fstEdgeStartPoint))
+      else {
+        f.vrp.next(i).value should be(f.initNext(i))
+      }
+    }
   }
 }
 
@@ -572,5 +643,17 @@ class MoveFixture(
   def commitPropagate = {
     vrp.commit(true)
     model.propagate()
+  }
+
+  /**
+   * To check points from next(segStart) to sndPred
+   */
+  def isInSeg(i: Int, segStart: Int, move: TwoOptMove): Boolean = {
+    var cur = segStart
+    while (cur != move.sndPred) {
+      cur = initNext(cur)
+      if (i == cur) return true
+    }
+    false
   }
 }
