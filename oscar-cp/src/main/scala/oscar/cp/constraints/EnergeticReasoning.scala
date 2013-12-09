@@ -51,11 +51,12 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
           return Suspend
       } else {
         //bound adjustements computation
-        for (task <- tasks if (durations(task).min <= t2 - t1)) {
+        for (task <- tasks) {
           val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2, tasks)
-          val leftShiftedEnergy = leftShiftedActivityEnergyForInterval(task, t1, t2, tasks)
-          val rightShiftedEnergy = rightShiftedActivityEnergyForInterval(task, t1, t2, tasks)
 
+          val leftShiftedEnergy = p_plusForInterval(task, t1, t2, tasks) * demands(task).min 
+          val rightShiftedEnergy = p_minusForInterval(task, t1, t2, tasks) * demands(task).min
+          
           if (slackWithoutCurrentActivity < leftShiftedEnergy)
             newEets(task) = max(newEets(task), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity).toDouble / demands(task).min).toInt)
 
@@ -75,7 +76,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
       if (ends(task).updateMin(newEets(task)) == Failure) {
         return Failure
       }
-
+      
     }
 
     Suspend
@@ -93,7 +94,7 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
       intervals += Tuple2(t1, t2)
 
     for (o <- ot) {
-      for (s <- o1 if (o(s) >= 0 && s < o(s) && o(s) <= horizon))
+      for (s <- o1 if (o(s) >= 0 && s < o(s)))
         intervals += Tuple2(s, o(s))
 
       for (e <- o2 if (o(e) >= 0 && e > o(e)))
@@ -135,13 +136,13 @@ class EnergeticReasoning(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
   }
 
   @inline
-  private def leftShiftedActivityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(durations(task).min, max(0, ends(task).min - t1))) * demands(task).min
+  private def p_plusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durations(task).min - max(0, t1 - starts(task).min)) 
 
   @inline
-  private def rightShiftedActivityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(durations(task).min, max(0, t2 - starts(task).max))) * demands(task).min
+  private def p_minusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durations(task).min - max(0, ends(task).max - t2))
 
   @inline
-  private def activityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(leftShiftedActivityEnergyForInterval(task, t1, t2, tasks), rightShiftedActivityEnergyForInterval(task, t1, t2, tasks))
+  private def activityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(p_plusForInterval(task, t1, t2, tasks), p_minusForInterval(task, t1, t2, tasks))) * demands(task).min
 
 }
 

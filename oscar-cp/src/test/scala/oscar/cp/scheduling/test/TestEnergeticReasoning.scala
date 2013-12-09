@@ -24,49 +24,12 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest._
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.search._
 
 @RunWith(classOf[JUnitRunner])
 class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 
-  test("ER : simple pruning") {
-    //a task : (startmin, endmax, dur, demand)
   
-    val horizon = 4
-    
-    val activitiesDescription = Array((2,horizon,2,2), (0,3,2,1),(0,3,3,1))
-	
-    var todoAfterBranch : Unit => Unit = Unit => Unit;
-    var todoBeforeBranch : Unit => Unit = Unit => Unit;
-    
-	val cp = new CPScheduler(horizon) {
-    override def afterBranch = todoAfterBranch()
-    override def beforeBranch = todoBeforeBranch()
-    
-  }
-
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
-	
-	val resId = 0
-	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
-
-	val capa = CPVarInt(cp, 3 to 3)
-
-	var nb = 0
-	
-	  
-	for(i <- 0 until starts.length)
-	  cp.add(starts(i) + durs(i) == ends(i))
-	
-	cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
-	  
-	starts(1).max should be(1)
-	starts(1).min should be(0)
-    	
-  }
   
   
   
@@ -77,14 +40,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,2,2), (0,horizon,2,1),(0,horizon,3,1))
 	
-    var todoAfterBranch : Unit => Unit = Unit => Unit;
-    var todoBeforeBranch : Unit => Unit = Unit => Unit;
-    
-	val cp = new CPScheduler(horizon) {
-    override def afterBranch = todoAfterBranch()
-    override def beforeBranch = todoBeforeBranch()
-    
-  }
+	val cp = new CPScheduler(horizon) 
 
 	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
 	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
@@ -99,70 +55,25 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 
 	var nb = 0
 	
-	todoAfterBranch = Unit => {
-	  println("After branch")
-	  starts foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  /*durs foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println*/
-	  ends foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  /*demands foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println*/
-	  println(capa.min + ".." + capa.max + " " )
-	  }
-	
-	todoBeforeBranch = Unit => {
-	  println("Before branch")
-	  starts foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  /*durs foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println*/
-	  ends foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  /*demands foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println*/
-	  println(capa.min + ".." + capa.max + " " )
-	  }
-	
 	  
-	  println
-	  starts foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  durs foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  ends foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  demands foreach { a => print(a.min + ".." + a.max + " " ) }
-	  println
-	  println(capa)
-	  
-	  println( "search !")
-	  
-	  for(i <- 0 until starts.length)
+	cp.solve
+    cp.subjectTo {
+      for(i <- 0 until starts.length)
     	  cp.add(starts(i) + durs(i) == ends(i))
 	
 	  cp.add(new EnergeticReasoning(starts,ends,durs,demands,resources,capa,resId))
-	  
-	cp.solve subjectTo
-	{
-      
-	
-		
-	} exploration {
-			cp.binaryFirstFail(starts)
-			
-    	    nb += 1
-    	    println("sol found !")
-			//starts foreach { a => print(a + " ") }
-			println
-    	} run()
+    }
+
+    cp.search {
+      new BinaryStaticOrderBranching(starts)
+    }  
     	
-    nb should be(4)
+    val stats = cp.start()
+    
+    stats.nbSols should be(4)
+    stats.nbFails should be(4)
     	
   }
-  
-  
   
   //example from Baptiste's book
   test("ER : Detect infeasibility") {
@@ -468,7 +379,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
   }
   
-  /*test("ER : big test with 0 demand") {
+  test("ER : big test with 0 demand") {
     //a task : (startmin, endmax, dur, demand)
   
     val horizon = 11
@@ -503,7 +414,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     	
     nb should be(6480)
     	
-  }*/
+  }
   
   
   
