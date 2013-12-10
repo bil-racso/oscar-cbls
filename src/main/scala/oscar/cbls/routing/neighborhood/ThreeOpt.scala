@@ -49,37 +49,37 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
       if (vrp.isRouted(fstEdgeStartPoint)) {
 
         val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
-        assert(fstEdgeEndPoint != fstEdgeStartPoint, "3-opt: the VRP has only one node!?")
+        if (fstEdgeEndPoint != fstEdgeStartPoint) {
 
-        var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
-        assert(sndEdgeStartPoint != fstEdgeStartPoint, "3-opt: the VRP has only two nodes!?")
-        assert(vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint,
-          "3-opt: the VRP has only three nodes !?")
-        while (vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
-          //            && !vrp.isADepot(sndEdgeStartPoint)) {
-          val sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
+          var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
+          if (sndEdgeStartPoint != fstEdgeStartPoint
+            && vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
+            while (vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
+              //            && !vrp.isADepot(sndEdgeStartPoint)) {
+              val sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
 
-          var trdEdgeStartPoint = sndEdgeEndPoint
-          while (trdEdgeStartPoint != fstEdgeStartPoint) {
-            assert(!vrp.isBetween(trdEdgeStartPoint, fstEdgeStartPoint, sndEdgeEndPoint),
-              "3-opt: third point was between the two others.")
-            //             && !vrp.isADepot(trdEdgeStartPoint)) {
+              var trdEdgeStartPoint = sndEdgeEndPoint
+              while (trdEdgeStartPoint != fstEdgeStartPoint) {
+                if (!vrp.isBetween(trdEdgeStartPoint, fstEdgeStartPoint, sndEdgeEndPoint)) {
+                  //             && !vrp.isADepot(trdEdgeStartPoint)) {
 
-            encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
+                  encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
 
-            checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-              case (true, newObj: Int) => { //this improved
-                if (returnMove) return MoveFound(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, newObj, vrp))
-                else return MovePerformed()
+                  checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
+                    case (true, newObj: Int) => { //this improved
+                      if (returnMove) return MoveFound(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, newObj, vrp))
+                      else return MovePerformed()
+                    }
+                    case _ => ()
+                  }
+                  trdEdgeStartPoint = vrp.next(trdEdgeStartPoint).value
+                }
               }
-              case _ => ()
+              sndEdgeStartPoint = vrp.next(sndEdgeStartPoint).value
             }
-            trdEdgeStartPoint = vrp.next(trdEdgeStartPoint).value
           }
-          sndEdgeStartPoint = vrp.next(sndEdgeStartPoint).value
         }
       }
-
     }
     NoMoveFound()
   }
