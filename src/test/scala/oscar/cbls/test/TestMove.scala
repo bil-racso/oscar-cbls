@@ -53,7 +53,7 @@ import oscar.cbls.routing.neighborhood.ThreeOpt
  * These tests (with star) show the lack of robustness of the current framework.
  */
 class TestMove extends FunSuite with ShouldMatchers with Checkers {
-  ignore("A node can be cut.") {
+  test("A node can be cut.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
       f.commitPropagate
@@ -62,7 +62,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       checkUnrouted(f, cutNode.start :: Nil)
   }
 
-  ignore("A segment can be cut.") {
+  test("A segment can be cut.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.randomCut
       f.commitPropagate
@@ -72,7 +72,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   }
 
   // FIXME: sometimes fails
-  ignore("A segment and a node can be cut.") {
+  test("A segment and a node can be cut.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.randomCut
       println(segNodes)
@@ -86,7 +86,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       checkUnrouted(f, cutNode.start :: segNodes)
   }
 
-  ignore("Non disjoint segments cannot be cut.") {
+  test("Non disjoint segments cannot be cut.") {
     (f: MoveFixture) =>
       evaluating {
         val cutSeg07 = f.vrp.cut(0, 7)
@@ -97,7 +97,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       } should produce[ArrayIndexOutOfBoundsException]
   }
 
-  ignore("Cut and insert is allright.") {
+  test("Cut and insert is allright.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
       f.cutNodeAfter(4)
@@ -112,7 +112,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       f.vrp.routes.PositionInRoute(8).value should be(f.vrp.routes.PositionInRoute(7).value + 1)
   }
 
-  ignore("Cannot insert routed node.") {
+  test("Cannot insert routed node.") {
     (f: MoveFixture) =>
       evaluating {
         val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
@@ -123,7 +123,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   }
 
   // TODO make this one generic
-  ignore("A segment can be reversed.") {
+  test("A segment can be reversed.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 1)
       val revSeg = f.vrp.reverse(cutSeg)
@@ -135,7 +135,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       for (i <- 1 to 9) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i + 1) % 9).value + 1)
   }
 
-  ignore("A segment cannot be inserted after an unrouted node.") {
+  test("A segment cannot be inserted after an unrouted node.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
       f.commitPropagate
@@ -144,7 +144,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       f.commitPropagate
   }
 
-  ignore("A node cannot be inserted after an unrouted node.") {
+  test("A node cannot be inserted after an unrouted node.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
       f.commitPropagate
