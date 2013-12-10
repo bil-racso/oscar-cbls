@@ -45,7 +45,6 @@ abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait
     s.vrp.cleanRecordedMoves()
     val vrp = s.vrp
 
-    println("DEBUT DE LA RECHERCHE.")
     while (s.primaryNodeIterator.hasNext) {
       val beforeMovedPoint: Int = s.primaryNodeIterator.next()
 //      println("BOUCLE1: beforeMovedPoint = " + beforeMovedPoint)
