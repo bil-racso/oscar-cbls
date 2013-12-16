@@ -61,7 +61,7 @@ object Diet {
 			}		
 		}
 		
-		println("objective: "+lp.getObjectiveValue())
+		println("objective: "+lp.objectiveValue())
 		println("----------")
 		println(foods.map(_.x).mkString("\n"))
 		

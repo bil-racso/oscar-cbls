@@ -64,11 +64,11 @@ object Queens {
 
     }
     
-	println("objective: "+mip.getObjectiveValue())
+	println("objective: "+mip.objectiveValue())
 
 	for(i <- 0 until n){
 	  for(j <- 0 until n)
-	    if(x(i)(j).getValue==1) print("Q") else print(".")
+	    if(x(i)(j).value.get >= .9) print("Q") else print(".")
 	  println()
 	}
 	mip.release()
