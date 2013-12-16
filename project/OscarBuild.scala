@@ -104,15 +104,7 @@ object OscarBuild extends Build {
     base = file("."),
     //
     settings = buildSettings ++ jacoco_settings ++ packSettings ++ unidocSettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo)) dependsOnSource("lib")
-
-
-  lazy val oscarExamples = Project(
-    id = "oscar-examples",
-    base = file("oscar-examples"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
-    dependencies = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo)) dependsOnSource("lib")         
-    
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
