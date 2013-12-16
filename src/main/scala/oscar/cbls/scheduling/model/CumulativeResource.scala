@@ -24,6 +24,11 @@ import oscar.cbls.invariants.core.computation.{IntVar, IntSetVar}
 import scala.Array
 import oscar.cbls.invariants.lib.logic.{Cumulative, Filter}
 import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
+import oscar.cbls.invariants.lib.numeric.Step
+import oscar.cbls.scheduling.algo.ConflictSearch
+import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.modeling.Algebra._
+import collection.SortedMap
 
 /**Maintains the resource usage at all time
  * the resource listens to the tasks using it, and maintains its overshoot times, and first overshoot
@@ -32,44 +37,62 @@ import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
  * @param MaxAmount the available amount of this resource that is available throughout the planning
  * @param n the name of the resource, used to annotate the internal variables of the problem
  */
-case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String = null) {
+case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String = null)
+  extends Resource(planning:Planning, n) with SearchEngineTrait {
   require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
-  val ResourceID = planning.addResource(this)
-  val name = Option(n) getOrElse s"Resource $ResourceID"
-  
-  private val model = planning.model
-  private val maxDuration = planning.maxduration
 
   /**The set of activities using this resource at every position*/
   val use = Array.tabulate(maxDuration)(t => new IntSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   val useAmount = Array.tabulate(maxDuration)(t => IntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
- 
-  val FirstOvershoot: IntVar = MinSet(Filter(useAmount, x => x > MaxAmount))
   
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: IntSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
-  var ActivitiesAndUse: List[(Activity, IntVar)] = List.empty
+  var ActivitiesAndUse: SortedMap[Activity, IntVar] = SortedMap.empty
 
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: IntVar) {
-    ActivitiesAndUse = (j, amount) :: ActivitiesAndUse
+    ActivitiesAndUse += ((j,
+      if(ActivitiesAndUse.isDefinedAt(j))
+        ActivitiesAndUse(j) + amount
+      else amount))
   }
 
-  def getActivitiesAndUse(t:Int):List[(Activity, IntVar)] = {
-    ActivitiesAndUse.filter((x: (Activity, IntVar)) => use(t).value.contains(x._1.ID))
+  def activitiesAndUse(t:Int):Iterable[(Activity, IntVar)] = {
+    use(t).value.map((a:Int) => {
+      val activity:Activity = planning.ActivityArray(a);
+      (activity,ActivitiesAndUse(activity))
+    })
   }
-  
+
+  val overShoot: IntVar = HighestUse - MaxAmount
+  def worseOverShootTime: Int = HighestUsePositions.value.firstKey
+
+  /** you need to eject one of these to solve the conflict */
+  def conflictingActivities(t: Int): Iterable[Activity] = {
+    val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
+      0,
+      activitiesAndUse(t),
+      (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
+      (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
+      (use: Int) => use > MaxAmount
+    )
+
+    conflictSet.map(_._1)
+  }
+
   def close() {
-    val NbTasks = ActivitiesAndUse.size
-   
-    val taskIDs = Array.tabulate(NbTasks)(i => ActivitiesAndUse(i)._1.ID)
-    val useAmounts = Array.tabulate(NbTasks)(i => ActivitiesAndUse(i)._2)
-    val taskDurations = Array.tabulate(NbTasks)(i => ActivitiesAndUse(i)._1.duration)
-    val taskStarts = Array.tabulate(NbTasks)(i => ActivitiesAndUse(i)._1.EarliestStartDate)
-   
-    Cumulative(taskIDs, taskStarts, taskDurations, useAmounts, useAmount, use)
+
+    val tasks:Array[Activity] = ActivitiesAndUse.keys.toArray
+
+    Cumulative(
+      tasks.map(_.ID),
+      tasks.map(_.EarliestStartDate),
+      tasks.map(_.duration),
+      tasks.map(ActivitiesAndUse(_)),
+      useAmount,
+      use)
   }
 }
 

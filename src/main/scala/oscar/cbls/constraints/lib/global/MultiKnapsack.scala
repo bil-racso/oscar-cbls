@@ -43,7 +43,7 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
   model = InvariantHelper.findModel(items)
 
   assert(items.map(_.minVal).min == 0, "bin 0 must be included in possible bins of items")
-  assert(items.map(_.minVal).max <= binsizes.length-1, "the range of ite bins should be not bigger than the available bins")
+  assert(items.map(_.minVal).max <= binsizes.length-1, "the range of item bins should be not bigger than the available bins")
   assert(items.length == itemsizes.length)
 
   registerConstrainedVariables(items)

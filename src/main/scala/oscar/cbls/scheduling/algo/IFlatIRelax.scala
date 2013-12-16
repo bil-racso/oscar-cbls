@@ -22,15 +22,10 @@ package oscar.cbls.scheduling.algo
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
-import oscar.cbls.scheduling.model.{Activity, CumulativeResource, Planning}
+import oscar.cbls.scheduling.model.{Resource, Activity, Planning}
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
-
-  class FlatteningHeuristics()
-  case class EarliestFirst() extends FlatteningHeuristics
-  case class WorseFirst() extends FlatteningHeuristics
-  case class Random() extends FlatteningHeuristics
 
   /**This solves the jobshop by iterative relaxation and flattening
     * @param MaxIt the max number of iterations of the search
@@ -38,17 +33,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     */
   def Solve(MaxIt: Int,
             Stable: Int,
-            flatteningheursitics: FlatteningHeuristics = WorseFirst(),
             NbRelax: Int = 4,
             PkillPerRelax: Int = 50) {
 
     var it: Int = 0
 
-    flatteningheursitics match {
-      case EarliestFirst() => FlattenEarliestFirst()
-      case WorseFirst() => FlattenWorseFirst()
-      case Random() => RandomFlatten()
-    }
+    FlattenWorseFirst()
 
     var BestSolution: Solution = model.getSolution(true)
     if (Verbose) {
@@ -75,11 +65,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         if(p.MakeSpan.value == m)println("skip")
       }
 
-      flatteningheursitics match {
-        case EarliestFirst() => FlattenEarliestFirst()
-        case WorseFirst() => FlattenWorseFirst()
-        case Random() => RandomFlatten()
-      }
+      FlattenWorseFirst()
 
       println(p.MakeSpan)
       println("iteration: " + it)
@@ -137,90 +123,24 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | Relax(PKill)
       if (!SomethingCouldBeRelaxed) return false
     }
-    println("relaxed " + n + " times to shorten makespan")
+    if (Verbose) println("relaxed " + n + " times to shorten makespan")
     return SomethingCouldBeRelaxed
-  }
-
-  def RandomFlatten() {
-    
-    while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
-      val t: Int = r.FirstOvershoot.value
-
-      val ActivitiesAndUse = r.ActivitiesAndUse.filter((taksAndamount: (Activity, IntVar)) => r.use(t).value.contains(taksAndamount._1.ID))
-      val Activities: List[Activity] = ActivitiesAndUse.map((ActivityAndamount: (Activity, IntVar)) => ActivityAndamount._1)
-
-      val a = selectFrom(Activities)
-      val b = selectFrom(Activities, (j: Activity) => j != a)
-
-      if (Verbose) println("added " + a + "->" + b)
-      b.addDynamicPredecessor(a)
-    }
   }
 
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
     while (!p.WorseOvershotResource.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
-      val t: Int = selectFirst(r.HighestUsePositions.value)
+      val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
 
-      val ActivitiesAndUse = r.getActivitiesAndUse(t)
+      val t: Int = r.worseOverShootTime
+      val conflictActivities=r.conflictingActivities(t)
 
-      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
-        0,
-        ActivitiesAndUse,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
-        (use: Int) => use > r.MaxAmount
-      )
-
-      val conflictActivities: List[Activity] = conflictSet.map(_._1)
-
-      //TODO: it could be the case tat no pair of Activity is available here.
       val (a, b) = selectMax2(conflictActivities, conflictActivities,
         (a: Activity, b: Activity) => (b.LatestEndDate.value - a.EarliestStartDate.value),
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a,b))
 
-      if (Verbose) println("added " + a + "->" + b)
       b.addDynamicPredecessor(a)
-    }
-  }
-
-  def FlattenEarliestFirst() {
-    while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
-      val t: Int = r.FirstOvershoot.value
-
-      //the two selected Activities a,b must belong to a minimal conflict set
-      //and they must maximize lsd(b)-esd(a)  //pq pas led(b) - esd(a)??
-      //then insert a->b
-
-      //modification par rapport a l'heuristique:
-      //uniquement b doit appartenir au conflict set.
-      //et on maximise led(b) - esd(a)
-
-      val ActivitiessAndUse = r.getActivitiesAndUse(t)
-
-      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
-        0,
-        ActivitiessAndUse,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
-        (use: Int) => use > r.MaxAmount
-      )
-
-      val conflictActivities: List[Activity] = conflictSet.map(_._1)
-
-      val Activities: List[Activity] = ActivitiessAndUse.map(_._1)
-
-      val (a, b) = selectMax2(Activities, conflictActivities,
-        (a: Activity, b: Activity) => (b.LatestStartDate.value - a.EarliestEndDate.value),
-        (a: Activity, b: Activity) => a != b)
-
       if (Verbose) println("added " + a + "->" + b)
-      b.addDynamicPredecessor(a)
     }
   }
 }
-
-

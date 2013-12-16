@@ -26,14 +26,15 @@ import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
 import oscar.cbls.scheduling.visu.Gantt
+import oscar.cbls.modeling.Algebra._
 
 
 class Planning(val model: Model, val maxduration: Int) {
 
-  var resources: List[CumulativeResource] = List.empty
+  var resources: List[Resource] = List.empty
   var resourceCount: Int = 0
   /**called by resources registers it in the planning, returns an ID, which is the one of the resource*/
-  def addResource(r: CumulativeResource): Int = {
+  def addResource(r: Resource): Int = {
     resources = r :: resources
     resourceCount += 1
     resourceCount - 1
@@ -57,7 +58,7 @@ class Planning(val model: Model, val maxduration: Int) {
   var EarliestOvershotResources: IntSetVar = null
   var WorseOvershotResource: IntSetVar = null
 
-  var ResourceArray: Array[CumulativeResource] = null
+  var ResourceArray: Array[Resource] = null
   var ActivityArray: Array[Activity] = null
 
   var SentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
@@ -84,28 +85,24 @@ class Planning(val model: Model, val maxduration: Int) {
       if (j.isInstanceOf[SuperActivity]) superActivity = true
     }
 
-    for (j <- Activities) {j.post()}
+    for (j <- Activities) {j.close()}
 
     DenseRef(ActivityArray.map(job => job.AllPrecedingActivities), ActivityArray.map(job => job.AllSucceedingActivities))
 
     MakeSpan <== SentinelActivity.EarliestStartDate
 
-    ResourceArray = new Array[CumulativeResource](resourceCount)
+    ResourceArray = new Array[Resource](resourceCount)
     for (r <- resources) {
       ResourceArray(r.ResourceID) = r; r.close()
     }
 
-    val FirstOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
-    for (r <- resources) {
-      FirstOvershootArray(r.ResourceID) = r.FirstOvershoot
-    }
-    val ResourceWithOvershoot: IntSetVar = Filter(FirstOvershootArray, (date: Int) => date <= maxduration)
-    EarliestOvershotResources = ArgMinArray(FirstOvershootArray, ResourceWithOvershoot)
-
     val WorseOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
     for (r <- resources) {
-      WorseOvershootArray(r.ResourceID) = r.HighestUse
+      WorseOvershootArray(r.ResourceID) = r.overShoot
     }
+
+    val ResourceWithOvershoot: IntSetVar = Filter(WorseOvershootArray)
+
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
@@ -175,7 +172,7 @@ class Planning(val model: Model, val maxduration: Int) {
    */
   def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
     //this is not straigntworfward since there can be some SuperTasks.
-    (from != to) & (if (superActivity) !isThereDependency(to,from) else true)
+    (from != to) & to.canAddPrecedence & (if (superActivity) !isThereDependency(to,from) else true)
   }
 
   /**Checks if there is a path leading from one activity to another one

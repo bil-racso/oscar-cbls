@@ -29,16 +29,34 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 import oscar.cbls.scheduling.model.Planning
 
+class NonMoveableActivity(startDate:Int, duration: IntVar, planning: Planning, name: String = "")
+  extends Activity(duration: IntVar, planning: Planning, name){
+  override def canAddPrecedence: Boolean = false
+  override def close() {
+
+    AdditionalPredecessors := SortedSet.empty
+    AllPrecedingActivities := SortedSet.empty
+    EarliestStartDate := startDate
+    DefiningPredecessors := SortedSet.empty
+    PotentiallyKilledPredecessors := SortedSet.empty
+
+    AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+
+    //This is not correct. but since no task can be put before this one, this is not an issue.
+    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
+  }
+}
+
 class SuperActivity(start: Activity, end: Activity, override val name: String = "")
   extends Activity(IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
   start precedes end
 
-  override def post() {
+  override def close() {
 
-    start.post()
-    end.post()
+    start.close()
+    end.close()
 
     AdditionalPredecessors = start.AdditionalPredecessors
 
@@ -82,6 +100,11 @@ object SuperActivity {
   def apply(start: Activity, end: Activity) = new SuperActivity(start,end,"SuperActivity(" + start + "," + end + ")")
 }
 
+object Activity{
+  implicit val ord:Ordering[Activity] = new Ordering[Activity]{
+    def compare(o1: Activity, o2: Activity) = o1.ID - o2.ID
+  }
+}
 /**
  *
  * @param duration
@@ -143,14 +166,13 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
     r.notifyUsedBy(this, amount)
   }
 
-  var EarliestStartDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, duration.value, "esd(" + name + ")")
-  val EarliestEndDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, duration.value, "eed(" + name + ")")
+  def maxDuration = planning.maxduration
+
+  var EarliestStartDate: IntVar = IntVar(planning.model, 0, maxDuration, duration.value, "esd(" + name + ")")
+  val EarliestEndDate: IntVar = IntVar(planning.model, 0, maxDuration, duration.value, "eed(" + name + ")")
   EarliestEndDate <== EarliestStartDate + duration
 
-  val LatestEndDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, planning.maxduration, "led(" + name + ")")
+  val LatestEndDate: IntVar = IntVar(planning.model, 0, maxDuration, maxDuration, "led(" + name + ")")
 
   val LatestStartDate: IntVar = LatestEndDate - duration
   var AllSucceedingActivities: IntSetVar = null
@@ -172,9 +194,11 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   def getEndActivity: Activity = this
   def getStartActivity: Activity = this
 
+  def canAddPrecedence:Boolean = true
+
  // var ParasiticPrecedences:IntSetVar = null
   /**This method is called by the planning when all activities are created*/
-  def post() {
+  def close() {
     if (AdditionalPredecessors == null){
       AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Activities.size,
         "added predecessors of " + name, SortedSet.empty)
@@ -192,8 +216,6 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
       AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
       LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
-
-     // ParasiticPrecedences = AdditionalPredecessors minus PotentiallyKilledPredecessors
     }
   }
 }
