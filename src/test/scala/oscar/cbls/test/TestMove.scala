@@ -46,6 +46,8 @@ import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.ThreeOpt
+import oscar.cbls.routing.model.Unrouted
+import oscar.cbls.routing.model.VRPObjective
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -318,6 +320,28 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //  }
   //
 
+  moveTest("A basic two-opt move is done correctly.", 1, false, 4, 1,
+    Array(0, 0, 2, 2), Array(0, 2, 0, 2),
+    (vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted) => {
+       vrp.setCircuit(List(0, 1, 2, 3))
+       vrp.m.propagate()
+    }) {
+      (f: MoveFixture) =>
+        val relevantNeighbors = (n: Int) => f.vrp.nodes
+        new TwoOptNeighborhood().firstImprovingMove(
+          SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+            case Some(m) => {
+              m.isInstanceOf[TwoOptMove] should be(true)
+              val move = m.asInstanceOf[TwoOptMove]
+              println("An improving move was found ! : " + move)
+              m.doMove
+
+              check2OptMove(f, move)
+            }
+            case None => assert(false, "No improving move found, try launching this test again...")
+          }
+    }
+
   moveTest("A first two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
@@ -425,9 +449,14 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   def moveTest(
     name: String,
     verbose: Int = 0,
-    randomWeight: Boolean = false)(moveFun: MoveFixture => Unit): Unit = {
+    randomWeight: Boolean = false,
+    nbNodes: Int = 10,
+    nbVehicles: Int = 1,
+    abscissa: Array[Int] = null,
+    ordinate: Array[Int] = null,
+    init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted => Unit = BestInsert.apply)(moveFun: MoveFixture => Unit): Unit = {
     test(name) {
-      val f = new MoveFixture(verbose, randomWeight)
+      val f = new MoveFixture(verbose, randomWeight, nbNodes, nbVehicles, abscissa, ordinate, init)
 
       if (verbose > 0) {
         println(f.vrp)
@@ -526,19 +555,22 @@ class MoveFixture(
   val verbose: Int = 0,
   val randomWeight: Boolean = false,
   val nbNodes: Int = 10,
-  val nbVehicules: Int = 1) {
+  val nbVehicules: Int = 1,
+  var abscissa: Array[Int] = null,
+  var ordinate: Array[Int] = null,
+  val init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted => Unit = BestInsert.apply) {
 
   val ROUTE_ARRAY_UNROUTED = 1
 
-  val abscissa = Array.iterate(0, nbNodes)(_ + 1)
-  val ordinate: Array[Int] =
-    if (randomWeight) {
-      Gen.containerOfN[Array, Int](nbNodes, Gen.choose(0, 100)).sample.get
-    } else {
-      Array.fill(nbNodes)(0)
-    }
-  for (i <- 0 to ordinate.length - 1) print(ordinate(i) + " ")
-  println()
+  if (abscissa == null)
+    abscissa = Array.iterate(0, nbNodes)(_ + 1)
+  if (ordinate == null)
+    ordinate =
+      if (randomWeight) {
+        Gen.containerOfN[Array, Int](nbNodes, Gen.choose(0, 100)).sample.get
+      } else {
+        Array.fill(nbNodes)(0)
+      }
   val matrix = getDistanceMatrix(abscissa, ordinate)
   val model: Model = new Model(false, None, false, false)
 
@@ -549,8 +581,10 @@ class MoveFixture(
   vrp.installCostMatrix(matrix)
   model.close()
   model.propagate()
+  
+  println(vrp)
 
-  BestInsert(vrp)
+  init(vrp)
   // 0 -> 1 -> 2 -> ... -> nbNodes - 1 (-> 0)
   // or
   // 0 -> nbNodes - 1 -> ... -> 2 -> 1 (-> 0)
