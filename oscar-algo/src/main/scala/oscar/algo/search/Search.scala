@@ -57,7 +57,7 @@ class Search(node: SearchNode, branching: Branching) {
     def timeInTrail = node.trail.getTimeInRestore()-t0trail
     
     
-    var stack = scala.collection.mutable.Stack[(Int,Alternative)]()
+    var stack = scala.collection.mutable.Stack[(Int,Alternative,Boolean)]()
     val discrepancy = new ReversibleInt(node,0)
     node.pushState()
     
@@ -69,9 +69,11 @@ class Search(node: SearchNode, branching: Branching) {
       val currDiscrepancy = discrepancy.value
       val slackDiscrepancy = maxDiscrepancy - currDiscrepancy
       var i = (maxDiscrepancy - currDiscrepancy).min(alts.size-1)
+      var last = true
       while (i >= 0) {
-        stack.push((i,alts(i)))
+        stack.push((i,alts(i),last))
         i -= 1
+        last = false
       }
       true
     }
@@ -95,19 +97,24 @@ class Search(node: SearchNode, branching: Branching) {
     
     while (!stack.isEmpty && !done && !searchLimitReached) {
       nbNodes += 1
-      val (d,a) = stack.pop() // (discrepancy,alternative)
+      val (d,a,last) = stack.pop() // (discrepancy,alternative)
+      if (!last) node.pushState()
       discrepancy.value = discrepancy.value + d
       a()
       if (!node.isFailed()) {
-        if (!stackAlternatives()) {
+        // a node not failed without alternative is a solution
+        if (!stackAlternatives()) { 
             solFound()
             solCounter += 1
             nbBkts += 1 
             if (nbSols == solCounter) done = true
-            else node.pop()
-        } else {
-            node.pushState()
-        }
+            else {
+              node.pop()
+            }
+        } 
+        //else {
+          //  node.pushState()
+        //}
 
       } else {
         nbBkts += 1 

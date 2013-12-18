@@ -19,6 +19,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
 import oscar.cp.core._
+import oscar.algo.search._
 
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
@@ -42,13 +43,14 @@ class TestQueens extends FunSuite with ShouldMatchers  {
     	     cp.add(allDifferent(queens),l)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),l)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),l)
-           } exploration {        
-             for (q <- Queens.suspendable) {
-               cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
+           } search {
+             queens.find(!_.isBound) match {
+               case None => noAlternative
+               case Some(x) => branchAll(1 to n)(v => cp.add(x == v))
              }
-             nbsol += 1
-           } run()
-           nbsol
+           }
+           val stat = cp.start()
+           stat.nbSols
     }
     
     nbSol(7,Weak) should be(40)

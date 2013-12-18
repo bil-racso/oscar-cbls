@@ -124,11 +124,16 @@ object Nurses extends App  {
  
    val cp = CPSolver()
    cp.silent = true
-   val spreadAcuity = CPVarInt(cp,0 to Int.MaxValue)
+   val spreadAcuity = CPVarInt(cp,0 to 10e6.toInt)
    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
    println("spreadacuity:"+spreadAcuity)
    var best = Int.MaxValue
+   cp.onSolution {
+     nurseOfPatient.zipWithIndex.foreach{case(n,j) => items(j).bin = (n.value + nbNursesInZone.take(i).sum)}
+     best = spreadAcuity.value
+   }
+   
    // each nurse can have at most 3 and at least one patient
    cp.minimize(spreadAcuity) subjectTo {
      println("spreadacuity:"+spreadAcuity)
@@ -137,21 +142,20 @@ object Nurses extends App  {
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
      
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
-     
-   } exploration {
-     val x = nurseOfPatient
-     while (!allBounds(x)) {
-		    val maxUsed = x.maxBoundOrElse(-1)
-		    val y = x.minDomNotBound
-		    cp.branchAll(0 to maxUsed+1)(v => cp.post(y == v))
-     }
-     x.zipWithIndex.foreach{case(n,j) => items(j).bin = (n.value + nbNursesInZone.take(i).sum)}
-     
-     best = spreadAcuity.value
-   } run()
+
+    } search {
+      selectMin(nurseOfPatient)(x => !x.isBound)(x => x.size) match {
+        case None => noAlternative
+        case Some(y) => {
+          val maxUsed = nurseOfPatient.maxBoundOrElse(-1)
+          branchAll(0 to maxUsed + 1)(v => cp.post(y == v))
+        }
+      }
+    } 
+   val stat = cp.start()
    totSpread += best
    println("spread zone:"+i+"="+best)
-   cp.printStats
+   println(stat)
   
  }
  println("---------------------------")
