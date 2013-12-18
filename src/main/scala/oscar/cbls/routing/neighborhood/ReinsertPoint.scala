@@ -32,7 +32,7 @@ import oscar.cbls.search.SearchEngineTrait
 
 /**
  * Inserts an unrouted point in a route.
- * The search complexity is O(n²).
+ * The search complexity is O(nÂ²).
  */
 object ReinsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(

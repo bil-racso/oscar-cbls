@@ -35,7 +35,7 @@ import oscar.cbls.search.SearchEngineTrait
  * Removes three edges of routes, and rebuilds routes from the segments. (without any reverse)
  *
  * Info : it also could be saw as the move of a route's segment to another place.
- * The search complexity is O(n³).
+ * The search complexity is O(nÂ³).
  */
 object ThreeOpt extends Neighborhood with SearchEngineTrait {
 
