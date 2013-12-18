@@ -31,7 +31,7 @@ import oscar.cbls.routing.model.{ MoveDescription, VRP }
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
- * The search complexity is O(n²).
+ * The search complexity is O(nÂ²).
  */
 object OnePointMove extends TwoPointsNeighborhood {
   override def encode(predOfMovedPoint: Int, insertionPoint: Int, vrp: VRP with MoveDescription) {

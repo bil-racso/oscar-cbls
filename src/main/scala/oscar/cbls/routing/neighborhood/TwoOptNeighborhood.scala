@@ -32,14 +32,14 @@ import oscar.cbls.search.SearchEngineTrait
 /**
  * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
  *
- * The search complexity is O(n²).
+ * The search complexity is O(nÂ²).
  */
 case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
 
   /**
    * Removes two edges of a route and flips the obtained segment before
    * reconnecting it.
-   * The search complexity is O(n²).
+   * The search complexity is O(nÂ²).
    */
   override protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult = {
 

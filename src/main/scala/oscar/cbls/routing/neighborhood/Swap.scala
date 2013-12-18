@@ -31,7 +31,7 @@ import oscar.cbls.routing.model._
 
 /**
  * Swaps two points of the same or different routes.
- * The search complexity is O(n²).
+ * The search complexity is O(nÂ²).
  */
 object Swap extends TwoPointsNeighborhood {
   override def encode(fstPred: Int, sndPred: Int, vrp: VRP with MoveDescription) {
