@@ -56,6 +56,12 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   private var VarInConstraints:List[Variable] = List.empty
   private var VarsWatchedForViolation:List[Variable] = List.empty
 
+  override def toString() = {
+    val constraints = PostedConstraints.map(_._1)
+    val sortedConstraints = constraints.sortBy(c => c.violation.value)
+    val sortedConstraintsStrings = sortedConstraints.map(c => "" + c.violation + " " + c)
+    "ConstraintSystem{\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
+  }
   /**
    * @return the constraints posted in the constraint system, together with their weighting factor.
    */
@@ -119,7 +125,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   /**Must be invoked before the violation can be queried.
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
-    * NEW: this is called automatically by the model before it actually closes. 
+    * NEW: this is called automatically by the model before it actually closes.
    */
   def close(){
     if(!isClosed){
