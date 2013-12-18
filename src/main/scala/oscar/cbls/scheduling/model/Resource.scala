@@ -3,7 +3,7 @@ package oscar.cbls.scheduling.model
 import oscar.cbls.invariants.core.computation.IntVar
 
 /**
- * this is an abstract class representing a resoruce.
+ * this is an abstract class representing a resource.
  * the purpose is to abstract away conflict identification and other stuff that are specific to each type of resource
  *
  * @param planning
