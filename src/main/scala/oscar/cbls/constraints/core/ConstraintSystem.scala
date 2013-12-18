@@ -76,7 +76,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    */
   def post(c:Constraint,weight:IntVar=null){
 
-    assert(c.getPropagationStructure == this.model || c.getPropagationStructure == null, "constraints must be registered to same propagation structure as constraint system")
+    assert(c.getPropagationStructure == this.model || c.getPropagationStructure == null,
+      "constraints must be registered to same propagation structure as constraint system")
     PostedConstraints = (c,weight) :: PostedConstraints
 
     for(variable <- c.constrainedVariables){

@@ -117,8 +117,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
     }
 
-    buildFastPropagationTracks()
-
     val StrognlyConnectedComponents: List[List[PropagationElement]] =
       if (NoCycle) {
         if (Verbose) {
@@ -150,6 +148,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
         c
       }
     })
+
+    buildFastPropagationTracks()
 
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
@@ -291,7 +291,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    */
   final def propagate(UpTo: PropagationElement = null) { //TODO: handle the case of input elements. just propagete it and done.
     if (!Propagating) {
-      if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
+      if (UpTo != null) {
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
         val SameAsBefore = (Track != null && (PreviousPropagationTarget == UpTo))
         propagateOnTrack(Track, SameAsBefore)
