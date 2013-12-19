@@ -67,6 +67,7 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
   }
 
   def encode(beforeReinsertedPoint: Int, reinsertedPoint: Int, vrp: VRP with MoveDescription) {
+    assert(!vrp.isRouted(reinsertedPoint))
     val s = vrp.segmentFromUnrouted(reinsertedPoint)
     vrp.insert(s, beforeReinsertedPoint)
   }
