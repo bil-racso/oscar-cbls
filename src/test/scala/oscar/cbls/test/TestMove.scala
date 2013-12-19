@@ -48,6 +48,7 @@ import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.ThreeOpt
 import oscar.cbls.routing.model.Unrouted
 import oscar.cbls.routing.model.VRPObjective
+import oscar.cbls.routing.model.StrongConstraints
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -454,7 +455,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     nbVehicles: Int = 1,
     abscissa: Array[Int] = null,
     ordinate: Array[Int] = null,
-    init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted => Unit = BestInsert.apply)(moveFun: MoveFixture => Unit): Unit = {
+    init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted with StrongConstraints => Unit = BestInsert.apply)(moveFun: MoveFixture => Unit): Unit = {
     test(name) {
       val f = new MoveFixture(verbose, randomWeight, nbNodes, nbVehicles, abscissa, ordinate, init)
 
@@ -558,7 +559,7 @@ class MoveFixture(
   val nbVehicules: Int = 1,
   var abscissa: Array[Int] = null,
   var ordinate: Array[Int] = null,
-  val init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted => Unit = BestInsert.apply) {
+  val init: VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted with StrongConstraints => Unit = BestInsert.apply) {
 
   val ROUTE_ARRAY_UNROUTED = 1
 
@@ -574,7 +575,7 @@ class MoveFixture(
   val matrix = getDistanceMatrix(abscissa, ordinate)
   val model: Model = new Model(false, None, false, false)
 
-  val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted
+  val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted with StrongConstraints
 
   vrp.addObjectiveTerm(vrp.UnroutedPenalty)
   vrp.setUnroutedPenaltyWeight(10000)

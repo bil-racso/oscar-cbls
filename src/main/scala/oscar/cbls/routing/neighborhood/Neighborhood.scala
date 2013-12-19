@@ -5,6 +5,8 @@ import oscar.cbls.modeling.Algebra._
 import java.nio.file.OpenOption
 import oscar.cbls.routing.model.{ PositionInRouteAndRouteNr, VRPObjective, MoveDescription, VRP }
 import oscar.cbls.routing.model.UnroutedImpl
+import oscar.cbls.routing.model.StrongConstraints
+import oscar.cbls.routing.model.StrongConstraints
 
 abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
@@ -110,23 +112,23 @@ abstract class Neighborhood() {
   def checkEncodedMove(
     moveAcceptor: Int => Boolean,
     StayIfAccept: Boolean,
-    vrp: VRP with VRPObjective with MoveDescription): (Boolean, Int) = {
-//    println("vrp dans checkEncodeMove AVANT commit: " + vrp)
+    vrp: VRPObjective with VRPObjective with StrongConstraints): (Boolean, Int) = {
+//    println("dans checkEncodeMove AVANT commit: " + vrp.strongConstraints)
     vrp.commit(true)
-//    println("vrp dans checkEncodeMove APRES commit: " + vrp)
-    val obj = vrp.getObjective()
+//    println("dans checkEncodeMove APRES commit: " + vrp.strongConstraints)
+    val obj = vrp.getObjectiveAfterRegisteredMove
     val accept = moveAcceptor(obj)
     if (accept & StayIfAccept) {
-        (accept, obj)
-      } else {
-        vrp.undo(false)
-//        println("vrp dans checkEncodeMove APRES undo: " + vrp)
-        (accept, obj)
-      }
+//      println("move accepted")
+      (accept, obj)
+    } else {
+      vrp.undo(false)
+      (accept, obj)
+    }
   }
 }
 
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
   //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
   primaryNodeIterator: Iterator[Int],
-  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
+  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with StrongConstraints)
