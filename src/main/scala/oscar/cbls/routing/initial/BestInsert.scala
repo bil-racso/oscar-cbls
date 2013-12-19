@@ -25,7 +25,7 @@
 package oscar.cbls.routing.initial
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.neighborhood.ReinsertPoint
+import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
 
 /**
@@ -42,7 +42,7 @@ object BestInsert {
   def apply(vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
     val relevantNeighbors = (n: Int) => vrp.nodes
     while (true) {
-      ReinsertPoint.bestImprovingMove(
+      InsertPoint.bestImprovingMove(
         SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
           case Some(m) => m.doMove
           case None => return

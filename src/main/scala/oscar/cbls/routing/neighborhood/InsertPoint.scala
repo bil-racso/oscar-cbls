@@ -34,7 +34,7 @@ import oscar.cbls.search.SearchEngineTrait
  * Inserts an unrouted point in a route.
  * The search complexity is O(n²).
  */
-object ReinsertPoint extends Neighborhood with SearchEngineTrait {
+object InsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(
       s: SearchZone,
       moveAcceptor: (Int) => (Int) => Boolean,
@@ -44,18 +44,18 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
-      val beforeReinsertedPoint: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(beforeReinsertedPoint)) {
+      val beforeInsertedPoint: Int = s.primaryNodeIterator.next()
+      if (vrp.isRouted(beforeInsertedPoint)) {
         for (
-          reinsertedPoint <- s.relevantNeighbors(beforeReinsertedPoint) if (
-            !vrp.isRouted(reinsertedPoint))) {
-          encode(beforeReinsertedPoint, reinsertedPoint, vrp)
+          insertedPoint <- s.relevantNeighbors(beforeInsertedPoint) if (
+            !vrp.isRouted(insertedPoint))) {
+          encode(beforeInsertedPoint, insertedPoint, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
             case (true, newObj: Int) => { //this improved
               if (returnMove) {
-                return MoveFound(ReinsertPoint(beforeReinsertedPoint,
-                  reinsertedPoint, newObj, vrp))
+                return MoveFound(InsertPoint(beforeInsertedPoint,
+                  insertedPoint, newObj, vrp))
               } else return MovePerformed()
             }
             case _ => ()
@@ -66,10 +66,10 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
     NoMoveFound()
   }
 
-  def encode(beforeReinsertedPoint: Int, reinsertedPoint: Int, vrp: VRP with MoveDescription) {
-    assert(!vrp.isRouted(reinsertedPoint))
-    val s = vrp.segmentFromUnrouted(reinsertedPoint)
-    vrp.insert(s, beforeReinsertedPoint)
+  def encode(beforeInsertedPoint: Int, insertedPoint: Int, vrp: VRP with MoveDescription) {
+    assert(!vrp.isRouted(insertedPoint))
+    val s = vrp.segmentFromUnrouted(insertedPoint)
+    vrp.insert(s, beforeInsertedPoint)
   }
 }
 
@@ -80,15 +80,15 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
  * @param objAfter the objective value if we performed this reinsert-point operator.
  * @param vrp the given VRP problem.
  */
-case class ReinsertPoint(
-  beforeReinsertedPoint: Int,
-  reinsertedPoint: Int,
+case class InsertPoint(
+  beforeInsertedPoint: Int,
+  insertedPoint: Int,
   override val objAfter: Int,
   override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
   // overriding methods
   override def encodeMove() {
-    ReinsertPoint.encode(beforeReinsertedPoint, reinsertedPoint, vrp)
+    InsertPoint.encode(beforeInsertedPoint, insertedPoint, vrp)
   }
 
-  override def toString: String = "ReinsertPoint(beforeReinsertedPoint = " + beforeReinsertedPoint + ", reinsertedPoint = " + reinsertedPoint + " )"
+  override def toString: String = "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint + ", insertedPoint = " + insertedPoint + " )"
 }
