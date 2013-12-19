@@ -40,6 +40,7 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
       moveAcceptor: (Int) => (Int) => Boolean,
       returnMove: Boolean): SearchResult = {
     val startObj: Int = s.vrp.getObjective()
+    s.vrp.cleanRecordedMoves()
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {

@@ -131,4 +131,4 @@ abstract class Neighborhood() {
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
   //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
   primaryNodeIterator: Iterator[Int],
-  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with StrongConstraints)
+  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
