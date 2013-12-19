@@ -47,8 +47,7 @@ object ReinsertPoint extends Neighborhood with SearchEngineTrait {
       if (vrp.isRouted(beforeReinsertedPoint)) {
         for (
           reinsertedPoint <- s.relevantNeighbors(beforeReinsertedPoint) if (
-            !vrp.isRouted(reinsertedPoint))
-        ) {
+            !vrp.isRouted(reinsertedPoint))) {
           encode(beforeReinsertedPoint, reinsertedPoint, vrp)
 
           checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {

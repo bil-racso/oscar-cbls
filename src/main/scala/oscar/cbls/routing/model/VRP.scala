@@ -314,7 +314,7 @@ trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   }
 }
 
-trait VRPObjective extends VRP with MoveDescription {
+trait VRPObjective extends VRP{
 
   val objectiveFunction = IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
@@ -335,18 +335,6 @@ trait VRPObjective extends VRP with MoveDescription {
    */
   def closeObjectiveFunction() {
     objectiveFunction <== Sum(objectiveFunctionTerms)
-  }
-
-  /**
-   * this returns the value of the objective function after the registered move is performed.
-   * The state of the recorded move is restored as it was, so you can simply re-comit it if you decide to keep this move.
-   * @return
-   */
-  def getObjectiveAfterRegisteredMove(): Int = {
-    this.commit(true)
-    val toreturn = objectiveFunction.value
-    undo(true)
-    toreturn
   }
 
   def getObjective(): Int = objectiveFunction.value
@@ -651,18 +639,8 @@ trait StrongConstraints extends VRPObjective {
    */
   var strongConstraints: ConstraintSystem = new ConstraintSystem(m)
 
-  /**
-   * this returns the value of the objective function after the registered move is performed.
-   * This will also undo the registered move, and drop it
-   * by convension, a violation of the strong constraint returns Int.MaxValue
-   * @return
-   */
-  override def getObjectiveAfterRegisteredMove(): Int = {
-    commit(true)
-    val toreturn: Int = (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
-    undo(true)
-    toreturn
-  }
+  override def getObjective(): Int =
+    (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
 }
 
 /**

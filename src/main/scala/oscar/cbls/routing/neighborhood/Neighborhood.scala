@@ -110,7 +110,7 @@ abstract class Neighborhood() {
   def checkEncodedMove(
     moveAcceptor: Int => Boolean,
     StayIfAccept: Boolean,
-    vrp: VRPObjective with VRPObjective): (Boolean, Int) = {
+    vrp: VRP with VRPObjective with MoveDescription): (Boolean, Int) = {
 //    println("vrp dans checkEncodeMove AVANT commit: " + vrp)
     vrp.commit(true)
 //    println("vrp dans checkEncodeMove APRES commit: " + vrp)
@@ -129,4 +129,4 @@ abstract class Neighborhood() {
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
   //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
   primaryNodeIterator: Iterator[Int],
-  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr)
+  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
