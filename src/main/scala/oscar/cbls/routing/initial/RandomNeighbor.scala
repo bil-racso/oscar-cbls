@@ -20,37 +20,27 @@
 package oscar.cbls.routing.initial
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing._
-import neighborhood.{ReinsertPoint, Neighbor}
+import oscar.cbls.routing.neighborhood.ReinsertPoint
+import oscar.cbls.routing.neighborhood.SearchZone
 
 /**
  * Constructs an initial solution randomly.
  */
 object RandomNeighbor{
-
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp:VRP with VRPObjective with Unrouted with PositionInRouteAndRouteNr
+  def apply(vrp:VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted with MoveDescription
     with HopDistance){
-
-    val current:Array[Neighbor] = Array.tabulate(vrp.V)(_ => null)
-    for (v <- 0 until vrp.V)
-      vrp.Next(v) := v
-    for (p <- vrp.V until vrp.N)
-      vrp.Next(p) := vrp.N
-    vrp.m.propagate()
-
-    var vehicle = 0
-    val nodeToRoute = vrp.N-vrp.V
-    for (p <- 0 until nodeToRoute){
-      current(vehicle) = ReinsertPoint.getRandomMove(vrp,current(vehicle),vehicle)
-
-      if (current(vehicle)!= null)
-        current(vehicle).comit()
-      vehicle=(vehicle+1) % vrp.V
+    val relevantNeighbors = (n: Int) => vrp.nodes
+    while(true) {
+      // FIXME this is not really random
+      ReinsertPoint.firstImprovingMove(
+          SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
+        case Some(m) => m.doMove
+        case None => return
+      }
     }
   }
 }
-

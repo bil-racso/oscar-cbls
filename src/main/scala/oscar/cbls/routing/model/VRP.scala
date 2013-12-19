@@ -314,7 +314,7 @@ trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   }
 }
 
-trait VRPObjective extends VRP{
+trait VRPObjective extends VRP {
 
   val objectiveFunction = IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
