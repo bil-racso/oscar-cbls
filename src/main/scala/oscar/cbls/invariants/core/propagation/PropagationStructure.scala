@@ -60,7 +60,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing.
- * @param Checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
+ * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */

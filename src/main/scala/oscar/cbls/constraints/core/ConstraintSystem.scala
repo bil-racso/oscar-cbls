@@ -60,7 +60,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     val constraints = PostedConstraints.map(_._1)
     val sortedConstraints = constraints.sortBy(c => c.violation.value)
     val sortedConstraintsStrings = sortedConstraints.map(c => "" + c.violation + " " + c)
-    "ConstraintSystem{\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
+    "ConstraintSystem{" + this.Violation + "\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
   }
   /**
    * @return the constraints posted in the constraint system, together with their weighting factor.
