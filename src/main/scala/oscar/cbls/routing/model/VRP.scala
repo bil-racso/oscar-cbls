@@ -168,7 +168,8 @@ trait HotSpotRecording extends VRP with MoveDescription {
 }
 
 trait MoveDescription extends VRP {
-  var Recording = true //recording ou comitted
+  private var Recording = true //recording ou comitted
+  def isRecording = Recording
 
   protected var affects: List[Affect] = List.empty
 
@@ -279,7 +280,7 @@ trait MoveDescription extends VRP {
       }
     }
     doIt(affects)
-    undoList.reverse //TODO: find a better ways to get it.
+    undoList.reverse //TODO: find a better way to get it.
   }
 
   private def doAllMoves() {

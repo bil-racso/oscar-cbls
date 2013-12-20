@@ -112,10 +112,11 @@ abstract class Neighborhood() {
     moveAcceptor: Int => Boolean,
     StayIfAccept: Boolean,
     vrp: VRPObjective with VRPObjective with MoveDescription): (Boolean, Int) = {
+    vrp.commit(true)
     val obj = vrp.getObjective
-    val accept = moveAcceptor(obj)
+    val accept:Boolean = moveAcceptor(obj)
     if (accept & StayIfAccept) {
-//      println("move accepted")
+      vrp.cleanRecordedMoves()
       (accept, obj)
     } else {
       vrp.undo(false)

@@ -50,7 +50,7 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
           insertedPoint <- s.relevantNeighbors(beforeInsertedPoint) if (
             !vrp.isRouted(insertedPoint))) {
 
-          assert(s.vrp.Recording, "MoveDescription should be recording now")
+          assert(s.vrp.isRecording, "MoveDescription should be recording now")
 
           encode(beforeInsertedPoint, insertedPoint, vrp)
 
