@@ -2,6 +2,7 @@ package oscar.cbls.constraints.lib.basic
 
 import oscar.cbls.invariants.core.computation.{IntSetVar, Variable, IntVar}
 import oscar.cbls.constraints.core.Constraint
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * implements v \in set
@@ -35,4 +36,12 @@ case class BelongsTo(v:IntVar, set:IntSetVar) extends Constraint{
   override def violation = Violation
   /** the violation is 1 v is not is set, 0 otherwise*/
   override def violation(v: Variable):IntVar = {if(this.v == v || this.set == v) Violation else 0}
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker) {
+    c.check(Violation.value == (if(set.value.contains(v.value)) 0 else 1), Some("Violation of BelongsTo"))
+  }
 }
