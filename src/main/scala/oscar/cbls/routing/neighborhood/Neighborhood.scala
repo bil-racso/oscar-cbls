@@ -60,6 +60,7 @@ abstract class Neighborhood() {
   final def bestImprovingMove(
     s: SearchZone,
     moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
+
     var bestMove: Option[Move] = None
     var bestObj = Int.MaxValue
     while (true) {

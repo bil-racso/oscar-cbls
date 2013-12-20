@@ -31,7 +31,7 @@ import oscar.cbls.routing.neighborhood.SearchZone
 /**
  * Constructs an initial solution by repeatedly inserting points into the circuits.
  * it performs a round-robin on vehicles, and every time performs the best possible insert
- * by applying [[oscar.cbls.routing.neighborhood.ReinsertPoint]]
+ * by applying [[oscar.cbls.routing.neighborhood.InsertPoint]]
  */
 object BestInsert {
 
