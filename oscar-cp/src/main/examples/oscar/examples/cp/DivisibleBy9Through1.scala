@@ -41,6 +41,11 @@ object DivisibleBy9Through1 {
 
     val coefs = Array(100000000,10000000,1000000,100000,10000,1000,100,10,1)
     
+    cp.onSolution {
+      println(digits.mkString(","))
+      println(numbers.mkString(","))      
+    }
+    
     cp.solve() subjectTo {
       
       cp.add(allDifferent(digits), Strong)
@@ -49,12 +54,10 @@ object DivisibleBy9Through1 {
         cp.add(numbers(i-1) == divisors(i-1) * i)
       }
       
-    } exploration {
-      cp.binaryFirstFail(digits)
-      println(digits.mkString(","))
-      println(numbers.mkString(","))
+    } search {
+      binaryFirstFail(digits)
     }
-    cp.printStats()
+    println(cp.start())
     
   }
 

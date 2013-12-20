@@ -44,12 +44,12 @@ object Dudeney {
       cp.add(nb == (s mul s mul s))
       cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)
       cp.add(sum(x) == s)
-    } exploration {
-      cp.binaryFirstFail(x)
+    } search {
+      binaryFirstFail(x)
+    } onSolution {
       println(nb.value)
-    } run()
-
-    cp.printStats()
+    }
+    println(cp.start())
 
   }
 

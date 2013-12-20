@@ -28,8 +28,7 @@ import oscar.cp.core._
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PrimeLooking {
-  def main(args: Array[String]) {
+object PrimeLooking extends App {
     
     val n = 1000
     
@@ -50,13 +49,12 @@ object PrimeLooking {
     	  cp.add(d2 != (v*i))
         }
       }
-    } exploration {
-      cp.binaryFirstFail(Array(x,d1,d2))
-      cpt += 1
-    } run()
+    } search {
+      binaryFirstFail(Seq(x,d1,d2))
+    } 
     
-    println("number of solutions:"+cpt)
-  }
+    println(cp.start())
+    
   
 
 

@@ -86,21 +86,17 @@ object BiQuadraticAssignment extends App {
 
   cp.paretoMinimize(obj1, obj2) subjectTo {
     cp.add(allDifferent(x), Strong)
-  }
-
-  cp.exploration {
-    while (!allBounds(x)) {
+  } search {
+    if (allBounds(x)) noAlternative
+    else {
       val (i, v) = heuristic(if (rand.nextBoolean) w1 else w2)
-      cp.branch(cp.post(x(i) == v))(cp.post(x(i) != v))
+      branch(cp.add(x(i) == v))(cp.add(x(i) != v))
     }
-    paretoPlot.insert(obj1.value, obj2.value)
+  } onSolution {
+     paretoPlot.insert(obj1.value, obj2.value)
   }
 
   println("search...")
-  val t = time {
-    cp.run()
-  }
-
-  println("time " + t)
-  println("size " + cp.nonDominatedSolutions.size)
+  println(cp.start())
+  println("size of archive" + cp.nonDominatedSolutions.size)
 }

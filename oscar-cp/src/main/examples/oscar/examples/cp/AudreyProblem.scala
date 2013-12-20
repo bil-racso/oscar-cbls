@@ -17,13 +17,13 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.algo.search._
 import oscar.visual._
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualCircle
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * Little Problem given by my n-Side colleague Audrey Timmermans:
@@ -49,15 +49,16 @@ object AudreyProblem  {
 		
 		val cp = new CPSolver()
 		val x = (0 until 100).map(v => CPVarInt(cp,reachables(v)))
-		
+		cp.onSolution {
+		  println(x.map(_.value).mkString(","))
+		}
 		cp.solve subjectTo {
 			cp.add(circuit(x))
-		} exploration {
-		  cp.binaryFirstFail(x)
-		  println(x.map(_.value).mkString(","))
-		} run(1)
+		} search {
+		  binaryFirstFail(x)
+		} start(1)
 		
-		cp.printStats()
+		
 		
 		//  -----------visualization of the euler tour ----------
 	

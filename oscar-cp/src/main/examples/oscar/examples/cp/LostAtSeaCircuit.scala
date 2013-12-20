@@ -39,8 +39,7 @@ import oscar.visual.shapes.VisualRectangle
  * 
  * @author Elise Dupont & Pierre Schaus
  */
-object LostAtSeaCircuit  {
-	def main(args: Array[String]) {
+object LostAtSeaCircuit  extends App {
 		
       // input data with the probabilities
       
@@ -77,18 +76,19 @@ object LostAtSeaCircuit  {
                   cp.add(elementVar(succ,path(i),path(i+1))) 
                 }
                 cp.add(circuit(succ),Strong)
-       } exploration {
-         cp.binaryFirstFail(path)
+       } search {
+         binaryFirstFail(path)
+       } onSolution {
          println(path.mkString(","))
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
-       } run()
+       }
        
-       cp.printStats()
+       println(cp.start())
        
        // ---------------- make a small visu ---------------	
        
        val f = new VisualFrame("Lost At Sea",1,2)
-	   val drawing = VisualDrawing(true)
+	   val drawing = VisualDrawing(flipped = true)
 	   f.createFrame("Solution").add(drawing)
 	   val scale = 60
 
@@ -103,21 +103,7 @@ object LostAtSeaCircuit  {
          val (li1,ci1) = getLineCol(sol(i+1))
          VisualLine(drawing,li*scale + scale/2 ,ci*scale +  scale/2 ,li1*scale + scale/2 ,ci1*scale +  scale /2 )
        }
-       
 
-       
-       
        f.pack()
        
-       
-		
-       
-       
-
-       
-
-      
-      
-      
-	}
 }

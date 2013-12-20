@@ -30,7 +30,7 @@ import oscar.util._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-package object modeling extends oscar.cp.modeling.Constraints {
+package object modeling extends Constraints with Branchings {
 
   /**
    * Filtering power can be specified for some of the constraints.
@@ -322,24 +322,7 @@ package object modeling extends oscar.cp.modeling.Constraints {
       cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
   }
 
-  def allBounds(vars: Iterable[CPVarInt]) = vars.forall(_.isBound)
-
-  def argMax[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
-    val max = indexes.map(f).max
-    indexes.filter(f(_) == max)
-  }
-
-  def argMax2[A](indexes: Iterable[A])(f1: A => Int, f2: A => Int): Iterable[A] = {
-    val maxf1 = indexes.map(f1).max
-    val tmp = indexes.filter(f1(_) == maxf1)
-    val maxf2 = tmp.map(f2).max
-    tmp.filter(f2(_) == maxf2)
-  }
-
-  def argMin[A](indexes: Iterable[A])(f: A => Int): Iterable[A] = {
-    val min = indexes.map(f).min
-    indexes.filter(f(_) == min)
-  }
+  def allBounds(vars: Iterable[_ <: CPVarInt]) = vars.forall(_.isBound)
   
   
   // helper functions to define searches

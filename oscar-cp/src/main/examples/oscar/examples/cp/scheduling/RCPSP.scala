@@ -59,8 +59,8 @@ object RCPSP extends App {
     // Cumulative
     cp.add(new SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capa), 0))
 
-  } exploration {
-    cp.binaryFirstFail(starts)
-  } run ()
-  cp.printStats()
+  } search {
+    binaryFirstFail(starts)
+  } 
+  println(cp.start())
 }

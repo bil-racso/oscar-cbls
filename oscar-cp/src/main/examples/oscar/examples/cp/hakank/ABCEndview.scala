@@ -413,7 +413,7 @@ object ABCEndview {
           val notbound = x_flat.filterNot(_.isBound)
 
           // "max regret"
-          val y = argMax(notbound)(v=>v.max-v.min).last
+          val y = notbound.maxBy(v=>v.max-v.min)
 
           //    
           // value selection

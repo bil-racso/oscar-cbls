@@ -32,7 +32,6 @@ object LongestPath extends App {
   // --- reading the data ---
 
   val lines = Source.fromFile("data/longestpath/planar-n50.ins1.txt_com10_ins1").getLines.reduceLeft(_ + " " + _)
-  //val lines = Source.fromFile("data/longestpath/test.txt").getLines.reduceLeft(_ + " " + _)
   
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "")
   var index = 0
@@ -67,107 +66,20 @@ object LongestPath extends App {
   val len = 12 // path lenth
 
   println("----------- trying with length:" + len + "-------------")
+  
   val cp = CPSolver()
   val path = Array.fill(len)(CPVarInt(cp, nodes))
   val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
-  //println((for (i <- nodes) yield distMatrix_(i).mkString(",")).mkString("\n"))
 
-  
-  
-  
+
   cp.maximize(weight) subjectTo {
     for (i <- 0 until len - 1) {
       cp.add(table(path(i), path(i + 1), tuples)) // for each consecutive visits, give the possible valid transitions
     }
     cp.add(allDifferent(path), Weak)
-    //val cons = new WeightedPath(path, outNodes, inNodes, distMatrix_, weight)
-    //println("initlb:"+cons.bound(true)+" initub:"+cons.bound(false))
-    //cp.post(cons)
 
-  } exploration {
-    cp.binaryFirstFail(path)
-
-    //println(path.mkString(","))
+  } search {
+    binaryFirstFail(path)
   }
-  cp.printStats
-
-}
-
-class WeightedPath(val path: Array[CPVarInt], outNodes: Array[Set[Int]], inNodes: Array[Set[Int]], distMatrix: Array[Array[Int]], dist: CPVarInt) extends Constraint(path(0).s) {
-
-  val n = outNodes.length
-  val m = path.length
-
-  def isConsistent(): Boolean = check(m - 2)
-
-  def check(l: Int): Boolean = {
-    if (l >= 0) {
-      val ok = (0 until n).forall(i => outNodes(i).filter(path(l + 1).hasValue(_)).nonEmpty)
-      for(i <- 0 until n) {
-        val empty = outNodes(i).filter(path(l + 1).hasValue(_)).isEmpty
-        if (empty) {
-          if (path(l).removeValue(i) == CPOutcome.Failure) {
-            return false
-          }
-        }
-      }
-      true
-    } else {
-      true
-    }
-  }
-
-  def bound(lower: Boolean): Int = {
-    val next = Array.fill(m, n)(0)
-    val weight = Array.fill(m, n)(if (lower) 1000000 else -1000000)
-    for (i <- 0 until n) {
-      if (path(m-1).hasValue(i)) {
-        weight(m-1)(i) = 0
-      } else {
-        if (lower) weight(m-1)(i) = 1000000
-        else weight(m-1)(i) = -1000000
-      }
-       
-    }
-    def updateLayer(l: Int) {
-      if (l >= 0) {
-        for (i <- 0 until n; if (path(l).hasValue(i)) ) {
-          val validOutNodes = outNodes(i).filter(path(l + 1).hasValue(_))
-          val pairs = validOutNodes.map(j => (distMatrix(i)(j) + weight(l + 1)(j), j))
-          val (cost, succ) = if (lower) pairs.min else pairs.max
-          next(l)(i) = succ
-          weight(l)(i) = cost
-        }
-        updateLayer(l - 1)
-      }
-    }
-    updateLayer(m - 2)
-    
-    val weight0 = (0 until n).filter(path(0).hasValue(_)).map(weight(0)(_))
-    if (lower) weight0.min else weight0.max
-    
-  }
-
-  def setup(strength: CPPropagStrength): CPOutcome = {
-    path.foreach(_.callPropagateWhenDomainChanges(this))
-    dist.callPropagateWhenBoundsChange(this)
-    propagate()
-  }
-
-  override def propagate(): CPOutcome = {
-    if (isConsistent()) {
-      
-      //println("lb:"+bound(true)+" cost:"+dist)
-      
-      if (dist.updateMin(bound(true)) == CPOutcome.Failure) {
-        return CPOutcome.Failure
-      }
-      
-      if (dist.updateMax(bound(false)) == CPOutcome.Failure) {
-        return CPOutcome.Failure
-      }
-      return CPOutcome.Suspend
-    } else CPOutcome.Failure
-  }
-
+  println(cp.start())
 }

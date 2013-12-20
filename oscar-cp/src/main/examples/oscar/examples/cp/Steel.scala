@@ -16,7 +16,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import oscar.visual._
 import oscar.util._

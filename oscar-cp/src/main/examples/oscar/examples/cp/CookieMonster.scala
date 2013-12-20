@@ -17,7 +17,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import collection.immutable.SortedSet
 
@@ -66,6 +65,11 @@ object CookieMonster extends App {
     }
   }
   
+  cp.onSolution {
+    printSol()
+    nbSol += 1
+  }
+  
   cp.solve subjectTo {
     for (j <- 0 until jars.size) {
       cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
@@ -74,19 +78,19 @@ object CookieMonster extends App {
     for (m <- 0 until maxMove-1) {
       cp.add(lexLeq(bx(m+1),bx(m)))
     }
-  } exploration {
-    cp.branchAll(1 until maxMove)(i => {
-      for (m <- i+1 until maxMove) {
+  } search {
+    binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
+  }
+  
+  for (i <- 0 until maxMove; if nbSol == 0) {
+    cp.startSubjectTo(nbSols = 1) {
+      for (m <- i + 1 until maxMove) {
         if (m > i) cp.post(x(m) == 0)
         else cp.post(x(m) > 0)
-      } 
-    })
-    cp.binaryFirstFail(x)
-    cp.binary(b.flatten)
-    //printSol()
-    nbSol += 1
-  } run(1)
+      }
+    }
+  }
   
   println("nbSol="+nbSol)
-  cp.printStats()
+
 }

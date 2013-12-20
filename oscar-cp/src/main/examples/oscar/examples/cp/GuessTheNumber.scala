@@ -41,11 +41,12 @@ object GuessTheNumber extends App {
 
     cp.solve subjectTo {
       cp.add(nb1 == (nb2*3))
-    } exploration {
-      cp.binary(digits)
+    } search {
+      binaryStatic(digits)
+    } onSolution {
       println("nb1:"+nb1.value+" nb2:"+nb2.value)
-    } run()
-    cp.printStats()
+    }
+    println(cp.start())
     
     
     // ---------------

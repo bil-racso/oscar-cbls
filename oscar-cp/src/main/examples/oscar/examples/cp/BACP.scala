@@ -17,12 +17,13 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
+
 import scala.io.Source
 import scala.io.Source
 import oscar.util._
 import oscar.visual._
+import oscar.cp.search.BinaryFirstFailBranching
 
 
 /**
@@ -46,7 +47,7 @@ import oscar.visual._
  */
 object BACP extends App{
 
-    val lines = Source.fromFile("../data/bacp/instances12/inst0.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/bacp/instances12/inst0.txt").getLines.reduceLeft(_ + " " + _)
     val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     var index = 0
     def next() = {
@@ -77,10 +78,8 @@ object BACP extends App{
         for ((i,j) <- prerequisites) {
           cp.add(x(i) < x(j)) // precedence constraint
         } 
-    } exploration {
-        cp.binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
-    } run()
+    } search {
+      binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
+    } start()
     
-    cp.printStats
-
 }

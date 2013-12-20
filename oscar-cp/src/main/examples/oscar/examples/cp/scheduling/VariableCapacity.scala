@@ -31,10 +31,9 @@ object VariableCapacity extends App {
     // Cumulative
     cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, capacity, 1))
 
-  } exploration {
-    cp.binaryFirstFail(starts)
-    cp.binaryFirstFail(capacity)
-    
+  } search {
+     binaryFirstFail(starts) ++ binaryFirstFail(Seq(capacity))
+  } onSolution {
     println("Total capacity of " + capacity.value)
     for (t <- Tasks) {
       print("Task " + t)
@@ -45,6 +44,5 @@ object VariableCapacity extends App {
     println()
   }
 
-  cp.run()
-  cp.printStats
+  println(cp.start())
 }

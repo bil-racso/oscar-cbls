@@ -19,6 +19,7 @@ import oscar.algo.search._
 import oscar.algo.reversible._
 import oscar.cp.core._
 import scala.io.Source
+import oscar.cp.search.BinaryFirstFailBranching
 
 /** 
  * Binero is a grid game, similar to Sudoku.
@@ -71,6 +72,12 @@ object Binero {
     
     var numSol = 0
     
+    cp.onSolution {
+      // Printing the solution
+      for(i <- range) println(grid.slice(2*n*i, 2*n*(i+1)).mkString(" "))
+      println
+    }
+    
     cp.solve() subjectTo {
       // The solution must contain the elements of the input grid
       for(i <- range; j <- range; if(origGrid(i)(j) != -1))
@@ -89,16 +96,13 @@ object Binero {
           cp.add(new TabNotEqual(column(i), column(j), 2*n))
         }
       }
-    } exploration {
-      cp.binaryFirstFail(grid)  
-      numSol += 1
-      
-      // Printing the solution
-      for(i <- range) println(grid.slice(2*n*i, 2*n*(i+1)).mkString(" "))
-      println
-    } run() // find all solutions
+    } search {
+      new BinaryFirstFailBranching(grid)
+    } 
     
-    println("Number of solutions : "+numSol)
+    val stat = cp.start() // find all solutions
+    
+    println("Number of solutions : "+ stat.nbSols)
     // Printing some stats
     cp.printStats()
   }

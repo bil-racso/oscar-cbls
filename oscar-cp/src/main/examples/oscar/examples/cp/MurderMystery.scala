@@ -82,10 +82,10 @@ object MurderMystery extends App {
       // 6. The murderer was not the youngest member of the family.
       cp.add(youngest != murderer)
       
-    } exploration {
-      cp.binaryFirstFail(Array(murderer,witness,helper,victim))
+    } search {
+      binaryFirstFail(Array(murderer,witness,helper,victim))
+    } onSolution {
       println("murderer:"+name(murderer.value)+" witness:"+name(witness.value)+" helper:"+name(helper.value)+" victim:"+name(victim.value)+" youngest:"+name(youngest.value))
-    } run()
-    
-    cp.printStats()
+    }
+    println(cp.start())
 }

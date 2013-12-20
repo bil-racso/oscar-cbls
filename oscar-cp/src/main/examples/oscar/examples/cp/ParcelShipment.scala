@@ -33,8 +33,7 @@ import oscar.visual.tree.VisualLabelledTree
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ParcelShipment {
-  def main(args: Array[String]) {
+object ParcelShipment extends App {
     // distance matrix between cities
     val distance: Array[Array[Int]] = Array(Array(0, 85, 110, 94, 71, 76, 25, 56, 94, 67),
       Array(85, 0, 26, 70, 62, 60, 63, 62, 70, 49),
@@ -81,5 +80,4 @@ object ParcelShipment {
 
     cp.printStats()
 
-  }
 }

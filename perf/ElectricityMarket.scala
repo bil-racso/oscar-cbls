@@ -59,7 +59,6 @@ object ElectricityMarket {
 	    val prodUB = producers.map(_.qty.abs).sum
 	    varMapQty += (t -> CPVarInt(cp, 0 to prodUB))
 	  }
-	  var nbSol = 0
 	  // total amount of exchanged quantity
 	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
 	  
@@ -79,13 +78,12 @@ object ElectricityMarket {
 	    def allBounds = orders.filter(!_.bound).isEmpty
 	    while (!allBounds) {
 	      val unboundOrders = orders.filter(!_.bound)
-	      val order = argMax(unboundOrders)(_.energy).head
+	      val order = unboundOrders.maxBy(_.energy)
 	      cp.branch {cp.post(order.selected == 1)} {cp.post(order.selected == 0)}
 	    }
-	    nbSol += 1
-	    
-	  } run()
-	  cp.printStats()
+	  }
+	  println(cp.start())
+
 	  
 	}
 }

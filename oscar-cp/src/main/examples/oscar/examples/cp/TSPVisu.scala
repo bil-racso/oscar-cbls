@@ -99,13 +99,13 @@ object TSPVisu extends App {
     // Total distance
     cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
-  } exploration {
-    cp.binaryFirstFail(succ)
-    // One additional solution
-    nbSol += 1
+  } search {
+    binaryFirstFail(succ)
+  } onSolution {
     // Updates the visualization
+    nbSol += 1
     updateVisu()
-  } run()
+  }
   
-  cp.printStats()
+  println(cp.start())
 }

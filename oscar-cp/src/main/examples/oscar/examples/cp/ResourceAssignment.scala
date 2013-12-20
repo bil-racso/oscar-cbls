@@ -69,7 +69,7 @@ object ResourceAssignment extends App {
     cp.minimize(maximum(0 until nbBins)(load(_))) subjectTo {
       cp.add(binPacking(x,taskWeight.map(_._2),load))
     } search {
-      new BinaryFirstFailBranching(x)
+      binaryFirstFail(x)
     } 
     
     println(cp.start())

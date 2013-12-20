@@ -121,7 +121,7 @@ object JobShop extends App {
       cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
     }
   } search {
-    new BinaryFirstFailBranching(startsVar)
+    binaryFirstFail(startsVar)
   }
   println(cp.start())
 } 

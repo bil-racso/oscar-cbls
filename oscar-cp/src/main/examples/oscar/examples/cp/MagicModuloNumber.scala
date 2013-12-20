@@ -49,10 +49,12 @@ object MagicModuloNumber extends App {
     for (i <- 2 to 10) {
       cp.add(modulo(x, i, i - 1))
     }
-  } exploration {
-    cp.binaryFirstFail(Array(x))
+  } search {
+    binaryFirstFail(Seq(x))
+  } onSolution {
     println(x)
-  } run()
-  cp.printStats()
+  }
+  
+  println(cp.start(1))
 
 }

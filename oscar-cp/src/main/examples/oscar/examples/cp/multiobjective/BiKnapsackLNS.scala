@@ -76,19 +76,19 @@ object BiKnapsackLNS extends App {
   cp.addDecisionVariables(x)
   cp.addDecisionVariables(Array(capaVar1, capaVar2))
 
+  var obj = 0
   cp.paretoMaximize(profitVar1, profitVar2) subjectTo {
     cp.add(knapsack1)
     cp.add(knapsack2)
-  }
-
-  var obj = 0
-  cp.exploration {
-    while (!allBounds(x)) {
-      val i = selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)).get
-      cp.branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
+  } search {
+    selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)) match {
+      case None => noAlternative
+      case Some(i) => branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
+  } onSolution {
     paretoPlot.insert(profitVar1.value, profitVar2.value)
-  } run (1)
+  } start(1)
+
 
   val rand = new scala.util.Random()
   // MO LNS PARAMETERS
@@ -106,7 +106,7 @@ object BiKnapsackLNS extends App {
     if (rand.nextInt(100) < probaIntensify) cp.objective.intensify(sol)
     else cp.objective.diversify()
     // search
-    cp.runSubjectTo(failureLimit = maxFailures) {
+    cp.startSubjectTo(failureLimit = maxFailures) {
       relaxRandomly(x, sol, relaxSize)
     }
   }

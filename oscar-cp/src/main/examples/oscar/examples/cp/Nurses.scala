@@ -15,7 +15,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import scala.io.Source
 import scala.io.Source
@@ -23,7 +22,16 @@ import oscar.util._
 import oscar.visual._
 
 /**
- * Balancing Nurse Problem
+ * Load Balancing Nurse Allocation Problem
+ * 
+ * See: 
+ * a) Scalable load balancing in nurse to patient assignment problems (Pierre Schaus, Pascal Van Hentenryck, Jean-Charles Regin), CPAIOR-09
+ * b) Bound-Consistent Spread Constraint, Application to load balancing in nurse-to-patient assignments (Pierre Schaus,Jean-Charles Regin). Accepted to EURO Journal on Computational Optimization, 2013.
+ * 
+ * A two step decomposition is used to solve this problem:
+ * 1) compute the number of nurses in each zone of the hospital
+ * 2) solve each zone independently minimizing the spread of the loads (sum of squares)
+ * 
  * @author Pierre Schaus pschaus@gmail.com
  */
 object Nurses extends App  {
@@ -90,12 +98,7 @@ object Nurses extends App  {
  nbNursesInZone(j) -= 1
      
    
- 
- 
  println("#nurses in each zones:"+nbNursesInZone.mkString(","))
- 
- //nbNursesInZone(0) = 3
- //nbNursesInZone(1) = 3
  
  
  // --- ---
@@ -121,6 +124,8 @@ object Nurses extends App  {
      
    val items = Array.tabulate(nbPatientsInZone(i))(j => drawing.addItem(i,scale*acuityByZone(i)(j)))
    items.foreach(_.innerCol = colors(i))
+   
+   // actual cp model solving zone i
  
    val cp = CPSolver()
    cp.silent = true
@@ -129,25 +134,30 @@ object Nurses extends App  {
    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
    println("spreadacuity:"+spreadAcuity)
    var best = Int.MaxValue
+   
    cp.onSolution {
+     // update the visualization
      nurseOfPatient.zipWithIndex.foreach{case(n,j) => items(j).bin = (n.value + nbNursesInZone.take(i).sum)}
+     // store the best objective
      best = spreadAcuity.value
    }
    
-   // each nurse can have at most 3 and at least one patient
+   
    cp.minimize(spreadAcuity) subjectTo {
-     println("spreadacuity:"+spreadAcuity)
+     // spread constraint to compute the objective 
      cp.add(spread(acuityOfNurse,acuityByZone(i).sum,spreadAcuity))
-     
+     // each nurse can have at most 3 and at least one patient
      cp.add(gcc(nurseOfPatient,0 until nbNursesInZone(i),1,3))
-     
+     // bin-packing to compute the load of each nurse
      cp.add(binpacking(nurseOfPatient,acuityByZone(i),acuityOfNurse))
 
     } search {
+      // first fail, take the patient with smallest domain not yet bound to a nurse
       selectMin(nurseOfPatient)(x => !x.isBound)(x => x.size) match {
-        case None => noAlternative
-        case Some(y) => {
+        case None => noAlternative // every patient is bound, no child nodes
+        case Some(y) => { // ok y is patient not yet assigned to a nurse
           val maxUsed = nurseOfPatient.maxBoundOrElse(-1)
+          // try every possible nurses up to the maximum one without any patient less (dynamic symmetry breaking)
           branchAll(0 to maxUsed + 1)(v => cp.post(y == v))
         }
       }
@@ -162,6 +172,5 @@ object Nurses extends App  {
  println("tot spread:"+totSpread+" ?>=? "+lb2 + "optimal:?"+(totSpread < lb2))
  println("lower bound:"+lb)
  
-
 	
 }

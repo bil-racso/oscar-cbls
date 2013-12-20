@@ -15,7 +15,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import collection.immutable.SortedSet
 
@@ -38,7 +37,16 @@ object Cubes extends App {
     val numLetters = letters.size
     def letterToInt(letter: Char): Int = letters.indexOf(letter) // Letter from letter index
     
-    val placement = for(i <- 0 until numLetters) yield CPVarInt(cp, 0 until numCubes) // The cube (0 to 3) on which each letter is placed
+    val placement = Array.fill(numLetters)(CPVarInt(cp, 0 until numCubes)) // The cube (0 to 3) on which each letter is placed
+    
+    cp.onSolution {
+      println("-")
+      for (cube <- 0 until numCubes) { // Printing the letters placed on each cube
+        println("Cube "+cube+" : "+
+            placement.zipWithIndex.map {
+              case (v,i) => if (v.value == cube) letters(i) else "."}.mkString(" "))
+      }      
+    }
     
     cp.solve subjectTo {
       cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
@@ -46,17 +54,11 @@ object Cubes extends App {
         cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
             for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
         ), Strong)
-    } exploration { // Each letter will be assigned different cubes during the search
-      loop(0 until numLetters) {
-        l =>  cp.branchAll(0 until numCubes)(v => cp.post(placement(l) == v))
-      }
-      println("-")
-      for (cube <- 0 until numCubes) { // Printing the letters placed on each cube
-        println("Cube "+cube+" : "+
-            placement.zipWithIndex.map {
-              case (v,i) => if (v.value == cube) letters(i) else "."}.mkString(" "))
-      }
-    } run()
+    } search { // Each letter will be assigned different cubes during the search
+      binaryStatic(placement)
+    }
+
+    val stat = cp.start()
     
-    cp.printStats()
+    println(stat)
 }

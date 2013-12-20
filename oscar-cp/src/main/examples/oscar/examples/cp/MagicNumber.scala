@@ -49,10 +49,11 @@ object MagicNumber extends App {
     cp.add(x(four + 5) == 4)
     cp.add(gcc(x, 1 to 4, 2, 2))
     cp.add(one < two)
-  } exploration {
-    cp.binaryFirstFail(Array(one, two, three, four))
-    println(x.mkString((",")))
-  } run()
-  cp.printStats()
+  } search {
+    binaryFirstFail(Seq(one, two, three, four))
+  } onSolution {
+    println(x.mkString((",")))  
+  }
+  println(cp.start())
 
 }

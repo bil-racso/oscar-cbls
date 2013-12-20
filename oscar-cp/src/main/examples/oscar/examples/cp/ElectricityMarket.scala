@@ -78,6 +78,8 @@ object ElectricityMarket {
 	  // total amount of exchanged quantity
 	  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
 	  
+
+	  
 	  cp.maximize(obj) subjectTo {
 	    for (t <- tmin to tmax) {
 	        val prodVars = producers.filter(_.overlap(t)).map(_.selected)
@@ -88,25 +90,24 @@ object ElectricityMarket {
 	    	cp.add(binaryKnapsack(prodVars,prodQty,varMapQty(t)), Strong)
 	    	cp.add(binaryKnapsack(consVars,consQty,varMapQty(t)), Strong)
 	    } 
-	  } exploration {   
-	    // efficient heuristic
-	    def allBounds = orders.filter(!_.bound).isEmpty
-	    while (!allBounds) {
+	  } search {
+	    if (allBounds(orders.map(_.selected))) noAlternative
+	    else {
 	      val unboundOrders = orders.filter(!_.bound)
-	      val order = argMax(unboundOrders)(_.energy).head
+	      val order = unboundOrders.maxBy(_.energy)
 	      // select orders on the left
-	      cp.branch {cp.add(order.selected == 1)} {cp.add(order.selected == 0)}
+	      branch {cp.add(order.selected == 1)} {cp.add(order.selected == 0)}
 	    }
-	    
+	  } onSolution {
 	    // update visualization
 	    for (t <- tmin to tmax) {
 	      barPlot.setValue(t-tmin,varMapQty(t).value)
 	    }
 	    plot.addPoint(nbSol,obj.value)
-	    nbSol += 1
-	    
-	  } run()
-	  cp.printStats()
+	    nbSol += 1	    
+	  }
+	  
+	  println(cp.start())
 	  
 	}
 }

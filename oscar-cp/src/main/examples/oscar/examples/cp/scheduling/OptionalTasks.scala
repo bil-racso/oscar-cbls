@@ -43,7 +43,7 @@ object OptionalTasks extends App {
     cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capaMax), 1))
 
   } search {
-    new BinaryFirstFailBranching(resources) ++  new BinaryFirstFailBranching(starts)
+   binaryFirstFail(resources) ++  binaryFirstFail(starts)
   }
   println(cp.start())
   

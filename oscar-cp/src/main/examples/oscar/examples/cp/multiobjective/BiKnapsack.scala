@@ -82,16 +82,18 @@ object BiKnapsack extends App {
   }
 
   var obj = 0
-  cp.exploration {
-    while (!allBounds(x)) {
-      val i = selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)).get
-      cp.branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
+  cp.search {
+    selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)) match {
+      case None => noAlternative
+      case Some(i) => branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
+    
+  } onSolution {
     paretoPlot.insert(profitVar1.value, profitVar2.value)
   }
 
-  val t = time { 
-    cp.run() 
+  val t = time {
+    cp.start() 
   }
 
   println("time " + t)

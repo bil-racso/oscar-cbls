@@ -17,7 +17,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import scala.io.Source
 import scala.io.Source
@@ -116,7 +115,7 @@ object PMedian extends App {
     cp.add(binPacking(x, demand, load))
     cp.add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
   } search {
-    new BinaryFirstFailBranching(x,_.randomValue)
+    binaryFirstFail(x,_.randomValue)
   } start()
 
 }

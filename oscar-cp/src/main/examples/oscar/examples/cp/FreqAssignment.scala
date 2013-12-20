@@ -76,15 +76,15 @@ object FreqAssignment extends App {
 	     }
 		 println("inter cell constraints added")
 	     
-	   } exploration {
-	     cp.binaryMaxDegree(freq.flatten)
+	   } search {
+	     binaryMaxDegree(freq.flatten.toSeq)
+	   } onSolution {
 	     freq.foreach { c =>
 	       c.foreach(print(_))
 	       println()
-	     }
-	   } run(1)  
- 
-	   cp.printStats()
+	     }	     
+	   }	   
+	   println(cp.start(1))
 	
 	
 }

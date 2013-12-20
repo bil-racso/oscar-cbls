@@ -87,6 +87,10 @@ object Domino  {
 		  }
 		}
 		
+		cp.onSolution {
+		  printSol()
+		}
+		
 		cp.solve subjectTo {
 		  for (i <- Lines; j <- Cols) {  
 		    val validTuples = for((k,l) <- neighbors(i,j)) yield (toIndex(k,l), dominoId(values(i)(j),values(k)(l)))
@@ -99,13 +103,11 @@ object Domino  {
 		  // each domino can appear at most once so each domino id can appear at most twice
 		  cp.add(gcc(id.flatten,0 to 9*9,0,2))
 		  
-		} exploration {
-		  cp.binaryFirstFail(id.flatten)
-		  printSol()
-		} run()
+		} search {
+		  binaryFirstFail(id.flatten.toSeq)
+		} 
+		println(cp.start())
 		
-		cp.printStats()
-
 	}
 		
 		

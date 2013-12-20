@@ -28,10 +28,7 @@ import oscar.cp.search.BinaryFirstFailBranching
   * Wikipedia: http://en.wikipedia.org/wiki/Stable_marriage_problem
   * @author Hakan Kjellerstrand hakank@gmail.com http://www.hakank.org/oscar/, Pierre Schaus pschaus@gmail.com
   */
-object StableMariage {
-
-
-  def main(args: Array[String]) {
+object StableMariage extends App {
 
     val n = 5
     
@@ -59,8 +56,8 @@ object StableMariage {
 
 
     cp.onSolution {
-       println("wife   :" + wife.mkString(""))
-       println("husband:" + husband.mkString(""))
+       println("wife   :" + wife.mkString(","))
+       println("husband:" + husband.mkString(","))
        println()
     }
     
@@ -79,13 +76,13 @@ object StableMariage {
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
-     } search {
-       new BinaryFirstFailBranching(wife)
-     } 
+    } search {
+      binaryFirstFail(wife)
+    } 
      
-     println(cp.start(1))
+    println(cp.start(1))
  
 
-  }
+  
 
 }

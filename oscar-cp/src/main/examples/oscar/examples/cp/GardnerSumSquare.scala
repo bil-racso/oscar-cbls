@@ -64,19 +64,12 @@ object GardnerSumSquare extends App {
       // break symmetries between the two sets
       cp.add(a<e)
       
-      //not enough filtering the lower bound on s1 and s2 is 0 at the root node
-      println("initial obj:"+obj)
-      println("inits1:"+s1)
-      println("inits2:"+s2)
+    } search {
+      binaryFirstFail(Seq(a,b,c,d,e,f,g,h))
+    } onSolution {
       println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
-      println("---------------")
-      
-    } exploration {
-      cp.binaryFirstFail(Array(a,b,c,d,e,f,g,h))
-      println("(a:"+a+" b:"+b+" c:"+c+" d:"+d+") (e:"+e+" f:"+f+" g:"+g+" h:"+h+")")
-    } run()
-
-    cp.printStats()
+    }
+    println(cp.start())
 
 
   

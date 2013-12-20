@@ -4,7 +4,6 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import scala.io.Source
 import oscar.cp.constraints.SweepMaxCumulative
-import oscar.cp.scheduling.SchedulingUtils.setTimes
 
 object BiRCPSP extends App {
 
@@ -45,11 +44,9 @@ object BiRCPSP extends App {
     // Cumulative
     cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 8), 0))
     
-  } exploration {
-    //cp.binaryFirstFail(startsVar)
+  } search {
     setTimes(startsVar, durationsVar, endsVar)
   }
 
-  cp.run()
-  cp.printStats()
+  println(cp.start())
 }

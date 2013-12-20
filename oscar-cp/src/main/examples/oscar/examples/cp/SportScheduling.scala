@@ -82,7 +82,7 @@ object SportScheduling {
       for (p <- Periods)
         cp.add(gcc(team(p).flatten, Teams, 1, 2), Strong)
     } search {
-      new BinaryBranching(game.flatten, _.size, _.randomValue) // our randomized solution
+      binary(game.flatten.toSeq, _.size, _.randomValue) // our randomized solution
     }
     // use restarts to break heavy tails phenomena
     var restart = 0

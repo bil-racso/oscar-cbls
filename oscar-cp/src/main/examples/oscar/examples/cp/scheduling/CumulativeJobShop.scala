@@ -91,7 +91,7 @@ object CumulativeJobShop extends App {
   // ------
   
   cp.search {
-    new SetTimesBranching(startsVar, durationsVar, endsVar)
+    setTimes(startsVar, durationsVar, endsVar)
   }
   val stat = cp.start()
   println(stat)
