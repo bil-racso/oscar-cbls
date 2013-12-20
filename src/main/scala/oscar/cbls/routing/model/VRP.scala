@@ -185,6 +185,7 @@ trait MoveDescription extends VRP {
   case class affectFromVariable(variable: IntVar, takeValueFrom: IntVar) extends Affect {
     def comit(): Affect = {
       val oldValue = variable.value
+      assert(isRouted(takeValueFrom.value), "you cannot take the value of an unrouted variable " + variable + " take value from " + takeValueFrom)
       variable := takeValueFrom.value
       affectFromConst(variable, oldValue)
     }
@@ -192,6 +193,7 @@ trait MoveDescription extends VRP {
 
   case class affectFromConst(variable: IntVar, takeValue: Int) extends Affect {
     def comit(): Affect = {
+      assert(variable.value != N  || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
       val oldValue = variable.value
       variable := takeValue
       affectFromConst(variable, oldValue)
@@ -209,14 +211,14 @@ trait MoveDescription extends VRP {
   }
 
   def cutNodeAfter(beforeStart: Int): Segment = {
-    assert(isRouted(beforeStart))
+    assert(isRouted(beforeStart), "you cannot cut after an unrouted node " + beforeStart)
     val start = next(beforeStart).value
     addMove(affectFromVariable(next(beforeStart), next(start)))
     Segment(start, start)
   }
 
   def segmentFromUnrouted(n: Int): Segment = {
-    assert(!isRouted(n))
+    assert(!isRouted(n), "you cannot make a segment from unrouted if node is actually routed " + n)
     Segment(n, n)
   }
 
@@ -255,7 +257,7 @@ trait MoveDescription extends VRP {
   }
 
   def commit(recordForUndo: Boolean = false) {
-    assert(Recording)
+    assert(Recording, "MoveDescription should be recording now")
     if (recordForUndo) {
       affects = doAllMovesAndReturnRollBack()
       assert({ Recording = false; true })
@@ -292,7 +294,7 @@ trait MoveDescription extends VRP {
   }
 
   def undo(recordForUndo: Boolean = false) {
-    assert(!Recording)
+    assert(!Recording, "MoveDescription should not be recording now")
     assert({ Recording = true; true })
     commit(recordForUndo)
     assert({ Recording = true; true })

@@ -78,8 +78,8 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
 
 /**
  * Models a reinsert-point operator of a given VRP problem.
- * @param beforeReinsertedPoint the place where to insert an unrouted point.
- * @param reinsertedPoint an unrouted point.
+ * @param beforeInsertedPoint the place where to insert an unrouted point.
+ * @param insertedPoint an unrouted point.
  * @param objAfter the objective value if we performed this reinsert-point operator.
  * @param vrp the given VRP problem.
  */
