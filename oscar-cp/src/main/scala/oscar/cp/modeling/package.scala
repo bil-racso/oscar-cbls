@@ -322,7 +322,7 @@ package object modeling extends Constraints with Branchings {
       cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
   }
 
-  def allBounds(vars: Iterable[_ <: CPVarInt]) = vars.forall(_.isBound)
+  def allBounds(vars: Iterable[_ <: CPVarInt]) = vars.asInstanceOf[Iterable[CPVarInt]].forall(_.isBound)
   
   
   // helper functions to define searches

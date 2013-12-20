@@ -7,6 +7,7 @@ import de.johoop.jacoco4sbt.JacocoPlugin._
 import xerial.sbt.Pack._
 import sbtunidoc.Plugin._
 
+
 object OscarBuild extends Build {
 
   
@@ -40,7 +41,7 @@ object OscarBuild extends Build {
 
   object Dependencies {
 
-    val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
+    //val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
     val junit = "junit" % "junit" % "4.8.1" % "test"
     val scalaswing = "org.scala-lang" % "scala-swing" % "2.10.0"
 
@@ -68,7 +69,7 @@ object OscarBuild extends Build {
   import Dependencies._
   import Resolvers._
 
-  val commonDeps = Seq(scalatest,junit,scalaswing)
+  val commonDeps = Seq(/*scalatest,*/junit,scalaswing)
   
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
@@ -103,7 +104,7 @@ object OscarBuild extends Build {
     id = "oscar",
     base = file("."),
     //
-    settings = buildSettings ++ jacoco_settings ++ packSettings ++ unidocSettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ packSettings ++ unidocSettings ++ sbtassembly.Plugin.assemblySettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
     aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
