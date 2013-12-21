@@ -48,17 +48,13 @@ object SendMoreMoney2 {
         cp.add(m > 0)
         cp.add(allDifferent(all), Strong)
 
-      } exploration {
-
-         cp.binaryFirstFail(all)
-
+      } search {
+         binaryFirstFail(all)
+      } onSolution {
          println(all.mkString(""))
-
-      } run()
+      } 
+      println(cp.start())
       
-      println()
-      cp.printStats()
-
   }
 
 }

@@ -26,48 +26,49 @@ import oscar.cp.core._
  * where A..J are distinct digits (0..9).
  *
  * Alternative approach.
- * 
+ *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
  */
 object LeastDiff2 {
 
-   def main(args: Array[String]) {
+  def main(args: Array[String]) {
 
-      val cp = CPSolver()
+    val cp = CPSolver()
 
-      val n = 10
-      val values = Array(10000, 1000, 100, 10, 1)
+    val n = 10
+    val values = Array(10000, 1000, 100, 10, 1)
 
-      // variables
-      val all = Array.fill(n)(CPVarInt(cp, 0 to 9))
-      val Array(a, b, c, d, e, f, g, h, i, j) = all
+    // variables
+    val all = Array.fill(n)(CPVarInt(cp, 0 to 9))
+    val Array(a, b, c, d, e, f, g, h, i, j) = all
 
-      val x = weightedSum(values, Array(a,b,c,d,e))
-      val y = weightedSum(values, Array(f,g,h,i,j))
-      val diff = x - y
+    val x = weightedSum(values, Array(a, b, c, d, e))
+    val y = weightedSum(values, Array(f, g, h, i, j))
+    val diff = x - y
 
-      cp.minimize(diff) subjectTo {
+    cp.minimize(diff) subjectTo {
 
-        // constraints
-	cp.add(allDifferent(all), Strong)
-        cp.add(a > 0)
-        cp.add(f > 0)
-        cp.add(diff > 0)
+      // constraints
+      cp.add(allDifferent(all), Strong)
+      cp.add(a > 0)
+      cp.add(f > 0)
+      cp.add(diff > 0)
 
+    } search {
 
-      } exploration {
+      binaryMaxDegree(all ++ Array(diff, x, y))
+    
+    } onSolution {
+      
+      println(x + " -" +
+        y + " =" +
+        diff)
+        
+    }
 
-         cp.binaryMaxDegree(all ++ Array(diff, x, y))
-
-         println(x + " -" +
-                 y + " =" +
-                 diff)
-      }
-	  
-      println()
-      cp.printStats()
+    println(cp.start())
 
   }
 

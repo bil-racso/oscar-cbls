@@ -74,19 +74,17 @@ object SendMostMoney2 {
       }
         
         
-    } exploration {
+    } search {
       
-      cp.binaryFirstFail(all)
-      
+      binaryFirstFail(all)
+    } onSolution {
       println(all)
       println("Money: " + Money)
       
       this_money = Money.value
       
-    } run()
-    
-    println()
-    cp.printStats()
+    }
+    println(cp.start())
     
     return this_money
     

@@ -21,7 +21,7 @@ import oscar.cp.core._
 /**
  *
  * CHOO+CHOO0=TRAIN problem in Oscar.
- * 
+ *
  *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
@@ -29,58 +29,58 @@ import oscar.cp.core._
  */
 object ChooChooTrain {
 
-   def main(args: Array[String]) {
+  def main(args: Array[String]) {
 
-      val cp = CPSolver()
+    val cp = CPSolver()
 
-      // variables
-      val C = CPVarInt(cp, 0 to 9)
-      val H = CPVarInt(cp, 0 to 9)
-      val O = CPVarInt(cp, 0 to 9)
-      val T = CPVarInt(cp, 0 to 9)
-      val R = CPVarInt(cp, 0 to 9)
-      val A = CPVarInt(cp, 0 to 9)
-      val I = CPVarInt(cp, 0 to 9)
-      val N = CPVarInt(cp, 0 to 9)
+    // variables
+    val C = CPVarInt(cp, 0 to 9)
+    val H = CPVarInt(cp, 0 to 9)
+    val O = CPVarInt(cp, 0 to 9)
+    val T = CPVarInt(cp, 0 to 9)
+    val R = CPVarInt(cp, 0 to 9)
+    val A = CPVarInt(cp, 0 to 9)
+    val I = CPVarInt(cp, 0 to 9)
+    val N = CPVarInt(cp, 0 to 9)
 
-      val all = Array(C,H,O,T,R,A,I,N)
-      val all_str = Array("C","H","O","T","R","A","I","N")
+    val all = Array(C, H, O, T, R, A, I, N)
+    val all_str = Array("C", "H", "O", "T", "R", "A", "I", "N")
 
-      cp.solve subjectTo {
+    cp.solve subjectTo {
 
-        // constraints
+      // constraints
 
-        // This give better pre-labeling results:
-        // it find C: 5..9
-        cp.add(       (C*1000 + H*100 + O*10 + O)*2 == 
-               T*10000 + R*1000 + A*100 + I*10 + N)
+      // This give better pre-labeling results:
+      // it find C: 5..9
+      cp.add((C * 1000 + H * 100 + O * 10 + O) * 2 ==
+        T * 10000 + R * 1000 + A * 100 + I * 10 + N)
 
+      // than this, which just find C: 2..9
+      // cp.add(          C*1000 + H*100 + O*10 + O 
+      //              +   C*1000 + H*100 + O*10 + O == 
+      //        T*10000 + R*1000 + A*100 + I*10 + N)
 
-        // than this, which just find C: 2..9
-        // cp.add(          C*1000 + H*100 + O*10 + O 
-        //              +   C*1000 + H*100 + O*10 + O == 
-        //        T*10000 + R*1000 + A*100 + I*10 + N)
+      cp.add(C != 0)
+      cp.add(T != 0)
+      cp.add(allDifferent(all), Strong)
 
-        cp.add(C != 0)
-        cp.add(T != 0)
-	cp.add(allDifferent(all), Strong)
+    } search {
 
-      } exploration {
-        
-        println("Before labeling: ")
-        for(i <- 0 until all.length) {
-          println("char: " + all_str(i) + ": " + all(i))
-        }
-        println()
-  
-        cp.binaryFirstFail(all)
-          
-        println(all.mkString(""))
+      binaryFirstFail(all)
 
-      } run()
+    } onSolution {
       
-      println()
-      cp.printStats()
+      println(all.mkString(""))
+    
+    }
+
+    println("Before labeling: ")
+    for (i <- 0 until all.length) {
+      println("char: " + all_str(i) + ": " + all(i))
+    }
+    println()
+
+    println(cp.start())
 
   }
 

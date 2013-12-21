@@ -149,9 +149,11 @@ object Exodus {
        (age(burningbush) === age(kazakhstan) + 3)
       )
 
-    } exploration {
+    } search {
        
-      cp.binary(story ++ country ++ age)
+      binaryStatic(story ++ country ++ age)
+    
+    } onSolution {
       
       println("Names  : " + names.mkString(" "))
       println("Story  :" + story.mkString(""))
@@ -169,10 +171,9 @@ object Exodus {
 
       numSols += 1
 
-    } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    } 
+    
+    println(cp.start())
 
   }
 

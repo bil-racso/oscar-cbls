@@ -104,50 +104,67 @@ object OscarBuild extends Build {
     id = "oscar",
     base = file("."),
     //
-    settings = buildSettings ++ jacoco_settings ++ packSettings ++ unidocSettings ++ sbtassembly.Plugin.assemblySettings ++ Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo)) dependsOnSource("lib")    
+    settings = buildSettings ++ jacoco_settings ++ 
+               packSettings ++ unidocSettings ++ 
+               Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
+               sbtassembly.Plugin.assemblySettings ++ 
+               commonTasks,
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo),
+    dependencies = Seq(oscarCp,oscarCbls,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
     base = file("oscar-cbls"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
+    		   sbtassembly.Plugin.assemblySettings ++ 
+    		   commonTasks,
     dependencies = Seq(oscarVisual)) dependsOnSource("lib")       
     
   lazy val oscarCp = Project(
     id = "oscar-cp",
     base = file("oscar-cp"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
+    		   sbtassembly.Plugin.assemblySettings ++ 
+    		   commonTasks,
     dependencies = Seq(oscarAlgo,oscarVisual)) dependsOnSource("lib") 
     
   lazy val oscarDes = Project(
     id = "oscar-des",
     base = file("oscar-des"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
+     		   sbtassembly.Plugin.assemblySettings ++    		   
+               commonTasks,
     dependencies = Seq(oscarInvariants)) dependsOnSource("lib")     
     
   lazy val oscarDfo = Project(
     id = "oscar-dfo",
     base = file("oscar-dfo"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
+               sbtassembly.Plugin.assemblySettings ++ 
+               commonTasks,
     dependencies = Seq(oscarAlgebra,oscarVisual)) dependsOnSource("lib")       
     
   lazy val oscarLinprog = Project( 
     id = "oscar-linprog",
     base = file("oscar-linprog"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ commonTasks,
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
+               sbtassembly.Plugin.assemblySettings ++ 
+               commonTasks,
     dependencies = Seq(oscarAlgebra)
     ) dependsOnSource("lib")
     
 
   lazy val oscarAlgo = Project(
     id = "oscar-algo",
-    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
+    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) 
+               ++ commonTasks,    
     base = file("oscar-algo"),
     dependencies= Seq(oscarUtil,oscarVisual)) dependsOnSource("lib")
     
   lazy val oscarVisual = Project(
     id = "oscar-visual",
-    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ commonTasks,    
+    settings = buildSettings ++ jacoco_settings ++ Seq (libraryDependencies ++= commonDeps) ++ 
+               commonTasks,    
     base = file("oscar-visual"),
     dependencies= Seq(oscarUtil)) dependsOnSource("lib")      
 

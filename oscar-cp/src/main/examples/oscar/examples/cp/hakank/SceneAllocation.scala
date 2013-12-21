@@ -124,25 +124,26 @@ object SceneAllocation {
 
       cp.add(shoot(0) == 0)
 
-    } exploration {
-
-      // This labeling is from the great mind of Pierre Schaus.
-
-      // order the shoot by decreasing cost
-      val orderedShoot = (0 until maxScene).sortBy(s => -appears(s).map(pay(_)).sum).map(shoot(_))
+    } 
     
-      while(!cp.allBounds(orderedShoot)) {
+    // This labeling is from the great mind of Pierre Schaus.
+    // order the shoot by decreasing cost
+    val orderedShoot = (0 until maxScene).sortBy(s => -appears(s).map(pay(_)).sum).map(shoot(_))
+    cp.search {
+
+      if(allBounds(orderedShoot)) noAlternative
+      else {
         val max = orderedShoot.filter(_.isBound).map(_.value).max
         val minsize =  orderedShoot.filter(!_.isBound).map(_.size).min
         val x =  orderedShoot.filter(_.size == minsize).head
         val xmin = x.min
         if (xmin == max+1) {
-          cp.branchOne(cp.post(x == xmin))
+          branchOne(cp.post(x == xmin))
         } else {
-          cp.branch(cp.post(x == xmin))(cp.post(x != xmin))
+          branch(cp.post(x == xmin))(cp.post(x != xmin))
         }
       }
-
+    } onSolution {
       println("\nSolution:")
 
       println("cost :" + cost)
@@ -153,8 +154,7 @@ object SceneAllocation {
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

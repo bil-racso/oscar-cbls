@@ -138,11 +138,12 @@ object CalvinPuzzleTable {
         cp.add(x(0)(0) == 0)
 
 
-      } exploration {
+      } search {
         
-        cp.binary(x_flat,-_.constraintDegree,_.randomValue)
-        // binaryMedianSelection(cp, x_flat, _.min, _.min)
+        binary(x_flat,-_.constraintDegree,_.randomValue)
 
+      } onSolution {
+        
         println("Solution:")
 
         // Now, get the values of the matrix
@@ -159,18 +160,10 @@ object CalvinPuzzleTable {
           println()
         }
         println()
-
-          
-        numSols +=1
-
-        if (num_to_show > 0 && numSols >= num_to_show) {
-          cp.stop()
-        }
-
-      } run()
+        
+      }
  
-      println("\nIt was " + numSols + " solution(s).")
-      cp.printStats()
+      println(cp.start(nbSolMax = num_to_show))
 
   }
 

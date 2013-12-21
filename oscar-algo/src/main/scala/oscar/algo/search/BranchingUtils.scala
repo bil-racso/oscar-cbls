@@ -24,6 +24,7 @@ trait BranchingUtils {
   
   def branch(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
   
+  def branchOne(action: => Unit) = Seq(() => action)
   
   def branchAll[A](indexes: Seq[A])(f: A => Unit): Seq[Alternative] = {
     indexes.map(i => () => f(i))
