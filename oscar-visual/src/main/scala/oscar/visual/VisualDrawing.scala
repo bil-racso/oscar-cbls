@@ -79,6 +79,8 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
     (minX, maxX, minY, maxY)
   }
   var transform = new AffineTransform()
+  var scale = 1.0
+  
   override def paint(g: Graphics): Unit = {
 	
     super.paintComponent(g)
@@ -99,7 +101,9 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
       // Flip
       if (flipped) {
         transform.translate(0, dHeight)
-        transform.scale(1, -1)
+        transform.scale(1*scale, -1*scale)
+      } else {
+        transform.scale(1*scale, 1*scale)
       }
 
       // Scale
@@ -157,11 +161,26 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
     }
   }
   
+  private def scale(factor: Double) {
+    scale = scale * factor
+    repaint()
+  }
+  
   addMouseListener {
     val drawingPanel = this
     new MouseListener() {
       override def mouseClicked(e: MouseEvent) {
-        shapes.foreach(_.clicked(e.getPoint()))
+        if (SwingUtilities.isRightMouseButton(e)) {
+          scale(0.9)
+        }
+        if (SwingUtilities.isLeftMouseButton(e)) {
+          if (e.getClickCount() == 2) {
+            scale(1.1)
+          }
+          else {
+            shapes.foreach(_.clicked(e.getPoint()))
+          }
+        }
       }
       override def mouseEntered(e: MouseEvent) {}
       override def mousePressed(e: MouseEvent) {}

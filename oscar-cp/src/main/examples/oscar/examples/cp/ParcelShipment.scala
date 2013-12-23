@@ -18,12 +18,14 @@ package oscar.examples.cp
 import oscar.cp.modeling._
 import oscar.cp.constraints._
 import oscar.cp.core._
+import oscar.util._
 import scala.io.Source
 import scala.collection.mutable.Map
 import oscar.visual.VisualFrame
 import oscar.algo.search.VisualSearchTree
 import oscar.util.tree.Node
 import oscar.visual.tree.VisualLabelledTree
+import oscar.util.tree.Tree
 
 /**
  * Parcel Shipment Problem (found in the examples of Jacop).
@@ -53,7 +55,6 @@ object ParcelShipment extends App {
     val start = 0 // start city
 
     val cp = CPSolver()
-    cp.recordTree
     val succ = Array.tabulate(n)(c => CPVarInt(cp, 0 until n)) // successor
     val load = Array.tabulate(n)(c => CPVarInt(cp, 0 to maxLoad)) // load(i) is the load in the ship when leaving city i
     val totDist = CPVarInt(cp, 0 to distance.flatten.sum)
@@ -68,16 +69,43 @@ object ParcelShipment extends App {
       cp.add(sum(0 until n)(i => distance(i)(succ(i))) == totDist)
       cp.add(circuit(succ), Strong)
 
-    } exploration {
-      cp.binaryFirstFail(succ)
-    } run ()
+    } 
+    
+    var currNode = 0
+    val tree = new Tree()
+    
+    cp.search {
+        selectMin(succ)(!_.isBound)(_.size) match {
+          case None => noAlternative
+          case Some(x) => {
+            val v = x.min
+            val parent = currNode
+            branch {
+              cp.post(x == v)
+              currNode += 1
+              val nodeId = currNode
+              tree.createBranch(parent,currNode,currNode.toString,"left") {
+                println("left in node"+nodeId)
+              }
+            } {
+              cp.post(x != v)
+              currNode += 1
+              val nodeId = currNode
+              tree.createBranch(parent,currNode,currNode.toString,"right") {
+                println("right in node"+nodeId)
+              }              
+            }
+          }
+        }
+     
+    } onSolution {
+      tree.addSuccess(currNode)
+    } start()
 
     val f = new VisualFrame("ParcelShipment", 1, 1)
     val w = f.createFrame("Tree")
-    val vt = new VisualSearchTree(cp)
+    val vt = new VisualSearchTree(tree)
     w.add(vt)
     w.pack()
-
-    cp.printStats()
 
 }
