@@ -81,14 +81,14 @@ object ParcelShipment extends App {
             val v = x.min
             val parent = currNode
             branch {
-              cp.post(x == v)
+              cp.add(x == v)
               currNode += 1
               val nodeId = currNode
               tree.createBranch(parent,currNode,currNode.toString,"left") {
                 println("left in node"+nodeId)
               }
             } {
-              cp.post(x != v)
+              cp.add(x != v)
               currNode += 1
               val nodeId = currNode
               tree.createBranch(parent,currNode,currNode.toString,"right") {
