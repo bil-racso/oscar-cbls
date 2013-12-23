@@ -40,6 +40,7 @@ object BestInsert {
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
   def apply(vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
+    print("(BestInsert) ")
     val relevantNeighbors = (n: Int) => vrp.nodes
     while (true) {
       InsertPoint.bestImprovingMove(
