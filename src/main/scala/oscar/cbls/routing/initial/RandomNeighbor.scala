@@ -31,8 +31,7 @@ object RandomNeighbor{
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp:VRP with VRPObjective with PositionInRouteAndRouteNr with Unrouted with MoveDescription
-    with HopDistance){
+  def apply(vrp:VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription with HopDistance){
     val relevantNeighbors = (n: Int) => vrp.nodes
     while(true) {
       // FIXME this is not really random
