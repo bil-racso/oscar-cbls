@@ -42,6 +42,8 @@ object OnePointMove extends TwoPointsNeighborhood {
   override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) = {
     OnePointMove(beforeMovedPoint, insertionPoint, newObj, vrp)
   }
+  
+  override def toString: String = "1-pt"
 }
 
 /**

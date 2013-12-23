@@ -48,6 +48,8 @@ object Swap extends TwoPointsNeighborhood {
   override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) = {
     Swap(beforeMovedPoint, insertionPoint, newObj, vrp)
   }
+  
+  override def toString: String = "swap"
 }
 
 /**

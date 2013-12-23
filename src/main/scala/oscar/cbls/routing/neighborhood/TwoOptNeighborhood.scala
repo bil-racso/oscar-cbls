@@ -83,6 +83,8 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
     val rev_seg = vrp.reverse(seg)
     vrp.insert(rev_seg, fstPred)
   }
+  
+  override def toString: String = "2-opt"
 }
 
 /**

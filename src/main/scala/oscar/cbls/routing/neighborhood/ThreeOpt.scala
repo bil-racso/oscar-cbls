@@ -92,6 +92,8 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
     val seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
     vrp.insert(seg, trdEdgeStartPoint)
   }
+  
+  override def toString: String = "3-opt"
 }
 
 /**
