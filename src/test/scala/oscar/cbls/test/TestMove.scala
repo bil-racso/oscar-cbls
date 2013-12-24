@@ -112,8 +112,8 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       f.commitPropagate
 
       f.mainRouteLength should be(initLength - segLength + 1)
-      f.vrp.routes.RouteNr(8).value should be(0)
-      f.vrp.routes.PositionInRoute(8).value should be(f.vrp.routes.PositionInRoute(7).value + 1)
+      f.vrp.routes.routeNr(8).value should be(0)
+      f.vrp.routes.positionInRoute(8).value should be(f.vrp.routes.positionInRoute(7).value + 1)
   }
 
   test("Cannot insert routed node.") {
@@ -135,8 +135,8 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       f.commitPropagate
 
       f.mainRouteLength should be(initLength)
-      for (i <- 0 to 9) f.vrp.routes.RouteNr(i).value should be(0)
-      for (i <- 1 to 9) f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute((i + 1) % 9).value + 1)
+      for (i <- 0 to 9) f.vrp.routes.routeNr(i).value should be(0)
+      for (i <- 1 to 9) f.vrp.routes.positionInRoute(i).value should be(f.vrp.routes.positionInRoute((i + 1) % 9).value + 1)
   }
 
   test("A segment cannot be inserted after an unrouted node.") {
@@ -172,7 +172,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
             println("VRP after the move: " + f.vrp)
             f.mainRouteLength should be(f.initLength)
-            f.vrp.routes.PositionInRoute(0).value should be(0)
+            f.vrp.routes.positionInRoute(0).value should be(0)
             for (i <- f.vrp.nodes) {
               if (i == move.predOfMovedPoint)
                 f.vrp.next(i).value should be(nextPoint)
@@ -203,7 +203,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
             println("VRP after the move: " + f.vrp)
             f.mainRouteLength should be(f.initLength)
-            f.vrp.routes.PositionInRoute(0).value should be(0)
+            f.vrp.routes.positionInRoute(0).value should be(0)
             for (i <- f.vrp.nodes) {
               if (i == move.predOfMovedPoint)
                 f.vrp.next(i).value should be(nextPoint)
@@ -235,7 +235,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
             println("VRP after the move: " + f.vrp)
             f.mainRouteLength should be(f.initLength)
-            f.vrp.routes.PositionInRoute(0).value should be(0)
+            f.vrp.routes.positionInRoute(0).value should be(0)
             for (i <- f.vrp.nodes) {
               if (i == swap.fstPred)
                 f.vrp.next(i).value should be(snd)
@@ -276,7 +276,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
             println("VRP after the move: " + f.vrp)
             f.mainRouteLength should be(f.initLength)
-            f.vrp.routes.PositionInRoute(0).value should be(0)
+            f.vrp.routes.positionInRoute(0).value should be(0)
             for (i <- f.vrp.nodes) {
               if (i == swap.fstPred)
                 f.vrp.next(i).value should be(snd)
@@ -403,11 +403,11 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i)
+  //        f.vrp.routes.positionInRoute(i).value should be(i)
   //      else if(i<=7 && i>=5)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i-3)
+  //        f.vrp.routes.positionInRoute(i).value should be(i-3)
   //      else if(i>=2 && i<=4)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i+3)
+  //        f.vrp.routes.positionInRoute(i).value should be(i+3)
   //    }
   //  }
   //
@@ -418,13 +418,13 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i)
+  //        f.vrp.routes.positionInRoute(i).value should be(i)
   //      else if(i<=7 && i>=5)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i-3)
+  //        f.vrp.routes.positionInRoute(i).value should be(i-3)
   //      else if(i>=2 && i<4)
-  //        f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute(i+1).value +1)
+  //        f.vrp.routes.positionInRoute(i).value should be(f.vrp.routes.positionInRoute(i+1).value +1)
   //      else
-  //        f.vrp.routes.PositionInRoute(i).value should be(5)
+  //        f.vrp.routes.positionInRoute(i).value should be(5)
   //    }
   //  }
   //
@@ -435,15 +435,15 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
-  //        f.vrp.routes.PositionInRoute(i).value should be(i)
+  //        f.vrp.routes.positionInRoute(i).value should be(i)
   //      else if(i<7 && i>=5)
-  //        f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute(i+1).value +1)
+  //        f.vrp.routes.positionInRoute(i).value should be(f.vrp.routes.positionInRoute(i+1).value +1)
   //      else if(i>=2 && i<4)
-  //        f.vrp.routes.PositionInRoute(i).value should be(f.vrp.routes.PositionInRoute(i+1).value +1)
+  //        f.vrp.routes.positionInRoute(i).value should be(f.vrp.routes.positionInRoute(i+1).value +1)
   //      else if (i==4)
-  //        f.vrp.routes.PositionInRoute(i).value should be(2)
+  //        f.vrp.routes.positionInRoute(i).value should be(2)
   //      else
-  //        f.vrp.routes.PositionInRoute(i).value should be(5)
+  //        f.vrp.routes.positionInRoute(i).value should be(5)
   //
   //    }
   //  }
@@ -472,7 +472,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   }
 
   def swap(move: (oscar.cbls.routing.neighborhood.SearchZone => Option[oscar.cbls.routing.neighborhood.Move]))(f: MoveFixture): Unit = {
-    val pos = f.vrp.nodes.map((n: Int) => f.vrp.routes.PositionInRoute(n).value)
+    val pos = f.vrp.nodes.map((n: Int) => f.vrp.routes.positionInRoute(n).value)
     val initLength = f.mainRouteLength
     val relevantNeighbors = (n: Int) => f.vrp.nodes
     move(
@@ -487,7 +487,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
           val sndNext = f.vrp.next(snd).value
           println("VRP after the move: " + f.vrp)
           f.mainRouteLength should be(f.initLength)
-          f.vrp.routes.PositionInRoute(0).value should be(0)
+          f.vrp.routes.positionInRoute(0).value should be(0)
           for (i <- f.vrp.nodes) {
             if (i == swap.fstPred)
               f.vrp.next(i).value should be(snd)
@@ -507,8 +507,8 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
 
   def checkUnrouted(f: MoveFixture, l: List[Int]) = l.foreach {
     (n: Int) =>
-      f.vrp.routes.RouteNr(n).value should be(f.ROUTE_ARRAY_UNROUTED)
-      f.vrp.routes.PositionInRoute(n).value should be(f.nbNodes)
+      f.vrp.routes.routeNr(n).value should be(f.ROUTE_ARRAY_UNROUTED)
+      f.vrp.routes.positionInRoute(n).value should be(f.nbNodes)
   }
 
   def check2OptMove(f: MoveFixture, move: TwoOptMove) = {
@@ -516,7 +516,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     val sndEdgeEnd = f.initNext(move.sndPred)
     println("VRP after the move: " + f.vrp)
     f.mainRouteLength should be(f.initLength)
-    f.vrp.routes.PositionInRoute(0).value should be(0)
+    f.vrp.routes.positionInRoute(0).value should be(0)
     for (i <- f.vrp.nodes) {
       if (i == move.fstPred)
         f.vrp.next(i).value should be(move.sndPred)
@@ -538,7 +538,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     val trdEdgeEnd = f.initNext(move.trdEdgeStartPoint)
     println("VRP after the move: " + f.vrp)
     f.mainRouteLength should be(f.initLength)
-    f.vrp.routes.PositionInRoute(0).value should be(0)
+    f.vrp.routes.positionInRoute(0).value should be(0)
     for (i <- f.vrp.nodes) {
       if (i == move.fstEdgeStartPoint)
         f.vrp.next(i).value should be(f.initNext(move.sndEdgeStartPoint))
@@ -594,8 +594,8 @@ class MoveFixture(
 
   val initLength = mainRouteLength
   val initNext = vrp.nodes.map((n: Int) => vrp.next(n).value)
-  val initPos = vrp.nodes.map((n: Int) => vrp.routes.PositionInRoute(n).value)
-  def mainRouteLength = vrp.routes.RouteLength(0).value
+  val initPos = vrp.nodes.map((n: Int) => vrp.routes.positionInRoute(n).value)
+  def mainRouteLength = vrp.routes.routeLength(0).value
 
   /**
    * Gives a distance matrix by entering the abscissa and
@@ -646,7 +646,7 @@ class MoveFixture(
   }
 
   def cut(beforeStart: Int, end: Int) = {
-    val initLength = vrp.routes.RouteLength(0).value
+    val initLength = vrp.routes.routeLength(0).value
     println("Will cut from after node number " + beforeStart + " to " + end)
     val cutSeg = vrp.cut(beforeStart, end)
     val segLength = this.segLength(cutSeg.start, cutSeg.end)

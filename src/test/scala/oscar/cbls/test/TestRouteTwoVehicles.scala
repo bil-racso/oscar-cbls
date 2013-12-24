@@ -56,25 +56,25 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     val f = fixture
     f.model.propagate()
 
-    f.routes.RouteLength(0).value should be(6)
-    f.routes.RouteLength(1).value should be(6)
+    f.routes.routeLength(0).value should be(6)
+    f.routes.routeLength(1).value should be(6)
 
-    f.routes.LastInRoute(0).value should be(6)
-    f.routes.LastInRoute(1).value should be(11)
+    f.routes.lastInRoute(0).value should be(6)
+    f.routes.lastInRoute(1).value should be(11)
 
-    f.routes.PositionInRoute(0).value should be(0)
-    f.routes.PositionInRoute(1).value should be(0)
+    f.routes.positionInRoute(0).value should be(0)
+    f.routes.positionInRoute(1).value should be(0)
 
-    f.routes.RouteNr(0).value should be(0)
-    f.routes.RouteNr(1).value should be(1)
+    f.routes.routeNr(0).value should be(0)
+    f.routes.routeNr(1).value should be(1)
 
     for(i <- 2 to 6){
-      f.routes.PositionInRoute(i).value should be(i-1)
-      f.routes.RouteNr(i).value should be(0)
+      f.routes.positionInRoute(i).value should be(i-1)
+      f.routes.routeNr(i).value should be(0)
     }
     for(i <- 7 to 11){
-      f.routes.PositionInRoute(i).value should be(i-1-5)
-      f.routes.RouteNr(i).value should be(1)
+      f.routes.positionInRoute(i).value should be(i-1-5)
+      f.routes.routeNr(i).value should be(1)
     }
   }
 
@@ -85,25 +85,25 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(8):= 5
     f.model.propagate()
 
-    f.routes.RouteLength(0).value should be(5)
-    f.routes.RouteLength(1).value should be(7)
+    f.routes.routeLength(0).value should be(5)
+    f.routes.routeLength(1).value should be(7)
 
-    f.routes.LastInRoute(0).value should be(6)
-    f.routes.LastInRoute(1).value should be(11)
+    f.routes.lastInRoute(0).value should be(6)
+    f.routes.lastInRoute(1).value should be(11)
 
-    f.routes.PositionInRoute(0).value should be(0)
-    f.routes.PositionInRoute(1).value should be(0)
+    f.routes.positionInRoute(0).value should be(0)
+    f.routes.positionInRoute(1).value should be(0)
     for(i <- 2 to 6){
-      if(i<5) f.routes.PositionInRoute(i).value should be(i-1)
-      else if (i>5) f.routes.PositionInRoute(i).value should be(i-2)
+      if(i<5) f.routes.positionInRoute(i).value should be(i-1)
+      else if (i>5) f.routes.positionInRoute(i).value should be(i-2)
     }
-    f.routes.PositionInRoute(5).value should be(3)
-    f.routes.RouteNr(5).value should be(1)
+    f.routes.positionInRoute(5).value should be(3)
+    f.routes.routeNr(5).value should be(1)
     for(i <- 7 to 11)
       if(i<9)
-        f.routes.PositionInRoute(i).value should be(i-1-5)
+        f.routes.positionInRoute(i).value should be(i-1-5)
       else
-        f.routes.PositionInRoute(i).value should be(i-1-4)
+        f.routes.positionInRoute(i).value should be(i-1-4)
   }
 
   test("swap segment 3-4 with segment 8-9"){
@@ -114,30 +114,30 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(4):=10
     f.model.propagate()
 
-    f.routes.RouteLength(0).value should be(6)
-    f.routes.RouteLength(1).value should be(6)
+    f.routes.routeLength(0).value should be(6)
+    f.routes.routeLength(1).value should be(6)
 
-    f.routes.LastInRoute(0).value should be(6)
-    f.routes.LastInRoute(1).value should be(11)
+    f.routes.lastInRoute(0).value should be(6)
+    f.routes.lastInRoute(1).value should be(11)
 
-    f.routes.PositionInRoute(0).value should be(0)
-    f.routes.PositionInRoute(1).value should be(0)
+    f.routes.positionInRoute(0).value should be(0)
+    f.routes.positionInRoute(1).value should be(0)
     for(i <- 2 to 6){
-      if(i<3) f.routes.PositionInRoute(i).value should be(i-1)
+      if(i<3) f.routes.positionInRoute(i).value should be(i-1)
       else if(i<5) {
-        f.routes.PositionInRoute(i+5).value should be(i-1)
-        f.routes.RouteNr(i+5).value should be(0)
+        f.routes.positionInRoute(i+5).value should be(i-1)
+        f.routes.routeNr(i+5).value should be(0)
       }
-      else f.routes.PositionInRoute(i).value should be(i-1)
+      else f.routes.positionInRoute(i).value should be(i-1)
     }
     for(i <- 7 to 11)
       if(i<8)
-        f.routes.PositionInRoute(i).value should be(i-1-5)
+        f.routes.positionInRoute(i).value should be(i-1-5)
       else if(i<10){
-        f.routes.PositionInRoute(i-5).value should be(i-1-5)
-        f.routes.RouteNr(i-5).value should be(1)
+        f.routes.positionInRoute(i-5).value should be(i-1-5)
+        f.routes.routeNr(i-5).value should be(1)
       }
-      else  f.routes.PositionInRoute(i).value should be(i-1-5)
+      else  f.routes.positionInRoute(i).value should be(i-1-5)
   }
 
   test("unroute the last elements of both route"){
@@ -149,27 +149,27 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(10) := 1
     f.model.propagate()
 
-    f.routes.RouteLength(0).value should be(5)
-    f.routes.RouteLength(1).value should be(5)
+    f.routes.routeLength(0).value should be(5)
+    f.routes.routeLength(1).value should be(5)
 
-    f.routes.LastInRoute(0).value should be(5)
-    f.routes.LastInRoute(1).value should be(10)
+    f.routes.lastInRoute(0).value should be(5)
+    f.routes.lastInRoute(1).value should be(10)
 
-    f.routes.PositionInRoute(0).value should be(0)
-    f.routes.PositionInRoute(1).value should be(0)
+    f.routes.positionInRoute(0).value should be(0)
+    f.routes.positionInRoute(1).value should be(0)
     for(i <- 2 to 6){
-      if(i<6) f.routes.PositionInRoute(i).value should be(i-1)
+      if(i<6) f.routes.positionInRoute(i).value should be(i-1)
       else {
-        f.routes.PositionInRoute(i).value should be(f.UNROUTED)
-        f.routes.RouteNr(i).value should be(f.ROUTE_ARRAY_UNROUTED)
+        f.routes.positionInRoute(i).value should be(f.UNROUTED)
+        f.routes.routeNr(i).value should be(f.ROUTE_ARRAY_UNROUTED)
       }
     }
     for(i <- 7 to 11){
       if(i<11)
-        f.routes.PositionInRoute(i).value should be(i-1-5)
+        f.routes.positionInRoute(i).value should be(i-1-5)
       else{
-        f.routes.PositionInRoute(i-5).value should be(f.UNROUTED)
-        f.routes.RouteNr(i-5).value should be(f.ROUTE_ARRAY_UNROUTED)
+        f.routes.positionInRoute(i-5).value should be(f.UNROUTED)
+        f.routes.routeNr(i-5).value should be(f.ROUTE_ARRAY_UNROUTED)
       }
     }
   }
@@ -188,30 +188,30 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
 
     f.model.propagate()
 
-    f.routes.RouteLength(0).value should be(6)
-    f.routes.RouteLength(1).value should be(4)
+    f.routes.routeLength(0).value should be(6)
+    f.routes.routeLength(1).value should be(4)
 
-    f.routes.LastInRoute(0).value should be(5)
-    f.routes.LastInRoute(1).value should be(8)
+    f.routes.lastInRoute(0).value should be(5)
+    f.routes.lastInRoute(1).value should be(8)
 
-    f.routes.PositionInRoute(0).value should be(0)
-    f.routes.PositionInRoute(1).value should be(0)
+    f.routes.positionInRoute(0).value should be(0)
+    f.routes.positionInRoute(1).value should be(0)
     for(i <- 2 to 6){
-      if(i<5) f.routes.PositionInRoute(i).value should be(i-1)
-      else  if(i==5) f.routes.PositionInRoute(i).value should be(i-1+1)
-      else f.routes.PositionInRoute(i).value should be(i-1-1)
+      if(i<5) f.routes.positionInRoute(i).value should be(i-1)
+      else  if(i==5) f.routes.positionInRoute(i).value should be(i-1+1)
+      else f.routes.positionInRoute(i).value should be(i-1-1)
     }
     for(i <- 7 to 11){
       if(i<8)
-        f.routes.PositionInRoute(i).value should be(i-1-5)
+        f.routes.positionInRoute(i).value should be(i-1-5)
       else if(i<9)
-        f.routes.PositionInRoute(i).value should be(3)
+        f.routes.positionInRoute(i).value should be(3)
       else if(i<11){
-        f.routes.PositionInRoute(i).value should be(f.UNROUTED)
-        f.routes.RouteNr(i).value should be(f.ROUTE_ARRAY_UNROUTED)
+        f.routes.positionInRoute(i).value should be(f.UNROUTED)
+        f.routes.routeNr(i).value should be(f.ROUTE_ARRAY_UNROUTED)
       }
       else
-        f.routes.PositionInRoute(i).value should be(2)
+        f.routes.positionInRoute(i).value should be(2)
     }
 
 

@@ -528,7 +528,7 @@ trait HopDistanceAsObjective extends VRPObjective with HopDistance {
  * Maintains the set of nodes reached by each vehicle
  */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with Unrouted {
-  val NodesOfVehicle = Cluster.MakeDense(RouteNr).clusters
+  val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
 }
 
@@ -546,17 +546,17 @@ trait PositionInRouteAndRouteNr extends VRP {
   /**
    * the position in route of each node as an array of IntVar.
    */
-  val PositionInRoute = routes.PositionInRoute
+  val positionInRoute = routes.positionInRoute
 
   /**
    * the route number of each node as an array of IntVar.
    */
-  val RouteNr = routes.RouteNr
+  val routeNr = routes.routeNr
 
   /**
    * the route length of each route as an array of IntVar.
    */
-  val RouteLength = routes.RouteLength
+  val routeLength = routes.routeLength
 
   /**
    * Tells if twos given nodes form a segment of route of n minimum length.
@@ -566,8 +566,8 @@ trait PositionInRouteAndRouteNr extends VRP {
    * @return true if "fromNode" to "toNode" forms a segment of route of n minimum length, else false.
    */
   def isAtLeastAsFarAs(fromNode: Int, toNode: Int, n: Int): Boolean = {
-    RouteNr(fromNode).value == RouteNr(toNode).value &&
-      PositionInRoute(fromNode).value + n <= PositionInRoute(toNode).value
+    routeNr(fromNode).value == routeNr(toNode).value &&
+      positionInRoute(fromNode).value + n <= positionInRoute(toNode).value
   }
 
   /**
@@ -578,8 +578,8 @@ trait PositionInRouteAndRouteNr extends VRP {
    * @return true if "fromNode" to "toNode" forms a segment of route of n maximum length, else false.
    */
   def isAtMostAsFarAs(fromNode: Int, toNode: Int, n: Int): Boolean = {
-    RouteNr(fromNode).value == RouteNr(toNode).value &&
-      PositionInRoute(fromNode).value + n >= PositionInRoute(toNode).value
+    routeNr(fromNode).value == routeNr(toNode).value &&
+      positionInRoute(fromNode).value + n >= positionInRoute(toNode).value
   }
 
   /**
@@ -601,9 +601,9 @@ trait PositionInRouteAndRouteNr extends VRP {
    */
   def isBetween(node: Int, fromNode: Int, toNode: Int): Boolean = {
     if (isASegment(fromNode, toNode)) {
-      RouteNr(fromNode).value == RouteNr(node).value &&
-        PositionInRoute(fromNode).value <= PositionInRoute(node).value &&
-        PositionInRoute(node).value < PositionInRoute(toNode).value
+      routeNr(fromNode).value == routeNr(node).value &&
+        positionInRoute(fromNode).value <= positionInRoute(node).value &&
+        positionInRoute(node).value < positionInRoute(toNode).value
     } else false
   }
 
@@ -614,7 +614,7 @@ trait PositionInRouteAndRouteNr extends VRP {
    * @param m the second given node.
    */
   def onTheSameRoute(n: Int, m: Int): Boolean = {
-    RouteNr(n).value == RouteNr(m).value
+    routeNr(n).value == routeNr(m).value
   }
 }
 

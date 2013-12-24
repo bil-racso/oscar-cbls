@@ -32,47 +32,47 @@ import oscar.cbls.invariants.core.propagation.Checker
  * This invariants maintains data structures representing a VRP and his
  * characteristics like the length of route, the position of points in route, etc.. .
  *
- * Info : the indices from 0 to V-1 (in the Next, PositionInRoute and RouteNr array) are the starting
+ * Info : the indices from 0 to V-1 (in the next, positionInRoute and routeNr array) are the starting
  * points of vehicles.
  * @param V the number of vehicles.
- * @param Next the array of successors of each points (deposits and customers) of the VRP.
- * @param PositionInRoute the position in route of each points, N is the value of unrouted node.
- * @param RouteNr the route number of each points, V is the value of unrouted node.
- * @param RouteLength the length of each route.
- * @param LastInRoute the last point in each route.
+ * @param next the array of successors of each points (deposits and customers) of the VRP.
+ * @param positionInRoute the position in route of each points, N is the value of unrouted node.
+ * @param routeNr the route number of each points, V is the value of unrouted node.
+ * @param routeLength the length of each route.
+ * @param lastInRoute the last point in each route.
  */
 case class Routes(V: Int,
-  Next: Array[IntVar],
-  PositionInRoute: Array[IntVar],
-  RouteNr: Array[IntVar],
-  RouteLength: Array[IntVar],
-  LastInRoute: Array[IntVar]) extends Invariant {
-  val UNROUTED = Next.length
-  val ArrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(Next)
+  next: Array[IntVar],
+  positionInRoute: Array[IntVar],
+  routeNr: Array[IntVar],
+  routeLength: Array[IntVar],
+  lastInRoute: Array[IntVar]) extends Invariant {
+  val UNROUTED = next.length
+  val arrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()
-  for (v <- PositionInRoute) { v.setDefiningInvariant(this) }
-  for (v <- RouteNr) { v.setDefiningInvariant(this) }
-  for (v <- RouteLength) { v.setDefiningInvariant(this) }
-  for (v <- LastInRoute) { v.setDefiningInvariant(this) }
+  for (v <- positionInRoute) { v.setDefiningInvariant(this) }
+  for (v <- routeNr) { v.setDefiningInvariant(this) }
+  for (v <- routeLength) { v.setDefiningInvariant(this) }
+  for (v <- lastInRoute) { v.setDefiningInvariant(this) }
 
   for (v <- 0 until V) DecorateVehicleRoute(v)
 
   override def toString: String = {
     var toReturn: String = ""
     toReturn += "\nNext array: ["
-    for (v <- Next) { toReturn += ("" + v + ",") }
+    for (v <- next) { toReturn += ("" + v + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "Position array: ["
-    for (v <- PositionInRoute) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- positionInRoute) { toReturn += ("" + v.getValue(true) + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "RouteNr array: ["
-    for (v <- RouteNr) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- routeNr) { toReturn += ("" + v.getValue(true) + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "RouteLength array: ["
-    for (v <- RouteLength) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- routeLength) { toReturn += ("" + v.getValue(true) + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "LastInRoute array: ["
-    for (v <- LastInRoute) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- lastInRoute) { toReturn += ("" + v.getValue(true) + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn
   }
@@ -80,27 +80,27 @@ case class Routes(V: Int,
   def DecorateVehicleRoute(v: Int) {
     var currentID = v
     var currentPosition = 1
-    PositionInRoute(v) := 0
-    RouteNr(v) := v
-    while (Next(currentID).value != v) {
+    positionInRoute(v) := 0
+    routeNr(v) := v
+    while (next(currentID).value != v) {
 
-      assert(Next(currentID).value > v)
+      assert(next(currentID).value > v)
 
-      currentID = Next(currentID).value
-      PositionInRoute(currentID) := currentPosition
-      RouteNr(currentID) := v
+      currentID = next(currentID).value
+      positionInRoute(currentID) := currentPosition
+      routeNr(currentID) := v
       currentPosition += 1
     }
-    LastInRoute(v) := currentID
-    RouteLength(v) := PositionInRoute(currentID).getValue(true) + 1
+    lastInRoute(v) := currentID
+    routeLength(v) := positionInRoute(currentID).getValue(true) + 1
   }
 
   var ToUpdate: List[Int] = List.empty
   var ToUpdateCount: Int = 0
 
   override def notifyIntChanged(v: IntVar, i: Int, OldVal: Int, NewVal: Int) {
-    unregisterDynamicallyListenedElement(ArrayOfUnregisterKeys(i))
-    ArrayOfUnregisterKeys(i) = null
+    unregisterDynamicallyListenedElement(arrayOfUnregisterKeys(i))
+    arrayOfUnregisterKeys(i) = null
     ToUpdate = i :: ToUpdate
     ToUpdateCount += 1
     scheduleForPropagation()
@@ -108,23 +108,23 @@ case class Routes(V: Int,
 
   @inline
   final def isUpToDate(node: Int): Boolean = {
-    ((RouteNr(node).getValue(true) == RouteNr(Next(node).value).getValue(true))
-      && ((PositionInRoute(node).getValue(true) + 1) % Next.length == PositionInRoute(Next(node).value).getValue(true)))
+    ((routeNr(node).getValue(true) == routeNr(next(node).value).getValue(true))
+      && ((positionInRoute(node).getValue(true) + 1) % next.length == positionInRoute(next(node).value).getValue(true)))
   }
 
   override def performPropagation() {
     //le numéro de noeud, son ancienne position dans le circuit
     val heap = new BinomialHeap[(Int, Int)]((a: (Int, Int)) => a._2, ToUpdateCount)
     for (node <- ToUpdate) {
-      if (Next(node).value == UNROUTED) {
+      if (next(node).value == UNROUTED) {
         //node is unrouted now
-        RouteNr(node) := V
-        PositionInRoute(node) := UNROUTED
-        ArrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(Next(node), node)
+        routeNr(node) := V
+        positionInRoute(node) := UNROUTED
+        arrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(next(node), node)
       } else if (isUpToDate(node)) {
-        ArrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(Next(node), node)
+        arrayOfUnregisterKeys(node) = registerDynamicallyListenedElement(next(node), node)
       } else {
-        heap.insert((node, PositionInRoute(node).getValue(true)))
+        heap.insert((node, positionInRoute(node).getValue(true)))
       }
     }
     ToUpdate = List.empty
@@ -133,7 +133,7 @@ case class Routes(V: Int,
     while (!heap.isEmpty) {
       val currentNodeForUpdate = heap.popFirst()._1
       DecorateRouteStartingFromAndUntilConformOrEnd(currentNodeForUpdate)
-      ArrayOfUnregisterKeys(currentNodeForUpdate) = registerDynamicallyListenedElement(Next(currentNodeForUpdate), currentNodeForUpdate)
+      arrayOfUnregisterKeys(currentNodeForUpdate) = registerDynamicallyListenedElement(next(currentNodeForUpdate), currentNodeForUpdate)
     }
   }
 
@@ -143,48 +143,48 @@ case class Routes(V: Int,
    */
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID: Int) {
     var currentNode = nodeID
-    var nextNode = Next(currentNode).value
+    var nextNode = next(currentNode).value
     while (!isUpToDate(currentNode) && nextNode >= V) {
-      PositionInRoute(nextNode) := (PositionInRoute(currentNode).getValue(true) + 1)
-      RouteNr(nextNode) := RouteNr(currentNode).getValue(true)
+      positionInRoute(nextNode) := (positionInRoute(currentNode).getValue(true) + 1)
+      routeNr(nextNode) := routeNr(currentNode).getValue(true)
       currentNode = nextNode
-      nextNode = Next(currentNode).value
+      nextNode = next(currentNode).value
     }
     if (nextNode < V) {
-      LastInRoute(nextNode) := currentNode
-      RouteLength(nextNode) := PositionInRoute(currentNode).getValue(true) + 1
+      lastInRoute(nextNode) := currentNode
+      routeLength(nextNode) := positionInRoute(currentNode).getValue(true) + 1
     }
   }
 
   override def checkInternals(c: Checker) {
-    for (n <- Next.indices) {
-      val next = Next(n).value
-      if (next != UNROUTED) {
-        c.check(RouteNr(next).value == RouteNr(n).value, Some("RouteNr(next).value == RouteNr(n).value"))
-        if (next < V) {
-          c.check(PositionInRoute(next).value == 0, Some("PositionInRoute(next).value == 0"))
-          c.check(RouteNr(next).value == next, Some("RouteNr(next).value == next"))
+    for (n <- next.indices) {
+      val nextNode = next(n).value
+      if (nextNode != UNROUTED) {
+        c.check(routeNr(nextNode).value == routeNr(n).value, Some("routeNr(nextNode).value == routeNr(n).value"))
+        if (nextNode < V) {
+          c.check(positionInRoute(nextNode).value == 0, Some("positionInRoute(nextNode).value == 0"))
+          c.check(routeNr(nextNode).value == nextNode, Some("routeNr(nextNode).value == nextNode"))
         } else {
-          c.check(PositionInRoute(next).value == (PositionInRoute(n).value + 1) % (RouteLength(RouteNr(n).value).value),
-            Some("PositionInRoute(next).value == (PositionInRoute(n).value +1)%(RouteLength(RouteNr(n).value).value)"))
-          c.check(RouteNr(n).value == RouteNr(next).value, Some("RouteNr(n).value == RouteNr(next).value"))
+          c.check(positionInRoute(nextNode).value == (positionInRoute(n).value + 1) % (routeLength(routeNr(n).value).value),
+            Some("positionInRoute(nextNode).value == (positionInRoute(n).value +1)%(routeLength(routeNr(n).value).value)"))
+          c.check(routeNr(n).value == routeNr(nextNode).value, Some("routeNr(n).value == routeNr(nextNode).value"))
         }
       } else {
-        c.check(RouteNr(n).value == V, Some("RouteNr(n).value == V"))
-        c.check(PositionInRoute(n).value == UNROUTED, Some("PositionInRoute(n).value == UNROUTED"))
+        c.check(routeNr(n).value == V, Some("routeNr(n).value == V"))
+        c.check(positionInRoute(n).value == UNROUTED, Some("positionInRoute(n).value == UNROUTED"))
       }
     }
   }
 }
 object Routes {
-  def buildRoutes(Next: Array[IntVar], V: Int): Routes = {
-    val m: Model = InvariantHelper.findModel(Next)
+  def buildRoutes(next: Array[IntVar], V: Int): Routes = {
+    val m: Model = InvariantHelper.findModel(next)
 
-    val PositionInRoute = Array.tabulate(Next.length)(i => IntVar(m, 0, Next.length, Next.length, "PositionInRouteOfPt" + i))
-    val RouteNr = Array.tabulate(Next.length)(i => IntVar(m, 0, V, V, "RouteNrOfPt" + i))
-    val RouteLength = Array.tabulate(V)(i => IntVar(m, 0, Next.length, 0, "Route " + i + "-Lenght"))
-    val lastInRoute = Array.tabulate(V)(i => IntVar(m, 0, Next.length, i, "LastInRoute " + i))
+    val positionInRoute = Array.tabulate(next.length)(i => IntVar(m, 0, next.length, next.length, "PositionInRouteOfPt" + i))
+    val routeNr = Array.tabulate(next.length)(i => IntVar(m, 0, V, V, "RouteNrOfPt" + i))
+    val routeLength = Array.tabulate(V)(i => IntVar(m, 0, next.length, 0, "Route " + i + "-Lenght"))
+    val lastInRoute = Array.tabulate(V)(i => IntVar(m, 0, next.length, i, "LastInRoute " + i))
 
-    Routes(V, Next, PositionInRoute, RouteNr, RouteLength, lastInRoute)
+    Routes(V, next, positionInRoute, routeNr, routeLength, lastInRoute)
   }
 }
