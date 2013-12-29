@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.cp.core
 
@@ -796,55 +798,99 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
 }
 
 object CPVarInt {
-  
+
+  /**
+   * Creates a new CP Integer Variable with an iterable as initial domain
+   * @param values the iterable defining the possible values for the variable
+   * @param name the name of the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * The domain of the variable does not contains a given value more than once.
+   */
   def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPVarInt = {
     values match {
-      case range:Range => rangeDomain(range, name, store)
-      case set:Set[Int] => setDomain(set, name, store)
+      case range: Range => rangeDomain(range, name, store)
+      case set: Set[Int] => setDomain(set, name, store)
       case iterable => setDomain(iterable.toSet, name, store)
     }
   }
-  
+
+  /**
+   * Creates a new CP Integer Variable with an iterable as initial domain
+   * @param values the iterable defining the possible values for the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * The domain of the variable does not contains a given value more than once.
+   */
   def apply(values: Iterable[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
-  
+
+  /**
+   * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
+   * @param minValue the minimal value of the domain
+   * @param maxValue the maximal value of the domain
+   * @param name the name of the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * as initial domain.
+   */
   def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPVarInt = {
     rangeDomain(minValue to maxValue, name, store)
   }
-  
+
+  /**
+   * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
+   * @param minValue the minimal value of the domain
+   * @param maxValue the maximal value of the domain
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * as initial domain.
+   */
   def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPVarInt = apply(minValue, maxValue, "")(store)
-  
+
+  /**
+   * Creates a new CP Integer Variable assigned to value
+   * @param value the single value contained in the domain
+   * @param name the name of the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with a single value as initial domain.
+   */
   def apply(value: Int, name: String)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, name)
-   
+
+  /**
+   * Creates a new CP Integer Variable assigned to value
+   * @param value the single value contained in the domain
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with a single value as initial domain.
+   */
   def apply(value: Int)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, "")
-  
-  
-  @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, values: Iterable[Int], name: String): CPVarInt = apply(values, name)(store)
-  
-  @deprecated("use apply(values: Iterable[Int])(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(values: Iterable[Int])(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, values: Iterable[Int]): CPVarInt = apply(store, values, "")
-  
-  @deprecated("use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPVarInt = apply(minValue, maxValue, name)(store)
-  
-  @deprecated("use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, minValue: Int, maxValue: Int): CPVarInt = apply(minValue, maxValue, "")(store)
-  
-  @deprecated("use apply(value: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(value: Int, name: String)(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, value: Int, name: String): CPVarInt = apply(value, name)(store)
-  
-  @deprecated("use apply(value: Int)(implicit store: CPStore) instead", "version alpha")
+
+  @deprecated("Use apply(value: Int)(implicit store: CPStore) instead", "version alpha")
   def apply(store: CPStore, value: Int): CPVarInt = apply(value, "")(store)
-  
+
   /** Builds a CPVarInt from a range */
   private def rangeDomain(domain: Range, name: String, store: CPStore): CPVarInt = {
     if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
     else new CPVarIntImpl(store, domain.min, domain.max, name)
   }
-  
+
   /** Builds a CPVarInt from an iterable */
   private def iterableDomain(domain: Iterable[Int], name: String, store: CPStore): CPVarInt = setDomain(domain.toSet, name, store)
-  
+
   /** Builds a CPVarInt from an set */
   private def setDomain(domain: Set[Int], name: String, store: CPStore): CPVarInt = {
     val min = domain.min
