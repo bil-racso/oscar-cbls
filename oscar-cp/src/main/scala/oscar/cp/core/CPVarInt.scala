@@ -811,7 +811,7 @@ object CPVarInt {
     values match {
       case range: Range => rangeDomain(range, name, store)
       case set: Set[Int] => setDomain(set, name, store)
-      case iterable => setDomain(iterable.toSet, name, store)
+      case iterable => iterableDomain(iterable, name, store)
     }
   }
 
@@ -823,6 +823,27 @@ object CPVarInt {
    * The domain of the variable does not contains a given value more than once.
    */
   def apply(values: Iterable[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
+  
+  /**
+   * Creates a new CP Integer Variable with an array as initial domain
+   * @param values the array defining the possible values for the variable
+   * @param name the name of the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * The domain of the variable does not contains a given value more than once.
+   */
+  def apply(values: Array[Int], name: String)(implicit store: CPStore): CPVarInt = {
+    iterableDomain(values, name, store)
+  }
+  
+  /**
+   * Creates a new CP Integer Variable with an array as initial domain
+   * @param values the array defining the possible values for the variable
+   * @param store the CPStore in which the variable is created
+   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * The domain of the variable does not contains a given value more than once.
+   */
+  def apply(values: Array[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
 
   /**
    * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
@@ -834,7 +855,7 @@ object CPVarInt {
    * as initial domain.
    */
   def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPVarInt = {
-    rangeDomain(minValue to maxValue, name, store)
+    new CPVarIntImpl(store, minValue, maxValue, name)
   }
 
   /**
