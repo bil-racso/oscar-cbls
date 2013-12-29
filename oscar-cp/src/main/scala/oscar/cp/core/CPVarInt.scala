@@ -885,22 +885,28 @@ object CPVarInt {
    */
   def apply(value: Int)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, "")
 
-  @deprecated("Use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int], name: String): CPVarInt = apply(values, name)(store)
 
-  @deprecated("Use apply(values: Iterable[Int])(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(values: Iterable[Int])(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int]): CPVarInt = apply(store, values, "")
+  
+  @deprecated("Use apply(values: Array[Int], name: String)(implicit store: CPStore) instead", "1.0")
+  def apply(store: CPStore, values: Array[Int], name: String): CPVarInt = apply(values, name)(store)
 
-  @deprecated("Use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(values: Array[Int])(implicit store: CPStore) instead", "1.0")
+  def apply(store: CPStore, values: Array[Int]): CPVarInt = apply(store, values, "")
+
+  @deprecated("Use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPVarInt = apply(minValue, maxValue, name)(store)
 
-  @deprecated("Use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, minValue: Int, maxValue: Int): CPVarInt = apply(minValue, maxValue, "")(store)
 
-  @deprecated("Use apply(value: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(value: Int, name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, value: Int, name: String): CPVarInt = apply(value, name)(store)
 
-  @deprecated("Use apply(value: Int)(implicit store: CPStore) instead", "version alpha")
+  @deprecated("Use apply(value: Int)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, value: Int): CPVarInt = apply(value, "")(store)
 
   /** Builds a CPVarInt from a range */
