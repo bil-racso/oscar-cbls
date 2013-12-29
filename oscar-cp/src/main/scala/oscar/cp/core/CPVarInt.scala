@@ -796,82 +796,66 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
 }
 
 object CPVarInt {
-
-  /**
-   * Creates a new CP Integer Variable with a range as initial domain
-   * @param cp the solver in which the variable is created
-   * @param domain the range defining the possible values for the variable
-   * @return a fresh CPVarInt defined in the solver cp with initial domain {domain.min,, ..., domain.max}
-   */
-  def apply(cp: CPStore, domain: Range, name: String): CPVarInt = {
-    if (domain.max - domain.min == domain.size - 1) CPVarInt(cp, domain.min, domain.max, name)
-    else CPVarInt(cp, domain.toSet, name)
+  
+  def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPVarInt = {
+    values match {
+      case range:Range => rangeDomain(range, name, store)
+      case set:Set[Int] => setDomain(set, name, store)
+      case iterable => setDomain(iterable.toSet, name, store)
+    }
   }
-
-  def apply(cp: CPStore, domain: Range): CPVarInt = {
-    CPVarInt(cp, domain, "")
+  
+  def apply(values: Iterable[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
+  
+  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPVarInt = {
+    rangeDomain(minValue to maxValue, name, store)
   }
-
-  /**
-   * Creates a new CP Integer Variable instantiated to a value
-   * @param cp the solver in which the variable is created
-   * @param value is the value to which the variable is instantiated
-   * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
-   */
-  def apply(cp: CPStore, value: Int, name: String): CPVarInt = {
-    new CPVarIntImpl(cp, value, value, name)
+  
+  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPVarInt = apply(minValue, maxValue, "")(store)
+  
+  def apply(value: Int, name: String)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, name)
+   
+  def apply(value: Int)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, "")
+  
+  
+  @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, values: Iterable[Int], name: String): CPVarInt = apply(values, name)(store)
+  
+  @deprecated("use apply(values: Iterable[Int])(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, values: Iterable[Int]): CPVarInt = apply(store, values, "")
+  
+  @deprecated("use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPVarInt = apply(minValue, maxValue, name)(store)
+  
+  @deprecated("use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, minValue: Int, maxValue: Int): CPVarInt = apply(minValue, maxValue, "")(store)
+  
+  @deprecated("use apply(value: Int, name: String)(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, value: Int, name: String): CPVarInt = apply(value, name)(store)
+  
+  @deprecated("use apply(value: Int)(implicit store: CPStore) instead", "version alpha")
+  def apply(store: CPStore, value: Int): CPVarInt = apply(value, "")(store)
+  
+  /** Builds a CPVarInt from a range */
+  private def rangeDomain(domain: Range, name: String, store: CPStore): CPVarInt = {
+    if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
+    else new CPVarIntImpl(store, domain.min, domain.max, name)
   }
-
-  def apply(cp: CPStore, value: Int): CPVarInt = {
-    new CPVarIntImpl(cp, value, value, "")
-  }
-
-  /**
-   * Creates a new CP Integer Variable instantiated to a value
-   * @param cp the solver in which the variable is created
-   * @param value is the value to which the variable is instantiated
-   * @return a fresh CPVarInt defined in the solver cp with initial domain {value}
-   */
-  def apply(cp: CPStore, valueMin: Int, valueMax: Int, name: String): CPVarInt = {
-    new CPVarIntImpl(cp, valueMin, valueMax, name)
-  }
-
-  def apply(cp: CPStore, valueMin: Int, valueMax: Int): CPVarInt = {
-    new CPVarIntImpl(cp, valueMin, valueMax, "")
-  }
-
-  /**
-   * Creates a new CP Integer Variable with a set of values as initial domain
-   * @param cp the solver in which the variable is created
-   * @param values is the initial set of values possible for the variable (domain)
-   * @return a fresh CPVarInt defined in the solver cp with initial domain equal to the set of values
-   */
-
-  def apply(cp: CPStore, values: Set[Int], name: String = ""): CPVarInt = {
-    val (minv, maxv) = (values.min, values.max)
-    val x = new CPVarIntImpl(cp, minv, maxv, name)
-    if (maxv - minv + 1 > values.size) {
-      for (v <- minv to maxv; if (!values.contains(v))) {
+  
+  /** Builds a CPVarInt from an iterable */
+  private def iterableDomain(domain: Iterable[Int], name: String, store: CPStore): CPVarInt = setDomain(domain.toSet, name, store)
+  
+  /** Builds a CPVarInt from an set */
+  private def setDomain(domain: Set[Int], name: String, store: CPStore): CPVarInt = {
+    val min = domain.min
+    val max = domain.max
+    val x = new CPVarIntImpl(store, min, max, name)
+    if (max - min + 1 > domain.size) {
+      for (v <- min to max if !domain.contains(v)) {
         x.removeValue(v)
       }
     }
     x
-  }
-
-  def apply(cp: CPStore, values: Seq[Int], name: String): CPVarInt = {
-    CPVarInt(cp, values.toSet, name)
-  }
-
-  def apply(cp: CPStore, values: Seq[Int]): CPVarInt = {
-    CPVarInt(cp, values.toSet, "")
-  }
-  
-  def apply(cp: CPStore, values: Array[Int], name: String): CPVarInt = {
-    CPVarInt(cp, values.toSet, name)
-  }
-
-  def apply(cp: CPStore, values: Array[Int]): CPVarInt = {
-    CPVarInt(cp, values.toSet, "")
   }
 }
 
