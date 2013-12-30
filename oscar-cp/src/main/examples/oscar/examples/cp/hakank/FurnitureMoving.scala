@@ -75,9 +75,9 @@ object FurnitureMoving {
     //
     // variables
     //
-    val starts = Array.fill(n)(CPVarInt(cp, 0 to upper_limit))
-    val end_times = Array.fill(n)(CPVarInt(cp, 0 to upper_limit*2))
-    val num_persons = CPVarInt(cp, 1 to 100)
+    val starts = Array.fill(n)(CPVarInt(0 to upper_limit)(cp))
+    val end_times = Array.fill(n)(CPVarInt(0 to upper_limit*2)(cp))
+    val num_persons = CPVarInt(1 to 100)(cp)
 
     val max_end_time = maximum(end_times) 
 

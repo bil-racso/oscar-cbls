@@ -55,10 +55,10 @@ object ParcelShipment extends App {
     val start = 0 // start city
 
     val cp = CPSolver()
-    val succ = Array.tabulate(n)(c => CPVarInt(cp, 0 until n)) // successor
-    val load = Array.tabulate(n)(c => CPVarInt(cp, 0 to maxLoad)) // load(i) is the load in the ship when leaving city i
-    val totDist = CPVarInt(cp, 0 to distance.flatten.sum)
-    val predStart = CPVarInt(cp, 0 until n)
+    val succ = Array.tabulate(n)(c => CPVarInt(0 until n)(cp)) // successor
+    val load = Array.tabulate(n)(c => CPVarInt(0 to maxLoad)(cp)) // load(i) is the load in the ship when leaving city i
+    val totDist = CPVarInt(0 to distance.flatten.sum)(cp)
+    val predStart = CPVarInt(0 until n)(cp)
 
     cp.minimize(totDist) subjectTo {
 

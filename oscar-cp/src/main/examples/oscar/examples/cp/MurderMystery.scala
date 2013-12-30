@@ -48,9 +48,9 @@ object MurderMystery extends App {
     
     
     // variables
-    val personWithAge = Array.fill(4)(CPVarInt(cp, 0 to 3)) // personWithAge(i) is younger than personWithAge(i+1)
-    val age = Array.fill(4)(CPVarInt(cp, 0 to 3))  // age(i) is the age of person i
-    val Array(murderer,witness,helper,victim) = Array.fill(4)(CPVarInt(cp,0 to 3))
+    val personWithAge = Array.fill(4)(CPVarInt(0 to 3)(cp)) // personWithAge(i) is younger than personWithAge(i+1)
+    val age = Array.fill(4)(CPVarInt(0 to 3)(cp))  // age(i) is the age of person i
+    val Array(murderer,witness,helper,victim) = Array.fill(4)(CPVarInt(0 to 3)(cp))
     val oldest = personWithAge(3)
     val youngest = personWithAge(0)
     

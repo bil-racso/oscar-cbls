@@ -37,7 +37,7 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
   val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
 
   // cardinality variable
-  val card = CPVarInt(s,0,max-min+1);
+  val card = CPVarInt(0,max-min+1)(s);
   s.post(new SetCard(this,card));
 
   /**

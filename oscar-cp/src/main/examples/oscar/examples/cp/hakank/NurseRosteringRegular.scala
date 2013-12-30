@@ -119,9 +119,9 @@ object NurseRosteringRegular {
     //
     // variables
     //
-    val x = Array.fill(num_nurses,num_days)(CPVarInt(cp, shifts_r))
-    val day_stat = Array.fill(num_days,num_shifts)(CPVarInt(cp, nurses))
-    val nurse_stat = Array.fill(num_nurses,num_shifts)(CPVarInt(cp, days))
+    val x = Array.fill(num_nurses,num_days)(CPVarInt(shifts_r)(cp))
+    val day_stat = Array.fill(num_days,num_shifts)(CPVarInt(nurses)(cp))
+    val nurse_stat = Array.fill(num_nurses,num_shifts)(CPVarInt(days)(cp))
 
     val all = x.flatten
 

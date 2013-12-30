@@ -66,9 +66,9 @@ object BACP extends App{
     val prerequisites = Array.fill(nbPre)((next(), next()))
 
     val cp = CPSolver()
-    var x = Array.fill(nbCourses)(CPVarInt(cp,periods))
-    val l = Array.fill(nbPeriods)(CPVarInt(cp,0 to credits.sum))
-    val vari = CPVarInt(cp,0 to 10000000)
+    var x = Array.fill(nbCourses)(CPVarInt(periods)(cp))
+    val l = Array.fill(nbPeriods)(CPVarInt(0 to credits.sum)(cp))
+    val vari = CPVarInt(0 to 10000000)(cp)
 
 
 

@@ -48,7 +48,7 @@ object AudreyProblem  {
 		}
 		
 		val cp = new CPSolver()
-		val x = (0 until 100).map(v => CPVarInt(cp,reachables(v)))
+		val x = (0 until 100).map(v => CPVarInt(reachables(v))(cp))
 		cp.onSolution {
 		  println(x.map(_.value).mkString(","))
 		}

@@ -36,16 +36,16 @@ object LeastDiff {
     val cp = CPSolver()
 
     // variables
-    val A = CPVarInt(cp, 0 to 9)
-    val B = CPVarInt(cp, 0 to 9)
-    val C = CPVarInt(cp, 0 to 9)
-    val D = CPVarInt(cp, 0 to 9)
-    val E = CPVarInt(cp, 0 to 9)
-    val F = CPVarInt(cp, 0 to 9)
-    val G = CPVarInt(cp, 0 to 9)
-    val H = CPVarInt(cp, 0 to 9)
-    val I = CPVarInt(cp, 0 to 9)
-    val J = CPVarInt(cp, 0 to 9)
+    val A = CPVarInt(0 to 9)(cp)
+    val B = CPVarInt(0 to 9)(cp)
+    val C = CPVarInt(0 to 9)(cp)
+    val D = CPVarInt(0 to 9)(cp)
+    val E = CPVarInt(0 to 9)(cp)
+    val F = CPVarInt(0 to 9)(cp)
+    val G = CPVarInt(0 to 9)(cp)
+    val H = CPVarInt(0 to 9)(cp)
+    val I = CPVarInt(0 to 9)(cp)
+    val J = CPVarInt(0 to 9)(cp)
 
     val all = Array(A, B, C, D, E, F, G, H, I, J)
     val X = A * 10000 + B * 1000 + C * 100 + D * 10 + E

@@ -75,9 +75,9 @@ public class TestBinPackingFlow extends TestCase {
  */   
     public void test3() { 	
     	CPStore cp = new CPStore();
-    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1})};
+    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, 0, 1),
+    									CPVarInt.apply(cp, 0, 1),
+    									CPVarInt.apply(cp, 0, 1)};
     	int w [] = new int [] {6,5,4}; 
     	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,9),
     									CPVarInt.apply(cp, 0,6)};

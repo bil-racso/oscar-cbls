@@ -361,7 +361,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    if((s contains x) || s.isEmpty) {
 	      	      model.dict += 
 	      	        ((id, (FZType.V_INT, 
-	      	            new VarInt(ann, CPVarInt(cp, x), id))))
+	      	            new VarInt(ann, CPVarInt(x)(cp), id))))
 	      	    } else {
 	      	      throw new Exception(x + " not in the domain of " + id)
 	      	    }
@@ -571,9 +571,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
 	          if(s.isEmpty) {
-	            CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
+	            CPVarInt(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)(cp)
 	          } else {
-	            CPVarInt(cp, s)
+	            CPVarInt(s)(cp)
 	          }
 	      	, id))))
 	  }
@@ -651,9 +651,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       ((id, (FZType.V_ARRAY_INT,
         new VarArrayInt(s, ann, 
             if(s.isEmpty) {
-            	Array.fill(l){CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)}
+            	Array.fill(l){CPVarInt(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)(cp)}
 	          } else {
-	            Array.fill(l){CPVarInt(cp, s)}
+	            Array.fill(l){CPVarInt(s)(cp)}
 	          }
         	, id))))
 	}
@@ -1031,13 +1031,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  tp match {
 	    case "def" => 
 	      val nbBin = getCPArrayRangeSize(varList(1).toString)
-	      Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
+	      Array.fill(nbBin){CPVarInt(0, varList(0).toString.toInt)(cp)}
 	    case "load" => getCPVarIntArray(varList(0))
 	    case "capa" =>
 	      var capaCP = Array[CPVarInt]()
 	      val capaInt = getIntArray(varList(0).toString)
 	      capaInt.foreach { e =>
-	        capaCP :+= CPVarInt(cp, 0, e)
+	        capaCP :+= CPVarInt(0, e)(cp)
 	      }
 	      capaCP
 	  }
@@ -1164,7 +1164,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def sort_cstr(varList: List[Any]) {
 	  val x = getCPVarIntArray(varList(0))
 	  val y = getCPVarIntArray(varList(1))
-	  val perm = Array.fill(x.size)(CPVarInt(cp,0 until x.size))
+	  val perm = Array.fill(x.size)(CPVarInt(0 until x.size)(cp))
 	  cp.add(sortedness(x,y,perm))
 	}
 	
@@ -1589,7 +1589,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def getCPVarInt(x: Any): CPVarInt = {
 	  x match {
-	    case x:Int => CPVarInt(cp, x)
+	    case x:Int => CPVarInt(x)(cp)
 	    case x:List[Any] => getCPVarIntFromList(x)
 	    case x:String => getCPVarIntFromString(x)
 	  }
@@ -1645,7 +1645,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 	            case FZType.P_INT => {
-	              CPVarInt(cp, fzo.asInstanceOf[ParamInt].value)
+	              CPVarInt(fzo.asInstanceOf[ParamInt].value)(cp)
 	            }
 	            case _ => {
 	              throw new Exception("Var " + x + " does not match")
@@ -1785,7 +1785,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                  val array = fzo.asInstanceOf[ParamArrayInt].value
 	                  array match {
 	                    case x:List[Int] =>
-	                      (x) map(CPVarInt(cp, _)) toArray
+	                      (x) map(CPVarInt(_)(cp)) toArray
 	                  }
 	                }
 	            }

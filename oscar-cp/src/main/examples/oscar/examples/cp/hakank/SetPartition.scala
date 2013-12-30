@@ -66,7 +66,7 @@ object SetPartition {
     // variables
     // 
     // The matrix
-    val a = Array.fill(num_sets,n)(CPVarInt(cp, 0 to 1))
+    val a = Array.fill(num_sets,n)(CPVarInt(0 to 1)(cp))
 
 
     //

@@ -67,8 +67,8 @@ object PMedian {
     //
     // variables
     //
-    val open = Array.fill(num_warehouses)(CPVarInt(cp, 0 to num_warehouses))
-    val ship = Array.fill(num_customers,num_warehouses)(CPVarInt(cp, 0 to 1))
+    val open = Array.fill(num_warehouses)(CPVarInt(0 to num_warehouses)(cp))
+    val ship = Array.fill(num_customers,num_warehouses)(CPVarInt(0 to 1)(cp))
 
       // val z = CPVarInt(cp, 0 to 1000)
     val z = sum(for{c <- CUSTOMERS

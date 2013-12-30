@@ -39,22 +39,22 @@ object PerfectSquare extends App {
   val s = 112
   val side = Array(50, 42, 37, 35, 33, 29, 27, 25, 24, 19, 18, 17, 16, 15, 11, 9, 8, 7, 6, 4, 2)
 
-  val cp = CPScheduler(s)
+  implicit val cp = CPScheduler(s)
 
   val nSquare = side.size
   val Square = 0 until nSquare
 
-  val durationsX = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t)))
-  val startsX = Array.tabulate(nSquare)(t => CPVarInt(cp, 0 to s - side(t)))
-  val endsX = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t) to s))
-  val demandsX = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t)))
-  val resourcesX = Array.fill(nSquare)(CPVarInt(cp, 0))
+  val durationsX = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
+  val startsX = Array.tabulate(nSquare)(t => CPVarInt(0 to s - side(t)))
+  val endsX = Array.tabulate(nSquare)(t => CPVarInt(side(t) to s))
+  val demandsX = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
+  val resourcesX = Array.fill(nSquare)(CPVarInt(0))
 
-  val durationsY = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t)))
-  val startsY = Array.tabulate(nSquare)(t => CPVarInt(cp, 0 to s - side(t)))
-  val endsY = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t) to s))
-  val demandsY = Array.tabulate(nSquare)(t => CPVarInt(cp, side(t)))
-  val resourcesY = Array.fill(nSquare)(CPVarInt(cp, 1))
+  val durationsY = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
+  val startsY = Array.tabulate(nSquare)(t => CPVarInt(0 to s - side(t)))
+  val endsY = Array.tabulate(nSquare)(t => CPVarInt(side(t) to s))
+  val demandsY = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
+  val resourcesY = Array.fill(nSquare)(CPVarInt(1))
 
   cp.onSolution {
     // Visualization
@@ -81,10 +81,10 @@ object PerfectSquare extends App {
     }
 
     // Cumulative
-    cp.add(new SweepMaxCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(cp, s), 0))
-    cp.add(new SweepMinCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(cp, s), 0))
-    cp.add(new SweepMaxCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(cp, s), 1))
-    cp.add(new SweepMinCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(cp, s), 1))
+    cp.add(new SweepMaxCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(s), 0))
+    cp.add(new SweepMinCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(s), 0))
+    cp.add(new SweepMaxCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(s), 1))
+    cp.add(new SweepMinCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(s), 1))
 
     // Overlapping
     for (i <- 0 until nSquare; j <- i + 1 until nSquare) {

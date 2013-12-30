@@ -129,9 +129,9 @@ object Nurses extends App  {
  
    val cp = CPSolver()
    cp.silent = true
-   val spreadAcuity = CPVarInt(cp,0 to 10e6.toInt)
-   val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(cp,0 until nbNursesInZone(i)))
-   val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(cp,1 to 105))
+   val spreadAcuity = CPVarInt(0 to 10e6.toInt)(cp)
+   val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(0 until nbNursesInZone(i))(cp))
+   val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(1 to 105)(cp))
    println("spreadacuity:"+spreadAcuity)
    var best = Int.MaxValue
    

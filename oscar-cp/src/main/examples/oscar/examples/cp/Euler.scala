@@ -51,7 +51,7 @@ object Euler extends App {
   }
 
   val cp = new CPSolver()
-  val x = (0 until 64).map(v => CPVarInt(cp, reachables(v)))
+  val x = (0 until 64).map(v => CPVarInt(reachables(v))(cp))
 
   cp.solve subjectTo {
     cp.add(circuit(x))

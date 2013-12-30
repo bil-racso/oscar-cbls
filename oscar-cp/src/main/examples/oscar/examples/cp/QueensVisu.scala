@@ -36,7 +36,7 @@ object QueensVisu extends App {
   val n = 8 //number of queens
   val Queens = 0 until n
   //variables
-  val queens = for (i <- Queens) yield CPVarInt(cp, 1 to n)
+  val queens = for (i <- Queens) yield CPVarInt(1 to n)(cp)
 
   val tree = new Tree() 
   // -----------------------------------------------

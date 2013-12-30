@@ -67,7 +67,7 @@ object Fancy {
     //
 
     val x = Array.fill(k)(CPVarBool(cp))
-    val x2 = Array.fill(k)(CPVarInt(cp, 0 to 1))
+    val x2 = Array.fill(k)(CPVarInt(0 to 1)(cp))
     val Array(t,h,r,s,n) = x
     val Array(t2,h2,r2,s2,n2) = x2
     // This don't work with CPVarBool

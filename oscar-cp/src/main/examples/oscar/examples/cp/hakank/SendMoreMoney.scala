@@ -34,14 +34,14 @@ object SendMoreMoney {
       val cp = CPSolver()
 
       // variables
-      val S = CPVarInt(cp, 0 to 9)
-      val E = CPVarInt(cp, 0 to 9)
-      val N = CPVarInt(cp, 0 to 9)
-      val D = CPVarInt(cp, 0 to 9)
-      val M = CPVarInt(cp, 0 to 9)
-      val O = CPVarInt(cp, 0 to 9)
-      val R = CPVarInt(cp, 0 to 9)
-      val Y = CPVarInt(cp, 0 to 9)
+      val S = CPVarInt(0 to 9)(cp)
+      val E = CPVarInt(0 to 9)(cp)
+      val N = CPVarInt(0 to 9)(cp)
+      val D = CPVarInt(0 to 9)(cp)
+      val M = CPVarInt(0 to 9)(cp)
+      val O = CPVarInt(0 to 9)(cp)
+      val R = CPVarInt(0 to 9)(cp)
+      val Y = CPVarInt(0 to 9)(cp)
 
       val all = Array(S,E,N,D,M,O,R,Y)
 

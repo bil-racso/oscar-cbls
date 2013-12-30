@@ -137,7 +137,7 @@ object AlphameticGenerate {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, start to base-1))
+    val x = Array.fill(n)(CPVarInt(start to base-1)(cp))
 
     //
     // constraints

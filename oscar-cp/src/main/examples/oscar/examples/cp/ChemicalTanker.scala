@@ -153,11 +153,11 @@ object ChemicalTanker extends App {
 
   val cp = CPSolver()
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
-  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
+  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(tanks(t).possibleCargos)(cp))
   // for each cargo, the total cacity allocated to it (must be at least the volume to place)
-  val load = Array.tabulate(cargos.size)(c => CPVarInt(cp, cargos(c).volume to totCapa))
+  val load = Array.tabulate(cargos.size)(c => CPVarInt(cargos(c).volume to totCapa)(cp))
   // for each cargo, the number of tanks allocated to it
-  val card = Array.tabulate(cargos.size)(c => CPVarInt(cp, 0 to tanks.size))
+  val card = Array.tabulate(cargos.size)(c => CPVarInt(0 to tanks.size)(cp))
 
   // objective = maximize the total empty space
   val freeSpace = load(0)

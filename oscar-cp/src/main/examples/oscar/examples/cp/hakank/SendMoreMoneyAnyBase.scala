@@ -52,14 +52,14 @@ object SendMoreMoneyAnyBase {
     //
     // variables
     //
-    val S = CPVarInt(cp, 0 to base2)
-    val E = CPVarInt(cp, 0 to base2)
-    val N = CPVarInt(cp, 0 to base2)
-    val D = CPVarInt(cp, 0 to base2)
-    val M = CPVarInt(cp, 0 to base2)
-    val O = CPVarInt(cp, 0 to base2)
-    val R = CPVarInt(cp, 0 to base2)
-    val Y = CPVarInt(cp, 0 to base2)
+    val S = CPVarInt(0 to base2)(cp)
+    val E = CPVarInt(0 to base2)(cp)
+    val N = CPVarInt(0 to base2)(cp)
+    val D = CPVarInt(0 to base2)(cp)
+    val M = CPVarInt(0 to base2)(cp)
+    val O = CPVarInt(0 to base2)(cp)
+    val R = CPVarInt(0 to base2)(cp)
+    val Y = CPVarInt(0 to base2)(cp)
 
     val all = Array(S,E,N,D,M,O,R,Y)
 

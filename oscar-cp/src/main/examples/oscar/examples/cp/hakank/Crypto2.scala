@@ -56,7 +56,7 @@ object Crypto2 {
     //
     // variables
     //
-    val all = Array.fill(num)(CPVarInt(cp, 1 to num))
+    val all = Array.fill(num)(CPVarInt(1 to num)(cp))
     val Array(a,b,c,d,e,f,g,h,i,j,k,l,m) = all slice( 0, 13)
     val Array(n,o,p,q,r,s,t,u,v,w,x,y,z) = all slice(13, 26)
 

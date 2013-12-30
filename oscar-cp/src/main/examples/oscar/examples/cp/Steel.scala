@@ -79,9 +79,9 @@ object Steel {
     val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
     val cp = new CPSolver
-    val x = (for (s <- Slabs) yield CPVarInt(cp, 0 until nbSlab))
+    val x = (for (s <- Slabs) yield CPVarInt(0 until nbSlab)(cp))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
-    val l = for (s <- Slabs) yield CPVarInt(cp, 0 to capa.max)
+    val l = for (s <- Slabs) yield CPVarInt(0 to capa.max)(cp)
     val xsol = Array.fill(nbSlab)(0) //current best solution
 
     // -------------visual components ------------
@@ -132,7 +132,9 @@ object Steel {
         }
       }
 
-    } start(1) // find firest feasible solution
+    } 
+    
+    val stats = cp.start(1) // find firest feasible solution
 
     for (r <- 1 to 100) {
       cp.startSubjectTo(failureLimit = 200) {
@@ -144,7 +146,6 @@ object Steel {
 
     println("end--------------")
 
-    cp.printStats()
-
+    println(stats)
   }
 }
