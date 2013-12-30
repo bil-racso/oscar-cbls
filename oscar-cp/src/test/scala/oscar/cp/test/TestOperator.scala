@@ -28,8 +28,8 @@ class TestOperator extends FunSuite with ShouldMatchers  {
   
   test("unary operator") { 
 	  val cp = CPSolver()
-	  val A = CPVarInt(cp,8)
-	  val B = CPVarInt(cp,-10 to 10)
+	  val A = CPVarInt(8)(cp)
+	  val B = CPVarInt(-10 to 10)(cp)
 	  val C = -A
 	  C.value should be(-8)
 	  cp.post(B == -C)

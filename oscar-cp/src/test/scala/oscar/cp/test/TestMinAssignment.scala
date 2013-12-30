@@ -27,8 +27,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(2, 3, 4), 
                   Array(3, 3, 3), 
                   Array(4, 5, 2))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array.fill(3)(CPVarInt(cp, 0 to 2))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array.fill(3)(CPVarInt(0 to 2)(cp))
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(7)
     cp.post(x(0) != 0)
@@ -43,8 +43,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(2, 3, 4), 
                   Array(3, 3, 3), 
                   Array(4, 5, 2))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array(CPVarInt(cp, Set(1,2)),CPVarInt(cp, Set(0,1,2)),CPVarInt(cp, Set(0,1)))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array(CPVarInt(Set(1,2))(cp), CPVarInt(Set(0,1,2))(cp), CPVarInt(Set(0,1))(cp))
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(10)
   }
@@ -55,8 +55,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(2, 3, 4), 
                   Array(3, 3, 3), 
                   Array(4, 5, 2))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array(CPVarInt(cp, Set(0,1,2)),CPVarInt(cp, Set(0,1,2)),CPVarInt(cp, Set(0,1)))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array(CPVarInt(Set(0,1,2))(cp), CPVarInt(Set(0,1,2))(cp), CPVarInt(Set(0,1))(cp))
     cp.post(new MinAssignment(x, w, cost))
     println(cost)
     cost.min should be(10)
@@ -67,8 +67,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(2, 3, 4), 
                   Array(3, 3, 3), 
                   Array(4, 5, 2))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array.fill(3)(CPVarInt(cp, 0 to 2))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array.fill(3)(CPVarInt(0 to 2)(cp))
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(7)
     cp.pushState()
@@ -85,8 +85,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(2, 3, 4), 
                   Array(3, 3, 3), 
                   Array(4, 5, 2))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array.fill(3)(CPVarInt(cp, 0 to 2))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array.fill(3)(CPVarInt(0 to 2)(cp))
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(7)
     cp.post(cost <= 7)
@@ -101,8 +101,8 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val w = Array(Array(0, 1, 2), 
                   Array(0, 0, 0), 
                   Array(2, 3, 0))
-    val cost = CPVarInt(cp, 0 to 100)
-    val x = Array.fill(3)(CPVarInt(cp, 0 to 2))
+    val cost = CPVarInt(0 to 100)(cp)
+    val x = Array.fill(3)(CPVarInt(0 to 2)(cp))
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(0)
     cp.post(cost <= 0)

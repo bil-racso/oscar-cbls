@@ -28,9 +28,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 
 //  test("Test 1: too few variables to satisfy the lower bounds of CC") {
 //    val cp = new CPSolver()
-//    var x1 = CPVarInt(cp, 0, 2)
-//    var x2 = CPVarInt(cp, 1, 3)
-//    var x3 = CPVarInt(cp, 0, 3)
+//    var x1 = CPVarInt(0, 2)
+//    var x2 = CPVarInt(1, 3)
+//    var x3 = CPVarInt(0, 3)
 //    val x = Array(x1, x2, x3)
 //
 //    val minVal = 0
@@ -50,9 +50,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 //
 //  test("Test 2: too many variables to satisfy the upper bounds of CC") {
 //    val cp = new CPSolver()
-//    var x1 = CPVarInt(cp, 0, 2)
-//    var x2 = CPVarInt(cp, 1, 3)
-//    var x3 = CPVarInt(cp, 0, 3)
+//    var x1 = CPVarInt(0, 2)
+//    var x2 = CPVarInt(1, 3)
+//    var x3 = CPVarInt(0, 3)
 //    val x = Array(x1, x2, x3)
 //
 //    val minVal = 0
@@ -72,9 +72,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 
   test("Test 3: Variation of 2 that should have some solutions") {
     val cp = new CPSolver()
-    var x1 = CPVarInt(cp, 0, 2)
-    var x2 = CPVarInt(cp, 1, 3)
-    var x3 = CPVarInt(cp, 0, 3)
+    var x1 = CPVarInt(0, 2)(cp)
+    var x2 = CPVarInt(1, 3)(cp)
+    var x3 = CPVarInt(0, 3)(cp)
     val x = Array(x1, x2, x3)
 
     val minVal = 0
@@ -94,9 +94,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
   
   test("Test 4: verifying a solution") {
     val cp = new CPSolver()
-    var x1 = CPVarInt(cp, 0, 2)
-    var x2 = CPVarInt(cp, 1, 3)
-    var x3 = CPVarInt(cp, 0, 3)
+    var x1 = CPVarInt(0, 2)(cp)
+    var x2 = CPVarInt(1, 3)(cp)
+    var x3 = CPVarInt(0, 3)(cp)
     val x = Array(x1, x2, x3)
 
     // T4
@@ -114,9 +114,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 
   test("Test 5: counting solutions") {
     val cp = new CPSolver()
-    var x1 = CPVarInt(cp, 0, 2)
-    var x2 = CPVarInt(cp, 1, 3)
-    var x3 = CPVarInt(cp, 0, 3)
+    var x1 = CPVarInt(0, 2)(cp)
+    var x2 = CPVarInt(1, 3)(cp)
+    var x3 = CPVarInt(0, 3)(cp)
     val x = Array(x1, x2, x3)
 
     val minVal = 0
@@ -137,9 +137,9 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
 
   test("Test 6: counting solutions") {
     val cp = new CPSolver()
-    var x1 = CPVarInt(cp, 0, 2)
-    var x2 = CPVarInt(cp, 1, 3)
-    var x3 = CPVarInt(cp, 0, 3)
+    var x1 = CPVarInt(0, 2)(cp)
+    var x2 = CPVarInt(1, 3)(cp)
+    var x3 = CPVarInt(0, 3)(cp)
     val x = Array(x1, x2, x3)
 
     val minVal = 0
@@ -224,7 +224,7 @@ object TestGCCFWC {
 
     val X = Array.tabulate(m)(v => {
       val (lb, ub) = domainGen(yMax).sample.get
-      CPVarInt(cp, lb, ub)
+      CPVarInt(lb, ub)
     })
     val minVal = Gen.choose(0, MaxMinVal).sample.get
     val n = Gen.choose(1, yMax - minVal).sample.get

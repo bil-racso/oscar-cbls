@@ -30,10 +30,10 @@ class TestSum extends FunSuite with ShouldMatchers  {
 	  	
 	  	val s = CPSolver()
 	  	
-    	val x0 = CPVarInt(s,0,1)
-    	val x1 = CPVarInt(s,0,2)
-    	val x2 = CPVarInt(s,0,2)
-    	val x3 = CPVarInt(s,0,3)
+    	val x0 = CPVarInt(0,1)(s)
+    	val x1 = CPVarInt(0,2)(s)
+    	val x2 = CPVarInt(0,2)(s)
+    	val x3 = CPVarInt(0,3)(s)
     	
     	val  cumulatedCounters = Array(x0,x1,x2,x3)
     	val n = cumulatedCounters.size
@@ -56,8 +56,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum1") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,0 to 5), CPVarInt(cp,1 to 5), CPVarInt(cp,0 to 5))
-	  val y = CPVarInt(cp,0 to 100)
+	  val x = Array(CPVarInt(0 to 5)(cp), CPVarInt(1 to 5)(cp), CPVarInt(0 to 5)(cp))
+	  val y = CPVarInt(0 to 100)(cp)
 	  cp.add(sum(x,y))
 	  y.min should be(1)
 	  y.max should be(15) 
@@ -65,8 +65,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum2") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,-5 to 5), CPVarInt(cp,1 to 2), CPVarInt(cp,0 to 1))
-	  val y = CPVarInt(cp,0 to 100)
+	  val x = Array(CPVarInt(-5 to 5)(cp), CPVarInt(1 to 2)(cp), CPVarInt(0 to 1)(cp))
+	  val y = CPVarInt(0 to 100)(cp)
 	  cp.add(sum(x,y))
 	  x(0).min should be(-3)
 	  y.min should be(0) 
@@ -75,8 +75,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum3") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,0 to 5), CPVarInt(cp,0 to 5), CPVarInt(cp,0 to 5))
-	  val y = CPVarInt(cp,5)
+	  val x = Array(CPVarInt(0 to 5)(cp), CPVarInt(0 to 5)(cp), CPVarInt(0 to 5)(cp))
+	  val y = CPVarInt(5)(cp)
 	  cp.add(sum(x,y))
 	  cp.add(x(1) == 0)
 	  cp.add(x(0) >= 1)
@@ -119,8 +119,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   test("sum4") { 
     
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,-2 to 5,"x0"), CPVarInt(cp,-4 to 5,"x1"), CPVarInt(cp,3 to 5,"x2"))
-	  val y = CPVarInt(cp,4 to 5,"y")
+	  val x = Array(CPVarInt(-2 to 5,"x0")(cp), CPVarInt(-4 to 5,"x1")(cp), CPVarInt(3 to 5,"x2")(cp))
+	  val y = CPVarInt(4 to 5,"y")(cp)
 	  println("---------------")
 	  println("=>"+solve(x,y,true))
 	  println("=>"+solve(x,y))
@@ -130,8 +130,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum5") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,Set(-5,-3,2,8)), CPVarInt(cp,Set(-10,8)), CPVarInt(cp,3 to 5))
-	  val y = CPVarInt(cp,3 to 8)
+	  val x = Array(CPVarInt(Set(-5,-3,2,8))(cp), CPVarInt(Set(-10,8))(cp), CPVarInt(3 to 5)(cp))
+	  val y = CPVarInt(3 to 8)(cp)
 	  
 	  println("=>"+solve(x,y,true))
 	  println("=>"+solve(x,y))
@@ -141,8 +141,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum6") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,Set(-5,-3,2,8)), CPVarInt(cp,Set(-10,8)), CPVarInt(cp,3 to 5),CPVarInt(cp,-10 to -5))
-	  val y = CPVarInt(cp,3 to 8)
+	  val x = Array(CPVarInt(Set(-5,-3,2,8))(cp), CPVarInt(Set(-10,8))(cp), CPVarInt(3 to 5)(cp),CPVarInt(-10 to -5)(cp))
+	  val y = CPVarInt(3 to 8)(cp)
 	  
 	  println("=>"+solve(x,y,true))
 	  println("=>"+solve(x,y))

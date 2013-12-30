@@ -62,7 +62,7 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
   test("Test SetCard 4") {
     val cp = CPSolver()
     val x = CPVarSet(cp,Set(1,3),Set(4))
-    val c = CPVarInt(cp,-100,100)
+    val c = CPVarInt(-100,100)(cp)
     cp.post(x.card == c)
     c.min should be(2)
     c.max should be(3)
