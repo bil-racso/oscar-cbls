@@ -47,7 +47,9 @@ class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double
 }
 	
 object MIPVar { 
-	  def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPVar = new MIPVar(mip,name,lbound,ubound) 
+      def apply(name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity)(implicit mip: MIPSolver) = new MIPVar(mip,name,lbound,ubound) 
+	  def apply(name : String,  domain : Range)(implicit mip: MIPSolver): MIPVar =  new MIPVar(mip,name,domain)
+      def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPVar = new MIPVar(mip,name,lbound,ubound) 
 	  def apply(mip : MIPSolver, name : String,  domain : Range): MIPVar =  new MIPVar(mip,name,domain)
 }
 
@@ -67,7 +69,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
       }
     }
 
-        /* PIECEWISE LINEAR FUNCTION
+    /* PIECEWISE LINEAR FUNCTION
      * limits = break points of the piecewise function (0 is the first)
      * rates  = rates of the different portions
      * Q      = the value of the abscissa
