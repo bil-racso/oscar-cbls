@@ -11,9 +11,7 @@ import oscar.util._
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object Queens extends App {
-
-  implicit val cp = CPSolver()
+object Queens extends CPModel {
 
   val nQueens = 12 // Number of queens
   val Queens = 0 until nQueens

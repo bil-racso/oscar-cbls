@@ -12,15 +12,12 @@ import oscar.cp.core._
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object TSPVisu extends App {
+object TSPVisu extends CPModel {
 
   // Data
   val nCities = 20
   val Cities = 0 until nCities
   val (distMatrix, coordinates) = TSPGenerator.randomInstance(nCities)
-
-  // Solver
-  implicit val cp = new CPSolver()
 
   // Variables
   val succ = Array.fill(nCities)(CPVarInt(Cities)) 
