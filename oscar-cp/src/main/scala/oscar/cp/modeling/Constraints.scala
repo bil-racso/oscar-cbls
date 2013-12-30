@@ -112,10 +112,6 @@ trait Constraints {
     return allDifferent(vars.toArray: _*)
   }
   
-  def allDifferent(vars: Array[CPVarInt]): Constraint = {
-    allDifferent(vars)
-  }
-  
   /**
    * minAssignment Constraint (Available Filtering: Medium)
    * @param vars an non empty array of variables, weights a n x n array (n = vars.size-1).
@@ -515,7 +511,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } >= n
    */  
   def atLeast(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
-    among(CPVarInt(n,x.size)(x(0).s),x,s)
+    among(CPVarInt(n, x.size)(x(0).s),x,s)
   }
 
   /**
@@ -535,7 +531,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } <= n
    */  
   def atMost(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
-    among(CPVarInt(0,n)(x(0).s),x,s)
+    among(CPVarInt(0, n)(x(0).s),x,s)
   }
 
   /**
@@ -920,7 +916,7 @@ trait Constraints {
         return Array(SweepMaxCumulative(cp, activities, CPVarInt(max)(cp), machine))
       }
     } else if (min != Int.MinValue) {
-      return Array(SweepMinCumulative(cp, activities, CPVarInt(max)(cp), machine))
+      return Array(SweepMinCumulative(cp, activities, CPVarInt(min)(cp), machine))
     }
 
     throw new IllegalArgumentException("Bounds are not specified")
