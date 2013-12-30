@@ -43,7 +43,7 @@ object MagicModuloNumber extends App {
 
   val cp = CPSolver()
 
-  var x = CPVarInt(cp, 0 to 10000)
+  var x = CPVarInt(0 to 10000)(cp)
 
   cp.solve subjectTo {
     for (i <- 2 to 10) {

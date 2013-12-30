@@ -57,9 +57,9 @@ object Rack extends App {
   // CP Model
 
   val cp = CPSolver()
-  val rack = Racks.map(r => CPVarInt(cp, 0 to nbModel)) // the model type in each rack
-  val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPVarInt(cp, 0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
-  val cost = CPVarInt(cp, 0 to maxCost)
+  val rack = Racks.map(r => CPVarInt(0 to nbModel)(cp)) // the model type in each rack
+  val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPVarInt(0 to cards(c).quantity)(cp)) //for each rack, how many cards of each type do you plug
+  val cost = CPVarInt(0 to maxCost)(cp)
 
   cp.minimize(cost) subjectTo {
 

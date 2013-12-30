@@ -90,7 +90,7 @@ object CircuitTest {
   def circuit_me(cp: CPSolver, x: Array[CPVarInt]) = {
 
     val len = x.length
-    val z = Array.tabulate(len)(i => CPVarInt(cp, 0 to len - 1))
+    val z = Array.tabulate(len)(i => CPVarInt(0 to len - 1)(cp))
 
     cp.add(allDifferent(x), Strong)
     cp.add(allDifferent(z), Strong)
@@ -143,8 +143,8 @@ object CircuitTest {
     //
 
     // Note: Here we use domain of 0..n-1
-    val x = Array.fill(n)(CPVarInt(cp, 0 to n - 1))
-    val p = Array.fill(n)(CPVarInt(cp, 0 to n - 1))
+    val x = Array.fill(n)(CPVarInt(0 to n - 1)(cp))
+    val p = Array.fill(n)(CPVarInt(0 to n - 1)(cp))
 
     //
     // constraints

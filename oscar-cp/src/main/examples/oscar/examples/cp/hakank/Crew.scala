@@ -138,7 +138,7 @@ object Crew {
     //
     // variables
     //
-    val crew = Array.fill(num_flights,num_persons)(CPVarInt(cp, 0 to 1))
+    val crew = Array.fill(num_flights,num_persons)(CPVarInt(0 to 1)(cp))
     val crew_flat = crew.flatten
 
     // val num_working = CPVarInt(cp, 1 to num_persons)

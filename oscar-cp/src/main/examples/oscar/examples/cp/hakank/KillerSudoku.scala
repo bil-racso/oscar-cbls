@@ -142,7 +142,7 @@ object KillerSudoku {
     //
     // Decision variables
     // 
-    val x = Array.fill(n,n)(CPVarInt(cp, 0 to 9))
+    val x = Array.fill(n,n)(CPVarInt(0 to 9)(cp))
     val x_flat = x.flatten
 
     //

@@ -111,7 +111,7 @@ object ABCEndview {
     def startWith(cp: CPSolver, a: Array[CPVarInt], c: Int, d: Int) = {
       val n = a.length
       if (c > 0) {
-        val i = CPVarInt(cp, 0 until d)
+        val i = CPVarInt(0 until d)(cp)
         cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i >>= j) ==> (a(j) === 0))
@@ -126,7 +126,7 @@ object ABCEndview {
     def endWith(cp: CPSolver, a: Array[CPVarInt], c: Int, d: Int) = {
       val n = a.length
       if (c > 0) {
-        val i = CPVarInt(cp, n-d until n)
+        val i = CPVarInt(n-d until n)(cp)
         cp.add(a(i) == c)
         for(j <- 0 until n) {
           cp.add((i <<= j) ==> (a(j) === 0))
@@ -358,7 +358,7 @@ object ABCEndview {
       //
 
       // 0 -> empty cell, 1..max_letter: the letters
-      val x = Array.fill(n,n)(CPVarInt(cp, 0 to max_letter))
+      val x = Array.fill(n,n)(CPVarInt(0 to max_letter)(cp))
       val x_flat = x.flatten
 
       //

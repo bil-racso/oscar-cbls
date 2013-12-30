@@ -43,7 +43,7 @@ object Assignment {
   implicit def mat(t: Array[Array[CPVarInt]]) = new CPVarIntMatrix(t)
 
   def makeCPVarIntMatrix(cp: CPSolver, rows: Int, cols: Int, range: Range) =
-    Array.fill(rows)(Array.fill(cols)((CPVarInt(cp, range))))
+    Array.fill(rows)(Array.fill(cols)((CPVarInt(range)(cp))))
 
 
   def main(args: Array[String]) {

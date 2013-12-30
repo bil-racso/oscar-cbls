@@ -51,8 +51,8 @@ object StableMariage extends App {
 
     val cp = CPSolver()
 
-    val wife    = Array.fill(n)(CPVarInt(cp, Women)) // wife(i) is the woman chosen for man i
-    val husband = Array.fill(n)(CPVarInt(cp, Men)) // husband(j) is the man chosen for woman j
+    val wife    = Array.fill(n)(CPVarInt(Women)(cp)) // wife(i) is the woman chosen for man i
+    val husband = Array.fill(n)(CPVarInt(Men)(cp)) // husband(j) is the man chosen for woman j
 
 
     cp.onSolution {

@@ -74,8 +74,8 @@ object OrganizeDay {
     //
     // variables
     //
-    val begins = Array.fill(n)(CPVarInt(cp, begin to end))
-    val ends   = Array.fill(n)(CPVarInt(cp, begin to end))
+    val begins = Array.fill(n)(CPVarInt(begin to end)(cp))
+    val ends   = Array.fill(n)(CPVarInt(begin to end)(cp))
 
     //
     // constraints

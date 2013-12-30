@@ -113,8 +113,8 @@ object PhotoProblem {
     //
     // variables
     //
-    val positions = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-    val places    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val positions = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val places    = Array.fill(n)(CPVarInt(0 to n-1)(cp))
 
     // calculate all the successful preferences
     val z =  sum(

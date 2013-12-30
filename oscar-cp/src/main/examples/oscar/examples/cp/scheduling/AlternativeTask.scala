@@ -17,11 +17,11 @@ object AlternativeTask extends App {
 
   val cp = CPSolver()
   cp.silent = true
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, Set(demandsData1(t), demandsData2(t))))
-  val resources = Array.fill(nTasks)(CPVarInt(cp, 1 to 2))
+  val durations = Array.tabulate(nTasks)(t => CPVarInt(durationsData(t))(cp))
+  val starts = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durations(t).min)(cp))
+  val ends = Array.tabulate(nTasks)(t => CPVarInt(durations(t).min to horizon)(cp))
+  val demands = Array.tabulate(nTasks)(t => CPVarInt(Set(demandsData1(t), demandsData2(t)))(cp))
+  val resources = Array.fill(nTasks)(CPVarInt(1 to 2)(cp))
   
   val makespan = maximum(ends)
 
@@ -36,8 +36,8 @@ object AlternativeTask extends App {
       cp.add((resources(t) === 2) ==> (demands(t) === demandsData2(t)))
     }
     // Cumulative
-    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capaMax), 1))
-    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capaMax), 2))
+    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 1))
+    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 2))
 
   } exploration {
     cp.binaryFirstFail(resources)

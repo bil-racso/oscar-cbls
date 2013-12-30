@@ -146,7 +146,7 @@ object Kakuro {
     //
     // Variables
     // 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 0 to 9)))
+    val x = Array.fill(n)(Array.fill(n)(CPVarInt(0 to 9)(cp)))
 
     //
     // constraints

@@ -34,14 +34,14 @@ object ChooChooTrain {
     val cp = CPSolver()
 
     // variables
-    val C = CPVarInt(cp, 0 to 9)
-    val H = CPVarInt(cp, 0 to 9)
-    val O = CPVarInt(cp, 0 to 9)
-    val T = CPVarInt(cp, 0 to 9)
-    val R = CPVarInt(cp, 0 to 9)
-    val A = CPVarInt(cp, 0 to 9)
-    val I = CPVarInt(cp, 0 to 9)
-    val N = CPVarInt(cp, 0 to 9)
+    val C = CPVarInt(0 to 9)(cp)
+    val H = CPVarInt(0 to 9)(cp)
+    val O = CPVarInt(0 to 9)(cp)
+    val T = CPVarInt(0 to 9)(cp)
+    val R = CPVarInt(0 to 9)(cp)
+    val A = CPVarInt(0 to 9)(cp)
+    val I = CPVarInt(0 to 9)(cp)
+    val N = CPVarInt(0 to 9)(cp)
 
     val all = Array(C, H, O, T, R, A, I, N)
     val all_str = Array("C", "H", "O", "T", "R", "A", "I", "N")

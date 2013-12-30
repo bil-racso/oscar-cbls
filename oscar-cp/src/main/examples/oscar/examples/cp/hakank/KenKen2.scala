@@ -105,7 +105,7 @@ object KenKen2 {
       val this_sum = sum(xx) === res
 
       // Product
-      var this_prod = CPVarInt(cp, 0 to 9)
+      var this_prod = CPVarInt(0 to 9)(cp)
       if (xx.length == 3) {
         this_prod = (x(cc(0)-1)(cc(1)-1) *
                      x(cc(2)-1)(cc(3)-1) *
@@ -163,7 +163,7 @@ object KenKen2 {
     //
     // Decision variables
     // 
-    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(n,n)(CPVarInt(1 to n)(cp))
     val x_flat = x.flatten
 
     //

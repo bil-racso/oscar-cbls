@@ -57,10 +57,10 @@ object DeBruijn {
     // variables
     //
     // (Improvements from the original version suggested by Pierre Schaus.)
-    val x        = Array.fill(m)(CPVarInt(cp, 0 to pow(base, n).toInt - 1))
-    val binary   = Array.fill(m,n)(CPVarInt(cp, 0 to base-1))
-    val bin_code = Array.fill(m)(CPVarInt(cp, 0 to base-1))
-    val gccv     = Array.tabulate(base)(i => (i,CPVarInt(cp, 0 to m)))
+    val x        = Array.fill(m)(CPVarInt(0 to pow(base, n).toInt - 1)(cp))
+    val binary   = Array.fill(m,n)(CPVarInt(0 to base-1)(cp))
+    val bin_code = Array.fill(m)(CPVarInt(0 to base-1)(cp))
+    val gccv     = Array.tabulate(base)(i => (i,CPVarInt(0 to m)(cp)))
 
     //
     // constraints
@@ -72,7 +72,7 @@ object DeBruijn {
       cp.add(allDifferent(x), Strong)
       // channeling x <-> binary
       for (i <- 0 until m) {
-         val t = Array.tabulate(n)(j=> CPVarInt(cp, 0 to base-1))
+         val t = Array.tabulate(n)(j=> CPVarInt(0 to base-1)(cp))
          cp.add(x(i) == toNum(t, base))
          for (j <- 0 until n) {
             cp.add(binary(i)(j) == t(j))

@@ -57,7 +57,7 @@ object Grocery {
       println("m2: " + m2)
 
       // variables
-      val item = Array.fill(n)(CPVarInt(cp, 1 to (m / 2).toInt))
+      val item = Array.fill(n)(CPVarInt(1 to (m / 2).toInt)(cp))
 
       var numSols = 0
       cp.solve subjectTo {

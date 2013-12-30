@@ -55,7 +55,7 @@ object QuadraticAssignmentLNS {
     // State the model and solve it
     val cp = CPSolver()
     // for each facilities, the location chosen for it
-    val x = N map (v => CPVarInt(cp, N))
+    val x = N map (v => CPVarInt(N)(cp))
 
     val rand = new scala.util.Random(0)
     

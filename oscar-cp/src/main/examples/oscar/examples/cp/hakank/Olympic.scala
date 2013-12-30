@@ -80,7 +80,7 @@ object Olympic {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(n)(CPVarInt(1 to n)(cp))
     val Array(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = x
       
     //

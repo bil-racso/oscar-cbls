@@ -45,7 +45,7 @@ object MagicSquare {
     //
     // variables
     //
-    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n2))
+    val x = Array.fill(n,n)(CPVarInt(1 to n2)(cp))
     val x_t = x.transpose
 
     // val total = CPVarInt(cp, 1 to n*n*n)

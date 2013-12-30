@@ -62,7 +62,7 @@ object FreqAssignment extends App {
 	    	                Array( 1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,2,2,1,2,16 ))
 		
        val cp = new CPSolver()
-	   val freq = Array.tabulate(nbCells)(c => Array.tabulate(trans(c))(t => CPVarInt(cp,0 to nbFreq)))
+	   val freq = Array.tabulate(nbCells)(c => Array.tabulate(trans(c))(t => CPVarInt(0 to nbFreq)(cp)))
 	   
 	   
 	   cp.solve subjectTo {

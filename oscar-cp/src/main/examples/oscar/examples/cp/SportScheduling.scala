@@ -45,8 +45,8 @@ object SportScheduling {
 
     val cp = CPSolver()
 
-    val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPVarInt(cp, 0 until nbTeams))
-    val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPVarInt(cp, 0 until (n * n - 1)))
+    val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPVarInt(0 until nbTeams)(cp))
+    val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPVarInt(0 until (n * n - 1))(cp))
     val tuples = for (i <- Teams; j <- i + 1 until nbTeams) yield (i, j, i * nbWeeks + j - 1)
 
     def printSol() {

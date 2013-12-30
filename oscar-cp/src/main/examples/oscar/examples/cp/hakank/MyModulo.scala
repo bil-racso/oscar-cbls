@@ -62,7 +62,7 @@ object MyModulo {
           y: CPVarInt) : CPVarInt = {
     val mmin = min(x.min, y.min)
     val mmax = min(x.max, y.max)
-    val r = CPVarInt(cp, mmin, mmax)
+    val r = CPVarInt(mmin, mmax)(cp)
     myMod(cp, x, y, r) 
     r
 
@@ -84,7 +84,7 @@ object MyModulo {
     val min_x = min(lbx, ubx_neg);
     val max_x = max(ubx, lbx_neg);
 
-    val d = CPVarInt(cp, min_x, max_x)
+    val d = CPVarInt(min_x, max_x)(cp)
 
     // r >= 0
     cp.add(r >= 0)
@@ -122,10 +122,10 @@ object MyModulo {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 0 to 9))
-    val two = CPVarInt(cp, 2 to 2)
-    val zero = CPVarInt(cp, 0 to 0)
-    val one = CPVarInt(cp, 1 to 1)
+    val x = Array.fill(n)(CPVarInt(0 to 9)(cp))
+    val two = CPVarInt(2 to 2)(cp)
+    val zero = CPVarInt(0 to 0)(cp)
+    val one = CPVarInt(1 to 1)(cp)
 
     //
     // constraints

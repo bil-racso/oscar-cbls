@@ -64,7 +64,7 @@ object Binero {
         case '.' => -1
       }
     
-    val grid = for(i <- rangeArr; j <- rangeArr)  yield CPVarInt(cp, 0 to 1) // The variable grid
+    val grid = for(i <- rangeArr; j <- rangeArr)  yield CPVarInt(0 to 1)(cp) // The variable grid
     
     // Arrays containing the elements of the lines and columns of the variable grids
     val line = for(i <- rangeArr) yield grid.slice(i*2*n, (i+1)*2*n)
@@ -104,7 +104,7 @@ object Binero {
     
     println("Number of solutions : "+ stat.nbSols)
     // Printing some stats
-    cp.printStats()
+    println(stat)
   }
   
   /**

@@ -64,12 +64,12 @@ object WhoKilledAgatha {
     val butler  = 1
     val charles = 2
 
-    val agathacp  = CPVarInt(cp, agatha)
+    val agathacp  = CPVarInt(agatha)(cp)
 
     val names = Array("Agatha", "Butler", "Charles")
 
     // variables
-    val the_killer = CPVarInt(cp, 0 to 2)
+    val the_killer = CPVarInt(0 to 2)(cp)
     val hates  = Array.fill(n,n)(CPVarBool(cp)) // who is hated by who?
     val richer = Array.fill(n,n)(CPVarBool(cp)) // who is porer than who?
 
@@ -132,8 +132,5 @@ object WhoKilledAgatha {
    } 
 
    println(cp.start())
-   cp.printStats()
-
  }
-
 }

@@ -33,10 +33,10 @@ object EuroDecisionChistmas extends App {
   val cp = CPSolver()
 
   val x = Array.fill(names.size)(CPVarBool(cp))
-  val obj = CPVarInt(cp, 0 to profit.sum)
+  val obj = CPVarInt(0 to profit.sum)(cp)
 
   cp.maximize(obj) subjectTo {
-    cp.add(binaryKnapsack(x, profit, weights, obj, CPVarInt(cp, 0 to 28)))
+    cp.add(binaryKnapsack(x, profit, weights, obj, CPVarInt(0 to 28)(cp)))
   } search {
     binaryStatic(x)
   } onSolution {

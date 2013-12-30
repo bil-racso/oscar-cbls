@@ -69,9 +69,9 @@ object PMedian extends App {
   val cost = Array.tabulate(nbCust, nbCust)((i, j) => dist(i)(j))
 
   val cp = CPSolver()
-  val x = Array.fill(nbCust)(CPVarInt(cp, 0 until nbCust))
+  val x = Array.fill(nbCust)(CPVarInt(0 until nbCust)(cp))
   val xsol = Array.fill(nbCust)(0)
-  val load = Array.fill(nbCust)(CPVarInt(cp, 0 until capa))
+  val load = Array.fill(nbCust)(CPVarInt(0 until capa)(cp))
 
   // ----------- visu ----------
   val f = new VisualFrame("P-Median Problem",1,2)

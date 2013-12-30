@@ -85,11 +85,11 @@ object PandigitalNumbers {
     //
     // variables
     //
-    val num1 = CPVarInt(cp, 1 to max_num)
-    val num2 = CPVarInt(cp, 1 to max_num)
-    val res  = CPVarInt(cp, 1 to max_num)
+    val num1 = CPVarInt(1 to max_num)(cp)
+    val num2 = CPVarInt(1 to max_num)(cp)
+    val res  = CPVarInt(1 to max_num)(cp)
     // the digits
-    val x    = Array.fill(x_len)(CPVarInt(cp, start to max_d))
+    val x    = Array.fill(x_len)(CPVarInt(start to max_d)(cp))
 
     // for labeling    
     val all = x ++ Array(num1, num2, res)

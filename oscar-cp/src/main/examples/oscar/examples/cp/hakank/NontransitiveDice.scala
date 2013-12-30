@@ -78,14 +78,14 @@ object NontransitiveDice {
     //
     // Decision variables
     // 
-    val dice = Array.fill(m,n)(CPVarInt(cp, 1 to n*2))
+    val dice = Array.fill(m,n)(CPVarInt(1 to n*2)(cp))
     val dice_flat = dice.flatten
 
-    val comp = Array.fill(m,2)(CPVarInt(cp, 0 to n*n))
+    val comp = Array.fill(m,2)(CPVarInt(0 to n*n)(cp))
     val comp_flat = comp.flatten
 
     // The following variables are for summaries or objectives
-    val gap = Array.fill(m)(CPVarInt(cp, 0 to n*n))
+    val gap = Array.fill(m)(CPVarInt(0 to n*n)(cp))
     val gap_sum = sum(gap)
 
     val max_val = maximum(dice_flat) // CPVarInt(cp, 0 to n*2) // max of dice_flat

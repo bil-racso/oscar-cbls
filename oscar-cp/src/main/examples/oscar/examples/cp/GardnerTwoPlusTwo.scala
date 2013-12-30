@@ -36,12 +36,12 @@ import oscar.cp.core._
 object GardnerTwoPlusTwo extends App {
 
   val cp = CPSolver()
-  val T = CPVarInt(cp, 0 to 9)
-  val W = CPVarInt(cp, 0 to 9)
-  val O = CPVarInt(cp, Set(0, 2, 4, 6, 8)) // even number
-  val F = CPVarInt(cp, 0 to 9)
-  val U = CPVarInt(cp, 0 to 9)
-  val R = CPVarInt(cp, 0 to 9)
+  val T = CPVarInt(0 to 9)(cp)
+  val W = CPVarInt(0 to 9)(cp)
+  val O = CPVarInt(Set(0, 2, 4, 6, 8))(cp) // even number
+  val F = CPVarInt(0 to 9)(cp)
+  val U = CPVarInt(0 to 9)(cp)
+  val R = CPVarInt(0 to 9)(cp)
 
   cp.solve subjectTo {
     cp.add((T * 100 + W * 10 + O) * 2 == F * 1000 + O * 100 + U + 10 + R)
