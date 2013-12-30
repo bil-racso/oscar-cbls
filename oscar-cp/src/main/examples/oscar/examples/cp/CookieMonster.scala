@@ -54,7 +54,7 @@ object CookieMonster extends App {
   val jars = Array(15, 13, 12, 4, 2, 1)
   val maxMove = 6
   
-  val x = Array.fill(maxMove)(CPVarInt(cp,0 to jars.max))
+  val x = Array.fill(maxMove)(CPVarInt(0 to jars.max)(cp))
   val b = Array.fill(maxMove,jars.size)(CPVarBool(cp))
   val bx = Array.tabulate(maxMove,jars.size){case(m,j) => b(m)(j)*x(m)}
   var nbSol = 0

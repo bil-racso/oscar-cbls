@@ -38,7 +38,7 @@ import oscar.cp.core._
 class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt) extends Constraint(succ(0).s, "Path") {
 
   // for each node, it's position in the path
-  val y = Array.fill(succ.size)(CPVarInt(s,0 until succ.size))
+  val y = Array.fill(succ.size)(CPVarInt(0 until succ.size)(s))
   
 
   override def setup(l: CPPropagStrength): CPOutcome = {    
@@ -69,10 +69,10 @@ object Path {
       
 
 	  val cp = CPSolver()
-	  var X = Array.tabulate(succ.length)(i => CPVarInt(cp,succ(i)))
-	  var start = CPVarInt(cp, 0)
-	  var end = CPVarInt(cp, 5)
-	  var length = CPVarInt(cp, 3)
+	  var X = Array.tabulate(succ.length)(i => CPVarInt(succ(i))(cp))
+	  var start = CPVarInt(0)(cp)
+	  var end = CPVarInt(5)(cp)
+	  var length = CPVarInt(3)(cp)
 	  
 	  cp.solve subjectTo {
         cp.add(new Path(X,start,end,length))

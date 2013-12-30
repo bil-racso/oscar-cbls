@@ -54,11 +54,11 @@ object CumulativeJobShop extends App {
   val cp = CPScheduler(horizon)
 
   // Activities & Resources
-  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durations(t)))
-  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
-  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durationsVar(t).min to horizon))
-  val demandsVar = Array.fill(nActivities)(CPVarInt(cp, 1))
-  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(cp, resources(t)))
+  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(durations(t))(cp))
+  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(0 to horizon - durationsVar(t).min)(cp))
+  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(durationsVar(t).min to horizon)(cp))
+  val demandsVar = Array.fill(nActivities)(CPVarInt(1)(cp))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(resources(t))(cp))
   val makespan = maximum(endsVar)
 
   cp.minimize(makespan) subjectTo {
@@ -72,7 +72,7 @@ object CumulativeJobShop extends App {
     }
     // Cumulative
     for (r <- Resources) {
-      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 2), r))
+      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(2)(cp), r))
     }
   } 
   

@@ -45,11 +45,11 @@ object BiTSP extends App {
   cp.silent = true
   
   // Successors & Predecessors
-  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+  val succ = Array.fill(nCities)(CPVarInt(Cities)(cp))
+  val pred = Array.fill(nCities)(CPVarInt(Cities)(cp))
 
   // Total distance
-  val totDists = Array.tabulate(nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
+  val totDists = Array.tabulate(nObjs)(o => CPVarInt(0 to distMatrices(o).flatten.sum)(cp))
 
   // Constraints
   // -----------

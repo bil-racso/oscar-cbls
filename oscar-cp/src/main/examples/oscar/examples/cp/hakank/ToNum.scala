@@ -44,8 +44,8 @@ object ToNum {
       val base = 10
 
       // variables
-      val x = Array.tabulate(n)(i => CPVarInt(cp, 0 to base-1))
-      val y = CPVarInt(cp, 0 to pow(n, base).toInt)
+      val x = Array.tabulate(n)(i => CPVarInt(0 to base-1)(cp))
+      val y = CPVarInt(0 to pow(n, base).toInt)(cp)
 
       var numSols = 0
       cp.solve subjectTo {

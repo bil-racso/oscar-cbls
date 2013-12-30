@@ -72,7 +72,7 @@ object ElectricityMarket {
 	  val varMapQty = Map[Int,CPVarInt]() 
 	  for (t <- tmin to tmax) {
 	    val prodUB = producers.map(_.qty.abs).sum
-	    varMapQty += (t -> CPVarInt(cp, 0 to prodUB))
+	    varMapQty += (t -> CPVarInt(0 to prodUB)(cp))
 	  }
 	  var nbSol = 0
 	  // total amount of exchanged quantity

@@ -58,7 +58,7 @@ object QuadraticAssignment extends App {
     println("solution" + x.mkString(","))
   }
   // for each facilities, the location chosen for it
-  val x = N map (v => CPVarInt(cp, 0 until n))
+  val x = N map (v => CPVarInt(0 until n)(cp))
   cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
     cp.add(allDifferent(x), Strong)
   } search {

@@ -58,11 +58,11 @@ object EinsteinPuzzle {
     //
     // variables
     // 
-    val nationality = Array.fill(n)(CPVarInt(cp, RANGE))
-    val animal      = Array.fill(n)(CPVarInt(cp, RANGE))
-    val drink       = Array.fill(n)(CPVarInt(cp, RANGE))
-    val smoke       = Array.fill(n)(CPVarInt(cp, RANGE))
-    val color       = Array.fill(n)(CPVarInt(cp, RANGE))
+    val nationality = Array.fill(n)(CPVarInt(RANGE)(cp))
+    val animal      = Array.fill(n)(CPVarInt(RANGE)(cp))
+    val drink       = Array.fill(n)(CPVarInt(RANGE)(cp))
+    val smoke       = Array.fill(n)(CPVarInt(RANGE)(cp))
+    val color       = Array.fill(n)(CPVarInt(RANGE)(cp))
 
     //
     // constraints

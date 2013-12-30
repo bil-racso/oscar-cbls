@@ -67,7 +67,7 @@ object BiQuadraticAssignment extends App {
   val cp = CPSolver()
   cp.silent = true
 
-  val x: Array[CPVarInt] = Array.fill(n)(CPVarInt(cp, N))
+  val x: Array[CPVarInt] = Array.fill(n)(CPVarInt(N)(cp))
   val dist = Array.tabulate(n, n) { case (i, j) => d(x(i))(x(j)) }
   val obj1 = sum(N, N)((i, j) => dist(i)(j) * w1(i)(j))
   val obj2 = sum(N, N)((i, j) => dist(i)(j) * w2(i)(j))

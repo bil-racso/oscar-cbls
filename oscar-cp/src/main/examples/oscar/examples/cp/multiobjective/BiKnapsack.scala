@@ -65,10 +65,10 @@ object BiKnapsack extends App {
   cp.silent = true
 
   val x: Array[CPVarBool] = Array.fill(nItems)(CPVarBool(cp))
-  val capaVar1 = CPVarInt(cp, 0 to capa1)
-  val capaVar2 = CPVarInt(cp, 0 to capa2)
-  val profitVar1 = CPVarInt(cp, 0 to profit(0).sum)
-  val profitVar2 = CPVarInt(cp, 0 to profit(1).sum)
+  val capaVar1 = CPVarInt(0 to capa1)(cp)
+  val capaVar2 = CPVarInt(0 to capa2)(cp)
+  val profitVar1 = CPVarInt(0 to profit(0).sum)(cp)
+  val profitVar2 = CPVarInt(0 to profit(1).sum)(cp)
 
   val knapsack1 = binaryKnapsack(x, items1.map(_._2), items1.map(_._1), profitVar1, capaVar1)
   val knapsack2 = binaryKnapsack(x, items2.map(_._2), items2.map(_._1), profitVar2, capaVar2)

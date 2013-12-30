@@ -68,7 +68,7 @@ object LongestPath extends App {
   println("----------- trying with length:" + len + "-------------")
   
   val cp = CPSolver()
-  val path = Array.fill(len)(CPVarInt(cp, nodes))
+  val path = Array.fill(len)(CPVarInt(nodes)(cp))
   val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
 
 

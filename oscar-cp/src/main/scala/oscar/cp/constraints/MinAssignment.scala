@@ -33,7 +33,7 @@ import scala.util.control.Breaks._
 class MinAssignment(val xarg: Array[CPVarInt], val weightsarg: Array[Array[Int]], val cost: CPVarInt) extends Constraint(xarg(0).s, "MinAssignment") {
   if (weightsarg.size != xarg.size) throw new IllegalArgumentException("MinAssignment: dim of x and weights must match")
   val n = weightsarg(0).size
-  val x = xarg ++ Array.fill(n-xarg.size)(CPVarInt(s,0 until n)) 
+  val x = xarg ++ Array.fill(n-xarg.size)(CPVarInt(0 until n)(s)) 
   val weights = weightsarg ++ Array.fill(n-xarg.size)(Array.fill(n)(0))
   val Jmax = n
   val Wmax = n

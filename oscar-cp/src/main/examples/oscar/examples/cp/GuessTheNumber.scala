@@ -32,7 +32,7 @@ object GuessTheNumber extends App {
     val cp = CPSolver()
     
     
-    val digits = Array.fill(5)(CPVarInt(cp,0 to 9))
+    val digits = Array.fill(5)(CPVarInt(0 to 9)(cp))
     
     // with a one after
     val nb1 =  digits(0)*100000 + digits(1)*10000 + digits(2)*1000 +  digits(3)*100 + digits(4)*10 + 1
@@ -54,7 +54,7 @@ object GuessTheNumber extends App {
     // simpler model imagined by JF Puget
     
     val cp1 = CPSolver()
-    val x = CPVarInt(cp1,0 to 100000)
+    val x = CPVarInt(0 to 100000)(cp1)
     cp1.add(x*10+1 == (x+100000)*3)
     println("=>"+x) // no need to search, already assigned     
 }

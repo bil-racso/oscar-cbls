@@ -88,7 +88,7 @@ object ContiguityRegular {
     //
     // variables
     //
-    val reg_input = Array.fill(n)(CPVarInt(cp, 0 to 1))
+    val reg_input = Array.fill(n)(CPVarInt(0 to 1)(cp))
 
     //
     // constraints

@@ -55,7 +55,7 @@ object CuriousSetOfIntegers {
       //
       // decision variables
       // 
-      val x = Array.fill(n)(CPVarInt(cp, 0 to max_val))
+      val x = Array.fill(n)(CPVarInt(0 to max_val)(cp))
 
       var numSols = 0
       cp.solve subjectTo {
@@ -64,7 +64,7 @@ object CuriousSetOfIntegers {
 
         for(i <- 0 until n - 1) {
           for(j <- i + 1 until n) {
-            val p = CPVarInt(cp, 0 to max_val)
+            val p = CPVarInt(0 to max_val)(cp)
             cp.add((p*p- 1) == x(i) * x(j))
           }
         }

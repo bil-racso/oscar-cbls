@@ -37,7 +37,7 @@ object Cubes extends App {
     val numLetters = letters.size
     def letterToInt(letter: Char): Int = letters.indexOf(letter) // Letter from letter index
     
-    val placement = Array.fill(numLetters)(CPVarInt(cp, 0 until numCubes)) // The cube (0 to 3) on which each letter is placed
+    val placement = Array.fill(numLetters)(CPVarInt(0 until numCubes)(cp)) // The cube (0 to 3) on which each letter is placed
     
     cp.onSolution {
       println("-")

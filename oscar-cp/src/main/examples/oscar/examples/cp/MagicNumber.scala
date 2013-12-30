@@ -32,11 +32,11 @@ object MagicNumber extends App {
 
   val cp = CPSolver()
 
-  var one = CPVarInt(cp, 0 to 7)
-  var two = CPVarInt(cp, 0 to 7)
-  var three = CPVarInt(cp, 0 to 7)
-  var four = CPVarInt(cp, 0 to 7)
-  var x = Array.fill(8)(CPVarInt(cp, 1 to 4))
+  var one = CPVarInt(0 to 7)(cp)
+  var two = CPVarInt(0 to 7)(cp)
+  var three = CPVarInt(0 to 7)(cp)
+  var four = CPVarInt(0 to 7)(cp)
+  var x = Array.fill(8)(CPVarInt(1 to 4)(cp))
 
   cp.solve subjectTo {
     cp.add(x(one) == 1)

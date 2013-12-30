@@ -68,7 +68,7 @@ object BalesOfHay {
     //
     // variables
     //
-    val bales = Array.fill(n)(CPVarInt(cp, 0 to 50))
+    val bales = Array.fill(n)(CPVarInt(0 to 50)(cp))
 
 
     //
@@ -80,8 +80,8 @@ object BalesOfHay {
 
       for(w <- 0 until weights.length) {
         // indices in bales
-        val i = CPVarInt(cp, 0 until n) 
-        val j = CPVarInt(cp, 0 until n)
+        val i = CPVarInt(0 until n)(cp) 
+        val j = CPVarInt(0 until n)(cp)
         
         cp.add(bales(i) + bales(j) == weights(w))
         cp.add(i < j) // symmetry breaking

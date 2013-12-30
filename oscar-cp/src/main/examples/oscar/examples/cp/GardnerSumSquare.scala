@@ -36,16 +36,16 @@ object GardnerSumSquare extends App {
     
     val cp = CPSolver()
 
-    val a = CPVarInt(cp,dom)
-    val b = CPVarInt(cp,dom)
-    val c = CPVarInt(cp,dom)
-    val d = CPVarInt(cp,dom)
-    val e = CPVarInt(cp,dom)
-    val f = CPVarInt(cp,dom)
-    val g = CPVarInt(cp,dom)
-    val h = CPVarInt(cp,dom)
-    val s1 = CPVarInt(cp,(0 to (dom.max*4)^2).toSet)
-    val s2 = CPVarInt(cp,(0 to (dom.max*4)^2).toSet)
+    val a = CPVarInt(dom)(cp)
+    val b = CPVarInt(dom)(cp)
+    val c = CPVarInt(dom)(cp)
+    val d = CPVarInt(dom)(cp)
+    val e = CPVarInt(dom)(cp)
+    val f = CPVarInt(dom)(cp)
+    val g = CPVarInt(dom)(cp)
+    val h = CPVarInt(dom)(cp)
+    val s1 = CPVarInt((0 to (dom.max*4)^2).toSet)(cp)
+    val s2 = CPVarInt((0 to (dom.max*4)^2).toSet)(cp)
     val obj = (s1*s1) + (s2*s2)
 
     cp.minimize(obj) subjectTo {

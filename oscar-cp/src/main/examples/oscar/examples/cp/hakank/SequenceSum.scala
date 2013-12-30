@@ -52,9 +52,9 @@ object SequenceSum {
 
 
     // variables
-    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(n)(CPVarInt(1 to n)(cp))
     // the sum
-    val m = CPVarInt(cp, 1 to n*n)
+    val m = CPVarInt(1 to n*n)(cp)
 
     //
     // constraints

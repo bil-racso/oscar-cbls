@@ -33,9 +33,9 @@ object PrimeLooking extends App {
     val n = 1000
     
     val cp = new CPSolver()
-    val x = CPVarInt(cp,1 to n)
-    val d1 = CPVarInt(cp,2 to n)
-    val d2 = CPVarInt(cp,2 to n)
+    val x = CPVarInt(1 to n)(cp)
+    val d1 = CPVarInt(2 to n)(cp)
+    val d2 = CPVarInt(2 to n)(cp)
     
     var cpt = 0 // number of solution
     
