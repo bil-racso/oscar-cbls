@@ -13,15 +13,15 @@ object VariableCapacity extends App {
   val nTasks = durationsData.size
   val Tasks = 0 until nTasks
 
-  val cp = CPSolver()
+  implicit val cp = CPSolver()
   cp.silent = true
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, demandsData(t)))
-  val resources = Array.fill(nTasks)(CPVarInt(cp, 1))
+  val durations = Array.tabulate(nTasks)(t => CPVarInt(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => CPVarInt(durations(t).min to horizon))
+  val demands = Array.tabulate(nTasks)(t => CPVarInt(demandsData(t)))
+  val resources = Array.fill(nTasks)(CPVarInt(1))
 
-  val capacity = CPVarInt(cp, 0 to demandsData.sum)
+  val capacity = CPVarInt(0 to demandsData.sum)
 
   cp.minimize(capacity) subjectTo {
     // Consistency 

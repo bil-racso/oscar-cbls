@@ -21,11 +21,11 @@ object BiRCPSP extends App {
   val horizon = durations.sum
   
   val cp = CPSolver()
-  val durationsVar = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t)))
-  val startsVar = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
-  val endsVar = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsVar(t).min to horizon))
-  val demandsVar = Array.tabulate(nTasks)(t => CPVarInt(cp, demands(t)))
-  val resourcesVar = Array.fill(nTasks)(CPVarInt(cp, 0))
+  val durationsVar = Array.tabulate(nTasks)(t => CPVarInt(durations(t))(cp))
+  val startsVar = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durationsVar(t).min)(cp))
+  val endsVar = Array.tabulate(nTasks)(t => CPVarInt(durationsVar(t).min to horizon)(cp))
+  val demandsVar = Array.tabulate(nTasks)(t => CPVarInt(demands(t))(cp))
+  val resourcesVar = Array.fill(nTasks)(CPVarInt(0)(cp))
   
   val makespan = maximum(endsVar)
 
@@ -42,7 +42,7 @@ object BiRCPSP extends App {
       cp.add(endsVar(t1) <= startsVar(t2))
     }
     // Cumulative
-    cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 8), 0))
+    cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(8)(cp), 0))
     
   } search {
     setTimes(startsVar, durationsVar, endsVar)

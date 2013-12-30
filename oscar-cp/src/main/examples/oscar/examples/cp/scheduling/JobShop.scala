@@ -78,14 +78,14 @@ object JobShop extends App {
   // -----------------------------------------------------------------------
 
   val horizon = durations.sum
-  val cp = CPScheduler(horizon)
+  implicit val cp = CPScheduler(horizon)
 
   // Activities & Resources
-  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durations(t)))
-  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, 0 to horizon - durationsVar(t).min))
-  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(cp, durationsVar(t).min to horizon))
-  val demandsVar = Array.fill(nActivities)(CPVarInt(cp, 1))
-  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(cp, resources(t)))
+  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(durations(t)))
+  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(0 to horizon - durationsVar(t).min))
+  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(durationsVar(t).min to horizon))
+  val demandsVar = Array.fill(nActivities)(CPVarInt(1))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(resources(t)))
 
   val makespan = maximum(endsVar)
 
@@ -118,7 +118,7 @@ object JobShop extends App {
     }
     // Cumulative
     for (r <- Resources) {
-      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(cp, 1), r))
+      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(1), r))
     }
   } search {
     binaryFirstFail(startsVar)

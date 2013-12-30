@@ -16,13 +16,13 @@ object OptionalTasks extends App {
   val nTasks = durationsData.size
   val Tasks = 0 until nTasks
 
-  val cp = CPSolver()
+  implicit val cp = CPSolver()
   cp.silent = true
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, demandsData(t)))
-  val resources = Array.fill(nTasks)(CPVarInt(cp, 0 to 1))
+  val durations = Array.tabulate(nTasks)(t => CPVarInt(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => CPVarInt(durations(t).min to horizon))
+  val demands = Array.tabulate(nTasks)(t => CPVarInt(demandsData(t)))
+  val resources = Array.fill(nTasks)(CPVarInt(0 to 1))
 
   val profits = Array.tabulate(nTasks)(t => resources(t) * profitsData(t))
   val totalProfit = sum(profits)
@@ -40,7 +40,7 @@ object OptionalTasks extends App {
       cp.add(ends(t) == starts(t) + durations(t))
     }
     // Cumulative
-    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capaMax), 1))
+    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax), 1))
 
   } search {
    binaryFirstFail(resources) ++  binaryFirstFail(starts)
