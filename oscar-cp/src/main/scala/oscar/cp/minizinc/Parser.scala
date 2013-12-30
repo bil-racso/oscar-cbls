@@ -337,7 +337,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        assign match {
 	      	  case x:Boolean => model.dict +=
 		        ((id, (FZType.V_BOOL,
-		            new VarBool(ann, CPVarBool(cp, x), id))))
+		            new VarBool(ann, CPVarBool(x)(cp), id))))
 		      case _ => 
 		        addCPVarBool(ann, id, getCPVarBool(assign))
 	      	}
@@ -394,7 +394,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   model.dict += 
 		      		((id, (FZType.V_SET_INT, 
 		      		    // it is an assignment, so x is a requiered set for the CPVarSet
-		      			new VarSetInt(ann, CPVarSet(cp, x.toSet, Set[Int]()), id)
+		      			new VarSetInt(ann, CPVarSet(x.toSet, x.toSet)(cp), id)
 		      		)))
                 } else {
                   throw new Exception(x.toSet.toString + " not in the domain of " + id)
@@ -597,7 +597,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def addCPVarSet(ann: List[Annotation], id: String, s: Set[Int]) {
 	  model.dict +=
         ((id, (FZType.V_SET_INT, 
-            new VarSetInt(ann, CPVarSet(cp, Set[Int](), s), id))))
+            new VarSetInt(ann, CPVarSet(s)(cp), id))))
 	}
 	
 	/**
@@ -679,10 +679,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def addCPVarSetArray(ann: List[Annotation], id: String, s: Set[Int], l: Int) {
 	  model.dict += 
-      ((id, (FZType.V_ARRAY_SET, 
-          new VarArraySet(s, ann, 
-            Array.fill(l){CPVarSet(cp, Set[Int](), s)} 
-            , id))))
+      ((id, (FZType.V_ARRAY_SET, new VarArraySet(s, ann, Array.fill(l)(CPVarSet(s)(cp)), id))))
 	}
 	
 	/**
@@ -1578,7 +1575,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x match {
 	    case x:List[Any] => getCPVarBoolFromList(x)
 	    case x:String => getCPVarBoolFromString(x)
-	    case x:Boolean => CPVarBool(cp, x)
+	    case x:Boolean => CPVarBool(x)(cp)
 	  }
 	}
 	
@@ -1620,7 +1617,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 	            case FZType.P_BOOL => {
-	              CPVarBool(cp, fzo.asInstanceOf[ParamBool].value)
+	              CPVarBool(fzo.asInstanceOf[ParamBool].value)(cp)
 	            }
 	        }
 	      case None => throw new Exception("Var " + x + " does not exist")
@@ -1668,7 +1665,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarSetInt].cpvar
 	            }
 	            case FZType.P_SET_INT => {
-	              CPVarSet(cp, Set[Int](), fzo.asInstanceOf[ParamSetOfInt].value)
+	              CPVarSet(fzo.asInstanceOf[ParamSetOfInt].value)(cp)
 	            }
 	        }
 	      case None => throw new Exception("Var " + x + " does not exist")
@@ -1718,7 +1715,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x(0) match {
 	    case y:Int => 
 	      // x is here a requiered set for the cpvarset
-	      CPVarSet(cp, x map(_.toString.toInt) toSet, Set[Int]())
+	      CPVarSet(x map(_.toString.toInt) toSet)(cp)
 	    case y:String => 
 	      model.dict.get(y) match {
 		      case Some((tp, fzo)) => 
@@ -1756,7 +1753,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                  val array = fzo.asInstanceOf[ParamArrayBool].value
 	                  array match {
 	                    case x:List[Boolean] =>
-	                      (x) map(CPVarBool(cp, _)) toArray
+	                      (x) map(CPVarBool(_)(cp)) toArray
 	                  }
 	                }
 	            }
@@ -1804,7 +1801,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    //need to test, may not work in a case :
 	    // [ {1, 2, 4}, {3, 45, x} ] with x a CPVarInt
 	    case y:List[List[Int]] =>
-	      (y) map(d => CPVarSet(cp, Set[Int](), d.toSet)) toArray
+	      (y) map(d => CPVarSet(d.toSet)(cp)) toArray
 	    case y:String =>
 	      model.dict.get(y) match {
 			  case Some((tp, fzo)) => 

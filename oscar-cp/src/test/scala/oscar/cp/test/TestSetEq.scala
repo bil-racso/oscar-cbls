@@ -30,14 +30,13 @@ class TestSetEq extends FunSuite with ShouldMatchers  {
   test("Test SetEq1") {
     var nbSol = 0
     val cp = CPSolver()
-    var x = CPVarSet(cp, Set(1,2), Set(3,4))
-    var y = CPVarSet(cp, Set(1), Set(2,3,4,5))
+    var x = CPVarSet(Set(1,2,3,4), Set(1,2))(cp)
+    var y = CPVarSet(Set(1,2,3,4,5), Set(1))(cp)
     cp.post(new SetEq(x,y))
     y.isPossible(5) should be(false)
     y.isPossible(2) should be(true)
     y.isPossible(3) should be(true)
     cp.post(x -- 3)
     y.isPossible(3) should be(false) 
-  } 
-  
+  }  
 }
