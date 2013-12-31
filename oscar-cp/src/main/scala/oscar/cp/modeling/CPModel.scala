@@ -1,5 +1,5 @@
 package oscar.cp.modeling
 
-trait CPModel extends App {
+trait CPModel {
   implicit val solver: CPSolver = CPSolver()
 }
