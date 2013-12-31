@@ -22,13 +22,17 @@ import java.awt.Color
  * @author Pierre Schaus pschaus@gmail.com
  */
 class Tree(var record: Boolean = true) {
-  var branches: List[(Int,Int,String,String)] = Nil
+  var branches: List[(Int,Int,String,String,() => Unit)] = Nil
   
   var succ: List[Int] = Nil
   
-  def addBranch(parentId: Int, id: Int, name: String="", value: String="") {
+  def addBranch(parentId: Int, id: Int, nodeName: String="", branchName: String="") {
+	createBranch(parentId,id,nodeName,branchName){}
+  }
+  
+  def createBranch(parentId: Int, id: Int, nodeName: String="", branchName: String="")(action: => Unit) {
 	//<try id="1" parent="0" name="a" size="2" value="1"/>
-    if (record) branches = (parentId,id,name,value) :: branches
+    if (record) branches = (parentId,id,nodeName,branchName,() => action) :: branches
   }
   
   def addSuccess(id: Int) {
@@ -40,17 +44,27 @@ class Tree(var record: Boolean = true) {
     succ = Nil
   }
   
+  /**
+   * returns branches with n as parent
+   */
   def children(n: Int) = {
     branches.filter(b => b._1 == n)
+  }
+  
+  private def action(n: Int):() => Unit = {
+    branches.find{case(parentId,id,nodeName,branchName,action) => id == n}.map(_._5) match {
+      case Some(action) => action
+      case None => () => Unit
+    }
   }
   
   def toNode(n: Int = 0): Node[String] = {
     //println("succ:"+succ)
     val childs = children(n).reverse
     if (childs.isEmpty) {
-      Node(n.toString,if(succ.contains(n)) Color.green else Color.white)
+      Node(n.toString,if(succ.contains(n)) Color.green else Color.white,action(n))
     } else {
-      Node(n.toString,childs.map(c => toNode(c._2)),childs.map(_._4),if(succ.contains(n)) Color.green else Color.white)
+      Node(n.toString,childs.map(c => toNode(c._2)),childs.map(_._4),if(succ.contains(n)) Color.green else Color.white,action(n))
     }
   }
   
@@ -58,7 +72,7 @@ class Tree(var record: Boolean = true) {
   def toXml() = {
     <tree version="1.0">
 		  <root id="0"/>
-	  	  {branches.map{case(parent,id,name,value) => 
+	  	  {branches.map{case(parent,id,name,value,action) => 
 	  	                   		<try id= {id.toString} parent = {parent.toString} name= {name} value = {value} />
 	  	                   }
 	  	  

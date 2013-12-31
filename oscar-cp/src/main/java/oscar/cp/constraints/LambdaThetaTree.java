@@ -62,6 +62,7 @@ public class LambdaThetaTree {
 		node.setSUMP_OPT(act.minDuration());
 		node.setResponsible_ECT(-1);
 		node.setResponsible_SUMP(-1);
+		System.out.println("insert into node "+curr_pos+":"+node);
 		reCompute(getFather(curr_pos));
 	}
 	

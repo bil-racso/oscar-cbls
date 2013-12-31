@@ -134,38 +134,38 @@ public class UnaryResource extends Constraint {
 
 
 
-	@Override
-	public CPOutcome setup(CPPropagStrength l) {
-
-		
-		for (int i = 0; i < nbAct; i++) {
-			activities[i].start().callPropagateWhenBoundsChange(this,false);
-			activities[i].end().callPropagateWhenBoundsChange(this,false);
+		@Override
+		public CPOutcome setup(CPPropagStrength l) {
+	
 			
-			if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
-				//required[i].callValBindIdxWhenBind(this,i);
-				required[i].callPropagateWhenBind(this,false);
-			}
-		}
-		
-		// next line are commented because we use a time-table instead instead in the UnitResource (more efficient)
-		/*
-		for (int i = 0; i < nbAct; i++) {
-			for (int j = i+1; j < nbAct; j++) {
-				if (required[i].isTrue() && required[j].isTrue()) {
-					if (s.post(new Disjunctive(activities[i], activities[j])) == CPOutcome.Failure) {
-						return CPOutcome.Failure;
-					}
+			for (int i = 0; i < nbAct; i++) {
+				activities[i].start().callPropagateWhenBoundsChange(this,false);
+				activities[i].end().callPropagateWhenBoundsChange(this,false);
+				
+				if (!required[i].isBound()) { // we must do something when an activity becomes required/forbidden 
+					//required[i].callValBindIdxWhenBind(this,i);
+					required[i].callPropagateWhenBind(this,false);
 				}
 			}
-		}*/
-		
-		if (propagate() == CPOutcome.Failure) {
-			return CPOutcome.Failure;
+			
+			// next line are commented because we use a time-table instead instead in the UnitResource (more efficient)
+			/*
+			for (int i = 0; i < nbAct; i++) {
+				for (int j = i+1; j < nbAct; j++) {
+					if (required[i].isTrue() && required[j].isTrue()) {
+						if (s.post(new Disjunctive(activities[i], activities[j])) == CPOutcome.Failure) {
+							return CPOutcome.Failure;
+						}
+					}
+				}
+			}*/
+			
+			if (propagate() == CPOutcome.Failure) {
+				return CPOutcome.Failure;
+			}
+	
+			return CPOutcome.Suspend;
 		}
-
-		return CPOutcome.Suspend;
-	}
 
 
 	
@@ -191,15 +191,18 @@ public class UnaryResource extends Constraint {
 			activities[i].update(); // forces update of start, end, dur
 		}
 		failure = false;
+
+		
+		
 		do {
-			do {
-				do {
+			//do {
+				//do {
 					if(!overloadChecking()) {
 						return CPOutcome.Failure;
 					}
 					
-				} while (!failure && detectablePrecedences());
-			} while (!failure && notFirstNotLast() && !failure);
+				//} while (!failure && detectablePrecedences());
+			//} while (!failure && notFirstNotLast() && !failure);
 		} while (!failure && edgeFinder());
 		
 		if (failure) {
@@ -225,6 +228,7 @@ public class UnaryResource extends Constraint {
 
 
 	private boolean overloadChecking() {
+		System.out.println("-------------overload--------");
 		// Init
 		updateEst(); // update the activity wrappers such that they now their position according to a non decreasing est sorting
 		
@@ -487,6 +491,7 @@ public class UnaryResource extends Constraint {
 
 
 	private boolean edgeFinder() {
+		System.out.println("--------------edge--------");
 		// Init
 		updateEst();
 		for (int i = 0; i < nbAct; i++) {
@@ -533,7 +538,7 @@ public class UnaryResource extends Constraint {
 				lamdaThetaTree.remove(i);
 			}
 		}
-
+		System.out.println("right to left");
 		// Push in other direction.
 		Arrays.sort(mlct,lctComp);
 		lamdaThetaTree.reset();
@@ -542,6 +547,7 @@ public class UnaryResource extends Constraint {
 			lamdaThetaTree.insert(mest[i].getActivity(), i);
 			}
 		}
+		System.out.println("intial tree ect:"+lamdaThetaTree.ect());
 		j = nbAct - 1;
 		while( j >= 0 && !lct[j].isMandatory()) {
 			j--;
@@ -571,7 +577,7 @@ public class UnaryResource extends Constraint {
 				lamdaThetaTree.remove(i);
 			}
 		}
-
+		System.out.println("newLct:"+Arrays.toString(new_lct));
 		// Apply modifications.
 		boolean modified = false;
 		for (int i = 0; i < nbAct; i++) {
@@ -583,9 +589,10 @@ public class UnaryResource extends Constraint {
 						return false;
 					}
 				}
-
+				System.out.println(activities[i].lct()+" > ?"+new_lct[i]);
 				if (activities[i].lct() > new_lct[i] ) {
 					modified = true;
+					System.out.println(i+" new end:"+new_lct[i]);
 					if (activities[i].end().updateMax(new_lct[i]) == CPOutcome.Failure) {
 						failure = true;
 						return false;
@@ -677,6 +684,7 @@ class LCTComparator implements Comparator<ActivityWrapper> {
 
 class LSTComparator implements Comparator<ActivityWrapper> {
 	public int compare(ActivityWrapper act0, ActivityWrapper act1) {
+		// bug here??
 		return act0.getActivity().lct()-act1.getActivity().lct();
 	}
 }

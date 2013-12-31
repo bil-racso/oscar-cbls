@@ -61,7 +61,7 @@ class Spread(val x: Array[CPVarInt], val sum: Int, val sum2: CPVarInt, val rever
     if (s.post(new Sum(x.map(i => i*i),sum2)) == CPOutcome.Failure) {
       CPOutcome.Failure
     }
-    else if (s.post(new Sum(x,CPVarInt(s,sum))) == CPOutcome.Failure) {
+    else if (s.post(new Sum(x,CPVarInt(sum)(s))) == CPOutcome.Failure) {
       CPOutcome.Failure 
     } else {
       CPOutcome.Suspend 

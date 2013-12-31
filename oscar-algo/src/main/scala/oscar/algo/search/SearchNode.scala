@@ -1,5 +1,5 @@
 /*******************************************************************************
-" * OscaR is free software: you can redistribute it and/or modify
+ * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
@@ -309,22 +309,17 @@ class SearchNode extends ReversibleContext {
       if (!silent) print("!")
     }
   }
-  private var branchings = new BranchingCombinator()
+  private var branchings = Branching(noAlternative)
   
   def search(block: => Seq[Alternative]): SearchNode = {
-    val b = new Branching() {
-      override def alternatives = {
-        block
-      }
-    }
-    branchings.addBranching(b)
+    branchings = Branching(block)
     this
   }
   
   def search(branching: Branching): SearchNode = {
-    branchings.addBranching(branching)
+    branchings = branching
     this
-  }  
+  }
   
   private var solCallBacks = List[() => Unit]()
   
@@ -343,8 +338,8 @@ class SearchNode extends ReversibleContext {
     stats
   }
   
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue): SearchStatistics = {
-    startSubjectTo(nbSolMax,failureLimit,timeLimit)()
+  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+    startSubjectTo(nbSolMax,failureLimit,timeLimit,maxDiscrepancy)()
   }
 
 }

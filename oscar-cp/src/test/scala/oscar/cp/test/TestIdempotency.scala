@@ -47,13 +47,13 @@ class TestIdempotency extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, 0 to 3)
+    val x = CPVarInt(0 to 3)(cp)
     cp.add(new MyCons(x, false))
     cp.add(x != 3)
     nbCallToPropagate should equal(2)
     
     nbCallToPropagate = 0
-    val y = CPVarInt(cp, 0 to 3)
+    val y = CPVarInt(0 to 3)(cp)
     cp.add(new MyCons(y, true))
     cp.add(y != 3)
     nbCallToPropagate should equal(1)

@@ -33,7 +33,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     var x = new CPVarSet(cp, -2 , 4)
     var inpropag = false
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callPropagateWhenDomainChanges(this)
@@ -89,7 +89,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
       inexclude = false
       inrequire = false
     }
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
 
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
@@ -177,7 +177,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
       idx = -100
       value = -100
     }
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callPropagateWhenDomainChanges(this)
@@ -275,7 +275,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
       inexclude = false
       inrequire = false
     }
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
 
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
@@ -362,7 +362,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
       inrequire = false
       idx = -100
     }
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callPropagateWhenDomainChanges(this)
@@ -427,7 +427,7 @@ class TestVarSet extends FunSuite with ShouldMatchers  {
       inrequire = false
       idx = -100
     }
-    class SetCons(val X: CPVarSet) extends Constraint(X.s, "TestSet") {
+    class SetCons(val X: CPVarSet) extends Constraint(X.store, "TestSet") {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callPropagateWhenDomainChanges(this)

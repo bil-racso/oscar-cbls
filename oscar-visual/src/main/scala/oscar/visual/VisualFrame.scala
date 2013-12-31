@@ -25,7 +25,7 @@ import java.awt.Color
 import java.awt.Toolkit
 import java.awt.BorderLayout
 
-class VisualFrame(title: String, nbLines: Int, nbCols: Int) extends JFrame(title) {
+class VisualFrame(title: String, nbLines: Int = 1, nbCols: Int = 1) extends JFrame(title) {
 
   val desktop = new JDesktopPane()
 

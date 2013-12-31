@@ -39,7 +39,7 @@ class TestCubes extends FunSuite with ShouldMatchers  {
     val numLetters = letters.size
     def letterToInt(letter: Char): Int = letters.indexOf(letter) // Letter from letter index
     
-    val placement = for(i <- 0 until numLetters) yield CPVarInt(cp, 0 until numCubes) // The cube (0 to 3) on which each letter is placed
+    val placement = for(i <- 0 until numLetters) yield CPVarInt(0 until numCubes)(cp) // The cube (0 to 3) on which each letter is placed
     var nbSol = 0
     cp.solve subjectTo
     {

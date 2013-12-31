@@ -28,7 +28,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
 
   test("Table Var View 1") {
     val cp = CPSolver()
-    var x = CPVarInt(cp, -2 to 4)
+    var x = CPVarInt(-2 to 4)(cp)
     
     class ViewCons(val X: CPVarInt) extends Constraint(X.s, "TestView") {
 
@@ -98,7 +98,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
   // same tests but with l1 indexes methods
   test("Table Var View 2") {
     val cp = CPSolver()
-    var x = CPVarInt(cp, -2 to 4)
+    var x = CPVarInt(-2 to 4)(cp)
     
     class ViewCons(val X: CPVarInt) extends Constraint(X.s, "TestView") {
 

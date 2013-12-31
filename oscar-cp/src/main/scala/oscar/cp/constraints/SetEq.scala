@@ -24,7 +24,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of Equality constraint for CPVarSet
  * @author Léonard Debroux leonard.debroux@gmail.com
  */
-class SetEq(val a: CPVarSet, val b: CPVarSet) extends Constraint(a.s, "SetEq") {
+class SetEq(val a: CPVarSet, val b: CPVarSet) extends Constraint(a.store, "SetEq") {
 	override def setup(l: CPPropagStrength): CPOutcome = {
 	  
 	  def filterB(d: DeltaVarSet): CPOutcome = {

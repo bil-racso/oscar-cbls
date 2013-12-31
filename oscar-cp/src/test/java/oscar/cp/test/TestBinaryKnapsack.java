@@ -74,7 +74,10 @@ public class TestBinaryKnapsack extends TestCase {
     public void testb() {
         CPStore cp = new CPStore();
         int n = 20;
-        CPVarBool [] x = CPVarBool.getArray(cp,n);
+        CPVarBool [] x = new CPVarBool[n];
+        for (int i = 0; i < n; i++) {
+        	x[i] = new CPVarBool(cp);
+        }
         int [] values = new int[n];
         int [] values2 = new int[n];
         for (int i = 0; i < n; i++) {
@@ -110,8 +113,10 @@ public class TestBinaryKnapsack extends TestCase {
 
     public void testc() {
         CPStore cp = new CPStore();
-
-        CPVarBool [] x = CPVarBool.getArray(cp,3);
+        CPVarBool [] x = new CPVarBool[3];
+        for (int i = 0; i < 3; i++) {
+        	x[i] = new CPVarBool(cp);
+        }
         int [] values = new int[]{43,23,23};
         CPVarInt c = CPVarInt.apply(cp,1,82);
 

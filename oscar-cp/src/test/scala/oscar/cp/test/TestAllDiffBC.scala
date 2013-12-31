@@ -28,7 +28,7 @@ class TestAllDiffBC extends FunSuite with ShouldMatchers  {
   
   test("test1") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,3 to 4),CPVarInt(cp,2 to 4),CPVarInt(cp,3 to 4),CPVarInt(cp,2 to 5),CPVarInt(cp,1 to 6))
+	  val x = Array(CPVarInt(3 to 4)(cp),CPVarInt(2 to 4)(cp),CPVarInt(3 to 4)(cp),CPVarInt(2 to 5)(cp),CPVarInt(1 to 6)(cp))
 	  cp.add(new AllDiffBC(x))
 	  
 	  println(x.mkString(","))

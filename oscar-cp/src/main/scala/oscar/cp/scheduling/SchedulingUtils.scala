@@ -26,6 +26,7 @@ object SchedulingUtils {
     minTask
   }
 
+  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see SetTimesBranching in particular", since = "1.0")
   def setTimes(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]): Unit @suspendable = {
 
     val cp = starts.head.store

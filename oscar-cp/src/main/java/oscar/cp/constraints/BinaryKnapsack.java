@@ -473,7 +473,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
     ReversibleInt nPacked;
 
 	public BinaryKnapsackWithCardinality(CPVarBool [] b, final int [] weights, CPVarInt load, int nbItems) {
-		super(b[0].s(),"LightBinaryKnapsack");
+		super(b[0].s(),"BinaryKnapsackWithCardinality");
 
 		Integer [] perm = new Integer [weights.length];
 		for (int i = 0; i < perm.length; i++) {

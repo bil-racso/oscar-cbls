@@ -184,7 +184,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     
     var c = 0
     node.onSolution { c += 1 }
-    node.search(b1).search(b2)
+    node.search(b1++b2)
     node.start().nbSols should be(32)
     c should be(32)    
   }
@@ -197,24 +197,105 @@ class SearchTest extends FunSuite with ShouldMatchers  {
 
     //def search
     val i1 = new ReversibleInt(node, 0)
-    node.search {
-        if (i1.value > 2) noAlternative
-        else {
-          branch {i1 += 1 } { i1 += 1 }
-        }
-    }
-           
     val i2 = new ReversibleInt(node, 0)
     node.search {
+      Branching {
+        if (i1.value > 2) noAlternative
+        else {
+          branch { i1 += 1 } { i1 += 1 }
+        } 
+      } ++ Branching {
         if (i2.value > 1) noAlternative
         else {
           branch {i2 += 1 } { i2 += 1 }
-        }      
+        }           
+      }
     }
 
     node.start().nbSols should be(32)
     c should be(32)    
-  }  
+  }
+  
+  test("test search6") {
+    val node = new SearchNode()
+
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 2) noAlternative
+      else branchAll(1 to 2) {v =>  i += 1}
+    } 
+    
+    val stat = node.start()
+    i.value should be(0)
+    stat.nbSols should be(8)
+    
+    node.search {
+      if (i > 2) noAlternative
+      else branchAll(1 to 3) {v =>  i += 1}
+    } 
+    
+    val stat2 = node.start()
+    stat2.nbSols should be(27)
+    
+  }
+ 
+  
+  test("test search7") {
+    val node = new SearchNode()
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 1) noAlternative
+      else branchAll(1 to 3) {v =>  i += 1}
+    } 
+    val stat2 = node.start()
+    stat2.nbSols should be(9)
+  }   
+  
+  test("test search8") {
+    val node = new SearchNode()
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 0) noAlternative
+      else branchAll(1 to 3) {v =>  i += 1}
+    } 
+    val stat2 = node.start()
+    stat2.nbSols should be(3)
+  }
+  
+  
+  test("test search9") {
+    val node = new SearchNode()
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 0) noAlternative
+      else branchAll(1 to 3) {v =>  i += 1}
+    } 
+    val stat2 = node.start(maxDiscrepancy = 1)
+    stat2.nbSols should be(2)
+  } 
+  
+  test("test search10") {
+    val node = new SearchNode()
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 2) noAlternative
+      else branchAll(1 to 3) {v =>  i += 1}
+    } 
+    val stat2 = node.start(maxDiscrepancy = 5)
+    stat2.nbSols should be(26)
+  }
+  
+  
+  test("test search11") {
+    val node = new SearchNode()
+    val i = new ReversibleInt(node, 0)
+    node.search {
+      if (i > 2) noAlternative
+      else branchAll(1 to 3) {v => if (v == 1) node.fail else  i += 1}
+    } 
+    val stat2 = node.start()
+    stat2.nbSols should be(8)
+  }
     
 
 
