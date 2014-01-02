@@ -30,7 +30,7 @@ import oscar.cbls.search.SearchEngineTrait
 
 /**
  * Moves some point of a route to another place in the same or in an other route.
- * The search complexity is O(n�).
+ * The search complexity is O(n^2).
  */
 abstract class TwoPointsNeighborhood extends Neighborhood with SearchEngineTrait {
   /**

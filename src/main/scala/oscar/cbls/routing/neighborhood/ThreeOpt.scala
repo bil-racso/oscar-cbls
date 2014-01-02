@@ -89,8 +89,10 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
     sndEdgeStartPoint: Int,
     trdEdgeStartPoint: Int,
     vrp: VRP with MoveDescription) {
+
     val seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
     vrp.insert(seg, trdEdgeStartPoint)
+
   }
   
   override def toString: String = "3-opt"
@@ -98,9 +100,9 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
 
 /**
  * Models a three-opt-move operator of a given VRP problem.
- * @param beforeSegmentStart the predecessor of the moved segment.
- * @param segmentEnd the end of the moved segment.
- * @param insertionPoint the place where to insert the moved segment.
+ * @param fstEdgeStartPoint the predecessor of the moved segment.
+ * @param sndEdgeStartPoint the end of the moved segment.
+ * @param trdEdgeStartPoint the place where to insert the moved segment.
  * @param objAfter the objective value if we performed this three-opt-move operator.
  * @param vrp the given VRP problem.
  */

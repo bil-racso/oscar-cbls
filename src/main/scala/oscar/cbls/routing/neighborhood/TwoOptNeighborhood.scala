@@ -50,8 +50,6 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
       val fstPred: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(fstPred)) {
 
-        val fstEdgeStartPoint = vrp.next(fstPred).value
-
         for (
           sndPred <- s.relevantNeighbors(fstPred) if (vrp.isRouted(sndPred)
             && sndPred != fstPred
@@ -75,10 +73,8 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
     NoMoveFound()
   }
 
-  def encode(
-    fstPred: Int,
-    sndPred: Int,
-    vrp: VRP with MoveDescription) {
+  def encode(fstPred:Int, sndPred:Int, vrp:VRP with MoveDescription) {
+
     val seg = vrp.cut(fstPred, sndPred)
     val rev_seg = vrp.reverse(seg)
     vrp.insert(rev_seg, fstPred)
@@ -89,8 +85,8 @@ case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
 
 /**
  * Models a two-opt-move operator of a given VRP problem.
- * @param fstEdgeStartPoint the start of first edge that we remove.
- * @param sndEdgeStartPoint the start of second edge that we remove.
+ * @param fstPred the start of first edge that we remove.
+ * @param sndPred the start of second edge that we remove.
  * @param objAfter the objective value if we performed this two-opt-move operator.
  * @param vrp the given VRP problem.
  */
