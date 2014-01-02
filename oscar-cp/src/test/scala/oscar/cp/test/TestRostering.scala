@@ -18,6 +18,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
+import oscar.cp.constraints.implementations._
 import oscar.cp.core._
 
 import oscar.cp.modeling._
@@ -68,7 +69,7 @@ class TestRostering extends FunSuite with ShouldMatchers  {
 		    val maxCap = Array.fill(nbActivities)(nbPersons)
 		    for (t <- 0 until nbSlots) {
 		      val act_t = Array.tabulate(nbPersons)(p => activities(p)(t))
-		      cp.add(new oscar.cp.constraints.SoftGCC(act_t,0,demand(t),maxCap,totUnderDemand))
+		      cp.add(new SoftGCC(act_t,0,demand(t),maxCap,totUnderDemand))
 		    }
 		
     	  

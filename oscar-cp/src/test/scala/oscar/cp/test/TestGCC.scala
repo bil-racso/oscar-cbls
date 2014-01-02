@@ -4,8 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
+import oscar.cp.constraints.implementations._
 import oscar.cp.core._
-
 import oscar.cp.modeling._
 
 class TestGCC extends FunSuite with ShouldMatchers {
@@ -34,9 +34,9 @@ class TestGCC extends FunSuite with ShouldMatchers {
     var nb = 0
 
     if (gccvar) {
-      cp.post(new oscar.cp.constraints.GCCVar(x, -1, o));
+      cp.post(new GCCVar(x, -1, o));
     } else {
-      cp.post(new oscar.cp.constraints.SoftGCC(x, -1, randomOcc(0), randomOcc(1), CPVarInt(0)(cp)));
+      cp.post(new SoftGCC(x, -1, randomOcc(0), randomOcc(1), CPVarInt(0)(cp)));
     }
     if (cp.isFailed()) {
       return -1;
@@ -70,7 +70,7 @@ class TestGCC extends FunSuite with ShouldMatchers {
 
     val o = Array.fill(10)(CPVarInt(0 to 10)(cp))
 
-    cp.post(new oscar.cp.constraints.GCCVar(x, 0, o));
+    cp.post(new oscar.cp.constraints.implementations.GCCVar(x, 0, o));
 
     cp.isFailed() should be(false)
 

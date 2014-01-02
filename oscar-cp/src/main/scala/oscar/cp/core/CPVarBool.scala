@@ -22,10 +22,10 @@ class CPVarBool(st: CPStore) extends CPVarIntImpl(st, 0, 1) {
   }
 
   /** @return  a constraint setting the boolean variable to true (1) */
-  def constraintTrue() = new oscar.cp.constraints.Eq(this, 1)
+  def constraintTrue() = new oscar.cp.constraints.implementations.Eq(this, 1)
 
   /** @return  a constraint setting the boolean variable to false (0) */
-  def constraintFalse() = new oscar.cp.constraints.Eq(this, 0)
+  def constraintFalse() = new oscar.cp.constraints.implementations.Eq(this, 0)
 
   /** @return true if the variable is bound and bound to value 1 */
   def isTrue = isBound && value == 1
@@ -36,7 +36,7 @@ class CPVarBool(st: CPStore) extends CPVarIntImpl(st, 0, 1) {
   /** Logical or */
   def or(y: CPVarBool): CPVarBool = {
     val b = new CPVarBool(s)
-    s.post(new oscar.cp.constraints.Or(Array(this, y), b))
+    s.post(new oscar.cp.constraints.implementations.Or(Array(this, y), b))
     b
   }
 
@@ -48,13 +48,13 @@ class CPVarBool(st: CPStore) extends CPVarIntImpl(st, 0, 1) {
 
   def not(): CPVarBool = {
     val not = new CPVarBool(s)
-    s.post(new oscar.cp.constraints.Not(this, not))
+    s.post(new oscar.cp.constraints.implementations.Not(this, not))
     not
   }
 
   def implies(y: CPVarBool) = {
     val V = new CPVarBool(s)
-    s.post(new oscar.cp.constraints.Implication(this, y, V))
+    s.post(new oscar.cp.constraints.implementations.Implication(this, y, V))
     V
   }
 }

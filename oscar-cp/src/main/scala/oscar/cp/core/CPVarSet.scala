@@ -3,9 +3,9 @@ package oscar.cp.core
 import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.cp.core.CPOutcome._
-import oscar.cp.constraints.Requires
-import oscar.cp.constraints.Excludes
-import oscar.cp.constraints.SetCard
+import oscar.cp.constraints.implementations.Requires
+import oscar.cp.constraints.implementations.Excludes
+import oscar.cp.constraints.implementations.SetCard
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -215,7 +215,7 @@ class CPVarSet(val store: CPStore, min: Int, max: Int, val name: String = "") ex
 
   def deltaRequired(sn: SnapshotVarSet): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
 
-  def ==(y: CPVarSet): Constraint = new oscar.cp.constraints.SetEq(this, y)
+  def ==(y: CPVarSet): Constraint = new oscar.cp.constraints.implementations.SetEq(this, y)
 }
 
 object CPVarSet {

@@ -26,7 +26,11 @@ import oscar.algo.reversible._
 import oscar.util._
 import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
-import oscar.cp.constraints.ParetoConstraint
+import oscar.cp.constraints.implementations.ParetoConstraint
+import oscar.cp.constraints.implementations.CPObjective
+import oscar.cp.constraints.implementations.CPObjectiveUnitMinimize
+import oscar.cp.constraints.implementations.CPObjectiveUnitMaximize
+import oscar.cp.constraints.implementations.CPObjectiveUnit
 
 
 class CPSolver() extends CPStore() {

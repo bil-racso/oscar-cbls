@@ -16,10 +16,10 @@ package oscar.examples.cp.multiobjective
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.constraints.ChannelingPredSucc
+import oscar.cp.constraints.implementations.ChannelingPredSucc
 import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
-import oscar.cp.constraints.MinAssignment
+import oscar.cp.constraints.implementations.MinAssignment
 import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.visual._
 import oscar.examples.cp.util.reader.TSPUtils

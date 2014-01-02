@@ -14,18 +14,16 @@
  ******************************************************************************/
 package oscar.cp.core;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Random;
-
-import oscar.cp.constraints.CPObjective;
-import oscar.cp.constraints.CPObjectiveUnit;
-import oscar.cp.constraints.Eq;
-import oscar.algo.reversible.ReversiblePointer;
-import oscar.algo.search.SearchNode;
+import java.util.Collection
+import java.util.LinkedList
+import java.util.Random
+import oscar.cp.constraints.implementations.CPObjective
+import oscar.cp.constraints.implementations.CPObjectiveUnit
+import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.search.SearchNode
 import collection.JavaConversions._
-
 import oscar.cp.core.CPOutcome._
+import oscar.cp.constraints.implementations.Eq
 
 /**
  * Constraint Programming CPStore

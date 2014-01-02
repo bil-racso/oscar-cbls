@@ -18,8 +18,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
+import oscar.cp.constraints.implementations.Or;
 import oscar.cp.core._
-
 import oscar.cp.modeling._
 
 

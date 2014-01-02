@@ -16,8 +16,9 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-
 import oscar.cp.constraints.*;
+import oscar.cp.constraints.implementations.Eq;
+import oscar.cp.constraints.implementations.LexLeq;
 import oscar.cp.core.*;
 
 

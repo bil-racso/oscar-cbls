@@ -20,6 +20,8 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import collection.immutable.SortedSet
 import oscar.algo.reversible.SetIndexedArray
+import oscar.cp.constraints.implementations.GCC
+import oscar.cp.constraints.implementations.Sequence
 
 class TestCarSeq extends FunSuite with ShouldMatchers  {
 
@@ -54,9 +56,9 @@ class TestCarSeq extends FunSuite with ShouldMatchers  {
 		var nbSol = 0
 		cp.solve subjectTo {
     	  for (o <- 1 until nbOptions) {
-    	    cp.add(new oscar.cp.constraints.Sequence(line, options(o), ub(o), 0, lb(o)))
+    	    cp.add(new Sequence(line, options(o), ub(o), 0, lb(o)))
     	  }
-    	  cp.add(new oscar.cp.constraints.GCC(line, 0, Array.fill(nbConfigs)(0), demand));
+    	  cp.add(new GCC(line, 0, Array.fill(nbConfigs)(0), demand));
     	} exploration {
     	  cp.binaryFirstFail(line)
     	  nbSol += 1

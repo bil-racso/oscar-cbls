@@ -16,8 +16,11 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-
 import oscar.cp.constraints.*;
+import oscar.cp.constraints.implementations.Automaton;
+import oscar.cp.constraints.implementations.Eq;
+import oscar.cp.constraints.implementations.Regular;
+import oscar.cp.constraints.implementations.Stretch;
 import oscar.cp.core.*;
 
 

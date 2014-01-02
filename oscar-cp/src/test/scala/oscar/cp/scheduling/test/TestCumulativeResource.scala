@@ -16,17 +16,23 @@
  */
 package oscar.cp.scheduling.test
 
+import scala.Array.canBuildFrom
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.constraints._
-import oscar.cp.core._
-
-import oscar.cp.modeling._
-import oscar.cp.scheduling._
-import oscar.algo.reversible._
-
-import oscar.visual._
+import oscar.cp.constraints.implementations.SweepMaxCumulative
+import oscar.cp.constraints.implementations.SweepMinCumulative
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.NoSolutionException
+import oscar.cp.modeling.CPScheduler
+import oscar.cp.modeling.maximum
+import oscar.cp.scheduling.Activity
+import oscar.cp.scheduling.CumulativeActivity
+import oscar.cp.scheduling.MaxResource
+import oscar.cp.scheduling.MinResource
+import oscar.cp.scheduling.int2ImplicitVarInt
+import oscar.cp.scheduling.range2ImplicitVarInt
 
 class TestCumulativeResource extends FunSuite with ShouldMatchers {
 

@@ -19,14 +19,19 @@
 
 package oscar.cp.scheduling.test
 
+import scala.Array.canBuildFrom
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.modeling._
-import oscar.algo.search._
-import oscar.cp.core._
-import oscar.cp.scheduling._
-import oscar.cp.constraints._
-import scala.Array.canBuildFrom
+
+import oscar.cp.constraints.implementations.SweepMaxCumulative
+import oscar.cp.core.CPVarInt
+import oscar.cp.modeling.CPScheduler
+import oscar.cp.modeling.maximum
+import oscar.cp.scheduling.Activity
+import oscar.cp.scheduling.CumulativeActivity
+import oscar.cp.scheduling.MaxResource
+import oscar.cp.scheduling.int2ImplicitVarInt
 
 class TestRCPSP extends FunSuite with ShouldMatchers {
 

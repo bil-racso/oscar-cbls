@@ -16,13 +16,32 @@
 
 package oscar.cp.modeling
 
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.scheduling._
-import scala.collection._
-import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
+
+import scala.Array.canBuildFrom
+import scala.Option.option2Iterable
+import scala.collection.IndexedSeq
+import scala.collection.Iterable
 import scala.collection.immutable.Set
+import oscar.cp.constraints._
+import oscar.cp.constraints.implementations.AtLeastNValue;
+import oscar.cp.constraints.implementations.BinPacking;
+import oscar.cp.constraints.implementations.BinPackingFlow;
+import oscar.cp.constraints.implementations.Deviation;
+import oscar.cp.constraints.implementations.ElementCst;
+import oscar.cp.constraints.implementations.GCCVar;
+import oscar.cp.constraints.implementations.Modulo;
+import oscar.cp.constraints.implementations.Stretch;
+import oscar.cp.constraints.implementations._
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPVarBool
+import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPVarSet
+import oscar.cp.core.Constraint
+import oscar.cp.core._
+import oscar.cp.scheduling.Activity
+import oscar.cp.scheduling.CumulativeActivity
 
 trait Constraints {
 
@@ -279,7 +298,7 @@ trait Constraints {
     else x(0) == s
     */
     if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
-    else new oscar.cp.constraints.Sum(vars, s)
+    else new oscar.cp.constraints.implementations.Sum(vars, s)
   }
 
   /**
@@ -412,10 +431,10 @@ trait Constraints {
   def table(x: Array[CPVarInt], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
 
-    import oscar.cp.constraints.TableAC5TCRecomp
+import oscar.cp.constraints.implementations.TableAC5TCRecomp
     val data = new TableData(x.size)
     tuples.foreach(t => data.add(t: _*))
-    new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
+    new oscar.cp.constraints.implementations.TableAC5TCRecomp(data, x: _*)
 
     /*
     val tab = new TableJava(x:_*)

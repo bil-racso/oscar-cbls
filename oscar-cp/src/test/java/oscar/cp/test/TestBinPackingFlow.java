@@ -13,11 +13,10 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.test;
-import oscar.cp.constraints.BinPackingFlow;
-import oscar.cp.constraints.Eq;
+import oscar.cp.constraints.implementations.BinPackingFlow;
+import oscar.cp.constraints.implementations.Eq;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.CPStore;
-
 import junit.framework.TestCase;
 
 /**

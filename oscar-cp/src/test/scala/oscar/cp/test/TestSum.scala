@@ -93,7 +93,7 @@ class TestSum extends FunSuite with ShouldMatchers  {
     //cp.pushState()
     var nbSol = 0
     cp.solve subjectTo {
-      if (decomp) cp.add(new oscar.cp.constraints.Sum(x,y))
+      if (decomp) cp.add(new oscar.cp.constraints.implementations.Sum(x,y))
       else cp.add(sum(x,y))
     } exploration {
       while(!x.forall(_.isBound)) {

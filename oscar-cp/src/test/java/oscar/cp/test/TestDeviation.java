@@ -16,7 +16,7 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.cp.constraints.Deviation;
+import oscar.cp.constraints.implementations.Deviation;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.CPStore;
 

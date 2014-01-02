@@ -17,13 +17,14 @@ package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-
 import oscar.visual._
 import scala.math
 import java.awt.Color
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
 import oscar.visual.shapes.VisualRectangle
+import oscar.cp.constraints.implementations.SweepMaxCumulative
+import oscar.cp.constraints.implementations.SweepMinCumulative
 
 /**
  * Perfect Square Problem

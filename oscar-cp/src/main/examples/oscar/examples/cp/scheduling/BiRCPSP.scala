@@ -3,7 +3,7 @@ package oscar.examples.cp.scheduling
 import oscar.cp.core._
 import oscar.cp.modeling._
 import scala.io.Source
-import oscar.cp.constraints.SweepMaxCumulative
+import oscar.cp.constraints.implementations.SweepMaxCumulative
 
 object BiRCPSP extends App {
 

@@ -17,8 +17,16 @@
 
 package oscar.cp.core
 
-import oscar.cp.constraints.InSet
-import oscar.cp.constraints.InSetReif
+import oscar.cp.constraints._
+import oscar.cp.constraints.implementations.Eq;
+import oscar.cp.constraints.implementations.EqVal;
+import oscar.cp.constraints.implementations.Gr;
+import oscar.cp.constraints.implementations.GrEq;
+import oscar.cp.constraints.implementations.Le;
+import oscar.cp.constraints.implementations.LeEq;
+import oscar.cp.constraints.implementations.Minus;
+import oscar.cp.constraints.implementations.Opposite;
+import oscar.cp.constraints.implementations._
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -480,7 +488,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def opposite() = {
     val y = new CPVarIntImpl(s, -max, -min);
-    s.post(new oscar.cp.constraints.Opposite(this, y));
+    s.post(new Opposite(this, y));
     y;
   }
 
@@ -499,7 +507,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def minus(y: CPVarInt) = {
     val c = new CPVarIntImpl(s, min - y.max, max - y.min);
-    s.post(new oscar.cp.constraints.Minus(this, y, c));
+    s.post(new Minus(this, y, c));
     c;
   }
 
@@ -521,7 +529,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
       this.plus(y.value)
     } else {
       val c = new CPVarIntImpl(s, min + y.min, max + y.max);
-      val ok = s.post(new oscar.cp.constraints.BinarySum(this, y, c));
+      val ok = s.post(new BinarySum(this, y, c));
       assert(ok != CPOutcome.Failure);
       c
     }
@@ -538,7 +546,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
     val a = if (c > 0) min * c else max * c
     val b = if (c > 0) max * c else min * c
     val y = new CPVarIntImpl(s, a, b)
-    val ok = s.post(new oscar.cp.constraints.MulCte(this, c, y))
+    val ok = s.post(new MulCte(this, c, y))
     assert(ok != CPOutcome.Failure)
     return y;
   }
@@ -552,10 +560,10 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
     val b = max
     val c = y.min
     val d = y.max
-    import oscar.cp.util.NumberUtils
+import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
     val z = new CPVarIntImpl(s, t.min, t.max)
-    val ok = s.post(new oscar.cp.constraints.MulVar(this, y, z))
+    val ok = s.post(new MulVar(this, y, z))
     assert(ok != CPOutcome.Failure);
     z
   }
@@ -565,7 +573,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def abs(): CPVarInt = {
     val c = new CPVarIntImpl(s, 0, Math.max(Math.abs(min), Math.abs(max)));
-    val ok = s.post(new oscar.cp.constraints.Abs(this, c));
+    val ok = s.post(new Abs(this, c));
     assert(ok != CPOutcome.Failure);
     return c
   }
@@ -577,7 +585,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isEq(v: Int): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.EqReif(this, v, b));
+    val ok = s.post(new EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -589,7 +597,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isEq(y: CPVarInt): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.EqReifVar(this, y, b));
+    val ok = s.post(new EqReifVar(this, y, b));
     assert(ok != CPOutcome.Failure);
     b
   }
@@ -601,7 +609,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isDiff(v: Int): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.DiffReif(this, v, b));
+    val ok = s.post(new DiffReif(this, v, b));
     assert(ok != CPOutcome.Failure)
     return b;
   }
@@ -613,7 +621,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isDiff(y: CPVarInt): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
+    val ok = s.post(new DiffReifVar(this, y, b));
     assert(ok != CPOutcome.Failure)
     return b;
   }
@@ -625,7 +633,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isGrEq(v: Int): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
+    val ok = s.post(new GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -637,7 +645,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isLeEq(v: Int): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
+    val ok = s.post(new LeEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -649,7 +657,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def isGrEq(y: CPVarInt): CPVarBool = {
     val b = new CPVarBool(s);
-    val ok = s.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
+    val ok = s.post(new GrEqVarReif(this, y, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -692,51 +700,51 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x!=y
    */
-  def !=(y: CPVarInt) = new oscar.cp.constraints.DiffVar(this, y)
+  def !=(y: CPVarInt) = new DiffVar(this, y)
   /**
    * x!=y
    */
-  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
+  def !=(y: Int) = new DiffVal(this, y)
   /**
    * x==y
    */
-  def ==(y: CPVarInt) = new oscar.cp.constraints.Eq(this, y)
+  def ==(y: CPVarInt) = new Eq(this, y)
   /**
    * x==y
    */
-  def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
+  def ==(y: Int) = new EqVal(this, y)
   /**
    * x<y
    */
-  def <(y: CPVarInt) = new oscar.cp.constraints.Le(this, y)
+  def <(y: CPVarInt) = new Le(this, y)
   /**
    * x<y
    */
-  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
+  def <(y: Int) = new Le(this, y)
   /**
    * x>y
    */
-  def >(y: CPVarInt) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: CPVarInt) = new Gr(this, y)
   /**
    * x>y
    */
-  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: Int) = new Gr(this, y)
   /**
    * x<=y
    */
-  def <=(y: CPVarInt) = new oscar.cp.constraints.LeEq(this, y)
+  def <= (y: CPVarInt) = new LeEq(this, y)
   /**
    * x<=y
    */
-  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
+  def <= (y: Int) = new LeEq(this, y)
   /**
    * x>=y
    */
-  def >=(y: CPVarInt) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: CPVarInt) = new GrEq(this, y)
   /**
    * x>=y
    */
-  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: Int) = new GrEq(this, y)
   /**
    * b <=> x == v
    */

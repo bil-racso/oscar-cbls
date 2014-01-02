@@ -18,11 +18,11 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
-import oscar.cp.constraints.MinAssignment
+import oscar.cp.constraints.implementations.MinAssignment
 import oscar.util.selectMin
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.multiobjective.ListPareto
-import oscar.cp.constraints.ParetoConstraint
+import oscar.cp.constraints.implementations.ParetoConstraint
 
 class TestParetoConstraint extends FunSuite with ShouldMatchers  {
   

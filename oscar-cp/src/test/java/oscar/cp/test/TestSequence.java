@@ -18,6 +18,8 @@ package oscar.cp.test;
 import junit.framework.TestCase;
 import oscar.algo.reversible.*;
 import oscar.cp.constraints.*;
+import oscar.cp.constraints.implementations.Eq;
+import oscar.cp.constraints.implementations.Sequence;
 import oscar.cp.core.*;
 
 

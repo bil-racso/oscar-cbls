@@ -19,7 +19,7 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
-import oscar.cp.constraints.BinPackingFlow
+import oscar.cp.constraints.implementations.BinPackingFlow
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.plot.PlotLine
 

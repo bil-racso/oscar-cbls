@@ -16,8 +16,8 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-
 import oscar.cp.constraints.*;
+import oscar.cp.constraints.implementations.Square;
 import oscar.cp.core.*;
 
 

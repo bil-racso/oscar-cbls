@@ -13,13 +13,12 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.test;
-import oscar.cp.constraints.BinaryKnapsack;
+import oscar.cp.constraints.implementations.BinaryKnapsack;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPVarBool;
 import oscar.cp.core.CPVarInt;
 import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
-
 import junit.framework.TestCase;
 
 /**
@@ -65,7 +64,7 @@ public class TestBinaryKnapsack extends TestCase {
         s.add(bkp, CPPropagStrength.Weak);
         s.add(bkp,CPPropagStrength.Strong);
 
-        s.add(new oscar.cp.constraints.DiffVal(b[0],0));
+        s.add(new oscar.cp.constraints.implementations.DiffVal(b[0],0));
         assertFalse(s.isFailed());
     }
 

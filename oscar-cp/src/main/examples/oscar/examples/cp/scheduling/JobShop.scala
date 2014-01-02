@@ -21,7 +21,7 @@ import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
-import oscar.cp.constraints.SweepMaxCumulative
+import oscar.cp.constraints.implementations.SweepMaxCumulative
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.search._
 import oscar.cp.search.BinaryFirstFailBranching

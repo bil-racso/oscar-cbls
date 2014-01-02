@@ -2,15 +2,15 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
+
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPVarInt
-import oscar.cp.constraints.WeightedSum
-import oscar.cp.constraints.MulCte
-import oscar.cp.constraints.Eq
-import oscar.cp.constraints.LeEq
-import oscar.cp.constraints.Gr
-import oscar.cp.constraints.MulVar
-import oscar.cp.constraints.DiffVal
+import oscar.cp.constraints._
+import oscar.cp.constraints.implementations.Gr;
+import oscar.cp.constraints.implementations.LeEq;
+import oscar.cp.constraints.implementations.MulCte;
+import oscar.cp.constraints.implementations.MulVar;
+import oscar.cp.constraints.implementations._
 
 class TestMul extends FunSuite with ShouldMatchers {
 

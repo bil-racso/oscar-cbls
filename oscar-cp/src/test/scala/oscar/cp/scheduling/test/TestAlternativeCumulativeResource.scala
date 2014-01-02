@@ -23,6 +23,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import scala.Array.canBuildFrom
+import oscar.cp.constraints.implementations.SweepMaxCumulative
 
 class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 

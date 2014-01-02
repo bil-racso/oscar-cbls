@@ -33,7 +33,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     val y = CPVarInt(Set(-70,-50,50,70))(cp)
     val z = CPVarInt(100 to 100)(cp)
     	
-    cp.post(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
+    cp.post(new oscar.cp.constraints.implementations.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
     	
     var nbSol = 0
     cp.exploration {

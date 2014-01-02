@@ -22,6 +22,7 @@ import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
 import oscar.cp.core.CPVarInt
+import oscar.cp.constraints.implementations.SweepMaxCumulative
 
 /**
  *

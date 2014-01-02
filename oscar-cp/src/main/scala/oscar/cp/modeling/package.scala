@@ -21,6 +21,7 @@ import scala.collection.generic.CanBuildFrom
 
 import oscar.algo.search._
 import oscar.cp.constraints._
+import oscar.cp.constraints.implementations._
 import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPVarBool
 import oscar.cp.modeling._

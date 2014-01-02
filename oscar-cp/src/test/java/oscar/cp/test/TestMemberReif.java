@@ -18,6 +18,9 @@ package oscar.cp.test;
 import junit.framework.TestCase;
 import oscar.algo.reversible.*;
 import oscar.cp.constraints.*;
+import oscar.cp.constraints.implementations.GrEq;
+import oscar.cp.constraints.implementations.LeEq;
+import oscar.cp.constraints.implementations.MemberReif;
 import oscar.cp.core.*;
 
 

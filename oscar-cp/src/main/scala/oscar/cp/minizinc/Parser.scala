@@ -5,24 +5,23 @@ import FZType._
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core._
 import oscar.cp.modeling._
+
 import java.io.FileReader
+
 import scala.Equals
-import oscar.cp.constraints.EqReifVar
-import oscar.cp.constraints.GrEqVarReif
-import oscar.cp.constraints.DiffReifVar
-import oscar.cp.constraints.EqReif
-import oscar.cp.constraints.GrEqCteReif
-import oscar.cp.constraints.DiffReif
-import oscar.cp.constraints.Abs
-import oscar.cp.constraints.Automaton
-import oscar.cp.constraints.Or
-import oscar.cp.constraints.Sum
+import oscar.cp.constraints._
+import oscar.cp.constraints.implementations.DiffReifVar;
+import oscar.cp.constraints.implementations.EqReifVar;
+import oscar.cp.constraints.implementations.GrEqVarReif;
+import oscar.cp.constraints.implementations.Or;
+import oscar.cp.constraints.implementations._
 import scala.util.continuations._
-import oscar.cp.constraints.SetDiff
+
 import java.sql.Time
-import oscar.cp.constraints.WeightedSum
+
 import scala.collection.mutable.HashMap
 import oscar.cp.scheduling.CumulativeActivity
+
 import java.util.Collection
 
 class Parser extends JavaTokenParsers {// RegexParsers {
@@ -1274,7 +1273,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	          val boolvar = getCPVarBool(varList(1))
 	          cstr match {
 	            case "array_bool_and" => {
-	              addCstr(new oscar.cp.constraints.And(array,boolvar))
+	              addCstr(new oscar.cp.constraints.implementations.And(array,boolvar))
 	              //cp.add(new GrEqVarReif(sum(array), CPVarInt(cp, array.length), boolvar))
 	            }
 	            case "array_bool_or" => addCstr(new Or(array, boolvar))

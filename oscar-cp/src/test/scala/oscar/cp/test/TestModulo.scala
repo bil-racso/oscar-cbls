@@ -4,8 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPVarInt
-import oscar.cp.constraints.DiffVal
-import oscar.cp.constraints.Modulo
+import oscar.cp.constraints.implementations.DiffVal
+import oscar.cp.constraints.implementations.Modulo
 import java.util.Arrays
 
 class TestModulo extends FunSuite with ShouldMatchers {
