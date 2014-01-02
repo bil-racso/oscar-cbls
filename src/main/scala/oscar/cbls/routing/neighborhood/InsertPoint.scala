@@ -44,6 +44,9 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
+      //TODO: bizarre qu'on itère à l'envers sur les points d'insertion puis sur les points à insérer!
+      //il faudrait itérer sur les points non routés, puis sur les poijnts d'insertion parmi les points relevants.
+      //tant pis pour le primaryIterator en fait.
       val beforeInsertedPoint: Int = s.primaryNodeIterator.next()
       if (vrp.isRouted(beforeInsertedPoint)) {
         for (
