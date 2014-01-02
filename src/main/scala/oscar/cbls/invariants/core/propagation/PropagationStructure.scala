@@ -210,7 +210,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
     }
     if (Position != ClusteredPropagationComponents.size) {
       if (NoCycle){
-        throw new Exception("cycle detected in propagation graph although NoCycle was set to true")
+        throw new Exception("cycle detected in propagation graph, please set NoCycle flag to false when declaring your model")
       }else{
         throw new Exception("internal bug")
       }
@@ -570,16 +570,18 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def getStalls = Stalls
 
   def addDependency(from:PropagationElement, to:PropagationElement){
-    try{
-      notifyAddEdge(from,to)
-    }catch{
-      case c:CycleException => {
-        //This can happen if we perform heavy changes to the dependencies in a careless way,
-        // eg: reloading a previous model.
-        // We wait for the dependencies to be stable, when the propagation is performed.
-        //println("cycle in SCC, reverting to differed non-incremental sort")
-        autoSort = false
-        Stalls +=1
+    if(autoSort){
+      try{
+        notifyAddEdge(from,to)
+      }catch{
+        case c:CycleException => {
+          //This can happen if we perform heavy changes to the dependencies in a careless way,
+          // eg: reloading a previous model.
+          // We wait for the dependencies to be stable, when the propagation is performed.
+          //println("cycle in SCC, reverting to differed non-incremental sort")
+          autoSort = false
+          Stalls +=1
+        }
       }
     }
   }

@@ -185,4 +185,10 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    *close() should have been called prior to calling this method.
    */
   override def violation:IntVar = Violation
+
+  /** to get the violated constraints, for debugging purpose
+    * @return the constraints that are violated, and whose ponderation factor is not zero
+    */
+  def violatedConstraints:List[Constraint] =
+    PostedConstraints.filter(p => (p._2 != null || p._2.value !=0) && p._1.isTrue).map(p => p._1)
 }
