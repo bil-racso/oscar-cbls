@@ -39,8 +39,8 @@ object ElectricityMarket {
       def bound = selected.isBound
 
     }
-    val firstLine :: restLines = Source.fromFile("data/electricityMarket.txt").getLines.toList
-    //val firstLine::restLines = Source.fromFile("../data/electricityMarket.txt").getLines.toList
+    //val firstLine :: restLines = Source.fromFile("data/electricityMarket.txt").getLines.toList
+    val firstLine::restLines = Source.fromFile("../data/electricityMarket.txt").getLines.toList
     val n = firstLine.toInt
 
     val orders = restLines.map(_.split(" ").map(_.toInt)).map(Order(_)).toArray
