@@ -97,7 +97,12 @@ trait DAG {
    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
+      try{
       doDAGSort()
+      }catch {
+        case e:CycleException =>
+        throw new Error("cycle in topological sort: \n " + getCycle().mkString("\n ") + "\n")
+      }
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
       AutoSort = true

@@ -27,7 +27,6 @@ import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
-import oscar.cbls.scheduling.model.Planning
 
 class NonMoveableActivity(startDate:Int, duration: IntVar, planning: Planning, name: String = "")
   extends Activity(duration: IntVar, planning: Planning, name){
@@ -114,6 +113,15 @@ object Activity{
  */
 case class Activity(duration: IntVar, planning: Planning, name: String = "", Shifter:(IntVar,IntVar) => IntVar = (a:IntVar,_) => a) {
   val ID: Int = planning.AddActivity(this)
+
+  override def equals(obj: Any): Boolean = {
+    obj match{
+      case a:Activity => a.ID == ID
+      case _ => false
+    }
+  }
+
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false

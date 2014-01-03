@@ -151,11 +151,11 @@ class Planning(val model: Model, val maxduration: Int) {
     var toreturn: String = ""
     for (activity <- Activities.sortBy(t => t.EarliestStartDate.value)){
       for (t2 <- activity.AllSucceedingActivities.value if t2 != activity.ID && t2 != SentinelActivity.ID){
-        val activity = ActivityArray(t2)
-        if (activity.AdditionalPredecessors.value.contains(activity.ID)){
-          toreturn += activity.name + " -> " + activity.name + "\n"
+        val activity2 = ActivityArray(t2)
+        if (activity2.AdditionalPredecessors.value.contains(activity.ID)){
+          toreturn += activity.name + " -> " + activity2.name + "\n"
         }else{
-          toreturn += activity.name + " ->> " + activity.name + "\n"
+          toreturn += activity.name + " ->> " + activity2.name + "\n"
         }
       }
     }
@@ -172,7 +172,7 @@ class Planning(val model: Model, val maxduration: Int) {
    */
   def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
     //this is not straigntworfward since there can be some SuperTasks.
-    (from != to) & to.canAddPrecedence & (if (superActivity) !isThereDependency(to,from) else true)
+    (from != to) && to.canAddPrecedence && ((!superActivity) || !isThereDependency(to,from))
   }
 
   /**Checks if there is a path leading from one activity to another one
@@ -188,7 +188,7 @@ class Planning(val model: Model, val maxduration: Int) {
     /**PRE: from is a ground activity. */
     def Search(from:Activity):Boolean = {
       if (from == target) return true
-      if (from.EarliestEndDate.value > to.EarliestStartDate.value){
+      if (from.EarliestEndDate.value > target.EarliestStartDate.value){
         return false
       }
 
@@ -207,23 +207,38 @@ class Planning(val model: Model, val maxduration: Int) {
     toreturn
   }
 
-  /**returns a list of pair of activity; precedences to kill to make it possible to add the new dependency
-   * 
+  /**returns a list of pair of activity; precedences to kill
+   * to add the new dependency newFrom -> newTo
+   * without introducing a cycle involving newFrom -> newTo
+   *
+   * it computes a cut in the dag newTo -> newFrom involving only additional dependencies
    * @param from
    * @param to
    * @return
    */
-  def getDependencyToKillToAvoidCycle(from:Activity, to:Activity):DependencyCleaner = {
+  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):DependencyCleaner = {
+    val from = newTo
+    val to = newFrom
+    if(from == to) return HardRockDependency()
+
     var MarkedActivities:List[Activity] = List.empty
     var DependenciesToKill:List[(Activity, Activity)] = List.empty
     /**marks all activities on the path linking From to To
-     * all market activities are also added to MArkekActivities*/
+     * all market activities are also added to MarkedActivities
+      * return true if a path exist*/
     def MarkPathes(from:Activity, to:Activity):Boolean = {
-      if (from == to) return true
+      if(from.Mark) return true
+      if (from == to){
+        if (!from.Mark){
+          from.Mark = true
+          MarkedActivities = from :: MarkedActivities
+        }
+        return true
+      }
       if (from.EarliestEndDate.value > to.EarliestStartDate.value){
         return false
       }
-      if(from.Mark){return true}
+
       for(next <- from.getStartActivity.AllSucceedingActivities.value){
         val nextActivity:Activity = ActivityArray(next)
         if (MarkPathes(nextActivity, to)) from.Mark = true
@@ -238,17 +253,17 @@ class Planning(val model: Model, val maxduration: Int) {
     def FindDependenciesToKill(from:Activity, to:Activity) :Boolean = {
       if (from == to) return false
       if(!from.Mark){return true}
-      for(next <- from.getStartActivity.AdditionalPredecessors.value){
-        val nextActivity:Activity = ActivityArray(next)
-        if (nextActivity.Mark){
-          DependenciesToKill = (from,nextActivity) :: DependenciesToKill
-          nextActivity.Mark = false
+      for(prev <- to.getStartActivity.AdditionalPredecessors.value){
+        val prevActivity:Activity = ActivityArray(prev)
+        if (prevActivity.Mark){
+          DependenciesToKill = (prevActivity,to) :: DependenciesToKill
+          prevActivity.Mark = false
         }
       }
-      for(nextActivity <- from.getStartActivity.StaticPredecessors){
-        if (nextActivity.Mark){
-          if (FindDependenciesToKill(nextActivity, to)){
-            nextActivity.Mark = false
+      for(prevActivity <- to.getStartActivity.StaticPredecessors){
+        if (prevActivity.Mark){
+          if (FindDependenciesToKill(from, prevActivity)){
+            prevActivity.Mark = false
           }else{
             return false
           }
@@ -258,7 +273,7 @@ class Planning(val model: Model, val maxduration: Int) {
     }
 
     MarkPathes(from.getStartActivity, to.getEndActivity)
-    if(FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
+    if(!FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
       for (t <- MarkedActivities) t.Mark = false
       HardRockDependency()
     }else{
@@ -266,22 +281,6 @@ class Planning(val model: Model, val maxduration: Int) {
       DependenciesCanBeKilled(DependenciesToKill)
     }
   }
-  
-  abstract class DependencyCleaner()
-  case class HardRockDependency() extends DependencyCleaner
-  case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner{
-    def killDependencies(){
-      for ((a,b) <- d){
-        b.removeDynamicPredecessor(a)
-      }
-    }
-    def restoreDependencies(){
-      for ((a,b) <- d){
-        b.addDynamicPredecessor(a)
-      }
-    }
-  }
-
 
   /** removes all additional Activity precedences that are not tight
     */
@@ -292,3 +291,20 @@ class Planning(val model: Model, val maxduration: Int) {
   }
 }
 
+abstract class DependencyCleaner(val canBeKilled:Boolean){
+  def killDependencies(){throw new Exception("cannot kill dependencies")}
+}
+case class HardRockDependency() extends DependencyCleaner(false)
+
+case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner(true){
+  override def killDependencies(){
+    for ((a,b) <- d){
+      b.removeDynamicPredecessor(a)
+    }
+  }
+  def restoreDependencies(){
+    for ((a,b) <- d){
+      b.addDynamicPredecessor(a)
+    }
+  }
+}

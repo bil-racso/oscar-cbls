@@ -59,8 +59,8 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
       else amount))
   }
 
-  def activitiesAndUse(t:Int):Iterable[(Activity, IntVar)] = {
-    use(t).value.map((a:Int) => {
+  def activitiesAndUse(t:Int):List[(Activity, IntVar)] = {
+    use(t).value.toList.map((a:Int) => {
       val activity:Activity = planning.ActivityArray(a);
       (activity,ActivitiesAndUse(activity))
     })
@@ -70,7 +70,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
 
   /** you need to eject one of these to solve the conflict */
-  def conflictingActivities(t: Int): Iterable[Activity] = {
+  def conflictingActivities(t: Int): List[Activity] = {
     val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
       0,
       activitiesAndUse(t),

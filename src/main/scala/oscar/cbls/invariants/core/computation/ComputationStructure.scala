@@ -39,6 +39,9 @@ class Model(override val Verbose:Boolean = false,
   extends PropagationStructure(Verbose,checker,NoCycle,TopologicalSort)
   with Bulker{
 
+
+  assert({println("You are using a CBLS model with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
+
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
   private var PropagationElements:List[PropagationElement] = List.empty
@@ -438,6 +441,11 @@ object InvariantHelper{
     }
     (MyMin, MyMax)
   }
+
+  def arrayToString[T<:Variable](a:Array[T]):String = {
+    "[" + a.toList.mkString(",")+"]"
+  }
+
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
@@ -734,7 +742,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
       Value
     } else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -978,7 +986,7 @@ class IntSetVar(override val model:Model,
       Value
     }else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       Perform()
       OldValue

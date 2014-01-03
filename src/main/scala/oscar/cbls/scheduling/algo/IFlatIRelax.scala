@@ -22,7 +22,9 @@ package oscar.cbls.scheduling.algo
 
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
-import oscar.cbls.scheduling.model.{Resource, Activity, Planning}
+import oscar.cbls.scheduling.model._
+import oscar.cbls.invariants.core.computation.Solution
+import oscar.cbls.scheduling.model.CumulativeResource
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
@@ -133,14 +135,36 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
 
       val t: Int = r.worseOverShootTime
+
       val conflictActivities=r.conflictingActivities(t)
 
-      val (a, b) = selectMax2(conflictActivities, conflictActivities,
+      selectMax2(conflictActivities, conflictActivities,
         (a: Activity, b: Activity) => (b.LatestEndDate.value - a.EarliestStartDate.value),
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a,b))
+      match{
+        case (a,b) =>
+          b.addDynamicPredecessor(a)
+          if (Verbose) println("added " + a + "->" + b)
+        case null =>
+          println("cannot add dependency to flatten. Need to kill some dependencies to further flatten")
+          //no precedence can be added because some additional precedence must be killed to allow that
+          //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
+          //we search which dependency can be killed in the conflict set,
+          val conflictActivityArray = conflictActivities.toArray
+          val dependencyKillers:Array[Array[DependencyCleaner]] =
+            Array.tabulate(conflictActivityArray.size)(
+              t1 => Array.tabulate(conflictActivityArray.size)(
+                t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1),conflictActivityArray(t2))))
 
-      b.addDynamicPredecessor(a)
-      if (Verbose) println("added " + a + "->" + b)
+          val (a,b) = selectMax2(conflictActivityArray.indices, conflictActivityArray.indices,
+            (a: Int, b: Int) => (conflictActivityArray(b).LatestEndDate.value - conflictActivityArray(a).EarliestStartDate.value),
+            (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled)
+
+          dependencyKillers(a)(b).killDependencies()
+
+          conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a))
+          if (Verbose) println("added " + conflictActivityArray(a) + "->" + conflictActivityArray(b))
+      }
     }
   }
 }
