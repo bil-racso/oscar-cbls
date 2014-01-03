@@ -124,27 +124,20 @@ class Planning(val model: Model, val maxduration: Int) {
     if (gantt!=null) gantt.update(1.0f, 30)
   }
 
-  override def toString: String = {
-    var toreturn: String = ""
-    for (j <- Activities.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelActivity) {
-      toreturn += "" + j.name + "[" + j.EarliestStartDate.value + ";" + j.EarliestEndDate.value + "]" + "\n"
-    }
-    toreturn += MakeSpan
-    toreturn
-  }
+  override def toString: String = toAsciiArt
 
   def toAsciiArt: String = {
     var toreturn: String = ""
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
-    for (j <- Activities.sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value) if j != SentinelActivity) {
-      toreturn += "" + padToLength(j.name, 20) + ":" + "[" +
-        padToLength("" + j.EarliestStartDate.value, 4) + ";" + padToLength("" + j.EarliestEndDate.value, 4) + "] " +
-        (if (j.duration.value == 1) nStrings(j.EarliestStartDate.value, " ") + "#\n"
-        else nStrings(j.EarliestStartDate.value, " ") + "#" + nStrings(j.duration.value - 2, "=") + "#\n")
-    }
-    toreturn += MakeSpan
-    toreturn + "\n"
+    val activityList = Activities.filter(_!=SentinelActivity).sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value)
+    val activityStrings = activityList.map(activity =>
+    "" + padToLength(activity.name, 20) + ":" + "[" +
+      padToLength("" + activity.EarliestStartDate.value, 4) + ";" + padToLength("" + activity.EarliestEndDate.value, 4) + "] " +
+      (if (activity.duration.value == 1) nStrings(activity.EarliestStartDate.value, " ") + "#\n"
+      else nStrings(activity.EarliestStartDate.value, " ") + "#" + nStrings(activity.duration.value - 2, "=") + "#\n"))
+
+    activityStrings.mkString + MakeSpan + "\n"
   }
 
   def dependencies: String = {
@@ -212,8 +205,8 @@ class Planning(val model: Model, val maxduration: Int) {
    * without introducing a cycle involving newFrom -> newTo
    *
    * it computes a cut in the dag newTo -> newFrom involving only additional dependencies
-   * @param from
-   * @param to
+   * @param newFrom
+   * @param newTo
    * @return
    */
   def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):DependencyCleaner = {
