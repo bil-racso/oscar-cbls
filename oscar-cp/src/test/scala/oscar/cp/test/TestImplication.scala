@@ -13,8 +13,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
   test("=>1") {
 
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     val res = A ==> B
     cp.add(res == 0)
     A.isBoundTo(1) should be(true)
@@ -24,8 +24,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
   test("=>2") {
     val values = Set((0, 0, 1), (0, 1, 1), (1, 0, 0), (1, 1, 1))
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     val res = A ==> B
     var nbSol = 0
     cp.exploration {
@@ -40,8 +40,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
   test("=>3") {
     val values = Set((0, 0, 1), (0, 1, 1), (1, 0, 0), (1, 1, 1))
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     val res = A ==> B
     var nbSol = 0
     cp.exploration {
@@ -56,8 +56,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
   test("=>4") {
     val values = Set((0, 0, 1), (0, 1, 1), (1, 0, 0), (1, 1, 1))
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     val res = A ==> B
     var nbSol = 0
     cp.exploration {
@@ -72,8 +72,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
   test("=>5") {
     val values = Set((0, 0, 1), (0, 1, 1), (1, 0, 0), (1, 1, 1))
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     val res = A ==> B
     var nbSol = 0
     cp.exploration {
@@ -87,8 +87,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
 
   test("=>6") {
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     cp.add(A ==> B)
     cp.add(B == 0)
     A.isBoundTo(0) should be(true)
@@ -96,8 +96,8 @@ class TestImplication extends FunSuite with ShouldMatchers {
 
   test("=>7") {
     val cp = CPSolver()
-    val A = CPVarBool(cp)
-    val B = CPVarBool(cp)
+    val A = CPVarBool()(cp)
+    val B = CPVarBool()(cp)
     cp.add(A == 1)
     cp.add(A ==> B)
     B.isBoundTo(1) should be(true)

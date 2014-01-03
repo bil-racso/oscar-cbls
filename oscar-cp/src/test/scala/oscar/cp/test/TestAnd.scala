@@ -28,8 +28,8 @@ class TestAnd extends FunSuite with ShouldMatchers  {
   
   test("and1") { 
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPVarBool()(cp))
+	  val B = CPVarBool()(cp)
 	  cp.add(new And(A,B))
 	  cp.add(A(0) == 0)
 	  B.isBoundTo(0) should be(true)
@@ -37,8 +37,8 @@ class TestAnd extends FunSuite with ShouldMatchers  {
 
   test("and2") { 
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPVarBool()(cp))
+	  val B = CPVarBool()(cp)
 	  cp.add(new And(A,B))
 	  cp.add(A(0) == 1)
 	  cp.add(A(1) == 1)
@@ -49,8 +49,8 @@ class TestAnd extends FunSuite with ShouldMatchers  {
   
   test("and3") { 
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPVarBool()(cp))
+	  val B = CPVarBool()(cp)
 	  cp.add(new And(A,B))
 	  cp.add(B == 0)
 	  cp.add(A(0) == 1)
@@ -61,8 +61,8 @@ class TestAnd extends FunSuite with ShouldMatchers  {
   
   test("and4") { 
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPVarBool()(cp))
+	  val B = CPVarBool()(cp)
 	  cp.add(new And(A,B))
 	  cp.add(B == 1)
 	  A.forall(_.isBoundTo(1)) should be(true)

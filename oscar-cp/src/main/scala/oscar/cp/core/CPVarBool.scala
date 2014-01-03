@@ -7,10 +7,12 @@ package oscar.cp.core
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPVarBool(st: CPStore) extends CPVarIntImpl(st, 0, 1) {
+class CPVarBool(st: CPStore, name: String) extends CPVarIntImpl(st, 0, 1, name) {
 
-  def this(s: CPStore, b: Boolean) = {
-    this(s)
+  def this(s: CPStore) = this(s, "")
+  
+  def this(s: CPStore, b: Boolean, name: String = "") = {
+    this(s, name)
     if (b) assign(1)
     else assign(0)
   }
@@ -62,10 +64,16 @@ class CPVarBool(st: CPStore) extends CPVarIntImpl(st, 0, 1) {
 object CPVarBool {
 
   /** Creates a new CP Boolean Variable */
-  def apply(implicit store: CPStore): CPVarBool = new CPVarBool(store)
+  def apply(name: String)(implicit store: CPStore): CPVarBool = new CPVarBool(store, name)
+  
+  /** Creates a new CP Boolean Variable */
+  def apply()(implicit store: CPStore): CPVarBool = apply("")(store)
 
   /** Creates a new CP Boolean Variable assigned to b */
-  def apply(b: Boolean)(implicit store: CPStore): CPVarBool = new CPVarBool(store, b)
+  def apply(b: Boolean, name: String)(implicit store: CPStore): CPVarBool = new CPVarBool(store, b, name)
+  
+  /** Creates a new CP Boolean Variable assigned to b */
+  def apply(b: Boolean)(implicit store: CPStore): CPVarBool = apply(b, "")(store)
 
   @deprecated("use apply(b: Boolean)(implicit store: CPStore) instead", "1.0")
   def apply(cp: CPStore, b: Boolean): CPVarBool = new CPVarBool(cp, b)

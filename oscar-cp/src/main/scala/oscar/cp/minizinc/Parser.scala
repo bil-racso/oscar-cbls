@@ -546,7 +546,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def addCPVarBool(ann: List[Annotation], id: String) {
 	  model.dict += ((id, (FZType.V_BOOL, 
-	      new VarBool(ann, CPVarBool(cp), id))))
+	      new VarBool(ann, CPVarBool()(cp), id))))
 	}
 	
 	/**
@@ -617,7 +617,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param l : the length of the array
 	 */
 	def addCPVarBoolArray(ann: List[Annotation], id: String, l: Int) {
-	  	val boolArray =  new VarArrayBool(ann, Array.fill(l){CPVarBool(cp)}, id)
+	  	val boolArray =  new VarArrayBool(ann, Array.fill(l){CPVarBool()(cp)}, id)
         model.dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
 		// also add each individual entries
         for (i <- 1 to boolArray.cpvar.size) {
@@ -1146,7 +1146,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       val r = Range(cover.min, cover.max+1)
       var min = Array.fill(r.size){0}
       var max = Array.fill(r.size){x.length}
-      // Array.fill(x.length){CPVarBool(cp)} 
+      // Array.fill(x.length){CPVarBool()(cp)} 
       for(i <- 0 until cover.length) {
         min(cover(i)-cover.min) = lb(i)
         max(cover(i)-cover.max) = ub(i)

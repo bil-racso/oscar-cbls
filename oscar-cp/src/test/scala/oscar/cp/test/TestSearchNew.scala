@@ -32,7 +32,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     var nbSol = 0
     cp.onSolution { nbSol += 1 }
 
-    val x = Array.tabulate(3)(i => CPVarBool(cp))
+    val x = Array.tabulate(3)(i => CPVarBool()(cp))
 
     cp.search {
       new BinaryStaticOrderBranching(x)

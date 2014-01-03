@@ -329,12 +329,16 @@ package object modeling extends Constraints with Branchings {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   // helper functions to model with an implicit CPSolver
-  def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c)
+  def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
+  def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
   def solve(implicit cp: CPSolver): CPSolver = cp.solve() subjectTo ()
   def minimize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.minimize(obj) subjectTo ()
   def maximize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.maximize(obj) subjectTo ()
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
-    cp.start(nbSolMax, failureLimit, timeLimit, maxDiscrepancy)
+  def start(nSolutions: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
+    cp.start(nSolutions, failureLimit, timeLimit, maxDiscrepancy)
+  }
+  def startSubjectTo(nSolutions: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
+    cp.startSubjectTo(nSolutions, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }
 }

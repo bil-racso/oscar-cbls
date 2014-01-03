@@ -45,7 +45,7 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
            val cp = CPSolver()
  
            
-           val x = Array.fill(n)(CPVarBool(cp))
+           val x = Array.fill(n)(CPVarBool()(cp))
            
            val values = Array.tabulate(n)(i => i+1)
            val values2 = Array.tabulate(n)(i => values(i)*values(i))

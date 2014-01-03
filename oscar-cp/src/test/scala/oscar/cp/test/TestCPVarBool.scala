@@ -26,7 +26,7 @@ class TestCPVarBool extends FunSuite with ShouldMatchers {
 
 		val cp = CPSolver()
 		
-		val x = CPVarBool(cp)
+		val x = CPVarBool()(cp)
 
 		x.isEmpty should be(false)
 		x.size should be(2)

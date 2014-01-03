@@ -66,7 +66,7 @@ object Fancy {
     // variables
     //
 
-    val x = Array.fill(k)(CPVarBool(cp))
+    val x = Array.fill(k)(CPVarBool()(cp))
     val x2 = Array.fill(k)(CPVarInt(0 to 1)(cp))
     val Array(t,h,r,s,n) = x
     val Array(t2,h2,r2,s2,n2) = x2

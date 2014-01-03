@@ -90,7 +90,7 @@ object Hexiom extends App {
 
   val cp = CPSolver()
   // used(i) = true iff there is a pawn at this position
-  val used = Array.fill(k)(CPVarBool(cp))
+  val used = Array.fill(k)(CPVarBool()(cp))
   val dummy = 7 // dummy value when no pawn in the neighborhood
   // card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
   val card = Array.fill(k)(CPVarInt(0 to 7)(cp))

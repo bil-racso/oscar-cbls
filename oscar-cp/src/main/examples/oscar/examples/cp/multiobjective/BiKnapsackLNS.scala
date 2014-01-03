@@ -64,7 +64,7 @@ object BiKnapsackLNS extends App {
   val cp = CPSolver()
   cp.silent = true
 
-  val x: Array[CPVarBool] = Array.fill(nItems)(CPVarBool(cp))
+  val x: Array[CPVarBool] = Array.fill(nItems)(CPVarBool()(cp))
   val capaVar1 = CPVarInt(0 to capa1)(cp)
   val capaVar2 = CPVarInt(0 to capa2)(cp)
   val profitVar1 = CPVarInt(0 to profit(0).sum)(cp)

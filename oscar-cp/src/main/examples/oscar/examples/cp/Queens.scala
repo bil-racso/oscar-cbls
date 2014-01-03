@@ -2,7 +2,6 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.util._
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
@@ -20,9 +19,6 @@ object Queens extends CPModel with App {
   // Variables
   val queens = Array.fill(nQueens)(CPVarInt(Queens))
 
-  var nSols = 0
-  onSolution { nSols += 1 }
-
   // Constraints
   add(allDifferent(queens))
   add(allDifferent(Queens.map(i => queens(i) + i)))
@@ -34,6 +30,5 @@ object Queens extends CPModel with App {
   // Execution
   val stats = start()
 
-  println(s"#sol: $nSols")
   println(stats)
 }
