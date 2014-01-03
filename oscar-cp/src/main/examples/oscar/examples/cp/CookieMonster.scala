@@ -1,18 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 package oscar.examples.cp
 
@@ -40,57 +41,55 @@ import collection.immutable.SortedSet
  * of jars can be completely emptied.
  *
  * Let's look at an example. Suppose that S is the set {15, 13, 12, 4, 2, 1}, meaning that there
- * are six jars, containing 1, 2, 4, 12, 13 and 15 cookies each. 
- * 
+ * are six jars, containing 1, 2, 4, 12, 13 and 15 cookies each.
+ *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object CookieMonster extends App {
-
-  val cp = CPSolver()
+object CookieMonster extends CPModel with App {
 
   val numCubes = 4
   val numFaces = 6
 
   val jars = Array(15, 13, 12, 4, 2, 1)
   val maxMove = 6
-  
-  val x = Array.fill(maxMove)(CPVarInt(0 to jars.max)(cp))
-  val b = Array.fill(maxMove,jars.size)(CPVarBool(cp))
-  val bx = Array.tabulate(maxMove,jars.size){case(m,j) => b(m)(j)*x(m)}
+
+  val x = Array.fill(maxMove)(CPVarInt(0 to jars.max))
+  val b = Array.fill(maxMove, jars.size)(CPVarBool())
+  val bx = Array.tabulate(maxMove, jars.size) { case (m, j) => b(m)(j) * x(m) }
   var nbSol = 0
-  
-  def printSol() = {  
+
+  def printSol() = {
     for (i <- 0 until maxMove) {
-      println("move"+i+":\t"+bx(i).mkString("\t"))
+      println("move" + i + ":\t" + bx(i).mkString("\t"))
     }
   }
-  
-  cp.onSolution {
+
+  onSolution {
     printSol()
     nbSol += 1
   }
-  
-  cp.solve subjectTo {
-    for (j <- 0 until jars.size) {
-      cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
-    }
-    // break symmetry
-    for (m <- 0 until maxMove-1) {
-      cp.add(lexLeq(bx(m+1),bx(m)))
-    }
-  } search {
+
+  for (j <- 0 until jars.size) {
+    add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
+  }
+  // break symmetry
+  for (m <- 0 until maxMove - 1) {
+    add(lexLeq(bx(m + 1), bx(m)))
+  }
+
+  solve search {
     binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
   }
-  
+
   for (i <- 0 until maxMove; if nbSol == 0) {
-    cp.startSubjectTo(nbSols = 1) {
+    startSubjectTo(nSolutions = 1) {
       for (m <- i + 1 until maxMove) {
-        if (m > i) cp.post(x(m) == 0)
-        else cp.post(x(m) > 0)
+        if (m > i) post(x(m) == 0)
+        else post(x(m) > 0)
       }
     }
   }
-  
-  println("nbSol="+nbSol)
+
+  println("nbSol=" + nbSol)
 
 }

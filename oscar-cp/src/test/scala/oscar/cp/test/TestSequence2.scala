@@ -28,7 +28,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   
   test("test1") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(5)(CPVarInt(cp,Set(1,4,7)))
+	  val x = Array.fill(5)(CPVarInt(Set(1,4,7))(cp))
 	  var nbSol = 0
 	  cp.solve subjectTo { 
 		cp.add(new SequenceDecomposition(x,Set(1,4),l=3,min=2,max=2))
@@ -41,7 +41,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   
   test("test2") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(4)(CPVarInt(cp,0 to 1))
+	  val x = Array.fill(4)(CPVarInt(0 to 1)(cp))
 	  cp.add(new SequenceDecomposition(x,Set(1),l=2,min=1,max=2))
 	  cp.add(x(2) == 0)
 	  x(3).isBound should be(true)
@@ -53,7 +53,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   
   test("test3") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(4)(CPVarInt(cp,1 to 5))
+	  val x = Array.fill(4)(CPVarInt(1 to 5)(cp))
 	  cp.add(new SequenceDecomposition(x,Set(3),l=2,min=1,max=2))
 	  cp.add(x(2) == 2)
 	  x(3).isBound should be(true)
@@ -65,7 +65,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   
   test("test4") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(4)(CPVarInt(cp,1 to 5))
+	  val x = Array.fill(4)(CPVarInt(1 to 5)(cp))
 	  cp.add(new SequenceDecomposition(x,Set(2,3),l=2,min=1,max=2))
 	  cp.add(x(2) == 1)
 	  x(1).toSet should be(Set(2,3))
@@ -75,7 +75,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   
   test("test5") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(4)(CPVarInt(cp,1 to 5))
+	  val x = Array.fill(4)(CPVarInt(1 to 5)(cp))
 	  cp.add(new SequenceDecomposition(x,Set(4),l=1,min=1,max=1))
 	  x.forall(_.isBoundTo(4)) should be(true)
    }

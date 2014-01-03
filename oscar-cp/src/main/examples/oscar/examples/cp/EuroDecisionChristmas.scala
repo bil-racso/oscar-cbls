@@ -32,7 +32,7 @@ object EuroDecisionChistmas extends App {
 
   val cp = CPSolver()
 
-  val x = Array.fill(names.size)(CPVarBool(cp))
+  val x = Array.fill(names.size)(CPVarBool()(cp))
   val obj = CPVarInt(0 to profit.sum)(cp)
 
   cp.maximize(obj) subjectTo {

@@ -40,8 +40,8 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val bins = 0 until binCapacities.length
 
     val cp = new CPSolver()
-    val x = (for (i <- items) yield CPVarInt(cp, binForItems(i))).toArray
-    val l = bins.map(i => CPVarInt(cp, binCapacities(i))).toArray
+    val x = (for (i <- items) yield CPVarInt(binForItems(i))(cp)).toArray
+    val l = bins.map(i => CPVarInt(binCapacities(i))(cp)).toArray
     var nbSol = 0
     cp.solve 
     cp.exploration {
@@ -69,8 +69,8 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val bins = 0 until 5
 
     val cp = new CPSolver()
-    val x = (for (i <- items) yield CPVarInt(cp,bins )).toArray
-    val l = bins.map(i => CPVarInt(cp, 0 to 10)).toArray
+    val x = (for (i <- items) yield CPVarInt(bins)(cp)).toArray
+    val l = bins.map(i => CPVarInt(0 to 10)(cp)).toArray
     var nbSol = 0
     cp.solve 
     cp.exploration {

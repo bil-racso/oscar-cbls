@@ -56,7 +56,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7))
+    val x = CPVarInt(Array(1, 3, 5, 7))(cp)
     cp.add(new MyCons(x))
     cp.add(x < 5)
     propag should be(true)
@@ -92,7 +92,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
+    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     cp.add(x < 2)
     propag should be(true)
@@ -126,7 +126,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
+    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     val cons = new LinkedList[Constraint]()
     cons.add(x < 4)
@@ -161,7 +161,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(cp, Array(1, 3, 5, 7)) -2 -3 + 2 // -2,0,2,4
+    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     val cons = new LinkedList[Constraint]()
     cons.add(x < 4)

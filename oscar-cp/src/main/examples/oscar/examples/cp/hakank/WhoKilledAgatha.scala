@@ -70,8 +70,8 @@ object WhoKilledAgatha {
 
     // variables
     val the_killer = CPVarInt(0 to 2)(cp)
-    val hates  = Array.fill(n,n)(CPVarBool(cp)) // who is hated by who?
-    val richer = Array.fill(n,n)(CPVarBool(cp)) // who is porer than who?
+    val hates  = Array.fill(n,n)(CPVarBool()(cp)) // who is hated by who?
+    val richer = Array.fill(n,n)(CPVarBool()(cp)) // who is porer than who?
 
     //
     // constraints

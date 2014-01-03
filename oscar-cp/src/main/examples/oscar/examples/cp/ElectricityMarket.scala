@@ -37,7 +37,7 @@ object ElectricityMarket {
 	    val qty = data(0) // amount of electricity he is ready to produce (>0) or consume (<0)
 	    val start = data(1) // [start,end] is the interval of validity of the order. 
 	    val end = data(2)
-	    val selected = CPVarBool(cp) // If the order is selected the orderer will have to produce/consume 
+	    val selected = CPVarBool()(cp) // If the order is selected the orderer will have to produce/consume 
 	                                 // the quantity at each period: start, start+1, ...., end-1, end.
 	    def energy = qty.abs * (end - start + 1)
 	    def overlap(t : Int) = t <= end && t >= start

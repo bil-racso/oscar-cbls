@@ -38,9 +38,9 @@ class TestCount extends FunSuite with ShouldMatchers  {
 	  var nbSol = 0  
 	  val cp = CPSolver()
 	  
-	  val N = CPVarInt(cp,nmin to nmax)
-	  val X = Array.tabulate(domx.size)(i => CPVarInt(cp,domx(i)))
-	  val Y = CPVarInt(cp,domy)
+	  val N = CPVarInt(nmin to nmax)(cp)
+	  val X = Array.tabulate(domx.size)(i => CPVarInt(domx(i))(cp))
+	  val Y = CPVarInt(domy)(cp)
 	  //println(domx.mkString(",")+" domY:"+domy)
 	  cp.solve subjectTo {
 	    if (decomp) countDecomp(cp,N,X,Y)
@@ -64,9 +64,9 @@ class TestCount extends FunSuite with ShouldMatchers  {
   test("count1") { 
 	  val cp = CPSolver()
 	  
-	  val N = CPVarInt(cp,0 to 3)
-	  val X = Array.fill(5)(CPVarInt(cp,0 to 5))
-	  val Y = CPVarInt(cp,1 to 3)
+	  val N = CPVarInt(0 to 3)(cp)
+	  val X = Array.fill(5)(CPVarInt(0 to 5)(cp))
+	  val Y = CPVarInt(1 to 3)(cp)
 	  
 	  cp.solve subjectTo {
 	    cp.add(new Count(N,X,Y))

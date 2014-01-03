@@ -790,7 +790,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * b <=> x belongs to set
    */
   def isIn(set: Set[Int]): CPVarBool = {
-    val b = CPVarBool(s)
+    val b = CPVarBool()(s)
     s.post(new InSetReif(this, set, b))
     b
   }
