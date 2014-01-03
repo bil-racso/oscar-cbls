@@ -15,7 +15,6 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
-import oscar.linprog._
 import oscar.algebra._
 
 /**
@@ -25,52 +24,47 @@ import oscar.algebra._
  *  to the same constant. A normal magic square contains the integers
  *  from 1 to n^2.
  */
-object MagicSquare {
-	
+object MagicSquare extends MIPModel(LPSolverLib.glpk) with App {
+
+  val n = 4
+
+  val Numbers = 1 to n * n
+  val Lines = 0 until n
+  val Columns = 0 until n
 
 
-  def main(args: Array[String]): Unit = {  
-    
-      val n = 4
-  
-      val Numbers= 1 to n*n
-      val Lines = 0 until n
-      val Columns = 0 until n
-	  
-	  val mip = new MIPSolver(LPSolverLib.glpk)
-	 
-	  val x = Array.tabulate(n,n,n*n) ((l,c,N) => MIPVar(mip,"x"+(l,c,N), 0 to 1))
-	  val s = MIPVar(mip,"s",0 to 10000000)
-	  
-	  mip.maximize(s) subjectTo {
-	     /* each cell must be assigned exactly one integer */
-		 for(l <- Lines; c <- Columns)
-		   mip.add(sum(Numbers)((n) => x(l)(c)(n-1)) == 1)
-		  
-        /* each integer must be assigned exactly to one cell */
-		 for (n <- Numbers)
-		   mip.add(sum(Lines,Columns)((l,c) => x(l)(c)(n-1)) == 1)
-		   
-		 /* the sum in each row must be the magic sum */  
-		 for (l <- Lines)
-		   mip.add(sum(Columns,Numbers)((c,n) => x(l)(c)(n-1)*(n)) == s)
-		   
-		 /* the sum in each column must be the magic sum */
-		 for (c <- Columns)
-		   mip.add(sum(Lines,Numbers)((l,n) => x(l)(c)(n-1)*(n)) == s)
-		 
-		 /* the sum in the diagonal must be the magic sum */  
-		 mip.add(sum(Lines,Numbers)((l,n) => x(l)(l)(n-1)*(n))==s)
-		 
-		 /* the sum in the co-diagonal must be the magic sum */
-		 //mip.add(sum(Lines,Numbers)((l,n) => x(l)(n-l-1)(n-1)*(n))==s) // TODO: fix this constraint
-	  }
+  val x = Array.tabulate(n, n, n * n)((l, c, N) => MIPVar("x" + (l, c, N), 0 to 1))
+  val s = MIPVar("s", 0 to 10000000)
 
-	  println("objective: "+mip.getObjectiveValue())
-	  
-	  for(l <- Lines) {
-	    println(Columns.map(c => Numbers.filter(n => x(l)(c)(n-1).getValue == 1)).mkString(","))
-	  }
-	  mip.release()
+  /* each cell must be assigned exactly one integer */
+  for (l <- Lines; c <- Columns)
+    add(sum(Numbers)((n) => x(l)(c)(n - 1)) == 1)
+
+  /* each integer must be assigned exactly to one cell */
+  for (n <- Numbers)
+    add(sum(Lines, Columns)((l, c) => x(l)(c)(n - 1)) == 1)
+
+  /* the sum in each row must be the magic sum */
+  for (l <- Lines)
+    add(sum(Columns, Numbers)((c, n) => x(l)(c)(n - 1) * (n)) == s)
+
+  /* the sum in each column must be the magic sum */
+  for (c <- Columns)
+    add(sum(Lines, Numbers)((l, n) => x(l)(c)(n - 1) * (n)) == s)
+
+  /* the sum in the diagonal must be the magic sum */
+  add(sum(Lines, Numbers)((l, n) => x(l)(l)(n - 1) * (n)) == s)
+
+  /* the sum in the co-diagonal must be the magic sum */
+  //mip.add(sum(Lines,Numbers)((l,n) => x(l)(n-l-1)(n-1)*(n))==s) // TODO: fix this constraint
+
+  maximize(s) 
+  start()
+  println("objective: " + objectiveValue)
+
+  for (l <- Lines) {
+    println(Columns.map(c => Numbers.filter(n => x(l)(c)(n - 1).value.get == 1)).mkString(","))
   }
+  release()
+
 }

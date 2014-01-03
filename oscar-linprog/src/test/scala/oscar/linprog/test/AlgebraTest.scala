@@ -25,12 +25,12 @@ import oscar.algebra._
 class AlgebraTest extends FunSuite with ShouldMatchers  {
 
   
-	val lp = new LPSolver()
+	implicit val lp = new LPSolver()
   
-	val x1 = new LPVar(lp,"x1",3.5,100)
-	val x2 = new LPVar(lp,"x2")
-	val x3 = new LPVar(lp,"x3",true)
-	val x4 = new LPVar(lp,"x4",false)
+	val x1 = LPVar("x1",3.5,100)
+	val x2 = LPVar("x2")
+	val x3 = LPVar("x3",true)
+	val x4 = LPVar("x4",false)
 	
 
 	val mip = new MIPSolver()

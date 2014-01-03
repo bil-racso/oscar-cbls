@@ -20,7 +20,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
 
-import oscar.linprog._
+
 import oscar.algebra._
 
 /**
@@ -30,116 +30,114 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 1") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
+      implicit val lp = LPSolver(lib)
       val x = new LPVar(lp, "x", 100, 200)
       val y = new LPVar(lp, "y", 80, 170)
 
-      lp.maximize(-2 * x + 5 * y) subjectTo {
-        lp.add(y >= -x + 200)
-      }
+      maximize(-2 * x + 5 * y)
+      add(y >= -x + 200)
+      start()
 
       x.value should equal(Some(100))
       y.value should equal(Some(170))
-      lp.getObjectiveValue() should equal(650)
-      lp.status should equal(LPStatus.OPTIMAL)
-      lp.checkConstraints() should be(true)
-      lp.release()
+      objectiveValue.get should equal(650)
+      status should equal(LPStatus.OPTIMAL)
+      checkConstraints() should be(true)
+      release()
     }
   }
 
   test("lp test 2") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
-      val x = new LPVar(lp, "x", 100, 200)
-      val y = new LPVar(lp, "y", 80, 170)
+      implicit val lp = LPSolver(lib)
+      val x = LPVar(lp, "x", 100, 200)
+      val y = LPVar(lp, "y", 80, 170)
 
-      lp.minimize(-2 * x + 5 * y) subjectTo {
-        lp.add(y >= -x + 200)
-      }
+      minimize(-2 * x + 5 * y)
+      add(y >= -x + 200)
+      start()
 
       x.value should equal(Some(200))
       y.value should equal(Some(80))
-      lp.getObjectiveValue() should equal(0)
-      lp.status should equal(LPStatus.OPTIMAL)
-      lp.checkConstraints() should be(true)
-      lp.release()
+      objectiveValue.get should equal(0)
+      status should equal(LPStatus.OPTIMAL)
+      checkConstraints() should be(true)
+      release()
     }
   }
 
   test("lp test 3") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
-      val x = new LPVar(lp, "x")
-      val y = new LPVar(lp, "y", 80, 170)
+      implicit val lp = LPSolver(lib)
+      val x = LPVar("x")
+      val y = LPVar("y", 80, 170)
 
-      lp.minimize(-2 * x + 5 * y) subjectTo {
-        lp.add(y >= -x + 200)
-      }
+      minimize(-2 * x + 5 * y)
+      add(y >= -x + 200)
+      start()
       // the solution is infeasible but some solver consider it dual infeasible
-      lp.status should (equal(LPStatus.UNBOUNDED) or equal(LPStatus.INFEASIBLE))
-      lp.release()
+      status should (equal(LPStatus.UNBOUNDED) or equal(LPStatus.INFEASIBLE))
+      release()
     }
   }
 
   test("lp test 4") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
-      val x = new LPVar(lp, "x", 100, 200)
-      val y = new LPVar(lp, "y", 80, 170)
-      var z: LPVar = null
-      lp.minimize(-2 * x + 5 * y) subjectTo {
-        z = new LPVar(lp, "z", 80, 170)
-        lp.add(z >= 170)
-        lp.add(y >= -x + 200)
-      }
+      implicit val lp = LPSolver(lib)
+      val x = LPVar( "x", 100, 200)
+      val y = LPVar("y", 80, 170)
+      minimize(-2 * x + 5 * y)
+      val z = new LPVar(lp, "z", 80, 170)
+      add(z >= 170)
+      add(y >= -x + 200)
+      start()
 
       x.value should equal(Some(200))
       y.value should equal(Some(80))
       z.value should equal(Some(170))
-      lp.getObjectiveValue() should equal(0)
-      lp.status should equal(LPStatus.OPTIMAL)
-      lp.release()
+      objectiveValue.get should equal(0)
+      status should equal(LPStatus.OPTIMAL)
+      release()
     }
   }
 
   test("lp test 5") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
-      val x = new LPVar(lp, "x", 100, 200)
-      val y = new LPVar(lp, "y", 80, 170)
-      lp.minimize(-2 * x + 5 * y) subjectTo {
-        lp.add(y >= -x + 200)
-      }
+      implicit val lp = new LPSolver(lib)
+      val x = LPVar("x", 100, 200)
+      val y = LPVar("y", 80, 170)
+      minimize(-2 * x + 5 * y) 
+      add(y >= -x + 200)
+      start()
 
       x.value should equal(Some(200))
       y.value should equal(Some(80))
-      lp.getObjectiveValue() should equal(0)
-      lp.status should equal(LPStatus.OPTIMAL)
-      lp.release()
+      objectiveValue.get should equal(0)
+      status should equal(LPStatus.OPTIMAL)
+      release()
     }
   }
 
   test("lp test 6") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
-      val x = new LPVar(lp, "x", 0, 10)
-      val y = new LPVar(lp, "y", 0, 10)
-      lp.maximize(x + y) subjectTo {
-        lp.add(x + y >= 5)
-      }
+      implicit val lp = new LPSolver(lib)
+      val x = LPVar("x", 0, 10)
+      val y = LPVar("y", 0, 10)
+      maximize(x + y) 
+      add(x + y >= 5)
+      start()
 
       x.value should equal(Some(10))
       y.value should equal(Some(10))
-      lp.getObjectiveValue() should equal(20)
+      objectiveValue.get should equal(20)
       lp.status should equal(LPStatus.OPTIMAL)
 
-      x.setBounds(0, 11, true) // change bounds and reoptimize 
-
+      x.setBounds(0, 11, true) // change bounds and re-optimize 
       y.setBounds(0, 11, true)
 
       x.value should equal(Some(11))
       y.value should equal(Some(11))
-      lp.getObjectiveValue() should equal(22)
+      objectiveValue.get should equal(22)
       lp.status should equal(LPStatus.OPTIMAL)
 
       lp.release()
@@ -148,20 +146,20 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 7") {
     for (lib <- solvers) {
-      val lp = new LPSolver(lib)
+      implicit val lp = LPSolver(lib)
       val x = new LPVar(lp, "x", 0, 10)
       val y = new LPVar(lp, "y", 0, 10)
 
       var cons: Vector[LPConstraint] = Vector()
 
-      lp.maximize(x + y) subjectTo {
-        cons = cons :+ lp.add(x + y >= 5)
-        cons = cons :+ lp.add(x + 2 * y <= 25)
-        cons = cons :+ lp.add(x + 2 * y <= 30)
-        cons = cons :+ lp.add(x + y >= 17.5)
-        cons = cons :+ lp.add(x == 10.0)
-      }
-
+      maximize(x + y)
+      cons = cons :+ add(x + y >= 5)
+      cons = cons :+ add(x + 2 * y <= 25)
+      cons = cons :+ add(x + 2 * y <= 30)
+      cons = cons :+ add(x + y >= 17.5)
+      cons = cons :+ add(x == 10.0)
+      
+      start()
       x.value.get should be(10.0 plusOrMinus 1e-6)
       y.value.get should be(7.5 plusOrMinus 1e-6)
 
@@ -179,7 +177,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
       cons.foreach(c => c.check() should be(true))
 
-      lp.getObjectiveValue() should be(17.5 plusOrMinus 1e-6)
+      lp.objectiveValue.get should be(17.5 plusOrMinus 1e-6)
       lp.status should equal(LPStatus.OPTIMAL)
 
       lp.release()

@@ -43,6 +43,8 @@ class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double =
 }
 
 object LPVar {
+  def apply()(implicit lp: LPSolver) = new LPVar(lp,"",false)
+  def apply(name: String)(implicit lp: LPSolver) = new LPVar(lp,name,false)
   def apply(name: String, unbounded: Boolean)(implicit lp: LPSolver) = new LPVar(lp,name,unbounded)
   def apply(lp: LPSolver, name: String, unbounded: Boolean) = new LPVar(lp,name,unbounded)
   def apply(name: String,lbound: Double, ubound: Double)(implicit lp: LPSolver) = new LPVar(lp,name,lbound,ubound)
@@ -73,4 +75,9 @@ class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abst
 object LPSolver {
   def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): LPSolver = new LPSolver(solverLib)
 }
+
+abstract class LPModel(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) {
+  implicit val lpsolver = LPSolver(solverLib)
+}
+  
 

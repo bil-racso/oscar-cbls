@@ -47,8 +47,13 @@ class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double
 }
 	
 object MIPVar { 
-      def apply(name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity)(implicit mip: MIPSolver) = new MIPVar(mip,name,lbound,ubound) 
+	  def apply(name : String)(implicit mip: MIPSolver) = new MIPVar(mip,name,0,Double.PositiveInfinity) 
+      def apply(name : String, lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPVar(mip,name,lbound,ubound)  
 	  def apply(name : String,  domain : Range)(implicit mip: MIPSolver): MIPVar =  new MIPVar(mip,name,domain)
+	  def apply()(implicit mip: MIPSolver) = new MIPVar(mip,"",0,Double.PositiveInfinity) 
+      def apply(lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPVar(mip,"",lbound,ubound)  
+	  def apply(domain : Range)(implicit mip: MIPSolver): MIPVar =  new MIPVar(mip,"",domain)	  
+	  
       def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPVar = new MIPVar(mip,name,lbound,ubound) 
 	  def apply(mip : MIPSolver, name : String,  domain : Range): MIPVar =  new MIPVar(mip,name,domain)
 }
@@ -187,4 +192,8 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
 	
 object MIPSolver { 
 	 def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): MIPSolver = new MIPSolver(solverLib) 
+}
+
+abstract class MIPModel(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) {
+  implicit val lpsolver = MIPSolver(solverLib)
 }
