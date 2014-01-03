@@ -47,7 +47,7 @@ import collection.immutable.SortedSet
 object CookieMonster {
   def main(args: Array[String]) {
 
-  val cp = CPSolver()
+  implicit val cp = CPSolver()
   cp.silent = true
   val numCubes = 4
   val numFaces = 6
@@ -56,7 +56,7 @@ object CookieMonster {
   val maxMove = 6
   
   val x = Array.fill(maxMove)(CPVarInt(cp,0 to jars.max))
-  val b = Array.fill(maxMove,jars.size)(CPVarBool(cp))
+  val b = Array.fill(maxMove,jars.size)(CPVarBool())
   val bx = Array.tabulate(maxMove,jars.size){case(m,j) => b(m)(j)*x(m)}
   var nbSol = 0
   

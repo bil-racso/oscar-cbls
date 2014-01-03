@@ -18,24 +18,19 @@ package oscar.examples.dfo
 import oscar.dfo.algo._
 import oscar.dfo.utils._
 
+object X2 extends App {
 
-object X2 {
+  // returns the array with objectives sum(i) x(i)*x(i) 
+  def f1(x: Array[Double]): Array[Double] = Array(x.foldLeft(0.0)((res, element) => res + element * element))
 
-  def main(args: Array[String]): Unit = {
-    
-         // returns the array with objectives sum(i) x(i)*x(i) 
-		 def f1(x: Array[Double]): Array[Double] = Array(x.foldLeft(0.0)((res,element) => res+element*element))
-		  
-		 // tells whether objective in a1 dominates objective in a2
-		 def singleObjCompare(a1: Array[Double], a2:Array[Double]) =  a1(0) < a2(0)
+  // tells whether objective in a1 dominates objective in a2
+  def singleObjCompare(a1: Array[Double], a2: Array[Double]) = a1(0) < a2(0)
 
-		 val domain2D = Array.fill(2)(Interval(-100.0, 100.0))
-		 val startPoint2D = Array.fill(2){42.0}
-		 val nm = NelderMead(f1, 1, singleObjCompare, startPoint2D, domain2D)
-		 // optimize 100 times with pseudo random restarts (scrambled Halton sequence)
-         val nmAns = nm.sampledOptimize(100, math.pow(10, -2))
-         println("Nelder-Mead: objective:" + nmAns._2(0) + " coordinate:" + (nmAns._1).mkString(",") + "\nAverage number of evaluations: " + nm.evalCount / 200.0)
-    
-  }
+  val domain2D = Array.fill(2)(Interval(-100.0, 100.0))
+  val startPoint2D = Array.fill(2) { 42.0 }
+  val nm = NelderMead(f1, 1, singleObjCompare, startPoint2D, domain2D)
+  // optimize 100 times with pseudo random restarts (scrambled Halton sequence)
+  val nmAns = nm.sampledOptimize(100, math.pow(10, -2))
+  println("Nelder-Mead: objective:" + nmAns._2(0) + " coordinate:" + (nmAns._1).mkString(",") + "\nAverage number of evaluations: " + nm.evalCount / 200.0)
 
 }

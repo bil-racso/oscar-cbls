@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.dfo.modeling
 
-
+import oscar.dfo.modeling._
 import scala.collection._
 import oscar.dfo.algo._
 import oscar.dfo.utils._
@@ -22,23 +22,29 @@ import oscar.dfo._
 import oscar.algebra._
 
 /**
- *
- * @author: pierre.schaus@n-side.com
+ * @author: Pierre Schaus pschaus@gmail.com
  */
-case class DFOVar(val solver: DFOSolver, varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
+class DFOVar(val solver: DFOSolver, val varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
     override def value = solver.getValue(index)
     def name = varName
     def randVal = rand.nextDouble()*(ub-lb)+lb
+}
+
+object DFOVar {
+  def apply(varName: String, lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver,varName,lb,ub)
+  def apply(lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver,"dfovar",lb,ub)
+  def apply(varName:String)(implicit solver: DFOSolver) = new DFOVar(solver,varName)
+  def apply()(implicit solver: DFOSolver) = new DFOVar(solver,"dfovar")
 }
   
 
 
 /**
  *
- * @author: pierre.schaus@n-side.com
+ * @author: Pierre Schaus pschaus@gmail.com
  */ 
-class DFOSolver(val algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
+class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
          
     // map from the index of variables to their implementation
     private lazy val vars = mutable.HashMap.empty[Int,DFOVar]
@@ -131,6 +137,10 @@ class DFOSolver(val algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
   
 object DFOSolver {
 	def apply(algo:DFOAlgo.Value = DFOAlgo.NelderMead): DFOSolver = new DFOSolver(algo)
+}
+
+abstract class DFOModel(algo:DFOAlgo.Value = DFOAlgo.NelderMead) {
+  implicit val dfoSolver = new DFOSolver(algo)
 }
   
 

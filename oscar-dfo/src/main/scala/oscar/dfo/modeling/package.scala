@@ -12,40 +12,22 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.dfo
+package oscar.dfo
 
-import oscar.dfo.modeling._
-import oscar.dfo._
 import oscar.algebra._
+import oscar.dfo.modeling.DFOSolver
 
-/**
- * @author pschaus@gmail.com
- */
-object Himmelblau extends DFOModel with App {
-
-  // declare two variables and their domain
-  val x = DFOVar("x1", -4, +4)
-  val y = DFOVar("x2", -4, +4)
-
-  // Himmelblau function
-  // 4 local minima: 
-  //  f(-0.27,-0.92) = 181.61
-  //  f(-3,2) = 0
-  //  f(-2.8,-3.13) = 0
-  //  f(-3.77,-3.28) = 0
-  // f(-3.58,-1.84) = 0
-  val objective = (x * x + y - 11) * (x * x + y - 11) + (x + y * y - 7) * (x + y * y - 7)
-
-  // callback to print evolution of objective during optimization
-  onSolution {
-    println(objective.value)
+package object modeling {
+  
+  val rand = new scala.util.Random(12)
+  
+  object DFOAlgo extends Enumeration {
+    val NelderMead = Value("NelderMead")
+    val DDS = Value("DDS")
+    val MDS = Value("MDS")
   }
-
-  // start the effective optimization
-  minimize(objective)
-
-  println(x + " " + x.value)
-  println(y + " " + y.value)
-  println("objective:" + objective.value)
+  
+  def minimize(objective: Expression)(implicit dfo: DFOSolver) = dfo.minimize(objective) 
+  def onSolution(block: => Unit)(implicit dfo: DFOSolver) = dfo.onSolution(block) 
 
 }
