@@ -304,12 +304,11 @@ class TestSpread extends FunSuite with ShouldMatchers {
     } else {
       cp.add(new Spread(x, sum, sum2))
     }
-    cp.exploration {
-      cp.binaryFirstFail(x)
-      nbSol += 1
-    } run()
-    println("nbsol="+nbSol)
-    nbSol
+    cp.search {
+      binaryFirstFail(x)
+    } 
+    val stat = cp.start()
+    stat.nbSols
   }
 
 }

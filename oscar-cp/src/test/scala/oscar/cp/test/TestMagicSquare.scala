@@ -51,12 +51,11 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 		cp.add(sum(0 until n)(j => x(i)(j)) == s)
 		cp.add(sum(0 until n)(j => x(j)(i)) == s)
 	  }
-	} exploration {
-	  cp.binaryFirstFail(x.flatten)
-	  nbSol += 1
-	} run()
+	} search {
+	  binaryFirstFail(x.flatten.toSeq)
+	}
 	
-	nbSol should be(8)
+	cp.start().nbSols should be(8)
 	
 
     

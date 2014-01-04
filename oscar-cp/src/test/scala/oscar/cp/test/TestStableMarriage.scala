@@ -69,16 +69,13 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
-     } exploration {
-       
-       cp.binary(wife)
-
-       println()
-       
+     } search {
+       binaryStatic(wife)
+     } onSolution {
        wife.map(_.getValue) should be(Array(0,2,1,4,3))
        husband.map(_.getValue) should be(Array(0,2,1,4,3))
-
-     }
+     } 
+     cp.start().nbSols should be(1)
     
   }
 

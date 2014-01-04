@@ -27,14 +27,13 @@ class TestImplication extends FunSuite with ShouldMatchers {
     val A = CPVarBool()(cp)
     val B = CPVarBool()(cp)
     val res = A ==> B
-    var nbSol = 0
-    cp.exploration {
-      cp.binary(Array(A, B))
+    cp.search {
+      binaryStatic(Array(A, B))
+    } onSolution {
       val entry = (A.getValue, B.getValue, res.getValue)
       values.contains(entry) should be(true)
-      nbSol += 1
-    } run ()
-    nbSol should be(4)
+    }
+    cp.start().nbSols should be(4)
   }
 
   test("=>3") {
@@ -43,14 +42,13 @@ class TestImplication extends FunSuite with ShouldMatchers {
     val A = CPVarBool()(cp)
     val B = CPVarBool()(cp)
     val res = A ==> B
-    var nbSol = 0
-    cp.exploration {
-      cp.binary(Array(res, A, B))
+    cp.search {
+      binaryStatic(Array(A, B))
+    } onSolution {
       val entry = (A.getValue, B.getValue, res.getValue)
       values.contains(entry) should be(true)
-      nbSol += 1
-    } run ()
-    nbSol should be(4)
+    }
+    cp.start().nbSols should be(4)
   }
 
   test("=>4") {
@@ -60,13 +58,13 @@ class TestImplication extends FunSuite with ShouldMatchers {
     val B = CPVarBool()(cp)
     val res = A ==> B
     var nbSol = 0
-    cp.exploration {
-      cp.binary(Array(res, B, A))
+    cp.search {
+      binaryStatic(Array(B, A))
+    } onSolution {
       val entry = (A.getValue, B.getValue, res.getValue)
       values.contains(entry) should be(true)
-      nbSol += 1
-    } run ()
-    nbSol should be(4)
+    }
+    cp.start().nbSols should be(4)
   }
 
   test("=>5") {
@@ -75,14 +73,13 @@ class TestImplication extends FunSuite with ShouldMatchers {
     val A = CPVarBool()(cp)
     val B = CPVarBool()(cp)
     val res = A ==> B
-    var nbSol = 0
-    cp.exploration {
-      cp.binary(Array(B, A))
+    cp.search {
+      binaryStatic(Array(B, A))
+    } onSolution {
       val entry = (A.getValue, B.getValue, res.getValue)
       values.contains(entry) should be(true)
-      nbSol += 1
-    } run ()
-    nbSol should be(4)
+    }
+    cp.start().nbSols should be(4)
   }
 
   test("=>6") {

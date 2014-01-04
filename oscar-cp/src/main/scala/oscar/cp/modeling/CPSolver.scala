@@ -37,7 +37,7 @@ class CPSolver() extends CPStore() {
   
   var objective = new CPObjective(this, Array[CPObjectiveUnit]());
   
-  private var stateObjective: Unit => Unit = Unit => Unit
+
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
   var lastSol = new CPSol(Set[CPVarInt]())
@@ -51,7 +51,7 @@ class CPSolver() extends CPStore() {
     x.foreach(decVariables += _)
   }
   
-  def addDecisionVariables(x: CPVarInt*) {
+  	def addDecisionVariables(x: CPVarInt*) {
     x.foreach(decVariables += _)
   }
   
@@ -64,10 +64,8 @@ class CPSolver() extends CPStore() {
   }
 
   def optimize(obj: CPObjective): CPSolver = {
-    stateObjective = Unit => {
-      objective = obj
-      postCut(obj)
-    }
+    objective = obj
+    postCut(obj)
     this
   }
 
@@ -97,16 +95,15 @@ class CPSolver() extends CPStore() {
     val objectives = objVarMode.map(_._1).toArray
     // true if objective i has to be maximized
     val isMax = objVarMode.map(_._2).toArray
+
+    recordNonDominatedSolutions = true
+    objective = new CPObjective(this, (for (i <- 0 until isMax.size) yield {
+      if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
+      else new CPObjectiveUnitMinimize(objectives(i))
+    }): _*)
+    postCut(objective)
+    objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     
-    stateObjective = Unit => {
-      recordNonDominatedSolutions = true
-      objective = new CPObjective(this, (for(i <- 0 until isMax.size) yield {
-        if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
-        else new CPObjectiveUnitMinimize(objectives(i))
-      }):_*)
-      postCut(objective)
-      objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
-    }
     
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](isMax)
@@ -122,13 +119,14 @@ class CPSolver() extends CPStore() {
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
-      stateObjective()
-      pushState()
-      deactivateNoSolExceptions()
     } catch {
       case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
+  }
+  
+  override def beforeStartAction() {
+    deactivateNoSolExceptions()
   }
 
   /**

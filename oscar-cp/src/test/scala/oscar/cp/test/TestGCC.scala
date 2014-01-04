@@ -42,11 +42,12 @@ class TestGCC extends FunSuite with ShouldMatchers {
       return -1;
     }
 
-    cp.solve exploration {
-      cp.binary(x)
+    cp.search {
+      binaryStatic(x)
+    }  onSolution {
       if (gccvar) o.forall(_.isBound) should be(true)
       nb += 1
-    } run ()
+    } start()
     nb
   }
 

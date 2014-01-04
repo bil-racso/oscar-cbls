@@ -30,63 +30,52 @@ import collection.immutable.SortedSet
  */
 class TestRostering extends FunSuite with ShouldMatchers  {
 
+  test("Test Rostering2") {
+    val nbPersons = 5;
+    val nbSlots = 6;
+    val nbActivities = 10;
 
-  test("Test Rostering") {
-     	val  nbPersons = 5;
-		val nbSlots = 6;
-		val nbActivities = 10;
+    val possibleActivities = Array(Set(0, 1, 2, 3, 4, 5, 7),
+                                   Set(0, 2, 3, 6, 8, 9),
+                                   Set(1, 3, 4, 7, 8, 9),
+                                   Set(0, 2, 4, 5, 6, 7, 8, 9),
+                                   Set(0, 3, 4, 6, 7, 9));
 
-		val possibleActivities = Array(Set(0,1,2,3,4,5,7),
-									   Set(0,2,3,6,8,9),
-									   Set(1,3,4,7,8,9),
-									   Set(0,2,4,5,6,7,8,9),
-									   Set(0,3,4,6,7,9));	
-		
-		val demand = Array(Array(1,0,2,1,0,0,0,0,1,0),
-						   Array(2,0,0,0,0,1,0,0,0,1),
-						   Array(1,0,0,1,0,0,1,0,0,2),
-						   Array(0,1,0,1,0,0,0,0,1,0),
-						   Array(1,0,1,0,0,1,0,1,0,1),
-						   Array(0,0,1,0,0,1,1,0,1,0));
-		
-		
-		val cp = CPSolver()
-    	
-    	
-    	val activities = Array.tabulate(nbPersons, nbSlots)((p,t) => CPVarInt(possibleActivities(p))(cp))
-	
-    	val underDemand = Array.tabulate(nbSlots)(t => CPVarInt(0 to nbPersons)(cp))
-    	
-    	val totUnderDemand: CPVarInt = sum(underDemand)
-    	var best = Int.MaxValue
-    	cp.minimize(totUnderDemand) subjectTo {
-    	  	// each person must do a different activity every day
-		    for (p <- 0 until nbPersons) {
-			  cp.add(allDifferent(activities(p)),Strong);
-		    }
-		    
-		    val maxCap = Array.fill(nbActivities)(nbPersons)
-		    for (t <- 0 until nbSlots) {
-		      val act_t = Array.tabulate(nbPersons)(p => activities(p)(t))
-		      cp.add(new oscar.cp.constraints.SoftGCC(act_t,0,demand(t),maxCap,totUnderDemand))
-		    }
-		
-    	  
-    	} exploration {
-    	  println("exploration"+activities.flatten.mkString(","))
-    	  val x = activities.flatten
-    	  cp.binary(x,y => y.size)
-    	  //println("solution======"+cp.isFailed()+" "+totUnderDemand)
-    	  best = totUnderDemand.value
-    	} run()
-    	best should be(1)
-		
-		
-    
+    val demand = Array(Array(1, 0, 2, 1, 0, 0, 0, 0, 1, 0),
+                       Array(2, 0, 0, 0, 0, 1, 0, 0, 0, 1),
+                       Array(1, 0, 0, 1, 0, 0, 1, 0, 0, 2),
+                       Array(0, 1, 0, 1, 0, 0, 0, 0, 1, 0),
+                       Array(1, 0, 1, 0, 0, 1, 0, 1, 0, 1),
+                       Array(0, 0, 1, 0, 0, 1, 1, 0, 1, 0));
+
+    val cp = CPSolver()
+
+    val activities = Array.tabulate(nbPersons, nbSlots)((p, t) => CPVarInt(possibleActivities(p))(cp))
+
+    val underDemand = Array.tabulate(nbSlots)(t => CPVarInt(0 to nbPersons)(cp))
+
+    val totUnderDemand: CPVarInt = sum(underDemand)
+    var best = Int.MaxValue
+
+    // each person must do a different activity every day
+    for (p <- 0 until nbPersons) {
+      cp.add(allDifferent(activities(p)), Strong);
+    }
+
+    val maxCap = Array.fill(nbActivities)(nbPersons)
+    for (t <- 0 until nbSlots) {
+      val act_t = Array.tabulate(nbPersons)(p => activities(p)(t))
+      cp.add(new oscar.cp.constraints.SoftGCC(act_t, 0, demand(t), maxCap, totUnderDemand))
+    }
+
+    cp.minimize(totUnderDemand) search {
+      binaryFirstFail(activities.flatten.toSeq)
+    } onSolution {
+      best = totUnderDemand.value
+    } start ()
+    best should be(1)
+
   }  
-  
-
-  
 
 
 }

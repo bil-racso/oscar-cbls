@@ -74,10 +74,11 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
     var nbSol = 0	
     cp.solve subjectTo {
       cp.add(new TableAC5TCRecomp(x(0),x(1),x(2),tuples))  
-    } exploration {
-      cp.binary(x)
+    } search {
+      binaryStatic(x)
+    } onSolution {
       nbSol += 1
-    } run()
+    } start()
     nbSol should be(4)
 
   }
@@ -96,27 +97,28 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
   }
   
   test("TableAC5 Test 5") {
-    
+
     def nbSol(newcons: Boolean) = {
       val cp = CPSolver()
-      val x = Array.fill(4)(CPVarInt(Set(1,3,6,9))(cp))
-    
-      val tuples = Array((1,2,2,4),
-                         (1,2,4,8),
-                         (1,1,9,6),
-                         (1,1,8,6),
-                         (3,1,6,9),
-                         (1,9,3,1),
-                         (1,9,9,9),
-                         (3,6,6,6))
-    
-      val cons = if (newcons) new TableAC5TCRecomp(x(0),x(1),x(2),x(3),tuples) else new TableSTR2(x,tuples.map(_.productIterator.asInstanceOf[Iterator[Int]].toArray))
+      val x = Array.fill(4)(CPVarInt(Set(1, 3, 6, 9))(cp))
+
+      val tuples = Array((1, 2, 2, 4),
+        (1, 2, 4, 8),
+        (1, 1, 9, 6),
+        (1, 1, 8, 6),
+        (3, 1, 6, 9),
+        (1, 9, 3, 1),
+        (1, 9, 9, 9),
+        (3, 6, 6, 6))
+
+      val cons = if (newcons) new TableAC5TCRecomp(x(0), x(1), x(2), x(3), tuples) else new TableSTR2(x, tuples.map(_.productIterator.asInstanceOf[Iterator[Int]].toArray))
       cp.post(cons)
       var nbSol = 0
-      cp.exploration {
-        cp.binaryFirstFail(x)
+      cp.search {
+        binaryFirstFail(x)
+      } onSolution {
         nbSol += 1
-      } run()
+      } start ()
       nbSol
     }
     nbSol(false) should be(nbSol(true))

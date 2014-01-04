@@ -48,13 +48,13 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	      //println("with knapsack")
 	      cp.add(new Knapsack(X,profit,weight,P,W,true))
 	    } 
-	  } exploration {
-	    
-	    while(!cp.allBounds(X)) {
+	  } search {
+	    if (allBounds(X)) noAlternative
+	    else {
 	      val (x,i) = X.zipWithIndex.filter{case (x,i) => !x.isBound}.maxBy{case (x,i) => weight(i)}
-	      cp.branch(cp.post(x == 1))(cp.post(x == 0))
+	      branch(cp.post(x == 1))(cp.post(x == 0))	      
 	    }
-	    //println(P.value+" "+X.mkString(","))
+	  } onSolution {
 	    obj = P.value
 	  }
 	  obj

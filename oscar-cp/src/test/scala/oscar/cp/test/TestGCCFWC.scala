@@ -126,13 +126,11 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     var nbSol = 0;
     cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
-    } exploration {
-      cp.binaryFirstFail(x)
-      println((x map (_.value)).mkString(";"))
-      nbSol += 1
-    } run()
+    } search {
+      binaryFirstFail(x)
+    }
 
-    nbSol should be(2)
+    cp.start().nbSols should be(2)
   }
 
   test("Test 6: counting solutions") {
@@ -149,13 +147,11 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
     var nbSol = 0;
     cp.solve subjectTo {
       cp.add(new GCCFWC(x, minVal, Low, Up))
-    } exploration {
-      cp.binaryFirstFail(x)
-      println((x map (_.value)).mkString(";"))
-      nbSol += 1
-    } run()
+    } search {
+      binaryFirstFail(x)
+    }
 
-    nbSol should be(14)
+    cp.start().nbSols should be(14)
 
   }
 

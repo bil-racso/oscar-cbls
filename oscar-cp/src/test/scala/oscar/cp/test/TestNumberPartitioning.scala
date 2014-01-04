@@ -62,11 +62,10 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
              cp.add(binaryKnapsack(x,values,values.sum/2),Strong)
              cp.add(binaryKnapsack(x,values2,values2.sum/2),Strong)
              
-           } exploration {
-             cp.binary(x.reverse.map(_.asInstanceOf[CPVarInt]))
-             nbsol += 1
-           } run()
-           nbsol
+           } search {
+             binaryStatic(x.reverse.map(_.asInstanceOf[CPVarInt]))
+           } 
+           cp.start().nbSols
        
     }
     

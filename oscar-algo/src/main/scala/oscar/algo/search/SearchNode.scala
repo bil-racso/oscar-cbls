@@ -250,6 +250,7 @@ class SearchNode extends ReversibleContext {
    */
   @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
   def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
+    beforeStartAction()
     val t1 = System.currentTimeMillis()
     explorationCompleted = false
     
@@ -328,7 +329,10 @@ class SearchNode extends ReversibleContext {
     this
   }
   
+  def beforeStartAction() = {}
+  
   def startSubjectTo (nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
+    beforeStartAction()
     pushState()
     reversibleBlock
     val s = new Search(this,branchings)

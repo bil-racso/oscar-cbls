@@ -68,28 +68,22 @@ class TestReversibleDisjointSets extends FunSuite with ShouldMatchers {
     val s1 = Set(0, 3)
     val s2 = Set(1, 3)
 
-    cp.exploration {
-
-      cp.branch {
-        for (i <- Elems; j <- Elems; if j != i) {
-          sets.findSet(i) != sets.findSet(j) should be(true)
-        }        
-        sets.union(0, 3)
-        for (i <- Elems; j <- Elems; if j != i) {
-          sets.sameSet(i, j) should be(s1.contains(i) && s1.contains(j))
-        }
-        cp.fail()
-      } {
-        for (i <- Elems; j <- Elems; if j != i) {
-          sets.findSet(i) != sets.findSet(j) should be(true)
-        }      
-        sets.union(1, 3)
-        for (i <- Elems; j <- Elems; if j != i) {
-          sets.sameSet(i, j) should be(s2.contains(i) && s2.contains(j))
-        }
-      }
+    cp.pushState()
+    for (i <- Elems; j <- Elems; if j != i) {
+      sets.findSet(i) != sets.findSet(j) should be(true)
     }
-
-    cp.run()
+    sets.union(0, 3)
+    for (i <- Elems; j <- Elems; if j != i) {
+      sets.sameSet(i, j) should be(s1.contains(i) && s1.contains(j))
+    }
+    cp.pop()
+    for (i <- Elems; j <- Elems; if j != i) {
+      sets.findSet(i) != sets.findSet(j) should be(true)
+    }
+    sets.union(1, 3)
+    for (i <- Elems; j <- Elems; if j != i) {
+      sets.sameSet(i, j) should be(s2.contains(i) && s2.contains(j))
+    }
+    
   }
 }

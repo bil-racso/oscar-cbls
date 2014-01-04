@@ -95,13 +95,10 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
       else cp.post(new SetDiff(a, b, c))
     //println("fix point a:" + a + " b:" + b + " c:" + c)
     if (oc == CPOutcome.Failure) return 0
-    cp exploration {
-      cp.binary(a)
-      cp.binary(b)
-      cp.binary(c)
-      nbSol += 1
-    } run ()
-    nbSol
+    cp search {
+      binary(a) ++ binary(b) ++ binary(c)
+    } 
+    cp.start().nbSols
   }
 
   // a - b = c
@@ -122,14 +119,11 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
     c.isPossible(5) should be(true)
     c.possibleSize should be(2)
     
-    cp.exploration {
-      cp.binary(a)
-      cp.binary(b)
-      cp.binary(c)
-      nbSol += 1
-    } run ()
+    cp.search {
+      binary(a) ++ binary(b) ++ binary(c)
+    }
 
-    nbSol should be(4)
+    cp.start().nbSols should be(4)
   }
 
   test("Test SetDiff 2") {
