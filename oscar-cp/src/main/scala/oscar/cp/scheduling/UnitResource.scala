@@ -46,6 +46,7 @@ class UnitResource(scheduler : CPScheduler, name : String = null) extends Resour
 	/**
 	 * efficient search to impose a total order of the activities requiring this resource
 	 */
+	/*
 	def rank() : Unit @suspendable = {
 		val activs = activities
 		val ranked = Array.fill(activs.size)(new ReversibleBool(scheduler, false))
@@ -64,7 +65,7 @@ class UnitResource(scheduler : CPScheduler, name : String = null) extends Resour
 			// try all not yet ranked activities as the first one to rank
 			scheduler.branchAll(toRank)(i => rankFirst(i))
 		}
-	}
+	}*/
 
 	/**
 	 * a number between 0/1 representing the business of the resource over it's horizon

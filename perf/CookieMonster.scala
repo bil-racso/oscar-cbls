@@ -47,47 +47,46 @@ import collection.immutable.SortedSet
 object CookieMonster {
   def main(args: Array[String]) {
 
-  implicit val cp = CPSolver()
-  cp.silent = true
-  val numCubes = 4
-  val numFaces = 6
+    implicit val cp = CPSolver()
+    cp.silent = true
+    val numCubes = 4
+    val numFaces = 6
 
-  val jars = Array(15, 13, 12, 4, 2, 1)
-  val maxMove = 6
-  
-  val x = Array.fill(maxMove)(CPVarInt(cp,0 to jars.max))
-  val b = Array.fill(maxMove,jars.size)(CPVarBool())
-  val bx = Array.tabulate(maxMove,jars.size){case(m,j) => b(m)(j)*x(m)}
-  var nbSol = 0
-  
-  def printSol() = {  
-    for (i <- 0 until maxMove) {
-      println("move"+i+":\t"+bx(i).mkString("\t"))
+    val jars = Array(15, 13, 12, 4, 2, 1)
+    val maxMove = 6
+
+    val x = Array.fill(maxMove)(CPVarInt(cp, 0 to jars.max))
+    val b = Array.fill(maxMove, jars.size)(CPVarBool())
+    val bx = Array.tabulate(maxMove, jars.size) { case (m, j) => b(m)(j) * x(m) }
+    var nbSol = 0
+
+    def printSol() = {
+      for (i <- 0 until maxMove) {
+        println("move" + i + ":\t" + bx(i).mkString("\t"))
+      }
     }
-  }
-  
-  cp.solve subjectTo {
-    for (j <- 0 until jars.size) {
-      cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
+
+    cp.solve subjectTo {
+      for (j <- 0 until jars.size) {
+        cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
+      }
+      // break symmetry
+      for (m <- 0 until maxMove - 1) {
+        cp.add(lexLeq(bx(m + 1), bx(m)))
+      }
     }
-    // break symmetry
-    for (m <- 0 until maxMove-1) {
-      cp.add(lexLeq(bx(m+1),bx(m)))
+    solve search {
+      binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
     }
-  } exploration {
-    cp.branchAll(1 until maxMove)(i => {
-      for (m <- i+1 until maxMove) {
-        if (m > i) cp.post(x(m) == 0)
-        else cp.post(x(m) > 0)
-      } 
-    })
-    cp.binaryFirstFail(x)
-    cp.binary(b.flatten)
-    nbSol += 1
-  } run(100000)
-  
-  println("nbSol="+nbSol)
-  cp.printStats()
+
+    for (i <- 0 until maxMove; if nbSol == 0) {
+      startSubjectTo(nSolutions = 100000) {
+        for (m <- i + 1 until maxMove) {
+          if (m > i) post(x(m) == 0)
+          else post(x(m) > 0)
+        }
+      }
+    }
 
   }
 

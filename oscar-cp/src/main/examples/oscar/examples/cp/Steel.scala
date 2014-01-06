@@ -108,7 +108,6 @@ object Steel {
     cp.onSolution {
       plot.addPoint(nbSol, obj.value)
       nbSol += 1
-      println("sol #fail:" + cp.nFail)  
       Slabs.foreach(o => {
         xsol(o) = x(o).value
         items(o).bin = xsol(o)

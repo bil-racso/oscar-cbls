@@ -483,7 +483,6 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
       bestObj = makespan.value
     } start()
     println("=>"+bestObj)
-    cp.printStats()
     bestObj should be(160)
 
   }

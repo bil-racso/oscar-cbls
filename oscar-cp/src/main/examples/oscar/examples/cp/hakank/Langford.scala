@@ -93,12 +93,9 @@ object Langford {
 
       numSols += 1
 
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop()
-      }
 
    } 
-   println(cp.start())
+   println(cp.start(num_to_show))
 
   }
 

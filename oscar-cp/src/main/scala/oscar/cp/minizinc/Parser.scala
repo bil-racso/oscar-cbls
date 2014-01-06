@@ -2117,7 +2117,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    println("=====UNSATISFIABLE=====")
 	  }
       if (options.statistics) {
-        cp.printStats()
+        //todo: print stat %%
       }
 	}
 	

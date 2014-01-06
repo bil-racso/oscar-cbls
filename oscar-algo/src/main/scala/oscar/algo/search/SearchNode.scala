@@ -34,31 +34,8 @@ class SearchNode extends ReversibleContext {
 
   val random: Random = new Random(0)
   val failed = new ReversibleBool(this, false)
-
-  var sc: SearchController = new DFSSearchController(this)
-  
-
-  /**
-   * time (ms) spend in last exploration
-   */
-  var time: Long = 0
-  /**
-   * number of backtracks in last exploration
-   */
-  var bkts: Int = 0
-
-  private var fLimit = Int.MaxValue
-  private var tLimit = Int.MaxValue
-
-  // tree visu
-  val tree = new Tree(false)
-  var currParent = 0
-  var nodeMagic = 0
-  def recordTree() {
-    tree.clear()
-    tree.record = true
-  }
-
+ 
+ 
   /**
    *
    * @return The Random generator of this node potentially used in other algorithms
@@ -78,20 +55,7 @@ class SearchNode extends ReversibleContext {
     failed.setValue(true)
   }
 
-  /**
-   * @return the number of fail
-   */
-  def nFail() = sc.nFail()
-
-  /**
-   * Exit the search in progress
-   */
-  def stop() {
-    sc.stop()
-  }
-
   def solFound() = {
-    tree.addSuccess(currParent)
   }
 
 
@@ -109,207 +73,10 @@ class SearchNode extends ReversibleContext {
    */
   def afterBranch() = {}
   
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-  def branch(left: => Unit)(right: => Unit):  Unit@suspendable =  {
-    branchLabel("")(left)("")(right)
-  }
   
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-  def branchLabel(leftLabel: String)(left: => Unit)( rightLabel: String)(right: => Unit) = {
-    val idleft = nodeMagic + 1
-    val idright = nodeMagic + 2
-    nodeMagic += 2
-    val parent = currParent
-
-    shift { k: (Unit => Unit) =>
-      if (!isFailed) {
-        pushState()
-        sc.addChoice(new MyContinuation("right", {
-          tree.addBranch(parent, idright, idright.toString, rightLabel)
-          pop()
-          sc.fail()
-          if (!isFailed) {
-            beforeBranch()
-            currParent = idright
-            right
-            afterBranch()
-          }
-          if (!isFailed()) {
-            k()
-          }
-        }))
-        sc.addChoice(new MyContinuation("left", {
-          tree.addBranch(parent, idleft, idleft.toString, leftLabel)
-          if (!isFailed()) {
-            beforeBranch()
-            currParent = idleft
-            left
-            afterBranch()
-          }
-          if (!isFailed()) {
-            k()
-          }
-        }))
-      }
-    }
-  }
-  
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-  def branchAllLabel[A](indexes: Seq[A])(l: A => String)(f: A => Unit) = {
-    val idleft = nodeMagic + 1
-    val idright = nodeMagic + 2
-    val idchildren = Array.tabulate(indexes.length)(nodeMagic+_+1)
-    val parent = currParent    
-    nodeMagic += indexes.length
-
-    shift { k: (Unit => Unit) =>
-      val first = indexes.head
-      for ((i,j) <- indexes.reverse.zipWithIndex) {
-        if (i != first) pushState()
-        sc.addChoice(new MyContinuation("i", {
-          tree.addBranch(parent, idchildren(j), idchildren(j).toString, l(i))
-          if (i != first) {
-            pop()
-            sc.fail()
-          }
-          beforeBranch()
-          currParent = idchildren(j)
-          f(i)
-          afterBranch()
-          if (!isFailed()) k()
-        }))
-
-      }
-    }
-  }  
-
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")  
-  def branchAll[A](indexes: Seq[A])(f: A => Unit) = {
-    val idleft = nodeMagic + 1
-    val idright = nodeMagic + 2
-    val idchildren = Array.tabulate(indexes.length)(nodeMagic+_+1)
-    val parent = currParent    
-    nodeMagic += indexes.length
-
-    shift { k: (Unit => Unit) =>
-      val first = indexes.head
-      for ((i,j) <- indexes.reverse.zipWithIndex) {
-        if (i != first) pushState()
-        sc.addChoice(new MyContinuation("i", {
-          tree.addBranch(parent, idchildren(j), idchildren(j).toString, "")
-          if (i != first) {
-            pop()
-            sc.fail()
-          }
-          beforeBranch()
-          currParent = idchildren(j)
-          f(i)
-          afterBranch()
-          if (!isFailed()) k()
-        }))
-
-      }
-    }
-  }
-
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")  
-  def branchOne(left: => Unit): Unit @suspendable = {
-    shift { k: (Unit => Unit) =>
-      left
-      if (!isFailed()) k()
-    }
-  }
-
-  case class Exploration(val exploration: () => Unit @suspendable)
-  private var exploBlock: Option[Exploration] = None
-
-  def exploration(block: => Unit @suspendable): SearchNode = {
-    exploBlock = Option(Exploration(() => block))
-    this
-  }
-
-  var explorationCompleted = false
-
-  /**
-   * Start the exploration block
-   * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
-   * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
-   * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-  def run(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue) = runSubjectTo(nbSolMax, failureLimit, timeLimit)()
-
   protected def update() = {}
 
-  /**
-   * Start the exploration block
-   * @param: nbSolMax is the maximum number of solution to discover before the exploration stops (default = Int.MaxValue)
-   * @param: failureLimit is the maximum number of backtracks before the exploration stops (default = Int.MaxValue)
-   * @param: timeLimit is the maximum number of milliseconds before the exploration stops (default = Int.MaxValue)
-   * @param: reversibleBlock is bloc of code such that every constraints posted in it are removed after the run
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-  def runSubjectTo(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): Unit = {
-    beforeStartAction()
-    val t1 = System.currentTimeMillis()
-    explorationCompleted = false
-    
-    // Fix failure limit
-    sc.failLimit_=(failureLimit)
-    fLimit = failureLimit    
-    // Fix time limit
-    sc.timeLimit_=(timeLimit)
-    tLimit = timeLimit
-    var n = 0
-    reset {
-      shift { k1: (Unit => Unit) =>
-        val b = () => {
-          sc.start()
-          update()
-          if (!isFailed()) {
-            exploBlock.get.exploration()
-          } else {
-            shift { k: (Unit => Unit) => k() }
-          }
-          if (!isFailed()) {
-            n += 1 // one more sol found
-            solFound()
-            if (n == nbSolMax) {
-              bkts = sc.nFail
-              sc.reset() // stop the search
-              k1() // exit the exploration block
-            }
-          }
-        }
-        popAll()
-        pushState()
-        reversibleBlock
-        sc.reset()
-        if (!isFailed()) {
-          sc.reset()
-          var exploreStarted = false
-          reset {
-            b()
-            if (exploreStarted) {
-              exploreStarted = true
-            }
-          }
-          if (!sc.exit) sc.explore() // let's go, unless the user decided to stop
-        }
-        k1() // exit the exploration block       
-      }
-    }
-    bkts = sc.nFail max bkts
-    time = System.currentTimeMillis() - t1
-    if (!sc.isLimitReached && n < nbSolMax) {
-      explorationCompleted = true
-    }
-    if (explorationCompleted) {
-      if (!silent) print("R")
-    } else {
-      if (!silent) print("!")
-    }
-  }
+
   private var branchings = Branching(noAlternative)
   
   def search(block: => Seq[Alternative]): SearchNode = {

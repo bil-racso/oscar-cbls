@@ -73,7 +73,6 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
     } start()
     numSols should be(8)
     println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
 
   }
 

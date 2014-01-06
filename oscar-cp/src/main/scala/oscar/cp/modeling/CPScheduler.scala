@@ -77,63 +77,6 @@ class CPScheduler(var horizon : Int) extends CPSolver {
 		this
 	}
 
-	/**
-	 * Binary First Fail on the decision variables vars
-	 */
-    @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-	def binaryFirstFail(vars : Array[Activity]) : Unit @suspendable = {
-		binaryFirstFail(vars.map(_.start))
-	}
-
-	/**
-	 * Binary search on the decision variables vars with custom variable/value heuristic
-	 */
-	@deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-	def binary(vars : Array[Activity]) : Unit @suspendable = {
-		binary(vars.map(_.start))
-	}
-
-    @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
-	def setTimes(activities : Array[_ <: Activity]) : Unit @suspendable = {
-
-		val n = activities.size
-		val Activities = 0 until n
-		
-		val selectable = Array.fill(n)(new ReversibleBool(this, true))
-		// non fixed activities (by setTimes)
-		val bound = Array.fill(n)(new ReversibleBool(this, false))
-
-		val oldEST = Array.fill(n)(new ReversibleInt(this, -1))
-	
-		// update the new ones becoming available because est has moved
-		def updateSelectable() = (Activities).filter(i => oldEST(i).value < activities(i).est || activities(i).dur.max == 0).foreach(selectable(_).value = true)
-		def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
-		def allStartBounds() = bound.forall(i => i.value)
-		
-		def updateAndCheck() = {
-			updateSelectable()
-			if (selectableIndices().isEmpty && !allStartBounds()) this.fail()
-		}
-		
-		while (!allStartBounds()) {
-			
-			updateSelectable()
-			val (est, ect) = selectableIndices().map(i => (activities(i).est, activities(i).ect)).min
-			
-			// Select the activity with the smallest EST, ECT as tie breaker
-			val x = selectableIndices().filter(i => activities(i).est == est && activities(i).ect == ect).head
-			
-			branch {
-				this.post(activities(x).start == est)
-				bound(x).value = true
-				if (!this.isFailed) updateAndCheck()
-			} {
-				selectable(x).value = false
-				oldEST(x).value = est
-				updateAndCheck()
-			}
-		}
-	}
 }
 
 object CPScheduler {

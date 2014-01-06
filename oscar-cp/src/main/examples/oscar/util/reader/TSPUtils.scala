@@ -98,29 +98,5 @@ object TSPUtils {
     else i + 1
   }
 
-  def regretHeuristic(cp: CPSolver, succ: Array[CPVarInt], dist: Array[Array[Int]]) = {
-    while (!allBounds(succ)) {
-      var x = -1
-      var maxRegret = Int.MinValue
-      for (i <- 0 until succ.size; if !succ(i).isBound) {
-        var distK1 = Int.MaxValue
-        var distK2 = Int.MaxValue
-        for (j <- 0 until succ.size; if succ(i) hasValue j) {
-          if (dist(i)(j) < distK1) {
-            distK2 = distK1
-            distK1 = dist(i)(j)
-          } else if (dist(i)(j) < distK2) {
-            distK2 = dist(i)(j)
-          }
-        }
-        val regret = distK2 - distK1
-        if (regret > maxRegret) {
-          x = i
-          maxRegret = regret
-        }
-      }
-      val v = selectMin(0 until succ.size)(succ(x).hasValue(_))(dist(x)(_)).get
-      cp.branch(cp.post(succ(x) == v))(cp.post(succ(x) != v))
-    }
-  }
+
 }
