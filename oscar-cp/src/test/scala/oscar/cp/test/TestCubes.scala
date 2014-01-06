@@ -48,14 +48,10 @@ class TestCubes extends FunSuite with ShouldMatchers  {
         cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
             for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
         ), Strong)
-    } exploration { // Each letter will be assigned different cubes during the search
-      loop(0 until numLetters) {
-        l =>  cp.branchAll(0 until numCubes)(v => cp.post(placement(l) == v))
-      }
-      nbSol +=1
-      
-    } run()
-    nbSol should be(24)
+    } search { // Each letter will be assigned different cubes during the search
+      binaryFirstFail(placement)
+    }
+    cp.start().nbSols should be(24)
     
   }  
   

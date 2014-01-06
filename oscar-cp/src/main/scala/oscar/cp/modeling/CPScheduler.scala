@@ -80,6 +80,7 @@ class CPScheduler(var horizon : Int) extends CPSolver {
 	/**
 	 * Binary First Fail on the decision variables vars
 	 */
+    @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
 	def binaryFirstFail(vars : Array[Activity]) : Unit @suspendable = {
 		binaryFirstFail(vars.map(_.start))
 	}
@@ -87,11 +88,12 @@ class CPScheduler(var horizon : Int) extends CPSolver {
 	/**
 	 * Binary search on the decision variables vars with custom variable/value heuristic
 	 */
+	@deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
 	def binary(vars : Array[Activity]) : Unit @suspendable = {
 		binary(vars.map(_.start))
 	}
 
-	
+    @deprecated(message = "Use search/start instead instead of non-deterministic search", since = "1.0")
 	def setTimes(activities : Array[_ <: Activity]) : Unit @suspendable = {
 
 		val n = activities.size

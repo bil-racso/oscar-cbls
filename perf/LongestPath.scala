@@ -71,10 +71,9 @@ object LongestPath {
       }
       cp.add(allDifferent(path), Weak)
 
-    } exploration {
-      cp.binaryFirstFail(path)
-    } run()
-    cp.printStats
+    } search {
+      binaryFirstFail(path)
+    } start()
 
   }
 

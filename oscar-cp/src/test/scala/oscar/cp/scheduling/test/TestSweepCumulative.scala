@@ -82,12 +82,13 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
       cp.add(SweepMinCumulative(cp, acts, CPVarInt(cp, 5), 0))
       cp.add(SweepMinCumulative(cp, acts, CPVarInt(cp, 5), 1))
 
-    } exploration {
-      cp.binary(acts.map(_.resource))
+    } search {
+      binaryStatic(acts.map(_.resource))
+    } onSolution { 
       val sol = (acts(0).resource.value, acts(1).resource.value, acts(2).resource.value, acts(3).resource.value)
       expectedSol.contains(sol) should be(true)
       nbSol += 1
-    } run ()
+    } start()
     nbSol should be(2)
   }
 
@@ -115,10 +116,11 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
       acts(2).resource.value should be(1)
       acts(3).resource.value should be(1)
 
-    } exploration {
-      cp.binary(acts.map(_.resource))
+    } search {
+      binaryStatic(acts.map(_.resource))
+    } onSolution {
       nbSol += 1
-    } run ()
+    } start()
     nbSol should be(1)
   }
 
@@ -206,12 +208,11 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     val makespan = maximum(tasks.map(_.end))
     cp.minimize(makespan) subjectTo {
       cp.add(SweepMaxCumulative(cp, tasks, CPVarInt(cp, capa), 0))
-    } exploration {
-      cp.setTimes(tasks)
+    } search {
+      setTimes(tasks.map(_.start),tasks.map(_.dur),tasks.map(_.end))
+    } onSolution {
       bestObj = makespan.value
-    } run ()
-    cp.printStats()
-
+    } start()
     bestObj should be(160)
 
   }
@@ -236,12 +237,12 @@ class TestSweepCumulative extends FunSuite with ShouldMatchers {
     cp.minimize(makespan) subjectTo {
 		for (a <- 0 until instance.size)
 			activities(a) needs instance(a)._2 ofResource resource
-    } exploration {
-      cp.setTimes(cp.activities)
+    } search {
+      setTimes(activities.map(_.start),activities.map(_.dur),activities.map(_.end))
+    } onSolution {
       bestObj = makespan.value
-    } run ()
+    } start()
     println("=>"+bestObj)
-    cp.printStats()
     bestObj should be(160)
 
   }

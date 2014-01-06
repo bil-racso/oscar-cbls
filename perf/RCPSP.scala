@@ -41,12 +41,10 @@ object RCPSP {
 		val makespan = maximum(tasks.map(_.end))
 		cp.minimize(makespan) subjectTo {
 			cp.add(new NewMaxCumulative(cp, tasks, capa, 0))
-		} exploration {
-		    cp.setTimes(tasks)
-		    println("here")
-			//
-		} run()
-		cp.printStats()
+		} search {
+		    setTimes(tasks.map(_.start),tasks.map(_.dur),tasks.map(_.end))
+		}
+		println(cp.start())
 
 	}
 }

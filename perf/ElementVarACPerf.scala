@@ -44,20 +44,13 @@ object ElementVarACPerf {
 			    cp.add(y(i) + y(i+1) == y(i+2))
 			    cp.add(y(i) != y(i+1))
 			  }
-			} exploration {
-			  cp.binaryFirstFail(y ++ Array(x,z),_.median)
-			  nbsol += 1
-			  //println("sol")
-			} run(1000)
+			} search {
+			  binaryFirstFail(y ++ Array(x,z),_.median)
+			} start(1000)
 			
-			//y(x) = z
-			//y(1) + y(2) = y(3)
-			//y(2) < y(4)
-			println("nbsol:"+nbsol)
-			//cp.printStats()
+
 			
 		}
-		//solve1(19)
 		
 		val t = time {
 		  for (i <- 0 until 50) {

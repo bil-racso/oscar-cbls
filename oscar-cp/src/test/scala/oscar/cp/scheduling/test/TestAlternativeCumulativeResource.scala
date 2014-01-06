@@ -62,12 +62,13 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
       cp.add(resources(1) == 0)
       cp.add(resources(2) == 0)
 
-    } exploration {
-      cp.binary(starts)
+    } search {
+      binaryStatic(starts)
+    } onSolution { 
       val sol = (starts(0).min, starts(1).min, starts(2).min)
       expectedSol.contains(sol) should be(true)
       nSol += 1
-    } run ()
+    } start()
 
     nSol should be(4)
   }
@@ -108,12 +109,13 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
       cp.add(resources(1) == 0)
       cp.add(resources(2) == 0)
 
-    } exploration {
-      cp.binary(starts)
+    } search {
+      binaryStatic(starts)
+    } onSolution {
       val sol = (starts(0).min, starts(1).min, starts(2).min)
       expectedSol.contains(sol) should be(true)
       nSol += 1
-    } run ()
+    } start()
 
     durations(1).value should be(1)
     durations(2).value should be(1)
@@ -157,12 +159,13 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
       cp.add(resources(1) == 0)
       cp.add(resources(2) == 0)
 
-    } exploration {
-      cp.binary(starts)
+    } search {
+      binaryStatic(starts)
+    } onSolution {
       val sol = (starts(0).min, starts(1).min, starts(2).min)
       expectedSol.contains(sol) should be(true)
       nSol += 1
-    } run ()
+    } start()
 
     demands(0).value should be(1)
     nSol should be(4)
@@ -206,17 +209,21 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
       cp.add(resources(2) == 0)
     }
 
-    resources(3).value should be(0)
 
-    cp.exploration {
-      cp.binary(starts)
+    
+    cp.search {
+      binaryStatic(starts)
+    } onSolution {
+      resources(3).value should be(0)
+      durations(0).value should be(2)
+      durations(3).value should be(3)
+          
       val sol = (starts(0).min, starts(1).min, starts(2).min, starts(3).min)
       expectedSol.contains(sol) should be(true)
       nSol += 1
-    } run ()
+    } start()
 
-    durations(0).value should be(2)
-    durations(3).value should be(3)
+
     nSol should be(2)
   }
 
@@ -260,16 +267,20 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
 
     resources(3).value should be(0)
 
-    cp.exploration {
-      cp.binary(starts)
+
+    
+    cp.search {
+      binaryStatic(starts)
+    } onSolution {
+      durations(0).value should be(2)
+      durations(3).value should be(3)
+      demands(3).value should be(-2)
       val sol = (starts(0).min, starts(1).min, starts(2).min, starts(3).min)
       expectedSol.contains(sol) should be(true)
       nSol += 1
-    } run ()
+    } start()
 
-    durations(0).value should be(2)
-    durations(3).value should be(3)
-    demands(3).value should be(-2)
+
     nSol should be(2)
   }
 
@@ -312,10 +323,11 @@ class TestAlternativeCumulativeResource extends FunSuite with ShouldMatchers {
     resources(2).value should be(1)
     resources(3).value should be(1)
 
-    cp.exploration {
-      cp.binary(resources)
+    cp.search {
+      binaryStatic(resources)
+    } onSolution {
       nSol += 1
-    } run ()
+    } start()
 
     nSol should be(1)
   }

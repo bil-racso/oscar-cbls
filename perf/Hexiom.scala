@@ -112,16 +112,9 @@ object Hexiom {
 		    cp.add(table(nbNeighbors,used(i),card(i),tuples))
 		  }
 		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities),Strong)
-		} exploration {
-		  
-		  while (!allBounds(used)) {
-			  val x = used.filter(!_.isBound).head
-			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
-		  }
-		  nbSol += 1
-	    } run(2000)
-		println("nbsol:"+nbSol)
-		cp.printStats()
+		} search {
+			binaryStatic(used,_.max)
+		} start(2000)
 
 	
   }

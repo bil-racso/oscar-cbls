@@ -61,17 +61,16 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
       cp.add(x(0) < x(n - 1))
       cp.add(diffs(0) < diffs(1))
 
-    } exploration {
-      println("exploration")
-      cp.binary(x)
-
+    } search {
+      binaryStatic(x)
+    } onSolution {
       print("x:" + x.mkString(""))
       print("  diffs:" + diffs.mkString(""))
       println()
 
       numSols += 1
 
-    } run ()
+    } start()
     numSols should be(8)
     println("\nIt was " + numSols + " solutions.")
     cp.printStats()

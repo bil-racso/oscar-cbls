@@ -39,10 +39,9 @@ object AlternativeTask extends App {
     cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 1))
     cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 2))
 
-  } exploration {
-    cp.binaryFirstFail(resources)
-    cp.binaryFirstFail(starts)
-    
+  } search {
+    binaryFirstFail(resources) ++ binaryFirstFail(starts)
+  } onSolution {
     println("Makespan of " + makespan.value)
     for (t <- Tasks) {
       print("Task " + t)
@@ -54,6 +53,5 @@ object AlternativeTask extends App {
     println()
   }
 
-  cp.run()
-  cp.printStats
+  println(cp.start())
 }
