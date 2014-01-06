@@ -22,8 +22,9 @@ package oscar.cbls.invariants.lib.numeric
 
 import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
 import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
+import oscar.cbls.invariants.core.propagation.Checker
 
- /**Maintains output to the smallest value such that
+/**Maintains output to the smallest value such that
   * output >= from
   * (output - shift) MOD period > zone
   * (output - shift + length) MOD period > zone

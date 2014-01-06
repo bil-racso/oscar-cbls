@@ -124,7 +124,7 @@ class InvariantTests extends FunSuite with Checkers {
       new AllDiff(bench.genIntVarsArray(10, -10 to 10))
   }
 
-  invTest("AtLeast", 2) {
+  invTest("AtLeast") {
     (bench: InvBench) =>
       new AtLeast(bench.genIntVars(10), bench.genBoundedValues(10, 0 to 30, 0 to 10)).toIntVar
   }
@@ -159,14 +159,14 @@ class InvariantTests extends FunSuite with Checkers {
         bench.genIntVar(10 to 11)).toIntVar
   }
 
-  invTest("Access to int element maintains output = array(index)", 2) {
+  invTest("Access to int element maintains output = array(index)") {
     (bench: InvBench) =>
       new IntElement(
         bench.genIntVar(0 to 19),
         bench.genIntVarsArray(20, 0 to 100)).toIntVar
   }
 
-  invTest("Access to int vars...", 2) {
+  invTest("Access to int vars...") {
     (bench: InvBench) =>
       new IntElements(
           bench.genIntSetVar(3, 0 to 4),
@@ -215,7 +215,7 @@ class InvariantTests extends FunSuite with Checkers {
           (i: Int) => (i % 2) == 0).toIntSetVar
   }
 
-  invTest("SelectLEHeapHeap", 2) {
+  invTest("SelectLEHeapHeap") {
     (bench: InvBench) =>
       new SelectLEHeapHeap(
           bench.genIntVarsArray(4, 0 to 5),

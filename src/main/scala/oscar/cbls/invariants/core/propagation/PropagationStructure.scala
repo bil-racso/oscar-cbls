@@ -352,7 +352,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    */
   private def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
     if (Propagating) return
-//    if (ScheduledElements.isEmpty && PostponedComponents.isEmpty) return //TODO: this causes the engine to crash, must be found why
     Propagating = true
 
     if (!SameAsBefore) {
