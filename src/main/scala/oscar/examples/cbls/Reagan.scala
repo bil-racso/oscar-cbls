@@ -49,7 +49,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * he cannot sleep before having eaten
  */
 object Reagan extends App {
-  val model = new Model(Verbose=false, None, NoCycle=false, TopologicalSort = false)
+  val model = new Model(Verbose=false, checker = None, NoCycle=false, TopologicalSort = false)
 
   val planning = new Planning(model, 40)
   val solver = new IFlatIRelax(planning)
