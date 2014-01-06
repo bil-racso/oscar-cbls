@@ -144,11 +144,14 @@ case class Routes(V: Int,
   def DecorateRouteStartingFromAndUntilConformOrEnd(nodeID: Int) {
     var currentNode = nodeID
     var nextNode = next(currentNode).value
+    var maxIt = next.length
     while (!isUpToDate(currentNode) && nextNode >= V) {
       positionInRoute(nextNode) := (positionInRoute(currentNode).getValue(true) + 1)
       routeNr(nextNode) := routeNr(currentNode).getValue(true)
       currentNode = nextNode
       nextNode = next(currentNode).value
+      if (maxIt == 0) throw new Error("Route invariant not converging. Cycle involving node " + currentNode)
+      maxIt -= 1
     }
     if (nextNode < V) {
       lastInRoute(nextNode) := currentNode

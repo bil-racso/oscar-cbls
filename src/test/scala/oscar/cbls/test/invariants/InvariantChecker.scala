@@ -1,4 +1,4 @@
-package oscar.cbls.invariants.tests
+package oscar.cbls.test.invariants
 
 import oscar.cbls.invariants.core.propagation.Checker
 

@@ -21,7 +21,7 @@
  * ****************************************************************************
  */
 
-package oscar.cbls.test
+package oscar.cbls.test.routing
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers

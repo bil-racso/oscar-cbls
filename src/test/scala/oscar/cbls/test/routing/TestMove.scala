@@ -21,7 +21,7 @@
  * ****************************************************************************
  */
 
-package oscar.cbls.test
+package oscar.cbls.test.routing
 
 import scala.math.pow
 import scala.math.round

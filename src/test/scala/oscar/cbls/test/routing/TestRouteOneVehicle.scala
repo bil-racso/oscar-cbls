@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -17,7 +17,8 @@
   *     This code has been initially developed by Ghilain Florent.
   ******************************************************************************/
 
-package oscar.cbls.test
+package oscar.cbls.test.routing
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
@@ -80,11 +81,13 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
 
   test("* Unroute depot"){
     val f = fixture
+    f.model.propagate()
 
     evaluating{
       f.next(5) := 1
       f.next(0) := f.UNROUTED
-    } should produce [AssertionError]
+      f.model.propagate()
+    } should produce [java.lang.Error]
   }
 
   test("Unroute 2 and 4"){
@@ -184,9 +187,9 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
 
   test("* form a cycle"){
     val f = fixture
-
+    evaluating {
     f.next(4) := 3
-    evaluating {f.model.propagate()} should produce[AssertionError]
+    f.model.propagate()} should produce[java.lang.Error]
   }
 
   test("form a temp cycle"){
@@ -216,7 +219,8 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
       f.next(4):=1
       f.next(5):=2
       f.next(0):=5
-    } should produce[AssertionError]
+      f.model.propagate()
+    } should produce[java.lang.Error]
 
   }
 }
