@@ -82,11 +82,11 @@ case class GE(l: IntVar, r: IntVar) extends LEA(r, l)
 protected class LA(val left: IntVar, val right: IntVar) extends Constraint {
   registerConstrainedVariables(left, right)
 
-  val Violation: IntVar = Max2(0, left + right + 1)
+  val Violation: IntVar = Max2(0, left - right + 1)
   finishInitialization(Violation.getPropagationStructure)
 
   /**
-   * the violation is Max(0,right-left + 1)
+   * the violation is Max(0,left - right + 1)
    */
   override def violation = Violation
   /**
@@ -95,10 +95,10 @@ protected class LA(val left: IntVar, val right: IntVar) extends Constraint {
   override def violation(v: Variable): IntVar = { if (left == v || right == v) Violation else 0 }
 
   override def checkInternals(c: Checker) {
-    val diff = left - right + 1
-    c.check(Violation.value == (if (diff.value < 0) 0 else diff.value),
+    val diff = left.value - right.value
+    c.check(Violation.value == (if (diff < 0) 0 else diff + 1),
       Some("Violation.value (" + Violation.value
-        + ") == (if (left - right (" + diff.value + ") < 0) 0 else " + diff.value + ")"))
+        + ") == (if (left.value - right.value (" + diff + ") < 0) 0 else " + (diff + 1) + ")"))
   }
 }
 
@@ -124,7 +124,7 @@ case class NE(left: IntVar, right: IntVar) extends Constraint {
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
 
-  val Violation: IntVar = IntVar(model, 0, 1, 1, "equals")
+  val Violation: IntVar = IntVar(model, 0, 1, if (left.value == right.value) 1 else 0, "equals")
 
   Violation.setDefiningInvariant(this)
 
