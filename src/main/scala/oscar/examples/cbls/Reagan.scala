@@ -82,7 +82,7 @@ object Reagan extends App {
   Chew precedes Speak
 
   planning.close()
-  println("ActivityArray: [" + planning.ActivityArray.toList.mkString(",") + "]")
+
   model.close(false)
  // println(model.dumpToDot(true, true))
   solver.Solve(15, 10, 2, 50)

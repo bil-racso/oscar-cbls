@@ -80,11 +80,14 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         p.updateVisual()
       } else {
         plateaulength += 1
+        p.clean()
       }
 
       println("----------------")
     }
     model.restoreSolution(BestSolution)
+
+    p.clean()
 
     println("restored best solution")
 
@@ -103,8 +106,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
     for ((from,to) <- PotentiallykilledNodes){
       if (flip(PKill)){
-        if (Verbose) println("killed " + from + "->" + to)
-        to.removeDynamicPredecessor(from)
+        to.removeDynamicPredecessor(from,Verbose)
       }
     }
     true
@@ -143,10 +145,9 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a,b))
       match{
         case (a,b) =>
-          b.addDynamicPredecessor(a)
-          if (Verbose) println("added " + a + "->" + b)
+          b.addDynamicPredecessor(a,Verbose)
         case null =>
-          println("cannot add dependency to flatten. Need to kill some dependencies to further flatten")
+
           //no precedence can be added because some additional precedence must be killed to allow that
           //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
           //we search which dependency can be killed in the conflict set,
@@ -160,10 +161,10 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
             (a: Int, b: Int) => (conflictActivityArray(b).LatestEndDate.value - conflictActivityArray(a).EarliestStartDate.value),
             (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled)
 
-          dependencyKillers(a)(b).killDependencies()
+          println("need to kill dependencies to complete flattening")
+          dependencyKillers(a)(b).killDependencies(Verbose)
 
-          conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a))
-          if (Verbose) println("added " + conflictActivityArray(a) + "->" + conflictActivityArray(b))
+          conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a),Verbose)
       }
     }
   }

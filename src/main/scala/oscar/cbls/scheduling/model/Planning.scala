@@ -285,14 +285,14 @@ class Planning(val model: Model, val maxduration: Int) {
 }
 
 abstract class DependencyCleaner(val canBeKilled:Boolean){
-  def killDependencies(){throw new Exception("cannot kill dependencies")}
+  def killDependencies(Verbose:Boolean = false){throw new Exception("cannot kill dependencies")}
 }
 case class HardRockDependency() extends DependencyCleaner(false)
 
 case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner(true){
-  override def killDependencies(){
+  override def killDependencies(Verbose:Boolean = false){
     for ((a,b) <- d){
-      b.removeDynamicPredecessor(a)
+      b.removeDynamicPredecessor(a,Verbose)
     }
   }
   def restoreDependencies(){

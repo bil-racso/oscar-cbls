@@ -76,12 +76,12 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
     //ParasiticPrecedences = SortedSet.empty[Int]
   }
 
-  override def addDynamicPredecessor(t: Activity) {
-    start.addDynamicPredecessor(t)
+  override def addDynamicPredecessor(t: Activity,Verbose:Boolean = false) {
+    start.addDynamicPredecessor(t,Verbose)
   }
 
-  override def removeDynamicPredecessor(t:Activity){
-    start.removeDynamicPredecessor(t)
+  override def removeDynamicPredecessor(t:Activity,Verbose:Boolean = false){
+    start.removeDynamicPredecessor(t,Verbose)
   }
   override def getEndActivity: Activity = end.getEndActivity
   override def getStartActivity: Activity = start.getStartActivity
@@ -191,11 +191,13 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   var DefiningPredecessors: IntSetVar = null
   var PotentiallyKilledPredecessors: IntSetVar = null
 
-  def addDynamicPredecessor(t: Activity) {
+  def addDynamicPredecessor(t: Activity,Verbose:Boolean=false) {
+    if (Verbose) println("added " + t + "->" + this)
     AdditionalPredecessors :+= t.getEndActivity.ID
   }
 
-  def removeDynamicPredecessor(t:Activity){
+  def removeDynamicPredecessor(t:Activity,Verbose:Boolean=false){
+    if (Verbose) println("killed " + t + "->" + this)
     AdditionalPredecessors :-= t.getEndActivity.ID
   }
 

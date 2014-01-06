@@ -483,6 +483,13 @@ abstract class Variable(val model:Model, n:String = null) extends PropagationEle
     }
   }
 
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate:String
+
   def getDotColor:String = {
     if (getStaticallyListeningElements.isEmpty){
       "blue"
@@ -716,7 +723,8 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
   // if the range was specified using until max should be max -1
   def maxVal = if(domain.isInclusive) domain.end else domain.end - 1
   
-  override def toString = s"$name:=$Value" //value
+  override def toString = s"$name:=$value" //value
+  override def toStringNoPropagate = s"$name:=$Value" //value
 
   def setValue(v:Int){
     if (v != Value){
@@ -881,6 +889,14 @@ class IntSetVar(override val model:Model,
     assert(this.DefiningInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
+
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate: String = name + ":={" + Value.foldLeft("")(
+    (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
 
   override def toString:String = name + ":={" + getValue(true).foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
