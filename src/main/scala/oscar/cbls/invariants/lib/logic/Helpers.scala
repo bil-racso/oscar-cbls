@@ -117,5 +117,13 @@ class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), ov
   override def performPropagation(){
     output := fun(a.value,b.value)
   }
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker){
+    c.check(output.value == fun(a.value,b.value), Some("checking output of LazyIntVarIntVar2IntVarFun"))
+  }
 }
 
