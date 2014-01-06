@@ -60,7 +60,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing.
- * @param Checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
+ * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
@@ -117,8 +117,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
     }
 
-    buildFastPropagationTracks()
-
     val StrognlyConnectedComponents: List[List[PropagationElement]] =
       if (NoCycle) {
         if (Verbose) {
@@ -150,6 +148,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
         c
       }
     })
+
+    buildFastPropagationTracks()
 
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
@@ -210,7 +210,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
     }
     if (Position != ClusteredPropagationComponents.size) {
       if (NoCycle){
-        throw new Exception("cycle detected in propagation graph although NoCycle was set to true")
+        throw new Exception("cycle detected in propagation graph, please set NoCycle flag to false when declaring your model")
       }else{
         throw new Exception("internal bug")
       }
@@ -291,7 +291,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    */
   final def propagate(UpTo: PropagationElement = null) { //TODO: handle the case of input elements. just propagete it and done.
     if (!Propagating) {
-      if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
+      if (UpTo != null) {
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
         val SameAsBefore = (Track != null && (PreviousPropagationTarget == UpTo))
         propagateOnTrack(Track, SameAsBefore)
@@ -570,16 +570,18 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def getStalls = Stalls
 
   def addDependency(from:PropagationElement, to:PropagationElement){
-    try{
-      notifyAddEdge(from,to)
-    }catch{
-      case c:CycleException => {
-        //This can happen if we perform heavy changes to the dependencies in a careless way,
-        // eg: reloading a previous model.
-        // We wait for the dependencies to be stable, when the propagation is performed.
-
-        autoSort = false
-        Stalls +=1
+    if(autoSort){
+      try{
+        notifyAddEdge(from,to)
+      }catch{
+        case c:CycleException => {
+          //This can happen if we perform heavy changes to the dependencies in a careless way,
+          // eg: reloading a previous model.
+          // We wait for the dependencies to be stable, when the propagation is performed.
+          //println("cycle in SCC, reverting to differed non-incremental sort")
+          autoSort = false
+          Stalls +=1
+        }
       }
     }
   }

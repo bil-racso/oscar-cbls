@@ -126,7 +126,6 @@ trait DAG {
         (if(HeapSort) findSortedForwardRegion(to, from.Position)
          else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
 
-
       val SortedBackwardsRegion =
         (if (HeapSort) findSortedBackwardRegion(from, to.Position)
          else findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position))

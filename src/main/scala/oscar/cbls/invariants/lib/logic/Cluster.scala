@@ -97,15 +97,14 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
   }
 
   //This method is called by each IntVar that is registered to the dynamic dependency graph.
-  //We update the output variabls incrementally based on this update.
-  @inline
+  //We update the output variables incrementally based on this update.
   override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
     assert(values(index) == v)
     clusters(OldVal).deleteValue(index)
     clusters(NewVal).insertValue(index)
   }
 
-  //This method is optionnal, it is called by the model when its debug mode is activated (see the contructor of model)
+  //This method is optional, it is called by the model when its debug mode is activated (see the constructor of model)
   //In this method, we check that the outputs are correct, based on non-incremental code
   override def checkInternals(c:Checker){
     for(v <- values.indices){

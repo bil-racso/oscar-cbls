@@ -20,7 +20,7 @@
 package oscar.cbls.routing.visual
 
 import oscar.cbls.routing._
-import initialSolution.RandomNeighbor
+import initial.RandomNeighbor
 import model.{ClosestNeighborPoints, PositionInRouteAndRouteNr, HopDistanceAsObjective, VRP}
 import neighborhood._
 import oscar.cbls.search.StopWatch

@@ -23,8 +23,8 @@ package oscar.cbls.scheduling
 import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.visual.VisualFrame
-import oscar.visual.plot.PlotLine
+//import oscar.visual.VisualFrame
+//import oscar.visual.plot.PlotLine
 
 
 class Planning(val model: Model, val maxduration: Int) {
@@ -106,22 +106,22 @@ class Planning(val model: Model, val maxduration: Int) {
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
-  var gantt:Gantt = null
-  var plot:PlotLine = null
-  def displayVisualRendering(){
-    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
-    frame.setBounds(0,0,500,800)
-    gantt = new Gantt(this)
-    frame.createFrame("Gantt chart").add(gantt)
- //   plot = new Plot2D("makespan", "iterations", "makespan");
- //   frame.createFrame("progress").add(plot)
-
-    frame.pack
-    frame.setSize(1500,500)
-  }
+//  var gantt:Gantt = null
+//  var plot:PlotLine = null
+//  def displayVisualRendering(){
+//    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
+//    frame.setBounds(0,0,500,800)
+//    gantt = new Gantt(this)
+//    frame.createFrame("Gantt chart").add(gantt)
+// //   plot = new Plot2D("makespan", "iterations", "makespan");
+// //   frame.createFrame("progress").add(plot)
+//
+//    frame.pack
+//    frame.setSize(1500,500)
+//  }
 
   def updateVisual(){
-    if (gantt!=null) gantt.update(1.0f, 30)
+//    if (gantt!=null) gantt.update(1.0f, 30)
   }
 
   override def toString: String = {

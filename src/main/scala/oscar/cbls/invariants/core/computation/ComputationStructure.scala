@@ -31,11 +31,15 @@ import oscar.cbls.invariants.core.propagation._
  * @param Verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
  * @param checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
  * @param NoCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
+ * @param TopologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
+ * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
+  *
  */
 class Model(override val Verbose:Boolean = false,
             override val checker:Option[Checker] = None,
-            override val NoCycle:Boolean = false,
-            override val TopologicalSort:Boolean = false)
+            override val NoCycle:Boolean = true,
+            override val TopologicalSort:Boolean = false,
+            val propagateOnToString:Boolean = true)
   extends PropagationStructure(Verbose,checker,NoCycle,TopologicalSort)
   with Bulker{
 
@@ -135,11 +139,19 @@ class Model(override val Verbose:Boolean = false,
     PropagationElements
   }
 
+  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+
+  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+    toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
+  }
+
   /**calls this when you have declared all your invariants and variables.
    * This must be called before any query and update can be made on the model, and after all the invariants and variables have been declared.
    */
   def close(DropStaticGraph: Boolean = true){
     assert(!Closed, "cannot close a model twice")
+    for(p <- toCallBeforeClose) p()
+    toCallBeforeClose = List.empty
     setupPropagationStructure(DropStaticGraph)
     Closed=true
   }
@@ -708,7 +720,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
   // if the range was specified using until max should be max -1
   def maxVal = if(domain.isInclusive) domain.end else domain.end - 1
   
-  override def toString = s"$name:=$Value" //value
+  override def toString = if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
 
   def setValue(v:Int){
     if (v != Value){
@@ -810,7 +822,13 @@ object IntVar{
     require(!domain.isEmpty, "the domain supplied must be a valid increasing interval")
     new IntVar(model, domain, value, name)
   }
-  
+
+  def apply(model: Model, value:Int = 0, name:String) = {
+    val domain = Int.MinValue to Int.MaxValue
+    new IntVar(model, domain, value, name)
+  }
+
+
   implicit val ord:Ordering[IntVar] = new Ordering[IntVar]{
     def compare(o1: IntVar, o2: IntVar) = o1.compare(o2)
   }
@@ -874,7 +892,7 @@ class IntSetVar(override val model:Model,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
-  override def toString:String = name + ":={" + getValue(true).foldLeft("")(
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
 
   /**The values that have bee impacted since last propagation was performed.

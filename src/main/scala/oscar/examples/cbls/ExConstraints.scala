@@ -28,7 +28,7 @@ import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.routing._
-import oscar.cbls.routing.initialSolution.RandomNeighbor
+import oscar.cbls.routing.initial.RandomNeighbor
 import oscar.cbls.routing.model._
 import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 

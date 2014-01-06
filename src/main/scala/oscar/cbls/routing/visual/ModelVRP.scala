@@ -22,7 +22,7 @@ package oscar.cbls.routing.visual
 
 import oscar.cbls.invariants.core.computation.{IntVar, Model}
 import oscar.cbls.routing._
-import initialSolution.{AllUnrouted, NearestNeighbor, RandomNeighbor}
+import initial.{BestInsert, RandomNeighbor}
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualArrow
 import oscar.cbls.constraints.core.ConstraintSystem
@@ -162,8 +162,8 @@ class ModelVRP() extends StopWatch{
     else{
       boardPanel.heuristic.getSelectedIndex match {
         case 0 => RandomNeighbor(vrp)
-        case 1 => NearestNeighbor(vrp)
-        case 2 => AllUnrouted(vrp)
+        case 1 => BestInsert(vrp)
+        case 2 => null
       }
     }
     m.propagate()

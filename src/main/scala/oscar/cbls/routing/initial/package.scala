@@ -12,45 +12,17 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
+package oscar.cbls.routing
+
 /*******************************************************************************
  * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
+ *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
-package oscar.cbls.routing.neighborhood
-
-import oscar.cbls.invariants.core.computation.IntVar
 
 /**
- * Describes a particular neighbor.
+ * It allows you to create different initial solutions respecting (or not)
+ * constraints problems.
  *
- * Info : a neighbor could be saw as a move operator.
+ * notice that by default, VRP is instantiated with all nodes unrouted.
  */
-abstract class Neighbor{
-
-  /**
-   * Returns the objective value in case if we perform the move. (choose this neighbor)
-   * @return the objective value if we choose this neighbor.
-   */
-  def getObjAfter:Int
-
-  /**
-   * It performs the move (which consist to choose this neighbor) on the VRP problem.
-   */
-  def comit()
-
-  /**
-   * Returns the node on which we restart the search procedure.
-   * @return the node on which we restart the search procedure.
-   */
-  def startNodeForNextExploration:Int
-
-  /**
-   * Returns the variables and their values to update to perfom the move.
-   * @return an iterable with variables and their values to update to perfom the move.
-   */
-  def getValuesToAssign:Iterable[(IntVar,Int)]
-
-}
-
-
+package object initial {}
