@@ -58,6 +58,12 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
 import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 import oscar.cbls.constraints.lib.basic.BelongsTo
+import oscar.cbls.constraints.lib.basic.LE
+import oscar.cbls.constraints.lib.basic.GE
+import oscar.cbls.constraints.lib.basic.G
+import oscar.cbls.constraints.lib.basic.L
+import oscar.cbls.constraints.lib.basic.NE
+import oscar.cbls.constraints.lib.basic.EQ
 
 class smalltest extends FunSuite with Checkers {
   //this is not working so far.
@@ -78,9 +84,39 @@ class InvariantTests extends FunSuite with Checkers {
     }
   }
   
-  invTest("BelongsTo maintains the violation of a membership.") {
+  invTest("BelongsTo maintains the violation of a membership.", 2) {
     (bench: InvBench) =>
       new BelongsTo(bench.genIntVar(0 to 10), bench.genIntSetVar(5, 0 to 10)).toIntVar
+  }
+  
+  invTest("LE maintains the violation of a lesser or equal test.") {
+    (bench: InvBench) =>
+      new LE(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+  }
+  
+  invTest("GE maintains the violation of a greater or equal test.") {
+    (bench: InvBench) =>
+      new GE(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+  }
+  
+  invTest("L maintains the violation of a strict lesser test.") {
+    (bench: InvBench) =>
+      new L(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+  }
+  
+  invTest("G maintains the violation of a strict greater test.") {
+    (bench: InvBench) =>
+      new G(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+  }
+  
+  invTest("NE maintains the violation of a inequality test.") {
+    (bench: InvBench) =>
+      new NE(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
+  }
+  
+  invTest("EQ maintains the violation of an equality test.") {
+    (bench: InvBench) =>
+      new EQ(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
   }
 
   invTest("AllDiff maintains output = all int vars have different values") {
