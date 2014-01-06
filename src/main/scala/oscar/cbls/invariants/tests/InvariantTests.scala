@@ -140,6 +140,7 @@ import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
 import oscar.cbls.invariants.lib.numeric.RoundUpCustom
+import oscar.cbls.invariants.core.propagation.Checker
 
 class smalltest extends FunSuite with Checkers {
   //this is not working so far.
@@ -354,7 +355,7 @@ class InvariantTests extends FunSuite with Checkers {
   invTest("ProdElements maintains the product of variables of which indices are in the given set.") {
     (bench: InvBench) =>
       new ProdElements(
-          bench.genIntVarsArray(10, 0 to 100),
+          bench.genIntVarsArray(10, 0 to 10),
           bench.genIntSetVar(2, 0 to 9)).toIntVar
   }
 
@@ -717,7 +718,10 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
 class InvBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
-  val model = new Model(false, Some(checker))
+  val model = new Model(false, Some(checker), false, false, false)
+
+
+
   var inputVars: List[RandomVar] = List()
   var outputVars: List[RandomVar] = List()
 
