@@ -431,6 +431,16 @@ class InvariantTests extends FunSuite with Checkers {
     (bench: InvBench) =>
       new SetProd(bench.genIntSetVar(10, -3 to 3)).toIntVar
   }
+  
+  invTest("IdentityInt maintains the identity of an integer).") {
+    (bench: InvBench) =>
+      new IdentityInt(bench.genIntVar(-100 to 100)).toIntVar
+  }
+  
+  invTest("IdentityIntSet maintains the identity of a set of integers).") {
+    (bench: InvBench) =>
+      new IdentityIntSet(bench.genIntSetVar()).toIntSetVar
+  }
 }
 
 /**
