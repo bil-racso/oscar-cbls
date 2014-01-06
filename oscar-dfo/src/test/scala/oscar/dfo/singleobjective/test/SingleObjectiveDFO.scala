@@ -436,6 +436,5 @@ class NelderMeadTest extends FunSuite with ShouldMatchers {
     val formerSimp = testNMS.formerSimplex
     val simp = testNMS.simplex
     testNMS.iterNM()
-    testNMS
   }
 }

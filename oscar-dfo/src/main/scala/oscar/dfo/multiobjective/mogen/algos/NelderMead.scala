@@ -16,7 +16,6 @@ package oscar.dfo.multiobjective.mogen.algos
 
 import oscar.dfo.utils._
 import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
-import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.multiobjective.mogen.algos.states.NelderMeadState
 
 object NelderMead extends ComparativeAlgorithm {

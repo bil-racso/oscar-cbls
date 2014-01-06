@@ -14,8 +14,8 @@
  ******************************************************************************/
 
 package oscar.dfo.utils
+
 import scala.math.Numeric.Implicits._
-import oscar.dfo.utils.ParetoFront
 
 /**
  * LinearList able to maintain a set of non dominated points (assuming maximizations in all dimensions).

@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.dfo.multiobjective.mogen.algos.states
 
-import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
 import oscar.dfo.utils._
 
 class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {

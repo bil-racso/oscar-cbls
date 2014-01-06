@@ -13,7 +13,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.dfo.utils
-import oscar.dfo.utils.ArchiveElement
 
 /** Point with its coordinates and its associated evaluations.
   *
