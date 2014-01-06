@@ -13,7 +13,7 @@ case class BelongsTo(v: IntVar, set: IntSetVar) extends Constraint {
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()
 
-  val Violation: IntVar = IntVar(model, 0, 1, 1, "belongsTo(" + v.name + "," + set.name + ")")
+  val Violation: IntVar = IntVar(model, 0, 1, (if (set.value.contains(v.value)) 0 else 1), "belongsTo(" + v.name + "," + set.name + ")")
 
   Violation.setDefiningInvariant(this)
 
@@ -45,6 +45,6 @@ case class BelongsTo(v: IntVar, set: IntSetVar) extends Constraint {
   override def checkInternals(c: Checker) {
     c.check(Violation.value == (if (set.value.contains(v.value)) 0 else 1),
       Some("Violation.value (" + Violation.value
-        + ") == (if(set.value.contains(v.value (" + v.value + "))) 0 else 1)"))
+        + ") == (if(set.value" + set.value + ".contains(v.value (" + v.value + "))) 0 else 1)"))
   }
 }

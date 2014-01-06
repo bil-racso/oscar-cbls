@@ -39,6 +39,8 @@ import oscar.cbls.invariants.core.propagation.Checker
 case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(Int=>Boolean))
   extends Constraint {
 
+  assert(Max <= length, "Sequence: Max > length")
+
   registerStaticAndDynamicDependencyArrayIndex(variables)
   registerConstrainedVariables(variables)
 

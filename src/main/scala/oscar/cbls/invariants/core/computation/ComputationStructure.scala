@@ -830,7 +830,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
 object IntVar{
   
   def apply(model: Model, minVal:Int, maxVal:Int, value:Int , name:String) = {
-    require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain")
+    require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain minVal:" + minVal + " maxVal:" + maxVal)
     new IntVar(model,(minVal to maxVal), value, name)
   }
   

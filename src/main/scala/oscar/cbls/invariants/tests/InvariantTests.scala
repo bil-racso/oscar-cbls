@@ -5,93 +5,10 @@ import collection.immutable.SortedMap
 import org.scalacheck.Gen
 import org.scalacheck.Gen.value
 import org.scalacheck.Prop
-import org.scalatest.PropSpec
 import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.Max
-import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.minmax.Min
-import oscar.cbls.invariants.lib.minmax.Min2
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.minmax.MinSet
-import oscar.cbls.invariants.lib.numeric.Abs
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.invariants.lib.numeric.Mod
-import oscar.cbls.invariants.lib.numeric.Prod
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.lib.numeric.SumElements
 import org.scalatest.FunSuite
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.constraints.lib.global.AtLeast
-import oscar.cbls.constraints.lib.global.AtMost
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.constraints.lib.global.Sequence
-import oscar.cbls.invariants.lib.minmax.MaxLin
-import oscar.cbls.invariants.lib.minmax.MinLin
-import oscar.cbls.invariants.lib.set.Union
-import oscar.cbls.invariants.lib.set.Inter
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.invariants.lib.set.MakeSet
-import oscar.cbls.invariants.lib.set.Interval
-import oscar.cbls.invariants.lib.set.TakeAny
-import oscar.cbls.invariants.lib.set.SetSum
-import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.lib.numeric.Mod
-import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.minmax.MinLin
-import oscar.cbls.invariants.lib.set.MakeSet
-import oscar.cbls.invariants.lib.minmax.MinSet
-import oscar.cbls.invariants.lib.numeric.Sum2
-import oscar.cbls.invariants.lib.set.Inter
-import oscar.cbls.invariants.lib.set.SetSum
-import oscar.cbls.constraints.lib.global.Sequence
-import oscar.cbls.invariants.lib.logic.IntITE
-import oscar.cbls.invariants.lib.numeric.Prod
-import scala.Some
-import oscar.cbls.invariants.lib.set.Interval
-import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
-import oscar.cbls.invariants.lib.minmax.MaxLin
-import oscar.cbls.invariants.lib.numeric.ProdElements
-import oscar.cbls.invariants.lib.minmax.Min2
-import oscar.cbls.invariants.lib.numeric.Prod2
-import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.numeric.Minus
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.constraints.lib.global.AtMost
-import oscar.cbls.invariants.lib.numeric.Abs
-import oscar.cbls.invariants.lib.minmax.Max
-import oscar.cbls.invariants.lib.logic.IntElement
-import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.logic.IntSetElement
-import oscar.cbls.invariants.lib.logic.IntElements
-import oscar.cbls.invariants.lib.numeric.Div
-import oscar.cbls.invariants.lib.set.Union
-import oscar.cbls.invariants.lib.minmax.Min
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic.DenseCount
-import oscar.cbls.constraints.lib.global.AtLeast
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.lib.set.TakeAny
-import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.minmax.MaxSet
-import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.Mod
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.minmax.MinLin
@@ -141,7 +58,6 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
 import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 import oscar.cbls.constraints.lib.basic.BelongsTo
-import oscar.cbls.invariants.core.propagation.Checker
 
 class smalltest extends FunSuite with Checkers {
   //this is not working so far.
@@ -177,25 +93,25 @@ class InvariantTests extends FunSuite with Checkers {
       new AtLeast(bench.genIntVars(10), bench.genBoundedValues(10, 0 to 30, 0 to 10)).toIntVar
   }
 
-  ignore("AtMost") {
+  invTest("AtMost") {
     (bench: InvBench) =>
       new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
   }
 
-  ignore("MultiKnapsack") {
+  invTest("MultiKnapsack") {
     (bench: InvBench) =>
       new MultiKnapsack(
-        bench.genIntVarsArray(),
-        bench.genIntVarsArray(),
-        bench.genIntVarsArray()).toIntVar
+        bench.genIntVarsArray(10, 0 to 5),
+        bench.genIntVarsArray(10, 2 to 7),
+        bench.genIntVarsArray(6, 1 to 10)).toIntVar
   }
 
-  ignore("Sequence") {
+  invTest("Sequence") {
     (bench: InvBench) =>
       new Sequence(
         bench.genIntVarsArray(),
-        Gen.choose(0, 10).sample.get,
-        Gen.choose(0, 10).sample.get,
+        Gen.choose(10, 20).sample.get,
+        Gen.choose(2, 9).sample.get,
         (x: Int) => x > 1).toIntVar
   }
 
@@ -490,13 +406,13 @@ class InvariantTests extends FunSuite with Checkers {
  */
 abstract class Move
 
-case class PlusOne extends Move
-case class MinusOne extends Move
-case class ToZero extends Move
-case class ToMin extends Move
-case class ToMax extends Move
-case class Random extends Move
-case class RandomDiff extends Move
+case class PlusOne() extends Move
+case class MinusOne() extends Move
+case class ToZero() extends Move
+case class ToMin() extends Move
+case class ToMax() extends Move
+case class Random() extends Move
+case class RandomDiff() extends Move
 
 /**
  * This object contains a set of functions and methods to generate random
