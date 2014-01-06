@@ -77,7 +77,7 @@ object CookieMonster extends CPModel with App {
     add(lexLeq(bx(m + 1), bx(m)))
   }
 
-  solve search {
+  search {
     binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
   }
 

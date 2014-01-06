@@ -31,7 +31,7 @@ import oscar.visual.shapes.VisualCircle
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Euler extends App {
+object Euler extends CPModel with App {
 
   //  -----------visualization of the euler tour ----------
   val f = new VisualFrame("Euler", 1, 1)
@@ -50,12 +50,11 @@ object Euler extends App {
     }
   }
 
-  val cp = new CPSolver()
-  val x = (0 until 64).map(v => CPVarInt(reachables(v))(cp))
+  val x = (0 until 64).map(v => CPVarInt(reachables(v)))
 
-  cp.solve subjectTo {
-    cp.add(circuit(x))
-  } search {
+  add(circuit(x))
+ 
+  search {
     binaryFirstFail(x)
   } onSolution {
     println(x.map(_.value).mkString(","))
@@ -74,6 +73,7 @@ object Euler extends App {
     drawing.repaint()
   }
 
-  println(cp.start(1))
-
+  val stats = start(1)
+  
+  println(stats)
 }

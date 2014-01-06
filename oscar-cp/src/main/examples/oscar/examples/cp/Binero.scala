@@ -96,7 +96,7 @@ object Binero extends CPModel with App {
     }
   }
 
-  solve search binaryFirstFail(grid)
+  search { binaryFirstFail(grid) }
 
   val stat = start() // find all solutions
 

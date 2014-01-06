@@ -64,7 +64,7 @@ object AudreyProblem extends CPModel with App {
   add(circuit(x))
   
   // Search 
-  solve search binaryFirstFail(x)
+  search { binaryFirstFail(x) }
   
   // Execution
   start(nSolutions = 1)

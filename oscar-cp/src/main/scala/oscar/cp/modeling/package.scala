@@ -331,7 +331,7 @@ package object modeling extends Constraints with Branchings {
   // helper functions to model with an implicit CPSolver
   def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
   def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
-  def solve(implicit cp: CPSolver): CPSolver = cp.solve() subjectTo ()
+  def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
   def minimize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
   def maximize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)

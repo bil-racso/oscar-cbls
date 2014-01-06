@@ -25,10 +25,10 @@ object Queens extends CPModel with App {
   add(allDifferent(Queens.map(i => queens(i) - i)))
 
   // Search heuristic
-  solve search binaryFirstFail(queens)
+  search(binaryFirstFail(queens))
   
   // Execution
-  val stats = start()
+  val stats = start(nSolutions = 1)
 
   println(stats)
 }
