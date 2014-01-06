@@ -54,7 +54,6 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
 
   test("Instantiation"){
     val f = fixture
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.routeLength(1).value should be(6)
@@ -83,7 +82,6 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(4):=6
     f.next(5):= 9
     f.next(8):= 5
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(5)
     f.routes.routeLength(1).value should be(7)
@@ -112,7 +110,6 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(9):=5
     f.next(7):=3
     f.next(4):=10
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.routeLength(1).value should be(6)
@@ -147,7 +144,6 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
 
     f.next(11) := f.UNROUTED
     f.next(10) := 1
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(5)
     f.routes.routeLength(1).value should be(5)
@@ -185,8 +181,6 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
     f.next(7) := 11
     f.next(9) := f.UNROUTED
     f.next(10) := f.UNROUTED
-
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.routeLength(1).value should be(4)

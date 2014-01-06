@@ -52,7 +52,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
 
   test("Instantiation"){
     val f = fixture
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.lastInRoute(0).value should be(5)
@@ -64,7 +63,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     val f = fixture
     f.next(3) := 5
     f.next(4) := f.UNROUTED
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(5)
     f.routes.lastInRoute(0).value should be(5)
@@ -86,7 +84,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     evaluating{
       f.next(5) := 1
       f.next(0) := f.UNROUTED
-      f.model.propagate()
     } should produce [AssertionError]
   }
 
@@ -96,7 +93,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     f.next(2):=f.UNROUTED
     f.next(3):=5
     f.next(4):=f.UNROUTED
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(4)
     f.routes.lastInRoute(0).value should be(5)
@@ -123,7 +119,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     f.next(5) := 1
     f.next(1) := 0
     f.next(0) := 2
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.lastInRoute(0).value should be(1)
@@ -143,7 +138,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     f.next(5):=3
     f.next(3):=1
     f.next(2):=0
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.lastInRoute(0).value should be(2)
@@ -170,7 +164,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     f.next(3):=0
     f.next(1):=5
     f.next(5):=2
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(5)
     f.routes.lastInRoute(0).value should be(3)
@@ -202,7 +195,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     f.next(4):=3
     f.next(3):=5
     f.next(2):=4
-    f.model.propagate()
 
     f.routes.routeLength(0).value should be(6)
     f.routes.lastInRoute(0).value should be(5)
@@ -224,7 +216,6 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
       f.next(4):=1
       f.next(5):=2
       f.next(0):=5
-      f.model.propagate()
     } should produce[AssertionError]
 
   }

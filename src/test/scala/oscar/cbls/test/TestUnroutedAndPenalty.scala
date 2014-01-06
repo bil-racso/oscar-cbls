@@ -56,7 +56,6 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
       model.close()
       BestInsert(vrp)
       // 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (-> 0)
-      model.propagate()
     }
 
   test("instantiation") {
@@ -86,7 +85,6 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
     f.vrp.UnroutedPenalty.value should be(0)
 
 //    f.vrp.remove(List((0, 1))).foreach(t => t._1 := t._2)
-    f.model.propagate()
 
     f.vrp.UnroutedPenalty.value should be(100)
   }
@@ -103,20 +101,16 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
     f.vrp.UnroutedPenalty.value should be(0)
 
 //    f.vrp.remove(List((0, 1), (3, 5))).foreach(t => t._1 := t._2)
-    f.model.propagate()
 
     f.vrp.UnroutedPenalty.value should be(300)
 
 //    f.vrp.add(0, 1).foreach(t => t._1 := t._2)
-    f.model.propagate()
     f.vrp.UnroutedPenalty.value should be(200)
 
 //    f.vrp.add(0, 4).foreach(t => t._1 := t._2)
-    f.model.propagate()
     f.vrp.UnroutedPenalty.value should be(100)
 
 //    f.vrp.add(0, 5).foreach(t => t._1 := t._2)
-    f.model.propagate()
     f.vrp.UnroutedPenalty.value should be(0)
   }
 }

@@ -60,7 +60,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   test("A node can be cut.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
-      f.commitPropagate
+      f.vrp.commit(true)
 
       f.mainRouteLength should be(f.nbNodes - 1)
       checkUnrouted(f, cutNode.start :: Nil)
@@ -69,7 +69,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   test("A segment can be cut.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.randomCut
-      f.commitPropagate
+      f.vrp.commit(true)
 
       f.mainRouteLength should be(initLength - segLength)
       checkUnrouted(f, segNodes)
@@ -84,7 +84,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
         !segNodes.contains(n) && !segNodes.contains(f.vrp.next(n).value))
       println("segNodes.contains(" + cutNode + "): " + segNodes.contains(cutNode))
       println("segNodes.contains(" + f.vrp.next(cutNode.start).value + "): " + segNodes.contains(f.vrp.next(cutNode.start).value))
-      f.commitPropagate
+      f.vrp.commit(true)
 
       f.mainRouteLength should be(initLength - segLength - 1)
       checkUnrouted(f, cutNode.start :: segNodes)
@@ -97,7 +97,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
         val cutSeg94 = f.vrp.cut(9, 4)
         f.vrp.unroute(cutSeg07)
         f.vrp.unroute(cutSeg94)
-        f.commitPropagate
+        f.vrp.commit(true)
       } should produce[ArrayIndexOutOfBoundsException]
   }
 
@@ -105,11 +105,11 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
       f.cutNodeAfter(4)
-      f.commitPropagate
+      f.vrp.commit(true)
 
       val seg = f.vrp.segmentFromUnrouted(8)
       f.vrp.insert(seg, 7)
-      f.commitPropagate
+      f.vrp.commit(true)
 
       f.mainRouteLength should be(initLength - segLength + 1)
       f.vrp.routes.routeNr(8).value should be(0)
@@ -120,9 +120,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     (f: MoveFixture) =>
       evaluating {
         val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 8)
-        f.commitPropagate
+        f.vrp.commit(true)
         f.vrp.insert(cutSeg, 0)
-        f.commitPropagate
+        f.vrp.commit(true)
       } should produce[AssertionError]
   }
 
@@ -132,7 +132,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       val (initLength, cutSeg, segLength, segNodes) = f.cut(0, 1)
       val revSeg = f.vrp.reverse(cutSeg)
       f.vrp.insert(revSeg, 0)
-      f.commitPropagate
+      f.vrp.commit(true)
 
       f.mainRouteLength should be(initLength)
       for (i <- 0 to 9) f.vrp.routes.routeNr(i).value should be(0)
@@ -142,19 +142,19 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   test("A segment cannot be inserted after an unrouted node.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
-      f.commitPropagate
+      f.vrp.commit(true)
       val (initLength, cutSeg, segLength, segNodes) = f.randomCut
       f.vrp.insert(cutSeg, cutNode.end)
-      f.commitPropagate
+      f.vrp.commit(true)
   }
 
   test("A node cannot be inserted after an unrouted node.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
-      f.commitPropagate
+      f.vrp.commit(true)
       val cutNode2 = f.randomCutNodeAfter()
       f.vrp.insert(cutNode2, cutNode.end)
-      f.commitPropagate
+      f.vrp.commit(true)
   }
 
   moveTest("The first improving point move is done correctly.", 1, true) {
@@ -304,11 +304,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //  test("swap unrouted point 2 with 6"){
   //    val f = fixture
   //    f.vrp.remove(List((0,2))).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
   //
   //    evaluating{
   //      f.vrp.swap(1,2,5,6).foreach(t => t._1 := t._2)
-  //      f.model.propagate()
   //    } should produce [AssertionError]
   //  }
   //
@@ -317,7 +315,6 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //
   //    evaluating{
   //      f.vrp.swap(2,3,2,3).foreach(t => t._1 := t._2)
-  //      f.model.propagate()
   //    } should produce [AssertionError]
   //  }
   //
@@ -325,8 +322,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   moveTest("A basic two-opt move is done correctly.", 1, false, 4, 1,
     Array(0, 0, 2, 2), Array(0, 2, 0, 2),
     (vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) => {
-       vrp.setCircuit(List(0, 1, 2, 3))
-       vrp.m.propagate()
+      vrp.setCircuit(List(0, 1, 2, 3))
     }) {
       (f: MoveFixture) =>
         val relevantNeighbors = (n: Int) => f.vrp.nodes
@@ -399,7 +395,6 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //  test("3opt with 1-2, 4-5 and 7-8"){
   //    val f = fixture
   //    f.vrp.threeOptA(1,2,4,5,7,8).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
@@ -414,7 +409,6 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //  test("3opt (one reverse) with 1-2, 4-5 and 7-8"){
   //    val f = fixture
   //    f.vrp.threeOptB(1,2,4,5,7,8).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
@@ -431,7 +425,6 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   //  test("3opt (two reverses) with 1-2, 4-5 and 7-8"){
   //    val f = fixture
   //    f.vrp.threeOptC(1,2,4,5,7,8).foreach(t => t._1 := t._2)
-  //    f.model.propagate()
   //
   //    for(i<- 0 to 8){
   //      if(i<=1 || i >=8)
@@ -582,8 +575,7 @@ class MoveFixture(
   vrp.setUnroutedPenaltyWeight(10000)
   vrp.installCostMatrix(matrix)
   model.close()
-  model.propagate()
-  
+
   println(vrp)
 
   init(vrp)
@@ -674,11 +666,6 @@ class MoveFixture(
       else aux(vrp.next(start).value, start :: nodes)
     }
     aux(start, Nil)
-  }
-
-  def commitPropagate = {
-    vrp.commit(true)
-    model.propagate()
   }
 
   /**
