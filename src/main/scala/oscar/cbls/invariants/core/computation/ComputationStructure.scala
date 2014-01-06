@@ -1125,7 +1125,7 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   def myMin = v.minVal
 
   override def checkInternals(c:Checker){
-    assert(output.getValue(true) == v.value)
+    c.check(output.getValue(true) == v.value)
   }
 
   override def setOutputVar(vv:IntVar){
@@ -1151,7 +1151,7 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   val myMax = v.getMaxVal
 
   override def checkInternals(c:Checker){
-    assert(output.getValue(true).intersect(v.value).size == v.value.size)
+    c.check(output.getValue(true).intersect(v.value).size == v.value.size)
   }
 
   override def setOutputVar(vv:IntSetVar){
