@@ -3,16 +3,16 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cbls.scheduling
+package oscar.cbls.scheduling.algo
 
 /*******************************************************************************
   * Contributors:
@@ -20,17 +20,14 @@ package oscar.cbls.scheduling
   *         by Renaud De Landtsheer
   ******************************************************************************/
 
-import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngine
 import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
+import oscar.cbls.scheduling.model._
+import oscar.cbls.invariants.core.computation.Solution
+import oscar.cbls.scheduling.model.CumulativeResource
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Model = p.model
-
-  class FlatteningHeuristics()
-  case class EarliestFirst() extends FlatteningHeuristics
-  case class WorseFirst() extends FlatteningHeuristics
-  case class Random() extends FlatteningHeuristics
 
   /**This solves the jobshop by iterative relaxation and flattening
     * @param MaxIt the max number of iterations of the search
@@ -38,17 +35,12 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     */
   def Solve(MaxIt: Int,
             Stable: Int,
-            flatteningheursitics: FlatteningHeuristics = WorseFirst(),
             NbRelax: Int = 4,
             PkillPerRelax: Int = 50) {
 
     var it: Int = 0
 
-    flatteningheursitics match {
-      case EarliestFirst() => FlattenEarliestFirst()
-      case WorseFirst() => FlattenWorseFirst()
-      case Random() => RandomFlatten()
-    }
+    FlattenWorseFirst()
 
     var BestSolution: Solution = model.getSolution(true)
     if (Verbose) {
@@ -75,11 +67,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         if(p.MakeSpan.value == m)println("skip")
       }
 
-      flatteningheursitics match {
-        case EarliestFirst() => FlattenEarliestFirst()
-        case WorseFirst() => FlattenWorseFirst()
-        case Random() => RandomFlatten()
-      }
+      FlattenWorseFirst()
 
       println(p.MakeSpan)
       println("iteration: " + it)
@@ -92,11 +80,14 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         p.updateVisual()
       } else {
         plateaulength += 1
+        p.clean()
       }
 
       println("----------------")
     }
     model.restoreSolution(BestSolution)
+
+    p.clean()
 
     println("restored best solution")
 
@@ -115,8 +106,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
     for ((from,to) <- PotentiallykilledNodes){
       if (flip(PKill)){
-        if (Verbose) println("killed " + from + "->" + to)
-        to.removeDynamicPredecessor(from)
+        to.removeDynamicPredecessor(from,Verbose)
       }
     }
     true
@@ -137,90 +127,45 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | Relax(PKill)
       if (!SomethingCouldBeRelaxed) return false
     }
-    println("relaxed " + n + " times to shorten makespan")
+    if (Verbose) println("relaxed " + n + " times to shorten makespan")
     return SomethingCouldBeRelaxed
-  }
-
-  def RandomFlatten() {
-    
-    while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
-      val t: Int = r.FirstOvershoot.value
-
-      val ActivitiesAndUse = r.ActivitiesAndUse.filter((taksAndamount: (Activity, IntVar)) => r.use(t).value.contains(taksAndamount._1.ID))
-      val Activities: List[Activity] = ActivitiesAndUse.map((ActivityAndamount: (Activity, IntVar)) => ActivityAndamount._1)
-
-      val a = selectFrom(Activities)
-      val b = selectFrom(Activities, (j: Activity) => j != a)
-
-      if (Verbose) println("added " + a + "->" + b)
-      b.addDynamicPredecessor(a)
-    }
   }
 
   /**implements the standard flatten procedure*/
   def FlattenWorseFirst() {
     while (!p.WorseOvershotResource.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
-      val t: Int = selectFirst(r.HighestUsePositions.value)
+      val r: Resource = p.ResourceArray(selectFrom(p.WorseOvershotResource.value))
 
-      val ActivitiesAndUse = r.getActivitiesAndUse(t)
+      val t: Int = r.worseOverShootTime
 
-      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
-        0,
-        ActivitiesAndUse,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
-        (use: Int) => use > r.MaxAmount
-      )
+      val conflictActivities=r.conflictingActivities(t)
 
-      val conflictActivities: List[Activity] = conflictSet.map(_._1)
-
-      //TODO: it could be the case tat no pair of Activity is available here.
-      val (a, b) = selectMax2(conflictActivities, conflictActivities,
+      selectMax2(conflictActivities, conflictActivities,
         (a: Activity, b: Activity) => (b.LatestEndDate.value - a.EarliestStartDate.value),
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a,b))
+      match{
+        case (a,b) =>
+          b.addDynamicPredecessor(a,Verbose)
+        case null =>
 
-      if (Verbose) println("added " + a + "->" + b)
-      b.addDynamicPredecessor(a)
-    }
-  }
+          //no precedence can be added because some additional precedence must be killed to allow that
+          //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
+          //we search which dependency can be killed in the conflict set,
+          val conflictActivityArray = conflictActivities.toArray
+          val dependencyKillers:Array[Array[DependencyCleaner]] =
+            Array.tabulate(conflictActivityArray.size)(
+              t1 => Array.tabulate(conflictActivityArray.size)(
+                t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1),conflictActivityArray(t2))))
 
-  def FlattenEarliestFirst() {
-    while (!p.EarliestOvershotResources.value.isEmpty) {
-      val r: CumulativeResource = p.ResourceArray(selectFrom(p.EarliestOvershotResources.value))
-      val t: Int = r.FirstOvershoot.value
+          val (a,b) = selectMax2(conflictActivityArray.indices, conflictActivityArray.indices,
+            (a: Int, b: Int) => (conflictActivityArray(b).LatestEndDate.value - conflictActivityArray(a).EarliestStartDate.value),
+            (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled)
 
-      //the two selected Activities a,b must belong to a minimal conflict set
-      //and they must maximize lsd(b)-esd(a)  //pq pas led(b) - esd(a)??
-      //then insert a->b
+          println("need to kill dependencies to complete flattening")
+          dependencyKillers(a)(b).killDependencies(Verbose)
 
-      //modification par rapport a l'heuristique:
-      //uniquement b doit appartenir au conflict set.
-      //et on maximise led(b) - esd(a)
-
-      val ActivitiessAndUse = r.getActivitiesAndUse(t)
-
-      val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
-        0,
-        ActivitiessAndUse,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
-        (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
-        (use: Int) => use > r.MaxAmount
-      )
-
-      val conflictActivities: List[Activity] = conflictSet.map(_._1)
-
-      val Activities: List[Activity] = ActivitiessAndUse.map(_._1)
-
-      val (a, b) = selectMax2(Activities, conflictActivities,
-        (a: Activity, b: Activity) => (b.LatestStartDate.value - a.EarliestEndDate.value),
-        (a: Activity, b: Activity) => a != b)
-
-      if (Verbose) println("added " + a + "->" + b)
-      b.addDynamicPredecessor(a)
+          conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a),Verbose)
+      }
     }
   }
 }
-
-

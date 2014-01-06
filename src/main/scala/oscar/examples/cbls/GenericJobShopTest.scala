@@ -42,6 +42,8 @@ import io.Source
 import oscar.cbls.search.StopWatch
 import oscar.visual.{VisualUtil, VisualFrame}
 import oscar.cbls.scheduling._
+import algo.IFlatIRelax
+import model.{Planning, Activity, CumulativeResource}
 
 /**this class loads JobShop problems as defined in
  * http://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/jobshop1.txt
@@ -81,13 +83,13 @@ object GenericJobShopTest extends StopWatch with App {
   val MachineArray: Array[CumulativeResource] = Array.tabulate(MachineCount)(MachineID
     => CumulativeResource(planning, 1, "Machine" + MachineID))
 
-  for (JobID <- 0 until JobCount) {
+  for (jobID <- 0 until JobCount) {
     var PreviousTask: Activity = null
-    for (TaskID <- MachineArray.indices) {
+    for (taskID <- MachineArray.indices) {
       val MachineID = WordReader.next().toInt
       val Duration = WordReader.next().toInt
 
-      val NewTask = Activity(Duration, planning, "Task_" + TaskID + "_of_Job_" + JobID)
+      val NewTask = Activity(Duration, planning, "Task_" + taskID + "_of_Job_" + jobID)
       NewTask uses 1 ofResource MachineArray(MachineID)
 
       if (PreviousTask != null)
@@ -106,7 +108,7 @@ object GenericJobShopTest extends StopWatch with App {
 
   println("start search")
   //println(model.dumpToDot(true,true))
-  solver.Solve(MaxIt, Stable, solver.WorseFirst(), 3, 20)
+  solver.Solve(MaxIt, Stable, 3, 20)
 
   println("run time: " + getWatch)
   println(planning.toAsciiArt)

@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -19,7 +19,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.cbls.scheduling
+package oscar.cbls.scheduling.model
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
@@ -28,16 +28,34 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-class SuperTask(start: Activity, end: Activity, override val name: String = "")
+class NonMoveableActivity(startDate:Int, duration: IntVar, planning: Planning, name: String = "")
+  extends Activity(duration: IntVar, planning: Planning, name){
+  override def canAddPrecedence: Boolean = false
+  override def close() {
+
+    AdditionalPredecessors := SortedSet.empty
+    AllPrecedingActivities := SortedSet.empty
+    EarliestStartDate := startDate
+    DefiningPredecessors := SortedSet.empty
+    PotentiallyKilledPredecessors := SortedSet.empty
+
+    AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+
+    //This is not correct. but since no task can be put before this one, this is not an issue.
+    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
+  }
+}
+
+class SuperActivity(start: Activity, end: Activity, override val name: String = "")
   extends Activity(IntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
 
   start precedes end
 
-  override def post() {
+  override def close() {
 
-    start.post()
-    end.post()
+    start.close()
+    end.close()
 
     AdditionalPredecessors = start.AdditionalPredecessors
 
@@ -58,12 +76,12 @@ class SuperTask(start: Activity, end: Activity, override val name: String = "")
     //ParasiticPrecedences = SortedSet.empty[Int]
   }
 
-  override def addDynamicPredecessor(t: Activity) {
-    start.addDynamicPredecessor(t)
+  override def addDynamicPredecessor(t: Activity,Verbose:Boolean = false) {
+    start.addDynamicPredecessor(t,Verbose)
   }
 
-  override def removeDynamicPredecessor(t:Activity){
-    start.removeDynamicPredecessor(t)
+  override def removeDynamicPredecessor(t:Activity,Verbose:Boolean = false){
+    start.removeDynamicPredecessor(t,Verbose)
   }
   override def getEndActivity: Activity = end.getEndActivity
   override def getStartActivity: Activity = start.getStartActivity
@@ -76,10 +94,16 @@ class SuperTask(start: Activity, end: Activity, override val name: String = "")
 
   }
 
-object SuperTask {
-  def apply(start: Activity, end: Activity, name: String = "") = new SuperTask(start,end,name)
+object SuperActivity {
+  def apply(start: Activity, end: Activity, name: String) = new SuperActivity(start,end,name)
+  def apply(start: Activity, end: Activity) = new SuperActivity(start,end,"SuperActivity(" + start + "," + end + ")")
 }
 
+object Activity{
+  implicit val ord:Ordering[Activity] = new Ordering[Activity]{
+    def compare(o1: Activity, o2: Activity) = o1.ID - o2.ID
+  }
+}
 /**
  *
  * @param duration
@@ -89,6 +113,15 @@ object SuperTask {
  */
 case class Activity(duration: IntVar, planning: Planning, name: String = "", Shifter:(IntVar,IntVar) => IntVar = (a:IntVar,_) => a) {
   val ID: Int = planning.AddActivity(this)
+
+  override def equals(obj: Any): Boolean = {
+    obj match{
+      case a:Activity => a.ID == ID
+      case _ => false
+    }
+  }
+
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false
@@ -141,14 +174,13 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
     r.notifyUsedBy(this, amount)
   }
 
-  var EarliestStartDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, duration.value, "esd(" + name + ")")
-  val EarliestEndDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, duration.value, "eed(" + name + ")")
+  def maxDuration = planning.maxduration
+
+  var EarliestStartDate: IntVar = IntVar(planning.model, 0, maxDuration, duration.value, "esd(" + name + ")")
+  val EarliestEndDate: IntVar = IntVar(planning.model, 0, maxDuration, duration.value, "eed(" + name + ")")
   EarliestEndDate <== EarliestStartDate + duration
 
-  val LatestEndDate: IntVar = IntVar(planning.model, 0,
-    planning.maxduration, planning.maxduration, "led(" + name + ")")
+  val LatestEndDate: IntVar = IntVar(planning.model, 0, maxDuration, maxDuration, "led(" + name + ")")
 
   val LatestStartDate: IntVar = LatestEndDate - duration
   var AllSucceedingActivities: IntSetVar = null
@@ -159,20 +191,24 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   var DefiningPredecessors: IntSetVar = null
   var PotentiallyKilledPredecessors: IntSetVar = null
 
-  def addDynamicPredecessor(t: Activity) {
+  def addDynamicPredecessor(t: Activity,Verbose:Boolean=false) {
+    if (Verbose) println("added " + t + "->" + this)
     AdditionalPredecessors :+= t.getEndActivity.ID
   }
 
-  def removeDynamicPredecessor(t:Activity){
+  def removeDynamicPredecessor(t:Activity,Verbose:Boolean=false){
+    if (Verbose) println("killed " + t + "->" + this)
     AdditionalPredecessors :-= t.getEndActivity.ID
   }
 
   def getEndActivity: Activity = this
   def getStartActivity: Activity = this
 
+  def canAddPrecedence:Boolean = true
+
  // var ParasiticPrecedences:IntSetVar = null
   /**This method is called by the planning when all activities are created*/
-  def post() {
+  def close() {
     if (AdditionalPredecessors == null){
       AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Activities.size,
         "added predecessors of " + name, SortedSet.empty)
@@ -190,8 +226,6 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
       AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
       LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
-
-     // ParasiticPrecedences = AdditionalPredecessors minus PotentiallyKilledPredecessors
     }
   }
 }

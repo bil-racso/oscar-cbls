@@ -44,7 +44,7 @@ object ConflictSearch {
   /**init includes items*/
   private def search[S,C](init:S,
                           items:List[C],
-                          toInject:List[C],
+                          toInject:Iterable[C],
                           inject:(S, C)=>S,
                           isConflict:S=>Boolean):List[C] = {
 

@@ -39,6 +39,9 @@ package oscar.examples.cbls
 
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.scheduling._
+import algo.IFlatIRelax
+import model.{Planning, SuperActivity, Activity, CumulativeResource}
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -46,8 +49,9 @@ import oscar.cbls.scheduling._
  * he cannot sleep before having eaten
  */
 object Reagan extends App {
-  val model = new Model(false, None, false)
-  val planning = new Planning(model, 31)
+  val model = new Model(Verbose=false, None, NoCycle=false, TopologicalSort = false)
+
+  val planning = new Planning(model, 40)
   val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
@@ -70,7 +74,7 @@ object Reagan extends App {
   val Drink = Activity(3, planning, "drink")
   Drink uses 3 ofResource Reagan
 
-  val Digest = SuperTask(Eat, Sleep, "digest")
+  val Digest = SuperActivity(Eat, Sleep, "digest")
   Digest uses 1 ofResource Reagan
 
   Think precedes Drink
@@ -78,9 +82,10 @@ object Reagan extends App {
   Chew precedes Speak
 
   planning.close()
+
   model.close(false)
  // println(model.dumpToDot(true, true))
-  solver.Solve(15, 10, solver.WorseFirst(), 2, 50)
+  solver.Solve(15, 10, 2, 50)
 
   println(planning.toAsciiArt)
   println(planning.dependencies)

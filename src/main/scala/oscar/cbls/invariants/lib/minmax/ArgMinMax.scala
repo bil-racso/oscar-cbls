@@ -54,7 +54,7 @@ case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
 /**
  * Maintains {i in indices of (vars Inter cond) | vars[i] == min(vars(i in indices of (vars Inter cond))}
  * @param vars is an array of IntVar
- * @param cond is the condition, supposed fully acceptant if not specified (must be specified if vars is bulked)
+ * @param cond is the condition, supposed fully accepting if not specified (must be specified if vars is bulked)
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  */
@@ -72,6 +72,7 @@ case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
    * not specified if cond is empty
    */
   def getMin: IntVar = Miax
+
 }
 
 /**
@@ -82,6 +83,10 @@ case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
  * update is O(log(n))
  */
 abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntSetInvariant with Bulked[IntVar, (Int, Int)] {
+
+  override def toString:String = {
+    name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
+  }
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))

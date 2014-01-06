@@ -32,7 +32,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param cond is a function that selects values to be includes in the output set.
  * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
  */
-case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetInvariant {
+case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)=_>0) extends IntSetInvariant {
   var output:IntSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)

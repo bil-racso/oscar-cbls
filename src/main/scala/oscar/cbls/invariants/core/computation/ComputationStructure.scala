@@ -43,6 +43,9 @@ class Model(override val Verbose:Boolean = false,
   extends PropagationStructure(Verbose,checker,NoCycle,TopologicalSort)
   with Bulker{
 
+
+  assert({println("You are using a CBLS model with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
+
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
   private var PropagationElements:List[PropagationElement] = List.empty
@@ -450,6 +453,11 @@ object InvariantHelper{
     }
     (MyMin, MyMax)
   }
+
+  def arrayToString[T<:Variable](a:Array[T]):String = {
+    "[" + a.toList.mkString(",")+"]"
+  }
+
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
@@ -486,6 +494,13 @@ abstract class Variable(val model:Model, n:String = null) extends PropagationEle
       scheduleForPropagation()
     }
   }
+
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate:String
 
   def getDotColor:String = {
     if (getStaticallyListeningElements.isEmpty){
@@ -721,6 +736,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
   def maxVal = if(domain.isInclusive) domain.end else domain.end - 1
   
   override def toString = if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+  override def toStringNoPropagate = s"$name:=$Value" //value
 
   def setValue(v:Int){
     if (v != Value){
@@ -746,7 +762,7 @@ class IntVar(model: Model, val domain: Range, private var Value: Int, n: String 
       Value
     } else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -893,7 +909,17 @@ class IntSetVar(override val model:Model,
   }
 
   override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
+   (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate: String = name + ":={" + Value.foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+
+
 
   /**The values that have bee impacted since last propagation was performed.
    * null if set was assigned
@@ -996,7 +1022,7 @@ class IntSetVar(override val model:Model,
       Value
     }else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.isPropagating)  return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       Perform()
       OldValue

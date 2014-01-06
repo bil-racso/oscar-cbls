@@ -289,7 +289,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    * the propagation will be partial, targeting this element.
    * @param UpTo: the optional target of partial propagation
    */
-  final def propagate(UpTo: PropagationElement = null) { //TODO: handle the case of input elements. just propagete it and done.
+  final def propagate(UpTo: PropagationElement = null) {
     if (!Propagating) {
       if (UpTo != null) {
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
@@ -352,6 +352,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    */
   private def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
     if (Propagating) return
+    if (ScheduledElements.isEmpty && PostponedComponents.isEmpty) return
     Propagating = true
 
     if (!SameAsBefore) {
@@ -418,7 +419,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    * initially true to avoid spurious propagation during the construction of the data structure;
    * set to false by setupPropagationStructure
    */
-  private var Propagating: Boolean = true
+  var Propagating: Boolean = true
 
   /**this variable is set by the propagation element to notify that they are propagating.
    * it is used to ensure that no propagation element perform illegal operation
@@ -578,7 +579,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
           //This can happen if we perform heavy changes to the dependencies in a careless way,
           // eg: reloading a previous model.
           // We wait for the dependencies to be stable, when the propagation is performed.
-          //println("cycle in SCC, reverting to differed non-incremental sort")
+          println("cycle in SCC, reverting to differed non-incremental sort")
           autoSort = false
           Stalls +=1
         }

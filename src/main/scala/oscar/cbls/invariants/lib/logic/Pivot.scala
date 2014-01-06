@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 /**
  * {i in index of values | values[i] <= boundary}
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
- * @param values an array of intvar
+ * @param values an array of [[oscar.cbls.invariants.core.computation.IntVar]]
  * @param boundary the boundary for comparison
  */
 case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends IntSetInvariant {
