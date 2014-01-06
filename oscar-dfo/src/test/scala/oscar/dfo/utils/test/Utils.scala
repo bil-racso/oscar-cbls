@@ -12,11 +12,10 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.test
+package oscar.dfo.utils.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.dfo.algo._
 import oscar.dfo.utils._
 
 class IntervalTest extends FunSuite with ShouldMatchers {

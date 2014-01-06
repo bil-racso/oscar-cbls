@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.algo
+package oscar.dfo.singleobjective
 
 import oscar.dfo.utils._
 
@@ -27,7 +27,7 @@ import oscar.dfo.utils._
   * The classes using the trait are DDS, DMS and NelderMead 
   * @author Cyrille Dejemeppe 
   */
-trait DFOptimizer {
+trait SODFOptimizer {
   
   /** The number of function evaluations performed */
   var evalCount = 0
@@ -36,10 +36,10 @@ trait DFOptimizer {
   val evaluator = new DeterministicEvaluation()
   
   /** The random number generator */
-  val rand = DFOptimizer.randGen
+  val rand = SODFOptimizer.randGen
   
   /** The quasi-random sequences generator */
-  val sampler = DFOptimizer.samplerGen
+  val sampler = SODFOptimizer.samplerGen
   
   /** The simplex (polyhedron) data structure */
   var simplex = Array[(Array[Double], Array[Double])]()
@@ -155,10 +155,10 @@ trait DFOptimizer {
 
 /** Used to have a single random number generator and a single quasi-random
   * sequence generator for all the DFO algorithms. */ 
-object DFOptimizer{
+object SODFOptimizer{
   
   /** A random number generator */
-  val randGen = new scala.util.Random(0)
+  val randGen = new scala.util.Random(42)
   
   /** A quasi-random sequence generator */
   val samplerGen = new QuasiRandomSequence(randGen)

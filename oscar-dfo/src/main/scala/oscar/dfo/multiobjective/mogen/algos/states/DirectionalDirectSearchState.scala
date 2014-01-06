@@ -12,8 +12,9 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.mogen.algos.states
+package oscar.dfo.multiobjective.mogen.algos.states
 
+import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
 import oscar.dfo.utils._
 
 class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {

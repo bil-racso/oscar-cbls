@@ -12,9 +12,10 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.algo
+package oscar.dfo.singleobjective.algos
 
-import oscar.dfo.utils._
+import oscar.dfo.utils.Interval
+import oscar.dfo.singleobjective.SODFOptimizer
 
 /** Framework for the Multi-Directional Search (MDS) algorithm used to find the optimum
   * of a derivative free optimization (DFO) problem.
@@ -32,7 +33,7 @@ import oscar.dfo.utils._
   *                                     the same dimensions 
   * @author Cyrille Dejemeppe 
   */
-class MDS(f: Array[Double] => Array[Double], nbObjectives: Int, compare: (Array[Double], Array[Double]) => java.lang.Boolean, startP: Array[Double], dom: Array[Interval]) extends DFOptimizer {
+class MDS(f: Array[Double] => Array[Double], nbObjectives: Int, compare: (Array[Double], Array[Double]) => java.lang.Boolean, startP: Array[Double], dom: Array[Interval]) extends SODFOptimizer {
   
   /** The dimension of the search space */
   val dim = startP.length

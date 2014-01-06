@@ -16,8 +16,10 @@ package oscar.dfo.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.dfo.algo._
+import oscar.dfo.multiobjective.mogen.algos._
 import oscar.dfo.utils._
+import oscar.dfo.multiobjective.MODFOptimizer
+import oscar.dfo.multiobjective.MODMS
 
 class MultiObjectiveDFO extends FunSuite with ShouldMatchers {
   
@@ -319,129 +321,58 @@ class MultiObjectiveDFO extends FunSuite with ShouldMatchers {
   
 
   test("findPareto => Dummy 2D & Rosenbrock 2D functions") {
-    println("=" * 80)
-    println("=" * 14 + "  findPareto => Dummy 2D & Rosenbrock 2D functions  " + "=" * 14)
-    println("-" * 80)
-    println("FormerMODMS")
-    val modms = FormerMODMS(dumRos, Array(200.0, 200.0), domain2D, bases2D)
+    val modms = MODMS(dumRos, Array(200.0, 200.0), domain2D, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
     println("-" * 80)
   }
   
   test("findPareto => Rosenbrock 2D & Himmelbau 2D functions") {
-    println("=" * 80)
-    println("=" * 12 + "  findPareto => Rosenbrock 2D & Himmelbau 2D functions  " + "=" * 12)
-    println("=" * 80)
-    println("FormerMODMS")
-    val modms = FormerMODMS(rosHim, Array(200.0, 200.0), domain2D, bases2D)
+    val modms = MODMS(rosHim, Array(200.0, 200.0), domain2D, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
     println("-" * 80)
   }
   
   test("findPareto => Rosenbrock 2D & Himmelbau 2D & Two-link truss functions") {
-    println("-" * 80)
-    println("FormerMODMS")
-    val modms = FormerMODMS(rosHimTwo, Array(200.0, 200.0, 200.0), domain2D, bases2D)
+    val modms = MODMS(rosHimTwo, Array(200.0, 200.0, 200.0), domain2D, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
   }
   
   test("findPareto => All functions but ZDT's") {
-    println("=" * 80)
-    println("FormerMODMS")
-    val modms = FormerMODMS(allButZDT, Array(200.0, 200.0, 200.0, 200.0), domain2D, bases2D)
+    val modms = MODMS(allButZDT, Array(200.0, 200.0, 200.0, 200.0), domain2D, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
   }
   
   test("findPareto => findPareto => ZDT1 functions") {
-    println("=" * 80)
-    println("=" * 20 + "  findPareto => ZDT1 functions  " + "=" * 19)
-    println("=" * 80)
-    println("FormerMODMS")
-    val modms = FormerMODMS(zdt1, Array(200.0, 200.0), domain2DZDT, bases2D)
+    val modms = MODMS(zdt1, Array(200.0, 200.0), domain2DZDT, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
   }
   
-  test("findPareto => findPareto => ZDT2 functions") {  
-    println("-" * 80)
-    println("FormerMODMS")
+  test("findPareto => findPareto => ZDT2 functions") {
+    val modms = MODMS(zdt2, Array(200.0, 200.0), domain2DZDT, bases2D)
+    val modmsAns = modms.findPareto(100, math.pow(10, -2))
+    printArchiveOverview(modms, modmsAns)
   }
   
   test("findPareto => findPareto => ZDT3 functions") {
-    println("FormerMODMS")
-    val modms = FormerMODMS(zdt3, Array(200.0, 200.0), domain2DZDT, bases2D)
+    val modms = MODMS(zdt3, Array(200.0, 200.0), domain2DZDT, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
   }
   
   test("findPareto => findPareto => ZDT4 functions") { 
-    println("FormerMODMS")
-    val modms = FormerMODMS(zdt4, Array(200.0, 200.0), domain2DZDT4, bases2D)
+    val modms = MODMS(zdt4, Array(200.0, 200.0), domain2DZDT4, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
   }
   
   test("findPareto => findPareto => ZDT6 functions") {
-    println("FormerMODMS")
-    val modms = FormerMODMS(zdt6, Array(200.0, 200.0), domain2DZDT, bases2D)
+    val modms = MODMS(zdt6, Array(200.0, 200.0), domain2DZDT, bases2D)
     val modmsAns = modms.findPareto(100, math.pow(10, -2))
     printArchiveOverview(modms, modmsAns)
-  }
-}
-
-class FormerMODMSTest extends FunSuite with ShouldMatchers {
-  //f(X) = Sum(1, N) x(i)^2
-  def f1(x: Array[Double]): Double = {
-    var eval = 0.0
-    x.foreach(element=> eval += element*element)
-    eval
-  }
-  
-  //f(X) = Sum(1, N-1)(1-x_(i))^2 + 100(x_(i+1) - x_(i)^2)^2
-  def f2(x: Array[Double]): Double = {
-    var eval = 0.0
-    for (i <- 0 to x.length - 2)
-      eval += (1 - x(i)) * (1 - x(i)) + 100 * (x(i+1) - x(i) * x(i)) * (x(i+1) - x(i) * x(i))
-    eval
-  }
-  
-  def dumRos(x: Array[Double]): Array[Double] = {
-    Array(f1(x), f2(x))
-  }
-  
-  val modms = FormerMODMS(dumRos, Array(1000.0, 1000.0), Array(Interval(-200.0, 200.0), Interval(-200.0, 200.0)), Array(Array(1.0, 0.0), Array(0.0, 1.0)))
-
-  test("normalize(vector: Array[Double]) function") {
-    val basis = modms.normalize(Array.tabulate(5)(i => 5.0))
-    for(i <- 0 until 5)
-      basis(i) should be (0.44 plusOrMinus 0.1)
-  }
-  
-  test("negateBasis(Array[Double]) function") {
-    val basis = modms.negateBasis(Array.tabulate(5)(i => 5.0 * math.pow(-1.0, i)))
-    val negBasis = Array.tabulate(5)(i => 5.0 * math.pow(-1.0, (i + 1)))
-    for (i <- 0 until 5)
-      basis(i) should equal (negBasis(i))
-  }
-
-  test("newMeshPoint(Array[Double], Array[Double], Double, Double) function") {
-    val basis = Array(1.0, 0.0)
-    val point = Array(40.0, 42.0)
-    val newPoint = modms.newMeshPoint(point, basis, Array(2.0, 2.0), 42.0)
-    val ans = (Array.fill(2){42.0}, Array(f1(Array(42.0, 42.0)), f2(Array(42.0, 42.0))))
-    for (i <- 0 until 2) {
-      newPoint._1(i) should equal (ans._1(i))
-      newPoint._2(i) should equal (ans._2(i))
-    }
-  }
-  
-  test("areEquals(Array[Double], Array[Double])") {
-    modms.areEqual(Array(0.1, 23.0), Array(0.1, 23.0)) should equal(true)
-    modms.areEqual(Array(0.1, 23.0), Array(0.1, 22.0)) should equal(false)
-    modms.areEqual(Array(0.1, 23.0), Array(0.2, 22.0)) should equal(false)
   }
 }

@@ -16,15 +16,15 @@ package oscar.dfo.mogen.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.dfo.mogen.MOGEN
+import oscar.dfo.multiobjective.mogen.MOGEN
 import oscar.dfo.utils._
-import oscar.dfo.mogen.algos.NelderMead
+import oscar.dfo.multiobjective.mogen.algos.NelderMead
 import oscar.dfo.visual.PlotDFOPareto2D
 import oscar.visual.VisualFrame
-import oscar.dfo.mogen.MOGENTriplet
+import oscar.dfo.multiobjective.mogen.MOGENTriplet
 
 import scala.util.continuations._
-import oscar.dfo.mogen.algos.DirectionalDirectSearch
+import oscar.dfo.multiobjective.mogen.algos.DirectionalDirectSearch
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com

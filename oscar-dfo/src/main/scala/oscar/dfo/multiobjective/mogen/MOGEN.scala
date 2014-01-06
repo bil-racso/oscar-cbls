@@ -12,18 +12,15 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.mogen
-
-import scala.reflect.ClassTag
-import oscar.dfo.mogen.algos.ComparativeAlgorithm
-import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
+package oscar.dfo.multiobjective.mogen
+import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.utils._
-import oscar.dfo.visual.PlotDFOPareto2D
-import oscar.visual.VisualFrame
+import scala.Array.canBuildFrom
 
 class MOGEN[E <% Ordered[E]](var evaluator: MOEvaluator[E], comparator: MOOComparator[E]) {
 
-  /** Function defining the feasible region of the problem */
+  /** Function defining import oscar.dfo.multiobjective.mogen.MOGENTriplet
+the feasible region of the problem */
   val feasibleRegion = FeasibleRegion()
   /** The set of non-dominated points (approximation of the Pareto front) */
   var archive = LinearList[E]()

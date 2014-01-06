@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.algo
+package oscar.dfo.multiobjective
 
 import oscar.dfo.utils._
 
@@ -36,7 +36,7 @@ trait MODFOptimizer {
   val nbObjectives: Int
   
   /** The quasi-random sequence generator */
-  val sampler = DFOptimizer.samplerGen
+  val sampler = MODFOptimizer.samplerGen
 
   /** The number of evaluations performed by the algorithm */
   var evalCount = 0

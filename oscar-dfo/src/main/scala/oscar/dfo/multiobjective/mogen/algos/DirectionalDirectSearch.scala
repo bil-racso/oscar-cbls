@@ -12,11 +12,11 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.mogen.algos
+package oscar.dfo.multiobjective.mogen.algos
 
 import oscar.dfo.utils._
-import oscar.dfo.mogen.algos.states.ComparativeAlgorithmState
-import oscar.dfo.mogen.algos.states.DirectionalDirectSearchState
+import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
+import oscar.dfo.multiobjective.mogen.algos.states.DirectionalDirectSearchState
 
 object DirectionalDirectSearch extends ComparativeAlgorithm {
   var tolerance = math.pow(10.0, -3.0)

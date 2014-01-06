@@ -16,10 +16,13 @@ package oscar.dfo.modeling
 
 import oscar.dfo.modeling._
 import scala.collection._
-import oscar.dfo.algo._
+import oscar.dfo.singleobjective.algos._
 import oscar.dfo.utils._
 import oscar.dfo._
 import oscar.algebra._
+import oscar.dfo.singleobjective.algos.DDS
+import oscar.dfo.singleobjective.algos.MDS
+import oscar.dfo.singleobjective.algos.NelderMead
 
 /**
  * @author: Pierre Schaus pschaus@gmail.com

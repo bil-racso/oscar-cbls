@@ -12,9 +12,14 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.dfo.mogen.algos.states
+package oscar.dfo.multiobjective.mogen.algos.states
 
-import oscar.dfo.utils._
+import scala.Array.canBuildFrom
+import oscar.dfo.utils.MOOComparator
+import oscar.dfo.utils.MOOPoint
+import oscar.dfo.utils.MOEvaluator
+import oscar.dfo.utils.RandomGenerator
+import oscar.dfo.utils.FeasibleRegion
 
 class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
   val simplex = simplexInit

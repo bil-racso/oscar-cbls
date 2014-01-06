@@ -15,7 +15,7 @@
 package oscar.examples.dfo
 
 
-import oscar.dfo.algo._
+import oscar.dfo.singleobjective.algos._
 import oscar.dfo.utils._
 
 object X2 extends App {
