@@ -140,6 +140,7 @@ import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
 import oscar.cbls.invariants.lib.numeric.RoundUpCustom
+import oscar.cbls.constraints.lib.basic.BelongsTo
 
 class smalltest extends FunSuite with Checkers {
   //this is not working so far.
@@ -158,6 +159,11 @@ class InvariantTests extends FunSuite with Checkers {
       invFun(bench)
       bench.run
     }
+  }
+  
+  invTest("BelongsTo maintains the violation of a membership.") {
+    (bench: InvBench) =>
+      new BelongsTo(bench.genIntVar(0 to 10), bench.genIntSetVar(5, 0 to 10)).toIntVar
   }
 
   invTest("AllDiff maintains output = all int vars have different values") {
