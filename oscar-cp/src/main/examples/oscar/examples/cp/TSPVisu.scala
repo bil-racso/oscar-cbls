@@ -12,7 +12,7 @@ import oscar.cp.core._
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object TSPVisu extends CPModel {
+object TSPVisu extends CPModel with App {
 
   // Data
   val nCities = 20

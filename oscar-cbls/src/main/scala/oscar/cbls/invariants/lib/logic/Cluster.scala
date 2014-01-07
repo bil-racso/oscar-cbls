@@ -22,12 +22,12 @@
 package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
-import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+import collection.immutable.SortedSet
+import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.computation.IntVar._
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
@@ -54,13 +54,17 @@ case class SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]
     if(y != null) y.insertValue(index)
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(v <- values.indices){
-      if (Clusters.isDefinedAt(values(v).value)){c.check(Clusters(values(v).value).value.contains(v))}
+      if (Clusters.isDefinedAt(values(v).value)) {
+        c.check(Clusters(values(v).value).value.contains(v),
+          Some("Clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
+          }
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
-        c.check(values(indices).value == value)
+        c.check(values(indices).value == value,
+            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }
@@ -93,23 +97,24 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
   }
 
   //This method is called by each IntVar that is registered to the dynamic dependency graph.
-  //We update the output variabls incrementally based on this update.
-  @inline
+  //We update the output variables incrementally based on this update.
   override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
     assert(values(index) == v)
     clusters(OldVal).deleteValue(index)
     clusters(NewVal).insertValue(index)
   }
 
-  //This method is optionnal, it is called by the model when its debug mode is activated (see the contructor of model)
+  //This method is optional, it is called by the model when its debug mode is activated (see the constructor of model)
   //In this method, we check that the outputs are correct, based on non-incremental code
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(v <- values.indices){
-      c.check(clusters(values(v).value).value.contains(v))
+      c.check(clusters(values(v).value).value.contains(v),
+          Some("clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
-        c.check(values(indices).value == value)
+        c.check(values(indices).value == value,
+            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }
@@ -119,23 +124,22 @@ case class DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) extends
 object Cluster{
 
   def MakeSparse(values:Array[IntVar], clusters: Iterable[Int]):SparseCluster = {
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:SortedMap[Int,IntSetVar] = clusters.foldLeft(SortedMap.empty[Int, IntSetVar])((acc,c) => acc + ((c,new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c))))
     SparseCluster(values,Clusters)
   }
 
   def MakeDense(values:Array[IntVar]):DenseCluster = {
-    val themax = values.foldLeft(Int.MinValue)((acc,intvar) => if (acc < intvar.MaxVal) intvar.MaxVal else acc)
-    val themin = values.foldLeft(Int.MaxValue)((acc,intvar) => if (acc > intvar.MinVal) intvar.MinVal else acc)
+    val (themin,themax) = InvariantHelper.getMinMaxBounds(values)
     assert(themin == 0, "dense clusters must start at zero")
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray
     DenseCluster(values,Clusters)
   }
 
   def MakeDenseAssumingMinMax(values:Array[IntVar],themin:Int,themax:Int):DenseCluster = {
     assert(themin == 0, "dense clusters must start at zero")
-    val m:Model = InvariantHelper.FindModel(values)
+    val m:Model = InvariantHelper.findModel(values)
     val Clusters:Array[IntSetVar] = (for(c <- 0 to themax) yield new IntSetVar(m,values.indices.start,values.indices.end,"cluster_"+c)).toArray
     DenseCluster(values,Clusters)
   }

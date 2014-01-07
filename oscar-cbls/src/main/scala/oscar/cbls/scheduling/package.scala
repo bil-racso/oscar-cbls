@@ -20,15 +20,18 @@
 
 package oscar.cbls
 
+import scheduling.algo.IFlatIRelax
+import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
+
 /** This package is a scheduling library.
  * it supports
- - [[oscar.cbls.scheduling.CumulativeResource]]
- - [[oscar.cbls.scheduling.Activity]] with varying durations and precedence constraints
- - [[oscar.cbls.scheduling.SuperTask]] that align their start and end to other tasks.
+ - [[CumulativeResource]]
+ - [[Activity]] with varying durations and precedence constraints
+ - [[SuperActivity]] that align their start and end to other tasks.
  *   This is useful to model that a resource is not released between tasks.
  *
- * In this package, Tasks are grouped into [[oscar.cbls.scheduling.Planning]] that keeps references to all tasks and resources.
- * This package features the [[oscar.cbls.scheduling.IFlatIRelax]] search heuristics with various tunings
+ * In this package, Tasks are grouped into [[Planning]] that keeps references to all tasks and resources.
+ * This package features the [[IFlatIRelax]] search heuristics with various tunings
  * */
 package object scheduling{
 }

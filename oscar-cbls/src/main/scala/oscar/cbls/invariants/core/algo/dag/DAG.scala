@@ -1,17 +1,17 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -26,11 +26,11 @@ import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 trait DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
-  var Position: Int = 0;
+  var Position: Int = 0
 
   /**supposed to be false between each pass of the algorithm*/
-  var visited: Boolean = false;
-  var visited2:Boolean = false;
+  var visited: Boolean = false
+  var visited2:Boolean = false
 
   /**it gives the unique ID of the PropagationElement.
    * those uniqueID are expected to start at 0 and to increase continuously
@@ -56,7 +56,8 @@ class CycleException(n: DAGNode) extends Exception
  * The incremental topological sort in _autoSort(mAutoSort: Boolean){
  */
 trait DAG {
-  private var AutoSort: Boolean = false;
+  private var AutoSort: Boolean = false
+
   def nodes:Iterable[DAGNode]
 
   var HeapSort = true
@@ -96,13 +97,18 @@ trait DAG {
    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
-      doDAGSort();
+      try{
+      doDAGSort()
+      }catch {
+        case e:CycleException =>
+        throw new Error("cycle in topological sort: \n " + getCycle().mkString("\n ") + "\n")
+      }
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
-      AutoSort = true;
+      AutoSort = true
     } else if (AutoSort && ! mAutoSort) {
       //on sort de l'autosort
-      AutoSort = false;
+      AutoSort = false
     }
   }
 
@@ -124,7 +130,6 @@ trait DAG {
       val SortedForwardRegion =
         (if(HeapSort) findSortedForwardRegion(to, from.Position)
          else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
-
 
       val SortedBackwardsRegion =
         (if (HeapSort) findSortedBackwardRegion(from, to.Position)
@@ -228,7 +233,7 @@ trait DAG {
   private def findSortedForwardRegion(n: DAGNode, ub: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
-    h.dropAll
+    h.dropAll()
     h.keyGetter = ((n:DAGNode) => n.Position)
 
     var toreturn:List[DAGNode] = List.empty
@@ -272,7 +277,7 @@ trait DAG {
   private def findSortedBackwardRegion(n: DAGNode, lb: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
-    h.dropAll
+    h.dropAll()
     h.keyGetter = ((n:DAGNode) => -n.Position)
 
     var toreturn:List[DAGNode] = List.empty

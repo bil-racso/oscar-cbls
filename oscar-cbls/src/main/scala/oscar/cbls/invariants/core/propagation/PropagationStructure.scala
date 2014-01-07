@@ -20,9 +20,9 @@
 
 package oscar.cbls.invariants.core.propagation
 
-import oscar.cbls.invariants.core.algo.dag._;
+import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.tarjan._
-import oscar.cbls.invariants.core.algo.dll._;
+import oscar.cbls.invariants.core.algo.dll._
 import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
@@ -60,11 +60,11 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing.
- * @param Checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
+ * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
  * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -86,13 +86,13 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     MaxID
   }
 
-  private var acyclic: Boolean = false;
+  private var acyclic: Boolean = false
 
   /**@return true if the propagation structure consider that his graph is acyclic, false otherwise.
    * call this after the call to setupPropagationStructure
    * If the propagation structure has been created with NoCycle set to true, this will return true
    */
-  def isAcyclic: Boolean = acyclic;
+  def isAcyclic: Boolean = acyclic
 
   /**return the summed stalls of all SCC.
    * A stall is when the SCC is unable to maintain the topological sort incrementally,
@@ -117,8 +117,6 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
       println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
     }
 
-    buildFastPropagationTracks()
-
     val StrognlyConnectedComponents: List[List[PropagationElement]] =
       if (NoCycle) {
         if (Verbose) {
@@ -138,22 +136,24 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
       ((acc, component) => acc + component.size))
 
     //tri topologique sur les composantes fortement connexes
-    acyclic = true;
-    StronglyConnexComponentsList = List.empty;
+    acyclic = true
+    StronglyConnexComponentsList = List.empty
     val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {
-        acyclic = false;
+        acyclic = false
         val c = new StronglyConnectedComponent(a, this, GetNextID())
         StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
     })
 
+    buildFastPropagationTracks()
+
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
-    var LayerCount = 0;
+    var LayerCount = 0
     if (TopologicalSort){
       computePositionsThroughTopologialSort(ClusteredPropagationComponents)
     }else{
@@ -188,7 +188,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
     ScheduledElements = List.empty
     for (e <- getPropagationElements) {
-      e.rescheduleIfNeeded
+      e.rescheduleIfNeeded()
     }
     for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
@@ -210,7 +210,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     }
     if (Position != ClusteredPropagationComponents.size) {
       if (NoCycle){
-        throw new Exception("cycle detected in propagation graph although NoCycle was set to true")
+        throw new Exception("cycle detected in propagation graph, please set NoCycle flag to false when declaring your model")
       }else{
         throw new Exception("internal bug")
       }
@@ -279,6 +279,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
 
   private var PreviousPropagationTarget: PropagationElement = null
 
+
+  def isPropagating:Boolean = Propagating
+
   /**triggers the propagation in the graph.
    * this method will do nothing if called before setupPropagationStructure
    * if UpTo set to a PropagationElement,
@@ -288,7 +291,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
    */
   final def propagate(UpTo: PropagationElement = null) {
     if (!Propagating) {
-      if (UpTo != null) { //TODO: if nothing before, just propagate the element and stop this.
+      if (UpTo != null) {
         val Track = FastPropagationTracks.getOrElse(UpTo, null)
         val SameAsBefore = (Track != null && (PreviousPropagationTarget == UpTo))
         propagateOnTrack(Track, SameAsBefore)
@@ -395,7 +398,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
     if (Verbose) println("PropagationStruture: end propagation")
 
     if (Track == null) {
-      Checker match{
+      checker match {
         case Some(c) =>
           for (p <- getPropagationElements) {
             p.checkInternals(c)
@@ -415,7 +418,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
    * initially true to avoid spurious propagation during the construction of the data structure;
    * set to false by setupPropagationStructure
    */
-  private var Propagating: Boolean = true
+  var Propagating: Boolean = true
 
   /**this variable is set by the propagation element to notify that they are propagating.
    * it is used to ensure that no propagation element perform illegal operation
@@ -518,8 +521,8 @@ abstract class PropagationStructure(val Verbose: Boolean, val Checker:Option[che
  * because the instantiated array will be very large compared to your benefits.
  * This might kill cache and RAM for nothing
  *
- * @param MaxNodeID
- * @tparam T
+ * @param MaxNodeID the maxial ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
+ * @tparam T the type stored in this structure
  */
 class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   private val storage:Array[T] = new Array[T](MaxNodeID-1)
@@ -567,16 +570,18 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def getStalls = Stalls
 
   def addDependency(from:PropagationElement, to:PropagationElement){
-    try{
-      notifyAddEdge(from,to)
-    }catch{
-      case c:CycleException => {
-        //This can happen if we perform heavy changes to the dependencies in a careless way,
-        // eg: reloading a previous model.
-        // We wait for the dependencies to be stable, when the propagation is performed.
-
-        autoSort = false
-        Stalls +=1
+    if(autoSort){
+      try{
+        notifyAddEdge(from,to)
+      }catch{
+        case c:CycleException => {
+          //This can happen if we perform heavy changes to the dependencies in a careless way,
+          // eg: reloading a previous model.
+          // We wait for the dependencies to be stable, when the propagation is performed.
+          println("cycle in SCC, reverting to differed non-incremental sort")
+          autoSort = false
+          Stalls +=1
+        }
       }
     }
   }
@@ -593,8 +598,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
     ScheduledElements = List.empty
 
-    var maxposition:Int = -1;
-    
+    var maxposition:Int = -1
+
     while (!h.isEmpty) {
       val x = h.popFirst()
       x.propagate()
@@ -629,8 +634,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override private[core] def rescheduleIfNeeded() {}
   //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
 
-  override def checkInternals(c:checker){
-    for(e <-Elements){e.checkInternals(c)}
+  override def checkInternals(c: Checker) {
+    for (e <- Elements) { e.checkInternals(c) }
   }
 }
 
@@ -796,7 +801,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
       if (p == q) return true
       if (q.isInstanceOf[BulkPropagator] && depth > 0 && q.isStaticPropagationGraphOrBulked(p, depth - 1)) return true
     }
-    false;
+    false
   }
 
   /**
@@ -890,7 +895,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   /**Performs the propagation, and some bookkeeping around it.
    */
   final def propagate() {
-    assert(isScheduled)
+    assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({getPropagationStructure.PropagatingElement = this; true})
     if (getPropagationStructure.Verbose) println("PropagationStruture: propagating [" + this + "]")
@@ -913,7 +918,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
    * that the incremental computation they perform through the performPropagation method is correct
    * overriding this method is optional, so an empty body is provided by default
    */
-  def checkInternals(c:checker) {
+  def checkInternals(c: Checker) {
     ;
   }
 
@@ -928,6 +933,6 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
  **/
 trait BulkPropagator extends PropagationElement
 
-abstract trait checker{
-  def check(b:Boolean)
+abstract trait Checker {
+  def check(verity: Boolean, traceOption: Option[String] = None)
 }

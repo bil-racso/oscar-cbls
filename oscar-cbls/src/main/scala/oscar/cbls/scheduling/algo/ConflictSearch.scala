@@ -44,7 +44,7 @@ object ConflictSearch {
   /**init includes items*/
   private def search[S,C](init:S,
                           items:List[C],
-                          toInject:List[C],
+                          toInject:Iterable[C],
                           inject:(S, C)=>S,
                           isConflict:S=>Boolean):List[C] = {
 
@@ -53,9 +53,9 @@ object ConflictSearch {
     var accumulator = init
     var ListA:List[C] = List.empty
     var ListB:List[C] = List.empty
-    var fillA = true;
-    var remaining = toInject;
-    
+    var fillA = true
+    var remaining = toInject
+
     while(true){
       if(remaining.isEmpty) throw new Exception("no conflict")
       val item = remaining.head

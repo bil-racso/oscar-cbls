@@ -20,8 +20,8 @@
 
 package oscar.cbls.invariants.core.algo.tarjan
 
-import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+import collection.immutable.SortedSet
+import collection.immutable.SortedMap
 
 class Tarjan[T]( implicit A:Ordering[T]){ // <: Ordered[T]]{
 
@@ -75,6 +75,6 @@ class Tarjan[T]( implicit A:Ordering[T]){ // <: Ordered[T]]{
 //      Components = SortedSet(n) :: Components
 //    }}
 
-    Components;
+    Components
   }
 }
