@@ -368,6 +368,8 @@ trait UnroutedImpl extends VRP with Unrouted {
  * Maintains and fixes a penalty weight of unrouted nodes.
  */
 trait PenaltyForUnrouted extends VRP with Unrouted {
+  assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
+
   /**
    * the data structure array which maintains penalty of nodes.
    */
