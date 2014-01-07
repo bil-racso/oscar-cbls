@@ -746,8 +746,6 @@ class InvBench(verbose: Int = 0) {
     genIntVars(nbVars, range, isInput, constraint).toArray
   }
 
-  implicit val intVarOrdering: Ordering[IntVar] = Ordering.by(_.value)
-
   /**
    * Method for generating a sorted set of random IntVar to add to the bench
    * and to its model.
@@ -760,7 +758,7 @@ class InvBench(verbose: Int = 0) {
     val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
     addVar(isInput, riVars)
     val iVars = riVars.map((riv: RandomIntVar) => { riv.randomVar })
-    SortedSet(iVars: _*)(intVarOrdering)
+    SortedSet(iVars: _*)
   }
 
   def genBoundedValues(
