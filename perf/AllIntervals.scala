@@ -87,20 +87,18 @@ object AllIntervals {
       cp.add(x(0) < x(n - 1))
       cp.add(diffs(0) < diffs(1))
 
-    } exploration {
+    } search {
 
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
       print("x:" + x.mkString(""))
       print("  diffs:" + diffs.mkString(""))
       println()
 
       numSols += 1
 
-    } run (1)
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    } 
+    println(cp.start(1))
 
   }
 

@@ -15,7 +15,7 @@
 
 
 import oscar.cp.modeling._
-import oscar.search._
+import oscar.algo.search._
 import oscar.cp.core._
 import scala.io.Source
 import scala.io.Source
@@ -77,11 +77,9 @@ object BACP {
           cp.add(x(i) < x(j)) // precedence constraint
         }
         cp.add(gcc(x,periods,5,7),Strong)
-    } exploration {
-        cp.binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
-    } run()
-    
-    cp.printStats
+    } search {
+        binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
+    } start()
     
   }
 

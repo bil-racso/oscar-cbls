@@ -88,13 +88,10 @@ object Rack {
       }
 
 
-    } exploration {
-      cp.binaryFirstFail(rack)
-      cp.binaryFirstFail(counters.flatten)
-    } run()
-
-
-    cp.printStats()
+    } search {
+      binaryFirstFail(rack) ++ binaryFirstFail(counters.flatten.toSeq)
+    } 
+    println(cp.start())
 
 
   }
