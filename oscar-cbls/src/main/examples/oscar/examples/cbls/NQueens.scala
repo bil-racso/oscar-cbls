@@ -46,7 +46,7 @@ import oscar.cbls.invariants.core.computation.IntSetVar._
 object NQueens extends SearchEngine(true) with StopWatch with App{
 
   if (args.length<1) {
-    println("Benchmarking NQueen - this takes time");
+    println("Benchmarking NQueen - this takes time")
 
     // first run could have some overhead so ignoring it
     SolveNQueen(1000)
@@ -69,7 +69,7 @@ object NQueens extends SearchEngine(true) with StopWatch with App{
 
     val m: Model = new Model(false,None,true)
     val it:Iterator[Int] = getRandomPermutation(N)
-    val Queens:Array[IntVar] = (for (q <- range) yield new IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
+    val Queens:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
     val c:ConstraintSystem = new ConstraintSystem(m)
 
