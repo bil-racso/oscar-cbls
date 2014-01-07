@@ -127,7 +127,6 @@ class Planning(val model: Model, val maxduration: Int) {
   override def toString: String = toAsciiArt
 
   def toAsciiArt: String = {
-    var toreturn: String = ""
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
     val activityList = Activities.filter(_!=SentinelActivity).sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value)
@@ -154,7 +153,6 @@ class Planning(val model: Model, val maxduration: Int) {
     }
     toreturn
   }
-
 
   /**
    * Checks that a dependence from --> to can be added to the graph,
