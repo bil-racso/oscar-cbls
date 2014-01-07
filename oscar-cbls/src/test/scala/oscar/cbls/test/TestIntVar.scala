@@ -16,7 +16,7 @@ package oscar.cbls.test
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
-import oscar.cbls.modeling.{LSSolver,LSVarInt}
+import oscar.cbls.modeling._
 import oscar.cbls.invariants.core.computation.IntVar
 
 class TestIntVar extends FunSuite with ShouldMatchers {
