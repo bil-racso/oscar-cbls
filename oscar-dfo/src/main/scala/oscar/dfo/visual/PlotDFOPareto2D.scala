@@ -40,13 +40,15 @@ class PlotDFOPareto2D[E <% Ordered[E]] (
     highlight(iterate.getMOOPoint.getEvaluation(0).asInstanceOf[Double], iterate.getMOOPoint.getEvaluation(1).asInstanceOf[Double])
   }
 
-  def update(archive: ParetoFront[E], paretoIndex: Int = 0) {
+  def update(archive: Set[ArchiveElement[E]], paretoIndex: Int = 0) {
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
         removeAllPoints(paretoIndex)
-        addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
-        highLightIterate(currentIterate)
-        for (p <- archive.toSet) {
+        if (currentIterate != null) {
+          addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
+          highLightIterate(currentIterate)
+        }
+        for (p <- archive) {
           val x = p.getEvaluation(0).asInstanceOf[Double]
           val y = p.getEvaluation(1).asInstanceOf[Double]
           addPoint(x, y, paretoIndex)

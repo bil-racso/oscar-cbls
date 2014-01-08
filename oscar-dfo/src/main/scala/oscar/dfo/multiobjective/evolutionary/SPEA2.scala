@@ -29,7 +29,8 @@ import scala.collection.mutable.HashMap
 class SPEA2[E <% Ordered[E]](val evaluator: MOEvaluator[E],
 			val comparator: MOOComparator[E],
 			val populationSize: Int,
-			val archiveSize: Int
+			val archiveSize: Int,
+			val mutationProba: Double
 	  ) extends EvolutionaryAlgorithm[E] {
   
   def optimizeMOO(maxIters: Int, maxEvals: Int): Set[MOOPoint[E]] = {
@@ -37,16 +38,20 @@ class SPEA2[E <% Ordered[E]](val evaluator: MOEvaluator[E],
     while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
+      println(nbIterations)
+      println(archive.sortWith((e1, e2) => e1.getEvaluation(0) <= e2.getEvaluation(0)).map(elem => elem.getMOOPoint.evaluations.mkString("(", ", ", ")")).mkString("; "))
     }
     archive.map(elem => elem.getMOOPoint).toSet
   }
   
   def performIteration(iterationNumber: Int): Unit = {
     val (fitnessValues, distances) = getFitnessValues
-    val newArchive = getNewArchive(fitnessValues, distances)
+    updateArchive(fitnessValues, distances)
+    updatePopulation(fitnessValues: List[(EvolutionaryElement[E], Double)])
   }
   
-  def getNewArchive(fitnessValues: List[(EvolutionaryElement[E], Double)], distances: HashMap[ArchiveElement[E], (Double, Array[Double])]): Unit = {
+  
+  def updateArchive(fitnessValues: List[(EvolutionaryElement[E], Double)], distances: HashMap[ArchiveElement[E], (Double, Array[Double])]): Unit = {
     val potentialArchive = fitnessValues.filter(elem => elem._2 < 1).map(e => e._1)
     if (potentialArchive.length == archiveSize) {
       archive = potentialArchive
@@ -54,13 +59,13 @@ class SPEA2[E <% Ordered[E]](val evaluator: MOEvaluator[E],
     else if (potentialArchive.length < archiveSize) {
       archive = potentialArchive
       for (i <- potentialArchive.length until archiveSize) {
-        archive ::= fitnessValues(i)._1        
+        archive ::= fitnessValues(i)._1
       }
     }
     else {
       def distCmp(e1: EvolutionaryElement[E], e2: EvolutionaryElement[E]): Boolean = {
         def distCmpAux(index: Int): Boolean = {
-          if (index >= e1.getMOOPoint.nbCoordinates) true
+          if (index >= e1.nbCoordinates) true
           else {
             if (distances(e1)._2(index) > distances(e2)._2(index)) true
             else if (distances(e1)._2(index) < distances(e2)._2(index)) false
@@ -97,10 +102,10 @@ class SPEA2[E <% Ordered[E]](val evaluator: MOEvaluator[E],
   }
   
   def densityAndDistance(allPoints: Array[EvolutionaryElement[E]]): HashMap[ArchiveElement[E], (Double, Array[Double])] = {
-    def euclidianDistance(e1: ArchiveElement[E], e2: ArchiveElement[E]): Double = {
+    def euclidianDistance(e1: EvolutionaryElement[E], e2:EvolutionaryElement[E]): Double = {
       var sum = 0.0
       for (i <- 0 until e1.nbCoordinates) {
-        sum += math.pow(e1.getMOOPoint.coordinates(i) - e2.getMOOPoint.coordinates(i), 2.0)
+        sum += math.pow(e1.getCoordinates(i) - e2.getCoordinates(i), 2.0)
       }
       math.sqrt(sum)
     }
@@ -135,8 +140,16 @@ object SPEA2 {
       evaluator: MOEvaluator[E],
       comparator: MOOComparator[E],
       populationSize: Int,
+      archiveSize: Int,
+      mutationProba: Double
+	): SPEA2[E] = new SPEA2(evaluator, comparator, populationSize, archiveSize, mutationProba)
+  
+  def apply[E <% Ordered[E]](
+      evaluator: MOEvaluator[E],
+      comparator: MOOComparator[E],
+      populationSize: Int,
       archiveSize: Int
-	): SPEA2[E] = new SPEA2(evaluator, comparator, populationSize, archiveSize)
+	): SPEA2[E] = new SPEA2(evaluator, comparator, populationSize, archiveSize, 0.1)
     
   var onArchChan: (ParetoFront[_]) => Unit = {newArchive: ParetoFront[_] => }
   

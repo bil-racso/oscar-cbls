@@ -14,6 +14,9 @@ class EvolutionaryElement[E](val point: MOOPoint[E]) extends ArchiveElement[E] {
   
   /** The evaluation at the index referenced by functionIndex contained in the MOOPoint of the triplet */
   def getEvaluation(functionIndex: Int): E = point.getEvaluation(functionIndex)
+  
+  /** The coordinates of the point */
+  def getCoordinates: Array[Double] = point.coordinates
 }
 
 object EvolutionaryElement {

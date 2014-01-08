@@ -79,4 +79,24 @@ class SPEA2Test extends FunSuite with ShouldMatchers {
     densityAndDistanceMap(allPoints(2))._2 should be (Array(0.0, math.sqrt(5.0), math.sqrt(13.0)))
   }
   
+  test("getFitnessValues should return correct fitness, distance and density values") {
+    val dummyCoordArray = Array(Array(0.0, 2.0), Array(1.0, 1.0), Array(3.0, 0.0))
+    val allPoints = Array.tabulate(dummyCoordArray.length)(i =>
+      EvolutionaryElement(MOOPoint(dummyCoordArray(i), identity(dummyCoordArray(i)))))
+    val spea2 = SPEA2(evaluator, comparator, 3, 3)
+    spea2.population = allPoints.toList
+    val (orderedPointList, densityAndDistanceMap) = spea2.getFitnessValues
+    var minFitValue = Double.MinValue
+    for ((point, fitnessValue) <- orderedPointList) {
+      assert(fitnessValue >= minFitValue)
+      minFitValue = fitnessValue
+    }
+    densityAndDistanceMap(allPoints(0))._1 should be (1.0 / (math.sqrt(2.0) + 2.0))
+    densityAndDistanceMap(allPoints(1))._1 should be (1.0 / (math.sqrt(2.0) + 2.0))
+    densityAndDistanceMap(allPoints(2))._1 should be (1.0 / (math.sqrt(5.0) + 2.0))
+    densityAndDistanceMap(allPoints(0))._2 should be (Array(0.0, math.sqrt(2.0), math.sqrt(13.0)))
+    densityAndDistanceMap(allPoints(1))._2 should be (Array(0.0, math.sqrt(2.0), math.sqrt(5.0)))
+    densityAndDistanceMap(allPoints(2))._2 should be (Array(0.0, math.sqrt(5.0), math.sqrt(13.0)))
+  }
+  
 }
