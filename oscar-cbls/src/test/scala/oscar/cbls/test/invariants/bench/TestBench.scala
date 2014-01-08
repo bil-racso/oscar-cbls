@@ -154,7 +154,7 @@ case class RandomIntVar(intVar: IntVar,
         else applyConstraint(randomVar.maxVal)
       }
       case ToZero() => {
-        applyConstraint(0)
+        if (randomVar.domain.contains(0)) applyConstraint(0)
       }
       case ToMax() => {
         applyConstraint(randomVar.maxVal)

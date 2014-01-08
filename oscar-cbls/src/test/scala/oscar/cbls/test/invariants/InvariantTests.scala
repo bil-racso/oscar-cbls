@@ -412,9 +412,9 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new RoundUpModulo(
       bench.genIntVar(0 to 10),
-      bench.genIntVar(0 to 10),
-      Gen.choose(0, 10).sample.get,
-      Gen.choose(0, 10).sample.get,
+      bench.genIntVar(0 to 5),
+      Gen.choose(10, 20).sample.get,
+      Gen.choose(1, 5).sample.get,
       Gen.choose(0, 10).sample.get).toIntVar
     bench.run
   }
@@ -423,8 +423,8 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new RoundUpCustom(
       bench.genIntVar(0 to 10),
-      bench.genIntVar(0 to 10),
-      InvGen.randomTuples(10, 0 to 10)).toIntVar
+      bench.genIntVar(1 to 10),
+      InvGen.randomTuples(10, 0 to 10).map(ab => (ab._1,ab._1 + ab._2))).toIntVar
     bench.run
   }
 
