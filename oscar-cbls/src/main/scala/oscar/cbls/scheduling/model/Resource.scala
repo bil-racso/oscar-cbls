@@ -33,5 +33,7 @@ abstract class Resource(planning:Planning, n:String) {
   /**you need to eject one of these to solve the conflict
     * this can be null if the problem is actually solved in between, or if the problem cannot be solved*/
   def conflictingActivities(t:Int):Iterable[Activity]
+
+  def toAsciiArt(headerLength:Int):String
 }
 
