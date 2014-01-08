@@ -270,9 +270,18 @@ trait NumericInvariants{
     * @param zone the size of the forbidden zone. it starts at the beginning of the period
     * @param shift the first period starts later than zero. it starts at shift. the duration before its start is allowed.
     */
-  def roundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int) = RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
 
-//  def roundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)]) = RoundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)])
+    def roundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int) = RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
+
+  /**Maintains output to the smallest value such that
+    * output >= from
+    * the interval [output ; output + length] does not overlap with the intervals given in FobiddenZones
+    *
+    * @param from
+    * @param duration
+    * @param ForbiddenZones
+    */
+  def roundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(Int, Int)]) = RoundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(Int, Int)])
 
   /**
    * This invariant implements a step function. Values higher than pivot are mapped to ifval
