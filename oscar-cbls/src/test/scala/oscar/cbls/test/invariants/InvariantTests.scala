@@ -419,14 +419,14 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("RoundUpCustom") {
+ /* test("RoundUpCustom") {
     val bench = new InvBench(verbose)
     new RoundUpCustom(
       bench.genIntVar(0 to 10),
       bench.genIntVar(0 to 10),
       InvGen.randomTuples(10, 0 to 10)).toIntVar
     bench.run
-  }
+  }*/
 
   test("Union maintains the union of two sets.") {
     val bench = new InvBench(verbose)
