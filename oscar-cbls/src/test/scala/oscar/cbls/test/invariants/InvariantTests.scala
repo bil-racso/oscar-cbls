@@ -420,11 +420,11 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("RoundUpCustom") {
-    val bench = new InvBench(verbose)
+    val bench = new InvBench(2)
     new RoundUpCustom(
       bench.genIntVar(0 to 10),
-      bench.genIntVar(0 to 10),
-      InvGen.randomTuples(10, 0 to 10)).toIntVar
+      bench.genIntVar(1 to 10),
+      InvGen.randomTuples(10, 0 to 10).map(ab => (ab._1,ab._1 + ab._2))).toIntVar
     bench.run
   }
 
