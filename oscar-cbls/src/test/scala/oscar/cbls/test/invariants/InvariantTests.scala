@@ -56,7 +56,6 @@ import oscar.cbls.invariants.lib.minmax.MaxArray
 import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
-import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 import oscar.cbls.constraints.lib.basic.BelongsTo
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.constraints.lib.basic.GE
