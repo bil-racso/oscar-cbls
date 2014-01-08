@@ -48,7 +48,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  */
  case class RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
   extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
-    assert(duration < period - zone)
+    require(duration <= period - zone, "duration " + duration + "<= period " + period  + "- zone " + zone)
+    require(period != 0)
     val reducedfrom = (from + period - shift) % period
     if (reducedfrom < zone)
       from + (zone - reducedfrom) //to restore the modulo, we must compute this
@@ -92,6 +93,7 @@ object testRoundUpModulo extends App{
   * output >= from
   * the interval [output ; output + length] does not overlap with the intervals given in FobiddenZones
   *
+  *Warning: the duration should never be zero.
   *
  * @param from
  * @param duration
