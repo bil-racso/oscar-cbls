@@ -45,7 +45,7 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   
   for(i <- start.indices)insert(start(i).value, duration(i).value, amount(i).value, i)
 
-  def remove(start:Int, duration:Int, amount:Int,index:Int){
+  def remove(start:Int, duration:Int, amount:Int, index:Int){
     for (t <- start until (start + duration)){
       profile(t) :-= amount
       active(t).deleteValue(indices(index))
@@ -54,13 +54,14 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
 
   def insert(start:Int, duration:Int, amount:Int, index:Int){
     for (t <- start until (start + duration)){
+      //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
       profile(t) :+= amount
       active(t).insertValue(indices(index))
     }
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:IntVar, index:Int, OldVal:Int, NewVal:Int){
     if (start(index) == v){
       //start
       remove(OldVal, duration(index).value, amount(index).value, index)
@@ -82,4 +83,3 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   }
   //TODO: checkInternals.
 }
-

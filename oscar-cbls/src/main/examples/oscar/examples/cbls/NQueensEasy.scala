@@ -24,6 +24,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.core._
 import oscar.cbls.modeling._
 import oscar.util._
+import oscar.cbls.invariants.core.computation.IntVar
 
 /**
  * Local Search for NQueens
@@ -40,7 +41,7 @@ object NQueensEasy extends App{
     
     val ls = new LSSolver()
     val init = rand.shuffle((0 to N-1).toList).toArray // initial solution
-    val queens = Array.tabulate(N)(q => new LSVarInt(ls, 0, N-1,init(q),"queen" + q))
+    val queens = Array.tabulate(N)(q => IntVar(ls, 0, N-1,init(q),"queen" + q))
     val c = new ConstraintSystem(ls)
 
     //alldiff on rows in enforced because we swap queens initially different
@@ -53,15 +54,15 @@ object NQueensEasy extends App{
     c.close()
     ls.close()
 
-  //this tabu search is a bit simplistic: does not use the invariants for maintining Tabu...
-  //and max violated queens might be all tabu
+    //this tabu search is a bit simplistic: does not use the invariants for maintaining Tabu...
+    //and max violated queens might be all tabu
 
     val pairs = (0 until N) x  (0 until N)
-    
+   
     var it = 0
     val tabu = Array.fill(N,N)(0)
     val tenure = 3
-    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) >= it 
+    def isNotTabu(pair: (Int,Int)) = pair._1 < pair._2 && tabu(pair._1)(pair._2) <= it 
     
     while(c.violation.value > 0){
       val (q1,q2) = selectMin(pairs)(q => isNotTabu(q))(q => c.swapVal(queens(q._1),queens(q._2))).get      
@@ -71,6 +72,4 @@ object NQueensEasy extends App{
     }
     println("number of iterations:"+it)
     println(queens.mkString(","))
-
-  
 }
