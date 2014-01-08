@@ -154,6 +154,9 @@ class Planning(val model: Model, val maxduration: Int) {
     toreturn
   }
 
+  def resourceUsage:String = {
+    resources.map(_.toAsciiArt(20)).mkString
+  }
   /**
    * Checks that a dependence from --> to can be added to the graph,
    * assuming that there is a resource conflict involving them

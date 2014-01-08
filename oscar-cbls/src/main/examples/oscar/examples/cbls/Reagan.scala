@@ -88,6 +88,8 @@ object Reagan extends App {
   solver.Solve(15, 10, 2, 50)
 
   println(planning.toAsciiArt)
+  println(planning.resourceUsage)
   println(planning.dependencies)
+
 }
 

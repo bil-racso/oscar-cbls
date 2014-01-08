@@ -94,5 +94,21 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
       useAmount,
       use)
   }
+
+  def toAsciiArt(headerLength: Int): String = {
+    def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
+    def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+
+    var lines:List[String] = List.empty
+
+    for(i <- 1 to MaxAmount){
+      //header
+      lines =
+        ("" + padToLength(if (i == MaxAmount)n else "", 21)
+        + "|" + padToLength("" + i, 9) + "| " + useAmount.toList.map((v:IntVar) => if(v.value >= i) "+" else " ").mkString + "\n"
+        ):: lines
+    }
+    lines.mkString
+  }
 }
 

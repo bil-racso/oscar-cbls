@@ -395,7 +395,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
 }
 
 trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
-  def getDistance(from: Int, to: Int): Int = getHop(from, to)
+  final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
 
 /**
@@ -404,7 +404,7 @@ trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
  */
 abstract trait ClosestNeighborPoints extends VRP {
 
-  def getDistance(from: Int, to: Int): Int
+  protected def getDistance(from: Int, to: Int): Int
   /**
    * the data structure which maintains the k closest neighbors of each point.
    */
