@@ -75,7 +75,7 @@ object CookieMonster {
         cp.add(lexLeq(bx(m + 1), bx(m)))
       }
     }
-    solve search {
+    search {
       binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
     }
 

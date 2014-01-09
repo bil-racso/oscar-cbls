@@ -39,7 +39,8 @@ class UnitResource(scheduler : CPScheduler, name : String = null) extends Resour
 	}
 
 	override def setup() {
-		scheduler.add(unaryResource(activities))
+	    val act = activities.toArray
+		scheduler.add(unaryResource(act.map(_.start),act.map(_.dur),act.map(_.end)))
 		scheduler.add(cumulative(activities.map(act => CumulativeActivity(act, id, 1)), id, max = 1))
 	}
 
