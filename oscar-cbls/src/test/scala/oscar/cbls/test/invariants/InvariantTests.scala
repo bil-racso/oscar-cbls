@@ -78,8 +78,6 @@ class InvariantTests extends FunSuite with Checkers {
 
   val verbose = 0
 
-
-
   test("BelongsTo maintains the violation of a membership.") {
     val bench = new InvBench(verbose)
     new BelongsTo(bench.genIntVar(0 to 10), bench.genIntSetVar(5, 0 to 10)).toIntVar
