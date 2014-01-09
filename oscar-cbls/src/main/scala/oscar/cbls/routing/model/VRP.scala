@@ -368,6 +368,8 @@ trait UnroutedImpl extends VRP with Unrouted {
  * Maintains and fixes a penalty weight of unrouted nodes.
  */
 trait PenaltyForUnrouted extends VRP with Unrouted {
+  assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
+
   /**
    * the data structure array which maintains penalty of nodes.
    */
@@ -393,7 +395,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
 }
 
 trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
-  def getDistance(from: Int, to: Int): Int = getHop(from, to)
+  final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
 
 /**
@@ -402,7 +404,7 @@ trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
  */
 abstract trait ClosestNeighborPoints extends VRP {
 
-  def getDistance(from: Int, to: Int): Int
+  protected def getDistance(from: Int, to: Int): Int
   /**
    * the data structure which maintains the k closest neighbors of each point.
    */

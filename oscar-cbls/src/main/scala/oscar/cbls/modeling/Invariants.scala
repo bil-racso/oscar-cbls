@@ -249,14 +249,39 @@ trait NumericInvariants{
   def abs(v:IntVar) = Abs(v:IntVar)
 
   /**Maintains output to the smallest value such that
-   * output >= from
-   * (output - shift) MOD period > zone
-   * (output - shift + length) MOD period > zone
-   * of course, it is required that length is < period - zone, and exception is thrown otherwise.
-   */
-  def roundUpModulo(from: IntVar, length: IntVar, period: Int, zone: Int, shift: Int) = RoundUpModulo(from: IntVar, length: IntVar, period: Int, zone: Int, shift: Int)
+    * output >= from
+    * (output - shift) MOD period > zone
+    * (output - shift + length) MOD period > zone
+    * of course, it is required that length is < period - zone, and exception is thrown otherwise.
+    *
+    * For instance, suppose that some task can only happen during open day (Mon-Fri),
+    * let 'from" being the lowest starting date, and 'length' its duration.
+    * the invariant will check that the task can be finished by friday of the week, and if not,
+    * will propose the next monday. 'shift' specifies says what is the starting day at zero.
+    * zone is the forbidden zone. it starts at the beginning of the cycle.
+    *
+    * for instance, suppose you represent days starting from zero, and zero is a monday,
+    * and you want to round up to the next open day (sa and su are closed day, the correct declaration is:
+    * RoundUpModulo(from,duration,7,2,5)
+    *
+    * @param from the starting date of the task. it can start later.
+    * @param duration the duration of the task.
+    * @param period the period of the forbidden-allowed pattern
+    * @param zone the size of the forbidden zone. it starts at the beginning of the period
+    * @param shift the first period starts later than zero. it starts at shift. the duration before its start is allowed.
+    */
 
-  def roundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)]) = RoundUpCustom(from: IntVar, length: IntVar, Zone: List[(Int, Int)])
+    def roundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int) = RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
+
+  /**Maintains output to the smallest value such that
+    * output >= from
+    * the interval [output ; output + length] does not overlap with the intervals given in FobiddenZones
+    *
+    * @param from
+    * @param duration
+    * @param ForbiddenZones
+    */
+  def roundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(Int, Int)]) = RoundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(Int, Int)])
 
   /**
    * This invariant implements a step function. Values higher than pivot are mapped to ifval

@@ -37,6 +37,7 @@ import scala.math.abs
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LEA(val left: IntVar, val right: IntVar) extends Constraint {
+  model = InvariantHelper.findModel(List(left,right))
 
   registerConstrainedVariables(left, right)
 
@@ -80,6 +81,7 @@ case class GE(l: IntVar, r: IntVar) extends LEA(r, l)
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
 protected class LA(val left: IntVar, val right: IntVar) extends Constraint {
+  model = InvariantHelper.findModel(List(left,right))
   registerConstrainedVariables(left, right)
 
   val Violation: IntVar = Max2(0, left - right + 1)
@@ -152,7 +154,7 @@ case class NE(left: IntVar, right: IntVar) extends Constraint {
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
 case class EQ(left: IntVar, right: IntVar) extends Constraint {
-
+  model = InvariantHelper.findModel(List(left,right))
   registerConstrainedVariables(left, right)
   finishInitialization()
 
