@@ -39,11 +39,12 @@ object BestInsert {
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
+  def apply(vrp: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
     print("(BestInsert) ")
     val relevantNeighbors = (n: Int) => vrp.nodes
     while (true) {
       InsertPoint.bestImprovingMove(
+        //SearchZone(relevantNeighbors, vrp.unrouted.value.toIterator, vrp)) match {
         SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
           case Some(m) => m.doMove
           case None => return
