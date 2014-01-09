@@ -38,8 +38,6 @@ class SPEA2[E <% Ordered[E]](val evaluator: MOEvaluator[E],
     while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
-      println(nbIterations)
-      println(archive.sortWith((e1, e2) => e1.getEvaluation(0) <= e2.getEvaluation(0)).map(elem => elem.getMOOPoint.evaluations.mkString("(", ", ", ")")).mkString("; "))
     }
     archive.map(elem => elem.getMOOPoint).toSet
   }
