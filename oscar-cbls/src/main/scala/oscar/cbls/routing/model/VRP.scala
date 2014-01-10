@@ -378,7 +378,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val UnroutedPenalty: IntVar = SumElements(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty: IntVar = SumElements(weightUnroutedPenalty, unrouted)
 
   /**
    * It allows you to set the penalty of a given point.

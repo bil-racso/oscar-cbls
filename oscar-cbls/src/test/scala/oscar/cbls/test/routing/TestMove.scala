@@ -583,7 +583,7 @@ class MoveFixture(
 
   val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted with MoveDescription
 
-  vrp.addObjectiveTerm(vrp.UnroutedPenalty)
+  vrp.addObjectiveTerm(vrp.unroutedPenalty)
   vrp.setUnroutedPenaltyWeight(10000)
   vrp.installCostMatrix(matrix)
   model.close()
