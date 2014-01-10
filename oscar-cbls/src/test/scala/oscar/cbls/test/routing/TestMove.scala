@@ -326,7 +326,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     }) {
       (f: MoveFixture) =>
         val relevantNeighbors = (n: Int) => f.vrp.nodes
-        new TwoOptNeighborhood().firstImprovingMove(
+        TwoOptNeighborhood.firstImprovingMove(
           SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
             case Some(m) => {
               m.isInstanceOf[TwoOptMove] should be(true)
@@ -343,7 +343,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   moveTest("A first two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
-      new TwoOptNeighborhood().firstImprovingMove(
+      TwoOptNeighborhood.firstImprovingMove(
         SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
           case Some(m) => {
             m.isInstanceOf[TwoOptMove] should be(true)
@@ -360,7 +360,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   moveTest("A best two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
-      new TwoOptNeighborhood().bestImprovingMove(
+      TwoOptNeighborhood.bestImprovingMove(
         SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
           case Some(m) => {
             m.isInstanceOf[TwoOptMove] should be(true)
