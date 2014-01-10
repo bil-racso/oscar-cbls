@@ -28,7 +28,7 @@ object Queens extends CPModel with App {
   search(binaryFirstFail(queens))
   
   // Execution
-  val stats = start(nSolutions = 1)
+  val stats = start(nSols = 1)
 
   println(stats)
 }

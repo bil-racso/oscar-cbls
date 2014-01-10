@@ -49,7 +49,7 @@ class TestQueens extends FunSuite with ShouldMatchers  {
              }
            }
            val stat = cp.start()
-           stat.nbSols
+           stat.nSols
     }
     
     nbSol(7,Weak) should be(40)

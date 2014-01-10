@@ -65,7 +65,7 @@ class TestNumberPartitioning extends FunSuite with ShouldMatchers  {
            } search {
              binaryStatic(x.reverse.map(_.asInstanceOf[CPVarInt]))
            } 
-           cp.start().nbSols
+           cp.start().nSols
        
     }
     

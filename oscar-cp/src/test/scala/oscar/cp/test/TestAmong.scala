@@ -45,7 +45,7 @@ class TestAmong extends FunSuite with ShouldMatchers  {
 	  } search {
 	    binaryStatic(X :+ N)
 	  }
-	  cp.start().nbSols
+	  cp.start().nSols
   }
   
   def randomDom = Array.fill(10)(rand.nextInt(10)).toSet

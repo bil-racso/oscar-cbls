@@ -75,7 +75,7 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
        wife.map(_.getValue) should be(Array(0,2,1,4,3))
        husband.map(_.getValue) should be(Array(0,2,1,4,3))
      } 
-     cp.start().nbSols should be(1)
+     cp.start().nSols should be(1)
     
   }
 

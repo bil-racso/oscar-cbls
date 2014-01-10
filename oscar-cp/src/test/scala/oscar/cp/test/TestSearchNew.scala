@@ -22,7 +22,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
       new BinaryFirstFailBranching(x)
     }
     val stat = cp.start()
-    stat.nbSols should be(1)
+    stat.nSols should be(1)
     nbSol should be(1)
   }
 
@@ -76,7 +76,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
       new BinaryStaticOrderBranching(Array(x), _.max)
     }
     val stat = cp.start()
-    stat.nbSols should be(4)
+    stat.nSols should be(4)
     best should be(1)
 
   }
@@ -98,6 +98,6 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
 
     val stat = cp.start()
     nbSol should equal(16)
-    stat.nbSols should be(16)
+    stat.nSols should be(16)
   }
 }

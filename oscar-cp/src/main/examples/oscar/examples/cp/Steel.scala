@@ -116,7 +116,7 @@ object Steel extends CPModel with App {
 
   }
 
-  val stats = start(nSolutions = 1) // find firest feasible solution
+  val stats = start(nSols = 1) // find firest feasible solution
 
   for (r <- 1 to 100) {
     startSubjectTo(failureLimit = 200) {

@@ -98,14 +98,14 @@ class SearchNode extends ReversibleContext {
   
   def beforeStartAction() = {}
   
-  def startSubjectTo (nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
+  def startSubjectTo (nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
     beforeStartAction()
     pushState()
     reversibleBlock
     val s = new Search(this,branchings)
     solCallBacks.foreach(b => s.onSolution(b()))
     s.onSolution(solFound())
-    val stats =  s.solveAll(nbSols = nbSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
+    val stats =  s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
     stats
   }
   

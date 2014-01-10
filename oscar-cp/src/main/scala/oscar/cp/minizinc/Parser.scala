@@ -2068,7 +2068,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    case "sat" => {
 	      val nbSolMax = 
 	          if (options.all) Int.MaxValue 
-	          else if (options.nSolutions > 0) options.nSolutions 
+	          else if (options.nSols > 0) options.nSols 
 	          else 1
 	      
 	      

@@ -60,7 +60,7 @@ object QuadraticAssignmentLNS extends CPModel with App {
   }
 
   // Search for an initial solution
-  start(nSolutions = 1)
+  start(nSols = 1)
 
   val rand = new scala.util.Random(0)
   var limit = 100 // set the limit to 100 backtracks for LNS restarts

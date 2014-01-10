@@ -51,5 +51,5 @@ object AudreyProblem extends CPModel with App {
   search { binaryFirstFail(x) }
   
   // Execution
-  start(nSolutions = 1)
+  start(nSols = 1)
 }

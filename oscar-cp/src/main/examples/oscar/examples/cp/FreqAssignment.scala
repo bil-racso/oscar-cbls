@@ -69,7 +69,7 @@ object FreqAssignment extends CPModel with App {
     }
   }
 
-  val stats = start(nSolutions = 1)
+  val stats = start(nSols = 1)
 
   println(stats)
 }

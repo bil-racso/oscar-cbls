@@ -31,7 +31,7 @@ class Options(args: Array[String]) {
 
   var timeOut = 0
 
-  var nSolutions = -1
+  var nSols = -1
   //println("<==>")
   if (args.length == 0) {
     System.out.println("fz2oscar: no model file specified");
@@ -71,7 +71,7 @@ class Options(args: Array[String]) {
         statistics = true
         i += 1
       } else if (oneOf("-n", "--num-solutions")) {
-        nSolutions = args(i + 1).toInt
+        nSols = args(i + 1).toInt
         i += 2
       } else if (oneOf("-v", "--verbose")) {
         verbose = true;

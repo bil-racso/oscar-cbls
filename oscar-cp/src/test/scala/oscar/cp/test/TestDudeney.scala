@@ -48,7 +48,7 @@ class TestDudeney extends FunSuite with ShouldMatchers  {
       sol.contains(nb.value) should be(true)
       nbSol += 1
     }
-    cp.start().nbSols should be(sol.size)
+    cp.start().nSols should be(sol.size)
 
     
   }  

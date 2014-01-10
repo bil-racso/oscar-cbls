@@ -71,7 +71,7 @@ object SportScheduling extends CPModel with App {
   var restart = 0
   val t = time {
     do {
-      start(nSolutions = 1, failureLimit = 5000)
+      start(nSols = 1, failureLimit = 5000)
       restart += 1
     } while (!solFound)
   }

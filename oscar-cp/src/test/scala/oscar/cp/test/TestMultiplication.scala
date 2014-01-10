@@ -41,7 +41,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     } onSolution {
       ((x.isBoundTo(-2) && y.isBoundTo(-50)) || (x.isBoundTo(2) && y.isBoundTo(50))) should be(true)
     }
-    cp.start().nbSols should be(2)
+    cp.start().nSols should be(2)
 
   }
   
@@ -89,7 +89,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
       nb1.value should be(428571)
       nb2.value should be(142857)      
     }
-    cp.start().nbSols should be(1)
+    cp.start().nSols should be(1)
     
     
   }    

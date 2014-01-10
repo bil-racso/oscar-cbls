@@ -98,8 +98,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
         decomp(cp,starts,durs,ends, resources,0)
       }
       
-      statCum.nbSols should be (statUnary.nbSols)
-      statUnaryDecomp.nbSols should be (statUnary.nbSols)
+      statCum.nSols should be (statUnary.nSols)
+      statUnaryDecomp.nSols should be (statUnary.nSols)
     }
 
      
@@ -138,8 +138,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
         unary(cp, starts, durs, ends)
       }
       
-      statDecomp.nbSols should be(statGlobal.nbSols)
-      statDecomp.nbSols should be(factorial(n))
+      statDecomp.nSols should be(statGlobal.nSols)
+      statDecomp.nSols should be(factorial(n))
     }
     for (i <- 0 until 10) {
       testPermutations(i)
@@ -178,7 +178,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 			expectedSol.contains(sol) should be(true)
 		}
 		
-		start().nbSols should be(4)
+		start().nSols should be(4)
 	}
 	
 	test("Test 2: durations") {	
@@ -213,7 +213,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 			expectedSol.contains(sol) should be(true)
 		}
 		
-		start().nbSols should be(4)
+		start().nSols should be(4)
 	}
 	
 	test("Test 3: durations") {	
@@ -270,7 +270,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 			expectedSol.contains(sol) should be(true)
 		}
 		println(start())
-		start().nbSols should be(24)
+		start().nSols should be(24)
 	}
 
   test("unary minimization with optional") {

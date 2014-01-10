@@ -80,7 +80,7 @@ object CookieMonster {
     }
 
     for (i <- 0 until maxMove; if nbSol == 0) {
-      startSubjectTo(nSolutions = 100000) {
+      startSubjectTo(nSols = 100000) {
         for (m <- i + 1 until maxMove) {
           if (m > i) post(x(m) == 0)
           else post(x(m) > 0)

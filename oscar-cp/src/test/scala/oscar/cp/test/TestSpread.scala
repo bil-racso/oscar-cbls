@@ -308,7 +308,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
       binaryFirstFail(x)
     } 
     val stat = cp.start()
-    stat.nbSols
+    stat.nSols
   }
 
 }

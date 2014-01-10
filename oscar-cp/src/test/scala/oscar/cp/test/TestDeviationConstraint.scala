@@ -47,7 +47,7 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
         cp.search {
           binaryFirstFail(x)
         } 
-        cp.start().nbSols
+        cp.start().nSols
     }
 
     def deviationDecomp(x: Array[CPVarInt], s: Int, nd: CPVarInt) {
