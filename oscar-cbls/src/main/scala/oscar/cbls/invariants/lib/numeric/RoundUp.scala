@@ -89,6 +89,7 @@ object testRoundUpModulo extends App{
   }
 }
 
+//TODO: proposer une approche en O(1)
 /**Maintains output to the smallest value such that
   * output >= from
   * the interval [output ; output + length] does not overlap with the intervals given in FobiddenZones
@@ -197,7 +198,6 @@ case class RoundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(I
     }
   }
 }
-
 
 object testRoundUpCustom extends App{
 
