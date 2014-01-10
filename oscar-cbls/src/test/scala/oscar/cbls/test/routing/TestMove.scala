@@ -26,21 +26,17 @@ package oscar.cbls.test.routing
 import scala.math.pow
 import scala.math.round
 import scala.math.sqrt
-
 import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
-
 import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.routing.initial.BestInsert
-import oscar.cbls.routing.initial.RandomNeighbor
+import oscar.cbls.routing.initial.RandomInsert
 import oscar.cbls.routing.model.ClosestNeighborPointsHop
 import oscar.cbls.routing.model.HopDistanceAsObjective
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.StrongConstraints
 import oscar.cbls.routing.model.Unrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
@@ -50,9 +46,8 @@ import oscar.cbls.routing.neighborhood.SearchZone
 import oscar.cbls.routing.neighborhood.Swap
 import oscar.cbls.routing.neighborhood.ThreeOpt
 import oscar.cbls.routing.neighborhood.TwoOptMove
-import oscar.cbls.routing.neighborhood.TwoOptMove
-import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
+import oscar.cbls.routing.initial.BestInsert
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -459,7 +454,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     nbVehicles: Int = 1,
     abscissa: Array[Int] = null,
     ordinate: Array[Int] = null,
-    init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = RandomNeighbor.apply)(moveFun: MoveFixture => Boolean): Unit = {
+    init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = RandomInsert.apply)(moveFun: MoveFixture => Boolean): Unit = {
     test(name) {
       var improvingMoveFound = false
       while (!improvingMoveFound) {

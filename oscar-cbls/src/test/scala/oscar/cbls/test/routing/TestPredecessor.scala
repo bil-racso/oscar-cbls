@@ -27,7 +27,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.initial.RandomNeighbor
+import oscar.cbls.routing.initial.RandomInsert
 
 class TestPredecessor extends FunSuite with ShouldMatchers {
 
@@ -42,7 +42,7 @@ class TestPredecessor extends FunSuite with ShouldMatchers {
       val vrp = new VRP(N, V, model) with VRPObjective with PositionInRouteAndRouteNr with UnroutedImpl with MoveDescription with HopDistance with Predecessors
       model.close()
 
-      RandomNeighbor(vrp)
+      RandomInsert(vrp)
       model.propagate()
     }
 
