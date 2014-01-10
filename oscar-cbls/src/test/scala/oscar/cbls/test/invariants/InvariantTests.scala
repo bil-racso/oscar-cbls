@@ -290,7 +290,7 @@ class InvariantTests extends FunSuite with Checkers {
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
-
+  
   test("Max") {
     val bench = new InvBench(verbose)
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
