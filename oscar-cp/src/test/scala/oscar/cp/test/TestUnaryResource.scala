@@ -73,7 +73,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
   test("unary vs cumul") {
     for (i <- 0 to 10) {
       val n = 4
-      val inst = randomInstance(5,i)
+      val inst = randomInstance(n,i)
       
       val durations = inst.map(_._1)
       val optional = inst.map(_._2)
@@ -113,7 +113,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
     def testPermutations(seed: Int) {
       def factorial(n: Int): Int = if (n == 0) 1 else n * factorial(n - 1)
 
-      val n = 5
+      val n = 4
       val durations = randomDurations(n, seed)
       val horizon = durations.sum
       val cp = CPScheduler(horizon)
@@ -147,104 +147,92 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 
   }
   
-/*
+
 	test("Test 1: packing") {	
 		
 		val horizon = 5
-		val cp = new CPScheduler(horizon)		
-
-		val act1 = Activity(cp, 3)
-		val act2 = Activity(cp, 1)
-		val act3 = Activity(cp, 2)
-		val act4 = Activity(cp, 2)
-		val acts = Array(act1, act2, act3, act4)
+		implicit val cp = new CPSolver()		
+        val starts = Array.fill(4)(CPVarInt(0 to 5))
+        val ends = Array.fill(4)(CPVarInt(0 to 5))
+        val durs = Array(CPVarInt(3),CPVarInt(1),CPVarInt(2),CPVarInt(2))
+        for (i <- 0 until 4) {
+          add(starts(i) + durs(i) == ends(i))
+        }
+		add(ends(0) <= starts(1)) // 0 precedes act 1
+		add(ends(2) <= starts(3)) // 2 precedes act 3
 		
-		val resource1 = UnitResource(cp)
-		val resource2 = UnitResource(cp)
+		val r1 =  Array(0,3) // activity on r1
+		val r2 = Array(1,2) // activity on r2
 		
-		act1.needs(resource1)
-		act2.needs(resource2)
-		act3.needs(resource2)
-		act4.needs(resource1)
+		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
-		
-		cp.solve subjectTo {
-			
-			act1 endsBeforeStartOf act2
-			act3 endsBeforeStartOf act4
-			
-		} exploration {
-			cp.binary(acts.map(_.start))
-			
-			val sol = (act1.est, act2.est, act3.est, act4.est)
+		cp.search {
+			binaryStatic(starts)
+
+		} onSolution {
+		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
 			expectedSol.contains(sol) should be(true)
-			nSol += 1
-		} run()
+		}
 		
-		nSol should be(4)
+		start().nbSols should be(4)
 	}
 	
 	test("Test 2: durations") {	
 		
 		val horizon = 5
-		val cp = new CPScheduler(horizon)		
-
-		val act1 = Activity(cp, 3 to 4)
-		val act2 = Activity(cp, 1)
-		val act3 = Activity(cp, 2)
-		val act4 = Activity(cp, 2)
-		val acts = Array(act1, act2, act3, act4)
+		implicit val cp = new CPSolver()		
+        val starts = Array.fill(4)(CPVarInt(0 to 5))
+        val ends = Array.fill(4)(CPVarInt(0 to 5))
+        val durs = Array(CPVarInt(3 to 4),CPVarInt(1),CPVarInt(2),CPVarInt(2))
+        for (i <- 0 until 4) {
+          add(starts(i) + durs(i) == ends(i))
+        }
+		add(ends(0) <= starts(1)) // 0 precedes act 1
+		add(ends(2) <= starts(3)) // 2 precedes act 3
 		
-		val resource1 = UnitResource(cp)
-		val resource2 = UnitResource(cp)
+		val r1 =  Array(0,3) // activity on r1
+		val r2 = Array(1,2) // activity on r2
 		
-		act1.needs(resource1)
-		act2.needs(resource2)
-		act3.needs(resource2)
-		act4.needs(resource1)
+		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
-		
-		cp.solve subjectTo {
-			
-			act1 precedes act2
-			act3 precedes act4
-			
-		} exploration {
-			cp.binary(acts.map(_.start))
-			
-			val sol = (act1.est, act2.est, act3.est, act4.est)
+		cp.search {
+			binaryStatic(starts)
+
+		} onSolution {
+		    durs(0).value should be(3)
+		    durs(0).isBound should be(true)
+		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
 			expectedSol.contains(sol) should be(true)
-			nSol += 1
-		} run()
+		}
 		
-		act1.dur.value should be(3)
-		nSol should be(4)
+		start().nbSols should be(4)
 	}
 	
 	test("Test 3: durations") {	
 		
 		val horizon = 5
-		val cp = new CPScheduler(horizon)		
+		implicit val cp = new CPSolver()		
+        val starts = Array.fill(4)(CPVarInt(0 to 5))
+        val ends = Array.fill(4)(CPVarInt(0 to 5))
+        val durs = Array(CPVarInt(3 to 4),CPVarInt(2),CPVarInt(2),CPVarInt(1))
+        for (i <- 0 until 4) {
+          add(starts(i) + durs(i) == ends(i))
+        }
 
-		val act1 = Activity(cp, 3 to 4) //Should be reduced to 3 
-		val act2 = Activity(cp, 2)
-		val act3 = Activity(cp, 2)
-		val act4 = Activity(cp, 1)
-		val acts = Array(act1, act2, act3, act4)
 		
-		val resource1 = UnitResource(cp)
-		val resource2 = UnitResource(cp)
+		val r1 =  Array(0,1) // activity on r1
+		val r2 = Array(2,3) // activity on r2
 		
-		act1 needs resource1
-		act2 needs resource1
-		act3 needs resource2
-		act4 needs resource2
+		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
@@ -272,21 +260,54 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 							  (2, 0, 3, 0), 
 							  (2, 0, 3, 1), 
 							  (2, 0, 3, 2))
-		
-		cp.addResourceConstraints()
-		cp.solve 
-		cp.exploration {
-			cp.binary(acts.map(_.start))
-			
-			val sol = (act1.est, act2.est, act3.est, act4.est)
+		cp.search {
+			binaryStatic(starts)
+
+		} onSolution {
+		    durs(0).value should be(3)
+		    durs(0).isBound should be(true)
+		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
 			expectedSol.contains(sol) should be(true)
-			nSol += 1
-		} run()
-		
-		act1.dur.value should be(3)
-		nSol should be(24)
-	} 
- */
+		}
+		println(start())
+		start().nbSols should be(24)
+	}
+
+  test("unary minimization with optional") {
+    for (i <- 0 to 10) {
+      var n = 6
+      val inst = randomInstance(n / 2, i)
+      val durations = inst.map(_._1) ++ inst.map(_._1)
+
+      val horizon = durations.sum
+      val expectedOpt = horizon / 2
+
+      implicit val cp = CPSolver()
+      val starts = Array.tabulate(n)(i => CPVarInt(0 until (horizon - durations(i) + 1)))
+      val durs = Array.tabulate(n)(i => CPVarInt(durations(i)))
+      val ends = Array.tabulate(n)(i => starts(i) + durations(i))
+      val resources = Array.tabulate(n)(i => CPVarInt(1 to 2))
+
+      add(unaryResource(starts, durs, ends, resources, 1))
+      add(unaryResource(starts, durs, ends, resources, 2))
+      val obj = maximum(ends)
+      var bestObj = Int.MaxValue
+      minimize(obj)
+      cp.search {
+        binaryFirstFail(resources) ++ binaryFirstFail(starts)
+      } onSolution {
+        bestObj = obj.value
+      }
+
+      val stat = start()
+
+      cp.search {
+         binaryFirstFail(starts) ++ binaryFirstFail(resources)
+      }
+      bestObj should be(expectedOpt)
+    }
+
+  }
 	
 
 
