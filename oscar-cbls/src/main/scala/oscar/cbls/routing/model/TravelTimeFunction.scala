@@ -112,7 +112,7 @@ trait TimeClosestNeighborPoints extends ClosestNeighborPoints with TravelTimeAsF
   }
 }
 
-trait TotalTimeSpentByVehicleSOutOfDepotAsObjectiveTerm extends VRPObjective with Time {
+trait TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm extends VRPObjective with Time {
   for (v <- 0 to V - 1) {
     addObjectiveTerm(arrivalTime(v) - leaveTime(v))
   }
