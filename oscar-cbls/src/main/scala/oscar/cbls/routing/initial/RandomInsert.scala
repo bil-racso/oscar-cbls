@@ -32,15 +32,16 @@ object RandomInsert{
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
   def apply(vrp:VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription){
-    print("(RandomInsert) ")
+    print("Applying random insert heuristic...")
     val relevantNeighbors = (n: Int) => vrp.nodes
     while(true) {
       // FIXME this is not really random
       InsertPoint.firstImprovingMove(
           SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
         case Some(m) => m.doMove
-        case None => return
+        case None => println(" done."); return
       }
     }
+    println(" done.")
   }
 }

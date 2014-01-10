@@ -106,7 +106,7 @@ trait WaitingDuration extends TimeWindow {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait TimeClosesNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
+trait TimeClosestNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
     travelCosts.getMinTravelDuration(from, to)
   }
