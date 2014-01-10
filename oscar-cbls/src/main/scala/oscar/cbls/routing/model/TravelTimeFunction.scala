@@ -119,9 +119,7 @@ trait TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm extends VRPObjective wit
 }
 
 trait TimeSpentOnRouteAsObjectiveTerm extends VRPObjective with Time {
-  for (v <- 0 to V - 1) {
-    addObjectiveTerm(Sum(travelOutDuration))
-  }
+  addObjectiveTerm(Sum(travelOutDuration))
 }
 
 trait WaitingTimeAsObjectiveTerm extends VRPObjective with WaitingDuration {
