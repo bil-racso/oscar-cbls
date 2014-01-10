@@ -15,7 +15,6 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
-import oscar.linprog._
 import oscar.algebra._
 import scala.io.Source
 
@@ -36,11 +35,11 @@ import scala.io.Source
  */
 object Steel {
 
-  class Column (val x : LPVar,val capa : Int, val contains : Array[Int]) {
-	  override def toString() : String = {
-	 	  contains.mkString("\t")
-	  }   
-	  def number() : Int = Math.ceil(x.getValue).toInt
+  class Column(val x: LPVar, val capa: Int, val contains: Array[Int]) {
+    override def toString(): String = {
+      contains.mkString("\t")
+    }
+    def number(): Int = Math.ceil(x.value.get).toInt
   }
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
@@ -59,86 +58,83 @@ object Steel {
     var col = Array[Int]()
     for (i <- 1 to nbSlab) {
       vals_ match {
-        case w :: c :: v => vals_ = vals_.drop(2)
-        weight = weight :+ w
-        col = col :+ c - 1 //color starts at 1 in input file
+        case w :: c :: v =>
+          vals_ = vals_.drop(2)
+          weight = weight :+ w
+          col = col :+ c - 1 //color starts at 1 in input file
         case Nil => Unit
       }
     }
     (capa toArray, weight, col)
   }
 
+  def main(args: Array[String]): Unit = {
 
-  def main(args: Array[String]): Unit = { 
+    val (capa, weight, col) = readData()
+    val (nbCapa, nbSlab, nbCol) = (capa.length, weight.length, col.max + 1)
+    val Slabs = 0 until nbSlab
+    val Cols = 0 until nbCol
+    val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
+    val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
-	  val (capa,weight,col) = readData()
-	  val (nbCapa,nbSlab,nbCol) = (capa.length, weight.length, col.max+1)
-	  val Slabs = 0 until nbSlab
-	  val Cols = 0 until nbCol
-	  val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
-	  val colorOrders = Cols.map(c => (Slabs).filter (s => col(s) == c))
-		
+    implicit val lp = LPSolver(LPSolverLib.lp_solve)
 
-	  val lp = LPSolver(LPSolverLib.lp_solve)
-				
-	  var C : Array[Column] = Array()
-		
-	  val Capa = Array.tabulate(capa(capa.size-1))(_ => 0)
+    var C: Array[Column] = Array()
 
+    val Capa = Array.tabulate(capa(capa.size - 1))(_ => 0)
 
-	  for (s <- 0 until nbSlab) {
-		  val cont = Array.tabulate(nbSlab)(_ => 0)
-		  cont(s) = 1
-		  C = C :+ new Column(LPVar(lp,"x",0,10000),loss(weight(s)), cont)
-	  }
-		
-	  var meet : Array[LPConstraint] = Array()
-		
-	  // Master Problem 
-	  lp.minimize(sum(C)(c => c.x*c.capa)) subjectTo {
-	 	  for (s <- 0 until nbSlab) {
-	 		  meet = meet :+ lp.add(sum(C)(c => c.x*c.contains(s)) == 1)
-	 	  }
-	 }
+    for (s <- 0 until nbSlab) {
+      val cont = Array.tabulate(nbSlab)(_ => 0)
+      cont(s) = 1
+      C = C :+ new Column(LPVar("x", 0, 10000), loss(weight(s)), cont)
+    }
 
-		
-	  // Pricing Problem
-	  var added=false	
-	  for (CAPA <- capa) {		  
-	      do{
-	    	  added = false
-	    	  val mip = MIPSolver(LPSolverLib.lp_solve)
+    var meet: Array[LPConstraint] = Array()
 
-	    	  val use = Array.tabulate(nbSlab)(_ => MIPVar(mip,"use",0 to 1))
-	    	  val v = Array.tabulate(nbCol)(_ => MIPVar(mip,"v",0 to 1))
-	    	  val cost = Array.tabulate(nbSlab)(meet(_).dual)
+    // Master Problem 
+    minimize(sum(C)(c => c.x * c.capa))
+    for (s <- 0 until nbSlab) {
+      meet = meet :+ add(sum(C)(c => c.x * c.contains(s)) == 1)
+    }
+    start()
 
-	    	  mip.maximize(sum(Slabs)(s => ((cost(s)+weight(s)) * use(s)))) subjectTo {
+    // Pricing Problem
+    var added = false
+    for (CAPA <- capa) {
+      do {
+        added = false
+        val mip = MIPSolver(LPSolverLib.lp_solve)
 
-	    		  mip.add(sum(Slabs)(s => use(s)*weight(s)) <= CAPA)	
-	    		  for (s <- Slabs)
-	    			  mip.add(use(s)<=v(col(s)))
-	    		  mip.add(sum(Cols)(c => v(c)) <= 2)  		
-	    	  }
+        val use = Array.tabulate(nbSlab)(_ => MIPVar(mip, "use", 0 to 1))
+        val v = Array.tabulate(nbCol)(_ => MIPVar(mip, "v", 0 to 1))
+        val cost = Array.tabulate(nbSlab)(meet(_).dual)
 
-	    	  if (mip.getObjectiveValue() > CAPA + 0.01) {	 	  		 	  		  
-	    		  var a = new Array[scala.Double](nbSlab)
-	    		  var tmp=0
-	    		  for( i <- 0 until nbSlab){
-	    			  a(i) = use(i).getValue.toInt*loss(weight(i))
-	    			  tmp += (use(i).getValue.toInt*weight(i))
-	    		  }
+        mip.maximize(sum(Slabs)(s => ((cost(s) + weight(s)) * use(s))))
 
-	    		  val x = lp.addColumn(loss(tmp),meet,use.map(_.getValue)) //create a new variable by introducing a new column
-	    		  C = C :+ new Column(x,loss(tmp), use.map(_.getValue.toInt))
-	    		  added = true
-	    	  }
-	    	  
-	    	  println("==> master obj:"+lp.getObjectiveValue())
-	 	 
-	      } while(added)
-	  }	  
-	  println("objective: " + lp.getObjectiveValue())
-	  println("nbColumns: " + C.size)
-	} // end of main
+        mip.add(sum(Slabs)(s => use(s) * weight(s)) <= CAPA)
+          for (s <- Slabs)
+            mip.add(use(s) <= v(col(s)))
+          mip.add(sum(Cols)(c => v(c)) <= 2)
+        mip.start()
+
+        if (mip.objectiveValue.get > CAPA + 0.01) {
+          var a = new Array[scala.Double](nbSlab)
+          var tmp = 0
+          for (i <- 0 until nbSlab) {
+            a(i) = use(i).value.get.toInt * loss(weight(i))
+            tmp += (use(i).value.get.toInt * weight(i))
+          }
+
+          val x = lp.addColumn(loss(tmp), meet, use.map(_.value.get)) //create a new variable by introducing a new column
+          C = C :+ new Column(x, loss(tmp), use.map(_.value.get.toInt))
+          added = true
+        }
+
+        println("==> master obj:" + lp.objectiveValue)
+
+      } while (added)
+    }
+    println("objective: " + lp.objectiveValue)
+    println("nbColumns: " + C.size)
+  } // end of main
 }

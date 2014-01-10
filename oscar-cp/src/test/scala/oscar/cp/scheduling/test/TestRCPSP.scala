@@ -45,12 +45,11 @@ class TestRCPSP extends FunSuite with ShouldMatchers {
     val makespan = maximum(tasks.map(_.end))
     cp.minimize(makespan) subjectTo {
       cp.add(SweepMaxCumulative(cp, tasks, CPVarInt(cp, capa), 0))
-    } exploration {
-      cp.setTimes(tasks)
+    } search {
+      setTimes(tasks.map(_.start),tasks.map(_.dur),tasks.map(_.end))
+    } onSolution {
       bestObj = makespan.value
-    } run ()
-    cp.printStats()
-
+    } start()
     bestObj should be(160)
 
   }
@@ -75,12 +74,11 @@ class TestRCPSP extends FunSuite with ShouldMatchers {
     cp.minimize(makespan) subjectTo {
 		for (a <- 0 until instance.size)
 			activities(a) needs instance(a)._2 ofResource resource
-    } exploration {
-      cp.setTimes(cp.activities)
+    } search {
+      setTimes(activities.map(_.start),activities.map(_.dur),activities.map(_.end))
+    } onSolution {
       bestObj = makespan.value
-    } run ()
-    println("=>"+bestObj)
-    cp.printStats()
+    } start()
     bestObj should be(160)
 
   }

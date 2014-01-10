@@ -33,7 +33,7 @@ class TestAmong extends FunSuite with ShouldMatchers  {
     cp.add(sum(counts) == N)
   }
   
-  def nbSol(nmin: Int, nmax: Int, domx: Array[Set[Int]], S: Set[Int], decomp: Boolean = false) = {
+  def nbSol(nmin: Int, nmax: Int, domx: Array[Set[Int]], S: Set[Int], decomp: Boolean = false): Int = {
 	  var nbSol = 0  
 	  val cp = CPSolver()
 	  
@@ -42,12 +42,10 @@ class TestAmong extends FunSuite with ShouldMatchers  {
 	  cp.solve subjectTo {
 	    if (decomp) amongDecomp(cp,N,X,S)
 	    else cp.add(new Among(N,X,S))
-	  } exploration {
-	    cp.binary(X :+ N)
-	    nbSol += 1
-	  } run()
-	  
-	  nbSol
+	  } search {
+	    binaryStatic(X :+ N)
+	  }
+	  cp.start().nSols
   }
   
   def randomDom = Array.fill(10)(rand.nextInt(10)).toSet
@@ -61,10 +59,11 @@ class TestAmong extends FunSuite with ShouldMatchers  {
 	  val X = Array.fill(5)(CPVarInt(0 to 5)(cp))
 	  cp.solve subjectTo {
 	    cp.add(new Among(N,X,S))
-	  } exploration {
-	    cp.binary(X)
+	  } search {
+	    binaryStatic(X)
+	  } onSolution {
 	    X.map(_.value).count(v => S.contains(v)) should equal(N.value)
-	  } run()
+	  } start()
 	  
   }
   

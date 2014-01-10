@@ -48,13 +48,13 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	      //println("with knapsack")
 	      cp.add(new Knapsack(X,profit,weight,P,W,true))
 	    } 
-	  } exploration {
-	    
-	    while(!cp.allBounds(X)) {
+	  } search {
+	    if (allBounds(X)) noAlternative
+	    else {
 	      val (x,i) = X.zipWithIndex.filter{case (x,i) => !x.isBound}.maxBy{case (x,i) => weight(i)}
-	      cp.branch(cp.post(x == 1))(cp.post(x == 0))
+	      branch(cp.post(x == 1))(cp.post(x == 0))	      
 	    }
-	    //println(P.value+" "+X.mkString(","))
+	  } onSolution {
 	    obj = P.value
 	  }
 	  obj
@@ -79,7 +79,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     val w = Array(25,2,32,36,36)
     val p = Array(76,62,4,91,94)
     val cp = CPSolver()
-    val X = Array.fill(w.size)(CPVarBool(cp))
+    val X = Array.fill(w.size)(CPVarBool()(cp))
     val P = CPVarInt(155 to 170)(cp)
     val W = CPVarInt(0 to 40)(cp)
     cp.add(new Knapsack(X,p,w,P,W))
@@ -100,7 +100,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     val p = Array(57,85,71,24,33)
     val w = Array(10,40,37,21,30)
     val cp = CPSolver()
-    val X = Array.fill(w.size)(CPVarBool(cp))
+    val X = Array.fill(w.size)(CPVarBool()(cp))
     val P = CPVarInt(85 to 170)(cp)
     val W = CPVarInt(0 to 40)(cp)
     cp.add(X(1) == 0)

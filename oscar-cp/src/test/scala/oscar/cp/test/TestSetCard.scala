@@ -34,13 +34,10 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
     var x = new CPVarSet(cp, 1 , 5)
     cp.post(x.card <= 2)
     cp.post(x.card >= 1)
-    cp.exploration {
-      println("exploration")
-      cp.binary(x)
-      println(x.value)
-      nbSol +=1
-    } run()
-    nbSol should be(15)
+    cp.search {
+      binary(x)
+    }
+    cp.start().nSols should be(15)
   }
   
   test("Test SetCard 2") {

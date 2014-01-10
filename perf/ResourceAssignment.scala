@@ -69,9 +69,8 @@ object ResourceAssignment extends App {
       cp.add(maximum(0 until nbBins)(load(_)) <= 6)
       cp.add(binPacking(x,taskWeight.map(_._2),load))
       
-    } exploration {
-      cp.binary(x)
-    } run(100000)
+    } search {
+      binaryStatic(x)
+    } start(100000)
 
-    cp.printStats()
 }

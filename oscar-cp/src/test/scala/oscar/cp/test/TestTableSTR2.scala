@@ -77,10 +77,11 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     	
     cp.solve subjectTo {
       cp.add(new TableSTR2(x,tuples))
-    } exploration {
-      cp.binary(x)
+    } search {
+      binaryStatic(x)
+    } onSolution {
       nbSol += 1
-    } run()
+    }start()
     nbSol should be(4)
 
   }

@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 //Log
 abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
@@ -40,7 +40,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
   def Default: Int
 
   override def setOutputVar(v: IntVar) {
-    output = v.asInstanceOf[IntVar]
+    output = v
     output.setDefiningInvariant(this)
     performPropagation()
   }
@@ -81,7 +81,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
+case class MinSet(v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
   override def name = "MinSet"
 
   override def Better(a:Int,b:Int):Boolean = a < b
@@ -94,11 +94,12 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MaxValue)((acc,value) => if (acc > value) value else acc)"))
     }
   }
 }
@@ -110,7 +111,7 @@ case class MinSet(val v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
+case class MaxSet(v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
   override def name = "MaxSet"
 
   override def Better(a:Int,b:Int):Boolean = a > b
@@ -123,11 +124,12 @@ case class MaxSet(val v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet
     }
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     if (v.value.isEmpty){
-      c.check(output.value == Default)
+      c.check(output.value == Default, Some("output.value == Default"))
     }else{
-      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc))
+      c.check(output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc),
+          Some("output.value == v.value.foldLeft(Int.MinValue)((acc,value) => if (acc < value) value else acc)"))
     }
   }
 }

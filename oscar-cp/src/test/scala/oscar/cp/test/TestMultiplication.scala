@@ -33,15 +33,15 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     val y = CPVarInt(Set(-70,-50,50,70))(cp)
     val z = CPVarInt(100 to 100)(cp)
     	
-    cp.post(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
+    cp.add(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
     	
     var nbSol = 0
-    cp.exploration {
-      cp.binaryFirstFail(Array(x,y))
+    cp.search {
+      binaryFirstFail(Array(x,y))
+    } onSolution {
       ((x.isBoundTo(-2) && y.isBoundTo(-50)) || (x.isBoundTo(2) && y.isBoundTo(50))) should be(true)
-      nbSol += 1
-    } run()
-    nbSol should be(2)
+    }
+    cp.start().nSols should be(2)
 
   }
   
@@ -61,7 +61,7 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
 
     val x = CPVarInt(-10 to -1)(cp)
     val y = CPVarInt(3 to 9)(cp)
-    cp.post(x*x == y)
+    cp.add(x*x == y)
     	
     cp.isFailed should be(false)
 
@@ -83,13 +83,13 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     var nbsol = 0
     cp.solve subjectTo {
       cp.add(nb1 == (nb2*3))
-    } exploration {
-      cp.binary(digits)
-      nbsol += 1
+    } search {
+      binaryStatic(digits)
+    } onSolution {
       nb1.value should be(428571)
-      nb2.value should be(142857)
-    } run()
-    nbsol should be(1)
+      nb2.value should be(142857)      
+    }
+    cp.start().nSols should be(1)
     
     
   }    

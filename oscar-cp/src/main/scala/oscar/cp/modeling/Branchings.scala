@@ -19,6 +19,7 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.search._
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils
+import oscar.cp.core.CPVarSet
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -62,6 +63,14 @@ trait Branchings extends BranchingUtils {
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
    */  
   def setTimes(starts: IndexedSeq[CPVarInt], durations: IndexedSeq[CPVarInt], ends: IndexedSeq[CPVarInt]) = new SetTimesBranching(starts,durations, ends) 
+  
+  /**
+   * Binary Search on the set variable
+   * forcing an arbitrary on the left, and removing it on the right until the variable is bound
+   */   
+  def binary(x: CPVarSet) = {
+    new BinarySetBranching(x)
+  }
   
   
 

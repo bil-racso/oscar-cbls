@@ -198,24 +198,3 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
   }
 }
 
-
-object GCCFWC {
-  def main(args: Array[String]) {
-//    var nbSol = 0  
-//    import oscar.cp.test.TestGCCFWC._
-//    val cp = new CPSolver()
-//    
-//    // Generate the constraint and solve
-//    val GCC = GCCGen(cp)
-//    cp.solveAll subjectTo {
-//      cp.add(GCC)
-//    } exploration {
-//      cp.binaryFirstFail(GCC.getX)
-//      println(GCC)
-//      println((GCC.getX map (_.value)).mkString(";"))
-//      GCC.check()
-//      nbSol += 1
-//    }
-    
-  }
-}

@@ -61,24 +61,3 @@ class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarI
   }
 
 }
-
-
-object Path {
-  def main(args: Array[String]) {
-      val succ = Array(Set(0,1),Set(1,2,3),Set(2,4),Set(3,2,5),Set(4,5),Set(5,0))
-      
-
-	  val cp = CPSolver()
-	  var X = Array.tabulate(succ.length)(i => CPVarInt(succ(i))(cp))
-	  var start = CPVarInt(0)(cp)
-	  var end = CPVarInt(5)(cp)
-	  var length = CPVarInt(3)(cp)
-	  
-	  cp.solve subjectTo {
-        cp.add(new Path(X,start,end,length))
-      } exploration {
-        cp.binaryFirstFail(X)
-        println(X.mkString(","))
-      } run()
-  }
-}

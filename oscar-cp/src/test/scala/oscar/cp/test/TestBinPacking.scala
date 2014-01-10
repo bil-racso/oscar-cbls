@@ -43,18 +43,17 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val x = (for (i <- items) yield CPVarInt(binForItems(i))(cp)).toArray
     val l = bins.map(i => CPVarInt(binCapacities(i))(cp)).toArray
     var nbSol = 0
-    cp.solve 
-    cp.exploration {
-      cp.binary(x)
-      nbSol += 1
-    }
+    cp.search {
+      binaryStatic(x)
+    } onSolution { nbSol += 1 }
+    
     nbSol = 0
-    cp.runSubjectTo() {
+    cp.startSubjectTo() {
       cp.add(new BinPacking(x, itemsSizes, l), Weak)
     }
     nbSol should be(1)
     nbSol = 0
-    cp.runSubjectTo() {
+    cp.startSubjectTo() {
       cp.add(new BinPacking(x, itemsSizes, l), Strong)
     }
     nbSol should be(1)
@@ -72,18 +71,18 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val x = (for (i <- items) yield CPVarInt(bins)(cp)).toArray
     val l = bins.map(i => CPVarInt(0 to 10)(cp)).toArray
     var nbSol = 0
-    cp.solve 
-    cp.exploration {
-      cp.binary(x)
+    cp.search {
+     binaryStatic(x)
+    } onSolution {
       nbSol += 1
     }
     nbSol = 0
-    cp.runSubjectTo() {
+    cp.startSubjectTo() {
       cp.add(new BinPacking(x, itemsSizes, l), Weak)
     }
     nbSol should be(120)
     nbSol = 0
-    cp.runSubjectTo() {
+    cp.startSubjectTo() {
       cp.add(new BinPacking(x, itemsSizes, l), Strong)
     }
     nbSol should be(120)

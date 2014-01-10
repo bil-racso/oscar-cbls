@@ -37,7 +37,7 @@ class CPSolver() extends CPStore() {
   
   var objective = new CPObjective(this, Array[CPObjectiveUnit]());
   
-  private var stateObjective: Unit => Unit = Unit => Unit
+
   
   private val decVariables = scala.collection.mutable.Set[CPVarInt]()
   var lastSol = new CPSol(Set[CPVarInt]())
@@ -51,7 +51,7 @@ class CPSolver() extends CPStore() {
     x.foreach(decVariables += _)
   }
   
-  def addDecisionVariables(x: CPVarInt*) {
+  	def addDecisionVariables(x: CPVarInt*) {
     x.foreach(decVariables += _)
   }
   
@@ -64,10 +64,8 @@ class CPSolver() extends CPStore() {
   }
 
   def optimize(obj: CPObjective): CPSolver = {
-    stateObjective = Unit => {
-      objective = obj
-      postCut(obj)
-    }
+    objective = obj
+    postCut(obj)
     this
   }
 
@@ -97,16 +95,15 @@ class CPSolver() extends CPStore() {
     val objectives = objVarMode.map(_._1).toArray
     // true if objective i has to be maximized
     val isMax = objVarMode.map(_._2).toArray
+
+    recordNonDominatedSolutions = true
+    objective = new CPObjective(this, (for (i <- 0 until isMax.size) yield {
+      if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
+      else new CPObjectiveUnitMinimize(objectives(i))
+    }): _*)
+    postCut(objective)
+    objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     
-    stateObjective = Unit => {
-      recordNonDominatedSolutions = true
-      objective = new CPObjective(this, (for(i <- 0 until isMax.size) yield {
-        if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
-        else new CPObjectiveUnitMinimize(objectives(i))
-      }):_*)
-      postCut(objective)
-      objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
-    }
     
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](isMax)
@@ -122,13 +119,14 @@ class CPSolver() extends CPStore() {
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
-      stateObjective()
-      pushState()
-      deactivateNoSolExceptions()
     } catch {
       case ex: NoSolutionException => println("No Solution, inconsistent model")
     }
     this
+  }
+  
+  override def beforeStartAction() {
+    deactivateNoSolExceptions()
   }
 
   /**
@@ -145,138 +143,6 @@ class CPSolver() extends CPStore() {
     true
     
   }
-
-  
-  /**
-   * Instantiate variable in from the first to last one in vars, trying smallest value first
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binary(vars: Array[_ <: CPVarInt]): Unit @suspendable = {
-    binaryStaticOrder(vars)
-  }
-  
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binaryStaticOrder(vars: Array[_ <: CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    var y = vars.asInstanceOf[Array[CPVarInt]]
-    var i = new ReversibleInt(this, 0)
-    while (i.value < y.size) {
-      val x: CPVarInt = y(i.value)
-      val v = valHeuris(x)
-      if (x.isBound) {
-        branchOne(i.incr())
-      } else {
-        branch {
-          assign(x, v)
-          i.incr()
-        } {
-          remove(x, v)
-        }
-      }
-    }
-  }
-
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binary(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {    
-    val x_ = vars.asInstanceOf[Array[CPVarInt]].zipWithIndex
-    val nbBounds = new ReversibleInt(this,0)
-    def bound(i: Int) {
-      val ind = nbBounds.value
-      val tmp = x_(ind)
-      x_(ind) = x_(i)
-      x_(i) = tmp
-      nbBounds.incr()
-    }
-    val size = x_.size
-    
-    def allBounds(): Boolean = {
-      var i = nbBounds.value
-      while (i < size) {
-        if (!x_(i)._1.isBound) return false
-        else bound(i)
-        i += 1
-      }
-      true
-    }
-    
-    while (!allBounds()) {
-      var i = nbBounds.value
-      var (x,ind) = x_(i)
-      var fbest = varHeuris(x)
-      i += 1
-      while (i < size) {
-        if (!x_(i)._1.isBound) {
-          val (y,indy) = x_(i)
-          val h = varHeuris(y)
-          if (h < fbest || (h==fbest && indy < ind)) {
-            x = y
-            fbest = h
-            ind = indy
-          }
-        } else {
-          bound(i)
-        }
-        i += 1
-      }
-      val y = x
-      val v = valHeuris(y)
-      branch(assign(y,v))(remove(y,v)) // right alternative
-    }
-  } 
-  
-  /**
-   * Binary First Fail (min dom size) on the decision variables vars.
-   * @param vars: the array of variables to assign during the search
-   * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binaryFirstFail(vars: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal): Unit @suspendable = {
-    binary(vars,_.size,valHeuris)
-  }  
-
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binaryFirstFail(vars: CPVarInt*): Unit @suspendable = {
-    binary(vars.toArray,_.size,minVal)
-  }
-
-  /**
-   * Binary search on the decision variables vars, selecting first the variables having the max number
-   * of propagation methods attached to it.
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binaryMaxDegree(vars: Array[CPVarInt]): Unit @suspendable = {
-    binary(vars, varHeuris = maxDegree, valHeuris = minVal)
-  }
-
-  /**
-   * Binary search on the decision variables vars, splitting the domain of the selected variable on the
-   * median of the values (left : <= median, right : > median)
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binaryDomainSplit(vars: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (Int => Int) = i => i): Unit @suspendable = {
-
-    while (!allBounds(vars)) {
-
-      val unbound = vars.filter(!_.isBound)
-      val heuris = unbound.map(varHeuris(_)).min
-      val x = unbound.filter(varHeuris(_) == heuris).head
-
-      val vals = x.toArray.sortBy(valHeuris)
-      val median = vals(vals.size / 2)
-
-      branch(post(x <= median))(post(x > median))
-    }
-  }
-  
-  /**
-   * Binary Branching for SetVar
-   */
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, @see BinaryBranching and sub-classes", since = "1.0")
-  def binary(x: CPVarSet): Unit @suspendable = {
-    while (!x.isBound) {
-      val v = x.arbitraryPossibleNotRequired
-      branch(post(x ++ v))(post(x -- v))
-    }
-  }
   
   override def update() = propagate()
   override def solFound() = {
@@ -289,14 +155,6 @@ class CPSolver() extends CPStore() {
     objective.tighten()
   }
 
-  @deprecated(message = "Use search/start instead instead of non-deterministic search, start return a search statistic object", since = "1.0")
-  def printStats() {
-    println("%% time(ms) : "+ time)
-    println("%% #bkts : "+ bkts)
-    println("%% time in fix point(ms) : "+ timeInFixPoint)
-    println("%% time in trail restore(ms) : "+ getTrail().getTimeInRestore())
-    println("%% max trail size : "+ getTrail().getMaxSize())
-  }
 }
 
 object CPSolver {

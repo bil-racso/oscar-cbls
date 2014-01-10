@@ -615,10 +615,10 @@ class CPStore extends SearchNode {
 
   def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, CPPropagStrength.Weak)
   
-  def add(constraints: Iterable[Constraint]): CPOutcome = {
+  def add(constraints: Iterable[Constraint], st: CPPropagStrength = CPPropagStrength.Weak): CPOutcome = {
     val cs = new LinkedList[Constraint]()
     constraints.foreach(cs.add(_))
-    add(cs, CPPropagStrength.Weak)
+    add(cs, st)
   }
 
   def addCut(c: Constraint): CPOutcome = {

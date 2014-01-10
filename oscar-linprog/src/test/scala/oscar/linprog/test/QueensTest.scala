@@ -26,61 +26,58 @@ import oscar.algebra._
  */
 class QueensTest extends FunSuite with ShouldMatchers {
 
+  test("Queens") {
+    for (lib <- solvers) {
 
-	test("Queens") {
-		for (lib <- solvers) {
+      val n = 8
+      val Lines = 0 until n
+      val Columns = 0 until n
+      implicit val mip = MIPSolver(lib)
+      val x = Array.tabulate(n, n)((l, c) => MIPVar("x" + (l, c), 0 to 1))
 
-			val n = 8
-			val Lines = 0 until n
-			val Columns = 0 until n
-			val mip = MIPSolver(lib)
-			val x = Array.tabulate(n,n) ((l,c) => MIPVar(mip,"x"+(l,c), 0 to 1))
+      maximize(sum(Lines, Columns) { (l, c) => x(l)(c) })
 
-			mip.maximize(sum(Lines,Columns) {(l,c) => x(l)(c)} ) subjectTo {
+      /* at most one queen can be placed in each row */
+      for (l <- Lines)
+        add(sum(Columns)(c => x(l)(c)) <= 1)
+      /* at most one queen can be placed in each column */
+      for (c <- Columns)
+        add(sum(Lines)(l => x(l)(c)) <= 1)
 
-			/* at most one queen can be placed in each row */
-			for(l <- Lines)
-				mip.add(sum(Columns)(c => x(l)(c)) <= 1)
-			/* at most one queen can be placed in each column */
-			for(c <- Columns)
-				mip.add(sum(Lines)(l => x(l)(c)) <= 1)
+      /* at most one queen can be placed in each "/"-diagonal  upper half*/
+      for (i <- 1 until n)
+        add(sum(0 to i)((j) => x(i - j)(j)) <= 1)
 
-			/* at most one queen can be placed in each "/"-diagonal  upper half*/
-			for(i <- 1 until n)        
-				mip.add(sum(0 to i)((j) => x(i-j)(j)) <= 1)
+      /* at most one queen can be placed in each "/"-diagonal  lower half*/
+      for (i <- 1 until n)
+        add(sum(i until n)((j) => x(j)(n - 1 - j + i)) <= 1)
 
-			/* at most one queen can be placed in each "/"-diagonal  lower half*/
-			for(i <- 1 until n)  
-				mip.add(sum(i until n)((j) => x(j)(n-1-j+i)) <= 1)     
+      /* at most one queen can be placed in each "/"-diagonal  upper half*/
+      for (i <- 0 until n)
+        add(sum(0 until n - i)((j) => x(j)(j + i)) <= 1)
 
-			/* at most one queen can be placed in each "/"-diagonal  upper half*/
-			for(i <- 0 until n)  
-				mip.add(sum(0 until n-i)((j) => x(j)(j+i)) <= 1)
+      /* at most one queen can be placed in each "/"-diagonal  lower half*/
+      for (i <- 1 until n)
+        add(sum(0 until n - i)((j) => x(j + i)(j)) <= 1)
 
-			/* at most one queen can be placed in each "/"-diagonal  lower half*/ 
-			for(i <- 1 until n)
-				mip.add(sum(0 until n-i)((j) => x(j+i)(j)) <= 1)
+      start()
 
-			}
-			
-			mip.status should equal (LPStatus.OPTIMAL)
-    		mip.getObjectiveValue() should be (8.0 plusOrMinus 0.00001)
-			mip.objectiveValue.get should be (8.0 plusOrMinus 0.00001)
+      status should equal(LPStatus.OPTIMAL)
+      objectiveValue.get should be(8.0 plusOrMinus 0.00001)
 
-			println("objective: "+mip.getObjectiveValue())
-		
-			for(i <- 0 until n) {
-					for(j <- 0 until n)
-						if(x(i)(j).getValue==1) print("Q") else print(".")
-						println()
-			}
-			mip.release()
-			
-			mip.checkConstraints() should be (true)
+      println("objective: " + objectiveValue)
 
+      for (i <- 0 until n) {
+        for (j <- 0 until n)
+          if (x(i)(j).value.get == 1) print("Q") else print(".")
+        println()
+      }
+      release()
 
-		}
-	}
+      checkConstraints() should be(true)
+
+    }
+  }
 
 }
 

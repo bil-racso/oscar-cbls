@@ -1,17 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -34,7 +20,7 @@ import oscar.visual.plot.PlotLine
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ChemicalTanker extends App {
+object ChemicalTanker extends CPModel with App {
 
   // -------------visual components ------------
   val f = VisualFrame("ChemicalTanker")
@@ -151,13 +137,12 @@ object ChemicalTanker extends App {
   cargos.zipWithIndex.foreach { case (c, i) => barChart.setValue("Volume", i.toString, c.volume) }
   f.createFrame("Volume Slack").add(barChart)
 
-  val cp = CPSolver()
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
-  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(tanks(t).possibleCargos)(cp))
+  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(tanks(t).possibleCargos))
   // for each cargo, the total cacity allocated to it (must be at least the volume to place)
-  val load = Array.tabulate(cargos.size)(c => CPVarInt(cargos(c).volume to totCapa)(cp))
+  val load = Array.tabulate(cargos.size)(c => CPVarInt(cargos(c).volume to totCapa))
   // for each cargo, the number of tanks allocated to it
-  val card = Array.tabulate(cargos.size)(c => CPVarInt(0 to tanks.size)(cp))
+  val card = Array.tabulate(cargos.size)(c => CPVarInt(0 to tanks.size))
 
   // objective = maximize the total empty space
   val freeSpace = load(0)
@@ -177,7 +162,7 @@ object ChemicalTanker extends App {
 
   val slack = Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
-  cp.onSolution {
+  onSolution {
     println("solution")
     nbSol += 1
     for (i <- 0 until cargo.size) {
@@ -191,21 +176,20 @@ object ChemicalTanker extends App {
   }
 
   // --------------- state the objective, the constraints and the search -------------
-
-  cp.maximize(freeSpace /*nbFreeTanks*/ ) subjectTo {
-    // make the link between cargo and load vars with binPacking constraint
-    cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
-    cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
+  
+  // make the link between cargo and load vars with binPacking constraint
+    add(binPacking(cargo, tanks.map(_.capa), load), Strong)
+    add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
     for (i <- 1 until cargos.size) {
-      cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) // dominance rules
+      add(new ChemicalConstraint(cargos(i), tanks, cargo)) // dominance rules
     }
     // enforce that for any two neighbor tanks, they must contain compatible cargo types
     for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id)) {
-      cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
+      add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
     }
 
-  } search {
+  maximize(freeSpace /*nbFreeTanks*/ ) search {
     if (allBounds(cargo)) noAlternative
     else {
       val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
@@ -213,15 +197,15 @@ object ChemicalTanker extends App {
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
-      branch(cp.add(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))      
+      branch(post(tankVar == cargoToPlace))(post(tankVar != cargoToPlace))      
     }
   } start(0)
 
   for (r <- 1 to 10000) {
-    cp.startSubjectTo(Int.MaxValue, 300) {
+    startSubjectTo(Int.MaxValue, 300) {
       //fix randomly 90% of the slabs to the position of the current best solution
-      for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 70; if (!cp.isFailed)) {
-        cp.add(cargo(i) == cargosol(i))
+      for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 70; if (!solver.isFailed)) {
+        add(cargo(i) == cargosol(i))
       }
     }
   }

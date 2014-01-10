@@ -329,12 +329,19 @@ package object modeling extends Constraints with Branchings {
   def minValminVal(x: CPVarInt): (Int, Int) = (x.min, x.min)
 
   // helper functions to model with an implicit CPSolver
-  def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c)
-  def solve(implicit cp: CPSolver): CPSolver = cp.solve() subjectTo ()
-  def minimize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.minimize(obj) subjectTo ()
-  def maximize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.maximize(obj) subjectTo ()
+  def add(constraints: Iterable[_ <: Constraint])(implicit cp: CPSolver): Unit = cp.add(constraints)
+  def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
+  def add(c: CPVarBool)(implicit cp: CPSolver): Unit = cp.add(c)
+  def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
+  def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
+  def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
+  def minimize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
+  def maximize(obj: CPVarInt)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
-    cp.start(nbSolMax, failureLimit, timeLimit, maxDiscrepancy)
+  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
+    cp.start(nSols, failureLimit, timeLimit, maxDiscrepancy)
+  }
+  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
+    cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }
 }

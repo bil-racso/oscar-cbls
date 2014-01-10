@@ -56,15 +56,15 @@ import oscar.cbls.invariants.core.computation._
 
 object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
-  var N: Int = 15;
+  var N: Int = 15
   var Dim = Range(0, N)
-  var PAUSE: Int = 50 + 1000 / N;
+  var PAUSE: Int = 50 + 1000 / N
 
   // UI stuff
   val cl = Thread.currentThread().getContextClassLoader()
-  val QUEEN = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resourcesQueens/queen-ok.png"))
-  val CONFLICT = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resourcesQueens/queen-ko.png"))
-  val EMPTY = new ImageIcon(cl.getResource("oscar/cbls/constraints/tests/resourcesQueens/queen-no.png"))
+  val QUEEN = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-ok.png"))
+  val CONFLICT = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-ko.png"))
+  val EMPTY = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-no.png"))
   var boxPanel: BoxPanel = null
   var tab: Array[Array[Label]] = null
   var lNQueen: Label = null
@@ -120,7 +120,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     if (stopRequested) return // not reentering
 
     N = n
-    PAUSE = 50 + 1000 / N;
+    PAUSE = 50 + 1000 / N
 
     lNQueen.text = "  " + N + "  "
     stopRequested = true
@@ -161,7 +161,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     println("NQueens(" + N + ")")
     val Queens: Array[IntVar] = new Array[IntVar](N)
     for (q <- range) {
-      Queens(q) = new IntVar(m, min, max, q, "queen" + q)
+      Queens(q) = IntVar(m, min, max, q, "queen" + q)
       tab(q)(q).icon = CONFLICT
     }
 
@@ -193,7 +193,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     var it: Int = 0
     val Tabu = (for (q <- range) yield -1).toArray
 
-    var longueurplateau = 0;
+    var longueurplateau = 0
     while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
       val oldviolation: Int = c.Violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)

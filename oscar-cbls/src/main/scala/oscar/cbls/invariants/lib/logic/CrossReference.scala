@@ -20,11 +20,10 @@
 
 
 package oscar.cbls.invariants.lib.logic
-/**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
-
 
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar}
+import oscar.cbls.invariants.core.computation.{Model, InvariantHelper, Invariant, IntSetVar}
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
  * */
@@ -50,5 +49,30 @@ case class DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) e
   @inline
   override def notifyDeleteOn(v: IntSetVar, i: Int, value: Int){
     referencing(value).deleteValue(i)
+  }
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker) {
+  //Referencing(i) = {j | Reference(j) includes i}
+    for (referencesId <- references.indices){
+      for (referencingId <- referencing.indices){
+        if (references(referencesId).value.contains(referencingId))
+          c.check(referencing(referencingId).value.contains(referencesId))
+        else c.check(!referencing(referencingId).value.contains(referencesId))
+      }
+    }
+  }
+}
+
+object DenseRef{
+  def makeDenseRef(references:Array[IntSetVar]):DenseRef = {
+    val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsIntSetVar(references)
+    val m:Model = InvariantHelper.findModel(references)
+    assert(minMin == 0)
+    val referencing = Array.tabulate(maxMax + 1)(i => new IntSetVar(m,0,references.length - 1, "referencing_" + i))
+    DenseRef(references,referencing)
   }
 }

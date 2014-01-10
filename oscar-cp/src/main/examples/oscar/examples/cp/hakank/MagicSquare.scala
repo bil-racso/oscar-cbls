@@ -54,7 +54,6 @@ object MagicSquare {
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
 
@@ -87,17 +86,10 @@ object MagicSquare {
          println(x(i).map(j=>"%3d".format(j.value)).mkString(""))
        }
        println()
-
-
-       numSols += 1
-
-       if (num_to_show > 0 && numSols >= num_to_show) {
-         cp.stop()
-       }
        
      } 
      
-     println(cp.start())
+     println(cp.start(num_to_show))
    }
 
 }

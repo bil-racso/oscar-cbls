@@ -36,7 +36,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     for (d <- 0 to 3) {
       node.start()
     }
-    stat.nbSols should be(4)
+    stat.nSols should be(4)
     
   }
   
@@ -63,31 +63,31 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     }
     
     nbSol = 0
-    search.solveAll().nbSols should be(8)
+    search.solveAll().nSols should be(8)
     nbSol should be(8)
     
     nbSol = 0
-    search.solveAll(nbSols = 2).nbSols should be(2)
+    search.solveAll(nSols = 2).nSols should be(2)
     nbSol should be(2)
     
     nbSol = 0
-    search.solveAll(failureLimit = 5).nbSols should be(5)
+    search.solveAll(failureLimit = 5).nSols should be(5)
     nbSol should be(5)
     
     nbSol = 0
-    search.solveAll(maxDiscrepancy = 0).nbSols should be(1)
+    search.solveAll(maxDiscrepancy = 0).nSols should be(1)
     nbSol should be(1)
     
     nbSol = 0
-    search.solveAll(maxDiscrepancy = 1).nbSols should be(4)  
+    search.solveAll(maxDiscrepancy = 1).nSols should be(4)  
     nbSol should be(4)
     
     nbSol = 0
-    search.solveAll(maxDiscrepancy = 2).nbSols should be(7)  
+    search.solveAll(maxDiscrepancy = 2).nSols should be(7)  
     nbSol should be(7)    
 
     nbSol = 0
-    search.solveAll(maxDiscrepancy = 3).nbSols should be(8)  
+    search.solveAll(maxDiscrepancy = 3).nSols should be(8)  
     nbSol should be(8)     
   }
   
@@ -125,11 +125,11 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       nbSol +=1 
     }
     nbSol = 0
-    search.solveAll().nbSols should be(4)
+    search.solveAll().nSols should be(4)
     nbSol should be(4)
     
     nbSol = 0
-    search.solveAll(failureLimit = 1).nbSols should be(0)
+    search.solveAll(failureLimit = 1).nSols should be(0)
   }
   
   
@@ -185,7 +185,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     var c = 0
     node.onSolution { c += 1 }
     node.search(b1++b2)
-    node.start().nbSols should be(32)
+    node.start().nSols should be(32)
     c should be(32)    
   }
   
@@ -212,7 +212,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       }
     }
 
-    node.start().nbSols should be(32)
+    node.start().nSols should be(32)
     c should be(32)    
   }
   
@@ -227,7 +227,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     
     val stat = node.start()
     i.value should be(0)
-    stat.nbSols should be(8)
+    stat.nSols should be(8)
     
     node.search {
       if (i > 2) noAlternative
@@ -235,7 +235,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     } 
     
     val stat2 = node.start()
-    stat2.nbSols should be(27)
+    stat2.nSols should be(27)
     
   }
  
@@ -248,7 +248,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       else branchAll(1 to 3) {v =>  i += 1}
     } 
     val stat2 = node.start()
-    stat2.nbSols should be(9)
+    stat2.nSols should be(9)
   }   
   
   test("test search8") {
@@ -259,7 +259,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       else branchAll(1 to 3) {v =>  i += 1}
     } 
     val stat2 = node.start()
-    stat2.nbSols should be(3)
+    stat2.nSols should be(3)
   }
   
   
@@ -271,7 +271,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       else branchAll(1 to 3) {v =>  i += 1}
     } 
     val stat2 = node.start(maxDiscrepancy = 1)
-    stat2.nbSols should be(2)
+    stat2.nSols should be(2)
   } 
   
   test("test search10") {
@@ -282,7 +282,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       else branchAll(1 to 3) {v =>  i += 1}
     } 
     val stat2 = node.start(maxDiscrepancy = 5)
-    stat2.nbSols should be(26)
+    stat2.nSols should be(26)
   }
   
   
@@ -294,7 +294,7 @@ class SearchTest extends FunSuite with ShouldMatchers  {
       else branchAll(1 to 3) {v => if (v == 1) node.fail else  i += 1}
     } 
     val stat2 = node.start()
-    stat2.nbSols should be(8)
+    stat2.nSols should be(8)
   }
     
 

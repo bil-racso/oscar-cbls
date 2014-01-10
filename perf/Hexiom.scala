@@ -95,10 +95,10 @@ object Hexiom {
 		val cardinalities = (0 to 6).map(i => oneline.count((i+'0').toChar ==)).toArray :+ oneline.count(('.').toChar ==) 
 
 		                      
-		val cp = CPSolver() 
+		implicit val cp = CPSolver() 
 		cp.silent = true
 		// used(i) = true iff there is a pawn at this position
-		val used =  Array.fill(k)(CPVarBool(cp)) 
+		val used =  Array.fill(k)(CPVarBool()) 
 		val dummy = 7 // dummy value when no pawn in the neighborhood
 		// card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
 		val card =  Array.fill(k)(CPVarInt(cp,0 to 7))
@@ -112,16 +112,9 @@ object Hexiom {
 		    cp.add(table(nbNeighbors,used(i),card(i),tuples))
 		  }
 		  cp.add(gcc(card,0 to 6,cardinalities,cardinalities),Strong)
-		} exploration {
-		  
-		  while (!allBounds(used)) {
-			  val x = used.filter(!_.isBound).head
-			  cp.branch {cp.post(x == 1)} {cp.post(x == 0)}
-		  }
-		  nbSol += 1
-	    } run(2000)
-		println("nbsol:"+nbSol)
-		cp.printStats()
+		} search {
+			binaryStatic(used,_.max)
+		} start(2000)
 
 	
   }

@@ -34,10 +34,11 @@ class TestGolomb extends FunSuite with ShouldMatchers {
         // break the symmetries between differences
         cp.add(marks(1) - marks(0) < marks(n - 1) - marks(n - 2));
 
-      } exploration {
-        cp.binaryFirstFail(marks)
+      } search {
+        binaryFirstFail(marks)
+      } onSolution {
         best = obj.value
-      } run ()
+      } start ()
       best
     }
 

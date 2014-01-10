@@ -36,7 +36,7 @@ class CircularIntSet(maxsize:Int) extends Set[Int]{
   private[set] val prev:Array[Int] = new Array[Int](maxsize) //gives the id of the next element, so that they constitute a cycle in the array
 
   private var handle:Int = -1
-  private var sizevar:Int = 0;
+  private var sizevar:Int = 0
 
   def -=(elem: Int):this.type = {
     containsvar(elem) = false

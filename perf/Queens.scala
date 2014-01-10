@@ -13,12 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
-
-
-
-
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
@@ -26,33 +21,30 @@ import oscar.cp.core._
  * Using Non Deterministic Search
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Queens  {
-	def main(args: Array[String]) {
-		
-      val cp = CPSolver()
-      cp.silent = true
-      val n = 12 //number of queens
-      val Queens = 0 until n
-      //variables
-      val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
-      
-      var nbsol = 0
-      cp.solve subjectTo {
-    	  cp.add(allDifferent(queens),Strong)
-    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),Strong)
-    	  cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),Strong)
-      } exploration {        
-        for (q <- Queens.suspendable) {
-          cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
-        }
-        nbsol += 1
-      } run()
-  
-      //print some statistics
-      println("#sol",nbsol)
-      cp.printStats()
-      
-	}
+object Queens {
+  def main(args: Array[String]) {
+
+    val cp = CPSolver()
+    cp.silent = true
+    val n = 12 //number of queens
+    val Queens = 0 until n
+    //variables
+    val queens = for (i <- Queens) yield CPVarInt(cp, 1 to n)
+
+    var nbsol = 0
+    cp.solve subjectTo {
+      cp.add(allDifferent(queens), Strong)
+      cp.add(allDifferent(for (i <- Queens) yield queens(i) + i), Strong)
+      cp.add(allDifferent(for (i <- Queens) yield queens(i) - i), Strong)
+    } search {
+      queens.find(!_.isBound) match {
+        case None => noAlternative
+        case Some(x) => branchAll(1 to n)(v => cp.add(x == v))
+      }
+    }
+    println(cp.start())
+
+  }
 }
 
 

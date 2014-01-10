@@ -95,22 +95,11 @@ class TestSum extends FunSuite with ShouldMatchers  {
     cp.solve subjectTo {
       if (decomp) cp.add(new oscar.cp.constraints.Sum(x,y))
       else cp.add(sum(x,y))
-    } exploration {
-      while(!x.forall(_.isBound)) {
-        val z = x.find(!_.isBound).get
-        val v = z.min
-        cp.branch
-        {
-          //println("banching on =="+v)
-          cp.add(z == v)}
-        {
-          //println("branching on !="+v)
-          cp.add(z!=v)}
-        //println("branched z="+z)
-      }
-      //cp.binary(x :+ y, z => rand.nextInt(30))
+    } search {
+      binaryStatic(x)
+    } onSolution {  
       nbSol += 1
-    } run()
+    } start()
     cp.popAll()
     nbSol
     

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -42,7 +27,7 @@ import oscar.visual.plot.PlotLine
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Steel {
+object Steel extends CPModel with App {
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
     val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
@@ -70,82 +55,78 @@ object Steel {
     (capa toArray, weight, col)
   }
 
-  def main(args: Array[String]) {
-    val (capa, weight, col) = readData()
-    val (nbCapa, nbSlab, nbCol) = (capa.length, weight.length, col.max + 1)
-    val Slabs = 0 until nbSlab
-    val Cols = 0 until nbCol
-    val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
-    val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
+  val (capa, weight, col) = readData()
+  val (nbCapa, nbSlab, nbCol) = (capa.length, weight.length, col.max + 1)
+  val Slabs = 0 until nbSlab
+  val Cols = 0 until nbCol
+  val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
+  val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
-    val cp = new CPSolver
-    val x = (for (s <- Slabs) yield CPVarInt(0 until nbSlab)(cp))
-    val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
-    val l = for (s <- Slabs) yield CPVarInt(0 to capa.max)(cp)
-    val xsol = Array.fill(nbSlab)(0) //current best solution
+  val x = (for (s <- Slabs) yield CPVarInt(0 until nbSlab))
+  val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
+  val l = for (s <- Slabs) yield CPVarInt(0 to capa.max)
+  val xsol = Array.fill(nbSlab)(0) //current best solution
 
-    // -------------visual components ------------
-    val colors = VisualUtil.getRandomColors(nbCol, true)
-    val scale = 7
-    val f = VisualFrame("Steel Mill Slab")
-    // creates the plot and place it into the frame
-    val plot = new PlotLine("", "Solution number", "Loss")
-    f.createFrame("Objective").add(plot)
-    // creates the tour visu and place it into the frame
-    val drawing: VisualBinPacking = VisualBinPacking(binWidth = 12)
-    val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
-    Slabs.foreach(o => items(o).innerCol = colors(col(o)))
-    f.createFrame("Steel Mill Slab").add(drawing)
-    capa.foreach(c => VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
-    f.pack()
-    // ------------------------------------------
+  // -------------visual components ------------
+  val colors = VisualUtil.getRandomColors(nbCol, true)
+  val scale = 7
+  val f = VisualFrame("Steel Mill Slab")
+  // creates the plot and place it into the frame
+  val plot = new PlotLine("", "Solution number", "Loss")
+  f.createFrame("Objective").add(plot)
+  // creates the tour visu and place it into the frame
+  val drawing: VisualBinPacking = VisualBinPacking(binWidth = 12)
+  val items = Slabs.map(i => drawing.addItem(i, scale * weight(i))).toArray
+  Slabs.foreach(o => items(o).innerCol = colors(col(o)))
+  f.createFrame("Steel Mill Slab").add(drawing)
+  capa.foreach(c => VisualLine(drawing, 0, c * scale, nbSlab * 12, c * scale).outerCol = Color.red)
+  f.pack()
+  // ------------------------------------------
 
-    val rnd = new Random(0)
-    var nbSol = 0
+  val rnd = new Random(0)
+  var nbSol = 0
 
-    val obj = sum(Slabs)(s => element(loss, l(s)))
-    
-    cp.onSolution {
-      plot.addPoint(nbSol, obj.value)
-      nbSol += 1
-      println("sol #fail:" + cp.nFail)  
-      Slabs.foreach(o => {
-        xsol(o) = x(o).value
-        items(o).bin = xsol(o)
-      })
-      
-    }
-    
-    cp.minimize(obj) subjectTo {
-      cp.add(binPacking(x, weight, l), Strong)
-      for (s <- Slabs) {
-        def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
-        cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
-      }
-    } search {
-      selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)) match {
-        case None => noAlternative
-        case Some(y) => {
-          // dynamic symmetry breaking
-          val maxUsed = x.maxBoundOrElse(-1)
-          branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.add(y == v))
-        }
-      }
+  val obj = sum(Slabs)(s => element(loss, l(s)))
 
-    } 
-    
-    val stats = cp.start(1) // find firest feasible solution
+  onSolution {
+    plot.addPoint(nbSol, obj.value)
+    nbSol += 1
+    Slabs.foreach(o => {
+      xsol(o) = x(o).value
+      items(o).bin = xsol(o)
+    })
 
-    for (r <- 1 to 100) {
-      cp.startSubjectTo(failureLimit = 200) {
-        for (s <- Slabs; if rnd.nextInt(100) > 70) {
-          cp.post(x(s) == xsol(s))
-        }
-      }
-    }
-
-    println("end--------------")
-
-    println(stats)
   }
+
+  add(binPacking(x, weight, l), Strong)
+  for (s <- Slabs) {
+    def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
+    add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
+  }
+
+  minimize(obj) search {
+    selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)) match {
+      case None => noAlternative
+      case Some(y) => {
+        // dynamic symmetry breaking
+        val maxUsed = x.maxBoundOrElse(-1)
+        branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => post(y == v))
+      }
+    }
+
+  }
+
+  val stats = start(nSols = 1) // find firest feasible solution
+
+  for (r <- 1 to 100) {
+    startSubjectTo(failureLimit = 200) {
+      for (s <- Slabs; if rnd.nextInt(100) > 70) {
+        post(x(s) == xsol(s))
+      }
+    }
+  }
+
+  println("end--------------")
+
+  println(stats)
 }

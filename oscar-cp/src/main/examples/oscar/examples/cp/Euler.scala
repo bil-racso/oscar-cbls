@@ -1,19 +1,4 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 package oscar.examples.cp
-
 
 import oscar.cp.modeling._
 import oscar.algo.search._
@@ -25,13 +10,12 @@ import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualCircle
 
 /**
- *
  * Euler Problem, a knight must visit every position of a chess board once and come back to its initial position
  * using only valid knight moves.
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Euler extends App {
+object Euler extends CPModel with App {
 
   //  -----------visualization of the euler tour ----------
   val f = new VisualFrame("Euler", 1, 1)
@@ -50,12 +34,11 @@ object Euler extends App {
     }
   }
 
-  val cp = new CPSolver()
-  val x = (0 until 64).map(v => CPVarInt(reachables(v))(cp))
+  val x = (0 until 64).map(v => CPVarInt(reachables(v)))
 
-  cp.solve subjectTo {
-    cp.add(circuit(x))
-  } search {
+  add(circuit(x))
+
+  search {
     binaryFirstFail(x)
   } onSolution {
     println(x.map(_.value).mkString(","))
@@ -74,6 +57,7 @@ object Euler extends App {
     drawing.repaint()
   }
 
-  println(cp.start(1))
+  val stats = start(1)
 
+  println(stats)
 }

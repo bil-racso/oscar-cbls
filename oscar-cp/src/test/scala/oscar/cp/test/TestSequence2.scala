@@ -29,14 +29,13 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
   test("test1") { 
 	  val cp = CPSolver()
 	  val x = Array.fill(5)(CPVarInt(Set(1,4,7))(cp))
-	  var nbSol = 0
 	  cp.solve subjectTo { 
 		cp.add(new SequenceDecomposition(x,Set(1,4),l=3,min=2,max=2))
-	  } exploration {
-	    cp.binaryFirstFail(x)
-	    nbSol += 1
-	  } run()
-	  nbSol should be(32)
+	  } search {
+	    binaryFirstFail(x)
+
+	  }
+	  cp.start().nSols should be(32)
   }
   
   test("test2") { 

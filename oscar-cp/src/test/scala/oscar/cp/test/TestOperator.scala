@@ -59,21 +59,19 @@ class TestOperator extends FunSuite with ShouldMatchers  {
   
   test("boolean unary operator 4") { 
 	  val cp = CPSolver()
-	  val A = CPVarBool(cp)
-	  val B = CPVarBool(cp)
+	  val A = CPVarBool()(cp)
+	  val B = CPVarBool()(cp)
 	  cp.add((!A || B) == (A ==> B))
-	  var nbSol = 0
-	  cp.exploration {
-	    cp.binary(Array(A,B))
-	    nbSol += 1
-	  } run()
-	  nbSol should be(4)
+	  cp.search {
+	    binaryStatic(Seq(A,B))
+	  }
+	  cp.start().nSols should be(4)
   }
   
   test("boolean unary operator 5") { 
 	  val cp = CPSolver()
-	  val A = CPVarBool(cp)
-	  val B = CPVarBool(cp)
+	  val A = CPVarBool()(cp)
+	  val B = CPVarBool()(cp)
 	  cp.add(A && B)
 	  A.isTrue should be(true)
 	  B.isTrue should be(true)

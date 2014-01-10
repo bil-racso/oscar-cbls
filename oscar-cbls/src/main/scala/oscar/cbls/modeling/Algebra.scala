@@ -14,23 +14,6 @@
  ******************************************************************************/
 package oscar.cbls.modeling
 
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
-
 /******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -40,11 +23,12 @@ package oscar.cbls.modeling
 
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.set.{Inter, Diff, Union}
+import oscar.cbls.invariants.lib.set.{Interval, Inter, Diff, Union}
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
 import collection.Iterator
+import language.implicitConversions
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
@@ -128,6 +112,13 @@ object Algebra {
     def >==(v: IntVar) = new GE(x, v)
 
     def le(v: IntVar) = new LE(x, v)
+
+    /** creates a IntSEt maintained as the inclusive interval between te two variable
+      * see [[oscar.cbls.invariants.lib.set.Interval]]
+      * @param v
+      * @return
+      */
+    def TO (v:IntVar) = new Interval(x,v)
   }
 
   implicit def InstrumentIntSetVar(v: IntSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)

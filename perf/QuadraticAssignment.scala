@@ -14,7 +14,7 @@
  ******************************************************************************/
 import oscar.cp.modeling._
 import oscar.cp.core._
-
+import oscar.util._
 
 import scala.io.Source
 import java.lang._
@@ -27,7 +27,7 @@ import java.lang._
  * (e.g., the amount of supplies transported between the two facilities).
  * The problem is to assign all facilities to different locations
  * with the goal of minimizing the sum of the distances multiplied by the corresponding flows.
- * 
+ *
  * @author Pierre Schaus pschaus@gmail.com
  */
 object QuadraticAssignment {
@@ -57,21 +57,17 @@ object QuadraticAssignment {
 
     cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
       cp.add(allDifferent(x), Strong)
-    } exploration {
-        while (!allBounds(x)) {
-           val y = x.minDomNotBound
-           val v = y.min
-    	   cp.branch {
-             cp.post(y == v)
-           } {
-             cp.post(y !=v)
-           }
+    } search {
+      selectMin(x)(y => !y.isBound)(y => y.size) match {
+        case None => noAlternative
+        case Some(y) => {
+          val v = y.min
+          branch(cp.add(y == v))(cp.add(y != v))
         }
-        println("solution"+x.mkString(",")) 
-    } run()
+      }
+    }
+    println(cp.start())
 
-    // Print some statistics
-    cp.printStats()
   }
 
 }

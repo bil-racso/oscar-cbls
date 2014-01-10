@@ -32,7 +32,7 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
     }
 
 
-    def nbSol(decomp: Boolean) = {
+    def nbSol(decomp: Boolean): Int = {
         val cp = CPSolver()
         val s = 74
     	val x = Array(CPVarInt(11 to 16)(cp), CPVarInt(9 to 11)(cp), CPVarInt(12 to 14)(cp), CPVarInt(13 to 14)(cp), CPVarInt(10 to 12)(cp), CPVarInt(12 to 15)(cp))
@@ -44,11 +44,10 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
         	cp.add(new Deviation(x, s, nd));
 
         var cnt = 0
-        cp.solve exploration {
-          cp.binaryFirstFail(x)
-          cnt += 1
-        } run
-        cnt
+        cp.search {
+          binaryFirstFail(x)
+        } 
+        cp.start().nSols
     }
 
     def deviationDecomp(x: Array[CPVarInt], s: Int, nd: CPVarInt) {
