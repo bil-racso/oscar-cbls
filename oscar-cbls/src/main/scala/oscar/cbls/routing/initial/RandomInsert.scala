@@ -26,7 +26,7 @@ import oscar.cbls.routing.neighborhood.SearchZone
 /**
  * Constructs an initial solution randomly.
  */
-object RandomNeighbor{
+object RandomInsert{
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
