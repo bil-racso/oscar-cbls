@@ -53,6 +53,8 @@ trait DiscreteDistr[B] extends Distr[B] {
   def apply[T](implicit m: DistrSolver[T]): B @cpsParam[SuspendableResult[T], SuspendableResult[T]] = m.getNextStochasticRealization(this)
 }
 
+case class UniformChoice[A](elements: List[A]) extends Choice[A](elements.map(e => (1./elements.size,e)))
+
 class Choice[A](val list: List[(Double, A)]) extends DiscreteDistr[A] {
   require(list.size > 0)
   require(Math.abs(list.foldLeft(0.0)(_ + _._1) - 1.0) <= 0.0001, "Sum of probabilities are not equal to 1.0: " + list.foldLeft(0.0)(_ + _._1) + ": " + list)

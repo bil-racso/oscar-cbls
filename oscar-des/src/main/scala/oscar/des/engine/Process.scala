@@ -24,15 +24,17 @@ import oscar.invariants._
 import org.joda.time._
 import com.typesafe.scalalogging.slf4j._
 
+trait SuspendableAnnotation[T]{
+  type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
+  type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]
+  def unit: Unit @susp = ()
+}
+
 /**
  * Every simulated object taking part in the simulation should extend this class.
  * @author Pierre Schaus, Sebastien Mouthuy
  */
-abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Model[T]) extends Logging{
-
-  type State = Unit @cpsParam[SuspendableResult[T], SuspendableResult[T]]
-  type susp = cpsParam[SuspendableResult[T], SuspendableResult[T]]
-  def unit: Unit @susp = ()
+abstract class AbstractProcess[T](val name: String = "Process")(implicit m: Model[T]) extends Logging with SuspendableAnnotation[T]{
   //
   //  def suspend(): Unit @susp = {
   //    //		if (suspending) {
@@ -121,7 +123,7 @@ class DefaultResult extends ProcessResult[DefaultResult] {
   def +:(v: DefaultResult) = { new DefaultResult() }
 }
 
-abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
+abstract class ProcessWithStates[S, T](name: String = "Process", val initState: S)(implicit m: Model[T]) extends Process[T](name)(m) {
   def exec(implicit state: S): T @susp
   def deepExec(state: S) = {
     exec(state)
@@ -130,7 +132,10 @@ abstract class ProcessWithStates[S, T](name: String = "Process", initState: S)(i
     logger.debug(name + " becomes " + next)
     deepExec(next)
   }
-  override def start() = deepExec(initState)
+  override def start() = {
+    
+    deepExec(initState)
+  }
 }
 
 abstract trait ProcessWithCostByState[S, T <: ProcessResult[T]] extends ProcessWithStates[S, T] {
@@ -139,6 +144,22 @@ abstract trait ProcessWithCostByState[S, T <: ProcessResult[T]] extends ProcessW
     cost(current).+:(deepExec(next))
   }
   }
+
+trait SaveState[S, T] extends ProcessWithStates[S, T] {
+  val currentState = new Var[S](initState)
+  
+  override def deepExec(state: S) = {
+    currentState := state
+    super.deepExec(state)
+  }
+}
+
+trait LogState[S, T] extends ProcessWithStates[S,T]{
+  override def deepExec(state: S) = {
+    println("%s change its state to %s" format (name,state))
+    super.deepExec(state)
+  }
+}
 
 trait MonitorState[S, T] extends ProcessWithStates[S, T] {
   val entering = Event[S]()
