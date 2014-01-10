@@ -23,7 +23,6 @@ import oscar.cp.core.CPVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
@@ -489,15 +488,6 @@ class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
 }
 
 object SweepMinCumulative {
-  def apply(cp: CPSolver, tasks: Array[CumulativeActivity], capacity: CPVarInt, id: Int): SweepMinCumulative = {
-    val starts = tasks.map(_.start)
-    val durations = tasks.map(_.dur)
-    val ends = tasks.map(_.end)
-    val demands = tasks.map(_.height)
-    val resources = tasks.map(_.resource)
-    new SweepMinCumulative(starts, ends, durations, demands, resources, capacity, id)
-  }
-  
   def apply(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): SweepMinCumulative = {
     val nTasks = starts.size
     if (nTasks == 0) throw new Exception("no tasks")

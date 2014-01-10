@@ -20,7 +20,6 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.search.BinaryFirstFailBranching
-import oscar.cp.scheduling.Activity
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -116,9 +115,9 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val n = 4
       val durations = randomDurations(n, seed)
       val horizon = durations.sum
-      val cp = CPScheduler(horizon)
-      val starts = Array.tabulate(n)(i => CPVarInt(cp, 0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPVarInt(cp, durations(i)))
+      implicit val cp = CPSolver()
+      val starts = Array.tabulate(n)(i => CPVarInt(0 until (horizon - durations(i) + 1)))
+      val durs = Array.tabulate(n)(i => CPVarInt(durations(i)))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
 
       cp.onSolution {

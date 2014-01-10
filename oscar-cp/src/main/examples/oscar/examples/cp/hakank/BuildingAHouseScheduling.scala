@@ -43,7 +43,7 @@ import scala.math._
 
 object BuildingAHouseScheduling {
 
-	def main(args : Array[String]) {
+	/*def main(args : Array[String]) {
 
 		//
 		// data
@@ -124,5 +124,5 @@ object BuildingAHouseScheduling {
 		println(cp.start())
 
 	}
-
+*/
 }

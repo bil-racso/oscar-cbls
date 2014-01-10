@@ -21,7 +21,6 @@ import oscar.cp.core._
 import oscar.cp.constraints._
 import scala.util.continuations._
 import scala.collection.mutable.Stack
-import oscar.cp.scheduling.CumulativeActivity
 import oscar.algo.reversible._
 import oscar.util._
 import oscar.cp.multiobjective.ListPareto

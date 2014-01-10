@@ -17,7 +17,7 @@
 package oscar.cp.constraints
 
 import scala.collection.mutable.Queue
-
+/*
 import oscar.algo.EfficientHeap
 import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.scheduling.MirrorCumulativeActivity
@@ -476,4 +476,4 @@ class NewMaxCumulative(cp: CPSolver, allTasks: Array[CumulativeActivity], limit:
     def right(i: Int) = 2 * i + 1
   }
 
-}
+}*/

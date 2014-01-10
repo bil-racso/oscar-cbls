@@ -39,7 +39,7 @@ import oscar.cp.search.BinaryFirstFailBranching
  *  @author Pierre Schaus  pschaus@gmail.com
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
-object JobShop extends App {
+object JobShop extends CPModel with App {
 
 
   // Parsing		
@@ -78,7 +78,6 @@ object JobShop extends App {
   // -----------------------------------------------------------------------
 
   val horizon = durations.sum
-  implicit val cp = CPScheduler(horizon)
 
   // Activities & Resources
   val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(durations(t)))
@@ -96,7 +95,7 @@ object JobShop extends App {
   val colors = VisualUtil.getRandomColors(nResources, true)
   val gantt1 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
   val gantt2 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => resources(i), colors = i => colors(resources(i)))
-  cp.onSolution {
+  onSolution {
     gantt1.update(1, 20)
     gantt2.update(1, 20)
   }
@@ -120,10 +119,8 @@ object JobShop extends App {
 	def filter(x: Array[CPVarInt]) = Activities.filter(resources(_) == r).map(x(_))
     add(unaryResource(filter(startsVar), filter(durationsVar),filter(endsVar)))
   }
-  minimize(makespan)
-  
-  cp.search {
+  minimize(makespan) search {
     binaryFirstFail(startsVar)
   }
-  println(cp.start())
+  println(start())
 } 

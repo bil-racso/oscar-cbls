@@ -20,7 +20,6 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.search.BinaryFirstFailBranching
-import oscar.cp.scheduling.Activity
 
 /**
  * @author: Pierre Schaus pschaus@gmail.com

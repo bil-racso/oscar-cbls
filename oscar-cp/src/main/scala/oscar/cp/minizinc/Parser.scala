@@ -22,7 +22,6 @@ import oscar.cp.constraints.SetDiff
 import java.sql.Time
 import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
-import oscar.cp.scheduling.CumulativeActivity
 import java.util.Collection
 import oscar.algo.search.Branching
 

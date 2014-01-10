@@ -916,26 +916,6 @@ trait Constraints {
     val cp = starts(0).s
 	new UnaryResource(starts,durations,ends,starts.map(s => CPVarBool(true)(cp)))
   }
-
-  /**
-   * Cumulative
-   */
-  def cumulative(activities: Array[CumulativeActivity], machine: Int, min: Int = Int.MinValue, max: Int = Int.MaxValue): Array[Constraint] = {
-
-    val cp = activities(0).store
-
-    if (max != Int.MaxValue) {
-      if (min != Int.MinValue) {
-        return Array(SweepMaxCumulative(cp, activities, CPVarInt(max)(cp), machine), SweepMinCumulative(cp, activities, CPVarInt(min)(cp), machine))
-      } else {
-        return Array(SweepMaxCumulative(cp, activities, CPVarInt(max)(cp), machine))
-      }
-    } else if (min != Int.MinValue) {
-      return Array(SweepMinCumulative(cp, activities, CPVarInt(min)(cp), machine))
-    }
-
-    throw new IllegalArgumentException("Bounds are not specified")
-  }
   
   /**
    * Constraint x and y to be disjoint (no common values)
