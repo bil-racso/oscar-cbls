@@ -84,7 +84,7 @@ object Binero extends CPModel with App {
 
   val stat = start() // find all solutions
 
-  println("Number of solutions : " + stat.nbSols)
+  println("Number of solutions : " + stat.nSols)
   println(stat)
 }
 

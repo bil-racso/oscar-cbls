@@ -35,7 +35,7 @@ class TestSequence2 extends FunSuite with ShouldMatchers  {
 	    binaryFirstFail(x)
 
 	  }
-	  cp.start().nbSols should be(32)
+	  cp.start().nSols should be(32)
   }
   
   test("test2") { 

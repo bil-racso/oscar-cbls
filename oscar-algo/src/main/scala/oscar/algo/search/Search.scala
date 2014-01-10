@@ -19,14 +19,14 @@ import oscar.algo.reversible._
 
 class SearchStatistics(
     val nbNodes: Int,
-    val nbFails: Int,
+    val nFails: Int,
     val time: Long,
     val completed: Boolean,
     val timeInTrail: Long,
     val maxTrailSize: Int,
-    val nbSols: Int) {
+    val nSols: Int) {
   override def toString: String = {
-    "nbNodes: "+nbNodes+" \n" + "nbFails: "+nbFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nbSols: "+nbSols+" \n"
+    "nbNodes: "+nbNodes+" \n" + "nFails: "+nFails+" \n" + "time(ms): "+time+" \n" + "completed: "+completed+" \n" + "timeInTrail: "+timeInTrail+" \n" + "nSols: "+nSols+" \n"
     
   }
 }
@@ -49,7 +49,7 @@ class Search(node: SearchNode, branching: Branching) {
     solutionActions.foreach(_())
   }
 
-  def solveAll(nbSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+  def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
     node.trail.resetStats()
     val t0trail = node.trail.getTimeInRestore()
     val t0 = System.currentTimeMillis()
@@ -80,9 +80,9 @@ class Search(node: SearchNode, branching: Branching) {
     
     var solCounter = 0
     var nbNodes = 0
-    var nbBkts = 0
+    var nBkts = 0
     
-    def searchLimitReached = (time/1000 >= timeLimit) || (nbBkts >= failureLimit)
+    def searchLimitReached = (time/1000 >= timeLimit) || (nBkts >= failureLimit)
     
     // add initial alternatives of the root node
     if (!node.isFailed) {
@@ -106,8 +106,8 @@ class Search(node: SearchNode, branching: Branching) {
         if (!stackAlternatives()) { 
             solFound()
             solCounter += 1
-            nbBkts += 1 
-            if (nbSols == solCounter) done = true
+            nBkts += 1 
+            if (nSols == solCounter) done = true
             else {
               node.pop()
             }
@@ -117,12 +117,12 @@ class Search(node: SearchNode, branching: Branching) {
         //}
 
       } else {
-        nbBkts += 1 
+        nBkts += 1 
         node.pop()
       }
     }
     node.popAll()
-    new SearchStatistics(nbNodes,nbFails = nbBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nbSols = solCounter)
+    new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nSols = solCounter)
   }
 
 }

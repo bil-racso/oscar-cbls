@@ -37,7 +37,7 @@ class TestSetCard extends FunSuite with ShouldMatchers  {
     cp.search {
       binary(x)
     }
-    cp.start().nbSols should be(15)
+    cp.start().nSols should be(15)
   }
   
   test("Test SetCard 2") {

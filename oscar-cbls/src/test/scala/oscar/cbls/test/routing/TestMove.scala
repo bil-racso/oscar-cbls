@@ -26,30 +26,33 @@ package oscar.cbls.test.routing
 import scala.math.pow
 import scala.math.round
 import scala.math.sqrt
+
 import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
+
 import oscar.cbls.invariants.core.computation.Model
 import oscar.cbls.routing.initial.BestInsert
+import oscar.cbls.routing.initial.RandomNeighbor
 import oscar.cbls.routing.model.ClosestNeighborPointsHop
 import oscar.cbls.routing.model.HopDistanceAsObjective
+import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
+import oscar.cbls.routing.model.StrongConstraints
+import oscar.cbls.routing.model.Unrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.OnePointMove
 import oscar.cbls.routing.neighborhood.SearchZone
 import oscar.cbls.routing.neighborhood.Swap
-import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
-import oscar.cbls.routing.neighborhood.TwoOptMove
-import oscar.cbls.routing.neighborhood.TwoOptMove
-import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.ThreeOpt
-import oscar.cbls.routing.model.Unrouted
-import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.model.StrongConstraints
-import oscar.cbls.routing.model.MoveDescription
+import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.TwoOptMove
+import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -75,7 +78,6 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       checkUnrouted(f, segNodes)
   }
 
-  // FIXME: sometimes fails
   test("A segment and a node can be cut.") {
     (f: MoveFixture) =>
       val (initLength, cutSeg, segLength, segNodes) = f.randomCut
@@ -183,8 +185,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
               else
                 f.vrp.next(i).value should be(f.initNext(i))
             }
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -214,8 +217,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
               else
                 f.vrp.next(i).value should be(f.initNext(i))
             }
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -248,8 +252,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
               else
                 f.vrp.next(i).value should be(f.initNext(i))
             }
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -289,8 +294,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
               else
                 f.vrp.next(i).value should be(f.initNext(i))
             }
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -335,8 +341,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
               m.doMove
 
               check2OptMove(f, move)
+              true
             }
-            case None => assert(false, "No improving move found, try launching this test again...")
+            case None => false
           }
     }
 
@@ -352,8 +359,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
 
             check2OptMove(f, move)
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -369,8 +377,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
 
             check2OptMove(f, move)
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
 
@@ -387,8 +396,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
             m.doMove
 
             check3OptMove(f, move)
+            true
           }
-          case None => assert(false, "No improving move found, try launching this test again...")
+          case None => false
         }
   }
   //
@@ -449,15 +459,22 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     nbVehicles: Int = 1,
     abscissa: Array[Int] = null,
     ordinate: Array[Int] = null,
-    init: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = BestInsert.apply)(moveFun: MoveFixture => Unit): Unit = {
+    init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = RandomNeighbor.apply)(moveFun: MoveFixture => Boolean): Unit = {
     test(name) {
-      val f = new MoveFixture(verbose, randomWeight, nbNodes, nbVehicles, abscissa, ordinate, init)
+      var improvingMoveFound = false
+      while (!improvingMoveFound) {
+        val f = new MoveFixture(verbose, randomWeight, nbNodes, nbVehicles, abscissa, ordinate, init)
 
-      if (verbose > 0) {
-        println(f.vrp)
+        if (verbose > 1) {
+          println(f.vrp)
+        }
+        improvingMoveFound = moveFun(f)
+        if (verbose > 0 && !improvingMoveFound) {
+          println("No improving move found for the following problem:")
+          println(f.model)
+          println(f.vrp)
+        }
       }
-      moveFun(f)
-
       //      if (verbose > 0) {
       //        println(f.vrp)
       //      }
@@ -553,7 +570,7 @@ class MoveFixture(
   val nbVehicules: Int = 1,
   var abscissa: Array[Int] = null,
   var ordinate: Array[Int] = null,
-  val init: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = BestInsert.apply) {
+  val init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = BestInsert.apply) {
 
   val ROUTE_ARRAY_UNROUTED = 1
 
@@ -576,7 +593,12 @@ class MoveFixture(
   vrp.installCostMatrix(matrix)
   model.close()
 
-  println(vrp)
+  if (verbose > 0) {
+    println
+    if (verbose > 1) {
+      println("Initial problem: " + vrp)
+    }
+  }
 
   init(vrp)
   // 0 -> 1 -> 2 -> ... -> nbNodes - 1 (-> 0)

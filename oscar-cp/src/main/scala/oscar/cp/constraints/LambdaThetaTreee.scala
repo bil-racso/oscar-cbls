@@ -13,23 +13,5 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.algo.search
+package oscar.cp.constraints
 
-/**
- * @author: Pierre Schaus pschaus@gmail.com
- */
-trait BranchingUtils {
-  
-  type Alternative = () => Unit
-  
-  def branch(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
-  
-  def branchOne(action: => Unit) = Seq(() => action)
-  
-  def branchAll[A](indexes: Seq[A])(f: A => Unit): Seq[Alternative] = {
-    indexes.map(i => () => f(i))
-  }
-  
-  val noAlternative = Seq[Alternative]()
-
-}

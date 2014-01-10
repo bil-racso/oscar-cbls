@@ -44,7 +44,7 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
       binaryFirstFail(x)
     }
 
-    cp.start().nbSols should be > 0
+    cp.start().nSols should be > 0
   }
   
   test("Test 4: verifying a solution") {
@@ -85,7 +85,7 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
       binaryFirstFail(x)
     }
 
-    cp.start().nbSols should be(2)
+    cp.start().nSols should be(2)
   }
 
   test("Test 6: counting solutions") {
@@ -106,7 +106,7 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
       binaryFirstFail(x)
     }
 
-    cp.start().nbSols should be(14)
+    cp.start().nSols should be(14)
 
   }
 }

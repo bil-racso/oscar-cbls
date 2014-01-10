@@ -101,7 +101,6 @@ object testRoundUpModulo extends App{
  */
 case class RoundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(Int, Int)]) extends IntInvariant {
 
-  println(this)
   def myMax = ForbiddenZones.maxBy(_._2)._2 + 1
 
   def myMin = from.minVal
@@ -145,7 +144,6 @@ case class RoundUpCustom(from: IntVar, duration: IntVar, ForbiddenZones: List[(I
 
   val SortedRegularizedZones = regularizeZones(ForbiddenZones.sortBy(_._1))
 
-  println("SortedRegularizedZones : " + SortedRegularizedZones)
   val ForbiddenStarts: Array[Int] = SortedRegularizedZones.map(_._1).toArray
   val ForbiddenEnds: Array[Int] = SortedRegularizedZones.map(_._2).toArray
 
@@ -226,3 +224,4 @@ object testRoundUpCustom extends App{
     println(n2day(from.value) + " " + from.value + " " + duration + " " + n2day(r.value) + " " + r.value)
   }
 }
+

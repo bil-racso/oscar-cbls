@@ -51,7 +51,7 @@ class TestCubes extends FunSuite with ShouldMatchers  {
     } search { // Each letter will be assigned different cubes during the search
       binaryFirstFail(placement)
     }
-    cp.start().nbSols should be(24)
+    cp.start().nSols should be(24)
     
   }  
   

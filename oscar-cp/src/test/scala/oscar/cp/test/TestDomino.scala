@@ -76,7 +76,7 @@ class TestDomino extends FunSuite with ShouldMatchers {
       binaryFirstFail(id.flatten.toSeq)
     }
 
-    cp.start().nbSols should be(1)
+    cp.start().nSols should be(1)
 
   }
 

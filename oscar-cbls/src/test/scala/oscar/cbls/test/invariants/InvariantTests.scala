@@ -56,7 +56,6 @@ import oscar.cbls.invariants.lib.minmax.MaxArray
 import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
-import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 import oscar.cbls.constraints.lib.basic.BelongsTo
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.constraints.lib.basic.GE
@@ -78,8 +77,6 @@ class smalltest extends FunSuite with Checkers {
 class InvariantTests extends FunSuite with Checkers {
 
   val verbose = 0
-
-
 
   test("BelongsTo maintains the violation of a membership.") {
     val bench = new InvBench(verbose)
@@ -419,14 +416,14 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("RoundUpCustom") {
+ /* test("RoundUpCustom") {
     val bench = new InvBench(verbose)
     new RoundUpCustom(
       bench.genIntVar(0 to 10),
       bench.genIntVar(1 to 10),
       InvGen.randomTuples(10, 0 to 10).map(ab => (ab._1,ab._1 + ab._2))).toIntVar
     bench.run
-  }
+  }*/
 
   test("Union maintains the union of two sets.") {
     val bench = new InvBench(verbose)

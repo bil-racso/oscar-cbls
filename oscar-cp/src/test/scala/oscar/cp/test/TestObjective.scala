@@ -42,7 +42,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binary(Array(x1, x2), minVar, _.max)
     } 
-    cp.start().nbSols should be(3)
+    cp.start().nSols should be(3)
   }
 
   test("Obj2") {
@@ -63,7 +63,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     } onSolution {
       println("=>"+x1+" "+x2)
     }
-    cp.start().nbSols should be(4)
+    cp.start().nSols should be(4)
   }
 
   test("Obj3") {
@@ -86,7 +86,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
        // solutions are (3,3) (2,3)
       Set((3, 3), (2, 3)).contains((x1.value, x2.value)) should be(true)
     } 
-    cp.start().nbSols should be(2)
+    cp.start().nSols should be(2)
   }
 
   test("Obj4") {
@@ -108,7 +108,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
       // solutions are (3,3) (2,2)
       Set((3, 3), (2, 2)).contains((x1.value, x2.value)) should be(true)
     } 
-    cp.start().nbSols should be(2)
+    cp.start().nSols should be(2)
   }
 
   test("Obj5") {
@@ -129,7 +129,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binary(Seq(x1), minVar, _.max) ++ binary(Seq(x2), minVar, _.max)
     }
-    cp.start().nbSols should be(7)    
+    cp.start().nSols should be(7)    
     
   }
 
@@ -152,7 +152,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binary(Seq(x1), minVar, _.max) ++ binary(Seq(x2), minVar, _.max)
     }
-    cp.start().nbSols should be(5) 
+    cp.start().nSols should be(5) 
   }
 
   test("Obj7") {
@@ -174,7 +174,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binary(Seq(x1), minVar, _.max) ++ binary(Seq(x2), minVar, _.max)
     }
-    cp.start().nbSols should be(3) 
+    cp.start().nSols should be(3) 
   }
 
   test("Obj8") {
@@ -186,7 +186,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binaryFirstFail(Array(x), valHeuris = (x: CPVarInt) => x.max)
     }
-    cp.start().nbSols should be(4)
+    cp.start().nSols should be(4)
   }   
  
 

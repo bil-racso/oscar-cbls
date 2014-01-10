@@ -77,7 +77,7 @@ object QueensVisu extends CPModel with App {
     }
   }
 
-  val stats = start(nSolutions = 3)
+  val stats = start(nSols = 3)
   vt.update()
 
   //print some statistics
