@@ -36,36 +36,32 @@ import oscar.cbls.search.SearchEngineTrait
  */
 object InsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(
-      s: SearchZone,
-      moveAcceptor: (Int) => (Int) => Boolean,
-      returnMove: Boolean): SearchResult = {
+    s: SearchZone,
+    moveAcceptor: (Int) => (Int) => Boolean,
+    returnMove: Boolean): SearchResult = {
     val startObj: Int = s.vrp.getObjective()
     s.vrp.cleanRecordedMoves()
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
-      //TODO: bizarre qu'on itère à l'envers sur les points d'insertion puis sur les points à insérer!
-      //il faudrait itérer sur les points non routés, puis sur les poijnts d'insertion parmi les points relevants.
-      //tant pis pour le primaryIterator en fait.
-      val beforeInsertedPoint: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(beforeInsertedPoint)) {
-        for (
-          insertedPoint <- s.relevantNeighbors(beforeInsertedPoint) if (
-            !vrp.isRouted(insertedPoint))) {
+      val insertedPoint = s.primaryNodeIterator.next
+      assert(!vrp.isRouted(insertedPoint),
+        "The search zone should be restricted to unrouted nodes when inserting.")
 
-          assert(s.vrp.isRecording, "MoveDescription should be recording now")
+      val routedNeighbors = s.relevantNeighbors(insertedPoint).filter(vrp.isRouted)
+      for (beforeInsertedPoint <- routedNeighbors) {
+        assert(s.vrp.isRecording, "MoveDescription should be recording now")
 
-          encode(beforeInsertedPoint, insertedPoint, vrp)
+        encode(beforeInsertedPoint, insertedPoint, vrp)
 
-          checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-            case (true, newObj: Int) => { //this improved
-              if (returnMove) {
-                return MoveFound(InsertPoint(beforeInsertedPoint,
-                  insertedPoint, newObj, vrp))
-              } else return MovePerformed()
-            }
-            case _ => ()
+        checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
+          case (true, newObj: Int) => { //this improved
+            if (returnMove) {
+              return MoveFound(InsertPoint(beforeInsertedPoint,
+                insertedPoint, newObj, vrp))
+            } else return MovePerformed()
           }
+          case _ => ()
         }
       }
     }

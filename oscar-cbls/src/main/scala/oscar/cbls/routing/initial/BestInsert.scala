@@ -44,8 +44,7 @@ object BestInsert {
     val relevantNeighbors = (n: Int) => vrp.nodes
     while (true) {
       InsertPoint.bestImprovingMove(
-        //SearchZone(relevantNeighbors, vrp.unrouted.value.toIterator, vrp)) match {
-        SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
+        SearchZone(relevantNeighbors, vrp.unrouted.value.toIterator, vrp)) match {
           case Some(m) => m.doMove
           case None => println(" done."); return
         }

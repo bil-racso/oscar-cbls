@@ -16,7 +16,6 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
 }
 
 //c'est toujours le first improve, jamais le best improve.
-
 abstract class Neighborhood() {
 
   /**
@@ -106,7 +105,7 @@ abstract class Neighborhood() {
    * @param moveAcceptor says if the move is accepted or not
    * @param StayIfAccept
    * @param vrp
-   * @return true if this improved, false otherwise, and the objective fucntion after the move
+   * @return true if this improved, false otherwise, and the objective function after the move
    */
   def checkEncodedMove(
     moveAcceptor: Int => Boolean,
@@ -125,7 +124,10 @@ abstract class Neighborhood() {
   }
 }
 
+/**
+ * primaryNodeIterator is a stateful iteration on nodes, it might be re-used,
+ * actually so only consume that you really examined
+ */
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
-  //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
   primaryNodeIterator: Iterator[Int],
   vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
