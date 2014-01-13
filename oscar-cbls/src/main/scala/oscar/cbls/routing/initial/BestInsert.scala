@@ -39,7 +39,10 @@ object BestInsert {
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                     with PositionInRouteAndRouteNr with MoveDescription) {
+    // format: ON
     print("Applying best insert heuristic...")
     val relevantNeighbors = (n: Int) => vrp.nodes
     while (true) {

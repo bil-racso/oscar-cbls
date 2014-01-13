@@ -4,7 +4,6 @@ import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.model.Unrouted
 
 abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
