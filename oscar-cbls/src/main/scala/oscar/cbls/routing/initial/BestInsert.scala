@@ -24,7 +24,11 @@
 
 package oscar.cbls.routing.initial
 
-import oscar.cbls.routing.model._
+import oscar.cbls.routing.model.MoveDescription
+import oscar.cbls.routing.model.PositionInRouteAndRouteNr
+import oscar.cbls.routing.model.RoutedAndUnrouted
+import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
 
@@ -44,14 +48,18 @@ object BestInsert {
                      with PositionInRouteAndRouteNr with MoveDescription) {
     // format: ON
     print("Applying best insert heuristic...")
-    val relevantNeighbors = (n: Int) => vrp.nodes
-    while (true) {
-      InsertPoint.bestImprovingMove(
-        SearchZone(relevantNeighbors, vrp.unrouted.value.toIterator, vrp)) match {
-          case Some(m) => m.doMove
-          case None => println(" done."); return
-        }
+    for (unroutedNode <- vrp.unrouted.value) {
+      val routed = (n: Int) => vrp.routed.value
+      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
     }
+    //    while (true) {
+    //      val routed = (n: Int) => vrp.routed.value
+    //      InsertPoint.bestImprovingMove(
+    //        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
+    //          case Some(m) => m.doMove
+    //          case None => println(" done."); return
+    //        }
+    //    }
     println(" done.")
   }
 }

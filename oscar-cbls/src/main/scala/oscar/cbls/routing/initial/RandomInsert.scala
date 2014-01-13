@@ -18,6 +18,7 @@
  * *****************************************************************************
  * Contributors:
  *     This code has been initially developed by Ghilain Florent.
+ *     Refactored by Yoann Guyot.
  * ****************************************************************************
  */
 
@@ -42,17 +43,22 @@ object RandomInsert {
   // format: OFF (to prevent eclipse from formatting the following lines)
   def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
                      with PositionInRouteAndRouteNr with MoveDescription) {
-  // format: ON
+    // format: ON
     print("Applying random insert heuristic...")
-    val relevantNeighbors = (n: Int) => vrp.nodes
-    while (true) {
+    for (unroutedNode <- vrp.unrouted.value) {
+      val routed = (n: Int) => vrp.routed.value
       // FIXME this is not really random
-      InsertPoint.firstImprovingMove(
-        SearchZone(relevantNeighbors, vrp.unrouted.value.toIterator, vrp)) match {
-          case Some(m) => m.doMove
-          case None => println(" done."); return
-        }
+      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
     }
+    //    while (true) {
+    //      val routed = (n: Int) => vrp.routed.value
+    //      // FIXME this is not really random
+    //      InsertPoint.firstImprovingMove(
+    //        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
+    //          case Some(m) => m.doMove
+    //          case None => println(" done."); return
+    //        }
+    //    }
     println(" done.")
   }
 }

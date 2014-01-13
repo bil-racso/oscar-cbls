@@ -33,6 +33,10 @@ import oscar.cbls.search.SearchEngineTrait
 /**
  * Inserts an unrouted point in a route.
  * The search complexity is O(n²).
+ *
+ * PRE-CONDITIONS:
+ * - the relevant neighbors must all be routed,
+ * - the primary node iterator must contain only unrouted nodes.
  */
 object InsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(
@@ -48,8 +52,10 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
-      val routedNeighbors = s.relevantNeighbors(insertedPoint).filter(vrp.isRouted)
+      val routedNeighbors = s.relevantNeighbors(insertedPoint)
       for (beforeInsertedPoint <- routedNeighbors) {
+        assert(vrp.isRouted(beforeInsertedPoint),
+          "The relevant neighbors should be routed.")
         assert(s.vrp.isRecording, "MoveDescription should be recording now")
 
         encode(beforeInsertedPoint, insertedPoint, vrp)
@@ -70,6 +76,7 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
 
   def encode(beforeInsertedPoint: Int, insertedPoint: Int, vrp: VRP with MoveDescription) {
     assert(!vrp.isRouted(insertedPoint))
+    assert(vrp.isRouted(beforeInsertedPoint))
     val s = vrp.segmentFromUnrouted(insertedPoint)
     vrp.insert(s, beforeInsertedPoint)
   }
