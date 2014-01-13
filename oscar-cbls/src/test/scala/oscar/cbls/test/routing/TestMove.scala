@@ -37,7 +37,7 @@ import oscar.cbls.routing.model.HopDistanceAsObjective
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.Unrouted
+import oscar.cbls.routing.model.RoutedAndUnrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
@@ -454,7 +454,12 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     nbVehicles: Int = 1,
     abscissa: Array[Int] = null,
     ordinate: Array[Int] = null,
-    init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = RandomInsert.apply)(moveFun: MoveFixture => Boolean): Unit = {
+    // format: OFF (to prevent eclipse from formatting the following lines)
+    init: VRP with RoutedAndUnrouted with VRPObjective
+              with PositionInRouteAndRouteNr
+              with MoveDescription => Unit = RandomInsert.apply)
+      (moveFun: MoveFixture => Boolean): Unit = {
+    // format: ON
     test(name) {
       var improvingMoveFound = false
       while (!improvingMoveFound) {
@@ -565,7 +570,11 @@ class MoveFixture(
   val nbVehicules: Int = 1,
   var abscissa: Array[Int] = null,
   var ordinate: Array[Int] = null,
-  val init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = BestInsert.apply) {
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  val init: VRP with RoutedAndUnrouted with VRPObjective
+                with PositionInRouteAndRouteNr
+                with MoveDescription => Unit = BestInsert.apply) {
+  // format: ON
 
   val ROUTE_ARRAY_UNROUTED = 1
 
