@@ -29,7 +29,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
-import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
+import oscar.cbls.invariants.core.computation.SetInvariant.toIntSetVar
 import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 
 /**
@@ -71,7 +71,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     val TABU_LENGTH = 4
 
     // model
-    val m: Model = new Model(false,None,true)
+    val m: Store = new Store(false,None,true)
         
     // letter and carriage values
     // d initialised with 0..10, r with 0
@@ -101,8 +101,8 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     c.close()
     val Tabu:Array[IntVar] = (for (i <- Letter.list) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = IntVar(m,0,Int.MaxValue,0,"it")
-    val NonTabuLetter:IntSetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolLetter:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
+    val NonTabuLetter:SetVar = SelectLESetQueue(Tabu, It)
+    val NonTabuMaxViolLetter:SetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
     
     // closing model
     m.close()

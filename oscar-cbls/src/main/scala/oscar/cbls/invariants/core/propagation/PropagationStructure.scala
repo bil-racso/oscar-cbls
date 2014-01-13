@@ -59,12 +59,12 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  *  If unsure, set to false (or do not set; it is false by default),
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
- * @param Verbose requires that the propagation structure prints a trace of what it is doing.
+ * @param verbose requires that the propagation structure prints a trace of what it is doing.
  * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
- * @param NoCycle is to be set to true only if the static dependency graph is acyclic.
- * @param TopologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
+ * @param noCycle is to be set to true only if the static dependency graph is acyclic.
+ * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  */
-abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Checker] = None, val NoCycle: Boolean, val TopologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -111,15 +111,15 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    */
   protected def setupPropagationStructure(DropStaticGraph: Boolean) {
 
-    if (Verbose) {
+    if (verbose) {
       println("PropagationStructure: closing propagation structure. Propagations structure includes: ")
       getPropagationElements.foreach(p => println("+ " + p))
       println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
     }
 
     val StrognlyConnectedComponents: List[List[PropagationElement]] =
-      if (NoCycle) {
-        if (Verbose) {
+      if (noCycle) {
+        if (verbose) {
           println("PropagationStructure: IsAcyclic flag; assuming acyclic static dependency graph ")
         }
         var toreturn: List[List[PropagationElement]] = List.empty
@@ -154,7 +154,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
     var LayerCount = 0
-    if (TopologicalSort){
+    if (topologicalSort){
       computePositionsThroughTopologialSort(ClusteredPropagationComponents)
     }else{
       LayerCount = computePositionsthroughDistanceToInput(ClusteredPropagationComponents)+1
@@ -173,7 +173,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       f.determineBoundary()
     }
 
-    if (TopologicalSort){
+    if (topologicalSort){
       ExecutionQueue = new BinomialHeap[PropagationElement](p => p.Position, ClusteredPropagationComponents.size)
     }else{
       ExecutionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.Position, LayerCount)
@@ -198,7 +198,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
 
   /**This computes the position of the clustered PE, that is: the SCC and the PE not belonging to an SCC*/
   private def computePositionsThroughTopologialSort(ClusteredPropagationComponents:List[PropagationElement]){
-    if (Verbose) println("PropagationStructure: Positioning through topological sort")
+    if (verbose) println("PropagationStructure: Positioning through topological sort")
     var Front: List[PropagationElement] = ClusteredPropagationComponents.filter(n => {n.setCounterToPrecedingCount();(n.Position == 0)})
     var Position = 0 //la position du prochain noeud place.
     while (!Front.isEmpty) {
@@ -209,7 +209,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       Front = n.decrementSucceedingAndAccumulateFront(Front)
     }
     if (Position != ClusteredPropagationComponents.size) {
-      if (NoCycle){
+      if (noCycle){
         throw new Exception("cycle detected in propagation graph, please set NoCycle flag to false when declaring your model")
       }else{
         throw new Exception("internal bug")
@@ -221,7 +221,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
    * that is: the SCC and the PE not belonging to an SCC
    * @return the max Position, knowing that the first is zero*/
   private def computePositionsthroughDistanceToInput(ClusteredPropagationComponents:List[PropagationElement]):Int = {
-    if (Verbose) println("PropagationStructure: Positioning through layered sort")
+    if (verbose) println("PropagationStructure: Positioning through layered sort")
     val Front:Queue[PropagationElement] =  new Queue[PropagationElement]()
     for (pe <- ClusteredPropagationComponents){
       pe.setCounterToPrecedingCount()
@@ -236,9 +236,9 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       val n = Front.dequeue()
       if (n == null){
         if (Front.isEmpty){
-          if (Verbose) println("PropagationStructure: Layer " + Position + " #Elements:" + CountInLayer)
+          if (verbose) println("PropagationStructure: Layer " + Position + " #Elements:" + CountInLayer)
           if (Count != ClusteredPropagationComponents.size) {
-            if (NoCycle){
+            if (noCycle){
               throw new Exception("cycle detected in propagation graph although NoCycle was set to true")
             }else{
               throw new Exception("internal bug")
@@ -246,7 +246,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
           }
           return Position+1
         }else{
-          if (Verbose) println("PropagationStructure: Layer " + Position + " #Elements:" + CountInLayer)
+          if (verbose) println("PropagationStructure: Layer " + Position + " #Elements:" + CountInLayer)
           CountInLayer=0
           Position +=1
           Front.enqueue(null) //null marker denotes when Position counter must be incremented
@@ -369,7 +369,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
     //notice that for partial propagation, connex components cannot be partially propagated
     // because they are strognly connected over the static propagation graph.
 
-    if (Verbose) {
+    if (verbose) {
       if (Track == null) println("PropagationStruture: start total propagation")
       else println("PropagationStruture: start partial propagation")
     }
@@ -395,7 +395,7 @@ abstract class PropagationStructure(val Verbose: Boolean, val checker:Option[Che
       ScheduledElements = List.empty
     }
 
-    if (Verbose) println("PropagationStruture: end propagation")
+    if (verbose) println("PropagationStruture: end propagation")
 
     if (Track == null) {
       checker match {
@@ -871,7 +871,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   final def scheduleForPropagation() {
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     if (!isScheduled) {
-      if (this.getPropagationStructure.Verbose) println("PropagationStruture: scheduled [" + this + "]")
+      if (this.getPropagationStructure.verbose) println("PropagationStruture: scheduled [" + this + "]")
       isScheduled = true
       if (component == null) {
         getPropagationStructure.scheduleForPropagation(this)
@@ -883,7 +883,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 
   private[core] def rescheduleIfNeeded() {
     if (isScheduled) {
-      if (this.getPropagationStructure.Verbose) println("PropagationStruture: re-scheduled [" + this.getClass + "]")
+      if (this.getPropagationStructure.verbose) println("PropagationStruture: re-scheduled [" + this.getClass + "]")
       if (component == null) {
         getPropagationStructure.scheduleForPropagation(this)
       } else {
@@ -898,7 +898,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
     assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({getPropagationStructure.PropagatingElement = this; true})
-    if (getPropagationStructure.Verbose) println("PropagationStruture: propagating [" + this + "]")
+    if (getPropagationStructure.verbose) println("PropagationStruture: propagating [" + this + "]")
     performPropagation()
     isScheduled = false //to avoid registering SCC to the propagation structure every time...
     assert({getPropagationStructure.PropagatingElement = null; true})

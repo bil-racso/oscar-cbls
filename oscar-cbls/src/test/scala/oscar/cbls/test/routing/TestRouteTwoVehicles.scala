@@ -29,7 +29,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.logic.Routes
 
 class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
@@ -40,7 +40,7 @@ class TestRouteTwoVehicles extends FunSuite with ShouldMatchers {
       val ROUTE_ARRAY_UNROUTED = 2
       var nbPoints = 12
       var nbCars = 2
-      val model = new Model(false, None, false, false)
+      val model = new Store(false, None, false, false)
       val next = Array.tabulate(nbPoints)(i => if (i < nbCars) IntVar(model, i, nbPoints - 1, i, "next" + i)
       else IntVar(model, 0, nbPoints, i, "next" + i))
       // 0->1->2->3->4->5(->0)

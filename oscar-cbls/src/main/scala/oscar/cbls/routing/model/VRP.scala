@@ -26,7 +26,7 @@ package oscar.cbls.routing.model
 import collection.immutable.SortedMap
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{ IntSetVar, Model, IntVar }
+import oscar.cbls.invariants.core.computation.{ SetVar, Store, IntVar }
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.lib.numeric.SumElements
@@ -46,7 +46,7 @@ import oscar.cbls.invariants.lib.logic.Predecessor
  * @param V the number of vehicles.
  * @param m the model.
  */
-class VRP(val N: Int, val V: Int, val m: Model) {
+class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
    * It assumed that the V vehicles are indexed from the point 0 to V-1,
@@ -349,7 +349,7 @@ trait VRPObjective extends VRP {
  * This trait is abstract, sinbce unrouted can be implemented either stand alone, or as a side effect of other traits
  */
 abstract trait Unrouted {
-  def unrouted: IntSetVar
+  def unrouted: SetVar
 }
 
 /**
@@ -360,7 +360,7 @@ trait UnroutedImpl extends VRP with Unrouted {
   /**
    * the data structure set which maintains the unrouted node.
    */
-  final override val unrouted: IntSetVar = Filter(next, _ == N)
+  final override val unrouted: SetVar = Filter(next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 

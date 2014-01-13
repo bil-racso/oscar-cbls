@@ -52,7 +52,7 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
 
   finishInitialization()
 
-  val bincontents:Array[IntSetVar] = Cluster.MakeDense(items).clusters
+  val bincontents:Array[SetVar] = Cluster.MakeDense(items).clusters
   val binfilling:Array[IntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
 
   val binviolations:Array[IntVar] = (

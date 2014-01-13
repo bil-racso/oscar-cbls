@@ -24,7 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Model, InvariantHelper, Invariant, IntVar}
+import oscar.cbls.invariants.core.computation.{Store, InvariantHelper, Invariant, IntVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -80,7 +80,7 @@ object DenseCount{
   def makeDenseCount(vars: Array[IntVar]):DenseCount = {
     val ((minMin,maxMax)) = InvariantHelper.getMinMaxBounds(vars)
     val mbValues = maxMax - minMin + 1
-    val m:Model = InvariantHelper.findModel(vars)
+    val m:Store = InvariantHelper.findModel(vars)
     val nbVars = vars.length
     val counts = Array.tabulate(mbValues)(i => IntVar(m,0 to nbVars,0,"count_" + (i-minMin)))
     DenseCount(vars,counts,-minMin)

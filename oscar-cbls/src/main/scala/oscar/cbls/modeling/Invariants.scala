@@ -41,12 +41,12 @@ trait ClusterInvariants{
   /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
    * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
    * */
-  def sparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar]) = SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,IntSetVar])
+  def sparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,SetVar]) = SparseCluster(values:Array[IntVar], Clusters:SortedMap[Int,SetVar])
 
   /**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
    * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
    * */
-  def denseCluster(values:Array[IntVar], clusters:Array[IntSetVar]) = DenseCluster(values:Array[IntVar], clusters:Array[IntSetVar])
+  def denseCluster(values:Array[IntVar], clusters:Array[SetVar]) = DenseCluster(values:Array[IntVar], clusters:Array[SetVar])
 
   /**Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i] == j}
    * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''
@@ -55,7 +55,7 @@ trait ClusterInvariants{
 
   /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
    * */
-  def denseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) = DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar])
+  def denseRef(references:Array[SetVar], referencing:Array[SetVar]) = DenseRef(references:Array[SetVar], referencing:Array[SetVar])
 
   /**
    * Maintains a resource usage profile.
@@ -66,8 +66,8 @@ trait ClusterInvariants{
    * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
    * @param active the tasks that are active maintained to active(time) <== (task.indices | task.start <= time <= t.start+t.duration)
    */
-  def cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[IntSetVar])  =
-    Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[IntSetVar])
+  def cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[SetVar])  =
+    Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[SetVar])
 
 
   /** { i in index(values) | cond(values[i] }
@@ -138,13 +138,13 @@ trait AccessInvariants{
    * @param index is an IntSetVar denoting the set of positions in the array to consider
    * @param inputarray is the array of intvar that can be selected by the index
    */
-  def intElements(index:IntSetVar, inputarray:Array[IntVar]) = IntElements(index, inputarray)
+  def intElements(index:SetVar, inputarray:Array[IntVar]) = Elements(index, inputarray)
 
   /** inputarray[index] on an array of IntSetVar
    * @param inputarray is the array of intsetvar
    * @param index is the index of the array access
    **/
-  def intSetElement(index:IntVar, inputarray:Array[IntSetVar]) = IntSetElement(index, inputarray)
+  def intSetElement(index:IntVar, inputarray:Array[SetVar]) = SetElement(index, inputarray)
 }
 
 trait MinMaxInvariants{
@@ -155,7 +155,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMax(vars: Array[IntVar], cond: IntSetVar = null,default:Int = Int.MinValue) = ArgMaxArray(vars, cond,default)
+  def argMax(vars: Array[IntVar], cond: SetVar = null,default:Int = Int.MinValue) = ArgMaxArray(vars, cond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -164,7 +164,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMin(varss: Array[IntVar], ccond: IntSetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntVar], ccond: SetVar = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar
@@ -183,14 +183,14 @@ trait MinMaxInvariants{
    * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
    * update is O(log(n))
    * */
-  def maxArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MinValue) = MaxArray(varss, ccond, default)
+  def maxArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = Int.MinValue) = MaxArray(varss, ccond, default)
 
   /** Maintains Min(Var(i) | i in cond)
    * @param varss is an array of IntVar, which can be bulked
    * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
    * update is O(log(n))
    * */
-  def minArray(varss: Array[IntVar], ccond: IntSetVar = null, default: Int = Int.MaxValue) = MinArray(varss, ccond, default)
+  def minArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = Int.MaxValue) = MinArray(varss, ccond, default)
 
   /** maintains output = Min(v)
    * where
@@ -199,7 +199,7 @@ trait MinMaxInvariants{
    * @param default is the default value if v is empty
    * update is O(log(n))
    * */
-  def minSet(v: IntSetVar, default: Int = Int.MaxValue) = MinSet(v, default)
+  def minSet(v: SetVar, default: Int = Int.MaxValue) = MinSet(v, default)
 
   /** maintains output = Max(v)
    * where
@@ -208,7 +208,7 @@ trait MinMaxInvariants{
    * @param default is the default value if v is empty
    * update is O(log(n))
    * */
-  def maxSet(v: IntSetVar, default: Int = Int.MinValue) = new MaxSet(v, default)
+  def maxSet(v: SetVar, default: Int = Int.MinValue) = new MaxSet(v, default)
 }
 
 trait NumericInvariants{
@@ -300,14 +300,14 @@ trait NumericInvariants{
    * @param vars is a set of IntVars
    * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
    */
-  def sumElements(vars: Array[IntVar], cond: IntSetVar) = SumElements(vars: Array[IntVar], cond: IntSetVar)
+  def sumElements(vars: Array[IntVar], cond: SetVar) = SumElements(vars: Array[IntVar], cond: SetVar)
 
   /** prod(i in cond) vars(i)
    * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
    * @param vars is a set of IntVars
    * @param cond is the condition for selecting variables in the set of summed ones.
    */
-  def prodElements(vars: Array[IntVar], cond: IntSetVar) = ProdElements(vars: Array[IntVar], cond: IntSetVar)
+  def prodElements(vars: Array[IntVar], cond: SetVar) = ProdElements(vars: Array[IntVar], cond: SetVar)
 
 }
 
@@ -316,24 +316,24 @@ trait SetInvariants{
    * @param left is an intvarset
    * @param right is an intvarset
    * */
-  def union(left:IntSetVar, right:IntSetVar) = Union(left:IntSetVar, right:IntSetVar)
+  def union(left:SetVar, right:SetVar) = Union(left:SetVar, right:SetVar)
 
   /** left INTER right
    * @param left is an intvarset
    * @param right is an intvarset
    * */
-  def inter(left:IntSetVar, right:IntSetVar) = Inter(left:IntSetVar, right:IntSetVar)
+  def inter(left:SetVar, right:SetVar) = Inter(left:SetVar, right:SetVar)
 
   /** left MINUS right, the set diff operator
    * @param left is the base set
    * @param right is the set that is removed from left
    * */
-  def diff(left:IntSetVar, right:IntSetVar) = Diff(left:IntSetVar, right:IntSetVar)
+  def diff(left:SetVar, right:SetVar) = Diff(left:SetVar, right:SetVar)
 
   /** #(v) (cardinality)
    * @param v is an IntSetVar, the set of integers to count
    */
-  def cardinality(v:IntSetVar) = Cardinality(v:IntSetVar)
+  def cardinality(v:SetVar) = Cardinality(v:SetVar)
 
   /** makes an IntSetVar out of a set of IntVar. If several variables have the same value, the value is present only once in the resulting set
    * @param on is a set of IntVar
@@ -351,17 +351,17 @@ trait SetInvariants{
    * @param from
    * @param default
    */
-  def takeAny(from:IntSetVar,  default:Int) = TakeAny(from:IntSetVar,  default:Int)
+  def takeAny(from:SetVar,  default:Int) = TakeAny(from:SetVar,  default:Int)
 
   /** Sum(i in on)(fun(i))
    * @param on is the set of integers to add
    * @param fun is an optional function Int -> Int to apply before summing elements. It is expected not to rely on any variable of the model.
    * */
-  def setSum(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) = SetSum(on, fun)
+  def setSum(on:SetVar, fun:(Int => Int) = ((a:Int) => a)) = SetSum(on, fun)
 
   /** PRod(i in on)(fun(i))
    * @param on is the set of integers to multiply
    * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
    * */
-  def setProd(on:IntSetVar, fun:(Int => Int) = ((a:Int) => a)) = SetProd(on, fun)
+  def setProd(on:SetVar, fun:(Int => Int) = ((a:Int) => a)) = SetProd(on, fun)
 }

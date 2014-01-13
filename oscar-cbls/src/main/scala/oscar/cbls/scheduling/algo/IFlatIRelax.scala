@@ -21,13 +21,13 @@ package oscar.cbls.scheduling.algo
   ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
+import oscar.cbls.invariants.core.computation.{IntVar, Solution, Store}
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.computation.Solution
 import oscar.cbls.scheduling.model.CumulativeResource
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
-  val model: Model = p.model
+  val model: Store = p.model
 
   /**This solves the jobshop by iterative relaxation and flattening
     * @param MaxIt the max number of iterations of the search

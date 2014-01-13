@@ -23,7 +23,7 @@ package oscar.cbls.scheduling.model
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.IntVar._
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar}
+import oscar.cbls.invariants.core.computation.{SetVar, IntVar}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
@@ -39,7 +39,7 @@ class NonMoveableActivity(startDate:Int, duration: IntVar, planning: Planning, n
     DefiningPredecessors := SortedSet.empty
     PotentiallyKilledPredecessors := SortedSet.empty
 
-    AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+    AllSucceedingActivities = new SetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
     //This is not correct. but since no task can be put before this one, this is not an issue.
     LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
@@ -67,7 +67,7 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
 
     PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
 
-    AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+    AllSucceedingActivities = new SetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
     LatestEndDate <== end.LatestEndDate
 
@@ -183,13 +183,13 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   val LatestEndDate: IntVar = IntVar(planning.model, 0, maxDuration, maxDuration, "led(" + name + ")")
 
   val LatestStartDate: IntVar = LatestEndDate - duration
-  var AllSucceedingActivities: IntSetVar = null
+  var AllSucceedingActivities: SetVar = null
 
-  var AdditionalPredecessors: IntSetVar = null
-  var AllPrecedingActivities: IntSetVar = null
+  var AdditionalPredecessors: SetVar = null
+  var AllPrecedingActivities: SetVar = null
 
-  var DefiningPredecessors: IntSetVar = null
-  var PotentiallyKilledPredecessors: IntSetVar = null
+  var DefiningPredecessors: SetVar = null
+  var PotentiallyKilledPredecessors: SetVar = null
 
   def addDynamicPredecessor(t: Activity,Verbose:Boolean=false) {
     if (Verbose) println("added " + t + "->" + this)
@@ -210,7 +210,7 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
   /**This method is called by the planning when all activities are created*/
   def close() {
     if (AdditionalPredecessors == null){
-      AdditionalPredecessors = new IntSetVar(planning.model, 0, planning.Activities.size,
+      AdditionalPredecessors = new SetVar(planning.model, 0, planning.Activities.size,
         "added predecessors of " + name, SortedSet.empty)
 
       val StaticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ StaticPredecessors.map((j: Activity) => j.ID)
@@ -223,7 +223,7 @@ case class Activity(duration: IntVar, planning: Planning, name: String = "", Shi
 
       PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-      AllSucceedingActivities = new IntSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+      AllSucceedingActivities = new SetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
       LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
     }

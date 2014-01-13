@@ -20,7 +20,7 @@
 
 package oscar.cbls.constraints.core
 
-import oscar.cbls.invariants.core.computation.{Variable, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{Variable, IntVar, Store}
 import oscar.cbls.objective.ObjectiveTrait
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
@@ -32,7 +32,7 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
  */
-class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
+class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
   model = _model
@@ -67,7 +67,16 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    */
   def getPostedConstraints:List[(Constraint,IntVar)] = PostedConstraints
 
-  /**Method used to post a constraint in the constraint system.
+  /**Method used to post a constraint in the constraint system. (synonym of post)
+    * Cannot be called after the constraint system has been closed.
+    * The violation degree of the constraint system is the weighted sum of the violation degree of the posted constraints.
+    * The same weighting is used to compute the violation degree of a specific variable, as it might be involved in several constraints.
+    * @param c is the posted constraint.
+    * @param weight is the weight that is used in the weighted sum of the violation degrees.
+    */
+  def add(c:Constraint,weight:IntVar=null) = post(c,weight)
+
+  /**Method used to post a constraint in the constraint system. (synonym of add)
    * Cannot be called after the constraint system has been closed.
    * The violation degree of the constraint system is the weighted sum of the violation degree of the posted constraints.
    * The same weighting is used to compute the violation degree of a specific variable, as it might be involved in several constraints.
@@ -126,8 +135,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   /**Must be invoked before the violation can be queried.
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
-    * NEW: this is called automatically by the model before it actually closes.
    */
+  @deprecated("you do not need to call close on a ConstraintSystem, it is closed by the Model when the model is closed.","1.0")
   def close(){
     if(!isClosed){
       isClosed = true

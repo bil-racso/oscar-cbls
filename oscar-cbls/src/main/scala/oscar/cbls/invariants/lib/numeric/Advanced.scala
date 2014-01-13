@@ -28,7 +28,7 @@ import oscar.cbls.invariants.core.propagation._
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
  */
-case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+case class SumElements(vars: Array[IntVar], cond: SetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
@@ -64,7 +64,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
@@ -73,7 +73,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
     unregisterDynamicDependency(keyForRemoval(value))
@@ -93,7 +93,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones.
  */
-case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+case class ProdElements(vars: Array[IntVar], cond: SetVar) extends IntInvariant with Bulked[IntVar, Unit]{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   def myMin = Int.MinValue
@@ -152,7 +152,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
@@ -166,7 +166,7 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
 

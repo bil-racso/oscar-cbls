@@ -3,16 +3,16 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cbls
+package oscar.examples.cbls.scheduling
 
 /*******************************************************************************
  * This file is part of OscaR (Scala in OR).
@@ -37,7 +37,7 @@ package oscar.examples.cbls
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.scheduling._
 import algo.IFlatIRelax
 import model.{Planning, SuperActivity, Activity, CumulativeResource}
@@ -49,7 +49,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * he cannot sleep before having eaten
  */
 object Reagan extends App {
-  val model = new Model(Verbose=false, checker = None, NoCycle=false, TopologicalSort = false)
+  val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 40)
   val solver = new IFlatIRelax(planning)

@@ -33,7 +33,7 @@ object test extends SearchEngine {
 
   def main(args: Array[String]) {
 
-    val m: Model = new Model
+    val m: Store = new Store
 
     val min = 0
     val max = 100
@@ -42,7 +42,7 @@ object test extends SearchEngine {
     val b:IntVar = IntVar(m, min, max, 5, "b")
     val c:IntVar = IntVar(m, min, max, 6, "c")
     val d:IntVar = IntVar(m, min, max, 6, "d")
-    val e:IntSetVar = new IntSetVar(m, min, max, "e", SortedSet.empty[Int])
+    val e:SetVar = new SetVar(m, min, max, "e", SortedSet.empty[Int])
 
     d <== (5 + c + 5 + (b * (4 - 3)))
     c <== a + b //Sum(SortedSet(a, b))
@@ -51,7 +51,7 @@ object test extends SearchEngine {
     val f:IntVar = MaxArray(SortedSet(a,b,c,d).toArray) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:IntVar = MaxLin(SortedSet(a,b,c,d))
 
-    val h:IntSetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))
+    val h:SetVar = ArgMinArray(Array(a,d,b,d,c,d - 1))
   
     Event(h,{println("Trigger: h changed: " + h)})
     val k:IntVar = Cardinality(h)

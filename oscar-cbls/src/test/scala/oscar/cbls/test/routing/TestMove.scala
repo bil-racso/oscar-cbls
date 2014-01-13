@@ -30,7 +30,7 @@ import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.initial.RandomInsert
 import oscar.cbls.routing.model.ClosestNeighborPointsHop
 import oscar.cbls.routing.model.HopDistanceAsObjective
@@ -579,7 +579,7 @@ class MoveFixture(
         Array.fill(nbNodes)(0)
       }
   val matrix = getDistanceMatrix(abscissa, ordinate)
-  val model: Model = new Model(false, None, false, false)
+  val model: Store = new Store(false, None, false, false)
 
   val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted with MoveDescription
 

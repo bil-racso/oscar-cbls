@@ -20,7 +20,7 @@ package oscar.cbls.invariants.lib.numeric
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{Model, IntInvariant, IntVar}
+import oscar.cbls.invariants.core.computation.{Store, IntInvariant, IntVar}
 import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -73,7 +73,7 @@ object testRoundUpModulo extends App{
     case 6 => "di"
 
   }
-  val m = new Model()
+  val m = new Store()
 
   val from = IntVar(m, 0,"from")
   val duration = IntVar(m, 2,"duration")
@@ -210,7 +210,7 @@ object testRoundUpCustom extends App{
       case 6 => "di"
 
     }
-  val m = new Model()
+  val m = new Store()
 
   val from = IntVar(m, 0,"from")
   val duration = IntVar(m, 2,"duration")

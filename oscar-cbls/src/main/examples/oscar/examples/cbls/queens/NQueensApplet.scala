@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -18,7 +18,7 @@
  *         by Renaud De Landtsheer and Christophe Ponsard
  ******************************************************************************/
 
-package oscar.examples.cbls
+package oscar.examples.cbls.queens
 
 import scala.swing.Applet
 import scala.swing.Button
@@ -32,7 +32,7 @@ import java.awt.Color
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.modeling.Algebra._
 import javax.swing.border.LineBorder
@@ -148,7 +148,7 @@ class NQueensApplet extends Applet {
       val max = N - 1
       val range: Range = Range(0, N)
       val tabulength = 0
-      val m: Model = new Model(false, None, true)
+      val m: Store = new Store(false, None, true)
       val MaxIT = 10000
 
       println("NQueens(" + N + ")")

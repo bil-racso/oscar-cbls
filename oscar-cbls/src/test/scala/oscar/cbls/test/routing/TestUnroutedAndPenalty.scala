@@ -31,7 +31,7 @@ import scala.math.sqrt
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.model.HopDistanceAsObjective
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
@@ -59,7 +59,7 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
       val N: Int = 9
 
       val matrix = getDistanceMatrix(Array(0, 1, 2, 3, 4, 5, 6, 7, 8), Array(0, 0, 0, 0, 0, 0, 0, 0, 0))
-      val model: Model = new Model(false, None, false, false)
+      val model: Store = new Store(false, None, false, false)
 
       val vrp = new VRP(N, V, model) with UnroutedImpl with VRPObjective with MoveDescription with HopDistanceAsObjective with PositionInRouteAndRouteNr with PenaltyForUnrouted
       vrp.installCostMatrix(matrix)
