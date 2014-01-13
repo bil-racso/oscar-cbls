@@ -19,13 +19,12 @@ import scala.collection.immutable.SortedSet
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
   *
   **/
-class CBLSSolver(override val verbose:Boolean = false,
-                 override val checker:Option[Checker] = None,
-                 override val noCycle:Boolean = true,
-                 override val topologicalSort:Boolean = false,
-                 override val propagateOnToString:Boolean = true)
-  extends Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
-  with SearchEngineTrait
+class CBLSSolver(val verbose:Boolean = false,
+                 val checker:Option[Checker] = None,
+                 val noCycle:Boolean = true,
+                 val topologicalSort:Boolean = false,
+                 val propagateOnToString:Boolean = true)
+  extends SearchEngineTrait
   with AlgebraTrait
   with Constraints
   with ClusterInvariants
@@ -36,7 +35,14 @@ class CBLSSolver(override val verbose:Boolean = false,
   with SetInvariants
   with StopWatch{
 
-  val c = new ConstraintSystem(this)
+  implicit val s = new Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
+  implicit val c = new ConstraintSystem(s)
 
+  def intVar(r:Range, v:Int, name:String = "")(implicit s:Store) = new IntVar(s,r,v,name)
+  def setVar(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
+    val emptySet:SortedSet[Int] = SortedSet.empty
+    new SetVar(s, r.start, r.end,name, emptySet ++ v)
+  }
 
+  def close()(implicit s:Store) {s.close()}
 }

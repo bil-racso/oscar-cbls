@@ -29,10 +29,6 @@ with MinMaxInvariants
 with NumericInvariants
 with SetInvariants {
 
-  def intVar(r:Range, v:Int, name:String = "")(implicit m:Store) = new IntVar(m,r,v,name)
-  def setVar(r:Range, v:Iterable[Int], name:String="")(implicit m:Store) = {
-    val emptySet:SortedSet[Int] = SortedSet.empty
-    new SetVar(m, r.start, r.end,name, emptySet ++ v)
-  }
+
 }
 

@@ -354,7 +354,7 @@ abstract trait RoutedAndUnrouted extends VRP {
   /**
    * the data structure set which maintains the routed nodes.
    */
-  val routed: IntSetVar = Filter(next, _ < N)
+  val routed: SetVar = Filter(next, _ < N)
   m.registerForPartialPropagation(routed)
   
   /**
