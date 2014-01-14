@@ -25,9 +25,6 @@ class ReversibleBool(node: ReversibleContext, value: Boolean) extends Reversible
    * @param node
    */
   def this(node: ReversibleContext) = this(node, true)
-
-  // I have to add it for Java compatibility
-  // override def getValue(): Boolean = super.getValue()
 }
 
 object ReversibleBool {

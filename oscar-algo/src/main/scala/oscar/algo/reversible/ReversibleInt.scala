@@ -36,9 +36,6 @@ class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePoint
     v
   }
 
-  // I have to add it for Java compatibility
-  // override def getValue(): Int = super.getValue()
-
   def +=(i: Int): Unit = {
     val v: Int = getValue() + i
     setValue(v)
@@ -53,7 +50,6 @@ class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePoint
     setValue(v)
     v
   }
-
 }
 
 object ReversibleInt {
