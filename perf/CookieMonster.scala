@@ -75,12 +75,12 @@ object CookieMonster {
         cp.add(lexLeq(bx(m + 1), bx(m)))
       }
     }
-    solve search {
+    search {
       binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
     }
 
     for (i <- 0 until maxMove; if nbSol == 0) {
-      startSubjectTo(nSolutions = 100000) {
+      startSubjectTo(nSols = 100000) {
         for (m <- i + 1 until maxMove) {
           if (m > i) post(x(m) == 0)
           else post(x(m) > 0)

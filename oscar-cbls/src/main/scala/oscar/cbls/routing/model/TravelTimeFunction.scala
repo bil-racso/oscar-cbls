@@ -59,9 +59,12 @@ trait TravelTimeAsFunction extends VRP with Time {
    * @param travelCosts
    */
   def setTravelTimeFunctions(travelCosts: TravelTimeFunction) {
+    this.travelCosts = travelCosts
     for (i <- 0 to N - 1) {
       travelOutDuration(i) <== new IntVarIntVar2IntVarFun(leaveTime(i), next(i),
-        (leaveTime, successor) => if (successor == N) 0 else travelCosts.getTravelDuration(i, leaveTime, successor))
+        (leaveTime, successor) =>
+          if (successor == N) 0
+          else travelCosts.getTravelDuration(i, leaveTime, successor))
     }
   }
 }
@@ -103,22 +106,20 @@ trait WaitingDuration extends TimeWindow {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait TimeClosesNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
+trait TimeClosestNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
     travelCosts.getMinTravelDuration(from, to)
   }
 }
 
-trait TotalTimeSpentByVehicleSOutOfDepotAsObjectiveTerm extends VRPObjective with Time {
+trait TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm extends VRPObjective with Time {
   for (v <- 0 to V - 1) {
     addObjectiveTerm(arrivalTime(v) - leaveTime(v))
   }
 }
 
 trait TimeSpentOnRouteAsObjectiveTerm extends VRPObjective with Time {
-  for (v <- 0 to V - 1) {
-    addObjectiveTerm(Sum(travelOutDuration))
-  }
+  addObjectiveTerm(Sum(travelOutDuration))
 }
 
 trait WaitingTimeAsObjectiveTerm extends VRPObjective with WaitingDuration {

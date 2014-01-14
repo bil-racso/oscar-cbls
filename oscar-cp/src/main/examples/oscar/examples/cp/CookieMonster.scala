@@ -65,7 +65,7 @@ object CookieMonster extends CPModel with App {
   }
 
   for (i <- 0 until maxMove; if nbSol == 0) {
-    startSubjectTo(nSolutions = 1) {
+    startSubjectTo(nSols = 1) {
       for (m <- i + 1 until maxMove) {
         if (m > i) post(x(m) == 0)
         else post(x(m) > 0)

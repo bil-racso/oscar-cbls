@@ -18,6 +18,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
 import oscar.cbls.modeling._
 import oscar.cbls.invariants.core.computation.IntVar
+import scala.language.postfixOps
 
 class TestIntVar extends FunSuite with ShouldMatchers {
   

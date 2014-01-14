@@ -98,7 +98,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
     cp search {
       binary(a) ++ binary(b) ++ binary(c)
     } 
-    cp.start().nbSols
+    cp.start().nSols
   }
 
   // a - b = c
@@ -123,7 +123,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
       binary(a) ++ binary(b) ++ binary(c)
     }
 
-    cp.start().nbSols should be(4)
+    cp.start().nSols should be(4)
   }
 
   test("Test SetDiff 2") {

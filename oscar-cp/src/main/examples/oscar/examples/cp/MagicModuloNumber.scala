@@ -35,6 +35,6 @@ object MagicModuloNumber extends CPModel with App {
 
   onSolution { println(x) }
 
-  val stats = start(nSolutions = 1)
+  val stats = start(nSols = 1)
   println(stats)
 }

@@ -25,7 +25,7 @@ import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{Interval, Inter, Diff, Union}
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.lib.logic.{IntSetElement, IntElements, IntElement}
+import oscar.cbls.invariants.lib.logic.{SetElement, Elements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
 import collection.Iterator
 import language.implicitConversions
@@ -33,8 +33,10 @@ import language.implicitConversions
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
  */
-object Algebra {
+object Algebra extends AlgebraTrait{
+}
 
+trait AlgebraTrait{
   class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
     extends Range(start,end,step) {
     if(!(this.contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
@@ -121,18 +123,18 @@ object Algebra {
     def TO (v:IntVar) = new Interval(x,v)
   }
 
-  implicit def InstrumentIntSetVar(v: IntSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
+  implicit def InstrumentIntSetVar(v: SetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
-  implicit def InstrumentIntSetInvariant(i: IntSetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toIntSetVar)
+  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toIntSetVar)
 
-  implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(IntSetConst(a))
+  implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(SetConst(a))
 
-  class InstrumentedIntSetVar(x: IntSetVar) {
-    def union(v: IntSetVar): IntSetInvariant = Union(x, v)
+  class InstrumentedIntSetVar(x: SetVar) {
+    def union(v: SetVar): SetInvariant = Union(x, v)
 
-    def inter(v: IntSetVar): IntSetInvariant = Inter(x, v)
+    def inter(v: SetVar): SetInvariant = Inter(x, v)
 
-    def minus(v: IntSetVar): IntSetInvariant = Diff(x, v)
+    def minus(v: SetVar): SetInvariant = Diff(x, v)
   }
 
   implicit def InstrumentArrayOfIntVar(inputarray: Array[IntVar]): InstrumentedArrayOfIntVar
@@ -141,15 +143,16 @@ object Algebra {
   class InstrumentedArrayOfIntVar(inputarray: Array[IntVar]) {
     def element(index: IntVar): IntVar = IntElement(index, inputarray)
 
-    def elements(index: IntSetVar): IntSetVar = IntElements(index, inputarray)
+    def elements(index: SetVar): SetVar = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[IntSetVar]): InstrumentedArrayOfIntSetVar
+  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetVar]): InstrumentedArrayOfIntSetVar
   = new InstrumentedArrayOfIntSetVar(inputarray)
 
-  class InstrumentedArrayOfIntSetVar(inputarray: Array[IntSetVar]) {
-    def apply(index: IntVar): IntSetVar = IntSetElement(index, inputarray)
+  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetVar]) {
+    def apply(index: IntVar): SetVar = SetElement(index, inputarray)
   }
+
 
 }
 

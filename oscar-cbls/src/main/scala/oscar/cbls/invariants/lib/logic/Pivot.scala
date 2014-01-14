@@ -34,8 +34,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param values an array of [[oscar.cbls.invariants.core.computation.IntVar]]
  * @param boundary the boundary for comparison
  */
-case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends IntSetInvariant {
-  var output: IntSetVar = null
+case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends SetInvariant {
+  var output: SetVar = null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
   registerStaticAndDynamicDependency(boundary)
@@ -47,7 +47,7 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
   val HeapAbove: BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i: Int) => values(i).value, values.size)
   val HeapBelowOrEqual: BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i: Int) => -(values(i).value), values.size)
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]
@@ -130,8 +130,8 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
  */
-case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends IntSetInvariant {
-  var output: IntSetVar = null
+case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends SetInvariant {
+  var output: SetVar = null
 
   def myMin = values.indices.start
   def myMax = values.indices.end
@@ -142,7 +142,7 @@ case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends Int
 
   val QueueAbove: Queue[Int] = new Queue[Int]
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]

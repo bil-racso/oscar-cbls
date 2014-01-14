@@ -42,8 +42,8 @@ import oscar.cbls.invariants.lib.minmax.Max
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.logic.IntSetElement
-import oscar.cbls.invariants.lib.logic.IntElements
+import oscar.cbls.invariants.lib.logic.SetElement
+import oscar.cbls.invariants.lib.logic.Elements
 import oscar.cbls.invariants.lib.numeric.Div
 import oscar.cbls.invariants.lib.set.Union
 import oscar.cbls.invariants.lib.minmax.Min
@@ -56,7 +56,6 @@ import oscar.cbls.invariants.lib.minmax.MaxArray
 import oscar.cbls.invariants.lib.minmax.MaxSet
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.RoundUpModulo
-import oscar.cbls.invariants.lib.numeric.RoundUpCustom
 import oscar.cbls.constraints.lib.basic.BelongsTo
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.constraints.lib.basic.GE
@@ -78,8 +77,6 @@ class smalltest extends FunSuite with Checkers {
 class InvariantTests extends FunSuite with Checkers {
 
   val verbose = 0
-
-
 
   test("BelongsTo maintains the violation of a membership.") {
     val bench = new InvBench(verbose)
@@ -179,7 +176,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Access to int vars...") {
     val bench = new InvBench(verbose)
-    new IntElements(
+    new Elements(
       bench.genIntSetVar(3, 0 to 4),
       bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
@@ -187,7 +184,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Access to int set element maintains output = array(index)") {
     val bench = new InvBench(verbose)
-    new IntSetElement(
+    new SetElement(
       bench.genIntVar(0 to 19),
       bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
     bench.run
@@ -293,7 +290,7 @@ class InvariantTests extends FunSuite with Checkers {
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
-
+  
   test("Max") {
     val bench = new InvBench(verbose)
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
@@ -419,14 +416,14 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
 
-  test("RoundUpCustom") {
+ /* test("RoundUpCustom") {
     val bench = new InvBench(verbose)
     new RoundUpCustom(
       bench.genIntVar(0 to 10),
       bench.genIntVar(1 to 10),
       InvGen.randomTuples(10, 0 to 10).map(ab => (ab._1,ab._1 + ab._2))).toIntVar
     bench.run
-  }
+  }*/
 
   test("Union maintains the union of two sets.") {
     val bench = new InvBench(verbose)
@@ -495,7 +492,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("IdentityIntSet maintains the identity of a set of integers).") {
     val bench = new InvBench(verbose)
-    new IdentityIntSet(bench.genIntSetVar()).toIntSetVar
+    new IdentitySet(bench.genIntSetVar()).toIntSetVar
     bench.run
   }
 }

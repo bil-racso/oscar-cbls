@@ -107,20 +107,22 @@ object JobShop extends App {
   // Constraints & Search
   // -----------------------------------------------------------------------
 
-  cp.minimize(makespan) subjectTo {
-    // Consistency 
-    for (t <- Activities) {
-      cp.add(endsVar(t) == startsVar(t) + durationsVar(t))
-    }
-    // Precedences
-    for (t <- 1 to Activities.max if jobs(t - 1) == jobs(t)) {
-      cp.add(endsVar(t - 1) <= startsVar(t))
-    }
-    // Cumulative
-    for (r <- Resources) {
-      cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(1), r))
-    }
-  } search {
+  // Consistency 
+  for (t <- Activities) {
+    add(endsVar(t) == startsVar(t) + durationsVar(t))
+  }
+  // Precedences
+  for (t <- 1 to Activities.max if jobs(t - 1) == jobs(t)) {
+    add(endsVar(t - 1) <= startsVar(t))
+  }
+  // Cumulative
+  for (r <- Resources) {
+	def filter(x: Array[CPVarInt]) = Activities.filter(resources(_) == r).map(x(_))
+    add(unaryResource(filter(startsVar), filter(durationsVar),filter(endsVar)))
+  }
+  minimize(makespan)
+  
+  cp.search {
     binaryFirstFail(startsVar)
   }
   println(cp.start())

@@ -128,7 +128,7 @@ object Sort {
    * It instantiates an array of the appropriate size and populates it with IntVar.
    */
   def MakeSort(values: Array[IntVar]): Sort = {
-    val m: Model = InvariantHelper.findModel(values)
+    val m: Store = InvariantHelper.findModel(values)
     val ReversePerm: Array[IntVar] = values.map(v => IntVar(m, values.indices.start, values.indices.end, 0, "reverse_perm"))
     Sort(values, ReversePerm)
   }

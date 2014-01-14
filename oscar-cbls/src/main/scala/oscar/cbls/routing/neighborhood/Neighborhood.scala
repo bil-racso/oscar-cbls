@@ -1,10 +1,32 @@
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
+/**
+ * *****************************************************************************
+ * Contributors:
+ *     Renaud De Landtsheer
+ *     Yoann Guyot
+ * ****************************************************************************
+ */
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.model.Unrouted
 
 abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
@@ -16,7 +38,6 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
 }
 
 //c'est toujours le first improve, jamais le best improve.
-
 abstract class Neighborhood() {
 
   /**
@@ -42,6 +63,20 @@ abstract class Neighborhood() {
   final def climbFirst(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, false).found
+  }
+
+  /**
+   * performs the best discovered move that yields an improvement
+   * @param s the search zone, including the VRP that we are examining
+   * @param moveAcceptor a function that given the old and new value of the objective function, tell whether the move is considered as an improvement or not.
+   * @return true if a move vans discovered, false otherwise
+   */
+  final def climbBest(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
+    bestImprovingMove(s, moveAcceptor) match {
+      case Some(m) =>
+        m.doMove; true
+      case None => false
+    }
   }
 
   /**
@@ -106,7 +141,7 @@ abstract class Neighborhood() {
    * @param moveAcceptor says if the move is accepted or not
    * @param StayIfAccept
    * @param vrp
-   * @return true if this improved, false otherwise, and the objective fucntion after the move
+   * @return true if this improved, false otherwise, and the objective function after the move
    */
   def checkEncodedMove(
     moveAcceptor: Int => Boolean,
@@ -114,7 +149,7 @@ abstract class Neighborhood() {
     vrp: VRPObjective with VRPObjective with MoveDescription): (Boolean, Int) = {
     vrp.commit(true)
     val obj = vrp.getObjective
-    val accept:Boolean = moveAcceptor(obj)
+    val accept: Boolean = moveAcceptor(obj)
     if (accept & StayIfAccept) {
       vrp.cleanRecordedMoves()
       (accept, obj)
@@ -125,7 +160,10 @@ abstract class Neighborhood() {
   }
 }
 
+/**
+ * primaryNodeIterator is a stateful iteration on nodes, it might be re-used,
+ * actually so only consume that you really examined
+ */
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
-  //This is a stateful iteration on nodes, it might be re-used, actually so only consume that you really examined
-  primaryNodeIterator: Iterator[Int],
-  vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
+                      primaryNodeIterator: Iterator[Int],
+                      vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)

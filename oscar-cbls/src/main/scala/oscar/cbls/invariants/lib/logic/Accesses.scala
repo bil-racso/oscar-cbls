@@ -142,10 +142,10 @@ case class IntElement(index: IntVar, inputarray: Array[IntVar])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index
  */
-case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
-  extends IntSetInvariant with Bulked[IntVar, ((Int, Int))] {
+case class Elements(index: SetVar, inputarray: Array[IntVar])
+  extends SetInvariant with Bulked[IntVar, ((Int, Int))] {
 
-  var output: IntSetVar = null
+  var output: SetVar = null
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
 
   //this array is the number of elements with value i-myMin
@@ -162,7 +162,7 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
   override def performBulkComputation(bulkedVar: Array[IntVar]): (Int, Int) =
     InvariantHelper.getMinMaxBounds(bulkedVar)
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
 
@@ -182,7 +182,7 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(index == v)
     KeysToInputArray(value) = registerDynamicDependency(inputarray(value))
     val NewVal: Int = inputarray(value).value
@@ -191,7 +191,7 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(index == v)
     assert(KeysToInputArray(value) != null)
 
@@ -239,10 +239,10 @@ case class IntElements(index: IntSetVar, inputarray: Array[IntVar])
  * @param inputarray is the array of intsetvar
  * @param index is the index of the array access
  */
-case class IntSetElement(index: IntVar, inputarray: Array[IntSetVar])
-  extends IntSetInvariant with Bulked[IntSetVar, ((Int, Int))] {
+case class SetElement(index: IntVar, inputarray: Array[SetVar])
+  extends SetInvariant with Bulked[SetVar, ((Int, Int))] {
 
-  var output: IntSetVar = null
+  var output: SetVar = null
   var KeyToCurrentVar: KeyForElementRemoval = null
 
   registerStaticDependency(index)
@@ -254,10 +254,10 @@ case class IntSetElement(index: IntVar, inputarray: Array[IntSetVar])
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntSetVar]): (Int, Int) =
+  override def performBulkComputation(bulkedVar: Array[SetVar]): (Int, Int) =
     InvariantHelper.getMinMaxBoundsIntSetVar(bulkedVar)
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := inputarray.apply(index.value).value
@@ -273,13 +273,13 @@ case class IntSetElement(index: IntVar, inputarray: Array[IntSetVar])
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == inputarray.apply(index.value))
     output.deleteValue(value)
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == inputarray.apply(index.value))
     output.insertValue(value)
   }

@@ -55,7 +55,7 @@ class TestCount extends FunSuite with ShouldMatchers {
       nbSol += 1
     }
     val stat = cp.start()
-    (nbSol, stat.nbFails)
+    (nbSol, stat.nFails)
   }
 
   def randomDom = Array.fill(10)(rand.nextInt(10)).toSet

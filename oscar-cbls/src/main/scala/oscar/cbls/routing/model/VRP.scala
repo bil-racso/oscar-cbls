@@ -26,13 +26,14 @@ package oscar.cbls.routing.model
 import collection.immutable.SortedMap
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{ IntSetVar, Model, IntVar }
+import oscar.cbls.invariants.core.computation.{ SetVar, Store, IntVar }
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.Predecessor
+import oscar.cbls.invariants.lib.set.Diff
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -46,7 +47,7 @@ import oscar.cbls.invariants.lib.logic.Predecessor
  * @param V the number of vehicles.
  * @param m the model.
  */
-class VRP(val N: Int, val V: Int, val m: Model) {
+class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
    * It assumed that the V vehicles are indexed from the point 0 to V-1,
@@ -194,7 +195,7 @@ trait MoveDescription extends VRP {
 
   case class affectFromConst(variable: IntVar, takeValue: Int) extends Affect {
     def comit(): Affect = {
-      assert(variable.value != N  || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
+      assert(variable.value != N || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
       val oldValue = variable.value
       variable := takeValue
       affectFromConst(variable, oldValue)
@@ -344,30 +345,40 @@ trait VRPObjective extends VRP {
 }
 
 /**
- * Maintains the set of unrouted nodes.
- * Info : those whose next is N.
- * This trait is abstract, sinbce unrouted can be implemented either stand alone, or as a side effect of other traits
+ * Maintains the set of routed and unrouted nodes.
+ * Info : unrouted nodes are those whose next is N.
+ * This trait is abstract, since unrouted can be implemented either stand alone,
+ * or as a side effect of other traits
  */
-abstract trait Unrouted {
-  def unrouted: IntSetVar
+abstract trait RoutedAndUnrouted extends VRP {
+  /**
+   * the data structure set which maintains the routed nodes.
+   */
+  val routed: SetVar = Filter(next, _ < N)
+  m.registerForPartialPropagation(routed)
+  
+  /**
+   * the data structure set which maintains the unrouted nodes.
+   */
+  def unrouted: SetVar
 }
 
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
  */
-trait UnroutedImpl extends VRP with Unrouted {
+trait UnroutedImpl extends VRP with RoutedAndUnrouted {
   /**
-   * the data structure set which maintains the unrouted node.
+   * the data structure set which maintains the unrouted nodes.
    */
-  final override val unrouted: IntSetVar = Filter(next, _ == N)
+  final override val unrouted: SetVar = Filter(next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
  */
-trait PenaltyForUnrouted extends VRP with Unrouted {
+trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
 
   /**
@@ -378,7 +389,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val UnroutedPenalty: IntVar = SumElements(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty: IntVar = SumElements(weightUnroutedPenalty, unrouted)
 
   /**
    * It allows you to set the penalty of a given point.
@@ -529,7 +540,7 @@ trait HopDistanceAsObjective extends VRPObjective with HopDistance {
 /**
  * Maintains the set of nodes reached by each vehicle
  */
-trait NodesOfVehicle extends PositionInRouteAndRouteNr with Unrouted {
+trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
 }

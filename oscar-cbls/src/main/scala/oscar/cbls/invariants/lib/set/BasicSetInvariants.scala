@@ -31,9 +31,9 @@ import oscar.cbls.invariants.core.propagation.Checker;
  * @param left is an intvarset
  * @param right is an intvarset
  */
-case class Union(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
+case class Union(left: SetVar, right: SetVar) extends SetInvariant {
   assert(left != right)
-  var output: IntSetVar = null
+  var output: SetVar = null
 
   def myMax = left.getMaxVal.max(right.getMaxVal)
   def myMin = left.getMinVal.min(right.getMinVal)
@@ -42,20 +42,20 @@ case class Union(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := left.value.union(right.value)
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(left == v || right == v)
     output.insertValue(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(left == v || right == v)
     if (v == left) {
       if (!right.value.contains(value)) {
@@ -81,9 +81,9 @@ case class Union(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
  * @param left is an intvarset
  * @param right is an intvarset
  */
-case class Inter(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
+case class Inter(left: SetVar, right: SetVar) extends SetInvariant {
 
-  var output: IntSetVar = null
+  var output: SetVar = null
 
   def myMax = left.getMaxVal.min(right.getMaxVal)
   def myMin = left.getMinVal.max(right.getMinVal)
@@ -92,14 +92,14 @@ case class Inter(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := left.value.intersect(right.value)
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     if (v == left) {
       if (right.value.contains(value)) {
         output.insertValue(value)
@@ -114,7 +114,7 @@ case class Inter(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(left == v || right == v)
     output.deleteValue(value)
   }
@@ -130,9 +130,9 @@ case class Inter(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
  * @param left is the base set
  * @param right is the set that is removed from left
  */
-case class Diff(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
+case class Diff(left: SetVar, right: SetVar) extends SetInvariant {
 
-  var output: IntSetVar = null
+  var output: SetVar = null
   def myMax = left.getMaxVal
   def myMin = left.getMinVal
 
@@ -140,14 +140,14 @@ case class Diff(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := left.value.diff(right.value)
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         output.insertValue(value)
@@ -162,7 +162,7 @@ case class Diff(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         output.deleteValue(value)
@@ -186,7 +186,7 @@ case class Diff(left: IntSetVar, right: IntSetVar) extends IntSetInvariant {
  * #(v) (cardinality)
  * @param v is an IntSetVar, the set of integers to count
  */
-case class Cardinality(v: IntSetVar) extends IntInvariant {
+case class Cardinality(v: SetVar) extends IntInvariant {
 
   def myMax = v.getMaxVal - v.getMinVal
   def myMin = 0
@@ -203,13 +203,13 @@ case class Cardinality(v: IntSetVar) extends IntInvariant {
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == this.v)
     output :+= 1
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == this.v)
     output :-= 1
   }
@@ -223,9 +223,9 @@ case class Cardinality(v: IntSetVar) extends IntInvariant {
  * makes an IntSetVar out of a set of IntVar. If several variables have the same value, the value is present only once in the resulting set
  * @param on is a set of IntVar
  */
-case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
+case class MakeSet(on: SortedSet[IntVar]) extends SetInvariant {
 
-  var output: IntSetVar = null
+  var output: SetVar = null
   var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc:SortedMap[Int,Int], intvar:IntVar) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
 
   for (v <- on) registerStaticAndDynamicDependency(v)
@@ -234,7 +234,7 @@ case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
   def myMax = Int.MaxValue
   def myMin = Int.MinValue
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output.setValue(SortedSet.empty[Int] ++ counts.keySet)
@@ -284,9 +284,9 @@ case class MakeSet(on: SortedSet[IntVar]) extends IntSetInvariant {
  * @param lb is the lower bound of the interval
  * @param ub is the upper bound of the interval
  */
-case class Interval(lb: IntVar, ub: IntVar) extends IntSetInvariant {
+case class Interval(lb: IntVar, ub: IntVar) extends SetInvariant {
   assert(ub != lb)
-  var output: IntSetVar = null
+  var output: SetVar = null
 
   def myMax = ub.maxVal
   def myMin = lb.minVal
@@ -295,7 +295,7 @@ case class Interval(lb: IntVar, ub: IntVar) extends IntSetInvariant {
   registerStaticAndDynamicDependency(ub)
   finishInitialization()
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     output.setDefiningInvariant(this)
     output.setValue(SortedSet.empty[Int])
@@ -348,7 +348,7 @@ case class Interval(lb: IntVar, ub: IntVar) extends IntSetInvariant {
  * @param from where we take the value from
  * @param default the default value in case from is empty
  */
-case class TakeAny(from: IntSetVar, default: Int) extends IntInvariant {
+case class TakeAny(from: SetVar, default: Int) extends IntInvariant {
   def myMin: Int = from.getMinVal
   def myMax: Int = from.getMaxVal
 
@@ -370,14 +370,14 @@ case class TakeAny(from: IntSetVar, default: Int) extends IntInvariant {
     }
   }
 
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     if (wasEmpty) {
       output := value
       wasEmpty = false
     }
   }
 
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     if (value == output.getValue(true)) {
       if (v.value.isEmpty) {
         output := default

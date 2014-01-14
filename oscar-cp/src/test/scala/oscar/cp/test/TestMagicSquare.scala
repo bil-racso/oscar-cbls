@@ -55,7 +55,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 	  binaryFirstFail(x.flatten.toSeq)
 	}
 	
-	cp.start().nbSols should be(8)
+	cp.start().nSols should be(8)
 	
 
     

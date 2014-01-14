@@ -33,19 +33,72 @@ import oscar.cbls.routing.model._
  * Swaps two points of the same or different routes.
  * The search complexity is O(n²).
  */
-object Swap extends TwoPointsNeighborhood {
+object Swap extends Neighborhood with SearchEngineTrait {
+  /**
+   * Does the search and stops at first improving move.
+   * @param s the search zone, including the VRP that we are examining
+   * @param returnMove true: returns first improving move, false: performs first improving move
+   * @return
+   */
+  override protected def doSearch(
+    s: SearchZone,
+    moveAcceptor: (Int) => (Int) => Boolean,
+    returnMove: Boolean): SearchResult = {
 
-  override def encode(fstPred: Int, sndPred: Int, vrp: VRP with MoveDescription) {
+    val startObj: Int = s.vrp.getObjective()
+    s.vrp.cleanRecordedMoves()
+    val vrp = s.vrp
+
+    while (s.primaryNodeIterator.hasNext) {
+      val beforeMovedPoint: Int = s.primaryNodeIterator.next()
+      //      println("BOUCLE1: beforeMovedPoint = " + beforeMovedPoint)
+      if (vrp.isRouted(beforeMovedPoint)) {
+
+        val movedPoint = vrp.next(beforeMovedPoint).value
+        //        println("movedPoint = " + movedPoint)
+
+        for (
+          insertionPoint <- s.relevantNeighbors(movedPoint)
+          //format: OFF (to prevent eclipse from formatting the following lines)
+          if (vrp.isRouted(insertionPoint)
+              && (!vrp.isADepot(vrp.next(insertionPoint).value))
+              && beforeMovedPoint != insertionPoint
+              && movedPoint != insertionPoint
+              && beforeMovedPoint != vrp.next(insertionPoint).value)
+              && (!vrp.isADepot(movedPoint)
+                  || (vrp.onTheSameRoute(movedPoint, insertionPoint)))
+        //format: ON
+        ) {
+          //          println("BOUCLE2: insertionPoint = " + insertionPoint)
+          //          print("VRP before encode dans la boucle de recherche: ")
+          //          println(vrp)
+
+          encode(beforeMovedPoint, insertionPoint, vrp)
+
+          checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
+            case (true, newObj: Int) => { //this improved
+              if (returnMove) {
+                val move = Swap(beforeMovedPoint, insertionPoint, newObj, vrp)
+                return MoveFound(move)
+              } else {
+                return MovePerformed()
+              }
+            }
+            case (false, _) => ()
+          }
+        }
+      }
+    }
+    NoMoveFound()
+  }
+
+  def encode(fstPred: Int, sndPred: Int, vrp: VRP with MoveDescription) {
     val fstSeg = vrp.cutNodeAfter(fstPred)
     val sndSeg = vrp.cutNodeAfter(sndPred)
     vrp.insert(fstSeg, sndPred)
     vrp.insert(sndSeg, fstPred)
   }
 
-  override def getMove(beforeMovedPoint: Int, insertionPoint: Int, newObj: Int, vrp: VRP with MoveDescription) = {
-    Swap(beforeMovedPoint, insertionPoint, newObj, vrp)
-  }
-  
   override def toString: String = "swap"
 }
 
@@ -66,5 +119,7 @@ case class Swap(
     Swap.encode(fstPred, sndPred, vrp)
   }
 
-  override def toString: String = "Swap(first point predecessor = " + fstPred + ", second point predecessor = " + sndPred + " )"
+  override def toString: String = (
+    "Swap(first point predecessor = " + fstPred
+    + ", second point predecessor = " + sndPred + " )")
 }

@@ -65,7 +65,7 @@ class TestOperator extends FunSuite with ShouldMatchers  {
 	  cp.search {
 	    binaryStatic(Seq(A,B))
 	  }
-	  cp.start().nbSols should be(4)
+	  cp.start().nSols should be(4)
   }
   
   test("boolean unary operator 5") { 

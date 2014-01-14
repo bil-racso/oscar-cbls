@@ -1,6 +1,6 @@
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.invariants.core.computation.{ IntSetVar, Variable, IntVar }
+import oscar.cbls.invariants.core.computation.{ SetVar, Variable, IntVar }
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -8,7 +8,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * implements v \in set
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class BelongsTo(v: IntVar, set: IntSetVar) extends Constraint {
+case class BelongsTo(v: IntVar, set: SetVar) extends Constraint {
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()
@@ -23,12 +23,12 @@ case class BelongsTo(v: IntVar, set: IntSetVar) extends Constraint {
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     if (this.v.value == value) Violation := 0
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     if (this.v.value == value) Violation := 1
   }
 

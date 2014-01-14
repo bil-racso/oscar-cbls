@@ -24,7 +24,11 @@
 
 package oscar.cbls.routing.initial
 
-import oscar.cbls.routing.model._
+import oscar.cbls.routing.model.MoveDescription
+import oscar.cbls.routing.model.PositionInRouteAndRouteNr
+import oscar.cbls.routing.model.RoutedAndUnrouted
+import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
 
@@ -39,15 +43,23 @@ object BestInsert {
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
    */
-  def apply(vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription) {
-    print("(BestInsert) ")
-    val relevantNeighbors = (n: Int) => vrp.nodes
-    while (true) {
-      InsertPoint.bestImprovingMove(
-        SearchZone(relevantNeighbors, vrp.nodes.iterator, vrp)) match {
-          case Some(m) => m.doMove
-          case None => return
-        }
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                     with PositionInRouteAndRouteNr with MoveDescription) {
+    // format: ON
+    print("Applying best insert heuristic...")
+    for (unroutedNode <- vrp.unrouted.value) {
+      val routed = (n: Int) => vrp.routed.value
+      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
     }
+    //    while (true) {
+    //      val routed = (n: Int) => vrp.routed.value
+    //      InsertPoint.bestImprovingMove(
+    //        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
+    //          case Some(m) => m.doMove
+    //          case None => println(" done."); return
+    //        }
+    //    }
+    println(" done.")
   }
 }

@@ -898,8 +898,23 @@ trait Constraints {
   /**
    * Unary Resource constraint
    */
-  def unaryResource(activities: Array[Activity], name: String = "machine"): UnaryResource = {
-    new UnaryResource(activities, name)
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], required: Array[CPVarBool]): UnaryResource = {
+	new UnaryResource(starts,durations,ends,required)
+  }
+  
+  /**
+   * Unary Resource constraint
+   */  
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], resources: Array[CPVarInt], id: Int) = {
+	new UnaryResource(starts,durations,ends,resources,id)
+  }
+
+  /**
+   * Unary Resource constraint
+   */    
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]) = {
+    val cp = starts(0).s
+	new UnaryResource(starts,durations,ends,starts.map(s => CPVarBool(true)(cp)))
   }
 
   /**

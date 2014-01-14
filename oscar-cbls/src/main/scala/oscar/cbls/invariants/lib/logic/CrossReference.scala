@@ -22,12 +22,12 @@
 package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.{Model, InvariantHelper, Invariant, IntSetVar}
+import oscar.cbls.invariants.core.computation.{Store, InvariantHelper, Invariant, SetVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
  * */
-case class DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) extends Invariant {
+case class DenseRef(references:Array[SetVar], referencing:Array[SetVar]) extends Invariant {
 
   for (v <- references.indices) registerStaticAndDynamicDependency(references(v),v)
 
@@ -42,12 +42,12 @@ case class DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) e
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, i: Int, value: Int){
+  override def notifyInsertOn(v: SetVar, i: Int, value: Int){
     referencing(value).insertValue(i)
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, i: Int, value: Int){
+  override def notifyDeleteOn(v: SetVar, i: Int, value: Int){
     referencing(value).deleteValue(i)
   }
 
@@ -68,11 +68,11 @@ case class DenseRef(references:Array[IntSetVar], referencing:Array[IntSetVar]) e
 }
 
 object DenseRef{
-  def makeDenseRef(references:Array[IntSetVar]):DenseRef = {
+  def makeDenseRef(references:Array[SetVar]):DenseRef = {
     val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsIntSetVar(references)
-    val m:Model = InvariantHelper.findModel(references)
+    val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0)
-    val referencing = Array.tabulate(maxMax + 1)(i => new IntSetVar(m,0,references.length - 1, "referencing_" + i))
+    val referencing = Array.tabulate(maxMax + 1)(i => new SetVar(m,0,references.length - 1, "referencing_" + i))
     DenseRef(references,referencing)
   }
 }

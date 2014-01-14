@@ -37,7 +37,7 @@ trait ObjectiveTrait {
   /**returns the value of the objective variable if the two variables a and b were swapped values.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
   def swapVal(a: IntVar, b: IntVar): Int = {
     a :=: b
@@ -49,14 +49,14 @@ trait ObjectiveTrait {
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
   def assignVal(a: IntVar, v: Int): Int = assignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
   def assignVal(a: Iterable[(IntVar, Int)]): Int = {
     //memorize

@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.computation._
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  */
-case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int = Int.MinValue)
+case class ArgMaxArray(vars: Array[IntVar], cond: SetVar = null, default: Int = Int.MinValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
@@ -58,7 +58,7 @@ case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  */
-case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int = Int.MaxValue)
+case class ArgMinArray(vars: Array[IntVar], cond: SetVar = null, default: Int = Int.MaxValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
@@ -82,7 +82,7 @@ case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
  * @param cond is the condition, can be null
  * update is O(log(n))
  */
-abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntSetInvariant with Bulked[IntVar, (Int, Int)] {
+abstract class ArgMiaxArray(vars: Array[IntVar], cond: SetVar, default: Int) extends SetInvariant with Bulked[IntVar, (Int, Int)] {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
@@ -90,7 +90,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-  var output: IntSetVar = null
+  var output: SetVar = null
   var Miax: IntVar = null
 
   if (cond != null) {
@@ -133,7 +133,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
 
   var cost:Long = 0
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: SetVar) {
     output = v
     //collecter les counts et le max
     output.setDefiningInvariant(this)
@@ -168,7 +168,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
@@ -187,7 +187,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
 

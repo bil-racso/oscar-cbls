@@ -361,7 +361,7 @@ class TestCumulativeResource extends FunSuite with ShouldMatchers {
     } search {
       binaryStatic(acts.map(_.resource))
     }
-    cp.start().nbSols should be(1)
+    cp.start().nSols should be(1)
   }
 
   test("Test 4: MaxSweepCumulative") {
