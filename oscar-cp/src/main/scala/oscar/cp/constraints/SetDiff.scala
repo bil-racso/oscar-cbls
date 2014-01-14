@@ -23,7 +23,7 @@ import oscar.cp.core._
  * @author Pierre Schaus pschaus@gmail.com
  * a - b = c
  */
-class SetDiff(val a: CPVarSet, val b: CPVarSet, val c: CPVarSet) extends Constraint(a.s, "SetDiff") {
+class SetDiff(val a: CPVarSet, val b: CPVarSet, val c: CPVarSet) extends Constraint(a.store, "SetDiff") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 

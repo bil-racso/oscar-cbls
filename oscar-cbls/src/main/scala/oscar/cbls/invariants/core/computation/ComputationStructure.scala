@@ -1,17 +1,17 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -21,23 +21,30 @@
 
 package oscar.cbls.invariants.core.computation
 
-import collection.immutable.{SortedSet, SortedMap};
-
-import oscar.cbls.invariants.core.propagation._;
+import collection.immutable.{SortedSet, SortedMap}
+import oscar.cbls.invariants.core.propagation._
+import language.implicitConversions
 
 /**This class contains the model, namely, the invariants and variables
- * They are all modeled as propagation Elements, which are handled by the inherited propagationstructure class.
+ * They are all modelled as propagation Elements, which are handled by the inherited [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
  *
  * @param Verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
- * @param Checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
+ * @param checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
  * @param NoCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
+ * @param TopologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
+ * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
+  *
  */
 class Model(override val Verbose:Boolean = false,
-            override val Checker:Option[checker] = None,
-            override val NoCycle:Boolean = false,
-            override val TopologicalSort:Boolean = false)
-  extends PropagationStructure(Verbose,Checker,NoCycle,TopologicalSort)
+            override val checker:Option[Checker] = None,
+            override val NoCycle:Boolean = true,
+            override val TopologicalSort:Boolean = false,
+            val propagateOnToString:Boolean = true)
+  extends PropagationStructure(Verbose,checker,NoCycle,TopologicalSort)
   with Bulker{
+
+
+  assert({println("You are using a CBLS model with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
   private var Variables:List[Variable] = List.empty
   private var Invariants:List[Invariant] = List.empty
@@ -135,11 +142,19 @@ class Model(override val Verbose:Boolean = false,
     PropagationElements
   }
 
+  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+
+  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+    toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
+  }
+
   /**calls this when you have declared all your invariants and variables.
    * This must be called before any query and update can be made on the model, and after all the invariants and variables have been declared.
    */
   def close(DropStaticGraph: Boolean = true){
     assert(!Closed, "cannot close a model twice")
+    for(p <- toCallBeforeClose) p()
+    toCallBeforeClose = List.empty
     setupPropagationStructure(DropStaticGraph)
     Closed=true
   }
@@ -205,7 +220,7 @@ case class Snapshot(assignationInt:List[(IntVar, Int)],
 
 /**This class contains a solution. It can be generated by a model, to store the state of the search, and restored.
  * it remains linked to the model, as it maintains references to the variables declared in the model.
- * you cannot pass it over a network connexion for instance.
+ * you cannot pass it over a network connection for instance.
  * see methods getSolution and restoreSolution in [[oscar.cbls.invariants.core.computation.Model]]
  */
 case class Solution(assignationInt:SortedMap[IntVar,Int],
@@ -257,7 +272,7 @@ trait Invariant extends PropagationElement{
   final def preFinishInitialization(model:Model = null):Model = {
     if (this.model== null){
       if (model == null){
-        this.model = InvariantHelper.FindModel(getStaticallyListenedElements)
+        this.model = InvariantHelper.findModel(getStaticallyListenedElements)
       }else{
         this.model = model //assert(model == InvariantHelper.FindModel(getStaticallyListenedElements()))
       }
@@ -330,9 +345,9 @@ trait Invariant extends PropagationElement{
 
   /**
    * registers static and dynamic dependency to all items in the array
-   * let be i, a position in the array, the idenx used for dynamic dependency registration is i+offset
+   * let be i, a position in the array, the index used for dynamic dependency registration is i+offset
    * @param v the variable that are registered
-   * @param offset and offset applied to the position in the array when reigstering the dynamic dependency
+   * @param offset and offset applied to the position in the array when registering the dynamic dependency
    */
   def registerStaticAndDynamicDependencyArrayIndex[T <: Variable](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] = {
     Array.tabulate(v.size)((i:Int) => {
@@ -395,9 +410,9 @@ trait Invariant extends PropagationElement{
 
   /**To override whenever possible to spot errors in invariants.
    * this will be called for each invariant after propagation is performed.
-   * It requires that the Model is instantiated with the varible debug set to true.
+   * It requires that the Model is instantiated with the variable debug set to true.
    */
-  override def checkInternals(c:checker){;}
+  override def checkInternals(c:Checker){c.check(false, Some("DEFAULT EMPTY CHECK " + this.toString() + ".checkInternals"))}
 
   def getDotNode = "[label = \"" + this.getClass.getSimpleName + "\" shape = box]"
 }
@@ -405,10 +420,10 @@ trait Invariant extends PropagationElement{
 object InvariantHelper{
   /**this is useful to find the model out of a set of propagation elements.
    *
-   * @param i some propagation elements, typically, variables lsitened by some invariants
+   * @param i some propagation elements, typically, variables listened by some invariants
    * @return the model that the invariant belongs to
    */
-  def FindModel(i:Iterable[PropagationElement]):Model={
+  def findModel(i:Iterable[PropagationElement]):Model={
     i.foreach(e => {
       if (e.isInstanceOf[Variable]){
         val m = e.asInstanceOf[Variable].model
@@ -417,23 +432,47 @@ object InvariantHelper{
         }
       }
     })
-    return null
+    null
   }
+
+  def getMinMaxBounds(variables:Iterable[IntVar]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.maxVal) MyMax = v.maxVal
+      if (MyMin > v.minVal) MyMin = v.minVal
+    }
+    (MyMin, MyMax)
+  }
+  def getMinMaxBoundsIntSetVar(variables:Iterable[IntSetVar]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.getMaxVal) MyMax = v.getMaxVal
+      if (MyMin > v.getMinVal) MyMin = v.getMinVal
+    }
+    (MyMin, MyMax)
+  }
+
+  def arrayToString[T<:Variable](a:Array[T]):String = {
+    "[" + a.toList.mkString(",")+"]"
+  }
+
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
  * Variables have an associated model, to which they register as soon as they are created. Variables also have a name,
  * which is used solely for printing models.
  */
-abstract class Variable(val model:Model,val name:String) extends PropagationElement{
+abstract class Variable(val model:Model, n:String = null) extends PropagationElement{
   UniqueID = if (model == null) -1 else model.registerVariable(this)
-
+  val name = Option(n) getOrElse (s"Var_$UniqueID")
   def getPropagationStructure = this.model
 
-  var DefiningInvariant:Invariant = null
+  protected var DefiningInvariant:Invariant = null
 
   def setDefiningInvariant(i:Invariant) {
-    assert(i.model == model || i.model == null)
+    assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
     if(DefiningInvariant == null){
       DefiningInvariant = i
       registerStaticallyListenedElement(i)
@@ -455,6 +494,13 @@ abstract class Variable(val model:Model,val name:String) extends PropagationElem
       scheduleForPropagation()
     }
   }
+
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate:String
 
   def getDotColor:String = {
     if (getStaticallyListeningElements.isEmpty){
@@ -478,7 +524,7 @@ object Event{
   def apply(v:Variable,
             action: =>Unit):Event = {
     val toreturn = new Event(v,null,null)
-    toreturn.setAction((_:Unit) => {action})
+    toreturn.setAction((_:Unit) => action)
 //    if (intaction != null) toreturn.setIntAction(intaction)
  //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -488,7 +534,7 @@ object Event{
             action: =>Unit,
             ModifiedVars:Iterable[Variable]):Event = {
     val toreturn = new Event(v,null,ModifiedVars)
-    toreturn.setAction((_:Unit) => {action})
+    toreturn.setAction((_:Unit) => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -565,9 +611,9 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   private var actionIntParam: (Int=>Unit) = null
   private var actionIntSetParam: (SortedSet[Int] => Unit) = null
 
-  private var oldIntv = 0;
+  private var oldIntv = 0
   private var oldIntSetv:SortedSet[Int] = SortedSet.empty
-  private var oldIntw = 0;
+  private var oldIntw = 0
   private var oldIntSetw:SortedSet[Int] = SortedSet.empty
 
   private var intintaction: ((Int,Int) => Unit) = null
@@ -668,23 +714,29 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
       oldIntSetw = w.asInstanceOf[IntSetVar].value
     }
   }
+  
+  override def checkInternals(c: Checker) = c.check(true, Some("Event.checkInternals"))
 }
 
-/**an intvar is a variable managed by the [[oscar.cbls.invariants.core.computation.Model]] whose type is integer.
+/**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Model]] whose type is integer.
  *
  * @param model is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.IntConst]]
- * @param MinVal is the minimum value of the variable. Some invariants exploit this value to declare fixed size arrays
- * @param MaxVal is the maximum value of the variable. Some invariants exploit this value to declare fixed size arrays
+ * @param domain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
  * @param Value is the value of the variable
- * @param name is the name of the variable, used for pretty printing only
+ * @param n is the name of the variable, used for pretty printing only
  */
-class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override val name:String="")
-  extends Variable(model,name) {
-  private var OldValue:Int=Value
+class IntVar(model: Model, val domain: Range, private var Value: Int, n: String = null)
+  extends Variable(model, n) {
+  
+  private var OldValue = Value
 
-  def inDomain(v:Int):Boolean = {if (v<= MaxVal && v>= MinVal) true else false}
-  val domain:Range = new Range(MinVal,if(MaxVal == MaxVal) MaxVal else MaxVal+1,1)
-  override def toString:String = name + ":=" + Value //value
+  def inDomain(v: Int) = domain.contains(v)
+  def minVal = domain.start
+  // if the range was specified using until max should be max -1
+  def maxVal = if(domain.isInclusive) domain.end else domain.end - 1
+  
+  override def toString = if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+  override def toStringNoPropagate = s"$name:=$Value" //value
 
   def setValue(v:Int){
     if (v != Value){
@@ -701,20 +753,18 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
       }
   }
   
-  def value:Int = getValue(false)
+  def value: Int = getValue() 
 
-  def getValue(NewValue:Boolean=false):Int = {
+  def getValue(NewValue: Boolean = false): Int = {
     if(NewValue){
       assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
-      if (this.DefiningInvariant!= null && model != null){ //TODO: this seems buggy: non-controlled vars do not trigger propagation??
-        model.propagate(this)
-        OldValue
-      }else{
-        Value
-      }
+      if (model == null) return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
+      model.propagate(this)
+      OldValue
     }
   }
 
@@ -722,7 +772,7 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
         val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
@@ -731,14 +781,27 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
     }
   }
 
-  def :=(v:Int) {setValue(v)}
-  def :+=(v:Int) {setValue(v+getValue(true))}
-  def :*=(v:Int) {setValue(v*getValue(true))}
-  def :-=(v:Int) {setValue(getValue(true) - v)}
+  def :=(v: Int) {
+    setValue(v)
+  }
+  
+  def :+=(v: Int) {
+    setValue(v + getValue(true))
+  }
+  
+  def :*=(v: Int) {
+    setValue(v * getValue(true))
+  }
+  
+  def :-=(v:Int) {
+    setValue(getValue(true) - v)
+  }
 
   /** increments the variable by one
     */
-  def ++() {this := this.getValue(true) +1}
+  def ++ {
+    setValue(1 + getValue(true))
+  }
 
   /**this operator swaps the value of two IntVar*/
   def :=:(v:IntVar){
@@ -748,15 +811,17 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
   }
 
   /**this operator swaps the value of two IntVar*/
-  def swap(v:IntVar) {this :=: v}
+  def swap(v: IntVar) {
+    this :=: v
+  }
 
-  def <==(i:IntInvariant) {i.setOutputVar(this)}
-  def <==(i:IntVar) {this <== i.getClone}
+  def <==(i: IntInvariant) {i.setOutputVar(this)}
+  def <==(i: IntVar) {this <== i.getClone}
 
   def getClone:IdentityInt = IdentityInt(this)
 
-  override def checkInternals(c:checker){
-    assert( OldValue == Value,this)
+  override def checkInternals(c:Checker){
+    assert(OldValue == Value, this)
   }
 
   def getDotNode = "[label = \"IntVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
@@ -764,15 +829,21 @@ class IntVar(model:Model,val MinVal:Int,val MaxVal:Int,var Value:Int,override va
 
 object IntVar{
   
-  def apply(model: Model, minVal:Int, maxVal:Int, value:Int, name:String) = {
-    new IntVar(model,minVal,maxVal,value,name)
+  def apply(model: Model, minVal:Int, maxVal:Int, value:Int , name:String) = {
+    require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain minVal:" + minVal + " maxVal:" + maxVal)
+    new IntVar(model,(minVal to maxVal), value, name)
   }
   
-  def apply(model: Model, domain: Range, value:Int, name:String="") = {
-    new IntVar(model,domain.start,if (domain.isInclusive) domain.end else domain.end-1,value,name)
+  def apply(model: Model, domain: Range, value:Int, name:String) = {
+    require(!domain.isEmpty, "the domain supplied must be a valid increasing interval")
+    new IntVar(model, domain, value, name)
   }
-  
-  
+
+  def apply(model: Model, value:Int = 0, name:String) = {
+    val domain = Int.MinValue to Int.MaxValue
+    new IntVar(model, domain, value, name)
+  }
+
 
   implicit val ord:Ordering[IntVar] = new Ordering[IntVar]{
     def compare(o1: IntVar, o2: IntVar) = o1.compare(o2)
@@ -784,12 +855,12 @@ object IntVar{
 }
 
 /**
- * An IntConst is an IntVar that has a constant value.
+ * An IntConst is an [[oscar.cbls.invariants.core.computation.IntVar]] that has a constant value.
  * It has no associated model, as there is no need to incorporate it into any propagation process.
  * @param ConstValue: the value of the constant
  */
 case class IntConst(ConstValue:Int, override val model:Model = null)
-  extends IntVar(model,ConstValue,ConstValue,ConstValue,toString){
+  extends IntVar(model, (ConstValue to ConstValue), ConstValue, toString){
   override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
   override def toString:String = "IntConst("+ ConstValue + ")"
 }
@@ -801,7 +872,6 @@ case class IntConst(ConstValue:Int, override val model:Model = null)
  * @param Value is the value of the variable
  * @param name is the name of the variable, used for pretty printing only
  */
-
 class IntSetVar(override val model:Model,
                 private val MinVal:Int,
                 private val MaxVal:Int,
@@ -833,13 +903,23 @@ class IntSetVar(override val model:Model,
     ToPerform = List.empty
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     assert(this.DefiningInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
-  override def toString:String = name + ":={" + getValue(true).foldLeft("")(
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
+   (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+
+  /** this method is a toString that does not trigger a propagation.
+    * use this when debugguing your software.
+    * you should specify to your IDE to render variable objects using this method isntead of the toString method
+    * @return a string similar to the toString method
+    */
+  def toStringNoPropagate: String = name + ":={" + Value.foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+
+
 
   /**The values that have bee impacted since last propagation was performed.
    * null if set was assigned
@@ -941,13 +1021,11 @@ class IntSetVar(override val model:Model,
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
-      if(this.DefiningInvariant!= null && getModel != null){
-        getModel.propagate(this)
-        if (!ToPerform.isEmpty){Perform()}
-        OldValue
-      }else{
-        Value
-      }
+      if (model == null) return Value
+      if (DefiningInvariant == null && !model.Propagating) return Value
+      model.propagate(this)
+      Perform()
+      OldValue
     }
   }
 
@@ -996,7 +1074,7 @@ abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
   implicit def toIntVar:IntVar = {
-    val a = new IntVar(model,myMin,myMax,0,this.getClass.getSimpleName)
+    val a = new IntVar(model, (myMin to myMax), 0, this.getClass.getSimpleName)
     a <== this //ca invoque setOutputVar en fait.
     a
   }
@@ -1043,11 +1121,11 @@ case class IdentityInt(v:IntVar) extends IntInvariant {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def myMax = v.MaxVal
-  def myMin = v.MinVal
+  def myMax = v.maxVal
+  def myMin = v.minVal
 
-  override def checkInternals(c:checker){
-    assert(output.getValue(true) == v.value)
+  override def checkInternals(c:Checker){
+    c.check(output.getValue(true) == v.value)
   }
 
   override def setOutputVar(vv:IntVar){
@@ -1072,8 +1150,8 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   val myMin = v.getMinVal
   val myMax = v.getMaxVal
 
-  override def checkInternals(c:checker){
-    assert(output.getValue(true).intersect(v.value).size == v.value.size)
+  override def checkInternals(c:Checker){
+    c.check(output.getValue(true).intersect(v.value).size == v.value.size)
   }
 
   override def setOutputVar(vv:IntSetVar){
@@ -1093,16 +1171,16 @@ case class IdentityIntSet(v:IntSetVar) extends IntSetInvariant{
   }
 }
 
-case class Singleton(v:IntVar) extends IntSetInvariant  {
+case class Singleton(v: IntVar) extends IntSetInvariant  {
 
   var output:IntSetVar = null
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def myMin=v.MinVal
-  def myMax = v.MaxVal
+  def myMin = v.minVal
+  def myMax = v.maxVal
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     assert(output.getValue(true).size == 1)
     assert(output.getValue(true).head == v.value)
   }

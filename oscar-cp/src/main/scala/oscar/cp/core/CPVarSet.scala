@@ -1,17 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
@@ -23,25 +9,26 @@ import oscar.cp.constraints.SetCard
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
+class CPVarSet(val store: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
 
-  def store = s
-  private val dom = new SetDomain(s, min, max);
+  private val dom = new SetDomain(store, min, max)
 
-  val onDomainL2 = new ReversiblePointer[ConstraintQueue](s, null)
+  val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
 
-  val onRequiredL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
-  val onExcludedL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
-  val onRequiredIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
-  val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](s, null)
+  val onRequiredL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onExcludedL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onRequiredIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
 
   // cardinality variable
-  val card = CPVarInt(s,0,max-min+1);
-  s.post(new SetCard(this,card));
+  val card = CPVarInt(0, max - min + 1)(store)
+  store.post(new SetCard(this, card))
 
   /**
-   * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
+   * @return true if the domain of the variable has exactly one value,
+   * false if the domain has more than one value
    */
   def isBound: Boolean = dom.possibleSize == dom.requiredSize
 
@@ -70,7 +57,7 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
   }
 
   def filterWhenDomainChanges(filter: DeltaVarSet => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarSet(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
@@ -118,10 +105,10 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
   def requires(v: Int): CPOutcome = {
     if (dom.isPossible(v) && !dom.isRequired(v)) {
       // -------- AC3 notifications ------------
-      s.notifyL2(onDomainL2.value)
+      store.notifyL2(onDomainL2.value)
       // -------- AC5 notifications ------------
-      s.notifyRequired(onRequiredL1.value, this, v)
-      s.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
+      store.notifyRequired(onRequiredL1.value, this, v)
+      store.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
     }
     val oc = dom.requires(v)
     if (oc != CPOutcome.Failure) {
@@ -132,39 +119,37 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
         }
       }
       card.updateMin(requiredSize)
-    }
-    else oc
+    } else oc
   }
 
   def excludes(v: Int): CPOutcome = {
     if (dom.isPossible(v) && !dom.isRequired(v)) {
       // -------- AC3 notifications ------------
-      s.notifyL2(onDomainL2.value)
+      store.notifyL2(onDomainL2.value)
       // -------- AC5 notifications ------------
-      s.notifyExcluded(onExcludedL1.value, this, v)
-      s.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
+      store.notifyExcluded(onExcludedL1.value, this, v)
+      store.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
     }
     val oc = dom.excludes(v)
     if (oc != CPOutcome.Failure) {
       if (possibleSize == card.min) {
         for (a: Int <- possibleNotRequiredValues.toSet) {
           val r = requires(a)
-           assert(r != CPOutcome.Failure)
+          assert(r != CPOutcome.Failure)
         }
       }
       card.updateMax(possibleSize)
-    }    
-    else oc
+    } else oc
   }
 
   def requiresAll(): CPOutcome = {
     // -------- AC3 notifications ------------
-    if (possibleSize > requiredSize) s.notifyL2(onDomainL2.value)
+    if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
     if (onRequiredL1.hasValue() || onRequiredIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
-        if (onRequiredL1.hasValue()) s.notifyRequired(onRequiredL1.value, this, v)
-        if (onRequiredIdxL1.hasValue) s.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
+        if (onRequiredL1.hasValue()) store.notifyRequired(onRequiredL1.value, this, v)
+        if (onRequiredIdxL1.hasValue) store.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
       }
     }
     val oc = dom.requiresAll()
@@ -174,59 +159,53 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
 
   def excludesAll(): CPOutcome = {
     // -------- AC3 notifications ------------
-    if (possibleSize > requiredSize) s.notifyL2(onDomainL2.value)
+    if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
     if (onExcludedL1.hasValue() || onExcludedIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
-        if (onExcludedL1.hasValue()) s.notifyExcluded(onExcludedL1.value, this, v)
-        if (onExcludedIdxL1.hasValue) s.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
+        if (onExcludedL1.hasValue()) store.notifyExcluded(onExcludedL1.value, this, v)
+        if (onExcludedIdxL1.hasValue) store.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
       }
-    }    
+    }
     val oc = dom.excludesAll()
     assert(oc != CPOutcome.Failure)
     card.assign(requiredSize)
   }
-  
-   
+
   def arbitraryPossibleNotRequired: Int = dom.arbitraryPossibleNotRequired
-  
-  def randomPossibleNotRequired: Int = dom.randomPossibleNotRequired    
+
+  def randomPossibleNotRequired: Int = dom.randomPossibleNotRequired
 
   def value(): Set[Int] = dom.requiredSet
 
   def requiredSet(): Set[Int] = dom.requiredSet
 
   def possibleSet(): Set[Int] = dom.possibleSet
-  
+
   def possibleNotRequiredValues: Iterator[Int] = dom.possibleNotRequiredValues
-   
+
   def requiredValues: Iterator[Int] = dom.requiredValues
-  
 
-  def possibleSize = dom.possibleSize
+  def possibleSize: Int = dom.possibleSize
 
-  def requiredSize = dom.requiredSize
+  def requiredSize: Int = dom.requiredSize
 
-  def ++(v: Int) = new Requires(this, v)
-  def --(v: Int) = new Excludes(this, v)
-  
-  override def toString = {
-    ""+requiredValues.toSet+" "+possibleNotRequiredValues.toSet
+  def ++(v: Int): Constraint = new Requires(this, v)
+  def --(v: Int): Constraint = new Excludes(this, v)
+
+  override def toString: String = {
+    val required = requiredValues.toSet
+    val possible = possibleNotRequiredValues.toSet
+    s"$required $possible"
   }
-
-  // --------------------------------------------
 
   // ------ delta methods to be called in propagate -------
 
-  def changed(sn: SnapshotVarSet) = possibleChanged(sn) || requiredChanged(sn)
+  def changed(sn: SnapshotVarSet): Boolean = possibleChanged(sn) || requiredChanged(sn)
 
-  def possibleChanged(sn: SnapshotVarSet) = {
-    sn.oldSizePossible != possibleSize
-  }
+  def possibleChanged(sn: SnapshotVarSet): Boolean = sn.oldSizePossible != possibleSize
 
-  def requiredChanged(sn: SnapshotVarSet) = {
-    sn.oldSizeRequired != requiredSize
-  }
+  def requiredChanged(sn: SnapshotVarSet): Boolean = sn.oldSizeRequired != requiredSize
 
   def deltaPossibleSize(sn: SnapshotVarSet): Int = sn.oldSizePossible - possibleSize
 
@@ -236,26 +215,43 @@ class CPVarSet(val s: CPStore, min: Int, max: Int, val name: String = "") extend
 
   def deltaRequired(sn: SnapshotVarSet): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
 
-  def ==(y: CPVarSet) = new oscar.cp.constraints.SetEq(this,y)
-  
-  // --------------------------------------------
-
+  def ==(y: CPVarSet): Constraint = new oscar.cp.constraints.SetEq(this, y)
 }
 
 object CPVarSet {
-	def apply(s: CPStore,required: Set[Int] = Set(), possibleNotRequired: Set[Int]): CPVarSet = {
-	  if (!required.intersect(possibleNotRequired).isEmpty) {
-	    throw new RuntimeException("Possible values should not be required")
-	  }
-	  val allPossibles = required ++ possibleNotRequired
-	  val x = new CPVarSet(s,allPossibles.min,allPossibles.max)
-	  for (v <- allPossibles.min to allPossibles.max if !allPossibles.contains(v)) {
-	    x.excludes(v)
-	  }
-	  for (v <- required) {
-	    x.requires(v)
-	  }
-	  x
-	}
+  
+  /** Creates a new CP Var Set that can contain a set of possible values in which some are required */
+  def apply(possible: Set[Int], required: Set[Int])(implicit store: CPStore): CPVarSet = {
+    if (!required.forall(elem => possible.contains(elem))) {
+      throw new RuntimeException("Required values should be possible")
+    }
+    val set = new CPVarSet(store, possible.min, possible.max) 
+    // Initializes the possible element
+    for (elem <- possible.min to possible.max if !possible.contains(elem)) {
+      set.excludes(elem)
+    }
+    // Initializes the required elements
+    required.foreach(set.requires)
+    set
+  }
+  
+  /** Creates a new CP Var Set that can contain a set of possible values */
+  def apply(possible: Set[Int])(implicit store: CPStore): CPVarSet = apply(possible, Set())(store)
+  
+  @deprecated("use apply(required: Set[Int], possibleNotRequired: Set[Int])(implicit store: CPStore) instead", "1.0")
+  def apply(s: CPStore, required: Set[Int] = Set(), possibleNotRequired: Set[Int]): CPVarSet = {
+    if (!required.intersect(possibleNotRequired).isEmpty) {
+      throw new RuntimeException("Possible values should not be required")
+    }
+    val allPossibles = required ++ possibleNotRequired
+    val x = new CPVarSet(s, allPossibles.min, allPossibles.max)
+    for (v <- allPossibles.min to allPossibles.max if !allPossibles.contains(v)) {
+      x.excludes(v)
+    }
+    for (v <- required) {
+      x.requires(v)
+    }
+    x
+  }
 }
   

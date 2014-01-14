@@ -24,21 +24,18 @@ package oscar.cp.core
  *  @author Pierre Schaus pschaus@gmail.com
  */
 class ConstraintQueue(val next: ConstraintQueue, val cons: Constraint) {
-	
- 
-    def hasNext() = next != null
 
-	override def toString(): String = "ConstraintQueue constraint:"+cons;
-	
-	
-	def size() = {
-		var s = 0;
-		var q = this;
-		while (q != null) {
-			s += 1
-			q = q.next
-		}
-		s
-	}
+  def hasNext(): Boolean = next != null
 
+  override def toString(): String = "ConstraintQueue constraint:" + cons;
+
+  def size() = {
+    var s = 0;
+    var q = this;
+    while (q != null) {
+      s += 1
+      q = q.next
+    }
+    s
+  }
 }

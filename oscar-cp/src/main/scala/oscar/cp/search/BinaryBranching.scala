@@ -18,8 +18,8 @@ package oscar.cp.search
 import oscar.cp.modeling._
 import oscar.cp.core.CPVarInt
 import oscar.algo.reversible._
-import oscar.algo.search._
 import oscar.algo.search.Branching
+import oscar.cp.core.CPVarSet
 
 /**
  * Binary Branching: 
@@ -143,4 +143,15 @@ class BinaryDomainSplitBranching(x: Array[CPVarInt], varHeuris: (CPVarInt => Int
       }
     }
   }
-} 
+}
+
+class BinarySetBranching(x: CPVarSet) extends Branching {
+  val cp = x.store
+  def alternatives(): Seq[Alternative] = {
+    if (x.isBound) noAlternative
+    else {
+      val v = x.arbitraryPossibleNotRequired
+      branch(cp.post(x ++ v))(cp.post(x -- v))
+    }
+  }
+}

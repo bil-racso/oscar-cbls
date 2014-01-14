@@ -22,7 +22,7 @@ import oscar.cp.core._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class SetCard(val x: CPVarSet, val c: CPVarInt) extends Constraint(x.s, "SetCard") {
+class SetCard(val x: CPVarSet, val c: CPVarInt) extends Constraint(x.store, "SetCard") {
   priorityL2 = CPStore.MAXPRIORL2
   override def setup(l: CPPropagStrength): CPOutcome = {
     x.callPropagateWhenDomainChanges(this, false)

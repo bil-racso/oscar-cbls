@@ -39,6 +39,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
 
   finishInitialization(_model)
 
+  model.addToCallBeforeClose(_ => this.close())
+
   class GlobalViolationDescriptor(val Violation:IntVar){
     var AggregatedViolation:List[IntVar] = List.empty
   }
@@ -46,7 +48,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   val IndexForLocalViolationINSU = model.getStorageIndex
   val IndexForGlobalViolationINSU = model.getStorageIndex
 
-  val Violation:IntVar = new IntVar(this.model,0,Int.MaxValue,0,"Violation")
+  val Violation:IntVar = IntVar(this.model,0,Int.MaxValue,0,"Violation")
   private var Violations:SortedMap[Variable,IntVar] = SortedMap.empty[Variable,IntVar]
   private var PostedConstraints:List[(Constraint,IntVar)] = List.empty
   //private var AllVars:SortedMap[Variable,List[(Constraint,IntVar)]]=SortedMap.empty
@@ -54,6 +56,12 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
   private var VarInConstraints:List[Variable] = List.empty
   private var VarsWatchedForViolation:List[Variable] = List.empty
 
+  override def toString() = {
+    val constraints = PostedConstraints.map(_._1)
+    val sortedConstraints = constraints.sortBy(c => c.violation.value)
+    val sortedConstraintsStrings = sortedConstraints.map(c => "" + c.violation + " " + c)
+    "ConstraintSystem{" + this.Violation + "\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
+  }
   /**
    * @return the constraints posted in the constraint system, together with their weighting factor.
    */
@@ -68,7 +76,8 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    */
   def post(c:Constraint,weight:IntVar=null){
 
-    assert(c.getPropagationStructure == this.model || c.getPropagationStructure == null, "constraints must be registered to same propagation structure as constraint system")
+    assert(c.getPropagationStructure == this.model || c.getPropagationStructure == null,
+      "constraints must be registered to same propagation structure as constraint system")
     PostedConstraints = (c,weight) :: PostedConstraints
 
     for(variable <- c.constrainedVariables){
@@ -113,21 +122,26 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
     }
   }
 
+  var isClosed = false
   /**Must be invoked before the violation can be queried.
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
+    * NEW: this is called automatically by the model before it actually closes.
    */
   def close(){
-    Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
-      if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
-      else Prod(SortedSet(constraintANDintvar._1.violation,constraintANDintvar._2)).toIntVar
-    }))
+    if(!isClosed){
+      isClosed = true
+      Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
+        if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
+        else Prod(SortedSet(constraintANDintvar._1.violation,constraintANDintvar._2)).toIntVar
+      }))
 
-    setObjectiveVar(Violation)
+      setObjectiveVar(Violation)
 
-    aggregateLocalViolations()
-    PropagateLocalToGlobalViolations()
-    aggregateGlobalViolations()
+      aggregateLocalViolations()
+      PropagateLocalToGlobalViolations()
+      aggregateGlobalViolations()
+    }
   }
 
   /**Call this method to notify that the variable should have a violation degree computed for the whole constraint system.
@@ -157,7 +171,7 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationvariable = new IntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
+      val violationvariable = IntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
       v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationvariable))
       registerConstrainedVariable(v)
       violationvariable
@@ -171,4 +185,10 @@ class ConstraintSystem(val _model:Model) extends Constraint with ObjectiveTrait{
    *close() should have been called prior to calling this method.
    */
   override def violation:IntVar = Violation
+
+  /** to get the violated constraints, for debugging purpose
+    * @return the constraints that are violated, and whose ponderation factor is not zero
+    */
+  def violatedConstraints:List[Constraint] =
+    PostedConstraints.filter(p => (p._2 != null || p._2.value !=0) && p._1.isTrue).map(p => p._1)
 }

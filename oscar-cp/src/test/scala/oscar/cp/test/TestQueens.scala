@@ -36,19 +36,20 @@ class TestQueens extends FunSuite with ShouldMatchers  {
            val cp = CPSolver()
            val Queens = 0 until n
            //variables
-           val queens = for(i <- Queens) yield CPVarInt(cp,1 to n)
+           val queens = for(i <- Queens) yield CPVarInt(1 to n)(cp)
            var nbsol = 0
            cp.solve subjectTo {
     	     cp.add(allDifferent(queens),l)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) + i),l)
     	     cp.add(allDifferent(for(i <- Queens) yield queens(i) - i),l)
-           } exploration {        
-             for (q <- Queens.suspendable) {
-               cp.branchAll(1 to n)(v => cp.post(queens(q) == v))
+           } search {
+             queens.find(!_.isBound) match {
+               case None => noAlternative
+               case Some(x) => branchAll(1 to n)(v => cp.add(x == v))
              }
-             nbsol += 1
-           } run()
-           nbsol
+           }
+           val stat = cp.start()
+           stat.nSols
     }
     
     nbSol(7,Weak) should be(40)

@@ -27,13 +27,17 @@ import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualShape
 import scala.collection.mutable.Queue
+import javax.swing.SwingUtilities
+import java.awt.event.MouseListener
+import java.awt.geom.AffineTransform
+import java.awt.geom.Point2D
 
 /**
  * VisualDrawing
  *
  *  Contains and draws VisualShapes.
  */
-class VisualDrawing(fliped: Boolean, scalable: Boolean) extends JPanel {
+class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
 
   setBackground(Color.white)
 
@@ -74,14 +78,17 @@ class VisualDrawing(fliped: Boolean, scalable: Boolean) extends JPanel {
     }
     (minX, maxX, minY, maxY)
   }
-
+  var transform = new AffineTransform()
+  var scale = 1.0
+  
   override def paint(g: Graphics): Unit = {
-
+	
     super.paintComponent(g)
     val g2d = g.asInstanceOf[Graphics2D]
-
+    transform = new AffineTransform() // start with identity transform   
+    
     if (!shapes.isEmpty) {
-
+      
       // Shapes size
       val (minX, maxX, minY, maxY) = findBounds(shapes)
       val sWidth = maxX - minX
@@ -90,11 +97,13 @@ class VisualDrawing(fliped: Boolean, scalable: Boolean) extends JPanel {
       // Drawing size
       val dWidth = getWidth()
       val dHeight = getHeight()
-
+      
       // Flip
-      if (fliped) {
-        g2d.translate(0, dHeight)
-        g2d.scale(1, -1)
+      if (flipped) {
+        transform.translate(0, dHeight)
+        transform.scale(1*scale, -1*scale)
+      } else {
+        transform.scale(1*scale, 1*scale)
       }
 
       // Scale
@@ -103,19 +112,25 @@ class VisualDrawing(fliped: Boolean, scalable: Boolean) extends JPanel {
         val ratioX = dWidth / (marginR + marginL + sWidth)
         val ratioY = dHeight / (marginT + marginB + sHeight)
         val ratio = math.min(ratioX, ratioY) // Maintain proportions
-        g2d.scale(ratio, ratio)
-
+        transform.scale(ratio, ratio)
+        
         // Translate
         val translateX: Int = (marginL - minX).toInt
-        val translateY: Int = ((if (fliped) marginB else marginT) - minY).toInt 
-        g2d.translate(translateX, translateY)
+        val translateY: Int = ((if (flipped) marginB else marginT) - minY).toInt 
+        transform.translate(translateX,translateY)
       }
-
+	  g2d.transform(transform)
       for (s <- shapes) {
-        s.draw(g.asInstanceOf[Graphics2D]);
+        s.draw(g2d);
       }
     }
   }
+  
+  def invertTransform(p: Point2D): Point2D = {
+    val clone = transform.clone().asInstanceOf[AffineTransform]
+    clone.invert()
+    clone.transform(new Point2D.Double(p.getX(), p.getY()), null);
+  } 
 
   /** Adds a new non null colored shape in the panel. */
   def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit = {
@@ -140,19 +155,49 @@ class VisualDrawing(fliped: Boolean, scalable: Boolean) extends JPanel {
         drawingPanel.setToolTipText("");
         for (s <- shapes) {
           s.showToolTip(e.getPoint());
-        }
+        }         
       }
-      override def mouseDragged(arg0: MouseEvent) {}
+      override def mouseDragged(e: MouseEvent) {}
     }
   }
+  
+  private def scale(factor: Double) {
+    scale = scale * factor
+    repaint()
+  }
+  
+  addMouseListener {
+    val drawingPanel = this
+    new MouseListener() {
+      override def mouseClicked(e: MouseEvent) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+          scale(0.9)
+        }
+        if (SwingUtilities.isLeftMouseButton(e)) {
+          if (e.getClickCount() == 2) {
+            scale(1.1)
+          }
+          else {
+            shapes.foreach(_.clicked(e.getPoint()))
+          }
+        }
+      }
+      override def mouseEntered(e: MouseEvent) {}
+      override def mousePressed(e: MouseEvent) {}
+      override def mouseExited(e: MouseEvent) {}
+      override def mouseReleased(e: MouseEvent) {}
+    }    
+  }
 
-  def showToolTip(text: String): Unit = setToolTipText(text)
+  def showToolTip(text: String): Unit = {
+    setToolTipText(text)
+  }
 }
 
 object VisualDrawing {
   
-  def apply(fliped: Boolean = true, scalable: Boolean = false): VisualDrawing = {
-    new VisualDrawing(fliped, scalable)
+  def apply(flipped: Boolean = true, scalable: Boolean = false): VisualDrawing = {
+    new VisualDrawing(flipped, scalable)
   }
 }
 

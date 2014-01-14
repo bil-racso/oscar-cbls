@@ -15,7 +15,6 @@
 
 package oscar.algo.search
 
-
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -25,10 +24,30 @@ abstract class Branching {
    * Initialize the branching
    * For instance in some branching strategy, some statistical probing must be done. This is the place to do it.
    */
-  def initialize() {}
+  def initialize(): Unit = {}
 
+  /**
+   * @returns: the alternative action to execute in each of the child nodes under the current node
+   */
   def alternatives(): Seq[Alternative]
+
+  /**
+   * @returns: the branching resulting of applying this branching, then b if not alternative available
+   */
+  def ++(b: Branching): Branching = new Branching {
+    override def alternatives = {
+      val r = Branching.this.alternatives()
+      if (r.isEmpty) b.alternatives()
+      else r
+    }
+  }
 }
+
+object Branching {
+  def apply(b: => Seq[Alternative]): Branching = new Branching() { override def alternatives = b }
+}
+
+/*
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -57,4 +76,4 @@ class BranchingCombinator extends Branching {
   }
 
 }
-  
+*/

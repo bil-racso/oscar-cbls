@@ -20,7 +20,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * This invariant maintains the predecessors of each node.
@@ -36,9 +36,9 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
-  finishInitialization();
-  val preds = for(i<- 0 until N) yield if (i<V) new IntVar(model, 0, N, i, "preds" + i)
-    else new IntVar(model, 0, N, N, "preds" + i)
+  finishInitialization()
+  val preds:Array[IntVar] = Array.tabulate(N)(i => if (i<V) IntVar(model, 0, N, i, "preds" + i)
+    else IntVar(model, 0, N, N, "preds" + i))
 
   for(p <- preds) p.setDefiningInvariant(this)
 
@@ -52,16 +52,16 @@ case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
     else preds(NewVal) := index
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(n<- 0 until N){
       //n is unrouted
-      if(next(n).value==N) c.check(preds(n).value==N)
+      if(next(n).value==N) c.check(preds(n).value==N, Some("preds(n).value==N"))
       // n is routed
-      else  c.check(n == preds(next(n).value).value)
+      else  c.check(n == preds(next(n).value).value, Some("n == preds(next(n).value).value"))
       }
   }
 
-  override def toString()={
+  override def toString ={
     var toReturn = ""
     toReturn +="\npreds array: ["
     for (v <- preds){toReturn += (""+v.getValue(true) +",")}

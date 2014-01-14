@@ -74,7 +74,7 @@ trait Constraints {
    * @return a binary-knapsack constraint linking the variables in argument such that W == sum,,j,, w[j]*x[i]
    */
   def binaryKnapsack(x: IndexedSeq[CPVarBool], w: IndexedSeq[Int], W: Int): Constraint = {
-    return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(x(0).store, W))
+    return new BinaryKnapsack(x.toArray, w.toArray, CPVarInt(W)(x(0).store))
   }
 
   /**
@@ -169,7 +169,7 @@ trait Constraints {
   def element(tab: IndexedSeq[Int], x: CPVarInt, strength: CPPropagStrength = CPPropagStrength.Medium): CPVarInt = {
     val minval = tab.min
     val maxval = tab.max
-    val z = CPVarInt(x.store, minval, maxval)
+    val z = CPVarInt(minval, maxval)(x.store)
     x.store.post(new ElementCst(tab.toArray, x, z), strength)
     z
   }
@@ -193,7 +193,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def element(tab: IndexedSeq[Int], x: CPVarInt, z: Int): Constraint = {
-    new ElementCst(tab.toArray, x, CPVarInt(x.store, z, z))
+    new ElementCst(tab.toArray, x, CPVarInt(z, z)(x.store))
   }
 
   /**
@@ -204,7 +204,7 @@ trait Constraints {
    * @return a variable z linked to the arguments with the relation matrix(i)(j) == z
    */
   def element(matrix: Array[Array[Int]], i: CPVarInt, j: CPVarInt): CPVarInt = {
-    val z = CPVarInt(i.store, matrix.flatten.min to matrix.flatten.max)
+    val z = CPVarInt(matrix.flatten.min to matrix.flatten.max)(i.store)
     val ok = i.store.post(new ElementCst2D(matrix, i, j, z))
     assert(ok != CPOutcome.Failure, { println("element on matrix, should not fail") })
     return z
@@ -219,7 +219,7 @@ trait Constraints {
   def elementVar(tab: IndexedSeq[CPVarInt], x: CPVarInt, l: CPPropagStrength = Weak): CPVarInt = {
     val minval = (for (x <- tab) yield x.getMin) min
     val maxval = (for (x <- tab) yield x.getMax) max
-    val z = CPVarInt(x.store, minval, maxval)
+    val z = CPVarInt(minval, maxval)(x.store)
     x.store.add(new ElementVar(tab.map(_.asInstanceOf[CPVarInt]).toArray, x, z), l)
     z
   }
@@ -243,7 +243,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def elementVar(tab: IndexedSeq[CPVarInt], x: CPVarInt, z: Int): Constraint = {
-    new ElementVar(tab.toArray, x, CPVarInt(x.s, z))
+    new ElementVar(tab.toArray, x, CPVarInt(z)(x.s))
   }
 
   /**
@@ -295,7 +295,7 @@ trait Constraints {
     val maxVal = (0 /: vars) {
       (sum, v) => sum + v.getMax
     }
-    val s = CPVarInt(x(0).store, minVal, maxVal)
+    val s = CPVarInt(minVal, maxVal)(x(0).store)
     x(0).store.post(sum(x, s))
     s
   }
@@ -366,7 +366,7 @@ trait Constraints {
    * @return y==sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPVarInt], y: Int): Constraint = {
-    weightedSum(w,x,CPVarInt(x(0).s,y))
+    weightedSum(w,x,CPVarInt(y)(x(0).s))
   }  
 
   /**
@@ -377,7 +377,7 @@ trait Constraints {
     val cp = x(0).s
     val m = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.max else wi*xi.min}.sum
     val M = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.min else wi*xi.max}.sum
-    val y = CPVarInt(cp,m to M)
+    val y = CPVarInt(m to M)(cp)
     cp.post(weightedSum(w,x,y))
     y
   }
@@ -488,7 +488,7 @@ trait Constraints {
   }
 
   def modulo(x: CPVarInt, v: Int, y: Int): Constraint = {
-    return new Modulo(x, v, CPVarInt(x.store, y))
+    return new Modulo(x, v, CPVarInt(y)(x.store))
   }
   
  
@@ -511,7 +511,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } >= n
    */  
   def atLeast(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
-    among(CPVarInt(x(0).s,n,x.size),x,s)
+    among(CPVarInt(n, x.size)(x(0).s),x,s)
   }
 
   /**
@@ -531,7 +531,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } <= n
    */  
   def atMost(n: Int, x: IndexedSeq[CPVarInt], s: Set[Int]) = {
-    among(CPVarInt(x(0).s,0,n),x,s)
+    among(CPVarInt(0, n)(x(0).s),x,s)
   }
 
   /**
@@ -562,7 +562,7 @@ trait Constraints {
    * @return a constraint enforcing that n >= #{ i | x(i) = y }
    */  
   def countGeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
-    val c = CPVarInt(n.s,0 to x.size)
+    val c = CPVarInt(0 to x.size)(n.s)
     val ok = n.s.post(n >= c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
@@ -576,7 +576,7 @@ trait Constraints {
    * @return a constraint enforcing that n > #{ i | x(i) = y }
    */  
   def countGt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
-    val c = CPVarInt(n.s,0 to x.size)
+    val c = CPVarInt(0 to x.size)(n.s)
     val ok = n.s.post(n > c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
@@ -590,7 +590,7 @@ trait Constraints {
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
    */  
   def countLeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
-    val c = CPVarInt(n.s,0 to x.size)
+    val c = CPVarInt(0 to x.size)(n.s)
     val ok = n.s.post(n <= c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
@@ -604,7 +604,7 @@ trait Constraints {
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
    */  
   def countLt(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
-    val c = CPVarInt(n.s,0 to x.size)
+    val c = CPVarInt(0 to x.size)(n.s)
     val ok = n.s.post(n < c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
@@ -618,7 +618,7 @@ trait Constraints {
    * @return a constraint enforcing that n != #{ i | x(i) = y }
    */  
   def countNeq(n: CPVarInt, x: IndexedSeq[CPVarInt], y: CPVarInt) = {
-    val c = CPVarInt(n.s,0 to x.size)
+    val c = CPVarInt(0 to x.size)(n.s)
     val ok = n.s.post(n != c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
@@ -664,7 +664,7 @@ trait Constraints {
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
   def gcc(x: IndexedSeq[CPVarInt], valueOccurrence: Iterable[(Int,CPVarInt)]): Constraint = {
-    def freshCard(): CPVarInt = CPVarInt(x.head.store, 0, x.size - 1)
+    def freshCard(): CPVarInt = CPVarInt(0, x.size - 1)(x.head.store)
     val sortedValOcc = valueOccurrence.toArray.sortWith((a, b) => a._1 <= b._1)
     val (v0,x0) = sortedValOcc(0)
     var values = Array(v0)
@@ -770,7 +770,7 @@ trait Constraints {
   def maximum(vars: Iterable[CPVarInt]): CPVarInt = {
     val x = vars.toArray
     val cp = x(0).store
-    val m = CPVarInt(cp, vars.map(_.min).max, vars.map(_.max).max)
+    val m = CPVarInt(vars.map(_.min).max, vars.map(_.max).max)(cp)
     cp.add(maximum(x, m))
     m
   }
@@ -801,7 +801,7 @@ trait Constraints {
   def minimum(vars: Iterable[CPVarInt]): CPVarInt = {
     val x = vars.toArray
     val cp = x(0).store
-    val m = CPVarInt(cp, vars.map(_.min).min, vars.map(_.max).min)
+    val m = CPVarInt(vars.map(_.min).min, vars.map(_.max).min)(cp)
     cp.add(minimum(x, m))
     m
   }
@@ -878,12 +878,12 @@ trait Constraints {
     val maxVal: Int = x.map(_.max).max
 
     // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
-    val occ = Array.fill(maxVal - minVal + 1)(CPVarInt(cp, 0 to n))
+    val occ = Array.fill(maxVal - minVal + 1)(CPVarInt(0 to n)(cp))
     cons.add(gcc(x, (minVal to maxVal).zip(occ)))
 
     // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
     val nbBefore = for (i <- minVal to maxVal) yield {
-      if (i == minVal) CPVarInt(cp, 0)
+      if (i == minVal) CPVarInt(0)(cp)
       else sum(minVal to i - 1)(j => occ(j))
     }
 
@@ -898,28 +898,23 @@ trait Constraints {
   /**
    * Unary Resource constraint
    */
-  def unaryResource(activities: Array[Activity], name: String = "machine"): UnaryResource = {
-    new UnaryResource(activities, name)
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], required: Array[CPVarBool]): UnaryResource = {
+	new UnaryResource(starts,durations,ends,required)
+  }
+  
+  /**
+   * Unary Resource constraint
+   */  
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], resources: Array[CPVarInt], id: Int) = {
+	new UnaryResource(starts,durations,ends,resources,id)
   }
 
   /**
-   * Cumulative
-   */
-  def cumulative(activities: Array[CumulativeActivity], machine: Int, min: Int = Int.MinValue, max: Int = Int.MaxValue): Array[Constraint] = {
-
-    val cp = activities(0).store
-
-    if (max != Int.MaxValue) {
-      if (min != Int.MinValue) {
-        return Array(SweepMaxCumulative(cp, activities, CPVarInt(cp, max), machine), SweepMinCumulative(cp, activities, CPVarInt(cp, min), machine))
-      } else {
-        return Array(SweepMaxCumulative(cp, activities, CPVarInt(cp, max), machine))
-      }
-    } else if (min != Int.MinValue) {
-      return Array(SweepMinCumulative(cp, activities, CPVarInt(cp, min), machine))
-    }
-
-    throw new IllegalArgumentException("Bounds are not specified")
+   * Unary Resource constraint
+   */    
+  def unaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]) = {
+    val cp = starts(0).s
+	new UnaryResource(starts,durations,ends,starts.map(s => CPVarBool(true)(cp)))
   }
   
   /**

@@ -34,7 +34,7 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
   test("test delta set 1") {
     var propag = false
     
-    class MyCons(val X: CPVarSet) extends Constraint(X.s, "TestDelta") {
+    class MyCons(val X: CPVarSet) extends Constraint(X.store, "TestDelta") {
       priorityL2 = CPStore.MAXPRIORL2-5 
       override def setup(l: CPPropagStrength): CPOutcome = {
         println("setup")

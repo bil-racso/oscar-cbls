@@ -22,8 +22,8 @@ import oscar.cp.constraints.SetDiff
 import java.sql.Time
 import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
-import oscar.cp.scheduling.CumulativeActivity
 import java.util.Collection
+import oscar.algo.search.Branching
 
 class Parser extends JavaTokenParsers {// RegexParsers {
   
@@ -337,7 +337,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	        assign match {
 	      	  case x:Boolean => model.dict +=
 		        ((id, (FZType.V_BOOL,
-		            new VarBool(ann, CPVarBool(cp, x), id))))
+		            new VarBool(ann, CPVarBool(x)(cp), id))))
 		      case _ => 
 		        addCPVarBool(ann, id, getCPVarBool(assign))
 	      	}
@@ -361,7 +361,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      	    if((s contains x) || s.isEmpty) {
 	      	      model.dict += 
 	      	        ((id, (FZType.V_INT, 
-	      	            new VarInt(ann, CPVarInt(cp, x), id))))
+	      	            new VarInt(ann, CPVarInt(x)(cp), id))))
 	      	    } else {
 	      	      throw new Exception(x + " not in the domain of " + id)
 	      	    }
@@ -394,7 +394,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
                   model.dict += 
 		      		((id, (FZType.V_SET_INT, 
 		      		    // it is an assignment, so x is a requiered set for the CPVarSet
-		      			new VarSetInt(ann, CPVarSet(cp, x.toSet, Set[Int]()), id)
+		      			new VarSetInt(ann, CPVarSet(x.toSet, x.toSet)(cp), id)
 		      		)))
                 } else {
                   throw new Exception(x.toSet.toString + " not in the domain of " + id)
@@ -546,7 +546,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def addCPVarBool(ann: List[Annotation], id: String) {
 	  model.dict += ((id, (FZType.V_BOOL, 
-	      new VarBool(ann, CPVarBool(cp), id))))
+	      new VarBool(ann, CPVarBool()(cp), id))))
 	}
 	
 	/**
@@ -571,9 +571,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    model.dict += ((id, (FZType.V_INT, 
 	      new VarInt(ann, 
 	          if(s.isEmpty) {
-	            CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
+	            CPVarInt(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)(cp)
 	          } else {
-	            CPVarInt(cp, s)
+	            CPVarInt(s)(cp)
 	          }
 	      	, id))))
 	  }
@@ -597,7 +597,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def addCPVarSet(ann: List[Annotation], id: String, s: Set[Int]) {
 	  model.dict +=
         ((id, (FZType.V_SET_INT, 
-            new VarSetInt(ann, CPVarSet(cp, Set[Int](), s), id))))
+            new VarSetInt(ann, CPVarSet(s)(cp), id))))
 	}
 	
 	/**
@@ -617,7 +617,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param l : the length of the array
 	 */
 	def addCPVarBoolArray(ann: List[Annotation], id: String, l: Int) {
-	  	val boolArray =  new VarArrayBool(ann, Array.fill(l){CPVarBool(cp)}, id)
+	  	val boolArray =  new VarArrayBool(ann, Array.fill(l){CPVarBool()(cp)}, id)
         model.dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
 		// also add each individual entries
         for (i <- 1 to boolArray.cpvar.size) {
@@ -651,9 +651,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       ((id, (FZType.V_ARRAY_INT,
         new VarArrayInt(s, ann, 
             if(s.isEmpty) {
-            	Array.fill(l){CPVarInt(cp, UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)}
+            	Array.fill(l){CPVarInt(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)(cp)}
 	          } else {
-	            Array.fill(l){CPVarInt(cp, s)}
+	            Array.fill(l){CPVarInt(s)(cp)}
 	          }
         	, id))))
 	}
@@ -679,10 +679,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def addCPVarSetArray(ann: List[Annotation], id: String, s: Set[Int], l: Int) {
 	  model.dict += 
-      ((id, (FZType.V_ARRAY_SET, 
-          new VarArraySet(s, ann, 
-            Array.fill(l){CPVarSet(cp, Set[Int](), s)} 
-            , id))))
+      ((id, (FZType.V_ARRAY_SET, new VarArraySet(s, ann, Array.fill(l)(CPVarSet(s)(cp)), id))))
 	}
 	
 	/**
@@ -1031,13 +1028,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  tp match {
 	    case "def" => 
 	      val nbBin = getCPArrayRangeSize(varList(1).toString)
-	      Array.fill(nbBin){CPVarInt(cp, 0, varList(0).toString.toInt)}
+	      Array.fill(nbBin){CPVarInt(0, varList(0).toString.toInt)(cp)}
 	    case "load" => getCPVarIntArray(varList(0))
 	    case "capa" =>
 	      var capaCP = Array[CPVarInt]()
 	      val capaInt = getIntArray(varList(0).toString)
 	      capaInt.foreach { e =>
-	        capaCP :+= CPVarInt(cp, 0, e)
+	        capaCP :+= CPVarInt(0, e)(cp)
 	      }
 	      capaCP
 	  }
@@ -1149,7 +1146,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
       val r = Range(cover.min, cover.max+1)
       var min = Array.fill(r.size){0}
       var max = Array.fill(r.size){x.length}
-      // Array.fill(x.length){CPVarBool(cp)} 
+      // Array.fill(x.length){CPVarBool()(cp)} 
       for(i <- 0 until cover.length) {
         min(cover(i)-cover.min) = lb(i)
         max(cover(i)-cover.max) = ub(i)
@@ -1164,7 +1161,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	def sort_cstr(varList: List[Any]) {
 	  val x = getCPVarIntArray(varList(0))
 	  val y = getCPVarIntArray(varList(1))
-	  val perm = Array.fill(x.size)(CPVarInt(cp,0 until x.size))
+	  val perm = Array.fill(x.size)(CPVarInt(0 until x.size)(cp))
 	  cp.add(sortedness(x,y,perm))
 	}
 	
@@ -1578,7 +1575,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x match {
 	    case x:List[Any] => getCPVarBoolFromList(x)
 	    case x:String => getCPVarBoolFromString(x)
-	    case x:Boolean => CPVarBool(cp, x)
+	    case x:Boolean => CPVarBool(x)(cp)
 	  }
 	}
 	
@@ -1589,7 +1586,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 */
 	def getCPVarInt(x: Any): CPVarInt = {
 	  x match {
-	    case x:Int => CPVarInt(cp, x)
+	    case x:Int => CPVarInt(x)(cp)
 	    case x:List[Any] => getCPVarIntFromList(x)
 	    case x:String => getCPVarIntFromString(x)
 	  }
@@ -1620,7 +1617,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 	            case FZType.P_BOOL => {
-	              CPVarBool(cp, fzo.asInstanceOf[ParamBool].value)
+	              CPVarBool(fzo.asInstanceOf[ParamBool].value)(cp)
 	            }
 	        }
 	      case None => throw new Exception("Var " + x + " does not exist")
@@ -1645,7 +1642,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarBool].cpvar
 	            }
 	            case FZType.P_INT => {
-	              CPVarInt(cp, fzo.asInstanceOf[ParamInt].value)
+	              CPVarInt(fzo.asInstanceOf[ParamInt].value)(cp)
 	            }
 	            case _ => {
 	              throw new Exception("Var " + x + " does not match")
@@ -1668,7 +1665,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              fzo.asInstanceOf[VarSetInt].cpvar
 	            }
 	            case FZType.P_SET_INT => {
-	              CPVarSet(cp, Set[Int](), fzo.asInstanceOf[ParamSetOfInt].value)
+	              CPVarSet(fzo.asInstanceOf[ParamSetOfInt].value)(cp)
 	            }
 	        }
 	      case None => throw new Exception("Var " + x + " does not exist")
@@ -1718,7 +1715,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  x(0) match {
 	    case y:Int => 
 	      // x is here a requiered set for the cpvarset
-	      CPVarSet(cp, x map(_.toString.toInt) toSet, Set[Int]())
+	      CPVarSet(x map(_.toString.toInt) toSet)(cp)
 	    case y:String => 
 	      model.dict.get(y) match {
 		      case Some((tp, fzo)) => 
@@ -1756,7 +1753,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                  val array = fzo.asInstanceOf[ParamArrayBool].value
 	                  array match {
 	                    case x:List[Boolean] =>
-	                      (x) map(CPVarBool(cp, _)) toArray
+	                      (x) map(CPVarBool(_)(cp)) toArray
 	                  }
 	                }
 	            }
@@ -1785,7 +1782,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	                  val array = fzo.asInstanceOf[ParamArrayInt].value
 	                  array match {
 	                    case x:List[Int] =>
-	                      (x) map(CPVarInt(cp, _)) toArray
+	                      (x) map(CPVarInt(_)(cp)) toArray
 	                  }
 	                }
 	            }
@@ -1804,7 +1801,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    //need to test, may not work in a case :
 	    // [ {1, 2, 4}, {3, 45, x} ] with x a CPVarInt
 	    case y:List[List[Int]] =>
-	      (y) map(d => CPVarSet(cp, Set[Int](), d.toSet)) toArray
+	      (y) map(d => CPVarSet(d.toSet)(cp)) toArray
 	    case y:String =>
 	      model.dict.get(y) match {
 			  case Some((tp, fzo)) => 
@@ -2068,16 +2065,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	   */
 	  tp match {
 	    case "sat" => {
-	      cp.solve subjectTo {
-	      } exploration {
+	      val nbSolMax = 
+	          if (options.all) Int.MaxValue 
+	          else if (options.nSols > 0) options.nSols 
+	          else 1
+	      
+	      
+	      cp.search {
 	        explo(ann, x, s)
+
+	      } onSolution {
 	        sol_found = true
-	        format_output(xs, xsstate)
-	      } run {
-	        if (options.all) Int.MaxValue 
-	        else if (options.nSolutions > 0) options.nSolutions 
-	        else 1
-	      }
+	        format_output(xs, xsstate)	        
+	      } start(nbSolMax)
 	    }
 	    case "max" => {
 	      cp.maximize(
@@ -2087,12 +2087,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        case x:String => 
 		          getCPVarIntFromString(x)
 	          }
-	      ) subjectTo {
-	      } exploration {
+	      ) search {
 	        explo(ann, x, s)
-	        sol_found = true
-	        format_output(xs, xsstate)
-	      } run ()
+	      } onSolution {
+	         sol_found = true
+	         format_output(xs, xsstate)
+	      } start()
 	    }
 	    case "min" => {
 	      cp.minimize(
@@ -2102,12 +2102,12 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        case x:String => 
 		          getCPVarIntFromString(x)
 	          }
-	      ) subjectTo {
-	      } exploration {
+	      ) search {
 	        explo(ann, x, s)
+	      } onSolution {
 	        sol_found = true
 	        format_output(xs, xsstate)
-	      } run ()
+	      } start()
 	    }
 	  }
 	  if(sol_found) {
@@ -2116,7 +2116,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    println("=====UNSATISFIABLE=====")
 	  }
       if (options.statistics) {
-        cp.printStats()
+        //todo: print stat %%
       }
 	}
 	
@@ -2142,13 +2142,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param s : the list of all CPVarSet in the model
 	 * @return Unit
 	 */
-	def explo(ann: List[Annotation], x: Array[CPVarInt], s: Array[CPVarSet]): Unit @suspendable = {
-		if(ann.isEmpty) {
-          cp.binary(x)
-        }
-        else {
-          for(a <- ann.suspendable) {
-        	a.name match {
+	def explo(ann: List[Annotation], x: Array[CPVarInt], s: Array[CPVarSet]): Branching = {
+		val br = if(ann.isEmpty) {
+          binaryStatic(x)
+        } else {
+          val br = ann.toList.foldLeft(Branching{oscar.algo.search.noAlternative}) { (b,a) => 
+
+        	b ++ (a.name match {
 		      case "int_search" =>
 		        val array = getCPVarIntArray(a.args(0))
 		        varChoiceAnn2(a.args, array)
@@ -2156,21 +2156,24 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        val array = getCPVarBoolArray(a.args(0)).map(_.asInstanceOf[CPVarInt])
 		        varChoiceAnn2(a.args, array)
 	//	      case "set_search" =>
-			}
+			})
           }
+          
           /*
            * PARTICULAR_SOLUTIONS == false  to get the admissible domains for the variable in the solution
            * PARTICULAR_SOLUTIONS == true  to have a particular solution
            * if false, the output won't necessarily be readable for the formatting tool of minizinc
            */
           if(PARTICULAR_SOLUTIONS) {
-        	  cp.binary(x)
-          }
+        	  br ++ binaryStatic(x)
+          } else br
         }
 		if(!s.isEmpty) {
-          for(e <- s.toList.suspendable){
-            cp.binary(e)
-          }
+		  s.toList.foldLeft(br) { (b,e) => 
+		    b ++ binary(e)
+		  }
+        } else {
+          br
         }
 	}
 	
@@ -2180,19 +2183,21 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param array : an array containing the variable related to the search annotation
 	 * @return Unit
 	 */
-	def varChoiceAnn2(args: List[Any], array: Array[CPVarInt]): Unit @suspendable = {
+	def varChoiceAnn2(args: List[Any], array: Array[CPVarInt]): Branching = {
 		args(1) match {
-	      case "input_order" => cp.binaryStaticOrder(array, assignAnn(args))//assignAnn(args, array, array.indexOf(_))
-	      case "first_fail" => cp.binary(array, _.size,assignAnn(args))
-	      case "anti_first_fail" => cp.binary(array, -_.size,assignAnn(args))
-	      case "smallest" => cp.binary(array, _.min,assignAnn(args))
-	      case "largest" => cp.binary(array, -_.max,assignAnn(args))
-	      case "occurence" => cp.binary(array, -_.constraintDegree,assignAnn(args))
+	      case "input_order" => binaryStatic(array, assignAnn(args))
+	      case "first_fail" => {
+	        binaryFirstFail(array,assignAnn(args))
+	      }
+	      case "anti_first_fail" => binary(array, -_.size,assignAnn(args))
+	      case "smallest" => binary(array, _.min,assignAnn(args))
+	      case "largest" => binary(array, -_.max,assignAnn(args))
+	      case "occurence" => binary(array, -_.constraintDegree,assignAnn(args))
 	      case "most_constrained" => {
 	        System.err.println(args(1) + " not suppported so far occurence instead")
-	        cp.binary(array, -_.constraintDegree,assignAnn(args))
+	        binary(array, -_.constraintDegree,assignAnn(args))
 	      }
-	      case "max_regret" => cp.binary(array, -_.regret,assignAnn(args))
+	      case "max_regret" => binary(array, -_.regret,assignAnn(args))
 	    }
 	}
 	

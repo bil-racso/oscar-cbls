@@ -72,13 +72,13 @@ object LostAtSeaCircuit  {
                   cp.add(elementVar(succ,path(i),path(i+1)),Strong) 
                 }
                 cp.add(circuit(succ),Strong)
-       } exploration {
-         cp.binary(path)
+       } search {
+         binaryStatic(path)
+       } onSolution {
          println(path.mkString(","))
          (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
-       } run()
-       
-       cp.printStats()
+       } 
+       println(cp.start())
 
       
       

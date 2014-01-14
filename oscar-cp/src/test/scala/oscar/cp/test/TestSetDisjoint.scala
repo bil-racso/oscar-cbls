@@ -31,8 +31,8 @@ class TestSetDisjoint extends FunSuite with ShouldMatchers  {
   test("Test SetDisjoint1") {
     var nbSol = 0
     val cp = CPSolver()
-    var x = CPVarSet(cp, Set(1,2), Set(3,4))
-    var y = CPVarSet(cp, Set(5), Set(1,2,3,4))
+    var x = CPVarSet(Set(1, 2, 3, 4), Set(1, 2))(cp)
+    var y = CPVarSet(Set(1, 2, 3, 4, 5), Set(5))(cp)
     cp.post(disjoint(x,y))
     y.isPossible(1) should be(false)
     y.isPossible(2) should be(false)

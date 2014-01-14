@@ -31,7 +31,7 @@ public class TestView extends TestCase {
         
     }
     	
-	 /**
+	/**
      * setUp() method that initializes common objects
      */
     protected void setUp() throws Exception {

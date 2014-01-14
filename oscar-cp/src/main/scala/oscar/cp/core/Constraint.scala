@@ -392,7 +392,7 @@ abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends
   
 }
 
-abstract class DeltaVarSet(x: CPVarSet,filter: DeltaVarSet => CPOutcome) extends Constraint(x.s, "DeltaVarSet") {
+abstract class DeltaVarSet(x: CPVarSet,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
   
   val sn = new SnapshotVarSet(x)
   s.onPop {

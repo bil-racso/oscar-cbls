@@ -34,7 +34,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
     
     val n = 3
     
-    val x = Array.fill(n,n)(CPVarInt(cp,1 to n*n))
+    val x = Array.fill(n,n)(CPVarInt(1 to n*n)(cp))
      
     val s = ( n * (n*n + 1)) / 2;
 		
@@ -51,12 +51,11 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
 		cp.add(sum(0 until n)(j => x(i)(j)) == s)
 		cp.add(sum(0 until n)(j => x(j)(i)) == s)
 	  }
-	} exploration {
-	  cp.binaryFirstFail(x.flatten)
-	  nbSol += 1
-	} run()
+	} search {
+	  binaryFirstFail(x.flatten.toSeq)
+	}
 	
-	nbSol should be(8)
+	cp.start().nSols should be(8)
 	
 
     

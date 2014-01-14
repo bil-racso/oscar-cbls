@@ -5,11 +5,18 @@ import java.awt.Graphics2D
 import java.awt.geom.Point2D
 import oscar.visual.VisualDrawing
 import java.awt.BasicStroke
+import java.awt.geom.AffineTransform
 
 abstract class VisualShape(protected val drawing: VisualDrawing) {
 
   type S <: java.awt.Shape
   protected val shape: S
+  
+  private var onClickActions = List[() => Unit]()
+  
+  def onClick(action: => Unit) {
+    onClickActions = (() => action) :: onClickActions
+  }
   
   // Adds the visual shape in the drawing
   drawing.addShape(this);
@@ -26,7 +33,7 @@ abstract class VisualShape(protected val drawing: VisualDrawing) {
   private var _fill: Boolean = true
   private var _border: Boolean = true
 
-  private var _toolTipText: String = null
+  private var _toolTipText: Option[String] = None
 
   // If true, the drawing repaints after each modification of the shape
   private var _autoRepaint: Boolean = true
@@ -84,15 +91,24 @@ abstract class VisualShape(protected val drawing: VisualDrawing) {
     if (autoRepaint) repaint()
   }
 
-  def toolTip: String = _toolTipText
+  def toolTip: String = _toolTipText match {
+    case Some(s) => s
+    case None => ""
+  }
 
-  def toolTip_=(s: String): Unit = { _toolTipText = s }
+  def toolTip_=(s: String): Unit = { _toolTipText = Some(s) }
 
   def showToolTip(mousePoint: Point2D) = {
-    if (toolTip != null && shape.contains(mousePoint)) {
-      drawing.showToolTip(toolTip);
+    if (_toolTipText.isDefined && shape.contains(drawing.invertTransform(mousePoint))) {
+      drawing.showToolTip(toolTip)
     }
   }
+  
+  def clicked(mousePoint: Point2D) = {
+    if (shape.contains(drawing.invertTransform(mousePoint))) {
+      onClickActions.foreach(action => action())
+    }
+  }  
 
   protected def dashedStroke: BasicStroke = {
     new BasicStroke(_bWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 10.0f, Array(_bWidth / 2, 2 * _bWidth), 0)
@@ -108,6 +124,7 @@ abstract class VisualShape(protected val drawing: VisualDrawing) {
 
   def repaint(): Unit = drawing.repaint()
 
+  
   def draw(g: Graphics2D) {
     if (visible) {
       if (fill) {

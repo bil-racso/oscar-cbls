@@ -29,7 +29,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   
   val rand = new scala.util.Random(0)
 
-  class SetDiffDecomp(val a: CPVarSet, val b: CPVarSet, val c: CPVarSet) extends Constraint(a.s, "SetDiffDecomp") {
+  class SetDiffDecomp(val a: CPVarSet, val b: CPVarSet, val c: CPVarSet) extends Constraint(a.store, "SetDiffDecomp") {
 
     override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -86,22 +86,19 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   
   def solCount(aReq: Set[Int], aPoss: Set[Int], bReq: Set[Int], bPoss: Set[Int], cReq: Set[Int], cPoss: Set[Int], decomp: Boolean = false): Int = {
     val cp = CPSolver()
-    var a = CPVarSet(cp, aReq, aPoss)
-    var b = CPVarSet(cp, bReq, bPoss)
-    var c = CPVarSet(cp, cReq, cPoss)
+    var a = CPVarSet(aReq ++ aPoss, aReq)(cp)
+    var b = CPVarSet(bReq ++ bPoss, bReq)(cp)
+    var c = CPVarSet(cReq ++ cPoss, cReq)(cp)
     var nbSol = 0
     val oc = 
       if (decomp) cp.post(new SetDiffDecomp(a, b, c))
       else cp.post(new SetDiff(a, b, c))
     //println("fix point a:" + a + " b:" + b + " c:" + c)
     if (oc == CPOutcome.Failure) return 0
-    cp exploration {
-      cp.binary(a)
-      cp.binary(b)
-      cp.binary(c)
-      nbSol += 1
-    } run ()
-    nbSol
+    cp search {
+      binary(a) ++ binary(b) ++ binary(c)
+    } 
+    cp.start().nSols
   }
 
   // a - b = c
@@ -109,9 +106,9 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   test("Test SetDiff 1") {
     var nbSol = 0
     val cp = CPSolver()
-    var a = CPVarSet(cp, Set(1, 4), Set(5, 7, 8))
-    var b = CPVarSet(cp, Set(4), Set(5))
-    var c = CPVarSet(cp, Set(), Set(1, 2, 3, 4, 5))
+    var a = CPVarSet(Set(1, 4, 5, 7, 8), Set(1, 4))(cp)
+    var b = CPVarSet(Set(4, 5), Set(4))(cp)
+    var c = CPVarSet(Set(1, 2, 3, 4, 5))(cp)
 
     cp.add(new SetDiff(a, b, c))
 
@@ -122,14 +119,11 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
     c.isPossible(5) should be(true)
     c.possibleSize should be(2)
     
-    cp.exploration {
-      cp.binary(a)
-      cp.binary(b)
-      cp.binary(c)
-      nbSol += 1
-    } run ()
+    cp.search {
+      binary(a) ++ binary(b) ++ binary(c)
+    }
 
-    nbSol should be(4)
+    cp.start().nSols should be(4)
   }
 
   test("Test SetDiff 2") {

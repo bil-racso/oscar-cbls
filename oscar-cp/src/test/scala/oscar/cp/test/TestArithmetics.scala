@@ -29,10 +29,10 @@ class TestArithmetics extends FunSuite with ShouldMatchers  {
 
   test("Arithmetics") {
     val cp = CPSolver()
-    val i = CPVarInt(cp,1)
-    val j = CPVarInt(cp,0)
-    val a = CPVarInt(cp,-1 to 1)
-    val b = CPVarInt(cp,0 to 1)
+    val i = CPVarInt(1)(cp)
+    val j = CPVarInt(0)(cp)
+    val a = CPVarInt(-1 to 1)(cp)
+    val b = CPVarInt(0 to 1)(cp)
     val n = 8
     
     val ia = i+a
@@ -58,7 +58,7 @@ class TestArithmetics extends FunSuite with ShouldMatchers  {
   test("cripta") {
     val cp = CPSolver()
     
-    val x = Array.fill(10)(CPVarInt(cp, 0 to 9))
+    val x = Array.fill(10)(CPVarInt(0 to 9)(cp))
     val Array(a,b,c,d,e,f,g,h,i,j) = x
     
     cp.add(a + j*10 + j*100 + i*1000 + a*10000 + b*100000 + 

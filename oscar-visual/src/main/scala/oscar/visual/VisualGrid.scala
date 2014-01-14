@@ -26,8 +26,8 @@ import oscar.visual.shapes.VisualRectangle
  */
 class VisualGrid(nRow: Int, nCol: Int) extends VisualDrawing(false, true) {
 
-  val scale = 100
-  val board = Array.tabulate(nRow, nCol) { case (i, j) => new VisualRectangle(this, 50 + j * scale, 50 + i * scale, scale, scale) }
+  val sc = 100
+  val board = Array.tabulate(nRow, nCol) { case (i, j) => new VisualRectangle(this, 50 + j * sc, 50 + i * sc, sc, sc) }
   
   def apply(i: Int) = board(i)
 
