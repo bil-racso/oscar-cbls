@@ -125,7 +125,8 @@ class ReversibleIntTest extends FunSuite {
     b += 2
     assert(a.value == 1)
     assert(b.value == 2)
-    assert((b+1) == 3)
+    assert((1+b) == 3)
+    assert((1+b) == 3)
     assert((b-1) == 1)
 
   }

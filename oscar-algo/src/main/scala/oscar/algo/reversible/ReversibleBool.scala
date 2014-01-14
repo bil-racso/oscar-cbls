@@ -14,20 +14,22 @@
  ******************************************************************************/
 package oscar.algo.reversible;
 
-
 /**
  * Reversible Boolean
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleBool(node: ReversibleContext ,value : Boolean) extends ReversiblePointer[Boolean](node,value) {
+class ReversibleBool(node: ReversibleContext, value: Boolean) extends ReversiblePointer[Boolean](node, value) {
 
-    /**
-     * Creates a reversible Boolean initialized to true
-     * @param node
-     */
-	def this(node: ReversibleContext) = this(node,true)
-	
-	// I have to add it for Java compatibility
-	override def getValue(): Boolean = super.getValue()
+  /**
+   * Creates a reversible Boolean initialized to true
+   * @param node
+   */
+  def this(node: ReversibleContext) = this(node, true)
 
+  // I have to add it for Java compatibility
+  override def getValue(): Boolean = super.getValue()
+}
+
+object ReversibleBool {
+  implicit def revBool2Bool(rb: ReversibleBool): Boolean = rb.getValue
 }
