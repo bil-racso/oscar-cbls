@@ -31,7 +31,7 @@ import scala.swing.GridPanel
 import java.awt.Color
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.modeling.Algebra._
@@ -148,22 +148,22 @@ class NQueensApplet extends Applet {
       val max = N - 1
       val range: Range = Range(0, N)
       val tabulength = 0
-      val m: Store = new Store(false, None, true)
+      val m = Store(false, None, true)
       val MaxIT = 10000
 
       println("NQueens(" + N + ")")
-      val Queens: Array[IntVar] = new Array[IntVar](N)
+      val Queens: Array[CBLSIntVar] = new Array[CBLSIntVar](N)
       for (q <- range) {
-        Queens(q) = IntVar(m, min, max, q, "queen" + q)
+        Queens(q) = CBLSIntVar(m, min, max, q, "queen" + q)
         tab(q)(q).icon = CONFLICT
       }
 
-      val c: ConstraintSystem = new ConstraintSystem(m)
+      val c = ConstraintSystem(m)
       //c.post(AllDiff(Queens)) handled trough permutations
       c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
 
-      val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+      val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
       c.close()
       m.close()
 
@@ -171,8 +171,8 @@ class NQueensApplet extends Applet {
       val Tabu = (for (q <- range) yield -1).toArray
 
       var longueurplateau = 0
-      while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
-        val oldviolation: Int = c.Violation.value
+      while ((c.violation.value > 0) && (it < MaxIT) && !stopRequested) {
+        val oldviolation: Int = c.violation.value
         val allowedqueens = range.filter(q => Tabu(q) < it)
         val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1,q2) => c.swapVal(Queens(q1), Queens(q2)), (q1,q2) => q1 < q2)
 
@@ -181,8 +181,8 @@ class NQueensApplet extends Applet {
         Tabu(q2) = it + tabulength
 
         it += 1
-        println("it: " + it + " " + c.Violation + " (swapped " + q1 + " and " + q2 + ")")
-        if (oldviolation <= c.Violation.value) longueurplateau += 1 else longueurplateau = 0
+        println("it: " + it + " " + c.violation + " (swapped " + q1 + " and " + q2 + ")")
+        if (oldviolation <= c.violation.value) longueurplateau += 1 else longueurplateau = 0
 
         if (longueurplateau > 5) {
           println("jump away")

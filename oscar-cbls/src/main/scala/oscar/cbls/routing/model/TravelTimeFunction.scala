@@ -21,14 +21,14 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.core.computation.IntConst
+import oscar.cbls.invariants.core.computation.CBLSIntConst
 
 abstract class TravelTimeFunction {
   def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int
@@ -40,16 +40,16 @@ abstract class TravelTimeFunction {
   def getMaxTravelDuration(from: Int, to: Int): Int
 }
 
-abstract trait Time extends VRP with Predecessors {
-  val defaultArrivalTime = new IntConst(0)
+trait Time extends VRP with Predecessors {
+  val defaultArrivalTime = new CBLSIntConst(0)
   val arrivalTime = Array.tabulate(N) {
-    (i: Int) => IntVar(m, 0, Int.MaxValue / N, 0, "arrivalTimeAtNode" + i)
+    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "arrivalTimeAtNode" + i)
   }
   val leaveTime = Array.tabulate(N) {
-    (i: Int) => IntVar(m, 0, Int.MaxValue / N, 0, "leaveTimeAtNode" + i)
+    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "leaveTimeAtNode" + i)
   }
   val travelOutDuration = Array.tabulate(N) {
-    (i: Int) => IntVar(m, 0, Int.MaxValue / N, 0, "travelDurationToLeave" + i)
+    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "travelDurationToLeave" + i)
   }
   val arrivalToNext = Array.tabulate(N + 1) {
     (i: Int) =>
@@ -109,7 +109,7 @@ trait TimeWindow extends Time with StrongConstraints {
 
 trait WaitingDuration extends TimeWindow {
   val waitingDuration = Array.tabulate(N) {
-    (i: Int) => IntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
+    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
   }
 
   override def setFixedDurationNode(node: Int, duration: Int, startWindow: Int) {
@@ -127,7 +127,7 @@ trait WaitingDuration extends TimeWindow {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait TimeClosestNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
+trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
     travelCosts.getMinTravelDuration(from, to)
   }

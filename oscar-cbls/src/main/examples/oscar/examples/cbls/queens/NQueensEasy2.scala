@@ -20,14 +20,14 @@
 
 package oscar.examples.cbls.queens
 
-import oscar.cbls.modeling.CBLSSolver
-import oscar.cbls.invariants.core.computation.{SetVar, IntVar}
+import oscar.cbls.modeling.CBLSModel
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 
 
 /**
  * Created by rdl on 13/01/14.
  */
-object NQueensEasy2 extends CBLSSolver with App{
+object NQueensEasy2 extends CBLSModel with App{
 
   val N = 20
 
@@ -40,26 +40,26 @@ object NQueensEasy2 extends CBLSSolver with App{
   // initial solution
   val init = rand.shuffle((0 to N-1).toList).toArray
 
-  val queens = Array.tabulate(N)(q => intVar(0 to N-1,init(q),"queen_" + q))
+  val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen_" + q))
 
   //alldiff on rows in enforced because we swap queens initially different
-  c.add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
-  c.add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
+  add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
+  add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
-  val violationArray:Array[IntVar] = Array.tabulate(N)(q => c.violation(queens(q))).toArray
+  val violationArray:Array[CBLSIntVar] = Array.tabulate(N)(q => c.violation(queens(q))).toArray
 
-  val tabu:Array[IntVar] = Array.tabulate(N)(q => intVar(0 to Int.MaxValue, 0, "tabu_queen" + q))
-  val it = intVar(0 to Int.MaxValue,1,"it")
-  val nonTabuQueens:SetVar = selectLESetQueue(tabu, it)
-  val nonTabuMaxViolQueens:SetVar = argMax(violationArray, nonTabuQueens)
+  val tabu:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(0 to Int.MaxValue, 0, "tabu_queen" + q))
+  val it = CBLSIntVar(0 to Int.MaxValue,1,"it")
+  val nonTabuQueens:CBLSSetVar = selectLESetQueue(tabu, it)
+  val nonTabuMaxViolQueens:CBLSSetVar = argMax(violationArray, nonTabuQueens)
 
   close()
 
   val tabulength = 3
 
-  while((c.Violation.value > 0) && (it.value < N)){
+  while((violation.value > 0) && (it.value < N)){
 
-    val oldviolation:Int = c.Violation.value
+    val oldviolation:Int = violation.value
 
     // to ensure that the set of tabu queens is no too restrictive
     // (but you'd better tune the tabu better)
@@ -70,7 +70,7 @@ object NQueensEasy2 extends CBLSSolver with App{
 
     val q1 = selectFirst(nonTabuMaxViolQueens.value)
     val q2 = selectFirst(nonTabuQueens.value, (q:Int) => {
-      q!=q1 && c.swapVal(queens(q1),queens(q)) < oldviolation
+      q!=q1 && swapVal(queens(q1),queens(q)) < oldviolation
     })
 
     queens(q1) :=: queens(q2)

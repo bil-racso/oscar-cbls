@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.numeric
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{Store, IntInvariant, IntVar}
+import oscar.cbls.invariants.core.computation.{Store, IntInvariant, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -51,7 +51,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param zone the size of the forbidden zone. it starts at the beginning of the period
  * @param shift the first period starts later than zero. it starts at shift. the duration before its start is allowed.
  */
-case class RoundUpModulo(from: IntVar, duration: IntVar, period: Int, zone: Int, shift: Int)
+case class RoundUpModulo(from: CBLSIntVar, duration: CBLSIntVar, period: Int, zone: Int, shift: Int)
   extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
     require(duration <= period - zone, "duration " + duration + "<= period " + period + "- zone " + zone)
     require(period != 0)
@@ -80,8 +80,8 @@ object TestRoundUpModulo extends App {
     }
   val m = new Store()
 
-  val from = IntVar(m, 0, "from")
-  val duration = IntVar(m, 2, "duration")
+  val from = CBLSIntVar(m, 0, "from")
+  val duration = CBLSIntVar(m, 2, "duration")
 
   val r = RoundUpModulo(from, duration, 7, 2, 0).toIntVar
 
@@ -105,24 +105,24 @@ object TestRoundUpModulo extends App {
  * @param duration
  * @param ForbiddenZones
  */
-case class RoundUpCustom(from: IntVar, duration: IntVar, forbiddenZones: List[(Int, Int)]) extends IntInvariant {
+case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones: List[(Int, Int)]) extends IntInvariant {
 
   def myMax = forbiddenZones.maxBy(_._2)._2 + 1
 
   def myMin = from.minVal
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
   registerStaticAndDynamicDependenciesNoID(from, duration)
   finishInitialization()
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     output := roundup()
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
     scheduleForPropagation()
   }
 
@@ -220,6 +220,7 @@ case class RoundUpCustom(from: IntVar, duration: IntVar, forbiddenZones: List[(I
   }
 }
 
+
 object TestRoundUpCustom extends App {
 
   def n2day(n: Int): String =
@@ -235,8 +236,8 @@ object TestRoundUpCustom extends App {
     }
   val m = new Store()
 
-  val from = IntVar(m, 0, "from")
-  val duration = IntVar(m, 2, "duration")
+  val from = CBLSIntVar(m, 0, "from")
+  val duration = CBLSIntVar(m, 2, "duration")
 
   val r = new RoundUpCustom(from, duration, List((3, 4), (9, 12))).toIntVar
 
@@ -260,7 +261,7 @@ object TestRoundUpCustom extends App {
  * @param preEmptiveTask the pre-emptive task expressed as a range: start to end
  * @param resume is true if the task must be resumed after the pre-emptive task
  */
-case class PreEmption(from: IntVar, duration: IntVar,
+case class PreEmption(from: CBLSIntVar, duration: CBLSIntVar,
                       preEmptFrom: Int, preEmptDuration: Int, resume: Boolean)
   extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
     var newEnd: Int = from + duration
@@ -283,8 +284,8 @@ case class PreEmption(from: IntVar, duration: IntVar,
 object TestPreEmption extends App {
   val m = new Store()
 
-  val from = IntVar(m, 0, "from")
-  val duration = IntVar(m, 4, "duration")
+  val from = CBLSIntVar(m, 0, "from")
+  val duration = CBLSIntVar(m, 4, "duration")
 
   val preEmptionFrom = 2
   val preEmptionDuration = 3

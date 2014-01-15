@@ -25,7 +25,7 @@ package oscar.cbls.test.routing
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cbls.invariants.core.computation.{ IntVar, Store }
+import oscar.cbls.invariants.core.computation.{ CBLSIntVar, Store }
 import oscar.cbls.invariants.lib.logic.Routes
 import scala.language.reflectiveCalls
 
@@ -44,8 +44,8 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
       val nbCars = 1
       val model = new Store(false, None, false, false)
       val next = Array.tabulate(nbPoints)(i =>
-        if (i < nbCars) IntVar(model, i, nbPoints - 1, i, "next" + i)
-        else IntVar(model, 0, nbPoints, i, "next" + i))
+        if (i < nbCars) CBLSIntVar(model, i, nbPoints - 1, i, "next" + i)
+        else CBLSIntVar(model, 0, nbPoints, i, "next" + i))
       // 0->1->2->3->4->5(->0)
       next(0) := 1
       next(1) := 2

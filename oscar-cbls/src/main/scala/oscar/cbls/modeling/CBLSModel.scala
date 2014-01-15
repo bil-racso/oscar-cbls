@@ -1,6 +1,6 @@
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.{IntVar, SetVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Store}
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.search.{StopWatch, SearchEngineTrait}
 import oscar.cbls.modeling._
@@ -19,7 +19,7 @@ import scala.collection.immutable.SortedSet
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
   *
   **/
-class CBLSSolver(val verbose:Boolean = false,
+class CBLSModel(val verbose:Boolean = false,
                  val checker:Option[Checker] = None,
                  val noCycle:Boolean = true,
                  val topologicalSort:Boolean = false,
@@ -38,11 +38,16 @@ class CBLSSolver(val verbose:Boolean = false,
   implicit val s = new Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
   implicit val c = new ConstraintSystem(s)
 
-  def intVar(r:Range, v:Int, name:String = "")(implicit s:Store) = new IntVar(s,r,v,name)
-  def setVar(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
-    val emptySet:SortedSet[Int] = SortedSet.empty
-    new SetVar(s, r.start, r.end,name, emptySet ++ v)
-  }
 
   def close()(implicit s:Store) {s.close()}
+
+  def add(c:Constraint)(implicit cs:ConstraintSystem) {cs.post(c)}
+  def post(c:Constraint)(implicit cs:ConstraintSystem) {cs.post(c)}
+
+  def violation()(implicit cs:ConstraintSystem) = cs.violation
+  def solution()(implicit s:Store) = s.solution()
+
+  def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:ObjectiveTrait) = o.swapVal(a,b)
+  def assignVal(a: CBLSIntVar, v: Int)(implicit o:ObjectiveTrait) = o.assignVal(a, v)
+
 }

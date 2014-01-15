@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.propagation.Checker;
  * sum(vars)
  * @param vars is an iterable of IntVars
  */
-case class Sum(vars: Iterable[IntVar]) extends IntInvariant {
+case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -39,16 +39,16 @@ case class Sum(vars: Iterable[IntVar]) extends IntInvariant {
   def myMin = vars.foldLeft(0)((acc, intvar) => acc + intvar.minVal)
   def myMax = vars.foldLeft(0)((acc, intvar) => acc + intvar.maxVal)
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     output := vars.foldLeft(0)((a, b) => a + b.value)
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
     output :+= NewVal - OldVal
   }
 
@@ -62,7 +62,7 @@ case class Sum(vars: Iterable[IntVar]) extends IntInvariant {
  * prod(vars)
  * @param vars is a set of IntVars
  */
-case class Prod(vars: Iterable[IntVar]) extends IntInvariant {
+case class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -71,13 +71,13 @@ case class Prod(vars: Iterable[IntVar]) extends IntInvariant {
   var NullVarCount: Int = vars.count(v => v.value == 0)
   var NonNullProd: Int = vars.foldLeft(1)((acc, intvar) => if (intvar.value == 0) { acc } else { acc * intvar.value })
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
   //TODO: find better bound, this is far too much
   def myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.maxVal) > math.abs(intvar.minVal)) math.abs(intvar.maxVal) else math.abs(intvar.minVal)))
   def myMin = -myMax
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     if (NullVarCount != 0) {
@@ -88,7 +88,7 @@ case class Prod(vars: Iterable[IntVar]) extends IntInvariant {
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
     assert(OldVal != NewVal)
     if (OldVal == 0 && NewVal != 0) {
       NullVarCount -= 1
@@ -119,7 +119,7 @@ case class Prod(vars: Iterable[IntVar]) extends IntInvariant {
  * left - right
  * where left, right, and output are IntVar
  */
-case class Minus(left: IntVar, right: IntVar)
+case class Minus(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l - r), left.minVal - right.maxVal, left.maxVal - right.minVal) {
   assert(left != right)
 }
@@ -128,14 +128,14 @@ case class Minus(left: IntVar, right: IntVar)
  * left + right
  * where left, right, and output are IntVar
  */
-case class Sum2(left: IntVar, right: IntVar)
+case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l + r), left.minVal + right.minVal, left.maxVal + right.maxVal)
 
 /**
  * left * right
  * where left, right, and output are IntVar
  */
-case class Prod2(left: IntVar, right: IntVar)
+case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
 
 /**
@@ -143,7 +143,7 @@ case class Prod2(left: IntVar, right: IntVar)
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
  */
-case class Div(left: IntVar, right: IntVar)
+case class Div(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l / r)
 
 /**
@@ -151,14 +151,14 @@ case class Div(left: IntVar, right: IntVar)
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
  */
-case class Mod(left: IntVar, right: IntVar)
+case class Mod(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l - r * (l / r))
 
 /**
  * abs(v) (absolute value)
  * where output and v are IntVar
  */
-case class Abs(v: IntVar)
+case class Abs(v: CBLSIntVar)
   extends IntVar2IntVarFun(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
 
 /**
@@ -171,5 +171,5 @@ case class Abs(v: IntVar)
  * @param thenval the value returned when x > pivot
  * @param elseval the value returned when x <= pivot
  */
-case class Step(x: IntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
+case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
   extends IntVar2IntVarFun(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)

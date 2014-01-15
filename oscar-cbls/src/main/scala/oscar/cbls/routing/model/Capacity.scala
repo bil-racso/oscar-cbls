@@ -19,8 +19,8 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.computation.IntVar
-import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntVar
 
@@ -32,7 +32,7 @@ class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
   /**
    * the data structure array which maintains weights.
    */
-  val nodeWeight : Array[IntVar] = Array.tabulate(vrp.N)(i => IntVar(vrp.m, Int.MinValue, Int.MaxValue, 0,
+  val nodeWeight : Array[CBLSIntVar] = Array.tabulate(vrp.N)(i => CBLSIntVar(vrp.m, Int.MinValue, Int.MaxValue, 0,
     weightingName + "_" + i))
 }
 
@@ -49,12 +49,12 @@ class CommutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "Cu
   * @param CapacityOut the capacity when leaving a node
   */
 class NonCommutativeProgressiveCapacity(vrp:VRP with Predecessors,
-                                var CapacityOut:Array[IntVar] =  null){
+                                var CapacityOut:Array[CBLSIntVar] =  null){
 
   if(CapacityOut  == null)
-    CapacityOut = Array.tabulate(vrp.N)(n => IntVar(vrp.m,name = "CapacityOutOf_" + n))
+    CapacityOut = Array.tabulate(vrp.N)(n => CBLSIntVar(vrp.m,name = "CapacityOutOf_" + n))
 
   /** the capacity when leaving the predecessor of a given node */
-  val CapacityOutPred:Array[IntVar] = Array.tabulate(vrp.N)(n => if (n < vrp.V) 0 else CapacityOut.element(vrp.preds(n)))
+  val CapacityOutPred:Array[CBLSIntVar] = Array.tabulate(vrp.N)(n => if (n < vrp.V) 0 else CapacityOut.element(vrp.preds(n)))
 }
 

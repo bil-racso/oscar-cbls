@@ -3,33 +3,17 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cbls
+package oscar.examples.cbls.queens
 
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
 
 /*******************************************************************************
  * Contributors:
@@ -155,17 +139,17 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     val max = N - 1
     val range: Range = Range(0, N)
     val tabulength = 0
-    val m: Store = new Store(false, None, true)
+    val m = Store(false, None, true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
-    val Queens: Array[IntVar] = new Array[IntVar](N)
+    val Queens: Array[CBLSIntVar] = new Array[CBLSIntVar](N)
     for (q <- range) {
-      Queens(q) = IntVar(m, min, max, q, "queen" + q)
+      Queens(q) = CBLSIntVar(m, min, max, q, "queen" + q)
       tab(q)(q).icon = CONFLICT
     }
 
-    val c: ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
     //c.post(AllDiff(Queens)) handled trough permutations
     c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
     c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
@@ -175,7 +159,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     }
     c.close()
 
-    val viol: Array[IntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+    val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
 
     for (q <- range) {
       Event(Queens(q), viol(q), (oldqueenposition: Int) => {
@@ -194,8 +178,8 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     val Tabu = (for (q <- range) yield -1).toArray
 
     var longueurplateau = 0
-    while ((c.Violation.value > 0) && (it < MaxIT) && !stopRequested) {
-      val oldviolation: Int = c.Violation.value
+    while ((c.violation.value > 0) && (it < MaxIT) && !stopRequested) {
+      val oldviolation: Int = c.violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
       val (q1, q2) = selectMin(allowedqueens, allowedqueens)((q1, q2) => c.swapVal(Queens(q1), Queens(q2)), (q1, q2) => q1 < q2)
 
@@ -204,8 +188,8 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
       Tabu(q2) = it + tabulength
       m.propagate() //we need to do this because only partial propagation are performed otherwise, and events are not propagated
       it += 1
-      println("it: " + it + " " + c.Violation + " (swapped " + q1 + " and " + q2 + ")")
-      if (oldviolation <= c.Violation.value) longueurplateau += 1 else longueurplateau = 0
+      println("it: " + it + " " + c.violation + " (swapped " + q1 + " and " + q2 + ")")
+      if (oldviolation <= c.violation.value) longueurplateau += 1 else longueurplateau = 0
 
       if (longueurplateau > 5) {
         println("jump away")

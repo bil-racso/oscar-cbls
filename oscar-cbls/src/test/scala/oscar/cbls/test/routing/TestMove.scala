@@ -32,8 +32,8 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.initial.RandomInsert
-import oscar.cbls.routing.model.ClosestNeighborPointsHop
-import oscar.cbls.routing.model.HopDistanceAsObjective
+import oscar.cbls.routing.model.HopClosestNeighbors
+import oscar.cbls.routing.model.HopDistanceAsObjectiveTerm
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
@@ -588,9 +588,9 @@ class MoveFixture(
         Array.fill(nbNodes)(0)
       }
   val matrix = getDistanceMatrix(abscissa, ordinate)
-  val model: Store = new Store(false, None, false, false)
+  val model = Store(false, None, false, false)
 
-  val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted with MoveDescription
+  val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjectiveTerm with PositionInRouteAndRouteNr with HopClosestNeighbors with UnroutedImpl with PenaltyForUnrouted with MoveDescription
 
   vrp.addObjectiveTerm(vrp.unroutedPenalty)
   vrp.setUnroutedPenaltyWeight(10000)

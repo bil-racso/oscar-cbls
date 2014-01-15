@@ -24,8 +24,8 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.core.computation.{ Variable, IntVar }
-import oscar.cbls.invariants.core.computation.IntVar._
+import oscar.cbls.invariants.core.computation.{ Variable, CBLSIntVar }
+import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param variables the variable whose values should all be different.
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class AllDiff(variables: Iterable[IntVar]) extends Constraint {
+case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
 
   registerStaticAndDynamicDependencyAllNoID(variables)
   registerConstrainedVariables(variables)
@@ -41,28 +41,28 @@ case class AllDiff(variables: Iterable[IntVar]) extends Constraint {
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
-  private val Violation: IntVar = new IntVar(model, (0 to Int.MaxValue), 0, "ViolationsOfAllDiff")
+  private val Violation: CBLSIntVar = new CBLSIntVar(model, (0 to Int.MaxValue), 0, "ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
   private val N0: Int = variables.foldLeft(0)(
-    (acc: Int, intvar: IntVar) => (if (intvar.maxVal > acc) intvar.maxVal else acc))
+    (acc: Int, intvar: CBLSIntVar) => (if (intvar.maxVal > acc) intvar.maxVal else acc))
 
   private val offset: Int = -variables.foldLeft(0)(
-    (acc: Int, intvar: IntVar) => (if (intvar.minVal < acc) intvar.minVal else acc))
+    (acc: Int, intvar: CBLSIntVar) => (if (intvar.minVal < acc) intvar.minVal else acc))
 
   private val N = N0 + offset
   private val range = 0 to N
 
   /**the degree of violation of a variable is the number of other variables that have the same value as it. */
-  private val Violations: SortedMap[IntVar, IntVar] = variables.foldLeft(
-    SortedMap.empty[IntVar, IntVar])(
+  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = variables.foldLeft(
+    SortedMap.empty[CBLSIntVar, CBLSIntVar])(
       (acc, intvar) => {
-        val newvar = new IntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
+        val newvar = new CBLSIntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
         acc + ((intvar, newvar))
       })
 
-  private val ValueCount: Array[IntVar] = Array.tabulate[IntVar](N + 1)((i: Int) => {
-    val tmp = new IntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
+  private val ValueCount: Array[CBLSIntVar] = Array.tabulate[CBLSIntVar](N + 1)((i: Int) => {
+    val tmp = new CBLSIntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
   })
@@ -82,7 +82,7 @@ case class AllDiff(variables: Iterable[IntVar]) extends Constraint {
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
     ValueCount(OldVal + offset) :-= 1
     ValueCount(NewVal + offset) :+= 1
 
@@ -102,8 +102,8 @@ case class AllDiff(variables: Iterable[IntVar]) extends Constraint {
    * The degree of violation of a variable is the number of other variables that have the same value
    * @return an IntVar that can be incorporated in an invariant.
    */
-  override def violation(v: Variable): IntVar = {
-    val tmp: IntVar = Violations.getOrElse(v.asInstanceOf[IntVar], null)
+  override def violation(v: Variable): CBLSIntVar = {
+    val tmp: CBLSIntVar = Violations.getOrElse(v.asInstanceOf[CBLSIntVar], null)
     assert(tmp != null)
     tmp
   }

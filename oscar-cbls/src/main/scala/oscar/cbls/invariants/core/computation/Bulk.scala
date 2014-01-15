@@ -42,7 +42,7 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
       return performBulkComputation(bulkedVars)
     }
 
-    val m: Store = this.preFinishInitialization(bulkedVars(0).model)
+    val m = this.preFinishInitialization(bulkedVars(0).model)
     if (m == null) {
       //no bulking possible
       this.registerStaticDependencyAll(bulkedVars)

@@ -20,7 +20,7 @@ package oscar.cbls.scheduling.model
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntVar, SetVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import scala.Array
 import oscar.cbls.invariants.lib.logic.{Cumulative, Filter}
 import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
@@ -42,40 +42,40 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
   require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration)(t => new SetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
-  val useAmount = Array.tabulate(maxDuration)(t => IntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
+  val use = Array.tabulate(maxDuration)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+  val useAmount = Array.tabulate(maxDuration)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
   
   val HighestUseTracker = ArgMaxArray(useAmount)
-  val HighestUsePositions: SetVar = HighestUseTracker
+  val HighestUsePositions: CBLSSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
-  var ActivitiesAndUse: SortedMap[Activity, IntVar] = SortedMap.empty
+  var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
 
   /**called by activities to register itself to the resource*/
-  def notifyUsedBy(j: Activity, amount: IntVar) {
+  def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
     ActivitiesAndUse += ((j,
       if(ActivitiesAndUse.isDefinedAt(j))
         ActivitiesAndUse(j) + amount
       else amount))
   }
 
-  def activitiesAndUse(t:Int):List[(Activity, IntVar)] = {
+  def activitiesAndUse(t:Int):List[(Activity, CBLSIntVar)] = {
     use(t).value.toList.map((a:Int) => {
       val activity:Activity = planning.ActivityArray(a);
       (activity,ActivitiesAndUse(activity))
     })
   }
 
-  val overShoot: IntVar = HighestUse - MaxAmount
+  val overShoot: CBLSIntVar = HighestUse - MaxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
 
   /** you need to eject one of these to solve the conflict */
   def conflictingActivities(t: Int): List[Activity] = {
-    val conflictSet: List[(Activity, IntVar)] = ConflictSearch(
+    val conflictSet: List[(Activity, CBLSIntVar)] = ConflictSearch(
       0,
       activitiesAndUse(t),
-      (use: Int, ActivityAndamount: (Activity, IntVar)) => use + ActivityAndamount._2.value,
-      (use: Int, ActivityAndamount: (Activity, IntVar)) => use - ActivityAndamount._2.value,
+      (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use + ActivityAndamount._2.value,
+      (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use - ActivityAndamount._2.value,
       (use: Int) => use > MaxAmount
     )
 
@@ -105,7 +105,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
       //header
       lines =
         ("" + padToLength(if (i == MaxAmount)n else "", 21)
-        + "|" + padToLength("" + i, 9) + "| " + useAmount.toList.map((v:IntVar) => if(v.value >= i) "+" else " ").mkString + "\n"
+        + "|" + padToLength("" + i, 9) + "| " + useAmount.toList.map((v:CBLSIntVar) => if(v.value >= i) "+" else " ").mkString + "\n"
         ):: lines
     }
     lines.mkString

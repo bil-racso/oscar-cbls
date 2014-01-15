@@ -53,13 +53,13 @@ object NQueens extends SearchEngine with StopWatch{
     val max = N-1
     val range:Range = Range(0,N)
     val tabulength = 0
-    val m: Store = new Store(false,None,true)
+    val m = Store(false,None,true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
-    val Queens:Array[IntVar] = Array.tabulate(N)(q => IntVar(m, min, max, q, "queen" + q))
+    val Queens:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(m, min, max, q, "queen" + q))
 
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
 
     //c.post(AllDiff(Queens)) handled trough permutations
     c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))
@@ -77,8 +77,8 @@ object NQueens extends SearchEngine with StopWatch{
     val Tabu = (for(q <- range)yield -1).toArray
 
     var longueurplateau = 0
-    while((c.Violation.value > 0) && (it < MaxIT)){
-      val oldviolation:Int = c.Violation.value
+    while((c.violation.value > 0) && (it < MaxIT)){
+      val oldviolation:Int = c.violation.value
       val allowedqueens = range.filter(q => Tabu(q) < it)
       val (q1,q2) = selectMin(allowedqueens,allowedqueens)((q1,q2) => c.swapVal(Queens(q1),Queens(q2)), (q1,q2) => q1 < q2)
 
@@ -87,8 +87,8 @@ object NQueens extends SearchEngine with StopWatch{
       Tabu(q2) = it + tabulength
 
       it += 1
-      println("it: " + it + " " + c.Violation + " (swapped "+ q1 + " and " + q2 + ")")
-      if(oldviolation <= c.Violation.value) longueurplateau+=1 else longueurplateau = 0
+      println("it: " + it + " " + c.violation + " (swapped "+ q1 + " and " + q2 + ")")
+      if(oldviolation <= c.violation.value) longueurplateau+=1 else longueurplateau = 0
 
       if (longueurplateau > 5){
         println("jump away")
@@ -98,8 +98,8 @@ object NQueens extends SearchEngine with StopWatch{
         longueurplateau = 0
       }
     }
-    println(c.Violation)
-    println(m.getSolution(true))
+    println(c.violation)
+    println(m.solution(true))
     println("run time: "+ getWatchString)
   }
 }

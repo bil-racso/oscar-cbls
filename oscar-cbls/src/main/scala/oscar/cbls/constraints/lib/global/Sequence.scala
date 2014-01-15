@@ -36,7 +36,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param predicate a predicate to say which values belong to the constraint
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(Int=>Boolean))
+case class Sequence(variables: Array[CBLSIntVar], length:Int, Max:Int, predicate:(Int=>Boolean))
   extends Constraint {
 
   assert(Max <= length, "Sequence: Max > length")
@@ -50,18 +50,18 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   val count:Array[Int] = Array.tabulate(sequences.size)(i => 0)
 
   /**the violation of the sequence starting here*/
-  val violated = Array.tabulate(sequences.size)(i => IntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i))
+  val violated = Array.tabulate(sequences.size)(i => CBLSIntVar(model,0, length - Max, 0 ,"is_violated_sequence" + i))
 
   for(v <- violated) v.setDefiningInvariant(this)
 
   /**the violation of a variable is the sum of the violation of each sequence it is involved in*/
-  var Violations = SortedMap.empty[Variable, IntVar]
+  var Violations = SortedMap.empty[Variable, CBLSIntVar]
 
   for(i <- 0 to variables.length - length){
     Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_))).toIntVar))
   }
 
-  val Violation = IntVar(model,0, variables.length * length, 0 ,"sequence_violations")
+  val Violation = CBLSIntVar(model,0, variables.length * length, 0 ,"sequence_violations")
   Violation.setDefiningInvariant(this)
 
   for(i <- variables.indices){
@@ -90,7 +90,7 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, i: Int, OldVal: Int, NewVal: Int){
+  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int){
     if (predicate(OldVal)){
       if(!predicate(NewVal)){
         //decrease the count
@@ -118,9 +118,9 @@ case class Sequence(variables: Array[IntVar], length:Int, Max:Int, predicate:(In
 
   private def min(a:Int, b:Int):Int = if (a>b) b else a
 
-  def violation(v: Variable): IntVar = Violations.getOrElse(v,null)
+  def violation(v: Variable): CBLSIntVar = Violations.getOrElse(v,null)
 
-  def violation: IntVar = Violation
+  def violation: CBLSIntVar = Violation
 
   /** To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
