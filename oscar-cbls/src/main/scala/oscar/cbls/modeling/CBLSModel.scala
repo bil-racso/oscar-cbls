@@ -19,7 +19,7 @@ import scala.collection.immutable.SortedSet
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
   *
   **/
-class CBLSSolver(val verbose:Boolean = false,
+class CBLSModel(val verbose:Boolean = false,
                  val checker:Option[Checker] = None,
                  val noCycle:Boolean = true,
                  val topologicalSort:Boolean = false,

@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
  * Moves are operated by swapping variables
  *
  */
-object NQueensEasy1 extends CBLSSolver with App{
+object NQueensEasy1 extends CBLSModel with App{
   startWatch()
 
   val N = 20

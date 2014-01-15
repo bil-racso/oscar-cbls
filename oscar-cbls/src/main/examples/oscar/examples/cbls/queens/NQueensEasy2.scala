@@ -20,14 +20,14 @@
 
 package oscar.examples.cbls.queens
 
-import oscar.cbls.modeling.CBLSSolver
+import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 
 
 /**
  * Created by rdl on 13/01/14.
  */
-object NQueensEasy2 extends CBLSSolver with App{
+object NQueensEasy2 extends CBLSModel with App{
 
   val N = 20
 
