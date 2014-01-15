@@ -42,10 +42,10 @@ object Domino extends CPModel with App {
   def neighborValues(i: Int, j: Int) = neighbors(i, j).map(t => values(t._1)(t._2))
 
   // for each entry (i,j), what is the other entry forming a domino with it
-  val matchedNeighbor = Array.tabulate(nLines, nCols)((i, j) => CPVarInt(neighborIndices(i, j)))
+  val matchedNeighbor = Array.tabulate(nLines, nCols)((i, j) => CPIntVar(neighborIndices(i, j)))
 
   // for each domino side (i,j) what is the id of it's domino in the solution
-  val id = Array.tabulate(nLines, nCols)((i, j) => CPVarInt(neighborValues(i, j).map(dominoId(_, values(i)(j)))))
+  val id = Array.tabulate(nLines, nCols)((i, j) => CPIntVar(neighborValues(i, j).map(dominoId(_, values(i)(j)))))
 
   def sameDomino(i: Int, j: Int, k: Int, l: Int) = id(i)(j).value == id(k)(l).value
   

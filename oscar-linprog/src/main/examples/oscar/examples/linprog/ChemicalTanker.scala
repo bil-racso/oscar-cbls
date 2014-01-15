@@ -97,9 +97,9 @@ object ChemicalTanker extends MIPModel(LPSolverLib.gurobi) with App {
 
 
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
-  val cargo = Array.fill(tanks.size, cargos.size)(MIPVar(0 to 1))
+  val cargo = Array.fill(tanks.size, cargos.size)(MIPFloatVar(0 to 1))
   // for each cargo, the number of tanks allocated to it
-  val card = Array.fill(cargos.size)(MIPVar(0 to tanks.size))
+  val card = Array.fill(cargos.size)(MIPFloatVar(0 to tanks.size))
 
   // objective = maximize the total empty space
   val freeSpace = sum(0 until tanks.size)(t => cargo(t)(0) * tanks(t).capa)

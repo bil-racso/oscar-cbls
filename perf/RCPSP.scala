@@ -35,7 +35,7 @@ object RCPSP {
 
 		val cp = CPScheduler(horizon)
 		cp.silent = true
-		val x = CPVarInt(cp, 0 to 3)
+		val x = CPIntVar(cp, 0 to 3)
 
 		val tasks : Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
 		val makespan = maximum(tasks.map(_.end))

@@ -22,7 +22,7 @@ import scala.collection.generic._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPVarInt(st,name) {
+class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPIntVar(st,name) {
   
 	val dom = new IntDomain(s,minimum,maximum)
 	val onMinL2    = new ReversiblePointer[ConstraintQueue](s,null)
@@ -50,7 +50,7 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	def this(st: CPStore, r: Range) = this(st, r.start,if (r.isInclusive) r.end else r.end-1)	
 	
 
-	def rootVar: CPVarInt = this
+	def rootVar: CPIntVar = this
     
     def offset: Int = 0
     
@@ -227,148 +227,148 @@ class CPVarIntImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 	}
 
     /**
-     * Level 1 registration: ask that the valBind(CPVarInt) method of the constraint c is called whenever
+     * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
      * the domain of the variable is a singleton (i.e. isBound).
      * @param c
-     * @see oscar.cp.core.Constraint#valBind(CPVarInt)
+     * @see oscar.cp.core.Constraint#valBind(CPIntVar)
      */
 	def callValBindWhenBind(c: Constraint) {
 		callValBindWhenBind(c,this,0)
 	}
 	
-	def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int) {
+	def callValBindWhenBind(c: Constraint, variable: CPIntVar, delta: Int) {
 		onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value,c,variable,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the updateBounds(CPVarInt) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
      * the minimum or maximum value of the domain changes.
      * @param c
-     * @see oscar.cp.core.Constraint#updateBounds(CPVarInt)
+     * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
      */
 	def callUpdateBoundsWhenBoundsChange(c: Constraint) {
 		callUpdateBoundsWhenBoundsChange(c,this,0)
 	}
 	
-	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt,delta: Int) {
+	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar,delta: Int) {
 		onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value,c,variable,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the updateMax(CPVarInt, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateMax(CPIntVar, int) method of the constraint c is called whenever
      * the maximum value of the domain changes.
      * @param c
-     * @see oscar.cp.core.Constraint#updateMax(CPVarInt, int)
+     * @see oscar.cp.core.Constraint#updateMax(CPIntVar, int)
      */
 	def callUpdateMaxWhenMaxChanges(c: Constraint) {
 		callUpdateMaxWhenMaxChanges(c,this,0)
 	}
 	
-	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int) {
+	def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPIntVar, delta: Int) {
 		onMaxL1.setValue(new PropagEventQueueVarInt(onMaxL1.value,c,variable,delta))
 	}
 
      /**
-     * Level 1 registration: ask that the updateMin(CPVarInt, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateMin(CPIntVar, int) method of the constraint c is called whenever
      * the minimum value of the domain changes.
      * @param c
-     * @see oscar.cp.core.Constraint#updateMin(CPVarInt, int)
+     * @see oscar.cp.core.Constraint#updateMin(CPIntVar, int)
      */
 	def callUpdateMinWhenMinChanges(c: Constraint) {
 		callUpdateMinWhenMinChanges(c,this,0)
 	}
 	
-	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int) {
+	def callUpdateMinWhenMinChanges(c: Constraint, variable: CPIntVar, delta: Int) {
 		onMinL1.setValue(new PropagEventQueueVarInt(onMinL1.value,c,variable,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the valRemove(CPVarInt, int) method of the constraint c is called for each
+     * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
      * value deletion from the domain
      * @param c
-     * @see oscar.cp.core.Constraint#valRemove(CPVarInt, int)
+     * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
      */
 	def callValRemoveWhenValueIsRemoved(c: Constraint) {
 		callValRemoveWhenValueIsRemoved(c,this,0)
 	}
 	
-	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int) {
+	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar, delta: Int) {
 		onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value,c,variable,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the valRemoveIdx(CPVarInt, int, int) method of the constraint c is called for each
+     * Level 1 registration: ask that the valRemoveIdx(CPIntVar, int, int) method of the constraint c is called for each
      * value deletion from the domain
      * @param c
-     * @param idx, an index that will be given as parameter to valRemoveIdx(CPVarInt, int, int)
-     * @see Constraint#valRemoveIdx(CPVarInt, int, int)
+     * @param idx, an index that will be given as parameter to valRemoveIdx(CPIntVar, int, int)
+     * @see Constraint#valRemoveIdx(CPIntVar, int, int)
      */
 	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) {
 		callValRemoveIdxWhenValueIsRemoved(c,this,idx,0)
 	}
 	
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
+	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
 		onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value,c,variable,idx,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the updateMinIdx(CPVarInt, int, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateMinIdx(CPIntVar, int, int) method of the constraint c is called whenever
      * the minimum value of the domain changes
      * @param c
-     * @param idx, an index that will be given as parameter to updateMinIdx(CPVarInt, int, int)
-     * @see Constraint#updateMinIdx(CPVarInt, int, int)
+     * @param idx, an index that will be given as parameter to updateMinIdx(CPIntVar, int, int)
+     * @see Constraint#updateMinIdx(CPIntVar, int, int)
      */
 	def callUpdateMinIdxWhenMinChanges(c: Constraint , idx: Int) {
 		callUpdateMinIdxWhenMinChanges(c,this,idx,0)
 	}
 
 
-	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
+	def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
 		onMinIdxL1.setValue(new PropagEventQueueVarInt(onMinIdxL1.value,c,variable,idx,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the updateMaxIdx(CPVarInt, int, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateMaxIdx(CPIntVar, int, int) method of the constraint c is called whenever
      * the maximum value of the domain changes
      * @param c
-     * @param idx, an index that will be given as parameter to updateMaxIdx(CPVarInt, int, int)
-     * @see Constraint#updateMaxIdx(CPVarInt, int, int)
+     * @param idx, an index that will be given as parameter to updateMaxIdx(CPIntVar, int, int)
+     * @see Constraint#updateMaxIdx(CPIntVar, int, int)
      */
 	def callUpdateMaxIdxWhenMaxChanges(c: Constraint , idx: Int) {
 		callUpdateMaxIdxWhenMaxChanges(c,this,idx,0)
 	}
 
-	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
+	def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
 		onMaxIdxL1.setValue(new PropagEventQueueVarInt(onMaxIdxL1.value,c,variable, idx,delta))	
 	}
 
     /**
-     * Level 1 registration: ask that the updateBoundsIdx(CPVarInt, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever
      * the minimum or maximum value of the domain changes
      * @param c
-     * @param idx, an index that will be given as parameter to updateBoundsIdx(CPVarInt, int)
-     * @see Constraint#updateBoundsIdx(CPVarInt, int)
+     * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntVar, int)
+     * @see Constraint#updateBoundsIdx(CPIntVar, int)
      */
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint , idx: Int) {
 		callUpdateBoundsIdxWhenBoundsChange(c,this,idx,0)
 	}
 	
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
+	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
 		onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value,c,variable,idx,delta))
 	}
 
     /**
-     * Level 1 registration: ask that the valBindIdx(CPVarInt, int) method of the constraint c is called whenever
+     * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
      * the domain of the variable is a singleton (i.e. isBound).
      * @param c
-     * @param idx, an index that will be given as parameter to valBindIdx(CPVarInt, int)
-     * @see Constraint#valBindIdx(CPVarInt, int)
+     * @param idx, an index that will be given as parameter to valBindIdx(CPIntVar, int)
+     * @see Constraint#valBindIdx(CPIntVar, int)
      */
 	def callValBindIdxWhenBind(c: Constraint , idx: Int) {
 		callValBindIdxWhenBind(c,this,idx,0)
 	}
 	
-	def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt, idx: Int, delta: Int) {
+	def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
 		onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value,c,variable,idx,delta))
 	}	
 	

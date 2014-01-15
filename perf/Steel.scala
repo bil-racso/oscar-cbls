@@ -79,9 +79,9 @@ object Steel {
 
     val cp = new CPSolver()
     cp.silent = true
-    val x = (for (s <- Slabs) yield CPVarInt(cp, 0 until nbSlab))
+    val x = (for (s <- Slabs) yield CPIntVar(cp, 0 until nbSlab))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
-    val l = for (s <- Slabs) yield CPVarInt(cp, 0 to capa.max)
+    val l = for (s <- Slabs) yield CPIntVar(cp, 0 to capa.max)
   
 
     val rnd = new Random(0)
@@ -91,7 +91,7 @@ object Steel {
     cp.minimize(obj) subjectTo {
       cp.add(binPacking(x, weight, l), Strong)
       for (s <- Slabs) {
-        def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
+        def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPBoolVar telling whether color c is present is slab s
         cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
       }
     } search {

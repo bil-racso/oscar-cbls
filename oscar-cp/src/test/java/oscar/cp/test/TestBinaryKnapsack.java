@@ -15,8 +15,8 @@
 package oscar.cp.test;
 import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 
@@ -52,12 +52,12 @@ public class TestBinaryKnapsack extends TestCase {
     public void testa() {
 
         CPStore s = new CPStore();
-        CPVarBool [] b = new CPVarBool[111];
+        CPBoolVar [] b = new CPBoolVar[111];
         for (int i = 0; i < b.length; i++) {
-			b[i] = CPVarBool.apply(s);
+			b[i] = CPBoolVar.apply(s);
 		}
 
-        CPVarInt l = CPVarInt.apply(s,12,44);
+        CPIntVar l = CPIntVar.apply(s,12,44);
         int [] w = new int[]{2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 12, 12, 12, 13, 13, 13, 13, 13, 14, 14, 15, 15, 15, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 18, 18, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 20, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 26, 26, 26, 26, 26, 26, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 30, 30, 30, 30};
 
     	//propagate binary knapsack
@@ -74,9 +74,9 @@ public class TestBinaryKnapsack extends TestCase {
     public void testb() {
         CPStore cp = new CPStore();
         int n = 20;
-        CPVarBool [] x = new CPVarBool[n];
+        CPBoolVar [] x = new CPBoolVar[n];
         for (int i = 0; i < n; i++) {
-        	x[i] = new CPVarBool(cp);
+        	x[i] = new CPBoolVar(cp);
         }
         int [] values = new int[n];
         int [] values2 = new int[n];
@@ -113,12 +113,12 @@ public class TestBinaryKnapsack extends TestCase {
 
     public void testc() {
         CPStore cp = new CPStore();
-        CPVarBool [] x = new CPVarBool[3];
+        CPBoolVar [] x = new CPBoolVar[3];
         for (int i = 0; i < 3; i++) {
-        	x[i] = new CPVarBool(cp);
+        	x[i] = new CPBoolVar(cp);
         }
         int [] values = new int[]{43,23,23};
-        CPVarInt c = CPVarInt.apply(cp,1,82);
+        CPIntVar c = CPIntVar.apply(cp,1,82);
 
         cp.add(new BinaryKnapsack(x,values, c), CPPropagStrength.Strong);
 

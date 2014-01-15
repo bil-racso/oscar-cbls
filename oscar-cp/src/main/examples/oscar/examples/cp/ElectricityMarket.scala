@@ -18,7 +18,7 @@ object ElectricityMarket extends CPModel with App {
     val qty = data(0) // amount of electricity he is ready to produce (>0) or consume (<0)
     val start = data(1) // [start,end] is the interval of validity of the order. 
     val end = data(2)
-    val selected = CPVarBool() // If the order is selected the orderer will have to produce/consume 
+    val selected = CPBoolVar() // If the order is selected the orderer will have to produce/consume 
     // the quantity at each period: start, start+1, ...., end-1, end.
     def energy = qty.abs * (end - start + 1)
     def overlap(t: Int) = t <= end && t >= start
@@ -47,14 +47,14 @@ object ElectricityMarket extends CPModel with App {
   // ------------------------------------------
 
   // one var for each time slot = the quantity exchanged on that slot
-  val varMapQty = Map[Int, CPVarInt]()
+  val varMapQty = Map[Int, CPIntVar]()
   for (t <- tmin to tmax) {
     val prodUB = producers.map(_.qty.abs).sum
-    varMapQty += (t -> CPVarInt(0 to prodUB))
+    varMapQty += (t -> CPIntVar(0 to prodUB))
   }
   var nbSol = 0
   // total amount of exchanged quantity
-  val obj: CPVarInt = sum(tmin to tmax)(t => varMapQty(t))
+  val obj: CPIntVar = sum(tmin to tmax)(t => varMapQty(t))
 
   for (t <- tmin to tmax) {
     val prodVars = producers.filter(_.overlap(t)).map(_.selected)

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,10 +25,10 @@ import oscar.cp.core.Constraint;
  */
 public class DiffVal extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int y;
 	
-	public DiffVal(CPVarInt x, int y) {
+	public DiffVal(CPIntVar x, int y) {
 		super(x.s(),"DiffVal");
 		this.x = x;
 		this.y = y;

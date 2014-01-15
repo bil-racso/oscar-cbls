@@ -33,7 +33,7 @@ class QueensTest extends FunSuite with ShouldMatchers {
       val Lines = 0 until n
       val Columns = 0 until n
       implicit val mip = MIPSolver(lib)
-      val x = Array.tabulate(n, n)((l, c) => MIPVar("x" + (l, c), 0 to 1))
+      val x = Array.tabulate(n, n)((l, c) => MIPIntVar("x" + (l, c), 0 to 1))
 
       maximize(sum(Lines, Columns) { (l, c) => x(l)(c) })
 

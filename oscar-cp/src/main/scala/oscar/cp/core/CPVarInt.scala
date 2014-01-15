@@ -25,11 +25,11 @@ trait DomainIterator extends Iterator[Int] {
   def execute()
 }
 
-abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar with Iterable[Int] {
+abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar with Iterable[Int] {
 
   def store = s
 
-  def rootVar: CPVarInt
+  def rootVar: CPIntVar
 
   def offset: Int
 
@@ -122,7 +122,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param other
    * @return Number of values in common in both domains
    */
-  def intersectionSize(other: CPVarInt): Int = {
+  def intersectionSize(other: CPIntVar): Int = {
     if (other.min > max) return 0
     if (other.max < min) return 0
     var res = 0
@@ -161,7 +161,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
       private var ok = false
       private var v = Int.MinValue
       private var collect: List[Int] = Nil
-      private var maxRemove = CPVarInt.this.size
+      private var maxRemove = CPIntVar.this.size
 
       def next(): Int = {
         v = it.next()
@@ -184,7 +184,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
       }
 
       def execute() = {
-        for (v <- collect) CPVarInt.this.removeValue(v)
+        for (v <- collect) CPIntVar.this.removeValue(v)
       }
     }
   }
@@ -280,109 +280,109 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   }
 
   /**
-   * Level 1 registration: ask that the valBind(CPVarInt) method of the constraint c is called whenever
+   * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).
    * @param c
-   * @see oscar.cp.core.Constraint#valBind(CPVarInt)
+   * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
   def callValBindWhenBind(c: Constraint): Unit
 
-  def callValBindWhenBind(c: Constraint, variable: CPVarInt, delta: Int): Unit
+  def callValBindWhenBind(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateBounds(CPVarInt) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
    * the minimum or maximum value of the domain changes.
    * @param c
-   * @see oscar.cp.core.Constraint#updateBounds(CPVarInt)
+   * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
   def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPVarInt, delta: Int): Unit
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateMax(CPVarInt, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateMax(CPIntVar, int) method of the constraint c is called whenever
    * the maximum value of the domain changes.
    * @param c
-   * @see oscar.cp.core.Constraint#updateMax(CPVarInt, int)
+   * @see oscar.cp.core.Constraint#updateMax(CPIntVar, int)
    */
   def callUpdateMaxWhenMaxChanges(c: Constraint): Unit
 
-  def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPVarInt, delta: Int): Unit
+  def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateMin(CPVarInt, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateMin(CPIntVar, int) method of the constraint c is called whenever
    * the minimum value of the domain changes.
    * @param c
-   * @see oscar.cp.core.Constraint#updateMin(CPVarInt, int)
+   * @see oscar.cp.core.Constraint#updateMin(CPIntVar, int)
    */
   def callUpdateMinWhenMinChanges(c: Constraint): Unit
 
-  def callUpdateMinWhenMinChanges(c: Constraint, variable: CPVarInt, delta: Int): Unit
+  def callUpdateMinWhenMinChanges(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the valRemove(CPVarInt, int) method of the constraint c is called for each
+   * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
    * value deletion from the domain
    * @param c
-   * @see oscar.cp.core.Constraint#valRemove(CPVarInt, int)
+   * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
    */
   def callValRemoveWhenValueIsRemoved(c: Constraint): Unit
 
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPVarInt, delta: Int): Unit
+  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the valRemoveIdx(CPVarInt, int, int) method of the constraint c is called for each
+   * Level 1 registration: ask that the valRemoveIdx(CPIntVar, int, int) method of the constraint c is called for each
    * value deletion from the domain
    * @param c
-   * @param idx, an index that will be given as parameter to valRemoveIdx(CPVarInt, int, int)
-   * @see Constraint#valRemoveIdx(CPVarInt, int, int)
+   * @param idx, an index that will be given as parameter to valRemoveIdx(CPIntVar, int, int)
+   * @see Constraint#valRemoveIdx(CPIntVar, int, int)
    */
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit
 
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
+  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateMinIdx(CPVarInt, int, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateMinIdx(CPIntVar, int, int) method of the constraint c is called whenever
    * the minimum value of the domain changes
    * @param c
-   * @param idx, an index that will be given as parameter to updateMinIdx(CPVarInt, int, int)
-   * @see Constraint#updateMinIdx(CPVarInt, int, int)
+   * @param idx, an index that will be given as parameter to updateMinIdx(CPIntVar, int, int)
+   * @see Constraint#updateMinIdx(CPIntVar, int, int)
    */
   def callUpdateMinIdxWhenMinChanges(c: Constraint, idx: Int): Unit
 
-  def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
+  def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateMaxIdx(CPVarInt, int, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateMaxIdx(CPIntVar, int, int) method of the constraint c is called whenever
    * the maximum value of the domain changes
    * @param c
-   * @param idx, an index that will be given as parameter to updateMaxIdx(CPVarInt, int, int)
-   * @see Constraint#updateMaxIdx(CPVarInt, int, int)
+   * @param idx, an index that will be given as parameter to updateMaxIdx(CPIntVar, int, int)
+   * @see Constraint#updateMaxIdx(CPIntVar, int, int)
    */
   def callUpdateMaxIdxWhenMaxChanges(c: Constraint, idx: Int): Unit
 
-  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
+  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateBoundsIdx(CPVarInt, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever
    * the minimum or maximum value of the domain changes
    * @param c
-   * @param idx, an index that will be given as parameter to updateBoundsIdx(CPVarInt, int)
-   * @see Constraint#updateBoundsIdx(CPVarInt, int)
+   * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntVar, int)
+   * @see Constraint#updateBoundsIdx(CPIntVar, int)
    */
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the valBindIdx(CPVarInt, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).
    * @param c
-   * @param idx, an index that will be given as parameter to valBindIdx(CPVarInt, int)
-   * @see Constraint#valBindIdx(CPVarInt, int)
+   * @param idx, an index that will be given as parameter to valBindIdx(CPIntVar, int)
+   * @see Constraint#valBindIdx(CPIntVar, int)
    */
   def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPVarInt, idx: Int, delta: Int): Unit
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
    * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
@@ -479,7 +479,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @return a variable in the same store representing: - x
    */
   def opposite() = {
-    val y = new CPVarIntImpl(s, -max, -min);
+    val y = new CPIntVarImpl(s, -max, -min);
     s.post(new oscar.cp.constraints.Opposite(this, y));
     y;
   }
@@ -490,15 +490,15 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def minus(d: Int) = {
     if (d == 0) this
-    else new CPVarIntView(this, -d)
+    else new CPIntVarView(this, -d)
   }
 
   /**
    * @param y a variable in the same store as x
    * @return a variable in the same store representing: x - y
    */
-  def minus(y: CPVarInt) = {
-    val c = new CPVarIntImpl(s, min - y.max, max - y.min);
+  def minus(y: CPIntVar) = {
+    val c = new CPIntVarImpl(s, min - y.max, max - y.min);
     s.post(new oscar.cp.constraints.Minus(this, y, c));
     c;
   }
@@ -509,18 +509,18 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    */
   def plus(d: Int) = {
     if (d == 0) this;
-    else new CPVarIntView(this, d);
+    else new CPIntVarView(this, d);
   }
 
   /**
    * @param y
    * @return a variable in the same store representing: x + y
    */
-  def plus(y: CPVarInt): CPVarInt = {
+  def plus(y: CPIntVar): CPIntVar = {
     if (y.isBound) {
       this.plus(y.value)
     } else {
-      val c = new CPVarIntImpl(s, min + y.min, max + y.max);
+      val c = new CPIntVarImpl(s, min + y.min, max + y.max);
       val ok = s.post(new oscar.cp.constraints.BinarySum(this, y, c));
       assert(ok != CPOutcome.Failure);
       c
@@ -531,13 +531,13 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param c
    * @return a variable in the same store representing: x * c
    */
-  def mul(c: Int): CPVarInt = {
+  def mul(c: Int): CPIntVar = {
     if (c == 1) {
       return this
     }
     val a = if (c > 0) min * c else max * c
     val b = if (c > 0) max * c else min * c
-    val y = new CPVarIntImpl(s, a, b)
+    val y = new CPIntVarImpl(s, a, b)
     val ok = s.post(new oscar.cp.constraints.MulCte(this, c, y))
     assert(ok != CPOutcome.Failure)
     return y;
@@ -547,14 +547,14 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param y a variable in the same store as x
    * @return a variable in the same store representing: x * y
    */
-  def mul(y: CPVarInt): CPVarInt = {
+  def mul(y: CPIntVar): CPIntVar = {
     val a = min
     val b = max
     val c = y.min
     val d = y.max
     import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-    val z = new CPVarIntImpl(s, t.min, t.max)
+    val z = new CPIntVarImpl(s, t.min, t.max)
     val ok = s.post(new oscar.cp.constraints.MulVar(this, y, z))
     assert(ok != CPOutcome.Failure);
     z
@@ -563,8 +563,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * @return a variable in the same store representing: |x|
    */
-  def abs(): CPVarInt = {
-    val c = new CPVarIntImpl(s, 0, Math.max(Math.abs(min), Math.abs(max)));
+  def abs(): CPIntVar = {
+    val c = new CPIntVarImpl(s, 0, Math.max(Math.abs(min), Math.abs(max)));
     val ok = s.post(new oscar.cp.constraints.Abs(this, c));
     assert(ok != CPOutcome.Failure);
     return c
@@ -575,8 +575,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
-  def isEq(v: Int): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -587,8 +587,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param y a variable
    * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
    */
-  def isEq(y: CPVarInt): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isEq(y: CPIntVar): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.EqReifVar(this, y, b));
     assert(ok != CPOutcome.Failure);
     b
@@ -599,8 +599,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
    */
-  def isDiff(v: Int): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isDiff(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.DiffReif(this, v, b));
     assert(ok != CPOutcome.Failure)
     return b;
@@ -611,8 +611,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param y
    * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
    */
-  def isDiff(y: CPVarInt): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isDiff(y: CPIntVar): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
     assert(ok != CPOutcome.Failure)
     return b;
@@ -623,8 +623,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
    */
-  def isGrEq(v: Int): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isGrEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -635,8 +635,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
-  def isLeEq(v: Int): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isLeEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -647,8 +647,8 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
    * @param y a variable in the same store as x
    * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
-  def isGrEq(y: CPVarInt): CPVarBool = {
-    val b = new CPVarBool(s);
+  def isGrEq(y: CPIntVar): CPBoolVar = {
+    val b = new CPBoolVar(s);
     val ok = s.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -668,11 +668,11 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x+y
    */
-  def +(y: CPVarInt) = this.plus(y)
+  def +(y: CPIntVar) = this.plus(y)
   /**
    * x-y
    */
-  def -(y: CPVarInt) = this.minus(y)
+  def -(y: CPIntVar) = this.minus(y)
   /**
    * x+y
    */
@@ -684,7 +684,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x*y
    */
-  def *(y: CPVarInt) = this.mul(y)
+  def *(y: CPIntVar) = this.mul(y)
   /**
    * x*y
    */
@@ -692,7 +692,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x!=y
    */
-  def !=(y: CPVarInt) = new oscar.cp.constraints.DiffVar(this, y)
+  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
   /**
    * x!=y
    */
@@ -700,7 +700,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x==y
    */
-  def ==(y: CPVarInt) = new oscar.cp.constraints.Eq(this, y)
+  def ==(y: CPIntVar) = new oscar.cp.constraints.Eq(this, y)
   /**
    * x==y
    */
@@ -708,7 +708,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x<y
    */
-  def <(y: CPVarInt) = new oscar.cp.constraints.Le(this, y)
+  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
   /**
    * x<y
    */
@@ -716,7 +716,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x>y
    */
-  def >(y: CPVarInt) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
   /**
    * x>y
    */
@@ -724,7 +724,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x<=y
    */
-  def <=(y: CPVarInt) = new oscar.cp.constraints.LeEq(this, y)
+  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
   /**
    * x<=y
    */
@@ -732,7 +732,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * x>=y
    */
-  def >=(y: CPVarInt) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
   /**
    * x>=y
    */
@@ -744,11 +744,11 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * b <=> x == y
    */
-  def ===(y: CPVarInt) = this.isEq(y)
+  def ===(y: CPIntVar) = this.isEq(y)
   /**
    * b <=> x!= y
    */
-  def !==(y: CPVarInt) = this.isDiff(y)
+  def !==(y: CPIntVar) = this.isDiff(y)
   /**
    * b <=> x!= y
    */
@@ -760,7 +760,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * b <=> x >= y
    */
-  def >==(y: CPVarInt) = this.isGrEq(y)
+  def >==(y: CPIntVar) = this.isGrEq(y)
   /**
    * b <=> x > y
    */
@@ -768,7 +768,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * b <=> x > y
    */
-  def >>=(y: CPVarInt) = this.isGrEq(y + 1)
+  def >>=(y: CPIntVar) = this.isGrEq(y + 1)
   /**
    * b <=> x >= y
    */
@@ -776,7 +776,7 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * b <=> x >= y
    */
-  def <==(y: CPVarInt) = y >== this
+  def <==(y: CPIntVar) = y >== this
   /**
    * b <=> x > y
    */
@@ -784,30 +784,30 @@ abstract class CPVarInt(val s: CPStore, val name: String = "") extends CPVar wit
   /**
    * b <=> x > y
    */
-  def <<=(y: CPVarInt) = this <== (y - 1)
+  def <<=(y: CPIntVar) = this <== (y - 1)
 
   /**
    * b <=> x belongs to set
    */
-  def isIn(set: Set[Int]): CPVarBool = {
-    val b = CPVarBool()(s)
+  def isIn(set: Set[Int]): CPBoolVar = {
+    val b = CPBoolVar()(s)
     s.post(new InSetReif(this, set, b))
     b
   }
 
 }
 
-object CPVarInt {
+object CPIntVar {
 
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain
    * @param values the iterable defining the possible values for the variable
    * @param name the name of the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
    * The domain of the variable does not contains a given value more than once.
    */
-  def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPVarInt = {
+  def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
     values match {
       case range: Range => rangeDomain(range, name, store)
       case set: Set[Int] => setDomain(set, name, store)
@@ -819,20 +819,20 @@ object CPVarInt {
    * Creates a new CP Integer Variable with an iterable as initial domain
    * @param values the iterable defining the possible values for the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
    * The domain of the variable does not contains a given value more than once.
    */
-  def apply(values: Iterable[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
+  def apply(values: Iterable[Int])(implicit store: CPStore): CPIntVar = apply(values, "")(store)
   
   /**
    * Creates a new CP Integer Variable with an array as initial domain
    * @param values the array defining the possible values for the variable
    * @param name the name of the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
    * The domain of the variable does not contains a given value more than once.
    */
-  def apply(values: Array[Int], name: String)(implicit store: CPStore): CPVarInt = {
+  def apply(values: Array[Int], name: String)(implicit store: CPStore): CPIntVar = {
     iterableDomain(values, name, store)
   }
   
@@ -840,10 +840,10 @@ object CPVarInt {
    * Creates a new CP Integer Variable with an array as initial domain
    * @param values the array defining the possible values for the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with values as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
    * The domain of the variable does not contains a given value more than once.
    */
-  def apply(values: Array[Int])(implicit store: CPStore): CPVarInt = apply(values, "")(store)
+  def apply(values: Array[Int])(implicit store: CPStore): CPIntVar = apply(values, "")(store)
 
   /**
    * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
@@ -851,11 +851,11 @@ object CPVarInt {
    * @param maxValue the maximal value of the domain
    * @param name the name of the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPVarInt = {
-    new CPVarIntImpl(store, minValue, maxValue, name)
+  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
+    new CPIntVarImpl(store, minValue, maxValue, name)
   }
 
   /**
@@ -863,66 +863,66 @@ object CPVarInt {
    * @param minValue the minimal value of the domain
    * @param maxValue the maximal value of the domain
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPVarInt = apply(minValue, maxValue, "")(store)
+  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = apply(minValue, maxValue, "")(store)
 
   /**
    * Creates a new CP Integer Variable assigned to value
    * @param value the single value contained in the domain
    * @param name the name of the variable
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with a single value as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int, name: String)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, name)
+  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = new CPIntVarImpl(store, value, value, name)
 
   /**
    * Creates a new CP Integer Variable assigned to value
    * @param value the single value contained in the domain
    * @param store the CPStore in which the variable is created
-   * @return a fresh CPVarInt defined in the CPStore store with a single value as initial domain.
+   * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPVarInt = new CPVarIntImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntVar = new CPIntVarImpl(store, value, value, "")
 
   @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Iterable[Int], name: String): CPVarInt = apply(values, name)(store)
+  def apply(store: CPStore, values: Iterable[Int], name: String): CPIntVar = apply(values, name)(store)
 
   @deprecated("use apply(values: Iterable[Int])(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Iterable[Int]): CPVarInt = apply(store, values, "")
+  def apply(store: CPStore, values: Iterable[Int]): CPIntVar = apply(store, values, "")
   
   @deprecated("use apply(values: Array[Int], name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Array[Int], name: String): CPVarInt = apply(values, name)(store)
+  def apply(store: CPStore, values: Array[Int], name: String): CPIntVar = apply(values, name)(store)
 
   @deprecated("use apply(values: Array[Int])(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Array[Int]): CPVarInt = apply(store, values, "")
+  def apply(store: CPStore, values: Array[Int]): CPIntVar = apply(store, values, "")
 
   @deprecated("use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPVarInt = apply(minValue, maxValue, name)(store)
+  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPIntVar = apply(minValue, maxValue, name)(store)
 
   @deprecated("use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int): CPVarInt = apply(minValue, maxValue, "")(store)
+  def apply(store: CPStore, minValue: Int, maxValue: Int): CPIntVar = apply(minValue, maxValue, "")(store)
 
   @deprecated("use apply(value: Int, name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, value: Int, name: String): CPVarInt = apply(value, name)(store)
+  def apply(store: CPStore, value: Int, name: String): CPIntVar = apply(value, name)(store)
 
   @deprecated("use apply(value: Int)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, value: Int): CPVarInt = apply(value, "")(store)
+  def apply(store: CPStore, value: Int): CPIntVar = apply(value, "")(store)
 
-  /** Builds a CPVarInt from a range */
-  private def rangeDomain(domain: Range, name: String, store: CPStore): CPVarInt = {
+  /** Builds a CPIntVar from a range */
+  private def rangeDomain(domain: Range, name: String, store: CPStore): CPIntVar = {
     if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
-    else new CPVarIntImpl(store, domain.min, domain.max, name)
+    else new CPIntVarImpl(store, domain.min, domain.max, name)
   }
 
-  /** Builds a CPVarInt from an iterable */
-  private def iterableDomain(domain: Iterable[Int], name: String, store: CPStore): CPVarInt = setDomain(domain.toSet, name, store)
+  /** Builds a CPIntVar from an iterable */
+  private def iterableDomain(domain: Iterable[Int], name: String, store: CPStore): CPIntVar = setDomain(domain.toSet, name, store)
 
-  /** Builds a CPVarInt from a set */
-  private def setDomain(domain: Set[Int], name: String, store: CPStore): CPVarInt = {
+  /** Builds a CPIntVar from a set */
+  private def setDomain(domain: Set[Int], name: String, store: CPStore): CPIntVar = {
     val min = domain.min
     val max = domain.max
-    val x = new CPVarIntImpl(store, min, max, name)
+    val x = new CPIntVarImpl(store, min, max, name)
     if (max - min + 1 > domain.size) {
       for (v <- min to max if !domain.contains(v)) {
         x.removeValue(v)

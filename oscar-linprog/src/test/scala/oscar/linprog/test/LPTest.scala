@@ -31,8 +31,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 1") {
     for (lib <- solvers) {
       implicit val lp = LPSolver(lib)
-      val x = new LPVar(lp, "x", 100, 200)
-      val y = new LPVar(lp, "y", 80, 170)
+      val x = new LPFloatVar(lp, "x", 100, 200)
+      val y = new LPFloatVar(lp, "y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(y >= -x + 200)
@@ -50,8 +50,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 2") {
     for (lib <- solvers) {
       implicit val lp = LPSolver(lib)
-      val x = LPVar(lp, "x", 100, 200)
-      val y = LPVar(lp, "y", 80, 170)
+      val x = LPFloatVar(lp, "x", 100, 200)
+      val y = LPFloatVar(lp, "y", 80, 170)
 
       minimize(-2 * x + 5 * y)
       add(y >= -x + 200)
@@ -69,8 +69,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 3") {
     for (lib <- solvers) {
       implicit val lp = LPSolver(lib)
-      val x = LPVar("x")
-      val y = LPVar("y", 80, 170)
+      val x = LPFloatVar("x")
+      val y = LPFloatVar("y", 80, 170)
 
       minimize(-2 * x + 5 * y)
       add(y >= -x + 200)
@@ -84,10 +84,10 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 4") {
     for (lib <- solvers) {
       implicit val lp = LPSolver(lib)
-      val x = LPVar( "x", 100, 200)
-      val y = LPVar("y", 80, 170)
+      val x = LPFloatVar( "x", 100, 200)
+      val y = LPFloatVar("y", 80, 170)
       minimize(-2 * x + 5 * y)
-      val z = new LPVar(lp, "z", 80, 170)
+      val z = new LPFloatVar(lp, "z", 80, 170)
       add(z >= 170)
       add(y >= -x + 200)
       start()
@@ -104,8 +104,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 5") {
     for (lib <- solvers) {
       implicit val lp = new LPSolver(lib)
-      val x = LPVar("x", 100, 200)
-      val y = LPVar("y", 80, 170)
+      val x = LPFloatVar("x", 100, 200)
+      val y = LPFloatVar("y", 80, 170)
       minimize(-2 * x + 5 * y) 
       add(y >= -x + 200)
       start()
@@ -121,8 +121,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 6") {
     for (lib <- solvers) {
       implicit val lp = new LPSolver(lib)
-      val x = LPVar("x", 0, 10)
-      val y = LPVar("y", 0, 10)
+      val x = LPFloatVar("x", 0, 10)
+      val y = LPFloatVar("y", 0, 10)
       maximize(x + y) 
       add(x + y >= 5)
       start()
@@ -147,8 +147,8 @@ class LPTest extends FunSuite with ShouldMatchers {
   test("lp test 7") {
     for (lib <- solvers) {
       implicit val lp = LPSolver(lib)
-      val x = new LPVar(lp, "x", 0, 10)
-      val y = new LPVar(lp, "y", 0, 10)
+      val x = new LPFloatVar(lp, "x", 0, 10)
+      val y = new LPFloatVar(lp, "y", 0, 10)
 
       var cons: Vector[LPConstraint] = Vector()
 

@@ -47,7 +47,7 @@ class TestCarSeq extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val line = Array.fill(nbCars)(CPVarInt(0, nbConfigs - 1)(cp))
+    val line = Array.fill(nbCars)(CPIntVar(0, nbConfigs - 1)(cp))
 
     var nbSol = 0
 

@@ -75,10 +75,10 @@ object Hexiom extends CPModel with App {
   val cardinalities = (0 to 6).map(i => oneline.count((i + '0').toChar ==)).toArray :+ oneline.count(('.').toChar ==)
 
   // used(i) = true iff there is a pawn at this position
-  val used = Array.fill(k)(CPVarBool())
+  val used = Array.fill(k)(CPBoolVar())
   val dummy = 7 // dummy value when no pawn in the neighborhood
   // card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
-  val card = Array.fill(k)(CPVarInt(0 to 7))
+  val card = Array.fill(k)(CPIntVar(0 to 7))
   var nbSol = 0
 
   val tuples = (for (i <- 0 to 6) yield (i, 0, 7)) ++ (for (i <- 0 to 6) yield (i, 1, i))

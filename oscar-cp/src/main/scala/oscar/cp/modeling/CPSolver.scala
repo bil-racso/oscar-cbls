@@ -38,19 +38,19 @@ class CPSolver() extends CPStore() {
   
 
   
-  private val decVariables = scala.collection.mutable.Set[CPVarInt]()
-  var lastSol = new CPSol(Set[CPVarInt]())
+  private val decVariables = scala.collection.mutable.Set[CPIntVar]()
+  var lastSol = new CPSol(Set[CPIntVar]())
   var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
   var recordNonDominatedSolutions = false
   
   def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
   def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
-  def addDecisionVariables(x: Iterable[CPVarInt]) {
+  def addDecisionVariables(x: Iterable[CPIntVar]) {
     x.foreach(decVariables += _)
   }
   
-  	def addDecisionVariables(x: CPVarInt*) {
+  	def addDecisionVariables(x: CPIntVar*) {
     x.foreach(decVariables += _)
   }
   
@@ -58,7 +58,7 @@ class CPSolver() extends CPStore() {
     lastSol = new CPSol(decVariables.toSet)
   }
   
-  def obj(objVar: CPVarInt): CPObjectiveUnit = {
+  def obj(objVar: CPIntVar): CPObjectiveUnit = {
     objective(objVar)
   }
 
@@ -68,27 +68,27 @@ class CPSolver() extends CPStore() {
     this
   }
 
-  def minimize(objective: CPVarInt): CPSolver = minimize(Seq(objective): _*)
+  def minimize(objective: CPIntVar): CPSolver = minimize(Seq(objective): _*)
   
-  def minimize(objectives: CPVarInt*): CPSolver = 
+  def minimize(objectives: CPIntVar*): CPSolver = 
     optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
 
-  def maximize(objective: CPVarInt): CPSolver = maximize(Seq(objective): _*)
+  def maximize(objective: CPIntVar): CPSolver = maximize(Seq(objective): _*)
 
-  def maximize(objectives: CPVarInt*): CPSolver = 
+  def maximize(objectives: CPIntVar*): CPSolver = 
     optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
   
-  def paretoMinimize(objective: CPVarInt): CPSolver = paretoOptimize((objective, false))  
+  def paretoMinimize(objective: CPIntVar): CPSolver = paretoOptimize((objective, false))  
   
-  def paretoMinimize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
+  def paretoMinimize(objectives: CPIntVar*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
   
-  def paretoMaximize(objective: CPVarInt): CPSolver = paretoOptimize((objective, true))
+  def paretoMaximize(objective: CPIntVar): CPSolver = paretoOptimize((objective, true))
   
-  def paretoMaximize(objectives: CPVarInt*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
+  def paretoMaximize(objectives: CPIntVar*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
   
-  def paretoOptimize(objVarModes: (CPVarInt, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
+  def paretoOptimize(objVarModes: (CPIntVar, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
   
-  def paretoOptimize(objVarMode: (CPVarInt, Boolean)*): CPSolver = {
+  def paretoOptimize(objVarMode: (CPIntVar, Boolean)*): CPSolver = {
     
     // objVar of each objective
     val objectives = objVarMode.map(_._1).toArray
@@ -131,7 +131,7 @@ class CPSolver() extends CPStore() {
   /**
    * return true if every variable is bound
    */
-  def allBounds(vars: IndexedSeq[CPVarInt]): Boolean = {
+  def allBounds(vars: IndexedSeq[CPIntVar]): Boolean = {
     //vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 	var i = 0 
 	val s = vars.size

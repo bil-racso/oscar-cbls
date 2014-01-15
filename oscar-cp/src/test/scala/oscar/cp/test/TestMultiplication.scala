@@ -29,9 +29,9 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
   test("Multiplication 1") {
     val cp = CPSolver()
 
-    val x = CPVarInt(-10 to 10)(cp)
-    val y = CPVarInt(Set(-70,-50,50,70))(cp)
-    val z = CPVarInt(100 to 100)(cp)
+    val x = CPIntVar(-10 to 10)(cp)
+    val y = CPIntVar(Set(-70,-50,50,70))(cp)
+    val z = CPIntVar(100 to 100)(cp)
     	
     cp.add(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
     	
@@ -48,8 +48,8 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
   test("Multiplication 2") {
     val cp = CPSolver()
 
-    val x = CPVarInt(-1 to 0)(cp)
-    val y = CPVarInt(0 to 1)(cp)
+    val x = CPIntVar(-1 to 0)(cp)
+    val y = CPIntVar(0 to 1)(cp)
     cp.post(x*x == y)
     	
     cp.isFailed should be(false)
@@ -59,8 +59,8 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
   test("Multiplication 3") {
     val cp = CPSolver()
 
-    val x = CPVarInt(-10 to -1)(cp)
-    val y = CPVarInt(3 to 9)(cp)
+    val x = CPIntVar(-10 to -1)(cp)
+    val y = CPIntVar(3 to 9)(cp)
     cp.add(x*x == y)
     	
     cp.isFailed should be(false)
@@ -74,12 +74,12 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     
 
-    val digits = Array.fill(5)(CPVarInt(0 to 9)(cp))
+    val digits = Array.fill(5)(CPIntVar(0 to 9)(cp))
     
     // with a one after (larger one)
     val nb1 =  digits(0)*100000 + digits(1)*10000 + digits(2)*1000 +  digits(3)*100 + digits(4)*10 + 1
     // with a one before (smaller one)
-    val nb2 =  CPVarInt(100000)(cp) + digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4)
+    val nb2 =  CPIntVar(100000)(cp) + digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4)
     var nbsol = 0
     cp.solve subjectTo {
       cp.add(nb1 == (nb2*3))

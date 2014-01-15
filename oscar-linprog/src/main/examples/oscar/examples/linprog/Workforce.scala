@@ -43,7 +43,7 @@ object Workforce extends MIPModel(LPSolverLib.glpk) with App {
       Array(1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1),
       Array(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1))
 
-  val assigned = Array.tabulate(Workers.size, Shifts.size)((_, _) => MIPVar(0 to 1))
+  val assigned = Array.tabulate(Workers.size, Shifts.size)((_, _) => MIPFloatVar(0 to 1))
 
   minimize(sum(Workers, Shifts)((w, s) => assigned(w)(s) * pay(w)))
   for (s <- 0 until Shifts.size) {

@@ -49,13 +49,13 @@ public class TestLexLeq extends TestCase {
     }
     
     public void testLexLeq(){ 
-    	CPVarInt [] x = new CPVarInt[5];
+    	CPIntVar [] x = new CPIntVar[5];
     	for (int i = 0; i < x.length; i++) {
-			x[i] = CPVarInt.apply(s,0,1);
+			x[i] = CPIntVar.apply(s,0,1);
 		}
-    	CPVarInt [] y = new CPVarInt[5];
+    	CPIntVar [] y = new CPIntVar[5];
     	for (int i = 0; i < y.length; i++) {
-			y[i] = CPVarInt.apply(s,0,1);
+			y[i] = CPIntVar.apply(s,0,1);
 		}
     	
     	

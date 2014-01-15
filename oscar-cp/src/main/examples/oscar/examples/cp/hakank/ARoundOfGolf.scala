@@ -75,13 +75,13 @@ object ARoundOfGolf {
     val Frank = 3
 
     // variables
-    val last_name = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val last_name = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(clubb, sands, carter, green) = last_name
 
-    val job = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val job = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(cook, maintenance_man, clerk, caddy) = job
 
-    val score = Array.fill(n)(CPVarInt(70 to 85)(cp))
+    val score = Array.fill(n)(CPIntVar(70 to 85)(cp))
 
 
     //

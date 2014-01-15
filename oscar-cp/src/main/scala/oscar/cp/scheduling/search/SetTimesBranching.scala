@@ -16,7 +16,7 @@
 package oscar.cp.scheduling.search
 
 import oscar.cp.modeling._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
 
@@ -25,7 +25,7 @@ import oscar.algo.search.Branching
  * You can specify your variable/value heuristics
  * author: Pierre Schaus pschaus@gmail.com
  */
-class SetTimesBranching(starts: IndexedSeq[CPVarInt], durations: IndexedSeq[CPVarInt], ends: IndexedSeq[CPVarInt]) extends Branching {
+class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]) extends Branching {
 
   val cp = starts.head.store
   val n = starts.size

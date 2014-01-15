@@ -7,7 +7,7 @@ import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualCircle
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 
 /**
  * Little Problem given by my n-Side colleague Audrey Timmermans:
@@ -31,7 +31,7 @@ object AudreyProblem extends CPModel with App {
   }
 
   // Variables
-  val x = Array.tabulate(100)(i => CPVarInt(reachables(i)))
+  val x = Array.tabulate(100)(i => CPIntVar(reachables(i)))
   
   onSolution { 
     // Print solution

@@ -30,9 +30,9 @@ object MurderMystery extends CPModel with App {
   val sex = Array(0, 1, 0, 1) // 0 = male, 1 = female
 
   // variables
-  val personWithAge = Array.fill(4)(CPVarInt(0 to 3)) // personWithAge(i) is younger than personWithAge(i+1)
-  val age = Array.fill(4)(CPVarInt(0 to 3)) // age(i) is the age of person i
-  val Array(murderer, witness, helper, victim) = Array.fill(4)(CPVarInt(0 to 3))
+  val personWithAge = Array.fill(4)(CPIntVar(0 to 3)) // personWithAge(i) is younger than personWithAge(i+1)
+  val age = Array.fill(4)(CPIntVar(0 to 3)) // age(i) is the age of person i
+  val Array(murderer, witness, helper, victim) = Array.fill(4)(CPIntVar(0 to 3))
   val oldest = personWithAge(3)
   val youngest = personWithAge(0)
 

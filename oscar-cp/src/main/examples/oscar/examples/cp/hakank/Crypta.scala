@@ -60,10 +60,10 @@ object Crypta {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(0 to 9)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to 9)(cp))
     val Array(a,b,c,d,e,f,g,h,i,j) = x
-    val sr1 = CPVarInt(0 to 1)(cp)
-    val sr2 = CPVarInt(0 to 1)(cp)
+    val sr1 = CPIntVar(0 to 1)(cp)
+    val sr2 = CPIntVar(0 to 1)(cp)
 
 
     //

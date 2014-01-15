@@ -20,12 +20,12 @@ import oscar.cp.core._
  */
 object GardnerTwoPlusTwo extends CPModel with App {
 
-  val T = CPVarInt(0 to 9)
-  val W = CPVarInt(0 to 9)
-  val O = CPVarInt(Set(0, 2, 4, 6, 8)) // even number
-  val F = CPVarInt(0 to 9)
-  val U = CPVarInt(0 to 9)
-  val R = CPVarInt(0 to 9)
+  val T = CPIntVar(0 to 9)
+  val W = CPIntVar(0 to 9)
+  val O = CPIntVar(Set(0, 2, 4, 6, 8)) // even number
+  val F = CPIntVar(0 to 9)
+  val U = CPIntVar(0 to 9)
+  val R = CPIntVar(0 to 9)
 
   add((T * 100 + W * 10 + O) * 2 == F * 1000 + O * 100 + U + 10 + R)
   add(allDifferent(Array(T, W, O, F, U, R)), Strong)

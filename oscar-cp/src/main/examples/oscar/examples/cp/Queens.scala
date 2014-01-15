@@ -17,7 +17,7 @@ object Queens extends CPModel with App {
   val Queens = 0 until nQueens
 
   // Variables
-  val queens = Array.fill(nQueens)(CPVarInt(Queens))
+  val queens = Array.fill(nQueens)(CPIntVar(Queens))
 
   // Constraints
   add(allDifferent(queens))

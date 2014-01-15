@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,9 +26,9 @@ import oscar.cp.core.Constraint;
  */
 public class DiffReifVar extends Constraint {
 
-	CPVarInt x;
-	CPVarInt y;
-	CPVarBool b;
+	CPIntVar x;
+	CPIntVar y;
+	CPBoolVar b;
 	
 
 	/**
@@ -37,7 +37,7 @@ public class DiffReifVar extends Constraint {
      * @param x
      * @param y
      */
-	public DiffReifVar(CPVarInt x, CPVarInt y, CPVarBool b) {
+	public DiffReifVar(CPIntVar x, CPIntVar y, CPBoolVar b) {
 		super(x.s(),"DiffReif");
 		this.x = x;
 		this.y = y;
@@ -66,7 +66,7 @@ public class DiffReifVar extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				// x != y

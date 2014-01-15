@@ -30,7 +30,7 @@ class TestCount extends FunSuite with ShouldMatchers {
 
   val rand = new scala.util.Random(0)
 
-  def countDecomp(cp: CPSolver, N: CPVarInt, X: Array[CPVarInt], Y: CPVarInt) = {
+  def countDecomp(cp: CPSolver, N: CPIntVar, X: Array[CPIntVar], Y: CPIntVar) = {
     cp.add(sum(X.map(_ === Y)) == N)
   }
 
@@ -38,9 +38,9 @@ class TestCount extends FunSuite with ShouldMatchers {
     var nbSol = 0
     val cp = CPSolver()
 
-    val N = CPVarInt(nmin to nmax)(cp)
-    val X = Array.tabulate(domx.size)(i => CPVarInt(domx(i))(cp))
-    val Y = CPVarInt(domy)(cp)
+    val N = CPIntVar(nmin to nmax)(cp)
+    val X = Array.tabulate(domx.size)(i => CPIntVar(domx(i))(cp))
+    val Y = CPIntVar(domy)(cp)
     //println(domx.mkString(",")+" domY:"+domy)
 
     if (decomp) countDecomp(cp, N, X, Y)
@@ -63,9 +63,9 @@ class TestCount extends FunSuite with ShouldMatchers {
   test("count1") {
     val cp = CPSolver()
 
-    val N = CPVarInt(0 to 3)(cp)
-    val X = Array.fill(5)(CPVarInt(0 to 5)(cp))
-    val Y = CPVarInt(1 to 3)(cp)
+    val N = CPIntVar(0 to 3)(cp)
+    val X = Array.fill(5)(CPIntVar(0 to 5)(cp))
+    val Y = CPIntVar(1 to 3)(cp)
 
     cp.add(new Count(N, X, Y))
     cp.search {

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,14 +25,14 @@ import oscar.cp.core.Constraint;
  */
 public class Eq extends Constraint {
 
-	CPVarInt x, y;
+	CPIntVar x, y;
 
     /**
      * Constraint x and y to take the same value
      * @param x
      * @param y
      */
-	public Eq(CPVarInt x, CPVarInt y) {
+	public Eq(CPIntVar x, CPIntVar y) {
 		super(x.s(),"Eq");
 		this.x = x;
 		this.y = y;
@@ -43,8 +43,8 @@ public class Eq extends Constraint {
      * @param x
      * @param v
      */
-	public Eq(CPVarInt x, int v) {
-		this(x,CPVarInt.apply(x.s(),v,v));
+	public Eq(CPIntVar x, int v) {
+		this(x,CPIntVar.apply(x.s(),v,v));
 	}
 	
 	@Override
@@ -114,7 +114,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (var == x){
 			if (y.assign(x.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -130,7 +130,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt var) {
+	public CPOutcome updateBounds(CPIntVar var) {
 		if (var == y) {
 			if(x.updateMax(y.getMax()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -151,7 +151,7 @@ public class Eq extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPIntVar var, int val) {
 		if (var == x) {
 			if (y.removeValue(val) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

@@ -17,7 +17,7 @@ class TestGolomb extends FunSuite with ShouldMatchers {
 
       val cp = CPSolver()
 
-      val marks = Array.fill(n)(CPVarInt(0 to n * n)(cp))
+      val marks = Array.fill(n)(CPIntVar(0 to n * n)(cp))
 
       val obj = marks(n - 1)
       var best = Int.MaxValue

@@ -23,8 +23,7 @@ import oscar.cp.modeling._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
-import oscar.cp.core.CPVarInt
-import oscar.cp.constraints.SweepMaxCumulative
+import oscar.cp.core.CPIntVar
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.scheduling.search.SetTimesBranching
 
@@ -55,11 +54,11 @@ object CumulativeJobShop extends CPModel with App {
   val horizon = durations.sum
 
   // Activities & Resources
-  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(durations(t)))
-  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(0 to horizon - durationsVar(t).min))
-  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(durationsVar(t).min to horizon))
-  val demandsVar = Array.fill(nActivities)(CPVarInt(1))
-  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(resources(t)))
+  val durationsVar = Array.tabulate(nActivities)(t => CPIntVar(durations(t)))
+  val startsVar = Array.tabulate(nActivities)(t => CPIntVar(0 to horizon - durationsVar(t).min))
+  val endsVar = Array.tabulate(nActivities)(t => CPIntVar(durationsVar(t).min to horizon))
+  val demandsVar = Array.fill(nActivities)(CPIntVar(1))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPIntVar(resources(t)))
   val makespan = maximum(endsVar)
 
   // Consistency 
@@ -72,7 +71,7 @@ object CumulativeJobShop extends CPModel with App {
   }
   // Cumulative
   for (r <- Resources) {
-    add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(2), r))
+    add(maxCumulativeResource(startsVar, durationsVar,endsVar, demandsVar, resourcesVar, CPIntVar(2), r))
   }
 
   // Visualization  

@@ -28,24 +28,24 @@ import oscar.cp.modeling._
  * 
  * @author Pierre Schaus (pschaus@gmail.com)
  */
-class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint(x(0).s, "TableAC5TCRecomp") {
+class TableAC5TCRecomp(val data: TableData, val x: CPIntVar*) extends Constraint(x(0).s, "TableAC5TCRecomp") {
   
-  def this(x1: CPVarInt, x2: CPVarInt, tuples: Iterable[(Int,Int)]) = {
+  def this(x1: CPIntVar, x2: CPIntVar, tuples: Iterable[(Int,Int)]) = {
    this(new TableData(2),x1,x2)
    tuples.foreach(t => data.add(t._1, t._2))
   }
   
-  def this(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, tuples: Iterable[(Int,Int,Int)]) = {
+  def this(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, tuples: Iterable[(Int,Int,Int)]) = {
    this(new TableData(3),x1,x2,x3)
    tuples.foreach(t => data.add(t._1, t._2, t._3))
   }
   
-  def this(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, tuples: Iterable[(Int,Int,Int,Int)]) = {
+  def this(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, x4: CPIntVar, tuples: Iterable[(Int,Int,Int,Int)]) = {
    this(new TableData(4),x1,x2,x3,x4)
    tuples.foreach(t => data.add(t._1, t._2, t._3,t._4))
   }
   
-  def this(x1: CPVarInt, x2: CPVarInt, x3: CPVarInt, x4: CPVarInt, x5: CPVarInt, tuples: Iterable[(Int,Int,Int,Int,Int)]) = {
+  def this(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, x4: CPIntVar, x5: CPIntVar, tuples: Iterable[(Int,Int,Int,Int,Int)]) = {
    this(new TableData(5),x1,x2,x3,x4,x5)
    tuples.foreach(t => data.add(t._1, t._2, t._3,t._4,t._5))
   }  
@@ -144,7 +144,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPVarInt*) extends Constraint
     true
   }
   
-  override def valRemoveIdx(y: CPVarInt, i: Int, v: Int): CPOutcome = {
+  override def valRemoveIdx(y: CPIntVar, i: Int, v: Int): CPOutcome = {
       // all the supports using a tuple with v at index i are not support any more
 	  // we iterate on these and try to find new support in case they were used as support
 	  var t = sup(i)(v).value

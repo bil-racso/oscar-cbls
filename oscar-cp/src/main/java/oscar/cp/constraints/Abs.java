@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,8 +25,8 @@ import oscar.cp.core.Constraint;
  */
 public class Abs extends Constraint {
 	
-	private CPVarInt x;
-	private CPVarInt y;
+	private CPIntVar x;
+	private CPIntVar y;
 
 
     /**
@@ -34,7 +34,7 @@ public class Abs extends Constraint {
      * @param x
      * @param y
      */
-	public Abs(CPVarInt x, CPVarInt y) {
+	public Abs(CPIntVar x, CPIntVar y) {
 		super(x.s(),"Abs");
 		this.x = x;
 		this.y = y;
@@ -111,7 +111,7 @@ public class Abs extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		//return CPOutcome.Suspend;
 		
 		if (x.isBound()) {

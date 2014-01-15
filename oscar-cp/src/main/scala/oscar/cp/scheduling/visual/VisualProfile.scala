@@ -16,13 +16,13 @@
  */
 package oscar.cp.scheduling.visual
 import java.awt.Color
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
 import oscar.visual.VisualDrawing
 import scala.Array.canBuildFrom
 /*
-class VisualProfile(res: CumulativeResource, makespan: CPVarInt, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
+class VisualProfile(res: CumulativeResource, makespan: CPIntVar, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
 
   // The profile is represented by a polygon
   private val polygon: VisualPolygon = VisualPolygon(this)

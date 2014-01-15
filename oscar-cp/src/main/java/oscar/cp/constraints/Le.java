@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,21 +25,21 @@ import oscar.cp.core.Constraint;
  */
 public class Le extends Constraint {
 
-	private CPVarInt x, y;
+	private CPIntVar x, y;
 
     /**
      * x < y
      * @param x
      * @param y
      */
-	public Le(CPVarInt x, CPVarInt y) {
+	public Le(CPIntVar x, CPIntVar y) {
 		super(x.s()," < ");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public Le(CPVarInt x, int v) {
-		this(x, CPVarInt.apply(x.s(),v,v));
+	public Le(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(x.s(),v,v));
 	}
 	
 	@Override

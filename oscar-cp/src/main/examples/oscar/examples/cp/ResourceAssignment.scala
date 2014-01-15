@@ -40,16 +40,16 @@ object ResourceAssignment extends CPModel with App {
   val nbTasks = taskWeight.map(_._1).max + 1
 
   // p(t) is the partition chosen for task i
-  val p = Array.fill(nbTasks)(CPVarInt(0 until partition.size))
+  val p = Array.fill(nbTasks)(CPIntVar(0 until partition.size))
 
   // x(i) is the bin chosen for subtask i
-  val x: Array[CPVarInt] = for ((i, j) <- taskWeight) yield {
-    val possbin = Array.tabulate(partition.size)(i => CPVarInt(partition(i)))
-    val xij = CPVarInt(0 until nbBins)
+  val x: Array[CPIntVar] = for ((i, j) <- taskWeight) yield {
+    val possbin = Array.tabulate(partition.size)(i => CPIntVar(partition(i)))
+    val xij = CPIntVar(0 until nbBins)
     possbin(p(i))
   }
 
-  val load = Array.fill(nbBins)(CPVarInt(0 to binCapa))
+  val load = Array.fill(nbBins)(CPIntVar(0 to binCapa))
 
   add(binPacking(x, taskWeight.map(_._2), load))
 

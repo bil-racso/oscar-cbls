@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils;
 import oscar.algo.reversible.ReversibleInt
@@ -37,7 +37,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  *
  * @author Renaud Hartert - ren.hartert@gmail.com, Pierre Schaus - pschaus@gmail.com
  */
-class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constraint(y(0).s, "ACElementVar") {
+class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).s, "ACElementVar") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
@@ -90,11 +90,11 @@ class ElementVarAC(y: Array[CPVarInt], x: CPVarInt, z: CPVarInt) extends Constra
     Suspend
   }
 
-  override def valRemoveIdx(cpvar: CPVarInt, i: Int, v: Int): CPOutcome = {
+  override def valRemoveIdx(cpvar: CPIntVar, i: Int, v: Int): CPOutcome = {
     removeFromY(i, v)
   }
 
-  override def valRemove(cpvar: CPVarInt, v: Int): CPOutcome = {
+  override def valRemove(cpvar: CPIntVar, v: Int): CPOutcome = {
     if (cpvar == x) removeFromX(v)
     else removeFromZ(v)
   }

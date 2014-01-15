@@ -35,9 +35,9 @@ class TestDudeney extends FunSuite with ShouldMatchers  {
     val cp = new CPSolver()
     var nbSol = 0
 
-    val x = (0 until n).map(v => CPVarInt(0 to 9)(cp))
-    val nb = CPVarInt(1 to math.pow(10, n).toInt - 1)(cp)
-    val s = CPVarInt(1 to 9 * n)(cp)
+    val x = (0 until n).map(v => CPIntVar(0 to 9)(cp))
+    val nb = CPIntVar(1 to math.pow(10, n).toInt - 1)(cp)
+    val s = CPIntVar(1 to 9 * n)(cp)
 
     cp.add(nb == (s mul s mul s))
     cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)

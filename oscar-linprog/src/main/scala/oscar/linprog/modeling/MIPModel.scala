@@ -22,7 +22,7 @@ import oscar.algebra._
 /**
  * @author Pierre Schaus pschaus@gmail.com  
  */
-class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(mip,name,lbound,ubound,false) {
+class MIPFloatVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPFloatVar(mip,name,lbound,ubound,false) {
 
 	  	def this(mip: MIPSolver, name: String, unbounded: Boolean) = {
 	      this(mip,name)
@@ -45,18 +45,27 @@ class MIPVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double
 		}		
 		
 }
-	
-object MIPVar { 
-	  def apply(name : String)(implicit mip: MIPSolver) = new MIPVar(mip,name,0,Double.PositiveInfinity) 
-      def apply(name : String, lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPVar(mip,name,lbound,ubound)  
-	  def apply(name : String,  domain : Range)(implicit mip: MIPSolver): MIPVar =  new MIPVar(mip,name,domain)
-	  def apply()(implicit mip: MIPSolver) = new MIPVar(mip,"",0,Double.PositiveInfinity) 
-      def apply(lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPVar(mip,"",lbound,ubound)  
-	  def apply(domain : Range)(implicit mip: MIPSolver): MIPVar =  new MIPVar(mip,"",domain)	  
-	  
-      def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPVar = new MIPVar(mip,name,lbound,ubound) 
-	  def apply(mip : MIPSolver, name : String,  domain : Range): MIPVar =  new MIPVar(mip,name,domain)
+
+object MIPFloatVar { 
+	  def apply(name : String)(implicit mip: MIPSolver) = new MIPFloatVar(mip,name,0,Double.PositiveInfinity) 
+      def apply(name : String, lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPFloatVar(mip,name,lbound,ubound)  
+	  def apply()(implicit mip: MIPSolver) = new MIPFloatVar(mip,"",0,Double.PositiveInfinity) 
+      def apply(lbound: Double, ubound: Double)(implicit mip: MIPSolver) = new MIPFloatVar(mip,"",lbound,ubound)  
+	  def apply(domain : Range)(implicit mip: MIPSolver): MIPFloatVar =  new MIPFloatVar(mip,"",domain)	    
+      def apply(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity): MIPFloatVar = new MIPFloatVar(mip,name,lbound,ubound) 
 }
+
+
+class MIPIntVar(mip : MIPSolver, name : String,  domain : Range) extends MIPFloatVar(mip,name,domain.min,domain.max) {
+		this.integer = true
+}
+
+object MIPIntVar { 
+	  def apply(name : String,  domain : Range)(implicit mip: MIPSolver): MIPIntVar =  new MIPIntVar(mip,name,domain)
+	  def apply(domain : Range)(implicit mip: MIPSolver): MIPFloatVar =  new MIPIntVar(mip,"",domain)	  
+	  def apply(mip : MIPSolver, name : String,  domain : Range): MIPIntVar =  new MIPIntVar(mip,name,domain)
+}
+
 
 class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
 
@@ -82,22 +91,22 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
      */
   
     // Linear functions
-    private def linpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
+    private def linpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPFloatVar = {
       println("***** Piecewise linear function : LINEAR ***********")
-      val Z = MIPVar(this,"Z_"+name,0,Double.PositiveInfinity)
+      val Z = MIPFloatVar(this,"Z_"+name,0,Double.PositiveInfinity)
       add(Z == rates(0)*Q,Some("Z_"+name))
       Z
     }
         
     // Convex functions
-    private def convpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
+    private def convpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPFloatVar = {
       val num = limits.size;
       println("***** Piecewise linear function : CONVEX ***********")
-      val Z = MIPVar(this,"Z_"+name,0,Double.PositiveInfinity)
+      val Z = MIPFloatVar(this,"Z_"+name,0,Double.PositiveInfinity)
       /* Way proposed by AMPL : more variables !
        * =======================================
        */
-      val X = createVarMap(0 until num)(n => MIPVar(this,"X_"+name+n,0,{if(n==0) limits(n) else (limits(n) - limits(n-1))}))
+      val X = createVarMap(0 until num)(n => MIPFloatVar(this,"X_"+name+n,0,{if(n==0) limits(n) else (limits(n) - limits(n-1))}))
       for(n<-0 until num) this.add(X(n) <= {if(n==0) limits(n) else limits(n)-limits(n-1)},Some("Forcing constraint - "+name+n))
       this.add(sum(0 until num)(n => X(n)) == Q,Some(name+"_convex_Somme des X == Q"))
       this.add(sum(0 until num)(n => rates(n)*X(n)) == Z,Some(name+"_convex_Z must stick to curve"))
@@ -121,7 +130,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     } 
     
     // Non-convex functions 
-    private def ncpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPVar = {
+    private def ncpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPFloatVar = {
       val num = limits.size 
       println("***** Piecewise linear function : NON-CONVEX *******")
       // If a limit is too big, it can generate serious numerical errors.
@@ -131,9 +140,9 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
         throw new IllegalArgumentException("limits out of bounds => Risk of numerical errors.")
       }
       
-      val Y = createVarMap(0 until num)(n => MIPVar(this,"Y_"+name+n,0 to 1))						// binary variables
-      val X = createVarMap(0 until num)(n => MIPVar(this,"X_"+name+n,0,Double.PositiveInfinity)) 	// auxiliary variables
-      val Z = MIPVar(this,"Z_"+name,0,Double.PositiveInfinity)
+      val Y = createVarMap(0 until num)(n => MIPIntVar(this,"Y_"+name+n,0 to 1))						// binary variables
+      val X = createVarMap(0 until num)(n => MIPFloatVar(this,"X_"+name+n,0,Double.PositiveInfinity)) 	// auxiliary variables
+      val Z = MIPFloatVar(this,"Z_"+name,0,Double.PositiveInfinity)
       
       // C terms of the linear pieces.
       val c = new Array[Double](num)
@@ -164,7 +173,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
      * Piecewise linear function
      * @author: Pierre-Yves Gousenbourger
      */
-    def pwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name: String): MIPVar = {
+    def pwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name: String): MIPFloatVar = {
         if(limits.size != rates.size){
           throw new IllegalArgumentException("limits must be the same size as rates.")
         }

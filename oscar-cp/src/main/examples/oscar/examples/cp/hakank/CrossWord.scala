@@ -119,10 +119,10 @@ object CrossWord {
     //
     // variables
     //
-    val A = Array.fill(num_words,word_len)(CPVarInt(0 to 26)(cp))
+    val A = Array.fill(num_words,word_len)(CPIntVar(0 to 26)(cp))
     val A_flatten = A.flatten
 
-    val E = Array.fill(N)(CPVarInt(0 to num_words)(cp))
+    val E = Array.fill(N)(CPIntVar(0 to num_words)(cp))
     
     //
     // constraints

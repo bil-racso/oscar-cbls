@@ -43,17 +43,17 @@ object PerfectSquare extends CPModel with App {
   val nSquare = side.size
   val Square = 0 until nSquare
 
-  val durationsX = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
-  val startsX = Array.tabulate(nSquare)(t => CPVarInt(0 to s - side(t)))
-  val endsX = Array.tabulate(nSquare)(t => CPVarInt(side(t) to s))
-  val demandsX = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
-  val resourcesX = Array.fill(nSquare)(CPVarInt(0))
+  val durationsX = Array.tabulate(nSquare)(t => CPIntVar(side(t)))
+  val startsX = Array.tabulate(nSquare)(t => CPIntVar(0 to s - side(t)))
+  val endsX = Array.tabulate(nSquare)(t => CPIntVar(side(t) to s))
+  val demandsX = Array.tabulate(nSquare)(t => CPIntVar(side(t)))
+  val resourcesX = Array.fill(nSquare)(CPIntVar(0))
 
-  val durationsY = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
-  val startsY = Array.tabulate(nSquare)(t => CPVarInt(0 to s - side(t)))
-  val endsY = Array.tabulate(nSquare)(t => CPVarInt(side(t) to s))
-  val demandsY = Array.tabulate(nSquare)(t => CPVarInt(side(t)))
-  val resourcesY = Array.fill(nSquare)(CPVarInt(1))
+  val durationsY = Array.tabulate(nSquare)(t => CPIntVar(side(t)))
+  val startsY = Array.tabulate(nSquare)(t => CPIntVar(0 to s - side(t)))
+  val endsY = Array.tabulate(nSquare)(t => CPIntVar(side(t) to s))
+  val demandsY = Array.tabulate(nSquare)(t => CPIntVar(side(t)))
+  val resourcesY = Array.fill(nSquare)(CPIntVar(1))
 
   onSolution {
     // Visualization
@@ -77,10 +77,10 @@ object PerfectSquare extends CPModel with App {
   }
 
   // Cumulative
-  add(new SweepMaxCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(s), 0))
-  add(new SweepMinCumulative(startsX, endsX, durationsX, demandsX, resourcesX, CPVarInt(s), 0))
-  add(new SweepMaxCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(s), 1))
-  add(new SweepMinCumulative(startsY, endsY, durationsY, demandsY, resourcesY, CPVarInt(s), 1))
+  add(maxCumulativeResource(startsX, durationsX, endsX, demandsX, resourcesX, CPIntVar(s), 0))
+  add(minCumulativeResource(startsX, durationsX, endsX, demandsX, resourcesX, CPIntVar(s), 0))
+  add(maxCumulativeResource(startsY, durationsY, endsY, demandsY, resourcesY, CPIntVar(s), 1))
+  add(minCumulativeResource(startsY, durationsY, endsY, demandsY, resourcesY, CPIntVar(s), 1))
 
   // Overlapping
   for (i <- 0 until nSquare; j <- i + 1 until nSquare) {
@@ -90,7 +90,7 @@ object PerfectSquare extends CPModel with App {
   import oscar.util._
   import oscar.algo.search._
 
-  def myCustomBranching(w: Array[CPVarInt]) = Branching {
+  def myCustomBranching(w: Array[CPIntVar]) = Branching {
     // Minimum x position
     selectMin(w)(x => !x.isBound)(_.min) match {
       case None => noAlternative

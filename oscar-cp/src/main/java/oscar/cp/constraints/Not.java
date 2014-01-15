@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,14 +26,14 @@ import oscar.cp.core.Constraint;
  */
 public class Not extends Constraint {
 
-	CPVarBool x, y;
+	CPBoolVar x, y;
 
     /**
      * Constraint x == !y
      * @param x
      * @param y
      */
-	public Not(CPVarBool x, CPVarBool y) {
+	public Not(CPBoolVar x, CPBoolVar y) {
 		super(x.s(),"Not");
 		this.x = x;
 		this.y = y;
@@ -55,7 +55,7 @@ public class Not extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
         if (y.isBound()) {
             if (x.assign(1-y.getValue()) == CPOutcome.Failure) {
                 return CPOutcome.Failure;

@@ -70,11 +70,11 @@ object YoungTableaux {
     // variables
 
     // grid
-    val x = Array.fill(n,n)(CPVarInt(1 to n+1)(cp))
+    val x = Array.fill(n,n)(CPIntVar(1 to n+1)(cp))
     val x_flatten = x.flatten
 
     // the partition structure
-    val p = Array.fill(n)(CPVarInt(0 to n+1)(cp))
+    val p = Array.fill(n)(CPIntVar(0 to n+1)(cp))
 
     //
     // constraints

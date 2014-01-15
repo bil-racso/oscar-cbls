@@ -22,7 +22,7 @@ object QueensVisu extends CPModel with App {
   val Queens = 0 until nQueens
 
   // Variables
-  val queens = Array.fill(nQueens)(CPVarInt(Queens))
+  val queens = Array.fill(nQueens)(CPIntVar(Queens))
 
   val tree = new Tree()
   // -----------------------------------------------

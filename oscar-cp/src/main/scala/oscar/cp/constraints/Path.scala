@@ -35,10 +35,10 @@ import oscar.cp.core._
  * the successor of the last node of the path is the first node by convention
  * @author Pierre Schaus
  */
-class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt) extends Constraint(succ(0).s, "Path") {
+class Path(succ: Array[CPIntVar], start: CPIntVar, end: CPIntVar, length: CPIntVar) extends Constraint(succ(0).s, "Path") {
 
   // for each node, it's position in the path
-  val y = Array.fill(succ.size)(CPVarInt(0 until succ.size)(s))
+  val y = Array.fill(succ.size)(CPIntVar(0 until succ.size)(s))
   
 
   override def setup(l: CPPropagStrength): CPOutcome = {    

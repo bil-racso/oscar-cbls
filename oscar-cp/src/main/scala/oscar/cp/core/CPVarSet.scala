@@ -11,7 +11,7 @@ import oscar.cp.constraints.SetCard
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPVarSet(val store: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
+class CPSetVar(val store: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
 
   private val dom = new SetDomain(store, min, max)
 
@@ -23,7 +23,7 @@ class CPVarSet(val store: CPStore, min: Int, max: Int, val name: String = "") ex
   val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
 
   // cardinality variable
-  val card = CPVarInt(0, max - min + 1)(store)
+  val card = CPIntVar(0, max - min + 1)(store)
   store.post(new SetCard(this, card))
 
   /**
@@ -215,17 +215,17 @@ class CPVarSet(val store: CPStore, min: Int, max: Int, val name: String = "") ex
 
   def deltaRequired(sn: SnapshotVarSet): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
 
-  def ==(y: CPVarSet): Constraint = new oscar.cp.constraints.SetEq(this, y)
+  def ==(y: CPSetVar): Constraint = new oscar.cp.constraints.SetEq(this, y)
 }
 
-object CPVarSet {
+object CPSetVar {
   
   /** Creates a new CP Var Set that can contain a set of possible values in which some are required */
-  def apply(possible: Set[Int], required: Set[Int])(implicit store: CPStore): CPVarSet = {
+  def apply(possible: Set[Int], required: Set[Int])(implicit store: CPStore): CPSetVar = {
     if (!required.forall(elem => possible.contains(elem))) {
       throw new RuntimeException("Required values should be possible")
     }
-    val set = new CPVarSet(store, possible.min, possible.max) 
+    val set = new CPSetVar(store, possible.min, possible.max) 
     // Initializes the possible element
     for (elem <- possible.min to possible.max if !possible.contains(elem)) {
       set.excludes(elem)
@@ -236,15 +236,15 @@ object CPVarSet {
   }
   
   /** Creates a new CP Var Set that can contain a set of possible values */
-  def apply(possible: Set[Int])(implicit store: CPStore): CPVarSet = apply(possible, Set())(store)
+  def apply(possible: Set[Int])(implicit store: CPStore): CPSetVar = apply(possible, Set())(store)
   
   @deprecated("use apply(required: Set[Int], possibleNotRequired: Set[Int])(implicit store: CPStore) instead", "1.0")
-  def apply(s: CPStore, required: Set[Int] = Set(), possibleNotRequired: Set[Int]): CPVarSet = {
+  def apply(s: CPStore, required: Set[Int] = Set(), possibleNotRequired: Set[Int]): CPSetVar = {
     if (!required.intersect(possibleNotRequired).isEmpty) {
       throw new RuntimeException("Possible values should not be required")
     }
     val allPossibles = required ++ possibleNotRequired
-    val x = new CPVarSet(s, allPossibles.min, allPossibles.max)
+    val x = new CPSetVar(s, allPossibles.min, allPossibles.max)
     for (v <- allPossibles.min to allPossibles.max if !allPossibles.contains(v)) {
       x.excludes(v)
     }

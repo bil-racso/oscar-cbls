@@ -29,7 +29,7 @@ object Queens {
     val n = 12 //number of queens
     val Queens = 0 until n
     //variables
-    val queens = for (i <- Queens) yield CPVarInt(cp, 1 to n)
+    val queens = for (i <- Queens) yield CPIntVar(cp, 1 to n)
 
     var nbsol = 0
     cp.solve subjectTo {

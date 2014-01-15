@@ -48,7 +48,7 @@ object FreqAssignment extends CPModel with App {
     Array(1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2, 1, 16, 2),
     Array(1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 16))
 
-  val freq = Array.tabulate(nbCells)(c => Array.tabulate(trans(c))(t => CPVarInt(0 to nbFreq)))
+  val freq = Array.tabulate(nbCells)(c => Array.tabulate(trans(c))(t => CPIntVar(0 to nbFreq)))
 
   for (c <- 0 until nbCells; t1 <- 0 until trans(c); t2 <- t1 + 1 until trans(c)) {
     add((freq(c)(t1) - freq(c)(t2)).abs >= distance(c)(c))

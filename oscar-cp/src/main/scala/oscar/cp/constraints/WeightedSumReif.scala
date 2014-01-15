@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of sum_i a(i).x(i) == c <--> b
  * @author Pierre Schaus pschaus@gmail.com
  */
-class WeightedSumReif(val a: Array[Int], val x: Array[CPVarInt], val c: Int, val b: CPVarBool) extends Constraint(b.s, "WeightedSumReif") {
+class WeightedSumReif(val a: Array[Int], val x: Array[CPIntVar], val c: Int, val b: CPBoolVar) extends Constraint(b.s, "WeightedSumReif") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     x.foreach(_.callPropagateWhenDomainChanges(this))
@@ -32,7 +32,7 @@ class WeightedSumReif(val a: Array[Int], val x: Array[CPVarInt], val c: Int, val
 
   override def propagate(): CPOutcome = {
     if (b.isBoundTo(1)) {
-      if (s.post(new oscar.cp.constraints.WeightedSum(a,x,CPVarInt(c)(s))) == Failure) Failure
+      if (s.post(new oscar.cp.constraints.WeightedSum(a,x,CPIntVar(c)(s))) == Failure) Failure
       else Success
     } else {
       val m = a.zip(x).map{case(ai,xi) => if (ai < 0) ai*xi.max else ai*xi.min}.sum

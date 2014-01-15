@@ -19,7 +19,7 @@ package oscar.cp.constraints
 import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
@@ -27,8 +27,9 @@ import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**
+ * @author: Renaud Hartert
  */
-class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
+class SweepMinCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
 
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
@@ -376,7 +377,7 @@ class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     return CPOutcome.Suspend
   }
 
-  private def pruneInterval(low: Int, up: Int, v: CPVarInt): CPOutcome = {
+  private def pruneInterval(low: Int, up: Int, v: CPIntVar): CPOutcome = {
 
     assert(low <= up)
     if (low <= v.min && up <= v.max) {
@@ -488,7 +489,7 @@ class SweepMinCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
 }
 
 object SweepMinCumulative {
-  def apply(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): SweepMinCumulative = {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): SweepMinCumulative = {
     val nTasks = starts.size
     if (nTasks == 0) throw new Exception("no tasks")
     else if (ends.size != nTasks) throw new Exception("the number of end variables should be " + nTasks)
@@ -496,6 +497,6 @@ object SweepMinCumulative {
     else if (demands.size != nTasks) throw new Exception("the number of demand variables should be " + nTasks)
     else if (resources.size != nTasks) throw new Exception("the number of resource variables should be " + nTasks)
     else if (durations.exists(_.min < 0)) throw new Exception("durations have to be superior or equal to 0")
-    else new SweepMinCumulative(starts, ends, durations, demands, resources, capacity, id)
+    else new SweepMinCumulative(starts, durations,ends, demands, resources, capacity, id)
   }
 } 

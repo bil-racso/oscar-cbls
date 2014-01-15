@@ -80,7 +80,7 @@ object BuildingAHouseScheduling {
 		val makespan = cp.makespan
 
 		// extra constraint
-		val zero = CPVarInt(0 to 0)(cp)
+		val zero = CPIntVar(0 to 0)(cp)
 		val z = maximum(Array(moving.end - 100, zero)) * 400 +
 			    maximum(Array(-masonry.start + 25, zero)) * 200 +
 			    maximum(Array(-carpentry.start + 75, zero)) * 300 +

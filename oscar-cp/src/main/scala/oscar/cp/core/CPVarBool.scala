@@ -7,7 +7,7 @@ package oscar.cp.core
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPVarBool(st: CPStore, name: String) extends CPVarIntImpl(st, 0, 1, name) {
+class CPBoolVar(st: CPStore, name: String) extends CPIntVarImpl(st, 0, 1, name) {
 
   def this(s: CPStore) = this(s, "")
   
@@ -36,46 +36,46 @@ class CPVarBool(st: CPStore, name: String) extends CPVarIntImpl(st, 0, 1, name) 
   def isFalse = isBound && value == 0
 
   /** Logical or */
-  def or(y: CPVarBool): CPVarBool = {
-    val b = new CPVarBool(s)
+  def or(y: CPBoolVar): CPBoolVar = {
+    val b = new CPBoolVar(s)
     s.post(new oscar.cp.constraints.Or(Array(this, y), b))
     b
   }
 
   /** Logical and */
-  def and(y: CPVarBool): CPVarBool = {
+  def and(y: CPBoolVar): CPBoolVar = {
     val res = this.plus(y)
     res.isEq(2)
   }
 
-  def not(): CPVarBool = {
-    val not = new CPVarBool(s)
+  def not(): CPBoolVar = {
+    val not = new CPBoolVar(s)
     s.post(new oscar.cp.constraints.Not(this, not))
     not
   }
 
-  def implies(y: CPVarBool) = {
-    val V = new CPVarBool(s)
+  def implies(y: CPBoolVar) = {
+    val V = new CPBoolVar(s)
     s.post(new oscar.cp.constraints.Implication(this, y, V))
     V
   }
 }
 
-object CPVarBool {
+object CPBoolVar {
 
   /** Creates a new CP Boolean Variable */
-  def apply(name: String)(implicit store: CPStore): CPVarBool = new CPVarBool(store, name)
+  def apply(name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVar(store, name)
   
   /** Creates a new CP Boolean Variable */
-  def apply()(implicit store: CPStore): CPVarBool = apply("")(store)
+  def apply()(implicit store: CPStore): CPBoolVar = apply("")(store)
 
   /** Creates a new CP Boolean Variable assigned to b */
-  def apply(b: Boolean, name: String)(implicit store: CPStore): CPVarBool = new CPVarBool(store, b, name)
+  def apply(b: Boolean, name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVar(store, b, name)
   
   /** Creates a new CP Boolean Variable assigned to b */
-  def apply(b: Boolean)(implicit store: CPStore): CPVarBool = apply(b, "")(store)
+  def apply(b: Boolean)(implicit store: CPStore): CPBoolVar = apply(b, "")(store)
 
   @deprecated("use apply(b: Boolean)(implicit store: CPStore) instead", "1.0")
-  def apply(cp: CPStore, b: Boolean): CPVarBool = new CPVarBool(cp, b)
+  def apply(cp: CPStore, b: Boolean): CPBoolVar = new CPBoolVar(cp, b)
 }  
   

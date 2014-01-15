@@ -50,9 +50,9 @@ import scala.math._
 object CalculsDEnfer {
 
    // returns the maximal element in t
-   def my_max(t: Array[CPVarInt]) : CPVarInt = {
+   def my_max(t: Array[CPIntVar]) : CPIntVar = {
      val cp = t(0).s
-     val mmax = CPVarInt(t(0).min to t(0).max)(cp)
+     val mmax = CPIntVar(t(0).min to t(0).max)(cp)
      for(i <- 0 to t.length-1) {
        cp.post(mmax >= t(i))
      }
@@ -70,7 +70,7 @@ object CalculsDEnfer {
     //
     // variables
     // 
-    val X = Array.fill(N)(CPVarInt(RANGE)(cp))
+    val X = Array.fill(N)(CPIntVar(RANGE)(cp))
     val Array(a,b,c,d,e,f,g,h,i,j,k,l,m) = X slice( 0, 13)
     val Array(n,o,p,q,r,s,t,u,v,w,x,y,z) = X slice(13, 26)
 

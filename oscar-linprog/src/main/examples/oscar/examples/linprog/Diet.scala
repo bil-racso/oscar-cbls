@@ -30,11 +30,11 @@ object Diet extends LPModel with App {
   case class Nutriment(name: String) {
     val shortName = name
   }
-  case class Food(x: LPVar, price: Double, contents: Nutriment => Double)
+  case class Food(x: LPFloatVar, price: Double, contents: Nutriment => Double)
 
   val nutriments = List("A", "C", "B1", "B2", "NA", "CAL").map { Nutriment }
 
-  def nvar(name: String) = LPVar(name, 2, 10) //Each food is limited between 2 and 10
+  def nvar(name: String) = LPFloatVar(name, 2, 10) //Each food is limited between 2 and 10
 
   val foods = List(
     (nvar("Beef"), 3.19, List(60, 20, 10, 15, 938, 295)),

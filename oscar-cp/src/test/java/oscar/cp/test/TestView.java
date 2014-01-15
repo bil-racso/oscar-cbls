@@ -48,17 +48,17 @@ public class TestView extends TestCase {
     }
     
     public void testView(){  	
-    	CPVarInt x = CPVarInt.apply(s,1,5);
-    	CPVarInt y = CPVarInt.apply(s,1,5);
+    	CPIntVar x = CPIntVar.apply(s,1,5);
+    	CPIntVar y = CPIntVar.apply(s,1,5);
         System.out.println(x);
 
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
 
 
-    	CPVarInt x1 = x.plus(0);
-    	CPVarInt x2 = x1.plus(y);
+    	CPIntVar x1 = x.plus(0);
+    	CPIntVar x2 = x1.plus(y);
     	
-    	CPVarInt x3 = x.plus(4);
+    	CPIntVar x3 = x.plus(4);
     	
 //    	for(Integer v: x) {
 //    		System.out.println(v);

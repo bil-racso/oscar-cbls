@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Sequence
  * @author Pierre Schaus pschaus@gmail.com
  */
-class SequenceDecomposition(val xinit: Array[CPVarInt], val values: Set[Int], val l: Int, min: Int, max: Int) extends Constraint(xinit(0).s, "Sequence") {
+class SequenceDecomposition(val xinit: Array[CPIntVar], val values: Set[Int], val l: Int, min: Int, max: Int) extends Constraint(xinit(0).s, "Sequence") {
 
   if (values.size <= 0) throw new IllegalArgumentException("Sequence: values.size <= 0")
   if (l > xinit.size) throw new IllegalArgumentException("Sequence: l > xinit.size")
@@ -36,14 +36,14 @@ class SequenceDecomposition(val xinit: Array[CPVarInt], val values: Set[Int], va
     val x = xinit.map(_.isIn(values))
 
     // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
-    val cumulatedCounters: Array[CPVarInt] = Array.fill(x.size)(null)
+    val cumulatedCounters: Array[CPIntVar] = Array.fill(x.size)(null)
     cumulatedCounters(0) = x(0)
     for (i <- 1 until x.size) {
       cumulatedCounters(i) = x(i) + cumulatedCounters(i - 1)
     }
 
     // partial sums Pij = x[i]+...+x[j]
-    val P: Array[Array[CPVarInt]] = Array.fill(x.size, x.size)(null)
+    val P: Array[Array[CPIntVar]] = Array.fill(x.size, x.size)(null)
     for (i <- 0 until x.size) {
       P(i)(i) = x(i)
       for (j <- i + 1 until (x.size.min(i + l))) {

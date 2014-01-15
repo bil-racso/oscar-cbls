@@ -37,8 +37,8 @@ object ElectricityMarket extends MIPModel with App {
   val tmax = orders.map(_(2)).max
 
   // one variable for each order if we take it or not
-  val varMap = Map[Array[Int], MIPVar]()
-  orders.foreach(o => varMap += (o -> MIPVar("order", 0 to 1)))
+  val varMap = Map[Array[Int], MIPFloatVar]()
+  orders.foreach(o => varMap += (o -> MIPIntVar("order", 0 to 1)))
 
   // helper functions
   def overlap(order: Array[Int], t: Int) = t <= order(2) && t >= order(1)

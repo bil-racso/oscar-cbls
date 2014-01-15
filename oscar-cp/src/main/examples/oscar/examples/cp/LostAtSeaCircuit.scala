@@ -63,9 +63,9 @@ object LostAtSeaCircuit extends CPModel with App {
 
   // --------------- model -------------------
 
-  val succ = Array.tabulate(64)(i => CPVarInt(neighbors(i)))
+  val succ = Array.tabulate(64)(i => CPIntVar(neighbors(i)))
 
-  val path = Array.fill(10)(CPVarInt(0 until 64)) // represent the path of length ten which is the solution
+  val path = Array.fill(10)(CPIntVar(0 until 64)) // represent the path of length ten which is the solution
 
   val sol = Array.fill(10)(0)
   val prob = proba.flatten

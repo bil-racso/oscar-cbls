@@ -31,7 +31,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
   test("test delta 1") {
     var propag = false
     
-    class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
+    class MyCons(val X: CPIntVar) extends Constraint(X.s, "TestDelta") {
 
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.callPropagateWhenDomainChanges(this,true)
@@ -56,7 +56,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(Array(1, 3, 5, 7))(cp)
+    val x = CPIntVar(Array(1, 3, 5, 7))(cp)
     cp.add(new MyCons(x))
     cp.add(x < 5)
     propag should be(true)
@@ -67,7 +67,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
   test("test delta 2") {
     var propag = false
     
-    class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
+    class MyCons(val X: CPIntVar) extends Constraint(X.s, "TestDelta") {
 
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.callPropagateWhenDomainChanges(this,trackDelta = true)
@@ -92,7 +92,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
+    val x = CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     cp.add(x < 2)
     propag should be(true)
@@ -101,7 +101,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
   test("test delta 3") {
     var propag = false
     
-    class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
+    class MyCons(val X: CPIntVar) extends Constraint(X.s, "TestDelta") {
       priorityL2 = CPStore.MAXPRIORL2-5 
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.callPropagateWhenDomainChanges(this,true)
@@ -126,7 +126,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
+    val x = CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     val cons = new LinkedList[Constraint]()
     cons.add(x < 4)
@@ -142,7 +142,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
   test("test delta 4") {
     var propag = false
     
-    class MyCons(val X: CPVarInt) extends Constraint(X.s, "TestDelta") {
+    class MyCons(val X: CPIntVar) extends Constraint(X.s, "TestDelta") {
       priorityL2 = CPStore.MAXPRIORL2-5 
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.filterWhenDomainChanges { delta =>
@@ -161,7 +161,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     }
 
     val cp = CPSolver()
-    val x = CPVarInt(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
+    val x = CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
     val cons = new LinkedList[Constraint]()
     cons.add(x < 4)

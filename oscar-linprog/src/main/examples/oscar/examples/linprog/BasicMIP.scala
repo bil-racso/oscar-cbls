@@ -20,10 +20,10 @@ import oscar.algebra._
 
 object BasicMIP extends MIPModel with App  {
 
-  val x0 = MIPVar("x0", 0.0, 40.0)
-  val x1 = MIPVar("x1", 0 to 1000)
-  val x2 = MIPVar("x2", 0 until 18)
-  val x3 = MIPVar("x3", 2.0, 3.0)
+  val x0 = MIPFloatVar("x0", 0.0, 40.0)
+  val x1 = MIPIntVar("x1", 0 to 1000)
+  val x2 = MIPIntVar("x2", 0 until 18)
+  val x3 = MIPFloatVar("x3", 2.0, 3.0)
 
   maximize(x0 + 2 * x1 + 3 * x2 + x3)
 
