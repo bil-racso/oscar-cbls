@@ -183,7 +183,7 @@ class Element1[A](x: IndexedSeq[Var[A]], y: IncrementalVar[Int], v: Var[A]) exte
  */
 class SumInvariant[N:Numeric](val result: IncrementalVar[N], list: List[IncrementalVar[N]]) extends StaticInvariant[N] {
   def scope = (for (v <- list) yield v.incChanges).toIndexedSeq
-  var a = 0.asInstanceOf[N]
+  var a = implicitly[Numeric[N]].zero
   for (v <- list.iterator) {
     a += v()
     dependsOn(v incChanges) {
@@ -200,7 +200,7 @@ class SumInvariant[N:Numeric](val result: IncrementalVar[N], list: List[Incremen
  * list is mutable, adding a var in list will modify the value hold by result
  */
 class SumInvariantOnList[N:Numeric](val result: IncrementalVar[N], list: VarList[N]) extends StaticInvariant[N] {
-  var a = 0.asInstanceOf[N]
+  var a = implicitly[Numeric[N]].zero
   for (v <- list().iterator) {
     a += v
   }
@@ -220,7 +220,7 @@ class SumInvariantOnList[N:Numeric](val result: IncrementalVar[N], list: VarList
  * list is mutable, so adding a Var in list will modify the value hold by result
  */
 class SumInvariantOnListOfVars[N:Numeric](val result: IncrementalVar[N], list: VarList[IncrementalVar[N]]) extends StaticInvariant[N] {
-  var a:N = 0.asInstanceOf[N]
+  var a:N = implicitly[Numeric[N]].zero
   val mmap = new scala.collection.mutable.HashMap[IncrementalVar[N], Dependency[(N, N)]]
   for (v <- list().iterator) {
     mmap.put(v, dependsOn(v.incChanges) {
