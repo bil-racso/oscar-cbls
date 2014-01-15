@@ -56,7 +56,7 @@ class TestVarList extends FunSuite with ShouldMatchers {
 
     val v2 = v.mymap(_ * 2)
     
-    val s = sumOnInt(v2)
+    val s = sum(v2)
     
     v.add(6)
     v.add(10)
@@ -69,16 +69,16 @@ class TestVarList extends FunSuite with ShouldMatchers {
   }
   
   test("mymap and VarInt - Sum"){
-    case class Cont(i: VarInt)
+    case class Cont(i: IncrementalVar[Int])
     
     val list = new VarList[Cont]()
     val listRes = list.mymap(_.i)
     
-    val s = sum(listRes)
+    val s = sumVars(listRes)
     
-    val v1 = new VarInt(5)
-    val v2 = new VarInt(9)
-    val v3 = new VarInt(10)
+    val v1 = new IncrementalVar(5)
+    val v2 = new IncrementalVar(9)
+    val v3 = new IncrementalVar(10)
     
     list.add(Cont(v1))
     

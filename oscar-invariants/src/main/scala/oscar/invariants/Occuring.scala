@@ -221,7 +221,9 @@ class Signal[A](private var value: A) extends NotifyAllEvent[A] {
       super.emit(msg)
     }
   }
+  
   def apply() = value
+  
   override def filter(cond: A => Boolean) = new ConditionalOccuring[A](this, cond) {
     // could be improved in the case the call to f(sig()) is false;
     // then we could avoid to create the Reaction
@@ -231,6 +233,7 @@ class Signal[A](private var value: A) extends NotifyAllEvent[A] {
       r
     }
   }
+  
   def filterOption(cond: A => Boolean) = {
     val self = this
     val fOption = (i: A) => if (cond(i)) Some(i) else None
@@ -239,7 +242,22 @@ class Signal[A](private var value: A) extends NotifyAllEvent[A] {
     }
   }
 
-  //new EventFromNow(this, f)
+  def zip[B](b:Signal[B]): Signal[(A,B)] = {
+    val signal = Signal((this(),b()))
+    whenever(this){ v => signal.emit(v,b()) }
+    whenever(b){ v => signal.emit(this(),v) }
+    signal
+  }
+  
+  def map[B](f:A=>B): Signal[B] = {
+    val signal = Signal[B](f(this()))
+    whenever(this){ v => signal.emit(f(v)) }
+    signal
+  }
+  
+  def >[B >: A](b:Signal[B])(implicit cmp: Ordering[B]): Signal[Boolean] = (this zip b) map { case (a,b) => cmp.gt(a,b) }
+  def <[B >: A](b:Signal[B])(implicit cmp: Ordering[B]): Signal[Boolean] = (this zip b) map { case (a,b) => cmp.lt(a,b) }
+  def compare[B >: A](b:Signal[B])(implicit cmp: Ordering[B]): Signal[Int] = (this zip b) map { case (a,b) => cmp.compare(a,b) }
 }
 
 //class SignalOne[A](value: A) extends Signal[A](value) with NotifyOneEvent[A] {

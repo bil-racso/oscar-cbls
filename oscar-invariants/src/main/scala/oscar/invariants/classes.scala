@@ -30,7 +30,7 @@
  */
 
 package oscar.invariants
-
+import Numeric.Implicits._
 import scala.collection.immutable._
 import oscar.invariants._
 
@@ -86,12 +86,13 @@ abstract class Dependency[A](val reactive: Reactive, var reaction: Reaction[A]) 
  * A Var holds a value with facility to assign a new value and maintain a property through invariants.
  */
 object Var {
-  def apply[A](v: A) = {
-    v match {
-      case Int => new VarInt(v.asInstanceOf[Int])
-    }
+  def apply[A](value: A) = value match {
+    case v:Int => new IncrementalVar[Int](v)
+    case v:Double => new IncrementalVar[Double](v)
+    case v:Long => new IncrementalVar[Long](v)
   }
 }
+
 class Var[A](_value: A) extends Signal[A](_value) {
 
   /**
@@ -102,25 +103,22 @@ class Var[A](_value: A) extends Signal[A](_value) {
   def <=(f: this.type => Any): this.type = {
     f(this)
     this
-  }
+  } 
 }
 
-/**
- * A Var holding an Integer value with facility value.
- */
-class VarInt(v: Int) extends Var[Int](v) {
-  
+/** A var with features to allow in/decrements and change a historic */
+class IncrementalVar[T:Numeric](v:T) extends Var[T](v) {
   /**
    * Occuring that throws notifications representing the incremental change in the value each time it changes.
    */
-  val incChanges = Event[(Int, Int)]()
-  @inline override final def :=(v: Int) {
+  val incChanges = Event[(T, T)]()
+  @inline override final def :=(v: T) {
     val old = this()
     super.:=(v)
     incChanges emit (old, v)
   }
-  def :+=(v: Int) { this := this() + v }
-  def :-=(v: Int) { this := this() - v }
+  def :+=(v: T) { this := this() + v  }
+  def :-=(v: T) { this := this() - v }
 }
 
 /**
@@ -129,6 +127,7 @@ class VarInt(v: Int) extends Var[Int](v) {
 class VarList[A]() extends Var[Seq[A]](Nil) {
   val isIncreased = Event[A]()
   val isDecreased = Event[A]()
+  
   def add(elem: A) {
     this := this() :+ elem
     isIncreased emit (elem)
@@ -143,7 +142,7 @@ class VarList[A]() extends Var[Seq[A]](Nil) {
     whenever(isDecreased){ v=> res.remove(f(v))}
     res
   } 
-    
+  def removeAll(f:A => Boolean): Unit = this().filter(f).foreach(remove)
 }
 
 abstract class StaticInvariant[R] extends Reactive {
@@ -151,7 +150,7 @@ abstract class StaticInvariant[R] extends Reactive {
 }
 
 class ElementArray[A](arr: scala.collection.immutable.IndexedSeq[Var[A]]) {
-  @inline def at(y: Var[Int]) = { v: Var[A] =>
+  @inline def at(y: IncrementalVar[Int]) = { v: Var[A] =>
     new Element1(arr, y, v)
   }
 }
@@ -164,15 +163,15 @@ class ElementArray[A](arr: scala.collection.immutable.IndexedSeq[Var[A]]) {
 /**
  * Maintains v = x(y())
  */
-class Element1[A](x: IndexedSeq[Var[A]], y: Var[Int], v: Var[A]) extends StaticInvariant[A] {
-  v := x(y)
+class Element1[A](x: IndexedSeq[Var[A]], y: IncrementalVar[Int], v: Var[A]) extends StaticInvariant[A] {
+  v := x(y())()
   def scope() = y +: (for (v <- x) yield v)
-  private var dep = dependsOn(x(y)) { (w: A) =>
+  private var dep = dependsOn(x(y())) { (w: A) =>
     v := w
     true
   }
   val a = dependsOn(y) { (w: Int) =>
-    v := x(w)
+    v := x(w)()
     dep nowReactsOn (x(w))
     true
   }
@@ -182,11 +181,11 @@ class Element1[A](x: IndexedSeq[Var[A]], y: Var[Int], v: Var[A]) extends StaticI
  * Maintains result = sum_{v \in list} v()
  * list is immutable, so no Var can be added
  */
-class SumInvariant(result: VarInt, list: List[VarInt]) extends StaticInvariant[Int] {
+class SumInvariant[N:Numeric](val result: IncrementalVar[N], list: List[IncrementalVar[N]]) extends StaticInvariant[N] {
   def scope = (for (v <- list) yield v.incChanges).toIndexedSeq
-  var a = 0
+  var a = 0.asInstanceOf[N]
   for (v <- list.iterator) {
-    a += v
+    a += v()
     dependsOn(v incChanges) {
       case (o, n) =>
         result :+= n - o
@@ -200,8 +199,8 @@ class SumInvariant(result: VarInt, list: List[VarInt]) extends StaticInvariant[I
  * Maintains result = sum_{i \in list} i
  * list is mutable, adding a var in list will modify the value hold by result
  */
-class SumInvariantOnList(result: VarInt, list: VarList[Int]) extends StaticInvariant[Int] {
-  var a = 0
+class SumInvariantOnList[N:Numeric](val result: IncrementalVar[N], list: VarList[N]) extends StaticInvariant[N] {
+  var a = 0.asInstanceOf[N]
   for (v <- list().iterator) {
     a += v
   }
@@ -210,30 +209,30 @@ class SumInvariantOnList(result: VarInt, list: VarList[Int]) extends StaticInvar
     result :+= w
     true
   }
-    dependsOn(list.isDecreased) { w =>
+  dependsOn(list.isDecreased) { w =>
     result :-= w
     true
-    }
+  }
 }
 
 /**
  * Maintains result = sum_{v \in list} v()
  * list is mutable, so adding a Var in list will modify the value hold by result
  */
-class SumInvariantOnListOfVars(result: VarInt, list: VarList[VarInt]) extends StaticInvariant[Int] {
-  var a = 0
-  val mmap = new scala.collection.mutable.HashMap[VarInt, Dependency[(Int, Int)]]
+class SumInvariantOnListOfVars[N:Numeric](val result: IncrementalVar[N], list: VarList[IncrementalVar[N]]) extends StaticInvariant[N] {
+  var a:N = 0.asInstanceOf[N]
+  val mmap = new scala.collection.mutable.HashMap[IncrementalVar[N], Dependency[(N, N)]]
   for (v <- list().iterator) {
     mmap.put(v, dependsOn(v.incChanges) {
       case (o, n) =>
         result :+= n - o
         true
     })
-    a += v
+    a += v()
   }
   result := a
   dependsOn(list.isIncreased) { v =>
-    result :+= v
+    result :+= v()
     mmap.put(v, dependsOn(v.incChanges) {
       case (o, n) =>
         result :+= n - o
@@ -242,7 +241,7 @@ class SumInvariantOnListOfVars(result: VarInt, list: VarList[VarInt]) extends St
     true
   }
   dependsOn(list.isDecreased) { v =>
-    result :-= v
+    result :-= v()
     mmap.get(v).get.dispose()
     true
   }
@@ -252,20 +251,20 @@ object invariants {
 
   def main(args: Array[String]) {
 
-    val y = new VarInt(1)
-    val z = new VarInt(1)
-    val x = (for (j <- 0 to 10) yield new VarInt(100 + j))
+    val y = new IncrementalVar[Int](1)
+    val z = new IncrementalVar[Int](1)
+    val x = (for (j <- 0 to 10) yield new IncrementalVar[Int](100 + j))
 
-    val s = new VarInt(0) <= sum(z, y)
+    val s = new IncrementalVar[Int](0) <= sum(z, y)
 
-    val l = new VarList[VarInt]
+    val l = new VarList[IncrementalVar[Int]]
 
     l.add(y)
     l.add(z)
 
-    val sl = new VarInt(0) <= sumOnListOfVars(l)
+    val sl = new IncrementalVar[Int](0) <= sumVars[Int](l)
 
-    val f = new VarInt(0) <= (x at y) //(y, z) //new Element1(x,y)
+    val f = new IncrementalVar[Int](0) <= (x at y) //(y, z) //new Element1(x,y)
     //
     //    when (sl changes){ x => println("sum changed to " + x )
     //      true}

@@ -27,7 +27,7 @@ class InvariantsTest extends FunSuite with ShouldMatchers  {
 
   
   test("test whener on VarInt") {
-	  	val y = new VarInt(1)
+	  	val y = new IncrementalVar(1)
 	  	
 	  	var nb = 0
 	  	
@@ -44,7 +44,7 @@ class InvariantsTest extends FunSuite with ShouldMatchers  {
   }
   
   test("test once on VarInt") {
-	  	val y = new VarInt(1)
+	  	val y = new IncrementalVar(1)
 	  	
 	  	var nb = 0
 	  	

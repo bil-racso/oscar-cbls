@@ -125,18 +125,13 @@ package object invariants extends Logging {
   implicit def array2ElementArray[A](at: scala.collection.immutable.IndexedSeq[Var[A]]) = {
     new ElementArray(at)
   }
-  def sum(l: VarInt*) = { (v: VarInt) => new SumInvariant(v, l.toList) }
-  def sumOnInt(l: VarList[Int]) = {
-    val v = new VarInt(0)
-    new SumInvariantOnList(v, l)
-    v
-  }
-  def sumOnListOfVars(l: VarList[VarInt]) = { (v: VarInt) => new SumInvariantOnListOfVars(v, l) }
-  def sum(l: VarList[VarInt]) = {
-    val v = new VarInt(0)
-    new SumInvariantOnListOfVars(v, l)
-    v
-  }
+  def sum[N:Numeric](l: IncrementalVar[N]*) = (new SumInvariant(createZero,l.toList)).result
+  def sum[N:Numeric](l: VarList[N]) = new SumInvariantOnList(createZero, l).result
+  
+  def createZero[N:Numeric]: IncrementalVar[N] = new IncrementalVar[N](implicitly[Numeric[N]].zero) 
+  
+  def sumVars[N:Numeric](l: VarList[IncrementalVar[N]],v: IncrementalVar[N]): IncrementalVar[N] = { new SumInvariantOnListOfVars(v, l); v}
+  def sumVars[N:Numeric](l: VarList[IncrementalVar[N]]): IncrementalVar[N] = sumVars(l,createZero[N])
 
   //  implicit def array2ElementArray2[A](at: IndexedSeq[IndexedSeq[Var[A]]]) = {
   //    new ElementArray2(at)
