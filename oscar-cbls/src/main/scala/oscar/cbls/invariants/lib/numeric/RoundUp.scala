@@ -220,6 +220,7 @@ case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones:
   }
 }
 
+
 object TestRoundUpCustom extends App {
 
   def n2day(n: Int): String =

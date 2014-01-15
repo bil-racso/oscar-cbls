@@ -165,7 +165,7 @@ class Planning(val model: Store, val maxduration: Int) {
    * @return true if a dependence can be add, false otherwise.
    */
   def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
-    //this is not straigntworfward since there can be some SuperTasks.
+    //this is not straightforward since there can be some SuperTasks.
     (from != to) && to.canAddPrecedence && ((!superActivity) || !isThereDependency(to,from))
   }
 
@@ -210,10 +210,10 @@ class Planning(val model: Store, val maxduration: Int) {
    * @param newTo
    * @return
    */
-  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):DependencyCleaner = {
+  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):PrecedenceCleaner = {
     val from = newTo
     val to = newFrom
-    if(from == to) return HardRockDependency()
+    if(from == to) return HardPrecedence()
 
     var MarkedActivities:List[Activity] = List.empty
     var DependenciesToKill:List[(Activity, Activity)] = List.empty
@@ -269,10 +269,10 @@ class Planning(val model: Store, val maxduration: Int) {
     MarkPathes(from.getStartActivity, to.getEndActivity)
     if(!FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
       for (t <- MarkedActivities) t.Mark = false
-      HardRockDependency()
+      HardPrecedence()
     }else{
       for (t <- MarkedActivities) t.Mark = false
-      DependenciesCanBeKilled(DependenciesToKill)
+      PrecedencesCanBeKilled(DependenciesToKill)
     }
   }
 
@@ -285,12 +285,12 @@ class Planning(val model: Store, val maxduration: Int) {
   }
 }
 
-abstract class DependencyCleaner(val canBeKilled:Boolean){
+abstract class PrecedenceCleaner(val canBeKilled:Boolean){
   def killDependencies(Verbose:Boolean = false){throw new Exception("cannot kill dependencies")}
 }
-case class HardRockDependency() extends DependencyCleaner(false)
+case class HardPrecedence() extends PrecedenceCleaner(false)
 
-case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner(true){
+case class PrecedencesCanBeKilled(d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
   override def killDependencies(Verbose:Boolean = false){
     for ((a,b) <- d){
       b.removeDynamicPredecessor(a,Verbose)

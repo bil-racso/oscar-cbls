@@ -152,7 +152,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
           //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
           //we search which dependency can be killed in the conflict set,
           val conflictActivityArray = conflictActivities.toArray
-          val dependencyKillers:Array[Array[DependencyCleaner]] =
+          val dependencyKillers:Array[Array[PrecedenceCleaner]] =
             Array.tabulate(conflictActivityArray.size)(
               t1 => Array.tabulate(conflictActivityArray.size)(
                 t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1),conflictActivityArray(t2))))
