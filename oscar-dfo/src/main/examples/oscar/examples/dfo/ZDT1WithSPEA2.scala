@@ -18,7 +18,6 @@ import oscar.dfo._
 import oscar.algebra._
 import oscar.dfo.multiobjective.evolutionary.SPEA2
 import oscar.dfo.utils.MOEvaluator
-import oscar.dfo.utils.MinMOOComparator
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotScatter
 import java.awt.Color
@@ -28,7 +27,7 @@ import oscar.dfo.visual.PlotDFOPareto2D
 /**
  * @author cyrille.dejemeppe@gmail.com
  */
-object ZDT1 extends App {
+object ZDT1WithSPEA2 extends App {
   
   // The zdt1 objective
   def zdt1(coordinates: Array[Double]): Array[Double] = {
@@ -49,12 +48,11 @@ object ZDT1 extends App {
 
   // declare two variables and their domain
   val evaluator = MOEvaluator(zdt1, Array.fill(2)(Double.MaxValue))
-  val comparator = MinMOOComparator[Double]()
   val populationSize = 100
   val archiveSize = 100
   val mutationProba = 100
-  val spea2Solver = SPEA2(evaluator, comparator,
-		  				  populationSize, archiveSize, mutationProba)
+  val spea2Solver = SPEA2(evaluator, populationSize,
+      archiveSize, mutationProba)
 
   spea2Solver.initPopulation(Array.fill(nbCoordinates)((0.0, 1.0)))
   spea2Solver.initFeasibleReagion(List(inUnitHV))

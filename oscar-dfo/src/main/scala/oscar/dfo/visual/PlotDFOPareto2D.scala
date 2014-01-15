@@ -19,6 +19,7 @@ import oscar.visual._
 import javax.swing.SwingUtilities
 import oscar.dfo.utils._
 import oscar.visual.plot.PlotScatter
+import oscar.algo.paretofront.ParetoElement
 
 /**
  * @author Cyrille Dejemeppe
@@ -33,24 +34,24 @@ class PlotDFOPareto2D[E <% Ordered[E]] (
   objMax2: Boolean
 ) extends PlotScatter(title, xlab, ylab, nbPareto) {
   
-  var currentIterate: MOOPoint[E] = null
+  var currentIterate: Array[Double] = null
 
-  def highLightIterate(iterate: ArchiveElement[E]) {
-    currentIterate = iterate.getMOOPoint
-    highlight(iterate.getMOOPoint.getEvaluation(0).asInstanceOf[Double], iterate.getMOOPoint.getEvaluation(1).asInstanceOf[Double])
+  def highLightIterate(iterate: Array[Double]) {
+    currentIterate = iterate
+    highlight(iterate(0).asInstanceOf[Double], iterate(1).asInstanceOf[Double])
   }
 
-  def update(archive: Set[ArchiveElement[E]], paretoIndex: Int = 0) {
+  def update(archive: Set[ParetoElement[E]], paretoIndex: Int = 0) {
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
         removeAllPoints(paretoIndex)
         if (currentIterate != null) {
-          addPoint(currentIterate.getEvaluation(0).asInstanceOf[Double], currentIterate.getEvaluation(1).asInstanceOf[Double], paretoIndex)
+          addPoint(currentIterate(0).asInstanceOf[Double], currentIterate(1).asInstanceOf[Double], paretoIndex)
           highLightIterate(currentIterate)
         }
         for (p <- archive) {
-          val x = p.getEvaluation(0).asInstanceOf[Double]
-          val y = p.getEvaluation(1).asInstanceOf[Double]
+          val x = p.objectives(0)
+          val y = p.objectives(1)
           addPoint(x, y, paretoIndex)
         }
       }

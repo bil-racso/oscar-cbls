@@ -14,7 +14,9 @@
  ******************************************************************************/
 package oscar.dfo.multiobjective
 
-import oscar.dfo.utils._
+import oscar.util.Interval
+import oscar.util.QuasiRandomSequence
+import oscar.dfo.utils.DeterministicEvaluation
 
 /** A Derivative Free MultiObjective Optimization (MODFO) Solver.
   *

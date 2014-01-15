@@ -17,30 +17,33 @@ package oscar.dfo.multiobjective.mogen.algos
 import oscar.dfo.utils._
 import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
 import oscar.dfo.multiobjective.mogen.algos.states.NelderMeadState
+import oscar.dfo.multiobjective.mogen.MOGENTriplet
+import oscar.algo.paretofront.ParetoFront
+import oscar.algo.paretofront.ParetoElement
 
 object NelderMead extends ComparativeAlgorithm {
-  def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]] = {
+  def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
-      case nmState: NelderMeadState[E] => {
+      case nmState: NelderMeadState => {
         val centroid = nmState.getCentroid
         val reflectedPoint = nmState.getReflection(evaluator, feasReg, centroid)
         // The reflected point is better than the second worst point of the simplex but worse or equivalent to the best point (f^0 <= f^r < f^(n-1) for SO minimisation problems)
-        if (comparator.cmpWithArchive(nmState.bestPoint, reflectedPoint, currentArchive) && comparator.cmpWithArchive(reflectedPoint, nmState.simplex(nmState.simplexSize - 2), currentArchive) &&
+        if (currentArchive.cmpWithArchive(nmState.bestPoint, reflectedPoint) && currentArchive.cmpWithArchive(reflectedPoint, nmState.simplex(nmState.simplexSize - 2)) &&
             !currentArchive.contains(reflectedPoint) && feasReg.isFeasible(reflectedPoint.coordinates)) {
-          nmState.applySinglePointTransformation(reflectedPoint, comparator)
+          nmState.applySinglePointTransformation(reflectedPoint)
           return List(reflectedPoint)
         }
         else {
           // The reflected point was better than the best point of the simplex => Expansion performed
-          if (comparator.cmpWithArchive(reflectedPoint, nmState.bestPoint, currentArchive)) {
+          if (currentArchive.cmpWithArchive(reflectedPoint, nmState.bestPoint)) {
             val expandedPoint = nmState.getExpansion(evaluator, feasReg, centroid)
-            if (comparator.cmpWithArchive(expandedPoint, reflectedPoint, currentArchive)) {
-              nmState.applySinglePointTransformation(expandedPoint, comparator)
+            if (currentArchive.cmpWithArchive(expandedPoint, reflectedPoint)) {
+              nmState.applySinglePointTransformation(expandedPoint)
               return List(expandedPoint)
             }
             // The reflected point is better than the expanded point
             else {
-              nmState.applySinglePointTransformation(reflectedPoint, comparator)
+              nmState.applySinglePointTransformation(reflectedPoint)
               return List(reflectedPoint)
             }
           }
@@ -48,17 +51,17 @@ object NelderMead extends ComparativeAlgorithm {
           else {
             val contractedPoint =
             // The reflected point is better than the worst point of the simplex => Outside contraction
-            if (comparator.cmpWithArchive(reflectedPoint, nmState.worstPoint, currentArchive)) nmState.getOutsideContraction(evaluator, feasReg, centroid)
+            if (currentArchive.cmpWithArchive(reflectedPoint, nmState.worstPoint)) nmState.getOutsideContraction(evaluator, feasReg, centroid)
             // The reflected point is worse than the worst point of the simplex => Inside contraction
             else nmState.getInsideContraction(evaluator, feasReg, centroid)
             // The contracted point is better than the reflected point
-            if (comparator.cmpWithArchive(contractedPoint, reflectedPoint, currentArchive)) {
-              nmState.applySinglePointTransformation(contractedPoint, comparator)
+            if (currentArchive.cmpWithArchive(contractedPoint, reflectedPoint)) {
+              nmState.applySinglePointTransformation(contractedPoint)
               return List(contractedPoint)
             }
             // The contracted point is worse than the reflected point => shrink
             else {
-              nmState.applyShrink(comparator, evaluator, feasReg)
+              nmState.applyShrink(evaluator, feasReg)
               return nmState.simplex.toList
             }
           }
@@ -69,7 +72,7 @@ object NelderMead extends ComparativeAlgorithm {
   }
   
   
-  def getInitialState[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
-    NelderMeadState(coordinates, startIntervals, evaluator, feasReg, comparator)
+  def getInitialState(coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator, feasReg: FeasibleRegion): ComparativeAlgorithmState = {
+    NelderMeadState(coordinates, startIntervals, evaluator, feasReg)
   }
 }

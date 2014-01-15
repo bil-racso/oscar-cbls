@@ -15,14 +15,15 @@
 package oscar.dfo.multiobjective.mogen.algos.states
 
 import oscar.dfo.utils._
+import oscar.util.RandomGenerator
 
 trait Simplex[E] {
 
-  val simplex: Array[MOOPoint[E]]
+  val simplex: Array[MOOPoint]
   
   def simplexSize = simplex.length
   
-  var bestPoint: MOOPoint[E]
+  var bestPoint: MOOPoint
 
   def getBestPoint = bestPoint
   
@@ -30,11 +31,11 @@ trait Simplex[E] {
   
   def worstPoint = simplex(simplexSize - 1)
 
-  def orderSimplex(comparator: MOOComparator[E]) = {
-    simplex.sortWith((point1, point2) => ((point1 == bestPoint) || (comparator.isEquivalent(point1, point2) && 0.5 > RandomGenerator.nextDouble) || comparator.dominates(point1, point2)))
+  def orderSimplex() = {
+    simplex.sortWith((point1, point2) => ((point1 == bestPoint) || (point1.dominance(point2) == 0 && 0.5 > RandomGenerator.nextDouble) || point1.dominance(point2) > 0))
   }
 
-  def getPoints: List[MOOPoint[E]] = simplex.toList
+  def getPoints: List[MOOPoint] = simplex.toList
 
   def arraySum(ar1: Array[Double], ar2: Array[Double]): Array[Double] = Array.tabulate(ar1.length)(i => ar1(i) + ar2(i))
   

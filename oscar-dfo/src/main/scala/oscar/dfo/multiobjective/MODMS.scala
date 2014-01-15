@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.dfo.multiobjective
 
-import oscar.dfo.utils._
+import oscar.util.Interval
 
 /** Framework for the DMS algorithm used to find the Pareto set of a multiobjective
   * derivative free optimization (MODFO) problem.

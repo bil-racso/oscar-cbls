@@ -14,8 +14,8 @@
  ******************************************************************************/
 package oscar.dfo.singleobjective.algos
 
-import oscar.dfo.utils.Interval
 import oscar.dfo.singleobjective.SODFOptimizer
+import oscar.util.Interval
 
 class A[T <: B]
 

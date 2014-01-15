@@ -17,7 +17,7 @@ package oscar.dfo.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.dfo.multiobjective.mogen.algos._
-import oscar.dfo.utils._
+import oscar.util.Interval
 import oscar.dfo.multiobjective.MODFOptimizer
 import oscar.dfo.multiobjective.MODMS
 

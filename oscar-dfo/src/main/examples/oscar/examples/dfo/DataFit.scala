@@ -14,9 +14,10 @@
  ******************************************************************************/
 package oscar.examples.dfo
 
+import scala.Array.canBuildFrom
 
-import oscar.dfo.singleobjective.algos._
-import oscar.dfo.utils._
+import oscar.dfo.singleobjective.algos.NelderMead
+import oscar.util.Interval
 
 /**
  * author James Thompson

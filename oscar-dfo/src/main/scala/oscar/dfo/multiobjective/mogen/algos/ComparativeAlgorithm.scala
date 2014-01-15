@@ -15,7 +15,10 @@
 package oscar.dfo.multiobjective.mogen.algos
 
 import oscar.dfo.utils._
+import oscar.algo.paretofront.ParetoFront
 import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
+import oscar.algo.paretofront.ParetoElement
+import oscar.algo.paretofront.ParetoElement
 
 trait ComparativeAlgorithm {
   /** Performs one iteration of the algorithm starting from state and comparing points with comparator and currentArchive.
@@ -29,9 +32,9 @@ trait ComparativeAlgorithm {
    * @return A tuple which first element is the state updated after the iteration and
    *         the second element is the set of candidate points non dominated by the archive
    */
-  def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]]
+  def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint]
   
-  def getInitialState[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E]
+  def getInitialState(coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator, feasReg: FeasibleRegion): ComparativeAlgorithmState
   
   /** Function to be called after the algorithm performed a successful iteration */
   var onImprovement: () => Unit = () => {}

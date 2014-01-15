@@ -1,16 +1,12 @@
 package oscar.dfo.multiobjective.evolutionary
 
 import oscar.dfo.utils.FeasibleRegion
-import oscar.dfo.utils.RandomGenerator
+import oscar.util.RandomGenerator
 import oscar.dfo.utils.MOEvaluator
-import oscar.dfo.utils.MOOComparator
 
-trait EvolutionaryAlgorithm[E] {
+trait EvolutionaryAlgorithm {
   /** The evaluator used for the optimization problem */
-  val evaluator: MOEvaluator[E]
-  
-  /** The comparator used for the optimization problem */
-  val comparator: MOOComparator[E]
+  val evaluator: MOEvaluator
   
   /** The size of the population */
   val populationSize: Int
@@ -25,10 +21,10 @@ trait EvolutionaryAlgorithm[E] {
   val feasibleRegion = FeasibleRegion()
   
   /** The population used to build new points */
-  var population = List[EvolutionaryElement[E]]()
+  var population = List[EvolutionaryElement]()
   
   /** The set of non-dominated points (approximation of the Pareto front) */
-  var archive = List[EvolutionaryElement[E]]()
+  var archive = List[EvolutionaryElement]()
   
   /** The minimal and maximal mutation applied to each dimension */
   var mutationIntervals = Array[(Double, Double)]()
@@ -57,7 +53,7 @@ trait EvolutionaryAlgorithm[E] {
     *      	 every point in the initial population will be.
     */
   def initPopulation(startIntervals: Array[(Double, Double)]): Unit = {
-    population = List[EvolutionaryElement[E]]()
+    population = List[EvolutionaryElement]()
     for (i <- 1 to populationSize) {
       val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
       val newElement = EvolutionaryElement(evaluator.eval(newCoordinates, feasibleRegion))
@@ -81,9 +77,9 @@ trait EvolutionaryAlgorithm[E] {
     * 		 must be returned
     * @return An evolutionary element chosen by a k-ary tournament selection
     */
-  def kAryTournamentSelection(fitnessValues: List[(EvolutionaryElement[E], Double)], k: Int): EvolutionaryElement[E] = {
-    def getFitness(element: EvolutionaryElement[E]): Double = {
-      def getFitnessAux(fitVals: List[(EvolutionaryElement[E], Double)]): Double = {
+  def kAryTournamentSelection(fitnessValues: List[(EvolutionaryElement, Double)], k: Int): EvolutionaryElement = {
+    def getFitness(element: EvolutionaryElement): Double = {
+      def getFitnessAux(fitVals: List[(EvolutionaryElement, Double)]): Double = {
         fitVals match {
           case head :: tail => {
             if (head._1 == element) head._2
@@ -113,7 +109,7 @@ trait EvolutionaryAlgorithm[E] {
     * 		 element and f is its associated fitness value
     * @return An evolutionary element chosen by a binary tournament selection
     */
-  def binaryTournamentSelection(fitnessValues: List[(EvolutionaryElement[E], Double)]) = kAryTournamentSelection(fitnessValues, 2)
+  def binaryTournamentSelection(fitnessValues: List[(EvolutionaryElement, Double)]) = kAryTournamentSelection(fitnessValues, 2)
   
   /** Performs a crossover of the two parents to get two new children.
     * 
@@ -124,7 +120,7 @@ trait EvolutionaryAlgorithm[E] {
     * @param parent2 The second parent for the crossover
     * @return A pair of two evolutionary elements (e1, e2) generated
     */
-  def crossover(parent1: EvolutionaryElement[E], parent2: EvolutionaryElement[E]): (EvolutionaryElement[E], EvolutionaryElement[E]) = {
+  def crossover(parent1: EvolutionaryElement, parent2: EvolutionaryElement): (EvolutionaryElement, EvolutionaryElement) = {
     val crossoverPoint = RandomGenerator.nextInt(parent1.nbCoordinates + 1)
     val child1Coordinates = parent1.getCoordinates.take(crossoverPoint) ++ parent2.getCoordinates.drop(crossoverPoint)
     val child2Coordinates = parent2.getCoordinates.take(crossoverPoint) ++ parent1.getCoordinates.drop(crossoverPoint)
@@ -138,7 +134,7 @@ trait EvolutionaryAlgorithm[E] {
     * @param element The element to be mutated
     * @return A new evolutionary element which is a mutation of the original one
     */
-  def mutation(element: EvolutionaryElement[E]): EvolutionaryElement[E] = {
+  def mutation(element: EvolutionaryElement): EvolutionaryElement = {
     def getRandPerturb(index: Int): Double = {
       element.getCoordinates(index) + (mutationIntervals(index)._1 +
           RandomGenerator.nextDouble * (mutationIntervals(index)._2 - mutationIntervals(index)._1))
@@ -156,8 +152,8 @@ trait EvolutionaryAlgorithm[E] {
   /** 
     * 
     */
-  def updatePopulation(fitnessValues: List[(EvolutionaryElement[E], Double)]): Unit = {
-    var newPopulation = List[EvolutionaryElement[E]]()
+  def updatePopulation(fitnessValues: List[(EvolutionaryElement, Double)]): Unit = {
+    var newPopulation = List[EvolutionaryElement]()
     for (i <- 1 to populationSize by 2) {
       val parent1 = archive(RandomGenerator.nextInt(archiveSize))
       val parent2 = archive(RandomGenerator.nextInt(archiveSize))

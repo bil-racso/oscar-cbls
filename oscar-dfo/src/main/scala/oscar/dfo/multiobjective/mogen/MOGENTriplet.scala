@@ -18,16 +18,21 @@ import oscar.dfo.utils._
 import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
+import oscar.algo.paretofront.ParetoElement
 
-class MOGENTriplet[E <% Ordered[E]](point: MOOPoint[E], algorithm: ComparativeAlgorithm, algorithmState: ComparativeAlgorithmState[E]) extends ArchiveElement[E] {
+class MOGENTriplet(point: MOOPoint, algorithm: ComparativeAlgorithm, algorithmState: ComparativeAlgorithmState) extends ParetoElement[Double] {
+  def coordinates: Array[Double] = point.coordinates
+  
+  def objectives: Array[Double] = point.evaluations
+  
   /** Returns the MOOPoint contained in the triplet */
-  def getMOOPoint: MOOPoint[E] = point
+  def getMOOPoint: MOOPoint = point
   
   /** Returns the algorithm contained in the triplet */
   def getAlgorithm: ComparativeAlgorithm = algorithm
   
   /** Returns the algorithm contained in the triplet */
-  def getAlgorithmState: ComparativeAlgorithmState[E] = algorithmState
+  def getAlgorithmState: ComparativeAlgorithmState = algorithmState
   
   /** The number of evaluations contained in the MOOPoint of the triplet */
   def nbEvaluations: Int = point.nbEvaluations
@@ -36,10 +41,10 @@ class MOGENTriplet[E <% Ordered[E]](point: MOOPoint[E], algorithm: ComparativeAl
   def nbCoordinates: Int = point.nbCoordinates
   
   /** The evaluation at the index referenced by functionIndex contained in the MOOPoint of the triplet */
-  def getEvaluation(functionIndex: Int): E = point.getEvaluation(functionIndex)
+  def getEvaluation(functionIndex: Int): Double = point.getEvaluation(functionIndex)
 }
 
 object MOGENTriplet {
   
-  def apply[E <% Ordered[E]](point: MOOPoint[E], algorithm: ComparativeAlgorithm, algorithmState: ComparativeAlgorithmState[E]) = new MOGENTriplet(point, algorithm, algorithmState)
+  def apply(point: MOOPoint, algorithm: ComparativeAlgorithm, algorithmState: ComparativeAlgorithmState) = new MOGENTriplet(point, algorithm, algorithmState)
 }

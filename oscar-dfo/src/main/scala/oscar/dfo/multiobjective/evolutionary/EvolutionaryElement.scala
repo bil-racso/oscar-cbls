@@ -1,10 +1,14 @@
 package oscar.dfo.multiobjective.evolutionary
 
 import oscar.dfo.utils.MOOPoint
-import oscar.dfo.utils.ArchiveElement
+import oscar.algo.paretofront.ParetoElement
 
-class EvolutionaryElement[E](val point: MOOPoint[E]) extends ArchiveElement[E] {
-  def getMOOPoint: MOOPoint[E] = point
+class EvolutionaryElement(val point: MOOPoint) extends ParetoElement[Double] {
+  def getMOOPoint: MOOPoint = point
+  
+  def coordinates = point.coordinates
+  
+  def objectives: Array[Double] = point.objectives
   
   /** The number of evaluations contained in the MOOPoint of the triplet */
   def nbEvaluations: Int = point.nbEvaluations
@@ -13,12 +17,12 @@ class EvolutionaryElement[E](val point: MOOPoint[E]) extends ArchiveElement[E] {
   def nbCoordinates: Int = point.nbCoordinates
   
   /** The evaluation at the index referenced by functionIndex contained in the MOOPoint of the triplet */
-  def getEvaluation(functionIndex: Int): E = point.getEvaluation(functionIndex)
+  def getEvaluation(functionIndex: Int): Double = point.getEvaluation(functionIndex)
   
   /** The coordinates of the point */
   def getCoordinates: Array[Double] = point.coordinates
 }
 
 object EvolutionaryElement {
-  def apply[E](point: MOOPoint[E]) = new EvolutionaryElement(point)
+  def apply[E](point: MOOPoint) = new EvolutionaryElement(point)
 }

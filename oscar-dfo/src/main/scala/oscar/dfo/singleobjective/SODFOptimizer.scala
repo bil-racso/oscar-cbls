@@ -14,7 +14,8 @@
  ******************************************************************************/
 package oscar.dfo.singleobjective
 
-import oscar.dfo.utils._
+import oscar.util.QuasiRandomSequence
+import oscar.dfo.utils.DeterministicEvaluation
 
 /** A Derivative Free Optimization (DFO) Solver.
   *

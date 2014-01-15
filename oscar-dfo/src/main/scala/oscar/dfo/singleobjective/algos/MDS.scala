@@ -14,8 +14,8 @@
  ******************************************************************************/
 package oscar.dfo.singleobjective.algos
 
-import oscar.dfo.utils.Interval
 import oscar.dfo.singleobjective.SODFOptimizer
+import oscar.util.Interval
 
 /** Framework for the Multi-Directional Search (MDS) algorithm used to find the optimum
   * of a derivative free optimization (DFO) problem.

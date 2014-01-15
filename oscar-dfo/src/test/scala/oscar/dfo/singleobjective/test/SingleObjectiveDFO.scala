@@ -17,7 +17,7 @@ package oscar.dfo.singleobjective.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.dfo.singleobjective.algos._
-import oscar.dfo.utils.Interval
+import oscar.util.Interval
 
 class SingleObjectiveDFO extends FunSuite with ShouldMatchers {
   

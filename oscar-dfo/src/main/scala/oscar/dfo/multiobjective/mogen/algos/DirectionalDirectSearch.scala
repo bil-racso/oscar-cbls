@@ -14,19 +14,24 @@
  ******************************************************************************/
 package oscar.dfo.multiobjective.mogen.algos
 
-import oscar.dfo.utils._
 import oscar.dfo.multiobjective.mogen.algos.states.ComparativeAlgorithmState
 import oscar.dfo.multiobjective.mogen.algos.states.DirectionalDirectSearchState
+import oscar.algo.paretofront.ParetoFront
+import oscar.dfo.multiobjective.mogen.MOGENTriplet
+import oscar.dfo.utils.MOEvaluator
+import oscar.dfo.utils.MOOPoint
+import oscar.dfo.utils.FeasibleRegion
+import oscar.algo.paretofront.ParetoElement
 
 object DirectionalDirectSearch extends ComparativeAlgorithm {
   var tolerance = math.pow(10.0, -3.0)
   
-  def singleIteration[E](state: ComparativeAlgorithmState[E], currentArchive: ParetoFront[E], feasReg: FeasibleRegion, comparator: MOOComparator[E], evaluator: MOEvaluator[E]): List[MOOPoint[E]] = {
+  def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
-      case ddsState: DirectionalDirectSearchState[E] => {
+      case ddsState: DirectionalDirectSearchState => {
         for (i <- 0 until ddsState.basisSize) {
           val newPoint = ddsState.getNewPoint(i, evaluator, feasReg)
-          if (comparator.cmpWithArchive(newPoint, ddsState.bestPoint, currentArchive)) {
+          if (currentArchive.cmpWithArchive(newPoint, ddsState.bestPoint)) {
             ddsState.updateBasis
             ddsState.increaseStepSizes
             return List(newPoint)
@@ -34,14 +39,14 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
         }
         ddsState.updateBasis
         ddsState.decreaseStepSizes
-        List[MOOPoint[E]]()
+        List[MOOPoint]()
       }
       case _ => throw new IllegalArgumentException("The Directional Direct-Search algorithm can only be used with a state for Directional Direct-Search");
     }
   }
   
   
-  def getInitialState[E <% Ordered[E]](coordinates: Array[Double], stepSizeIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def getInitialState(coordinates: Array[Double], stepSizeIntervals: Array[(Double, Double)], evaluator: MOEvaluator, feasReg: FeasibleRegion): ComparativeAlgorithmState = {
     DirectionalDirectSearchState(evaluator.eval(coordinates, feasReg), stepSizeIntervals)
   }
 }

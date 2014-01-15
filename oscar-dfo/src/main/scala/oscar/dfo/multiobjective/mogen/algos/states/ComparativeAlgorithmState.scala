@@ -15,10 +15,10 @@
 package oscar.dfo.multiobjective.mogen.algos.states
 import oscar.dfo.utils._
 
-trait ComparativeAlgorithmState[E] {
-  def getBestPoint: MOOPoint[E]
+trait ComparativeAlgorithmState {
+  def getBestPoint: MOOPoint
 
-  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E]
+  def getNewState(newBestPoint: MOOPoint): ComparativeAlgorithmState
 
-  def getPoints: List[MOOPoint[E]]
+  def getPoints: List[MOOPoint]
 }

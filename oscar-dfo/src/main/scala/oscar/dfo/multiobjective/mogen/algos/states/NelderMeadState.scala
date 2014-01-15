@@ -15,13 +15,12 @@
 package oscar.dfo.multiobjective.mogen.algos.states
 
 import scala.Array.canBuildFrom
-import oscar.dfo.utils.MOOComparator
 import oscar.dfo.utils.MOOPoint
 import oscar.dfo.utils.MOEvaluator
-import oscar.dfo.utils.RandomGenerator
 import oscar.dfo.utils.FeasibleRegion
+import oscar.util.RandomGenerator
 
-class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends ComparativeAlgorithmState[E] with Simplex[E] {
+class NelderMeadState(simplexInit: Array[MOOPoint]) extends ComparativeAlgorithmState with Simplex[Double] {
   val simplex = simplexInit
   var bestPoint = simplex(0)
 
@@ -31,7 +30,7 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
   var deltaIC = -0.5
   var gammaS = 0.5
   
-  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def getNewState(newBestPoint: MOOPoint): ComparativeAlgorithmState = {
     val newState = NelderMeadState(simplex)
     newState.deltaR = this.deltaR
     newState.deltaE = this.deltaE
@@ -39,26 +38,26 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
     newState.deltaIC = this.deltaIC
     newState.gammaS = this.gammaS
     newState.bestPoint = newBestPoint
-    orderSimplex(comparator)
+    orderSimplex()
     newState
   }
   
-  def getReflection(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint[E] = getSinglePointTransformation(centroid, deltaR, evaluator, feasibleReg)
+  def getReflection(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint = getSinglePointTransformation(centroid, deltaR, evaluator, feasibleReg)
   
-  def getExpansion(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint[E] = getSinglePointTransformation(centroid, deltaE, evaluator, feasibleReg)
+  def getExpansion(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint = getSinglePointTransformation(centroid, deltaE, evaluator, feasibleReg)
   
-  def getInsideContraction(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint[E] = getSinglePointTransformation(centroid, deltaIC, evaluator, feasibleReg)
+  def getInsideContraction(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint = getSinglePointTransformation(centroid, deltaIC, evaluator, feasibleReg)
   
-  def getOutsideContraction(evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint[E] = getSinglePointTransformation(centroid, deltaOC, evaluator, feasibleReg)
+  def getOutsideContraction(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint = getSinglePointTransformation(centroid, deltaOC, evaluator, feasibleReg)
   
-  def getSinglePointTransformation(centroid: Array[Double], factor: Double, evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): MOOPoint[E] = {
+  def getSinglePointTransformation(centroid: Array[Double], factor: Double, evaluator: MOEvaluator, feasibleReg: FeasibleRegion): MOOPoint = {
     val newCoordinates = arraySum(centroid, arrayProd(arrayDiff(centroid, worstPoint.coordinates), factor))
     evaluator.eval(newCoordinates, feasibleReg)
   }
   
-  def applySinglePointTransformation(newPoint: MOOPoint[E], comparator: MOOComparator[E]) = {
+  def applySinglePointTransformation(newPoint: MOOPoint) = {
     simplex(simplexSize - 1) = newPoint
-    orderSimplex(comparator)
+    orderSimplex()
   }
   
   def getCentroid: Array[Double] = {
@@ -66,12 +65,12 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
     arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
   }
   
-  def applyShrink(comparator: MOOComparator[E], evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion) = {
+  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion) = {
     val simplexCoordinates = simplex.map(mooP => mooP.coordinates).drop(1)
     for (i <- 1 until simplexSize - 1) {
       simplex(i) = evaluator.eval(arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
     }
-    orderSimplex(comparator)
+    orderSimplex()
   }
   
   def printSimplex = {
@@ -83,9 +82,9 @@ class NelderMeadState[E <% Ordered[E]](simplexInit: Array[MOOPoint[E]]) extends 
 }
 
 object NelderMeadState {
-  def apply[E <% Ordered[E]](simplex: Array[MOOPoint[E]]) = new NelderMeadState(simplex)
+  def apply(simplex: Array[MOOPoint]) = new NelderMeadState(simplex)
   
-  def apply[E <% Ordered[E]](coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator[E], feasReg: FeasibleRegion, comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def apply(coordinates: Array[Double], startIntervals: Array[(Double, Double)], evaluator: MOEvaluator, feasReg: FeasibleRegion): ComparativeAlgorithmState = {
     val simplex = Array.tabulate(coordinates.length + 1){ index =>
       if (index == 0) coordinates
       else {

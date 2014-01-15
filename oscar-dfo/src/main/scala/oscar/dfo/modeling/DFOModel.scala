@@ -22,22 +22,23 @@ import oscar.algebra._
 import oscar.dfo.singleobjective.algos.DDS
 import oscar.dfo.singleobjective.algos.MDS
 import oscar.dfo.singleobjective.algos.NelderMead
+import oscar.util.Interval
 
 /**
  * @author: Pierre Schaus pschaus@gmail.com
  */
-class DFOVar(val solver: DFOSolver, val varName: String, val lb: Double = 0.0, val ub: Double = Double.PositiveInfinity) extends Var {
+class DFOFloatVar(val solver: DFOSolver, val varName: String, val lb: Double = 0.0, val ub: Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
     override def value = solver.getValue(index)
     def name = varName
     def randVal = rand.nextDouble() * (ub - lb) + lb
 }
 
-object DFOVar {
-  def apply(varName: String, lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver, varName, lb, ub)
-  def apply(lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver, "dfovar", lb ,ub)
-  def apply(varName: String)(implicit solver: DFOSolver) = new DFOVar(solver, varName)
-  def apply()(implicit solver: DFOSolver) = new DFOVar(solver, "dfovar")
+object DFOFloatVar {
+  def apply(varName: String, lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOFloatVar(solver, varName, lb, ub)
+  def apply(lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOFloatVar(solver, "dfovar", lb ,ub)
+  def apply(varName: String)(implicit solver: DFOSolver) = new DFOFloatVar(solver, varName)
+  def apply()(implicit solver: DFOSolver) = new DFOFloatVar(solver, "dfovar")
 }
   
 
@@ -49,7 +50,7 @@ object DFOVar {
 class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
     
     // map from the index of variables to their implementation
-    private lazy val vars = mutable.HashMap.empty[Int,DFOVar]
+    private lazy val vars = mutable.HashMap.empty[Int,DFOFloatVar]
     private lazy val solution = mutable.HashMap.empty[Int,Double]
 
     /**
@@ -69,7 +70,7 @@ class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
 	
 	
     
-    def register(vari: DFOVar): Int = {
+    def register(vari: DFOFloatVar): Int = {
       vars(vars.size) = vari
       vars.size-1
     }

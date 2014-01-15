@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.dfo.singleobjective.algos
 
-import oscar.dfo.utils.Interval
+import oscar.util.Interval
 import oscar.dfo.singleobjective.SODFOptimizer
 
 /** Framework for the Direct Directional Search (DDS) algorithm used to find the optimum

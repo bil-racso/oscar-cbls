@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.dfo.utils
 
+import oscar.algo.paretofront.ParetoElement
+
 /** Point with its coordinates and its associated evaluations.
   *
   * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -25,14 +27,18 @@ package oscar.dfo.utils
   *                    of the coordinates passed as argument
   * @param maximization A Boolean which is true when the point is part of a maximization 
   *                     problem, false otherwise. Default value: true */
-class MOOPoint[E <% Ordered[E]](val coordinates: Array[Double], val evaluations: Array[E]) extends ArchiveElement[E] {
+class MOOPoint(val coords: Array[Double], val evaluations: Array[Double]) extends ParetoElement[Double] {
   
-  def this(coordinates: Array[Double], evaluator: (Array[Double] => Array[E])) = {
+  def coordinates = coords
+  
+  def objectives = evaluations
+  
+  def this(coordinates: Array[Double], evaluator: (Array[Double] => Array[Double])) = {
     this(coordinates, evaluator(coordinates))
   }
   
   /** Returns the MOOPoint contained in the archive element */
-  def getMOOPoint: MOOPoint[E] = this
+  def getMOOPoint: MOOPoint = this
   
   /** The number of evaluations */
   def nbEvaluations: Int = evaluations.length
@@ -40,13 +46,13 @@ class MOOPoint[E <% Ordered[E]](val coordinates: Array[Double], val evaluations:
   /** The number of coordinates */
   def nbCoordinates: Int = coordinates.length
   
-  def getEvaluation(functionIndex: Int): E = {
+  def getEvaluation(functionIndex: Int): Double = {
     evaluations(functionIndex)
   }
   
   var iter = 0
   
-  def equals(other: MOOPoint[E]): Boolean = {
+  def equals(other: MOOPoint): Boolean = {
     for(evalIndex <- 0 until evaluations.length) {
       if(evaluations(evalIndex) != other.evaluations(evalIndex)) return false
     }
@@ -59,11 +65,11 @@ class MOOPoint[E <% Ordered[E]](val coordinates: Array[Double], val evaluations:
 }
 
 object MOOPoint {
-  def apply[E <% Ordered[E]](coordinates: Array[Double], evaluations: Array[E]): MOOPoint[E] = {
+  def apply(coordinates: Array[Double], evaluations: Array[Double]): MOOPoint = {
     new MOOPoint(coordinates, evaluations)
   }
   
-  def apply[E <% Ordered[E]](coordinates: Array[Double], evaluator: (Array[Double] => Array[E])): MOOPoint[E] = {
+  def apply(coordinates: Array[Double], evaluator: (Array[Double] => Array[Double])): MOOPoint = {
     new MOOPoint(coordinates, evaluator)
   }
 }

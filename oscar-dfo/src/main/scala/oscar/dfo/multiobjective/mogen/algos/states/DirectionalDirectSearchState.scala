@@ -14,9 +14,12 @@
  ******************************************************************************/
 package oscar.dfo.multiobjective.mogen.algos.states
 
-import oscar.dfo.utils._
+import oscar.util.RandomGenerator
+import oscar.dfo.utils.MOEvaluator
+import oscar.dfo.utils.MOOPoint
+import oscar.dfo.utils.FeasibleRegion
 
-class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState[E] {
+class DirectionalDirectSearchState(initPoint: MOOPoint, val stepSizes: Array[Double], val dictionary: Array[Array[Double]], var basisSize: Int) extends ComparativeAlgorithmState {
   val newDirectionProportion = 0.2
   var bestPoint = initPoint
   var currentBasis = getRandomBasis
@@ -25,7 +28,7 @@ class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val 
   
   def getPoints = List(bestPoint)
   
-  def getNewState(newBestPoint: MOOPoint[E], comparator: MOOComparator[E]): ComparativeAlgorithmState[E] = {
+  def getNewState(newBestPoint: MOOPoint): ComparativeAlgorithmState = {
     DirectionalDirectSearchState(newBestPoint, stepSizes, dictionary, basisSize)
   }
   
@@ -33,7 +36,7 @@ class DirectionalDirectSearchState[E <% Ordered[E]](initPoint: MOOPoint[E], val 
     currentBasis = currentBasis(directionIndex) :: currentBasis.take(directionIndex) ::: currentBasis.drop(directionIndex + 1)
   }
   
-  def getNewPoint(directionIndex: Int, evaluator: MOEvaluator[E], feasibleReg: FeasibleRegion): MOOPoint[E] = {
+  def getNewPoint(directionIndex: Int, evaluator: MOEvaluator, feasibleReg: FeasibleRegion): MOOPoint = {
     val newCoordinates = Array.tabulate(bestPoint.nbCoordinates)(i => bestPoint.coordinates(i) + dictionary(currentBasis(directionIndex))(i))
     evaluator.eval(newCoordinates, feasibleReg)
   }
@@ -67,9 +70,9 @@ object DirectionalDirectSearchState {
   var increaseFactor = 1.1
   var decreaseFactor = 0.9
   
-  def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizes: Array[Double], dictionnary: Array[Array[Double]], basisSize: Int) = new DirectionalDirectSearchState(initPoint, stepSizes, dictionnary, basisSize)
+  def apply(initPoint: MOOPoint, stepSizes: Array[Double], dictionnary: Array[Array[Double]], basisSize: Int) = new DirectionalDirectSearchState(initPoint, stepSizes, dictionnary, basisSize)
   
-  def apply[E <% Ordered[E]](initPoint: MOOPoint[E], stepSizeIntervals: Array[(Double, Double)], dictionarySize: Int = 100, basisSize: Int = 10): ComparativeAlgorithmState[E] = {
+  def apply(initPoint: MOOPoint, stepSizeIntervals: Array[(Double, Double)], dictionarySize: Int = 100, basisSize: Int = 10): ComparativeAlgorithmState = {
     val stepSizes = Array.tabulate(initPoint.nbCoordinates)(i => stepSizeIntervals(i)._1 + RandomGenerator.nextDouble * (stepSizeIntervals(i)._2 - stepSizeIntervals(i)._1))
     val dictionary = Array.tabulate(dictionarySize)(i => normalizeArray(Array.tabulate(initPoint.nbCoordinates)(i => RandomGenerator.nextDouble)))
     DirectionalDirectSearchState(initPoint, stepSizes, dictionary, basisSize)
