@@ -65,7 +65,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     println(holes.toList)
     
     // constraint system (alternative: use ArgMax rather than Constraint System)
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
     
     // requiring all holes to have less that a pigeon
     //val ONE=new IntVar(m,0,N,1, "ONE")

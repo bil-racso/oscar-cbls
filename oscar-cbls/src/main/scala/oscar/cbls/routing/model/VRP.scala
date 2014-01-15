@@ -653,7 +653,7 @@ trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
    */
-  var strongConstraints: ConstraintSystem = new ConstraintSystem(m)
+  var strongConstraints = ConstraintSystem(m)
 
   override def getObjective(): Int =
     (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
@@ -666,7 +666,7 @@ trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.
    */
-  val weakConstraints: ConstraintSystem = new ConstraintSystem(m)
+  val weakConstraints = ConstraintSystem(m)
 
   this.addObjectiveTerm(weakConstraints)
 }

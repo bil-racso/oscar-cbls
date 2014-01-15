@@ -32,7 +32,7 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
  */
-class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
+case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
   model = _model

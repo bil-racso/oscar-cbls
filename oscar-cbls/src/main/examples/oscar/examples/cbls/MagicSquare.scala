@@ -68,7 +68,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     showSquare(magic)
     
     // constraint system
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
     
     // c.post(AllDiff(magic)) // all diff will be maintained by swap
     for(i <- Dim) c.post(EQ(Sum(for ( j <- Dim) yield magic(i)(j)), T)) // lines

@@ -126,7 +126,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     showGrid(grid,N)
 
     // constraint system
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
     
     for(i <- Indexes) c.post(AllDiff(for(j <- Indexes) yield grid(i*N+j))) // lines
     for(j <- Indexes) c.post(AllDiff(for(i <- Indexes) yield grid(i*N+j))) // columns    

@@ -79,7 +79,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     val r:Array[CBLSIntVar]= (for(c <- Carry.values) yield CBLSIntVar(m, 0, 9, 0, c+"")).toArray
           
     // constraint system
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
     
     // all digits should be different
     // c.post(AllDiff(d)) // will be enforced

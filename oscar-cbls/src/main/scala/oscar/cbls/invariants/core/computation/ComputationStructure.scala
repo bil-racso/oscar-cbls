@@ -35,7 +35,7 @@ import language.implicitConversions
  * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
   *
  */
-class Store(override val verbose:Boolean = false,
+case class Store(override val verbose:Boolean = false,
             override val checker:Option[Checker] = None,
             override val noCycle:Boolean = true,
             override val topologicalSort:Boolean = false,

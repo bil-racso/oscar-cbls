@@ -53,13 +53,13 @@ object NQueens extends SearchEngine with StopWatch{
     val max = N-1
     val range:Range = Range(0,N)
     val tabulength = 0
-    val m: Store = new Store(false,None,true)
+    val m = Store(false,None,true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")
     val Queens:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(m, min, max, q, "queen" + q))
 
-    val c:ConstraintSystem = new ConstraintSystem(m)
+    val c = ConstraintSystem(m)
 
     //c.post(AllDiff(Queens)) handled trough permutations
     c.post(AllDiff(for ( q <- range) yield (q + Queens(q)).toIntVar))

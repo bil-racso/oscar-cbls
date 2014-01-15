@@ -588,7 +588,7 @@ class MoveFixture(
         Array.fill(nbNodes)(0)
       }
   val matrix = getDistanceMatrix(abscissa, ordinate)
-  val model: Store = new Store(false, None, false, false)
+  val model = Store(false, None, false, false)
 
   val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjectiveTerm with PositionInRouteAndRouteNr with HopClosestNeighbors with UnroutedImpl with PenaltyForUnrouted with MoveDescription
 

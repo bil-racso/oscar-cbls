@@ -148,7 +148,7 @@ class NQueensApplet extends Applet {
       val max = N - 1
       val range: Range = Range(0, N)
       val tabulength = 0
-      val m: Store = new Store(false, None, true)
+      val m = Store(false, None, true)
       val MaxIT = 10000
 
       println("NQueens(" + N + ")")
@@ -158,7 +158,7 @@ class NQueensApplet extends Applet {
         tab(q)(q).icon = CONFLICT
       }
 
-      val c: ConstraintSystem = new ConstraintSystem(m)
+      val c = ConstraintSystem(m)
       //c.post(AllDiff(Queens)) handled trough permutations
       c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
