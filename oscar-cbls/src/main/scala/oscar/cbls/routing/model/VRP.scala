@@ -378,7 +378,7 @@ trait UnroutedImpl extends VRP with RoutedAndUnrouted {
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
  */
-trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
+abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
 
   /**
@@ -405,7 +405,7 @@ trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
 
-trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
+trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
   final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
 
@@ -413,7 +413,7 @@ trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-abstract trait ClosestNeighborPoints extends VRP {
+abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
   /**
@@ -533,7 +533,7 @@ trait HopDistance extends VRP {
  * It maintains it equal to the hop distance in the VRP,
  * based either on a matrix, or on another mechanism defined by the distance function.
  */
-trait HopDistanceAsObjective extends VRPObjective with HopDistance {
+trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
   addObjectiveTerm(overallDistance)
 }
 

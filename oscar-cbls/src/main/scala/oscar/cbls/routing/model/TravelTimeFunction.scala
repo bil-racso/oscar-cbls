@@ -40,7 +40,7 @@ abstract class TravelTimeFunction {
   def getMaxTravelDuration(from: Int, to: Int): Int
 }
 
-abstract trait Time extends VRP with Predecessors {
+trait Time extends VRP with Predecessors {
   val defaultArrivalTime = new CBLSIntConst(0)
   val arrivalTime = Array.tabulate(N) {
     (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "arrivalTimeAtNode" + i)
@@ -127,7 +127,7 @@ trait WaitingDuration extends TimeWindow {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-trait TimeClosestNeighborPoints extends ClosestNeighborPoints with TravelTimeAsFunction {
+trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
     travelCosts.getMinTravelDuration(from, to)
   }
