@@ -27,7 +27,6 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-
 class CPSolver() extends CPStore() {
 
   def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
@@ -35,8 +34,6 @@ class CPSolver() extends CPStore() {
   }
   
   var objective = new CPObjective(this, Array[CPObjectiveUnit]());
-  
-
   
   private val decVariables = scala.collection.mutable.Set[CPIntVar]()
   var lastSol = new CPSol(Set[CPIntVar]())
@@ -46,21 +43,15 @@ class CPSolver() extends CPStore() {
   def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
   def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
   
-  def addDecisionVariables(x: Iterable[CPIntVar]) {
-    x.foreach(decVariables += _)
-  }
+  def addDecisionVariables(x: Iterable[CPIntVar]): Unit = x.foreach(decVariables += _)
   
-  	def addDecisionVariables(x: CPIntVar*) {
-    x.foreach(decVariables += _)
-  }
+  def addDecisionVariables(x: CPIntVar*): Unit = x.foreach(decVariables += _)
   
-  private def recordSol() {
+  private def recordSol(): Unit = {
     lastSol = new CPSol(decVariables.toSet)
   }
   
-  def obj(objVar: CPIntVar): CPObjectiveUnit = {
-    objective(objVar)
-  }
+  def obj(objVar: CPIntVar): CPObjectiveUnit = objective(objVar)
 
   def optimize(obj: CPObjective): CPSolver = {
     objective = obj
@@ -103,18 +94,17 @@ class CPSolver() extends CPStore() {
     postCut(objective)
     objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
     
-    
     addDecisionVariables(objectives)
     paretoSet = new ListPareto[CPSol](isMax)
     // Adds a dominance constraint with all objectives in minimization mode
     addCut(new ParetoConstraint(paretoSet, isMax, objectives.toArray))
     this
   }
+  
+  @deprecated("solve is the default behavior of CPSolver and does not need to be specified anymore.", "1.0")
+  def solve(): CPSolver = this
 
-  def solve(): CPSolver = {
-    this
-  }
-
+  @deprecated("constraints do not need to be stated in the subectTo block anymore.", "1.0")
   def subjectTo(constraintsBlock: => Unit): CPSolver = {
     try {
       constraintsBlock
@@ -124,15 +114,12 @@ class CPSolver() extends CPStore() {
     this
   }
   
-  override def beforeStartAction() {
-    deactivateNoSolExceptions()
-  }
+  override def beforeStartAction(): Unit = { deactivateNoSolExceptions() }
 
   /**
    * return true if every variable is bound
    */
   def allBounds(vars: IndexedSeq[CPIntVar]): Boolean = {
-    //vars.map(_.isBound).foldLeft(true)((a, b) => a & b)
 	var i = 0 
 	val s = vars.size
 	while (i < s) {
@@ -140,11 +127,11 @@ class CPSolver() extends CPStore() {
 	  i += 1
 	}
     true
-    
   }
   
-  override def update() = propagate()
-  override def solFound() = {
+  override def update(): Unit = propagate()
+  
+  override def solFound(): Unit = {
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
@@ -153,15 +140,9 @@ class CPSolver() extends CPStore() {
     }
     objective.tighten()
   }
-
 }
 
 object CPSolver {
-
-  /**
-   * Creates a new CP Solver
-   */
-  def apply(): CPSolver = {
-    new CPSolver()
-  }
+  /** Creates a new CP Solver */
+  def apply(): CPSolver = new CPSolver()
 }

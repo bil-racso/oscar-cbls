@@ -14,11 +14,8 @@
  ******************************************************************************/
 package oscar.algo.search
 
-import oscar.algo.search.Objective
-
  /**
-  *import oscar.algo.search.Objective
- @author Pierre Schaus pschaus@gmail.com
+  * @author Pierre Schaus pschaus@gmail.com
   */
 class DummyObjective extends Objective {
 

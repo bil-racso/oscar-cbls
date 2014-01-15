@@ -67,9 +67,9 @@ class CPStore extends SearchNode {
     throwNoSolExceptions = false;
   }
 
-  override def isFailed() = status.value == CPOutcome.Failure;
+  override def isFailed: Boolean = status.value == CPOutcome.Failure;
 
-  private def cleanQueues() {
+  private def cleanQueues(): Unit = {
     propagQueueL1.foreach(_.clear())
     propagQueueL2.foreach(_.clear())
   }

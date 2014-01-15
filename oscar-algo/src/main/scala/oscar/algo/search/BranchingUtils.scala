@@ -31,5 +31,4 @@ trait BranchingUtils {
   }
   
   val noAlternative = Seq[Alternative]()
-
 }
