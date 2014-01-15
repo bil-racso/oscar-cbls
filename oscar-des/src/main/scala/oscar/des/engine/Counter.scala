@@ -133,8 +133,8 @@ object Counter {
 
   def main(args: Array[String]) {
 
-    val x = new VarInt(5)
-    val y = new VarInt(8)
+    val x = new IncrementalVar(5)
+    val y = new IncrementalVar(8)
 
     val c = new PQCounter(0)
 
