@@ -895,22 +895,36 @@ trait Constraints {
   }
   // scheduling constraints
 
+
   /**
-   * Unary Resource constraint
-   */
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with required(i) = true) can overlap in time 
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
+   */  
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResource = {
 	new UnaryResource(starts,durations,ends,required)
   }
   
+
   /**
-   * Unary Resource constraint
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with resources(i) = id) can overlap in time 
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param resources the variables representing the resource where the task is scheduled
+   * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
    */  
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
 	new UnaryResource(starts,durations,ends,resources,id)
   }
 
   /**
-   * Unary Resource constraint
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks can overlap in time
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */    
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
     val cp = starts(0).s
@@ -919,21 +933,62 @@ trait Constraints {
   
 
   /**
-   * Discrete Resource constraint with maximum capacity
+   * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks executing on the resource id, must be <= than the capacity
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param demands the variables representing how much each task consume of the resource
+   * @param resources the variables representing the resource where the task is scheduled
+   * @param capacity the capacity of the resource
+   * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
     new SweepMaxCumulative(starts: Array[CPIntVar],durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
-  } 
+  }
   
   /**
-   * Discrete Resource constraint with minimum capacity
+   * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks must be <= than the capacity
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param demands the variables representing how much each task consume of the resource
+   * @param capacity the capacity of the resource
+   */ 
+  def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
+    val cp = starts(0).s
+    val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
+    maxCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
+  }   
+  
+  /**
+   * Discrete Resource constraint with minimum capacity: at any time where at least one tasks overlaps, the cumulative demands of the tasks executing on the resource id, must be >= than the capacity
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param demands the variables representing how much each task consume of the resource
+   * @param resources the variables representing the resource where the task is scheduled
+   * @param capacity the capacity of the resource
+   * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
   def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
     new SweepMinCumulative(starts: Array[CPIntVar],durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
+  }
+  
+  /**
+   * Discrete Resource constraint with maximum capacity: at any time where at least one tasks overlaps, the cumulative demands of the tasks must be >= than the capacity
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param demands the variables representing how much each task consume of the resource
+   * @param capacity the capacity of the resource
+   */ 
+  def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
+    val cp = starts(0).s
+    val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
+    minCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
   }    
   
-  
-  
+
   
   /**
    * Constraint x and y to be disjoint (no common values)

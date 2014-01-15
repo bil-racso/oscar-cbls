@@ -43,18 +43,13 @@ object RCPSP extends App {
   
   val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
   val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to horizon))
+  val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
   val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
   val resources = Array.tabulate(nTasks)(t => CPIntVar(0))
 
   val makespan = maximum(ends)
 
   cp.minimize(makespan) subjectTo {
-    
-    // Consistency
-    for (t <- Tasks) {
-      cp.add(ends(t) == starts(t) + durations(t))
-    }
     
     // Cumulative
     cp.add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capa), 0))
