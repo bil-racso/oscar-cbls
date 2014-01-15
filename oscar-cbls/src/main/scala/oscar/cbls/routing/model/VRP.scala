@@ -356,7 +356,7 @@ abstract trait RoutedAndUnrouted extends VRP {
    */
   val routed: CBLSSetVar = Filter(next, _ < N)
   m.registerForPartialPropagation(routed)
-  
+
   /**
    * the data structure set which maintains the unrouted nodes.
    */
@@ -628,6 +628,48 @@ trait PositionInRouteAndRouteNr extends VRP {
    */
   def onTheSameRoute(n: Int, m: Int): Boolean = {
     routeNr(n).value == routeNr(m).value
+  }
+}
+
+/**
+ * Maintains a penalty weight for routes which do not contain task nodes.
+ * That is: they only contain the vehicle node.
+ */
+trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
+  /**
+   * The data structure array which maintains route penalty.
+   */
+  private val emptyRoutePenaltyWeight: Array[CBLSIntVar] =
+    Array.tabulate(V)(v =>
+      CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "penality of vehicule " + v))
+
+  /**
+   * The variable which maintains the set of empty routes.
+   * (that is: routes containing no other node than the vehicle node)
+   */
+  val emptyRoutes = Filter(routeLength, _ <= (1))
+
+  /**
+   * The variable which maintains the sum of route penalties,
+   * thanks to SumElements invariant.
+   */
+  val emptyRoutePenalty = SumElements(emptyRoutePenaltyWeight, emptyRoutes)
+
+  /**
+   * Allows client to set the penalty of a given vehicle route.
+   * @param n the node.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
+    emptyRoutePenaltyWeight(n) := p
+  }
+
+  /**
+   * Allows client to set a specific penalty for all the VRP routes.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(p: Int) {
+    emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
   }
 }
 
