@@ -19,7 +19,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
+import oscar.cbls.invariants.core.computation.{Invariant, CBLSIntVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -32,20 +32,20 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param next the array of successors of each points (deposits and customers) of the VRP.
  * @param V the number of vehicles.
  */
-case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
+case class Predecessor(next:Array[CBLSIntVar],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()
-  val preds:Array[IntVar] = Array.tabulate(N)(i => if (i<V) IntVar(model, 0, N, i, "preds" + i)
-    else IntVar(model, 0, N, N, "preds" + i))
+  val preds:Array[CBLSIntVar] = Array.tabulate(N)(i => if (i<V) CBLSIntVar(model, 0, N, i, "preds" + i)
+    else CBLSIntVar(model, 0, N, N, "preds" + i))
 
   for(p <- preds) p.setDefiningInvariant(this)
 
   def length = N
   def apply(i:Int) = preds(i)
 
-  override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,index:Int,OldVal:Int,NewVal:Int){
     assert(next(index) == v)
     // it unroutes a node
     if(NewVal == N) preds(index) := N

@@ -28,7 +28,7 @@ import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import util.Random
-import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 ;
 
@@ -81,47 +81,47 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
     val tabulength = 10
 
     val m: Store = new Store(false,None,true)
-    val it = Random.shuffle(range.toList).iterator
-    val Queens:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
+    val init = Random.shuffle(range.toList).iterator
+    val queens:Array[CBLSIntVar] = (for (q <- range) yield CBLSIntVar(m, 0, N-1,init.next(), "queen" + q)).toArray
 
     val c:ConstraintSystem = new ConstraintSystem(m)
 
     //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always alldiff
-    c.post(AllDiff(for ( q <- range) yield (Queens(q) + q).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (queens(q) + q).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (q - queens(q)).toIntVar))
 
-    val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
+    val violationArray:Array[CBLSIntVar] = (for(q <- range) yield c.violation(queens(q))).toArray
 
-    val Tabu:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
-    val It = IntVar(m,0,Int.MaxValue,1,"it")
-    val NonTabuQueens:SetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolQueens:SetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
+    val tabu:Array[CBLSIntVar] = (for (q <- range) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
+    val it = CBLSIntVar(m,0,Int.MaxValue,1,"it")
+    val nonTabuQueens:CBLSSetVar = SelectLESetQueue(tabu, it)
+    val nonTabuMaxViolQueens:CBLSSetVar = new ArgMaxArray(violationArray, nonTabuQueens)
 
     m.close(false)
     print(padToLength("" + getWatch, 15))
 
-    while((c.Violation.value > 0) && (It.value < N)){
-      val oldviolation:Int = c.Violation.value
+    while((c.violation.value > 0) && (it.value < N)){
+      val oldviolation:Int = c.violation.value
 
       // to ensure that the set of tabu queens is no too restrictive
       // (but you'd better tune the tabu better)
-      while(NonTabuMaxViolQueens.value.isEmpty){
-        It ++;
+      while(nonTabuMaxViolQueens.value.isEmpty){
+        it ++;
         println("Warning: Tabu it too big compared to queens count")
       }
 
-      val q1 = selectFirst(NonTabuMaxViolQueens.value)
-      val q2 = selectFirst(NonTabuQueens.value, (q:Int) => {
-        q!=q1 && c.swapVal(Queens(q1),Queens(q)) < oldviolation
+      val q1 = selectFirst(nonTabuMaxViolQueens.value)
+      val q2 = selectFirst(nonTabuQueens.value, (q:Int) => {
+        q!=q1 && c.swapVal(queens(q1),queens(q)) < oldviolation
       })
 
-      Queens(q1) :=: Queens(q2)
-      Tabu(q1) := It.getValue(true) + tabulength
-      Tabu(q2) := It.getValue(true) + tabulength
+      queens(q1) :=: queens(q2)
+      tabu(q1) := it.value + tabulength
+      tabu(q2) := it.value + tabulength
       
-      It ++
+      it ++
     }
 
-    println(padToLength("" + getWatch, 15) + It.value)
+    println(padToLength("" + getWatch, 15) + it.value)
   }
 }

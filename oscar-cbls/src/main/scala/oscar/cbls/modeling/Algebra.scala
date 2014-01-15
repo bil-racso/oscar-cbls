@@ -86,71 +86,71 @@ trait AlgebraTrait{
     def startBy (start:Int)  =  new ShiftedRange(r.start, r.end,start:Int, r.step)
   }
 
-  implicit def InstrumentIntVar(v: IntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
+  implicit def InstrumentIntVar(v: CBLSIntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
 
   implicit def InstrumentIntInvariant(i: IntInvariant): InstrumentedIntVar = InstrumentIntVar(i.toIntVar)
 
-  implicit def InstrumentInt(a: Int): InstrumentedIntVar = InstrumentIntVar(IntConst(a))
+  implicit def InstrumentInt(a: Int): InstrumentedIntVar = InstrumentIntVar(CBLSIntConst(a))
 
-  class InstrumentedIntVar(x: IntVar) {
-    def +(v: IntVar): IntInvariant = Sum2(x, v)
+  class InstrumentedIntVar(x: CBLSIntVar) {
+    def +(v: CBLSIntVar): IntInvariant = Sum2(x, v)
 
-    def -(v: IntVar): IntInvariant = Minus(x, v)
+    def -(v: CBLSIntVar): IntInvariant = Minus(x, v)
 
-    def *(v: IntVar): IntInvariant = Prod(List(x, v))
+    def *(v: CBLSIntVar): IntInvariant = Prod(List(x, v))
 
-    def /(v: IntVar): IntInvariant = Div(x, v)
+    def /(v: CBLSIntVar): IntInvariant = Div(x, v)
 
-    def %(v: IntVar): IntInvariant = Mod(x, v)
+    def %(v: CBLSIntVar): IntInvariant = Mod(x, v)
 
-    def ===(v: IntVar) = new EQ(x, v)
+    def ===(v: CBLSIntVar) = new EQ(x, v)
 
-    def !==(v: IntVar) = new NE(x, v)
+    def !==(v: CBLSIntVar) = new NE(x, v)
 
-    def >>=(v: IntVar) = new G(x, v)
+    def >>=(v: CBLSIntVar) = new G(x, v)
 
-    def <<=(v: IntVar) = new L(x, v)
+    def <<=(v: CBLSIntVar) = new L(x, v)
 
-    def >==(v: IntVar) = new GE(x, v)
+    def >==(v: CBLSIntVar) = new GE(x, v)
 
-    def le(v: IntVar) = new LE(x, v)
+    def le(v: CBLSIntVar) = new LE(x, v)
 
     /** creates a IntSEt maintained as the inclusive interval between te two variable
       * see [[oscar.cbls.invariants.lib.set.Interval]]
       * @param v
       * @return
       */
-    def TO (v:IntVar) = new Interval(x,v)
+    def TO (v:CBLSIntVar) = new Interval(x,v)
   }
 
-  implicit def InstrumentIntSetVar(v: SetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
+  implicit def InstrumentIntSetVar(v: CBLSSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
   implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toIntSetVar)
 
-  implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(SetConst(a))
+  implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(CBLSSetConst(a))
 
-  class InstrumentedIntSetVar(x: SetVar) {
-    def union(v: SetVar): SetInvariant = Union(x, v)
+  class InstrumentedIntSetVar(x: CBLSSetVar) {
+    def union(v: CBLSSetVar): SetInvariant = Union(x, v)
 
-    def inter(v: SetVar): SetInvariant = Inter(x, v)
+    def inter(v: CBLSSetVar): SetInvariant = Inter(x, v)
 
-    def minus(v: SetVar): SetInvariant = Diff(x, v)
+    def minus(v: CBLSSetVar): SetInvariant = Diff(x, v)
   }
 
-  implicit def InstrumentArrayOfIntVar(inputarray: Array[IntVar]): InstrumentedArrayOfIntVar
+  implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
   = new InstrumentedArrayOfIntVar(inputarray)
 
-  class InstrumentedArrayOfIntVar(inputarray: Array[IntVar]) {
-    def element(index: IntVar): IntVar = IntElement(index, inputarray)
+  class InstrumentedArrayOfIntVar(inputarray: Array[CBLSIntVar]) {
+    def element(index: CBLSIntVar): CBLSIntVar = IntElement(index, inputarray)
 
-    def elements(index: SetVar): SetVar = Elements(index, inputarray)
+    def elements(index: CBLSSetVar): CBLSSetVar = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetVar]): InstrumentedArrayOfIntSetVar
+  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[CBLSSetVar]): InstrumentedArrayOfIntSetVar
   = new InstrumentedArrayOfIntSetVar(inputarray)
 
-  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetVar]) {
-    def apply(index: IntVar): SetVar = SetElement(index, inputarray)
+  class InstrumentedArrayOfIntSetVar(inputarray: Array[CBLSSetVar]) {
+    def apply(index: CBLSIntVar): CBLSSetVar = SetElement(index, inputarray)
   }
 
 

@@ -37,7 +37,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param binsizes the max size of the available bins
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsizes:Array[IntVar])
+case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
   extends Constraint {
 
   model = InvariantHelper.findModel(items)
@@ -52,19 +52,19 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
 
   finishInitialization()
 
-  val bincontents:Array[SetVar] = Cluster.MakeDense(items).clusters
-  val binfilling:Array[IntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
+  val bincontents:Array[CBLSSetVar] = Cluster.MakeDense(items).clusters
+  val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
 
-  val binviolations:Array[IntVar] = (
+  val binviolations:Array[CBLSIntVar] = (
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
-  val itemviolations:Array[IntVar] = items.map(itemval =>  binviolations.element(itemval))
+  val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval))
 
-  val Violation:IntVar = Sum(binviolations).toIntVar
+  val Violation:CBLSIntVar = Sum(binviolations).toIntVar
 
-  val Violations:SortedMap[IntVar,IntVar] = {
-    var acc = SortedMap.empty[IntVar,IntVar]
+  val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
+    var acc = SortedMap.empty[CBLSIntVar,CBLSIntVar]
     for(itemid <- items.indices){
       acc += ((items(itemid),itemviolations(itemid)))
       acc += ((itemsizes(itemid),itemviolations(itemid)))
@@ -82,8 +82,8 @@ case class MultiKnapsack(items: Array[IntVar], itemsizes: Array[IntVar], binsize
   /**The violation of an item is the excess of the bin it is located into,
    * The violation of a bin is the excess in the bin
    */
-  override def violation(v: Variable): IntVar = {
-    val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
+  override def violation(v: Variable): CBLSIntVar = {
+    val tmp:CBLSIntVar = Violations.getOrElse(v.asInstanceOf[CBLSIntVar],null)
     assert(tmp != null)
     tmp
   }

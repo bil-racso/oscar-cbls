@@ -90,7 +90,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     val m: Store = new Store(false,None,true)
         
     // grid definition and initialisation
-    val grid = Array.ofDim[IntVar](M)
+    val grid = Array.ofDim[CBLSIntVar](M)
         
     for(ns <- Indexes) {
       var squareSet:Set[Int]=Set() ++ (for(ps <- Indexes; if (problem(square(ns)(ps))!=0)) yield problem(square(ns)(ps))).toArray
@@ -101,7 +101,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
         	vinit=k
     	    squareSet += k
     	}  
-        grid(i)=IntVar(m, 1, N, vinit, "v_"+i)
+        grid(i)=CBLSIntVar(m, 1, N, vinit, "v_"+i)
       }
     }
     showGrid(grid,N)
@@ -120,14 +120,14 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     c.close()
     
     // working variables
-    val Tabu:Array[IntVar] = (for (i <- LinearIndexes) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
+    val Tabu:Array[CBLSIntVar] = (for (i <- LinearIndexes) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
     var it:Int=1
     
     // closing model
     m.close()
       
     // search
-    while((c.Violation.value > 0) && (it < MAX_IT)){
+    while((c.violation.value > 0) && (it < MAX_IT)){
       val allowed = openCells.filter(v => Tabu(v).value < it)
       val (v1,v2)= selectMin(allowed, allowed) ((v1,v2) => c.swapVal(grid(v1),grid(v2)), (v1,v2) => (v1 < v2) && (squareOf(v1)==squareOf(v2))) // swap on the same line
 
@@ -136,12 +136,12 @@ object SimpleSudoku extends SearchEngine with StopWatch {
       Tabu(v2) := it + TABU_LENGTH
 
       it=it+1   
-      println("it: "+ it + " " + c.Violation + " (swapped "+ grid(v1) + " and " + grid(v2) + ") in square "+squareOf(v1))      
+      println("it: "+ it + " " + c.violation + " (swapped "+ grid(v1) + " and " + grid(v2) + ") in square "+squareOf(v1))
     }
 
-    println("Solution: "+m.getSolution(true))
+    println("Solution: "+m.solution(true))
 
-    if (c.Violation.value==0) {
+    if (c.violation.value==0) {
       showGrid(grid,N)    
     } else {
       println("Not found after "+MAX_IT+" iterations")
@@ -151,7 +151,7 @@ object SimpleSudoku extends SearchEngine with StopWatch {
     println("run time: "+ getWatch)
   }
 
-  def showGrid(tab:Array[IntVar],N:Int) {
+  def showGrid(tab:Array[CBLSIntVar],N:Int) {
     for (i <- Range(0,tab.length)) {
       if ((i%N)==0) println()
       print(tab(i).value+" ")

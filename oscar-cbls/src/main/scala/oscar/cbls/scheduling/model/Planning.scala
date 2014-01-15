@@ -20,7 +20,7 @@ package oscar.cbls.scheduling.model
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{SetVar, IntVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.visual.VisualFrame
@@ -50,13 +50,13 @@ class Planning(val model: Store, val maxduration: Int) {
     activityCount - 1
   }
 
-  var EarliestStartDates: Array[IntVar] = null
-  var EarliestEndDates: Array[IntVar] = null
-  var LatestStartDates: Array[IntVar] = null
+  var EarliestStartDates: Array[CBLSIntVar] = null
+  var EarliestEndDates: Array[CBLSIntVar] = null
+  var LatestStartDates: Array[CBLSIntVar] = null
 
-  val MakeSpan: IntVar = IntVar(model, 0, maxduration, 0, "MakeSpan")
-  var EarliestOvershotResources: SetVar = null
-  var WorseOvershotResource: SetVar = null
+  val MakeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxduration, 0, "MakeSpan")
+  var EarliestOvershotResources: CBLSSetVar = null
+  var WorseOvershotResource: CBLSSetVar = null
 
   var ResourceArray: Array[Resource] = null
   var ActivityArray: Array[Activity] = null
@@ -73,9 +73,9 @@ class Planning(val model: Store, val maxduration: Int) {
     }
 
     ActivityArray = new Array[Activity](activityCount)
-    EarliestEndDates = new Array[IntVar](activityCount)
-    EarliestStartDates = new Array[IntVar](activityCount)
-    LatestStartDates = new Array[IntVar](activityCount)
+    EarliestEndDates = new Array[CBLSIntVar](activityCount)
+    EarliestStartDates = new Array[CBLSIntVar](activityCount)
+    LatestStartDates = new Array[CBLSIntVar](activityCount)
   
     for (j <- Activities) {
       ActivityArray(j.ID) = j
@@ -96,12 +96,12 @@ class Planning(val model: Store, val maxduration: Int) {
       ResourceArray(r.ResourceID) = r; r.close()
     }
 
-    val WorseOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
+    val WorseOvershootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
     for (r <- resources) {
       WorseOvershootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: SetVar = Filter(WorseOvershootArray)
+    val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
 
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }

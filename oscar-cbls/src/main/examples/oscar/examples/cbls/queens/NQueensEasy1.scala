@@ -24,7 +24,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.core._
 import oscar.cbls.modeling._
 import oscar.util._
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 
 /**
  * Local Search for NQueens
@@ -58,9 +58,9 @@ object NQueensEasy1 extends CBLSSolver with App{
   val tabu = Array.fill(N)(0)
   val tenure = 3
 
-  while(c.violation.value > 0){
+  while(violation.value > 0){
     selectMin(range,range)(
-      (p,q) => c.swapVal(queens(p),queens(q)),
+      (p,q) => swapVal(queens(p),queens(q)),
       (p,q) => tabu(p) < it && tabu(q) < it && p < q)
     match{
       case (q1,q2) =>

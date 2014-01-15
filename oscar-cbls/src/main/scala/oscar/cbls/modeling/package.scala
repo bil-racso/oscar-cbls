@@ -15,7 +15,7 @@
 package oscar.cbls
 
 
-import oscar.cbls.invariants.core.computation.{Store, IntVar, SetVar}
+import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar, CBLSSetVar}
 import scala.collection.immutable.SortedSet
 
 /**This package proposes an interface to the primitive of the CBLS engine.

@@ -21,7 +21,7 @@ package oscar.cbls.scheduling.algo
   ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{IntVar, Solution, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.computation.Solution
 import oscar.cbls.scheduling.model.CumulativeResource
@@ -42,7 +42,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
     FlattenWorseFirst()
 
-    var BestSolution: Solution = model.getSolution(true)
+    var BestSolution: Solution = model.solution(true)
     if (Verbose) {
       println(p.MakeSpan)
       println("----------------")
@@ -73,7 +73,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println("iteration: " + it)
 
       if (p.MakeSpan.value < BestMakeSpan) {
-        BestSolution = model.getSolution(true)
+        BestSolution = model.solution(true)
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")

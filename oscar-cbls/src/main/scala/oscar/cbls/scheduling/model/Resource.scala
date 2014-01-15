@@ -1,6 +1,6 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 
 /**
  * this is an abstract class representing a resource.
@@ -17,7 +17,7 @@ abstract class Resource(planning:Planning, n:String) {
   /** the level of overshoot of the resource.
     * The higher, the more important it is to solve it first in the flattening
     */
-  val overShoot:IntVar
+  val overShoot:CBLSIntVar
 
   /** this method is called by the framework before starting the scheduling
     * put anything that needs to be done after instantiation here

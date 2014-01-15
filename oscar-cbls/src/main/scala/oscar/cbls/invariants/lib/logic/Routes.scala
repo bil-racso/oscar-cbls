@@ -42,11 +42,11 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param lastInRoute the last point in each route.
  */
 case class Routes(V: Int,
-  next: Array[IntVar],
-  positionInRoute: Array[IntVar],
-  routeNr: Array[IntVar],
-  routeLength: Array[IntVar],
-  lastInRoute: Array[IntVar]) extends Invariant {
+  next: Array[CBLSIntVar],
+  positionInRoute: Array[CBLSIntVar],
+  routeNr: Array[CBLSIntVar],
+  routeLength: Array[CBLSIntVar],
+  lastInRoute: Array[CBLSIntVar]) extends Invariant {
   val UNROUTED = next.length
   val arrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()
@@ -98,7 +98,7 @@ case class Routes(V: Int,
   var ToUpdate: List[Int] = List.empty
   var ToUpdateCount: Int = 0
 
-  override def notifyIntChanged(v: IntVar, i: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
     unregisterDynamicallyListenedElement(arrayOfUnregisterKeys(i))
     arrayOfUnregisterKeys(i) = null
     ToUpdate = i :: ToUpdate
@@ -180,13 +180,13 @@ case class Routes(V: Int,
   }
 }
 object Routes {
-  def buildRoutes(next: Array[IntVar], V: Int): Routes = {
+  def buildRoutes(next: Array[CBLSIntVar], V: Int): Routes = {
     val m: Store = InvariantHelper.findModel(next)
 
-    val positionInRoute = Array.tabulate(next.length)(i => IntVar(m, 0, next.length, next.length, "PositionInRouteOfPt" + i))
-    val routeNr = Array.tabulate(next.length)(i => IntVar(m, 0, V, V, "RouteNrOfPt" + i))
-    val routeLength = Array.tabulate(V)(i => IntVar(m, 0, next.length, 0, "Route " + i + "-Lenght"))
-    val lastInRoute = Array.tabulate(V)(i => IntVar(m, 0, next.length, i, "LastInRoute " + i))
+    val positionInRoute = Array.tabulate(next.length)(i => CBLSIntVar(m, 0, next.length, next.length, "PositionInRouteOfPt" + i))
+    val routeNr = Array.tabulate(next.length)(i => CBLSIntVar(m, 0, V, V, "RouteNrOfPt" + i))
+    val routeLength = Array.tabulate(V)(i => CBLSIntVar(m, 0, next.length, 0, "Route " + i + "-Lenght"))
+    val lastInRoute = Array.tabulate(V)(i => CBLSIntVar(m, 0, next.length, i, "LastInRoute " + i))
 
     Routes(V, next, positionInRoute, routeNr, routeLength, lastInRoute)
   }

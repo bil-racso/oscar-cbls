@@ -25,7 +25,7 @@ import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 
 /**
  * Very simple example showing how to use Asteroid on the basic pigeon hole problem
@@ -56,7 +56,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     val m: Store = new Store(false,None,true)
        
     // holes
-    val holes:Array[IntVar] = (for(i <- range) yield IntVar(m, 0, N, 0, "h" + (i+1))).toArray
+    val holes:Array[CBLSIntVar] = (for(i <- range) yield CBLSIntVar(m, 0, N, 0, "h" + (i+1))).toArray
     
     // initially all pigeons are in the first hole...
     holes(0).setValue(N)
@@ -82,7 +82,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
     var it:Int =0
     val MaxIT = 2*N
 
-    while((c.Violation.value > 0) && (it < MaxIT)){
+    while((c.violation.value > 0) && (it < MaxIT)){
       val holeMax:(Int)=selectMax(range, (p:Int) => holes(p).value)
       val holeMin:(Int)=selectMin(range)(p => holes(p).value, (p:Int) => p != holeMax )
 
@@ -90,11 +90,11 @@ object PigeonHoles extends SearchEngine with StopWatch {
       holes(holeMin).setValue(holes(holeMin).value+1)
       
       it += 1
-      println("it: " + it + " " + c.Violation + " (moved from "+ holeMax + " to " + holeMin + ")")
+      println("it: " + it + " " + c.violation + " (moved from "+ holeMax + " to " + holeMin + ")")
     }
 
-    println(c.Violation)
-    println(m.getSolution(true))
+    println(c.violation)
+    println(m.solution(true))
     println("run time: "+ getWatchString)
   }
 }

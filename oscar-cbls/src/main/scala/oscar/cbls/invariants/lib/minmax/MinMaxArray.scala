@@ -34,12 +34,12 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  */
-case class MaxArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = Int.MinValue)
-  extends MiaxArray(varss, if(ccond == null) SetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
+case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MinValue)
+  extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MaxArray"
 
-  override def Ord(v: IntVar): Int = -v.value
+  override def Ord(v: CBLSIntVar): Int = -v.value
 
   override def ExtremumName: String = "Max"
 
@@ -57,12 +57,12 @@ case class MaxArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = I
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  */
-case class MinArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = Int.MaxValue)
-  extends MiaxArray(varss, if(ccond == null) SetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
+case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MaxValue)
+  extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MinArray"
 
-  override def Ord(v: IntVar): Int = v.value
+  override def Ord(v: CBLSIntVar): Int = v.value
 
   override def ExtremumName: String = "Min"
 
@@ -81,11 +81,11 @@ case class MinArray(varss: Array[IntVar], ccond: SetVar = null, default: Int = I
  * @param cond is the condition, cannot be null
  * update is O(log(n))
  */
-abstract class MiaxArray(vars: Array[IntVar], cond: SetVar, default: Int) extends IntInvariant with Bulked[IntVar, (Int, Int)] {
+abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends IntInvariant with Bulked[CBLSIntVar, (Int, Int)] {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
   if (cond != null) {
     registerStaticDependency(cond)
@@ -108,16 +108,16 @@ abstract class MiaxArray(vars: Array[IntVar], cond: SetVar, default: Int) extend
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntVar]) = {
+  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
   }
 
   def name: String
   def ExtremumName: String
-  def Ord(v: IntVar): Int
+  def Ord(v: CBLSIntVar): Int
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     if (h.isEmpty) {
@@ -128,14 +128,14 @@ abstract class MiaxArray(vars: Array[IntVar], cond: SetVar, default: Int) extend
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
     output := vars(h.getFirst).value
   }
 
   @inline
-  override def notifyInsertOn(v: SetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
@@ -145,7 +145,7 @@ abstract class MiaxArray(vars: Array[IntVar], cond: SetVar, default: Int) extend
   }
 
   @inline
-  override def notifyDeleteOn(v: SetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
 
     unregisterDynamicDependency(keyForRemoval(value))

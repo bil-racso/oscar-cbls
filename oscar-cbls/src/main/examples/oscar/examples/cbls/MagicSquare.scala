@@ -27,7 +27,7 @@ import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
-import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 
 /**
  * Example showing how to use Asteroid on the magic square problem  
@@ -58,11 +58,11 @@ object MagicSquare extends SearchEngine with StopWatch {
     val m: Store = new Store(false,None,true)
         
     // Square
-    val magic = Array.ofDim[IntVar](N,N)
+    val magic = Array.ofDim[CBLSIntVar](N,N)
     val perm:Iterator[Int] = getRandomPermutation(M)
     var v:Int=1
     for(i <- Dim; j <-Dim) { 
-      magic(i)(j)=IntVar(m, 1, N, perm.next+1, "v_"+i+"_"+j) // init with random permutation (ensuring all diff)
+      magic(i)(j)=CBLSIntVar(m, 1, N, perm.next+1, "v_"+i+"_"+j) // init with random permutation (ensuring all diff)
       v=v+1
     }
     showSquare(magic)
@@ -86,14 +86,14 @@ object MagicSquare extends SearchEngine with StopWatch {
     // conversion is: i=v/N, j=v%N
     // TODO - can we work with multidimensional arrays here ?
     //val ViolationArray:Array[IntVar] = (for(i <- Dim; j <- Dim) yield c.violation(magic(i)(j))).toArray
-    val Tabu:Array[IntVar] = (for (i <- Dim; j <- Dim) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i+"_"+j)).toArray
+    val Tabu:Array[CBLSIntVar] = (for (i <- Dim; j <- Dim) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i+"_"+j)).toArray
     var it:Int=1
     
     // closing model
     m.close()
       
     // search
-    while((c.Violation.value > 0) && (it < MAX_IT)){
+    while((c.violation.value > 0) && (it < MAX_IT)){
       val allowed = Dim2.filter(v => Tabu(v).value < it)
       val (v1,v2)=selectMin(allowed, allowed) ((v1,v2) => c.swapVal(magic(v1/N)(v1%N),magic(v2/N)(v2%N)), (v1,v2) => v1 < v2)
 
@@ -108,12 +108,12 @@ object MagicSquare extends SearchEngine with StopWatch {
       Tabu(v2) := it + TABU_LENGTH
 
       it=it+1   
-      println("it: "+ it + " " + c.Violation + " (swapped "+ magic(i1)(j1) + " and " + magic(i2)(j2) + ")")
+      println("it: "+ it + " " + c.violation + " (swapped "+ magic(i1)(j1) + " and " + magic(i2)(j2) + ")")
     }
      
-    println("Solution: "+m.getSolution(true))
+    println("Solution: "+m.solution(true))
 
-    if (c.Violation.value==0) {
+    if (c.violation.value==0) {
       showSquare(magic)    
     } else {
       println("Not found after "+MAX_IT+" iterations")
@@ -122,7 +122,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     println("run time: "+ getWatch)
   }
 
-  def showSquare(tab:Array[Array[IntVar]]) {
+  def showSquare(tab:Array[Array[CBLSIntVar]]) {
     println()
     for (i <- Range(0,tab.length)) {
       for (j <-Range(0,tab(i).length)) {

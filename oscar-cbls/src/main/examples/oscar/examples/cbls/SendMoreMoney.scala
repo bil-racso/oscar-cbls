@@ -30,7 +30,7 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 import oscar.cbls.invariants.core.computation.SetInvariant.toIntSetVar
-import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
@@ -75,8 +75,8 @@ object SendMoreMoney extends SearchEngine with StopWatch {
         
     // letter and carriage values
     // d initialised with 0..10, r with 0
-    val d:Array[IntVar]= (for(l <- Letter.list) yield IntVar(m, 0, 9, l.id, l+"")).toArray
-    val r:Array[IntVar]= (for(c <- Carry.values) yield IntVar(m, 0, 9, 0, c+"")).toArray
+    val d:Array[CBLSIntVar]= (for(l <- Letter.list) yield CBLSIntVar(m, 0, 9, l.id, l+"")).toArray
+    val r:Array[CBLSIntVar]= (for(c <- Carry.values) yield CBLSIntVar(m, 0, 9, 0, c+"")).toArray
           
     // constraint system
     val c:ConstraintSystem = new ConstraintSystem(m)
@@ -97,24 +97,24 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     r(Carry.c4.id) <== ((d(Letter.S.id) + d(Letter.M.id) + r(Carry.c3.id)) / 10)
 
     // search variables
-    val ViolationArray:Array[IntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
+    val ViolationArray:Array[CBLSIntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
     c.close()
-    val Tabu:Array[IntVar] = (for (i <- Letter.list) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
-    val It = IntVar(m,0,Int.MaxValue,0,"it")
-    val NonTabuLetter:SetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolLetter:SetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
+    val Tabu:Array[CBLSIntVar] = (for (i <- Letter.list) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
+    val It = CBLSIntVar(m,0,Int.MaxValue,0,"it")
+    val NonTabuLetter:CBLSSetVar = SelectLESetQueue(Tabu, It)
+    val NonTabuMaxViolLetter:CBLSSetVar = new ArgMaxArray(ViolationArray, NonTabuLetter)
     
     // closing model
     m.close()
 
     // search
-    while((c.Violation.value > 0) && (It.value < MAX_IT)){
+    while((c.violation.value > 0) && (It.value < MAX_IT)){
       val l1 = selectFrom(NonTabuMaxViolLetter.value)
       val l2 = selectMin(NonTabuLetter.value)(i => c.swapVal(d(l1),d(i)), (i:Int) => i!=l1)
 
       // swapping so this enforces all d are different
       d(l1) :=: d(l2)
-      println(c.Violation.toString +" "+c.Violation.value+" "+c.swapVal(d(l1),d(l2)))
+      println(c.violation.toString +" "+c.violation.value+" "+c.swapVal(d(l1),d(l2)))
       // enforcing carries are matching constraints
 
       //r(Carry.c1.id).setValue((d(Letter.D.id).value+d(Letter.E.id).value) / 10)
@@ -126,10 +126,10 @@ object SendMoreMoney extends SearchEngine with StopWatch {
       // Tabu(l2) := It.value + TABU_LENGTH // not a good idea to tabu the second variable
       
       It.++ // try without the dot (strange line behavior)
-      println(It.toString + " " + c.Violation+" switching "+d(l1).name+" "+d(l2).name)
+      println(It.toString + " " + c.violation+" switching "+d(l1).name+" "+d(l2).name)
     }	
       
-    println("Solution: "+m.getSolution(true))
+    println("Solution: "+m.solution(true))
     println("run time: "+ getWatchString)
   }
 
