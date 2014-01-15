@@ -9,7 +9,7 @@ import oscar.cp.constraints.Not
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPBoolVar(st: CPStore, name: String) extends CPVarIntImpl(st, 0, 1, name) {
+class CPBoolVar(st: CPStore, name: String) extends CPIntVarImpl(st, 0, 1, name) {
 
   def this(s: CPStore) = this(s, "")
 
