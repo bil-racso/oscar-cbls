@@ -18,11 +18,13 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
 import oscar.cbls.modeling._
 import oscar.cbls.invariants.core.computation.IntVar
+import scala.language.postfixOps
+import oscar.cbls.invariants.core.computation.Store
 
 class TestIntVar extends FunSuite with ShouldMatchers {
   
   test("test create IntVar 1..10"){
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, 1, 10, 1, "x")
     val y = IntVar(solver, (1 to 10), 1, "y")
     val z = IntVar(solver, (1 until 10), 1, "z")
@@ -39,7 +41,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test create IntVar using invalid ranges"){
-	  val solver = new LSSolver
+	  val solver = new Store
 	  evaluating {
 		  val x = IntVar(solver, (0 to -1), 0, "x")
 	  } should produce [IllegalArgumentException]
@@ -50,7 +52,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test inDomain of IntVar 1..10"){
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 10), 1, "x")
    // solver.close()
     (1 to 10).foreach(x.inDomain(_) should be(true))
@@ -61,7 +63,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test domain of IntVar"){
-    val solver = new LSSolver
+    val solver = new Store
     val domain = (1 to 10)
     val x = IntVar(solver, domain, 1, "x")
     val y = IntVar(solver, 1, 10, 1, "y")
@@ -71,7 +73,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test setValue via :="){
-    val solver = new LSSolver
+    val solver = new Store
     
     val x = IntVar(solver, (1 to 10), 1, "x")
     solver.close()
@@ -82,7 +84,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :=:"){
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 10), 1, "x")
     val y = IntVar(solver, (1 to 10), 10, "y")
     solver.close()
@@ -97,7 +99,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :+=") {
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 100), 50, "x")
     
     x.value should be(50)
@@ -108,7 +110,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :*=") {
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 10), 10, "x")
     
     x.value should be(10)
@@ -119,7 +121,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :-=") {
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 10), 5, "x")
     x.value should be(5)
     x :-= 3
@@ -131,7 +133,7 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test ++()") {
-    val solver = new LSSolver
+    val solver = new Store
     val x = IntVar(solver, (1 to 10), 1, "x")
     x.value should be(1)
 

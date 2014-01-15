@@ -30,14 +30,14 @@ import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.initial.RandomInsert
 import oscar.cbls.routing.model.ClosestNeighborPointsHop
 import oscar.cbls.routing.model.HopDistanceAsObjective
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PenaltyForUnrouted
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.Unrouted
+import oscar.cbls.routing.model.RoutedAndUnrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
@@ -327,7 +327,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     }) {
       (f: MoveFixture) =>
         val relevantNeighbors = (n: Int) => f.vrp.nodes
-        new TwoOptNeighborhood().firstImprovingMove(
+        TwoOptNeighborhood.firstImprovingMove(
           SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
             case Some(m) => {
               m.isInstanceOf[TwoOptMove] should be(true)
@@ -345,7 +345,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   moveTest("A first two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
-      new TwoOptNeighborhood().firstImprovingMove(
+      TwoOptNeighborhood.firstImprovingMove(
         SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
           case Some(m) => {
             m.isInstanceOf[TwoOptMove] should be(true)
@@ -363,7 +363,7 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   moveTest("A best two-opt move is done correctly.", 1, true) {
     (f: MoveFixture) =>
       val relevantNeighbors = (n: Int) => f.vrp.nodes
-      new TwoOptNeighborhood().bestImprovingMove(
+      TwoOptNeighborhood.bestImprovingMove(
         SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
           case Some(m) => {
             m.isInstanceOf[TwoOptMove] should be(true)
@@ -454,7 +454,12 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     nbVehicles: Int = 1,
     abscissa: Array[Int] = null,
     ordinate: Array[Int] = null,
-    init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = RandomInsert.apply)(moveFun: MoveFixture => Boolean): Unit = {
+    // format: OFF (to prevent eclipse from formatting the following lines)
+    init: VRP with RoutedAndUnrouted with VRPObjective
+              with PositionInRouteAndRouteNr
+              with MoveDescription => Unit = RandomInsert.apply)
+      (moveFun: MoveFixture => Boolean): Unit = {
+    // format: ON
     test(name) {
       var improvingMoveFound = false
       while (!improvingMoveFound) {
@@ -565,7 +570,11 @@ class MoveFixture(
   val nbVehicules: Int = 1,
   var abscissa: Array[Int] = null,
   var ordinate: Array[Int] = null,
-  val init: VRP with Unrouted with VRPObjective with PositionInRouteAndRouteNr with MoveDescription => Unit = BestInsert.apply) {
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  val init: VRP with RoutedAndUnrouted with VRPObjective
+                with PositionInRouteAndRouteNr
+                with MoveDescription => Unit = BestInsert.apply) {
+  // format: ON
 
   val ROUTE_ARRAY_UNROUTED = 1
 
@@ -579,11 +588,11 @@ class MoveFixture(
         Array.fill(nbNodes)(0)
       }
   val matrix = getDistanceMatrix(abscissa, ordinate)
-  val model: Model = new Model(false, None, false, false)
+  val model: Store = new Store(false, None, false, false)
 
   val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjective with PositionInRouteAndRouteNr with ClosestNeighborPointsHop with UnroutedImpl with PenaltyForUnrouted with MoveDescription
 
-  vrp.addObjectiveTerm(vrp.UnroutedPenalty)
+  vrp.addObjectiveTerm(vrp.unroutedPenalty)
   vrp.setUnroutedPenaltyWeight(10000)
   vrp.installCostMatrix(matrix)
   model.close()

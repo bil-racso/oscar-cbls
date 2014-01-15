@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -18,7 +18,7 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-package oscar.examples.cbls
+package oscar.examples.cbls.queens
 
 import oscar.cbls.search._
 import oscar.cbls.invariants.core.computation._
@@ -28,7 +28,6 @@ import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import util.Random
-import oscar.cbls.invariants.core.computation.IntSetInvariant.toIntSetVar
 import oscar.cbls.invariants.core.computation.IntVar.int2IntVar
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 ;
@@ -48,20 +47,24 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
  * The program accepts an argument which is the problem size
  * Otherwise it performs a benchmarking over a range of sizes (this takes time)
 */
-object NQueens2 extends SearchEngine(true) with StopWatch{
+object NQueensBench1 extends SearchEngine(true) with StopWatch{
+
+  def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
+  def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
 
   def main(args: Array[String]) {
 
     if (args.length<1) {
       println("Benchmarking NQueen - this takes time")
-      println("TClose, Ttotal, It")
+      println("advise: put -Xms1000M -Xmx1000M")
+      println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
     
       // first run could have some overhead so ignoring it
       SolveNQueen(1000)
 
       // multiple runs
-      for (N <- Range(1000, 11000, 1000)){
-    	  SolveNQueen(N)
+      for (n <- Range(1000, 11000, 1000)){
+    	  SolveNQueen(n)
     	  System.gc()
       }
     } else {
@@ -71,13 +74,13 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
   }
   
   def SolveNQueen(N:Int){
-    print("NQueens(" + N + ")")
+    print(padToLength("" + N, 15))
 
     startWatch()
     val range:Range = Range(0,N)
     val tabulength = 10
 
-    val m: Model = new Model(false,None,true)
+    val m: Store = new Store(false,None,true)
     val it = Random.shuffle(range.toList).iterator
     val Queens:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, N-1,it.next(), "queen" + q)).toArray
 
@@ -88,16 +91,14 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
     c.post(AllDiff(for ( q <- range) yield (q - Queens(q)).toIntVar))
 
     val ViolationArray:Array[IntVar] = (for(q <- range) yield c.violation(Queens(q))).toArray
-    c.close()
 
     val Tabu:Array[IntVar] = (for (q <- range) yield IntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
     val It = IntVar(m,0,Int.MaxValue,1,"it")
-    val NonTabuQueens:IntSetVar = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolQueens:IntSetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
+    val NonTabuQueens:SetVar = SelectLESetQueue(Tabu, It)
+    val NonTabuMaxViolQueens:SetVar = new ArgMaxArray(ViolationArray, NonTabuQueens)
 
     m.close(false)
-
-    print(", " + getWatch)
+    print(padToLength("" + getWatch, 15))
 
     while((c.Violation.value > 0) && (It.value < N)){
       val oldviolation:Int = c.Violation.value
@@ -121,6 +122,6 @@ object NQueens2 extends SearchEngine(true) with StopWatch{
       It ++
     }
 
-    println(", " + getWatch + ", " + It)
+    println(padToLength("" + getWatch, 15) + It.value)
   }
 }

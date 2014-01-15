@@ -23,12 +23,22 @@
 
 package oscar.cbls.test.routing
 
+import scala.language.reflectiveCalls
+import scala.math.pow
+import scala.math.round
+import scala.math.sqrt
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import math._
-import oscar.cbls.invariants.core.computation.Model
-import oscar.cbls.routing.model._
-import oscar.cbls.routing.initial.BestInsert
+
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.routing.model.HopDistanceAsObjective
+import oscar.cbls.routing.model.MoveDescription
+import oscar.cbls.routing.model.PenaltyForUnrouted
+import oscar.cbls.routing.model.PositionInRouteAndRouteNr
+import oscar.cbls.routing.model.UnroutedImpl
+import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.VRPObjective
 
 class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
 
@@ -49,18 +59,18 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
       val N: Int = 9
 
       val matrix = getDistanceMatrix(Array(0, 1, 2, 3, 4, 5, 6, 7, 8), Array(0, 0, 0, 0, 0, 0, 0, 0, 0))
-      val model: Model = new Model(false, None, false, false)
+      val model: Store = new Store(false, None, false, false)
 
       val vrp = new VRP(N, V, model) with UnroutedImpl with VRPObjective with MoveDescription with HopDistanceAsObjective with PositionInRouteAndRouteNr with PenaltyForUnrouted
       vrp.installCostMatrix(matrix)
       model.close()
-      vrp.setCircuit(List(0,1,2,3,4,5,6,7,8))
+      vrp.setCircuit(List(0, 1, 2, 3, 4, 5, 6, 7, 8))
       // 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (-> 0)
     }
 
   test("instantiation") {
     val f = fixture
-    f.vrp.UnroutedPenalty.value should be(0)
+    f.vrp.unroutedPenalty.value should be(0)
     f.vrp.weightUnroutedPenalty.foreach { v => v.value should be(0) }
   }
 
@@ -68,24 +78,24 @@ class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
     val f = fixture
     f.vrp.setUnroutedPenaltyWeight(100)
     f.vrp.weightUnroutedPenalty(1).value should be(100)
-    f.vrp.UnroutedPenalty.value should be( 100 * f.vrp.unrouted.value.size)
+    f.vrp.unroutedPenalty.value should be(100 * f.vrp.unrouted.value.size)
   }
 
   test("fixe a penalty of 1000 on each node") {
     val f = fixture
     f.vrp.setUnroutedPenaltyWeight(1000)
     f.vrp.weightUnroutedPenalty.foreach { v => v.value should be(1000) }
-    f.vrp.UnroutedPenalty.value should be(0)
+    f.vrp.unroutedPenalty.value should be(0)
   }
 
   test("fixe a penalty of 100 on node 1 and unroute 1") {
     val f = fixture
     f.vrp.setUnroutedPenaltyWeight(1, 100)
     f.vrp.weightUnroutedPenalty(1).value should be(100)
-    f.vrp.UnroutedPenalty.value should be(0)
+    f.vrp.unroutedPenalty.value should be(0)
 
     f.vrp.unroute()
 
-    f.vrp.UnroutedPenalty.value should be(100)
+    f.vrp.unroutedPenalty.value should be(100)
   }
 }

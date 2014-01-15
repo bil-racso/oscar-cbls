@@ -181,7 +181,7 @@ case class Routes(V: Int,
 }
 object Routes {
   def buildRoutes(next: Array[IntVar], V: Int): Routes = {
-    val m: Model = InvariantHelper.findModel(next)
+    val m: Store = InvariantHelper.findModel(next)
 
     val positionInRoute = Array.tabulate(next.length)(i => IntVar(m, 0, next.length, next.length, "PositionInRouteOfPt" + i))
     val routeNr = Array.tabulate(next.length)(i => IntVar(m, 0, V, V, "RouteNrOfPt" + i))

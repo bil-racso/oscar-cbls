@@ -25,7 +25,7 @@ package oscar.cbls.test.routing
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cbls.invariants.core.computation.Model
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.initial.RandomInsert
 
@@ -38,7 +38,7 @@ class TestPredecessor extends FunSuite with ShouldMatchers {
       val V: Int = v
       val N: Int = n
       // model with check internal
-      val model: Model = new Model(false, None, false, false)
+      val model: Store = new Store(false, None, false, false)
       val vrp = new VRP(N, V, model) with VRPObjective with PositionInRouteAndRouteNr with UnroutedImpl with MoveDescription with HopDistance with Predecessors
       model.close()
 

@@ -20,7 +20,7 @@ package oscar.cbls.scheduling.model
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntVar, IntSetVar}
+import oscar.cbls.invariants.core.computation.{IntVar, SetVar}
 import scala.Array
 import oscar.cbls.invariants.lib.logic.{Cumulative, Filter}
 import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinSet}
@@ -42,11 +42,11 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
   require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration)(t => new IntSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+  val use = Array.tabulate(maxDuration)(t => new SetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   val useAmount = Array.tabulate(maxDuration)(t => IntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
   
   val HighestUseTracker = ArgMaxArray(useAmount)
-  val HighestUsePositions: IntSetVar = HighestUseTracker
+  val HighestUsePositions: SetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
   var ActivitiesAndUse: SortedMap[Activity, IntVar] = SortedMap.empty

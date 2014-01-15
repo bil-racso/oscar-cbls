@@ -62,9 +62,9 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
   // UI stuff
   val cl = Thread.currentThread().getContextClassLoader()
-  val QUEEN = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-ok.png"))
-  val CONFLICT = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-ko.png"))
-  val EMPTY = new ImageIcon(cl.getResource("oscar/examples/cbls/resourcesQueens/queen-no.png"))
+  val QUEEN = new ImageIcon(cl.getResource("oscar/examples/cbls/queens/resourcesQueens/queen-ok.png"))
+  val CONFLICT = new ImageIcon(cl.getResource("oscar/examples/cbls/queens/resourcesQueens/queen-ko.png"))
+  val EMPTY = new ImageIcon(cl.getResource("oscar/examples/cbls/queens/resourcesQueens/queen-no.png"))
   var boxPanel: BoxPanel = null
   var tab: Array[Array[Label]] = null
   var lNQueen: Label = null
@@ -155,7 +155,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     val max = N - 1
     val range: Range = Range(0, N)
     val tabulength = 0
-    val m: Model = new Model(false, None, true)
+    val m: Store = new Store(false, None, true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")

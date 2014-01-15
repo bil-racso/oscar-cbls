@@ -33,39 +33,41 @@ import oscar.cbls.search.SearchEngineTrait
 /**
  * Inserts an unrouted point in a route.
  * The search complexity is O(n²).
+ *
+ * PRE-CONDITIONS:
+ * - the relevant neighbors must all be routed,
+ * - the primary node iterator must contain only unrouted nodes.
  */
 object InsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(
-      s: SearchZone,
-      moveAcceptor: (Int) => (Int) => Boolean,
-      returnMove: Boolean): SearchResult = {
+    s: SearchZone,
+    moveAcceptor: (Int) => (Int) => Boolean,
+    returnMove: Boolean): SearchResult = {
     val startObj: Int = s.vrp.getObjective()
     s.vrp.cleanRecordedMoves()
     val vrp = s.vrp
 
     while (s.primaryNodeIterator.hasNext) {
-      //TODO: bizarre qu'on itère à l'envers sur les points d'insertion puis sur les points à insérer!
-      //il faudrait itérer sur les points non routés, puis sur les poijnts d'insertion parmi les points relevants.
-      //tant pis pour le primaryIterator en fait.
-      val beforeInsertedPoint: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(beforeInsertedPoint)) {
-        for (
-          insertedPoint <- s.relevantNeighbors(beforeInsertedPoint) if (
-            !vrp.isRouted(insertedPoint))) {
+      val insertedPoint = s.primaryNodeIterator.next
+      assert(!vrp.isRouted(insertedPoint),
+        "The search zone should be restricted to unrouted nodes when inserting.")
 
-          assert(s.vrp.isRecording, "MoveDescription should be recording now")
+      val routedNeighbors = s.relevantNeighbors(insertedPoint)
+      for (beforeInsertedPoint <- routedNeighbors) {
+        assert(vrp.isRouted(beforeInsertedPoint),
+          "The relevant neighbors should be routed.")
+        assert(s.vrp.isRecording, "MoveDescription should be recording now")
 
-          encode(beforeInsertedPoint, insertedPoint, vrp)
+        encode(beforeInsertedPoint, insertedPoint, vrp)
 
-          checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-            case (true, newObj: Int) => { //this improved
-              if (returnMove) {
-                return MoveFound(InsertPoint(beforeInsertedPoint,
-                  insertedPoint, newObj, vrp))
-              } else return MovePerformed()
-            }
-            case _ => ()
+        checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
+          case (true, newObj: Int) => { //this improved
+            if (returnMove) {
+              return MoveFound(InsertPoint(beforeInsertedPoint,
+                insertedPoint, newObj, vrp))
+            } else return MovePerformed()
           }
+          case _ => ()
         }
       }
     }
@@ -74,6 +76,7 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
 
   def encode(beforeInsertedPoint: Int, insertedPoint: Int, vrp: VRP with MoveDescription) {
     assert(!vrp.isRouted(insertedPoint))
+    assert(vrp.isRouted(beforeInsertedPoint))
     val s = vrp.segmentFromUnrouted(insertedPoint)
     vrp.insert(s, beforeInsertedPoint)
   }

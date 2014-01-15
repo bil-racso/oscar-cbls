@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{ IntVar, IntInvariant, IntSetVar }
+import oscar.cbls.invariants.core.computation.{ IntVar, IntInvariant, SetVar }
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param on is the set of integers to add
  * @param fun is an optional function Int -> Int to apply before summing elements. It is expected not to rely on any variable of the model.
  */
-case class SetSum(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetSum(on: SetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
   var output: IntVar = null
 
@@ -49,13 +49,13 @@ case class SetSum(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends In
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == on)
     output :+= fun(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == on)
     output :-= fun(value)
   }
@@ -72,7 +72,7 @@ case class SetSum(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends In
  * @param on is the set of integers to multiply
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
  */
-case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetProd(on: SetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
   var output: IntVar = null
   var NonZeroProduct: Int = 0
@@ -96,7 +96,7 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: SetVar, value: Int) {
     assert(v == on)
     if (value != 0) {
       NonZeroProduct *= fun(value)
@@ -109,7 +109,7 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: SetVar, value: Int) {
     assert(v == on, "The given set (IntSetVar) should be SetProd.on.")
     if (value != 0) {
       NonZeroProduct /= fun(value)

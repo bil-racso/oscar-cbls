@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar}
+import oscar.cbls.invariants.core.computation.{Invariant, SetVar, IntVar}
 import collection.immutable.SortedSet
 
 /**
@@ -32,7 +32,7 @@ import collection.immutable.SortedSet
  * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
  * @param active the tasks that are active maintained to active(time) <== (task.indices | task.start <= time <= t.start+t.duration)
  */
-case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[IntSetVar]) extends Invariant {
+case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[SetVar]) extends Invariant {
 
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v),v)
   for (v <- duration.indices) registerStaticAndDynamicDependency(duration(v),v)

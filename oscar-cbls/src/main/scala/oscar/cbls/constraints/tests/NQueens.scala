@@ -53,7 +53,7 @@ object NQueens extends SearchEngine with StopWatch{
     val max = N-1
     val range:Range = Range(0,N)
     val tabulength = 0
-    val m: Model = new Model(false,None,true)
+    val m: Store = new Store(false,None,true)
     val MaxIT = 10000
 
     println("NQueens(" + N + ")")

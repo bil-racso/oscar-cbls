@@ -20,7 +20,7 @@ package oscar.cbls.scheduling.model
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{SetVar, IntVar, Store}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.visual.VisualFrame
@@ -29,7 +29,7 @@ import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
 
-class Planning(val model: Model, val maxduration: Int) {
+class Planning(val model: Store, val maxduration: Int) {
 
   var resources: List[Resource] = List.empty
   var resourceCount: Int = 0
@@ -55,8 +55,8 @@ class Planning(val model: Model, val maxduration: Int) {
   var LatestStartDates: Array[IntVar] = null
 
   val MakeSpan: IntVar = IntVar(model, 0, maxduration, 0, "MakeSpan")
-  var EarliestOvershotResources: IntSetVar = null
-  var WorseOvershotResource: IntSetVar = null
+  var EarliestOvershotResources: SetVar = null
+  var WorseOvershotResource: SetVar = null
 
   var ResourceArray: Array[Resource] = null
   var ActivityArray: Array[Activity] = null
@@ -101,7 +101,7 @@ class Planning(val model: Model, val maxduration: Int) {
       WorseOvershootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: IntSetVar = Filter(WorseOvershootArray)
+    val ResourceWithOvershoot: SetVar = Filter(WorseOvershootArray)
 
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
