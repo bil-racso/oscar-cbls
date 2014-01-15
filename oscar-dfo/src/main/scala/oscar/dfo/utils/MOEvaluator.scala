@@ -16,11 +16,11 @@ package oscar.dfo.utils
 
 import scala.collection.mutable.HashMap
 
-class MOEvaluator[E <% Ordered[E]](var evalFunctions: Array[Double] => Array[E], val unfeasibleValue: Array[E]) {
-  val evaluations = HashMap[Array[Double], MOOPoint[E]]()
+class MOEvaluator(var evalFunctions: Array[Double] => Array[Double], val unfeasibleValue: Array[Double]) {
+  val evaluations = HashMap[Array[Double], MOOPoint]()
   var nbCallToEvalFunction = 0
   
-  def eval(coordinates: Array[Double], feasibleReg: FeasibleRegion): MOOPoint[E] = {
+  def eval(coordinates: Array[Double], feasibleReg: FeasibleRegion): MOOPoint = {
     evaluations.get(coordinates) match {
       case Some(point) => point
       case _ => {
@@ -40,5 +40,5 @@ class MOEvaluator[E <% Ordered[E]](var evalFunctions: Array[Double] => Array[E],
 }
 
 object MOEvaluator {
-  def apply[E <% Ordered[E]](evalFunctions: Array[Double] => Array[E], unfeasibleValue: Array[E]) = new MOEvaluator(evalFunctions, unfeasibleValue)
+  def apply(evalFunctions: Array[Double] => Array[Double], unfeasibleValue: Array[Double]) = new MOEvaluator(evalFunctions, unfeasibleValue)
 }

@@ -32,7 +32,7 @@ import java.awt.geom.Ellipse2D
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.chart.annotations.XYTextAnnotation
 
-class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = false) extends JPanel(new BorderLayout()) {
+class VisualSimplex2D(simplex: Array[MOOPoint], inputSpace: Boolean = false) extends JPanel(new BorderLayout()) {
 
   val textDistFactor = 10.0
   val originalSerie = new XYSeries(0, false)
@@ -116,12 +116,12 @@ class VisualSimplex2D(simplex: Array[MOOPoint[Double]], inputSpace: Boolean = fa
   def origXDist = originalSerie.getMaxX() - originalSerie.getMinX()
   def origYDist = originalSerie.getMaxY() - originalSerie.getMinY()
   
-  def showReflexion(simplex: Array[MOOPoint[Double]], newPoint: MOOPoint[Double]) = showSingleTransform(simplex, newPoint, "yr", 1)
-  def showExpansion(simplex: Array[MOOPoint[Double]], newPoint: MOOPoint[Double]) = showSingleTransform(simplex, newPoint, "ye", 2)
-  def showInsideContraction(simplex: Array[MOOPoint[Double]], newPoint: MOOPoint[Double]) = showSingleTransform(simplex, newPoint, "yic", 3)
-  def showOutsideContraction(simplex: Array[MOOPoint[Double]], newPoint: MOOPoint[Double]) = showSingleTransform(simplex, newPoint, "yoc", 3)
+  def showReflexion(simplex: Array[MOOPoint], newPoint: MOOPoint) = showSingleTransform(simplex, newPoint, "yr", 1)
+  def showExpansion(simplex: Array[MOOPoint], newPoint: MOOPoint) = showSingleTransform(simplex, newPoint, "ye", 2)
+  def showInsideContraction(simplex: Array[MOOPoint], newPoint: MOOPoint) = showSingleTransform(simplex, newPoint, "yic", 3)
+  def showOutsideContraction(simplex: Array[MOOPoint], newPoint: MOOPoint) = showSingleTransform(simplex, newPoint, "yoc", 3)
   
-  def showSingleTransform(simplex: Array[MOOPoint[Double]], newPoint: MOOPoint[Double], label: String, serieIndex: Int) {
+  def showSingleTransform(simplex: Array[MOOPoint], newPoint: MOOPoint, label: String, serieIndex: Int) {
     if (inputSpace) {
       transformSeries(serieIndex - 1).add(simplex(0).coordinates(0), simplex(0).coordinates(1))
       transformSeries(serieIndex - 1).add(newPoint.coordinates(0), newPoint.coordinates(1))
