@@ -48,7 +48,7 @@ object BestInsert {
                      with PositionInRouteAndRouteNr with MoveDescription
                      with ClosestNeighbors) {
     // format: ON
-    apply(vrp, 0)
+    apply(vrp, (n: Int) => vrp.routed.value)
   }
   
   // format: OFF (to prevent eclipse from formatting the following lines)
@@ -56,14 +56,16 @@ object BestInsert {
                      with PositionInRouteAndRouteNr with MoveDescription
                      with ClosestNeighbors, k: Int) {
     // format: ON
+    val relevantNeighbors = vrp.getKNearest(k)_
+    apply(vrp, (n: Int) => relevantNeighbors(n).filter(vrp.isRouted))
+  }
+  
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  private def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                             with PositionInRouteAndRouteNr with MoveDescription
+                             with ClosestNeighbors, routed: Int => Iterable[Int]) {
+    // format: ON
     print("Applying best insert heuristic...")
-
-    val routed = if (k <= 0) {
-      (n: Int) => vrp.routed.value
-    } else {
-      val relevantNeighbors = vrp.getKNearest(k)_
-      (n: Int) => relevantNeighbors(n).filter(vrp.isRouted)
-    }
 
     //    for (unroutedNode <- vrp.unrouted.value) {
     //      val routed = (n: Int) => vrp.routed.value
