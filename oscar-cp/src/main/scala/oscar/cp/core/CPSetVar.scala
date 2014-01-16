@@ -200,6 +200,22 @@ class CPSetVar(val store: CPStore, min: Int, max: Int, val name: String = "") ex
   }
 
   // ------ delta methods to be called in propagate -------
+  
+
+  def changed(c: Constraint): Boolean = changed(c.snapshotsVarSet(this))
+
+  def possibleChanged(c: Constraint): Boolean = possibleChanged(c.snapshotsVarSet(this))
+
+  def requiredChanged(c: Constraint): Boolean = requiredChanged(c.snapshotsVarSet(this))
+
+  def deltaPossibleSize(c: Constraint): Int = deltaPossibleSize(c.snapshotsVarSet(this))
+
+  def deltaRequiredSize(c: Constraint): Int = deltaRequiredSize(c.snapshotsVarSet(this))
+
+  def deltaPossible(c: Constraint): Iterator[Int] = deltaPossible(c.snapshotsVarSet(this))
+  
+  def deltaRequired(c: Constraint): Iterator[Int] = deltaRequired(c.snapshotsVarSet(this))
+  
 
   def changed(sn: SnapshotVarSet): Boolean = possibleChanged(sn) || requiredChanged(sn)
 
