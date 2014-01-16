@@ -48,6 +48,7 @@ import oscar.cbls.routing.neighborhood.ThreeOpt
 import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
 import oscar.cbls.routing.initial.BestInsert
+import oscar.cbls.routing.model.ClosestNeighbors
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -572,7 +573,7 @@ class MoveFixture(
   var ordinate: Array[Int] = null,
   // format: OFF (to prevent eclipse from formatting the following lines)
   val init: VRP with RoutedAndUnrouted with VRPObjective
-                with PositionInRouteAndRouteNr
+                with PositionInRouteAndRouteNr with ClosestNeighbors
                 with MoveDescription => Unit = BestInsert.apply) {
   // format: ON
 

@@ -31,6 +31,7 @@ import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
+import oscar.cbls.routing.model.ClosestNeighbors
 
 /**
  * Constructs an initial solution by repeatedly inserting points into the circuits.
@@ -42,24 +43,39 @@ object BestInsert {
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
-   */
+   */  // format: OFF (to prevent eclipse from formatting the following lines)
+  def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                     with PositionInRouteAndRouteNr with MoveDescription
+                     with ClosestNeighbors) {
+    // format: ON
+    apply(vrp, 0)
+  }
+  
   // format: OFF (to prevent eclipse from formatting the following lines)
   def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
-                     with PositionInRouteAndRouteNr with MoveDescription) {
+                     with PositionInRouteAndRouteNr with MoveDescription
+                     with ClosestNeighbors, k: Int) {
     // format: ON
     print("Applying best insert heuristic...")
-    for (unroutedNode <- vrp.unrouted.value) {
-      val routed = (n: Int) => vrp.routed.value
-      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
+
+    val routed = if (k <= 0) {
+      (n: Int) => vrp.routed.value
+    } else {
+      val relevantNeighbors = vrp.getKNearest(k)_
+      (n: Int) => relevantNeighbors(n).filter(vrp.isRouted)
     }
-    //    while (true) {
+
+    //    for (unroutedNode <- vrp.unrouted.value) {
     //      val routed = (n: Int) => vrp.routed.value
-    //      InsertPoint.bestImprovingMove(
-    //        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
-    //          case Some(m) => m.doMove
-    //          case None => println(" done."); return
-    //        }
+    //      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
     //    }
+    while (true) {
+      InsertPoint.bestImprovingMove(
+        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
+          case Some(m) => m.doMove
+          case None => println(" done."); return
+        }
+    }
     println(" done.")
   }
 }
