@@ -3,8 +3,8 @@ package oscar.cp.core
 import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.cp.core.CPOutcome._
-import oscar.cp.constraints.Requires
-import oscar.cp.constraints.Excludes
+import oscar.cp.constraints.sets.Requires
+import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
 
 /**
