@@ -10,6 +10,7 @@ import oscar.cp.core.CPIntVar
 
 /** 
  *  @author Renaud Hartert ren.hartert@gmail.com
+ *  @author Pierre Schaus pschaus@gmail.com
  */
 
 class Excludes(val set: CPSetVar, elem: Int) extends Constraint(set.store, "Set excludes") {
