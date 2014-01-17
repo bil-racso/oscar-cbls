@@ -871,7 +871,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   final def scheduleForPropagation() {
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     if (!isScheduled) {
-      if (this.getPropagationStructure.verbose) println("PropagationStruture: scheduled [" + this + "]")
+      //if (this.getPropagationStructure.verbose) println("PropagationStruture: scheduled [" + this + "]")
       isScheduled = true
       if (component == null) {
         getPropagationStructure.scheduleForPropagation(this)
