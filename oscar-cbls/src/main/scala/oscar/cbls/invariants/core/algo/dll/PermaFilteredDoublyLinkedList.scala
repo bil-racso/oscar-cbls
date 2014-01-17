@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.algo.dll
 
-/**this is a mutable data strcuture that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
+/**this is a mutable data structure that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
  * and to update in parallell another set that is a filter of the first one through a specified function
  * the filter can be specified anytime and filtering can be cascated, but a PermaFilteresDLL can have only one filter
  *
