@@ -15,6 +15,7 @@
 package oscar.cbls.invariants.core.algo.heap
 
 import collection.Iterator
+import oscar.cbls.invariants.core.propagation.PropagationElement
 
 /*******************************************************************************
  * Contributors:
@@ -28,7 +29,7 @@ import collection.Iterator
  * This is more efficient if it often occurs that elements have the same position.
  * keys is assumed to start at zero.
  */
-class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
+class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
 
 
   val b= new BinomialHeap[Int](a => a, MaxPosition)

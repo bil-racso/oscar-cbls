@@ -32,7 +32,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
  */
-class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
+class BinomialHeap[@specialized T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   var HeapArray:Array[T] = new Array[T](maxsize)
   private var msize:Int=0
 

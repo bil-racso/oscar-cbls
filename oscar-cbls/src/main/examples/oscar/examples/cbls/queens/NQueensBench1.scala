@@ -80,7 +80,7 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
     val range:Range = Range(0,N)
     val tabulength = 10
 
-    val m = Store(false,None,true)
+    val m = Store()
     val init = Random.shuffle(range.toList).iterator
     val queens:Array[CBLSIntVar] = (for (q <- range) yield CBLSIntVar(m, 0, N-1,init.next(), "queen" + q)).toArray
 
