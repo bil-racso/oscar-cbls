@@ -26,7 +26,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
   
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).s,true)))
+    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(true)(starts(0).s)))
   }
 
   val cp = starts(0).s

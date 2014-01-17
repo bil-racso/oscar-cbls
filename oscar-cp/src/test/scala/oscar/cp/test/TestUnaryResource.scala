@@ -78,8 +78,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val optional = inst.map(_._2)
       val horizon = durations.sum
       val cp = CPSolver()
-      val starts = Array.tabulate(n)(i => CPIntVar(cp, 0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPIntVar(cp, durations(i)))
+      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1))(cp))
+      val durs = Array.tabulate(n)(i => CPIntVar(durations(i))(cp))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
       val resources = Array.tabulate(n)(i => if (optional(i)) CPIntVar(0 to 1)(cp) else CPIntVar(0)(cp) )
       cp.search {
