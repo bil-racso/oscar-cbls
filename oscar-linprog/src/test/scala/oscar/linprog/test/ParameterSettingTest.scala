@@ -68,6 +68,35 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     release()
     configLP.delete
   }
+
+  test("Config file for LPSolve: Bug 72 ") {
+
+    val configLP = new java.io.File("LPParam.ini")
+    val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
+    // The correct header must be specified
+    writer.print("[Default]\n")
+    writer.print("[Default] break_at_first=1\n")
+    writer.flush
+    writer.close
+
+    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+
+    val x0 = MIPFloatVar(mip, "x0", 0, 40)
+    val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]
+    val x2 = MIPIntVar(mip, "x2", 0 until 18) // can take integer value in range[0 .. 17] 
+    val x3 = MIPFloatVar(mip, "x3", 2, 3)
+
+    maximize(x0 + 2 * x1 + 3 * x2 + x3)
+    add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
+    add(x0 - 3.0 * x1 + x2 <= 30)
+    add(x1 - 3.5 * x3 == 0)
+    mip.start()
+    println("objective" + objectiveValue)
+    println(x1.value)
+    mip.release()
+    configLP.delete
+  }  
+  
   test("Config file for Gurobi") {
 	assume(canInstantiateSolver(LPSolverLib.gurobi), "The test could not access Gurobi. Check you have it installed.")
     val configLP = new java.io.File("GurobiParam.txt")

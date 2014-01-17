@@ -50,7 +50,7 @@ class LPSolve extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+	  lp.setColName(colId + 1, name)
   }
 
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
@@ -62,6 +62,7 @@ class LPSolve extends AbstractLP {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.LE, rhs)
   }
+  
   def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.EQ, rhs)
@@ -107,6 +108,7 @@ class LPSolve extends AbstractLP {
         objectiveValue = lp.getObjective()
         LPStatus.OPTIMAL
       case LpSolve.SUBOPTIMAL =>
+        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows + c + 1))
         objectiveValue = lp.getObjective()
         LPStatus.SUBOPTIMAL
       case LpSolve.INFEASIBLE =>
@@ -142,8 +144,8 @@ class LPSolve extends AbstractLP {
 
   def setFloat(colId: Int) {
     lp.setInt(colId + 1, false)
-
   }
+  
   def setBounds(colId: Int, low: Double, up: Double) {
     lp.setBounds(colId + 1, low, up)
   }
@@ -195,15 +197,9 @@ class LPSolve extends AbstractLP {
 
   def updateRhs(rowId: Int, rhs: Double): Unit = {
     lp.setRh(rowId + 1, rhs)
-
   }
 
   def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
     lp.setMat(rowId + 1, colId + 1, coeff)
   }
 }
-	
-/*
-lp.writeLp("model.lp"+tmp);
-
-*/
