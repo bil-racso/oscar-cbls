@@ -24,7 +24,7 @@ import oscar.algo.reversible.ReversibleSparseSet
  *   N variables of X take a values in set
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Among(val N: CPVarInt, val X: Array[CPVarInt], val S: Set[Int]) extends Constraint(N.s, "Among") {
+class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Constraint(N.s, "Among") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     // for each xi, maintain the size of the intersection between D(xi) and v

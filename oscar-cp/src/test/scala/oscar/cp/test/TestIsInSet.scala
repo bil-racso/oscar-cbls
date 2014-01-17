@@ -28,21 +28,21 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test1") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(1,4,7))(cp)
+	  val x = CPIntVar(Set(1,4,7))(cp)
 	  val b = x.isIn(Set(1,4,7))
 	  b.isTrue should be(true)
   }
   
   test("test2") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,4,7))
 	  b.isTrue should be(false)
   }
   
   test("test3") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  b.isBound should be(false)
   }
@@ -50,7 +50,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test4") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  b.isBound should be(false)
 	  cp.add(x == 5)
@@ -59,7 +59,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test5") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  b.isBound should be(false)
 	  cp.add(x == 8)
@@ -68,7 +68,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test6") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  cp.add(b)
 	  x.isBoundTo(5) should be(true)
@@ -76,7 +76,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test7") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,8))(cp)
+	  val x = CPIntVar(Set(2,5,8))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  cp.add(!b)
 	  x.toSet should be(Set(2,8))
@@ -84,7 +84,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
 
   test("test8") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,5,7))(cp)
+	  val x = CPIntVar(Set(2,5,7))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  cp.add(x != 2)
 	  b.isTrue should be(true)
@@ -92,7 +92,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test9") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,3,7))(cp)
+	  val x = CPIntVar(Set(2,3,7))(cp)
 	  val b = x.isIn(Set(1,5,7))
 	  cp.add(x != 7)
 	  b.isFalse should be(true)
@@ -100,7 +100,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test10") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,3,7,9))(cp)
+	  val x = CPIntVar(Set(2,3,7,9))(cp)
 	  val b = x.isIn(Set(2,3,6,8))
 	  cp.add(x != 2)
 	  cp.add(x != 3)
@@ -109,7 +109,7 @@ class TestInSet extends FunSuite with ShouldMatchers  {
   
   test("test11") { 
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(2,3,7,9))(cp)
+	  val x = CPIntVar(Set(2,3,7,9))(cp)
 	  val b = x.isIn(Set(2,3,6,8))
 	  cp.add(x != 7)
 	  cp.add(x != 9)

@@ -16,17 +16,18 @@ package oscar.cp.constraints
 
 import scala.math.max
 import scala.math.min
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPStore
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.scheduling.CumulativeActivity
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int) extends Constraint(starts.head.store, "MaxSweepCumulative") {
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MaxSweepCumulative") {
 
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
@@ -366,7 +367,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
     return CPOutcome.Suspend
   }
 
-  private def pruneInterval(low: Int, up: Int, v: CPVarInt): CPOutcome = {
+  private def pruneInterval(low: Int, up: Int, v: CPIntVar): CPOutcome = {
 
     assert(low <= up)
     if (low <= v.min && up <= v.max) {
@@ -471,16 +472,7 @@ class SweepMaxCumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], duratio
 }
 
 object SweepMaxCumulative {
-  def apply(cp: CPSolver, tasks: Array[CumulativeActivity], capacity: CPVarInt, id: Int): SweepMaxCumulative = {
-    val starts = tasks.map(_.start)
-    val durations = tasks.map(_.dur)
-    val ends = tasks.map(_.end)
-    val demands = tasks.map(_.height)
-    val resources = tasks.map(_.resource)
-    new SweepMaxCumulative(starts, ends, durations, demands, resources, capacity, id)
-  }
-
-  def apply(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): SweepMaxCumulative = {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): SweepMaxCumulative = {
     val nTasks = starts.size
     if (nTasks == 0) throw new Exception("no tasks")
     else if (ends.size != nTasks) throw new Exception("the number of end variables should be " + nTasks)
@@ -488,6 +480,6 @@ object SweepMaxCumulative {
     else if (demands.size != nTasks) throw new Exception("the number of demand variables should be " + nTasks)
     else if (resources.size != nTasks) throw new Exception("the number of resource variables should be " + nTasks)
     else if (durations.exists(_.min < 0)) throw new Exception("durations have to be superior or equal to 0")
-    else new SweepMaxCumulative(starts, ends, durations, demands, resources, capacity, id)
+    else new SweepMaxCumulative(starts, durations,ends, demands, resources, capacity, id)
   }
 } 

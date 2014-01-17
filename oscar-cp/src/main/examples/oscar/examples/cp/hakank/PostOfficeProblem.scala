@@ -84,7 +84,7 @@ object PostOfficeProblem {
     //
  
     // number of workers starting at day i
-    val x = Array.fill(n)(CPVarInt(0 to need.max)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to need.max)(cp))
     val total_cost  = weightedSum(cost, x)
     val num_workers = sum(x)
 

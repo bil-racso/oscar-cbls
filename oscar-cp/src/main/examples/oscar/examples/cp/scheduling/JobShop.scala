@@ -21,7 +21,6 @@ import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
-import oscar.cp.constraints.SweepMaxCumulative
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.search._
 import oscar.cp.search.BinaryFirstFailBranching
@@ -39,7 +38,7 @@ import oscar.cp.search.BinaryFirstFailBranching
  *  @author Pierre Schaus  pschaus@gmail.com
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
-object JobShop extends App {
+object JobShop extends CPModel with App {
 
 
   // Parsing		
@@ -78,14 +77,13 @@ object JobShop extends App {
   // -----------------------------------------------------------------------
 
   val horizon = durations.sum
-  implicit val cp = CPScheduler(horizon)
 
   // Activities & Resources
-  val durationsVar = Array.tabulate(nActivities)(t => CPVarInt(durations(t)))
-  val startsVar = Array.tabulate(nActivities)(t => CPVarInt(0 to horizon - durationsVar(t).min))
-  val endsVar = Array.tabulate(nActivities)(t => CPVarInt(durationsVar(t).min to horizon))
-  val demandsVar = Array.fill(nActivities)(CPVarInt(1))
-  val resourcesVar = Array.tabulate(nActivities)(t => CPVarInt(resources(t)))
+  val durationsVar = Array.tabulate(nActivities)(t => CPIntVar(durations(t)))
+  val startsVar = Array.tabulate(nActivities)(t => CPIntVar(0 to horizon - durationsVar(t).min))
+  val endsVar = Array.tabulate(nActivities)(t => CPIntVar(durationsVar(t).min to horizon))
+  val demandsVar = Array.fill(nActivities)(CPIntVar(1))
+  val resourcesVar = Array.tabulate(nActivities)(t => CPIntVar(resources(t)))
 
   val makespan = maximum(endsVar)
 
@@ -96,7 +94,7 @@ object JobShop extends App {
   val colors = VisualUtil.getRandomColors(nResources, true)
   val gantt1 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
   val gantt2 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => resources(i), colors = i => colors(resources(i)))
-  cp.onSolution {
+  onSolution {
     gantt1.update(1, 20)
     gantt2.update(1, 20)
   }
@@ -117,13 +115,11 @@ object JobShop extends App {
   }
   // Cumulative
   for (r <- Resources) {
-	def filter(x: Array[CPVarInt]) = Activities.filter(resources(_) == r).map(x(_))
+	def filter(x: Array[CPIntVar]) = Activities.filter(resources(_) == r).map(x(_))
     add(unaryResource(filter(startsVar), filter(durationsVar),filter(endsVar)))
   }
-  minimize(makespan)
-  
-  cp.search {
+  minimize(makespan) search {
     binaryFirstFail(startsVar)
   }
-  println(cp.start())
+  println(start())
 } 

@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{IntInvariant, IntVar}
+import oscar.cbls.invariants.core.computation.{IntInvariant, CBLSIntVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /** This is a helper to define an invariant from an Int -> Int function.
@@ -32,22 +32,22 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
-  var output:IntVar=null
+class IntVar2IntVarFun(a:CBLSIntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+  var output:CBLSIntVar=null
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
 
   //This method is called by the IntVar when the method <== is applied
   //Example: MyVar <== my_IntInvariant
-  override def setOutputVar(v:IntVar){
+  override def setOutputVar(v:CBLSIntVar){
     output = v
     output.setDefiningInvariant(this)
     output := fun(a.value)
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
     assert(v == a)
     output := fun(NewVal)
   }
@@ -66,20 +66,20 @@ class IntVar2IntVarFun(a:IntVar, fun:Int => Int, override val myMin:Int = Int.Mi
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class IntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
-  var output:IntVar=null
+  var output:CBLSIntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
 
-  override def setOutputVar(v:IntVar){
+  override def setOutputVar(v:CBLSIntVar){
     output = v
     output.setDefiningInvariant(this)
     output := fun(a.value,b.value)
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
     output := fun(a.value,b.value)
   }
 
@@ -97,20 +97,20 @@ class IntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), overri
  * @param myMin the min value of the output
  * @param myMax the max value of the output
  */
-class LazyIntVarIntVar2IntVarFun(a:IntVar, b:IntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class LazyIntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
-  var output:IntVar=null
+  var output:CBLSIntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
 
-  override def setOutputVar(v:IntVar){
+  override def setOutputVar(v:CBLSIntVar){
     output = v
     output.setDefiningInvariant(this)
     output := fun(a.value,b.value)
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
     scheduleForPropagation()
   }
 

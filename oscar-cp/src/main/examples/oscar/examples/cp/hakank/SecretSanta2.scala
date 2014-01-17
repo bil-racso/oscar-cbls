@@ -157,8 +157,8 @@ object SecretSanta2 {
     //
     // variables
     //
-    val santas = Array.fill(n)(CPVarInt(0 to n-1)(cp))
-    val santa_distance = Array.fill(n)(CPVarInt(0 to M)(cp))
+    val santas = Array.fill(n)(CPIntVar(0 to n-1)(cp))
+    val santa_distance = Array.fill(n)(CPIntVar(0 to M)(cp))
 
     // total of "distance", to maximize
     val z = sum(santa_distance)

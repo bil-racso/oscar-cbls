@@ -17,9 +17,9 @@ object Dudeney extends CPModel with App {
 
   val n = 5
 
-  val x = (0 until n).map(v => CPVarInt(0 to 9))
-  val nb = CPVarInt(1 to math.pow(10, n).toInt - 1)
-  val s = CPVarInt(1 to 9 * n)
+  val x = (0 until n).map(v => CPIntVar(0 to 9))
+  val nb = CPIntVar(1 to math.pow(10, n).toInt - 1)
+  val s = CPIntVar(1 to 9 * n)
 
   add(nb == (s mul s mul s))
   add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)

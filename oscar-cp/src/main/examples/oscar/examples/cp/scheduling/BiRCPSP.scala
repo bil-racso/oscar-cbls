@@ -3,7 +3,6 @@ package oscar.examples.cp.scheduling
 import oscar.cp.core._
 import oscar.cp.modeling._
 import scala.io.Source
-import oscar.cp.constraints.SweepMaxCumulative
 
 object BiRCPSP extends App {
 
@@ -21,11 +20,11 @@ object BiRCPSP extends App {
   val horizon = durations.sum
   
   val cp = CPSolver()
-  val durationsVar = Array.tabulate(nTasks)(t => CPVarInt(durations(t))(cp))
-  val startsVar = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durationsVar(t).min)(cp))
-  val endsVar = Array.tabulate(nTasks)(t => CPVarInt(durationsVar(t).min to horizon)(cp))
-  val demandsVar = Array.tabulate(nTasks)(t => CPVarInt(demands(t))(cp))
-  val resourcesVar = Array.fill(nTasks)(CPVarInt(0)(cp))
+  val durationsVar = Array.tabulate(nTasks)(t => CPIntVar(durations(t))(cp))
+  val startsVar = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durationsVar(t).min)(cp))
+  val endsVar = Array.tabulate(nTasks)(t => CPIntVar(durationsVar(t).min to horizon)(cp))
+  val demandsVar = Array.tabulate(nTasks)(t => CPIntVar(demands(t))(cp))
+  val resourcesVar = Array.fill(nTasks)(CPIntVar(0)(cp))
   
   val makespan = maximum(endsVar)
 
@@ -42,7 +41,7 @@ object BiRCPSP extends App {
       cp.add(endsVar(t1) <= startsVar(t2))
     }
     // Cumulative
-    cp.add(new SweepMaxCumulative(startsVar, endsVar, durationsVar, demandsVar, resourcesVar, CPVarInt(8)(cp), 0))
+    cp.add(maxCumulativeResource(startsVar, durationsVar, endsVar, demandsVar, resourcesVar, CPIntVar(8)(cp), 0))
     
   } search {
     setTimes(startsVar, durationsVar, endsVar)

@@ -21,7 +21,7 @@ import oscar.cp.modeling._
 import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 
 /**
  *
@@ -41,23 +41,18 @@ object RCPSP extends App {
   val horizon = durationsData.sum
   implicit val cp = CPSolver()
   
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(demandsData))
-  val resources = Array.tabulate(nTasks)(t => CPVarInt(0))
+  val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
+  val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
+  val resources = Array.tabulate(nTasks)(t => CPIntVar(0))
 
   val makespan = maximum(ends)
 
   cp.minimize(makespan) subjectTo {
     
-    // Consistency
-    for (t <- Tasks) {
-      cp.add(ends(t) == starts(t) + durations(t))
-    }
-    
     // Cumulative
-    cp.add(new SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capa), 0))
+    cp.add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capa), 0))
 
   } search {
     binaryFirstFail(starts)

@@ -72,19 +72,19 @@ object Zebra2 {
     //
     // variables
     // 
-    val colors      = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val colors      = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(red, green, yellow, blue, ivory) = colors
 
-    val nationality = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val nationality = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(englishman,spaniard,japanese,ukrainian,norwegian) = nationality
 
-    val animal      = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val animal      = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(dog,snails,fox,zebra,horse) = animal
 
-    val drink       = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val drink       = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(tea,coffee,water,milk,fruit_juice) = drink
 
-    val smoke       = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val smoke       = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(old_gold,kools,chesterfields,lucky_strike,parliaments) = smoke
 
     // for labeling

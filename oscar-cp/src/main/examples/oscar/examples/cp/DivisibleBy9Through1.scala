@@ -18,9 +18,9 @@ import scala.math._
  */
 object DivisibleBy9Through1 extends CPModel with App {
 
-  val digits = Array.fill(9)(CPVarInt(1 to 9))
-  val numbers = Array.fill(9)(CPVarInt(1 to 1000000000))
-  val divisors = Array.fill(9)(CPVarInt(1 to 100000000))
+  val digits = Array.fill(9)(CPIntVar(1 to 9))
+  val numbers = Array.fill(9)(CPIntVar(1 to 1000000000))
+  val divisors = Array.fill(9)(CPIntVar(1 to 100000000))
 
   val coefs = Array(100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1)
 

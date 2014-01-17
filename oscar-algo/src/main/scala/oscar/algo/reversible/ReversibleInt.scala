@@ -14,46 +14,44 @@
  ******************************************************************************/
 package oscar.algo.reversible;
 
-
 /**
  * Creates Reversible integer
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleInt(node: ReversibleContext ,value : Int) extends ReversiblePointer[Int](node,value) {
+class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePointer[Int](node, value) {
 
-    /**
-     * Creates a reversible Int initialized to 0
-     * @param node
-     */
-	def this(node: ReversibleContext) = this(node,0)
+  /**
+   * Creates a reversible Int initialized to 0
+   * @param node
+   */
+  def this(node: ReversibleContext) = this(node, 0)
 
-    /**
-     * increment the reversible integer by one
-     */
-	def incr(): Int = {
-		assert(hasValue())
-		val v = getValue() + 1
-		setValue(v)
-		v
-	}
-	
-	// I have to add it for Java compatibility
-	override def getValue(): Int = super.getValue()
+  /**
+   * increment the reversible integer by one
+   */
+  def incr(): Int = {
+    assert(hasValue())
+    val v = getValue() + 1
+    setValue(v)
+    v
+  }
 
-	
-	def +=(i: Int): Unit = {
-	  val v: Int = getValue() + i
-	  setValue(v)
-	}
+  def +=(i: Int): Unit = {
+    val v: Int = getValue() + i
+    setValue(v)
+  }
 
-    /**
-     * decrement the reversible integer by one
-     */
-	def decr(): Int = {
-		assert(hasValue())
-		val v = getValue() - 1
-		setValue(v)
-		v
-	}
+  /**
+   * decrement the reversible integer by one
+   */
+  def decr(): Int = {
+    assert(hasValue())
+    val v = getValue() - 1
+    setValue(v)
+    v
+  }
+}
 
+object ReversibleInt {
+  implicit def revInt2Int(ri: ReversibleInt): Int = ri.getValue
 }

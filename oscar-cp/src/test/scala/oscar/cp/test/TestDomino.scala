@@ -56,10 +56,10 @@ class TestDomino extends FunSuite with ShouldMatchers {
     // decision variables
 
     // for each entry (i,j), what is the other entry forming a domino with it
-    val matchedNeighbor = Array.tabulate(nLines, nCols)((i, j) => CPVarInt(neighborIndices(i, j))(cp))
+    val matchedNeighbor = Array.tabulate(nLines, nCols)((i, j) => CPIntVar(neighborIndices(i, j))(cp))
 
     // for each domino side (i,j) what is the id of it's domino in the solution
-    val id = Array.tabulate(nLines, nCols)((i, j) => CPVarInt(neighborValues(i, j).map(dominoId(_, values(i)(j))))(cp))
+    val id = Array.tabulate(nLines, nCols)((i, j) => CPIntVar(neighborValues(i, j).map(dominoId(_, values(i)(j))))(cp))
     var nbSol = 0
     for (i <- Lines; j <- Cols) {
       val validTuples = for ((k, l) <- neighbors(i, j)) yield (toIndex(k, l), dominoId(values(i)(j), values(k)(l)))

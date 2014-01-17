@@ -89,8 +89,8 @@ object StableMarriageRandom {
     //
     // decision variables
     //
-    val wife    = Array.tabulate(n)(i => CPVarInt(0 to n-1)(cp))
-    val husband = Array.tabulate(n)(i => CPVarInt(0 to n-1)(cp))
+    val wife    = Array.tabulate(n)(i => CPIntVar(0 to n-1)(cp))
+    val husband = Array.tabulate(n)(i => CPIntVar(0 to n-1)(cp))
 
     //
     // constraints

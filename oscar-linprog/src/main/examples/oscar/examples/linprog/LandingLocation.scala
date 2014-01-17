@@ -46,10 +46,10 @@ object LandingLocation extends MIPModel with App {
 
   // Variables
   // For each landing either it is ON or OFF
-  val y = for (land <- Landings) yield MIPVar("y" + land, 0 to 1)
+  val y = for (land <- Landings) yield MIPIntVar("y" + land, 0 to 1)
 
   // Transportation decision variables
-  val x = Array.tabulate(Logs.length, Landings.length)((log, land) => MIPVar("x" + (log, land), 0 to 1))
+  val x = Array.tabulate(Logs.length, Landings.length)((log, land) => MIPIntVar("x" + (log, land), 0 to 1))
 
   val obj = sum(Logs, Landings) { (log, land) => x(log)(land) * transportationCost(log)(land) } + sum(Landings) { land => openingCost(land) * y(land) } + Alpha * (Demand - (sum(Logs, Landings) { (log, land) => x(log)(land) * 1 }))
   minimize(obj)

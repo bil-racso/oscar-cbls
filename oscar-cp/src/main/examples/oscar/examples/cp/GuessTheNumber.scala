@@ -13,7 +13,7 @@ import oscar.cp.core._
  */
 object GuessTheNumber extends CPModel with App {
 
-  val digits = Array.fill(5)(CPVarInt(0 to 9))
+  val digits = Array.fill(5)(CPIntVar(0 to 9))
 
   // with a one after
   val nb1 = digits(0) * 100000 + digits(1) * 10000 + digits(2) * 1000 + digits(3) * 100 + digits(4) * 10 + 1
@@ -33,7 +33,7 @@ object GuessTheNumber extends CPModel with App {
 
 // simpler model imagined by JF Puget
 object GuessTheNumber2 extends CPModel {
-  val x = CPVarInt(0 to 100000)
+  val x = CPIntVar(0 to 100000)
   add(x *10 + 1 == (x + 100000) * 3)
   println(s"=> $x")
 }

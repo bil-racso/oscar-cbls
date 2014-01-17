@@ -20,7 +20,6 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.search.BinaryFirstFailBranching
-import oscar.cp.scheduling.Activity
 
 /**
  * @author: Pierre Schaus pschaus@gmail.com
@@ -31,13 +30,13 @@ class TestLambdaThetaTree extends FunSuite with ShouldMatchers {
   
   test("unary unit fig2.8 of petr vilim's thesis") {
     implicit val cp = CPSolver()
-    val starts = Array(CPVarInt(0 to 100),CPVarInt(25 to 100),CPVarInt(30 to 100),CPVarInt(32 to 100))
-    val durs = Array(CPVarInt(5),CPVarInt(6),CPVarInt(4),CPVarInt(10))
-    val ends = Array(CPVarInt(0 to 5),CPVarInt(0 to 31),CPVarInt(0 to 34),CPVarInt(0 to 52))
+    val starts = Array(CPIntVar(0 to 100),CPIntVar(25 to 100),CPIntVar(30 to 100),CPIntVar(32 to 100))
+    val durs = Array(CPIntVar(5),CPIntVar(6),CPIntVar(4),CPIntVar(10))
+    val ends = Array(CPIntVar(0 to 5),CPIntVar(0 to 31),CPIntVar(0 to 34),CPIntVar(0 to 52))
     for (i <- 0 until starts.size) {
       add(starts(i) + durs(i) == ends(i))
     }
-    val activities = Array.tabulate(starts.size)(i => new ActivityUnary(cp,starts(i),durs(i),ends(i),CPVarBool(true),i))
+    val activities = Array.tabulate(starts.size)(i => new ActivityUnary(cp,starts(i),durs(i),ends(i),CPBoolVar(true),i))
     
     val ltTree = new LambdaThetaTreee2(4)
     ltTree.left(0) should be(1)
@@ -78,13 +77,13 @@ class TestLambdaThetaTree extends FunSuite with ShouldMatchers {
   
   test("unary unit fig2.9 of petr vilim's thesis") {
     implicit val cp = CPSolver()
-    val starts = Array(CPVarInt(0 to 100),CPVarInt(25 to 100),CPVarInt(30 to 100),CPVarInt(32 to 100))
-    val durs = Array(CPVarInt(5),CPVarInt(6),CPVarInt(5),CPVarInt(10))
-    val ends = Array(CPVarInt(0 to 5),CPVarInt(0 to 31),CPVarInt(0 to 35),CPVarInt(0 to 42))
+    val starts = Array(CPIntVar(0 to 100),CPIntVar(25 to 100),CPIntVar(30 to 100),CPIntVar(32 to 100))
+    val durs = Array(CPIntVar(5),CPIntVar(6),CPIntVar(5),CPIntVar(10))
+    val ends = Array(CPIntVar(0 to 5),CPIntVar(0 to 31),CPIntVar(0 to 35),CPIntVar(0 to 42))
     for (i <- 0 until starts.size) {
       add(starts(i) + durs(i) == ends(i))
     }
-    val activities = Array.tabulate(starts.size)(i => new ActivityUnary(cp,starts(i),durs(i),ends(i),CPVarBool(true),i))
+    val activities = Array.tabulate(starts.size)(i => new ActivityUnary(cp,starts(i),durs(i),ends(i),CPBoolVar(true),i))
     
     val ltTree = new LambdaThetaTreee2(4)
    

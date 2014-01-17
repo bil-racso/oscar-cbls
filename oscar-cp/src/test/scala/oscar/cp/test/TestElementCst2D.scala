@@ -16,9 +16,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 3, 2),
       Array(6, 8, 1))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
 
@@ -34,9 +34,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 3, 2),
       Array(6, 8, 1))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(7 to 8)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(7 to 8)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
 
@@ -52,9 +52,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 7, 2),
       Array(6, 8, 1))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(7 to 8)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(7 to 8)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
 
@@ -70,9 +70,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 7, 2),
       Array(6, 8, 1))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(9 to 10)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(9 to 10)(cp)
 
     cp.post(new ElementCst2D(T, x, y, z))
 
@@ -83,9 +83,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 3, 2),
       Array(6, 8, 1))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(0 to 10)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(0 to 10)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
     cp.add(z >= 4)
@@ -100,9 +100,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 3, 2),
       Array(1, 8, 4))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(0 to 10)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(0 to 10)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
     cp.add(y != 0)
@@ -115,9 +115,9 @@ class TestElementCst2D extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val T = Array(Array(1, 3, 2),
       Array(1, 8, 4))
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = CPVarInt(-4 to 14)(cp)
-    val z = CPVarInt(0 to 10)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = CPIntVar(-4 to 14)(cp)
+    val z = CPIntVar(0 to 10)(cp)
 
     cp.add(new ElementCst2D(T, x, y, z))
     cp.add(y != 0)

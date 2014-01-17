@@ -39,7 +39,7 @@ object QuadraticAssignmentLNS extends CPModel with App {
 
 
   // for each facilities, the location chosen for it
-  val x = N map (v => CPVarInt(0 until n))
+  val x = N map (v => CPIntVar(0 until n))
 
   solver.addDecisionVariables(x)
   

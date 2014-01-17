@@ -22,7 +22,7 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, IntVar}
+import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, IntVar2IntVarFun}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.propagation.Checker
@@ -37,7 +37,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
   * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
   * @author  Renaud De Landtsheer rdl@cetic.be
   */
-case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint {
+case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
   model = InvariantHelper.findModel(variables)
@@ -48,7 +48,7 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   private val offset:Int = countInvariant.offset
   private val valueCount = countInvariant.counts //v => #occurrence of v+offset in variables
 
-  private val noViolation:IntVar = 0
+  private val noViolation:CBLSIntVar = 0
   private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
 
   for((value,bound) <- bounds){
@@ -56,14 +56,14 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   }
 
   //the violation of each input variable
-  private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
+  private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])((acc,intvar)
   => {
-    val newVar = new IntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
+    val newVar = new CBLSIntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
     newVar <== violationByVal.element(intvar + offset)
     acc + ((intvar,newVar))
   })
 
-  private val Violation:IntVar = new IntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
+  private val Violation:CBLSIntVar = new CBLSIntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
   Violation <== Sum(bounds.keys.map(bound => violationByVal(bound)))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
@@ -75,8 +75,8 @@ case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extend
   /**The violation of a variable is zero if its value is not the one of a bound.
     * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
     */
-  override def violation(v: Variable):IntVar = {
-    Violations(v.asInstanceOf[IntVar])
+  override def violation(v: Variable):CBLSIntVar = {
+    Violations(v.asInstanceOf[CBLSIntVar])
   }
 
   override def checkInternals(c: Checker) {

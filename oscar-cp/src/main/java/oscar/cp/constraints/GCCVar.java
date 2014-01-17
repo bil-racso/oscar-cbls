@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -32,8 +32,8 @@ public class GCCVar extends Constraint {
 	private final int NONE = -Integer.MIN_VALUE;
 
 	//var
-	private CPVarInt [] x;
-	private CPVarInt [] o;
+	private CPIntVar [] x;
+	private CPIntVar [] o;
 	private int minValInit;
 	private int minVal;
 	private int maxVal;
@@ -82,7 +82,7 @@ public class GCCVar extends Constraint {
      * @see  GCC
      * @see  SoftGCC
      */
-	public GCCVar(CPVarInt[] x, int minval,CPVarInt [] o) {
+	public GCCVar(CPIntVar[] x, int minval,CPIntVar [] o) {
 		super(x[0].s(),"GCCVar");
 		this.x = x;
 		this.o = o;

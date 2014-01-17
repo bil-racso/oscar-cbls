@@ -21,7 +21,7 @@
 
 package oscar.cbls.search
 
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
 
 /**generic search procedure
@@ -36,8 +36,8 @@ object conflictSearch extends SearchEngine{
    */
   def apply(c:ConstraintSystem, MaxIt: Int) {
     var it = 0
-    val Variables:Array[IntVar] = c.constrainedVariables.asInstanceOf[Iterable[IntVar]].toArray
-    val Violations:Array[IntVar] = Variables.clone().map(c.violation)
+    val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
+    val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation)
     while (!c.isTrue && it < MaxIt) {
       val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
       val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int),i => true)

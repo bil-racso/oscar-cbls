@@ -15,13 +15,13 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPVarSet
+import oscar.cp.core.CPSetVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPOutcome
 
-class Requires(val X: CPVarSet, v: Int) extends Constraint(X.store, "Set requires") {
+class Requires(val X: CPSetVar, v: Int) extends Constraint(X.store, "Set requires") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     X.requires(v)
@@ -30,7 +30,7 @@ class Requires(val X: CPVarSet, v: Int) extends Constraint(X.store, "Set require
 }
 
 
-class Excludes(val X: CPVarSet, v: Int) extends Constraint(X.store, "Set excludes") {
+class Excludes(val X: CPSetVar, v: Int) extends Constraint(X.store, "Set excludes") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     X.excludes(v)

@@ -13,15 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
 package oscar.algo.search
 
-
 import java.util.Random
-import scala.util.continuations._
-import scala.collection.JavaConversions._
-import oscar.algo.reversible._
-import oscar.util.tree.Tree
+import oscar.algo.reversible.ReversibleContext
+import oscar.algo.reversible.ReversibleBool
 
 /**
  * Class representing a (reversible search) node <br>
@@ -34,16 +30,13 @@ class SearchNode extends ReversibleContext {
 
   val random: Random = new Random(0)
   val failed = new ReversibleBool(this, false)
- 
- 
-  /**
-   *
-   * @return The Random generator of this node potentially used in other algorithms
-   */
-  def getRandom() = random
 
   /**
-   *
+   * @return The Random generator of this node potentially used in other algorithms
+   */
+  def getRandom(): Random = random
+
+  /**
    * @return  true if this node can surely not lead to any solution
    */
   def isFailed(): Boolean = failed.value
@@ -51,66 +44,57 @@ class SearchNode extends ReversibleContext {
   /**
    * Set the node in a failed state
    */
-  def fail() {
-    failed.setValue(true)
-  }
+  def fail(): Unit = failed.setValue(true)
 
-  def solFound() = {
-  }
+  def solFound(): Unit = {}
 
-
-  override def toString() = {
-    super.toString
-  }
+  override def toString(): String = super.toString
 
   /**
    * executed just before the actual branch action
    */
-  def beforeBranch() = {}
+  def beforeBranch(): Unit = {}
 
   /**
    * executed just after the actual branch action
    */
-  def afterBranch() = {}
-  
-  
-  protected def update() = {}
+  def afterBranch(): Unit = {}
 
+  protected def update(): Unit = {}
 
-  private var branchings = Branching(noAlternative)
-  
+  private var branchings: Branching = Branching(noAlternative)
+
   def search(block: => Seq[Alternative]): SearchNode = {
     branchings = Branching(block)
     this
   }
-  
+
   def search(branching: Branching): SearchNode = {
     branchings = branching
     this
   }
-  
-  private var solCallBacks = List[() => Unit]()
-  
+
+  private var solCallBacks: List[() => Unit] = List.empty
+
   def onSolution(block: => Unit): SearchNode = {
     solCallBacks = (() => block) :: solCallBacks
     this
   }
-  
-  def beforeStartAction() = {}
-  
-  def startSubjectTo (nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
+
+  def beforeStartAction(): Unit = {}
+
+  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
     beforeStartAction()
     pushState()
     reversibleBlock
-    val s = new Search(this,branchings)
+    val s = new Search(this, branchings)
     solCallBacks.foreach(b => s.onSolution(b()))
     s.onSolution(solFound())
-    val stats =  s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
+    val stats = s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
     stats
   }
-  
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    startSubjectTo(nbSolMax,failureLimit,timeLimit,maxDiscrepancy)()
-  }
 
+  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+    startSubjectTo(nbSolMax, failureLimit, timeLimit, maxDiscrepancy)()
+  }
 }

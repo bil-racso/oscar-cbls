@@ -41,7 +41,7 @@ object LeastDiff2 {
     val values = Array(10000, 1000, 100, 10, 1)
 
     // variables
-    val all = Array.fill(n)(CPVarInt(0 to 9)(cp))
+    val all = Array.fill(n)(CPIntVar(0 to 9)(cp))
     val Array(a, b, c, d, e, f, g, h, i, j) = all
 
     val x = weightedSum(values, Array(a, b, c, d, e))

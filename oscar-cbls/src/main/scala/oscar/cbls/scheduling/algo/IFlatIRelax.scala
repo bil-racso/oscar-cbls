@@ -21,13 +21,13 @@ package oscar.cbls.scheduling.algo
   ******************************************************************************/
 
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{IntVar, Solution, Model}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.computation.Solution
 import oscar.cbls.scheduling.model.CumulativeResource
 
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
-  val model: Model = p.model
+  val model: Store = p.model
 
   /**This solves the jobshop by iterative relaxation and flattening
     * @param MaxIt the max number of iterations of the search
@@ -42,7 +42,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
 
     FlattenWorseFirst()
 
-    var BestSolution: Solution = model.getSolution(true)
+    var BestSolution: Solution = model.solution(true)
     if (Verbose) {
       println(p.MakeSpan)
       println("----------------")
@@ -73,7 +73,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println("iteration: " + it)
 
       if (p.MakeSpan.value < BestMakeSpan) {
-        BestSolution = model.getSolution(true)
+        BestSolution = model.solution(true)
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
@@ -152,7 +152,7 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
           //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
           //we search which dependency can be killed in the conflict set,
           val conflictActivityArray = conflictActivities.toArray
-          val dependencyKillers:Array[Array[DependencyCleaner]] =
+          val dependencyKillers:Array[Array[PrecedenceCleaner]] =
             Array.tabulate(conflictActivityArray.size)(
               t1 => Array.tabulate(conflictActivityArray.size)(
                 t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1),conflictActivityArray(t2))))

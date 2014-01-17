@@ -26,11 +26,11 @@ import oscar.algebra._
  */
 object KnapSack extends MIPModel with App {
 
-  case class O(val weight: Int, val utility: Int, val x: MIPVar)
+  case class O(val weight: Int, val utility: Int, val x: MIPFloatVar)
   val weights = Array(100, 50, 45, 20, 10, 5)
   val utility = Array(40, 35, 18, 4, 10, 2)
 
-  val objects = Array.tabulate(weights.size)(i => O(weights(i), utility(i), MIPVar("x" + i, 0 to 1)))
+  val objects = Array.tabulate(weights.size)(i => O(weights(i), utility(i), MIPIntVar("x" + i, 0 to 1)))
 
   val capacity = 100
 

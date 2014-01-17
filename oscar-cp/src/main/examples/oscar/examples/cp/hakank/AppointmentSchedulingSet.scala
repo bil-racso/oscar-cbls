@@ -136,7 +136,7 @@ object AppointmentSchedulingSet {
     //
 
     // The assignment of persons to a time slot (appointment number 1..n).
-    val x = Array.tabulate(n)(i=>CPVarInt(s(i).toSet)(cp))
+    val x = Array.tabulate(n)(i=>CPIntVar(s(i).toSet)(cp))
 
 
     //

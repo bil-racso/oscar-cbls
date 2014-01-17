@@ -14,9 +14,11 @@
  ******************************************************************************/
 package oscar.examples.dfo
 
-import oscar.dfo.modeling._
-import oscar.dfo._
-import oscar.algebra._
+import oscar.algebra.int2const
+import oscar.dfo.modeling.DFOModel
+import oscar.dfo.modeling.DFOFloatVar
+import oscar.dfo.modeling.minimize
+import oscar.dfo.modeling.onSolution
 
 /**
  * @author pschaus@gmail.com
@@ -24,8 +26,8 @@ import oscar.algebra._
 object Himmelblau extends DFOModel with App {
 
   // declare two variables and their domain
-  val x = DFOVar("x1", -4, +4)
-  val y = DFOVar("x2", -4, +4)
+  val x = DFOFloatVar("x1", -4, +4)
+  val y = DFOFloatVar("x2", -4, +4)
 
   // Himmelblau function
   // 4 local minima: 

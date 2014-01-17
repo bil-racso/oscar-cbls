@@ -25,7 +25,7 @@ object CuttingStock extends App {
 
    implicit val lp = LPSolver() 
     
-  class Column(val x: LPVar, val pattern: Array[Int]) {
+  class Column(val x: LPFloatVar, val pattern: Array[Int]) {
     override def toString(): String = {
       pattern.mkString("\t")
     }
@@ -42,7 +42,7 @@ object CuttingStock extends App {
   for (r <- Rolls) {
     val config = Array.tabulate(roll.size)(_ => 0)
     config(r) = rollStock / roll(r)
-    C = C :+ new Column(LPVar( "pattern" + r), config)
+    C = C :+ new Column(LPFloatVar( "pattern" + r), config)
   }
 
 
@@ -64,7 +64,7 @@ object CuttingStock extends App {
   do {
     
     implicit val mip = MIPSolver()
-    val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip, "use", 0 to rollStock))
+    val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar(mip, "use", 0 to rollStock))
     val cost = Array.tabulate(roll.size)(constraints(_).dual)
     mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
     mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) 

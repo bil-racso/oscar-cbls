@@ -142,7 +142,7 @@ object OscarBuild extends Build {
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
                commonTasks,
-    dependencies = Seq(oscarAlgebra,oscarVisual)) dependsOnSource("lib")       
+    dependencies = Seq(oscarAlgebra,oscarVisual,oscarAlgo)) dependsOnSource("lib")       
     
   lazy val oscarLinprog = Project( 
     id = "oscar-linprog",

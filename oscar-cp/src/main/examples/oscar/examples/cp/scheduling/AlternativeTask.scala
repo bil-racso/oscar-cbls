@@ -2,7 +2,6 @@ package oscar.examples.cp.scheduling
 
 import oscar.cp.core._
 import oscar.cp.modeling._
-import oscar.cp.constraints.SweepMaxCumulative
 
 object AlternativeTask extends App {
 
@@ -17,11 +16,11 @@ object AlternativeTask extends App {
 
   val cp = CPSolver()
   cp.silent = true
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(durationsData(t))(cp))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(0 to horizon - durations(t).min)(cp))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(durations(t).min to horizon)(cp))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(Set(demandsData1(t), demandsData2(t)))(cp))
-  val resources = Array.fill(nTasks)(CPVarInt(1 to 2)(cp))
+  val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t))(cp))
+  val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min)(cp))
+  val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to horizon)(cp))
+  val demands = Array.tabulate(nTasks)(t => CPIntVar(Set(demandsData1(t), demandsData2(t)))(cp))
+  val resources = Array.fill(nTasks)(CPIntVar(1 to 2)(cp))
   
   val makespan = maximum(ends)
 
@@ -36,8 +35,8 @@ object AlternativeTask extends App {
       cp.add((resources(t) === 2) ==> (demands(t) === demandsData2(t)))
     }
     // Cumulative
-    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 1))
-    cp.add(SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(capaMax)(cp), 2))
+    cp.add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capaMax)(cp), 1))
+    cp.add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capaMax)(cp), 2))
 
   } search {
     binaryFirstFail(resources) ++ binaryFirstFail(starts)

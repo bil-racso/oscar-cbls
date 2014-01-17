@@ -49,7 +49,7 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
 
     var best = 1000
 
-    val path = Array.fill(10)(CPVarInt(0 until 64)(cp))
+    val path = Array.fill(10)(CPIntVar(0 until 64)(cp))
 
     val sol = Array.fill(10)(0)
     val prob = proba.flatten
@@ -73,9 +73,9 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
 
     val cp = CPSolver()
 
-    val succ = Array.tabulate(64)(i => CPVarInt(neighbors(i))(cp))
+    val succ = Array.tabulate(64)(i => CPIntVar(neighbors(i))(cp))
 
-    val path = Array.fill(10)(CPVarInt(0 until 64)(cp)) // represent the path of length ten which is the solution
+    val path = Array.fill(10)(CPIntVar(0 until 64)(cp)) // represent the path of length ten which is the solution
 
     val sol = Array.fill(10)(0)
 

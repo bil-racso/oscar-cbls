@@ -77,7 +77,7 @@ object ChemicalTanker extends CPModel with App {
    * allocated to cargo exceed the volume of this cargo to place we immediately
    * forbid this cargo in other tanks.
    */
-  class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPVarInt]) extends Constraint(cargos(0).s) {
+  class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPIntVar]) extends Constraint(cargos(0).s) {
 
     val curCapa = new ReversibleInt(s, 0)
 
@@ -86,7 +86,7 @@ object ChemicalTanker extends CPModel with App {
       CPOutcome.Suspend
     }
 
-    override def valBindIdx(x: CPVarInt, tank: Int) = {
+    override def valBindIdx(x: CPIntVar, tank: Int) = {
       if (x.getValue == cargo.id) {
         curCapa.setValue(curCapa.getValue + tanks(tank).capa)
         if (curCapa.getValue >= cargo.volume) {
@@ -138,11 +138,11 @@ object ChemicalTanker extends CPModel with App {
   f.createFrame("Volume Slack").add(barChart)
 
   // for each tank, the cargo type placed into it (dummy cargo if emmty)
-  val cargo = Array.tabulate(tanks.size)(t => CPVarInt(tanks(t).possibleCargos))
+  val cargo = Array.tabulate(tanks.size)(t => CPIntVar(tanks(t).possibleCargos))
   // for each cargo, the total cacity allocated to it (must be at least the volume to place)
-  val load = Array.tabulate(cargos.size)(c => CPVarInt(cargos(c).volume to totCapa))
+  val load = Array.tabulate(cargos.size)(c => CPIntVar(cargos(c).volume to totCapa))
   // for each cargo, the number of tanks allocated to it
-  val card = Array.tabulate(cargos.size)(c => CPVarInt(0 to tanks.size))
+  val card = Array.tabulate(cargos.size)(c => CPIntVar(0 to tanks.size))
 
   // objective = maximize the total empty space
   val freeSpace = load(0)

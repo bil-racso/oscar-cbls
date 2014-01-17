@@ -67,8 +67,8 @@ object AllIntervals {
     // variables
     //
 
-    val x = Array.fill(n)(CPVarInt(cp, 0 to n - 1))
-    val diffs = Array.fill(n - 1)(CPVarInt(cp, 1 to n - 1))
+    val x = Array.fill(n)(CPIntVar(cp, 0 to n - 1))
+    val diffs = Array.fill(n - 1)(CPIntVar(cp, 1 to n - 1))
 
     //
     // constraints

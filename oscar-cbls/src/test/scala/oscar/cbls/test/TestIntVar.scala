@@ -17,15 +17,17 @@ package oscar.cbls.test
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
 import oscar.cbls.modeling._
-import oscar.cbls.invariants.core.computation.IntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar
+import scala.language.postfixOps
+import oscar.cbls.invariants.core.computation.Store
 
 class TestIntVar extends FunSuite with ShouldMatchers {
   
   test("test create IntVar 1..10"){
-    val solver = new LSSolver
-    val x = IntVar(solver, 1, 10, 1, "x")
-    val y = IntVar(solver, (1 to 10), 1, "y")
-    val z = IntVar(solver, (1 until 10), 1, "z")
+    val solver = new Store
+    val x = CBLSIntVar(solver, 1, 10, 1, "x")
+    val y = CBLSIntVar(solver, (1 to 10), 1, "y")
+    val z = CBLSIntVar(solver, (1 until 10), 1, "z")
   //  solver.close()
     
     x.minVal should be(1)
@@ -39,19 +41,19 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test create IntVar using invalid ranges"){
-	  val solver = new LSSolver
+	  val solver = new Store
 	  evaluating {
-		  val x = IntVar(solver, (0 to -1), 0, "x")
+		  val x = CBLSIntVar(solver, (0 to -1), 0, "x")
 	  } should produce [IllegalArgumentException]
 	  
 	  evaluating {
-	     val x = IntVar(solver, (0 until 0), 0, "x") // until makes an empty range
+	     val x = CBLSIntVar(solver, (0 until 0), 0, "x") // until makes an empty range
 	  } should produce [IllegalArgumentException]
   }
   
   test("test inDomain of IntVar 1..10"){
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 10), 1, "x")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 10), 1, "x")
    // solver.close()
     (1 to 10).foreach(x.inDomain(_) should be(true))
     x.inDomain(0) should be(false)
@@ -61,19 +63,19 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test domain of IntVar"){
-    val solver = new LSSolver
+    val solver = new Store
     val domain = (1 to 10)
-    val x = IntVar(solver, domain, 1, "x")
-    val y = IntVar(solver, 1, 10, 1, "y")
+    val x = CBLSIntVar(solver, domain, 1, "x")
+    val y = CBLSIntVar(solver, 1, 10, 1, "y")
     
     x.domain should be(domain)
     y.domain should be(domain)
   }
   
   test("test setValue via :="){
-    val solver = new LSSolver
+    val solver = new Store
     
-    val x = IntVar(solver, (1 to 10), 1, "x")
+    val x = CBLSIntVar(solver, (1 to 10), 1, "x")
     solver.close()
     
     x.value should be(1)
@@ -82,9 +84,9 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :=:"){
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 10), 1, "x")
-    val y = IntVar(solver, (1 to 10), 10, "y")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 10), 1, "x")
+    val y = CBLSIntVar(solver, (1 to 10), 10, "y")
     solver.close()
     
     x.value should be(1)
@@ -97,8 +99,8 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :+=") {
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 100), 50, "x")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 100), 50, "x")
     
     x.value should be(50)
     x :+= 10
@@ -108,8 +110,8 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :*=") {
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 10), 10, "x")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 10), 10, "x")
     
     x.value should be(10)
     x :*= 2
@@ -119,8 +121,8 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test :-=") {
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 10), 5, "x")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 10), 5, "x")
     x.value should be(5)
     x :-= 3
     x.value should be(2)
@@ -131,8 +133,8 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   }
   
   test("test ++()") {
-    val solver = new LSSolver
-    val x = IntVar(solver, (1 to 10), 1, "x")
+    val solver = new Store
+    val x = CBLSIntVar(solver, (1 to 10), 1, "x")
     x.value should be(1)
 
     x ++

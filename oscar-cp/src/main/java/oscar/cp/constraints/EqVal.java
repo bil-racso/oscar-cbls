@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,7 +25,7 @@ import oscar.cp.core.Constraint;
  */
 public class EqVal extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int v;
 
     /**
@@ -33,7 +33,7 @@ public class EqVal extends Constraint {
      * @param x
      * @param v
      */
-	public EqVal(CPVarInt x, int v) {
+	public EqVal(CPIntVar x, int v) {
 		super(x.s(),"EqVal");
 		this.x = x;
 		this.v = v;

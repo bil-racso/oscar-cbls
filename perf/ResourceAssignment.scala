@@ -54,16 +54,16 @@ object ResourceAssignment extends App {
     val nbTasks = taskWeight.map(_._1).max +1
     
     // p(t) is the partition chosen for task i
-    var p = Array.fill(nbTasks)(CPVarInt(cp,0 until partition.size))
+    var p = Array.fill(nbTasks)(CPIntVar(cp,0 until partition.size))
     
     // x(i) is the bin chosen for subtask i
-    val x: Array[CPVarInt] = for ((i,j) <- taskWeight) yield {
-      var possbin = Array.tabulate(partition.size)(i => CPVarInt(cp,partition(i)))
-      var xij = CPVarInt(cp,0 until nbBins)
+    val x: Array[CPIntVar] = for ((i,j) <- taskWeight) yield {
+      var possbin = Array.tabulate(partition.size)(i => CPIntVar(cp,partition(i)))
+      var xij = CPIntVar(cp,0 until nbBins)
       possbin(p(i))
     }
     
-    val load = Array.fill(nbBins)(CPVarInt(cp,0 to binCapa))
+    val load = Array.fill(nbBins)(CPIntVar(cp,0 to binCapa))
 
     cp.solve() subjectTo {
       cp.add(maximum(0 until nbBins)(load(_)) <= 6)

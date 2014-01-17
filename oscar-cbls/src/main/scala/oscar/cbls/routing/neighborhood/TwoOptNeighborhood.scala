@@ -34,7 +34,7 @@ import oscar.cbls.search.SearchEngineTrait
  *
  * The search complexity is O(n²).
  */
-case class TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
+object TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
 
   /**
    * Removes two edges of a route and flips the obtained segment before
@@ -97,7 +97,7 @@ case class TwoOptMove(
   override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
   // overriding methods
   override def encodeMove() {
-    new TwoOptNeighborhood().encode(fstPred, sndPred, vrp)
+    TwoOptNeighborhood.encode(fstPred, sndPred, vrp)
   }
 
   override def toString: String = ("TwoOpt(first predecessor = "

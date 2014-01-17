@@ -25,7 +25,7 @@ import oscar.cp.core._
  */
 object MagicModuloNumber extends CPModel with App {
 
-  val x = CPVarInt(0 to 10000)
+  val x = CPIntVar(0 to 10000)
 
   for (i <- 2 to 10) {
     add(modulo(x, i, i - 1))

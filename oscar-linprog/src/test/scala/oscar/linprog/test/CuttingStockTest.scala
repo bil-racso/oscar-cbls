@@ -26,7 +26,7 @@ import org.scalatest.matchers.ShouldMatchers
  */
 class CuttingStockTest extends FunSuite with ShouldMatchers {
 	
-  class Column (val x : LPVar, val pattern : Array[Int]) {
+  class Column (val x : LPFloatVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
 	 	  pattern.mkString("\t")
 	  }   
@@ -46,7 +46,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  for (r <- Rolls) {
 	 	  val config = Array.tabulate(roll.size)(_ => 0)
 	 	  config(r) = rollStock/roll(r)
-	 	  C = C :+ new Column(LPVar(lp,"pattern"+r), config)
+	 	  C = C :+ new Column(LPFloatVar(lp,"pattern"+r), config)
 	  }
 	   
 	  var constraints = Array[LPConstraint]()
@@ -64,7 +64,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  var mip : MIPSolver = null
 	  do {
 		  mip = MIPSolver(lib)
-		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar("use",0 to rollStock)(mip))
+		  val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar("use",0 to rollStock)(mip))
 		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 
 		 

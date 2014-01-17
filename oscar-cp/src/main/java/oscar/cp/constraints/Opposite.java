@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,16 +25,16 @@ import oscar.cp.core.Constraint;
  */
 public class Opposite extends Constraint {
 	
-	private CPVarInt x;
-	private CPVarInt y;
+	private CPIntVar x;
+	private CPIntVar y;
 
     /**
      * y == -x
      * @param x
      * @param y
-     * @see cp.core.CPVarInt#opposite()
+     * @see cp.core.CPIntVar#opposite()
      */
-	public Opposite(CPVarInt x, CPVarInt y) {
+	public Opposite(CPIntVar x, CPIntVar y) {
 		super(x.s(),"Opposite");
 		this.x = x;
 		this.y = y;
@@ -95,7 +95,7 @@ public class Opposite extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (var == x) {
 			if (y.assign(-x.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -109,7 +109,7 @@ public class Opposite extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt var) {
+	public CPOutcome updateBounds(CPIntVar var) {
 		if (var == x) {
 			if (y.updateMax(-x.min()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -129,7 +129,7 @@ public class Opposite extends Constraint {
 	}	
 	
 	@Override
-	public CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPIntVar var, int val) {
 		if (var == x) {
 			if (y.removeValue(-val) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

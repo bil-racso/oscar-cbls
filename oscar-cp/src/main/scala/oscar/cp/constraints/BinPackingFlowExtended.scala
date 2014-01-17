@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt;
@@ -26,7 +26,7 @@ import oscar.algo.reversible.ReversibleInt;
  * Redundant Bin-Packing Flow Constraint
  * @author pschaus@gmail.com
  */
-class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val l: Array[CPVarInt], val c: Array[CPVarInt]) extends Constraint(x(0).s) {
+class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val l: Array[CPIntVar], val c: Array[CPIntVar]) extends Constraint(x(0).s) {
 
   val perm = ArrayUtils.sortPerm(sizes);
   val l_t = Array.fill(c.size)(new ReversibleInt(s, 0))
@@ -67,13 +67,13 @@ class BinPackingFlowExtended(val x: Array[CPVarInt], val sizes: Array[Int], val 
   }
   
 
-  override def valRemoveIdx(x: CPVarInt, idx: Int, value: Int): CPOutcome = {
+  override def valRemoveIdx(x: CPIntVar, idx: Int, value: Int): CPOutcome = {
     candidates_t(value).decr();
     return CPOutcome.Suspend;
   }
 
 
-  override def valBindIdx(x: CPVarInt, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
     val j = x.value;
     val wj = sizes(idx);
     l_t(j).setValue(l_t(j).value + wj);

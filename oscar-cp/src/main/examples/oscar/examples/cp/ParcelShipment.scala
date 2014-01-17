@@ -41,10 +41,10 @@ object ParcelShipment extends CPModel with App {
   val maxLoad = 7 // maximum load in the ship at any time
   val start = 0 // start city
 
-  val succ = Array.tabulate(n)(c => CPVarInt(0 until n)) // successor
-  val load = Array.tabulate(n)(c => CPVarInt(0 to maxLoad)) // load(i) is the load in the ship when leaving city i
-  val totDist = CPVarInt(0 to distance.flatten.sum)
-  val predStart = CPVarInt(0 until n)
+  val succ = Array.tabulate(n)(c => CPIntVar(0 until n)) // successor
+  val load = Array.tabulate(n)(c => CPIntVar(0 to maxLoad)) // load(i) is the load in the ship when leaving city i
+  val totDist = CPIntVar(0 to distance.flatten.sum)
+  val predStart = CPIntVar(0 until n)
 
   add(load(start) == 0) // start initially empty
   for (i <- 0 until n) {

@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{ IntVar, IntInvariant, IntSetVar }
+import oscar.cbls.invariants.core.computation.{ CBLSIntVar, IntInvariant, CBLSSetVar }
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -33,29 +33,29 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param on is the set of integers to add
  * @param fun is an optional function Int -> Int to apply before summing elements. It is expected not to rely on any variable of the model.
  */
-case class SetSum(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
   def myMax = Int.MaxValue
   def myMin = Int.MinValue
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     output := on.value.foldLeft(0)((a, b) => a + fun(b))
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     assert(v == on)
     output :+= fun(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     assert(v == on)
     output :-= fun(value)
   }
@@ -72,9 +72,9 @@ case class SetSum(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends In
  * @param on is the set of integers to multiply
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
  */
-case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
   var NonZeroProduct: Int = 0
 
   registerStaticAndDynamicDependency(on)
@@ -83,7 +83,7 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   def myMax = Int.MaxValue
   def myMin = Int.MinValue
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     NonZeroProduct = on.value.foldLeft(1)(
@@ -96,7 +96,7 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     assert(v == on)
     if (value != 0) {
       NonZeroProduct *= fun(value)
@@ -109,7 +109,7 @@ case class SetProd(on: IntSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     assert(v == on, "The given set (IntSetVar) should be SetProd.on.")
     if (value != 0) {
       NonZeroProduct /= fun(value)

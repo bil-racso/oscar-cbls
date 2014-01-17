@@ -32,8 +32,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param cond is a function that selects values to be includes in the output set.
  * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
  */
-case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)=_>0) extends IntSetInvariant {
-  var output:IntSetVar=null
+case class Filter(var values:Array[CBLSIntVar], cond:(Int=>Boolean)=_>0) extends SetInvariant {
+  var output:CBLSSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
   finishInitialization()
@@ -41,14 +41,14 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)=_>0) extends Int
   def myMin = values.indices.start
   def myMax = values.indices.end
 
-  override def setOutputVar(v:IntSetVar){
+  override def setOutputVar(v:CBLSSetVar){
     output = v
     output.setDefiningInvariant(this)
     output := values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc)
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,index:Int, OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,index:Int, OldVal:Int,NewVal:Int){
     val OldCond = cond(OldVal)
     val NewCond = cond(NewVal)
     if(OldCond  && !NewCond) output.deleteValue(index)

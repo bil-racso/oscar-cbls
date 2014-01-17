@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,9 +26,9 @@ import oscar.cp.core.Constraint;
  */
 public class EqReif extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int v;
-	CPVarBool b;
+	CPBoolVar b;
 
     /**
      * x is equal to v if and only if b is true i.e.
@@ -38,7 +38,7 @@ public class EqReif extends Constraint {
      * @param b
      * @see DiffReif
      */
-	public EqReif(CPVarInt x, int v, CPVarBool b) {
+	public EqReif(CPIntVar x, int v, CPBoolVar b) {
 		super(x.s(),"EqReif");
 		this.x = x;
 		this.v = v;
@@ -65,7 +65,7 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPIntVar x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -87,7 +87,7 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valRemove(CPVarInt x, int val) {
+	public CPOutcome valRemove(CPIntVar x, int val) {
 		if (val == v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -99,7 +99,7 @@ public class EqReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.isBound()) {
 			if (b.isFalse()) {
 				//x != v

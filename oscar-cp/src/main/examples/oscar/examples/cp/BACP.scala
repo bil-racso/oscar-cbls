@@ -47,9 +47,9 @@ object BACP extends CPModel with App {
   val credits = Array.fill(nbCourses)(next())
   val prerequisites = Array.fill(nbPre)((next(), next()))
 
-  val x = Array.fill(nbCourses)(CPVarInt(periods))
-  val l = Array.fill(nbPeriods)(CPVarInt(0 to credits.sum))
-  val vari = CPVarInt(0 to 10000000)
+  val x = Array.fill(nbCourses)(CPIntVar(periods))
+  val l = Array.fill(nbPeriods)(CPIntVar(0 to credits.sum))
+  val vari = CPIntVar(0 to 10000000)
 
   add(spread(l, credits.sum, vari))
   add(binPacking(x, credits, l))

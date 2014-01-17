@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,18 +25,18 @@ import oscar.cp.core.Constraint;
  */
 public class Minus extends Constraint {
 	
-	private CPVarInt x;
-	private CPVarInt y;
-	private CPVarInt z;
+	private CPIntVar x;
+	private CPIntVar y;
+	private CPIntVar z;
 
     /**
      * x - y == z
      * @param x
      * @param y
      * @param z
-     * @see CPVarInt#minus(cp.core.CPVarInt)
+     * @see CPIntVar#minus(cp.core.CPIntVar)
      */
-	public Minus(CPVarInt x, CPVarInt y, CPVarInt z) {
+	public Minus(CPIntVar x, CPIntVar y, CPIntVar z) {
 		super(x.s(),"Minus");
 		this.x = x;
 		this.y = y;
@@ -61,7 +61,7 @@ public class Minus extends Constraint {
 	}
 	
 	
-	private CPOutcome prune(CPVarInt A, CPVarInt B, CPVarInt C) {
+	private CPOutcome prune(CPIntVar A, CPIntVar B, CPIntVar C) {
 		//prune var C = A-B 
 		if (C.updateMax(A.getMax()-B.getMin()) == CPOutcome.Failure) {
 			return CPOutcome.Failure;

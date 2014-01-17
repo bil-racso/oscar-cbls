@@ -42,7 +42,7 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
       return performBulkComputation(bulkedVars)
     }
 
-    val m: Model = this.preFinishInitialization(bulkedVars(0).model)
+    val m = this.preFinishInitialization(bulkedVars(0).model)
     if (m == null) {
       //no bulking possible
       this.registerStaticDependencyAll(bulkedVars)
@@ -77,7 +77,7 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
  * This is the node that is put in the propagation graph
  * used by BulkLoad only
  */
-class Bulk(m: Model, val bulkedVars: Array[Variable], val bulkedComputationResult: Any)
+class Bulk(m: Store, val bulkedVars: Array[Variable], val bulkedComputationResult: Any)
   extends Invariant with BulkPropagator {
 
   for (dd <- bulkedVars) registerStaticallyListenedElement(dd)

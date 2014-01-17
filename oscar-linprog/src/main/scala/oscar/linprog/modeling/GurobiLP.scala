@@ -248,7 +248,7 @@ class GurobiLP extends AbstractLP {
     println("Added " + allCons.size + " constraints.")
   }
 
-  def setVarProperties(vars: Array[AbstractLPVar]) = {
+  def setVarProperties(vars: Array[AbstractLPFloatVar]) = {
     val varsGrb = model.getVars
     val orderedVars: Array[GRBVar] = vars map (x => varsGrb(x.index))
     val ub = vars map (_.ub)

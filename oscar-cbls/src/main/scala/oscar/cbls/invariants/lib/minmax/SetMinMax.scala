@@ -21,11 +21,11 @@
 
 package oscar.cbls.invariants.lib.minmax
 
-import oscar.cbls.invariants.core.computation.{IntVar, IntInvariant, IntSetVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntInvariant, CBLSSetVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 //Log
-abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
+abstract class MiaxSet(v: CBLSSetVar) extends IntInvariant{
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -35,11 +35,11 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
 
   def Better(a: Int, b:Int): Boolean
 
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
   def Default: Int
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     performPropagation()
@@ -50,7 +50,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
   var wasEmpty:Boolean = v.value.isEmpty
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     if (wasEmpty){
       output := value
     }else if(!this.isScheduled && Better(value,output.getValue(true))){
@@ -60,7 +60,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     if (v.value.isEmpty){ //TODO: avoid querying this directly on the intsetvar!
       wasEmpty = true
       output := Default
@@ -81,7 +81,7 @@ abstract class MiaxSet(v: IntSetVar) extends IntInvariant{
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MinSet(v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
+case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
   override def name = "MinSet"
 
   override def Better(a:Int,b:Int):Boolean = a < b
@@ -111,7 +111,7 @@ case class MinSet(v: IntSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) 
  * @param Default is the default value if v is empty
  * update is O(log(n))
  * */
-case class MaxSet(v: IntSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
+case class MaxSet(v: CBLSSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
   override def name = "MaxSet"
 
   override def Better(a:Int,b:Int):Boolean = a > b

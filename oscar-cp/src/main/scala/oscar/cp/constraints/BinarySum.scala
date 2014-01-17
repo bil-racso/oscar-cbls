@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * x + y = z 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class BinarySum(val x: CPVarInt, val y: CPVarInt, val z: CPVarInt) extends Constraint(x.s, "BinarySum") {
+class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Constraint(x.s, "BinarySum") {
 
   
   override def setup(l: CPPropagStrength): CPOutcome = {

@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.ArrayUtils;
 
@@ -27,17 +27,17 @@ import oscar.cp.util.ArrayUtils;
  */
 public class BinPackingFlow extends Constraint {
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	private int [] sizes;
-	private CPVarInt [] l;
-	private CPVarInt [] c; // cardinalities
+	private CPIntVar [] l;
+	private CPIntVar [] c; // cardinalities
 
 	private ReversibleInt [] l_t; // keep track of the current load of each bin
 	private ReversibleInt [] c_t; // keep track of the number of items in each bin
 	
 	private int [] perm ; //permutation of sorted items i.e. s[perm[i]] <= s[perm[i+1]]
 	
-	public BinPackingFlow(CPVarInt [] x, int [] sizes, CPVarInt [] l, CPVarInt [] c) {
+	public BinPackingFlow(CPIntVar [] x, int [] sizes, CPIntVar [] l, CPIntVar [] c) {
 		super(x[0].s(),"BinPackingFlow");
 		this.x = x;
 		this.sizes = sizes;
@@ -54,7 +54,7 @@ public class BinPackingFlow extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength strength) {
-		for (CPVarInt var: x) {
+		for (CPIntVar var: x) {
 			if (var.updateMax(l.length-1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -83,7 +83,7 @@ public class BinPackingFlow extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPVarInt x, int idx) {
+	public CPOutcome valBindIdx(CPIntVar x, int idx) {
 		int j = x.getValue();
 		int size = sizes[idx];
 		l_t[j].setValue(l_t[j].getValue() + size);

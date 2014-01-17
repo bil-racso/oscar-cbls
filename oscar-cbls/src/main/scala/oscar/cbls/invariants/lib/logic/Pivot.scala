@@ -31,11 +31,11 @@ import oscar.cbls.invariants.core.propagation.Checker
 /**
  * {i in index of values | values[i] <= boundary}
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
- * @param values an array of [[oscar.cbls.invariants.core.computation.IntVar]]
+ * @param values an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]]
  * @param boundary the boundary for comparison
  */
-case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends IntSetInvariant {
-  var output: IntSetVar = null
+case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
+  var output: CBLSSetVar = null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
   registerStaticAndDynamicDependency(boundary)
@@ -47,7 +47,7 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
   val HeapAbove: BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i: Int) => values(i).value, values.size)
   val HeapBelowOrEqual: BinomialHeapWithMove[Int] = new BinomialHeapWithMove((i: Int) => -(values(i).value), values.size)
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: CBLSSetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]
@@ -83,7 +83,7 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, i: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
     if (v == boundary) {
       //c'est le boundary
       if (NewVal > OldVal) {
@@ -130,8 +130,8 @@ case class SelectLEHeapHeap(values: Array[IntVar], boundary: IntVar) extends Int
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
  */
-case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends IntSetInvariant {
-  var output: IntSetVar = null
+case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
+  var output: CBLSSetVar = null
 
   def myMin = values.indices.start
   def myMax = values.indices.end
@@ -142,7 +142,7 @@ case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends Int
 
   val QueueAbove: Queue[Int] = new Queue[Int]
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: CBLSSetVar) {
     output = v
     output.setDefiningInvariant(this)
     output := SortedSet.empty[Int]
@@ -160,7 +160,7 @@ case class SelectLESetQueue(values: Array[IntVar], boundary: IntVar) extends Int
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
     if (v == boundary) {
       //c'est le boundary
       assert(NewVal > OldVal, "SelectLESetQueue does not allow boundary to decrease")

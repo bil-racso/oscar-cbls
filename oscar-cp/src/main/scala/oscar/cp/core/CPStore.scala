@@ -67,9 +67,9 @@ class CPStore extends SearchNode {
     throwNoSolExceptions = false;
   }
 
-  override def isFailed() = status.value == CPOutcome.Failure;
+  override def isFailed: Boolean = status.value == CPOutcome.Failure;
 
-  private def cleanQueues() {
+  private def cleanQueues(): Unit = {
     propagQueueL1.foreach(_.clear())
     propagQueueL2.foreach(_.clear())
   }
@@ -115,7 +115,7 @@ class CPStore extends SearchNode {
     highestPriorL1 = Math.max(highestPriorL1, prior);
   }
 
-  def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -128,7 +128,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -142,7 +142,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateMinL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifyUpdateMinL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -156,7 +156,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateMinIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifyUpdateMinIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -170,7 +170,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -183,7 +183,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt, v: Int) {
+  def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -197,7 +197,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -209,7 +209,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -222,7 +222,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+  def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -234,7 +234,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPVarInt) {
+  def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -249,7 +249,7 @@ class CPStore extends SearchNode {
 
   // set variable
 
-  def notifyRequired(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+  def notifyRequired(constraints: PropagEventQueueVarSet, x: CPSetVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -262,7 +262,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyRequiredIdx(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+  def notifyRequiredIdx(constraints: PropagEventQueueVarSet, x: CPSetVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -275,7 +275,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyExcluded(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+  def notifyExcluded(constraints: PropagEventQueueVarSet, x: CPSetVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -288,7 +288,7 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyExcludedIdx(constraints: PropagEventQueueVarSet, x: CPVarSet, v: Int) {
+  def notifyExcludedIdx(constraints: PropagEventQueueVarSet, x: CPSetVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -525,7 +525,7 @@ class CPStore extends SearchNode {
    * @param c, the constraint
    * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise
    */
-  def post(b: CPVarBool): CPOutcome = post(new Eq(b, 1), CPPropagStrength.Weak)
+  def post(b: CPBoolVar): CPOutcome = post(new Eq(b, 1), CPPropagStrength.Weak)
 
   /**
    * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
@@ -590,7 +590,7 @@ class CPStore extends SearchNode {
    * @param c
    * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
    */
-  def add(b: CPVarBool): CPOutcome = {
+  def add(b: CPBoolVar): CPOutcome = {
     val res = post(new Eq(b, 1));
     if ((res == Failure || status.value == Failure) && throwNoSolExceptions) {
       throw new NoSolutionException("the store failed when setting boolvar to true");
@@ -631,7 +631,7 @@ class CPStore extends SearchNode {
   
   
   
-  def assign(x: CPVarInt, v: Int): CPOutcome = {
+  def assign(x: CPIntVar, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure
     var oc = x.assign(v)
     if (oc != Failure) {
@@ -642,7 +642,7 @@ class CPStore extends SearchNode {
     return status.value
   }
   
-  def remove(x: CPVarInt, v: Int): CPOutcome = {
+  def remove(x: CPIntVar, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure
     var oc = x.removeValue(v)
     if (oc != Failure) {

@@ -31,8 +31,8 @@ class MIPTest extends FunSuite with ShouldMatchers {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
-      val x = MIPVar("x", 0, 100)
-      val y = MIPVar("y", 0 to 100)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
 
       maximize(8 * x + 12 * y)
       add(10 * x + 20 * y <= 140)
@@ -51,8 +51,8 @@ class MIPTest extends FunSuite with ShouldMatchers {
     for (lib <- solvers) {
       println("===================================================================================lib:"+lib)
       implicit val mip = MIPSolver(lib)
-      val x = MIPVar("x", 0, 100)
-      val y = MIPVar("y", 0 to 100)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
 
       val cons: LPConstraint = mip.add(10 * x + 20 * y <= 140)
       val cons2 = mip.add(8 * x + 6 * y <= 96)
@@ -94,8 +94,8 @@ class MIPTest extends FunSuite with ShouldMatchers {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
-      val x = MIPVar( "x", 0, 100)
-      val y = MIPVar("y", 0 to 100)
+      val x = MIPFloatVar( "x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
       val cons: LPConstraint = add(10 * x + 20 * y <= 140)
       val cons2 = add(8 * x + 6 * y <= 96)
 
@@ -133,8 +133,8 @@ class MIPTest extends FunSuite with ShouldMatchers {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
-      val x = MIPVar("x", 0, 100)
-      val y = MIPVar("y", 0 to 100)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
       val cons: LPConstraint = add(10 * x + 20 * y <= 140)
       val cons2 = add(8 * x + 6 * y <= 96)
 

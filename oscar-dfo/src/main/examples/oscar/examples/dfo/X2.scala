@@ -14,9 +14,8 @@
  ******************************************************************************/
 package oscar.examples.dfo
 
-
-import oscar.dfo.algo._
-import oscar.dfo.utils._
+import oscar.dfo.singleobjective.algos.NelderMead
+import oscar.util.Interval
 
 object X2 extends App {
 

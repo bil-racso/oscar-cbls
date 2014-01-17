@@ -34,9 +34,9 @@ object ElementVarACPerf {
 			val rand = new scala.util.Random(seed)
 			def randDom(maxVal: Int,prob: Int) = (0 to maxVal).filter(i => rand.nextInt(100) < prob) 
 			val cp = new CPSolver()
-			val y = Array.fill(n)(CPVarInt(cp,randDom(n,prob)))
-			val x = CPVarInt(cp,randDom(n,prob*2))
-			val z = CPVarInt(cp,randDom(n,prob*2))
+			val y = Array.fill(n)(CPIntVar(cp,randDom(n,prob)))
+			val x = CPIntVar(cp,randDom(n,prob*2))
+			val z = CPIntVar(cp,randDom(n,prob*2))
 			var nbsol = 0
 			cp.solve subjectTo {
 			  cp.add(new ElementVarAC(y,x,z))

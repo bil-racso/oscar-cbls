@@ -36,9 +36,9 @@ object Rack extends CPModel with App {
   val maxCost = nbRack * maxPrice
 
   // CP Model
-  val rack = Racks.map(r => CPVarInt(0 to nbModel)) // the model type in each rack
-  val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPVarInt(0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
-  val cost = CPVarInt(0 to maxCost)
+  val rack = Racks.map(r => CPIntVar(0 to nbModel)) // the model type in each rack
+  val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPIntVar(0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
+  val cost = CPIntVar(0 to maxCost)
 
   for (r <- Racks) {
     // do not exceed the power capacity
@@ -56,8 +56,8 @@ object Rack extends CPModel with App {
 
   // symmetry breaking constraints
   for (r <- 1 until nbRack) {
-    val var_r: Array[CPVarInt] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
-    val var_r_1: Array[CPVarInt] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
+    val var_r: Array[CPIntVar] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
+    val var_r_1: Array[CPIntVar] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
     add(lexLeq(var_r, var_r_1))
   }
 

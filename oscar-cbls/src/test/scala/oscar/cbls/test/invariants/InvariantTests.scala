@@ -42,8 +42,8 @@ import oscar.cbls.invariants.lib.minmax.Max
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.IntElement
 import oscar.cbls.invariants.lib.numeric.Step
-import oscar.cbls.invariants.lib.logic.IntSetElement
-import oscar.cbls.invariants.lib.logic.IntElements
+import oscar.cbls.invariants.lib.logic.SetElement
+import oscar.cbls.invariants.lib.logic.Elements
 import oscar.cbls.invariants.lib.numeric.Div
 import oscar.cbls.invariants.lib.set.Union
 import oscar.cbls.invariants.lib.minmax.Min
@@ -176,7 +176,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Access to int vars...") {
     val bench = new InvBench(verbose)
-    new IntElements(
+    new Elements(
       bench.genIntSetVar(3, 0 to 4),
       bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
     bench.run
@@ -184,7 +184,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Access to int set element maintains output = array(index)") {
     val bench = new InvBench(verbose)
-    new IntSetElement(
+    new SetElement(
       bench.genIntVar(0 to 19),
       bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
     bench.run
@@ -290,7 +290,7 @@ class InvariantTests extends FunSuite with Checkers {
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
-
+  
   test("Max") {
     val bench = new InvBench(verbose)
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
@@ -492,7 +492,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("IdentityIntSet maintains the identity of a set of integers).") {
     val bench = new InvBench(verbose)
-    new IdentityIntSet(bench.genIntSetVar()).toIntSetVar
+    new IdentitySet(bench.genIntSetVar()).toIntSetVar
     bench.run
   }
 }

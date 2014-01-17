@@ -18,7 +18,7 @@ import java.util.Set;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -33,15 +33,15 @@ public class Regular extends Constraint {
 	private int initialState;
 	private Set<Integer> acceptingStates;
 	
-	private CPVarInt [] x;
-	private CPVarInt [] q;
+	private CPIntVar [] x;
+	private CPIntVar [] q;
 
     /**
      * Constraint x to be a valid sequence accepted by the automaton
      * @param x
      * @param automaton
      */
-	public Regular(CPVarInt [] x, Automaton automaton) {
+	public Regular(CPIntVar [] x, Automaton automaton) {
 		super(x[0].s(),"Regular");
 		this.x = x;
 
@@ -50,16 +50,16 @@ public class Regular extends Constraint {
 	    T = automaton.getTransitionMatrix();//transition matrix
 	    initialState = automaton.getInitialState();
 	    acceptingStates = automaton.getAcceptingStates();
-	    q = new CPVarInt[x.length];
+	    q = new CPIntVar[x.length];
 	    for (int i = 0; i < q.length; i++) {
-			q[i] = CPVarInt.apply(s(),0,nbStates-1);
+			q[i] = CPIntVar.apply(s(),0,nbStates-1);
 		}		
 	}
 
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {		
-		if (s().post(ElementCst2D.apply(T,CPVarInt.apply(s(),initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
+		if (s().post(ElementCst2D.apply(T,CPIntVar.apply(s(),initialState,initialState),x[0],q[0])) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		

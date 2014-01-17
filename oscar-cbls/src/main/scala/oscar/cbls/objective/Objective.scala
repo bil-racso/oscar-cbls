@@ -22,14 +22,14 @@ package oscar.cbls.objective
 
 import oscar.cbls.invariants.core.computation._
 
-case class Objective(Objective: IntVar) extends ObjectiveTrait {
+case class Objective(Objective: CBLSIntVar) extends ObjectiveTrait {
   setObjectiveVar(Objective)
 }
 
 trait ObjectiveTrait {
-  var ObjectiveVar: IntVar = null
+  var ObjectiveVar: CBLSIntVar = null
 
-  def setObjectiveVar(v: IntVar) {
+  def setObjectiveVar(v: CBLSIntVar) {
     ObjectiveVar = v
     ObjectiveVar.getPropagationStructure.registerForPartialPropagation(ObjectiveVar)
   }
@@ -37,9 +37,9 @@ trait ObjectiveTrait {
   /**returns the value of the objective variable if the two variables a and b were swapped values.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
-  def swapVal(a: IntVar, b: IntVar): Int = {
+  def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
     val NewVal = propagateObjective
     a :=: b
@@ -49,18 +49,18 @@ trait ObjectiveTrait {
   /**returns the value of the objective variable if variable a was assigned the value v.
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
-  def assignVal(a: IntVar, v: Int): Int = assignVal(List((a,v)))
+  def assignVal(a: CBLSIntVar, v: Int): Int = assignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
    * This proceeds through explicit state change and restore.
    * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Model]]
+   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
    */
-  def assignVal(a: Iterable[(IntVar, Int)]): Int = {
+  def assignVal(a: Iterable[(CBLSIntVar, Int)]): Int = {
     //memorize
-    val oldvals: Iterable[(IntVar, Int)] = a.foldLeft(List.empty[(IntVar, Int)])(
+    val oldvals: Iterable[(CBLSIntVar, Int)] = a.foldLeft(List.empty[(CBLSIntVar, Int)])(
       (acc, IntVarAndInt) => ((IntVarAndInt._1, IntVarAndInt._1.value)) :: acc)
     //excurse
     for (assign <- a)

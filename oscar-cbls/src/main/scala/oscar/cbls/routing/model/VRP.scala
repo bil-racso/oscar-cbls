@@ -26,13 +26,14 @@ package oscar.cbls.routing.model
 import collection.immutable.SortedMap
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{ IntSetVar, Model, IntVar }
+import oscar.cbls.invariants.core.computation.{ CBLSSetVar, Store, CBLSIntVar }
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.Predecessor
+import oscar.cbls.invariants.lib.set.Diff
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -46,16 +47,16 @@ import oscar.cbls.invariants.lib.logic.Predecessor
  * @param V the number of vehicles.
  * @param m the model.
  */
-class VRP(val N: Int, val V: Int, val m: Model) {
+class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
    * It assumed that the V vehicles are indexed from the point 0 to V-1,
    * like that each vehicle is considered like a deposit. Other indexes
    * are used to modelise customers. Finally the value N is used for unrouted node.
    */
-  val next: Array[IntVar] = Array.tabulate(N)(i =>
-    if (i < V) IntVar(m, V to N - 1, i, "next" + i)
-    else IntVar(m, 0, N, N, "next" + i))
+  val next: Array[CBLSIntVar] = Array.tabulate(N)(i =>
+    if (i < V) CBLSIntVar(m, V to N - 1, i, "next" + i)
+    else CBLSIntVar(m, 0, N, N, "next" + i))
 
   /**unroutes all points of the VRP*/
   def unroute() {
@@ -183,7 +184,7 @@ trait MoveDescription extends VRP {
     def iterator: Iterator[Int] = null
   }
 
-  case class affectFromVariable(variable: IntVar, takeValueFrom: IntVar) extends Affect {
+  case class affectFromVariable(variable: CBLSIntVar, takeValueFrom: CBLSIntVar) extends Affect {
     def comit(): Affect = {
       val oldValue = variable.value
       assert(isRouted(takeValueFrom.value), "you cannot take the value of an unrouted variable " + variable + " take value from " + takeValueFrom)
@@ -192,9 +193,9 @@ trait MoveDescription extends VRP {
     }
   }
 
-  case class affectFromConst(variable: IntVar, takeValue: Int) extends Affect {
+  case class affectFromConst(variable: CBLSIntVar, takeValue: Int) extends Affect {
     def comit(): Affect = {
-      assert(variable.value != N  || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
+      assert(variable.value != N || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
       val oldValue = variable.value
       variable := takeValue
       affectFromConst(variable, oldValue)
@@ -319,13 +320,13 @@ trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
 
 trait VRPObjective extends VRP {
 
-  val objectiveFunction = IntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
+  val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
-  private var objectiveFunctionTerms: List[IntVar] = List.empty
+  private var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
 
   /** adds a term top the objective function*/
-  def addObjectiveTerm(o: IntVar) {
+  def addObjectiveTerm(o: CBLSIntVar) {
     objectiveFunctionTerms = o :: objectiveFunctionTerms
   }
 
@@ -344,41 +345,51 @@ trait VRPObjective extends VRP {
 }
 
 /**
- * Maintains the set of unrouted nodes.
- * Info : those whose next is N.
- * This trait is abstract, sinbce unrouted can be implemented either stand alone, or as a side effect of other traits
+ * Maintains the set of routed and unrouted nodes.
+ * Info : unrouted nodes are those whose next is N.
+ * This trait is abstract, since unrouted can be implemented either stand alone,
+ * or as a side effect of other traits
  */
-abstract trait Unrouted {
-  def unrouted: IntSetVar
+abstract trait RoutedAndUnrouted extends VRP {
+  /**
+   * the data structure set which maintains the routed nodes.
+   */
+  val routed: CBLSSetVar = Filter(next, _ < N)
+  m.registerForPartialPropagation(routed)
+
+  /**
+   * the data structure set which maintains the unrouted nodes.
+   */
+  def unrouted: CBLSSetVar
 }
 
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
  */
-trait UnroutedImpl extends VRP with Unrouted {
+trait UnroutedImpl extends VRP with RoutedAndUnrouted {
   /**
-   * the data structure set which maintains the unrouted node.
+   * the data structure set which maintains the unrouted nodes.
    */
-  final override val unrouted: IntSetVar = Filter(next, _ == N)
+  final override val unrouted: CBLSSetVar = Filter(next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
  */
-trait PenaltyForUnrouted extends VRP with Unrouted {
+abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
 
   /**
    * the data structure array which maintains penalty of nodes.
    */
-  val weightUnroutedPenalty: Array[IntVar] = Array.tabulate(N)(i => IntVar(m, Int.MinValue, Int.MaxValue, 0,
+  val weightUnroutedPenalty: Array[CBLSIntVar] = Array.tabulate(N)(i => CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0,
     "penality of node " + i))
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val UnroutedPenalty: IntVar = SumElements(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty: CBLSIntVar = SumElements(weightUnroutedPenalty, unrouted)
 
   /**
    * It allows you to set the penalty of a given point.
@@ -394,7 +405,7 @@ trait PenaltyForUnrouted extends VRP with Unrouted {
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
 
-trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
+trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
   final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
 
@@ -402,7 +413,7 @@ trait ClosestNeighborPointsHop extends ClosestNeighborPoints with HopDistance {
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
  */
-abstract trait ClosestNeighborPoints extends VRP {
+abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
   /**
@@ -475,12 +486,12 @@ trait HopDistance extends VRP {
    * Info : the domain max is (Int.MaxValue / N) to avoid problem with domain. (allow us to use sum invariant without
    * throw over flow exception to save the distance of all vehicle).
    */
-  val hopDistance = Array.tabulate(N) { (i: Int) => IntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i) }
+  val hopDistance = Array.tabulate(N) { (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "hopDistanceForLeaving" + i) }
 
   /**
    * maintains the total distance of all vehicle, linked on the actual next hop of each node.
    */
-  val overallDistance: IntVar = Sum(hopDistance)
+  val overallDistance: CBLSIntVar = Sum(hopDistance)
 
   /**
    * the function which defines the distance between two points of the VRP.
@@ -522,14 +533,14 @@ trait HopDistance extends VRP {
  * It maintains it equal to the hop distance in the VRP,
  * based either on a matrix, or on another mechanism defined by the distance function.
  */
-trait HopDistanceAsObjective extends VRPObjective with HopDistance {
+trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
   addObjectiveTerm(overallDistance)
 }
 
 /**
  * Maintains the set of nodes reached by each vehicle
  */
-trait NodesOfVehicle extends PositionInRouteAndRouteNr with Unrouted {
+trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
 }
@@ -621,6 +632,48 @@ trait PositionInRouteAndRouteNr extends VRP {
 }
 
 /**
+ * Maintains a penalty weight for routes which do not contain task nodes.
+ * That is: they only contain the vehicle node.
+ */
+trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
+  /**
+   * The data structure array which maintains route penalty.
+   */
+  private val emptyRoutePenaltyWeight: Array[CBLSIntVar] =
+    Array.tabulate(V)(v =>
+      CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "penality of vehicule " + v))
+
+  /**
+   * The variable which maintains the set of empty routes.
+   * (that is: routes containing no other node than the vehicle node)
+   */
+  val emptyRoutes = Filter(routeLength, _ <= (1))
+
+  /**
+   * The variable which maintains the sum of route penalties,
+   * thanks to SumElements invariant.
+   */
+  val emptyRoutePenalty = SumElements(emptyRoutePenaltyWeight, emptyRoutes)
+
+  /**
+   * Allows client to set the penalty of a given vehicle route.
+   * @param n the node.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
+    emptyRoutePenaltyWeight(n) := p
+  }
+
+  /**
+   * Allows client to set a specific penalty for all the VRP routes.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(p: Int) {
+    emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
+  }
+}
+
+/**
  * This trait maintains the predecessors of each node of the VRP.
  * It uses the Predecessor invariant.
  */
@@ -628,7 +681,7 @@ trait Predecessors extends VRP {
   /**
    * the data structure array which maintains the predecessors of each node.
    */
-  val preds: Array[IntVar] = Predecessor(next, V).preds
+  val preds: Array[CBLSIntVar] = Predecessor(next, V).preds
 
   //TODO: ajouter des moves plus simples, sans les neouds sprécédesseurs à chaque fois
 }
@@ -642,7 +695,7 @@ trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
    */
-  var strongConstraints: ConstraintSystem = new ConstraintSystem(m)
+  var strongConstraints = ConstraintSystem(m)
 
   override def getObjective(): Int =
     (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
@@ -655,7 +708,7 @@ trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.
    */
-  val weakConstraints: ConstraintSystem = new ConstraintSystem(m)
+  val weakConstraints = ConstraintSystem(m)
 
   this.addObjectiveTerm(weakConstraints)
 }

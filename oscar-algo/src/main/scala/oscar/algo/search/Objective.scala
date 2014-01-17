@@ -15,7 +15,6 @@
 package oscar.algo.search
 
 import scala.collection.mutable.ArrayBuffer
-import oscar.algo.search.ObjectiveObserver
 
  /**
   * @author Pierre Schaus pschaus@gmail.com

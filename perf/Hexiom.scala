@@ -98,10 +98,10 @@ object Hexiom {
 		implicit val cp = CPSolver() 
 		cp.silent = true
 		// used(i) = true iff there is a pawn at this position
-		val used =  Array.fill(k)(CPVarBool()) 
+		val used =  Array.fill(k)(CPBoolVar()) 
 		val dummy = 7 // dummy value when no pawn in the neighborhood
 		// card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
-		val card =  Array.fill(k)(CPVarInt(cp,0 to 7))
+		val card =  Array.fill(k)(CPIntVar(cp,0 to 7))
 		var nbSol = 0
 		cp.solve subjectTo {
 		  

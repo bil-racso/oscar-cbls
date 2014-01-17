@@ -112,9 +112,9 @@ object Nurses extends CPModel with App {
     // actual cp model solving zone i
 
     solver.silent = true
-    val spreadAcuity = CPVarInt(0 to 10e6.toInt)
-    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPVarInt(0 until nbNursesInZone(i)))
-    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPVarInt(1 to 105))
+    val spreadAcuity = CPIntVar(0 to 10e6.toInt)
+    val nurseOfPatient = Array.fill(nbPatientsInZone(i))(CPIntVar(0 until nbNursesInZone(i)))
+    val acuityOfNurse = Array.fill(nbNursesInZone(i))(CPIntVar(1 to 105))
     println("spreadacuity:" + spreadAcuity)
     var best = Int.MaxValue
 

@@ -18,7 +18,7 @@ package oscar.cp.constraints;
 import oscar.cp.modeling._
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt
@@ -38,7 +38,7 @@ import java.security.InvalidParameterException
  * x and y are such that x(y(i)) = i i.e. y(i) is the position of number i in x
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class Permutation(x: Array[CPVarInt], y: Array[CPVarInt]) extends Constraint(y(0).s, "Permutation") {
+class Permutation(x: Array[CPIntVar], y: Array[CPIntVar]) extends Constraint(y(0).s, "Permutation") {
     
   val n = x.size-1
   if (x.size != y.size) throw new InvalidParameterException("x and y must have the same size")
@@ -70,7 +70,7 @@ class Permutation(x: Array[CPVarInt], y: Array[CPVarInt]) extends Constraint(y(0
   }
 
 
-  override def valRemoveIdx(cpvar: CPVarInt, i: Int, v: Int): CPOutcome = {
+  override def valRemoveIdx(cpvar: CPIntVar, i: Int, v: Int): CPOutcome = {
     if (i <= n) {
       // x(i) lost the value v
       y(v).removeValue(i)

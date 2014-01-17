@@ -80,7 +80,7 @@ object Exodus {
    // 
    // Note: This requires the domain 0..n-1
    //
-   def inverse(cp: CPSolver, x: Array[CPVarInt], y: Array[CPVarInt]) {
+   def inverse(cp: CPSolver, x: Array[CPIntVar], y: Array[CPIntVar]) {
       val len = x.length
       for(i <- 0 until len;
           j <- 0 until len) {
@@ -89,8 +89,8 @@ object Exodus {
    }
 
    // Convenient function which returns y (for presentation)
-   def inverse2(cp: CPSolver, x: Array[CPVarInt]) : Array[CPVarInt] = {
-     val y = Array.fill(x.length)(CPVarInt(x(0).min to x(0).max)(cp))
+   def inverse2(cp: CPSolver, x: Array[CPIntVar]) : Array[CPIntVar] = {
+     val y = Array.fill(x.length)(CPIntVar(x(0).min to x(0).max)(cp))
      inverse(cp, x, y)
      y
    }
@@ -111,19 +111,19 @@ object Exodus {
     //
     // variables
     //
-    val story = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val story = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(burningbush, captivity, mosessyouth, passover, tencommandments) = story
     // for output
     val storyStr = Array("Burning Bush", "Captivity", "Moses Youth", "Passover", "Ten Commandments")
     val storyInv = inverse2(cp, story)
     
-    val country = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val country = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(ethiopia, kazakhstan, lithuania, morocco, yemen) = country
     // for output
     val countryStr = Array("Ethiopia", "Kazakhstan", "Lithuania", "Morocco", "Yemen")
     val countryInv = inverse2(cp, country)
 
-    val age = Array.fill(n)(CPVarInt(Array(3,5,7,8,10))(cp))
+    val age = Array.fill(n)(CPIntVar(Array(3,5,7,8,10))(cp))
 
     //
      // constraints

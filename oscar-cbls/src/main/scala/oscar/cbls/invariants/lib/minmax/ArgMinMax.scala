@@ -35,12 +35,12 @@ import oscar.cbls.invariants.core.computation._
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  */
-case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int = Int.MinValue)
+case class ArgMaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MinValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
 
-  override def Ord(v: IntVar): Int = -v.value
+  override def Ord(v: CBLSIntVar): Int = -v.value
 
   override def ExtremumName: String = "Max of ArgMax"
 
@@ -48,7 +48,7 @@ case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
    * returns an IntVar equal to the value of the returned indices.
    * not specified if cond is empty
    */
-  def getMax: IntVar = Miax
+  def getMax: CBLSIntVar = Miax
 }
 
 /**
@@ -58,12 +58,12 @@ case class ArgMaxArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
  * @param default is the value returned when cond is empty
  * update is O(log(n))
  */
-case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int = Int.MaxValue)
+case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MaxValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
 
-  override def Ord(v: IntVar): Int = v.value
+  override def Ord(v: CBLSIntVar): Int = v.value
 
   override def ExtremumName: String = "Min of ArgMin"
 
@@ -71,7 +71,7 @@ case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
    * returns an IntVar equal to the value of the returned indices.
    * not specified if cond is empty
    */
-  def getMin: IntVar = Miax
+  def getMin: CBLSIntVar = Miax
 
 }
 
@@ -82,7 +82,7 @@ case class ArgMinArray(vars: Array[IntVar], cond: IntSetVar = null, default: Int
  * @param cond is the condition, can be null
  * update is O(log(n))
  */
-abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) extends IntSetInvariant with Bulked[IntVar, (Int, Int)] {
+abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends SetInvariant with Bulked[CBLSIntVar, (Int, Int)] {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
@@ -90,8 +90,8 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-  var output: IntSetVar = null
-  var Miax: IntVar = null
+  var output: CBLSSetVar = null
+  var Miax: CBLSIntVar = null
 
   if (cond != null) {
     registerStaticDependency(cond)
@@ -114,26 +114,26 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
     }
   }
 
-  Miax = new IntVar(model, (minOfMiax to maxOfMiax),
+  Miax = new CBLSIntVar(model, (minOfMiax to maxOfMiax),
     if (cond != null && cond.value.isEmpty) default else vars(h.getFirst).value, ExtremumName)
 
   Miax.setDefiningInvariant(this)
 
-  override def performBulkComputation(bulkedVar: Array[IntVar]) = {
+  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
   }
 
   def name: String
   def ExtremumName: String
-  def Ord(v: IntVar): Int
+  def Ord(v: CBLSIntVar): Int
 
   def myMin = vars.indices.start
   def myMax = vars.indices.end
 
   var cost:Long = 0
 
-  override def setOutputVar(v: IntSetVar) {
+  override def setOutputVar(v: CBLSSetVar) {
     output = v
     //collecter les counts et le max
     output.setDefiningInvariant(this)
@@ -143,7 +143,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
     cost = cost - System.currentTimeMillis()
     //mettre a jour le heap
     h.notifyChange(index)
@@ -168,7 +168,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
@@ -187,7 +187,7 @@ abstract class ArgMiaxArray(vars: Array[IntVar], cond: IntSetVar, default: Int) 
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
 

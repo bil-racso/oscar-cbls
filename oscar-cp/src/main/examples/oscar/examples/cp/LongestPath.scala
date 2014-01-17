@@ -48,7 +48,7 @@ object LongestPath extends CPModel with App {
 
   println("----------- trying with length:" + len + "-------------")
 
-  val path = Array.fill(len)(CPVarInt(nodes))
+  val path = Array.fill(len)(CPIntVar(nodes))
   val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
 
   for (i <- 0 until len - 1) {

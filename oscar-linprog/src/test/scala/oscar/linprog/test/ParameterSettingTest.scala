@@ -44,8 +44,8 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     implicit val lp = new LPSolver(LPSolverLib.lp_solve)
 
     lp.solver.configFile = configLP
-    val x = LPVar("x", 100, 200)
-    val y = LPVar("y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
     add(y >= -x + 200)
@@ -80,8 +80,8 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     implicit val lp = LPSolver(LPSolverLib.gurobi)
 
     lp.solver.configFile = configLP
-    val x = LPVar("x", 100, 200)
-    val y = LPVar("y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y) 
     add(y >= -x + 200)

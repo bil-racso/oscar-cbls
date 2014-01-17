@@ -1,7 +1,7 @@
 package oscar.cbls.test.invariants.bench
 
 import org.scalacheck.{Gen, Prop}
-import oscar.cbls.invariants.core.computation.{Variable, IntSetVar, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar, Store}
 import scala.collection.immutable.{SortedMap, SortedSet}
 import org.scalatest.prop.Checkers
 
@@ -56,18 +56,18 @@ object InvGen {
    *  as the name of the variable
    * The generated variable is added to the given model.
    */
-  def randomIntVar(range: Range, model: Model, constraint: Int => Boolean) =
+  def randomIntVar(range: Range, model: Store, constraint: Int => Boolean) =
     for {
       v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
       c <- Gen.alphaChar
     } yield new RandomIntVar(
-      new IntVar(model, range, v, c.toString.toLowerCase), constraint)
+      new CBLSIntVar(model, range, v, c.toString.toLowerCase), constraint)
 
   /**
    * Method to generate a list of nbVars random IntVar. Uses randomIntVar
    * method to generate each variable.
    */
-  def randomIntVars(nbVars: Int, range: Range, model: Model, constraint: Int => Boolean) = {
+  def randomIntVars(nbVars: Int, range: Range, model: Store, constraint: Int => Boolean) = {
     Gen.containerOfN[List, RandomIntVar](nbVars, randomIntVar(range, model, constraint))
   }
 
@@ -79,28 +79,28 @@ object InvGen {
    * A sorted set is made of the list of values, and the generated variable
    * is added to the given model.
    */
-  def randomFixedIntSetVar(nbVars: Int, range: Range, model: Model) = for {
+  def randomFixedIntSetVar(nbVars: Int, range: Range, model: Store) = for {
     c <- Gen.alphaChar
     v <- Gen.containerOfN[List, Int](nbVars, Gen.choose(range.min, range.max))
   } yield new RandomIntSetVar(
-      new IntSetVar(model, range.min, range.max, c.toString.toUpperCase,
+      new CBLSSetVar(model, range.min, range.max, c.toString.toUpperCase,
         SortedSet(v: _*)))
 
   /**
    * Method to generate a random IntSetVar of size less or equal to the given
    * limit. Same as randomFixedIntSetVar, except the size is chosen randomly.
    */
-  def randomIntSetVar(upToSize: Int, range: Range, model: Model) = for {
+  def randomIntSetVar(upToSize: Int, range: Range, model: Store) = for {
     c <- Gen.alphaChar
     s <- Gen.choose(1, upToSize)
     v <- Gen.containerOfN[List, Int](s, Gen.choose(range.min, range.max))
-  } yield new RandomIntSetVar(new IntSetVar(model, range.min, range.max,
+  } yield new RandomIntSetVar(new CBLSSetVar(model, range.min, range.max,
       c.toString.toUpperCase, SortedSet(v: _*)))
 
   /**
    * Method to generate a list of IntSetVars. Uses randomIntSetVar.
    */
-  def randomIntSetVars(nbVars: Int, upToSize: Int, range: Range, model: Model) = {
+  def randomIntSetVars(nbVars: Int, upToSize: Int, range: Range, model: Store) = {
     Gen.containerOfN[List, RandomIntSetVar](nbVars,
       randomIntSetVar(upToSize, range, model))
   }
@@ -122,10 +122,10 @@ abstract class RandomVar {
  * It can also contains a constraint which is applied when the variable is
  * moving.
  */
-case class RandomIntVar(intVar: IntVar,
+case class RandomIntVar(intVar: CBLSIntVar,
                         constraint: Int => Boolean = (v: Int) => true) extends RandomVar {
 
-  override def randomVar(): IntVar = intVar
+  override def randomVar(): CBLSIntVar = intVar
 
   def applyConstraint(newVal: Int) {
     if (constraint(newVal)) {
@@ -177,8 +177,8 @@ case class RandomIntVar(intVar: IntVar,
 /**
  * A RandomIntSetVar is a RandomVar containing an IntSetVar.
  */
-case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
-  override def randomVar(): IntSetVar = intSetVar
+case class RandomIntSetVar(intSetVar: CBLSSetVar) extends RandomVar {
+  override def randomVar(): CBLSSetVar = intSetVar
 
   /**
    * Defines the different possible moves for a RandomIntSetVar.
@@ -248,7 +248,7 @@ case class RandomIntSetVar(intSetVar: IntSetVar) extends RandomVar {
 class InvBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
-  val model = new Model(false, Some(checker), false, false, false)
+  val model = new Store(false, Some(checker), false, false, false)
 
 
 
@@ -278,7 +278,7 @@ class InvBench(verbose: Int = 0) {
   def genIntVar(
                  range: Range,
                  isInput: Boolean = true,
-                 constraint: Int => Boolean = (v: Int) => true): IntVar = {
+                 constraint: Int => Boolean = (v: Int) => true): CBLSIntVar = {
     val riVar = InvGen.randomIntVar(range, model, constraint).sample.get
     addVar(isInput, riVar)
     riVar.randomVar
@@ -292,7 +292,7 @@ class InvBench(verbose: Int = 0) {
                   nbVars: Int = 4,
                   range: Range = 0 to 100,
                   isInput: Boolean = true,
-                  constraint: Int => Boolean = (v: Int) => true): List[IntVar] = {
+                  constraint: Int => Boolean = (v: Int) => true): List[CBLSIntVar] = {
     val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
     addVar(isInput, riVars)
     riVars.map((riv: RandomIntVar) => {
@@ -304,7 +304,7 @@ class InvBench(verbose: Int = 0) {
                        nbVars: Int = 4,
                        range: Range = 0 to 100,
                        isInput: Boolean = true,
-                       constraint: Int => Boolean = (v: Int) => true): Array[IntVar] = {
+                       constraint: Int => Boolean = (v: Int) => true): Array[CBLSIntVar] = {
     genIntVars(nbVars, range, isInput, constraint).toArray
   }
 
@@ -316,7 +316,7 @@ class InvBench(verbose: Int = 0) {
                         nbVars: Int,
                         range: Range,
                         isInput: Boolean = true,
-                        constraint: Int => Boolean = (v: Int) => true): SortedSet[IntVar] = {
+                        constraint: Int => Boolean = (v: Int) => true): SortedSet[CBLSIntVar] = {
     val riVars = InvGen.randomIntVars(nbVars, range, model, constraint).sample.get
     addVar(isInput, riVars)
     val iVars = riVars.map((riv: RandomIntVar) => { riv.randomVar })
@@ -328,9 +328,9 @@ class InvBench(verbose: Int = 0) {
                         rangeValue: Range,
                         rangeBound: Range,
                         isInput: Boolean = true,
-                        constraint: Int => Boolean = (v: Int) => true): SortedMap[Int, IntVar] = {
+                        constraint: Int => Boolean = (v: Int) => true): SortedMap[Int, CBLSIntVar] = {
     val boundVars = genIntVars(nbVars, rangeBound, isInput, constraint)
-    val map = boundVars.map((boundVar: IntVar) =>
+    val map = boundVars.map((boundVar: CBLSIntVar) =>
       (Gen.choose(rangeValue.min, rangeValue.max).sample.get, boundVar))
     SortedMap(map: _*)
   }
@@ -356,7 +356,7 @@ class InvBench(verbose: Int = 0) {
                      nbVars: Int = 4,
                      upToSize: Int = 20,
                      range: Range = 0 to 100,
-                     isInput: Boolean = true): Array[IntSetVar] = {
+                     isInput: Boolean = true): Array[CBLSSetVar] = {
     val risVars = InvGen.randomIntSetVars(nbVars, upToSize, range, model).sample.get
     addVar(isInput, risVars)
     risVars.map((risv: RandomIntSetVar) => {

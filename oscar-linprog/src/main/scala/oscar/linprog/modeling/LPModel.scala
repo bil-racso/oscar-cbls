@@ -32,7 +32,7 @@ abstract class LP extends AbstractLP {
 /**
  * @author Pierre Schaus
  */
-class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPVar(lp, name_, lbound, ubound, false) {
+class LPFloatVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) extends AbstractLPFloatVar(lp, name_, lbound, ubound, false) {
 
   def this(lp: LPSolver, name: String, unbounded: Boolean) = {
     this(lp, name, if (unbounded) Double.PositiveInfinity else 0.0, Double.PositiveInfinity)
@@ -42,13 +42,13 @@ class LPVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Double =
   def reducedCost(): Double = lp.getReducedCost(index)
 }
 
-object LPVar {
-  def apply()(implicit lp: LPSolver) = new LPVar(lp,"",false)
-  def apply(name: String)(implicit lp: LPSolver) = new LPVar(lp,name,false)
-  def apply(name: String, unbounded: Boolean)(implicit lp: LPSolver) = new LPVar(lp,name,unbounded)
-  def apply(lp: LPSolver, name: String, unbounded: Boolean) = new LPVar(lp,name,unbounded)
-  def apply(name: String,lbound: Double, ubound: Double)(implicit lp: LPSolver) = new LPVar(lp,name,lbound,ubound)
-  def apply(lp: LPSolver, name: String,lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) = new LPVar(lp,name,lbound,ubound)
+object LPFloatVar {
+  def apply()(implicit lp: LPSolver) = new LPFloatVar(lp,"",false)
+  def apply(name: String)(implicit lp: LPSolver) = new LPFloatVar(lp,name,false)
+  def apply(name: String, unbounded: Boolean)(implicit lp: LPSolver) = new LPFloatVar(lp,name,unbounded)
+  def apply(lp: LPSolver, name: String, unbounded: Boolean) = new LPFloatVar(lp,name,unbounded)
+  def apply(name: String,lbound: Double, ubound: Double)(implicit lp: LPSolver) = new LPFloatVar(lp,name,lbound,ubound)
+  def apply(lp: LPSolver, name: String,lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) = new LPFloatVar(lp,name,lbound,ubound)
 }
 
 class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
@@ -62,8 +62,8 @@ class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abst
 
   def getReducedCost(varId: Int): Double = solver.getReducedCost(varId)
 
-  def addColumn(objCoef: Double, constraints: IndexedSeq[LPConstraint], lhsConstraintCoefs: Array[Double]): LPVar = {
-    val colVar = LPVar(this, "column var")
+  def addColumn(objCoef: Double, constraints: IndexedSeq[LPConstraint], lhsConstraintCoefs: Array[Double]): LPFloatVar = {
+    val colVar = LPFloatVar(this, "column var")
     objective += (objCoef * colVar)
     solver.addColumn(objCoef, constraints.map(_.index).toArray, lhsConstraintCoefs)
     solveModel()

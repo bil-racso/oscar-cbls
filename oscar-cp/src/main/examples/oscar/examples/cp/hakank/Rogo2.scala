@@ -173,9 +173,9 @@ object Rogo2 {
     //
     // variables
     //
-    val path       = Array.fill(max_steps)(CPVarInt(0 to rows*cols-1)(cp))
-    val points     = Array.fill(max_steps)(CPVarInt(0 to best)(cp))
-    val sum_points = CPVarInt(0 to best)(cp)
+    val path       = Array.fill(max_steps)(CPIntVar(0 to rows*cols-1)(cp))
+    val points     = Array.fill(max_steps)(CPIntVar(0 to best)(cp))
+    val sum_points = CPIntVar(0 to best)(cp)
 
     //
     // constraints

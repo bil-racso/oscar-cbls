@@ -20,7 +20,7 @@ package oscar.cbls.scheduling.model
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{IntSetVar, IntVar, Model}
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
 import oscar.visual.VisualFrame
@@ -29,7 +29,7 @@ import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
 
-class Planning(val model: Model, val maxduration: Int) {
+class Planning(val model: Store, val maxduration: Int) {
 
   var resources: List[Resource] = List.empty
   var resourceCount: Int = 0
@@ -50,13 +50,13 @@ class Planning(val model: Model, val maxduration: Int) {
     activityCount - 1
   }
 
-  var EarliestStartDates: Array[IntVar] = null
-  var EarliestEndDates: Array[IntVar] = null
-  var LatestStartDates: Array[IntVar] = null
+  var EarliestStartDates: Array[CBLSIntVar] = null
+  var EarliestEndDates: Array[CBLSIntVar] = null
+  var LatestStartDates: Array[CBLSIntVar] = null
 
-  val MakeSpan: IntVar = IntVar(model, 0, maxduration, 0, "MakeSpan")
-  var EarliestOvershotResources: IntSetVar = null
-  var WorseOvershotResource: IntSetVar = null
+  val MakeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxduration, 0, "MakeSpan")
+  var EarliestOvershotResources: CBLSSetVar = null
+  var WorseOvershotResource: CBLSSetVar = null
 
   var ResourceArray: Array[Resource] = null
   var ActivityArray: Array[Activity] = null
@@ -73,9 +73,9 @@ class Planning(val model: Model, val maxduration: Int) {
     }
 
     ActivityArray = new Array[Activity](activityCount)
-    EarliestEndDates = new Array[IntVar](activityCount)
-    EarliestStartDates = new Array[IntVar](activityCount)
-    LatestStartDates = new Array[IntVar](activityCount)
+    EarliestEndDates = new Array[CBLSIntVar](activityCount)
+    EarliestStartDates = new Array[CBLSIntVar](activityCount)
+    LatestStartDates = new Array[CBLSIntVar](activityCount)
   
     for (j <- Activities) {
       ActivityArray(j.ID) = j
@@ -96,12 +96,12 @@ class Planning(val model: Model, val maxduration: Int) {
       ResourceArray(r.ResourceID) = r; r.close()
     }
 
-    val WorseOvershootArray: Array[IntVar] = new Array[IntVar](resourceCount)
+    val WorseOvershootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
     for (r <- resources) {
       WorseOvershootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: IntSetVar = Filter(WorseOvershootArray)
+    val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
 
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
@@ -165,7 +165,7 @@ class Planning(val model: Model, val maxduration: Int) {
    * @return true if a dependence can be add, false otherwise.
    */
   def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
-    //this is not straigntworfward since there can be some SuperTasks.
+    //this is not straightforward since there can be some SuperTasks.
     (from != to) && to.canAddPrecedence && ((!superActivity) || !isThereDependency(to,from))
   }
 
@@ -210,10 +210,10 @@ class Planning(val model: Model, val maxduration: Int) {
    * @param newTo
    * @return
    */
-  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):DependencyCleaner = {
+  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):PrecedenceCleaner = {
     val from = newTo
     val to = newFrom
-    if(from == to) return HardRockDependency()
+    if(from == to) return HardPrecedence()
 
     var MarkedActivities:List[Activity] = List.empty
     var DependenciesToKill:List[(Activity, Activity)] = List.empty
@@ -269,10 +269,10 @@ class Planning(val model: Model, val maxduration: Int) {
     MarkPathes(from.getStartActivity, to.getEndActivity)
     if(!FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
       for (t <- MarkedActivities) t.Mark = false
-      HardRockDependency()
+      HardPrecedence()
     }else{
       for (t <- MarkedActivities) t.Mark = false
-      DependenciesCanBeKilled(DependenciesToKill)
+      PrecedencesCanBeKilled(DependenciesToKill)
     }
   }
 
@@ -285,12 +285,12 @@ class Planning(val model: Model, val maxduration: Int) {
   }
 }
 
-abstract class DependencyCleaner(val canBeKilled:Boolean){
+abstract class PrecedenceCleaner(val canBeKilled:Boolean){
   def killDependencies(Verbose:Boolean = false){throw new Exception("cannot kill dependencies")}
 }
-case class HardRockDependency() extends DependencyCleaner(false)
+case class HardPrecedence() extends PrecedenceCleaner(false)
 
-case class DependenciesCanBeKilled(d:List[(Activity, Activity)]) extends DependencyCleaner(true){
+case class PrecedencesCanBeKilled(d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
   override def killDependencies(Verbose:Boolean = false){
     for ((a,b) <- d){
       b.removeDynamicPredecessor(a,Verbose)
