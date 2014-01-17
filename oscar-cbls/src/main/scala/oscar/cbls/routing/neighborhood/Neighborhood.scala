@@ -48,7 +48,7 @@ abstract class Neighborhood() {
   final def climbAll(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Int = {
     var toreturn = 0;
 
-    while (doSearch(s, moveAcceptor, false).found) {
+    while (doSearch(s, moveAcceptor, false).found && !s.abort()) {
       toreturn += 1
     }
     return toreturn
@@ -164,6 +164,10 @@ abstract class Neighborhood() {
  * primaryNodeIterator is a stateful iteration on nodes, it might be re-used,
  * actually so only consume that you really examined
  */
+// format: OFF (to prevent Eclipse from formatting the following lines)
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
-                      vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
+                      vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
+                               with MoveDescription,
+                      abort: Unit => Boolean = (_ => false))
+// format: ON
