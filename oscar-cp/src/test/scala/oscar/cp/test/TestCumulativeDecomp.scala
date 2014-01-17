@@ -3,24 +3,25 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.modeling._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
 
 class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
 
   private class CPSched(durationsData: Array[Int], demandsData: Array[Int], horizon: Int) extends CPSolver {
+    implicit val solver = this
     val nTasks = demandsData.size
     val Tasks = 0 until nTasks
-    val durations = Array.tabulate(nTasks)(t => CPVarInt(this, durationsData(t)))
-    val starts = Array.tabulate(nTasks)(t => CPVarInt(this, 0 to horizon - durations(t).min))
-    val ends = Array.tabulate(nTasks)(t => CPVarInt(this, durations(t).min to horizon))
-    val demands = Array.tabulate(nTasks)(t => CPVarInt(this, demandsData(t)))
-    val resources = Array.fill(nTasks)(CPVarInt(this, 0))
+    val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+    val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
+    val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to horizon))
+    val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
+    val resources = Array.fill(nTasks)(CPIntVar(0))
     Tasks.foreach(t => this.post(ends(t) == starts(t) + durations(t)))
   }
 
   private def cumulative(cp: CPSched, capacity: Int): CumulativeDecomp = {
-    new CumulativeDecomp(cp.starts, cp.ends, cp.durations, cp.demands, cp.resources, CPVarInt(cp, capacity), 0)
+    new CumulativeDecomp(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity)(cp), 0)
   }
 
   test("solve all 1") {
@@ -29,9 +30,7 @@ class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
     val horizon = 5
     val capacity = 2
     val cp = new CPSched(durationsData, demandsData, horizon)
-    cp.solve subjectTo {
-      cp.add(cumulative(cp, capacity))
-    }
+    cp.add(cumulative(cp, capacity))
 
     val allSols = Set(
       List(0, 0, 2),
@@ -46,15 +45,16 @@ class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
       List(3, 3, 0))
 
     var nSol = 0
-    cp.exploration {
-      cp.binaryFirstFail(cp.starts)
+    
+    cp.search(binaryFirstFail(cp.starts)) 
+    
+    cp.onSolution {
       nSol += 1
       val sol = cp.starts.map(_.value).toList
       allSols contains sol should be(true)
     }
     
-    cp.run()
-
+    cp.start()
     nSol should be(10)
   }
 
@@ -64,16 +64,11 @@ class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
     val horizon = 5
     val capacity = 2
     val cp = new CPSched(durationsData, demandsData, horizon)
-    cp.solve subjectTo {
-      cp.add(cumulative(cp, capacity))
-    }
+    cp.add(cumulative(cp, capacity))
 
     var nSol = 0
-    cp.exploration {
-      cp.binaryFirstFail(cp.starts)
-      nSol += 1
-    }
-
+    cp.search(binaryFirstFail(cp.starts))
+    cp.onSolution { nSol += 1 }
     assert(nSol == 0)
   }
 

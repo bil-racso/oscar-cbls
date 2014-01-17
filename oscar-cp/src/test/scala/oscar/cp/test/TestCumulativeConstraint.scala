@@ -1,12 +1,11 @@
 package oscar.cp.test
 
-import oscar.cp.core.CPVarInt
 import oscar.cp.core.Constraint
 import oscar.cp.constraints.SweepMaxCumulative
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.modeling._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
 import oscar.cp.constraints.EnergeticReasoning
 import oscar.cp.search.BinaryStaticOrderBranching
@@ -27,20 +26,21 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
   }
 
   class CPSched(instance: SchedulingInstance) extends CPSolver {
+    implicit val solver = this
     silent = true
     val nTasks = instance.demands.size
     val Tasks = 0 until nTasks
     val nResources = instance.capacity.size
     val Resources = 0 until nResources
-    val durations = Array.tabulate(nTasks)(t => CPVarInt(this, instance.durations(t)))
-    val starts = Array.tabulate(nTasks)(t => CPVarInt(this, 0 to instance.horizon - durations(t).min))
-    val ends = Array.tabulate(nTasks)(t => CPVarInt(this, durations(t).min to instance.horizon))
-    val demands = Array.tabulate(nTasks)(t => CPVarInt(this, instance.demands(t)))
-    val resources = Array.tabulate(nTasks)(t => CPVarInt(this, instance.resources(t)))
+    val durations = Array.tabulate(nTasks)(t => CPIntVar(instance.durations(t)))
+    val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to instance.horizon - durations(t).min))
+    val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to instance.horizon))
+    val demands = Array.tabulate(nTasks)(t => CPIntVar(instance.demands(t)))
+    val resources = Array.tabulate(nTasks)(t => CPIntVar(instance.resources(t)))
     Tasks.foreach(t => post(ends(t) == starts(t) + durations(t)))
   }
 
-  def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint
+  def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint
 
   def generateRandomSchedulingProblem(nTasks: Int): SchedulingInstance = {
     val rand = new scala.util.Random()
@@ -53,18 +53,15 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
   }
 
   def solveAll(cp: CPSched, capacity: Array[Int], decomp: Boolean): Set[Sol] = {
-    cp.solve
-    cp.subjectTo {
-      if (!decomp) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.ends, cp.durations, cp.demands, cp.resources, CPVarInt(cp, capacity(r)), r)))
-      else cp.Resources.foreach(r => cp.post(new CumulativeDecomp(cp.starts, cp.ends, cp.durations, cp.demands, cp.resources, CPVarInt(cp, capacity(r)), r)))
-    }
+    if (!decomp) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
+    else cp.Resources.foreach(r => cp.post(new CumulativeDecomp(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
     var sols: List[Sol] = List()
 
     cp.search {
       val b1 = new BinaryStaticOrderBranching(cp.starts)
       val b2 = new BinaryStaticOrderBranching(cp.durations)
       val b3 = new BinaryStaticOrderBranching(cp.resources)
-      b1 // TODO assemble branching
+      b1 ++ b2 ++ b3
     }
 
     cp.onSolution {
@@ -107,38 +104,34 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 
 class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulative") {
 
-  override def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint = {
-    new SweepMaxCumulative(starts, ends, durations, demands, resources, capacity, id: Int)
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+    new SweepMaxCumulative(starts, durations, ends, demands, resources, capacity, id: Int)
   }
 }
 
-class TestEnergeticReasoning extends TestCumulativeConstraint("Energetic", 20) {
-  override def cumulative(starts: Array[CPVarInt], ends: Array[CPVarInt], durations: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int): Constraint = {
-    new EnergeticReasoning(starts, ends, durations, demands, resources, capacity, id: Int)
+class TestEnergeticReasoning extends TestCumulativeConstraint("Energetic") {
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+    new EnergeticReasoning(starts, durations, ends, demands, resources, capacity, id: Int)
   }
 
   def solveBkts(cp: CPSched, capacity: Array[Int], energetic: Boolean): Int = {
-    cp.solve
-    cp.subjectTo {
-      if (energetic) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.ends, cp.durations, cp.demands, cp.resources, CPVarInt(cp, capacity(r)), r)))
-      else cp.Resources.foreach(r => cp.post(new SweepMaxCumulative(cp.starts, cp.ends, cp.durations, cp.demands, cp.resources, CPVarInt(cp, capacity(r)), r)))
-    }
-
+    if (energetic) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
+    else cp.Resources.foreach(r => cp.post(new SweepMaxCumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
     cp.search {
       val b1 = new BinaryStaticOrderBranching(cp.starts)
       val b2 = new BinaryStaticOrderBranching(cp.durations)
       val b3 = new BinaryStaticOrderBranching(cp.resources)
-      b1 // TODO assemble branching
+      b1 ++ b2 ++ b3
     }
 
     val stats = cp.start()
-    stats.nbFails
+    stats.nFails
   }
 
   test("test bkts " + cumulativeName) {
     (1 to nTests).forall(i => {
       print("test " + cumulativeName + " instance " + i + ": ")
-      val instance = generateRandomSchedulingProblem(3)
+      val instance = generateRandomSchedulingProblem(5)
       val cp1 = new CPSched(instance)
       val cp2 = new CPSched(instance)
       val bktsEnerg = solveBkts(cp1, instance.capacity, true)

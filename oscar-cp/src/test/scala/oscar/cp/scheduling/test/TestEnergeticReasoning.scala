@@ -31,7 +31,7 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 
   
   
-  
+  /*
   
   test("ER : backtrack") {
     //a task : (startmin, endmax, dur, demand)
@@ -40,18 +40,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,2,2), (0,horizon,2,1),(0,horizon,3,1))
 	
-	val cp = new CPScheduler(horizon) 
+	val cp = new CPSolver(horizon) 
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 3 to 3)
+	val capa = CPIntVar(cp, 3 to 3)
 
 	var nb = 0
 	
@@ -83,18 +83,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
 	val horizon = 3000
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 1
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 2 to 2)
+	val capa = CPIntVar(cp, 2 to 2)
 	
 	var nb = 0
 	cp.solve subjectTo
@@ -116,18 +116,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
 	val horizon = 3000
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 1
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 2 to 2)
+	val capa = CPIntVar(cp, 2 to 2)
 
 	
 	cp.add(starts(0) == 1)
@@ -152,18 +152,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
 	
 	val horizon = 4
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 2 to 2)
+	val capa = CPIntVar(cp, 2 to 2)
 
 	
 	var nb = 0
@@ -190,18 +190,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,2,2), (0,horizon,0,1),(0,horizon,1,3))
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 4 to 4)
+	val capa = CPIntVar(cp, 4 to 4)
 
 	var nb = 0
 	val solutions = new Array[Tuple3[Int,Int,Int]](8)
@@ -240,18 +240,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,0,3), (0,horizon,2,3))
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 4 to 4)
+	val capa = CPIntVar(cp, 4 to 4)
 
 	var nb = 0
 	val solutions = new Array[Tuple2[Int,Int]](3)
@@ -285,19 +285,19 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,2,2), (0,horizon,0,3))
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
 	//second activity has variable duration
-	val durs = 0 until activitiesDescription.length map(i => if(i != 1) CPVarInt(cp, activitiesDescription(i)._3 to activitiesDescription(i)._3) else CPVarInt(cp, 0 to 1))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val durs = 0 until activitiesDescription.length map(i => if(i != 1) CPIntVar(cp, activitiesDescription(i)._3 to activitiesDescription(i)._3) else CPIntVar(cp, 0 to 1))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 4 to 4)
+	val capa = CPIntVar(cp, 4 to 4)
 
 	var nb = 0
 	val solutions = new ArrayBuffer[Tuple3[Int,Int,Int]]()
@@ -342,18 +342,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,2,2), (0,horizon,3,2))
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 3 to 3)
+	val capa = CPIntVar(cp, 3 to 3)
 
 	var nb = 0
 	val solutions = new Array[Tuple2[Int,Int]](2)
@@ -386,18 +386,18 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     
     val activitiesDescription = Array((0,horizon,3,3), (0,horizon,3,3),(0,horizon,3,3),(0,horizon,3,0),(0,horizon,0,2))
 	
-	val cp = CPScheduler(horizon)
+	val cp = CPSolver()
 
-	val starts = activitiesDescription.map(aD => CPVarInt(cp, aD._1 to aD._2 - aD._3))
-	val durs = activitiesDescription.map(aD => CPVarInt(cp, aD._3, aD._3))
-	val ends = activitiesDescription.map(aD => CPVarInt(cp, aD._1 + aD._3 to aD._2))
-	val demands = activitiesDescription.map(aD => CPVarInt(cp, aD._4 to aD._4))
+	val starts = activitiesDescription.map(aD => CPIntVar(cp, aD._1 to aD._2 - aD._3))
+	val durs = activitiesDescription.map(aD => CPIntVar(cp, aD._3, aD._3))
+	val ends = activitiesDescription.map(aD => CPIntVar(cp, aD._1 + aD._3 to aD._2))
+	val demands = activitiesDescription.map(aD => CPIntVar(cp, aD._4 to aD._4))
 	
 	val resId = 0
 	
-	val resources = Array.fill(activitiesDescription.length)(CPVarInt(cp, resId to resId)) 
+	val resources = Array.fill(activitiesDescription.length)(CPIntVar(cp, resId to resId)) 
 
-	val capa = CPVarInt(cp, 3 to 3)
+	val capa = CPIntVar(cp, 3 to 3)
 
 	var nb = 0
 	
@@ -416,6 +416,6 @@ class TestEnergeticReasoning extends FunSuite with ShouldMatchers  {
     	
   }
   
-  
+  */
   
 }
