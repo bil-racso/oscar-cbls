@@ -143,7 +143,7 @@ object CalvinPuzzleTable {
         
       }
  
-      println(cp.start(nbSolMax = num_to_show))
+      println(cp.start(nSols = num_to_show))
 
   }
 

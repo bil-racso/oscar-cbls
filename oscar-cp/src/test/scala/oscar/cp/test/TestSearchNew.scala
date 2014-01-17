@@ -38,9 +38,9 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
       new BinaryStaticOrderBranching(x)
     }
 
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
     cp.start(failureLimit = 3).completed should be(false)
   }

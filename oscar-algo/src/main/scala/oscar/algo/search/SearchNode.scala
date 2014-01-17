@@ -94,7 +94,7 @@ class SearchNode extends ReversibleContext {
     stats
   }
 
-  def start(nbSolMax: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    startSubjectTo(nbSolMax, failureLimit, timeLimit, maxDiscrepancy)()
+  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
+    startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)()
   }
 }
