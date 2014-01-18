@@ -44,7 +44,7 @@ public class Modulo extends Constraint{
 	 * @param y
 	 */
 	public Modulo(CPIntVar x, int v, CPIntVar y) {
-		super(x.s(),"Modulo");
+		super(x.store(),"Modulo");
 		assert( v > 0);
 		if (v <= 0) throw new RuntimeException("v must be > 0");
 		this.x = x;

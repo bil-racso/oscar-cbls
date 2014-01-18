@@ -21,15 +21,14 @@ import java.util.{Arrays => JArrays}
 /**
  * @author: Pierre Schaus pschaus@gmail.com
  */
-class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).s) {
+class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
   
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
   
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).s,true)))
+    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).store,true)))
   }
 
-  val cp = starts(0).s
   val n = starts.size // number of activities
 
   assert(durations.size == n)

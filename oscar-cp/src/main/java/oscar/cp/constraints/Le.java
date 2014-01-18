@@ -33,13 +33,13 @@ public class Le extends Constraint {
      * @param y
      */
 	public Le(CPIntVar x, CPIntVar y) {
-		super(x.s()," < ");
+		super(x.store()," < ");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public Le(CPIntVar x, int v) {
-		this(x, CPIntVar.apply(x.s(),v,v));
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override

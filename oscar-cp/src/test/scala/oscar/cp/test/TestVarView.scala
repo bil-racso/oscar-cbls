@@ -30,7 +30,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     var x = CPIntVar(-2 to 4)(cp)
     
-    class ViewCons(val X: CPIntVar) extends Constraint(X.s, "TestView") {
+    class ViewCons(val X: CPIntVar) extends Constraint(X.store, "TestView") {
 
     	var valRemove = true
       
@@ -100,7 +100,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     var x = CPIntVar(-2 to 4)(cp)
     
-    class ViewCons(val X: CPIntVar) extends Constraint(X.s, "TestView") {
+    class ViewCons(val X: CPIntVar) extends Constraint(X.store, "TestView") {
 
     	var valRemove = true
       

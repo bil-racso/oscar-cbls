@@ -29,7 +29,7 @@ public class SumLeEq extends Constraint {
 	private CPIntVar y;
 
 	public SumLeEq(CPIntVar [] x, CPIntVar y) {
-		super(x[0].s(),"SumLeq");
+		super(x[0].store(),"SumLeq");
 		this.x = x;
 		this.y = y;
 	}
@@ -40,7 +40,7 @@ public class SumLeEq extends Constraint {
      * @param y
      */
 	public SumLeEq(CPIntVar [] x, int y) {
-		this(x,CPIntVar.apply(x[0].s(),y,y));
+		this(x,CPIntVar.apply(x[0].store(),y,y));
 	}
 
 	@Override

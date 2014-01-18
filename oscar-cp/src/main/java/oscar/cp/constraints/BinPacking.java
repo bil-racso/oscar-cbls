@@ -43,7 +43,7 @@ public class BinPacking extends Constraint {
      * @see BinaryKnapsack
      */
 	public BinPacking(CPIntVar [] x, int [] w, CPIntVar [] l) {
-		super(x[0].s(),"BinPacking");
+		super(x[0].store(),"BinPacking");
 		this.x = x;
 		this.w = w;
 		this.l = l;

@@ -28,7 +28,7 @@ import oscar.cp.modeling._
  * 
  * @author Pierre Schaus (pschaus@gmail.com)
  */
-class TableAC5TCRecomp(val data: TableData, val x: CPIntVar*) extends Constraint(x(0).s, "TableAC5TCRecomp") {
+class TableAC5TCRecomp(val data: TableData, val x: CPIntVar*) extends Constraint(x(0).store, "TableAC5TCRecomp") {
   
   def this(x1: CPIntVar, x2: CPIntVar, tuples: Iterable[(Int,Int)]) = {
    this(new TableData(2),x1,x2)

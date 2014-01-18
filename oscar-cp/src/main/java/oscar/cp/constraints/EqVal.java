@@ -34,7 +34,7 @@ public class EqVal extends Constraint {
      * @param v
      */
 	public EqVal(CPIntVar x, int v) {
-		super(x.s(),"EqVal");
+		super(x.store(),"EqVal");
 		this.x = x;
 		this.v = v;
 	}

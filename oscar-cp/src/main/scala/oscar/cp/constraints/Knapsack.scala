@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
  * Weights must be > 0, Profit must be non negative.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Knapsack(val X: Array[CPBoolVar], val profit: Array[Int], val weight: Array[Int], val P: CPIntVar, val W: CPIntVar, val filter: Boolean = true ) extends Constraint(X(0).s, "Table2") {
+class Knapsack(val X: Array[CPBoolVar], val profit: Array[Int], val weight: Array[Int], val P: CPIntVar, val W: CPIntVar, val filter: Boolean = true ) extends Constraint(X(0).store, "Table2") {
 
   def pre(): Boolean = weight.forall(_ > 0) && profit.forall(_ >= 0)
   

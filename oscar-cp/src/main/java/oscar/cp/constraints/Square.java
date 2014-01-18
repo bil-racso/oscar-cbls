@@ -34,7 +34,7 @@ public class Square extends Constraint {
 	 * @see  CPIntVar#mul(cp.core.CPIntVar)
 	 */
 	public Square(CPIntVar x, CPIntVar y) {
-		super(x.s(),"Square");
+		super(x.store(),"Square");
 		this.x = x;
 		this.y = y;
 	}

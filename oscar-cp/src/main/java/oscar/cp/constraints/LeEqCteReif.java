@@ -39,7 +39,7 @@ public class LeEqCteReif extends Constraint {
      * @param b
      */
 	public LeEqCteReif(CPIntVar x, int v, CPBoolVar b) {
-		super(x.s(),"GrEqCteReif");
+		super(x.store(),"GrEqCteReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;

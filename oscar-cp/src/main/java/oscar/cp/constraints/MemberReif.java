@@ -37,7 +37,7 @@ public class MemberReif extends Constraint {
 	 * @param b
 	 */
 	public MemberReif(CPIntVar x, SetIndexedArray set, CPBoolVar b) {
-		super(x.s(),"MemberReif");
+		super(x.store(),"MemberReif");
 		this.x = x;
 		this.set = set;
 		this.b = b;

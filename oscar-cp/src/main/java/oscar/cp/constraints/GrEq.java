@@ -36,13 +36,13 @@ public class GrEq extends Constraint {
      * @see GrEqVarReif
      */
 	public GrEq(CPIntVar x, CPIntVar y) {
-		super(x.s(),"GrEq");
+		super(x.store(),"GrEq");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public GrEq(CPIntVar x, int v) {
-		this(x, CPIntVar.apply(x.s(),v,v));
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override

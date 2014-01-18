@@ -25,9 +25,7 @@ trait DomainIterator extends Iterator[Int] {
   def execute()
 }
 
-abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar with Iterable[Int] {
-
-  def store = s
+abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
 
   def rootVar: CPIntVar
 
@@ -82,7 +80,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return A random value in the domain of the variable (uniform distribution)
    */
   def randomValue: Int = {
-    val ind = s.getRandom().nextInt(size);
+    val ind = store.getRandom().nextInt(size);
     this.toArray.apply(ind)
     /*
 		var cpt = 0;
@@ -230,7 +228,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
   def filterWhenBind(filter: DeltaVarInt => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBind(this)
@@ -240,7 +238,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
   }
 
   def filterWhenBoundsChanges(filter: DeltaVarInt => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBoundsChange(this)
@@ -250,7 +248,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
   }
 
   def filterWhenMaxChanges(filter: DeltaVarInt => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenMaxChanges(this)
@@ -260,7 +258,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
   }
 
   def filterWhenMinChanges(filter: DeltaVarInt => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenMinChanges(this)
@@ -270,7 +268,7 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
   }
 
   def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
-    s.post(
+    store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
@@ -479,8 +477,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return a variable in the same store representing: - x
    */
   def opposite() = {
-    val y = new CPIntVarImpl(s, -max, -min);
-    s.post(new oscar.cp.constraints.Opposite(this, y));
+    val y = new CPIntVarImpl(store, -max, -min);
+    store.post(new oscar.cp.constraints.Opposite(this, y));
     y;
   }
 
@@ -498,8 +496,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return a variable in the same store representing: x - y
    */
   def minus(y: CPIntVar) = {
-    val c = new CPIntVarImpl(s, min - y.max, max - y.min);
-    s.post(new oscar.cp.constraints.Minus(this, y, c));
+    val c = new CPIntVarImpl(store, min - y.max, max - y.min);
+    store.post(new oscar.cp.constraints.Minus(this, y, c));
     c;
   }
 
@@ -520,8 +518,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
     if (y.isBound) {
       this.plus(y.value)
     } else {
-      val c = new CPIntVarImpl(s, min + y.min, max + y.max);
-      val ok = s.post(new oscar.cp.constraints.BinarySum(this, y, c));
+      val c = new CPIntVarImpl(store, min + y.min, max + y.max);
+      val ok = store.post(new oscar.cp.constraints.BinarySum(this, y, c));
       assert(ok != CPOutcome.Failure);
       c
     }
@@ -537,8 +535,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
     }
     val a = if (c > 0) min * c else max * c
     val b = if (c > 0) max * c else min * c
-    val y = new CPIntVarImpl(s, a, b)
-    val ok = s.post(new oscar.cp.constraints.MulCte(this, c, y))
+    val y = new CPIntVarImpl(store, a, b)
+    val ok = store.post(new oscar.cp.constraints.MulCte(this, c, y))
     assert(ok != CPOutcome.Failure)
     return y;
   }
@@ -554,8 +552,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
     val d = y.max
     import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-    val z = new CPIntVarImpl(s, t.min, t.max)
-    val ok = s.post(new oscar.cp.constraints.MulVar(this, y, z))
+    val z = new CPIntVarImpl(store, t.min, t.max)
+    val ok = store.post(new oscar.cp.constraints.MulVar(this, y, z))
     assert(ok != CPOutcome.Failure);
     z
   }
@@ -564,8 +562,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return a variable in the same store representing: |x|
    */
   def abs(): CPIntVar = {
-    val c = new CPIntVarImpl(s, 0, Math.max(Math.abs(min), Math.abs(max)));
-    val ok = s.post(new oscar.cp.constraints.Abs(this, c));
+    val c = new CPIntVarImpl(store, 0, Math.max(Math.abs(min), Math.abs(max)));
+    val ok = store.post(new oscar.cp.constraints.Abs(this, c));
     assert(ok != CPOutcome.Failure);
     return c
   }
@@ -576,8 +574,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
   def isEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.EqReif(this, v, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -588,8 +586,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
    */
   def isEq(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.EqReifVar(this, y, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.EqReifVar(this, y, b));
     assert(ok != CPOutcome.Failure);
     b
   }
@@ -600,8 +598,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
    */
   def isDiff(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.DiffReif(this, v, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
     assert(ok != CPOutcome.Failure)
     return b;
   }
@@ -612,8 +610,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
    */
   def isDiff(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
     assert(ok != CPOutcome.Failure)
     return b;
   }
@@ -624,8 +622,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
    */
   def isGrEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -636,8 +634,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
   def isLeEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -648,8 +646,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
   def isGrEq(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(s);
-    val ok = s.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -790,8 +788,8 @@ abstract class CPIntVar(val s: CPStore, val name: String = "") extends CPVar wit
    * b <=> x belongs to set
    */
   def isIn(set: Set[Int]): CPBoolVar = {
-    val b = CPBoolVar()(s)
-    s.post(new InSetReif(this, set, b))
+    val b = CPBoolVar()(store)
+    store.post(new InSetReif(this, set, b))
     b
   }
 

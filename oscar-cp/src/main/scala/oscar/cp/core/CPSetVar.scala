@@ -11,7 +11,7 @@ import oscar.cp.constraints.SetCard
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPSetVar(val store: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
+class CPSetVar(override val store: CPStore, min: Int, max: Int, override val name: String = "") extends CPVar {
 
   private val dom = new SetDomain(store, min, max)
 

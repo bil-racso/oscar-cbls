@@ -23,7 +23,7 @@ import oscar.algo.reversible.ReversibleSparseSet
  * and_i x_i <--> bi 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.s, "AndReif") {
+class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.store, "AndReif") {
 
   var unbound: ReversibleSparseSet = null
   priorityBindL1 = CPStore.MAXPRIORL1-1

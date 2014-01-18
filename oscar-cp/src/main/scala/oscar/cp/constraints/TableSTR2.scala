@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
  * 
  * @author Jean-Baptiste Mairy and Pierre Schaus (pschaus@gmail.com)
  */
-class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).s, "Table2") {
+class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "Table2") {
 
   val lastSize = Array.fill(X.size)(new ReversibleInt(s,-1))
   

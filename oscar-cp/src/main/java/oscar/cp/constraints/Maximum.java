@@ -40,7 +40,7 @@ public class Maximum extends Constraint {
 	 * @param y
 	 */
 	public Maximum(CPIntVar [] x, CPIntVar y) {
-		super(x[0].s(),"Maximum");
+		super(x[0].store(),"Maximum");
 		this.x = x;
 		this.y = y;
 		maxval = new ReversibleInt(s());
