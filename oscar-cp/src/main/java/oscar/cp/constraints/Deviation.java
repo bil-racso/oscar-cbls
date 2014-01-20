@@ -52,7 +52,7 @@ public class Deviation extends Constraint {
      * @param nd
      */
     public Deviation(CPIntVar [] x, int s, CPIntVar nd) {
-        super(x[0].s(),"Deviation");
+        super(x[0].store(),"Deviation");
         assert (x.length >= 2);
         this.x = x;
         this.nd = nd;

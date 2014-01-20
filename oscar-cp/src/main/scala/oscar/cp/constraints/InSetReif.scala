@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * x must be a value of the set
  * @author Pierre Schaus pschaus@gmail.com
  */
-class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Constraint(x.s, "InSetReif") {
+class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Constraint(x.store, "InSetReif") {
   val setSize = set.size
   val setMin = set.min
   val setMax = set.max

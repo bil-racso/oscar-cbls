@@ -15,25 +15,18 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.CPIntVar
+import oscar.cp.modeling.Constraints
 import oscar.cp.core.Constraint
-import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPOutcome._
-import oscar.cp.core.CPOutcome
 
-class Requires(val X: CPSetVar, v: Int) extends Constraint(X.store, "Set requires") {
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
-    X.requires(v)
-  }
-
-}
-
-
-class Excludes(val X: CPSetVar, v: Int) extends Constraint(X.store, "Set excludes") {
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
-    X.excludes(v)
-  }
-
+/**
+ * Provides "syntactic sugar" for declaring modulo constraints. CPIntVar has 
+ * an overloaded % operator so that it'll return this case class representing the
+ * Left Hand Side of a modulo constraint. The case class provides two overloaded
+ * equality operators that use the existing modulo constraint wrapper. 
+ * @author Alastair Andrew
+ */
+case class ModuloLHS(x: CPIntVar, v: Int) extends Constraints {
+	  def ==(y: CPIntVar): Constraint = modulo(x, v, y)
+	  def ==(y: Int): Constraint = modulo(x, v, y)
 }

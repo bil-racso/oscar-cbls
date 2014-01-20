@@ -37,7 +37,7 @@ public class GCC extends Constraint {
      * @see GCCVar
      */
 	public GCC(CPIntVar [] x,int minval, int [] low, int [] up) {
-		super(x[0].s(),"GCC");
+		super(x[0].store(),"GCC");
 		this.x = x;
 		this.minval = minval;
 		this.low = low;

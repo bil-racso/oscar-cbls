@@ -38,7 +38,7 @@ public class MulCteRes extends Constraint {
      * @see CPIntVar#mul(cp.core.CPIntVar)
      */
 	public MulCteRes(CPIntVar x, CPIntVar y, int c) {
-		super(x.s(),"MulCteRes x*y=c");
+		super(x.store(),"MulCteRes x*y=c");
 		this.x = x;
 		this.y = y;
 		this.c = c;

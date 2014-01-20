@@ -83,7 +83,7 @@ public class GCCVar extends Constraint {
      * @see  SoftGCC
      */
 	public GCCVar(CPIntVar[] x, int minval,CPIntVar [] o) {
-		super(x[0].s(),"GCCVar");
+		super(x[0].store(),"GCCVar");
 		this.x = x;
 		this.o = o;
 		this.minValInit = minval;

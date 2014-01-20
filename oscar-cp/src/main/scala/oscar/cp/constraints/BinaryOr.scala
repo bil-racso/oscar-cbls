@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * x || y <--> b 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class BinaryOr(val x: CPBoolVar, val y: CPBoolVar, val b: CPBoolVar) extends Constraint(b.s, "BinaryOrReif") {
+class BinaryOr(val x: CPBoolVar, val y: CPBoolVar, val b: CPBoolVar) extends Constraint(b.store, "BinaryOrReif") {
 
   
   override def setup(l: CPPropagStrength): CPOutcome = {

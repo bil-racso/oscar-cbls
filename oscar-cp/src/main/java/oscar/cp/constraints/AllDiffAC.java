@@ -27,7 +27,7 @@ public class AllDiffAC extends Constraint {
 	private CPIntVar[] x;
 
 	public AllDiffAC(CPIntVar[] x) {
-		super(x[0].s(),"Alldifferent AC");
+		super(x[0].store(),"Alldifferent AC");
 		this.x = x;
 	}
 

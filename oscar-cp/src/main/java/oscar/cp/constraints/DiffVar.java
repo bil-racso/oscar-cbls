@@ -28,7 +28,7 @@ public class DiffVar extends Constraint {
 	CPIntVar x, y;
 	
 	public DiffVar(CPIntVar x, CPIntVar y) {
-		super(x.s(),"DiffVar");
+		super(x.store(),"DiffVar");
 		this.x = x;
 		this.y = y;
 	}

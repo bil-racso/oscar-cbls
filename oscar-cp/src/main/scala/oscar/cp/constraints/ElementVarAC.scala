@@ -35,9 +35,10 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
 /**
  * A full Arc-Consistent Element Constraint: y(x) == z
  *
- * @author Renaud Hartert - ren.hartert@gmail.com, Pierre Schaus - pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com, 
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).s, "ACElementVar") {
+class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).store, "ACElementVar") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))

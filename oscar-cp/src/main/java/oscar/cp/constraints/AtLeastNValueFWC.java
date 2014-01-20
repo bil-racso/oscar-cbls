@@ -41,7 +41,7 @@ public class AtLeastNValueFWC extends Constraint {
 	
 	
 	public AtLeastNValueFWC(CPIntVar [] x, CPIntVar nval) {
-		super(x[0].s(),"AtLeastNValueFWC");
+		super(x[0].store(),"AtLeastNValueFWC");
 		this.x = x;
 		this.nValueVar = nval;
 	}

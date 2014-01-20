@@ -37,7 +37,7 @@ public class MulCte extends Constraint {
      * @see CPIntVar#mul(int)
      */
 	public MulCte(CPIntVar x, int c, CPIntVar z) {
-		super(x.s(),"MulCte");
+		super(x.store(),"MulCte");
 		this.x = x;
 		this.z = z;
 		this.c = c;

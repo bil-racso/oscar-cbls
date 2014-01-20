@@ -35,7 +35,7 @@ public class Opposite extends Constraint {
      * @see cp.core.CPIntVar#opposite()
      */
 	public Opposite(CPIntVar x, CPIntVar y) {
-		super(x.s(),"Opposite");
+		super(x.store(),"Opposite");
 		this.x = x;
 		this.y = y;
 	}

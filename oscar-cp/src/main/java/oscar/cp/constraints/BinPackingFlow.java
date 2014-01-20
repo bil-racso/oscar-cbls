@@ -38,7 +38,7 @@ public class BinPackingFlow extends Constraint {
 	private int [] perm ; //permutation of sorted items i.e. s[perm[i]] <= s[perm[i+1]]
 	
 	public BinPackingFlow(CPIntVar [] x, int [] sizes, CPIntVar [] l, CPIntVar [] c) {
-		super(x[0].s(),"BinPackingFlow");
+		super(x[0].store(),"BinPackingFlow");
 		this.x = x;
 		this.sizes = sizes;
 		this.l = l;

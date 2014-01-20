@@ -49,7 +49,7 @@ object ElementCst2D {
  * BC Element Constraint on a 2D array
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) extends Constraint(x.s, "ElementCst2D") {
+class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ElementCst2D") {
 
   val sortedTuples = (for (i <- 0 until T.size; j <- 0 until T(i).size) yield (T(i)(j), i, j)).sortBy(t => t).toArray
   val nbColSupports = Array.fill(T.size)(new ReversibleInt(s, 0))

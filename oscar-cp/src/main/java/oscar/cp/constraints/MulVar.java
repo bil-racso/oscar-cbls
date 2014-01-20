@@ -37,7 +37,7 @@ public class MulVar extends Constraint {
      * @see CPIntVar#mul(cp.core.CPIntVar)
      */
 	public MulVar(CPIntVar x, CPIntVar y, CPIntVar z) {
-		super(x.s(),"Mul x*y=z");
+		super(x.store(),"Mul x*y=z");
 		this.x = x;
 		this.y = y;
 		this.z = z;

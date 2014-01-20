@@ -39,7 +39,7 @@ public class EqReif extends Constraint {
      * @see DiffReif
      */
 	public EqReif(CPIntVar x, int v, CPBoolVar b) {
-		super(x.s(),"EqReif");
+		super(x.store(),"EqReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;

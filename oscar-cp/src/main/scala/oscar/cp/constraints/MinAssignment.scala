@@ -30,7 +30,7 @@ import scala.util.control.Breaks._
  * This code is adapted to CP from an original implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
  */
-class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]], val cost: CPIntVar) extends Constraint(xarg(0).s, "MinAssignment") {
+class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]], val cost: CPIntVar) extends Constraint(xarg(0).store, "MinAssignment") {
   if (weightsarg.size != xarg.size) throw new IllegalArgumentException("MinAssignment: dim of x and weights must match")
   val n = weightsarg(0).size
   val x = xarg ++ Array.fill(n-xarg.size)(CPIntVar(0 until n)(s)) 

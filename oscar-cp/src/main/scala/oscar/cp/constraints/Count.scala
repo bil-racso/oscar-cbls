@@ -24,7 +24,7 @@ import oscar.cp.core.CPOutcome._
  *   N variables of X take the values Y
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Constraint(N.s, "Among") {
+class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Constraint(N.store, "Among") {
 
     /*
      * propagate X & Y -> N

@@ -36,7 +36,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  *
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class AllDiffBC(val x: Array[CPIntVar]) extends Constraint(x(0).s, "AllDiffBC") {
+class AllDiffBC(val x: Array[CPIntVar]) extends Constraint(x(0).store, "AllDiffBC") {
 
   class Interval(var min: Int, var max: Int, var minRank: Int, var maxRank: Int) {
     override def toString = "["+min+","+max+"]"

@@ -42,7 +42,7 @@ public class Or extends Constraint {
      * @param y
      */
 	public Or(CPBoolVar [] x, CPBoolVar y) {
-		super(x[0].s(),"Or");
+		super(x[0].store(),"Or");
 		this.x = x;
 		this.y = y;
 

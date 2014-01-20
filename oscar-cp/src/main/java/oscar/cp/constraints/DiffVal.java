@@ -29,7 +29,7 @@ public class DiffVal extends Constraint {
 	int y;
 	
 	public DiffVal(CPIntVar x, int y) {
-		super(x.s(),"DiffVal");
+		super(x.store(),"DiffVal");
 		this.x = x;
 		this.y = y;
 	}

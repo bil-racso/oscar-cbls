@@ -18,7 +18,7 @@ package oscar.cp.core;
  * Represents a view on variable applying an offset on it.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarView(v: CPIntVar,val b: Int) extends CPIntVar(v.s) {
+class CPIntVarView(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
   
     def rootVar: CPIntVar = v.rootVar
     

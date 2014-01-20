@@ -29,7 +29,7 @@ import oscar.cp.core.CPOutcome
  * And you generally want to maximize to minimize sum2 variable knowing the sum
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Spread(val x: Array[CPIntVar], val sum: Int, val sum2: CPIntVar, val reverse: Boolean = true) extends Constraint(x(0).s, "Spread") {
+class Spread(val x: Array[CPIntVar], val sum: Int, val sum2: CPIntVar, val reverse: Boolean = true) extends Constraint(x(0).store, "Spread") {
   val n = x.size
   val xmin = Array.fill(n)(0)
   val xmax = Array.fill(n)(0)

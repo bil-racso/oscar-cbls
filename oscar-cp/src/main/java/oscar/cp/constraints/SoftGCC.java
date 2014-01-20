@@ -101,7 +101,7 @@ public class SoftGCC extends Constraint{
      * @see GCC
      */
 	public SoftGCC(CPIntVar [] x,int minval, int [] low, int [] up, CPIntVar viol) {
-		super(x[0].s(),"SoftGCC");
+		super(x[0].store(),"SoftGCC");
 		this.x = x;
 		this.minval = minval;
 		this.maxval = minval+low.length-1;

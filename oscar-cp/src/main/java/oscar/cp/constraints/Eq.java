@@ -33,7 +33,7 @@ public class Eq extends Constraint {
      * @param y
      */
 	public Eq(CPIntVar x, CPIntVar y) {
-		super(x.s(),"Eq");
+		super(x.store(),"Eq");
 		this.x = x;
 		this.y = y;
 	}
@@ -44,7 +44,7 @@ public class Eq extends Constraint {
      * @param v
      */
 	public Eq(CPIntVar x, int v) {
-		this(x,CPIntVar.apply(x.s(),v,v));
+		this(x,CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override

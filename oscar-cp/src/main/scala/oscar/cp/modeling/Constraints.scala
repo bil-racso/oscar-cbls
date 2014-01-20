@@ -243,7 +243,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def elementVar(tab: IndexedSeq[CPIntVar], x: CPIntVar, z: Int): Constraint = {
-    new ElementVar(tab.toArray, x, CPIntVar(z)(x.s))
+    new ElementVar(tab.toArray, x, CPIntVar(z)(x.store))
   }
 
   /**
@@ -366,7 +366,7 @@ trait Constraints {
    * @return y==sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: Int): Constraint = {
-    weightedSum(w,x,CPIntVar(y)(x(0).s))
+    weightedSum(w,x,CPIntVar(y)(x(0).store))
   }  
 
   /**
@@ -374,7 +374,7 @@ trait Constraints {
    * @return sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar]): CPIntVar = {
-    val cp = x(0).s
+    val cp = x(0).store
     val m = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.max else wi*xi.min}.sum
     val M = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.min else wi*xi.max}.sum
     val y = CPIntVar(m to M)(cp)
@@ -511,7 +511,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } >= n
    */  
   def atLeast(n: Int, x: IndexedSeq[CPIntVar], s: Set[Int]) = {
-    among(CPIntVar(n, x.size)(x(0).s),x,s)
+    among(CPIntVar(n, x.size)(x(0).store),x,s)
   }
 
   /**
@@ -531,7 +531,7 @@ trait Constraints {
    * @return a constraint enforcing that  #{ i | x(i) in s } <= n
    */  
   def atMost(n: Int, x: IndexedSeq[CPIntVar], s: Set[Int]) = {
-    among(CPIntVar(0, n)(x(0).s),x,s)
+    among(CPIntVar(0, n)(x(0).store),x,s)
   }
 
   /**
@@ -562,8 +562,8 @@ trait Constraints {
    * @return a constraint enforcing that n >= #{ i | x(i) = y }
    */  
   def countGeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    val c = CPIntVar(0 to x.size)(n.s)
-    val ok = n.s.post(n >= c)
+    val c = CPIntVar(0 to x.size)(n.store)
+    val ok = n.store.post(n >= c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
   }
@@ -576,8 +576,8 @@ trait Constraints {
    * @return a constraint enforcing that n > #{ i | x(i) = y }
    */  
   def countGt(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    val c = CPIntVar(0 to x.size)(n.s)
-    val ok = n.s.post(n > c)
+    val c = CPIntVar(0 to x.size)(n.store)
+    val ok = n.store.post(n > c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
   }
@@ -590,8 +590,8 @@ trait Constraints {
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
    */  
   def countLeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    val c = CPIntVar(0 to x.size)(n.s)
-    val ok = n.s.post(n <= c)
+    val c = CPIntVar(0 to x.size)(n.store)
+    val ok = n.store.post(n <= c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
   }
@@ -604,8 +604,8 @@ trait Constraints {
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
    */  
   def countLt(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    val c = CPIntVar(0 to x.size)(n.s)
-    val ok = n.s.post(n < c)
+    val c = CPIntVar(0 to x.size)(n.store)
+    val ok = n.store.post(n < c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
   }  
@@ -618,8 +618,8 @@ trait Constraints {
    * @return a constraint enforcing that n != #{ i | x(i) = y }
    */  
   def countNeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    val c = CPIntVar(0 to x.size)(n.s)
-    val ok = n.s.post(n != c)
+    val c = CPIntVar(0 to x.size)(n.store)
+    val ok = n.store.post(n != c)
     assert(ok != CPOutcome.Failure)
     new Count(c,x,y)
   }   
@@ -927,7 +927,7 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */    
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    val cp = starts(0).s
+    val cp = starts(0).store
 	new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
   }
   
@@ -955,7 +955,7 @@ trait Constraints {
    * @param capacity the capacity of the resource
    */ 
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
-    val cp = starts(0).s
+    val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     maxCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
   }   
@@ -983,7 +983,7 @@ trait Constraints {
    * @param capacity the capacity of the resource
    */ 
   def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
-    val cp = starts(0).s
+    val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     minCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
   }    

@@ -26,7 +26,7 @@ import oscar.algo.reversible.ReversibleInt;
  * Redundant Bin-Packing Flow Constraint
  * @author pschaus@gmail.com
  */
-class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val l: Array[CPIntVar], val c: Array[CPIntVar]) extends Constraint(x(0).s) {
+class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val l: Array[CPIntVar], val c: Array[CPIntVar]) extends Constraint(x(0).store) {
 
   val perm = ArrayUtils.sortPerm(sizes);
   val l_t = Array.fill(c.size)(new ReversibleInt(s, 0))

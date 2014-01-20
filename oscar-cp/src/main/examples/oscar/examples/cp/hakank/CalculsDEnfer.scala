@@ -51,7 +51,7 @@ object CalculsDEnfer {
 
    // returns the maximal element in t
    def my_max(t: Array[CPIntVar]) : CPIntVar = {
-     val cp = t(0).s
+     val cp = t(0).store
      val mmax = CPIntVar(t(0).min to t(0).max)(cp)
      for(i <- 0 to t.length-1) {
        cp.post(mmax >= t(i))

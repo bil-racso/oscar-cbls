@@ -39,7 +39,7 @@ public class DiffReif extends Constraint {
      * @param v
      */
 	public DiffReif(CPIntVar x, int v, CPBoolVar b) {
-		super(x.s(),"DiffReif");
+		super(x.store(),"DiffReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;

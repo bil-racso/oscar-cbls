@@ -150,7 +150,7 @@ package object modeling extends Constraints with Branchings {
    * relax randomly k variables in x, others are assigned to the values they have in sol
    */
   def relaxRandomly(x: IndexedSeq[_ <: CPIntVar], sol: CPSol, k: Int): CPOutcome = {
-    val cp = x.head.s
+    val cp = x.head.store
     val n = x.size
     val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
     cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
