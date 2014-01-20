@@ -32,7 +32,8 @@ import oscar.cbls.invariants.core.computation.CBLSIntConst
 
 abstract class TravelTimeFunction {
   def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int
-
+  def getBackwardTravelDuration(from: Int, leaveTime: Int, to: Int): Int
+  
   def getMinMaxTravelDuration(from: Int, to: Int): (Int, Int) =
     (getMinTravelDuration(from, to), getMaxTravelDuration(from, to))
 

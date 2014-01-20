@@ -41,6 +41,9 @@ class TTFMatrix(nodeCount:Int,defaultTTF:PrimitiveTravelTimeFunction) extends Tr
   override def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int =
     matrix(from)(to).getTravelDuration(leaveTime)
 
+  override def getBackwardTravelDuration(from: Int, leaveTime: Int, to: Int): Int =
+    matrix(from)(to).getBackwardTravelDuration(leaveTime)
+
   override def getMinTravelDuration(from: Int, to: Int): Int =
     matrix(from)(to).getMinTravelDuration
 
