@@ -18,14 +18,14 @@ package oscar.algo.search
 import oscar.algo.reversible._
 
 class SearchStatistics(
-    val nbNodes: Int,
+    val nNodes: Int,
     val nFails: Int,
     val time: Long,
     val completed: Boolean,
     val timeInTrail: Long,
     val maxTrailSize: Int,
     val nSols: Int) {
-  override val toString: String = s"nbNodes: $nbNodes\nnFails: $nFails\ntime(ms): $time\ncompleted: $completed\ntimeInTrail: $timeInTrail\n$nSols: $nSols\n"
+  override val toString: String = s"nNodes: $nNodes\nnFails: $nFails\ntime(ms): $time\ncompleted: $completed\ntimeInTrail: $timeInTrail\n$nSols: $nSols\n"
 }
 
 
