@@ -63,6 +63,13 @@ abstract class PrimitiveTravelTimeFunction {
     */
   def getTravelDuration(leaveTime: Int): Int
 
+  /** the duration of he travel if you plan to arive at the given time
+    *
+    * @param arrivalTime
+    * @return the latest start to begin the travel
+    */
+  def getBackwardTravelDuration(arrivalTime:Int):Int
+
   def getMinMaxTravelDuration: (Int, Int) =
     (getMinTravelDuration, getMaxTravelDuration)
 
@@ -82,6 +89,8 @@ class TTFConst(travelDuration:Int) extends PrimitiveTravelTimeFunction {
   override def getMinTravelDuration: Int = travelDuration
 
   override def getMaxTravelDuration: Int = travelDuration
+
+  override def getBackwardTravelDuration(arrivalTime: Int): Int = travelDuration
 }
 
 /**
@@ -105,7 +114,7 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
     slots(slotNumber) = duration
     nimMaxAccurate = false
   }
-  def getTravelDurationAtSlot(slotNumber:Int):Int = slots(slotNumber)
+  def getTravelDurationAtSlot(slotNumber:Int):Int = slots(rectifySlot(slotNumber))
 
   private def updateMinMax(){
     if(!nimMaxAccurate){
@@ -126,7 +135,7 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
   }
 
   override def getTravelDuration(leaveTime: Int): Int =
-    slots(rectifySlot(leaveTime / slotDuration))
+    getTravelDurationAtSlot(leaveTime / slotDuration)
 
   override def getMinTravelDuration: Int = {
     updateMinMax()
@@ -136,6 +145,39 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
   override def getMaxTravelDuration: Int = {
     updateMinMax()
     max
+  }
+
+  override def getBackwardTravelDuration(arrivalTime: Int): Int = {
+    if(NbSlots == 1){
+      slots(0)
+    }
+    var maxslot:Int = arrivalTime / slotDuration;
+    var minslot:Int = 0
+    while(minslot*slotDuration + getTravelDurationAtSlot(minslot) >= arrivalTime){
+      minslot -= NbSlots
+    }
+
+    while(true){
+      if (minslot == maxslot){
+        return slots(rectifySlot(minslot))
+      }else if(minslot + 1 == maxslot){
+        if (maxslot*slotDuration + getTravelDurationAtSlot(maxslot) <= arrivalTime){
+          return getTravelDurationAtSlot(maxslot)
+        }else{
+          return getTravelDurationAtSlot(minslot)
+        }
+      }
+      val medslot = (minslot + maxslot) /2
+      val medslotstart = medslot * slotDuration
+
+      if(medslotstart + getTravelDurationAtSlot(medslot) <= arrivalTime){
+        minslot = medslot
+      }
+      if (medslotstart + slotDuration + getTravelDurationAtSlot(medslot) >= arrivalTime){
+        maxslot = medslot;
+      }
+    }
+    return 0;
   }
 }
 
@@ -177,8 +219,8 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     }
   }
 
-  def getPointX(pointNr:Int):Int = pointX(pointNr)
-  def getPointY(pointNr:Int):Int = pointY(pointNr)
+  def getPointX(pointNr:Int):Int = pointX(pointNr % NbPoints) + (math.floor(pointNr / NbPoints)).toInt * overallDuration
+  def getPointY(pointNr:Int):Int = pointY(pointNr % NbPoints)
 
   private def updateMinMax(){
     if(!nimMaxAccurate){
@@ -192,35 +234,35 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     }
   }
 
+  /**
+   *
+   * @param x is a point in time
+   * @return a point number
+   */
   private def findLastPointBefore(x:Int): Int = {
     var up:Int = NbPoints - 1
+    while(getPointX(up) < x) up = up + NbPoints
     var down:Int = -1
     while (down + 1 < up) {
       val mid:Int = (up + down) / 2
-      if (pointX(mid) == x) {
+      if (getPointX(mid) == x) {
         return mid
-      } else if (pointX(mid) < x) {
+      } else if (getPointX(mid) < x) {
         down = mid
       } else {
         up = mid
       }
     }
-    if (pointX(up) <= x) up
+    if (getPointY(up) <= x) up
     else down
   }
 
   override def getTravelDuration(leaveTime: Int): Int = {
     val pointBefore = findLastPointBefore(leaveTime)
-    if(pointBefore == NbPoints){
-      linearInterpol(leaveTime,
-        pointX(pointBefore), pointY(pointBefore),
-        pointX(0) + overallDuration,  pointY(0))
-    }else{
-      val pointAfter = pointBefore + 1
-      linearInterpol(leaveTime,
-        pointX(pointBefore), pointY(pointBefore),
-        pointX(pointAfter),  pointY(pointAfter))
-    }
+    val pointAfter = pointBefore + 1
+    linearInterpol(leaveTime,
+      getPointX(pointBefore), getPointY(pointBefore),
+      getPointX(pointAfter), getPointY(pointAfter))
   }
 
   @inline
@@ -236,5 +278,41 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
   override def getMaxTravelDuration: Int = {
     updateMinMax()
     max
+  }
+
+  def findLastPointBeforeLeave(arrivalTime:Int):Int = {
+    var up:Int = NbPoints - 1
+    while(getPointX(up) + getPointY(up) < arrivalTime) up = up + NbPoints
+    var down:Int = -1
+    while (down + 1 < up) {
+      val mid:Int = (up + down) / 2
+      if (getPointX(mid) + getPointY(mid) == arrivalTime) {
+        return mid
+      } else if (getPointX(mid) + getPointY(mid) < arrivalTime) {
+        down = mid
+      } else {
+        up = mid
+      }
+    }
+    if (getPointY(up) + getPointY(up) <= arrivalTime) up
+    else down
+  }
+
+  override def getBackwardTravelDuration(arrivalTime: Int): Int = {
+    var pointBefore = findLastPointBeforeLeave(arrivalTime)
+    while((pointBefore < NbPoints -1)
+      && (getPointX(pointBefore+1) + getPointY(pointBefore+1)<= arrivalTime)){
+      pointBefore +=1
+    }
+
+      linearInterpolBackward(arrivalTime,
+        getPointX(pointBefore), getPointY(pointBefore),
+        getPointX(pointBefore+1) ,  getPointY(pointBefore+1))
+  }
+
+  @inline
+  private def linearInterpolBackward(Y:Int, X1:Int, Y1:Int, X2:Int, Y2:Int):Int = {
+    if(Y1 == Y2) X2
+    else X1 + (Y - Y1) * (X2 - X1) / (Y2 - Y1)
   }
 }
