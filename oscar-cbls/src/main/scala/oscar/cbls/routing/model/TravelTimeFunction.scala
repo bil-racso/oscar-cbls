@@ -52,7 +52,7 @@ trait Time extends VRP with Predecessors {
   val travelOutDuration = Array.tabulate(N) {
     (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "travelDurationToLeave" + i)
   }
-  val arrivalToNext = Array.tabulate(N + 1) {
+  val arrivalTimeToNext = Array.tabulate(N + 1) {
     (i: Int) =>
       if (i == N) defaultArrivalTime
       else (travelOutDuration(i) + leaveTime(i)).toIntVar
@@ -63,7 +63,7 @@ trait Time extends VRP with Predecessors {
   }
 
   for (i <- 0 to N - 1) {
-    arrivalTime(i) <== arrivalToNext.element(preds(i))
+    arrivalTime(i) <== arrivalTimeToNext.element(preds(i))
   }
 }
 
@@ -74,7 +74,7 @@ trait Time extends VRP with Predecessors {
  */
 trait TravelTimeAsFunction extends VRP with Time {
 
-  protected var travelCosts: TravelTimeFunction = null
+  var travelCosts: TravelTimeFunction = null
 
   /**
    * sets the cost function
