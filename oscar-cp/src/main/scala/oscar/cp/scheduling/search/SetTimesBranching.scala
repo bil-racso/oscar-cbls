@@ -22,10 +22,10 @@ import oscar.algo.search.Branching
 
 /**
  * Binary Branching:
- * You can specify your variable/value heuristics
+ * Set Times Branching
  * author: Pierre Schaus pschaus@gmail.com
  */
-class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]) extends Branching {
+class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
 
   val cp = starts.head.store
   val n = starts.size
@@ -52,9 +52,8 @@ class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIn
       noAlternative
     } else {
       updateSelectable()
-      val (est, ect) = selectableIndices().map(i => (starts(i).min, ends(i).min)).min
+      val (est, ect,x) = selectableIndices().map(i => (starts(i).min, tieBreaker(i),i)).min
       // Select the activity with the smallest EST, ECT as tie breaker
-      val x = selectableIndices().filter(i => starts(i).min == est && ends(i).min == ect).head
       branch {
         cp.post(starts(x) == est)
         bound(x).value = true

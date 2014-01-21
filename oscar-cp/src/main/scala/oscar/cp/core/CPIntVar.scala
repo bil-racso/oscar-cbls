@@ -19,6 +19,7 @@ package oscar.cp.core
 
 import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
+import oscar.cp.constraints.ModuloLHS
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -792,6 +793,8 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     store.post(new InSetReif(this, set, b))
     b
   }
+  
+  def %(y: Int) = ModuloLHS(this, y)
 
 }
 
