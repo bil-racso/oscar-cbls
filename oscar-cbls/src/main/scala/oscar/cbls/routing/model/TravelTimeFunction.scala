@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntConst
 abstract class TravelTimeFunction {
   def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int
   def getBackwardTravelDuration(from: Int, leaveTime: Int, to: Int): Int
-  
+
   def getMinMaxTravelDuration(from: Int, to: Int): (Int, Int) =
     (getMinTravelDuration(from, to), getMaxTravelDuration(from, to))
 
@@ -58,7 +58,8 @@ trait Time extends VRP with Predecessors {
       else (travelOutDuration(i) + leaveTime(i)).toIntVar
   }
 
-  def setFixedDurationNode(node: Int, duration: Int) {
+  def setNodeDuration(node: Int, duration: CBLSIntVar) {
+    assert(node >= V)
     leaveTime(node) <== arrivalTime(node) + duration
   }
 
@@ -97,12 +98,12 @@ trait TimeWindow extends Time with StrongConstraints {
     strongConstraints.post(LE(leaveTime(node), endWindow))
   }
 
-  def setFixedDurationNode(node: Int, duration: Int, startWindow: Int) {
+  def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int) {
     leaveTime(node) <== Max2(arrivalTime(node), startWindow) + duration
   }
 
-  def setFixedDurationNode(node: Int, duration: Int, startWindow: Int, maxWaiting: Int) {
-    setFixedDurationNode(node, duration, startWindow)
+  def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+    setNodeDuration(node, duration, startWindow)
     strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting))
   }
 
@@ -113,13 +114,18 @@ trait WaitingDuration extends TimeWindow {
     (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
   }
 
-  override def setFixedDurationNode(node: Int, duration: Int, startWindow: Int) {
-    super.setFixedDurationNode(node, duration, startWindow)
+  def setNodeDurationAndWaitingTime(node: Int, duration: CBLSIntVar, waitingDuration:CBLSIntVar) {
+    super.setNodeDuration(node, duration)
+    this.waitingDuration(node) <== waitingDuration
+  }
+
+  override def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int) {
+    super.setNodeDuration(node, duration, startWindow)
     waitingDuration(node) <== Max2(0, startWindow - arrivalTime(node))
   }
 
-  override def setFixedDurationNode(node: Int, duration: Int, startWindow: Int, maxWaiting: Int) {
-    setFixedDurationNode(node, duration, startWindow)
+  override def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+    setNodeDuration(node, duration, startWindow)
     strongConstraints.post(LE(waitingDuration(node), maxWaiting))
   }
 }
