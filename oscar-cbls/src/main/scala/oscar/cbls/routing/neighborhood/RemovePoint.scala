@@ -66,6 +66,8 @@ object RemovePoint extends Neighborhood with SearchEngineTrait {
   def encode(beforeRemovedPoint: Int, vrp: VRP with MoveDescription) {
     vrp.unroute(vrp.cutNodeAfter(beforeRemovedPoint))
   }
+
+  override def toString: String = "unrouting"
 }
 
 /**
