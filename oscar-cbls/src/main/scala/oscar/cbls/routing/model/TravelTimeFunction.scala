@@ -98,12 +98,12 @@ trait TimeWindow extends Time with StrongConstraints {
     strongConstraints.post(LE(leaveTime(node), endWindow))
   }
 
-  def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int) {
-    leaveTime(node) <== Max2(arrivalTime(node), startWindow) + duration
+  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+    leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
   }
 
-  def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
-    setNodeDuration(node, duration, startWindow)
+  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+    setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting))
   }
 
@@ -114,18 +114,18 @@ trait WaitingDuration extends TimeWindow {
     (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
   }
 
-  def setNodeDurationAndWaitingTime(node: Int, duration: CBLSIntVar, waitingDuration:CBLSIntVar) {
-    super.setNodeDuration(node, duration)
+  def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: CBLSIntVar, waitingDuration:CBLSIntVar) {
+    super.setNodeDuration(node, durationWithoutWait + waitingDuration)
     this.waitingDuration(node) <== waitingDuration
   }
 
-  override def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int) {
-    super.setNodeDuration(node, duration, startWindow)
+  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+    super.setNodeDuration(node, durationWithoutWait, startWindow)
     waitingDuration(node) <== Max2(0, startWindow - arrivalTime(node))
   }
 
-  override def setNodeDuration(node: Int, duration: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
-    setNodeDuration(node, duration, startWindow)
+  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+    setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(LE(waitingDuration(node), maxWaiting))
   }
 }
