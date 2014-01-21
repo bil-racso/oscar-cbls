@@ -132,8 +132,8 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
   }
 
   private def rectifySlot(slotNr:Int):Int = {
-    val tmp:Int = slotNr % NbSlots
-    if (tmp < 0) return tmp + NbSlots
+    var tmp:Int = slotNr % NbSlots
+    while (tmp < 0) tmp == NbSlots
     return tmp
   }
 
@@ -197,6 +197,7 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
  * */
 class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTravelTimeFunction {
 
+
   private val pointX:Array[Int] = Array.fill(NbPoints)(0)
   private val pointY:Array[Int] = Array.fill(NbPoints)(0)
 
@@ -222,8 +223,22 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     }
   }
 
-  def getPointX(pointNr:Int):Int = pointX(pointNr % NbPoints) + (math.floor(pointNr / NbPoints)).toInt * overallDuration
-  def getPointY(pointNr:Int):Int = pointY(pointNr % NbPoints)
+  def getPointX(pointNr:Int):Int = getPoint(pointNr)._1
+  def getPointY(pointNr:Int):Int = getPoint(pointNr)._2
+
+  def getPoint(pointNr:Int):(Int,Int) = {
+    var rectifiedPoint:Int = pointNr % NbPoints
+    var shifting:Int = (math.floor(pointNr / NbPoints)).toInt * overallDuration
+    while (rectifiedPoint < 0){
+      rectifiedPoint += NbPoints
+      shifting -= overallDuration
+    }
+
+    (pointX(rectifiedPoint) + shifting
+     ,pointY(rectifiedPoint))
+  }
+
+
 
   private def updateMinMax(){
     if(!nimMaxAccurate){
@@ -246,6 +261,8 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     var up:Int = NbPoints - 1
     while(getPointX(up) < x) up = up + NbPoints
     var down:Int = -1
+    while(getPointX(down) > x) down = down - NbPoints
+
     while (down + 1 < up) {
       val mid:Int = (up + down) / 2
       if (getPointX(mid) == x) {
@@ -256,13 +273,14 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
         up = mid
       }
     }
-    if (getPointY(up) <= x) up
+    if (getPointX(up) <= x) up
     else down
   }
 
   override def getTravelDuration(leaveTime: Int): Int = {
     val pointBefore = findLastPointBefore(leaveTime)
     val pointAfter = pointBefore + 1
+
     linearInterpol(leaveTime,
       getPointX(pointBefore), getPointY(pointBefore),
       getPointX(pointAfter), getPointY(pointAfter))
@@ -270,7 +288,7 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
 
   @inline
   private def linearInterpol(X:Int, X1:Int, Y1:Int, X2:Int, Y2:Int):Int = {
-    (X - X1) * (Y2 - Y1) / (X2 - X1) + Y1
+    ((X - X1) * (Y2 - Y1)) / (X2 - X1) + Y1
   }
 
   override def getMinTravelDuration: Int = {
@@ -287,6 +305,8 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     var up:Int = NbPoints - 1
     while(getPointX(up) + getPointY(up) < arrivalTime) up = up + NbPoints
     var down:Int = -1
+    while(getPointX(down) + getPointX(down) > arrivalTime - overallDuration) down = down - NbPoints
+
     while (down + 1 < up) {
       val mid:Int = (up + down) / 2
       if (getPointX(mid) + getPointY(mid) == arrivalTime) {
@@ -297,7 +317,7 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
         up = mid
       }
     }
-    if (getPointY(up) + getPointY(up) <= arrivalTime) up
+    if (getPointX(up) + getPointY(up) <= arrivalTime) up
     else down
   }
 
@@ -308,14 +328,42 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
       pointBefore +=1
     }
 
-      linearInterpolBackward(arrivalTime,
-        getPointX(pointBefore), getPointY(pointBefore),
-        getPointX(pointBefore+1) ,  getPointY(pointBefore+1))
+    assert(getPointX(pointBefore) + getPointY(pointBefore) <= arrivalTime)
+    assert(arrivalTime <= getPointX(pointBefore +1) + getPointY(pointBefore +1))
+
+    linearInterpolBackward(arrivalTime,
+      getPointX(pointBefore), getPointY(pointBefore),
+      getPointX(pointBefore+1), getPointY(pointBefore+1))
   }
 
   @inline
   private def linearInterpolBackward(Y:Int, X1:Int, Y1:Int, X2:Int, Y2:Int):Int = {
-    if(Y1 == Y2) X2
-    else X1 + (Y - Y1) * (X2 - X1) / (Y2 - Y1)
+    if(Y1 == Y2) return Y1
+    val p = (X1.toFloat - X2.toFloat) / (Y1.toFloat - Y2.toFloat)
+    ((Y.toFloat + p*Y1.toFloat - X1.toFloat) / (p + 1.0)).toInt
   }
+
+  override def toString = (0 until NbPoints) map (i => "(" + pointX(i)+ ";" + pointY(i) + ")") mkString(",")
+}
+
+
+object TTFTest extends App{
+
+  val t = new TTFSegments(7, 24*60)
+  t.setPoint(0, 60*3,  10)
+  t.setPoint(1, 60*6,  20)
+  t.setPoint(2, 60*9,  30)
+  t.setPoint(3, 60*12, 20)
+  t.setPoint(4, 60*15, 30)
+  t.setPoint(5, 60*18, 30)
+  t.setPoint(6, 60*21, 10)
+
+  println(t)
+
+  println("leave\tarrive")
+  for(i <- 0 to (24 * 60) by 30){
+    println(i + "\t" + t.getTravelDuration(i) + "\t" + t.getBackwardTravelDuration(t.getTravelDuration(i) + i))
+
+  }
+
 }
