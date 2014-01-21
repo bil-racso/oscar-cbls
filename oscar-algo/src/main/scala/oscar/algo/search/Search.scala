@@ -25,7 +25,7 @@ class SearchStatistics(
     val timeInTrail: Long,
     val maxTrailSize: Int,
     val nSols: Int) {
-  override val toString: String = s"nbNodes: $nbNodes\nnFails: $nFails\ntime(ms): $time\ncompleted: $completed\ntimeInTrail: $timeInTrail\n$nSols: $nSols\n"
+  override val toString: String = s"nbNodes: $nbNodes\nnFails: $nFails\ntime(ms): $time\ncompleted: $completed\ntimeInTrail: $timeInTrail\nnSols: $nSols\n"
 }
 
 
