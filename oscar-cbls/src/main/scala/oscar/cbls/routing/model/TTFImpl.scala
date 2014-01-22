@@ -238,8 +238,6 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
      ,pointY(rectifiedPoint))
   }
 
-
-
   private def updateMinMax(){
     if(!nimMaxAccurate){
       nimMaxAccurate = true
@@ -342,7 +340,9 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
     ((Y + p*Y1- X1) / (p + 1.0)).toFloat
   }
 
-  override def toString = (0 until NbPoints) map (i => "(" + pointX(i)+ ";" + pointY(i) + ")") mkString(",")
+  override def toString = ("TTFSegments(NbPoints: " + NbPoints + " overallDuration: " + overallDuration + " points: ["
+        + ((0 until NbPoints) map (i => "(" + pointX(i)+ ";" + pointY(i) + ")") mkString(",")) + "])")
+
 }
 
 
@@ -362,7 +362,6 @@ object TTFTest extends App{
   println("leave\tarrive")
   for(i <- 0 to (24 * 60) by 30){
     println(i + "\t" + t.getTravelDuration(i) + "\t" + t.getBackwardTravelDuration(t.getTravelDuration(i) + i))
-
   }
-
+  println("min: " + t.getMinTravelDuration + " max: " + t.getMaxTravelDuration)
 }
