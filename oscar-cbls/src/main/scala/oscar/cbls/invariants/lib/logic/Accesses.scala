@@ -237,6 +237,15 @@ case class Elements(index: CBLSSetVar, inputarray: Array[CBLSIntVar])
     c.check(output.value.size <= index.value.size,
       Some("output.value.size (" + output.value.size + ") <= index.value.size (" + index.value.size + ")"))
   }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
+  }
 }
 
 /**
@@ -295,5 +304,14 @@ case class SetElement(index: CBLSIntVar, inputarray: Array[CBLSSetVar])
         + inputarray(index.value).value + ")).size ("
         + output.value.intersect(inputarray(index.value).value).size
         + ") == output.value.size (" + output.value.size + ")"))
+  }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
   }
 }
