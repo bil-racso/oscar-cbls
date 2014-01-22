@@ -89,7 +89,7 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
               selectBestMove(threeOptMoves, startObj, moveAcceptor, vrp) match {
                 case (Some(move), newObj: Int) => {
                   if (returnMove) return MoveFound(move)
-                  else move.encodeMove; vrp.commit(true); MovePerformed()
+                  else move.encodeMove; vrp.commit(true); return MovePerformed()
                 }
                 case _ => ()
               }
