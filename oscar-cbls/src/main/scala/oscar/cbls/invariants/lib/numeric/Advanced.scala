@@ -24,9 +24,8 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation._
 
 /** sum(i in cond) vars(i)
- * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
- * @param vars is a set of IntVars
- * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
+ * @param vars is an array of IntVars
+ * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
  */
 case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
