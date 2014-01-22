@@ -283,11 +283,11 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
 
     linearInterpol(leaveTime,
       getPointX(pointBefore), getPointY(pointBefore),
-      getPointX(pointAfter), getPointY(pointAfter))
+      getPointX(pointAfter), getPointY(pointAfter)).toInt
   }
 
   @inline
-  private def linearInterpol(X:Int, X1:Int, Y1:Int, X2:Int, Y2:Int):Int = {
+  private def linearInterpol(X:Float, X1:Float, Y1:Float, X2:Float, Y2:Float):Float = {
     ((X - X1) * (Y2 - Y1)) / (X2 - X1) + Y1
   }
 
@@ -323,8 +323,7 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
 
   override def getBackwardTravelDuration(arrivalTime: Int): Int = {
     var pointBefore = findLastPointBeforeLeave(arrivalTime)
-    while((pointBefore < NbPoints -1)
-      && (getPointX(pointBefore+1) + getPointY(pointBefore+1)<= arrivalTime)){
+    while(getPointX(pointBefore+1) + getPointY(pointBefore+1) <= arrivalTime){
       pointBefore +=1
     }
 
@@ -333,14 +332,14 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
 
     linearInterpolBackward(arrivalTime,
       getPointX(pointBefore), getPointY(pointBefore),
-      getPointX(pointBefore+1), getPointY(pointBefore+1))
+      getPointX(pointBefore+1), getPointY(pointBefore+1)).toInt
   }
 
   @inline
-  private def linearInterpolBackward(Y:Int, X1:Int, Y1:Int, X2:Int, Y2:Int):Int = {
+  private def linearInterpolBackward(Y:Float, X1:Float, Y1:Float, X2:Float, Y2:Float):Float = {
     if(Y1 == Y2) return Y1
-    val p = (X1.toFloat - X2.toFloat) / (Y1.toFloat - Y2.toFloat)
-    ((Y.toFloat + p*Y1.toFloat - X1.toFloat) / (p + 1.0)).toInt
+    val p = (X1 - X2) / (Y1 - Y2)
+    ((Y + p*Y1- X1) / (p + 1.0)).toFloat
   }
 
   override def toString = (0 until NbPoints) map (i => "(" + pointX(i)+ ";" + pointY(i) + ")") mkString(",")
