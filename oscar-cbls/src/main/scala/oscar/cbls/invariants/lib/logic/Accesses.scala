@@ -133,7 +133,12 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
   }
 
   override def toString: String = {
-    inputarray.toList.toString + "[" + index.toString + "]"
+    val inputs = inputarray.toList
+      if(inputs.length > 4){
+        "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+      }else{
+        "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+      }
   }
 }
 
