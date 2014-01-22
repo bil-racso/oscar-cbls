@@ -74,7 +74,6 @@ object TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
   }
 
   def encode(fstPred:Int, sndPred:Int, vrp:VRP with MoveDescription) {
-
     val seg = vrp.cut(fstPred, sndPred)
     val rev_seg = vrp.reverse(seg)
     vrp.insert(rev_seg, fstPred)

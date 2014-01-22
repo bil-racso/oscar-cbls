@@ -89,7 +89,12 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
               selectBestMove(threeOptMoves, startObj, moveAcceptor, vrp) match {
                 case (Some(move), newObj: Int) => {
                   if (returnMove) return MoveFound(move)
-                  else move.encodeMove; vrp.commit(true); return MovePerformed()
+                  else {
+                    vrp.cleanRecordedMoves
+                    move.encodeMove
+                    vrp.commit(true)
+                    return MovePerformed()
+                  }
                 }
                 case _ => ()
               }
@@ -122,6 +127,7 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
     var improvingMove: Option[Move] = None
 
     for ((fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, reverseSegment) <- specs) {
+      vrp.cleanRecordedMoves
       encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, reverseSegment, vrp)
       vrp.commit(true)
       newObj = vrp.getObjective
