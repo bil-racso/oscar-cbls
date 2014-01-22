@@ -39,20 +39,28 @@ import oscar.cbls.search.SearchEngineTrait
  * The search complexity is O(n³).
  */
 object ThreeOpt extends Neighborhood with SearchEngineTrait {
+  val REVERSE = true
 
-  // PRE-CONDITION: all nodes of search zone are routed
+  // PRE-CONDITION: all nodes of search zone must be routed
   override protected def doSearch(s: SearchZone,
                                   moveAcceptor: (Int) => (Int) => Boolean,
                                   returnMove: Boolean): SearchResult = {
-    val startObj: Int = s.vrp.getObjective()
     val vrp = s.vrp
+    val startObj: Int = vrp.getObjective()
 
+    /**
+     * The insertion point (trdEdgeStartPoint) is picked from the primaryNodeIterator.
+     */
     while (s.primaryNodeIterator.hasNext) {
       val trdEdgeStartPoint: Int = s.primaryNodeIterator.next()
       assert(vrp.isRouted(trdEdgeStartPoint),
         "ThreeOpt should be applied to routed nodes only.")
 
-// format: OFF (to prevent eclipse from formatting the following lines)
+      /**
+       * The segment start point (fstEdgeStartPoint) is picked
+       * from the insertion point neighbors.
+       */
+      // format: OFF (to prevent eclipse from formatting the following lines)
       for (fstEdgeStartPoint <- s.relevantNeighbors(trdEdgeStartPoint)
            if fstEdgeStartPoint != trdEdgeStartPoint;
            if fstEdgeStartPoint != vrp.next(trdEdgeStartPoint).value;
@@ -61,6 +69,10 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
            if !vrp.isADepot(fstEdgeEndPoint)) {
         // format: ON
 
+        /**
+         * The segment end point (sndEdgeStartPoint) is picked
+         * from the next nodes of its start point route.
+         */
         var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
         if (sndEdgeStartPoint != fstEdgeStartPoint) {
 
@@ -69,73 +81,60 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
             && !vrp.isADepot(sndEdgeStartPoint)
             && !vrp.isADepot(sndEdgeEndPoint)) {
             if (!vrp.isBetween(trdEdgeStartPoint, fstEdgeStartPoint, sndEdgeEndPoint)) {
-              encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
 
-              checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-                case (true, newObj: Int) => { //this improved
-                  if (returnMove) return MoveFound(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, newObj, vrp))
-                  else return MovePerformed()
+              def threeOptMove(reverse: Boolean) =
+                (fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, reverse)
+              val threeOptMoves = List(threeOptMove(!REVERSE), threeOptMove(REVERSE))
+
+              selectBestMove(threeOptMoves, startObj, moveAcceptor, vrp) match {
+                case (Some(move), newObj: Int) => {
+                  if (returnMove) return MoveFound(move)
+                  else move.encodeMove; vrp.commit(true); MovePerformed()
                 }
                 case _ => ()
               }
             }
-            
+
             sndEdgeStartPoint = sndEdgeEndPoint
             sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
           }
         }
       }
     }
-//
-//    while (s.primaryNodeIterator.hasNext) {
-//      val fstEdgeStartPoint: Int = s.primaryNodeIterator.next()
-//      if (vrp.isRouted(fstEdgeStartPoint)) {
-//
-//        val fstEdgeEndPoint = vrp.next(fstEdgeStartPoint).value
-//        if (fstEdgeEndPoint != fstEdgeStartPoint) {
-//
-//          var sndEdgeStartPoint = vrp.next(fstEdgeEndPoint).value
-//          if (sndEdgeStartPoint != fstEdgeStartPoint
-//            && vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
-//            while (vrp.next(sndEdgeStartPoint).value != fstEdgeStartPoint) {
-//              //            && !vrp.isADepot(sndEdgeStartPoint)) {
-//              val sndEdgeEndPoint = vrp.next(sndEdgeStartPoint).value
-//
-//              var trdEdgeStartPoint = sndEdgeEndPoint
-//              while (trdEdgeStartPoint != fstEdgeStartPoint) {
-//                if (!vrp.isBetween(trdEdgeStartPoint, fstEdgeStartPoint, sndEdgeEndPoint)) {
-//                  //             && !vrp.isADepot(trdEdgeStartPoint)) {
-//
-//                  encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
-//
-//                  checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-//                    case (true, newObj: Int) => { //this improved
-//                      if (returnMove) return MoveFound(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, newObj, vrp))
-//                      else return MovePerformed()
-//                    }
-//                    case _ => ()
-//                  }
-//                  trdEdgeStartPoint = vrp.next(trdEdgeStartPoint).value
-//                }
-//              }
-//              sndEdgeStartPoint = vrp.next(sndEdgeStartPoint).value
-//            }
-//          }
-//        }
-//      }
-//    }
     NoMoveFound()
   }
 
-  def encode(
-    fstEdgeStartPoint: Int,
-    sndEdgeStartPoint: Int,
-    trdEdgeStartPoint: Int,
-    vrp: VRP with MoveDescription) {
-
-    val seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
+  def encode(fstEdgeStartPoint: Int, sndEdgeStartPoint: Int, trdEdgeStartPoint: Int,
+             reverseSegment: Boolean, vrp: VRP with MoveDescription) {
+    var seg = vrp.cut(fstEdgeStartPoint, sndEdgeStartPoint)
+    if (reverseSegment) {
+      seg = vrp.reverse(seg)
+    }
     vrp.insert(seg, trdEdgeStartPoint)
+  }
 
+  def selectBestMove(specs: List[(Int, Int, Int, Boolean)],
+                     startObj: Int,
+                     moveAcceptor: (Int) => (Int) => Boolean,
+                     vrp: VRPObjective with MoveDescription): (Option[Move], Int) = {
+    var obj = startObj
+    var newObj = obj + 1
+    var improvingMove: Option[Move] = None
+
+    for ((fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, reverseSegment) <- specs) {
+      encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, reverseSegment, vrp)
+      vrp.commit(true)
+      newObj = vrp.getObjective
+      val accept = moveAcceptor(obj)(newObj)
+      if (accept) {
+        obj = newObj
+        improvingMove = Some(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint,
+          reverseSegment, vrp: MoveDescription, obj))
+      }
+      vrp.undo(false)
+    }
+
+    (improvingMove, obj)
   }
 
   override def toString: String = "3-opt"
@@ -150,15 +149,18 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
  * @param vrp the given VRP problem.
  */
 case class ThreeOpt(fstEdgeStartPoint: Int, sndEdgeStartPoint: Int, trdEdgeStartPoint: Int,
-                    override val objAfter: Int,
-                    override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
+                    reverseSegment: Boolean, override val vrp: MoveDescription,
+                    override val objAfter: Int) extends Move(objAfter, vrp) {
+
   // overriding methods
   override def encodeMove() {
-    ThreeOpt.encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint, vrp)
+    ThreeOpt.encode(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint,
+      reverseSegment, vrp)
   }
 
   override def toString: String =
     ("TreeOpt(first edge start point = " + fstEdgeStartPoint
       + ", second edge start point = " + sndEdgeStartPoint
-      + ", third edge start point =" + trdEdgeStartPoint + " )")
+      + ", third edge start point = " + trdEdgeStartPoint
+      + ", reverse segment = " + reverseSegment + ")")
 }
