@@ -175,7 +175,7 @@ trait MoveDescription extends VRP {
   protected var affects: List[Affect] = List.empty
 
   protected def addMove(affect: Affect) {
-    assert(Recording)
+    require(Recording)
     affects = affect :: affects
   }
 
@@ -259,10 +259,10 @@ trait MoveDescription extends VRP {
   }
 
   def commit(recordForUndo: Boolean = false) {
-    assert(Recording, "MoveDescription should be recording now")
+    require(Recording, "MoveDescription should be recording now")
     if (recordForUndo) {
       affects = doAllMovesAndReturnRollBack()
-      assert({ Recording = false; true })
+      Recording = false
     } else {
       doAllMoves()
       affects = List.empty
@@ -296,15 +296,15 @@ trait MoveDescription extends VRP {
   }
 
   def undo(recordForUndo: Boolean = false) {
-    assert(!Recording, "MoveDescription should not be recording now")
-    assert({ Recording = true; true })
+    require(!Recording, "MoveDescription should not be recording now")
+    Recording = true
     commit(recordForUndo)
-    assert({ Recording = true; true })
+    Recording = true
   }
 
   def cleanRecordedMoves() {
     affects = List.empty
-    assert({ Recording = true; true })
+    Recording = true
   }
 }
 
