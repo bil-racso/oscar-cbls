@@ -76,7 +76,7 @@ object ChemicalTanker  {
      * allocated to cargo exceed the volume of this cargo to place we immediately
      * forbid this cargo in other tanks.
      */
-    class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPIntVar]) extends Constraint(cargos(0).s) {
+    class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPIntVar]) extends Constraint(cargos(0).store) {
       
       val curCapa = new ReversibleInt(s,0)
 

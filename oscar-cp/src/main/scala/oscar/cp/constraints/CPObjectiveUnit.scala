@@ -66,7 +66,9 @@ abstract class CPObjectiveUnit(val objVar: CPIntVar, val n: String = "") extends
   
   /** Tightens the objective according to its tightening mode */
   def tighten(): Unit = {
-    if (!objVar.isBound) throw new RuntimeException("objective"+n+" not bound:" + objVar)
+    if (!objVar.isBound) {
+      if (tightenType != NoTighten) throw new RuntimeException("objective"+n+" not bound:" + objVar)
+    }
     else {
       best = objVar.value // Sets new best value
       if (!objVar.store.silent && tightenType != NoTighten) {

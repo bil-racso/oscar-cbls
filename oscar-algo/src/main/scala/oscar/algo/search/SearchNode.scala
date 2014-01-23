@@ -80,6 +80,10 @@ class SearchNode extends ReversibleContext {
     solCallBacks = (() => block) :: solCallBacks
     this
   }
+  
+  def clearOnsolution() {
+    solCallBacks = List.empty
+  }
 
   def beforeStartAction(): Unit = {}
 
