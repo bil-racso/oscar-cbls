@@ -136,7 +136,7 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
         improvingMove = Some(ThreeOpt(fstEdgeStartPoint, sndEdgeStartPoint, trdEdgeStartPoint,
           reverseSegment, vrp: MoveDescription, obj))
       }
-      vrp.undo(false)
+      vrp.undo()
     }
 
     (improvingMove, obj)
