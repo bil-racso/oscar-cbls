@@ -295,10 +295,10 @@ trait MoveDescription extends VRP {
     doIt(affects)
   }
 
-  def undo(recordForUndo: Boolean = false) {
+  def undo() {
     require(!Recording, "MoveDescription should not be recording now")
     Recording = true
-    commit(recordForUndo)
+    commit(false)
     Recording = true
   }
 

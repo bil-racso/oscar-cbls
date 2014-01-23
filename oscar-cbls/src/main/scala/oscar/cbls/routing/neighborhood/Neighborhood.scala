@@ -154,7 +154,7 @@ abstract class Neighborhood() {
       vrp.cleanRecordedMoves()
       (accept, obj)
     } else {
-      vrp.undo(false)
+      vrp.undo()
       (accept, obj)
     }
   }
