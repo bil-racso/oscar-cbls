@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param myMax the max value of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntVar2IntVarFun(a:CBLSIntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class Int2Int(a:CBLSIntVar, fun:Int => Int, override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
   var output:CBLSIntVar=null
 
   registerStaticAndDynamicDependency(a)
@@ -68,7 +68,7 @@ class IntVar2IntVarFun(a:CBLSIntVar, fun:Int => Int, override val myMin:Int = In
   * @param myMax the max value of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class IntInt2Int(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:CBLSIntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
@@ -92,7 +92,7 @@ class IntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int)
 
 /** This is a helper to define an invariant from an Int x Int -> Int function.
   * Ths invariant is not incremental, so this should only be used for very simple functions.
-  * it maintains output = fun(a,b) The difference with [[oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun]] is that this one performs the computation only after both variables have been updated.
+  * it maintains output = fun(a,b) The difference with [[oscar.cbls.invariants.lib.logic.IntInt2Int]] is that this one performs the computation only after both variables have been updated.
   * @param a the first parameter of the function
   * @param b the second parameter of the function
   * @param fun the function to maintain, it is supposed not to listen to any variable in the model
@@ -100,7 +100,7 @@ class IntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int)
   * @param myMax the max value of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class LazyIntVarIntVar2IntVarFun(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
+class LazyIntInt2Int(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override val myMin:Int = Int.MinValue, override val myMax:Int=Int.MaxValue) extends IntInvariant {
 
   var output:CBLSIntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)

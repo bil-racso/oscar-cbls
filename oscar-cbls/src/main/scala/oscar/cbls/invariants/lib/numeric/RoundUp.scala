@@ -25,7 +25,7 @@ package oscar.cbls.invariants.lib.numeric
  */
 
 import oscar.cbls.invariants.core.computation.{ Store, IntInvariant, CBLSIntVar }
-import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
+import oscar.cbls.invariants.lib.logic.LazyIntInt2Int
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -53,7 +53,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpModulo(from: CBLSIntVar, duration: CBLSIntVar, period: Int, zone: Int, shift: Int)
-  extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
+  extends LazyIntInt2Int(from, duration, (from: Int, duration: Int) => {
     require(duration <= period - zone, "duration " + duration + "<= period " + period + "- zone " + zone)
     require(period != 0)
     val reducedfrom = (from + period - shift) % period
@@ -266,7 +266,7 @@ object TestRoundUpCustom extends App {
  */
 case class PreEmption(startTime: CBLSIntVar, duration: CBLSIntVar,
                       preEmptStartTime: Int, preEmptDuration: Int, resume: Boolean)
-  extends LazyIntVarIntVar2IntVarFun(startTime, duration,
+  extends LazyIntInt2Int(startTime, duration,
     (startTime: Int, duration: Int) => {
       val endTime: Int = startTime + duration
       var newDuration: Int = duration

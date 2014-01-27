@@ -123,7 +123,7 @@ case class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Minus(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l - r), left.minVal - right.maxVal, left.maxVal - right.minVal) {
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), left.minVal - right.maxVal, left.maxVal - right.minVal) {
   assert(left != right)
 }
 
@@ -133,7 +133,7 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l + r), left.minVal + right.minVal, left.maxVal + right.maxVal)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), left.minVal + right.minVal, left.maxVal + right.maxVal)
 
 /**
  * left * right
@@ -141,7 +141,7 @@ case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
 
 /**
  * left / right
@@ -150,7 +150,7 @@ case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Div(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l / r)
+  extends IntInt2Int(left, right, (l: Int, r: Int) => l / r)
 
 /**
  * left / right
@@ -159,7 +159,7 @@ case class Div(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Mod(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l - r * (l / r))
+  extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r))
 
 /**
  * abs(v) (absolute value)
@@ -167,7 +167,7 @@ case class Mod(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Abs(v: CBLSIntVar)
-  extends IntVar2IntVarFun(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
+  extends Int2Int(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval
@@ -180,4 +180,4 @@ case class Abs(v: CBLSIntVar)
  * @param elseval the value returned when x <= pivot
  */
 case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
-  extends IntVar2IntVarFun(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)
+  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)

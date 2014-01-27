@@ -539,7 +539,7 @@ trait HopDistance extends VRP {
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i: Int, j: Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => { if (j != N) DistanceMatrix(i)(j) else 0 })
+    for (i <- 0 until N) hopDistance(i) <== new Int2Int(next(i), j => { if (j != N) DistanceMatrix(i)(j) else 0 })
   }
 
   /**
@@ -549,7 +549,7 @@ trait HopDistance extends VRP {
    */
   def installCostFunction(fun: (Int, Int) => Int) {
     distanceFunction = fun
-    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => fun(i, j))
+    for (i <- 0 until N) hopDistance(i) <== new Int2Int(next(i), j => fun(i, j))
   }
 
   /**

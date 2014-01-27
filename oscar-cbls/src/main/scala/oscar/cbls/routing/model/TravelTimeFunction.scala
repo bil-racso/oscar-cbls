@@ -22,7 +22,7 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
-import oscar.cbls.invariants.lib.logic.IntVarIntVar2IntVarFun
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.constraints.lib.basic.GE
@@ -91,7 +91,7 @@ trait TravelTimeAsFunction extends VRP with Time {
   def setTravelTimeFunctions(travelCosts: TravelTimeFunction) {
     this.travelCosts = travelCosts
     for (i <- 0 to N - 1) {
-      travelOutDuration(i) <== new IntVarIntVar2IntVarFun(leaveTime(i), next(i),
+      travelOutDuration(i) <== new IntInt2Int(leaveTime(i), next(i),
         (leaveTime, successor) =>
           if (successor == N) 0
           else travelCosts.getTravelDuration(i, leaveTime, successor))

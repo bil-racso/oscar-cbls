@@ -199,7 +199,7 @@ case class Max(vars: SortedSet[CBLSIntVar]) extends Miax(vars) {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Max2(a: CBLSIntVar, b: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.minVal.max(b.minVal), a.maxVal.max(b.maxVal))
+  extends IntInt2Int(a, b, ((x: Int, y: Int) => x.max(y)), a.minVal.max(b.minVal), a.maxVal.max(b.maxVal))
 
 /**
  * maintains output = Min(a,b)
@@ -208,4 +208,4 @@ case class Max2(a: CBLSIntVar, b: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Min2(a: CBLSIntVar, b: CBLSIntVar)
-  extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.minVal.min(b.minVal), a.maxVal.min(b.maxVal))
+  extends IntInt2Int(a, b, ((x: Int, y: Int) => x.min(y)), a.minVal.min(b.minVal), a.maxVal.min(b.maxVal))
