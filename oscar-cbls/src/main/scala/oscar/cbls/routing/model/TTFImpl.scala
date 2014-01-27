@@ -345,7 +345,6 @@ class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTr
 
 }
 
-
 object TTFTest extends App{
 
   val t = new TTFSegments(7, 24*60)
@@ -365,3 +364,4 @@ object TTFTest extends App{
   }
   println("min: " + t.getMinTravelDuration + " max: " + t.getMaxTravelDuration)
 }
+

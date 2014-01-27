@@ -6,7 +6,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * implements v \in set
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class BelongsTo(v: CBLSIntVar, set: CBLSSetVar) extends Constraint {
   registerConstrainedVariables(v, set)

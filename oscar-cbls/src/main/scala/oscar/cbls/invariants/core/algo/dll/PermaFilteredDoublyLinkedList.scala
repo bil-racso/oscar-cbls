@@ -13,23 +13,24 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.invariants.core.algo.dll
 
 /**this is a mutable data structure that is able to represent sets through doubly-lined lists, with insert and delete in O(1) through reference
- * and to update in parallell another set that is a filter of the first one through a specified function
- * the filter can be specified anytime and filtering can be cascated, but a PermaFilteresDLL can have only one filter
- *
- * You should not perform any operation on the slave DLL,
- * although this will not be detected and reported as an error
- *
- * Beware that this is a mutable data structure, hence you should not perform any update on it while iterating on it.
- * */
- class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
+  * and to update in parallell another set that is a filter of the first one through a specified function
+  * the filter can be specified anytime and filtering can be cascated, but a PermaFilteresDLL can have only one filter
+  *
+  * You should not perform any operation on the slave DLL,
+  * although this will not be detected and reported as an error
+  *
+  * Beware that this is a mutable data structure, hence you should not perform any update on it while iterating on it.
+  * @author renaud.delandtsheer@cetic.be
+  * */
+class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
   private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
@@ -39,12 +40,12 @@ package oscar.cbls.invariants.core.algo.dll
   private var mmap:T => AnyRef = null
   private var Filtered: PermaFilteredDoublyLinkedList[AnyRef] = null
 
-   /**returns the size of the PermaFilteredDLL*/
+  /**returns the size of the PermaFilteredDLL*/
   override def size = msize
 
   private var msize:Int = 0
 
-   /**adds an a item in the PermaFilteredDLL, and if accepted by the filter, adds it in the slave PermaFilteredDLL.
+  /**adds an a item in the PermaFilteredDLL, and if accepted by the filter, adds it in the slave PermaFilteredDLL.
     * returns a reference that should be used to remove the item from all those structures at once.
     */
   def addElem(elem:T):PFDLLStorageElement[T] = {
@@ -70,7 +71,7 @@ package oscar.cbls.invariants.core.algo.dll
   /**adds a bunch of items to the data structures*/
   def ++(elems:Iterable[T]) {for(elem <- elems) addElem(elem)}
 
-   /**deletes an item from the DLL and all the filtered DLL.
+  /**deletes an item from the DLL and all the filtered DLL.
     * the item is specified through the reference given when it was inserted in the first place.
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
@@ -82,9 +83,9 @@ package oscar.cbls.invariants.core.algo.dll
     elemkey.elem
   }
 
-   def deleteAny(elemkey:AnyRef):AnyRef = deleteElem(elemkey.asInstanceOf[PFDLLStorageElement[T]])
+  def deleteAny(elemkey:AnyRef):AnyRef = deleteElem(elemkey.asInstanceOf[PFDLLStorageElement[T]])
 
-   /**makes the DLL empty, and all its filtered DLL as well*/
+  /**makes the DLL empty, and all its filtered DLL as well*/
   def dropAll(){
     headfantom.setNext(endfantom)
     msize = 0
@@ -118,21 +119,26 @@ package oscar.cbls.invariants.core.algo.dll
     newlist
   }
 
-   /**
-    * @param fn the function to execute on each items included in this list
-    * @tparam U the output type of the function
-    * @return a list containing the result of executing fn on each element of the DLL. the list is in reverse order.
-    */
-   def mapToList[U](fn:T => U):List[U] = {
-     val it = iterator
-     var toReturn:List[U] = List.empty
-     while(it.hasNext){
-       toReturn = fn(it.next()) :: toReturn
-     }
-     toReturn
-   }
+  /**
+   * @param fn the function to execute on each items included in this list
+   * @tparam U the output type of the function
+   * @return a list containing the result of executing fn on each element of the DLL. the list is in reverse order.
+   */
+  def mapToList[U](fn:T => U):List[U] = {
+    val it = iterator
+    var toReturn:List[U] = List.empty
+    while(it.hasNext){
+      toReturn = fn(it.next()) :: toReturn
+    }
+    toReturn
+  }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param elem
+ * @tparam T
+ */
 class PFDLLStorageElement[T](val elem:T){
   var next:PFDLLStorageElement[T] = null
   var prev:PFDLLStorageElement[T] = null

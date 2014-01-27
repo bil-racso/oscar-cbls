@@ -35,7 +35,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
   *
   * @param variables the variables that should be bounded
   * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
-  * @author  Renaud De Landtsheer rdl@cetic.be
+  * @author renaud.delandtsheer@cetic.be
   */
 case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)

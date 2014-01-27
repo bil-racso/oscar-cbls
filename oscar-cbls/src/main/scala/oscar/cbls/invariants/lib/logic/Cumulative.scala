@@ -31,7 +31,8 @@ import collection.immutable.SortedSet
  * @param amount the amount that tasks use of this resource
  * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
  * @param active the tasks that are active maintained to active(time) <== (task.indices | task.start <= time <= t.start+t.duration)
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Cumulative(indices:Array[Int], start:Array[CBLSIntVar], duration:Array[CBLSIntVar], amount:Array[CBLSIntVar], profile:Array[CBLSIntVar], active:Array[CBLSSetVar]) extends Invariant {
 
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v),v)

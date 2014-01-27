@@ -50,6 +50,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param period the period of the forbidden-allowed pattern
  * @param zone the size of the forbidden zone. it starts at the beginning of the period
  * @param shift the first period starts later than zero. it starts at shift. the duration before its start is allowed.
+ * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpModulo(from: CBLSIntVar, duration: CBLSIntVar, period: Int, zone: Int, shift: Int)
   extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
@@ -103,7 +104,8 @@ object TestRoundUpModulo extends App {
  *
  * @param from
  * @param duration
- * @param ForbiddenZones
+ * @param forbiddenZones
+ * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones: List[(Int, Int)]) extends IntInvariant {
 
@@ -260,6 +262,7 @@ object TestRoundUpCustom extends App {
  * @param preEmptStartTime the pre-emptive task start time
  * @param preEmptDuration the pre-emptive task duration
  * @param resume is true if the task must be resumed after the pre-emptive task
+ * @author yoann.guyot@cetic.be
  */
 case class PreEmption(startTime: CBLSIntVar, duration: CBLSIntVar,
                       preEmptStartTime: Int, preEmptDuration: Int, resume: Boolean)

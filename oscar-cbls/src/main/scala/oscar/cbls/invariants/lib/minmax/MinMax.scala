@@ -94,7 +94,8 @@ abstract class MiaxLin(vars: SortedSet[CBLSIntVar]) extends IntInvariant {
  * * output is an IntVar
  * * on is a set of IntVar
  * update is O(n)
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class MaxLin(vars: SortedSet[CBLSIntVar]) extends MiaxLin(vars) {
   override def name = "MaxLin"
 
@@ -107,7 +108,8 @@ case class MaxLin(vars: SortedSet[CBLSIntVar]) extends MiaxLin(vars) {
  * * output is an IntVar
  * * on is a set of IntVar
  * update is O(n)
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class MinLin(vars: SortedSet[CBLSIntVar]) extends MiaxLin(vars) {
   override def name = "MinLin"
 
@@ -159,7 +161,8 @@ abstract class Miax(vars: SortedSet[CBLSIntVar]) extends IntInvariant {
  * where
  * * output is an IntVar
  * update is O(n*n)
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 @deprecated("use the MinArray instead", "always")
 case class Min(vars: SortedSet[CBLSIntVar]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Min declared with zero vars to min")
@@ -177,7 +180,8 @@ case class Min(vars: SortedSet[CBLSIntVar]) extends Miax(vars) {
  * where
  * * output is an IntVar
  * update is O(n*n)
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 @deprecated("use the MaxArray instead", "always")
 case class Max(vars: SortedSet[CBLSIntVar]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Max declared with zero vars to max")
@@ -192,7 +196,8 @@ case class Max(vars: SortedSet[CBLSIntVar]) extends Miax(vars) {
  * maintains output = Max(a,b)
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log implementations
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Max2(a: CBLSIntVar, b: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.max(y)), a.minVal.max(b.minVal), a.maxVal.max(b.maxVal))
 
@@ -200,6 +205,7 @@ case class Max2(a: CBLSIntVar, b: CBLSIntVar)
  * maintains output = Min(a,b)
  * where output, a, and b are an IntVar
  * use this if you only have two variables to max, otherwise, refer to log implementations
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Min2(a: CBLSIntVar, b: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(a, b, ((x: Int, y: Int) => x.min(y)), a.minVal.min(b.minVal), a.maxVal.min(b.maxVal))

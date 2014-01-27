@@ -25,6 +25,7 @@ package oscar.cbls
  * proposed by [[oscar.cbls.invariants.core.computation.Store]].
  * It features the [[oscar.cbls.objective.Objective]] class to model an objective in a problem statement, and
  * the [[oscar.cbls.objective.ObjectiveTrait]] to use in other classes.
+  * @author renaud.delandtsheer@cetic.be
  * */
 package object objective{
 }

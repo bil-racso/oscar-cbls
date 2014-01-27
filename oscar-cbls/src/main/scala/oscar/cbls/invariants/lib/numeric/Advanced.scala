@@ -26,7 +26,8 @@ import oscar.cbls.invariants.core.propagation._
 /** sum(i in cond) vars(i)
  * @param vars is an array of IntVars
  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
@@ -91,7 +92,8 @@ case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInv
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones.
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
   assert(cond != null, "cond cannot be null for ProdElements")
 

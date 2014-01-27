@@ -24,7 +24,7 @@ import scala.collection.immutable.SortedSet
 package object modeling extends Constraints
 with ClusterInvariants
 with ComplexLogicInvariants
-with AccessInvariants
+with ElementInvariants
 with MinMaxInvariants
 with NumericInvariants
 with SetInvariants {

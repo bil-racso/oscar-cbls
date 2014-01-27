@@ -34,6 +34,9 @@ import oscar.cbls.routing.neighborhood.SearchZone
 
 /**
  * Constructs an initial solution randomly.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object RandomInsert {
   /**

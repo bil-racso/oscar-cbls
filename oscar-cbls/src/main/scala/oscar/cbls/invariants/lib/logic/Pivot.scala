@@ -33,7 +33,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
  * @param values an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]]
  * @param boundary the boundary for comparison
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
   var output: CBLSSetVar = null
 
@@ -129,7 +130,8 @@ case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
  * - SelectLESetQueue requires latest variables passing above boundary to be the biggest one
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
   var output: CBLSSetVar = null
 

@@ -31,6 +31,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
+ * @author renaud.delandtsheer@cetic.be
  */
 class BinomialHeap[@specialized T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   var HeapArray:Array[T] = new Array[T](maxsize)
@@ -189,7 +190,8 @@ class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Ordering[T],implicit val X:Manifest[T]){
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
@@ -328,6 +330,10 @@ class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Or
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param maxId
+ */
 class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   
   val array:Array[Int] = new Array[Int](maxId)
@@ -346,6 +352,15 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param GetKey
+ * @param maxsize
+ * @param position
+ * @param A
+ * @param X
+ * @tparam T
+ */
 class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:scala.collection.mutable.Map[T,Int])(implicit val A:Ordering[T],implicit val X:Manifest[T]){
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0

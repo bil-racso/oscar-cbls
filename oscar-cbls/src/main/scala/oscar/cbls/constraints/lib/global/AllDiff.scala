@@ -31,7 +31,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 /**
  * Implement the AllDiff constraint on IntVars: all variables must have a different value.
  * @param variables the variable whose values should all be different.
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
 

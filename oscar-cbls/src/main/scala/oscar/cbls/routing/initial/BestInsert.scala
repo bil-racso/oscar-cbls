@@ -37,6 +37,9 @@ import oscar.cbls.routing.model.ClosestNeighbors
  * Constructs an initial solution by repeatedly inserting points into the circuits.
  * it performs a round-robin on vehicles, and every time performs the best possible insert
  * by applying [[oscar.cbls.routing.neighborhood.InsertPoint]]
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object BestInsert {
 

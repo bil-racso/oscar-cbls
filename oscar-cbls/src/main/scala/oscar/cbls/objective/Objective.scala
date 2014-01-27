@@ -22,10 +22,15 @@ package oscar.cbls.objective
 
 import oscar.cbls.invariants.core.computation._
 
+
 case class Objective(Objective: CBLSIntVar) extends ObjectiveTrait {
   setObjectiveVar(Objective)
 }
 
+/**
+ * a common class for modeling an objective, and querying its variations on different basic moves
+  * @author renaud.delandtsheer@cetic.be
+ */
 trait ObjectiveTrait {
   var ObjectiveVar: CBLSIntVar = null
 

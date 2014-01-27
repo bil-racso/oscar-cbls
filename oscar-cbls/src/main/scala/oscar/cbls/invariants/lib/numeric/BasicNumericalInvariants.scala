@@ -1,23 +1,23 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- *            Yoann Guyot
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  *            Yoann Guyot
+  ******************************************************************************/
 
 package oscar.cbls.invariants.lib.numeric
 
@@ -29,7 +29,8 @@ import oscar.cbls.invariants.core.propagation.Checker;
 /**
  * sum(vars)
  * @param vars is an iterable of IntVars
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
 
@@ -61,7 +62,8 @@ case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
 /**
  * prod(vars)
  * @param vars is a set of IntVars
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
@@ -118,7 +120,8 @@ case class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
 /**
  * left - right
  * where left, right, and output are IntVar
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Minus(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l - r), left.minVal - right.maxVal, left.maxVal - right.minVal) {
   assert(left != right)
@@ -127,14 +130,16 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
 /**
  * left + right
  * where left, right, and output are IntVar
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l + r), left.minVal + right.minVal, left.maxVal + right.maxVal)
 
 /**
  * left * right
  * where left, right, and output are IntVar
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
 
@@ -142,7 +147,8 @@ case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
  * left / right
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Div(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l / r)
 
@@ -150,21 +156,23 @@ case class Div(left: CBLSIntVar, right: CBLSIntVar)
  * left / right
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Mod(left: CBLSIntVar, right: CBLSIntVar)
   extends IntVarIntVar2IntVarFun(left, right, (l: Int, r: Int) => l - r * (l / r))
 
 /**
  * abs(v) (absolute value)
  * where output and v are IntVar
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Abs(v: CBLSIntVar)
   extends IntVar2IntVarFun(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval
  * values lower or equal to pivot are mapped to elseval
- * This invariant was suggested by Jean-Noël Monette
+ * @author renaud.delandtsheer@cetic.be, suggested by Jean-Noël Monette
  *
  * @param x the IntVar parameter of the invariant
  * @param pivot the pivot value

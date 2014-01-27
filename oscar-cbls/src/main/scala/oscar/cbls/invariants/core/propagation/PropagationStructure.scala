@@ -1,22 +1,22 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.invariants.core.propagation
 
@@ -63,20 +63,21 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param noCycle is to be set to true only if the static dependency graph is acyclic.
  * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
+ * @author renaud.delandtsheer@cetic.be
  */
 abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean) extends StorageUtilityManager{
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
-   * on which the propagation structure will reason.
-   * The method is expected to return consistent result once the setupPropagationStructure method is called
-   */
+    * on which the propagation structure will reason.
+    * The method is expected to return consistent result once the setupPropagationStructure method is called
+    */
   def getPropagationElements: Iterable[PropagationElement]
 
   /**This method is to be overridden and is expected to return the maximal value of the UniqueID
-   * of the propagation elements
-   * The method is expected to return consistent result once the setupPropagationStructure method is called
-   */
+    * of the propagation elements
+    * The method is expected to return consistent result once the setupPropagationStructure method is called
+    */
   private var MaxID: Int = -1
 
   def getMaxID = MaxID
@@ -89,26 +90,26 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   private var acyclic: Boolean = false
 
   /**@return true if the propagation structure consider that his graph is acyclic, false otherwise.
-   * call this after the call to setupPropagationStructure
-   * If the propagation structure has been created with NoCycle set to true, this will return true
-   */
+    * call this after the call to setupPropagationStructure
+    * If the propagation structure has been created with NoCycle set to true, this will return true
+    */
   def isAcyclic: Boolean = acyclic
 
   /**return the summed stalls of all SCC.
-   * A stall is when the SCC is unable to maintain the topological sort incrementally,
-   * and must recompute it from scratch
-   * this happens when dependencies are modified with transient cycles
-   * @return the summed number of stalls for all the SCC
-   */
+    * A stall is when the SCC is unable to maintain the topological sort incrementally,
+    * and must recompute it from scratch
+    * this happens when dependencies are modified with transient cycles
+    * @return the summed number of stalls for all the SCC
+    */
   def getStalls = StronglyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
   private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**To call when one has defined all the propagation elements on which propagation will ever be triggered.
-   * It must be called before any propagation is triggered,
-   * as it allows the propagation structure to build the necessary internal structures
-   * @param DropStaticGraph if true, the propagation structure drops the static graph after setup.
-   */
+    * It must be called before any propagation is triggered,
+    * as it allows the propagation structure to build the necessary internal structures
+    * @param DropStaticGraph if true, the propagation structure drops the static graph after setup.
+    */
   protected def setupPropagationStructure(DropStaticGraph: Boolean) {
 
     if (verbose) {
@@ -218,8 +219,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
   /**This computes the position of the clustered PE based on distance to input,
-   * that is: the SCC and the PE not belonging to an SCC
-   * @return the max Position, knowing that the first is zero*/
+    * that is: the SCC and the PE not belonging to an SCC
+    * @return the max Position, knowing that the first is zero*/
   private def computePositionsthroughDistanceToInput(ClusteredPropagationComponents:List[PropagationElement]):Int = {
     if (verbose) println("PropagationStructure: Positioning through layered sort")
     val Front:Queue[PropagationElement] =  new Queue[PropagationElement]()
@@ -271,8 +272,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
   /**to call before setupPropagationStructure to specify PropagationElements
-   * on which one will invoque partial propagation
-   */
+    * on which one will invoque partial propagation
+    */
   def registerForPartialPropagation(p: PropagationElement) {
     FastPropagationTracks += ((p, null))
   }
@@ -283,12 +284,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   def isPropagating:Boolean = Propagating
 
   /**triggers the propagation in the graph.
-   * this method will do nothing if called before setupPropagationStructure
-   * if UpTo set to a PropagationElement,
-   * and provided it has been registered through the registerForPartialPropagation method,
-   * the propagation will be partial, targeting this element.
-   * @param UpTo: the optional target of partial propagation
-   */
+    * this method will do nothing if called before setupPropagationStructure
+    * if UpTo set to a PropagationElement,
+    * and provided it has been registered through the registerForPartialPropagation method,
+    * the propagation will be partial, targeting this element.
+    * @param UpTo: the optional target of partial propagation
+    */
   final def propagate(UpTo: PropagationElement = null) {
     if (!Propagating) {
       if (UpTo != null) {
@@ -316,9 +317,9 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
   /**Builds the partial propagation track for the specified target
-   * @param target the propagation element for which we build the partial propagation track
-   * @return an array of boolean: UniqueID => should the element with UniqueID be propagated for this target?
-   */
+    * @param target the propagation element for which we build the partial propagation track
+    * @return an array of boolean: UniqueID => should the element with UniqueID be propagated for this target?
+    */
   private def BuildFastPropagationtrack(target: PropagationElement): Array[Boolean] = {
     val Track: Array[Boolean] = new Array[Boolean](getMaxID + 1)
     for (i <- 0 to getMaxID) Track(i) = false
@@ -415,27 +416,27 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
   /**this variable controls propagation.
-   * initially true to avoid spurious propagation during the construction of the data structure;
-   * set to false by setupPropagationStructure
-   */
+    * initially true to avoid spurious propagation during the construction of the data structure;
+    * set to false by setupPropagationStructure
+    */
   var Propagating: Boolean = true
 
   /**this variable is set by the propagation element to notify that they are propagating.
-   * it is used to ensure that no propagation element perform illegal operation
-   * such as writing a variable they do not control, etc)*/
+    * it is used to ensure that no propagation element perform illegal operation
+    * such as writing a variable they do not control, etc)*/
   var PropagatingElement: PropagationElement = null
 
   /**returns the propagation element that is currently propagating.
-   * it allows one to ensure that the propagating element behaves as declared in its dependencies
-   */
+    * it allows one to ensure that the propagating element behaves as declared in its dependencies
+    */
   def getPropagatingElement: PropagationElement = PropagatingElement
 
   /**This dumps the propagation graphs in a dot format, for documentation purposes
-   * Static graph should only be set if the static graph has not been dropped
-   * @param StaticGraph adds the static graph as red arrows
-   * @param DynamicGraph adds the dynamic graph as blue arrows
-   * @return a string that contains the dot format
-   **/
+    * Static graph should only be set if the static graph has not been dropped
+    * @param StaticGraph adds the static graph as red arrows
+    * @param DynamicGraph adds the dynamic graph as blue arrows
+    * @return a string that contains the dot format
+    **/
   def dumpToDot(StaticGraph: Boolean, DynamicGraph: Boolean, Target:PropagationElement = null): String = {
     var ToReturn = "digraph PropagationStructure {\n"
     ToReturn += "   rankdir=LR;\n"
@@ -505,25 +506,26 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
   /**Builds a dictionary to store data related to the PE.
-   * the dictionary is O(1), based on an array.
-   * It only works on PE that are registered to this structure.
-   * The storage is not initialized, call the initialize to set it to some conventional value. 
-   * @tparam T the type stored in the data structure
-   * @return a dictionary over the PE that are registered in the propagation structure.
-   */
+    * the dictionary is O(1), based on an array.
+    * It only works on PE that are registered to this structure.
+    * The storage is not initialized, call the initialize to set it to some conventional value.
+    * @tparam T the type stored in the data structure
+    * @return a dictionary over the PE that are registered in the propagation structure.
+    */
   def getNodeStorage[T](implicit X:Manifest[T]):NodeDictionary[T] = new NodeDictionary[T](this.MaxID)
 }
 
 /**This is a O(1) dictionary for propagation elements.
- * It is based on an array, and the keys it support is only the PE that have been reistered
- * to the propagation structure by the time this is instantiated.
- * WARNING: this is not efficient if you do not actually use many of the keys
- * because the instantiated array will be very large compared to your benefits.
- * This might kill cache and RAM for nothing
- *
- * @param MaxNodeID the maxial ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
- * @tparam T the type stored in this structure
- */
+  * It is based on an array, and the keys it support is only the PE that have been reistered
+  * to the propagation structure by the time this is instantiated.
+  * WARNING: this is not efficient if you do not actually use many of the keys
+  * because the instantiated array will be very large compared to your benefits.
+  * This might kill cache and RAM for nothing
+  *
+  * @param MaxNodeID the maxial ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
+  * @tparam T the type stored in this structure
+  * @author renaud.delandtsheer@cetic.be
+  */
 class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   private val storage:Array[T] = new Array[T](MaxNodeID-1)
 
@@ -532,12 +534,12 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   }
 
   def get(elem:PropagationElement):T = storage(elem.UniqueID)
-  
+
   def initialize(value:T){for (i <- storage.indices) storage(i) = value}
 }
 
 class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
-                              val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with DAG {
+                                 val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with DAG {
 
   var ScheduledElements: List[PropagationElement] = List.empty
 
@@ -645,21 +647,24 @@ object PropagationElement {
   }
 }
 
-/**This class is used in Asteroid as a handle to register and unregister dynamically to variables*/
+/**This class is used in as a handle to register and unregister dynamically to variables
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class KeyForElementRemoval(element: PropagationElement
                                 , KeyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)]
                                 , KeyForListeningElement: PFDLLStorageElement[PropagationElement])
 
 /**this is a propagation element. It mainly defines:
- * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
- * its performPropagation and checkInternals methods
- * it also has a scheduleForPropagation method that can be invoked by custom code
- * to notify that this propagation element should be included in the coming or current propagation wave.
- *
- * There are two graph mentioning the dependencies of propagation elements:
+  * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
+  * its performPropagation and checkInternals methods
+  * it also has a scheduleForPropagation method that can be invoked by custom code
+  * to notify that this propagation element should be included in the coming or current propagation wave.
+  *
+  * There are two graph mentioning the dependencies of propagation elements:
  - a static propagation graph that does not change after the call to setupPropagationStructure
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
 
   final def compare(that: DAGNode): Int = {
@@ -669,24 +674,24 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**this refers to the propagationComponent that contains the PropagationElement.
-   * it is managed by the propagation structure
-   */
+    * it is managed by the propagation structure
+    */
   var component: StronglyConnectedComponent = null
 
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
-   * this is managed by the PropagationElement
-   */
+    * this is managed by the PropagationElement
+    */
   var isScheduled: Boolean = false
 
   /**set to true if the PropagationElement is one that can break
-   * or make dependency cycles in the dynamic dependency graph
-   * managed by the PropagationComponent
-   * basically, set to true if the determiningElement is not in the same component
-   * and if this PropagationElement belongs to a cycle in the static dependency graph*/
+    * or make dependency cycles in the dynamic dependency graph
+    * managed by the PropagationComponent
+    * basically, set to true if the determiningElement is not in the same component
+    * and if this PropagationElement belongs to a cycle in the static dependency graph*/
   var IsBoundary: Boolean = false
 
   /**this sets the value of IsBoundary according to the definition of this variable
-   * @return the value of IsBoundary*/
+    * @return the value of IsBoundary*/
   def determineBoundary() {
     if (component == null) {
       IsBoundary = false
@@ -707,10 +712,10 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   var DeterminingElements: List[PropagationElement] = List.empty
 
   val DynamicallyListenedElements: PermaFilteredDoublyLinkedList[PropagationElement]
-    = new PermaFilteredDoublyLinkedList[PropagationElement]
+  = new PermaFilteredDoublyLinkedList[PropagationElement]
 
   val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
-    = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
+  = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
 
   var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
@@ -719,19 +724,19 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   def InitiateDynamicGraphFromSameComponent() {
     assert(component != null)
     DynamicallyListenedElementsFromSameComponent
-       = DynamicallyListenedElements.PermaFilter((e: PropagationElement) => e.component == component)
+      = DynamicallyListenedElements.PermaFilter((e: PropagationElement) => e.component == component)
     DynamicallyListeningElementsFromSameComponent
       = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component, (e) => e._1)
   }
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
-   * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
-   * to override*/
+    * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
+    * to override*/
   final def getStaticallyListenedElements: Iterable[PropagationElement] = StaticallyListenedElements
 
   /**through this method, the PropagationElement must declare which PropagationElement listen to it
-   * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
-   * to override*/
+    * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
+    * to override*/
   final def getStaticallyListeningElements: Iterable[PropagationElement] = StaticallyListeningElements
 
   final def getDynamicallyListeningElements: Iterable[(PropagationElement, Any)] = DynamicallyListeningElements
@@ -739,20 +744,20 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   final def getDynamicallyListenedElements: Iterable[PropagationElement] = DynamicallyListenedElements
 
   /**registers an element in the static dependency graph.
-   * Beware that you also need to register elements in the dynamic propagation graph for something to happen.
-   * @param p the element that we register to
-   **/
+    * Beware that you also need to register elements in the dynamic propagation graph for something to happen.
+    * @param p the element that we register to
+    **/
   protected final def registerStaticallyListenedElement(p: PropagationElement) {
     StaticallyListenedElements = p :: StaticallyListenedElements
     p.StaticallyListeningElements = this :: p.StaticallyListeningElements
   }
 
   /**must belong to the statically listened elements.
-   * cannot be added to the dynamically listened ones (it is added through this method, so you cannot remove it)
-   * @param p the element that determines the dynamic dependencies of the propagation element
-   * @param i an additional value that is stored in this element together with the reference to this,
-   * can be use for notification purposes
-   */
+    * cannot be added to the dynamically listened ones (it is added through this method, so you cannot remove it)
+    * @param p the element that determines the dynamic dependencies of the propagation element
+    * @param i an additional value that is stored in this element together with the reference to this,
+    * can be use for notification purposes
+    */
   protected final def registerDeterminingElement(p: PropagationElement, i: Any) {
     assert(this.getStaticallyListenedElements.exists(e => e == p),
       "dependency to determining element " + p + " must be registered in static propagation graph")
@@ -761,16 +766,16 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**the variable that influence on the dependencies of the propagation element
-   * these are propagated first to constitute the dynamic propagation graph*/
+    * these are propagated first to constitute the dynamic propagation graph*/
   def getDeterminingElements: Iterable[PropagationElement] = DeterminingElements
 
   /**this registers to the element in the dynamic propagation graph.
-   * this element must have been registered o the static propagation graph before, or be accessible through a bulk
-   * @param p the element that we register to
-   * @param i a value that can be exploited by the element to notify its updates. normally, this value should be an int,
-   *            if other type is used, the invariant should override a dedicated notification method.
-   * @return a key that is needed to unregister the element in the dynamic propagation graph
-   */
+    * this element must have been registered o the static propagation graph before, or be accessible through a bulk
+    * @param p the element that we register to
+    * @param i a value that can be exploited by the element to notify its updates. normally, this value should be an int,
+    *            if other type is used, the invariant should override a dedicated notification method.
+    * @return a key that is needed to unregister the element in the dynamic propagation graph
+    */
   protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
     assert(isStaticPropagationGraphOrBulked(p, 1),
       "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
@@ -788,13 +793,13 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**checks that the propagation element is statically listened to, possibly
-   * up to the transitivity depth mentioned in depth
-   * Beware: this is really not efficient, so do not call unless in heavy debug mode
-   * it is called by all register methods, by the way
-   * @param p the propagation element to find
-   * @param depth the maximal transitivity depth (basically to ensure that we do not follow bulk chains)
-   * @return true if found, false otherwise
-   */
+    * up to the transitivity depth mentioned in depth
+    * Beware: this is really not efficient, so do not call unless in heavy debug mode
+    * it is called by all register methods, by the way
+    * @param p the propagation element to find
+    * @param depth the maximal transitivity depth (basically to ensure that we do not follow bulk chains)
+    * @return true if found, false otherwise
+    */
   private def isStaticPropagationGraphOrBulked(p: PropagationElement, depth: Int = 0): Boolean = {
     if (getStaticallyListenedElements == null) return true //static graph has been dropped
     for (q <- getStaticallyListenedElements) {
@@ -819,10 +824,10 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   final def getDAGPrecedingNodes: Iterable[DAGNode]
-    = DynamicallyListenedElementsFromSameComponent
+  = DynamicallyListenedElementsFromSameComponent
 
   final def getDAGSucceedingNodes: Iterable[DAGNode]
-    = DynamicallyListeningElementsFromSameComponent
+  = DynamicallyListeningElementsFromSameComponent
 
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
@@ -850,9 +855,9 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**Sets the Position oto the number of element that need to be decremented, not belonging to same connex component
-   * for connex component, set it to the number of element that are referenced from othercomponents
-   * @return true if there is a dependency, false otherwise
-   */
+    * for connex component, set it to the number of element that are referenced from othercomponents
+    * @return true if there is a dependency, false otherwise
+    */
   def setCounterToPrecedingCount(): Boolean = {
     //le compteur est mis au nombre de noeud precedent qui ne sont pas dans la meme composante connexe
     if (this.component == null) {
@@ -893,7 +898,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**Performs the propagation, and some bookkeeping around it.
-   */
+    */
   final def propagate() {
     assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
@@ -905,34 +910,38 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   }
 
   /**this is the propagation method that should be overridden by propagation elements.
-   * notice that it is only called in a propagation wave if:
-   * 1: it has been registered for propagation since the last time it was propagated
-   * 2: it is included in the propagation wave: partial propagation wave do not propagate all propagation elements;
-   *    it only propagates the ones that come in the predecessors of the targeted propagation element
-   *  overriding this method is optional, so an empty body is provided by default*/
+    * notice that it is only called in a propagation wave if:
+    * 1: it has been registered for propagation since the last time it was propagated
+    * 2: it is included in the propagation wave: partial propagation wave do not propagate all propagation elements;
+    *    it only propagates the ones that come in the predecessors of the targeted propagation element
+    *  overriding this method is optional, so an empty body is provided by default*/
   def performPropagation() {
     ;
   }
 
   /**This is the debug procedure through which propagation element can redundantly check
-   * that the incremental computation they perform through the performPropagation method is correct
-   * overriding this method is optional, so an empty body is provided by default
-   */
+    * that the incremental computation they perform through the performPropagation method is correct
+    * overriding this method is optional, so an empty body is provided by default
+    */
   def checkInternals(c: Checker) {
     ;
   }
 
   /**This returns the dot node to display on the DOT output for the node. Only the argument of the nodes
-   * example: "[label= \"toto\" shape=diamond color=red]"
-   * */
+    * example: "[label= \"toto\" shape=diamond color=red]"
+    * */
   def getDotNode: String
 
 }
 
 /**This is the node type to be used for bulking
- **/
+  * @author renaud.delandtsheer@cetic.be
+  * **/
 trait BulkPropagator extends PropagationElement
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 abstract trait Checker {
   def check(verity: Boolean, traceOption: Option[String] = None)
 }
