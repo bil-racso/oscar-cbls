@@ -28,6 +28,9 @@ import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 
+/**
+* @author renaud.delandtsheer@cetic.be
+*/
 abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
   def doMove() {
@@ -37,7 +40,9 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   }
 }
 
-//c'est toujours le first improve, jamais le best improve.
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 abstract class Neighborhood() {
 
   /**
@@ -163,6 +168,8 @@ abstract class Neighborhood() {
 /**
  * primaryNodeIterator is a stateful iteration on nodes, it might be re-used,
  * actually so only consume that you really examined
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
  */
 // format: OFF (to prevent Eclipse from formatting the following lines)
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),

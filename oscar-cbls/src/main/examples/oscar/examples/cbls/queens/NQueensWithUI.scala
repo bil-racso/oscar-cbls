@@ -173,7 +173,6 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     for (q <- range) {
       c.violation(Queens(q))
     }
-    c.close()
 
     val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
 

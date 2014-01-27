@@ -26,6 +26,8 @@ import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntVar
 
 /**
  * Maintains a integer weight on each node to help to form constraints (adding information).
+ * @author renaud.delandtsheer@cetic.be
+ * THIS IS EXPERIMENTAL
  */
 class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
 
@@ -38,6 +40,8 @@ class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
 
 /** maintains a cost associated to each vehicle
   *the cost is the sum of the cost associated to each node crossed by the vehicle
+  * @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL
   */
 class CommutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "CumulativeCapacity") extends NodeWeighting(vrp,CapacityName){
   val CostOfVehicle = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
@@ -47,6 +51,8 @@ class CommutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "Cu
   *
   * @param vrp the routing model
   * @param CapacityOut the capacity when leaving a node
+  * @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL
   */
 class NonCommutativeProgressiveCapacity(vrp:VRP with Predecessors,
                                 var CapacityOut:Array[CBLSIntVar] =  null){

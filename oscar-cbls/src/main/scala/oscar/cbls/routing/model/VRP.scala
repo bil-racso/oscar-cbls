@@ -46,7 +46,9 @@ import oscar.cbls.invariants.lib.set.Diff
  * @param N the number of points (deposits and customers) in the problem.
  * @param V the number of vehicles.
  * @param m the model.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
@@ -127,7 +129,10 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 }
 
-/**this records touched points when comit with no undo, or when cleaning move*/
+/** this records touched points when comit with no undo, or when cleaning move*
+* @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL
+*/
 trait HotSpotRecording extends VRP with MoveDescription {
 
   var hotspotList: List[Int]
@@ -168,6 +173,10 @@ trait HotSpotRecording extends VRP with MoveDescription {
   }
 }
 
+/**
+ * describes moves in a spart way by use of segments
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait MoveDescription extends VRP {
   private var Recording = true //recording ou comitted
   def isRecording = Recording
@@ -308,6 +317,9 @@ trait MoveDescription extends VRP {
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   def cutAt(start: Int, end: Int): Segment = {
     cut(this.preds(start).value, end)
@@ -318,6 +330,10 @@ trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ */
 trait VRPObjective extends VRP {
 
   val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
@@ -349,6 +365,9 @@ trait VRPObjective extends VRP {
  * Info : unrouted nodes are those whose next is N.
  * This trait is abstract, since unrouted can be implemented either stand alone,
  * or as a side effect of other traits
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 abstract trait RoutedAndUnrouted extends VRP {
   /**
@@ -366,6 +385,9 @@ abstract trait RoutedAndUnrouted extends VRP {
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 trait UnroutedImpl extends VRP with RoutedAndUnrouted {
   /**
@@ -377,6 +399,9 @@ trait UnroutedImpl extends VRP with RoutedAndUnrouted {
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
@@ -405,6 +430,10 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
 
+
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
   final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
@@ -412,7 +441,9 @@ trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
@@ -479,7 +510,9 @@ abstract trait ClosestNeighbors extends VRP {
  * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
  * We consider that a hop distance of Int.MaxVal is unreachable.
  * HopDistance is only handling simple cost functions such as cost matrices
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait HopDistance extends VRP {
   /**
    * the data structure which maintains the current hop distance of each node to reach his successor.
@@ -532,14 +565,17 @@ trait HopDistance extends VRP {
  * Declares an objective function, attached to the VRP.
  * It maintains it equal to the hop distance in the VRP,
  * based either on a matrix, or on another mechanism defined by the distance function.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
   addObjectiveTerm(overallDistance)
 }
 
 /**
  * Maintains the set of nodes reached by each vehicle
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
@@ -548,7 +584,9 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
 /**
  * Maintains the position of nodes in the routes, the route number of each node,
  * the length of each route and their last node.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait PositionInRouteAndRouteNr extends VRP {
 
   /**
@@ -634,7 +672,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 /**
  * Maintains a penalty weight for routes which do not contain task nodes.
  * That is: they only contain the vehicle node.
- */
+ * @author yoann.guyot@cetic.be
+ * */
 trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
   /**
    * The data structure array which maintains route penalty.
@@ -676,7 +715,9 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
 /**
  * This trait maintains the predecessors of each node of the VRP.
  * It uses the Predecessor invariant.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait Predecessors extends VRP {
   /**
    * the data structure array which maintains the predecessors of each node.
@@ -690,7 +731,8 @@ trait Predecessors extends VRP {
  * This trait maintains strong constraints system.
  * It redefines the propagation method of ObjectiveFunction trait,
  * that saves time by propagating partially.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
@@ -703,7 +745,8 @@ trait StrongConstraints extends VRPObjective {
 
 /**
  * This trait maintains weak constraints system.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.

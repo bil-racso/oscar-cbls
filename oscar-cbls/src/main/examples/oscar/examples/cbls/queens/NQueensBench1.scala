@@ -30,7 +30,7 @@ import oscar.cbls.invariants.lib.minmax._
 import util.Random
 import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
-;
+import scala.language.postfixOps
 
 //Beware: this requires a lot of memory, so I use to put this in the command line.
 //-Xms1000M -Xmx1000M

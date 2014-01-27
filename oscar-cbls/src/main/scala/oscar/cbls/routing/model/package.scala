@@ -23,6 +23,9 @@ package oscar.cbls.routing
  * Concrete modeling of vehicle routing problem.
  * It specifies the data structure used, conventions,
  * and additional information in the form of 'traits' that may be required such a problem.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 package object model{}
 

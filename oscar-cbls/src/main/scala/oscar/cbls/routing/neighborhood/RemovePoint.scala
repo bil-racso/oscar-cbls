@@ -32,6 +32,9 @@ import oscar.cbls.routing.model.{ MoveDescription, VRP }
 /**
  * Removes a point of route.
  * The search complexity is O(n).
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object RemovePoint extends Neighborhood with SearchEngineTrait {
 
@@ -75,6 +78,9 @@ object RemovePoint extends Neighborhood with SearchEngineTrait {
  * @param beforeRemovedPoint the predecessor of the point that will be removed.
  * @param objAfter the objective value if we performed this remove-point operator.
  * @param vrp the given VRP problem.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 case class RemovePoint(
   beforeRemovedPoint: Int,

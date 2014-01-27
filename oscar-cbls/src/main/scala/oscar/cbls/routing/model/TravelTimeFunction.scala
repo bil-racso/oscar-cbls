@@ -30,6 +30,9 @@ import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.core.computation.CBLSIntConst
 
+/** an abstract class representing a travel time function
+  * @author renaud.delandtsheer@cetic.be
+  */
 abstract class TravelTimeFunction {
   def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int
   def getBackwardTravelDuration(from: Int, arrivalTime: Int, to: Int): Int
@@ -41,6 +44,9 @@ abstract class TravelTimeFunction {
   def getMaxTravelDuration(from: Int, to: Int): Int
 }
 
+/** adds the notion of time to your VRP
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait Time extends VRP with Predecessors {
   val defaultArrivalTime = new CBLSIntConst(0)
   val arrivalTime = Array.tabulate(N) {
@@ -72,6 +78,7 @@ trait Time extends VRP with Predecessors {
  * when the cost of a hop is more complex than a distance matrix.
  * Beware, you must still define the leaveTime from the ArrivalTime (or not)
  * and you can post strong constraints on these values
+ * @author renaud.delandtsheer@cetic.be
  */
 trait TravelTimeAsFunction extends VRP with Time {
 
@@ -92,6 +99,9 @@ trait TravelTimeAsFunction extends VRP with Time {
   }
 }
 
+/** to post time window constraints
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
@@ -109,6 +119,9 @@ trait TimeWindow extends Time with StrongConstraints {
 
 }
 
+/** addition ot the [[oscar.cbls.routing.model.TimeWindow]] trait, adds a variable representing the waiting duration
+  * @author renaud.delandtsheer@cetic.be
+  */
 trait WaitingDuration extends TimeWindow {
   val waitingDuration = Array.tabulate(N) {
     (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
@@ -133,6 +146,7 @@ trait WaitingDuration extends TimeWindow {
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
+ * @author renaud.delandtsheer@cetic.be
  */
 trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
@@ -140,16 +154,25 @@ trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm extends VRPObjective with Time {
   for (v <- 0 to V - 1) {
     addObjectiveTerm(arrivalTime(v) - leaveTime(v))
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait TimeSpentOnRouteAsObjectiveTerm extends VRPObjective with Time {
   addObjectiveTerm(Sum(travelOutDuration))
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait WaitingTimeAsObjectiveTerm extends VRPObjective with WaitingDuration {
   addObjectiveTerm(Sum(waitingDuration))
 }

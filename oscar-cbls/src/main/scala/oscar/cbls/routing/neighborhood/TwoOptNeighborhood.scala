@@ -33,7 +33,10 @@ import oscar.cbls.search.SearchEngineTrait
  * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
  *
  * The search complexity is O(n²).
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 object TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
 
   /**
@@ -88,7 +91,10 @@ object TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
  * @param sndPred the start of second edge that we remove.
  * @param objAfter the objective value if we performed this two-opt-move operator.
  * @param vrp the given VRP problem.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 case class TwoOptMove(
   fstPred: Int,
   sndPred: Int,

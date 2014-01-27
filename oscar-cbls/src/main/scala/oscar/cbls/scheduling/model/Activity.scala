@@ -28,6 +28,15 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
+/**
+ *
+ * @param startDate
+ * @param duration
+ * @param planning
+ * @param name
+ * @author renaud.delandtsheer@cetic.be
+ * THIS IS EXPERIMENTAL
+ * */
 class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Planning, name: String = "")
   extends Activity(duration: CBLSIntVar, planning: Planning, name){
   override def canAddPrecedence: Boolean = false
@@ -46,6 +55,13 @@ class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Plannin
   }
 }
 
+/**
+ *
+ * @param start
+ * @param end
+ * @param name
+ * @author renaud.delandtsheer@cetic.be
+ */
 class SuperActivity(start: Activity, end: Activity, override val name: String = "")
   extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
     start.planning, name) {
@@ -110,7 +126,8 @@ object Activity{
  * @param planning
  * @param name
  * @param Shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "", Shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a) {
   val ID: Int = planning.AddActivity(this)
 

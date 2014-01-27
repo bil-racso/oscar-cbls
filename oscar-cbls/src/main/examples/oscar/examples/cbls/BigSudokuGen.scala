@@ -135,9 +135,6 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     // register for violation
     for (i <- LinearIndexes) { c.violation(grid(i)) }
 
-    // closing constraints
-    c.close()
-    
     // working variables
     val Tabu:Array[CBLSIntVar] = (for (i <- LinearIndexes) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
     

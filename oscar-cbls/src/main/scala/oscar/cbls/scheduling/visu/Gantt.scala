@@ -22,6 +22,11 @@ import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualText
 import oscar.cbls.scheduling.model.{Activity, Planning}
 
+/**
+ *
+ * @param p
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Gantt(p:Planning) extends VisualDrawing(false, false) {
 
   var LineCount = 0

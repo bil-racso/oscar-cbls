@@ -25,7 +25,7 @@ package oscar.cbls.routing.model
   *
   * @param nodeCount the number of nodes to consider; continuous ranges starting at zero
   * @param defaultTTF if we do not specify a TTF for a node, this is the value considered
-  * @author Renaud De Landtsheer
+  * @author renaud.delandtsheer@cetic.be
   */
 class TTFMatrix(nodeCount:Int,defaultTTF:PrimitiveTravelTimeFunction) extends TravelTimeFunction{
 
@@ -55,7 +55,7 @@ class TTFMatrix(nodeCount:Int,defaultTTF:PrimitiveTravelTimeFunction) extends Tr
 }
 
 /** This stores a single TTF of a travel binding two nodes
-  * @author Renaud De Landtsheer
+  * @author renaud.delandtsheer@cetic.be
   * */
 abstract class PrimitiveTravelTimeFunction {
 
@@ -84,7 +84,7 @@ abstract class PrimitiveTravelTimeFunction {
 /** A TTF that is constant
   * this is similar to using a TTFHistogram with a single slot, but this class is lighter
   * @param travelDuration the duration of the travel
-  * @author Renaud De Landtsheer
+  * @author renaud.delandtsheer@cetic.be
   **/
 class TTFConst(travelDuration:Int) extends PrimitiveTravelTimeFunction {
   override def getTravelDuration(leaveTime: Int): Int = travelDuration
@@ -103,7 +103,8 @@ class TTFConst(travelDuration:Int) extends PrimitiveTravelTimeFunction {
  *
  * @param NbSlots the number of slots in the histogram
  * @param overallDuration the duration of the whole TTF
- * @author Renaud De Landtsheer
+ * @author renaud.delandtsheer@cetic.be
+ * THIS IS EXPERIMENTAL
  * */
 class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTravelTimeFunction {
   private val slotDuration:Int = overallDuration / NbSlots
@@ -193,7 +194,7 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
  *
  * @param NbPoints the number of points to consider
  * @param overallDuration the duration to consider
- * @author Renaud De Landtsheer
+ * @author renaud.delandtsheer@cetic.be
  * */
 class TTFSegments(val NbPoints:Int, val overallDuration:Int) extends PrimitiveTravelTimeFunction {
 

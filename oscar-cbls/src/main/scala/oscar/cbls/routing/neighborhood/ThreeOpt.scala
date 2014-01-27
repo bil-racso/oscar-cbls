@@ -37,7 +37,10 @@ import oscar.cbls.search.SearchEngineTrait
  *
  * Info : it also could be saw as the move of a route's segment to another place.
  * The search complexity is O(n³).
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 object ThreeOpt extends Neighborhood with SearchEngineTrait {
   val REVERSE = true
 
@@ -152,7 +155,10 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
  * @param trdEdgeStartPoint the place where to insert the moved segment.
  * @param objAfter the objective value if we performed this three-opt-move operator.
  * @param vrp the given VRP problem.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 case class ThreeOpt(fstEdgeStartPoint: Int, sndEdgeStartPoint: Int, trdEdgeStartPoint: Int,
                     reverseSegment: Boolean, override val vrp: MoveDescription,
                     override val objAfter: Int) extends Move(objAfter, vrp) {

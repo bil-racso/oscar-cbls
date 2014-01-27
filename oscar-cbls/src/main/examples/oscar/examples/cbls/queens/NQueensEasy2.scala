@@ -22,7 +22,7 @@ package oscar.examples.cbls.queens
 
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
-
+import scala.language.postfixOps
 
 /**
  * Created by rdl on 13/01/14.

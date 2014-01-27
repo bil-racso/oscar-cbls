@@ -74,6 +74,9 @@ class smalltest extends FunSuite with Checkers {
   }
 }
 
+/**
+ * @author yoann.guyot@cetic.be
+ */
 class InvariantTests extends FunSuite with Checkers {
 
   val verbose = 0

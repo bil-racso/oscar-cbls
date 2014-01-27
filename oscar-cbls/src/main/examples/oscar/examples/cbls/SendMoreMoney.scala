@@ -98,7 +98,6 @@ object SendMoreMoney extends SearchEngine with StopWatch {
 
     // search variables
     val ViolationArray:Array[CBLSIntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
-    c.close()
     val Tabu:Array[CBLSIntVar] = (for (i <- Letter.list) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = CBLSIntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:CBLSSetVar = SelectLESetQueue(Tabu, It)
