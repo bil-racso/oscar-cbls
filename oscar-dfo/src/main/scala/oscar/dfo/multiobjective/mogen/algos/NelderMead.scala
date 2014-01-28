@@ -22,9 +22,14 @@ import oscar.algo.paretofront.ParetoFront
 import oscar.algo.paretofront.ParetoElement
 
 object NelderMead extends ComparativeAlgorithm {
+  var tolerance = math.pow(10.0, -2.0)
+  
   def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
       case nmState: NelderMeadState => {
+        if (nmState.getSmallestEdge < tolerance) {
+          nmState.reinitializeSimplex(nmState.startIntervals, evaluator, feasReg)
+        }
         val centroid = nmState.getCentroid
         val reflectedPoint = nmState.getReflection(evaluator, feasReg, centroid)
         // The reflected point is better than the second worst point of the simplex but worse or equivalent to the best point (f^0 <= f^r < f^(n-1) for SO minimisation problems)

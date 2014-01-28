@@ -22,6 +22,7 @@ import oscar.algo.paretofront.LinearList
 import oscar.algo.paretofront.ParetoFront
 import scala.Array.canBuildFrom
 import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
+import oscar.dfo.multiobjective.mogen.algos.states.NelderMeadState
 
 class MOGEN(var evaluator: MOEvaluator) {
 
@@ -31,10 +32,15 @@ class MOGEN(var evaluator: MOEvaluator) {
   var archive = LinearList[Double, MOGENTriplet]()
   /** The iterate selection heuristic */
   var selectionHeuristic: ParetoFront[Double, MOGENTriplet] => MOGENTriplet = MOGEN.fairSelect
+  /** The starting intervals of the points */
+  var startIntervals = Array[(Double, Double)]()
+  /** The probability of performing a search step */
+  var searchStepProba = 0.1
 
   def initFeasibleReagion(feasibilityFunctions: List[Array[Double] => Boolean]) = for (newFun <- feasibilityFunctions) feasibleRegion.addFunction(newFun)
 
   def initArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
+    this.startIntervals = startIntervals
     for (i <- 1 to 100) {
       val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
@@ -66,23 +72,36 @@ class MOGEN(var evaluator: MOEvaluator) {
       performIteration(nbIterations)
       nbIterations += 1
     }
-    println("NB EVALS: " + evaluator.nbCallToEvalFunction)
     archive.toSet.map((e: MOGENTriplet) => e.getMOOPoint)
   }
   
   def performIteration(iterationNumber: Int) {
+    if (RandomGenerator.nextDouble <= searchStepProba) searchStep
     val currentTriplet = selectIterate
     MOGEN.onIterateSelected(currentTriplet)
-    println("What?")
-    //if (visu) {paretoPlot.highLightIterate(currentTriplet); Thread.sleep(500)}
     val newPoints = currentTriplet.getAlgorithm.singleIteration(currentTriplet.getAlgorithmState, archive, feasibleRegion, evaluator)
     var archiveChanged = false
     for (newPoint <- newPoints) {
-      newPoint.iter = iterationNumber
       val newTriplet = MOGENTriplet(newPoint, currentTriplet.getAlgorithm, currentTriplet.getAlgorithmState.getNewState(newPoint))
+      archive.insert(newTriplet)
       archiveChanged = archiveChanged || archive.contains(newTriplet)
     }
     archive.insert(currentTriplet)
+    if (archiveChanged) MOGEN.onArchiveChanged(archive)
+  }
+  
+  def searchStep {
+    val point1 = archive.randomElement
+    val point2 = archive.randomElement
+    val randMultiplier = RandomGenerator.nextDouble
+    val newCoords = Array.tabulate(point1.nbCoordinates)(i => point1.coordinates(i) + randMultiplier * point1.coordinates(i) + (1.0 - randMultiplier) * point2.coordinates(i))
+    val newAlgoState = point1.getAlgorithm.getInitialState(newCoords, startIntervals, evaluator, feasibleRegion)
+    var archiveChanged = false
+    for (newPoint <- newAlgoState.getPoints) {
+      val newTriplet = MOGENTriplet(newPoint, point1.getAlgorithm, newAlgoState.getNewState(newPoint))
+      archive.insert(newTriplet)
+      archiveChanged = archiveChanged || archive.contains(newTriplet)
+    }
     if (archiveChanged) MOGEN.onArchiveChanged(archive)
   }
 
