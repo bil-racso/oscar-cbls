@@ -41,7 +41,7 @@ class MOGEN(var evaluator: MOEvaluator) {
 
   def initArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
     this.startIntervals = startIntervals
-    for (i <- 1 to 100) {
+    for (i <- 1 to maxNbPoints) {
       val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
         val newAlgo = getRandomAlgo(algorithms)
