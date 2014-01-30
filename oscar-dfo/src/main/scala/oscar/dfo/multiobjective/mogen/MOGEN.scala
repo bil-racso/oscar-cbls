@@ -66,9 +66,9 @@ class MOGEN(var evaluator: MOEvaluator) {
     algorithms(0)._1
   }
 
-  def optimizeMOO(maxIters: Int): Set[MOOPoint] = {
+  def optimizeMOO(maxIters: Int, maxEvals: Int = Int.MaxValue): Set[MOOPoint] = {
     var nbIterations = 1
-    while (nbIterations <= maxIters) {
+    while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
     }
@@ -86,7 +86,7 @@ class MOGEN(var evaluator: MOEvaluator) {
       archive.insert(newTriplet)
       archiveChanged = archiveChanged || archive.contains(newTriplet)
     }
-    archive.insert(currentTriplet)
+    archive.priorityQueue.enqueue(currentTriplet)
     if (archiveChanged) MOGEN.onArchiveChanged(archive)
   }
   

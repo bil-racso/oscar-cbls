@@ -22,7 +22,7 @@ import oscar.algo.paretofront.ParetoFront
 import oscar.algo.paretofront.ParetoElement
 
 object NelderMead extends ComparativeAlgorithm {
-  var tolerance = math.pow(10.0, -2.0)
+  var tolerance = math.pow(10.0, -3.0)
   
   def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
