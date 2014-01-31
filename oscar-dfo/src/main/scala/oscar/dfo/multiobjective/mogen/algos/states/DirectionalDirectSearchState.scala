@@ -74,6 +74,9 @@ class DirectionalDirectSearchState(initPoint: MOOPoint, val stepSizes: Array[Dou
     for (i <- 0 until stepSizes.length) {
       stepSizes(i) = (stepSizeIntervals(i)._2 - stepSizeIntervals(i)._1) / 5.0
     }
+    for (i <- 0 until basisSize) {
+      currentBasis(i) = getNewRandomDirection
+    }
   }
   
   def increaseStepSizes = {

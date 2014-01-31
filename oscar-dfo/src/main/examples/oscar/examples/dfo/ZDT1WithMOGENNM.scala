@@ -48,7 +48,7 @@ object ZDT1WithMOGENNM extends App {
   val mogenSolver = MOGEN(evaluator)
 
   mogenSolver.initFeasibleReagion(List(inUnitHV))
-  mogenSolver.initArchive(100, Array.fill(nbCoordinates)((0.0, 1.0)), List((NelderMead, 1.0)))
+  mogenSolver.initSinglePointArchive(Array.fill(nbCoordinates)((0.0, 1.0)), List((NelderMead, 1.0)))//initRandomArchive(100, Array.fill(nbCoordinates)((0.0, 1.0)), List((NelderMead, 1.0)))
   
   val f = VisualFrame("toto")
   val inf = f.createFrame("Drawing")
