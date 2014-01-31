@@ -545,9 +545,9 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   }
 
   def check3OptMove(f: MoveFixture, move: ThreeOpt) {
-    val fstEdgeEnd = f.initNext(move.fstEdgeStartPoint)
-    val sndEdgeEnd = f.initNext(move.sndEdgeStartPoint)
-    val trdEdgeEnd = f.initNext(move.trdEdgeStartPoint)
+    val segStartPoint = f.initNext(move.beforeStart)
+    val afterEnd = f.initNext(move.segEndPoint)
+    val afterInsertion = f.initNext(move.insertionPoint)
     println("VRP after the move: " + f.vrp)
 
     withClue("Main route length should not be modified:") {
@@ -558,17 +558,17 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
     }
     if (!move.reverseSegment) {
       for (i <- f.vrp.nodes) {
-        if (i == move.fstEdgeStartPoint)
-          withClue("Initial second edge end point should follow first edge start point:") {
-            f.vrp.next(i).value should be(f.initNext(move.sndEdgeStartPoint))
+        if (i == move.beforeStart)
+          withClue("Initial segment end point should follow before start point:") {
+            f.vrp.next(i).value should be(f.initNext(move.segEndPoint))
           }
-        else if (i == move.sndEdgeStartPoint)
-          withClue("Initial third edge end point should follow second edge start point:") {
-            f.vrp.next(i).value should be(f.initNext(move.trdEdgeStartPoint))
+        else if (i == move.segEndPoint)
+          withClue("Initial insertion point should follow segment end point:") {
+            f.vrp.next(i).value should be(f.initNext(move.insertionPoint))
           }
-        else if (i == move.trdEdgeStartPoint)
-          withClue("Initial first edge end point should follow third edge start point:") {
-            f.vrp.next(i).value should be(f.initNext(move.fstEdgeStartPoint))
+        else if (i == move.insertionPoint)
+          withClue("Initial before start point should follow insertion point:") {
+            f.vrp.next(i).value should be(f.initNext(move.beforeStart))
           }
         else
           withClue("Any other node should keep the same following one:") {
@@ -577,23 +577,23 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
       }
     } else {
       for (i <- f.vrp.nodes) {
-        if (i == move.fstEdgeStartPoint)
-          withClue("Initial second edge end point should follow first edge start point:") {
-            f.vrp.next(i).value should be(f.initNext(move.sndEdgeStartPoint))
+        if (i == move.beforeStart)
+          withClue("Initial segment end point should follow before start point:") {
+            f.vrp.next(i).value should be(f.initNext(move.segEndPoint))
           }
-        else if (i == fstEdgeEnd)
-          withClue("Initial third edge end point should follow first edge end point:") {
-            f.vrp.next(i).value should be(trdEdgeEnd)
+        else if (i == segStartPoint)
+          withClue("Initial after insertion point should follow initial segment start point:") {
+            f.vrp.next(i).value should be(afterInsertion)
           }
-        else if (i == move.trdEdgeStartPoint)
-          withClue("Initial second edge start point should follow third edge start point:") {
-            f.vrp.next(i).value should be(move.sndEdgeStartPoint)
+        else if (i == move.insertionPoint)
+          withClue("Initial second end point should follow insertion point:") {
+            f.vrp.next(i).value should be(move.segEndPoint)
           }
-        else if (f.vrp.isBetween(i, move.sndEdgeStartPoint, f.initNext(move.fstEdgeStartPoint)))
+        else if (f.vrp.isBetween(i, move.segEndPoint, f.initNext(move.beforeStart)))
           withClue("Any other node of the segment should follow its initial following one:") {
             f.vrp.next(i).value should be(f.initPred(i))
           }
-        else if (f.vrp.isBetween(i, trdEdgeEnd, move.fstEdgeStartPoint))
+        else if (f.vrp.isBetween(i, afterInsertion, move.beforeStart))
           withClue("Any other node should keep the same following one:") {
             f.vrp.next(i).value should be(f.initNext(i))
           }
