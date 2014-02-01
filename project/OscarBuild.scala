@@ -17,6 +17,15 @@ object OscarBuild extends Build {
     val buildVersion = "beta"
     val buildScalaVersion = "2.10.0"
     val buildSbtVersion= "0.13.0"
+
+    val osNativeLibDir = (sys.props("os.name"), sys.props("os.arch")) match {
+    case (os, arch) if os.contains("Mac") && arch.endsWith("64") => "macos64"
+    case (os, arch) if os.contains("Linux") && arch.endsWith("64") => "linux64"
+    case (os, arch) if os.contains("Windows") && arch.endsWith("32") => "windows32"
+    case (os, arch) if os.contains("Windows") && arch.endsWith("64") => "windows64"
+    case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
+}
+
     val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
@@ -27,7 +36,9 @@ object OscarBuild extends Build {
       },
       testOptions in Test <+= (target in Test) map {
           t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports")) },
-      parallelExecution in Test := false,    
+      parallelExecution in Test := false,
+      fork in Test := true,
+      javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") },
       scalaVersion := buildScalaVersion)
