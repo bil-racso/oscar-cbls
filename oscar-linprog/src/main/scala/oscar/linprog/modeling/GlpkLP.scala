@@ -16,6 +16,7 @@
 package oscar.linprog.modeling
 
 import org.gnu.glpk._
+import org.gnu.glpk.GLPKJNI
 
 /**
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com
@@ -31,6 +32,7 @@ class GlpkLP extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("ToBImplemented")
+  protected var timeout = Int.MaxValue
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
@@ -45,6 +47,15 @@ class GlpkLP extends AbstractLP {
 
   def setVarName(colId: Int, name: String) {
     // TODO implement
+  }
+  
+  override def setTimeout(t: Int) {
+    require(0 <= t)
+    timeout = t
+  }
+  
+  override def setName(name: String) {
+    GLPK.glp_set_prob_name(lp, name)
   }
 
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
@@ -149,6 +160,11 @@ class GlpkLP extends AbstractLP {
     //GLPK.glp_write_lp(lp,null,"model.lp")
     val parm = new glp_smcp()
     GLPK.glp_init_smcp(parm)
+    parm.setMsg_lev(GLPKConstants.GLP_MSG_ERR)
+    if(timeout < Int.MaxValue) {
+    	parm.setTm_lim(timeout)
+    }
+
     val ret = GLPK.glp_simplex(lp, parm)
     GLPK.glp_get_status(lp) match {
       case GLPKConstants.GLP_UNBND => LPStatus.UNBOUNDED
@@ -236,7 +252,7 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_del_cols(lp, 1, num)
     nbCols -= 1
   }
-
+  
   def exportModel(fileName: String) {
     GLPK._glp_lpx_write_cpxlp(lp, fileName)
   }
@@ -253,11 +269,3 @@ class GlpkLP extends AbstractLP {
     println("Warning: updateCoef method is not implemented for GLPK")
   }
 }
-
-/*
- GLPK.glp_write_lp(lp,null,"model.lp")// write model in file
- GLPK.glp_get_status(lp) 
-GLPK.glp_delete_prob(lp) //delete model
-
-
-*/

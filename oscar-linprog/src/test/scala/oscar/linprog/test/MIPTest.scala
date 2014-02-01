@@ -31,6 +31,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
+      mip.name = "Mip Test 1"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
 
@@ -43,14 +44,13 @@ class MIPTest extends FunSuite with ShouldMatchers {
       x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
       release()
-
     }
   }
 
-  test("mip test 2: update constraints rhs") {
+  test("MIP test 2: Update constraints rhs") {
     for (lib <- solvers) {
-      println("===================================================================================lib:"+lib)
       implicit val mip = MIPSolver(lib)
+      mip.name = "MIP Test 2"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
 
@@ -85,15 +85,15 @@ class MIPTest extends FunSuite with ShouldMatchers {
         y.value should equal(Some(3))
       }
       
-
       release()
     }
   }
 
-  test("mip test 3: update coeficient in constraint") {
+  test("MIP Test 3: update coeficient in constraint") {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
+      mip.name = "MIP Test 3"
       val x = MIPFloatVar( "x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
       val cons: LPConstraint = add(10 * x + 20 * y <= 140)
@@ -126,13 +126,14 @@ class MIPTest extends FunSuite with ShouldMatchers {
         x.value.get should be(0.0 plusOrMinus 0.00001)
         y.value should equal(Some(9))
       }
-
+      mip.release()
     }
   }
-  test("mip test 4: update coeficient and rhs in constraint") {
+  test("MIP Test 4: update coeficient and rhs in constraint") {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
+      mip.name = "MIP Test 4"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
       val cons: LPConstraint = add(10 * x + 20 * y <= 140)
@@ -156,7 +157,6 @@ class MIPTest extends FunSuite with ShouldMatchers {
       }
 
       mip.release()
-
     }
   }
 }

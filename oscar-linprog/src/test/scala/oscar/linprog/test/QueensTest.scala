@@ -33,6 +33,9 @@ class QueensTest extends FunSuite with ShouldMatchers {
       val Lines = 0 until n
       val Columns = 0 until n
       implicit val mip = MIPSolver(lib)
+      
+      mip.name = "Queens Test"
+      
       val x = Array.tabulate(n, n)((l, c) => MIPIntVar("x" + (l, c), 0 to 1))
 
       maximize(sum(Lines, Columns) { (l, c) => x(l)(c) })
@@ -65,19 +68,10 @@ class QueensTest extends FunSuite with ShouldMatchers {
       status should equal(LPStatus.OPTIMAL)
       objectiveValue.get should be(8.0 plusOrMinus 0.00001)
 
-      println("objective: " + objectiveValue)
-
-      for (i <- 0 until n) {
-        for (j <- 0 until n)
-          if (x(i)(j).value.get == 1) print("Q") else print(".")
-        println()
-      }
       release()
 
       checkConstraints() should be(true)
-
     }
   }
-
 }
 

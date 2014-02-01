@@ -183,6 +183,5 @@ class LPTest extends FunSuite with ShouldMatchers {
       lp.release()
     }
   }
-
 }
 

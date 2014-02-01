@@ -15,15 +15,15 @@
 
 package oscar.linprog.test
 
-import gurobi.{ GRBModel, GRB }
-import lpsolve.LpSolve
+import java.io.{File, FileWriter, PrintWriter}
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.linprog.modeling._
 
-import oscar.linprog._
-import oscar.algebra._
+import gurobi.{GRB, GRBModel}
+import lpsolve.LpSolve
+import oscar.algebra.{double2const, int2const}
+import oscar.linprog.modeling.{GurobiLP, LPFloatVar, LPSolve, LPSolver, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, canInstantiateSolver, checkConstraints, maximize, objectiveValue, release, start, status}
 
 /**
  * LPTesting
@@ -32,12 +32,12 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
 
   test("Config file for LPSolve") {
 
-    val configLP = new java.io.File("LPParam.ini")
-    val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
     // The correct header must be specified
-    writer.print("[Default]\n")
-    writer.print("pivoting=PRICER_DEVEX + PRICE_ADAPTIVE\n" +
-      "presolve=PRESOLVE_COLS+PRESOLVE_ROWS ")
+    writer.println("[Default]")
+    writer.println("pivoting=PRICER_DEVEX + PRICE_ADAPTIVE")
+    writer.println("presolve=PRESOLVE_COLS+PRESOLVE_ROWS")
     writer.flush
     writer.close
 
@@ -69,13 +69,13 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     configLP.delete
   }
 
-  test("Config file for LPSolve: Bug 72 ") {
+  test("Config file for LPSolve: Bug #72 ") {
 
-    val configLP = new java.io.File("LPParam.ini")
-    val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
     // The correct header must be specified
-    writer.print("[Default]\n")
-    writer.print("[Default] break_at_first=1\n")
+    writer.println("[Default]")
+    writer.println("break_at_first=1")
     writer.flush
     writer.close
 
@@ -91,8 +91,6 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     add(x0 - 3.0 * x1 + x2 <= 30)
     add(x1 - 3.5 * x3 == 0)
     mip.start()
-    println("objective" + objectiveValue)
-    println(x1.value)
     mip.release()
     configLP.delete
   }  
@@ -132,7 +130,6 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
 
     release()
     configLP.delete
-
   }
 }
 

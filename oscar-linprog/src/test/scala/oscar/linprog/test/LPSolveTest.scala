@@ -15,12 +15,13 @@
 
 package oscar.linprog.test
 
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FunSuite
-import oscar.linprog.modeling._
-import org.scalatest.BeforeAndAfter
+import java.io.{File, FileWriter, PrintWriter}
 
-import java.io.{ File, PrintWriter, FileWriter }
+import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.matchers.ShouldMatchers
+
+import oscar.algebra.{double2const, int2const, sum}
+import oscar.linprog.modeling.{LPSolve, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, maximize, release, start}
 
 /**
  * Testing OscaR's handling of lp_solve specific settings 
@@ -28,15 +29,18 @@ import java.io.{ File, PrintWriter, FileWriter }
  */
 class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 	
-    val tmpConfigFile = File.createTempFile("lp_solve", ".ini")
-    val writer = new PrintWriter(new FileWriter(tmpConfigFile))
+    var tmpConfigFile: File = _
+    var writer: PrintWriter = _
   
     before {
+        tmpConfigFile = File.createTempFile("lp_solve", ".ini")
+        writer = new PrintWriter(new FileWriter(tmpConfigFile))
     	writer.println("[Default]") // Must match readParams argument in LPSolve.scala
     	writer.println("verbose=CRITICAL") // lp_solve is silent (other than errors).
     }
     
     after {
+        writer.close()
     	tmpConfigFile.delete()
     }
 	
@@ -68,5 +72,109 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
       
       mip.status should be(LPStatus.SUBOPTIMAL)
 	  
+	}
+	
+	/** Example taken from [[http://lpsolve.sourceforge.net/5.5/SOS.htm lp_solve's documentation SOS section]]
+	 */
+	test("Test lp_solve's SOS1 constraint handling") {
+	    writer.close() // Not using additional config
+		implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+		
+		val lpSolve = mip.solver match {
+			case lp: LPSolve => lp
+			case _ => fail("Test case requires that solver is actually lp_solve")
+		}
+		
+		lpSolve.configFile = tmpConfigFile
+		
+		val x = Array(MIPFloatVar("x1", 0, 40), 
+					  MIPFloatVar("x2", 0, 1), 
+					  MIPFloatVar("x3"), 
+					  MIPFloatVar("x4"),
+					  MIPFloatVar("x5", 0, 1))
+		
+		mip.minimize(-x(0) - x(1) - 3 * x(2) - 2 * x(3) - 2 * x(4))
+		mip.add(-x(0) - x(1) + x(2) + x(3) <= 30, "c1")
+		mip.add(x(0) + x(2) - 3 * x(3) <= 30, "c2")
+		val sos1Cstr = x(0) + x(1) + x(2) + x(3) + x(4) <= 1
+		mip.addSOS(sos1Cstr, "SOS")
+		start()
+		release()
+		
+		mip.status() should be(LPStatus.OPTIMAL)
+		x(0).value should be(Some(0.0))
+		x(1).value should be(Some(0.0))
+		x(2).value should be(Some(30.0))
+		x(3).value should be(Some(0.0))
+		x(4).value should be(Some(0.0))
+		mip.objectiveValue() should be(Some(-90))	
+	}
+	
+	test("Test lp_solve's SOS1 constraint handling (as sum)") {
+		writer.close() // Not using additional config
+	    implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+		
+		val lpSolve = mip.solver match {
+			case lp: LPSolve => lp
+			case _ => fail("Test case requires that solver is actually lp_solve")
+		}
+		
+		lpSolve.configFile = tmpConfigFile
+		
+		val x = Array(MIPFloatVar("x1", 0, 40), 
+					  MIPFloatVar("x2", 0, 1), 
+					  MIPFloatVar("x3"), 
+					  MIPFloatVar("x4"),
+					  MIPFloatVar("x5", 0, 1))
+		
+		mip.minimize(-x(0) - x(1) - 3 * x(2) - 2 * x(3) - 2 * x(4))
+		mip.add(-x(0) - x(1) + x(2) + x(3) <= 30, "c1")
+		mip.add(x(0) + x(2) - 3 * x(3) <= 30, "c2") 
+		mip.addSOS(sum(x) <= 1, "SOS1")
+		start()
+		release()
+		
+		mip.status() should be(LPStatus.OPTIMAL)
+		x(0).value should be(Some(0.0))
+		x(1).value should be(Some(0.0))
+		x(2).value should be(Some(30.0))
+		x(3).value should be(Some(0.0))
+		x(4).value should be(Some(0.0))
+		mip.objectiveValue() should be(Some(-90))	
+	}
+	
+	/** Took the example from CPLEX 12.2 Manual
+	 */
+	test("Test SOS1 weighting support - warehouse location example") {
+	    writer.close() // Not using additional config
+	    implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+		
+		val lpSolve = mip.solver match {
+			case lp: LPSolve => lp.configFile = tmpConfigFile
+			case _ => fail("Test case requires that solver is actually lp_solve")
+		}
+		
+		//lpSolve.configFile = tmpConfigFile
+		
+		val x = Array(MIPFloatVar("x1", 0, 40), 
+					  MIPFloatVar("x2", 0, 1), 
+					  MIPFloatVar("x3"), 
+					  MIPFloatVar("x4"),
+					  MIPFloatVar("x5", 0, 1))
+		
+		mip.minimize(-x(0) - x(1) - 3 * x(2) - 2 * x(3) - 2 * x(4))
+		mip.add(-x(0) - x(1) + x(2) + x(3) <= 30, "c1")
+		mip.add(x(0) + x(2) - 3 * x(3) <= 30, "c2") 
+		mip.addSOS(sum(x) <= 1, "SOS1")
+		mip.start(30)
+		mip.release()
+		
+		mip.status() should be(LPStatus.OPTIMAL)
+		x(0).value should be(Some(0.0))
+		x(1).value should be(Some(0.0))
+		x(2).value should be(Some(30.0))
+		x(3).value should be(Some(0.0))
+		x(4).value should be(Some(0.0))
+		mip.objectiveValue() should be(Some(-90))
 	}
 }

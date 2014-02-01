@@ -69,6 +69,7 @@ object MIPIntVar {
 
 class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
 
+    
     val solver = solverLib match {
       case LPSolverLib.lp_solve => new LPSolve()
       case LPSolverLib.glpk => new GlpkMIP()
@@ -193,10 +194,6 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
           ncpwf(limits,rates,Q,name)
         }
      }        
-
-    
-
-
 }
 	
 object MIPSolver { 

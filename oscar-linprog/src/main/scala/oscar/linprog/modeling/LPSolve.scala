@@ -32,13 +32,14 @@ class LPSolve extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("options.ini")
-
+  
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
     this.nbCols = nbCols
     lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
     lp.setInfinite(Double.MaxValue)
     lp.setAddRowmode(true)
+    lp.setVerbose(LpSolve.CRITICAL)
     if (configFile.exists()) {
       lp.readParams(configFile.getAbsolutePath, "[Default]");
     }
@@ -56,16 +57,19 @@ class LPSolve extends AbstractLP {
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
+    lp.setRowName(nbRows, name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) { 
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.LE, rhs)
+    lp.setRowName(nbRows, name)
   }
   
   def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.EQ, rhs)
+    lp.setRowName(nbRows, name)
   }
 
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
@@ -73,6 +77,19 @@ class LPSolve extends AbstractLP {
     if (!minMode) {
       lp.setMaxim()
     }
+  }
+  
+  override def setTimeout(t: Int) {
+    require(0 <= t)
+    lp.setTimeout(t)
+  }
+  
+  override def setName(name: String) {
+    lp.setLpName(name)
+  }
+  
+  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
+    lp.addSOS(name, 1, 1, col.size, col.map(_ + 1), coef)
   }
 
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double]) {
@@ -115,6 +132,9 @@ class LPSolve extends AbstractLP {
         LPStatus.INFEASIBLE
       case LpSolve.UNBOUNDED =>
         LPStatus.UNBOUNDED
+      case LpSolve.TIMEOUT => { println("lp_solve timed out before integer solution found...")
+      	LPStatus.NOT_SOLVED
+      }
       case _ =>
         LPStatus.INFEASIBLE
     }
@@ -170,7 +190,7 @@ class LPSolve extends AbstractLP {
     if (rowId < 0 || rowId >= nbRows) {
       0.0
     } else {
-      println( lp.getPtrDualSolution().mkString(", " ))
+      // println( lp.getPtrDualSolution().mkString(", " ))
       lp.getPtrDualSolution()(rowId +1)
     }
   }
