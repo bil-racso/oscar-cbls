@@ -322,6 +322,7 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
   }
 
   def isTight(tol: Double = 10e-6) = slack.abs <= tol
+  override def toString: String = name + ": " + cstr
 }
 
 class SOSConstraint(override val solver: AbstractLPSolver, override val cstr: LinearConstraint, override val index: Int, override val name: String) extends LPConstraint(solver, cstr, index, name) {

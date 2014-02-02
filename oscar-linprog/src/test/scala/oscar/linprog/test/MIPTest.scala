@@ -65,25 +65,23 @@ class MIPTest extends FunSuite with ShouldMatchers {
       x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
-      if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
-        mip.updateRhs(cons, 120.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(12.0 plusOrMinus 0.00001)
-        y.value should equal(Some(0))
+      mip.updateRhs(cons, 120.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(12.0 plusOrMinus 0.00001)
+      y.value should equal(Some(0))
 
-        mip.updateRhs(cons2, 80.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(8.0 plusOrMinus 0.00001)
-        y.value should equal(Some(2))
+      mip.updateRhs(cons2, 80.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
+      y.value should equal(Some(2))
 
-        mip.updateRhs(cons, 140.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(7.75 plusOrMinus 0.00001)
-        y.value should equal(Some(3))
-      }
+      mip.updateRhs(cons, 140.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(7.75 plusOrMinus 0.00001)
+      y.value should equal(Some(3))
       
       release()
     }
@@ -107,25 +105,23 @@ class MIPTest extends FunSuite with ShouldMatchers {
       x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
-      if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
-        mip.updateCoef(cons, x, 1000.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(0.0 plusOrMinus 0.00001)
-        y.value should equal(Some(7))
+      mip.updateCoef(cons, x, 1000.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(0.0 plusOrMinus 0.00001)
+      y.value should equal(Some(7))
 
-        mip.updateCoef(cons, x, 10.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(8.0 plusOrMinus 0.00001)
-        y.value should equal(Some(3))
+      mip.updateCoef(cons, x, 10.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
+      y.value should equal(Some(3))
 
-        mip.updateCoef(cons, y, 10.0)
-        mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(0.0 plusOrMinus 0.00001)
-        y.value should equal(Some(9))
-      }
+      mip.updateCoef(cons, y, 10.0)
+      mip.solveModel
+      mip.status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(0.0 plusOrMinus 0.00001)
+      y.value should equal(Some(9))
       mip.release()
     }
   }
@@ -147,14 +143,12 @@ class MIPTest extends FunSuite with ShouldMatchers {
       x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
-      if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
-        mip.updateCoef(cons, y, 10.0)
-        mip.updateRhs(cons2, 30)
-        mip.solveModel
-        status should equal(LPStatus.OPTIMAL)
-        x.value.get should be(0.0 plusOrMinus 0.00001)
-        y.value should equal(Some(5))
-      }
+      mip.updateCoef(cons, y, 10.0)
+      mip.updateRhs(cons2, 30)
+      mip.solveModel
+      status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(0.0 plusOrMinus 0.00001)
+      y.value should equal(Some(5))
 
       mip.release()
     }

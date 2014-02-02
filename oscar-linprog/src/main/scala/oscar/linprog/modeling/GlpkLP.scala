@@ -16,7 +16,6 @@
 package oscar.linprog.modeling
 
 import org.gnu.glpk._
-import org.gnu.glpk.GLPKJNI
 
 /**
  * @author Hrayr Kostanyan Hrayr.Kostanyan@ulb.ac.be, Pierre Schaus pschaus@gmail.com
@@ -254,7 +253,7 @@ class GlpkLP extends AbstractLP {
   }
   
   def exportModel(fileName: String) {
-    GLPK._glp_lpx_write_cpxlp(lp, fileName)
+    GLPK.glp_write_lp(lp, null, fileName)
   }
 
   def release() {
@@ -262,10 +261,23 @@ class GlpkLP extends AbstractLP {
   }
 
   def updateRhs(consId: Int, rhs: Double): Unit = {
-    println("Warning: updateRhs method is not implemented for GLPK")
+    GLPK.glp_set_row_bnds(lp, consId + 1, GLPKConstants.GLP_UP, 0.0, rhs)
   }
-
+ 
   def updateCoef(consId: Int, varId: Int, coeff: Double): Unit = {
-    println("Warning: updateCoef method is not implemented for GLPK")
+    val nColumns = GLPK.glp_get_num_cols(lp)
+    // + 1 to array lengths since the cols start from 1 
+    val coef = GLPK.new_doubleArray(nColumns + 1) 
+    val ind = GLPK.new_intArray(nColumns + 1)
+    // Populates coef and ind arrays with selected row's values
+    GLPK.glp_get_mat_row(lp, consId + 1, ind, coef)
+    
+    // Need to find which index in the coef array to update
+    // Maybe varId should represent model index to make this
+    // translation unnecessary. 
+    val id = (0 to nColumns).find(i => GLPK.intArray_getitem(ind, i) == (varId + 1)).get
+
+    GLPK.doubleArray_setitem(coef, id, coeff) // Replace element
+    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, coef) // Update whole row.
   }
 }
