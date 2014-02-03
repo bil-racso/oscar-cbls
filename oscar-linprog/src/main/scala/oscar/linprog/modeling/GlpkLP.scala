@@ -45,7 +45,7 @@ class GlpkLP extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+    GLPK.glp_set_col_name(lp, colId + 1, name)
   }
   
   override def setTimeout(t: Int) {
@@ -252,9 +252,13 @@ class GlpkLP extends AbstractLP {
     nbCols -= 1
   }
   
-  def exportModel(fileName: String) {
-    GLPK.glp_write_lp(lp, null, fileName)
-  }
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
+        case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
+        case _ => println(s"Unrecognised export format ${format}")
+    }  
+}
 
   def release() {
     GLPK.glp_delete_prob(lp)

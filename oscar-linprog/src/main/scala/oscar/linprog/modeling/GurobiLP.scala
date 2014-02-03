@@ -14,24 +14,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.linprog.modeling
 
@@ -245,9 +227,16 @@ class GurobiLP extends AbstractLP {
     env.release
     env.dispose
   }
-
-  def exportModel(fileName: String) {
-    model.write(fileName)
+  
+  /** Gurobi's export file handling is a little different. The format is defined by the fileName
+  * passed to model.write for the LP format it's .lp and for MPS it's .mps
+  */ 
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.MPS => model.write(fileName + ".mps")
+        case LPExportFormat.LP => model.write(fileName + ".lp")
+        case _ => model.write(fileName) // User specified file format
+    }
   }
 
   override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint]) = {

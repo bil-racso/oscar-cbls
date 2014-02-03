@@ -26,6 +26,10 @@ object LPStatus extends Enumeration {
   val INFEASIBLE = Value("infeasible")
 }
 
+object LPExportFormat extends Enumeration {
+    val LP, MPS = Value
+}
+
 /**
  * Abstract class that must be extended to define a new LP solver
  */
@@ -170,7 +174,7 @@ abstract class AbstractLP {
 
   def deleteVariable(colId: Int)
 
-  def exportModel(fileName: String)
+  def exportModel(fileName: String, format: LPExportFormat.Value = LPExportFormat.MPS)
   
   def setTimeout(t: Int)
   

@@ -207,8 +207,12 @@ class LPSolve extends AbstractLP {
     lp.delColumn(colId)
   }
 
-  def exportModel(fileName: String) {
-    lp.writeLp(fileName)
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.LP => lp.writeLp(fileName) // NB: this is lp_solve's own .lp format NOT CPLEX's
+        case LPExportFormat.MPS => lp.writeFreeMps(fileName)
+        case _ => println(s"Unrecognised format ${format}")
+    }
   }
 
   def release() {
