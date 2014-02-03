@@ -58,7 +58,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+    model.getVar(colId).set(GRB.StringAttr.VarName, name)
   }
   
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
