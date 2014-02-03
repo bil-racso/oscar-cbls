@@ -27,12 +27,12 @@ abstract class Branching {
   def initialize(): Unit = {}
 
   /**
-   * @returns: the alternative action to execute in each of the child nodes under the current node
+   * @return the alternative action to execute in each of the child nodes under the current node
    */
   def alternatives(): Seq[Alternative]
 
   /**
-   * @returns: the branching resulting of applying this branching, then b if not alternative available
+   * @return the branching resulting of applying this branching, then b if not alternative available
    */
   def ++(b: Branching): Branching = new Branching {
     override def alternatives = {

@@ -37,8 +37,9 @@ trait Constraints {
   def binPacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]): Constraint = {
     return new BinPacking(x.toArray, w.toArray, l.toArray)
   }
+
   /**
-   * @deprecated(use binPacking instead)
+   * @deprecated(use binPacking instead, 1.0)
    */
   def binpacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]) = binPacking(x, w, l)
 

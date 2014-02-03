@@ -32,7 +32,7 @@ class SearchStatistics(
 
 /**
  * DFS and Bounded Dicrepancy DFS 
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
   type SolutionAction = () => Unit

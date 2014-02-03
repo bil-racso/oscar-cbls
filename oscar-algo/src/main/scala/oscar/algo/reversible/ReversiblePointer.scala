@@ -37,17 +37,17 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
   }
 
   /**
-   * @param: value to assign
+   * @param value to assign
    */
   def value_= (value: T): Unit = setValue(value)
   
   /**
-   * @param: value to assign
+   * @param value to assign
    */
   def := (value: T): Unit = setValue(value)
   
   /**
-   * @return: current value
+   * @return current value
    */
   def value = getValue
 

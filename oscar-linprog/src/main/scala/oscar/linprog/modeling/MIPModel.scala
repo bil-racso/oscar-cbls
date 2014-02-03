@@ -172,7 +172,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     
     /**
      * Piecewise linear function
-     * @author: Pierre-Yves Gousenbourger
+     * @author Pierre-Yves Gousenbourger
      */
     def pwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name: String): MIPFloatVar = {
         if(limits.size != rates.size){
