@@ -58,7 +58,7 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     val cost = CPIntVar(0 to 100)(cp)
     val x = Array(CPIntVar(Set(0,1,2))(cp), CPIntVar(Set(0,1,2))(cp), CPIntVar(Set(0,1))(cp))
     cp.post(new MinAssignment(x, w, cost))
-    println(cost)
+    //println(cost)
     cost.min should be(10)
   }  
   
@@ -106,7 +106,7 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     cp.post(new MinAssignment(x, w, cost))
     cost.min should be(0)
     cp.post(cost <= 0)
-    println(x.mkString(","))
+    //println(x.mkString(","))
     x(0).value should be(0)
     //x(1).value should be(1) // if we do AC
     x(2).value should be(2)

@@ -53,7 +53,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     val s = Array.tabulate(x_.size)(i => CPIntVar(s_(i))(cp))
     val p = Array.tabulate(x_.size)(i => CPIntVar(0 until x.size)(cp))
     cp.add(sortedness(x,s,p),Strong)
-    println(p.mkString(","))
+    //println(p.mkString(","))
     for (i <- 0 until x.size) {
       p(i).value should be(p_(i))
     }
@@ -69,7 +69,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     val s = Array.tabulate(x_.size)(i => CPIntVar(0 to 100)(cp))
     val p = Array.tabulate(x_.size)(i => CPIntVar(p_(i))(cp))
     cp.add(sortedness(x,s,p),Strong)
-    println(p.mkString(","))
+    //println(p.mkString(","))
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))
     }
@@ -89,7 +89,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
       cp.add(x(i) == x_(i))
     }
     
-    println(p.mkString(","))
+    //println(p.mkString(","))
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))
     }
@@ -113,8 +113,8 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     }
     cp.allBounds(p) should be(true)
     cp.allBounds(s) should be(true)
-    println(s.mkString(","))
-    println(p.mkString(","))
+    //println(s.mkString(","))
+    //println(p.mkString(","))
   }
   
   

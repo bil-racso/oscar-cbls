@@ -21,7 +21,7 @@ class TestGolomb extends FunSuite with ShouldMatchers {
 
       val obj = marks(n - 1)
       var best = Int.MaxValue
-
+      cp.silent = true
       cp.minimize(obj) subjectTo {
         // we break symmetries to put the marks increasing
         cp.add(marks(0) == 0)
