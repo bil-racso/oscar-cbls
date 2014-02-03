@@ -701,6 +701,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
         IsBoundary = false
       } else {
         IsBoundary = a.forall(p => (p.component != this.component))
+        //TODO: maybe this should be a "exists"? so far we only have one determining Element.
       }
     }
   }

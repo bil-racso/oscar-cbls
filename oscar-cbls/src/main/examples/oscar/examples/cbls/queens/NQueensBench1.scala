@@ -63,12 +63,14 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
       SolveNQueen(1000)
 
       // multiple runs
-      for (n <- Range(1000, 11000, 1000)){
+      for (n <- 1000 to 10000 by 1000){
     	  SolveNQueen(n)
     	  System.gc()
       }
     } else {
-    	val N:Int=args(0).toInt
+      	val N:Int=args(0).toInt
+        println("Runing NQueen - this takes time depending on N")
+        println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
       	SolveNQueen(N)
     }
   }
@@ -82,7 +84,7 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
 
     val m = Store()
     val init = Random.shuffle(range.toList).iterator
-    val queens:Array[CBLSIntVar] = (for (q <- range) yield CBLSIntVar(m, 0, N-1,init.next(), "queen" + q)).toArray
+    val queens:Array[CBLSIntVar] = Array.tabulate(N)((q:Int) => CBLSIntVar(m, 0, N-1,init.next(), "queen" + q))
 
     val c = ConstraintSystem(m)
 
@@ -90,17 +92,18 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
     c.post(AllDiff(for ( q <- range) yield (queens(q) + q).toIntVar))
     c.post(AllDiff(for ( q <- range) yield (q - queens(q)).toIntVar))
 
-    val violationArray:Array[CBLSIntVar] = (for(q <- range) yield c.violation(queens(q))).toArray
+    val violationArray:Array[CBLSIntVar] = Array.tabulate(N)(q => c.violation(queens(q)))
 
-    val tabu:Array[CBLSIntVar] = (for (q <- range) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q)).toArray
+    val tabu:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q))
     val it = CBLSIntVar(m,0,Int.MaxValue,1,"it")
     val nonTabuQueens:CBLSSetVar = SelectLESetQueue(tabu, it)
-    val nonTabuMaxViolQueens:CBLSSetVar = new ArgMaxArray(violationArray, nonTabuQueens)
+    val nonTabuMaxViolQueens:CBLSSetVar = ArgMaxArray(violationArray, nonTabuQueens)
 
     m.close(false)
     print(padToLength("" + getWatch, 15))
 
-    while((c.violation.value > 0) && (it.value < N)){
+    while((c.violation.value > 0)){
+      require(it.value < N, "NQueens seems to diverge: " + it + " N "+ N)
       val oldviolation:Int = c.violation.value
 
       // to ensure that the set of tabu queens is no too restrictive
