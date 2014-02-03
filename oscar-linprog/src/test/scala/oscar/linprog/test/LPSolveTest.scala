@@ -23,6 +23,8 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.algebra.{double2const, int2const, sum}
 import oscar.linprog.modeling.{LPSolve, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, maximize, release, start}
 
+import lpsolve._
+
 /**
  * Testing OscaR's handling of lp_solve specific settings 
  * @author Alastair Andrew
@@ -43,35 +45,39 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
         writer.close()
     	tmpConfigFile.delete()
     }
-	
-	test("Test lp_solve correctly returns solution when status is LPStatus.SUBOPTIMAL") {
+    
+    test("Test lp_solve correctly returns solution when status is LPStatus.SUBOPTIMAL") {
 	  
-	  implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+        implicit val mip = MIPSolver(LPSolverLib.lp_solve)
 	
-	  val lpSolve = mip.solver match {
+	val lpSolve = mip.solver match {
 	    case lp: LPSolve => lp
 	    case _ => fail("Test case requires that solver is actually lp_solve")
-	  }
+	}
 	  
-	  writer.println("break_at_first=1")
-	  writer.close() // Writer must be closed to allow lp_solve to read it
+	writer.println("break_at_first=1")
+	writer.close() // Writer must be closed to allow lp_solve to read it
 	  
-	  lpSolve.configFile = tmpConfigFile
+	lpSolve.configFile = tmpConfigFile
 	
-      val x0 = MIPFloatVar("x0", 0, 40)
-      val x1 = MIPIntVar("x1", 0 to 1000) 
-      val x2 = MIPIntVar("x2", 0 until 18)
-      val x3 = MIPFloatVar("x3", 2, 3)  
+        val x0 = MIPFloatVar("x0", 0, 40)
+        val x1 = MIPIntVar("x1", 0 to 1000) 
+        val x2 = MIPIntVar("x2", 0 until 18)
+        val x3 = MIPFloatVar("x3", 2, 3)  
 
-      maximize(x0 + 2*x1 + 3*x2 + x3) 
-      add(-1*x0 + x1 + x2 + 10*x3 <= 20)
-      add(x0 - 3.0*x1 + x2 <= 30)
-      add(x1 - 3.5*x3 == 0)  
-      start()
-      release()
+        maximize(x0 + 2*x1 + 3*x2 + x3) 
+        add(-1*x0 + x1 + x2 + 10*x3 <= 20)
+        add(x0 - 3.0*x1 + x2 <= 30)
+        add(x1 - 3.5*x3 == 0)  
+        start()
       
-      mip.status should be(LPStatus.SUBOPTIMAL)
-	  
+        mip.status should be(LPStatus.SUBOPTIMAL)
+        
+        lpSolve.lp.setBreakAtFirst(false)
+        mip.solveModel()    
+        	  
+        mip.status should be(LPStatus.OPTIMAL)
+        release()
 	}
 	
 	/** Example taken from [[http://lpsolve.sourceforge.net/5.5/SOS.htm lp_solve's documentation SOS section]]
