@@ -80,21 +80,23 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 
   test("test solveAll " + cumulativeName) {
     (1 to nTests).forall(i => {
-      print("test " + cumulativeName + " instance " + i + ": ")
+      //print("test " + cumulativeName + " instance " + i + ": ")
       val instance = generateRandomSchedulingProblem(5)
       val cpDecomp = new CPSched(instance)
       val cpCumul = new CPSched(instance)
       val allSolsDecomp = solveAll(cpDecomp, instance.capacity, true)
       val allSolsCumul = solveAll(cpCumul, instance.capacity, false)
       if (compare(allSolsDecomp, allSolsCumul)) {
-        println("success " + allSolsDecomp.size + " " + allSolsCumul.size)
+        //println("success " + allSolsDecomp.size + " " + allSolsCumul.size)
         true
       } else {
+        print("test " + cumulativeName + " instance " + i + ": ")
         println("failed !")
         println("expected number of solutions: " + allSolsDecomp.size)
         println("number of solutions: " + allSolsCumul.size)
         println("INSTANCE")
         println(instance)
+        
         false
       }
     }) should be(true)

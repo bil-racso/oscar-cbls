@@ -39,10 +39,10 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
     x(0).value should be(1)
     x(2).hasValue(2) should be (false)
     
-    println(x.mkString(","))
+    //println(x.mkString(","))
     
     cp.post(x(2) != 3)
-    println(x.mkString(","))
+    //println(x.mkString(","))
     
     cp.isFailed should be(false)
     x(1).value should be(1)

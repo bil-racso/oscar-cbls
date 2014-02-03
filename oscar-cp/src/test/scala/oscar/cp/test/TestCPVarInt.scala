@@ -162,11 +162,11 @@ class TestCPIntVar extends FunSuite with ShouldMatchers {
     var x = CPIntVar(Set(1,3,5))(cp)
   
     val d = x.domainIterator
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Suspend)
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Suspend)
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Failure)
     d.hasNext should be(false)
   }

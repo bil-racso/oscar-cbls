@@ -128,7 +128,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
     val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z === y
 
-    println(b)
+    //println(b)
 
     b.isBound should be(false)
 

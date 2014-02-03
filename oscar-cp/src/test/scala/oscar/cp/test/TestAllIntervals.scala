@@ -64,15 +64,15 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
     } search {
       binaryStatic(x)
     } onSolution {
-      print("x:" + x.mkString(""))
-      print("  diffs:" + diffs.mkString(""))
-      println()
+      //print("x:" + x.mkString(""))
+      //print("  diffs:" + diffs.mkString(""))
+      //println()
 
       numSols += 1
 
     } start()
     numSols should be(8)
-    println("\nIt was " + numSols + " solutions.")
+    //println("\nIt was " + numSols + " solutions.")
 
   }
 

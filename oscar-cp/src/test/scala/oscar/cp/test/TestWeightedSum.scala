@@ -65,8 +65,8 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
   test("Weighted Sum 5") {
     val x = Array(Set(1, 2), Set(4, 6, 8), Set(-6, -4, 0, 6))
     val w = Array(4, -3, 2)
-    println("=>" + nbsol(w, x, -100, 100, true))
-    println("=>" + nbsol(w, x, -100, 100, false))
+    //println("=>" + nbsol(w, x, -100, 100, true))
+    //println("=>" + nbsol(w, x, -100, 100, false))
   }
 }
   

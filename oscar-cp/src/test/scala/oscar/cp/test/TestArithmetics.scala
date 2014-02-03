@@ -48,7 +48,7 @@ class TestArithmetics extends FunSuite with ShouldMatchers  {
     println(jb)
     val ix2 = (ia)*n + (jb) // what is the index of k+1
     
-    println(ix2)
+    //println(ix2)
 
     ix2.size should be(18) // should contain: 0,1,8,16,17
 

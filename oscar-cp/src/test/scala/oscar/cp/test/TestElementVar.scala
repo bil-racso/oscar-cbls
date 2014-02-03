@@ -116,7 +116,7 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     x.removeValue(0)
     y(0).removeValue(0)
     cp.add(x >= -1)
-    println("y:" + y.mkString(",") + " x:" + x + z)
+    //println("y:" + y.mkString(",") + " x:" + x + z)
     z.hasValue(0) should be(true)
   }
 

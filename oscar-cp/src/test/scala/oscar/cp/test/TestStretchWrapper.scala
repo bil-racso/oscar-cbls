@@ -36,7 +36,7 @@ class TestStretchWrapper extends FunSuite with ShouldMatchers  {
     cp.isFailed should be(false)
     
     //  0-2  0-2  1-2  1-2  0   0
-    println(x.mkString(","))
+    //println(x.mkString(","))
     x(4).value should be(0)
     x(3).hasValue(0) should be(false)
     x(2).hasValue(0) should be(false)

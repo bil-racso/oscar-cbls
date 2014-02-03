@@ -43,7 +43,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val u
    */
   override def setup(l: CPPropagStrength): CPOutcome = {
     
-    println("chez beber")
+    //println("chez beber")
     var outcome: CPOutcome = CPOutcome.Suspend
     
     // initialize correctly nbBound and nbVarWithValue
