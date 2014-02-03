@@ -192,7 +192,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def setUnboundUpperBound(colId: Int) {
-
+    model.getVar(colId).set(GRB.DoubleAttr.UB, GRB.INFINITY)
   }
 
   def setUnboundLowerBound(colId: Int) {
