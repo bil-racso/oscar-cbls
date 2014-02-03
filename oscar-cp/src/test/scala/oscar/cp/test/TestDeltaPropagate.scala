@@ -75,7 +75,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
       }
       
       override def propagate(): CPOutcome = {
-        println(X.delta(this).toSet)
+        //println(X.delta(this).toSet)
         
         X.changed(this) should be(true)
         X.deltaSize(this) should be(2)
@@ -132,7 +132,7 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     cons.add(x < 4)
     cons.add(x < 2)
     cp.add(cons)
-    println("x dom:"+x.toSet)
+    //println("x dom:"+x.toSet)
     propag should be(true)
   }    
   

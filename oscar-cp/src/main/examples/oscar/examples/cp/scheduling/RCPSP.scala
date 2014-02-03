@@ -24,11 +24,10 @@ import oscar.cp.constraints._
 import oscar.cp.core.CPIntVar
 
 /**
- *
  *  @authors: Pierre Schaus  pschaus@gmail.com
  *  @authors: Renaud Hartert ren.hartert@gmail.com
  */
-object RCPSP extends App {
+object RCPSP extends CPModel with App {
 
   // (duration, consumption)
   val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
@@ -40,7 +39,7 @@ object RCPSP extends App {
 
   val horizon = durationsData.sum
   implicit val cp = CPSolver()
-  
+
   val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
   val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
   val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
@@ -49,13 +48,12 @@ object RCPSP extends App {
 
   val makespan = maximum(ends)
 
-  cp.minimize(makespan) subjectTo {
-    
-    // Cumulative
-    cp.add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capa), 0))
+  // Cumulative
+  add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capa), 0))
 
-  } search {
+  minimize(makespan) search {
     binaryFirstFail(starts)
-  } 
+  }
+
   println(cp.start())
 }

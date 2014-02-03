@@ -29,7 +29,7 @@ class LinearList[U: Numeric, T <: ParetoElement[U]] extends ParetoFront[U, T] wi
     elements.map((e: T) => e.objectives).toSet
   }
   
-  override def foreach[U](f: T => U): Unit = {
+  override def foreach[E](f: T => E): Unit = {
     elements.foreach(f)
   }
   

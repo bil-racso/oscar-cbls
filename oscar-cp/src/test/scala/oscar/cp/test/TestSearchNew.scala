@@ -17,7 +17,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     cp.onSolution { nbSol += 1 }
 
     val x = Array(CPIntVar(0)(cp))
-
+    cp.silent = true
     cp.minimize(x(0)) subjectTo () search {
       new BinaryFirstFailBranching(x)
     }
@@ -38,9 +38,9 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
       new BinaryStaticOrderBranching(x)
     }
 
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
     cp.start(failureLimit = 3).completed should be(false)
   }
@@ -100,4 +100,26 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     nbSol should equal(16)
     stat.nSols should be(16)
   }
+  
+  test("test 3 split") {
+
+    val cp = CPSolver()
+    val x = Array.fill(4)(CPIntVar(1 to 2)(cp))
+
+    //def dom(x: CPIntVar) = (x.min to x.max).filter(x.hasValue(_))
+
+    var nbSol = 0
+    cp.onSolution { nbSol += 1 }
+
+    cp.search {
+      binaryFirstFail(x, _.min)
+    }  
+    val nFails = cp.start().nFails
+    cp.search {
+      binarySplit(x, _.size)
+    }  
+    cp.start().nFails should be(nFails)
+  }
+    
+    
 }

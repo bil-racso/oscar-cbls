@@ -126,20 +126,17 @@ class BinaryFirstFailBranching(x: Array[CPIntVar], valHeuris: (CPIntVar => Int) 
 class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, varHeuris = maxDegree, valHeuris = minVal)
 
 /**
- * Binary search on the decision variables vars, splitting the domain of the selected variable on the
- * median of the values (left : <= median, right : > median)
+ * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
  */
-class BinaryDomainSplitBranching(x: Array[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (Int => Int) = i => i) extends BinaryBranching(x,varHeuris,minVal) {
+class BinaryDomainSplitBranching(x: Array[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) extends BinaryBranching(x,varHeuris,minVal) {
 
   override def alternatives(): Seq[Alternative] = {
     allBounds() match {
       case true => noAlternative
       case false => {
         val x = nextVar()
-        val vals = x.toArray.sortBy(valHeuris)
-        val median = vals(vals.size / 2)
-
-        branch(cp.post(x <= median))(cp.post(x > median))
+        val value = valHeuris(x)
+        branch(cp.post(x <= value))(cp.post(x > value))
       }
     }
   }

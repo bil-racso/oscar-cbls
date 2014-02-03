@@ -3,17 +3,15 @@ package oscar.examples.cp.scheduling
 import oscar.cp.core._
 import oscar.cp.modeling._
 
-object VariableCapacity extends App {
+object VariableCapacity extends CPModel with App {
 
   val horizon = 8
   val durationsData = Array(2, 2, 3, 3, 3, 4, 4, 5, 6, 7)
-  val demandsData   = Array(1, 3, 2, 1, 2, 3, 1, 2, 1, 2)
+  val demandsData = Array(1, 3, 2, 1, 2, 3, 1, 2, 1, 2)
 
   val nTasks = durationsData.size
   val Tasks = 0 until nTasks
 
-  implicit val cp = CPSolver()
-  cp.silent = true
   val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
   val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
   val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to horizon))
@@ -22,17 +20,18 @@ object VariableCapacity extends App {
 
   val capacity = CPIntVar(0 to demandsData.sum)
 
-  cp.minimize(capacity) subjectTo {
-    // Consistency 
-    for (t <- Tasks) {
-      cp.add(ends(t) == starts(t) + durations(t))
-    }
-    // Cumulative
-    cp.add(maxCumulativeResource(starts, durations,ends, demands, resources, capacity, 1))
+  // Consistency 
+  for (t <- Tasks) {
+    add(ends(t) == starts(t) + durations(t))
+  }
+  // Cumulative
+  add(maxCumulativeResource(starts, durations, ends, demands, resources, capacity, 1))
 
-  } search {
-     binaryFirstFail(starts) ++ binaryFirstFail(Seq(capacity))
-  } onSolution {
+  minimize(capacity) search {
+    binaryFirstFail(starts) ++ binaryFirstFail(Seq(capacity))
+  }
+
+  onSolution {
     println("Total capacity of " + capacity.value)
     for (t <- Tasks) {
       print("Task " + t)
@@ -43,5 +42,5 @@ object VariableCapacity extends App {
     println()
   }
 
-  println(cp.start())
+  println(start())
 }

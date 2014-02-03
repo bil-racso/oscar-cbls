@@ -3,15 +3,15 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * *****************************************************************************/
 package oscar.cp.core;
 
 import java.util.Collection;
@@ -510,14 +510,13 @@ class CPStore extends SearchNode {
     cutConstraints.add(c);
     return ok;
   }
-  
+
   def resetCuts(): Unit = {
     for (c <- cutConstraints) {
       c.deactivate() // we cannot really remove them because they were set-up
     }
     cutConstraints.clear()
   }
-  
 
   /**
    * Add a constraint b == true to the store (with a Weak propagation strength) in a reversible way and trigger the fix-point algorithm. <br>
@@ -614,7 +613,7 @@ class CPStore extends SearchNode {
   }
 
   def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, CPPropagStrength.Weak)
-  
+
   def add(constraints: Iterable[Constraint], st: CPPropagStrength = CPPropagStrength.Weak): CPOutcome = {
     val cs = new LinkedList[Constraint]()
     constraints.foreach(cs.add(_))
@@ -628,9 +627,7 @@ class CPStore extends SearchNode {
     }
     res;
   }
-  
-  
-  
+
   def assign(x: CPIntVar, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure
     var oc = x.assign(v)
@@ -641,7 +638,7 @@ class CPStore extends SearchNode {
     status.value = oc
     return status.value
   }
-  
+
   def remove(x: CPIntVar, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure
     var oc = x.removeValue(v)
@@ -651,7 +648,7 @@ class CPStore extends SearchNode {
     cleanQueues()
     status.value = oc
     return status.value
-  }  
+  }
 
 }
 

@@ -31,7 +31,7 @@ class TestAllDiffBC extends FunSuite with ShouldMatchers  {
 	  val x = Array(CPIntVar(3 to 4)(cp),CPIntVar(2 to 4)(cp),CPIntVar(3 to 4)(cp),CPIntVar(2 to 5)(cp),CPIntVar(1 to 6)(cp))
 	  cp.add(new AllDiffBC(x))
 	  
-	  println(x.mkString(","))
+	  //println(x.mkString(","))
   }  
 
   

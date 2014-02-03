@@ -44,9 +44,9 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
   test("Table Model") {
     // set of valid transitions pair
     val tuples = (for (i <- 0 until 64; j <- neighbors(i)) yield (i, j)).toSet
-
+    
     val cp = CPSolver()
-
+    cp.silent = true
     var best = 1000
 
     val path = Array.fill(10)(CPIntVar(0 until 64)(cp))
@@ -70,9 +70,9 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
   }
 
   test("Circuit Model") {
-
+    
     val cp = CPSolver()
-
+    cp.silent = true
     val succ = Array.tabulate(64)(i => CPIntVar(neighbors(i))(cp))
 
     val path = Array.fill(10)(CPIntVar(0 until 64)(cp)) // represent the path of length ten which is the solution
