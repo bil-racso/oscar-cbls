@@ -124,18 +124,6 @@ abstract class Neighborhood() {
    */
   protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult
 
-  abstract class SearchResult {
-    def found: Boolean
-  }
-  case class MovePerformed() extends SearchResult {
-    def found: Boolean = true
-  }
-  case class MoveFound(move: Move) extends SearchResult {
-    def found: Boolean = true
-  }
-  case class NoMoveFound() extends SearchResult {
-    def found = false
-  }
 
   /**
    * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move
@@ -178,3 +166,16 @@ case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                                with MoveDescription,
                       abort: Unit => Boolean = (_ => false))
 // format: ON
+
+abstract class SearchResult {
+  def found: Boolean
+}
+case class MovePerformed() extends SearchResult {
+  def found: Boolean = true
+}
+case class MoveFound(move: Move) extends SearchResult {
+  def found: Boolean = true
+}
+case class NoMoveFound() extends SearchResult {
+  def found = false
+}

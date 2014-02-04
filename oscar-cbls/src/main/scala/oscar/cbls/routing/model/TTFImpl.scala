@@ -134,7 +134,7 @@ class TTFHistogram(val NbSlots:Int, val overallDuration:Int) extends PrimitiveTr
 
   private def rectifySlot(slotNr:Int):Int = {
     var tmp:Int = slotNr % NbSlots
-    while (tmp < 0) tmp == NbSlots
+    if (tmp < 0) tmp += NbSlots
     return tmp
   }
 
@@ -364,5 +364,22 @@ object TTFTest extends App{
     println(i + "\t" + t.getTravelDuration(i) + "\t" + t.getBackwardTravelDuration(t.getTravelDuration(i) + i))
   }
   println("min: " + t.getMinTravelDuration + " max: " + t.getMaxTravelDuration)
+}
+object TTFHistoTest extends App{
+  val t = new TTFHistogram(7, 24*60)
+
+  t.setTravelDurationAtSlot(0, 2*60)
+  t.setTravelDurationAtSlot(1, 2*60)
+  t.setTravelDurationAtSlot(2, 3*60)
+  t.setTravelDurationAtSlot(3, 6*60)
+  t.setTravelDurationAtSlot(4, 5*60)
+  t.setTravelDurationAtSlot(5, 4*60)
+  t.setTravelDurationAtSlot(6, 3*60)
+
+  println(t)
+  println("leave\tarrive")
+  for(i <- 0 to (24 * 60) by 30){
+    println(i + "\t" + t.getTravelDuration(i) + "\t" + t.getBackwardTravelDuration(t.getTravelDuration(i) + i))
+  }
 }
 

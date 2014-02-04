@@ -18,7 +18,7 @@
  * *****************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer and Florent Ghilain.
+ *         by Renaud De Landtsheer
  * ****************************************************************************
  */
 
@@ -56,9 +56,9 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
 
       val otherNodes:List[List[Int]] = s.relevantNeighbors(insertionPoint)
         .filter(vrp.isRouted)
-        .groupBy(n => vrp.routeNr(n).value)
+        .groupBy(vrp.routeNr(_).value)
         .toList
-        .map(routeAndNodes => routeAndNodes._2.toList)
+        .map(_._2.toList)
 
       case class MoveException(m:SearchResult) extends Exception
 
@@ -73,26 +73,28 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
       def exploreNodeList(nodeList:List[Int]){
         nodeList match{
           case head :: tail => exploreTail(head,tail) ; exploreNodeList(tail)
+          case _ => ;
         }
       }
 
       def exploreTail(head:Int, tail:List[Int]){
         tail match{
           case other :: newtail => explore(head,other) ; exploreTail(head,newtail)
+          case _ => ;
         }
       }
 
       def explore(a:Int,b:Int){
         val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
         if(vrp.isBetween(insertionPoint, first, second)) return
-          ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
+        ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
           startObj, returnMove, moveAcceptor, vrp) match {
-          case NoMoveFound() => ()
+          case m:NoMoveFound => ()
           case result:SearchResult => throw new MoveException(result)
         }
       }
-    }
 
+    } //end while
     NoMoveFound()
   }
 }
