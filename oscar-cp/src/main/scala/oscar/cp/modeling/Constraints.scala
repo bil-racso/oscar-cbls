@@ -39,7 +39,7 @@ trait Constraints {
   }
 
   /**
-   * @deprecated(use binPacking instead, 1.0)
+   * @deprecated("use binPacking instead", "1.0")
    */
   def binpacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]) = binPacking(x, w, l)
 
@@ -322,8 +322,8 @@ trait Constraints {
 
   /**
    * Sum Constraint
-   * @param size of the first range of i
-   * @param size of the second range of j
+   * @param n1 size of the first range of i
+   * @param n2 size of the second range of j
    * @param f a function mapping the indices i and j to a variable
    * @return a variable that is the sum of f(i, j) over each (i, j) in (0 until n1 x 0 until n2)
    */

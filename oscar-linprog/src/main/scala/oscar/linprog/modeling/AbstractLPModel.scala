@@ -129,8 +129,7 @@ abstract class AbstractLP {
    */
   def updateCoef(consId: Int, varId: Int, coeff: Double): Unit
 
-  /**
-   * Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
+  /** Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
    * @param minMode = true if this objective should be minimized (default), false to maximize it
@@ -359,7 +358,7 @@ abstract class AbstractLPSolver {
   }
 
   /**
-   * @deprecated("no need to use option",1.0)
+   * @deprecated("no need to use option", "1.0")
    */
   def add(constr: LinearConstraint, name: Option[String]): LPConstraint = {
     name match {
@@ -437,7 +436,7 @@ abstract class AbstractLPSolver {
   /**
    * Effectively start the concrete model building and solving
    * @param timeLimit (in seconds) to pass to the solver
-   * @returns true if a feasible solution is found (optimal or sub-optimal)
+   * @return true if a feasible solution is found (optimal or sub-optimal)
    */
   def start(timeLimit: Int = Int.MaxValue): Boolean = {
     solver.startModelBuilding(cons.size, vars.size)
