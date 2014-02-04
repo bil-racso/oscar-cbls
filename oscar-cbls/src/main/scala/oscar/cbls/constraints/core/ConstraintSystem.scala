@@ -200,5 +200,5 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     * @return the constraints that are violated, and whose ponderation factor is not zero
     */
   def violatedConstraints:List[Constraint] =
-    PostedConstraints.filter(p => (p._2 != null || p._2.value !=0) && p._1.isTrue).map(p => p._1)
+    PostedConstraints.filter(p => (p._2 == null || p._2.value !=0) && !p._1.isTrue).map(p => p._1)
 }
