@@ -16,14 +16,13 @@
 package oscar.linprog.test
 
 import java.io.{File, FileWriter, PrintWriter}
-
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import gurobi.{GRB, GRBModel}
 import lpsolve.LpSolve
 import oscar.algebra.{double2const, int2const}
 import oscar.linprog.modeling.{GurobiLP, LPFloatVar, LPSolve, LPSolver, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, canInstantiateSolver, checkConstraints, maximize, objectiveValue, release, start, status}
+import lpsolve.LpSolveException
 
 /**
  * LPTesting
@@ -68,8 +67,38 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     release()
     configLP.delete
   }
+  
+  test("Incorrect Config file for LPSolve") {
 
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
+    // The correct header must be specified
+    writer.println("[Default]")
+    writer.println("presolve=NOT_A_VALID_VALUE")
+    writer.flush
+    writer.close
 
+    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    mip.solver.configFile = configLP
+    
+    val x0 = MIPFloatVar(mip, "x0", 0, 40)
+    val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]
+    val x2 = MIPIntVar(mip, "x2", 0 until 18) // can take integer value in range[0 .. 17] 
+    val x3 = MIPFloatVar(mip, "x3", 2, 3)
+
+    maximize(x0 + 2 * x1 + 3 * x2 + x3)
+    add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
+    add(x0 - 3.0 * x1 + x2 <= 30)
+    add(x1 - 3.5 * x3 == 0)
+    try {
+    	mip.start()
+    } catch {
+      case _ : LpSolveException => fail("Incorrect param files should not leak exceptions")
+    }
+    mip.release()
+    configLP.delete
+  }  
+  
   test("Config file for LPSolve: Bug #72 ") {
 
     val configLP = new File("LPParam.ini")
@@ -81,6 +110,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.close
 
     implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    mip.solver.configFile = configLP
 
     val x0 = MIPFloatVar(mip, "x0", 0, 40)
     val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]

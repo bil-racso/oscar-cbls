@@ -41,7 +41,16 @@ class LPSolve extends AbstractLP {
     lp.setAddRowmode(true)
     lp.setVerbose(LpSolve.CRITICAL)
     if (configFile.exists()) {
-      lp.readParams(configFile.getAbsolutePath, "[Default]");
+      try {
+    	  lp.readParams(configFile.getAbsolutePath, "[Default]");
+      } catch {
+        case e : LpSolveException => { 
+        	System.err.println(s"lp_solve encountered a problem reading from params file [${configFile.getAbsolutePath}")
+        	System.err.println(s"Ignoring the parameters file")
+        	System.err.println(s"Error Message was: ${e.getMessage()}")
+        	
+        }
+      }
     }
   }
 
