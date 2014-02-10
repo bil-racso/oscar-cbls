@@ -16,14 +16,13 @@
 package oscar.linprog.test
 
 import java.io.{File, FileWriter, PrintWriter}
-
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.algebra.{double2const, int2const, sum}
 import oscar.linprog.modeling.{LPSolve, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, maximize, release, start}
-
 import lpsolve._
+import oscar.linprog.modeling.LPFloatVar
+import oscar.linprog.modeling.LPSolver
 
 /**
  * Testing OscaR's handling of lp_solve specific settings 
@@ -183,4 +182,42 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 		x(4).value should be(Some(0.0))
 		mip.objectiveValue() should be(Some(-90))
 	}
+	
+	/** Example from [[http://lpsolve.sourceforge.net/5.5/Presolve.htm lp_solve's Presolve
+	 *  documentation]]
+	 */
+	test("Test OscaR can handle when solver presolve alters model") {
+	    writer.println("presolve=PRESOLVE_ROWS + PRESOLVE_COLS")
+	    writer.close() // Not using additional config
+	    implicit val lp = LPSolver(LPSolverLib.lp_solve)
+		
+		val lpSolve = lp.solver match {
+			case lp: LPSolve => lp
+			case _ => fail("Test case requires that solver is actually lp_solve")
+		}
+		
+	    
+		lpSolve.configFile = tmpConfigFile
+		
+		val x = Array(LPFloatVar("x1"), 
+					  LPFloatVar("x2"), 
+					  LPFloatVar("x3"))
+		
+		maximize(x(0) + x(1) + x(2))
+		add(x(1) == 2, "r1")
+		add(x(0) + x(1) <= 6, "r2")
+		add(x(0) - 2 * x(2) >= 2, "r3")
+		add(x(1) + 3 * x(2) <= 5, "r4")	
+		start()
+	
+		lpSolve.lp.getNorigRows() should be(4)
+		lpSolve.lp.getNrows() should be(1)
+		
+                lpSolve.lp.getNorigColumns() should be(3)
+                lpSolve.lp.getNcolumns() should be(2)
+
+                x(0).value should be(Some(4.0))
+                x(1).value should be(Some(2.0))
+                x(2).value should be(Some(1.0))
+        }	
 }
