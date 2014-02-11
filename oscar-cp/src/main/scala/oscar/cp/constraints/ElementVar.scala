@@ -18,7 +18,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils;
 import oscar.algo.reversible.ReversibleInt
@@ -38,7 +38,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  * Use CPPropagStrength.Strong to have GAC propagation, otherwise BC propagation is used.
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class ElementVar(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) extends Constraint(y(0).s, "ElementVar") {
+class ElementVar(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "ElementVar") {
     
 
 

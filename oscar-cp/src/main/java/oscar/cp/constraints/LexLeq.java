@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -28,8 +28,8 @@ import oscar.cp.core.Constraint;
  */
 public class LexLeq extends Constraint {
 	   
-	private CPVarInt [] x;
-	private CPVarInt [] y;
+	private CPIntVar [] x;
+	private CPIntVar [] y;
 	
 	private ReversibleInt q;
 	private ReversibleInt r;
@@ -47,8 +47,8 @@ public class LexLeq extends Constraint {
      * @param x
      * @param y a vector of same length as x
      */
-	public LexLeq(CPVarInt [] x, CPVarInt [] y) {
-		super(x[0].s(),"LexLeq");
+	public LexLeq(CPIntVar [] x, CPIntVar [] y) {
+		super(x[0].store(),"LexLeq");
 			
 		if (x.length != y.length) {
 			throw new RuntimeException("LexLeq: x and y must have the same length");
@@ -98,7 +98,7 @@ public class LexLeq extends Constraint {
 	}
 	
 	
-	public CPOutcome updateBoundsIdx(CPVarInt var, int idx) {
+	public CPOutcome updateBoundsIdx(CPIntVar var, int idx) {
 		i = idx;
 		if (i == q.getValue()) return state1();
 		else if (i == r.getValue()) return state2();

@@ -81,7 +81,7 @@ object SecretSanta {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     //
     // constraints
@@ -117,7 +117,7 @@ object SecretSanta {
       numSols += 1
 
    } 
-   println(cp.start(nbSolMax = num_to_show))
+   println(cp.start(nSols = num_to_show))
 
   }
 

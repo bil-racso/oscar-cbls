@@ -49,9 +49,9 @@ object PMedian extends CPModel with App {
 
   val cost = Array.tabulate(nbCust, nbCust)((i, j) => dist(i)(j))
 
-  val x = Array.fill(nbCust)(CPVarInt(0 until nbCust))
+  val x = Array.fill(nbCust)(CPIntVar(0 until nbCust))
   val xsol = Array.fill(nbCust)(0)
-  val load = Array.fill(nbCust)(CPVarInt(0 until capa))
+  val load = Array.fill(nbCust)(CPIntVar(0 until capa))
 
   // ----------- visu ----------
   val f = new VisualFrame("P-Median Problem", 1, 2)

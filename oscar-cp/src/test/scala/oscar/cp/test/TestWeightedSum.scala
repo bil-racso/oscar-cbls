@@ -12,7 +12,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
 
   test("Weighted Sum 1") {
     val cp = CPSolver()
-    var x = Array.tabulate(5)(i => CPVarInt(i)(cp))
+    var x = Array.tabulate(5)(i => CPIntVar(i)(cp))
     val y = weightedSum(0 until 5) { i => (i, x(i)) }
     // 0*0 + 1*1 + 2*2 + 3*3 + 4*4
     y.value should be(30)
@@ -20,7 +20,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
 
   test("Weighted Sum 2") {
     val cp = CPSolver()
-    var x = Array.tabulate(5)(i => CPVarInt(i)(cp))
+    var x = Array.tabulate(5)(i => CPIntVar(i)(cp))
     val y = weightedSum(0 until 5, x)
     // 0*0 + 1*1 + 2*2 + 3*3 + 4*4
     y.value should be(30)
@@ -28,7 +28,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
 
   test("Weighted Sum 3") {
     val cp = CPSolver()
-    var x = Array.tabulate(2, 2)((i, j) => CPVarInt(i * 2 + j)(cp))
+    var x = Array.tabulate(2, 2)((i, j) => CPIntVar(i * 2 + j)(cp))
     var w = Array.tabulate(2, 2)((i, j) => i * 2 + j)
     // 0*0 + 1*1 + 2*2 + 3*3
     val y = weightedSum(w, x)
@@ -37,7 +37,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
 
   test("Weighted Sum 4") {
     val cp = CPSolver()
-    var x = Array.tabulate(2, 2)((i, j) => CPVarInt(i * 2 + j)(cp))
+    var x = Array.tabulate(2, 2)((i, j) => CPIntVar(i * 2 + j)(cp))
     var w = Array.tabulate(2, 2)((i, j) => i * 2 + j)
     // 0*0 + 1*1 + 2*2 + 3*3
     val y = weightedSum(0 until x.size, 0 until w.size) { case (i, j) => (w(i)(j), x(i)(j)) }
@@ -46,8 +46,8 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
 
   def nbsol(w: Array[Int], domx: Array[Set[Int]], ymin: Int, ymax: Int, decomp: Boolean = false): Int = {
     val cp = CPSolver()
-    val x = domx.map(dom => CPVarInt(dom)(cp))
-    val y = CPVarInt(ymin to ymax)(cp)
+    val x = domx.map(dom => CPIntVar(dom)(cp))
+    val y = CPIntVar(ymin to ymax)(cp)
     var n: Int = 0
     cp.solve subjectTo {
       if (!decomp)
@@ -65,8 +65,8 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
   test("Weighted Sum 5") {
     val x = Array(Set(1, 2), Set(4, 6, 8), Set(-6, -4, 0, 6))
     val w = Array(4, -3, 2)
-    println("=>" + nbsol(w, x, -100, 100, true))
-    println("=>" + nbsol(w, x, -100, 100, false))
+    //println("=>" + nbsol(w, x, -100, 100, true))
+    //println("=>" + nbsol(w, x, -100, 100, false))
   }
 }
   

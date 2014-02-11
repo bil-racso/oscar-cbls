@@ -1,11 +1,11 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPVarSet
+import oscar.cp.core.CPSetVar
 
 class VarSetInt (
     //val value: Set[Int],
     val annotations: List[Annotation],
-    val cpvar: CPVarSet,
+    val cpvar: CPSetVar,
     override val name: String
     ) extends FZObject (name) {
 

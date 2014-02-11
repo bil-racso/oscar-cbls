@@ -17,7 +17,7 @@ package oscar.cp.core
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPSol(x: Set[CPVarInt]) {
+class CPSol(x: Set[CPIntVar]) {
 	val dict = x.map(y => (y,y.value)).toMap
-	def apply(y: CPVarInt): Int = dict(y)
+	def apply(y: CPIntVar): Int = dict(y)
 }

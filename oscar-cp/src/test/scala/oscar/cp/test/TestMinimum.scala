@@ -29,9 +29,9 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
   test("Minimum1") {
     val cp = CPSolver()
     
-    var x = Array.fill(3)(CPVarInt(1 to 3)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
-    var y = CPVarInt(0 to 6)(cp)
+    var y = CPIntVar(0 to 6)(cp)
    
     cp.add(minimum(x) == y)
     
@@ -48,9 +48,9 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
   test("Minimum2") {
     val cp = CPSolver()
     
-    var x = Array.fill(3)(CPVarInt(1 to 3)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
-    var y = CPVarInt(0 to 6)(cp)
+    var y = CPIntVar(0 to 6)(cp)
    
     cp.add(minimum(x) == y)
     
@@ -64,9 +64,9 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
   test("Minimum3") {
     val cp = CPSolver()
     
-    var x = Array.fill(3)(CPVarInt(1 to 3)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
-    var y = CPVarInt(0 to 6)(cp)
+    var y = CPIntVar(0 to 6)(cp)
    
     cp.add(minimum(x) == y)
     

@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -27,9 +27,9 @@ import oscar.cp.core.CPStore;
  */
 public class DiffReif extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int v;
-	CPVarBool b;
+	CPBoolVar b;
 	
 
 	/**
@@ -38,8 +38,8 @@ public class DiffReif extends Constraint {
      * @param x
      * @param v
      */
-	public DiffReif(CPVarInt x, int v, CPVarBool b) {
-		super(x.s(),"DiffReif");
+	public DiffReif(CPIntVar x, int v, CPBoolVar b) {
+		super(x.store(),"DiffReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;
@@ -64,7 +64,7 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPIntVar x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -76,7 +76,7 @@ public class DiffReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valRemove(CPVarInt x, int val) {
+	public CPOutcome valRemove(CPIntVar x, int val) {
 		if (val == v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -88,7 +88,7 @@ public class DiffReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				//x != v

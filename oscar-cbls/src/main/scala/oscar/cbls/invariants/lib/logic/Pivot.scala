@@ -172,8 +172,8 @@ case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
       }
     } else { //il est dans BelowOrEqual
       //     println("SelectLEnotify " + v + " index: " + index +  " OldVal: " + OldVal + " NewVal: " + NewVal + " boundary: " + boundary + " output " + output)
-      assert(OldVal <= boundary.value, "SelectLESetQueue does not allow elements above boundary to change")
-      assert(QueueAbove.isEmpty || values(QueueAbove.last).value <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one")
+      assert(OldVal <= boundary.value, "SelectLESetQueue does not allow elements above boundary to change: " + v + "(new: " + NewVal + ", old: " + OldVal + ") pivot: " + boundary)
+      assert(QueueAbove.isEmpty || values(QueueAbove.last).value <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one: " + v)
       QueueAbove.enqueue(index)
       output.deleteValue(index)
     }

@@ -15,7 +15,7 @@ import java.io.FileReader
 import java.io.File
 import scala.io.Source
 import oscar.cp.modeling.CPSolver
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 
 class TestBuild extends FunSuite with ShouldMatchers {
   
@@ -23,12 +23,13 @@ class TestBuild extends FunSuite with ShouldMatchers {
   
  
 	test("Test fzn models") {
-	  val pwd = new java.io.File(".").getCanonicalPath
-	  val modelFileList = new File(pwd+"/minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
-	  val old = Console.out;
 	  
+	  val pwd = new java.io.File(".").getCanonicalPath
+	  
+	  val modelFileList = new File(pwd+"/../minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
+	  val old = Console.out;
 	  for(f <- modelFileList) {
-	    println("Testing: " + f.getName())
+	    old.println("Testing: " + f.getName())
 	    
 	    // redirect Console.out
 	    var baos = new ByteArrayOutputStream();
@@ -44,14 +45,14 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    Console.setOut(old);
 	    	   
 	    // write to file
-//	    var os: OutputStream = new FileOutputStream (pwd+"/minizinc/testBuildOutput_"+f.getName().dropRight(4)); 
-//	    baos.writeTo(os);
+	    //var os: OutputStream = new FileOutputStream (pwd+"/minizinc/testBuildOutput_"+f.getName().dropRight(4)); 
+	    //baos.writeTo(os);
 	    
 	    val str = baos.toString().lines.toList
-	    val output = Source.fromFile(pwd+"/minizinc/test/output/"+f.getName().dropRight(4)+".output").getLines.toList
+	    val output = Source.fromFile(pwd+"/../minizinc/test/output/"+f.getName().dropRight(4)+".output").getLines.toList
 
 	    str.length should be(output.length)
-//	    println(str.length + " --- " + output.length)
+	    //println(str.length + " --- " + output.length)
 	    
 	    for ((o, s) <- output.zip(str)) {
 //	      println(o + " ---- " + s)
@@ -61,6 +62,8 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    ps.close()
 	    baos.close()
 	  }
+	  
+	  
 	}
 	/*
 	test("Test fzn models") {

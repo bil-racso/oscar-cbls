@@ -77,7 +77,7 @@ object Valentines extends LPModel with App {
   
 
   // The decision vars are binary: does a shop send a bouquet to a valentine or not?
-  val x = Array.tabulate(Florists, Valentines)((f, v) => LPVar(s"x($f,$v)", 0, 1))
+  val x = Array.tabulate(Florists, Valentines)((f, v) => LPFloatVar(s"x($f,$v)", 0, 1))
 
   minimize(sum(0 until Florists, 0 until Valentines)((f, v) => x(f)(v) * cost(f)(v)))
   (0 until Florists).foreach(f => add(sum(0 until Valentines)(v => x(f)(v)) == stock(f)))

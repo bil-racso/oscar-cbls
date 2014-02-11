@@ -28,7 +28,7 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
 
   test("TableAC5 Test 1") {
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarInt(1 to 3)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
     val tuples = Array((1,1,1),
                        (1,2,3))
@@ -39,10 +39,10 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
     x(0).value should be(1)
     x(2).hasValue(2) should be (false)
     
-    println(x.mkString(","))
+    //println(x.mkString(","))
     
     cp.post(x(2) != 3)
-    println(x.mkString(","))
+    //println(x.mkString(","))
     
     cp.isFailed should be(false)
     x(1).value should be(1)
@@ -53,9 +53,9 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
   test("TableAC5 Test 2") {
     val cp = CPSolver()
     
-    var x = CPVarInt(0 to 4)(cp)
-    var y = CPVarInt(0 to 4)(cp)
-    var z = CPVarInt(0 to 24)(cp)
+    var x = CPIntVar(0 to 4)(cp)
+    var y = CPIntVar(0 to 4)(cp)
+    var z = CPIntVar(0 to 24)(cp)
     
     
     val tuples = (for (i <- 0 until 5; j <- i+1 until 5) yield (i,j,i*4+j-1)).toArray
@@ -69,7 +69,7 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
   
   test("TableAC5 Test 3") {
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarInt(1 to 7)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 7)(cp))
     val tuples = Array((1,1,1),(1,2,3),(1,2,7),(2,1,4))  
     var nbSol = 0	
     cp.solve subjectTo {
@@ -85,7 +85,7 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
   
   test("TableAC5 Test 4") {
     val cp = CPSolver()
-    var x = Array.fill(2)(CPVarInt(1 to 1)(cp))
+    var x = Array.fill(2)(CPIntVar(1 to 1)(cp))
     
     val tuples = Array((1,2),(2,1))
     
@@ -100,7 +100,7 @@ class TestTableAC5TCRecomp extends FunSuite with ShouldMatchers  {
 
     def nbSol(newcons: Boolean) = {
       val cp = CPSolver()
-      val x = Array.fill(4)(CPVarInt(Set(1, 3, 6, 9))(cp))
+      val x = Array.fill(4)(CPIntVar(Set(1, 3, 6, 9))(cp))
 
       val tuples = Array((1, 2, 2, 4),
         (1, 2, 4, 8),

@@ -82,8 +82,8 @@ object TouristSiteCompetition {
     //
     // variables
     //
-    val x = Array.fill(num_sites, num_judges)(CPVarInt(0 to 1)(cp))
-    val judges_where = Array.fill(num_judges, num_sites)(CPVarInt(0 to 1)(cp))
+    val x = Array.fill(num_sites, num_judges)(CPIntVar(0 to 1)(cp))
+    val judges_where = Array.fill(num_judges, num_sites)(CPIntVar(0 to 1)(cp))
 
     //
     // constraints

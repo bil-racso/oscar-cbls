@@ -97,7 +97,7 @@ object CalvinPuzzleTable {
       //
       // variables
       //
-      val x = Array.fill(n,n)(CPVarInt(0 to n*n-1)(cp))
+      val x = Array.fill(n,n)(CPIntVar(0 to n*n-1)(cp))
       val x_flat = x.flatten
 
       //
@@ -143,7 +143,7 @@ object CalvinPuzzleTable {
         
       }
  
-      println(cp.start(nbSolMax = num_to_show))
+      println(cp.start(nSols = num_to_show))
 
   }
 

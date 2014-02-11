@@ -34,7 +34,7 @@ object Euler extends CPModel with App {
     }
   }
 
-  val x = (0 until 64).map(v => CPVarInt(reachables(v)))
+  val x = (0 until 64).map(v => CPIntVar(reachables(v)))
 
   add(circuit(x))
 

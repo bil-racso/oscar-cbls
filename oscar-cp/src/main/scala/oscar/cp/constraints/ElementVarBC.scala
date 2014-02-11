@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils;
 import oscar.algo.reversible.ReversibleInt
@@ -37,7 +37,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  *
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) extends Constraint(y(0).s, "BCElementVar") {
+class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "BCElementVar") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
@@ -90,14 +90,14 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
 	Suspend
   }  
   
-  override def updateBounds(cpvar: CPVarInt): CPOutcome = {
+  override def updateBounds(cpvar: CPIntVar): CPOutcome = {
     // bounds of z changed
     if (filterX() == Failure) Failure
     else if (x.isBound) valBind(x)
     else Suspend
   }
   
-  override def valBind(cpvar: CPVarInt): CPOutcome = {
+  override def valBind(cpvar: CPIntVar): CPOutcome = {
     // x is bind
     val i = x.value
     zminSup.setValue(i)
@@ -107,7 +107,7 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
     else filterZ()
   }
 
-  override def updateBoundsIdx(cpvar: CPVarInt, i: Int): CPOutcome = {
+  override def updateBoundsIdx(cpvar: CPIntVar, i: Int): CPOutcome = {
     // bound of y(i) changed
     if (y(i).max < z.min || y(i).min > z.max) {
       if (x.removeValue(i) == Failure) return Failure
@@ -121,7 +121,7 @@ class ElementVarBC(val y: Array[CPVarInt], val x: CPVarInt, val z: CPVarInt) ext
     }
   }
   
-  override def valRemove(cpvar: CPVarInt, v: Int): CPOutcome = {
+  override def valRemove(cpvar: CPIntVar, v: Int): CPOutcome = {
     // x lost value v
     if (zminSup.value == v || zmaxSup.value == v) {
       updateSupport()

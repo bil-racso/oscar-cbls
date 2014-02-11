@@ -41,8 +41,8 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
     // variables
     //
 
-    val x = Array.fill(n)(CPVarInt(0 to n - 1)(cp))
-    val diffs = Array.fill(n - 1)(CPVarInt(1 to n - 1)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to n - 1)(cp))
+    val diffs = Array.fill(n - 1)(CPIntVar(1 to n - 1)(cp))
 
     //
     // constraints
@@ -64,15 +64,15 @@ class TestAllIntervals extends FunSuite with ShouldMatchers {
     } search {
       binaryStatic(x)
     } onSolution {
-      print("x:" + x.mkString(""))
-      print("  diffs:" + diffs.mkString(""))
-      println()
+      //print("x:" + x.mkString(""))
+      //print("  diffs:" + diffs.mkString(""))
+      //println()
 
       numSols += 1
 
     } start()
     numSols should be(8)
-    println("\nIt was " + numSols + " solutions.")
+    //println("\nIt was " + numSols + " solutions.")
 
   }
 

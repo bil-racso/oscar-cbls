@@ -20,13 +20,13 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
 
-class TestCPVarInt extends FunSuite with ShouldMatchers {
+class TestCPIntVar extends FunSuite with ShouldMatchers {
 	
 	test("Test1 : Median") {
 
 		val cp = CPSolver()
 		
-		val a = CPVarInt(Array(0, 1, 2, 3, 4))(cp)
+		val a = CPIntVar(Array(0, 1, 2, 3, 4))(cp)
 
 		
 		a.median should be(2)
@@ -46,13 +46,13 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	
 	test("Test is full") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(0,1,3,2))(cp)
+	  val x = CPIntVar(Set(0,1,3,2))(cp)
 	  x.isFull should be(true)
 	  cp.add(x!=3)
 	  x.isFull should be(true)
 	  cp.add(x!=1)
 	  x.isFull should be(false)
-	  val y = CPVarInt(Set(0,1,3))(cp)
+	  val y = CPIntVar(Set(0,1,3))(cp)
 	  x.isFull should be(false)
 	  
 	}
@@ -60,20 +60,20 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	
 	test("Iterator1") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(0,1,3,2))(cp)
+	  val x = CPIntVar(Set(0,1,3,2))(cp)
 	  x.toSet should be(Set(0,1,2,3))
 	}	
 	
 	test("Iterator2") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(0,1,3,2))(cp)+1
+	  val x = CPIntVar(Set(0,1,3,2))(cp)+1
 	  x.toSet should be(Set(1,2,3,4))
 	}	
 	
   
   	test("Iterator3a") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(1,3))(cp)
+	  val x = CPIntVar(Set(1,3))(cp)
 	  x.toSet should be(Set(1,3))
 	}
 	
@@ -82,21 +82,21 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	
 	test("Iterator3") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(1,3))(cp)-1
+	  val x = CPIntVar(Set(1,3))(cp)-1
 	  x.toSet should be(Set(0,2))
 	}
 	
 	
 	test("Iterator4") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(Set(1,3,5))(cp)-1
+	  val x = CPIntVar(Set(1,3,5))(cp)-1
 	  cp.add(x != 2)
 	  x.toSet should be(Set(0,4))
 	}
 	
 	test("Iterator5") {
 	  val cp = CPSolver()
-	  val x = CPVarInt(1 to 5)(cp)-1
+	  val x = CPIntVar(1 to 5)(cp)-1
 	  
 	  x.toSet should be(Set(0,1,2,3,4))
 	  cp.add(x != 2)
@@ -105,7 +105,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	
 	test("isBound test - var does get bound") {
 		val cp = CPSolver()
-		val a = CPVarInt(Array(10, 20, 30))(cp)
+		val a = CPIntVar(Array(10, 20, 30))(cp)
 		a.isBound should be(false)
 		cp.add(a == 10)
 		a.isBound should be(true)
@@ -113,7 +113,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 	
 	test("isBound test - var doesn't get bound") {
 		val cp = CPSolver()
-		val a = CPVarInt(Array(10, 20, 30))(cp)
+		val a = CPIntVar(Array(10, 20, 30))(cp)
 		a.isBound should be(false)
 		
 		evaluating {
@@ -125,7 +125,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    var x = CPVarInt(-2 to 4)(cp)
+    var x = CPIntVar(-2 to 4)(cp)
     
     x.min should be(-2)
     x.max should be(4)
@@ -159,14 +159,14 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
   
   test("domain iterator 1") {
     val cp = CPSolver()
-    var x = CPVarInt(Set(1,3,5))(cp)
+    var x = CPIntVar(Set(1,3,5))(cp)
   
     val d = x.domainIterator
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Suspend)
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Suspend)
-    println(d.next)
+    d.next
     d.removeValue should be(CPOutcome.Failure)
     d.hasNext should be(false)
   }
@@ -174,7 +174,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
   
   test("domain iterator 2") {
     val cp = CPSolver()
-    var x = CPVarInt(Set(1,3,5,11))(cp)
+    var x = CPIntVar(Set(1,3,5,11))(cp)
     val initVals = x.toSet
     val d = x.domainIterator
     val removed = (for (i <- 1 to x.size-1) yield {
@@ -193,7 +193,7 @@ class TestCPVarInt extends FunSuite with ShouldMatchers {
   
   test("domain iterator 3") {
     val cp = CPSolver()
-    var x = CPVarInt(Set(1,3,5,11,15,17))(cp)
+    var x = CPIntVar(Set(1,3,5,11,15,17))(cp)
     x.removeValue(15)
     val d = x.domainIterator
     val toRemove = Set(3,11,17)

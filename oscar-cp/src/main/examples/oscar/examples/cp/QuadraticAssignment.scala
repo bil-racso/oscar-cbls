@@ -39,7 +39,7 @@ object QuadraticAssignment extends CPModel with App {
   onSolution { println("solution" + x.mkString(",")) }
 
   // for each facilities, the location chosen for it
-  val x = N map (v => CPVarInt(0 until n))
+  val x = N map (v => CPIntVar(0 until n))
 
   add(allDifferent(x), Strong)
 

@@ -14,10 +14,7 @@
  ******************************************************************************/
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
-import oscar.cp.scheduling._
-import oscar.cp.constraints._
 
 /**
  *
@@ -25,26 +22,32 @@ import oscar.cp.constraints._
  */
 object RCPSP {
 
-	def main(args : Array[String]) {
+  def main(args: Array[String]) {
 
-		// (duration, consumption)
-		val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
-		val capa = 4
-		val horizon = instance.map(_._1).sum
-		val Times = 0 to horizon
+    // (duration, consumption)
+    val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
+    val durationsData = instance.map(_._1)
+    val demandsData = instance.map(_._2)
+    val capa = 4
+    val horizon = instance.map(_._1).sum
+    val Times = 0 to horizon
+    val nTasks = instance.size
 
-		val cp = CPScheduler(horizon)
-		cp.silent = true
-		val x = CPVarInt(cp, 0 to 3)
+    implicit val cp = CPSolver()
+    cp.silent = true
 
-		val tasks : Array[CumulativeActivity] = instance.map { case (dur, req) => CumulativeActivity(cp, dur, 0, req) }
-		val makespan = maximum(tasks.map(_.end))
-		cp.minimize(makespan) subjectTo {
-			cp.add(new NewMaxCumulative(cp, tasks, capa, 0))
-		} search {
-		    setTimes(tasks.map(_.start),tasks.map(_.dur),tasks.map(_.end))
-		}
-		println(cp.start())
+    val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+    val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
+    val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
+    val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
 
-	}
+    val makespan = maximum(ends)
+    add(maxCumulativeResource(starts, durations, ends,demands, CPIntVar(capa)))
+    
+    minimize(makespan) search {
+      setTimes(starts, durations,ends)
+    }
+    println(cp.start())
+
+  }
 }

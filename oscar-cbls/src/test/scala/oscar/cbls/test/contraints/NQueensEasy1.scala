@@ -43,7 +43,7 @@ object NQueensEasy1 extends CBLSModel with App{
   // initial solution
   val init = rand.shuffle((0 to N-1).toList).toArray
 
-  val queens = Array.tabulate(N)(q => intVar(0 to N-1,init(q),"queen" + q))
+  val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen" + q))
 
   //alldiff on rows in enforced because we swap queens initially different
   c.add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))

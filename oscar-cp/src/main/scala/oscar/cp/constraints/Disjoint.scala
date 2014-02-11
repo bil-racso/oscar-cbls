@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of Disjoint Constraint (two sets must be disjoint)
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Disjoint(val x: CPVarSet, val y: CPVarSet) extends Constraint(x.store, "Disjoint") {
+class Disjoint(val x: CPSetVar, val y: CPSetVar) extends Constraint(x.store, "Disjoint") {
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     

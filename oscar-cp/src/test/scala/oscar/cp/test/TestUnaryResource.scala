@@ -20,7 +20,6 @@ import oscar.cp.constraints._
 import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.search.BinaryFirstFailBranching
-import oscar.cp.scheduling.Activity
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -28,7 +27,7 @@ import oscar.cp.scheduling.Activity
 class TestUnaryResource extends FunSuite with ShouldMatchers {
 
   // decomp without resource variables
-  def decomp(cp: CPSolver, starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]): Unit = {
+  def decomp(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]): Unit = {
     val n = starts.size
     for (i <- 0 until n; j <- i + 1 until n) {
       cp.add((ends(i) <== starts(j)) || (ends(j) <== starts(i)))
@@ -36,14 +35,14 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
   }
   
   // decomp with resource variables
-  def decomp(cp: CPSolver, starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt],resources: Array[CPVarInt], id: Int ): Unit = {
+  def decomp(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],resources: Array[CPIntVar], id: Int ): Unit = {
     val n = starts.size
     for (i <- 0 until n; j <- i + 1 until n) {
       cp.add((ends(i) <== starts(j)) || (ends(j) <== starts(i)) || (resources(i) !== id) || (resources(j) !== id))
     }
   }  
 
-  def unary(cp: CPSolver, starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]): Unit = {
+  def unary(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]): Unit = {
     cp.add(unaryResource(starts, durations, ends))
   }
 
@@ -61,11 +60,12 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 
       
       implicit val cp = CPSolver()
-      val starts = Array(CPVarInt(10), CPVarInt(7), CPVarInt(10))
+      cp.silent = true
+      val starts = Array(CPIntVar(10), CPIntVar(7), CPIntVar(10))
       val durations = Array(3,1,3)
-      val durs = durations.map(d => CPVarInt(d))
+      val durs = durations.map(d => CPIntVar(d))
       val ends = Array.tabulate(starts.size)(i => starts(i) + durations(i))
-      val required = Array(CPVarBool(false),CPVarBool(true),CPVarBool(false))
+      val required = Array(CPBoolVar(false),CPBoolVar(true),CPBoolVar(false))
       add(unaryResource(starts,durs,ends, required))
       cp.isFailed should be(false)
   }  
@@ -79,16 +79,17 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val optional = inst.map(_._2)
       val horizon = durations.sum
       val cp = CPSolver()
-      val starts = Array.tabulate(n)(i => CPVarInt(cp, 0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPVarInt(cp, durations(i)))
+      cp.silent = true
+      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1))(cp))
+      val durs = Array.tabulate(n)(i => CPIntVar(durations(i))(cp))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
-      val resources = Array.tabulate(n)(i => if (optional(i)) CPVarInt(0 to 1)(cp) else CPVarInt(0)(cp) )
+      val resources = Array.tabulate(n)(i => if (optional(i)) CPIntVar(0 to 1)(cp) else CPIntVar(0)(cp) )
       cp.search {
         binaryFirstFail(starts) ++ binaryFirstFail(resources)
       }
       
       val statCum = cp.startSubjectTo() {
-        cp.add(new SweepMaxCumulative(starts, ends, durs,starts.map(_ => CPVarInt(1)(cp)), resources, CPVarInt(1)(cp),0))
+        cp.add(maxCumulativeResource(starts, durs, ends,starts.map(_ => CPIntVar(1)(cp)), resources, CPIntVar(1)(cp),0))
       }
       val statUnary = cp.startSubjectTo() {
         cp.add(unaryResource(starts,durs,ends, resources,0))
@@ -116,9 +117,10 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val n = 4
       val durations = randomDurations(n, seed)
       val horizon = durations.sum
-      val cp = CPScheduler(horizon)
-      val starts = Array.tabulate(n)(i => CPVarInt(cp, 0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPVarInt(cp, durations(i)))
+      implicit val cp = CPSolver()
+      cp.silent = true
+      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1)))
+      val durs = Array.tabulate(n)(i => CPIntVar(durations(i)))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
 
       cp.onSolution {
@@ -151,10 +153,11 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 	test("Test 1: packing") {	
 		
 		val horizon = 5
-		implicit val cp = new CPSolver()		
-        val starts = Array.fill(4)(CPVarInt(0 to 5))
-        val ends = Array.fill(4)(CPVarInt(0 to 5))
-        val durs = Array(CPVarInt(3),CPVarInt(1),CPVarInt(2),CPVarInt(2))
+		implicit val cp = new CPSolver()
+		cp.silent = true
+        val starts = Array.fill(4)(CPIntVar(0 to 5))
+        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val durs = Array(CPIntVar(3),CPIntVar(1),CPIntVar(2),CPIntVar(2))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
         }
@@ -184,10 +187,11 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 	test("Test 2: durations") {	
 		
 		val horizon = 5
-		implicit val cp = new CPSolver()		
-        val starts = Array.fill(4)(CPVarInt(0 to 5))
-        val ends = Array.fill(4)(CPVarInt(0 to 5))
-        val durs = Array(CPVarInt(3 to 4),CPVarInt(1),CPVarInt(2),CPVarInt(2))
+		implicit val cp = new CPSolver()
+		cp.silent = true
+        val starts = Array.fill(4)(CPIntVar(0 to 5))
+        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val durs = Array(CPIntVar(3 to 4),CPIntVar(1),CPIntVar(2),CPIntVar(2))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
         }
@@ -219,10 +223,11 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 	test("Test 3: durations") {	
 		
 		val horizon = 5
-		implicit val cp = new CPSolver()		
-        val starts = Array.fill(4)(CPVarInt(0 to 5))
-        val ends = Array.fill(4)(CPVarInt(0 to 5))
-        val durs = Array(CPVarInt(3 to 4),CPVarInt(2),CPVarInt(2),CPVarInt(1))
+		implicit val cp = new CPSolver()
+		cp.silent = true
+        val starts = Array.fill(4)(CPIntVar(0 to 5))
+        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val durs = Array(CPIntVar(3 to 4),CPIntVar(2),CPIntVar(2),CPIntVar(1))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
         }
@@ -269,7 +274,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
 			expectedSol.contains(sol) should be(true)
 		}
-		println(start())
+		
 		start().nSols should be(24)
 	}
 
@@ -283,10 +288,11 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val expectedOpt = horizon / 2
 
       implicit val cp = CPSolver()
-      val starts = Array.tabulate(n)(i => CPVarInt(0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPVarInt(durations(i)))
+      cp.silent = true
+      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1)))
+      val durs = Array.tabulate(n)(i => CPIntVar(durations(i)))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
-      val resources = Array.tabulate(n)(i => CPVarInt(1 to 2))
+      val resources = Array.tabulate(n)(i => CPIntVar(1 to 2))
 
       add(unaryResource(starts, durs, ends, resources, 1))
       add(unaryResource(starts, durs, ends, resources, 2))

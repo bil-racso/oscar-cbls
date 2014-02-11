@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of Sum Constraint:
  * @author Pierre Schaus pschaus@gmail.com
  */
-class AllDiffFWC(val X: Array[CPVarInt]) extends Constraint(X(0).s, "AllDiffFWC") {
+class AllDiffFWC(val X: Array[CPIntVar]) extends Constraint(X(0).store, "AllDiffFWC") {
 
   val x = X.map(i => i)
   val nBounds = new ReversibleInt(s, 0)

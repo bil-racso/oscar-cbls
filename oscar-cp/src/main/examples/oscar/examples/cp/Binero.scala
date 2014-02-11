@@ -49,7 +49,7 @@ object Binero extends CPModel with App {
     }.toArray
   }).toArray
 
-  val grid = for (i <- rangeArr; j <- rangeArr) yield CPVarInt(0 to 1) // The variable grid
+  val grid = for (i <- rangeArr; j <- rangeArr) yield CPIntVar(0 to 1) // The variable grid
 
   // Arrays containing the elements of the lines and columns of the variable grids
   val line = for (i <- rangeArr) yield grid.slice(i * 2 * n, (i + 1) * 2 * n)
@@ -91,7 +91,7 @@ object Binero extends CPModel with App {
 /**
  * Custom constraint which obliges two arrays to be different
  */
-class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len: Int) extends Constraint(tab1(0).s) {
+class TabNotEqual(val tab1: Array[CPIntVar], val tab2: Array[CPIntVar], val len: Int) extends Constraint(tab1(0).store) {
 
   val valuesBin = Array(new ReversibleInt(s, 0), new ReversibleInt(s, 0))
   val numBound = Array(new ReversibleInt(s, 0), new ReversibleInt(s, 0))
@@ -110,7 +110,7 @@ class TabNotEqual(val tab1: Array[CPVarInt], val tab2: Array[CPVarInt], val len:
     CPOutcome.Suspend
   }
 
-  override def valBindIdx(x: CPVarInt, i: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
     valuesBin(i / len).value += x.min * intPow(2, i % len)
     numBound(i / len).incr()
     if (numBound(0).value == len && numBound(1).value == len) {

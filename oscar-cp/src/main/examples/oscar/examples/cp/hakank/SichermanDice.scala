@@ -89,8 +89,8 @@ object SichermanDice {
     //
     // variables
     //
-    val x1 = Array.fill(n)(CPVarInt(lowest_value to m)(cp))
-    val x2 = Array.fill(n)(CPVarInt(lowest_value to m)(cp))
+    val x1 = Array.fill(n)(CPIntVar(lowest_value to m)(cp))
+    val x2 = Array.fill(n)(CPIntVar(lowest_value to m)(cp))
 
     //
     // constraints

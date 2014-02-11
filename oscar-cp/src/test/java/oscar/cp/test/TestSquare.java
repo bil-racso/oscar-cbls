@@ -48,8 +48,8 @@ public class TestSquare extends TestCase {
     
     public void testSquare1() {  
     	CPStore s = new CPStore();
-    	CPVarInt x = CPVarInt.apply(s,-5,5);
-    	CPVarInt y = CPVarInt.apply(s,-5,16);
+    	CPIntVar x = CPIntVar.apply(s,-5,5);
+    	CPIntVar y = CPIntVar.apply(s,-5,16);
     	s.post(new Square(x, y));
     	assertTrue(!s.isFailed());
     	assertTrue(x.getMin() == -4);

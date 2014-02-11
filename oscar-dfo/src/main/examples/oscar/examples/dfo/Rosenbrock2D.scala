@@ -14,8 +14,11 @@
  ******************************************************************************/
 package oscar.examples.dfo
 
-import oscar.dfo.modeling._
-import oscar.algebra._
+import oscar.algebra.int2const
+import oscar.dfo.modeling.DFOModel
+import oscar.dfo.modeling.DFOFloatVar
+import oscar.dfo.modeling.minimize
+import oscar.dfo.modeling.onSolution
 
 /**
  * @author pschaus@gmail.com
@@ -25,8 +28,8 @@ object Rosenbrock2D extends DFOModel with App {
 
 
   // declare two variables and their domain
-  val x = DFOVar("x1", -10, +10)
-  val y = DFOVar("x2", -10, +10)
+  val x = DFOFloatVar("x1", -10, +10)
+  val y = DFOFloatVar("x2", -10, +10)
 
   // 2D Rosenbrock function
   val objective = (1 - x) * (1 - x) + 100 * (y - x * x) * (y - x * x)

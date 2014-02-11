@@ -17,9 +17,9 @@ object PrimeLooking extends CPModel with App {
 
   val n = 1000
 
-  val x  = CPVarInt(1 to n)
-  val d1 = CPVarInt(2 to n)
-  val d2 = CPVarInt(2 to n)
+  val x  = CPIntVar(1 to n)
+  val d1 = CPIntVar(2 to n)
+  val d2 = CPIntVar(2 to n)
 
   add(d1 * d2 == x)
   add(d1 <= d2) // avoid symmetric solutions

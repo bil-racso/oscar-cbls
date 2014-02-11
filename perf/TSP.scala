@@ -41,9 +41,9 @@ object TSP {
     val cp = new CPSolver()
     cp.silent = true
     //array of successors
-    val succ = Array.tabulate(n)(_ => CPVarInt(cp, 0 until n))
+    val succ = Array.tabulate(n)(_ => CPIntVar(cp, 0 until n))
     //total distance
-    val dist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
+    val dist = CPIntVar(cp, 0 to distMatrix.flatten.sum)
 
     cp.minimize(dist) subjectTo {
       cp.add(circuit(succ), Strong) //ask to have a strong filtering

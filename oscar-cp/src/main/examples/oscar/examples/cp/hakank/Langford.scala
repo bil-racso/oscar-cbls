@@ -61,10 +61,10 @@ object Langford {
     //
     // variables
     //
-    val position = Array.fill(2*k)(CPVarInt(0 to 2*k-1)(cp))
+    val position = Array.fill(2*k)(CPIntVar(0 to 2*k-1)(cp))
 
     // channel positions to a solution array
-    val solution = Array.fill(2*k)(CPVarInt(1 to k)(cp))
+    val solution = Array.fill(2*k)(CPIntVar(1 to k)(cp))
 
     //
     // constraints

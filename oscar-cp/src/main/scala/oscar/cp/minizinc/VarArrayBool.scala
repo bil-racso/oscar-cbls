@@ -1,10 +1,10 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPVarBool
+import oscar.cp.core.CPBoolVar
 
 class VarArrayBool (
     val annotations: List[Annotation],
-    val cpvar: Array[CPVarBool],
+    val cpvar: Array[CPBoolVar],
     override val name: String
     ) extends FZObject (name) {
 

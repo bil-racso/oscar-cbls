@@ -35,24 +35,33 @@ class GlpkMIP extends GlpkLP {
     		iocp.setMir_cuts(GLPKConstants.GLP_ON)
     		iocp.setCov_cuts(GLPKConstants.GLP_ON)
     		iocp.setClq_cuts(GLPKConstants.GLP_ON)
+    	
 			
-    		//ioocp.setMip_gap(0.03) 
+    		iocp.setMsg_lev(GLPKConstants.GLP_MSG_ERR)
+    		if(timeout < Int.MaxValue) {
+    			iocp.setTm_lim(timeout)
+    		}
 
-
-    		val ret = GLPK.glp_intopt(lp, iocp)
-    		if (ret != 0) {
-    		  println("glpk return code was not zero, must be problem somewhere...")
+    		GLPK.glp_intopt(lp, iocp) match {
+    		  case 0 => println("Solution process was successful")
+    		  case GLPKConstants.GLP_EBOUND => println("Unable to start search. Some variables have incorrect bounds")
+    		  case GLPKConstants.GLP_EROOT => println("Unable to start search. No optimal basis provided (turn on LP presolve)")
+    		  case GLPKConstants.GLP_ENOPFS => println("No primal feasible solution")
+    		  case GLPKConstants.GLP_EFAIL => println("Search terminated earlier due to solver failure")
+    		  case GLPKConstants.GLP_EMIPGAP => println("Relative MIP Gap tolerance reached")
+    		  case GLPKConstants.GLP_ETMLIM => println("Search reached its time limit")
+    		  case GLPKConstants.GLP_ESTOP => println("Search was terminated from application")
     		}
     		
     		GLPK.glp_mip_status(lp)  match {	  
-    		  case GLPKConstants.GLP_UNBND => LPStatus.UNBOUNDED
-    		  case GLPKConstants.GLP_INFEAS => LPStatus.INFEASIBLE
+    		  case GLPKConstants.GLP_UNDEF => LPStatus.UNBOUNDED
+    		  case GLPKConstants.GLP_NOFEAS => LPStatus.INFEASIBLE
     		  case GLPKConstants.GLP_OPT => {
     		  	sol = Array.tabulate(nbCols)(col => GLPK.glp_mip_col_val(lp,col +1))
     			objectiveValue = GLPK.glp_get_obj_val(lp)
     			LPStatus.OPTIMAL
     		  }
-    		  case _ => {
+    		  case GLPKConstants.GLP_FEAS => {
     		  	sol = Array.tabulate(nbCols)(col => GLPK.glp_mip_col_val(lp,col +1))
     			objectiveValue = GLPK.glp_get_obj_val(lp)
     			LPStatus.SUBOPTIMAL

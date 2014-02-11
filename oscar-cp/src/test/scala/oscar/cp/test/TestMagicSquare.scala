@@ -34,7 +34,7 @@ class TestMagicSquare extends FunSuite with ShouldMatchers  {
     
     val n = 3
     
-    val x = Array.fill(n,n)(CPVarInt(1 to n*n)(cp))
+    val x = Array.fill(n,n)(CPIntVar(1 to n*n)(cp))
      
     val s = ( n * (n*n + 1)) / 2;
 		

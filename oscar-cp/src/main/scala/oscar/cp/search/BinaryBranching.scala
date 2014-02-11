@@ -16,19 +16,19 @@
 package oscar.cp.search
 
 import oscar.cp.modeling._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
-import oscar.cp.core.CPVarSet
+import oscar.cp.core.CPSetVar
 
 /**
  * Binary Branching: 
  * You can specify your variable/value heuristics
  * author: Pierre Schaus pschaus@gmail.com
  */
-class BinaryBranching(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), valHeuris: (CPVarInt => Int) = minVal) extends Branching {
-  val cp = vars(0).s
-  val x_ = vars.asInstanceOf[Array[CPVarInt]].zipWithIndex
+class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends Branching {
+  val cp = vars(0).store
+  val x_ = vars.asInstanceOf[Array[CPIntVar]].zipWithIndex
   val nbBounds = new ReversibleInt(cp, 0)
   def bound(i: Int) {
     val ind = nbBounds.value
@@ -49,7 +49,7 @@ class BinaryBranching(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), 
     true
   }
 
-  def nextVar(): CPVarInt = {
+  def nextVar(): CPIntVar = {
     var i = nbBounds.value
     var (x, ind) = x_(i)
     var fbest = varHeuris(x)
@@ -83,10 +83,10 @@ class BinaryBranching(vars: Array[_ <: CPVarInt], varHeuris: (CPVarInt => Int), 
   }
 }
 
-class BinaryStaticOrderBranching(vars: Array[_ <: CPVarInt], valHeuris: (CPVarInt => Int) = minVal) extends Branching {
+class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends Branching {
 
-  val cp = vars(0).s
-  var y = vars.asInstanceOf[Array[CPVarInt]]
+  val cp = vars(0).store
+  var y = vars.asInstanceOf[Array[CPIntVar]]
   var i = new ReversibleInt(cp, 0)
 
   override def alternatives(): Seq[Alternative] = {
@@ -95,7 +95,7 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPVarInt], valHeuris: (CPVarIn
     
     if (i.value < y.size) {
 
-      val x: CPVarInt = y(i.value)
+      val x: CPIntVar = y(i.value)
       val v = valHeuris(x)
       branch {
         cp.assign(x, v)
@@ -115,37 +115,34 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPVarInt], valHeuris: (CPVarIn
  * @param vars: the array of variables to assign during the search
  * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
  */
-class BinaryFirstFailBranching(x: Array[CPVarInt], valHeuris: (CPVarInt => Int) = minVal) extends BinaryBranching(x, _.size, valHeuris) {
-  def this(x: CPVarInt*) = this(x.toArray)
+class BinaryFirstFailBranching(x: Array[CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends BinaryBranching(x, _.size, valHeuris) {
+  def this(x: CPIntVar*) = this(x.toArray)
 }
 
 /**
  * Binary search on the decision variables vars, selecting first the variables having the max number
  * of propagation methods attached to it.
  */
-class BinaryMaxDegreeBranching(x: Array[CPVarInt]) extends BinaryBranching(x, varHeuris = maxDegree, valHeuris = minVal)
+class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, varHeuris = maxDegree, valHeuris = minVal)
 
 /**
- * Binary search on the decision variables vars, splitting the domain of the selected variable on the
- * median of the values (left : <= median, right : > median)
+ * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
  */
-class BinaryDomainSplitBranching(x: Array[CPVarInt], varHeuris: (CPVarInt => Int) = minVar, valHeuris: (Int => Int) = i => i) extends BinaryBranching(x,varHeuris,minVal) {
+class BinaryDomainSplitBranching(x: Array[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) extends BinaryBranching(x,varHeuris,minVal) {
 
   override def alternatives(): Seq[Alternative] = {
     allBounds() match {
       case true => noAlternative
       case false => {
         val x = nextVar()
-        val vals = x.toArray.sortBy(valHeuris)
-        val median = vals(vals.size / 2)
-
-        branch(cp.post(x <= median))(cp.post(x > median))
+        val value = valHeuris(x)
+        branch(cp.post(x <= value))(cp.post(x > value))
       }
     }
   }
 }
 
-class BinarySetBranching(x: CPVarSet) extends Branching {
+class BinarySetBranching(x: CPSetVar) extends Branching {
   val cp = x.store
   def alternatives(): Seq[Alternative] = {
     if (x.isBound) noAlternative

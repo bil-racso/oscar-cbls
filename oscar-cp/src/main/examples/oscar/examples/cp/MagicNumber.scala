@@ -18,11 +18,11 @@ import oscar.cp.core._
  */
 object MagicNumber extends CPModel with App {
 
-  val one = CPVarInt(0 to 7)
-  val two = CPVarInt(0 to 7)
-  val three = CPVarInt(0 to 7)
-  val four = CPVarInt(0 to 7)
-  val x = Array.fill(8)(CPVarInt(1 to 4))
+  val one = CPIntVar(0 to 7)
+  val two = CPIntVar(0 to 7)
+  val three = CPIntVar(0 to 7)
+  val four = CPIntVar(0 to 7)
+  val x = Array.fill(8)(CPIntVar(1 to 4))
 
   add(x(one) == 1)
   add(x(one + 2) == 1)

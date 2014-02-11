@@ -38,11 +38,6 @@ class CBLSModel(val verbose:Boolean = false,
   implicit val s = new Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
   implicit val c = new ConstraintSystem(s)
 
-  def intVar(r:Range, v:Int, name:String = "")(implicit s:Store) = new CBLSIntVar(s,r,v,name)
-  def setVar(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
-    val emptySet:SortedSet[Int] = SortedSet.empty
-    new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
-  }
 
   def close()(implicit s:Store) {s.close()}
 

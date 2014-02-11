@@ -36,10 +36,10 @@ object BinPacking1D extends MIPModel(LPSolverLib.glpk) with App {
   val nObjects = objectSizes.length
 
   // binary variables: does object o goes to bin b ?
-  val objectAssignations = Array.tabulate(nObjects, nBins)((o, b) => MIPVar("o" + o + "b" + b, 0 to 1))
+  val objectAssignations = Array.tabulate(nObjects, nBins)((o, b) => MIPIntVar("o" + o + "b" + b, 0 to 1))
 
   // binary variables: is bin b selected ?
-  val binSelection = Array.tabulate(nBins)(b => MIPVar("b" + b, 0 to 1))
+  val binSelection = Array.tabulate(nBins)(b => MIPIntVar("b" + b, 0 to 1))
 
   // limited bin capacities
   for (j <- 0 until nBins)

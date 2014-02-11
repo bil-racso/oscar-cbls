@@ -18,7 +18,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleSetIndexedArray;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -28,8 +28,8 @@ import oscar.cp.core.Constraint;
  */
 public class Modulo extends Constraint{
 
-	private CPVarInt x;
-	private CPVarInt y;
+	private CPIntVar x;
+	private CPIntVar y;
 	private int v;
 
 	// for each value from 0 to v-1 how many values in D(x) support it ? When it fall to 0 the value can be removed from y	
@@ -43,8 +43,8 @@ public class Modulo extends Constraint{
 	 * @param v a value > 0
 	 * @param y
 	 */
-	public Modulo(CPVarInt x, int v, CPVarInt y) {
-		super(x.s(),"Modulo");
+	public Modulo(CPIntVar x, int v, CPIntVar y) {
+		super(x.store(),"Modulo");
 		assert( v > 0);
 		if (v <= 0) throw new RuntimeException("v must be > 0");
 		this.x = x;
@@ -111,7 +111,7 @@ public class Modulo extends Constraint{
 	}
 
 	@Override
-	public CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPIntVar var, int val) {
 		if (var == x) {
 			int i = val % v;
 			supportSet[i+v-1].removeValue(val);

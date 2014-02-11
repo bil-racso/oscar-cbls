@@ -35,8 +35,8 @@ object StableMariage extends CPModel with App {
     Array(0, 4, 1, 3, 2),
     Array(4, 1, 2, 0, 3))
 
-  val wife = Array.fill(n)(CPVarInt(Women)) // wife(i) is the woman chosen for man i
-  val husband = Array.fill(n)(CPVarInt(Men)) // husband(j) is the man chosen for woman j
+  val wife = Array.fill(n)(CPIntVar(Women)) // wife(i) is the woman chosen for man i
+  val husband = Array.fill(n)(CPIntVar(Men)) // husband(j) is the man chosen for woman j
 
   onSolution {
     println("wife   :" + wife.mkString(","))

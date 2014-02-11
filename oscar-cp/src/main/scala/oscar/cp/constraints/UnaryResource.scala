@@ -19,17 +19,16 @@ import oscar.cp.core._
 import java.util.{Arrays => JArrays}
 
 /**
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class UnaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], required: Array[CPVarBool]) extends Constraint(starts(0).s) {
+class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
   
-  def this(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], resources: Array[CPVarInt], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
+  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
   
-  def this(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt]) = {
-    this (starts,durations,ends,Array.fill(starts.size)(CPVarBool(starts(0).s,true)))
+  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
+    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).store,true)))
   }
 
-  val cp = starts(0).s
   val n = starts.size // number of activities
 
   assert(durations.size == n)
@@ -533,7 +532,7 @@ class UnaryResource(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: A
  * This object is used internally by UnaryResource, it is not intended to be used in modeling
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ActivityUnary(val cp: CPStore, startVar: CPVarInt, durVar: CPVarInt, endVar: CPVarInt, requiredVar: CPVarBool, val index: Int) {
+class ActivityUnary(val cp: CPStore, startVar: CPIntVar, durVar: CPIntVar, endVar: CPIntVar, requiredVar: CPBoolVar, val index: Int) {
 
   var estPos = -1
 
@@ -623,8 +622,8 @@ class ActivityUnary(val cp: CPStore, startVar: CPVarInt, durVar: CPVarInt, endVa
 
 class MirrorActivityUnary(val act: ActivityUnary) extends ActivityUnary(act.cp, act.start, act.dur, act.end, act.required, act.index) {
 
-  override def start: CPVarInt = throw new UninitializedFieldError("not available")
-  override def end: CPVarInt = throw new UninitializedFieldError("not available")
+  override def start: CPIntVar = throw new UninitializedFieldError("not available")
+  override def end: CPIntVar = throw new UninitializedFieldError("not available")
 
   // Earliest starting time
   override def est = -act.lct

@@ -55,7 +55,7 @@ object FiveFloors {
     //
     // decision variables
     //
-    val x = Array.fill(n)(CPVarInt(1 to n)(cp))
+    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(baker, cooper, fletcher, miller, smith) = x
 
     //

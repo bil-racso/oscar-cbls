@@ -62,9 +62,9 @@ object Steel extends CPModel with App {
   val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
   val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
-  val x = (for (s <- Slabs) yield CPVarInt(0 until nbSlab))
+  val x = (for (s <- Slabs) yield CPIntVar(0 until nbSlab))
   val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
-  val l = for (s <- Slabs) yield CPVarInt(0 to capa.max)
+  val l = for (s <- Slabs) yield CPIntVar(0 to capa.max)
   val xsol = Array.fill(nbSlab)(0) //current best solution
 
   // -------------visual components ------------
@@ -100,7 +100,7 @@ object Steel extends CPModel with App {
 
   add(binPacking(x, weight, l), Strong)
   for (s <- Slabs) {
-    def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
+    def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPBoolVar telling whether color c is present is slab s
     add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
   }
 

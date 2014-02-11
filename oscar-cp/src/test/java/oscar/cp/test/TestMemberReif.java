@@ -55,9 +55,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = CPVarInt.apply(s,0,5);
+        CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(b.constraintFalse()); // forbid x to be a member os set
         s.post(new MemberReif(x,set,b));
@@ -72,9 +72,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = CPVarInt.apply(s,0,5);
+        CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         s.post(new MemberReif(x,set,b));
         assertFalse(b.isBound());
         s.post(b.constraintFalse());  // forbid x to be a member os set
@@ -89,9 +89,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = CPVarInt.apply(s,0,5);
+        CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(b.constraintTrue());  //force x to be a member of s
         s.post(new MemberReif(x,set,b));
@@ -106,9 +106,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
-        CPVarInt x = CPVarInt.apply(s,0,5);
+        CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(b.constraintTrue());  //force x to be a member of s
@@ -123,9 +123,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = CPVarInt.apply(s,1,5);
+        CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(new LeEq(x,3));  //force D(x) = 1,2,3 so that x is always a member
@@ -139,9 +139,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = CPVarInt.apply(s,1,5);
+        CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(new LeEq(x,3));  //force D(x) = 1,2,3 so that x is always a member
         s.post(new MemberReif(x,set,b));
@@ -155,9 +155,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = CPVarInt.apply(s,1,5);
+        CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(new GrEq(x,4));  //force D(x) = 4,5 so that x is not a member
         s.post(new MemberReif(x,set,b));
@@ -171,9 +171,9 @@ public class TestMemberReif extends TestCase {
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
-        CPVarInt x = CPVarInt.apply(s,1,5);
+        CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPVarBool b = new CPVarBool(s);
+        CPBoolVar b = new CPBoolVar(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(new GrEq(x,4));  //force D(x) = 4,5 so that x is not a member

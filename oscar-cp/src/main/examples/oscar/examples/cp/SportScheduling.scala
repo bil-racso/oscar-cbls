@@ -24,8 +24,8 @@ object SportScheduling extends CPModel with App {
   val Weeks = 0 until nbWeeks
   val Homes = 0 to 1 // 0/1 for home/away game
 
-  val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPVarInt(0 until nbTeams))
-  val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPVarInt(0 until (n * n - 1)))
+  val team = Array.tabulate(nbPeriods, nbWeeks, 2)((p, w, h) => CPIntVar(0 until nbTeams))
+  val game = Array.tabulate(nbPeriods, nbWeeks)((p, w) => CPIntVar(0 until (n * n - 1)))
   val tuples = for (i <- Teams; j <- i + 1 until nbTeams) yield (i, j, i * nbWeeks + j - 1)
 
   def printSol() {

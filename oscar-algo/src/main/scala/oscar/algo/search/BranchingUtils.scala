@@ -16,7 +16,7 @@
 package oscar.algo.search
 
 /**
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
 trait BranchingUtils {
   
@@ -31,5 +31,4 @@ trait BranchingUtils {
   }
   
   val noAlternative = Seq[Alternative]()
-
 }

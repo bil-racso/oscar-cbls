@@ -24,8 +24,8 @@ class TestPermutation extends FunSuite with ShouldMatchers {
 
 	test("Test Permutation 1") {
 		val cp = CPSolver()
-		val x = Array.fill(4)(CPVarInt(-6 to 6)(cp))
-		val y = Array.fill(4)(CPVarInt(-6 to 6)(cp))
+		val x = Array.fill(4)(CPIntVar(-6 to 6)(cp))
+		val y = Array.fill(4)(CPIntVar(-6 to 6)(cp))
 		
 		cp.add(x(0) >= 2)
 		cp.add(new Permutation(x,y))
@@ -39,8 +39,8 @@ class TestPermutation extends FunSuite with ShouldMatchers {
 	
 	test("Test Permutation 2") {
 		val cp = CPSolver()
-		val x = Array.fill(4)(CPVarInt(-6 to 6)(cp))
-		val y = Array.fill(4)(CPVarInt(-6 to 6)(cp))
+		val x = Array.fill(4)(CPIntVar(-6 to 6)(cp))
+		val y = Array.fill(4)(CPIntVar(-6 to 6)(cp))
 
 		cp.add(new Permutation(x,y))
 
@@ -60,8 +60,8 @@ class TestPermutation extends FunSuite with ShouldMatchers {
 	
 	test("Test Permutation 4") {
 		val cp = CPSolver()
-		val x = Array.fill(4)(CPVarInt(-6 to 6)(cp))
-		val y = Array.fill(4)(CPVarInt(-6 to 6)(cp))
+		val x = Array.fill(4)(CPIntVar(-6 to 6)(cp))
+		val y = Array.fill(4)(CPIntVar(-6 to 6)(cp))
 
 		cp.add(new Permutation(x,y))
 		cp.add(x(2) == 2)
@@ -79,8 +79,8 @@ class TestPermutation extends FunSuite with ShouldMatchers {
 	
 	test("Test Permutation 5") {
 		val cp = CPSolver()
-		val x = Array.fill(4)(CPVarInt(-6 to 6)(cp))
-		val y = Array.fill(4)(CPVarInt(-6 to 6)(cp))
+		val x = Array.fill(4)(CPIntVar(-6 to 6)(cp))
+		val y = Array.fill(4)(CPIntVar(-6 to 6)(cp))
 
 		cp.add(new Permutation(x,y))
 		cp.add(y(2) == 2)

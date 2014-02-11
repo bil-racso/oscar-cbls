@@ -21,7 +21,7 @@ import java.util.Hashtable;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -35,8 +35,8 @@ public class ElementCst extends Constraint {
 	
 
 	private final int [] y;
-	private CPVarInt x;
-	private CPVarInt z;
+	private CPIntVar x;
+	private CPIntVar z;
 	private Integer [] sortedPerm; //y[sortedPerm[0]] is the min element of y... y[sortedPerm[y.length]] is the largest element of y 
 	private ReversibleInt minIndSupp;
 	private ReversibleInt maxIndSupp;
@@ -48,10 +48,10 @@ public class ElementCst extends Constraint {
      * @param y
      * @param x
      * @param z linked with y and x by the relation y[x] == z
-     * @see  Element#get(int[], cp.core.CPVarInt)
+     * @see  Element#get(int[], cp.core.CPIntVar)
      */
-	public ElementCst(final int [] y, CPVarInt x, CPVarInt z) {
-		super(x.s(),"ElementCst");
+	public ElementCst(final int [] y, CPIntVar x, CPIntVar z) {
+		super(x.store(),"ElementCst");
 		this.y = y;
 		this.x = x;
 		this.z = z;
@@ -111,7 +111,7 @@ public class ElementCst extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valRemove(CPVarInt var, int val) {
+	public CPOutcome valRemove(CPIntVar var, int val) {
 		if (var == z) {
 			for (int i = 0; i < y.length; i++) {
 				if (y[i] == val) {
@@ -164,7 +164,7 @@ public class ElementCst extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	
-	public CPOutcome valBind(CPVarInt x) {
+	public CPOutcome valBind(CPIntVar x) {
 		// x is bound
 		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;

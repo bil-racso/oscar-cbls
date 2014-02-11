@@ -110,7 +110,7 @@ object SceneAllocation {
     //
     // variables
     //
-    val shoot = Array.fill(maxScene)(CPVarInt(0 until maxDay)(cp)) // the day a particular scene is shooted
+    val shoot = Array.fill(maxScene)(CPIntVar(0 until maxDay)(cp)) // the day a particular scene is shooted
     val cost = sum(ACTORS,DAYS) ((a,d) => or(which(a))(shoot(_) === d) * pay(a))
 
     //

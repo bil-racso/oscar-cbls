@@ -14,43 +14,44 @@
  ******************************************************************************/
 package oscar.dfo.modeling
 
-import oscar.dfo.modeling._
 import scala.collection._
-import oscar.dfo.algo._
+import oscar.dfo.singleobjective.algos._
 import oscar.dfo.utils._
 import oscar.dfo._
 import oscar.algebra._
+import oscar.dfo.singleobjective.algos.DDS
+import oscar.dfo.singleobjective.algos.MDS
+import oscar.dfo.singleobjective.algos.NelderMead
+import oscar.util.Interval
 
 /**
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class DFOVar(val solver: DFOSolver, val varName:String, val lb:Double = 0.0, val ub:Double = Double.PositiveInfinity) extends Var {
+class DFOFloatVar(val solver: DFOSolver, val varName: String, val lb: Double = 0.0, val ub: Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
     override def value = solver.getValue(index)
     def name = varName
-    def randVal = rand.nextDouble()*(ub-lb)+lb
+    def randVal = rand.nextDouble() * (ub - lb) + lb
 }
 
-object DFOVar {
-  def apply(varName: String, lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver,varName,lb,ub)
-  def apply(lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOVar(solver,"dfovar",lb,ub)
-  def apply(varName:String)(implicit solver: DFOSolver) = new DFOVar(solver,varName)
-  def apply()(implicit solver: DFOSolver) = new DFOVar(solver,"dfovar")
+object DFOFloatVar {
+  def apply(varName: String, lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOFloatVar(solver, varName, lb, ub)
+  def apply(lb: Double, ub: Double)(implicit solver: DFOSolver) = new DFOFloatVar(solver, "dfovar", lb ,ub)
+  def apply(varName: String)(implicit solver: DFOSolver) = new DFOFloatVar(solver, varName)
+  def apply()(implicit solver: DFOSolver) = new DFOFloatVar(solver, "dfovar")
 }
   
 
 
 /**
  *
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */ 
 class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
-         
-    // map from the index of variables to their implementation
-    private lazy val vars = mutable.HashMap.empty[Int,DFOVar]
-    private lazy val solution = mutable.HashMap.empty[Int,Double]
     
-
+    // map from the index of variables to their implementation
+    private lazy val vars = mutable.HashMap.empty[Int,DFOFloatVar]
+    private lazy val solution = mutable.HashMap.empty[Int,Double]
 
     /**
      * Tolerance used to decide completion
@@ -65,11 +66,11 @@ class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
      */
     var maxTime = 10 // max time(s)
  
-    class Block(block: => Unit )
+    class Block(block: => Unit)
 	
 	
     
-    def register(vari: DFOVar): Int = {
+    def register(vari: DFOFloatVar): Int = {
       vars(vars.size) = vari
       vars.size-1
     }

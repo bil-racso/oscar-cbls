@@ -40,7 +40,7 @@ object MaxFlow extends LPModel(LPSolverLib.glpk) with App {
                    Array(0, 0, 0, 0, 0, 0, 0, 0, 15),
                    Array(0, 0, 0, 0, 0, 63, 0, 0, 20))
 
-  val x = Array.tabulate(nbline, nbcol)((l, c) => LPVar("x" + (l, c), 0, capa(l)(c)))
+  val x = Array.tabulate(nbline, nbcol)((l, c) => LPFloatVar("x" + (l, c), 0, capa(l)(c)))
 
   
   for (l <- 1 to nbline - 1)

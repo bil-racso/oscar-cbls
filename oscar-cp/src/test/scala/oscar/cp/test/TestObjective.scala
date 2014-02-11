@@ -27,8 +27,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj1") {
     val cp = CPSolver()
-    val x1 = CPVarInt(1 to 3)(cp)
-    val x2 = CPVarInt(1 to 3)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(1 to 3)(cp)
+    val x2 = CPIntVar(1 to 3)(cp)
     cp.add(x1 + x2 == 4)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
@@ -47,8 +48,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj2") {
     val cp = CPSolver()
-    val x1 = CPVarInt(2 to 3)(cp)
-    val x2 = CPVarInt(1 to 3)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(2 to 3)(cp)
+    val x2 = CPIntVar(1 to 3)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.WeakTighten
@@ -68,8 +70,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj3") {
     val cp = CPSolver()
-    val x1 = CPVarInt(2 to 3)(cp)
-    val x2 = CPVarInt(1 to 3)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(2 to 3)(cp)
+    val x2 = CPIntVar(1 to 3)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.StrongTighten
@@ -91,8 +94,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj4") {
     val cp = CPSolver()
-    val x1 = CPVarInt(2 to 3)(cp)
-    val x2 = CPVarInt(1 to 3)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(2 to 3)(cp)
+    val x2 = CPIntVar(1 to 3)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.StrongTighten
@@ -114,8 +118,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
   test("Obj5") {
 
     val cp = CPSolver()
-    val x1 = CPVarInt(0 to 2)(cp)
-    val x2 = CPVarInt(0 to 2)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(0 to 2)(cp)
+    val x2 = CPIntVar(0 to 2)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.NoTighten
@@ -135,8 +140,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj6") {
     val cp = CPSolver()
-    val x1 = CPVarInt(0 to 2)(cp)
-    val x2 = CPVarInt(0 to 2)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(0 to 2)(cp)
+    val x2 = CPIntVar(0 to 2)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.WeakTighten
@@ -157,8 +163,9 @@ class TestObjective extends FunSuite with ShouldMatchers {
 
   test("Obj7") {
     val cp = CPSolver()
-    val x1 = CPVarInt(0 to 2)(cp)
-    val x2 = CPVarInt(0 to 2)(cp)
+    cp.silent = true
+    val x1 = CPIntVar(0 to 2)(cp)
+    val x2 = CPIntVar(0 to 2)(cp)
 
     val obj1 = new CPObjectiveUnitMinimize(x1, "x1")
     obj1.tightenMode = TightenType.StrongTighten
@@ -180,11 +187,12 @@ class TestObjective extends FunSuite with ShouldMatchers {
   test("Obj8") {
 
     val cp = new CPSolver();
-    val x = CPVarInt(Array(1, 5, 9, 10))(cp)
+    cp.silent = true
+    val x = CPIntVar(Array(1, 5, 9, 10))(cp)
     var nbSol = 0
     cp.minimize(x)
     cp.search {
-      binaryFirstFail(Array(x), valHeuris = (x: CPVarInt) => x.max)
+      binaryFirstFail(Array(x), valHeuris = (x: CPIntVar) => x.max)
     }
     cp.start().nSols should be(4)
   }   

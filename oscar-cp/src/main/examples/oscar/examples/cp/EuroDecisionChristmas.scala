@@ -18,9 +18,9 @@ object EuroDecisionChistmas extends CPModel with App {
   val weights = Array(10, 8, 5, 5, 15) // number of gifts
   val profit = Array(2, 3, 0, 1, 5) // number of children
 
-  val x = Array.fill(names.size)(CPVarBool())
-  val obj = CPVarInt(0 to profit.sum)
-  val capacity = CPVarInt(0 to 28)
+  val x = Array.fill(names.size)(CPBoolVar())
+  val obj = CPIntVar(0 to profit.sum)
+  val capacity = CPIntVar(0 to 28)
 
   add(binaryKnapsack(x, profit, weights, obj, capacity))
 

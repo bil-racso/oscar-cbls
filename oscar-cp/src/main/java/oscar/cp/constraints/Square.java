@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -24,17 +24,17 @@ import oscar.cp.core.Constraint;
  */
 public class Square extends Constraint {
 
-	private CPVarInt x;
-	private CPVarInt y;
+	private CPIntVar x;
+	private CPIntVar y;
 
 	/**
 	 * x*x == y
 	 * @param x
 	 * @param y
-	 * @see  CPVarInt#mul(cp.core.CPVarInt)
+	 * @see  CPIntVar#mul(cp.core.CPIntVar)
 	 */
-	public Square(CPVarInt x, CPVarInt y) {
-		super(x.s(),"Square");
+	public Square(CPIntVar x, CPIntVar y) {
+		super(x.store(),"Square");
 		this.x = x;
 		this.y = y;
 	}

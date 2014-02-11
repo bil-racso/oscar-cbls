@@ -43,7 +43,7 @@ object ProductionPlanning extends LPModel with App {
                    Array(0, 0, 40, 70, 4, 63, 0, 0, 60, 0, 4, 0),
                    Array(0, 32, 0, 0, 0, 5, 0, 3, 0, 660, 0, 9))
 
-  val x = Products.map(p => LPVar("x", 0, 10000))
+  val x = Products.map(p => LPFloatVar("x", 0, 10000))
 
   maximize(sum(Products) { p => x(p) * c(p) })
   for (d <- Dimensions) {

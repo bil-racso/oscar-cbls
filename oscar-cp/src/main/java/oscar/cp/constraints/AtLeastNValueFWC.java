@@ -18,7 +18,7 @@ import oscar.algo.reversible.ReversibleBool;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,9 +26,9 @@ import oscar.cp.core.Constraint;
  */
 public class AtLeastNValueFWC extends Constraint {
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	
-	private CPVarInt nValueVar;
+	private CPIntVar nValueVar;
 	
 	private ReversibleBool [] isValueUsed; //for each value if it is used or not
 	private ReversibleInt nbValueUsed; //number of value used
@@ -40,8 +40,8 @@ public class AtLeastNValueFWC extends Constraint {
 	private int valSize;
 	
 	
-	public AtLeastNValueFWC(CPVarInt [] x, CPVarInt nval) {
-		super(x[0].s(),"AtLeastNValueFWC");
+	public AtLeastNValueFWC(CPIntVar [] x, CPIntVar nval) {
+		super(x[0].store(),"AtLeastNValueFWC");
 		this.x = x;
 		this.nValueVar = nval;
 	}
@@ -101,7 +101,7 @@ public class AtLeastNValueFWC extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
 		
 		int val = var.getValue();
 		nbBound.incr();

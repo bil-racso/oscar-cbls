@@ -82,7 +82,7 @@ object Lectures {
     // variables
     // 
 
-    val v = Array.fill(n)(CPVarInt(0 to n-1)(cp))
+    val v = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     // Maximum color (hour) to minimize.
     // Note: since C# is 0-based, the

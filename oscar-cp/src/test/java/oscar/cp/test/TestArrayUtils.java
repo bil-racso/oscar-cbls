@@ -58,7 +58,7 @@ public class TestArrayUtils extends TestCase {
     public void testGetRandomVar1() {
     	CPStore cp = new CPStore();
     	int [] freq = new int[5]; 
-        CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,0,1,2,3),CPVarInt.apply(cp,3),CPVarInt.apply(cp,1,3,9)};
+        CPIntVar [] x = CPIntVar[]{CPIntVar.apply(cp,0,1,2,3),CPIntVar.apply(cp,2),CPIntVar.apply(cp,0,1,2,3),CPIntVar.apply(cp,3),CPIntVar.apply(cp,1,3,9)};
         for (int i = 0; i < 600; i++) {
         	freq[ArrayUtils.getRandomNotBound(x)]++;
         }
@@ -72,7 +72,7 @@ public class TestArrayUtils extends TestCase {
     public void testGetRandomVar2() {
     	CPStore cp = new CPStore();
     	int [] freq = new int[5]; 
-        CPVarInt [] x = CPVarInt[]{CPVarInt.apply(cp,3),CPVarInt.apply(cp,2),CPVarInt.apply(cp,2),CPVarInt.apply(cp,3),CPVarInt.apply(cp,9)};
+        CPIntVar [] x = CPIntVar[]{CPIntVar.apply(cp,3),CPIntVar.apply(cp,2),CPIntVar.apply(cp,2),CPIntVar.apply(cp,3),CPIntVar.apply(cp,9)};
         
         assertTrue(ArrayUtils.getRandomNotBound(x) ==  -1);     
     }

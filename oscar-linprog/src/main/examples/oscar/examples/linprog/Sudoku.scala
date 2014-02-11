@@ -27,7 +27,7 @@ object Sudoku extends MIPModel(LPSolverLib.glpk) with App {
 
   val N = 0 until n
 
-  val x = Array.tabulate(n, n, n)((l, c, n) => MIPVar("x" + (l, c, n), 0 to 1))
+  val x = Array.tabulate(n, n, n)((l, c, n) => MIPIntVar("x" + (l, c, n), 0 to 1))
 
   maximize(0)
 

@@ -829,6 +829,9 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
 
 object CBLSIntVar{
 
+  def apply(r:Range, v:Int, name:String)(implicit s:Store) = new CBLSIntVar(s,r,v,name)
+  def apply(r:Range, v:Int)(implicit s:Store) = new CBLSIntVar(s,r,v,"")
+  
   def apply(model: Store, minVal:Int, maxVal:Int, value:Int , name:String) = {
     require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain minVal:" + minVal + " maxVal:" + maxVal)
     new CBLSIntVar(model,(minVal to maxVal), value, name)
@@ -1049,6 +1052,11 @@ class CBLSSetVar(override val model:Store,
 object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
+  
+  def apply(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
+    val emptySet:SortedSet[Int] = SortedSet.empty
+    new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
+  }
 
   implicit val ord:Ordering[CBLSSetVar] = new Ordering[CBLSSetVar]{
     def compare(o1: CBLSSetVar, o2: CBLSSetVar) = o1.compare(o2)

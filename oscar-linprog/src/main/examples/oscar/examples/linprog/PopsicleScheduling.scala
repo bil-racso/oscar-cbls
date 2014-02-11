@@ -42,8 +42,8 @@ object PropsicleScheduling extends MIPModel with App {
   }
 
 
-  val configs = Array.tabulate(7)(i => (MIPVar("x", 0 to demand.max), 100, generateConfig(i, 5))) ++
-    Array.tabulate(7)(i => (MIPVar("x", 0 to demand.max), 150, generateConfig(i, 2)))
+  val configs = Array.tabulate(7)(i => (MIPIntVar("x", 0 to demand.max), 100, generateConfig(i, 5))) ++
+    Array.tabulate(7)(i => (MIPIntVar("x", 0 to demand.max), 150, generateConfig(i, 2)))
 
   minimize(sum(configs)(c => c._1 * (c._2 * c._3.sum)))
   for ((d, i) <- demand.zipWithIndex) {

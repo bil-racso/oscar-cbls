@@ -27,8 +27,8 @@ class TestAmong extends FunSuite with ShouldMatchers  {
   
   val rand = new scala.util.Random(0)
   
-  def amongDecomp(cp: CPSolver, N: CPVarInt, X: Array[CPVarInt], S: Set[Int]) = {
-    val counts = Array.fill(S.size)(CPVarInt(0 to X.size)(cp))
+  def amongDecomp(cp: CPSolver, N: CPIntVar, X: Array[CPIntVar], S: Set[Int]) = {
+    val counts = Array.fill(S.size)(CPIntVar(0 to X.size)(cp))
     cp.add(gcc(X,S zip counts))
     cp.add(sum(counts) == N)
   }
@@ -37,8 +37,8 @@ class TestAmong extends FunSuite with ShouldMatchers  {
 	  var nbSol = 0  
 	  val cp = CPSolver()
 	  
-	  val N = CPVarInt(nmin to nmax)(cp)
-	  val X = Array.tabulate(domx.size)(i => CPVarInt(domx(i))(cp))
+	  val N = CPIntVar(nmin to nmax)(cp)
+	  val X = Array.tabulate(domx.size)(i => CPIntVar(domx(i))(cp))
 	  cp.solve subjectTo {
 	    if (decomp) amongDecomp(cp,N,X,S)
 	    else cp.add(new Among(N,X,S))
@@ -55,8 +55,8 @@ class TestAmong extends FunSuite with ShouldMatchers  {
 	  val cp = CPSolver()
 	  val S = Set(1,2,3)
 	  
-	  val N = CPVarInt(2)(cp)
-	  val X = Array.fill(5)(CPVarInt(0 to 5)(cp))
+	  val N = CPIntVar(2)(cp)
+	  val X = Array.fill(5)(CPIntVar(0 to 5)(cp))
 	  cp.solve subjectTo {
 	    cp.add(new Among(N,X,S))
 	  } search {

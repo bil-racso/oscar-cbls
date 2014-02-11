@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,21 +25,21 @@ import oscar.cp.core.Constraint;
  */
 public class LeEq extends Constraint {
 
-	private CPVarInt x, y;
+	private CPIntVar x, y;
 
     /**
      * x <= u
      * @param x
      * @param y
      */
-	public LeEq(CPVarInt x, CPVarInt y) {
-		super(x.s(),"LeEq");
+	public LeEq(CPIntVar x, CPIntVar y) {
+		super(x.store(),"LeEq");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public LeEq(CPVarInt x, int v) {
-		this(x, CPVarInt.apply(x.s(),v,v));
+	public LeEq(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override

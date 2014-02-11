@@ -30,10 +30,10 @@ import scala.util.control.Breaks._
  * This code is adapted to CP from an original implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
  */
-class MinAssignment(val xarg: Array[CPVarInt], val weightsarg: Array[Array[Int]], val cost: CPVarInt) extends Constraint(xarg(0).s, "MinAssignment") {
+class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]], val cost: CPIntVar) extends Constraint(xarg(0).store, "MinAssignment") {
   if (weightsarg.size != xarg.size) throw new IllegalArgumentException("MinAssignment: dim of x and weights must match")
   val n = weightsarg(0).size
-  val x = xarg ++ Array.fill(n-xarg.size)(CPVarInt(0 until n)(s)) 
+  val x = xarg ++ Array.fill(n-xarg.size)(CPIntVar(0 until n)(s)) 
   val weights = weightsarg ++ Array.fill(n-xarg.size)(Array.fill(n)(0))
   val Jmax = n
   val Wmax = n
@@ -322,7 +322,7 @@ class MinAssignment(val xarg: Array[CPVarInt], val weightsarg: Array[Array[Int]]
     CPOutcome.Suspend
   }
 
-  override def valRemoveIdx(y: CPVarInt, w: Int, j: Int): CPOutcome = {
+  override def valRemoveIdx(y: CPIntVar, w: Int, j: Int): CPOutcome = {
     costMatrix(w)(j).value = M
     if (matchJobByWorker(w).value == j) {
       matchJobByWorker(w).value = -1

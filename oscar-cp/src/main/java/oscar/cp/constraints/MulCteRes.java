@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.NumberUtils;
 
@@ -27,7 +27,7 @@ import oscar.cp.util.NumberUtils;
  */
 public class MulCteRes extends Constraint {
 
-	private CPVarInt x, y;
+	private CPIntVar x, y;
 	private int c;
 
     /**
@@ -35,10 +35,10 @@ public class MulCteRes extends Constraint {
      * @param x
      * @param y
      * @param c
-     * @see CPVarInt#mul(cp.core.CPVarInt)
+     * @see CPIntVar#mul(cp.core.CPIntVar)
      */
-	public MulCteRes(CPVarInt x, CPVarInt y, int c) {
-		super(x.s(),"MulCteRes x*y=c");
+	public MulCteRes(CPIntVar x, CPIntVar y, int c) {
+		super(x.store(),"MulCteRes x*y=c");
 		this.x = x;
 		this.y = y;
 		this.c = c;
@@ -48,7 +48,7 @@ public class MulCteRes extends Constraint {
 	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x == y) {
-			if (s().post(new Square(x,CPVarInt.apply(s(),c,c))) == CPOutcome.Failure) {
+			if (s().post(new Square(x,CPIntVar.apply(s(),c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -82,12 +82,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s().post(new MulCte(y,x.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s().post(new MulCte(x,y.value(),CPVarInt.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -120,7 +120,7 @@ public class MulCteRes extends Constraint {
 	/**
 	 * Filter domain of z with w * z == c with c!=0
 	 */
-	private CPOutcome propagateVar(CPVarInt w , CPVarInt z) { 
+	private CPOutcome propagateVar(CPIntVar w , CPIntVar z) { 
 		int a = w.getMin();
 		int b = w.getMax();
 		

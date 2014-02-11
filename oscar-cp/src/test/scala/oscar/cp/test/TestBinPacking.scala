@@ -40,8 +40,8 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val bins = 0 until binCapacities.length
 
     val cp = new CPSolver()
-    val x = (for (i <- items) yield CPVarInt(binForItems(i))(cp)).toArray
-    val l = bins.map(i => CPVarInt(binCapacities(i))(cp)).toArray
+    val x = (for (i <- items) yield CPIntVar(binForItems(i))(cp)).toArray
+    val l = bins.map(i => CPIntVar(binCapacities(i))(cp)).toArray
     var nbSol = 0
     cp.search {
       binaryStatic(x)
@@ -68,8 +68,8 @@ class TestBinPacking extends FunSuite with ShouldMatchers  {
     val bins = 0 until 5
 
     val cp = new CPSolver()
-    val x = (for (i <- items) yield CPVarInt(bins)(cp)).toArray
-    val l = bins.map(i => CPVarInt(0 to 10)(cp)).toArray
+    val x = (for (i <- items) yield CPIntVar(bins)(cp)).toArray
+    val l = bins.map(i => CPIntVar(0 to 10)(cp)).toArray
     var nbSol = 0
     cp.search {
      binaryStatic(x)

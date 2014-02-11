@@ -3,15 +3,15 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 
 class TestVariable extends FunSuite with ShouldMatchers {
 
   trait StoreAndVariables {
     val store = new CPStore()
-    val a = CPVarInt(1, 6)(store)
-    val b = CPVarInt(0, 31)(store)
-    val c = CPVarInt(1, 10)(store)
+    val a = CPIntVar(1, 6)(store)
+    val b = CPIntVar(0, 31)(store)
+    val c = CPIntVar(1, 10)(store)
   }
 
   test("test a") {
@@ -67,14 +67,14 @@ class TestVariable extends FunSuite with ShouldMatchers {
 
   test("test d") {
     val cp = new CPStore()
-    val x = CPVarInt(1, 6)(cp)
+    val x = CPIntVar(1, 6)(cp)
 
     assert(x.valueAfter(5) == 6)
     assert(x.valueAfter(-10) == 1)
     val v: Int = x.valueAfter(6)
     assert(v == 6)
 
-    val y = CPVarInt(-100, 100)(cp)
+    val y = CPIntVar(-100, 100)(cp)
     y.removeValue(0)
 
     assert(y.valueAfter(-1) == 1)
@@ -99,7 +99,7 @@ class TestVariable extends FunSuite with ShouldMatchers {
   test("test e") {
     val cp = new CPStore()
     val freq = Array.fill(4)(0)
-    val x = CPVarInt(Set(0, 1, 2, 3))(cp)
+    val x = CPIntVar(Set(0, 1, 2, 3))(cp)
     for (i <- 0 until 200) {
       freq(x.randomValue) += 1
     }
@@ -111,10 +111,10 @@ class TestVariable extends FunSuite with ShouldMatchers {
 
   test("test f") {
     val cp = new CPStore()
-    val x = CPVarInt(Set(1, 5, 9, 10))(cp)
-    val y = CPVarInt(Set(5, 9, 11))(cp)
-    val z = CPVarInt(Set(6, 7, 11))(cp)
-    val w = CPVarInt(14)(cp)
+    val x = CPIntVar(Set(1, 5, 9, 10))(cp)
+    val y = CPIntVar(Set(5, 9, 11))(cp)
+    val z = CPIntVar(Set(6, 7, 11))(cp)
+    val w = CPIntVar(14)(cp)
 
     assert(x.intersectionSize(y) == 2)
     assert(y.intersectionSize(x) == 2)

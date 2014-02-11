@@ -15,15 +15,14 @@
 
 package oscar.linprog.test
 
-import gurobi.{ GRBModel, GRB }
-import lpsolve.LpSolve
-
+import java.io.{File, FileWriter, PrintWriter}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.linprog.modeling._
-
-import oscar.linprog._
-import oscar.algebra._
+import gurobi.{GRB, GRBModel}
+import lpsolve.LpSolve
+import oscar.algebra.{double2const, int2const}
+import oscar.linprog.modeling.{GurobiLP, LPFloatVar, LPSolve, LPSolver, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, canInstantiateSolver, checkConstraints, maximize, objectiveValue, release, start, status}
+import lpsolve.LpSolveException
 
 /**
  * LPTesting
@@ -32,20 +31,20 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
 
   test("Config file for LPSolve") {
 
-    val configLP = new java.io.File("LPParam.ini")
-    val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
     // The correct header must be specified
-    writer.print("[Default]\n")
-    writer.print("pivoting=PRICER_DEVEX + PRICE_ADAPTIVE\n" +
-      "presolve=PRESOLVE_COLS+PRESOLVE_ROWS ")
+    writer.println("[Default]")
+    writer.println("pivoting=PRICER_DEVEX + PRICE_ADAPTIVE")
+    writer.println("presolve=PRESOLVE_COLS+PRESOLVE_ROWS")
     writer.flush
     writer.close
 
     implicit val lp = new LPSolver(LPSolverLib.lp_solve)
 
     lp.solver.configFile = configLP
-    val x = LPVar("x", 100, 200)
-    val y = LPVar("y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
     add(y >= -x + 200)
@@ -68,6 +67,65 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     release()
     configLP.delete
   }
+  
+  test("Incorrect Config file for LPSolve") {
+
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
+    // The correct header must be specified
+    writer.println("[Default]")
+    writer.println("presolve=NOT_A_VALID_VALUE")
+    writer.flush
+    writer.close
+
+    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    mip.solver.configFile = configLP
+    
+    val x0 = MIPFloatVar(mip, "x0", 0, 40)
+    val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]
+    val x2 = MIPIntVar(mip, "x2", 0 until 18) // can take integer value in range[0 .. 17] 
+    val x3 = MIPFloatVar(mip, "x3", 2, 3)
+
+    maximize(x0 + 2 * x1 + 3 * x2 + x3)
+    add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
+    add(x0 - 3.0 * x1 + x2 <= 30)
+    add(x1 - 3.5 * x3 == 0)
+    try {
+    	mip.start()
+    } catch {
+      case _ : LpSolveException => fail("Incorrect param files should not leak exceptions")
+    }
+    mip.release()
+    configLP.delete
+  }  
+  
+  test("Config file for LPSolve: Bug #72 ") {
+
+    val configLP = new File("LPParam.ini")
+    val writer = new PrintWriter(new FileWriter(configLP))
+    // The correct header must be specified
+    writer.println("[Default]")
+    writer.println("break_at_first=1")
+    writer.flush
+    writer.close
+
+    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    mip.solver.configFile = configLP
+
+    val x0 = MIPFloatVar(mip, "x0", 0, 40)
+    val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]
+    val x2 = MIPIntVar(mip, "x2", 0 until 18) // can take integer value in range[0 .. 17] 
+    val x3 = MIPFloatVar(mip, "x3", 2, 3)
+
+    maximize(x0 + 2 * x1 + 3 * x2 + x3)
+    add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
+    add(x0 - 3.0 * x1 + x2 <= 30)
+    add(x1 - 3.5 * x3 == 0)
+    mip.start()
+    mip.release()
+    configLP.delete
+  }  
+
   test("Config file for Gurobi") {
 	assume(canInstantiateSolver(LPSolverLib.gurobi), "The test could not access Gurobi. Check you have it installed.")
     val configLP = new java.io.File("GurobiParam.txt")
@@ -80,8 +138,8 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     implicit val lp = LPSolver(LPSolverLib.gurobi)
 
     lp.solver.configFile = configLP
-    val x = LPVar("x", 100, 200)
-    val y = LPVar("y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y) 
     add(y >= -x + 200)
@@ -103,7 +161,6 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
 
     release()
     configLP.delete
-
   }
 }
 
