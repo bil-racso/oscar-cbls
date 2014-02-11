@@ -30,3 +30,4 @@ class InvariantChecker(verbose: Int = 0) extends Checker {
     invariantChecked
   }
 }
+

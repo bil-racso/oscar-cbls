@@ -49,7 +49,7 @@ object NQueensEasy2 extends CBLSModel with App{
   val violationArray:Array[CBLSIntVar] = Array.tabulate(N)(q => c.violation(queens(q))).toArray
 
   val tabu:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(0 to Int.MaxValue, 0, "tabu_queen" + q))
-  val it = CBLSIntVar(0 to Int.MaxValue,1,"it")
+  val it:CBLSIntVar = CBLSIntVar(0 to Int.MaxValue,1,"it")
   val nonTabuQueens:CBLSSetVar = selectLESetQueue(tabu, it)
   val nonTabuMaxViolQueens:CBLSSetVar = argMax(violationArray, nonTabuQueens)
 
@@ -61,25 +61,20 @@ object NQueensEasy2 extends CBLSModel with App{
 
     val oldviolation:Int = violation.value
 
-    // to ensure that the set of tabu queens is no too restrictive
-    // (but you'd better tune the tabu better)
-    while(nonTabuMaxViolQueens.value.isEmpty){
-      it ++;
-      println("Warning: Tabu it too big compared to queens count")
-    }
+    selectFirstDo(nonTabuMaxViolQueens.value)((q1:Int) => {
+      selectFirstDo(nonTabuQueens.value, (q2:Int) => {
+        q2!=q1 && c.swapVal(queens(q1),queens(q2)) < oldviolation
+      })((q2:Int) => {
+        println("" + it.value + " swapping " + q1 +"(tabu: " + tabu(q1) + ") and " + q2 +"(tabu: " + tabu(q2) + ")")
+        queens(q1) :=: queens(q2)
+        tabu(q1) := it.value + tabulength
+        tabu(q2) := it.value + tabulength
 
-    val q1 = selectFirst(nonTabuMaxViolQueens.value)
-    val q2 = selectFirst(nonTabuQueens.value, (q:Int) => {
-      q!=q1 && swapVal(queens(q1),queens(q)) < oldviolation
-    })
-
-    queens(q1) :=: queens(q2)
-    tabu(q1) := it.value + tabulength
-    tabu(q2) := it.value + tabulength
-
-    //println("" + it + " swapping " + q1 + " and " + q2)
+      },()=>println("Warning: Tabu it too big compared to queens count"))},
+      ()=>println("Warning: Tabu it too big compared to queens count"))
 
     it ++
+
   }
 
   println(getWatchString)

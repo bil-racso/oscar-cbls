@@ -946,3 +946,13 @@ trait BulkPropagator extends PropagationElement
 abstract trait Checker {
   def check(verity: Boolean, traceOption: Option[String] = None)
 }
+
+/**
+ * a checker that trows an error as soon as there is an error
+ * @author renaud.delandtsheer@cetic.be
+ */
+case class ErrorChecker() extends Checker {
+  def check(verity: Boolean, traceOption: Option[String]) = {
+    if(! verity) throw new Error("Error in checker, debug: " + traceOption)
+  }
+}

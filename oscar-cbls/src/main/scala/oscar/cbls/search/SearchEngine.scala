@@ -210,6 +210,17 @@ trait SearchEngineTrait{
       null.asInstanceOf[R]
   }
 
+  /**return the first element r that is allowed: st(r) is true
+    * @param st is optional and set to true if not specified
+    */
+  def selectFirstDo[R](r: Iterable[R],st: (R => Boolean) = ((r:R) => true))(doIt:R => Unit, ifNone: (()=> Unit) = ()=>{println("no suitable item found")}): Unit = {
+    for(rr <- r) if(st(rr)) {
+      doIt(rr)
+      return
+    }
+    ifNone()
+  }
+
   /**returns a randomly chosen boolean (50%-50%)*/
   def flip(PercentTrue:Int = 50):Boolean = (RandomGenerator.nextInt(100) < PercentTrue)
 
