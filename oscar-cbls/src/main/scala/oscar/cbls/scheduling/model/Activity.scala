@@ -42,11 +42,11 @@ class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Plannin
   override def canAddPrecedence: Boolean = false
   override def close() {
 
-    AdditionalPredecessors := SortedSet.empty
-    AllPrecedingActivities := SortedSet.empty
+    AdditionalPredecessors = SortedSet.empty[Int]
+    AllPrecedingActivities = SortedSet.empty[Int]
     EarliestStartDate := startDate
-    DefiningPredecessors := SortedSet.empty
-    PotentiallyKilledPredecessors := SortedSet.empty
+    DefiningPredecessors = SortedSet.empty[Int]
+    PotentiallyKilledPredecessors = SortedSet.empty[Int]
 
     AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
 
@@ -55,7 +55,13 @@ class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Plannin
   }
 }
 
-/**
+object NonMoveableActivity{
+  def apply(startDate:Int, duration: CBLSIntVar, planning: Planning, name: String = "") =
+  new NonMoveableActivity(startDate, duration, planning, name)
+}
+
+
+  /**
  *
  * @param start
  * @param end
@@ -116,6 +122,9 @@ object SuperActivity {
 }
 
 object Activity{
+  def apply(duration: CBLSIntVar, planning: Planning, name: String = "", shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a)
+   = new Activity(duration, planning, name, shifter)
+
   implicit val ord:Ordering[Activity] = new Ordering[Activity]{
     def compare(o1: Activity, o2: Activity) = o1.ID - o2.ID
   }
@@ -128,7 +137,7 @@ object Activity{
  * @param Shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "", Shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a) {
+class Activity(val duration: CBLSIntVar, val planning: Planning, val name: String = "", Shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a) {
   val ID: Int = planning.AddActivity(this)
 
   override def equals(obj: Any): Boolean = {
@@ -138,7 +147,7 @@ case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "",
     }
   }
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
+  def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false
