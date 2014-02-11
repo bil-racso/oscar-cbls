@@ -354,6 +354,7 @@ trait VRPObjective extends VRP {
    * it is called by the model on close
    */
   def closeObjectiveFunction() {
+    if(objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
     objectiveFunction <== Sum(objectiveFunctionTerms)
   }
 
