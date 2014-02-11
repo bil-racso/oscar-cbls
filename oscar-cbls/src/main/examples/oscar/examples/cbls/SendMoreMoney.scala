@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
  * Using a generic constrained directed search
- * 
+ * @author christophe.ponsard@cetic.be
  */
 object SendMoreMoney extends SearchEngine with StopWatch {
   

@@ -30,7 +30,8 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 /**
  * Very simple example showing how to use Asteroid on the basic pigeon hole problem
  * Using constraint system (better alternative: use ArgMax to keep track of violation)
- */
+ * @author christophe.ponsard@cetic.be
+ * */
 object PigeonHoles extends SearchEngine with StopWatch {
   
   def main(args: Array[String]) {
