@@ -32,6 +32,9 @@ import oscar.cbls.routing.model._
 /**
  * Swaps two points of the same or different routes.
  * The search complexity is O(n²).
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object Swap extends Neighborhood with SearchEngineTrait {
   /**
@@ -108,7 +111,10 @@ object Swap extends Neighborhood with SearchEngineTrait {
  * @param sndPred the predecessor of the second point that will be swapped.
  * @param objAfter the objective value if we performed this swap move.
  * @param vrp the given VRP problem.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 case class Swap(
   fstPred: Int,
   sndPred: Int,

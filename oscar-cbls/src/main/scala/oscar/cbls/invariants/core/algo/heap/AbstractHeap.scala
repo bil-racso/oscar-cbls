@@ -21,6 +21,10 @@ package oscar.cbls.invariants.core.algo.heap
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
+/**
+* @author renaud.delandtsheer@cetic.be
+ * @tparam T
+ */
 abstract class AbstractHeap[T] extends Iterable[T] {
   def dropAll()
   def insert(elem:T)

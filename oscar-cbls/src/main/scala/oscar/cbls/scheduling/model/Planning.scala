@@ -29,6 +29,11 @@ import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
 
+/**
+ * @param model
+ * @param maxduration
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Planning(val model: Store, val maxduration: Int) {
 
   var resources: List[Resource] = List.empty

@@ -27,7 +27,10 @@ package oscar.cbls
  * This is a package to solve routing problems.
  * It includes modeling features as well as standard neighbor to conduct the search.
  * It also encompasses some heuristics to construct the initial solution for the search.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 package object routing {}
 
 

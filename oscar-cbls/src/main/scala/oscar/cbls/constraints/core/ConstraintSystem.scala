@@ -31,7 +31,8 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * This is achieved by calling the method registerForViolation(v:Variable).
  * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
@@ -199,5 +200,5 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     * @return the constraints that are violated, and whose ponderation factor is not zero
     */
   def violatedConstraints:List[Constraint] =
-    PostedConstraints.filter(p => (p._2 != null || p._2.value !=0) && p._1.isTrue).map(p => p._1)
+    PostedConstraints.filter(p => (p._2 == null || p._2.value !=0) && !p._1.isTrue).map(p => p._1)
 }

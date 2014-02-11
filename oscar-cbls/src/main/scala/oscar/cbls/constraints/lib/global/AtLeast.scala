@@ -38,7 +38,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
  * @param variables the variable whose values are constrained
  * @param bounds map(value,minbound) specifying the minimal number of occurrence of ''value'' among the variables.
  * We use a map to ensure that there is no two bounds on the same value.
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSIntVar]) extends Constraint {
 

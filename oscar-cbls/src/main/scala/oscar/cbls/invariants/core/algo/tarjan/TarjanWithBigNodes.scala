@@ -1,48 +1,24 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
-
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.invariants.core.algo.tarjan
-
-
-
-object test{
-  def main(args: Array[String]) {
-
-    val A = testnode("a")
-    val B = testnode("b")
-    val C = testnode("c")
-    val D = testnode("d")
-
-    A.succeedingnodes = List(B,C,D)
-    B.succeedingnodes = List(C)
-  //  C.succeedingnodes = List(B,D)
-    D.succeedingnodes = List(A)
-    println(TarjanWithBigNodes.getStronlyConnexComponents(List(A,B,C,D),(n:testnode) => n.succeedingnodes))
-
-  }
-}
-
-case class testnode(name:String,var succeedingnodes:List[testnode] = List.empty) extends TarjanNode {
-  override def toString:String = name
-}
 
 trait TarjanNode{
   var Index:Int = -1
@@ -50,6 +26,11 @@ trait TarjanNode{
   var OnStack:Boolean = false
 }
 
+/** The Tarjan algorithm for detecting SCC is graphs
+  * This version is faster because it does not use dictionaries.
+  * all data are stored in the nodes.
+  * @author renaud.delandtsheer@cetic.be
+  */
 object TarjanWithBigNodes{
 
   def getStronlyConnexComponents[T <: TarjanNode](Nodes:Iterable[T], GetSucceedingNodes:(T => Iterable[T])):List[List[T]] = {

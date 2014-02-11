@@ -32,7 +32,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''
  *
  * it is expected that the values are always >= 0
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)

@@ -73,8 +73,7 @@ object PigeonHoles extends SearchEngine with StopWatch {
       c.post(holes(i) le 1)
     }
     // enforcing sum (not required if transfer is used during search)
-    
-    c.close()
+
     m.close()
 
     println("run time after model close: "+ getWatchString)

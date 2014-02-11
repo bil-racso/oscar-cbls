@@ -1,22 +1,22 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 
 package oscar.cbls.invariants.lib.logic
@@ -31,8 +31,9 @@ import oscar.cbls.invariants.core.propagation.Checker
 ;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
- * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
- * */
+  * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class SparseCluster(values:Array[CBLSIntVar], Clusters:SortedMap[Int,CBLSSetVar]) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
@@ -59,20 +60,21 @@ case class SparseCluster(values:Array[CBLSIntVar], Clusters:SortedMap[Int,CBLSSe
       if (Clusters.isDefinedAt(values(v).value)) {
         c.check(Clusters(values(v).value).value.contains(v),
           Some("Clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
-          }
+      }
     }
     for(value <- Clusters.keys){
       for (indices <- Clusters(value).value){
         c.check(values(indices).value == value,
-            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
+          Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }
 }
 
 /**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
- * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
- * */
+  * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class DenseCluster(values:Array[CBLSIntVar], clusters:Array[CBLSSetVar]) extends Invariant {
 
   //We register the static and dynamic dependencies.
@@ -109,18 +111,22 @@ case class DenseCluster(values:Array[CBLSIntVar], clusters:Array[CBLSSetVar]) ex
   override def checkInternals(c:Checker){
     for(v <- values.indices){
       c.check(clusters(values(v).value).value.contains(v),
-          Some("clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
+        Some("clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
     }
     for(value <- clusters.indices){
       for (indices <- clusters(value).value){
         c.check(values(indices).value == value,
-            Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
+          Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
       }
     }
   }
 }
 
-/**This is a helper object for the [[oscar.cbls.invariants.lib.logic.DenseCluster]] and [[oscar.cbls.invariants.lib.logic.SparseCluster]] invariants.*/
+/**This is a helper object for the [[oscar.cbls.invariants.lib.logic.DenseCluster]]
+  * and [[oscar.cbls.invariants.lib.logic.SparseCluster]]
+  * invariants.
+  * @author renaud.delandtsheer@cetic.be
+  * */
 object Cluster{
 
   def MakeSparse(values:Array[CBLSIntVar], clusters: Iterable[Int]):SparseCluster = {

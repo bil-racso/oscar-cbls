@@ -46,7 +46,9 @@ import oscar.cbls.invariants.lib.set.Diff
  * @param N the number of points (deposits and customers) in the problem.
  * @param V the number of vehicles.
  * @param m the model.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
@@ -127,7 +129,10 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 }
 
-/**this records touched points when comit with no undo, or when cleaning move*/
+/** this records touched points when comit with no undo, or when cleaning move*
+* @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL
+*/
 trait HotSpotRecording extends VRP with MoveDescription {
 
   var hotspotList: List[Int]
@@ -168,6 +173,10 @@ trait HotSpotRecording extends VRP with MoveDescription {
   }
 }
 
+/**
+ * describes moves in a spart way by use of segments
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait MoveDescription extends VRP {
   private var Recording = true //recording ou comitted
   def isRecording = Recording
@@ -175,7 +184,7 @@ trait MoveDescription extends VRP {
   protected var affects: List[Affect] = List.empty
 
   protected def addMove(affect: Affect) {
-    assert(Recording)
+    require(Recording)
     affects = affect :: affects
   }
 
@@ -259,10 +268,10 @@ trait MoveDescription extends VRP {
   }
 
   def commit(recordForUndo: Boolean = false) {
-    assert(Recording, "MoveDescription should be recording now")
+    require(Recording, "MoveDescription should be recording now")
     if (recordForUndo) {
       affects = doAllMovesAndReturnRollBack()
-      assert({ Recording = false; true })
+      Recording = false
     } else {
       doAllMoves()
       affects = List.empty
@@ -295,19 +304,22 @@ trait MoveDescription extends VRP {
     doIt(affects)
   }
 
-  def undo(recordForUndo: Boolean = false) {
-    assert(!Recording, "MoveDescription should not be recording now")
-    assert({ Recording = true; true })
-    commit(recordForUndo)
-    assert({ Recording = true; true })
+  def undo() {
+    require(!Recording, "MoveDescription should not be recording now")
+    Recording = true
+    commit(false)
+    Recording = true
   }
 
   def cleanRecordedMoves() {
     affects = List.empty
-    assert({ Recording = true; true })
+    Recording = true
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   def cutAt(start: Int, end: Int): Segment = {
     cut(this.preds(start).value, end)
@@ -318,6 +330,10 @@ trait MoveDescriptionSmarter extends MoveDescription with Predecessors {
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ */
 trait VRPObjective extends VRP {
 
   val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
@@ -338,6 +354,7 @@ trait VRPObjective extends VRP {
    * it is called by the model on close
    */
   def closeObjectiveFunction() {
+    if(objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
     objectiveFunction <== Sum(objectiveFunctionTerms)
   }
 
@@ -349,6 +366,9 @@ trait VRPObjective extends VRP {
  * Info : unrouted nodes are those whose next is N.
  * This trait is abstract, since unrouted can be implemented either stand alone,
  * or as a side effect of other traits
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 abstract trait RoutedAndUnrouted extends VRP {
   /**
@@ -366,6 +386,9 @@ abstract trait RoutedAndUnrouted extends VRP {
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 trait UnroutedImpl extends VRP with RoutedAndUnrouted {
   /**
@@ -377,6 +400,9 @@ trait UnroutedImpl extends VRP with RoutedAndUnrouted {
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   assert(unrouted != null, "you should put the implementation of Unrouted before PenaltyForUnrouted when declaring your model")
@@ -405,6 +431,10 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
 
+
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
   final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
 }
@@ -412,7 +442,9 @@ trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
@@ -479,7 +511,9 @@ abstract trait ClosestNeighbors extends VRP {
  * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
  * We consider that a hop distance of Int.MaxVal is unreachable.
  * HopDistance is only handling simple cost functions such as cost matrices
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait HopDistance extends VRP {
   /**
    * the data structure which maintains the current hop distance of each node to reach his successor.
@@ -506,7 +540,7 @@ trait HopDistance extends VRP {
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i: Int, j: Int) => DistanceMatrix(i)(j)
-    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => { if (j != N) DistanceMatrix(i)(j) else 0 })
+    for (i <- 0 until N) hopDistance(i) <== new Int2Int(next(i), j => { if (j != N) DistanceMatrix(i)(j) else 0 })
   }
 
   /**
@@ -516,7 +550,7 @@ trait HopDistance extends VRP {
    */
   def installCostFunction(fun: (Int, Int) => Int) {
     distanceFunction = fun
-    for (i <- 0 until N) hopDistance(i) <== new IntVar2IntVarFun(next(i), j => fun(i, j))
+    for (i <- 0 until N) hopDistance(i) <== new Int2Int(next(i), j => fun(i, j))
   }
 
   /**
@@ -532,14 +566,17 @@ trait HopDistance extends VRP {
  * Declares an objective function, attached to the VRP.
  * It maintains it equal to the hop distance in the VRP,
  * based either on a matrix, or on another mechanism defined by the distance function.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
   addObjectiveTerm(overallDistance)
 }
 
 /**
  * Maintains the set of nodes reached by each vehicle
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
@@ -548,7 +585,9 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
 /**
  * Maintains the position of nodes in the routes, the route number of each node,
  * the length of each route and their last node.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait PositionInRouteAndRouteNr extends VRP {
 
   /**
@@ -634,7 +673,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 /**
  * Maintains a penalty weight for routes which do not contain task nodes.
  * That is: they only contain the vehicle node.
- */
+ * @author yoann.guyot@cetic.be
+ * */
 trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
   /**
    * The data structure array which maintains route penalty.
@@ -676,7 +716,9 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
 /**
  * This trait maintains the predecessors of each node of the VRP.
  * It uses the Predecessor invariant.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 trait Predecessors extends VRP {
   /**
    * the data structure array which maintains the predecessors of each node.
@@ -690,7 +732,8 @@ trait Predecessors extends VRP {
  * This trait maintains strong constraints system.
  * It redefines the propagation method of ObjectiveFunction trait,
  * that saves time by propagating partially.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
@@ -703,7 +746,8 @@ trait StrongConstraints extends VRPObjective {
 
 /**
  * This trait maintains weak constraints system.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.

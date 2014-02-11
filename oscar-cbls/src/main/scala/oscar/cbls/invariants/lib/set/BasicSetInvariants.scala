@@ -30,6 +30,7 @@ import oscar.cbls.invariants.core.propagation.Checker;
  * left UNION right
  * @param left is an intvarset
  * @param right is an intvarset
+ * @author renaud.delandtsheer@cetic.be
  */
 case class Union(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   assert(left != right)
@@ -78,9 +79,10 @@ case class Union(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
 
 /**
  * left INTER right
- * @param left is an intvarset
- * @param right is an intvarset
- */
+ * @param left is a CBLSSetVar
+ * @param right is a CBLSSetVar
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Inter(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
 
   var output: CBLSSetVar = null
@@ -129,7 +131,8 @@ case class Inter(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
  * left MINUS right, the set diff operator
  * @param left is the base set
  * @param right is the set that is removed from left
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Diff(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
 
   var output: CBLSSetVar = null
@@ -185,7 +188,8 @@ case class Diff(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
 /**
  * #(v) (cardinality)
  * @param v is an IntSetVar, the set of integers to count
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Cardinality(v: CBLSSetVar) extends IntInvariant {
 
   def myMax = v.getMaxVal - v.getMinVal
@@ -222,7 +226,8 @@ case class Cardinality(v: CBLSSetVar) extends IntInvariant {
 /**
  * makes an IntSetVar out of a set of IntVar. If several variables have the same value, the value is present only once in the resulting set
  * @param on is a set of IntVar
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class MakeSet(on: SortedSet[CBLSIntVar]) extends SetInvariant {
 
   var output: CBLSSetVar = null
@@ -283,7 +288,8 @@ case class MakeSet(on: SortedSet[CBLSIntVar]) extends SetInvariant {
  *
  * @param lb is the lower bound of the interval
  * @param ub is the upper bound of the interval
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Interval(lb: CBLSIntVar, ub: CBLSIntVar) extends SetInvariant {
   assert(ub != lb)
   var output: CBLSSetVar = null
@@ -347,7 +353,8 @@ case class Interval(lb: CBLSIntVar, ub: CBLSIntVar) extends SetInvariant {
  * if this set is empty, puts the default value ni output.
  * @param from where we take the value from
  * @param default the default value in case from is empty
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class TakeAny(from: CBLSSetVar, default: Int) extends IntInvariant {
   def myMin: Int = from.getMinVal
   def myMax: Int = from.getMaxVal

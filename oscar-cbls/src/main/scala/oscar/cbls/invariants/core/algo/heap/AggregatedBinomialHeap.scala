@@ -28,6 +28,8 @@ import oscar.cbls.invariants.core.propagation.PropagationElement
  * A binomial heap is maintained to record the lowest position in the heap.
  * This is more efficient if it often occurs that elements have the same position.
  * keys is assumed to start at zero.
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
 

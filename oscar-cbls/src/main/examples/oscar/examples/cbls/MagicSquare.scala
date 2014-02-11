@@ -79,9 +79,6 @@ object MagicSquare extends SearchEngine with StopWatch {
     // register for violation
     for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
-    // closing constraints
-    c.close()
-    
     // working variables - using flat arrays
     // conversion is: i=v/N, j=v%N
     // TODO - can we work with multidimensional arrays here ?

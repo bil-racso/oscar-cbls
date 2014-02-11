@@ -34,7 +34,8 @@ import oscar.cbls.invariants.core.computation._
  * @param cond is the condition, supposed fully acceptant if not specified
  * @param default is the value returned when cond is empty
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class ArgMaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MinValue)
   extends ArgMiaxArray(vars, cond, default) {
 
@@ -57,7 +58,8 @@ case class ArgMaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default
  * @param cond is the condition, supposed fully accepting if not specified (must be specified if vars is bulked)
  * @param default is the value returned when cond is empty
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MaxValue)
   extends ArgMiaxArray(vars, cond, default) {
 
@@ -81,7 +83,8 @@ case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default
  * @param vars is an array of IntVar, which can be bulked
  * @param cond is the condition, can be null
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends SetInvariant with Bulked[CBLSIntVar, (Int, Int)] {
 
   override def toString:String = {

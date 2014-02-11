@@ -80,7 +80,8 @@ abstract class MiaxSet(v: CBLSSetVar) extends IntInvariant{
  * * v is an IntSetVar
  * @param Default is the default value if v is empty
  * update is O(log(n))
- * */
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
   override def name = "MinSet"
 
@@ -110,7 +111,8 @@ case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v)
  * * v is an IntSetVar
  * @param Default is the default value if v is empty
  * update is O(log(n))
- * */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class MaxSet(v: CBLSSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
   override def name = "MaxSet"
 

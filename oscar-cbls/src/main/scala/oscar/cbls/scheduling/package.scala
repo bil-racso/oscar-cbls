@@ -32,6 +32,7 @@ import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
  *
  * In this package, Tasks are grouped into [[oscar.cbls.scheduling.model.Planning]] that keeps references to all tasks and resources.
  * This package features the [[oscar.cbls.scheduling.algo.IFlatIRelax]] search heuristics with various tunings
+  * @author renaud.delandtsheer@cetic.be
  * */
 package object scheduling{
 }

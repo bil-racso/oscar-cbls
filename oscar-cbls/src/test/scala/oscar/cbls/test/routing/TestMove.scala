@@ -49,6 +49,7 @@ import oscar.cbls.routing.neighborhood.TwoOptMove
 import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
 import oscar.cbls.routing.initial.BestInsert
 import oscar.cbls.routing.model.ClosestNeighbors
+import oscar.cbls.routing.model.Predecessors
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -544,21 +545,58 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
   }
 
   def check3OptMove(f: MoveFixture, move: ThreeOpt) {
-    val segStart = f.initNext(move.fstEdgeStartPoint)
-    val sndEdgeEnd = f.initNext(move.sndEdgeStartPoint)
-    val trdEdgeEnd = f.initNext(move.trdEdgeStartPoint)
+    val segStartPoint = f.initNext(move.beforeStart)
+    val afterEnd = f.initNext(move.segEndPoint)
+    val afterInsertion = f.initNext(move.insertionPoint)
     println("VRP after the move: " + f.vrp)
-    f.mainRouteLength should be(f.initLength)
-    f.vrp.routes.positionInRoute(0).value should be(0)
-    for (i <- f.vrp.nodes) {
-      if (i == move.fstEdgeStartPoint)
-        f.vrp.next(i).value should be(f.initNext(move.sndEdgeStartPoint))
-      else if (i == move.sndEdgeStartPoint)
-        f.vrp.next(i).value should be(f.initNext(move.trdEdgeStartPoint))
-      else if (i == move.trdEdgeStartPoint)
-        f.vrp.next(i).value should be(f.initNext(move.fstEdgeStartPoint))
-      else {
-        f.vrp.next(i).value should be(f.initNext(i))
+
+    withClue("Main route length should not be modified:") {
+      f.mainRouteLength should be(f.initLength)
+    }
+    withClue("Node 0 position in route should not be modified:") {
+      f.vrp.routes.positionInRoute(0).value should be(0)
+    }
+    if (!move.reverseSegment) {
+      for (i <- f.vrp.nodes) {
+        if (i == move.beforeStart)
+          withClue("Initial segment end point should follow before start point:") {
+            f.vrp.next(i).value should be(f.initNext(move.segEndPoint))
+          }
+        else if (i == move.segEndPoint)
+          withClue("Initial insertion point should follow segment end point:") {
+            f.vrp.next(i).value should be(f.initNext(move.insertionPoint))
+          }
+        else if (i == move.insertionPoint)
+          withClue("Initial before start point should follow insertion point:") {
+            f.vrp.next(i).value should be(f.initNext(move.beforeStart))
+          }
+        else
+          withClue("Any other node should keep the same following one:") {
+            f.vrp.next(i).value should be(f.initNext(i))
+          }
+      }
+    } else {
+      for (i <- f.vrp.nodes) {
+        if (i == move.beforeStart)
+          withClue("Initial segment end point should follow before start point:") {
+            f.vrp.next(i).value should be(f.initNext(move.segEndPoint))
+          }
+        else if (i == segStartPoint)
+          withClue("Initial after insertion point should follow initial segment start point:") {
+            f.vrp.next(i).value should be(afterInsertion)
+          }
+        else if (i == move.insertionPoint)
+          withClue("Initial second end point should follow insertion point:") {
+            f.vrp.next(i).value should be(move.segEndPoint)
+          }
+        else if (f.vrp.isBetween(i, move.segEndPoint, f.initNext(move.beforeStart)))
+          withClue("Any other node of the segment should follow its initial following one:") {
+            f.vrp.next(i).value should be(f.initPred(i))
+          }
+        else if (f.vrp.isBetween(i, afterInsertion, move.beforeStart))
+          withClue("Any other node should keep the same following one:") {
+            f.vrp.next(i).value should be(f.initNext(i))
+          }
       }
     }
   }
@@ -591,7 +629,15 @@ class MoveFixture(
   val matrix = getDistanceMatrix(abscissa, ordinate)
   val model = Store(false, None, false, false)
 
-  val vrp = new VRP(nbNodes, nbVehicules, model) with HopDistanceAsObjectiveTerm with PositionInRouteAndRouteNr with HopClosestNeighbors with UnroutedImpl with PenaltyForUnrouted with MoveDescription
+  //format: OFF
+  val vrp = new VRP(nbNodes, nbVehicules, model) with Predecessors
+                                                 with HopDistanceAsObjectiveTerm
+                                                 with PositionInRouteAndRouteNr
+                                                 with HopClosestNeighbors
+                                                 with UnroutedImpl
+                                                 with PenaltyForUnrouted
+                                                 with MoveDescription
+  //format: ON
 
   vrp.addObjectiveTerm(vrp.unroutedPenalty)
   vrp.setUnroutedPenaltyWeight(10000)
@@ -613,6 +659,7 @@ class MoveFixture(
 
   val initLength = mainRouteLength
   val initNext = vrp.nodes.map((n: Int) => vrp.next(n).value)
+  val initPred = vrp.nodes.map((n: Int) => vrp.preds(n).value)
   val initPos = vrp.nodes.map((n: Int) => vrp.routes.positionInRoute(n).value)
   def mainRouteLength = vrp.routes.routeLength(0).value
 

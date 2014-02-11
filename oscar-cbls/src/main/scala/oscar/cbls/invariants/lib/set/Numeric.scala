@@ -32,7 +32,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * Sum(i in on)(fun(i))
  * @param on is the set of integers to add
  * @param fun is an optional function Int -> Int to apply before summing elements. It is expected not to rely on any variable of the model.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
   var output: CBLSIntVar = null
@@ -71,7 +72,8 @@ case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
  * PRod(i in on)(fun(i))
  * @param on is the set of integers to multiply
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
 
   var output: CBLSIntVar = null

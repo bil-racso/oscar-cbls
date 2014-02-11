@@ -14,11 +14,22 @@
  ******************************************************************************/
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.lib.global.{MultiKnapsack, AtMost, AtLeast, AllDiff, Sequence}
+import oscar.cbls.constraints.core.Constraint
+import oscar.cbls.constraints.lib.basic.BelongsTo
 
+/** modeling interface for all the constraints
+* @author renaud.delandtsheer@cetic.be
+  */
 trait Constraints {
+
+
+  /**
+   * implements v \in set
+   */
+  def belongsTo(v: CBLSIntVar, set: CBLSSetVar) =  BelongsTo(v: CBLSIntVar, set: CBLSSetVar)
 
   /**Implement the AllDiff constraint on IntVars: all variables must have a different value.
    * @param variables the variable whose values should all be different.

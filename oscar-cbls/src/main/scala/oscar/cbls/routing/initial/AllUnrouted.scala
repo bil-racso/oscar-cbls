@@ -4,6 +4,9 @@ import oscar.cbls.routing.model.VRP
 
 /**
  * Constructs an initial solution where no point is routed, actually.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object AllUnrouted {
   def apply(vrp:VRP){

@@ -22,7 +22,7 @@
 package oscar.cbls.invariants
 
 /** This package proposes a library of invariants classified in several packages
- * */
+  * */
 package object lib{
 }
 

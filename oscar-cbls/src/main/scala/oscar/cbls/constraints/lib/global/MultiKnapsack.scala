@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param items the items, designing the bins they are placed into
  * @param itemsizes the size of the items
  * @param binsizes the max size of the available bins
- * @author  Renaud De Landtsheer rdl@cetic.be
+  * @author renaud.delandtsheer@cetic.be
  */
 case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
   extends Constraint {

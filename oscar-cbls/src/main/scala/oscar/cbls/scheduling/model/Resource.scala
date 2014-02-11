@@ -7,6 +7,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
  * the purpose is to abstract away conflict identification and other stuff that are specific to each type of resource
  *
  * @param planning
+ * @author renaud.delandtsheer@cetic.be
  */
 abstract class Resource(planning:Planning, n:String) {
   val ResourceID = planning.addResource(this)

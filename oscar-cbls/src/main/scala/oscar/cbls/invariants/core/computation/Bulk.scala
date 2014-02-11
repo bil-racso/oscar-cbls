@@ -13,11 +13,11 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- *            Yoann Guyot
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  *            Yoann Guyot
+  ******************************************************************************/
 
 package oscar.cbls.invariants.core.computation
 
@@ -25,7 +25,9 @@ import oscar.cbls.invariants.core.propagation.BulkPropagator
 import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.propagation.Checker
 
-/**Invariants over arrays can implement this trait to make it possible to bulk load their dependencies*/
+/**Invariants over arrays can implement this trait to make it possible to bulk load their dependencies
+  * @author renaud.delandtsheer@cetic.be
+  * */
 trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
 
   /**
@@ -76,6 +78,7 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
 /**
  * This is the node that is put in the propagation graph
  * used by BulkLoad only
+ * @author renaud.delandtsheer@cetic.be
  */
 class Bulk(m: Store, val bulkedVars: Array[Variable], val bulkedComputationResult: Any)
   extends Invariant with BulkPropagator {
@@ -87,6 +90,9 @@ class Bulk(m: Store, val bulkedVars: Array[Variable], val bulkedComputationResul
   override def checkInternals(c: Checker) = c.check(true)
 }
 
+/**This is the dictionaries where bulks are stored, and can be searched for
+  * @author renaud.delandtsheer@cetic.be
+  */
 trait Bulker {
 
   var Bulked: SortedMap[String, List[Bulk]] = SortedMap.empty

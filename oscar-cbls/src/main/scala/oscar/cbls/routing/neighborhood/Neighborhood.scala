@@ -28,6 +28,9 @@ import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 
+/**
+* @author renaud.delandtsheer@cetic.be
+*/
 abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   def encodeMove()
   def doMove() {
@@ -37,7 +40,9 @@ abstract class Move(val objAfter: Int, val vrp: VRP with MoveDescription) {
   }
 }
 
-//c'est toujours le first improve, jamais le best improve.
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 abstract class Neighborhood() {
 
   /**
@@ -48,7 +53,7 @@ abstract class Neighborhood() {
   final def climbAll(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Int = {
     var toreturn = 0;
 
-    while (doSearch(s, moveAcceptor, false).found) {
+    while (doSearch(s, moveAcceptor, false).found && !s.abort()) {
       toreturn += 1
     }
     return toreturn
@@ -119,18 +124,6 @@ abstract class Neighborhood() {
    */
   protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult
 
-  abstract class SearchResult {
-    def found: Boolean
-  }
-  case class MovePerformed() extends SearchResult {
-    def found: Boolean = true
-  }
-  case class MoveFound(move: Move) extends SearchResult {
-    def found: Boolean = true
-  }
-  case class NoMoveFound() extends SearchResult {
-    def found = false
-  }
 
   /**
    * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move
@@ -154,7 +147,7 @@ abstract class Neighborhood() {
       vrp.cleanRecordedMoves()
       (accept, obj)
     } else {
-      vrp.undo(false)
+      vrp.undo()
       (accept, obj)
     }
   }
@@ -163,7 +156,26 @@ abstract class Neighborhood() {
 /**
  * primaryNodeIterator is a stateful iteration on nodes, it might be re-used,
  * actually so only consume that you really examined
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
  */
+// format: OFF (to prevent Eclipse from formatting the following lines)
 case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
-                      vrp: VRP with VRPObjective with PositionInRouteAndRouteNr with MoveDescription)
+                      vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
+                               with MoveDescription,
+                      abort: Unit => Boolean = (_ => false))
+// format: ON
+
+abstract class SearchResult {
+  def found: Boolean
+}
+case class MovePerformed() extends SearchResult {
+  def found: Boolean = true
+}
+case class MoveFound(move: Move) extends SearchResult {
+  def found: Boolean = true
+}
+case class NoMoveFound() extends SearchResult {
+  def found = false
+}

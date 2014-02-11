@@ -1,24 +1,24 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- *            Yoann Guyot
- * ****************************************************************************
- */
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  *            Yoann Guyot
+  * ****************************************************************************
+  */
 
 package oscar.cbls.invariants.lib.logic
 
@@ -32,7 +32,8 @@ import scala.collection.immutable.Set
  * @param ifVar the condition (IntVar)
  * @param thenVar the returned value if ifVar > 0
  * @param elseVar the returned value if ifVar <= 0
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) extends IntInvariant {
 
   var output: CBLSIntVar = null
@@ -87,7 +88,8 @@ case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) e
  * inputarray[index]
  * @param inputarray is an array of IntVar
  * @param index is the index accessing the array
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
   extends IntInvariant with Bulked[CBLSIntVar, ((Int, Int))] {
 
@@ -133,7 +135,12 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
   }
 
   override def toString: String = {
-    inputarray.toList.toString + "[" + index.toString + "]"
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
   }
 }
 
@@ -141,7 +148,8 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
  * Union(i in index) (array[i])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Elements(index: CBLSSetVar, inputarray: Array[CBLSIntVar])
   extends SetInvariant with Bulked[CBLSIntVar, ((Int, Int))] {
 
@@ -232,13 +240,23 @@ case class Elements(index: CBLSSetVar, inputarray: Array[CBLSIntVar])
     c.check(output.value.size <= index.value.size,
       Some("output.value.size (" + output.value.size + ") <= index.value.size (" + index.value.size + ")"))
   }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
+  }
 }
 
 /**
  * inputarray[index] on an array of IntSetVar
  * @param inputarray is the array of intsetvar
  * @param index is the index of the array access
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SetElement(index: CBLSIntVar, inputarray: Array[CBLSSetVar])
   extends SetInvariant with Bulked[CBLSSetVar, ((Int, Int))] {
 
@@ -286,9 +304,18 @@ case class SetElement(index: CBLSIntVar, inputarray: Array[CBLSSetVar])
 
   override def checkInternals(c: Checker) {
     c.check(output.value.intersect(inputarray(index.value).value).size == output.value.size,
-        Some("output.value.intersect(inputarray(index.value (" + index.value + ")).value ("
+      Some("output.value.intersect(inputarray(index.value (" + index.value + ")).value ("
         + inputarray(index.value).value + ")).size ("
         + output.value.intersect(inputarray(index.value).value).size
         + ") == output.value.size (" + output.value.size + ")"))
+  }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
   }
 }

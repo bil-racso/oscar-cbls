@@ -26,6 +26,11 @@ import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.computation.Solution
 import oscar.cbls.scheduling.model.CumulativeResource
 
+/**
+ * @param p
+ * @param Verbose
+ * @author renaud.delandtsheer@cetic.be
+ * */
 class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
   val model: Store = p.model
 

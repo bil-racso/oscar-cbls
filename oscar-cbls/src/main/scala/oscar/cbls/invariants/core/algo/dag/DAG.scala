@@ -13,16 +13,19 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.invariants.core.algo.dag
 
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
 
+/** a DAG node with some abstract methods
+  * @author renaud.delandtsheer@cetic.be
+  */
 trait DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
@@ -33,28 +36,34 @@ trait DAGNode extends Ordered[DAGNode]{
   var visited2:Boolean = false
 
   /**it gives the unique ID of the PropagationElement.
-   * those uniqueID are expected to start at 0 and to increase continuously
-   * An exception is tolerated: UniqueID is set to -1
-   * if the Propagation Element is not mentioned in the propagation structure, such as for constants
-   * yet is mentioned in the dependencies of registered propagation elements
-   */
+    * those uniqueID are expected to start at 0 and to increase continuously
+    * An exception is tolerated: UniqueID is set to -1
+    * if the Propagation Element is not mentioned in the propagation structure, such as for constants
+    * yet is mentioned in the dependencies of registered propagation elements
+    */
   var UniqueID:Int = -1
 
   def getDAGPrecedingNodes: Iterable[DAGNode]
-  
+
   def getDAGSucceedingNodes: Iterable[DAGNode]
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param n a node that is involved in the cycle
+ */
 class CycleException(n: DAGNode) extends Exception
 
 /**This data structure performs dynamic topological sort on DAG
- * the topological sort can be performed either from scratch or maintained incrementally.
- * The topological sort is about maintaining the attribute Position in the nodes [[oscar.cbls.invariants.core.algo.dag.DAGNode]]
- *
- * the topological sort is lower before
- *
- * The incremental topological sort in _autoSort(mAutoSort: Boolean){
- */
+  * the topological sort can be performed either from scratch or maintained incrementally.
+  * The topological sort is about maintaining the attribute Position in the nodes [[oscar.cbls.invariants.core.algo.dag.DAGNode]]
+  *
+  * the topological sort is lower before
+  *
+  * The incremental topological sort in _autoSort(mAutoSort: Boolean){
+  *
+  * @author renaud.delandtsheer@cetic.be
+  */
 trait DAG {
   private var AutoSort: Boolean = false
 
@@ -72,36 +81,36 @@ trait DAG {
   }
 
   /**Checks that node have correct reference to each other.
-   * Nodes are expected to know their successors and predecessors.
-   * This is expected to be consistent between several nodes.
-   */
+    * Nodes are expected to know their successors and predecessors.
+    * This is expected to be consistent between several nodes.
+    */
   def checkGraph(){
-     nodes.foreach(n => {
+    nodes.foreach(n => {
       n.getDAGPrecedingNodes.foreach(p=> {
         if(!p.getDAGSucceedingNodes.exists(p => p == n)){
-            throw new Exception("graph is incoherent at nodes [" + p + "] -> [" + n +"]")
+          throw new Exception("graph is incoherent at nodes [" + p + "] -> [" + n +"]")
         }
       })
 
       n.getDAGSucceedingNodes.foreach(p=> {
         if(!p.getDAGPrecedingNodes.exists(p => p == n)){
-            throw new Exception("graph is incoherent at nodes [" + n + "] -> [" + p +"]")
+          throw new Exception("graph is incoherent at nodes [" + n + "] -> [" + p +"]")
         }
       })
-     })
+    })
   }
 
   /**turns the incremental sort on or off.
-   * Incremental sort is then applied at each edge insert. node insert and delete is prohibited when autosort is activated
-   * in case a cycle is detected, does not pass in autosort model, but throws an exception  
-   */
+    * Incremental sort is then applied at each edge insert. node insert and delete is prohibited when autosort is activated
+    * in case a cycle is detected, does not pass in autosort model, but throws an exception
+    */
   def autoSort_=(mAutoSort: Boolean){
     if (mAutoSort && !AutoSort) {
       try{
-      doDAGSort()
+        doDAGSort()
       }catch {
         case e:CycleException =>
-        throw new Error("cycle in topological sort: \n " + getCycle().mkString("\n ") + "\n")
+          throw new Error("cycle in topological sort: \n " + getCycle().mkString("\n ") + "\n")
       }
       assert({checkSort(); checkGraph(); true})
       //will throw an exception in case of cycle, so AutoSort will not be set to true
@@ -116,11 +125,11 @@ trait DAG {
   def autoSort:Boolean = AutoSort
 
   /**to notify that an edge has been added between two nodes.
-   * this will trigger a re-ordering of the nodes in the topological sort if it is activated.
-   * The reordering might lead to an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case there is a cycle in the graph
-   * We expect the graph to be updated prior to calling this method
-   * notice that you do not need to notify edge deletion.
-   */
+    * this will trigger a re-ordering of the nodes in the topological sort if it is activated.
+    * The reordering might lead to an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case there is a cycle in the graph
+    * We expect the graph to be updated prior to calling this method
+    * notice that you do not need to notify edge deletion.
+    */
   def notifyAddEdge(from: DAGNode, to: DAGNode) {
 
     if (AutoSort && (from.Position > to.Position)) {
@@ -129,11 +138,11 @@ trait DAG {
 
       val SortedForwardRegion =
         (if(HeapSort) findSortedForwardRegion(to, from.Position)
-         else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
+        else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
 
       val SortedBackwardsRegion =
         (if (HeapSort) findSortedBackwardRegion(from, to.Position)
-         else findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position))
+        else findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position))
 
       //reassignment
 
@@ -186,9 +195,9 @@ trait DAG {
   }
 
   /**sorts DAG nodes according to dependencies.
-   * first position is set to zero.
-   * this throws an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case a cycle is detected
-   */
+    * first position is set to zero.
+    * this throws an exception [[oscar.cbls.invariants.core.algo.dag.CycleException]] in case a cycle is detected
+    */
   def doDAGSort() {
     //on utilise les positions pour stocker le nombre de noeuds predecesseurs non visites, puis on met l'autre valeur apres.
     nodes.foreach(n => n.Position = n.getDAGPrecedingNodes.size)

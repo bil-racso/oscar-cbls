@@ -17,7 +17,7 @@ import scala.collection.immutable.SortedSet
   * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
   * @param topologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
-  *
+  * @author renaud.delandtsheer@cetic.be
   **/
 class CBLSModel(val verbose:Boolean = false,
                  val checker:Option[Checker] = None,
@@ -29,7 +29,7 @@ class CBLSModel(val verbose:Boolean = false,
   with Constraints
   with ClusterInvariants
   with ComplexLogicInvariants
-  with AccessInvariants
+  with ElementInvariants
   with MinMaxInvariants
   with NumericInvariants
   with SetInvariants

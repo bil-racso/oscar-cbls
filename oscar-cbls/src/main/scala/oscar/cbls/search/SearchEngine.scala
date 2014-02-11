@@ -22,7 +22,9 @@ package oscar.cbls.search
 import scala.util.Random
 
 /**Provides a set of selectors to ease the development of search engines
- * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine*/
+ * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine
+ * @author renaud.delandtsheer@cetic.be
+  * */
 class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
   setRandomized(isRandomized)
 }

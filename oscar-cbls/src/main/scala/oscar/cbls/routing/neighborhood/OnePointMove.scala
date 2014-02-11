@@ -32,7 +32,10 @@ import oscar.cbls.routing.model.{ MoveDescription, VRP }
 /**
  * Moves a point of a route to another place in the same or in an other route.
  * The search complexity is O(n²).
- */
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
 object OnePointMove extends Neighborhood with SearchEngineTrait {
 
   /**
@@ -107,6 +110,9 @@ object OnePointMove extends Neighborhood with SearchEngineTrait {
  * @param insertionPoint the place where insert the moving point.
  * @param objAfter the objective value if we performed this one-point-move operator.
  * @param vrp the given VRP problem.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 case class OnePointMove(
   predOfMovedPoint: Int,
