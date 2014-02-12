@@ -71,8 +71,6 @@ object Reagan extends App {
   Eat precedes Sleep
   Chew precedes Speak
 
-  planning.close()
-
   model.close(false)
  // println(model.dumpToDot(true, true))
   solver.Solve(15, 10, 2, 50)

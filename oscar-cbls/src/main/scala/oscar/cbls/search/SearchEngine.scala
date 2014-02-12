@@ -252,3 +252,25 @@ trait SearchEngineTrait{
     null //should not happen
   }
 }
+
+/*
+class selectFirst[R](r: Iterable[R],st: (R => Boolean)){
+  def apply(doIt:R => Unit, ifNone: (()=> Unit)= ()=>{println("no suitable item found in " + r)}){
+    for(rr <- r) if(st(rr)) {
+      doIt(rr)
+      return
+    }
+    ifNone()
+  }
+
+  def getIt:R ={
+    for(rr <- r) if(st(rr)) return rr
+    null.asInstanceOf[R]
+  }
+}
+
+object selectFirst{
+  def apply[R](r: Iterable[R],st: (R => Boolean) = ((r:R) => true)):selectFirst[R] = new selectFirst[R](r,st)
+  implicit def selectToR[R](s:selectFirst[R]):R = s.getIt
+}
+*/

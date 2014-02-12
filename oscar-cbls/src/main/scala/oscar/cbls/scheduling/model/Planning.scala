@@ -36,6 +36,8 @@ import oscar.cbls.modeling.Algebra._
  */
 class Planning(val model: Store, val maxduration: Int) {
 
+  var isClosed = false
+
   var resources: List[Resource] = List.empty
   var resourceCount: Int = 0
   /**called by resources registers it in the planning, returns an ID, which is the one of the resource*/
@@ -68,7 +70,14 @@ class Planning(val model: Store, val maxduration: Int) {
 
   var SentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
+  model.addToCallBeforeClose(_=>this.close())
+
+  /** this is to close the planning when you are done with declaring tasks, precedence  and resource
+    * notice that you do not need to explicitely call this, as the model will call it automatically on close.
+    */
   def close() {
+    if(isClosed) return
+    isClosed = true
     val ActivitiesNoSentinel = Activities
     SentinelActivity = new Activity(0, this, "SentinelActivity")
     SentinelActivity.LatestEndDate := maxduration

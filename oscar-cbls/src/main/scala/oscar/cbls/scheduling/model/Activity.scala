@@ -28,98 +28,9 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-/**
- *
- * @param startDate
- * @param duration
- * @param planning
- * @param name
- * @author renaud.delandtsheer@cetic.be
- * THIS IS EXPERIMENTAL
- * */
-class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Planning, name: String = "")
-  extends Activity(duration: CBLSIntVar, planning: Planning, name){
-  override def canAddPrecedence: Boolean = false
-  override def close() {
-
-    AdditionalPredecessors = SortedSet.empty[Int]
-    AllPrecedingActivities = SortedSet.empty[Int]
-    EarliestStartDate := startDate
-    DefiningPredecessors = SortedSet.empty[Int]
-    PotentiallyKilledPredecessors = SortedSet.empty[Int]
-
-    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
-
-    //This is not correct. but since no task can be put before this one, this is not an issue.
-    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
-  }
-}
-
-object NonMoveableActivity{
-  def apply(startDate:Int, duration: CBLSIntVar, planning: Planning, name: String = "") =
-  new NonMoveableActivity(startDate, duration, planning, name)
-}
 
 
-  /**
- *
- * @param start
- * @param end
- * @param name
- * @author renaud.delandtsheer@cetic.be
- */
-class SuperActivity(start: Activity, end: Activity, override val name: String = "")
-  extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
-    start.planning, name) {
 
-  start precedes end
-
-  override def close() {
-
-    start.close()
-    end.close()
-
-    AdditionalPredecessors = start.AdditionalPredecessors
-
-    AllPrecedingActivities = start.AllPrecedingActivities
-
-    EarliestStartDate <== start.EarliestStartDate
-
-    DefiningPredecessors = start.DefiningPredecessors
-
-    PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
-
-    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
-
-    LatestEndDate <== end.LatestEndDate
-
-    this.duration <== end.EarliestEndDate - start.EarliestStartDate
-
-    //ParasiticPrecedences = SortedSet.empty[Int]
-  }
-
-  override def addDynamicPredecessor(t: Activity,Verbose:Boolean = false) {
-    start.addDynamicPredecessor(t,Verbose)
-  }
-
-  override def removeDynamicPredecessor(t:Activity,Verbose:Boolean = false){
-    start.removeDynamicPredecessor(t,Verbose)
-  }
-  override def getEndActivity: Activity = end.getEndActivity
-  override def getStartActivity: Activity = start.getStartActivity
-
-  override def addStaticPredecessor(j: Activity) {
-    start.addStaticPredecessor(j)
-  }
-
-  override def removeNonTightAdditionalPredecessors(){} //nothing to be done here because no such dependencies can exist
-
-  }
-
-object SuperActivity {
-  def apply(start: Activity, end: Activity, name: String) = new SuperActivity(start,end,name)
-  def apply(start: Activity, end: Activity) = new SuperActivity(start,end,"SuperActivity(" + start + "," + end + ")")
-}
 
 object Activity{
   def apply(duration: CBLSIntVar, planning: Planning, name: String = "", shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a)
