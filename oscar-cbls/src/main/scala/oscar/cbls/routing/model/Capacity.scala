@@ -32,8 +32,8 @@ import oscar.cbls.modeling.Algebra._
  */
 abstract trait NodeWeighting{
 
-  abstract def vrp:VRP
-  abstract def name:String
+  def vrp:VRP
+  def name:String
 
   /**
    * the data structure array which maintains weights.

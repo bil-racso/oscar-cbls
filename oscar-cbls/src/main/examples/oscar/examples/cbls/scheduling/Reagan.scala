@@ -72,7 +72,8 @@ object Reagan extends App {
   Chew precedes Speak
 
   model.close(false)
- // println(model.dumpToDot(true, true))
+
+
   solver.Solve(15, 10, 2, 50)
 
   println(planning.toAsciiArt)

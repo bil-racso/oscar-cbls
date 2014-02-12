@@ -22,6 +22,7 @@
 package oscar.cbls.scheduling.model
 
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+import oscar.cbls.modeling.Algebra._
 
 /**
  *

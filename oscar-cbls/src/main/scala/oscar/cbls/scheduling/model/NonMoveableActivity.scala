@@ -23,7 +23,6 @@ package oscar.cbls.scheduling.model
 
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.scheduling.model.Planning
 import scala.collection.immutable.SortedSet
 
 /**

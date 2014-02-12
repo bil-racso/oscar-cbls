@@ -28,10 +28,6 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-
-
-
-
 object Activity{
   def apply(duration: CBLSIntVar, planning: Planning, name: String = "", shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a)
    = new Activity(duration, planning, name, shifter)
