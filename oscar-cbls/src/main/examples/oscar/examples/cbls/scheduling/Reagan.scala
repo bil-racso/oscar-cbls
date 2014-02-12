@@ -38,7 +38,7 @@ import oscar.cbls.scheduling.model.CumulativeResource
 object Reagan extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
-  val planning = new Planning(model, 40)
+  val planning = new Planning(model, 50)
   val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
@@ -62,7 +62,7 @@ object Reagan extends App {
   Drink uses 3 ofResource Reagan
 
   val Pray = NonMoveableActivity(5, 2, planning, "pray")
-  Pray uses 3 ofResource Reagan
+  Pray uses 2 ofResource Reagan
 
   val Digest = SuperActivity(Eat, Sleep, "digest")
   Digest uses 1 ofResource Reagan

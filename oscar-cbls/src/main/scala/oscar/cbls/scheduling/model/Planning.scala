@@ -227,6 +227,7 @@ class Planning(val model: Store, val maxduration: Int) {
       * return true if a path exist*/
     def MarkPathes(from:Activity, to:Activity):Boolean = {
       if(from.Mark) return true
+      //TODO: we might explore the same node several times if it does not lead to to
       if (from == to){
         if (!from.Mark){
           from.Mark = true
@@ -251,7 +252,7 @@ class Planning(val model: Store, val maxduration: Int) {
     /**returns false if hard rock dependency, true if can be killed*/
     def FindDependenciesToKill(from:Activity, to:Activity) :Boolean = {
       if (from == to) return false
-      if(!from.Mark){return true}
+      if(!to.Mark){return true}
       for(prev <- to.getStartActivity.AdditionalPredecessors.value){
         val prevActivity:Activity = ActivityArray(prev)
         if (prevActivity.Mark){
