@@ -22,45 +22,64 @@ package oscar.cbls.routing.model
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.lib.numeric.SumElements
-import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntVar
+import oscar.cbls.invariants.lib.minmax.Min2
+import oscar.cbls.modeling.Algebra._
 
 /**
- * Maintains a integer weight on each node to help to form constraints (adding information).
+ * Maintains a integer weight on each node. This is used to formulate additional model items.
  * @author renaud.delandtsheer@cetic.be
  * THIS IS EXPERIMENTAL
  */
-class NodeWeighting(vrp:VRP, weightingName:String = "weight"){
+abstract trait NodeWeighting{
+
+  abstract def vrp:VRP
+  abstract def name:String
 
   /**
    * the data structure array which maintains weights.
    */
   val nodeWeight : Array[CBLSIntVar] = Array.tabulate(vrp.N)(i => CBLSIntVar(vrp.m, Int.MinValue, Int.MaxValue, 0,
-    weightingName + "_" + i))
+    name + "_" + i))
 }
 
-/** maintains a cost associated to each vehicle
-  *the cost is the sum of the cost associated to each node crossed by the vehicle
+/** Maintains a cost associated to each vehicle, as the sum of the nodeWeight of each node reached by the vehicle.
+  * The initial depot is taken into account in the sum, and it is counted exactly once.
   * @author renaud.delandtsheer@cetic.be
   * THIS IS EXPERIMENTAL
   */
-class CommutativeCapacity(vrp:VRP with NodesOfVehicle, CapacityName:String = "CumulativeCapacity") extends NodeWeighting(vrp,CapacityName){
-  val CostOfVehicle = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
+class CommutativeSummedCapacity(val vrp:VRP with NodesOfVehicle, val name:String = "SummedCapacity") extends NodeWeighting{
+  val vehicleSum = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
 }
 
-/** the capacity out is computed from the capacity out of the predecessor
+/** Maintains a capacity that spans on the route of a vehicle.
+  * Each node has an incomingCapacity, and an outGoingCapacity.
+  * The outgoing capacity is to be set through invariant (but not for depot nodes)
+  * This class ensures that the capacityIn of a node is set to the capacityOut of its predecessor;
   *
   * @param vrp the routing model
-  * @param CapacityOut the capacity when leaving a node
   * @author renaud.delandtsheer@cetic.be
   * THIS IS EXPERIMENTAL
   */
-class NonCommutativeProgressiveCapacity(vrp:VRP with Predecessors,
-                                var CapacityOut:Array[CBLSIntVar] =  null){
+class AccumulativeCapacity(vrp:VRP with Predecessors, val name:String="AccumulativeCapacity"){
 
-  if(CapacityOut  == null)
-    CapacityOut = Array.tabulate(vrp.N)(n => CBLSIntVar(vrp.m,name = "CapacityOutOf_" + n))
+  val capacityOut:Array[CBLSIntVar] = Array.tabulate(vrp.N+1)(n => CBLSIntVar(vrp.m,name = if(n == vrp.N) "capacityOutUnrouted" else name + "_Out_" + n))
+  val capacityIn:Array[CBLSIntVar] = Array.tabulate(vrp.N)(n => if (n < vrp.V) 0 else capacityOut.element(vrp.preds(n)))
+}
 
-  /** the capacity when leaving the predecessor of a given node */
-  val CapacityOutPred:Array[CBLSIntVar] = Array.tabulate(vrp.N)(n => if (n < vrp.V) 0 else CapacityOut.element(vrp.preds(n)))
+/**
+  * This class proposes a standard model of capacity:
+  * - there is a maxValueAtNode CBLSIntVar for each node.
+  * - the capacityOUt of a node is min(capacityIn,maxValueAtNode)+nodeWeight
+  *
+  * @param vrp the routing model
+  * @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL
+  */
+class AccumulativeMinSumCapacity(val vrp:VRP with Predecessors, override val name:String="AccumulativeMinSumCapacity")
+  extends AccumulativeCapacity(vrp,name) with NodeWeighting{
+  val maxValueAtNode = Array.tabulate(vrp.N)(n => CBLSIntVar(vrp.m,name = "maxValueAtNode_" + n))
+  for(i <- vrp.nodes){
+    capacityOut(i) <== Min2(capacityIn(i), maxValueAtNode(i)) + nodeWeight(i)
+  }
 }
 
