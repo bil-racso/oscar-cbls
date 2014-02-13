@@ -2,6 +2,11 @@ package oscar.cbls.test.invariants.bench
 
 import oscar.cbls.invariants.core.propagation.Checker
 
+/**
+ *
+ * @param verbose
+ * @author yoann.guyot@cetic.be
+ */
 class InvariantChecker(verbose: Int = 0) extends Checker {
   var firstCheck = true
   var invariantChecked = false
@@ -25,3 +30,4 @@ class InvariantChecker(verbose: Int = 0) extends Checker {
     invariantChecked
   }
 }
+

@@ -23,7 +23,7 @@ package oscar.cbls.constraints
 /**This package defines a core structure for constraints.
  * A [[oscar.cbls.constraints.core.Constraint]] is to be posted in [[oscar.cbls.constraints.core.ConstraintSystem]]
  * All this mechanics aims at computing violation degrees associated with constraints and with constraint systems.
- * @author  Renaud De Landtsheer rdl@cetic.be
+  * @author renaud.delandtsheer@cetic.be
  */
 package object core {
 }

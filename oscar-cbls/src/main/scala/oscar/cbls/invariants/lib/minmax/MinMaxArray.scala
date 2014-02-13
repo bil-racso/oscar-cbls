@@ -33,7 +33,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param varss is an array of IntVar, which can be bulked
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
@@ -56,7 +57,8 @@ case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
  * @param varss is an array of IntVar, which can be bulked
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
@@ -80,7 +82,8 @@ case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
  * @param vars is an array of IntVar, which can be bulked
  * @param cond is the condition, cannot be null
  * update is O(log(n))
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends IntInvariant with Bulked[CBLSIntVar, (Int, Int)] {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)

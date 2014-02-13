@@ -24,5 +24,8 @@ package oscar.cbls.routing
  * constraints problems.
  *
  * notice that by default, VRP is instantiated with all nodes unrouted.
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 package object initial {}

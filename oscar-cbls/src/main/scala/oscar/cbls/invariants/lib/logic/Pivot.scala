@@ -33,7 +33,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * It is based on two heap data structure, hence updates are log(n) and all updates are allowed
  * @param values an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]]
  * @param boundary the boundary for comparison
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
   var output: CBLSSetVar = null
 
@@ -129,7 +130,8 @@ case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
  * - SelectLESetQueue requires latest variables passing above boundary to be the biggest one
  * @param values: an array of intvar
  * @param boundary: the boundary for comparison
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) extends SetInvariant {
   var output: CBLSSetVar = null
 
@@ -170,8 +172,8 @@ case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
       }
     } else { //il est dans BelowOrEqual
       //     println("SelectLEnotify " + v + " index: " + index +  " OldVal: " + OldVal + " NewVal: " + NewVal + " boundary: " + boundary + " output " + output)
-      assert(OldVal <= boundary.value, "SelectLESetQueue does not allow elements above boundary to change")
-      assert(QueueAbove.isEmpty || values(QueueAbove.last).value <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one")
+      assert(OldVal <= boundary.value, "SelectLESetQueue does not allow elements above boundary to change: " + v + "(new: " + NewVal + ", old: " + OldVal + ") pivot: " + boundary)
+      assert(QueueAbove.isEmpty || values(QueueAbove.last).value <= NewVal, "SelectLESetQueue requires latest variables passing above boundary to be the biggest one: " + v)
       QueueAbove.enqueue(index)
       output.deleteValue(index)
     }

@@ -34,7 +34,7 @@ import scala.math.abs
 
 /**
  * implements left <= right
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
   model = InvariantHelper.findModel(List(left,right))
@@ -72,13 +72,13 @@ case class LE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(l, r)
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class GE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(r, l)
 
 /**
  * implements left < right
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
   model = InvariantHelper.findModel(List(left,right))
@@ -107,7 +107,7 @@ protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constrai
 /**
  * implements left < right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class L(l: CBLSIntVar, r: CBLSIntVar) extends LA(l, r)
 
@@ -119,7 +119,7 @@ case class G(l: CBLSIntVar, r: CBLSIntVar) extends LA(r, l)
 
 /**
  * implements left != right
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
   registerConstrainedVariables(left, right)
@@ -151,7 +151,7 @@ case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
  * constraints left == right
  * this is considered as a primitive constraint and used in the [[oscar.cbls.constraints.core.Constraint]]
  * class, so that it is part of the core instead of the library
- * @author  Renaud De Landtsheer rdl@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  */
 case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
   model = InvariantHelper.findModel(List(left,right))

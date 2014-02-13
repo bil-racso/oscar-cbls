@@ -26,7 +26,8 @@ import oscar.cbls.invariants.core.computation.{Store, InvariantHelper, Invariant
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
- * */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class DenseRef(references:Array[CBLSSetVar], referencing:Array[CBLSSetVar]) extends Invariant {
 
   for (v <- references.indices) registerStaticAndDynamicDependency(references(v),v)

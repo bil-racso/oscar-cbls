@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 /**
  * Very simple example showing how to use Asteroid on the basic SEND+MORE=MONEY
  * Using a generic constrained directed search
- * 
+ * @author christophe.ponsard@cetic.be
  */
 object SendMoreMoney extends SearchEngine with StopWatch {
   
@@ -98,7 +98,6 @@ object SendMoreMoney extends SearchEngine with StopWatch {
 
     // search variables
     val ViolationArray:Array[CBLSIntVar] = (for(l <- Letter.list) yield c.violation(d(l.id))).toArray
-    c.close()
     val Tabu:Array[CBLSIntVar] = (for (i <- Letter.list) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_" + i)).toArray
     val It = CBLSIntVar(m,0,Int.MaxValue,0,"it")
     val NonTabuLetter:CBLSSetVar = SelectLESetQueue(Tabu, It)

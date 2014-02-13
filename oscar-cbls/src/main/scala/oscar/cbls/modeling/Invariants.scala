@@ -25,11 +25,15 @@ import oscar.cbls.invariants.lib.set._
 
 trait Invariants extends ClusterInvariants
 with ComplexLogicInvariants
-with AccessInvariants
+with ElementInvariants
 with MinMaxInvariants
 with NumericInvariants
 with SetInvariants
 
+/**
+ * modeling interface presenting the cluster invariants
+ * @author renaud.delandtsheer@cetic.be
+*/
 trait ClusterInvariants{
 
   def makeSparseCluster(values:Array[CBLSIntVar], clusters: Iterable[Int]):SparseCluster = Cluster.MakeSparse(values, clusters)
@@ -97,6 +101,10 @@ trait ClusterInvariants{
 
 }
 
+/**
+ * modeling interface presenting the complex logic invariants
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait ComplexLogicInvariants{
 
   /**this invariants maintains data structures representing vrp of vehicles.
@@ -121,7 +129,12 @@ trait ComplexLogicInvariants{
   def makeSort(values:Array[CBLSIntVar]):Sort = Sort.MakeSort(values:Array[CBLSIntVar])
 }
 
-trait AccessInvariants{
+
+/**
+ * modeling interface presenting the element invariants
+ * @author renaud.delandtsheer@cetic.be
+ */
+trait ElementInvariants{
   /** if (ifVar >0) then thenVar else elveVar
    * @param ifVar the condition (IntVar)
    * @param thenVar the returned value if ifVar > 0
@@ -147,6 +160,10 @@ trait AccessInvariants{
   def intSetElement(index:CBLSIntVar, inputarray:Array[CBLSSetVar]) = SetElement(index, inputarray)
 }
 
+/**
+ * modeling interface presenting the min-max invariants
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait MinMaxInvariants{
 
   /** Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
@@ -211,6 +228,10 @@ trait MinMaxInvariants{
   def maxSet(v: CBLSSetVar, default: Int = Int.MinValue) = new MaxSet(v, default)
 }
 
+/**
+ * modeling interface presenting the numeric invariants
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait NumericInvariants{
   /** sum(vars)
    * @param vars is an iterable of IntVars
@@ -311,6 +332,10 @@ trait NumericInvariants{
 
 }
 
+/**
+ * modeling interface presenting the set invariants
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait SetInvariants{
   /** left UNION right
    * @param left is an intvarset

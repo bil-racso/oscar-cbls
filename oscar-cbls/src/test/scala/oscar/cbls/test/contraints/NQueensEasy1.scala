@@ -18,7 +18,7 @@
   *         by Renaud De Landtsheer
   ******************************************************************************/
 
-package oscar.examples.cbls.queens
+package oscar.cbls.test.contraints
 
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.core._
@@ -46,8 +46,8 @@ object NQueensEasy1 extends CBLSModel with App{
   val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen" + q))
 
   //alldiff on rows in enforced because we swap queens initially different
-  add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
-  add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
+  c.add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
+  c.add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
 
   close()
 
@@ -67,7 +67,7 @@ object NQueensEasy1 extends CBLSModel with App{
         queens(q1) :=: queens(q2)
         tabu(q1)= it + tenure
         tabu(q2) = it + tenure
-      case _ => ;
+      case _ => println("Warning: Tabu it too big compared to queens count")
     }
     it += 1
   }

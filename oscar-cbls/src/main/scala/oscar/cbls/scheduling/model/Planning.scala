@@ -23,13 +23,17 @@ package oscar.cbls.scheduling.model
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
 import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
-import oscar.visual.VisualFrame
-import oscar.visual.plot.PlotLine
-import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
 
+/**
+ * @param model
+ * @param maxduration
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Planning(val model: Store, val maxduration: Int) {
+
+  var isClosed = false
 
   var resources: List[Resource] = List.empty
   var resourceCount: Int = 0
@@ -63,7 +67,14 @@ class Planning(val model: Store, val maxduration: Int) {
 
   var SentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
+  model.addToCallBeforeClose(_=>this.close())
+
+  /** this is to close the planning when you are done with declaring tasks, precedence  and resource
+    * notice that you do not need to explicitely call this, as the model will call it automatically on close.
+    */
   def close() {
+    if(isClosed) return
+    isClosed = true
     val ActivitiesNoSentinel = Activities
     SentinelActivity = new Activity(0, this, "SentinelActivity")
     SentinelActivity.LatestEndDate := maxduration
@@ -104,24 +115,6 @@ class Planning(val model: Store, val maxduration: Int) {
     val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
 
     WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
-  }
-
-  var gantt:Gantt = null
-  var plot:PlotLine = null
-  def displayVisualRendering(){
-    val frame  = new VisualFrame("Cumulative JobShop Problem", 1, 1)
-    frame.setBounds(0,0,500,800)
-    gantt = new Gantt(this)
-    frame.createFrame("Gantt chart").add(gantt)
- //   plot = new Plot2D("makespan", "iterations", "makespan");
- //   frame.createFrame("progress").add(plot)
-
-    frame.pack
-    frame.setSize(1500,500)
-  }
-
-  def updateVisual(){
-    if (gantt!=null) gantt.update(1.0f, 30)
   }
 
   override def toString: String = toAsciiArt
@@ -222,6 +215,7 @@ class Planning(val model: Store, val maxduration: Int) {
       * return true if a path exist*/
     def MarkPathes(from:Activity, to:Activity):Boolean = {
       if(from.Mark) return true
+      //TODO: we might explore the same node several times if it does not lead to to
       if (from == to){
         if (!from.Mark){
           from.Mark = true
@@ -246,7 +240,7 @@ class Planning(val model: Store, val maxduration: Int) {
     /**returns false if hard rock dependency, true if can be killed*/
     def FindDependenciesToKill(from:Activity, to:Activity) :Boolean = {
       if (from == to) return false
-      if(!from.Mark){return true}
+      if(!to.Mark){return true}
       for(prev <- to.getStartActivity.AdditionalPredecessors.value){
         val prevActivity:Activity = ActivityArray(prev)
         if (prevActivity.Mark){
@@ -290,7 +284,7 @@ abstract class PrecedenceCleaner(val canBeKilled:Boolean){
 }
 case class HardPrecedence() extends PrecedenceCleaner(false)
 
-case class PrecedencesCanBeKilled(d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
+case class PrecedencesCanBeKilled(val d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
   override def killDependencies(Verbose:Boolean = false){
     for ((a,b) <- d){
       b.removeDynamicPredecessor(a,Verbose)

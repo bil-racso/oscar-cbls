@@ -37,6 +37,9 @@ import oscar.cbls.search.SearchEngineTrait
  * PRE-CONDITIONS:
  * - the relevant neighbors must all be routed,
  * - the primary node iterator must contain only unrouted nodes.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 object InsertPoint extends Neighborhood with SearchEngineTrait {
   override protected def doSearch(

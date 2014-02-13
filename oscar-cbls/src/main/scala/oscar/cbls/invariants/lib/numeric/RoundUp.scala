@@ -24,8 +24,8 @@ package oscar.cbls.invariants.lib.numeric
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{Store, IntInvariant, CBLSIntVar}
-import oscar.cbls.invariants.lib.logic.LazyIntVarIntVar2IntVarFun
+import oscar.cbls.invariants.core.computation.{ Store, IntInvariant, CBLSIntVar }
+import oscar.cbls.invariants.lib.logic.LazyIntInt2Int
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -50,9 +50,10 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param period the period of the forbidden-allowed pattern
  * @param zone the size of the forbidden zone. it starts at the beginning of the period
  * @param shift the first period starts later than zero. it starts at shift. the duration before its start is allowed.
+ * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpModulo(from: CBLSIntVar, duration: CBLSIntVar, period: Int, zone: Int, shift: Int)
-  extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
+  extends LazyIntInt2Int(from, duration, (from: Int, duration: Int) => {
     require(duration <= period - zone, "duration " + duration + "<= period " + period + "- zone " + zone)
     require(period != 0)
     val reducedfrom = (from + period - shift) % period
@@ -103,7 +104,8 @@ object TestRoundUpModulo extends App {
  *
  * @param from
  * @param duration
- * @param ForbiddenZones
+ * @param forbiddenZones
+ * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones: List[(Int, Int)]) extends IntInvariant {
 
@@ -220,7 +222,6 @@ case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones:
   }
 }
 
-
 object TestRoundUpCustom extends App {
 
   def n2day(n: Int): String =
@@ -250,37 +251,46 @@ object TestRoundUpCustom extends App {
 }
 
 /**
- * Maintains output to the end time value of a task, with respect to a possible
+ * Maintains output to the duration value of a task, with respect to a possible
  * interruption by a pre-emptive task.
  * The task is extended with the duration of the pre-emptive task, if this
  * pre-emptive task occurs during that task execution.
  * If necessary, the pre-empted task is resumed after the pre-emptive task execution.
  *
- * @param from the task start time
+ * @param startTime the task start time
  * @param duration the task duration
- * @param preEmptiveTask the pre-emptive task expressed as a range: start to end
+ * @param preEmptStartTime the pre-emptive task start time
+ * @param preEmptDuration the pre-emptive task duration
  * @param resume is true if the task must be resumed after the pre-emptive task
+ * @author yoann.guyot@cetic.be
  */
-case class PreEmption(from: CBLSIntVar, duration: CBLSIntVar,
-                      preEmptFrom: Int, preEmptDuration: Int, resume: Boolean)
-  extends LazyIntVarIntVar2IntVarFun(from, duration, (from: Int, duration: Int) => {
-    var newEnd: Int = from + duration
-    /**
-     * If the pre-emptive task begins during the execution of the current task,
-     * the current task shall be shifted.
-     */
+case class PreEmption(startTime: CBLSIntVar, duration: CBLSIntVar,
+                      preEmptStartTime: Int, preEmptDuration: Int, resume: Boolean)
+  extends LazyIntInt2Int(startTime, duration,
+    (startTime: Int, duration: Int) => {
+      val endTime: Int = startTime + duration
+      var newDuration: Int = duration
 
-    if ((from to newEnd).contains(preEmptFrom)) {
-      if (resume) {
-        newEnd = newEnd + preEmptDuration
-      } else {
-        newEnd = preEmptFrom + preEmptDuration
+      /**
+       * If the pre-emptive task begins during the execution of the current task,
+       * the current task shall be shifted.
+       */
+      if ((startTime to endTime).contains(preEmptStartTime)) {
+        if (resume) {
+          newDuration = duration + preEmptDuration
+        } else {
+          newDuration = (preEmptStartTime - startTime) + preEmptDuration
+        }
       }
-    }
-    newEnd
-  }, from.minVal, from.maxVal + duration.maxVal + preEmptDuration) {
+      newDuration
+    }, duration.minVal,  (if (resume) {
+          duration.maxVal + preEmptDuration
+        } else {
+          (preEmptStartTime - startTime.minVal) + preEmptDuration
+        })) {
 }
 
+// replace with a so-called test
 object TestPreEmption extends App {
   val m = new Store()
 
@@ -290,10 +300,16 @@ object TestPreEmption extends App {
   val preEmptionFrom = 2
   val preEmptionDuration = 3
 
-  val preEmption = PreEmption(from, duration,
+  val durationResumed = PreEmption(from, duration,
     preEmptionFrom, preEmptionDuration, true).toIntVar
+
+  val durationNotResumed = PreEmption(from, duration,
+    preEmptionFrom, preEmptionDuration, false).toIntVar
 
   m.close()
 
-  println(preEmption.value)
+  // should be 7
+  println(durationResumed.value)
+  // should be 5
+  println(durationNotResumed.value)
 }

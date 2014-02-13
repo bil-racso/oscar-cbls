@@ -39,7 +39,8 @@ import oscar.cbls.invariants.core.computation._
  * - solution proceeds by working on the internal Square
  * - AllDiff on Squares are kept invariant (initialisation + swap strategy)
  * - best delta is used and switch cells are added to tabu
- */
+ * @author christophe.ponsard@cetic.be
+ * */
 object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with StopWatch {
 
   val C:Int=4
@@ -135,9 +136,6 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     // register for violation
     for (i <- LinearIndexes) { c.violation(grid(i)) }
 
-    // closing constraints
-    c.close()
-    
     // working variables
     val Tabu:Array[CBLSIntVar] = (for (i <- LinearIndexes) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
     

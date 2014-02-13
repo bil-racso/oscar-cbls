@@ -28,78 +28,10 @@ import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{MinArray, ArgMaxArray}
 
-class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Planning, name: String = "")
-  extends Activity(duration: CBLSIntVar, planning: Planning, name){
-  override def canAddPrecedence: Boolean = false
-  override def close() {
-
-    AdditionalPredecessors := SortedSet.empty
-    AllPrecedingActivities := SortedSet.empty
-    EarliestStartDate := startDate
-    DefiningPredecessors := SortedSet.empty
-    PotentiallyKilledPredecessors := SortedSet.empty
-
-    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
-
-    //This is not correct. but since no task can be put before this one, this is not an issue.
-    LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
-  }
-}
-
-class SuperActivity(start: Activity, end: Activity, override val name: String = "")
-  extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxduration, start.duration.value, "duration of " + name),
-    start.planning, name) {
-
-  start precedes end
-
-  override def close() {
-
-    start.close()
-    end.close()
-
-    AdditionalPredecessors = start.AdditionalPredecessors
-
-    AllPrecedingActivities = start.AllPrecedingActivities
-
-    EarliestStartDate <== start.EarliestStartDate
-
-    DefiningPredecessors = start.DefiningPredecessors
-
-    PotentiallyKilledPredecessors = start.PotentiallyKilledPredecessors
-
-    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
-
-    LatestEndDate <== end.LatestEndDate
-
-    this.duration <== end.EarliestEndDate - start.EarliestStartDate
-
-    //ParasiticPrecedences = SortedSet.empty[Int]
-  }
-
-  override def addDynamicPredecessor(t: Activity,Verbose:Boolean = false) {
-    start.addDynamicPredecessor(t,Verbose)
-  }
-
-  override def removeDynamicPredecessor(t:Activity,Verbose:Boolean = false){
-    start.removeDynamicPredecessor(t,Verbose)
-  }
-  override def getEndActivity: Activity = end.getEndActivity
-  override def getStartActivity: Activity = start.getStartActivity
-
-  override def addStaticPredecessor(j: Activity) {
-    start.addStaticPredecessor(j)
-  }
-
-  override def removeNonTightAdditionalPredecessors(){} //nothing to be done here because no such dependencies can exist
-
-  }
-
-object SuperActivity {
-  def apply(start: Activity, end: Activity, name: String) = new SuperActivity(start,end,name)
-  def apply(start: Activity, end: Activity) = new SuperActivity(start,end,"SuperActivity(" + start + "," + end + ")")
-}
-
 object Activity{
+  def apply(duration: CBLSIntVar, planning: Planning, name: String = "", shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a)
+   = new Activity(duration, planning, name, shifter)
+
   implicit val ord:Ordering[Activity] = new Ordering[Activity]{
     def compare(o1: Activity, o2: Activity) = o1.ID - o2.ID
   }
@@ -110,8 +42,9 @@ object Activity{
  * @param planning
  * @param name
  * @param Shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
- */
-case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "", Shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a) {
+ * @author renaud.delandtsheer@cetic.be
+ * */
+class Activity(val duration: CBLSIntVar, val planning: Planning, val name: String = "", Shifter:(CBLSIntVar,CBLSIntVar) => CBLSIntVar = (a:CBLSIntVar,_) => a) {
   val ID: Int = planning.AddActivity(this)
 
   override def equals(obj: Any): Boolean = {
@@ -121,7 +54,7 @@ case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "",
     }
   }
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
+  def canEqual(that: Any): Boolean = that.isInstanceOf[Activity]
 
   /**Used for marking algorithm. Must always be set to false between algorithm execution*/
   var Mark:Boolean =  false
@@ -223,7 +156,7 @@ case class Activity(duration: CBLSIntVar, planning: Planning, name: String = "",
 
       PotentiallyKilledPredecessors = Inter(DefiningPredecessors, AdditionalPredecessors)
 
-      AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+      AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_activities_of_" + name)
 
       LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)
     }

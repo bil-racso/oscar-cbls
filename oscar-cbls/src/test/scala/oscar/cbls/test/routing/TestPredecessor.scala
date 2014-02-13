@@ -39,7 +39,7 @@ class TestPredecessor extends FunSuite with ShouldMatchers {
       val N: Int = n
       // model with check internal
       val model: Store = new Store(false, None, false, false)
-      val vrp = new VRP(N, V, model) with VRPObjective with PositionInRouteAndRouteNr with UnroutedImpl with MoveDescription with HopDistance with Predecessors
+      val vrp = new VRP(N, V, model) with VRPObjective with PositionInRouteAndRouteNr with UnroutedImpl with MoveDescription with HopDistanceAsObjectiveTerm with Predecessors
       model.close()
 
       RandomInsert(vrp)

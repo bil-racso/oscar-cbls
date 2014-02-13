@@ -40,7 +40,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param routeNr the route number of each points, V is the value of unrouted node.
  * @param routeLength the length of each route.
  * @param lastInRoute the last point in each route.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Routes(V: Int,
   next: Array[CBLSIntVar],
   positionInRoute: Array[CBLSIntVar],
@@ -179,6 +180,8 @@ case class Routes(V: Int,
     }
   }
 }
+
+
 object Routes {
   def buildRoutes(next: Array[CBLSIntVar], V: Int): Routes = {
     val m: Store = InvariantHelper.findModel(next)

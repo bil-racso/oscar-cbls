@@ -31,7 +31,8 @@ import oscar.cbls.invariants.core.propagation.Checker
       - value N for unrouted node in preds array.
  * @param next the array of successors of each points (deposits and customers) of the VRP.
  * @param V the number of vehicles.
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class Predecessor(next:Array[CBLSIntVar],V:Int) extends Invariant{
 
   val N = next.length

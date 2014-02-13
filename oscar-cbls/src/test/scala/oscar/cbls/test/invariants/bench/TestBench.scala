@@ -25,6 +25,7 @@ case class RandomDiff() extends Move
 /**
  * This object contains a set of functions and methods to generate random
  * moves and variables, which we need for the tests.
+ * @author yoann.guyot@cetic.be
  */
 object InvGen {
   /**
@@ -244,6 +245,7 @@ case class RandomIntSetVar(intSetVar: CBLSSetVar) extends RandomVar {
  * 0 (or less) for no debug
  * 1 for a minimum debug
  * 2 (or more) for total debug
+ * @author yoann.guyot@cetic.be
  */
 class InvBench(verbose: Int = 0) {
   var property: Prop = false

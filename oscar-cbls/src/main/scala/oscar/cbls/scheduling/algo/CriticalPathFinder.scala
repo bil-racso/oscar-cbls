@@ -19,7 +19,7 @@ import oscar.cbls.scheduling.model.{Activity, Planning}
 
 /**
  * finds a critical path for the given planning
- *
+ * @author renaud.delandtsheer@cetic.be
  */
 object CriticalPathFinder extends SearchEngine{
 

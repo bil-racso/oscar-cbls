@@ -24,6 +24,7 @@ import oscar.cbls.invariants.core.computation.{Variable, CBLSIntVar, Store}
 import oscar.cbls.objective.ObjectiveTrait
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
+import oscar.cbls.invariants.core.propagation.Checker
 
 /** A constraint system is a composition of constraints.
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
@@ -31,7 +32,8 @@ import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
  * This is achieved by calling the method registerForViolation(v:Variable).
  * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
@@ -199,5 +201,11 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     * @return the constraints that are violated, and whose ponderation factor is not zero
     */
   def violatedConstraints:List[Constraint] =
-    PostedConstraints.filter(p => (p._2 != null || p._2.value !=0) && p._1.isTrue).map(p => p._1)
+    PostedConstraints.filter(p => (p._2 == null || p._2.value !=0) && !p._1.isTrue).map(p => p._1)
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker): Unit = {}
 }

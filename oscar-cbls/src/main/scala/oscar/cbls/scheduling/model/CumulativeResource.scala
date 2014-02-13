@@ -36,6 +36,7 @@ import collection.SortedMap
  * @param planning the [[oscar.cbls.scheduling.model.Planning]] where the task is located
  * @param MaxAmount the available amount of this resource that is available throughout the planning
  * @param n the name of the resource, used to annotate the internal variables of the problem
+  * @author renaud.delandtsheer@cetic.be
  */
 case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String = null)
   extends Resource(planning:Planning, n) with SearchEngineTrait {

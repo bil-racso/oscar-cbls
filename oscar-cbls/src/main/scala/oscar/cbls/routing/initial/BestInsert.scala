@@ -31,35 +31,60 @@ import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
+import oscar.cbls.routing.model.ClosestNeighbors
 
 /**
  * Constructs an initial solution by repeatedly inserting points into the circuits.
  * it performs a round-robin on vehicles, and every time performs the best possible insert
  * by applying [[oscar.cbls.routing.neighborhood.InsertPoint]]
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
  */
 object BestInsert {
 
   /**
    * It applies the initial solution to a given vrp problem.
    * @param vrp : the vrp problem that we want to apply the initial solution.
-   */
+   */  // format: OFF (to prevent eclipse from formatting the following lines)
+  def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                     with PositionInRouteAndRouteNr with MoveDescription
+                     with ClosestNeighbors) {
+    // format: ON
+    println("Applying best insert heuristic (all)...")
+    apply(vrp, (n: Int) => vrp.routed.value)
+  }
+  
   // format: OFF (to prevent eclipse from formatting the following lines)
   def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
-                     with PositionInRouteAndRouteNr with MoveDescription) {
+                     with PositionInRouteAndRouteNr with MoveDescription
+                     with ClosestNeighbors, k: Int) {
     // format: ON
-    print("Applying best insert heuristic...")
-    for (unroutedNode <- vrp.unrouted.value) {
-      val routed = (n: Int) => vrp.routed.value
-      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
+    if (k == 0) apply(vrp)
+    else {
+      println("Applying best insert heuristic (" + k + ")...")
+      val relevantNeighbors = vrp.getKNearest(k)_
+      apply(vrp, (n: Int) => relevantNeighbors(n).filter(vrp.isRouted))
     }
-    //    while (true) {
+  }
+  
+  // format: OFF (to prevent eclipse from formatting the following lines)
+  private def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective
+                             with PositionInRouteAndRouteNr with MoveDescription
+                             with ClosestNeighbors, routed: Int => Iterable[Int]) {
+    // format: ON
+
+    //    for (unroutedNode <- vrp.unrouted.value) {
     //      val routed = (n: Int) => vrp.routed.value
-    //      InsertPoint.bestImprovingMove(
-    //        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
-    //          case Some(m) => m.doMove
-    //          case None => println(" done."); return
-    //        }
+    //      InsertPoint.climbBest(SearchZone(routed, List(unroutedNode).toIterator, vrp))
     //    }
+    while (true) {
+      InsertPoint.bestImprovingMove(
+        SearchZone(routed, vrp.unrouted.value.toIterator, vrp)) match {
+          case Some(m) => m.doMove
+          case None => return
+        }
+    }
     println(" done.")
   }
 }

@@ -32,7 +32,8 @@ import language.implicitConversions
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 object Algebra extends AlgebraTrait{
 }
 

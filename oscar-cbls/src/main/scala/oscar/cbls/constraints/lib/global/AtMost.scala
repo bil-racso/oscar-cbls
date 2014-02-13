@@ -23,7 +23,7 @@ package oscar.cbls.constraints.lib.global
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, CBLSIntVar}
-import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, IntVar2IntVarFun}
+import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, Int2Int}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.minmax.Max2
@@ -35,7 +35,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
   *
   * @param variables the variables that should be bounded
   * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
-  * @author  Renaud De Landtsheer rdl@cetic.be
+  * @author renaud.delandtsheer@cetic.be
   */
 case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)

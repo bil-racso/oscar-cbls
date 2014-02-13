@@ -31,7 +31,8 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 
 /**
  * Example showing how to use Asteroid on the magic square problem  
- */
+ * @author christophe.ponsard@cetic.be
+ * */
 object MagicSquare extends SearchEngine with StopWatch {
   
   def main(args: Array[String]) {
@@ -79,9 +80,6 @@ object MagicSquare extends SearchEngine with StopWatch {
     // register for violation
     for (i <- Dim; j <- Dim) { c.violation(magic(i)(j)) }
 
-    // closing constraints
-    c.close()
-    
     // working variables - using flat arrays
     // conversion is: i=v/N, j=v%N
     // TODO - can we work with multidimensional arrays here ?

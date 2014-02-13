@@ -28,6 +28,8 @@ import collection.Iterator
  * although the memory footprint will not be efficient at all
  * stores elements from 0 to size-1
  * ensure that the maxsize is not so big because it consumes O(maxsize) memory.
+  * @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL STUFF
  */
 class CircularIntSet(maxsize:Int) extends Set[Int]{
 
