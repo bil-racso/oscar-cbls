@@ -45,7 +45,7 @@ class NonMoveableActivity(startDate:Int, duration: CBLSIntVar, planning: Plannin
     DefiningPredecessors = SortedSet.empty[Int]
     PotentiallyKilledPredecessors = SortedSet.empty[Int]
 
-    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+    AllSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_activities_of_" + name)
 
     //This is not correct. but since no task can be put before this one, this is not an issue.
     LatestEndDate <== MinArray(planning.LatestStartDates, AllSucceedingActivities, planning.maxduration)

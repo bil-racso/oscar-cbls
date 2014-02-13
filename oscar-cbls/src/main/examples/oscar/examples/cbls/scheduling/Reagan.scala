@@ -25,7 +25,7 @@ package oscar.examples.cbls.scheduling
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.scheduling._
-import algo.IFlatIRelax
+import oscar.cbls.scheduling.algo.{IFlatIRelaxTabu, IFlatIRelax}
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.scheduling.model.CumulativeResource
@@ -39,7 +39,7 @@ object Reagan extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)
-  val solver = new IFlatIRelax(planning)
+  val solver = new IFlatIRelaxTabu(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
@@ -74,11 +74,31 @@ object Reagan extends App {
   model.close(false)
 
 
-  solver.Solve(15, 10, 2, 50)
+  solver.Solve(MaxIt = 100,
+            Stable = 50,
+            NbRelax = 5,
+            PkillPerRelax = 10,
+            tenure = 5,
+            jumpAfterPlateau = 7)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)
   println(planning.dependencies)
 
+  /*
+  digest              :[0   ;15  ] #=============#
+  eat                 :[0   ;2   ] ##
+  chew                :[2   ;5   ]   #=#
+  pray                :[5   ;7   ]      ##
+  think               :[7   ;19  ]        #==========#
+  sleep               :[7   ;15  ]        #======#
+  speak               :[19  ;22  ]                    #=#
+  drink               :[22  ;25  ]                       #=#
+  MakeSpan:=25
+
+  Reagan               |3        | ++   ++++++++++    ++++++
+                       |2        | +++++++++++++++    ++++++
+                       |1        | +++++++++++++++++++++++++
+  */
 }
 

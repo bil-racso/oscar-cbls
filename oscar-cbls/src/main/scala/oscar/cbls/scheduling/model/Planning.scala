@@ -305,7 +305,7 @@ abstract class PrecedenceCleaner(val canBeKilled:Boolean){
 }
 case class HardPrecedence() extends PrecedenceCleaner(false)
 
-case class PrecedencesCanBeKilled(d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
+case class PrecedencesCanBeKilled(val d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
   override def killDependencies(Verbose:Boolean = false){
     for ((a,b) <- d){
       b.removeDynamicPredecessor(a,Verbose)
