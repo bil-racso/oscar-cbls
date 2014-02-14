@@ -916,10 +916,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	      val s = getCPIntVarArray(varList(0))
 	      val d = getCPIntVarArray(varList(1))
 	      val r = getCPIntVarArray(varList(2))
-	      
-	      //scheduler : CPScheduler, startVar : CPIntVar, durVar : CPIntVar, endVar : CPIntVar, resourceVar : CPIntVar, heightVar : CPIntVar,
-	      
-	      System.err.println("oscar_cumulative not implemented")
+	      val e = s.zip(d).map{case(st,dur) => st+dur}
+	      val c = getCPIntVar(varList(3))
+	      cp.add(maxCumulativeResource(s,d,e,r,c))
 	    }
 	    case "oscar_decreasing_int" =>
 	      val array = getCPIntVarArray(varList(0))
@@ -1894,13 +1893,19 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	
 	def solve_goal : Parser[Any] = (
 	    "solve"~annotations~"satisfy;" ^^ { 
-	      case "solve"~ann~"satisfy;" => solver("sat", null, ann)
+	      case "solve"~ann~"satisfy;" => {
+	        solver("sat", null, ann)
+	      }
 	    }
 	    | "solve"~annotations~"minimize"~expr~";" ^^ { 
-	      case "solve"~ann~"minimize"~e~";" => solver("min", e, ann)
+	      case "solve"~ann~"minimize"~e~";" => {
+	        solver("min", e, ann)
+	      }
 	    }
 	    | "solve"~annotations~"maximize"~expr~";" ^^ { 
-	      case "solve"~ann~"maximize"~e~";" => solver("max", e, ann)
+	      case "solve"~ann~"maximize"~e~";" => {
+	        solver("max", e, ann)
+	      }
 	    }
 	)
 	
@@ -1912,6 +1917,7 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	 * @param ann : the list of annotations related to the search
 	 */
 	def solver(tp: String, expr: Any, ann: List[Annotation]) {
+	  //println("annotations:\n"+ann.mkString("\n"))
 	  var x = Array[CPIntVar]()
 	  var s = Array[CPSetVar]()
 	  // array with all the variable so that it is possible to output correctly
@@ -2054,8 +2060,9 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	              case _ => {
 	                //System.err.println("The type " + tp.toString() + " is not supported/relevant for the solver")
 	              }
-	            }  
+	            }   
 	        }
+		    case (key, value) => //println("key:"+key+"value:"+value)
 	      }
 	  } 
 	  cp.silent = !options.verbose 
@@ -2063,20 +2070,20 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	  /*
 	   * need to catch exceptions when objective is not bound
 	   */
-	  tp match {
+	  val stat = tp match { // tp = search type
 	    case "sat" => {
 	      val nbSolMax = 
 	          if (options.all) Int.MaxValue 
 	          else if (options.nSols > 0) options.nSols 
 	          else 1
 	      
-	      
+	      cp.onSolution {
+	        sol_found = true
+	        format_output(xs, xsstate)	        
+	      }
 	      cp.search {
 	        explo(ann, x, s)
 
-	      } onSolution {
-	        sol_found = true
-	        format_output(xs, xsstate)	        
 	      } start(nbSolMax)
 	    }
 	    case "max" => {
@@ -2087,12 +2094,14 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        case x:String => 
 		          getCPIntVarFromString(x)
 	          }
-	      ) search {
-	        explo(ann, x, s)
-	      } onSolution {
+	      ) 
+	      cp.onSolution {
 	         sol_found = true
 	         format_output(xs, xsstate)
-	      } start()
+	      }
+	      cp.search {
+	        explo(ann, x, s)
+	      }  start()
 	    }
 	    case "min" => {
 	      cp.minimize(
@@ -2102,12 +2111,16 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 		        case x:String => 
 		          getCPIntVarFromString(x)
 	          }
-	      ) search {
-	        explo(ann, x, s)
-	      } onSolution {
+	      ) 
+	      //println("minimize")
+	      cp.onSolution {
+	        //println("sol found")
 	        sol_found = true
 	        format_output(xs, xsstate)
-	      } start()
+	      }
+	      cp.search {
+	        explo(ann, x, s)
+	      }  start()
 	    }
 	  }
 	  if(sol_found) {
@@ -2116,6 +2129,13 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    println("=====UNSATISFIABLE=====")
 	  }
       if (options.statistics) {
+        println("%% nNodes:" + stat.nNodes)
+        println("%% nFails:" + stat.nFails)
+        println("%% nSols:" + stat.nSols)
+        println("%% completed:" + stat.completed)
+        println("%% time:" + stat.time)
+        println("%% timeInTrail:"+stat.timeInTrail)
+        
         //todo: print stat %%
       }
 	}
@@ -2329,7 +2349,8 @@ class Parser extends JavaTokenParsers {// RegexParsers {
 	    } 
 	}
 	
-	def annotations : Parser[List[Annotation]] = rep("::"~>annotation) 
+	def annotations : Parser[List[Annotation]] = 
+	  "::"~>"seq_search"~>"("~>"["~> repsep(annotation, ",") <~"]"<~")" | rep("::"~>annotation) 
 	// list of annotations : in flatzinc spec pg10
 	def annotation : Parser[Annotation] = (
 	    pred_ann_id~"("~rep1sep(expr, ",")~")" ^^ {
