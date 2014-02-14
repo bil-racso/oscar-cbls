@@ -955,7 +955,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "oscar_inverse" =>
         val x = getCPIntVarArray(varList(0))
         val y = getCPIntVarArray(varList(1))
-        addCstr(permutation(x, y), ann)
+        addCstr(permutation(x.map(_-1), y.map(_-1)), ann)
       //System.err.println(cstr+" not implemented")
       case "oscar_inverse_set" =>
         System.err.println(cstr + " not implemented")
