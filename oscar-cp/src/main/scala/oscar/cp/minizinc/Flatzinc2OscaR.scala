@@ -18,20 +18,27 @@ package oscar.cp.minizinc
 import java.io.FileReader
 import scala.io.Source
 import java.util.regex.Pattern
+import oscar.cp.core.NoSolutionException
 
-object FlatZinc2OscaR extends Parser with App{
-  
+object FlatZinc2OscaR extends Parser with App {
+
   parse(args)
-  
+
   def parse(args: Array[String]) {
-        // "constraint bool2int(BOOL____00771, INT____00772) :: defines_var(INT____00772);"
-		val opts = new Options(args)
-		//val  pattern = Pattern.compile("\\(.*\\)");
-		var lines = Source.fromFile(opts.fileName).getLines.filter(_.contains("bool2int")).map(s => s.substring(s.indexOf('(')+1,s.indexOf(')')));
-		val mapBool2Int = lines.map(_.split(",").reverse.map(_.trim)).map(s => s(0) -> s(1)).toMap
-		
-		
-		myParseAll(opts,mapBool2Int)
-		reset
+    // "constraint bool2int(BOOL____00771, INT____00772) :: defines_var(INT____00772);"
+    val opts = new Options(args)
+    //val  pattern = Pattern.compile("\\(.*\\)");
+    var lines = Source.fromFile(opts.fileName).getLines.filter(_.contains("bool2int")).map(s => s.substring(s.indexOf('(') + 1, s.indexOf(')')));
+    val mapBool2Int = lines.map(_.split(",").reverse.map(_.trim)).map(s => s(0) -> s(1)).toMap
+
+    try {
+      myParseAll(opts, mapBool2Int)
+
+    } catch {
+      case e: NoSolutionException => println("=====UNSATISFIABLE=====")
+      case _: Throwable => throw new Exception("adding the constraint failed")
+    }
+
+    reset
   }
 }
