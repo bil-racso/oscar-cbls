@@ -47,6 +47,8 @@ class IFlatIRelaxTabu(p: Planning, Verbose: Boolean = true) extends SearchEngine
             jumpAfterPlateau:Int = 5) {
 
 
+    require(model.isClosed, "cannot run iFlatiRelax if store is not closed")
+
     //the iteration where the precedence from-to has been killed last
     val tabu:Array[Array[Int]] = Array.fill(p.activityCount,p.activityCount)(initialTabu)
 
