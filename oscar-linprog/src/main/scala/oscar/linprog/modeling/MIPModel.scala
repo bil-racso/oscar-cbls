@@ -44,6 +44,13 @@ class MIPFloatVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: D
 			this.integer = true
 		}		
 		
+		/**
+		 * Set the variable as a binary one
+		 */
+		def setBinary() {
+			this.binary = true
+		}
+		
 }
 
 object MIPFloatVar { 
@@ -58,6 +65,7 @@ object MIPFloatVar {
 
 class MIPIntVar(mip : MIPSolver, name : String,  domain : Range) extends MIPFloatVar(mip,name,domain.min,domain.max) {
 		this.integer = true
+		this.binary = (domain.min == 0 && domain.max == 1)
 }
 
 object MIPIntVar { 
@@ -69,7 +77,6 @@ object MIPIntVar {
 
 class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
 
-    
     val solver = solverLib match {
       case LPSolverLib.lp_solve => new LPSolve()
       case LPSolverLib.glpk => new GlpkMIP()
@@ -79,8 +86,12 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
 
     override def setVarProperties() = {
       super.setVarProperties();
-      for (x <- vars; if (x._2.isInteger)) {
-        solver.setInteger(x._2.index)
+      for (x <- vars) {
+        if(x._2.isBinary) {
+          solver.setBinary(x._2.index)
+        } else if(x._2.isInteger) {
+        	solver.setInteger(x._2.index)
+      	}
       }
     }
 

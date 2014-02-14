@@ -205,7 +205,12 @@ abstract class AbstractLP {
    * Set the column/variable as an integer variable
    */
   def setInteger(colId: Int)
-
+  
+  /**
+   * Set the column / variable as an binary 0-1 integer variable
+   */
+  def setBinary(colId: Int)
+  
   /**
    * Set the column/variable as a float variable
    */
@@ -234,6 +239,7 @@ class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: 
   val ub = ubound
   var unbounded = doubleUnbounded // unbounded [-inf,+inf]
   var integer: Boolean = false
+  var binary = false
 
   def name = varName
 
@@ -245,7 +251,7 @@ class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: 
   }
 
   /**
-   * Reset initial bounds and repotimize
+   * Reset initial bounds and re-optimize
    */
   def resetBounds() {
     solver.setVarProperties()
@@ -260,7 +266,12 @@ class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: 
    * Return true if the variable is integer, false otherwise
    */
   def isInteger(): Boolean = integer
-
+  
+  /**
+   * @return true if the variable is a binary integer variable (e.g. 0-1)
+   */
+  def isBinary(): Boolean = binary
+  
   /**
    * Return true if the variable is unbounded, false otherwise
    */
