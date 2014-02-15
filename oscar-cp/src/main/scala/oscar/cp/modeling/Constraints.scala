@@ -289,6 +289,7 @@ trait Constraints {
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
   def sum(vars: Iterable[CPIntVar]): CPIntVar = {
+    if (vars.size == 1) return vars.head
     val x = vars.toArray
     val minVal = (0 /: vars) {
       (sum, v) => sum + v.getMin

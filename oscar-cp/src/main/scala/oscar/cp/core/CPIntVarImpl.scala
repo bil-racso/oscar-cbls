@@ -86,7 +86,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   /**
    * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
    */
-  def isBound = {
+  @inline def isBound = {
     assert(!store.isFailed())
     size == 1
   }
@@ -105,7 +105,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  def hasValue(value: Int) = dom.hasValue(value)
+  @inline def hasValue(value: Int) = dom.hasValue(value)
 
   /**
    * @param val

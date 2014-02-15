@@ -28,18 +28,18 @@ class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: 
   
   def size = 0 max _size.value
   
-  def min: Int = {
+  @inline def min: Int = {
 	assert(!isEmpty)
     _min.value
   }
   
-  def max: Int = {
+  @inline def max: Int = {
     assert(!isEmpty)
     _max.value
   }
   
 
-  def isEmpty = {
+  @inline def isEmpty = {
     size <= 0
   }
   
@@ -103,8 +103,6 @@ class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: 
       _max.value = value
       _size.value = 1
     }
-      //updateMax(value)
-      //if (!isEmpty) updateMin(value)
   }
 
 }

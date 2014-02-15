@@ -1377,6 +1377,16 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "int_lin_ne" =>
         addCstr(weightedSum(cst, cpvar) != c)
       case "int_lin_eq" => {
+        if (cst.forall(_.abs <= 1)) { // simplification into sum
+          val left = for (i <- 0 until cpvar.size; if (cst(i) == 1)) yield cpvar(i)
+          val right = for (i <- 0 until cpvar.size; if (cst(i) == -1)) yield cpvar(i)
+          if (right.size == 0) {
+            addCstr(sum(left,CPIntVar(cp,c)))
+          } else {
+            addCstr(sum(left,sum(right) + c))
+          }
+        }
+        /*
         if (c == 0 && cst(0) == -1 && cst.tail.forall(_ == 1)) {
           // sum constraint
           //System.err.println("int_lin_eq, sum identified")
@@ -1390,7 +1400,9 @@ class Parser extends JavaTokenParsers { // RegexParsers {
         } else if (c == 0 && cst.last == 1 && cst.reverse.tail.forall(_ == -1)) {
           //System.err.println("int_lin_eq, sum identified")
           addCstr(sum(cpvar.reverse.tail, cpvar.last))
-        } else {
+        } 
+         
+        */else {
           addCstr(weightedSum(cst, cpvar, c))
         }
 

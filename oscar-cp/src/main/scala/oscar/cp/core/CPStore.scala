@@ -70,8 +70,14 @@ class CPStore extends SearchNode {
   override def isFailed: Boolean = status.value == CPOutcome.Failure;
 
   private def cleanQueues(): Unit = {
-    propagQueueL1.foreach(_.clear())
-    propagQueueL2.foreach(_.clear())
+    val iteL1 = propagQueueL1.iterator
+    while (iteL1.hasNext()) {
+      iteL1.next().clear()
+    }
+    val iteL2 = propagQueueL2.iterator
+    while (iteL2.hasNext()) {
+      iteL2.next().clear()
+    }
   }
 
   def addQueueL2(c: Constraint): Int = {
@@ -94,11 +100,12 @@ class CPStore extends SearchNode {
     var q = constraints;
     //println("constraints before notifyL2:"+constraints)
     while (q != null) {
-
-      val c = q.cons;
+      val c = q.cons
       //println("add constraint "+c+" on L2 queue")
-      val p = addQueueL2(c);
-      highestPriorL2 = Math.max(p, highestPriorL2);
+      val p = addQueueL2(c)
+      if (p > highestPriorL2) {
+        highestPriorL2 = p
+      }
       q = q.next
     }
     //println("constraints after notifyL2:"+constraints)
@@ -320,6 +327,16 @@ class CPStore extends SearchNode {
   }
 
   def addCutConstraints() {
+    /*
+    val ite = cutConstraints.iterator()
+    while (ite.hasNext()) {
+      val c = ite.next()
+      if (c.isActive) {
+        c.setInQueue()
+        propagQueueL2(c.priorityL2).add(c);       
+      }
+    }
+    */
     for (c <- cutConstraints; if c.isActive) {
       c.setInQueue()
       propagQueueL2(c.priorityL2).add(c);
