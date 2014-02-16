@@ -18,14 +18,15 @@ import oscar.cp.minizinc.FlatZinc2OscaR
 import java.io.File
 
 /**
- * Minizinc competition bench Linear2Program 2013: l2p1
+ * Minizinc competition bench 2013: instance anneal-k1
  * @author Pierre Schaus pschaus@gmail.com
  */
-object LinearToProgram {
+object PatternSetMining {
   def main(args: Array[String]) {
-        val file = if ((new File("/data/minizinc/linear-to-program.fzn")).exists()) "data/minizinc/linear-to-program.fzn" else "../data/minizinc/linear-to-program.fzn"
-        val args = Array[String]("-s","-a", file)
-	    FlatZinc2OscaR.parse(args)
+    val file = if ((new File("data/minizinc/pattern_set_mining.fzn")).exists()) "data/minizinc/pattern_set_mining.fzn" else "../data/minizinc/pattern_set_mining.fzn"
+	val args = Array[String]("-s","-a", file)
+	FlatZinc2OscaR.parse(args)
+	
   }
 }
 

@@ -24,6 +24,7 @@ import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
 import java.util.Collection
 import oscar.algo.search.Branching
+import oscar.cp.constraints.MulCte
 
 class Parser extends JavaTokenParsers { // RegexParsers {
 
@@ -1402,7 +1403,18 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           addCstr(sum(cpvar.reverse.tail, cpvar.last))
         } 
          
-        */else {
+        */
+        
+        
+        else if(cst.size == 2 && (cst(0) == -1 || cst(1) == -1)) {
+          if (cst(0) == -1) {
+            addCstr(new MulCte(cpvar(1),cst(1),cpvar(0)+c))
+          } else {
+            addCstr(new MulCte(cpvar(0),cst(0),(cpvar(1)+c)))
+          }
+        }
+        else {
+          println(cst.zip(cpvar).mkString("+")+"=="+c)
           addCstr(weightedSum(cst, cpvar, c))
         }
 

@@ -552,9 +552,14 @@ trait Constraints {
    * @param y is a variable
    * @return a constraint enforcing that n = #{ i | x(i) = y }
    */  
-  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    new Count(n,x,y)
+  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar): Constraint = {
+    if (y.isBound) countEq(n,x,y.value)
+    else new CountSimple(n,x,y)
   }
+  
+  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], v: Int) = {
+    new CountCst(n,x,v)
+  }  
   
   /**
    * Count Constraint: n is greater or equal to the number of variables from x equal to y.

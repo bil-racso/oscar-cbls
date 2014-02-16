@@ -18,14 +18,16 @@ import oscar.cp.minizinc.FlatZinc2OscaR
 import java.io.File
 
 /**
- * Minizinc competition bench Linear2Program 2013: l2p1
+ * Minizinc competition bench 2013 PentominoesInt: instance 05
+ * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-object LinearToProgram {
+object PentominoesInt {
   def main(args: Array[String]) {
-        val file = if ((new File("/data/minizinc/linear-to-program.fzn")).exists()) "data/minizinc/linear-to-program.fzn" else "../data/minizinc/linear-to-program.fzn"
-        val args = Array[String]("-s","-a", file)
-	    FlatZinc2OscaR.parse(args)
+    val file = if ((new File("data/minizinc/pentominoes-int.fzn")).exists()) "data/minizinc/pentominoes-int.fzn" else "../data/minizinc/pentominoes-int.fzn"
+	val args = Array[String]("-s", file)
+	FlatZinc2OscaR.parse(args)
+	
   }
 }
 
