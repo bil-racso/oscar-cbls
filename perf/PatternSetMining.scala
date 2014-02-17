@@ -23,7 +23,7 @@ import java.io.File
  */
 object PatternSetMining {
   def main(args: Array[String]) {
-    val file = if ((new File("data/minizinc/pattern_set_mining.fzn")).exists()) "data/minizinc/pattern_set_mining.fzn" else "../data/minizinc/pattern_set_mining.fzn"
+    val file = if ((new File("../data/minizinc/pattern_set_mining.fzn")).exists()) "../data/minizinc/pattern_set_mining.fzn" else  "data/minizinc/pattern_set_mining.fzn" 
 	val args = Array[String]("-s","-a", file)
 	FlatZinc2OscaR.parse(args)
 	
