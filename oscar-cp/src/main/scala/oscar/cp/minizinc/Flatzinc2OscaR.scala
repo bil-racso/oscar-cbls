@@ -36,7 +36,11 @@ object FlatZinc2OscaR extends Parser with App {
 
     } catch {
       case e: NoSolutionException => println("=====UNSATISFIABLE=====")
-      case _: Throwable => throw new Exception("adding the constraint failed")
+      case e: Throwable => {
+        println(e)
+        println(e.printStackTrace())
+        throw new Exception("adding the constraint failed")
+      }
     }
 
     reset

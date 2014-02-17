@@ -40,7 +40,7 @@ class CPBoolVar(st: CPStore, name: String) extends CPIntVarImpl(st, 0, 1, name) 
   /** Logical or */
   def or(y: CPBoolVar): CPBoolVar = {
     val b = new CPBoolVar(store)
-    store.post(new oscar.cp.constraints.Or(Array(this, y), b))
+    store.post(new oscar.cp.constraints.OrReif2(Array(this, y), b))
     b
   }
 

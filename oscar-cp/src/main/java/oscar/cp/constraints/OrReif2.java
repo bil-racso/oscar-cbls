@@ -26,7 +26,7 @@ import oscar.cp.core.Constraint;
  * Logical Or Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class Or extends Constraint {
+public class OrReif2 extends Constraint {
 	
 	private CPBoolVar [] x;
 	private CPBoolVar y;
@@ -41,7 +41,7 @@ public class Or extends Constraint {
      * @param x
      * @param y
      */
-	public Or(CPBoolVar [] x, CPBoolVar y) {
+	public OrReif2(CPBoolVar [] x, CPBoolVar y) {
 		super(x[0].store(),"Or");
 		this.x = x;
 		this.y = y;

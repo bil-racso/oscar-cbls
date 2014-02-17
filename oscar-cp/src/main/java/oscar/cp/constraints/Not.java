@@ -18,6 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPStore;
 import oscar.cp.core.Constraint;
 
 /**
@@ -43,6 +44,7 @@ public class Not extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
+		priorityBindL1_$eq(CPStore.MAXPRIORL1());
         if (y.isBound()) {
             return valBind(y);
         }

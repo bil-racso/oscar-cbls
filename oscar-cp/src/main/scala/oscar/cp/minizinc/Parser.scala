@@ -15,7 +15,6 @@ import oscar.cp.constraints.GrEqCteReif
 import oscar.cp.constraints.DiffReif
 import oscar.cp.constraints.Abs
 import oscar.cp.constraints.Automaton
-import oscar.cp.constraints.Or
 import oscar.cp.constraints.Sum
 import scala.util.continuations._
 import oscar.cp.constraints.SetDiff
@@ -1267,6 +1266,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
         val array = getCPBoolVarArray(varList(0))
         cstr match {
           case "array_bool_xor" =>
+            System.err.println("xor not implemented")
           case _ =>
             val boolvar = getCPBoolVar(varList(1))
             cstr match {
@@ -1274,7 +1274,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
                 addCstr(new oscar.cp.constraints.And(array, boolvar))
                 //cp.add(new GrEqVarReif(sum(array), CPIntVar(cp, array.length), boolvar))
               }
-              case "array_bool_or" => addCstr(new Or(array, boolvar))
+              case "array_bool_or" => addCstr( or(array, boolvar))
             }
         }
       }
@@ -1295,7 +1295,16 @@ class Parser extends JavaTokenParsers { // RegexParsers {
     cstr match {
       case "bool_and" => addCstr((cpvar(0) && cpvar(1)) == cpvar(2))
       case "bool_eq" => addCstr(cpvar(0) == cpvar(1))
-      case "bool_eq_reif" => addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
+      case "bool_eq_reif" => {
+        if (cpvar(0).isBoundTo(0)) {
+          addCstr(new oscar.cp.constraints.Not(cpvar(1),cpvar(2)))
+        } else if(cpvar(1).isBoundTo(0)) {
+          addCstr(new oscar.cp.constraints.Not(cpvar(0),cpvar(2)))
+        } else {
+          addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
+        }
+        
+      }
       case "bool_le" => addCstr(cpvar(0) <= cpvar(1))
       case "bool_le_reif" => addCstr(new GrEqVarReif(cpvar(1), cpvar(0), cpvar(2)))
       case "bool_lt" => {
@@ -1378,6 +1387,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "int_lin_ne" =>
         addCstr(weightedSum(cst, cpvar) != c)
       case "int_lin_eq" => {
+        /*
         if (cst.forall(_.abs <= 1)) { // simplification into sum
           val left = for (i <- 0 until cpvar.size; if (cst(i) == 1)) yield cpvar(i)
           val right = for (i <- 0 until cpvar.size; if (cst(i) == -1)) yield cpvar(i)
@@ -1386,8 +1396,8 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           } else {
             addCstr(sum(left,sum(right) + c))
           }
-        }
-        /*
+        }*/
+        
         if (c == 0 && cst(0) == -1 && cst.tail.forall(_ == 1)) {
           // sum constraint
           //System.err.println("int_lin_eq, sum identified")
@@ -1403,7 +1413,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           addCstr(sum(cpvar.reverse.tail, cpvar.last))
         } 
          
-        */
+        
         
         
         else if(cst.size == 2 && (cst(0) == -1 || cst(1) == -1)) {
@@ -1414,7 +1424,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           }
         }
         else {
-          println(cst.zip(cpvar).mkString("+")+"=="+c)
+          //println(cst.zip(cpvar).mkString("+")+"=="+c)
           addCstr(weightedSum(cst, cpvar, c))
         }
 
@@ -2254,8 +2264,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       }
       case "indomain_median" => _.median
       case "indomain" => {
-        System.err.println(args(2) + " not suppported so far, in_domain_min used instead")
-        _.min
+        _.median
       }
       case "indomain_random" => _.randomValue
       case "indomain_split" => {

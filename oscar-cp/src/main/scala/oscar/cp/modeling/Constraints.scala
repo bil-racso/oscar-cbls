@@ -395,21 +395,55 @@ trait Constraints {
   /**
    * Or (logical) Constraint
    * @param vars a non empty array of n variables
-   * @return a variable that will be true if at least one variable of vars is true
+   * @param z the result of the or over vars
+   * @return an or constraint
+   */  
+  def or(vars: Iterable[CPBoolVar], z:CPBoolVar): Constraint = {
+    if (z.isTrue) or(vars)
+    else new OrReif(vars.toArray, z)
+    //new OrReif2(vars, z)
+  }
+  
+  /**
+   * Or (logical) Constraint
+   * @return a constraint such that at least one variables in vars must be true
    */
-  def or(vars: Array[CPBoolVar]): CPBoolVar = {
-    val z = new CPBoolVar(vars(0).store)
-    vars(0).store.post(new Or(vars, z))
-    return (z)
+  def or(vars: Iterable[CPBoolVar]): Constraint = {
+    new Or(vars.toArray)
+    //sum(vars) >= 1
   }
 
   /**
    * Or (logical) Constraint
-   * @return a variable that will be true if at least one variable of f(i) is true for i in indexes
+   * @return a constraint such that at least one variables in vars must be true
    */
-  def or[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
-    or((for (i <- indexes) yield f(i)).toArray)
+  def or[A](indexes: Iterable[A])(f: A => CPBoolVar): Constraint = {
+    or((for (i <- indexes) yield f(i)))
   }
+
+  /**
+   * Or (logical) Constraint
+   * @param vars a non empty array of n variables
+   * @return result of the or over vars
+   */
+  def isOr(vars: Iterable[CPBoolVar]): CPBoolVar = {
+    val z = new CPBoolVar(vars.head.store)
+    vars.head.store.add(or(vars, z))
+    z
+  }
+
+  /**
+   * Or (logical) Constraint
+   * @return z the result of the or over or(f(i))
+   */  
+  def isOr[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
+    val x = (for (i <- indexes) yield f(i)).toArray
+    val z = new CPBoolVar(x(0).store)
+    x(0).store.add(or(x,z))
+    z
+  }  
+  
+
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)

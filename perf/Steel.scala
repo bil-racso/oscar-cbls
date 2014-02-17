@@ -91,7 +91,7 @@ object Steel {
     cp.minimize(obj) subjectTo {
       cp.add(binPacking(x, weight, l), Strong)
       for (s <- Slabs) {
-        def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPBoolVar telling whether color c is present is slab s
+        def colPresent(c: Int) = isOr((for (o <- colorOrders(c)) yield x(o) === s)) //return a CPBoolVar telling whether color c is present is slab s
         cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
       }
     } search {
