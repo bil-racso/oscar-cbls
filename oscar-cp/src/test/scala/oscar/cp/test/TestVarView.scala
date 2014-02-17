@@ -36,8 +36,6 @@ class TestVarView extends FunSuite with ShouldMatchers  {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callValRemoveWhenValueIsRemoved(this)
-    		X.callUpdateMinWhenMinChanges(this)
-    		X.callUpdateMaxWhenMaxChanges(this)
     		X.callValBindWhenBind(this)
     		X.callUpdateBoundsWhenBoundsChange(this)
     		return CPOutcome.Suspend
@@ -59,22 +57,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
           x.value should be(-2)  
           return CPOutcome.Suspend
         }
- 
-        override def updateMin(x: CPIntVar, oldmin: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmin should be(-3)
-          x.min should be(-2)  
-          return CPOutcome.Suspend
-        }
-        
-        override def updateMax(x: CPIntVar, oldmax: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmax should be(3)
-          x.max should be(-2)
-          return CPOutcome.Suspend
-        }
+
         
         override def updateBounds(x: CPIntVar): CPOutcome = {
     	  val eq: Boolean = x==X
@@ -106,8 +89,6 @@ class TestVarView extends FunSuite with ShouldMatchers  {
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callValRemoveIdxWhenValueIsRemoved(this,-1)
-    		X.callUpdateMinIdxWhenMinChanges(this,-1)
-    		X.callUpdateMaxIdxWhenMaxChanges(this,-1)
     		X.callValBindIdxWhenBind(this,-1)
     		X.callUpdateBoundsIdxWhenBoundsChange(this,-1)
     		return CPOutcome.Suspend
@@ -127,22 +108,6 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     	  val eq: Boolean = x==X
     	  eq should  equal(true)
           x.value should be(-2)  
-          return CPOutcome.Suspend
-        }
- 
-        override def updateMinIdx(x: CPIntVar,idx: Int, oldmin: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmin should be(-3)
-          x.min should be(-2)  
-          return CPOutcome.Suspend
-        }
-        
-        override def updateMaxIdx(x: CPIntVar,idx: Int,  oldmax: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmax should be(3)
-          x.max should be(-2)
           return CPOutcome.Suspend
         }
         

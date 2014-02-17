@@ -206,22 +206,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * the maximum of the domain changes
-   * @param c
-   * @see oscar.cp.core.Constraint#propagate()
-   */
-  def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false): Unit
-
-  /**
-   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * the minimum of the domain changes
-   * @param c
-   * @see oscar.cp.core.Constraint#propagate()
-   */
-  def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false): Unit
-
-  /**
-   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
@@ -243,26 +227,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBoundsChange(this)
-          CPOutcome.Suspend
-        }
-      }) // should not fail
-  }
-
-  def filterWhenMaxChanges(filter: DeltaVarInt => CPOutcome) {
-    store.post(
-      new DeltaVarInt(this, filter) {
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenMaxChanges(this)
-          CPOutcome.Suspend
-        }
-      }) // should not fail
-  }
-
-  def filterWhenMinChanges(filter: DeltaVarInt => CPOutcome) {
-    store.post(
-      new DeltaVarInt(this, filter) {
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenMinChanges(this)
           CPOutcome.Suspend
         }
       }) // should not fail
@@ -299,26 +263,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar, delta: Int): Unit
 
   /**
-   * Level 1 registration: ask that the updateMax(CPIntVar, int) method of the constraint c is called whenever
-   * the maximum value of the domain changes.
-   * @param c
-   * @see oscar.cp.core.Constraint#updateMax(CPIntVar, int)
-   */
-  def callUpdateMaxWhenMaxChanges(c: Constraint): Unit
-
-  def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPIntVar, delta: Int): Unit
-
-  /**
-   * Level 1 registration: ask that the updateMin(CPIntVar, int) method of the constraint c is called whenever
-   * the minimum value of the domain changes.
-   * @param c
-   * @see oscar.cp.core.Constraint#updateMin(CPIntVar, int)
-   */
-  def callUpdateMinWhenMinChanges(c: Constraint): Unit
-
-  def callUpdateMinWhenMinChanges(c: Constraint, variable: CPIntVar, delta: Int): Unit
-
-  /**
    * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
    * value deletion from the domain
    * @param c
@@ -339,27 +283,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
-  /**
-   * Level 1 registration: ask that the updateMinIdx(CPIntVar, int, int) method of the constraint c is called whenever
-   * the minimum value of the domain changes
-   * @param c
-   * @param idx, an index that will be given as parameter to updateMinIdx(CPIntVar, int, int)
-   * @see Constraint#updateMinIdx(CPIntVar, int, int)
-   */
-  def callUpdateMinIdxWhenMinChanges(c: Constraint, idx: Int): Unit
-
-  def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
-
-  /**
-   * Level 1 registration: ask that the updateMaxIdx(CPIntVar, int, int) method of the constraint c is called whenever
-   * the maximum value of the domain changes
-   * @param c
-   * @param idx, an index that will be given as parameter to updateMaxIdx(CPIntVar, int, int)
-   * @see Constraint#updateMaxIdx(CPIntVar, int, int)
-   */
-  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, idx: Int): Unit
-
-  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
 
   /**
    * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever

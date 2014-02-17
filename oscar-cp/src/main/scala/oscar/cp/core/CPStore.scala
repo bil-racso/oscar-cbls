@@ -149,60 +149,6 @@ class CPStore extends SearchNode {
     }
   }
 
-  def notifyUpdateMinL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      val delta = q.delta
-      if (c.isActive()) {
-        addQueueL1(c, c.priorityBoundsL1, c.updateMin(x, v + delta))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyUpdateMinIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      val delta = q.delta
-      if (c.isActive()) {
-        addQueueL1(c, c.priorityBoundsL1, c.updateMinIdx(x, idx, v + delta));
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyUpdateMaxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val delta = q.delta
-      if (c.isActive()) {
-        addQueueL1(c, c.priorityBoundsL1, c.updateMax(x, v + delta))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyUpdateMaxIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      val delta = q.delta
-      if (c.isActive()) {
-        addQueueL1(c, c.priorityBoundsL1, c.updateMaxIdx(x, idx, v + delta));
-      }
-      q = q.next;
-    }
-  }
 
   def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
