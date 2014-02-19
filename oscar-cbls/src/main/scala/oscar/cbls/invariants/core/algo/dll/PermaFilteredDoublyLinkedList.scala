@@ -106,6 +106,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     headfantom.setNext(d)
     msize +=1
 
+    //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
     if(permaFilter != null) permaFilter.notifyInsert(d)
 
     d
@@ -125,6 +126,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 //    elemkey.prev = null
     msize -=1
 
+    //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
     if (permaFilter != null) permaFilter.notifyDelete(elemkey)
 
     elemkey.elem
