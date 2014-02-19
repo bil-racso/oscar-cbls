@@ -39,7 +39,8 @@ import oscar.cbls.invariants.core.computation._
  * - solution proceeds by working on the internal Square
  * - AllDiff on Squares are kept invariant (initialisation + swap strategy)
  * - best delta is used and switch cells are added to tabu
- */
+ * @author christophe.ponsard@cetic.be
+ * */
 object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with StopWatch {
 
   val C:Int=4

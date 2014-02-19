@@ -35,7 +35,7 @@ import oscar.cbls.scheduling.model.CumulativeResource
  * he needs to sleep 2H, eat 30', chew 45' and think 3H
  * he cannot sleep before having eaten
  */
-object Reagan extends App {
+object ReaganPray extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)

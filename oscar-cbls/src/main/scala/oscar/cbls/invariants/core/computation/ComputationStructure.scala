@@ -295,8 +295,6 @@ trait Invariant extends PropagationElement{
     }
   }
 
-  //TODO: these methods should be in PropagationElement, not in Invariants!!!
-
   /**Call this from within the invariant to notify that you will statically listen to this variable.
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
     * @param v the variable that you want to listen to (and be notified about change)
@@ -481,6 +479,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
       throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
+
   def getDefiningInvariant:Invariant = DefiningInvariant
 
   /**this method s to be called by any method that internally modifies the value of the variable
@@ -821,7 +820,7 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
   def getClone:IdentityInt = IdentityInt(this)
 
   override def checkInternals(c:Checker){
-    assert(OldValue == Value, this)
+    c.check(OldValue == Value)
   }
 
   def getDotNode = "[label = \"IntVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
@@ -831,7 +830,7 @@ object CBLSIntVar{
 
   def apply(r:Range, v:Int, name:String)(implicit s:Store) = new CBLSIntVar(s,r,v,name)
   def apply(r:Range, v:Int)(implicit s:Store) = new CBLSIntVar(s,r,v,"")
-  
+
   def apply(model: Store, minVal:Int, maxVal:Int, value:Int , name:String) = {
     require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain minVal:" + minVal + " maxVal:" + maxVal)
     new CBLSIntVar(model,(minVal to maxVal), value, name)
@@ -846,7 +845,6 @@ object CBLSIntVar{
     val domain = Int.MinValue to Int.MaxValue
     new CBLSIntVar(model, domain, value, name)
   }
-
 
   implicit val ord:Ordering[CBLSIntVar] = new Ordering[CBLSIntVar]{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)

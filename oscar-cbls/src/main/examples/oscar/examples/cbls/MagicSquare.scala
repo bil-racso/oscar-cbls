@@ -31,7 +31,8 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 
 /**
  * Example showing how to use Asteroid on the magic square problem  
- */
+ * @author christophe.ponsard@cetic.be
+ * */
 object MagicSquare extends SearchEngine with StopWatch {
   
   def main(args: Array[String]) {
