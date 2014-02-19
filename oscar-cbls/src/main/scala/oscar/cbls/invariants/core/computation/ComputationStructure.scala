@@ -295,8 +295,6 @@ trait Invariant extends PropagationElement{
     }
   }
 
-  //TODO: these methods should be in PropagationElement, not in Invariants!!!
-
   /**Call this from within the invariant to notify that you will statically listen to this variable.
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
     * @param v the variable that you want to listen to (and be notified about change)
@@ -481,6 +479,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
       throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
+
   def getDefiningInvariant:Invariant = DefiningInvariant
 
   /**this method s to be called by any method that internally modifies the value of the variable

@@ -28,7 +28,6 @@ import oscar.visual.plot.PlotLine
 import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
-
 /**
  * @param model
  * @param maxduration

@@ -85,20 +85,11 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
   def deleteAny(elemkey:AnyRef):AnyRef = deleteElem(elemkey.asInstanceOf[PFDLLStorageElement[T]])
 
-  /**makes the DLL empty, and all its filtered DLL as well*/
-  def dropAll(){
-    headfantom.setNext(endfantom)
-    msize = 0
-    if(mfilter != null){
-      Filtered.dropAll()
-    }
-  }
-
   override def isEmpty:Boolean = (size == 0)
 
   override def iterator = new PFDLLIterator[T](headfantom,endfantom)
 
-  def PermaFilter[X <: AnyRef](filter:T => Boolean, map:T => X = null):PermaFilteredDoublyLinkedList[X] = {
+  def permaFilter[X <: AnyRef](filter:T => Boolean, map:T => X = null):PermaFilteredDoublyLinkedList[X] = {
     assert(mfilter == null,"PermaFilteredDoublyLinkedList can only accept a single filter")
     mfilter = filter
     val newlist = new PermaFilteredDoublyLinkedList[X]
@@ -158,3 +149,4 @@ class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T], val endfantom:PFDL
 
   def hasNext:Boolean = {CurrentKey.next != endfantom}
 }
+

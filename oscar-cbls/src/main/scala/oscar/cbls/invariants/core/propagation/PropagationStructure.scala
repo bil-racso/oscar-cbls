@@ -725,9 +725,9 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   def InitiateDynamicGraphFromSameComponent() {
     assert(component != null)
     DynamicallyListenedElementsFromSameComponent
-      = DynamicallyListenedElements.PermaFilter((e: PropagationElement) => e.component == component)
+      = DynamicallyListenedElements.permaFilter((e: PropagationElement) => e.component == component)
     DynamicallyListeningElementsFromSameComponent
-      = DynamicallyListeningElements.PermaFilter((e) => e._1.component == component, (e) => e._1)
+      = DynamicallyListeningElements.permaFilter((e) => e._1.component == component, (e) => e._1)
   }
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
