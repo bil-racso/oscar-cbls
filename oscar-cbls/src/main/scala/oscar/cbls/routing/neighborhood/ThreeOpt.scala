@@ -59,7 +59,7 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
       val insertionPoint: Int = s.primaryNodeIterator.next()
       assert(vrp.isRouted(insertionPoint),
         "ThreeOpt should be applied to routed nodes only.")
-
+        
       /**
        * The segment predecessor point (beforeStart) is picked from the insertion point
        * neighbors. It must not be the same as the insertion point, because the move would
@@ -74,7 +74,7 @@ object ThreeOpt extends Neighborhood with SearchEngineTrait {
            val segStartPoint = vrp.next(beforeStart).value
            if (segStartPoint != beforeStart && !vrp.isADepot(segStartPoint)) {
             // format: ON
-
+             
             /**
              * The segment end point is picked from the next nodes of its start point route.
              */
