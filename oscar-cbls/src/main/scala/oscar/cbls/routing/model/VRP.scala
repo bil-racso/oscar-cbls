@@ -129,50 +129,6 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 }
 
-/** this records touched points when comit with no undo, or when cleaning move*
-* @author renaud.delandtsheer@cetic.be
-  * THIS IS EXPERIMENTAL
-*/
-trait HotSpotRecording extends VRP with MoveDescription {
-
-  var hotspotList: List[Int]
-  val hotSpotArray: Array[Int] = Array.tabulate(N)(_ => 0)
-  var hotSpotValue: Int = 1 //the value for being in the hotspot, smller and you are not hotspotted
-
-  override def commit(recordForUndo: Boolean) {
-    if (!recordForUndo) addMoveToHotSpot()
-    super.commit(recordForUndo)
-  }
-
-  override def cleanRecordedMoves() {
-    addMoveToHotSpot()
-    super.cleanRecordedMoves()
-  }
-
-  def addMoveToHotSpot() {
-    for (a: Affect <- affects) {
-      for (n: Int <- a) hotSpot(n)
-    }
-  }
-
-  def hotSpot(n: Int) {
-    if (hotSpotArray(n) != hotSpotValue) {
-      hotSpotArray(n) = hotSpotValue
-      hotspotList = n :: hotspotList
-    }
-  }
-
-  def hotSpottedNodes(): Iterable[Int] = hotspotList
-
-  def cleanHotSpot() {
-    hotSpotValue += 1
-    if (hotSpotValue == Int.MaxValue) {
-      for (i <- 0 to N - 1) hotSpotArray(i) = 0
-      hotSpotValue = 1
-    }
-  }
-}
-
 /**
  * describes moves in a spart way by use of segments
  * @author renaud.delandtsheer@cetic.be
