@@ -253,7 +253,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def elementVar(tab: IndexedSeq[CPBoolVar], x: CPIntVar, z: Boolean): Constraint = {
-    val z_ = new CPBoolVar(x.store, z)
+    val z_ = CPBoolVar(z)(x.store)
     new ElementVar(tab.map(_.asInstanceOf[CPIntVar]).toArray, x, z_)
   }
 
