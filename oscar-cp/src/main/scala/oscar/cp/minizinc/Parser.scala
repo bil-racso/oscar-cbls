@@ -1297,9 +1297,9 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "bool_eq" => addCstr(cpvar(0) == cpvar(1))
       case "bool_eq_reif" => {
         if (cpvar(0).isBoundTo(0)) {
-          addCstr(new oscar.cp.constraints.Not(cpvar(1),cpvar(2)))
+          addCstr(cpvar(1) != cpvar(2))
         } else if(cpvar(1).isBoundTo(0)) {
-          addCstr(new oscar.cp.constraints.Not(cpvar(0),cpvar(2)))
+          addCstr(cpvar(0) != cpvar(2))
         } else {
           addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
         }

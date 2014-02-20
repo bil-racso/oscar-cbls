@@ -27,8 +27,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
 
 
   test("Table Var View 1") {
-    val cp = CPSolver()
-    var x = CPIntVar(-2 to 4)(cp)
+
     
     class ViewCons(val X: CPIntVar) extends Constraint(X.store, "TestView") {
 
@@ -66,7 +65,8 @@ class TestVarView extends FunSuite with ShouldMatchers  {
         }
 
     }
-    
+    val cp = CPSolver()
+    var x = CPIntVar(-2 to 4)(cp)
     val y = x+5+2-3-5 // y = x-1 so its domain should be -3..3
     cp.add(new ViewCons(y))
     cp.add(y != 0)
@@ -127,6 +127,25 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     y.min should be(-2)
     cp.add(y <= -2) // now it's bind to -2
     y.value should be(-2)
+  }
+  
+  
+  test("Table Var View 3") {
+    val cp = CPSolver()
+    val x = CPIntVar(0 to 3)(cp)
+    val minusx = -x
+    minusx.min should be(-3)
+    minusx.max should be(0)
+    minusx.removeValue(-1)
+    x.hasValue(1) should be(false)
+    minusx.valueBefore(-1) should be(-2)
+    minusx.valueAfter(-3) should be(-2)
+    minusx.updateMin(-2)
+    minusx.min should be(-2)
+    x.max should be(2)
+    minusx.hasValue(0) should be(true)
+    minusx.updateMax(-1)
+    minusx.hasValue(0) should be(false)
   }
   
    

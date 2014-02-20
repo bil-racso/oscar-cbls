@@ -127,9 +127,8 @@ class CPStore extends SearchNode {
     while (q != null) {
       val c = q.cons
       val x = q.x
-      val delta = q.delta
       if (c.isActive()) {
-        addQueueL1(c, c.priorityRemoveL1, c.valRemove(x, v + delta));
+        addQueueL1(c, c.priorityRemoveL1, c.valRemove(x, x.transform(v)));
       }
       q = q.next
     }
@@ -141,9 +140,8 @@ class CPStore extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      val delta = q.delta
       if (c.isActive()) {
-        addQueueL1(c, c.priorityRemoveL1, c.valRemoveIdx(x, idx, v + delta))
+        addQueueL1(c, c.priorityRemoveL1, c.valRemoveIdx(x, idx, x.transform(v)))
       }
       q = q.next
     }
