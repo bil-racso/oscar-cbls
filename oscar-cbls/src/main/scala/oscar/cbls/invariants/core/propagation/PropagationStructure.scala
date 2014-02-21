@@ -561,33 +561,17 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     super.scheduleForPropagation()
   }
 
-  def filterForDelayedInjectionListened(listening:PropagationElement):(PropagationElement,=>Unit, => Boolean) => Unit = {
-    def filter(listened:PropagationElement,injector:(=>Unit), isStillValid:(=> Boolean)){
-      if(listening.component == listened.component)
-        this.registerListenedWaitingDependency(injector, isStillValid)
-    }
-    filter
-  }
-
-  def filterForDelayedInjectionListening(listened:PropagationElement):((PropagationElement,Any),=>Unit, => Boolean) => Unit = {
-    def filter(listeningAndPayload:(PropagationElement,Any),injector:(=>Unit), isStillValid:(=> Boolean)){
-      if(listeningAndPayload._1.component == listened.component)
-        this.registerListeningWaitingDependency(injector)
-    }
-    filter
-  }
-
   var newDependenciesToInject:List[WaitingDependency] = List.empty
 
   case class WaitingDependency(val from:PropagationElement,
                                val to:PropagationElement,
-                               var inject1:(=>Unit) = null,
-                               var inject2:(=>Unit) = null,
-                               var isStillValid:(=>Boolean) = null)
+                               var inject1:(()=>Unit) = null,
+                               var inject2:(()=>Unit) = null,
+                               var isStillValid:(()=>Boolean) = null)
 
   def injectNewDependencies(autoSort:Boolean){
     for(d:WaitingDependency <- newDependenciesToInject){
-      if(d.isStillValid){
+      if(d.isStillValid()){
           d.inject1
           d.inject2
           if(autoSort) notifyAddEdge(d.from,d.to)
@@ -596,15 +580,23 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     newDependenciesToInject = List.empty
   }
 
-  def registerListenedWaitingDependency(injector:(=>Unit), isStillValid:(=>Boolean)){
-    val waiting = newDependenciesToInject.head
-    waiting.inject1 = injector
-    waiting.isStillValid = isStillValid
+  def registerListenedWaitingDependency(injector:(()=>Unit), isStillValid:(()=>Boolean)){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      waiting.inject1 = injector
+      waiting.isStillValid = isStillValid
+    }else{
+      injector()
+    }
   }
 
-  def registerListeningWaitingDependency(injector:(=>Unit)){
-    val waiting = newDependenciesToInject.head
-    waiting.inject2 = injector
+  def registerListeningWaitingDependency(injector:(()=>Unit)){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      waiting.inject2 = injector
+    }else{
+      injector()
+    }
   }
 
   def newWaitingDependency(from:PropagationElement, to:PropagationElement){
@@ -612,7 +604,9 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   }
 
   def addDependency(from:PropagationElement, to:PropagationElement){
-    newWaitingDependency(from:PropagationElement, to:PropagationElement)
+    if(autoSort){
+      newWaitingDependency(from:PropagationElement, to:PropagationElement)
+    }
   }
 
   val h: BinomialHeap[PropagationElement] = new BinomialHeap[PropagationElement](p => p.Position, size)
@@ -754,14 +748,14 @@ trait PropagationElement extends DAGNode with TarjanNode{
   def InitiateDynamicGraphFromSameComponent() {
     assert(component != null)
 
-    def filterForListened(listened:PropagationElement,injector:(=>Unit), isStillValid:(=> Boolean)){
+    def filterForListened(listened:PropagationElement,injector:(()=>Unit), isStillValid:(()=> Boolean)):Unit = {
       if(component == listened.component)
         component.registerListenedWaitingDependency(injector, isStillValid)
     }
     DynamicallyListenedElementsFromSameComponent
       = DynamicallyListenedElements.delayedPermaFilter(filterForListened)
 
-    def filterForListening(listeningAndPayload:(PropagationElement,Any),injector:(=>Unit), isStillValid:(=> Boolean)){
+    def filterForListening(listeningAndPayload:(PropagationElement,Any),injector:(()=>Unit), isStillValid:(()=> Boolean)){
       if(component == listeningAndPayload._1.component)
         component.registerListeningWaitingDependency(injector)
     }
