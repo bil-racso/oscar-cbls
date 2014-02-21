@@ -41,8 +41,7 @@ case class Store(override val verbose:Boolean = false,
                  override val topologicalSort:Boolean = false,
                  val propagateOnToString:Boolean = true)
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
-  with Bulker{
-
+  with Bulker with StorageUtilityManager{
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
@@ -462,7 +461,7 @@ object InvariantHelper{
   * Variables have an associated model, to which they register as soon as they are created. Variables also have a name,
   * which is used solely for printing models.
   */
-abstract class Variable(val model:Store, n:String = null) extends PropagationElement{
+abstract class Variable(val model:Store, n:String = null) extends PropagationElement with DistributedStorageUtility{
   UniqueID = if (model == null) -1 else model.registerVariable(this)
   val name = Option(n) getOrElse (s"Var_$UniqueID")
   def getPropagationStructure = this.model

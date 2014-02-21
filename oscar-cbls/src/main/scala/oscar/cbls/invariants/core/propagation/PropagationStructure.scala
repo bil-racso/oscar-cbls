@@ -26,6 +26,7 @@ import oscar.cbls.invariants.core.algo.dll._
 import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
+import oscar.cbls.invariants.core.computation.StorageUtilityManager
 ;
 
 /**
@@ -40,7 +41,6 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * propagation are triggered by calling the propagate method.
  * additionally, before calling setupPropagationStructure, the method registerForPartialPropagation can be
  * called to specify propagation elements that might require lazy propagation.
- *
  *
  *  Two debug mechanisms are provided: trace printing and debug mode.
  *
@@ -65,7 +65,7 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean){
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -666,7 +666,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
+trait PropagationElement extends DAGNode with TarjanNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -745,6 +745,10 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 
   final def getDynamicallyListenedElements: Iterable[PropagationElement] = DynamicallyListenedElements
 
+  final def getDAGPrecedingNodes: Iterable[DAGNode] = DynamicallyListenedElementsFromSameComponent
+
+  final def getDAGSucceedingNodes: Iterable[DAGNode] = DynamicallyListeningElementsFromSameComponent
+
   /**registers an element in the static dependency graph.
     * Beware that you also need to register elements in the dynamic propagation graph for something to happen.
     * @param p the element that we register to
@@ -784,7 +788,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
     val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
     val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
 
-    //We need to check for boundary here Because other elemenbts might indeed change their dependencies,
+    //We need to check for boundary here Because other elements might indeed change their dependencies,
     // but since they are not boundary, this would require resorting the SCC during the propagation
     if (IsBoundary && p.component == this.component) {
       //this is only called once the component is established, so no worries.
@@ -824,12 +828,6 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
     StaticallyListenedElements = null
     StaticallyListeningElements = null
   }
-
-  final def getDAGPrecedingNodes: Iterable[DAGNode]
-  = DynamicallyListenedElementsFromSameComponent
-
-  final def getDAGSucceedingNodes: Iterable[DAGNode]
-  = DynamicallyListeningElementsFromSameComponent
 
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
