@@ -85,7 +85,6 @@ object SwapInsert extends Neighborhood with SearchEngineTrait {
         }
       }
     }
-    println("nothing...")
     NoMoveFound()
   }
 
