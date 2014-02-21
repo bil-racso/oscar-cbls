@@ -166,7 +166,7 @@ trait HotSpotRecording extends VRP with MoveDescription {
 
   private def hotSpottedNodes(): Iterable[Int] = hotspotList
 
-  private def cleanHotSpot() {
+  def cleanHotSpot() {
     hotSpotValue += 1
     if (hotSpotValue == Int.MaxValue) {
       for (i <- 0 to N - 1) hotSpotArray(i) = 0
@@ -354,7 +354,7 @@ trait VRPObjective extends VRP {
   val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
-  private var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
+  var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
 
   /** adds a term top the objective function*/
   def addObjectiveTerm(o: CBLSIntVar) {

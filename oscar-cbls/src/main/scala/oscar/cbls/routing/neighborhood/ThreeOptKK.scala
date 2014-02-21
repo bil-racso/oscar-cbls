@@ -97,4 +97,6 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
     } //end while
     NoMoveFound()
   }
+
+  override def toString: String = "3-optKK"
 }
