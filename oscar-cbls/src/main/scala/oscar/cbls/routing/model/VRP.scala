@@ -34,6 +34,8 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.Diff
+import oscar.cbls.invariants.core.propagation.StorageUtilityManager
+import oscar.cbls.invariants.core.propagation.StorageUtilityManager
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -48,7 +50,7 @@ import oscar.cbls.invariants.lib.set.Diff
  * @param m the model.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.
@@ -129,14 +131,14 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 }
 
-/** this records touched points when comit with no undo, or when cleaning move*
-* @author renaud.delandtsheer@cetic.be
-  * THIS IS EXPERIMENTAL
-*/
+/**
+ * this records touched points when comit with no undo, or when cleaning move*
+ * @author renaud.delandtsheer@cetic.be
+ * THIS IS EXPERIMENTAL
+ */
 trait HotSpotRecording extends VRP with MoveDescription {
-
-  var hotspotList: List[Int]
-  val hotSpotArray: Array[Int] = Array.tabulate(N)(_ => 0)
+  var hotspotList: List[Int] = List()
+  val hotSpotArray: Array[Int] = Array.fill(N)(0)
   var hotSpotValue: Int = 1 //the value for being in the hotspot, smller and you are not hotspotted
 
   override def commit(recordForUndo: Boolean) {
@@ -151,7 +153,7 @@ trait HotSpotRecording extends VRP with MoveDescription {
 
   def addMoveToHotSpot() {
     for (a: Affect <- affects) {
-      for (n: Int <- a) hotSpot(n)
+      hotSpot(a.node)
     }
   }
 
@@ -162,7 +164,7 @@ trait HotSpotRecording extends VRP with MoveDescription {
     }
   }
 
-  def hotSpottedNodes(): Iterable[Int] = hotspotList
+  private def hotSpottedNodes(): Iterable[Int] = hotspotList
 
   def cleanHotSpot() {
     hotSpotValue += 1
@@ -170,6 +172,12 @@ trait HotSpotRecording extends VRP with MoveDescription {
       for (i <- 0 to N - 1) hotSpotArray(i) = 0
       hotSpotValue = 1
     }
+  }
+
+  def getAndCleanHotSpottedNodes(): Iterable[Int] = {
+    val hotSpottedNodes: Iterable[Int] = hotspotList
+    cleanHotSpot()
+    hotSpottedNodes
   }
 }
 
@@ -188,27 +196,34 @@ trait MoveDescription extends VRP {
     affects = affect :: affects
   }
 
-  protected abstract class Affect extends Iterable[Int] {
+  protected abstract class Affect {
     def comit(): Affect
-    def iterator: Iterator[Int] = null
+    def node: Int
   }
 
-  case class affectFromVariable(variable: CBLSIntVar, takeValueFrom: CBLSIntVar) extends Affect {
+  case class affectFromVariable(variableNode: Int, takeValueFromNode: Int) extends Affect {
     def comit(): Affect = {
+      val variable = next(variableNode)
+      val takeValueFrom = next(takeValueFromNode)
       val oldValue = variable.value
       assert(isRouted(takeValueFrom.value), "you cannot take the value of an unrouted variable " + variable + " take value from " + takeValueFrom)
       variable := takeValueFrom.value
-      affectFromConst(variable, oldValue)
+      affectFromConst(variableNode, oldValue)
     }
+
+    def node: Int = variableNode
   }
 
-  case class affectFromConst(variable: CBLSIntVar, takeValue: Int) extends Affect {
+  case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect {
     def comit(): Affect = {
+      val variable = next(variableNode)
       assert(variable.value != N || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
       val oldValue = variable.value
       variable := takeValue
-      affectFromConst(variable, oldValue)
+      affectFromConst(variableNode, oldValue)
     }
+
+    def node: Int = variableNode
   }
 
   protected case class Segment(start: Int, end: Int)
@@ -217,14 +232,14 @@ trait MoveDescription extends VRP {
     assert(!this.isInstanceOf[PositionInRouteAndRouteNr]
       || this.asInstanceOf[PositionInRouteAndRouteNr].onTheSameRoute(beforeStart, end))
 
-    addMove(affectFromVariable(next(beforeStart), next(end)))
+    addMove(affectFromVariable(beforeStart, end))
     Segment(next(beforeStart).value, end)
   }
 
   def cutNodeAfter(beforeStart: Int): Segment = {
     assert(isRouted(beforeStart), "you cannot cut after an unrouted node " + beforeStart)
     val start = next(beforeStart).value
-    addMove(affectFromVariable(next(beforeStart), next(start)))
+    addMove(affectFromVariable(beforeStart, start))
     Segment(start, start)
   }
 
@@ -237,7 +252,7 @@ trait MoveDescription extends VRP {
     var prev = s.start
     var current: Int = next(prev).value
     while (prev != s.end) {
-      addMove(affectFromConst(next(current), prev))
+      addMove(affectFromConst(current, prev))
       prev = current
       current = next(current).value
     }
@@ -245,19 +260,19 @@ trait MoveDescription extends VRP {
   }
 
   def insert(s: Segment, node: Int) {
-    addMove(affectFromVariable(next(s.end), next(node)))
-    addMove(affectFromConst(next(node), s.start))
+    addMove(affectFromVariable(s.end, node))
+    addMove(affectFromConst(node, s.start))
   }
 
   def append(s: Segment, t: Segment): Segment = {
-    addMove(affectFromConst(next(s.end), t.start))
+    addMove(affectFromConst(s.end, t.start))
     Segment(s.start, t.end)
   }
 
   def unroute(s: Segment) {
     def unroute(n: Int) {
       assert(n >= V, "you cannot unroute a depot: (depot=" + n + ")")
-      addMove(affectFromConst(next(n), N))
+      addMove(affectFromConst(n, N))
     }
     var current = s.start
     unroute(current)
@@ -339,7 +354,7 @@ trait VRPObjective extends VRP {
   val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
-  private var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
+  var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
 
   /** adds a term top the objective function*/
   def addObjectiveTerm(o: CBLSIntVar) {
@@ -354,7 +369,7 @@ trait VRPObjective extends VRP {
    * it is called by the model on close
    */
   def closeObjectiveFunction() {
-    if(objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
+    if (objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
     objectiveFunction <== Sum(objectiveFunctionTerms)
   }
 
@@ -431,7 +446,6 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
 
-
 /**
  * @author renaud.delandtsheer@cetic.be
  */
@@ -444,7 +458,7 @@ trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
  * Used by some neighborhood searches.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
@@ -513,7 +527,7 @@ abstract trait ClosestNeighbors extends VRP {
  * HopDistance is only handling simple cost functions such as cost matrices
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 trait HopDistance extends VRP {
   /**
    * the data structure which maintains the current hop distance of each node to reach his successor.
@@ -568,7 +582,7 @@ trait HopDistance extends VRP {
  * based either on a matrix, or on another mechanism defined by the distance function.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
   addObjectiveTerm(overallDistance)
 }
@@ -576,7 +590,7 @@ trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
 /**
  * Maintains the set of nodes reached by each vehicle
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
   final override val unrouted = NodesOfVehicle(V)
@@ -587,7 +601,7 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
  * the length of each route and their last node.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 trait PositionInRouteAndRouteNr extends VRP {
 
   /**
@@ -674,7 +688,7 @@ trait PositionInRouteAndRouteNr extends VRP {
  * Maintains a penalty weight for routes which do not contain task nodes.
  * That is: they only contain the vehicle node.
  * @author yoann.guyot@cetic.be
- * */
+ */
 trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
   /**
    * The data structure array which maintains route penalty.
@@ -687,13 +701,13 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    * The variable which maintains the set of empty routes.
    * (that is: routes containing no other node than the vehicle node)
    */
-  val emptyRoutes = Filter(routeLength, _ <= (1))
+  val emptyRoutes: CBLSSetVar = Filter(routeLength, _ <= (1))
 
   /**
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.
    */
-  val emptyRoutePenalty = SumElements(emptyRoutePenaltyWeight, emptyRoutes)
+  val emptyRoutePenalty: CBLSIntVar = SumElements(emptyRoutePenaltyWeight, emptyRoutes)
 
   /**
    * Allows client to set the penalty of a given vehicle route.
@@ -718,7 +732,7 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
  * It uses the Predecessor invariant.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
- * */
+ */
 trait Predecessors extends VRP {
   /**
    * the data structure array which maintains the predecessors of each node.
@@ -733,7 +747,7 @@ trait Predecessors extends VRP {
  * It redefines the propagation method of ObjectiveFunction trait,
  * that saves time by propagating partially.
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 trait StrongConstraints extends VRPObjective {
   /**
    * the strong constraints system.
@@ -747,7 +761,7 @@ trait StrongConstraints extends VRPObjective {
 /**
  * This trait maintains weak constraints system.
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 trait WeakConstraints extends VRPObjective {
   /**
    * the weak constraints system.
