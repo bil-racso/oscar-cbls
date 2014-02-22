@@ -3,11 +3,10 @@ package oscar.cp.minizinc
 import oscar.cp.core.CPIntVar
 
 class VarInt (
-    //var value: Int,
     val annotations: List[Annotation],
-    val cpvar: CPIntVar,
+    val variable: Variable,
     override val name: String
     ) extends FZObject (name){
 	
-    override def toString() = name + " " + annotations + " " + cpvar
+    override def toString() = name + " " + annotations + " " + variable
 }

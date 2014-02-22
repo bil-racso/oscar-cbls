@@ -3,9 +3,8 @@ package oscar.cp.test.minizinc
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
 import oscar.cp.minizinc.Options
-import oscar.cp.minizinc.Parser
+import oscar.cp.minizinc.NewParser
 import oscar.cp.minizinc.FlatZinc2OscaR
-import oscar.cp.minizinc.Minizinc_model
 import java.io.PrintStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream

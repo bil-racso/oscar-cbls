@@ -5,10 +5,10 @@ import oscar.cp.core.CPIntVar
 class VarArrayInt (
     override val value: Set[Int],
     override val annotations: List[Annotation],
-    override val cpvar: Array[CPIntVar],
+    override val variables: Array[Variable],
     override val name: String
-    ) extends FZArrayObject (value, annotations, cpvar, name) {
+    ) extends FZArrayObject (value, annotations, variables, name) {
 
-	override def toString() = name + " " + annotations + " " + cpvar.mkString(",")
+	override def toString() = name + " " + annotations + " " + variables.mkString(",")
 	
 }

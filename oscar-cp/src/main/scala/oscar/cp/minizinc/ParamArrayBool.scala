@@ -1,11 +1,10 @@
 package oscar.cp.minizinc
 
 class ParamArrayBool (
-    val value: Any, 
-    val range: Any,
+    val values: Array[Boolean],
     override val name: String
     ) extends FZObject (name){
 	
   
-    override def toString() = name + " " + value + " " + range
+    override def toString() = name + " " + values.mkString(",")
 }

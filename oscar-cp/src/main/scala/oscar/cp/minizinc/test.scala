@@ -1,22 +1,26 @@
 package oscar.cp.minizinc
 
 import java.io.FileReader
+import oscar.cp.core.NoSolutionException
 
-object test extends Parser with App{
-    test
-   
-	def test {
-		//val input = "bool: name = true;"
-    	//val input = new FileReader(args(0))
-    	//val input = "array [1..7] of set of int: name = [2..5, {8, 7, 5}, {3}];" +
-    				"solve satisfy;"
-		//println(myParseAll(input))
-		myParseAll(new Options(args),Map(""->""))
-		//println(myParseAll(new Options(args),Map(""->"")))
-		//println(model.dict.toString)
-		//println(model.dict.get("name"))
-//		model.dict.get("name") match {
-//		  case Some(p) => println(p.toString)
-//		}
-	}	
+object test extends NewParser with App{
+
+  
+    val file = Array("minizinc/unit/test1.fzn")
+  
+  
+    val opts = new Options(file/*args*/)
+
+    try {
+      myParseAll(opts)
+      println("here")
+
+    } catch {
+      case e: NoSolutionException => println("=====UNSATISFIABLE=====")
+      case e: Throwable => {
+        println(e)
+        println(e.printStackTrace())
+        throw new Exception("adding the constraint failed")
+      }
+    }
 }
