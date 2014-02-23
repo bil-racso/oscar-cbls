@@ -32,8 +32,8 @@ import oscar.cp.multiobjective.SolSelect._
  */
 object BiKnapsack extends App {
 
-  val dataFile = "data/mo-knapsack/2KP100A.txt"
-  val solutionFile = "data/mo-knapsack/solution/2KP100A.txt"
+  val dataFile = "data/mo-knapsack/2KP50A.txt"
+  val solutionFile = "data/mo-knapsack/solution/2KP50A.txt"
 
   // Data
   // ----
