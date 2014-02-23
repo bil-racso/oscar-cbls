@@ -150,7 +150,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   override def toString(): String = {
     if (isEmpty) name + " phi"
     else if (isBound) name + (if (name.isEmpty) "" else " ") + value
-    else name + (if (name.isEmpty) "" else " ") + dom.toString()
+    else name + (if (name.isEmpty) "" else " ") + "{" + dom.toString() + "}"
   }
 
   /**
