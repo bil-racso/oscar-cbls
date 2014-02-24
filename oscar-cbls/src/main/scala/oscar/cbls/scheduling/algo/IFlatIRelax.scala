@@ -73,7 +73,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       } else {
         val m = p.makeSpan.value
-        if (!RelaxUntilMakespanReduced(pkillPerRelax, nbRelax)) return
+        if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) return
         if (p.makeSpan.value == m) println("skip")
       }
 
@@ -128,7 +128,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
    * @param min: the minimal number of relaxation
    * @return true if something could be relaxed, false if makespan is solid
    */
-  def RelaxUntilMakespanReduced(pKill: Int, min: Int = 3): Boolean = {
+  def relaxUntilMakespanReduced(pKill: Int, min: Int = 3): Boolean = {
     val m = p.makeSpan.value
     var n = 0
     var SomethingCouldBeRelaxed = false
