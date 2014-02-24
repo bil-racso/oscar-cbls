@@ -85,7 +85,7 @@ object Reagan extends App {
 
   model.close(false)
  // println(model.dumpToDot(true, true))
-  solver.Solve(15, 10, 2, 50)
+  solver.solve(15, 10, 2, 50)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)
