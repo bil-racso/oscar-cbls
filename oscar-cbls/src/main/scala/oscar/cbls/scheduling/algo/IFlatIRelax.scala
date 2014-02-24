@@ -68,7 +68,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       if (plateaulength > 10 && (plateaulength % 50) == 0) {
 
-        for (i <- 0 until nbRelax * 3) { Relax(pkillPerRelax); }
+        for (i <- 0 until nbRelax * 3) { relax(pkillPerRelax); }
         println("jumping****************")
 
       } else {
@@ -109,7 +109,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
    * @param pKill: the probability to kill a killable precedence constraint in percent
    * @return true if something could be relaxed, false if makespan is solid (made only of dependencies that cannot be relaxed)
    */
-  def Relax(pKill: Int): Boolean = {
+  def relax(pKill: Int): Boolean = {
 
     val potentiallykilledNodes = CriticalPathFinder.nonSolidCriticalPath(p)
     if (potentiallykilledNodes.isEmpty) return false
@@ -134,7 +134,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     var SomethingCouldBeRelaxed = false
     while ((p.makeSpan.value == m) | (n < min)) {
       n += 1
-      SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | Relax(pKill)
+      SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | relax(pKill)
       if (!SomethingCouldBeRelaxed) return false
     }
     if (verbose) println("relaxed " + n + " times to shorten makespan")
