@@ -609,6 +609,23 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
   }
 
+  /** this is called when the dependency has been added and all its field are filled.
+    * We take the opportunity to check if the dependency is by any chance already implemented
+    * in the sort.
+    * if yes, we inject it right away, since it does not trigger any computation, actually.
+    */
+  def dependencyAdded(){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      if(waiting.from.Position > waiting.to.Position){
+        waiting.inject1
+        waiting.inject2
+        notifyAddEdge(waiting.from,waiting.to)
+        newDependenciesToInject = newDependenciesToInject.tail
+      }
+    }
+  }
+
   val h: BinomialHeap[PropagationElement] = new BinomialHeap[PropagationElement](p => p.Position, size)
 
   override def performPropagation() {
@@ -825,12 +842,15 @@ trait PropagationElement extends DAGNode with TarjanNode{
       //this is only called once the component is established, so no worries.
       //we must call this before performing hte injection to create the waitingDependency in the SCC
       component.addDependency(p, this)
+      val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
+      val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
+      component.dependencyAdded()
+      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+    }else{
+      val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
+      val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
+      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
     }
-
-    val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
-    val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
-
-    KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
   }
 
   /**checks that the propagation element is statically listened to, possibly
