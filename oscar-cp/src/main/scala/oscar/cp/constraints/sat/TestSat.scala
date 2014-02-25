@@ -8,31 +8,37 @@ import oscar.algo.search.SearchStatistics
 
 object Test2SAT extends App {
   
-  val nIter = 50
+  val nIter = 20
 
   // Data
   val nLiterals = 500
-  val edgePerMillion = 20000 // too little and the number of solutions explodes
+  val edgePerMillion = 200000 // too little and the number of solutions explodes
   
   print("Generate the instance...")
-  val instance = Generator2Sat.generateRandomEdges(nLiterals, edgePerMillion)
+  val instance = Generator2Sat.generateRandomEdges(nLiterals, edgePerMillion, 4)
   println(" ok")
   
   print("Compute SAT statistics...")
-  val stats2Sat = for (iter <- 1 to nIter) yield SolverSAT.test2Sat(instance, nLiterals)  
+  val stats2Sat = for (iter <- 1 to nIter) yield {
+    print(s" $iter")
+    SolverSAT.test2Sat(instance, nLiterals)  
+  }
   println(" ok")
   
-  print("Compute CP statistics...")
-  val statsCP = for (iter <- 1 to nIter) yield SolverSAT.testCP(instance, nLiterals)
+  print("Compute CP statistics... ")
+  val statsCP = for (iter <- 1 to nIter) yield {
+    print(s" $iter")
+    SolverSAT.testCP(instance, nLiterals)
+  }
   println(" ok")
   
   val (meanSat, devSat) = StatUtil.computeTimeStats(stats2Sat)
   val (meanCP, devCP) = StatUtil.computeTimeStats(statsCP)
   
   println
-  println("mean\tdev")
-  println(s"$meanSat\t$devSat")
-  println(s"$meanCP\t$devCP")
+  println("algo\tmean\tdev")
+  println(s"2SAT\t$meanSat\t$devSat")
+  println(s"CP\t$meanCP\t$devCP")
 }
 
 object Generator2Sat {
