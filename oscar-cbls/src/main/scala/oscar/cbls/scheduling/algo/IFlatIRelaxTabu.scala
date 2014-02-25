@@ -32,7 +32,7 @@ import oscar.cbls.scheduling.model.CumulativeResource
 
 /**
  * @param p
- * @param Verbose
+ * @param verbose
  * @author renaud.delandtsheer@cetic.be
  */
 class IFlatIRelaxTabu(p: Planning, verbose: Boolean = true) extends SearchEngine {
@@ -40,8 +40,8 @@ class IFlatIRelaxTabu(p: Planning, verbose: Boolean = true) extends SearchEngine
 
   /**
    * This solves the jobshop by iterative relaxation and flattening
-   * @param MaxIt the max number of iterations of the search
-   * @param Stable the number of no successice noimprove that will cause the search to stop
+   * @param maxIt the max number of iterations of the search
+   * @param stable the number of no successice noimprove that will cause the search to stop
    */
   def Solve(maxIt: Int,
             stable: Int,

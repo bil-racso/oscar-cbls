@@ -108,7 +108,7 @@ object GenericJobShopTest extends StopWatch with App {
 
   println("start search")
   //println(model.dumpToDot(true,true))
-  solver.Solve(MaxIt, Stable, 3, 20)
+  solver.solve(MaxIt, Stable, 3, 20)
 
   println("run time: " + getWatch)
   println(planning.toAsciiArt)
