@@ -24,6 +24,7 @@ import scala.collection.mutable.HashMap
 import java.util.Collection
 import oscar.algo.search.Branching
 import oscar.cp.constraints.MulCte
+import oscar.cp.constraints.SubCircuit
 
 class Parser extends JavaTokenParsers { // RegexParsers {
 
@@ -997,7 +998,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "oscar_strict_lex2" =>
         lex2_cstr(varList, true)
       case "oscar_subcircuit" =>
-        System.err.println(cstr + " not implemented")
+        cp.add(SubCircuit(getCPIntVarArray(varList(0)), 1), Strong)
       case "oscar_sum_pred" =>
         System.err.println(cstr + " not implemented")
       case "oscar_table_int" => //2D -> 1D done
@@ -1297,9 +1298,9 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "bool_eq" => addCstr(cpvar(0) == cpvar(1))
       case "bool_eq_reif" => {
         if (cpvar(0).isBoundTo(0)) {
-          addCstr(new oscar.cp.constraints.Not(cpvar(1),cpvar(2)))
+          addCstr(cpvar(1) != cpvar(2))
         } else if(cpvar(1).isBoundTo(0)) {
-          addCstr(new oscar.cp.constraints.Not(cpvar(0),cpvar(2)))
+          addCstr(cpvar(0) != cpvar(2))
         } else {
           addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
         }

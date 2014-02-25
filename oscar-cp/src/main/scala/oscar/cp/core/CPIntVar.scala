@@ -26,11 +26,12 @@ trait DomainIterator extends Iterator[Int] {
   def execute()
 }
 
+/**
+ * @author Pierre Schaus pschaus@gmail.com
+ */
 abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
-
-  def rootVar: CPIntVar
-
-  def offset: Int
+  
+  def transform(v: Int): Int
 
   def constraintDegree(): Int
 
@@ -250,7 +251,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callValBindWhenBind(c: Constraint): Unit
 
-  def callValBindWhenBind(c: Constraint, variable: CPIntVar, delta: Int): Unit
+  def callValBindWhenBind(c: Constraint, variable: CPIntVar): Unit
 
   /**
    * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
@@ -260,7 +261,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar, delta: Int): Unit
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar): Unit
 
   /**
    * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
@@ -270,7 +271,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callValRemoveWhenValueIsRemoved(c: Constraint): Unit
 
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar, delta: Int): Unit
+  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar): Unit
 
   /**
    * Level 1 registration: ask that the valRemoveIdx(CPIntVar, int, int) method of the constraint c is called for each
@@ -281,7 +282,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit
 
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
+  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int): Unit
 
 
   /**
@@ -293,7 +294,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int): Unit
 
   /**
    * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
@@ -304,7 +305,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int, delta: Int): Unit
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int): Unit
 
   /**
    * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
@@ -401,9 +402,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return a variable in the same store representing: - x
    */
   def opposite() = {
-    val y = new CPIntVarImpl(store, -max, -min);
-    store.post(new oscar.cp.constraints.Opposite(this, y));
-    y;
+    new CPIntVarViewMinus(this)
   }
 
   /**
@@ -412,7 +411,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def minus(d: Int) = {
     if (d == 0) this
-    else new CPIntVarView(this, -d)
+    else new CPIntVarViewOffset(this, -d)
   }
 
   /**
@@ -431,7 +430,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def plus(d: Int) = {
     if (d == 0) this;
-    else new CPIntVarView(this, d);
+    else new CPIntVarViewOffset(this, d);
   }
 
   /**

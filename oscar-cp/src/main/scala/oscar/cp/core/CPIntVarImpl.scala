@@ -43,9 +43,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    */
   def this(st: CPStore, r: Range) = this(st, r.start, if (r.isInclusive) r.end else r.end - 1)
 
-  def rootVar: CPIntVar = this
-
-  def offset: Int = 0
+  def transform(v: Int ) = v
 
   def iterator = {
     dom.iterator
@@ -150,7 +148,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   override def toString(): String = {
     if (isEmpty) name + " phi"
     else if (isBound) name + (if (name.isEmpty) "" else " ") + value
-    else name + (if (name.isEmpty) "" else " ") + dom.toString()
+    else name + (if (name.isEmpty) "" else " ") + "{" + dom.toString() + "}"
   }
 
   /**
@@ -193,11 +191,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
   def callValBindWhenBind(c: Constraint) {
-    callValBindWhenBind(c, this, 0)
+    callValBindWhenBind(c, this)
   }
 
-  def callValBindWhenBind(c: Constraint, variable: CPIntVar, delta: Int) {
-    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable, delta))
+  def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
+    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
   }
 
   /**
@@ -207,11 +205,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
   def callUpdateBoundsWhenBoundsChange(c: Constraint) {
-    callUpdateBoundsWhenBoundsChange(c, this, 0)
+    callUpdateBoundsWhenBoundsChange(c, this)
   }
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar, delta: Int) {
-    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable, delta))
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
+    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
   }
 
   /**
@@ -221,11 +219,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
    */
   def callValRemoveWhenValueIsRemoved(c: Constraint) {
-    callValRemoveWhenValueIsRemoved(c, this, 0)
+    callValRemoveWhenValueIsRemoved(c, this)
   }
 
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar, delta: Int) {
-    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable, delta))
+  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) {
+    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable))
   }
 
   /**
@@ -236,11 +234,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#valRemoveIdx(CPIntVar, int, int)
    */
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) {
-    callValRemoveIdxWhenValueIsRemoved(c, this, idx, 0)
+    callValRemoveIdxWhenValueIsRemoved(c, this, idx)
   }
 
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx, delta))
+  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) {
+    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -251,11 +249,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#updateBoundsIdx(CPIntVar, int)
    */
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) {
-    callUpdateBoundsIdxWhenBoundsChange(c, this, idx, 0)
+    callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
   }
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx, delta))
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
+    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -266,11 +264,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#valBindIdx(CPIntVar, int)
    */
   def callValBindIdxWhenBind(c: Constraint, idx: Int) {
-    callValBindIdxWhenBind(c, this, idx, 0)
+    callValBindIdxWhenBind(c, this, idx)
   }
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx, delta))
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
+    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
 
   /**
