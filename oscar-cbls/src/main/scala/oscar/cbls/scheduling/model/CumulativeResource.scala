@@ -62,7 +62,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
 
   def activitiesAndUse(t:Int):List[(Activity, CBLSIntVar)] = {
     use(t).value.toList.map((a:Int) => {
-      val activity:Activity = planning.ActivityArray(a);
+      val activity:Activity = planning.activityArray(a);
       (activity,ActivitiesAndUse(activity))
     })
   }
@@ -89,7 +89,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
 
     Cumulative(
       tasks.map(_.ID),
-      tasks.map(_.EarliestStartDate),
+      tasks.map(_.earliestStartDate),
       tasks.map(_.duration),
       tasks.map(ActivitiesAndUse(_)),
       useAmount,

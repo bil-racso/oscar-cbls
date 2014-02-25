@@ -89,7 +89,6 @@ object SwapInsert extends Neighborhood with SearchEngineTrait {
   }
 
   def encode(beforeMovedPoint: Int, unroutedPoint: Int, vrp: VRP with MoveDescription) {
-    println("swap-insert(" + beforeMovedPoint + ", " + unroutedPoint + ")")
     val cutSeg = vrp.cutNodeAfter(beforeMovedPoint)
     vrp.unroute(cutSeg)
     val newSeg = vrp.segmentFromUnrouted(unroutedPoint)

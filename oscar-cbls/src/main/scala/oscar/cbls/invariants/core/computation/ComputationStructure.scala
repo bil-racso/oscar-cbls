@@ -41,8 +41,7 @@ case class Store(override val verbose:Boolean = false,
                  override val topologicalSort:Boolean = false,
                  val propagateOnToString:Boolean = true)
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
-  with Bulker{
-
+  with Bulker with StorageUtilityManager{
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
@@ -295,8 +294,6 @@ trait Invariant extends PropagationElement{
     }
   }
 
-  //TODO: these methods should be in PropagationElement, not in Invariants!!!
-
   /**Call this from within the invariant to notify that you will statically listen to this variable.
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
     * @param v the variable that you want to listen to (and be notified about change)
@@ -464,7 +461,7 @@ object InvariantHelper{
   * Variables have an associated model, to which they register as soon as they are created. Variables also have a name,
   * which is used solely for printing models.
   */
-abstract class Variable(val model:Store, n:String = null) extends PropagationElement{
+abstract class Variable(val model:Store, n:String = null) extends PropagationElement with DistributedStorageUtility{
   UniqueID = if (model == null) -1 else model.registerVariable(this)
   val name = Option(n) getOrElse (s"Var_$UniqueID")
   def getPropagationStructure = this.model
@@ -481,6 +478,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
       throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
+
   def getDefiningInvariant:Invariant = DefiningInvariant
 
   /**this method s to be called by any method that internally modifies the value of the variable

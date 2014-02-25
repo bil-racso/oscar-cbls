@@ -34,8 +34,8 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.core.propagation.StorageUtilityManager
-import oscar.cbls.invariants.core.propagation.StorageUtilityManager
+import oscar.cbls.invariants.core.computation.StorageUtilityManager
+import oscar.cbls.invariants.core.computation.StorageUtilityManager
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
