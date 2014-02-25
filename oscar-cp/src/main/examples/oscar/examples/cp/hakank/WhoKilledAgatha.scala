@@ -40,7 +40,7 @@ import oscar.cp.core._
  * Originally from 
  * F. J. Pelletier: Seventy-five problems for testing automatic
  *                  theorem provers.
- *                  Journal of Automated Reasoning, 2: 191–216, 1986.
+ *                  Journal of Automated Reasoning, 2: 191-216, 1986.
  *
  * This version include some improvements suggested by Pierre Schaus.
  *

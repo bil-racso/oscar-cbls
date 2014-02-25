@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
 
 /**
  * Implementation of Equality constraint for CPSetVar
- * @author Léonard Debroux leonard.debroux@gmail.com
+ * @author Leonard Debroux leonard.debroux@gmail.com
  */
 class SetEq(val a: CPSetVar, val b: CPSetVar) extends Constraint(a.store, "SetEq") {
 	override def setup(l: CPPropagStrength): CPOutcome = {

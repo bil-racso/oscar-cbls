@@ -28,7 +28,7 @@ import scala.math._
   """
   Here's a fantastic problem I recently heard. Apparently it was first 
   posed by Claude Gaspard Bachet de Maziriac in a book of arithmetic problems 
-  published in 1612, and can also be found in Heinrich Dorrieâ€™s 100 
+  published in 1612, and can also be found in Heinrich Dorries 100 
   Great Problems of Elementary Mathematics.
   
       A merchant had a forty pound measuring weight that broke 
