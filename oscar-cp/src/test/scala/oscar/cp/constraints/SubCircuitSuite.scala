@@ -2,7 +2,7 @@ package oscar.cp.constraints
 
 import oscar.cp.TestSuite
 import oscar.cp.core.CPIntVar
-import oscar.cp.modeling.CPSolver
+import oscar.cp.modeling._
 
 class SubCircuitSuite extends TestSuite {
   
@@ -65,5 +65,31 @@ class SubCircuitSuite extends TestSuite {
     assert(!cp.isFailed)
     assert(succs(4).value == 0)
     assert(succs(2).value == 3)
+  }
+  
+  test("solve all") {
+    val (cp, succs) = testData(6)
+    cp.search(binaryFirstFail(succs))
+    val stats = cp.start()
+    assert(stats.nSols == nSubCircuits(6))
+  }
+  
+  private def nSubCircuits(n: Int): Int = {
+    1 + (2 to n).map(i => combinations(n, i) * factorial(i-1)).sum
+  }
+  
+  private def combinations(n: Int, k: Int): Int = {
+    factorial(n)/(factorial(n-k)*factorial(k))
+  }
+  
+  private def factorial(n: Int): Int = {
+    if (n == 0) 1 
+    else factorial(n, 1)
+  }
+  
+  @annotation.tailrec
+  private def factorial(n: Int, cum: Int): Int = {
+    if (n == 1) cum
+    else factorial(n-1, cum*n)
   }
 }
