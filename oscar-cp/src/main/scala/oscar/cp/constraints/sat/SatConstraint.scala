@@ -10,29 +10,33 @@ import scala.collection.immutable.Map
 import oscar.cp.core.CPBoolVar
 import oscar.cp.core.CPStore
 
-class SatConstraint(val literals: Array[Literal], val clauses: Array[(Literal, Literal)]) extends Constraint(literals.head.store, "SatConstraint") {
+class SatConstraint(lit: Array[Literal], val clauses: Array[(Literal, Literal)]) extends Constraint(lit.head.store, "SatConstraint") {
 
+  private val literals = lit.sortBy(_.id)
+  
   private val nLiterals = literals.size
   private val Literals = 0 until nLiterals
-
-  val IDToIndex = literals.map(_.id).zipWithIndex.toMap
+  
+  private val offset = literals.head.id 
+  @inline
+  private def litId(id: Int): Int = id - offset
 
   // Graph
   private val nClauses = clauses.size
   private val implicationArcs = Array.tabulate(2 * nClauses) { i =>
     if (i < nClauses) (clauses(i)._1.negation, clauses(i)._2)
     else (clauses(i - nClauses)._2.negation, clauses(i - nClauses)._1)
-  }
-    .map { case (l1, l2) => (IDToIndex(l1.id), IDToIndex(l2.id)) }
+  }   
+    .map { case (l1, l2) => (litId(l1.id), litId(l2.id)) }
 
   private val implicationAdjacency = Array.tabulate(nLiterals) { i => Array.empty[Int] }
   implicationArcs.groupBy(_._1).foreach { case (i, ijPairs) => implicationAdjacency(i) = ijPairs.map(_._2) }
 
   private val implicationSccs = new Tarjan(Literals.toArray, implicationAdjacency)
 
-  private val litToSCC = implicationSccs.sccOf
-  private val SCCToLit = implicationSccs.nodesOf
-  private val SCCToSCC = implicationSccs.successorsOf
+  private val litToSCC: Array[Int] = implicationSccs.sccOf
+  private val SCCToLit: Array[Array[Int]] = implicationSccs.nodesOf
+  private val SCCToSCC: Array[Array[Int]] = implicationSccs.successorsOf
 
   // Used for internal propagation
   private val toVisit: ArrayStack[Int] = ArrayStack()
@@ -82,7 +86,7 @@ class SatConstraint(val literals: Array[Literal], val clauses: Array[(Literal, L
 
   @inline
   private def isInfeasible(): Boolean = {
-    literals.exists { l => litToSCC(IDToIndex(l.id)) == litToSCC(IDToIndex(l.negation.id)) }
+    literals.exists { l => litToSCC(litId(l.id)) == litToSCC(litId(l.negation.id)) }
   }
 
   @inline
@@ -103,7 +107,5 @@ class SatConstraint(val literals: Array[Literal], val clauses: Array[(Literal, L
 }
 
 object SatConstraint {
-  def apply(literals: Array[Literal], clauses: Array[(Literal, Literal)]): SatConstraint = {
-    new SatConstraint(literals.sortBy(_.id), clauses)
-  }
+  def apply(literals: Array[Literal], clauses: Array[(Literal, Literal)]): SatConstraint = new SatConstraint(literals, clauses)
 }

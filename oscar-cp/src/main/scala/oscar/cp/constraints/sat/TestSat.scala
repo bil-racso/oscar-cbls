@@ -11,11 +11,11 @@ object Test2SAT extends App {
   val nIter = 20
 
   // Data
-  val nLiterals = 500
-  val edgePerMillion = 200000 // too little and the number of solutions explodes
+  val nLiterals = 1000
+  val density = 20
   
   print("Generate the instance...")
-  val instance = Generator2Sat.generateRandomEdges(nLiterals, edgePerMillion, 4)
+  val instance = Generator2Sat.buildInstance(nLiterals, density)
   println(" ok")
   
   print("Compute SAT statistics...")
@@ -33,23 +33,27 @@ object Test2SAT extends App {
   println(" ok")
   
   val (meanSat, devSat) = StatUtil.computeTimeStats(stats2Sat)
-  val (meanCP, devCP) = StatUtil.computeTimeStats(statsCP)
+  val solsSat = stats2Sat.head.nSols
+  val nodesSat = stats2Sat.head.nNodes
   
-  println
-  println("algo\tmean\tdev")
-  println(s"2SAT\t$meanSat\t$devSat")
-  println(s"CP\t$meanCP\t$devCP")
+  val (meanCP, devCP) = StatUtil.computeTimeStats(statsCP)
+  val solsCP = statsCP.last.nSols
+  val nodesCP = statsCP.last.nNodes
+  
+  println("\nalgo\tmean\tdev\tsols\tnodes")
+  println(s"2SAT\t$meanSat\t$devSat\t$solsSat\t$nodesSat")
+  println(s"CP\t$meanCP\t$devCP\t$solsCP\t$nodesCP")
 }
 
 object Generator2Sat {
-  def generateRandomEdges(graphSize: Int, edgePerMillion: Int, seed: Int = 0) = {
+  def buildInstance(graphSize: Int, density: Int, seed: Int = 0) = {
     val rand = new Random(seed)
     val edges =
       for (
         i <- 0 until graphSize;
         j <- 0 until graphSize;
         rev <- Array(true, false);
-        if (rand.nextInt(1000000) < edgePerMillion)
+        if (rand.nextInt(100) < density)
       ) yield (i, j, rev)
     edges.toArray
   }
@@ -65,7 +69,7 @@ object SolverSAT {
         if (rev) (literals(i), literals(j).negation)
         else (literals(i), literals(j))
     }
-    add(new SatConstraint(literals ++ literals.map(_.negation), literalEdges))
+    add(SatConstraint(literals ++ literals.map(_.negation), literalEdges))
     val booleans = literals.map(_.boolean)
     search(binaryStatic(booleans))
     start()   
@@ -73,7 +77,7 @@ object SolverSAT {
 
   def testCP(edges: Array[(Int, Int, Boolean)], nLiterals: Int): SearchStatistics = {
     implicit val solver = CPSolver()
-    val booleans = Array.tabulate(nLiterals) { i => CPBoolVar() }
+    val booleans = Array.fill(nLiterals)(CPBoolVar())
     edges.foreach {
       case (i, j, rev) =>
         if (rev) add(booleans(i) | !booleans(j))
