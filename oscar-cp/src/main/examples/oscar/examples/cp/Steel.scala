@@ -15,7 +15,7 @@ import oscar.visual.plot.PlotLine
 /**
  * Model for the steel mill slab problem:
  * Steel is produced by casting molten iron into slabs.
- * A steel mill can produce a finite number, σ, of slab sizes.
+ * A steel mill can produce a finite number, sigma, of slab sizes.
  * An order has two properties, a color corresponding to the route required through the steel mill and a weight.
  * Given d input orders, the problem is to assign the orders to slabs,
  * the number and size of which are also to be determined,
