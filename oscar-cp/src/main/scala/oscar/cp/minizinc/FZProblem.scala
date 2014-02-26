@@ -38,7 +38,11 @@ class FZProblem {
   def addVariable(v: Boolean): Variable = {
     if (v) addVariable("1",v)
     else addVariable("0",v)
-  }   
+  }
+  
+  def addVariable(v: Int): Variable = {
+    addVariable(v.toString,v)
+  }    
   
   def addVariable(id: String, v: Int): Variable = {
     addVariable(id,v,v)

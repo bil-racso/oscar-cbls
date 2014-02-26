@@ -271,15 +271,15 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
           createCPBoolVar(e, id, ann)
 
         case "array [" ~ iset ~ "] of var bool" =>
-          createCPBoolVarArray(e, id, ann, getRangeLength(iset))
+          createBoolVarArray(e, id, ann, getRangeLength(iset))
 
         case "var int" =>
-        //createCPIntVar(e, id, Set[Int](), ann)
+          createIntVar(e, id, Set[Int](), ann)
 
         case "var" ~ i1 ~ ".." ~ i2 =>
           val s = Range(i1.toString.toInt, i2.toString.toInt + 1).toSet[Int]
           if (!s.isEmpty) {
-            //createCPIntVar(e, id, s, ann)
+            createIntVar(e, id, s, ann)
           } else {
             throw new Exception("A var int can not have an empty domain")
           }
@@ -287,10 +287,10 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
         case "var" ~ "{" ~ intList ~ "}" =>
           // no need to check if s is empty as the grammar doesn't allow it
           val s = getSetFromList(intList)
-        //createCPIntVar(e, id, s, ann)
+          createIntVar(e, id, s, ann)
 
         case "array [" ~ iset ~ "] of var int" =>
-        //createCPIntVarArray(e, id, Set[Int](), ann, getRangeLength(iset))
+          createIntVarArray(e, id, Set[Int](), ann, getRangeLength(iset))
 
         case "array [" ~ iset ~ "] of var" ~ i1 ~ ".." ~ i2 =>
           val s = Range(i1.toString.toInt, i2.toString.toInt + 1).toSet
@@ -325,8 +325,8 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
       case _ => throw new Exception("Error in var bool creation")
     }
   }
-/*
-  def createCPIntVar(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
+
+  def createIntVar(e: Any, id: String, s: Set[Int], ann: List[Annotation]) {
     e match {
       case Some("=" ~ assign) =>
         assign match {
@@ -334,22 +334,26 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             if ((s contains x) || s.isEmpty) {
               dict +=
                 ((id, (FZType.V_INT,
-                  new VarInt(ann, model.addVariable(id,x,x),id))))
+                  new VarInt(ann, model.addVariable(id,x),id))))
             } else {
               throw new Exception(x + " not in the domain of " + id)
             }
           case _ =>
+              println("domain:"+s)
               dict +=
                 ((id, (FZType.V_INT,
                   new VarInt(ann, model.addVariable(id,s),id))))            
         }
       case None =>
-        //addCPIntVar(ann, id, s)
+          val vari =   if (s.max - s.min + 1 == s.size) model.addVariable(id,s.min,s.max) else model.addVariable(id,s)
+          val variable = new VarInt(ann,vari,id)
+          println("new var witn dom:"+s)
+          dict += id -> (FZType.V_INT,variable)
       case _ => throw new Exception("Error in var int creation")
     }
   }
-*/
-  def createCPBoolVarArray(e: Any, id: String, ann: List[Annotation], l: Int) {
+
+  def createBoolVarArray(e: Any, id: String, ann: List[Annotation], l: Int) {
     e match {
       case Some("=" ~ assign) =>
         assign match {
@@ -363,7 +367,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
           }
           case _ =>
             // fresh array of boolvar
-            val array = getCPBoolVarArray(assign)
+            val array = getBoolVarArray(assign)
             dict +=
               ((id, (FZType.V_ARRAY_BOOL,
                 new VarArrayInt(Set(0, 1), ann, array, id))))
@@ -381,7 +385,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
     }
   }
   
-  def getCPBoolVarArray(x: Any): Array[Variable] = {
+  def getBoolVarArray(x: Any): Array[Variable] = {
     x match {
       case y: List[Any] =>
         y.map(getBoolVar(_)).toArray
@@ -401,77 +405,73 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   }  
   
   
-/*
-  def createCPIntVarArray(e: Any, id: String, s: Set[Int], ann: List[Annotation],
-    l: Int) {
+
+  def createIntVarArray(e: Any, id: String, s: Set[Int], ann: List[Annotation], l: Int) {
     e match {
-      case Some("=" ~ assign) =>
+      case Some("=" ~ assign) =>  
         assign match {
-          case x: List[Any] =>
+          case x: List[Any] => {
+            val vars = x.map {
+                  case v: Int => getIntVar(v)
+                  case e: Any => e.asInstanceOf[Variable] }
+            
+            val intArray = new VarArrayInt(s,ann,vars.toArray, id)
+            dict += (id -> (FZType.V_ARRAY_INT, intArray))
+                     
+          }
+          case _ =>
+            // fresh array of intvar
             /*
+            val array = getVarArray(assign)
             dict +=
               ((id, (FZType.V_ARRAY_INT,
-                new VarArrayInt(Set[Int](), ann,
-                  (x) map (d =>
-                    d match {
-                      case y: Int =>
-                        if ((s contains y) || s.isEmpty) {
-                          //getCPIntVar(y)
-                        } else {
-                          throw new Exception(y + " not in the domain of " + id)
-                        }
-                      case _ =>
-                        /*
-                        val cpvar = getCPIntVar(d)
-                        if (!s.isEmpty) {
-                          shrinkDom(s, cpvar)
-                        }
-                        cpvar
-                        
-                        */
-                    }) toArray, id))))
-                    */
-          case _ =>
-            var array = Array[CPIntVar]()
-            //val value = getCPIntVarArray(assign)
-            /*
-            value.foreach { cpvar =>
-              if (!s.isEmpty) {
-                shrinkDom(s, cpvar)
-              }
-              array :+= cpvar
-            }*/
-            //addCPIntVarArray(ann, id, s, array)
-        }
+                new VarArrayInt(s, ann, array, id))))
+                
+                */
+        }        
       case None =>
         //addCPIntVarArray(ann, id, s, l)
       case _ => throw new Exception("Error in var int array creation")
     }
   }
-  */
+  
 
   
   def getBoolVar(x: Any): Variable = {
     x match {
-      case x: List[Any] => getBoolVarFromList(x)
-      case x: String => getBoolVarFromString(x)
+      case x: List[Any] => getVarFromList(x)
+      case x: String => getVarFromString(x)
       case x: Boolean => model.addVariable(x)
     }
   } 
   
-  def getBoolVarFromList(x: List[Any]): Variable = {
+
+  def getIntVar(x: Any): Variable = {
+    x match {
+      case x: Int => model.addVariable(x)
+      case x: List[Any] => getVarFromList(x)
+      case x: String => getVarFromString(x)
+    }
+  }  
+  
+  def getVarFromList(x: List[Any]): Variable = {
     dict.get(x(0).toString) match {
       case Some((tp, fzo)) =>
         tp match {
           case FZType.V_ARRAY_BOOL => {
             fzo.asInstanceOf[VarArrayInt].variables(x(1).toString.toInt - 1)
           }
+          case FZType.V_ARRAY_INT => {
+            fzo.asInstanceOf[VarArrayInt].variables(x(1).toString.toInt - 1)
+          }          
         }
       case None => throw new Exception("Var " + x + " does not exist")
     }
   } 
   
-   def getBoolVarFromString(x: String): Variable = {
+
+  
+   def getVarFromString(x: String): Variable = {
     dict.get(x) match {
       case Some((tp, fzo)) =>
         tp match {
@@ -482,6 +482,13 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             val pBool = fzo.asInstanceOf[ParamBool]
             model.addVariable(pBool.name, pBool.value)
           }
+          case FZType.V_INT => {
+            fzo.asInstanceOf[VarInt].variable
+          }
+          case FZType.P_INT => {
+            val pInt = fzo.asInstanceOf[ParamInt]
+            model.addVariable(pInt.name, pInt.value)
+          }          
         }
       case None => throw new Exception("Var " + x + " does not exist")
     }
