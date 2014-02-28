@@ -53,7 +53,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   /**
    * flatzinc model parsing
    */
-  def flatzinc_model: Parser[Any] = rep(pred_decl) ~ rep(param_decl) ~ rep(var_decl) // ~ rep(constraint) ~ solve_goal
+  def flatzinc_model: Parser[Any] = rep(pred_decl) ~ rep(param_decl) ~ rep(var_decl) ~ rep(constraint) // ~ solve_goal
 
   /**
    * predicate declaration parsing
@@ -294,13 +294,14 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
 
         case "array [" ~ iset ~ "] of var" ~ i1 ~ ".." ~ i2 =>
           val s = Range(i1.toString.toInt, i2.toString.toInt + 1).toSet
-          if (!s.isEmpty) {
-            //createCPIntVarArray(e, id, s, ann, getRangeLength(iset))
+          if (!s.isEmpty) {   
+            createIntVarArray(e, id, s, ann, getRangeLength(iset))
           } else {
             throw new Exception("A var int can not have an empty domain")
           }
 
         case "array [" ~ iset ~ "] of var" ~ "{" ~ intList ~ "}" =>
+          println("here3")
           val s = getSetFromList(intList)
         //createCPIntVarArray(e, id, s, ann, getRangeLength(iset))
 
@@ -317,7 +318,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             ((id, (FZType.V_BOOL,
               new VarInt(ann,model.addVariable(id,0,1),id))))
           case _ =>
-            dict += ((id, (FZType.V_BOOL, new VarInt(ann, getBoolVar(assign), id))))
+            dict += ((id, (FZType.V_BOOL, new VarInt(ann, getIntVar(assign), id))))
         }
       case None =>
           val variable = new VarInt(ann,model.addBoolVariable(id),id)
@@ -358,11 +359,8 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
       case Some("=" ~ assign) =>
         assign match {
           case x: List[Any] => {
-            val vars = x.map {
-                  case v: Boolean => getBoolVar(v)
-                  case e: Any => e.asInstanceOf[Variable] }
-            
-            val boolArray = new VarArrayInt(Set(0,1),ann,vars.toArray, id)
+            val vars = getBoolVarArray(x)
+            val boolArray = new VarArrayInt(ann,vars.toArray, id)
             dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
           }
           case _ =>
@@ -370,14 +368,14 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             val array = getBoolVarArray(assign)
             dict +=
               ((id, (FZType.V_ARRAY_BOOL,
-                new VarArrayInt(Set(0, 1), ann, array, id))))
+                new VarArrayInt(ann, array, id))))
         }
       case None => {
         // fresh array of boolvar
-        val boolArray = new VarArrayInt(Set(0, 1), ann, Array.tabulate(l) { i => model.addBoolVariable(id + "[" + (i + 1) + "]") }, id)
+        val boolArray = new VarArrayInt(ann, Array.tabulate(l) { i => model.addBoolVariable(id + "[" + (i + 1) + "]") }, id)
         dict += (id -> (FZType.V_ARRAY_BOOL, boolArray))
         // also add each individual entries
-        for (i <- 1 to boolArray.variables.size) {
+        for (i <- 1 to boolArray.size) {
           dict += ((id + "[" + i + "]") -> (FZType.V_BOOL, new VarInt(ann, boolArray.variables(i - 1), id)))
         }
       }
@@ -388,7 +386,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   def getBoolVarArray(x: Any): Array[Variable] = {
     x match {
       case y: List[Any] =>
-        y.map(getBoolVar(_)).toArray
+        y.map(getIntVar(_)).toArray
       case y: String =>
         dict.get(y) match {
           case Some((tp, fzo)) =>
@@ -409,48 +407,55 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   def createIntVarArray(e: Any, id: String, s: Set[Int], ann: List[Annotation], l: Int) {
     e match {
       case Some("=" ~ assign) =>  
+        println("assign array of var")
         assign match {
           case x: List[Any] => {
-            val vars = x.map {
-                  case v: Int => getIntVar(v)
-                  case e: Any => e.asInstanceOf[Variable] }
-            
-            val intArray = new VarArrayInt(s,ann,vars.toArray, id)
-            dict += (id -> (FZType.V_ARRAY_INT, intArray))
-                     
+            val vars = getIntVarArray(x)
+            val intArray = new VarArrayInt(ann,vars.toArray, id)
+            dict += (id -> (FZType.V_ARRAY_INT, intArray))       
           }
           case _ =>
-            // fresh array of intvar
-            /*
-            val array = getVarArray(assign)
-            dict +=
-              ((id, (FZType.V_ARRAY_INT,
-                new VarArrayInt(s, ann, array, id))))
-                
-                */
+            println("array of intvar")
         }        
       case None =>
-        //addCPIntVarArray(ann, id, s, l)
+        val intArray =
+          if (s.isEmpty) new VarArrayInt(ann, Array.tabulate(l) { i => model.addVariable(id + "[" + (i + 1) + "]", UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX) }, id)
+          else new VarArrayInt(ann, Array.tabulate(l) { i => model.addVariable(id + "[" + (i + 1) + "]", s) }, id)
+        dict += (id -> (FZType.V_ARRAY_INT, intArray))
+        // also add each individual entries
+        for (i <- 1 to intArray.size) {
+          dict += ((id + "[" + i + "]") -> (FZType.V_INT, new VarInt(ann, intArray.variables(i - 1), id)))
+        }     
+    
       case _ => throw new Exception("Error in var int array creation")
     }
   }
   
-
-  
-  def getBoolVar(x: Any): Variable = {
+  def getIntVarArray(x: Any): Array[Variable] = {
     x match {
-      case x: List[Any] => getVarFromList(x)
-      case x: String => getVarFromString(x)
-      case x: Boolean => model.addVariable(x)
+      case y: List[Any] =>
+        y.map(getIntVar(_)).toArray
+      case y: String =>
+        dict.get(y) match {
+          case Some((tp, fzo)) =>
+            tp match {
+              case FZType.V_ARRAY_INT => fzo.asInstanceOf[VarArrayInt].variables
+              case FZType.P_ARRAY_INT => {
+                fzo.asInstanceOf[ParamArrayBool].values.map(v => model.addVariable(v))
+              }
+            }
+          case None => throw new Exception("Var " + x + " does not exist")
+        }
     }
-  } 
+  }   
   
 
   def getIntVar(x: Any): Variable = {
     x match {
-      case x: Int => model.addVariable(x)
       case x: List[Any] => getVarFromList(x)
       case x: String => getVarFromString(x)
+      case x: Int => model.addVariable(x)
+      case x: Boolean => model.addVariable(x)
     }
   }  
   
@@ -525,7 +530,293 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
       case y: Range => y.length
       case _ => 0
     }
-  }   
+  }
+  
+  
+  // ------------------------------------------------------------------
+  
+  /**
+   * Constraints parsing
+   */
+  def constraint: Parser[Any] = "constraint" ~ pred_ann_id ~ "(" ~ rep1sep(expr, ",") ~ ")" ~ annotations ~ ";" ^^ {
+    case "constraint" ~ cstr ~ "(" ~ varList ~ ")" ~ ann ~ ";" => cstr match {
+
+      case "array_bool_and" =>
+        val array = getBoolVarArray(varList(0))
+        //array_bool_cstr(varList, ann, cstr)
+        
+      /*  
+      case "array_bool_element" =>
+        System.err.println(cstr + " not implemented")
+      case "array_bool_or" =>
+        array_bool_cstr(varList, ann, cstr)
+
+      case "array_int_element" =>
+        val b = getCPIntVar(varList(0))
+        val as = getIntArray(varList(1))
+        val c = getCPIntVar(varList(2))
+        addCstr(element(as, b - 1, c), ann)
+
+      case "array_var_bool_element" =>
+        val b = getCPIntVar(varList(0))
+        val as = getCPBoolVarArray(varList(1))
+        val c = getCPBoolVar(varList(2))
+        addCstr(elementVar(as, b - 1, c), ann)
+      case "array_var_int_element" =>
+        val b = getCPIntVar(varList(0))
+        val as = getCPIntVarArray(varList(1))
+        val c = getCPIntVar(varList(2))
+        addCstr(elementVar(as, b - 1, c), ann)
+      case "bool2int" =>
+      //cp.add(getCPBoolVar(varList(0)) == getCPIntVar(varList(1)))      
+      case "bool_and" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_eq" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_eq_reif" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_le" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_le_reif" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_lt" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_lt_reif" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_not" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_or" =>
+        bool_cstr(varList, ann, cstr)
+      case "bool_xor" =>
+        bool_cstr(varList, ann, cstr)
+
+      case "bool_lin_eq" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "bool_lin_le" =>
+        int_lin_cstr(varList, ann, cstr)
+
+      case "int_abs" =>
+        int_cstr(varList, ann, cstr)
+      case "int_eq" =>
+        int_cstr(varList, ann, cstr)
+      case "int_eq_reif" =>
+        int_reif(varList, ann, cstr)
+      case "int_le" =>
+        int_cstr(varList, ann, cstr)
+      case "int_le_reif" =>
+        int_reif(varList, ann, cstr)
+      case "int_lt" =>
+        int_cstr(varList, ann, cstr)
+      case "int_lt_reif" =>
+        int_reif(varList, ann, cstr)
+      case "int_max" =>
+        val CPArray = Array[CPIntVar](getCPIntVar(varList(0)), getCPIntVar(varList(1)))
+        addCstr(maximum(CPArray, getCPIntVar(varList(2))), ann)
+      case "int_min" =>
+        val CPArray = Array[CPIntVar](getCPIntVar(varList(0)), getCPIntVar(varList(1)))
+        addCstr(minimum(CPArray, getCPIntVar(varList(2))), ann)
+      case "int_ne" =>
+        int_cstr(varList, ann, cstr)
+      case "int_ne_reif" =>
+        int_reif(varList, ann, cstr)
+      case "int_plus" =>
+        int_cstr(varList, ann, cstr)
+      case "int_times" =>
+        int_cstr(varList, ann, cstr)
+
+      case "int_lin_ne" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "int_lin_ne_reif" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "int_lin_eq" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "int_lin_eq_reif" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "int_lin_le" =>
+        int_lin_cstr(varList, ann, cstr)
+      case "int_lin_le_reif" =>
+        int_lin_cstr(varList, ann, cstr)
+
+      case "set_card" =>
+        val s = getCPSetVar(varList(0))
+        val i = getCPIntVar(varList(1))
+        addCstr(s.card == i, ann)
+      case "set_diff" =>
+        set_cstr(varList, ann, cstr)
+      case "set_eq" =>
+        set_cstr(varList, ann, cstr)
+      case "set_in" => {
+        val x = getCPIntVar(varList(0))
+        val s = getSetOfInt(varList(1))
+        for (v <- x.min to x.max; if !s.contains(v)) {
+          x.removeValue(v)
+        }
+      }
+      // global constraints defined in minizinc/mznlib/
+      case "oscar_alldiff" =>
+        cp.add(allDifferent(getCPIntVarArray(varList(0))), Strong)
+      case "alldiff_0" =>
+      case "all_disjoint" =>
+      case "oscar_all_equal_int" =>
+        // to be tested
+        val array = getCPIntVarArray(varList(0))
+        for (i <- 0 to array.length - 2) {
+          addCstr(array(i) == array(i + 1), ann)
+        }
+      case "oscar_among" =>
+        // no need to create the vals, can get while adding constraint, what is better ?
+        val n = getCPIntVar(varList(0))
+        val x = getCPIntVarArray(varList(1))
+        val s = getSetOfInt(varList(2))
+        addCstr(among(n, x, s), ann)
+      case "oscar_at_least_int" =>
+        // no need to create the vals, can get while adding constraint, what is better ?
+        val n = getInt(varList(0))
+        val x = getCPIntVarArray(varList(1))
+        val v = getInt(varList(2))
+        addCstr(atLeast(n, x, v), ann)
+      case "oscar_at most_int" =>
+        // no need to create the vals, can get while adding constraint, what is better ?
+        val n = getInt(varList(0))
+        val x = getCPIntVarArray(varList(1))
+        val v = getInt(varList(2))
+        addCstr(atMost(n, x, v), ann)
+      case "at_most1" =>
+      case "oscar_bin_packing" =>
+        bin_packing(varList, "def")
+      case "oscar_bin_packing_capa" =>
+        bin_packing(varList, "capa")
+      case "oscar_bin_packing_load" =>
+        bin_packing(varList, "load")
+      case "oscar_circuit" =>
+        addCstr(circuit(getCPIntVarArray(varList(0)).map(_ - 1)), Strong)
+      case "oscar_count_eq" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_count_geq" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_count_gt" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_count_leq" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_count_lt" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_count_neq" =>
+        count_cstr(varList, ann, cstr)
+      case "oscar_cumulative" => {
+        val s = getCPIntVarArray(varList(0))
+        val d = getCPIntVarArray(varList(1))
+        val r = getCPIntVarArray(varList(2))
+        val e = s.zip(d).map { case (st, dur) => st + dur }
+        val c = getCPIntVar(varList(3))
+        addCstr(maxCumulativeResource(s, d, e, r, c))
+      }
+      case "oscar_decreasing_int" =>
+        val array = getCPIntVarArray(varList(0))
+        for (i <- 0 to array.length - 2) {
+          addCstr(array(i) >= array(i + 1), ann)
+        }
+      case "oscar_diffn" =>
+        val x = getCPIntVarArray(varList(0))
+        val y = getCPIntVarArray(varList(1))
+        val dx = getCPIntVarArray(varList(2))
+        val dy = getCPIntVarArray(varList(3))
+        val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
+        val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
+        val capay = maximum(endy) - minimum(y)
+        val capax = maximum(endx) - minimum(x)
+
+        for (i <- 0 until x.length; j <- i + 1 until x.length) {
+          cp.add(
+            ((x(i) + dx(i) <== x(j)) || (x(j) + dx(j) <== x(i))) ||
+              ((y(i) + dy(i) <== y(j)) || (y(j) + dy(j) <== y(i))))
+        }
+        addCstr(maxCumulativeResource(x, dx, endx, dy, capay))
+        addCstr(maxCumulativeResource(y, dy, endy, dx, capax))
+      case "oscar_disjoint" =>
+        addCstr(disjoint(getCPSetVar(varList(0)), getCPSetVar(varList(1))), ann)
+      case "oscar_distribute" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_element_bool" =>
+        System.err.println(cstr + " not implemented")
+      //cp.add(elementVar(getCPIntVarArray(varList(1).toString), getCPIntVar(varList(0)), getCPIntVar(varList(2))))
+      case "oscar_element_int" =>
+        addCstr(elementVar(getCPIntVarArray(varList(1)), getCPIntVar(varList(0)), getCPIntVar(varList(2))), ann)
+      case "exactly_int" => //not used, done with among
+
+      case "oscar_global_cardinality" =>
+        gcc_cstr(varList)
+
+      case "oscar_global_cardinality_closed" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_global_cardinality_low_up" =>
+        gcc_lbub_cstr(varList)
+      case "oscar_global_cardinality_low_up_closed" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_increasing_int" =>
+        val array = getCPIntVarArray(varList(0))
+        for (i <- 0 to array.length - 2) {
+          addCstr(array(i) <= array(i + 1), ann)
+        }
+      case "oscar_int_set_channel" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_inverse" =>
+        val x = getCPIntVarArray(varList(0))
+        val y = getCPIntVarArray(varList(1))
+        addCstr(permutation(x.map(_-1), y.map(_-1)), ann)
+      //System.err.println(cstr+" not implemented")
+      case "oscar_inverse_set" =>
+        System.err.println(cstr + " not implemented")
+      case "lex_greater_int" => //not used, done with lex_less
+        System.err.println(cstr + " not implemented")
+      case "lex_greatereq_int" => //not used, done with lex_lesseq
+        System.err.println(cstr + " not implemented")
+      case "oscar_lex_less_int" =>
+        val t1 = getCPIntVarArray(varList(0))
+        val t2 = getCPIntVarArray(varList(1))
+        addCstr(lexLeq(t1, t2), ann)
+        diff_array_cstr(t1, t2)
+      case "oscar_lex_lesseq_int" =>
+        addCstr(lexLeq(getCPIntVarArray(varList(0)), getCPIntVarArray(varList(1))), ann)
+      case "oscar_lex2" => //2D -> 1D done, need to parse the constraint
+        lex2_cstr(varList, false)
+      case "oscar_link_set_to_booleans" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_maximum_int" =>
+        addCstr(maximum(getCPIntVarArray(varList(1)), getCPIntVar(varList(0))), ann)
+      case "oscar_member_int" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_minimum_int" =>
+        addCstr(minimum(getCPIntVarArray(varList(1)), getCPIntVar(varList(0))), ann)
+      case "oscar_nvalue" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_partition_set" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_range" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_regular" => //2D -> 1D done
+        regular_cstr(varList)
+      case "oscar_roots" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_sliding_sum" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_sort" =>
+        sort_cstr(varList)
+      case "oscar_strict_lex2" =>
+        lex2_cstr(varList, true)
+      case "oscar_subcircuit" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_sum_pred" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_table_int" => //2D -> 1D done
+        table_cstr(varList)
+      case "oscar_value_precede_int" =>
+        System.err.println(cstr + " not implemented")
+      case "oscar_value_precede_chain_int" =>
+        System.err.println(cstr + " not implemented")
+        
+        */
+    }
+  }  
 
 
 /*

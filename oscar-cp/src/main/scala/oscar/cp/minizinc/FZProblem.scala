@@ -262,5 +262,189 @@ case class int_eq(x: Variable, y: Variable, ann: Option[List[Annotat]] = None) e
   }
 }
 
+/*
+         array_bool_and   
 
+         array_bool_element   
+
+         array_bool_or   
+
+
+         array_int_element   
+      
+
+         array_var_bool_element   
+      
+         array_var_int_element   
+      
+         bool2int   
+       
+         bool_and   
+     
+         bool_eq   
+       
+         bool_eq_reif   
+        
+         bool_le   
+       
+         bool_le_reif   
+
+         bool_lt   
+ 
+         bool_lt_reif   
+
+         bool_not   
+
+         bool_or   
+
+         bool_xor   
+
+         bool_lin_eq   
+
+         bool_lin_le   
+
+
+         int_abs   
+
+         int_eq   
+
+         int_eq_reif   
+ 
+         int_le   
+ 
+         int_le_reif   
+
+         int_lt   
+
+         int_lt_reif   
+
+         int_max   
+
+         int_min   
+         int_ne   
+         int_ne_reif   
+         int_plus   
+         int_times   
+   
+         int_lin_ne   
+
+         int_lin_ne_reif   
+
+         int_lin_eq   
+
+         int_lin_eq_reif   
+
+         int_lin_le   
+
+         int_lin_le_reif   
+
+
+         set_card   
+
+         set_diff   
+
+         set_eq   
+   
+         set_in
+   
+
+         oscar_alldiff   
+
+         alldiff_0   
+         all_disjoint   
+         oscar_all_equal_int   
+
+         oscar_among   
+         oscar_at_least_int   
+         oscar_at most_int   
+         at_most1   
+         oscar_bin_packing   
+
+         oscar_bin_packing_capa   
+
+         oscar_bin_packing_load   
+
+         oscar_circuit   
+ 
+         oscar_count_eq   
+ 
+         oscar_count_geq   
+ 
+         oscar_count_gt   
+
+         oscar_count_leq   
+
+         oscar_count_lt   
+    
+         oscar_count_neq   
+      
+         oscar_cumulative
+
+         oscar_decreasing_int   
+
+         oscar_diffn   
+     
+         oscar_disjoint   
+
+         oscar_distribute   
+
+         oscar_element_bool   
+         oscar_element_int   
+         exactly_int    //not used, done with among
+
+         oscar_global_cardinality   
+
+
+         oscar_global_cardinality_closed   
+
+         oscar_global_cardinality_low_up   
+
+         oscar_global_cardinality_low_up_closed   
+ 
+         oscar_increasing_int   
+
+         oscar_int_set_channel   
+
+         oscar_inverse   
+         oscar_inverse_set   
+         lex_greater_int    //not used, done with lex_less
+         lex_greatereq_int    //not used, done with lex_lesseq
+         oscar_lex_less_int   
+         oscar_lex2    //2D -> 1D done, need to parse the constraint
+
+         oscar_link_set_to_booleans   
+
+         oscar_maximum_int   
+
+         oscar_member_int   
+
+         oscar_minimum_int   
+
+         oscar_nvalue   
+
+         oscar_partition_set   
+
+         oscar_range   
+
+         oscar_regular    //2D -> 1D done
+
+         oscar_roots   
+
+         oscar_sliding_sum   
+
+         oscar_sort   
+
+         oscar_strict_lex2   
+
+         oscar_subcircuit   
+ 
+         oscar_sum_pred   
+
+         oscar_table_int    //2D -> 1D done
+
+         oscar_value_precede_int   
+ 
+         oscar_value_precede_chain_int   
+
+*/
 
