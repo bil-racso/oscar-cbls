@@ -25,20 +25,20 @@ import oscar.algebra._
 class AlgebraTest extends FunSuite with ShouldMatchers  {
 
   
-	val lp = new LPSolver()
+	implicit val lp = new LPSolver()
   
-	val x1 = new LPVar(lp,"x1",3.5,100)
-	val x2 = new LPVar(lp,"x2")
-	val x3 = new LPVar(lp,"x3",true)
-	val x4 = new LPVar(lp,"x4",false)
+	val x1 = LPFloatVar("x1",3.5,100)
+	val x2 = LPFloatVar("x2")
+	val x3 = LPFloatVar("x3",true)
+	val x4 = LPFloatVar("x4",false)
 	
 
 	val mip = new MIPSolver()
   
-	val y1 = new MIPVar(mip,"y1",3.5,100)
-	val y2 = new MIPVar(mip,"y2")
-	val y3 = new MIPVar(mip,"y3",true)
-	val y4 = new MIPVar(mip,"y4",false)	
+	val y1 = new MIPFloatVar(mip,"y1",3.5,100)
+	val y2 = new MIPFloatVar(mip,"y2")
+	val y3 = new MIPFloatVar(mip,"y3",true)
+	val y4 = new MIPFloatVar(mip,"y4",false)	
 	
   
   test("normalization, simplification and equality of linear expression") {
@@ -85,7 +85,7 @@ class AlgebraTest extends FunSuite with ShouldMatchers  {
   
   test("large sum") {
 	    val lp = new LPSolver()
-	    val x = Array.tabulate(100000)(i => new LPVar(lp,i.toString(),0,1))
+	    val x = Array.tabulate(100000)(i => new LPFloatVar(lp,i.toString(),0,1))
 	    println("large sum")
 	    val mysum = sum(x)
 	    println("large sum done")

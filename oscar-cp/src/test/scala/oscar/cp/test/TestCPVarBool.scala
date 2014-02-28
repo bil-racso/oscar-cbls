@@ -20,13 +20,13 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core._
 import oscar.cp.modeling._
 
-class TestCPVarBool extends FunSuite with ShouldMatchers {
+class TestCPBoolVar extends FunSuite with ShouldMatchers {
 	
 	test("Test1") {
 
 		val cp = CPSolver()
 		
-		val x = CPVarBool(cp)
+		val x = CPBoolVar()(cp)
 
 		x.isEmpty should be(false)
 		x.size should be(2)
@@ -53,7 +53,7 @@ class TestCPVarBool extends FunSuite with ShouldMatchers {
 
 		val cp = CPSolver()
 		
-		val x = CPVarBool(cp)
+		val x = CPBoolVar(cp)
 
 		x.isEmpty should be(false)
 		x.size should be(2)
@@ -74,7 +74,7 @@ class TestCPVarBool extends FunSuite with ShouldMatchers {
 
 		val cp = CPSolver()
 		
-		val x = CPVarBool(cp)
+		val x = CPBoolVar(cp)
 		
 		x.assign(0)
 		
@@ -89,7 +89,7 @@ class TestCPVarBool extends FunSuite with ShouldMatchers {
 
 		val cp = CPSolver()
 		
-		val x = CPVarBool(cp)
+		val x = CPBoolVar(cp)
 		
 		x.assign(0)
 		

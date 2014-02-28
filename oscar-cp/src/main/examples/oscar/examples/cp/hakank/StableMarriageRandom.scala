@@ -89,8 +89,8 @@ object StableMarriageRandom {
     //
     // decision variables
     //
-    val wife    = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
-    val husband = Array.tabulate(n)(i => CPVarInt(cp, 0 to n-1))
+    val wife    = Array.tabulate(n)(i => CPIntVar(0 to n-1)(cp))
+    val husband = Array.tabulate(n)(i => CPIntVar(0 to n-1)(cp))
 
     //
     // constraints
@@ -120,27 +120,20 @@ object StableMarriageRandom {
       val t2 = System.currentTimeMillis
       println("Constraints took " + (t2-t1) + "ms");
 
-    } exploration {
+    } search {
 
-       println("Explore...")
-       
-       cp.binary(wife ++ husband)
-
+       binaryStatic(wife ++ husband)
+    
+    } onSolution {
+      
        println("wife   :" + wife.mkString(""))
        println("husband:" + husband.mkString(""))
        println()
-
        numSols += 1
-       
 
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop()
-      }
+    } 
+    println(cp.start(nSols = num_to_show))
 
-    } run()
-
-    println("\nIt was " + numSols + " solutions.\n")
-    cp.printStats()
 
   }
 

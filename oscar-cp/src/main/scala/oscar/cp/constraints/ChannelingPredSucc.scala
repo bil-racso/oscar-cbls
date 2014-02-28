@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
@@ -28,7 +28,7 @@ import oscar.cp.core.CPOutcome._
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
 
-class ChannelingPredSucc(pred: Array[CPVarInt], succ: Array[CPVarInt]) extends Constraint(pred.head.store, "ChannelingPredSucc") {
+class ChannelingPredSucc(pred: Array[CPIntVar], succ: Array[CPIntVar]) extends Constraint(pred.head.store, "ChannelingPredSucc") {
 
   private val nSites = pred.size
   private val Sites  = 0 until nSites
@@ -76,11 +76,11 @@ class ChannelingPredSucc(pred: Array[CPVarInt], succ: Array[CPVarInt]) extends C
     return Suspend
   }
 
-  override def valRemoveIdx(cpvar: CPVarInt, i: Int, j: Int): CPOutcome =
+  override def valRemoveIdx(cpvar: CPIntVar, i: Int, j: Int): CPOutcome =
     if (i < nSites) removePred(i, j)
     else removeSucc(i - nSites, j)
 
-  override def valBindIdx(cpvar: CPVarInt, i: Int): CPOutcome =
+  override def valBindIdx(cpvar: CPIntVar, i: Int): CPOutcome =
     if (i < nSites) bindPred(i)
     else bindSucc(i - nSites)
 
@@ -92,6 +92,6 @@ class ChannelingPredSucc(pred: Array[CPVarInt], succ: Array[CPVarInt]) extends C
 }
 
 object ChannelingPredSucc {
-  def apply(pred: Array[CPVarInt], succ: Array[CPVarInt]) = new ChannelingPredSucc(pred, succ)
+  def apply(pred: Array[CPIntVar], succ: Array[CPIntVar]) = new ChannelingPredSucc(pred, succ)
 }
 

@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -27,8 +27,8 @@ import oscar.cp.core.CPStore;
  */
 public class GrEqVarReif extends Constraint {
 
-	CPVarInt x, y;
-	CPVarBool b;
+	CPIntVar x, y;
+	CPBoolVar b;
 
     /**
      * Constraint x greater or equal to y if and only if b is true <br>
@@ -37,7 +37,7 @@ public class GrEqVarReif extends Constraint {
      * @param y
      * @param b
      */
-	public GrEqVarReif(CPVarInt x, CPVarInt y, CPVarBool b) {
+	public GrEqVarReif(CPIntVar x, CPIntVar y, CPBoolVar b) {
 		super(x.s(),"GrEqVarReif");
 		this.x = x;
 		this.y = y;
@@ -95,7 +95,7 @@ public class GrEqVarReif extends Constraint {
 	}
 		
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.getValue() == 0) {
 			//x < y
 			if (s().post(new Le(x,y)) == CPOutcome.Failure) {

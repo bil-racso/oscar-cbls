@@ -62,9 +62,9 @@ import scala.math._
 
 object Olympic {
 
-  def abs_minus(x: CPVarInt,
-             y: CPVarInt,
-             z: CPVarInt) : Constraint = 
+  def abs_minus(x: CPIntVar,
+             y: CPIntVar,
+             z: CPIntVar) : Constraint = 
     z == (x-y).abs()
 
 
@@ -80,7 +80,7 @@ object Olympic {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = x
       
     //
@@ -102,18 +102,16 @@ object Olympic {
       cp.add(abs_minus(x9, x10, x6))
 
 
-    } exploration {
+    } search {
        
-      cp.binary(x, _.size, _.min)
-
+      binary(x, _.size, _.min)
+    } onSolution {
       println("x: " + x.mkString(""))
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   }
+   println(cp.start())
 
   }
 

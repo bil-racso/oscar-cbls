@@ -43,14 +43,14 @@ object SendMostMoney2 {
     val cp = CPSolver()
 
     // variables
-    val S = CPVarInt(cp, 0 to 9)
-    val E = CPVarInt(cp, 0 to 9)
-    val N = CPVarInt(cp, 0 to 9)
-    val D = CPVarInt(cp, 0 to 9)
-    val M = CPVarInt(cp, 0 to 9)
-    val O = CPVarInt(cp, 0 to 9)
-    val T = CPVarInt(cp, 0 to 9)
-    val Y = CPVarInt(cp, 0 to 9)
+    val S = CPIntVar(0 to 9)(cp)
+    val E = CPIntVar(0 to 9)(cp)
+    val N = CPIntVar(0 to 9)(cp)
+    val D = CPIntVar(0 to 9)(cp)
+    val M = CPIntVar(0 to 9)(cp)
+    val O = CPIntVar(0 to 9)(cp)
+    val T = CPIntVar(0 to 9)(cp)
+    val Y = CPIntVar(0 to 9)(cp)
     
     val all = Array(S,E,N,D,M,O,T,Y)
     val Money = M*10000 + O*1000 + N*100 + E*10 + Y
@@ -74,19 +74,17 @@ object SendMostMoney2 {
       }
         
         
-    } exploration {
+    } search {
       
-      cp.binaryFirstFail(all)
-      
+      binaryFirstFail(all)
+    } onSolution {
       println(all)
       println("Money: " + Money)
       
       this_money = Money.value
       
-    } run()
-    
-    println()
-    cp.printStats()
+    }
+    println(cp.start())
     
     return this_money
     

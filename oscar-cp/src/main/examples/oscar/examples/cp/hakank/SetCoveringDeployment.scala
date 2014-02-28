@@ -80,8 +80,8 @@ object SetCoveringDeployment {
     //
  
     // First army
-    val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
-    val y = Array.fill(n)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(n)(CPIntVar(0 to 1)(cp))
+    val y = Array.fill(n)(CPIntVar(0 to 1)(cp))
 
     // total number of elements in the choosen sets
     val num_armies = sum(x) + sum(y)
@@ -117,10 +117,11 @@ object SetCoveringDeployment {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
+      
       println("\nSolution:")
       println("num_armies: " + num_armies)
       println("x: " + x.mkString(""))
@@ -138,8 +139,7 @@ object SetCoveringDeployment {
 
    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   println(cp.start())
 
   }
 

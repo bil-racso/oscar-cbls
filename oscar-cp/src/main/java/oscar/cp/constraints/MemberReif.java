@@ -24,9 +24,9 @@ import oscar.cp.core.*;
  */
 public class MemberReif extends Constraint {
 
-	private CPVarInt x;
+	private CPIntVar x;
 	private SetIndexedArray set;
-	private CPVarBool b;
+	private CPBoolVar b;
 	private ReversibleInt inter;  // size of the intersection of D(x) and set
     private ReversibleInt xsize; // size of x
 
@@ -36,7 +36,7 @@ public class MemberReif extends Constraint {
 	 * @param set, should not be modified externally after posting the constraint
 	 * @param b
 	 */
-	public MemberReif(CPVarInt x, SetIndexedArray set, CPVarBool b) {
+	public MemberReif(CPIntVar x, SetIndexedArray set, CPBoolVar b) {
 		super(x.s(),"MemberReif");
 		this.x = x;
 		this.set = set;
@@ -75,7 +75,7 @@ public class MemberReif extends Constraint {
 	}
 
     @Override
-    public CPOutcome valRemove(CPVarInt var, int val) {
+    public CPOutcome valRemove(CPIntVar var, int val) {
         xsize.decr();
         if (set.hasValue(val)) {
             inter.decr();
@@ -90,7 +90,7 @@ public class MemberReif extends Constraint {
     }
 
     @Override
-    public CPOutcome valBind(CPVarInt var) {
+    public CPOutcome valBind(CPIntVar var) {
         assert(var.isBound());
 		if (var == x) {
              if (set.hasValue(x.getValue())) {

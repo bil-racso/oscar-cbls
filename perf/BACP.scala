@@ -64,9 +64,9 @@ object BACP {
     val prerequisites = Array.fill(nbPre)((next(), next()))
 
     val cp = CPSolver()
-    var x = Array.fill(nbCourses)(CPVarInt(cp,periods))
-    val l = Array.fill(nbPeriods)(CPVarInt(cp,0 to credits.sum))
-    val vari = CPVarInt(cp,0 to 10000000)
+    var x = Array.fill(nbCourses)(CPIntVar(cp,periods))
+    val l = Array.fill(nbPeriods)(CPIntVar(cp,0 to credits.sum))
+    val vari = CPIntVar(cp,0 to 10000000)
 
 
 
@@ -77,11 +77,9 @@ object BACP {
           cp.add(x(i) < x(j)) // precedence constraint
         }
         cp.add(gcc(x,periods,5,7),Strong)
-    } exploration {
-        cp.binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
-    } run()
-    
-    cp.printStats
+    } search {
+        binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
+    } start()
     
   }
 

@@ -28,8 +28,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or1") { 
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  cp.add(new Or(A,B))
 	  cp.add(A(0) == 1)
 	  
@@ -38,8 +38,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or2") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  cp.add(A(0) == 1)
 	  cp.add(new Or(A,B))
 	  B.isBoundTo(1) should be(true)
@@ -47,17 +47,17 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or3") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
+	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  A.foreach(x => cp.add(x == 0))
-	  val B = CPVarBool(cp)
+	  val B = CPBoolVar()(cp)
 	  cp.add(new Or(A,B))
 	  B.isBoundTo(0) should be(true)
   } 
   
   test("or4") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  cp.add(new Or(A,B))
 	  A.foreach(x => cp.add(x == 0))
 	  B.isBoundTo(0) should be(true)
@@ -65,8 +65,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or5") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  cp.add(B == 1)
 	  cp.add(A(0) == 0)
 	  cp.add(A(1) == 0)
@@ -78,8 +78,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
     
   test("or6") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  
 	  cp.add(new Or(A,B))
 	  
@@ -92,8 +92,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or7") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  
 	  cp.add(new Or(A,B))	  
 	  cp.add(B == 0)
@@ -103,8 +103,8 @@ class TestOr extends FunSuite with ShouldMatchers  {
   
   test("or8") {
 	  val cp = CPSolver()
-	  val A = Array.fill(3)(CPVarBool(cp))
-	  val B = CPVarBool(cp)
+	  val A = Array.fill(3)(CPBoolVar()(cp))
+	  val B = CPBoolVar()(cp)
 	  cp.add(B == 0)
 	  cp.add(new Or(A,B))	  
 	  

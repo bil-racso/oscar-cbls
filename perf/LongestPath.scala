@@ -12,24 +12,6 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -80,7 +62,7 @@ object LongestPath {
     
     val cp = CPSolver()
     cp.silent = true
-    val path = Array.fill(len)(CPVarInt(cp, nodes))
+    val path = Array.fill(len)(CPIntVar(cp, nodes))
     val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
 
     cp.maximize(weight) subjectTo {
@@ -89,10 +71,9 @@ object LongestPath {
       }
       cp.add(allDifferent(path), Weak)
 
-    } exploration {
-      cp.binaryFirstFail(path)
-    } run()
-    cp.printStats
+    } search {
+      binaryFirstFail(path)
+    } start()
 
   }
 

@@ -68,10 +68,10 @@ object SetCoveringSkiena {
     // variables
     //
  
-    val x = Array.fill(num_sets)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(num_sets)(CPIntVar(0 to 1)(cp))
     val z = sum(x)
     // total number of elements in the choosen sets
-    val tot_elements = CPVarInt(cp, 0 to num_sets*num_elements)
+    val tot_elements = CPIntVar(0 to num_sets*num_elements)(cp)
 
     //
     // constraints
@@ -97,10 +97,10 @@ object SetCoveringSkiena {
                 } yield x(i) * belongs(i)(j))
              )
 
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
       println("\nSolution:")
       println("z: " + z)
       println("tot_elements: " + tot_elements)
@@ -112,8 +112,7 @@ object SetCoveringSkiena {
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

@@ -76,7 +76,7 @@ object KillerSudoku {
    */
   def calc(cp: CPSolver,
            cc: Array[Int],
-           x: Array[Array[CPVarInt]],
+           x: Array[Array[CPIntVar]],
            res: Int) {
 
     val len = (cc.length / 2).toInt
@@ -142,7 +142,7 @@ object KillerSudoku {
     //
     // Decision variables
     // 
-    val x = Array.fill(n,n)(CPVarInt(cp, 0 to 9))
+    val x = Array.fill(n,n)(CPIntVar(0 to 9)(cp))
     val x_flat = x.flatten
 
     //
@@ -179,10 +179,11 @@ object KillerSudoku {
 
       }
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(x_flat)
-
+      binaryFirstFail(x_flat)
+    } onSolution {
+      
       for(i <- RANGE) {
         println(x(i).mkString(""))
       }
@@ -190,10 +191,8 @@ object KillerSudoku {
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+   println(cp.start())
 
   }
 

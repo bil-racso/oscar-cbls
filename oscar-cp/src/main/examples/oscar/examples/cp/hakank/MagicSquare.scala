@@ -45,16 +45,15 @@ object MagicSquare {
     //
     // variables
     //
-    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n2))
+    val x = Array.fill(n,n)(CPIntVar(1 to n2)(cp))
     val x_t = x.transpose
 
-    // val total = CPVarInt(cp, 1 to n*n*n)
+    // val total = CPIntVar(cp, 1 to n*n*n)
     val total = (n * (n*n + 1) / 2)
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
 
@@ -76,27 +75,21 @@ object MagicSquare {
        cp.add(x(0)(0)   < x(n-1)(n-1))
 
 
-     } exploration {
+     } search {
        
-       cp.binary(x.flatten, _.size, _.min)
-
+       binary(x.flatten.toSeq, _.size, _.min)
+     
+     } onSolution {
+       
        println("\nSolution:\ntotal " + total)
        for(i <- 0 until n) {
          println(x(i).map(j=>"%3d".format(j.value)).mkString(""))
        }
        println()
-
-
-       numSols += 1
-
-       if (num_to_show > 0 && numSols >= num_to_show) {
-         cp.stop()
-       }
        
-     } run()
-     println("\nIt was " + numSols + " solutions.")
-
-     cp.printStats()
+     } 
+     
+     println(cp.start(num_to_show))
    }
 
 }

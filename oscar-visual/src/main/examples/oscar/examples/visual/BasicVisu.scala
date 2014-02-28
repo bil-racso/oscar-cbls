@@ -19,6 +19,7 @@ package oscar.examples.visual
 import oscar.visual.VisualFrame
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualRectangle
+import java.awt.Color
 
 object BasicVisu {
 
@@ -27,11 +28,16 @@ object BasicVisu {
     val f = VisualFrame("Basic");
     val tb = f.createToolBar()
     tb.addButton("foo", println("bar"))
-    val d = VisualDrawing(false);
-    val inf = f.createFrame("Rectangle");
-    inf.add(d);
-    val rect = new VisualRectangle(d, 50, 50, 100, 50);
-    rect.toolTip = "Hello";
+    val d = VisualDrawing(flipped = true, scalable = false)
+    
+    val inf = f.createFrame("Rectangle")
+    inf.add(d)
+    val rect = new VisualRectangle(d, 10, 10, 100, 50)
+    rect.innerCol = Color.blue
+    rect.toolTip = "Hello"
+    rect.onClick {
+      println("clicked")
+    }
 
   }
 

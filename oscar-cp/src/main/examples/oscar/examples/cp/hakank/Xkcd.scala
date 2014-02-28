@@ -47,7 +47,7 @@ object Xkcd {
 
 
     // variables
-    val x = Array.fill(num_prices)(CPVarInt(cp, 0 to 10))
+    val x = Array.fill(num_prices)(CPIntVar(0 to 10)(cp))
 
     //
     // constraints
@@ -58,18 +58,17 @@ object Xkcd {
 
       cp.add(weightedSum(price, x) == total)
 
-    } exploration {
+    } search {
        
-       cp.binaryFirstFail(x)
-
+       binaryFirstFail(x)
+    } onSolution {
        println("x:" + x.mkString(" "))
 
        numSols += 1
        
-    } run()
+    } 
 
-    println("\nIt was " + numSols + " solutions.\n")
-    cp.printStats()
+    println(cp.start())
 
   }
 

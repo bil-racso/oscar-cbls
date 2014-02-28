@@ -69,7 +69,7 @@ object JustForgotten {
     //
     // variables
     // 
-    val x = Array.fill(cols)(CPVarInt(cp, 0 to 9))
+    val x = Array.fill(cols)(CPIntVar(0 to 9)(cp))
 
     //
     // constraints
@@ -84,10 +84,11 @@ object JustForgotten {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
+      
       println("\nSolution:")
       println("x: " + x.mkString(""))
       println("\nThe four tries, where '!' represents a correct digit:")
@@ -104,10 +105,9 @@ object JustForgotten {
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+    
+   println(cp.start())
 
   }
 

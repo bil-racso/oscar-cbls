@@ -121,11 +121,11 @@ object EinavPuzzle {
     //
     // variables
     //
-    val x = Array.fill(rows,cols)(CPVarInt(cp, -100 to 100))
+    val x = Array.fill(rows,cols)(CPIntVar(-100 to 100)(cp))
     val total_sum = sum(x.flatten)
     
-    val row_signs = Array.fill(rows)(CPVarInt(cp, sign_domains))
-    val col_signs = Array.fill(cols)(CPVarInt(cp, sign_domains))
+    val row_signs = Array.fill(rows)(CPIntVar(sign_domains)(cp))
+    val col_signs = Array.fill(cols)(CPIntVar(sign_domains)(cp))
 
     val row_sums = for(i <- ROWS) yield sum(for(j <- COLS) yield x(i)(j))
     val col_sums = for(j <- COLS) yield sum(for(i <- ROWS) yield x(i)(j))
@@ -150,10 +150,11 @@ object EinavPuzzle {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(col_signs ++ row_signs)
-
+      binaryMaxDegree(col_signs ++ row_signs)
+    } onSolution {
+      
       println("\nSolution:")
       println("row_sums: " + row_sums.mkString(""))
       println("row_signs: " + row_signs.mkString(""))
@@ -168,12 +169,9 @@ object EinavPuzzle {
       }
       println()
 
-      numSols += 1
-
-   }
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    } 
+    
+    println(cp.start())
 
   }
 

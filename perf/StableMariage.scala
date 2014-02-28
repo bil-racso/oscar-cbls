@@ -12,24 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+
 
 import oscar.cp.modeling._
 import oscar.cp.core._
@@ -74,8 +57,8 @@ object StableMariage {
 
     val cp = CPSolver()
 
-    val wife    = Array.fill(n)(CPVarInt(cp, Women)) // wife(i) is the woman chosen for man i
-    val husband = Array.fill(n)(CPVarInt(cp, Men)) // husband(j) is the man chosen for woman j
+    val wife    = Array.fill(n)(CPIntVar(cp, Women)) // wife(i) is the woman chosen for man i
+    val husband = Array.fill(n)(CPIntVar(cp, Men)) // husband(j) is the man chosen for woman j
     var nbSol = 0
 
     cp.solve subjectTo {
@@ -90,12 +73,11 @@ object StableMariage {
           val pref_m = element(rankMen(m),wife(m),Weak) // preference of m for his wife
           val pref_w = element(rankWomen(w),husband(w),Weak) // preference of w for her husband     
       }
-     } exploration {
-       cp.binary(wife)
-       nbSol += 1
-     } run()
-     println("nbSol:"+nbSol)
-     cp.printStats()    
+     } search {
+       binaryStatic(wife)
+     } 
+     println(cp.start())
+
   }
 
 }

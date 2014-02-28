@@ -94,13 +94,12 @@ object FillAPix {
     //
     // decision variables
     // 
-    val pict = Array.fill(n,n)(CPVarInt(cp, 0 to 1))
+    val pict = Array.fill(n,n)(CPIntVar(0 to 1)(cp))
     val pict_flat = pict.flatten
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
 
@@ -116,19 +115,19 @@ object FillAPix {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(pict.flatten)
-
+      binaryFirstFail(pict.flatten.toSeq)
+      
+    } onSolution {
+      
       println("\nSolution:")
       println(pict.map(i=>i.map(j => if (j.value == 1) "#" else " ").mkString("")).mkString("\n"))
-
-      numSols += 1
        
-     } run()
-
-     println("\nIt was " + numSols + " solutions.\n")
-     cp.printStats()
+    }
+    
+    println(cp.start())
+    
    }
 
 }

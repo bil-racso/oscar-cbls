@@ -15,7 +15,7 @@
 package oscar.cp.test;
 import oscar.cp.constraints.BinPackingFlow;
 import oscar.cp.constraints.Eq;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPStore;
 
 import junit.framework.TestCase;
@@ -48,12 +48,12 @@ public class TestBinPackingFlow extends TestCase {
 /*    
     public void test1() { 
     	CPStore cp = new CPStore();
-    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1,2}),
-    									CPVarInt.apply(cp, new int[]{0,1,2}),
-    									CPVarInt.apply(cp, new int[]{0,1,2})};
+    	CPIntVar x [] = new CPIntVar[]{ CPIntVar.apply(cp, new int[]{0,1,2}),
+    									CPIntVar.apply(cp, new int[]{0,1,2}),
+    									CPIntVar.apply(cp, new int[]{0,1,2})};
     	int w [] = new int [] {4,5,6}; 
-    	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,8),
-    									CPVarInt.apply(cp, 0,8)};
+    	CPIntVar l [] = new CPIntVar[]{ CPIntVar.apply(cp, 0,8),
+    									CPIntVar.apply(cp, 0,8)};
     	
     	cp.post(new BinPackingFlow(x, w, l));
     	assertTrue(cp.isFailed());
@@ -61,12 +61,12 @@ public class TestBinPackingFlow extends TestCase {
     
     public void test2() { 	
     	CPStore cp = new CPStore();
-    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1})};
+    	CPIntVar x [] = new CPIntVar[]{ CPIntVar.apply(cp, new int[]{0,1}),
+    									CPIntVar.apply(cp, new int[]{0,1}),
+    									CPIntVar.apply(cp, new int[]{0,1})};
     	int w [] = new int [] {6,5,4}; 
-    	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,9),
-    									CPVarInt.apply(cp, 0,6)};
+    	CPIntVar l [] = new CPIntVar[]{ CPIntVar.apply(cp, 0,9),
+    									CPIntVar.apply(cp, 0,6)};
     	
     	cp.post(new BinPackingFlow(x, w, l));
     	
@@ -75,15 +75,15 @@ public class TestBinPackingFlow extends TestCase {
  */   
     public void test3() { 	
     	CPStore cp = new CPStore();
-    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1}),
-    									CPVarInt.apply(cp, new int[]{0,1})};
+    	CPIntVar x [] = new CPIntVar[]{ CPIntVar.apply(cp, 0, 1),
+    									CPIntVar.apply(cp, 0, 1),
+    									CPIntVar.apply(cp, 0, 1)};
     	int w [] = new int [] {6,5,4}; 
-    	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,9),
-    									CPVarInt.apply(cp, 0,6)};
+    	CPIntVar l [] = new CPIntVar[]{ CPIntVar.apply(cp, 0,9),
+    									CPIntVar.apply(cp, 0,6)};
     	
-    	CPVarInt c [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,3),
-				CPVarInt.apply(cp, 0,3)};
+    	CPIntVar c [] = new CPIntVar[]{ CPIntVar.apply(cp, 0,3),
+				CPIntVar.apply(cp, 0,3)};
     	
     	cp.post(new BinPackingFlow(x, w, l,c));
     	cp.post(new Eq(x[0], 0));
@@ -94,13 +94,13 @@ public class TestBinPackingFlow extends TestCase {
     public void test4() { 
     	
     	CPStore cp = new CPStore();
-    	CPVarInt x [] = new CPVarInt[]{ CPVarInt.apply(cp, new int[]{0,1,2}),
-    									CPVarInt.apply(cp, new int[]{0,1,2}),
-    									CPVarInt.apply(cp, new int[]{0,1,2})};
+    	CPIntVar x [] = new CPIntVar[]{ CPIntVar.apply(cp, new int[]{0,1,2}),
+    									CPIntVar.apply(cp, new int[]{0,1,2}),
+    									CPIntVar.apply(cp, new int[]{0,1,2})};
     	int w [] = new int [] {4,5,6}; 
-    	CPVarInt l [] = new CPVarInt[]{ CPVarInt.apply(cp, 0,8),
-    									CPVarInt.apply(cp, 0,8),
-    									CPVarInt.apply(cp, 0,8)};
+    	CPIntVar l [] = new CPIntVar[]{ CPIntVar.apply(cp, 0,8),
+    									CPIntVar.apply(cp, 0,8),
+    									CPIntVar.apply(cp, 0,8)};
     	
     	cp.post(new BinPackingFlow(x, w, l));
     	

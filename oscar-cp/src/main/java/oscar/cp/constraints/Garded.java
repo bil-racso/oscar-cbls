@@ -16,12 +16,12 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
+import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.Constraint;
 
 public class Garded extends Constraint {
 	
-	private CPVarBool b;
+	private CPBoolVar b;
 	private Constraint c;
 	private boolean onTrue;
 	
@@ -30,9 +30,9 @@ public class Garded extends Constraint {
 	 * @param b
 	 * @param c
 	 * @param onTrue 
-     * @see  Constraint#when(cp.core.CPVarBool)
+     * @see  Constraint#when(cp.core.CPBoolVar)
 	 */
-	public Garded(CPVarBool b, Constraint c, boolean onTrue) {
+	public Garded(CPBoolVar b, Constraint c, boolean onTrue) {
 		super(b.s(),"Garded Constraint");
 		this.b = b;
 		this.c = c;

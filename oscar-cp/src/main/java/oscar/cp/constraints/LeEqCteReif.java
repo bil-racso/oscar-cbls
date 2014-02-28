@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -27,9 +27,9 @@ import oscar.cp.core.CPStore;
  */
 public class LeEqCteReif extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int v;
-	CPVarBool b;
+	CPBoolVar b;
 
     /**
      * Constraint x less or equal to v if and only if b is true <br>
@@ -38,7 +38,7 @@ public class LeEqCteReif extends Constraint {
      * @param v
      * @param b
      */
-	public LeEqCteReif(CPVarInt x, int v, CPVarBool b) {
+	public LeEqCteReif(CPIntVar x, int v, CPBoolVar b) {
 		super(x.s(),"GrEqCteReif");
 		this.x = x;
 		this.v = v;
@@ -79,7 +79,7 @@ public class LeEqCteReif extends Constraint {
 	}
 		
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.getValue() == 0) {
 			//x > v
 			if (x.updateMin(v+1) == CPOutcome.Failure) {

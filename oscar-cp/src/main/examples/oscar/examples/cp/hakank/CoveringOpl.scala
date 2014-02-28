@@ -67,7 +67,7 @@ object CoveringOpl {
     //
     // variables
     //
-    val hire = Array.fill(num_workers)(CPVarInt(cp, 0 to 1))
+    val hire = Array.fill(num_workers)(CPIntVar(0 to 1)(cp))
     val total_cost = weightedSum(cost, hire)
 
     //
@@ -88,20 +88,19 @@ object CoveringOpl {
                                )
                         )
       
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(hire)
-
+      binaryMaxDegree(hire)
+      
+    } onSolution {
+      
       println("\nSolution:")
       println("total_cost: " + total_cost)
       println("hire: " + hire.zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(" "))
 
-      numSols += 1
-
    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   println(cp.start())
 
   }
 

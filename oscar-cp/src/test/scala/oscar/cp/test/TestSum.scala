@@ -30,10 +30,10 @@ class TestSum extends FunSuite with ShouldMatchers  {
 	  	
 	  	val s = CPSolver()
 	  	
-    	val x0 = CPVarInt(s,0,1)
-    	val x1 = CPVarInt(s,0,2)
-    	val x2 = CPVarInt(s,0,2)
-    	val x3 = CPVarInt(s,0,3)
+    	val x0 = CPIntVar(0,1)(s)
+    	val x1 = CPIntVar(0,2)(s)
+    	val x2 = CPIntVar(0,2)(s)
+    	val x3 = CPIntVar(0,3)(s)
     	
     	val  cumulatedCounters = Array(x0,x1,x2,x3)
     	val n = cumulatedCounters.size
@@ -56,8 +56,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum1") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,0 to 5), CPVarInt(cp,1 to 5), CPVarInt(cp,0 to 5))
-	  val y = CPVarInt(cp,0 to 100)
+	  val x = Array(CPIntVar(0 to 5)(cp), CPIntVar(1 to 5)(cp), CPIntVar(0 to 5)(cp))
+	  val y = CPIntVar(0 to 100)(cp)
 	  cp.add(sum(x,y))
 	  y.min should be(1)
 	  y.max should be(15) 
@@ -65,8 +65,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum2") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,-5 to 5), CPVarInt(cp,1 to 2), CPVarInt(cp,0 to 1))
-	  val y = CPVarInt(cp,0 to 100)
+	  val x = Array(CPIntVar(-5 to 5)(cp), CPIntVar(1 to 2)(cp), CPIntVar(0 to 1)(cp))
+	  val y = CPIntVar(0 to 100)(cp)
 	  cp.add(sum(x,y))
 	  x(0).min should be(-3)
 	  y.min should be(0) 
@@ -75,8 +75,8 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   test("sum3") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,0 to 5), CPVarInt(cp,0 to 5), CPVarInt(cp,0 to 5))
-	  val y = CPVarInt(cp,5)
+	  val x = Array(CPIntVar(0 to 5)(cp), CPIntVar(0 to 5)(cp), CPIntVar(0 to 5)(cp))
+	  val y = CPIntVar(5)(cp)
 	  cp.add(sum(x,y))
 	  cp.add(x(1) == 0)
 	  cp.add(x(0) >= 1)
@@ -88,29 +88,18 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   
   val rand = new scala.util.Random(0)
-  def solve(x: Array[CPVarInt], y: CPVarInt, decomp: Boolean = false): Int = {
+  def solve(x: Array[CPIntVar], y: CPIntVar, decomp: Boolean = false): Int = {
     val cp = y.s.asInstanceOf[CPSolver]
     //cp.pushState()
     var nbSol = 0
     cp.solve subjectTo {
       if (decomp) cp.add(new oscar.cp.constraints.Sum(x,y))
       else cp.add(sum(x,y))
-    } exploration {
-      while(!x.forall(_.isBound)) {
-        val z = x.find(!_.isBound).get
-        val v = z.min
-        cp.branch
-        {
-          //println("banching on =="+v)
-          cp.add(z == v)}
-        {
-          //println("branching on !="+v)
-          cp.add(z!=v)}
-        //println("branched z="+z)
-      }
-      //cp.binary(x :+ y, z => rand.nextInt(30))
+    } search {
+      binaryStatic(x)
+    } onSolution {  
       nbSol += 1
-    } run()
+    } start()
     cp.popAll()
     nbSol
     
@@ -119,33 +108,33 @@ class TestSum extends FunSuite with ShouldMatchers  {
   test("sum4") { 
     
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,-2 to 5,"x0"), CPVarInt(cp,-4 to 5,"x1"), CPVarInt(cp,3 to 5,"x2"))
-	  val y = CPVarInt(cp,4 to 5,"y")
-	  println("---------------")
-	  println("=>"+solve(x,y,true))
-	  println("=>"+solve(x,y))
-	  println("----------------")
-	  //solve(x,y,false) should be(solve(x,y,true))
+	  val x = Array(CPIntVar(-2 to 5,"x0")(cp), CPIntVar(-4 to 5,"x1")(cp), CPIntVar(3 to 5,"x2")(cp))
+	  val y = CPIntVar(4 to 5,"y")(cp)
+	  //println("---------------")
+	  //println("=>"+solve(x,y,true))
+	  //println("=>"+solve(x,y))
+	  //println("----------------")
+	  solve(x,y,false) should be(solve(x,y,true))
   }
   
   test("sum5") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,Set(-5,-3,2,8)), CPVarInt(cp,Set(-10,8)), CPVarInt(cp,3 to 5))
-	  val y = CPVarInt(cp,3 to 8)
+	  val x = Array(CPIntVar(Set(-5,-3,2,8))(cp), CPIntVar(Set(-10,8))(cp), CPIntVar(3 to 5)(cp))
+	  val y = CPIntVar(3 to 8)(cp)
 	  
-	  println("=>"+solve(x,y,true))
-	  println("=>"+solve(x,y))
+	  //println("=>"+solve(x,y,true))
+	  //println("=>"+solve(x,y))
 	  
 	  solve(x,y,false) should be(solve(x,y,true))
   }
   
   test("sum6") { 
 	  val cp = CPSolver()
-	  val x = Array(CPVarInt(cp,Set(-5,-3,2,8)), CPVarInt(cp,Set(-10,8)), CPVarInt(cp,3 to 5),CPVarInt(cp,-10 to -5))
-	  val y = CPVarInt(cp,3 to 8)
+	  val x = Array(CPIntVar(Set(-5,-3,2,8))(cp), CPIntVar(Set(-10,8))(cp), CPIntVar(3 to 5)(cp),CPIntVar(-10 to -5)(cp))
+	  val y = CPIntVar(3 to 8)(cp)
 	  
-	  println("=>"+solve(x,y,true))
-	  println("=>"+solve(x,y))
+	  //println("=>"+solve(x,y,true))
+	  //println("=>"+solve(x,y))
 	  
 	  solve(x,y,false) should be(solve(x,y,true))
   }   

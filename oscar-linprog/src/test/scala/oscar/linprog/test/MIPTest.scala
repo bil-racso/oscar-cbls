@@ -30,19 +30,19 @@ class MIPTest extends FunSuite with ShouldMatchers {
   test("mip test 1") {
     for (lib <- solvers) {
 
-      val mip = MIPSolver(lib)
-      val x = MIPVar(mip, "x", 0, 100)
-      val y = MIPVar(mip, "y", 0 to 100)
+      implicit val mip = MIPSolver(lib)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
 
-      mip.maximize(8 * x + 12 * y) subjectTo {
-        mip.add(10 * x + 20 * y <= 140)
-        mip.add(6 * x + 8 * y <= 72)
-      }
+      maximize(8 * x + 12 * y)
+      add(10 * x + 20 * y <= 140)
+      add(6 * x + 8 * y <= 72)
+      start()
 
-      mip.status should equal(LPStatus.OPTIMAL)
-      x.getValue should be(8.0 plusOrMinus 0.00001)
+      status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
-      mip.release()
+      release()
 
     }
   }
@@ -50,80 +50,80 @@ class MIPTest extends FunSuite with ShouldMatchers {
   test("mip test 2: update constraints rhs") {
     for (lib <- solvers) {
       println("===================================================================================lib:"+lib)
-      val mip = MIPSolver(lib)
-      val x = MIPVar(mip, "x", 0, 100)
-      val y = MIPVar(mip, "y", 0 to 100)
+      implicit val mip = MIPSolver(lib)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
 
       val cons: LPConstraint = mip.add(10 * x + 20 * y <= 140)
       val cons2 = mip.add(8 * x + 6 * y <= 96)
 
-      mip.maximize(8 * x + 12 * y) subjectTo {
-        mip.add(6 * x + 8 * y <= 72)
-      }
-
-      mip.status should equal(LPStatus.OPTIMAL)
-      x.getValue should be(8.0 plusOrMinus 0.00001)
+      maximize(8 * x + 12 * y)
+      add(6 * x + 8 * y <= 72)
+      start()
+      
+      status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
       if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
         mip.updateRhs(cons, 120.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(12.0 plusOrMinus 0.00001)
+        x.value.get should be(12.0 plusOrMinus 0.00001)
         y.value should equal(Some(0))
 
         mip.updateRhs(cons2, 80.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(8.0 plusOrMinus 0.00001)
+        x.value.get should be(8.0 plusOrMinus 0.00001)
         y.value should equal(Some(2))
 
         mip.updateRhs(cons, 140.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(7.75 plusOrMinus 0.00001)
+        x.value.get should be(7.75 plusOrMinus 0.00001)
         y.value should equal(Some(3))
       }
       
 
-      mip.release()
+      release()
     }
   }
 
   test("mip test 3: update coeficient in constraint") {
     for (lib <- solvers) {
 
-      val mip = MIPSolver(lib)
-      val x = MIPVar(mip, "x", 0, 100)
-      val y = MIPVar(mip, "y", 0 to 100)
-      val cons: LPConstraint = mip.add(10 * x + 20 * y <= 140)
-      val cons2 = mip.add(8 * x + 6 * y <= 96)
+      implicit val mip = MIPSolver(lib)
+      val x = MIPFloatVar( "x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
+      val cons: LPConstraint = add(10 * x + 20 * y <= 140)
+      val cons2 = add(8 * x + 6 * y <= 96)
 
-      mip.maximize(8 * x + 12 * y) subjectTo {
-        mip.add(6 * x + 8 * y <= 72)
-      }
+      maximize(8 * x + 12 * y)
+      add(6 * x + 8 * y <= 72)
+      start()
 
       mip.status should equal(LPStatus.OPTIMAL)
-      x.getValue should be(8.0 plusOrMinus 0.00001)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
       if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
         mip.updateCoef(cons, x, 1000.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(0.0 plusOrMinus 0.00001)
+        x.value.get should be(0.0 plusOrMinus 0.00001)
         y.value should equal(Some(7))
 
         mip.updateCoef(cons, x, 10.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(8.0 plusOrMinus 0.00001)
+        x.value.get should be(8.0 plusOrMinus 0.00001)
         y.value should equal(Some(3))
 
         mip.updateCoef(cons, y, 10.0)
         mip.solveModel
         mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(0.0 plusOrMinus 0.00001)
+        x.value.get should be(0.0 plusOrMinus 0.00001)
         y.value should equal(Some(9))
       }
 
@@ -132,25 +132,26 @@ class MIPTest extends FunSuite with ShouldMatchers {
   test("mip test 4: update coeficient and rhs in constraint") {
     for (lib <- solvers) {
 
-      val mip = MIPSolver(lib)
-      val x = MIPVar(mip, "x", 0, 100)
-      val y = MIPVar(mip, "y", 0 to 100)
-      val cons: LPConstraint = mip.add(10 * x + 20 * y <= 140)
-      val cons2 = mip.add(8 * x + 6 * y <= 96)
+      implicit val mip = MIPSolver(lib)
+      val x = MIPFloatVar("x", 0, 100)
+      val y = MIPIntVar("y", 0 to 100)
+      val cons: LPConstraint = add(10 * x + 20 * y <= 140)
+      val cons2 = add(8 * x + 6 * y <= 96)
 
-      mip.maximize(8 * x + 12 * y) subjectTo {
-        mip.add(6 * x + 8 * y <= 72)
-      }
-      mip.status should equal(LPStatus.OPTIMAL)
-      x.getValue should be(8.0 plusOrMinus 0.00001)
+      maximize(8 * x + 12 * y)
+      add(6 * x + 8 * y <= 72)
+      start()
+      
+      status should equal(LPStatus.OPTIMAL)
+      x.value.get should be(8.0 plusOrMinus 0.00001)
       y.value should equal(Some(3))
 
       if (lib != LPSolverLib.glpk) { // update not yet implemented in glpk
         mip.updateCoef(cons, y, 10.0)
         mip.updateRhs(cons2, 30)
         mip.solveModel
-        mip.status should equal(LPStatus.OPTIMAL)
-        x.getValue should be(0.0 plusOrMinus 0.00001)
+        status should equal(LPStatus.OPTIMAL)
+        x.value.get should be(0.0 plusOrMinus 0.00001)
         y.value should equal(Some(5))
       }
 

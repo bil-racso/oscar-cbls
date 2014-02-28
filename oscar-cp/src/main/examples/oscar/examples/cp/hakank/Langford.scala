@@ -61,10 +61,10 @@ object Langford {
     //
     // variables
     //
-    val position = Array.fill(2*k)(CPVarInt(cp, 0 to 2*k-1))
+    val position = Array.fill(2*k)(CPIntVar(0 to 2*k-1)(cp))
 
     // channel positions to a solution array
-    val solution = Array.fill(2*k)(CPVarInt(cp, 1 to k))
+    val solution = Array.fill(2*k)(CPIntVar(1 to k)(cp))
 
     //
     // constraints
@@ -83,23 +83,19 @@ object Langford {
       // symmetry breaking
       cp.add(solution(0) < solution(2*k-1))
 
-    } exploration {
+    } search {
        
-      cp.binary(position, _.size, _.min)
-
+      binary(position, _.size, _.min)
+    
+    } onSolution {
       print("solution:" + solution.mkString("") + " ")
       println("position:" + position.mkString(""))
 
       numSols += 1
 
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop()
-      }
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+   println(cp.start(num_to_show))
 
   }
 

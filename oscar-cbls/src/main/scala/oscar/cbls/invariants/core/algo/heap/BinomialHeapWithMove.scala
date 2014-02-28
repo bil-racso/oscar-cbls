@@ -1,17 +1,17 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
@@ -22,7 +22,7 @@ package oscar.cbls.invariants.core.algo.heap
 
 import collection.immutable.SortedMap
 import collection.Iterator
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
@@ -31,8 +31,9 @@ import oscar.cbls.invariants.core.propagation.checker
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
+ * @author renaud.delandtsheer@cetic.be
  */
-class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
+class BinomialHeap[@specialized T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   var HeapArray:Array[T] = new Array[T](maxsize)
   private var msize:Int=0
 
@@ -45,7 +46,7 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   def keyGetter_=(KeyGetter:T => Int){
     if(msize>0){
       val content:List[T] = this.toList
-      dropAll
+      dropAll()
       GetKey = KeyGetter
       content map insert
     }else{
@@ -58,13 +59,13 @@ class BinomialHeap[T](initialGetKey:T => Int,val maxsize:Int)(implicit val X:Man
   override def size = msize
   override def isEmpty:Boolean = (msize == 0)
 
-  override def toString:String = {
+  override def toString():String = {
     HeapArray.toList.toString()
   }
 
   /**makes the datastruct empty, but does not frees the space*/
   override def dropAll(){
-    msize = 0;
+    msize = 0
   }
 
   /**log(n)*/
@@ -189,7 +190,8 @@ class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
  * @param maxsize the maximum number of elements that can be inserted in this heap
  * @param X the manifest of T, to create arrays of T's
  * @tparam T the type of elements included in the heap
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Ordering[T],implicit val X:Manifest[T]){
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
@@ -197,7 +199,7 @@ class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Or
 
   def isEmpty = (size==0)
 
-  def checkInternals(c:checker){
+  def checkInternals(c:Checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)
@@ -328,6 +330,10 @@ class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Or
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param maxId
+ */
 class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   
   val array:Array[Int] = new Array[Int](maxId)
@@ -336,7 +342,7 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   def iterator: Iterator[(Int, Int)] = {throw new Exception("enumeration not supported"); null}
 
   def +=(kv: (Int, Int)): this.type = {
-    array(kv._1) = kv._2.asInstanceOf[Int]
+    array(kv._1) = kv._2
     this
   }
 
@@ -346,11 +352,20 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
   }
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ * @param GetKey
+ * @param maxsize
+ * @param position
+ * @param A
+ * @param X
+ * @tparam T
+ */
 class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:scala.collection.mutable.Map[T,Int])(implicit val A:Ordering[T],implicit val X:Manifest[T]){
   var HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
 
-  def checkInternals(c:checker){
+  def checkInternals(c:Checker){
     for(i <- HeapArray.indices if i < size-1){
       if (leftChild(i) < size){
         assert(GetKey(HeapArray(i)) <= GetKey(HeapArray(leftChild(i))),"heap error " + this + i)

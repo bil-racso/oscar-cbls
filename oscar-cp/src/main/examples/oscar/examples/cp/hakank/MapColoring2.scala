@@ -47,7 +47,7 @@ object MapColoring2 {
     val num_colors = 4
       
     // variables
-    val color = Array.fill(n)(CPVarInt(cp, 1 to num_colors))
+    val color = Array.fill(n)(CPIntVar(1 to num_colors)(cp))
 
     //
     // constraints
@@ -71,18 +71,19 @@ object MapColoring2 {
       cp.add(color(Belgium) == 1)
 
 
-     } exploration {
+     } search {
        
-       cp.binaryFirstFail(color)
-
+       binaryFirstFail(color)
+     
+     } onSolution {
+     
        println("color:" + color.mkString(" "))
 
        numSols += 1
        
-     } run()
-     println("\nIt was " + numSols + " solutions.\n")
-
-     cp.printStats()
+     } 
+     
+     println(cp.start())
    }
 
 }

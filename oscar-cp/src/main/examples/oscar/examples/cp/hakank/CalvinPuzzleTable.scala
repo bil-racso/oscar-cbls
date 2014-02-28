@@ -52,27 +52,7 @@ import scala.math._
  */
 object CalvinPuzzleTable {
 
-  def binaryMedianSelection(cp: CPSolver,
-                            vars : Array[CPVarInt], 
-                            varHeuris : CPVarInt => Int, 
-                            valHeuris : CPVarInt => Int) : Unit @suspendable = {
-                                
-    while (!allBounds(vars)) {
-                                        
-      // Variable selection
-      val unbound   = vars.filter(!_.isBound)
-      val minHeuris = unbound.map(varHeuris(_)).min
-      val x         = unbound.filter(varHeuris(_) == minHeuris).head
-      
-      // Value selection
-      val vals      = x.toArray
-      // val sortedVal = vals.sortBy(valHeuris)
-      // val v         = sortedVal(vals.size/2)
-      val v         = vals(vals.size/2)
-      // println("x: " + x + " v: " + v)
-      cp.branch (cp.post(x == v))(cp.post(x != v))
-    }
-  }
+
 
 
     //
@@ -117,7 +97,7 @@ object CalvinPuzzleTable {
       //
       // variables
       //
-      val x = Array.fill(n,n)(CPVarInt(cp, 0 to n*n-1))
+      val x = Array.fill(n,n)(CPIntVar(0 to n*n-1)(cp))
       val x_flat = x.flatten
 
       //
@@ -138,11 +118,12 @@ object CalvinPuzzleTable {
         cp.add(x(0)(0) == 0)
 
 
-      } exploration {
+      } search {
         
-        cp.binary(x_flat,-_.constraintDegree,_.randomValue)
-        // binaryMedianSelection(cp, x_flat, _.min, _.min)
+        binary(x_flat,-_.constraintDegree,_.randomValue)
 
+      } onSolution {
+        
         println("Solution:")
 
         // Now, get the values of the matrix
@@ -159,18 +140,10 @@ object CalvinPuzzleTable {
           println()
         }
         println()
-
-          
-        numSols +=1
-
-        if (num_to_show > 0 && numSols >= num_to_show) {
-          cp.stop()
-        }
-
-      } run()
+        
+      }
  
-      println("\nIt was " + numSols + " solution(s).")
-      cp.printStats()
+      println(cp.start(nSols = num_to_show))
 
   }
 

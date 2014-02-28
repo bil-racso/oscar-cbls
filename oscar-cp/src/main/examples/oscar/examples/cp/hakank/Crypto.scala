@@ -95,7 +95,7 @@ object Crypto {
     //
     // variables
     //
-    val LD = Array.fill(num_letters)(CPVarInt(cp, 1 to num_letters))
+    val LD = Array.fill(num_letters)(CPIntVar(1 to num_letters)(cp))
 
     // Note: D is not used in the constraints below
     // Note: Scala only allows for max 22-tuple... 
@@ -140,19 +140,20 @@ object Crypto {
       cp.add(                W + A + L + T + Z == WALTZ)
 
 
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(LD)
-
+      binaryMaxDegree(LD)
+      
+    } onSolution {
+      
       println("\nSolution:")
       println("LD:" + LD.mkString(""))
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+    
+   println(cp.start())
 
   }
 

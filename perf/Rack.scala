@@ -60,9 +60,9 @@ object Rack {
     // CP Model
 
     val cp = CPSolver()
-    val rack = Racks.map(r => CPVarInt(cp, 0 to nbModel)) // the model type in each rack
-    val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPVarInt(cp, 0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
-    val cost = CPVarInt(cp, 0 to maxCost)
+    val rack = Racks.map(r => CPIntVar(cp, 0 to nbModel)) // the model type in each rack
+    val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPIntVar(cp, 0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
+    val cost = CPIntVar(cp, 0 to maxCost)
 
     cp.minimize(cost) subjectTo {
 
@@ -82,19 +82,16 @@ object Rack {
 
       // symmetry breaking constraints
       for (r <- 1 until nbRack) {
-        val var_r: Array[CPVarInt] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
-        val var_r_1: Array[CPVarInt] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
+        val var_r: Array[CPIntVar] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
+        val var_r_1: Array[CPIntVar] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
         cp.add(lexLeq(var_r, var_r_1))
       }
 
 
-    } exploration {
-      cp.binaryFirstFail(rack)
-      cp.binaryFirstFail(counters.flatten)
-    } run()
-
-
-    cp.printStats()
+    } search {
+      binaryFirstFail(rack) ++ binaryFirstFail(counters.flatten.toSeq)
+    } 
+    println(cp.start())
 
 
   }

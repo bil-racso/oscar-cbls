@@ -1,17 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -27,35 +13,31 @@ import scala.math._
  * 2. If the rightmost digit is removed, the remaining number should be divisible by 8.
  * 3. If the rightmost digit of the new number is removed, the remaining number should be divisible by 7.
  * 4. And so on, until there's only one digit (which will necessarily be divisible by 1).
+ * 
+ * 
  */
-object DivisibleBy9Through1 {
+object DivisibleBy9Through1 extends CPModel with App {
 
-  def main(args: Array[String]) {
+  val digits = Array.fill(9)(CPIntVar(1 to 9))
+  val numbers = Array.fill(9)(CPIntVar(1 to 1000000000))
+  val divisors = Array.fill(9)(CPIntVar(1 to 100000000))
 
-      
-    val cp = CPSolver()
+  val coefs = Array(100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1)
 
-    val digits = Array.fill(9)(CPVarInt(cp, 1 to 9))
-    val numbers  = Array.fill(9)(CPVarInt(cp, 1 to 1000000000))
-    val divisors = Array.fill(9)(CPVarInt(cp, 1 to 100000000))
-
-    val coefs = Array(100000000,10000000,1000000,100000,10000,1000,100,10,1)
-    
-    cp.solve() subjectTo {
-      
-      cp.add(allDifferent(digits), Strong)
-      for (i <- 1 to 9) {
-        cp.add(sum(0 until i)(j => digits(j) * coefs.drop(9-i)(j)) == numbers(i-1))
-        cp.add(numbers(i-1) == divisors(i-1) * i)
-      }
-      
-    } exploration {
-      cp.binaryFirstFail(digits)
-      println(digits.mkString(","))
-      println(numbers.mkString(","))
-    }
-    cp.printStats()
-    
+  onSolution {
+    println(digits.mkString(", "))
+    println(numbers.mkString(", "))
   }
 
+  add(allDifferent(digits), Strong)
+  for (i <- 1 to 9) {
+    add(sum(0 until i)(j => digits(j) * coefs.drop(9 - i)(j)) == numbers(i - 1))
+    add(numbers(i - 1) == divisors(i - 1) * i)
+  }
+
+  search(binaryFirstFail(digits))
+
+  val stats = start()
+
+  println(stats)
 }

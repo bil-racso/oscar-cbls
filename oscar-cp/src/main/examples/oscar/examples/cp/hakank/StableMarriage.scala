@@ -170,8 +170,8 @@ object StableMarriage {
 
       
     // variables
-    val wife    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-    val husband = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val wife    = Array.fill(n)(CPIntVar(0 to n-1)(cp))
+    val husband = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     //
     // constraints
@@ -223,21 +223,19 @@ object StableMarriage {
         }
       }
 
-     } exploration {
+     } search {
        
-       cp.binaryFirstFail(wife ++ husband)
-
+       binaryFirstFail(wife ++ husband)
+     } onSolution {
        println("wife   :" + wife.mkString(""))
        println("husband:" + husband.mkString(""))
        println()
 
        numSols += 1
        
-     } run()
+     }
 
-     println("\nIt was " + numSols + " solutions.\n")
-
-     cp.printStats()
-   }
+     println(cp.start())
+  }
 
 }

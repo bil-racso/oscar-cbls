@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,10 +25,10 @@ import oscar.cp.core.Constraint;
  */
 public class SumLeEq extends Constraint {
 	
-	private CPVarInt [] x;
-	private CPVarInt y;
+	private CPIntVar [] x;
+	private CPIntVar y;
 
-	public SumLeEq(CPVarInt [] x, CPVarInt y) {
+	public SumLeEq(CPIntVar [] x, CPIntVar y) {
 		super(x[0].s(),"SumLeq");
 		this.x = x;
 		this.y = y;
@@ -39,8 +39,8 @@ public class SumLeEq extends Constraint {
      * @param x
      * @param y
      */
-	public SumLeEq(CPVarInt [] x, int y) {
-		this(x,CPVarInt.apply(x[0].s(),y,y));
+	public SumLeEq(CPIntVar [] x, int y) {
+		this(x,CPIntVar.apply(x[0].s(),y,y));
 	}
 
 	@Override

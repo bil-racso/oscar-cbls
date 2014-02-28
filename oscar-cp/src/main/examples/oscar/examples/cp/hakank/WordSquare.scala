@@ -88,7 +88,7 @@ object WordSquare {
     // word matrix 
     val A = Array.tabulate(num_words,word_len)((i,j) => d(words(i)(j)))
     // the selected words
-    val E = Array.fill(word_len)(CPVarInt(cp, 0 to num_words))
+    val E = Array.fill(word_len)(CPIntVar(0 to num_words)(cp))
 
     //
     // constraints
@@ -102,28 +102,22 @@ object WordSquare {
       // now find the connections
       for{i <- WORDLEN
           j <- WORDLEN} {
-        cp.add(A(E(i))(CPVarInt(cp,j)) == A(E(j))(CPVarInt(cp,i)))
+        cp.add(A(E(i))(CPIntVar(j)(cp)) == A(E(j))(CPIntVar(i)(cp)))
       }
 
 
-    } exploration {
+    } search {
 
-      cp.binaryFirstFail(E)
-        
+      binaryFirstFail(E)
+    } onSolution {  
       println("solution #" + (numSols+1))
       println(E.map(e=>words(e.value)).mkString("\n"))
       println()
-
       numSols += 1
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop();
-      }
 
-    } run()
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    }
 
+    println(cp.start(nSols = num_to_show))
  }
-
 }

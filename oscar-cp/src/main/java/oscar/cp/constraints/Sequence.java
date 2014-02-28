@@ -27,12 +27,12 @@ import oscar.cp.core.*;
 public class Sequence extends Constraint {
 	
 
-	private CPVarInt[] xinit;
-    private CPVarBool[] x; // x[i] <-> (xinit[i] memberOf values)
+	private CPIntVar[] xinit;
+    private CPBoolVar[] x; // x[i] <-> (xinit[i] memberOf values)
 	private int min, max, len;
     private SetIndexedArray values;
-    private CPVarInt[] cumulatedCounters; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
-	private CPVarInt[][] P; // partial sums Pij = x[i]+...+x[j]
+    private CPIntVar[] cumulatedCounters; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
+	private CPIntVar[][] P; // partial sums Pij = x[i]+...+x[j]
 	
 	/**
 	 * Sequence constraint specifying that in any sequence of length q in x, there 
@@ -43,7 +43,7 @@ public class Sequence extends Constraint {
 	 * @param min the minimal occurrences of values from set within a sequence.
 	 * @param max the maximal occurrences of values from set within a sequence.
 	 */
-	public Sequence(CPVarInt [] x, SetIndexedArray values, int l, int min, int max) {
+	public Sequence(CPIntVar [] x, SetIndexedArray values, int l, int min, int max) {
 		super(x[0].s(),"Sequence");
 		assert (!(values.getSize() == 0));
 		assert(l < x.length);
@@ -61,21 +61,21 @@ public class Sequence extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength cl) {
         // creates the bool vars and create the channeling constraints
-        x = new CPVarBool[xinit.length];
+        x = new CPBoolVar[xinit.length];
         for (int i = 0; i < x.length; i++) {
-        	x[i] = CPVarBool.apply(s());
+        	x[i] = CPBoolVar.apply(s());
         }
         for (int i = 0; i < x.length; i++) {
             if (s().post(new MemberReif(xinit[i],values,x[i])) == CPOutcome.Failure) {
                 return CPOutcome.Failure;
             }
         }
-        cumulatedCounters = new CPVarInt[x.length]; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
+        cumulatedCounters = new CPIntVar[x.length]; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
         cumulatedCounters[0] = x[0];
         for (int i = 1; i < x.length; i++) {
             cumulatedCounters[i] = cumulatedCounters[i-1].plus(x[i]);
         }
-        P = new CPVarInt[x.length][x.length];
+        P = new CPIntVar[x.length][x.length];
         for (int i = 0; i < x.length; i++) {
             P[i][i] = x[i];
             for (int j = i+1; j < Math.min(x.length, i+len); j++) {
@@ -88,7 +88,7 @@ public class Sequence extends Constraint {
         for (int i = 0; i < x.length; i++) {
             for (int j = i+1; j < Math.min(x.length, i+len); j++) {
                 for (int m = i; m < j; m++) {
-                    if (s().post(new Sum(new CPVarInt[]{P[i][m],P[m+1][j]},P[i][j])) == CPOutcome.Failure) {
+                    if (s().post(new Sum(new CPIntVar[]{P[i][m],P[m+1][j]},P[i][j])) == CPOutcome.Failure) {
                         return CPOutcome.Failure;
                     }
                 }

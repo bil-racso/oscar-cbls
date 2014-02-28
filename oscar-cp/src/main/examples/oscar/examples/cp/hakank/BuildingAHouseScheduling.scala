@@ -12,24 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+
 package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
@@ -60,7 +43,7 @@ import scala.math._
 
 object BuildingAHouseScheduling {
 
-	def main(args : Array[String]) {
+	/*def main(args : Array[String]) {
 
 		//
 		// data
@@ -97,7 +80,7 @@ object BuildingAHouseScheduling {
 		val makespan = cp.makespan
 
 		// extra constraint
-		val zero = CPVarInt(cp, 0 to 0)
+		val zero = CPIntVar(0 to 0)(cp)
 		val z = maximum(Array(moving.end - 100, zero)) * 400 +
 			    maximum(Array(-masonry.start + 25, zero)) * 200 +
 			    maximum(Array(-carpentry.start + 75, zero)) * 300 +
@@ -106,7 +89,6 @@ object BuildingAHouseScheduling {
 		//
 		// constraints
 		//
-		var numSols = 0
 
 		// cp.minimize(makespan) subjectTo {
 		cp.minimize(z) subjectTo {
@@ -127,24 +109,20 @@ object BuildingAHouseScheduling {
 			garden precedes moving
 			painting precedes moving
 
-		} exploration {
+		} search {
 
-			cp.setTimes(cp.activities)
-			// cp.binaryFirstFail(cp.activities)
-			// cp.binaryMaxDegree(cp.activities.map(_.start))
+			setTimes(cp.activities.map(_.start),cp.activities.map(_.dur),cp.activities.map(_.end))
 
+		} onSolution {
+		  
 			println("makespan:" + makespan)
 			println(activities.map(a => "%-10s".format(a.name) + ": " + "%3d".format(a.start.value) + " --" + "%3d".format(a.dur.value) + "h --" + "%3d".format(a.end.value)).mkString("\n"))
-
 			println()
-
-			numSols += 1
-
+		  
 		}
 
-		println("\nIt was " + numSols + " solutions.")
-		cp.printStats()
+		println(cp.start())
 
 	}
-
+*/
 }

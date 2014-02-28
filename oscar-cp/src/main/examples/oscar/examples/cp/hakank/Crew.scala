@@ -138,17 +138,16 @@ object Crew {
     //
     // variables
     //
-    val crew = Array.fill(num_flights,num_persons)(CPVarInt(cp, 0 to 1))
+    val crew = Array.fill(num_flights,num_persons)(CPIntVar(0 to 1)(cp))
     val crew_flat = crew.flatten
 
-    // val num_working = CPVarInt(cp, 1 to num_persons)
+    // val num_working = CPIntVar(cp, 1 to num_persons)
     val num_working = sum(for{p <- PERSONS}
                            yield sum(for{f <- FLIGHTS} yield (crew(f)(p)))>>= 0)
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
     // cp.minimize(num_working) subjectTo {
@@ -189,10 +188,12 @@ object Crew {
       */
 
 
-     } exploration {
+     } search {
 
-        cp.binary(crew_flat)
-
+        binaryStatic(crew_flat)
+        
+     } onSolution {
+       
         println("num_working: " + num_working)
         for(f <- FLIGHTS) {
           for(p <- PERSONS) {
@@ -226,17 +227,10 @@ object Crew {
         println()
         println();
 
-        numSols += 1
-
-        if (num_to_show > 0 && numSols >= num_to_show) {
-          cp.stop()
-        }
-
-     } run()
-
-     println("\nIt was " + numSols + " solutions.")
-
-     cp.printStats()
+     } 
+     
+     println(cp.start(nSols = num_to_show))
+    
    }
 
 }

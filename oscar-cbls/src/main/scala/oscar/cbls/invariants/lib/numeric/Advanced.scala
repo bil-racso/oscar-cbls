@@ -20,21 +20,21 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import oscar.cbls.invariants.core.computation._;
-import oscar.cbls.invariants.core.propagation._;
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation._
 
 /** sum(i in cond) vars(i)
- * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
- * @param vars is a set of IntVars
- * @param cond is the condition for selecting variables in the set of summed ones, cannot be null
- */
-case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+ * @param vars is an array of IntVars
+ * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
   def myMin = Int.MinValue
   def myMax = Int.MaxValue
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
 
@@ -48,7 +48,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
   finishInitialization()
 
-  override def setOutputVar(v: IntVar) {
+  override def setOutputVar(v: CBLSIntVar) {
       output = v
       //collecter les counts et le max
       output.setDefiningInvariant(this)
@@ -56,7 +56,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, index:Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index)==v)
     assert(keyForRemoval(index)!=null)
@@ -64,7 +64,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
@@ -73,7 +73,7 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
     unregisterDynamicDependency(keyForRemoval(value))
@@ -82,8 +82,9 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
     output :-= vars(value).value
   }
 
-  override def checkInternals(c:checker) {
-    c.check(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
+  override def checkInternals(c:Checker) {
+    c.check(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value),
+        Some("output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)"))
   }
 }
 
@@ -91,15 +92,16 @@ case class SumElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvarian
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.
  * @param vars is a set of IntVars
  * @param cond is the condition for selecting variables in the set of summed ones.
- */
-case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvariant with Bulked[IntVar, Unit]{
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   def myMin = Int.MinValue
   def myMax = Int.MaxValue
-  var output: IntVar = null
+  var output: CBLSIntVar = null
 
-  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
+  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}
 
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)
@@ -111,23 +113,29 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
   }
 
   finishInitialization()
-  var NullVarCount:Int = 0
-  var NonNullProd:Int = 0
 
-  override def setOutputVar(v: IntVar) {
+  var NullVarCount:Int = 0
+  var NonNullProd:Int = 1
+
+  @inline
+  private def affectOutput(){
+    if (NullVarCount == 0){
+      output := NonNullProd
+    }else{
+      output := 0
+    }
+  }
+
+  override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
     NullVarCount = cond.value.count(i => vars(i).value == 0)
     NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i).value == 0){acc}else{acc*vars(i).value})
-    if (NullVarCount != 0){
-      output := 0
-    }else{
-      output := NonNullProd
-    }
+    affectOutput()
   }
 
   @inline
-  override def notifyIntChanged(v: IntVar, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: CBLSIntVar, index:Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index) == v)
     assert(keyForRemoval(index)!=null)
@@ -141,33 +149,25 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
       NonNullProd = NonNullProd/OldVal
       NonNullProd = NonNullProd * NewVal
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
   @inline
-  override def notifyInsertOn(v: IntSetVar, value: Int) {
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     if(vars(value).value == 0){
-      NullVarCount +=1
+      NullVarCount += 1
     }else{
-      NonNullProd *=vars(value).value
+      NonNullProd *= vars(value).value
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
   @inline
-  override def notifyDeleteOn(v: IntSetVar, value: Int) {
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
 
@@ -175,18 +175,17 @@ case class ProdElements(vars: Array[IntVar], cond: IntSetVar) extends IntInvaria
     keyForRemoval(value) = null
 
     if(vars(value).value == 0){
-      NullVarCount -=1
+      NullVarCount -= 1
     }else{
-      NonNullProd =NonNullProd / vars(value).value
+      NonNullProd = NonNullProd / vars(value).value
     }
-    if (NullVarCount == 0){
-      output := NonNullProd
-    }else{
-      output := 0
-    }
+    affectOutput()
   }
 
-  override def checkInternals(c:checker) {
-    c.check(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value))
+  override def checkInternals(c:Checker) {
+    c.check(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value),
+        Some("output.value (" + output.value
+            + ") == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value) ("
+            + cond.value.foldLeft(1)((acc, i) => acc * vars(i).value) + ")"))
   }
 }

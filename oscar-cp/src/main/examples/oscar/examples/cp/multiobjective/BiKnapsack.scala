@@ -64,11 +64,11 @@ object BiKnapsack extends App {
   val cp = CPSolver()
   cp.silent = true
 
-  val x: Array[CPVarBool] = Array.fill(nItems)(CPVarBool(cp))
-  val capaVar1 = CPVarInt(cp, 0 to capa1)
-  val capaVar2 = CPVarInt(cp, 0 to capa2)
-  val profitVar1 = CPVarInt(cp, 0 to profit(0).sum)
-  val profitVar2 = CPVarInt(cp, 0 to profit(1).sum)
+  val x: Array[CPBoolVar] = Array.fill(nItems)(CPBoolVar()(cp))
+  val capaVar1 = CPIntVar(0 to capa1)(cp)
+  val capaVar2 = CPIntVar(0 to capa2)(cp)
+  val profitVar1 = CPIntVar(0 to profit(0).sum)(cp)
+  val profitVar2 = CPIntVar(0 to profit(1).sum)(cp)
 
   val knapsack1 = binaryKnapsack(x, items1.map(_._2), items1.map(_._1), profitVar1, capaVar1)
   val knapsack2 = binaryKnapsack(x, items2.map(_._2), items2.map(_._1), profitVar2, capaVar2)
@@ -82,16 +82,18 @@ object BiKnapsack extends App {
   }
 
   var obj = 0
-  cp.exploration {
-    while (!allBounds(x)) {
-      val i = selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)).get
-      cp.branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
+  cp.search {
+    selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)) match {
+      case None => noAlternative
+      case Some(i) => branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
+    
+  } onSolution {
     paretoPlot.insert(profitVar1.value, profitVar2.value)
   }
 
-  val t = time { 
-    cp.run() 
+  val t = time {
+    cp.start() 
   }
 
   println("time " + t)

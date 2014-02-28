@@ -33,9 +33,9 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	  val profit = Array.fill(n)(1+rand.nextInt(100))
 	  val weight = Array.fill(n)(1+rand.nextInt(u))
 	  val cp = CPSolver()
-	  val P = CPVarInt(cp,0 to 1000000)
-	  val W = CPVarInt(cp,0 to (n/2 * u/2))
-	  val X = Array.fill(profit.size)(new CPVarBool(cp))
+	  val P = CPIntVar(0 to 1000000)(cp)
+	  val W = CPIntVar(0 to (n/2 * u/2))(cp)
+	  val X = Array.fill(profit.size)(new CPBoolVar(cp))
 	  var obj = 0
 	  //println("W:"+W)
 	  //println("weight:"+weight.mkString(","))
@@ -48,13 +48,13 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
 	      //println("with knapsack")
 	      cp.add(new Knapsack(X,profit,weight,P,W,true))
 	    } 
-	  } exploration {
-	    
-	    while(!cp.allBounds(X)) {
+	  } search {
+	    if (allBounds(X)) noAlternative
+	    else {
 	      val (x,i) = X.zipWithIndex.filter{case (x,i) => !x.isBound}.maxBy{case (x,i) => weight(i)}
-	      cp.branch(cp.post(x == 1))(cp.post(x == 0))
+	      branch(cp.post(x == 1))(cp.post(x == 0))	      
 	    }
-	    //println(P.value+" "+X.mkString(","))
+	  } onSolution {
 	    obj = P.value
 	  }
 	  obj
@@ -79,9 +79,9 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     val w = Array(25,2,32,36,36)
     val p = Array(76,62,4,91,94)
     val cp = CPSolver()
-    val X = Array.fill(w.size)(CPVarBool(cp))
-    val P = CPVarInt(cp,155 to 170)
-    val W = CPVarInt(cp,0 to 40)
+    val X = Array.fill(w.size)(CPBoolVar()(cp))
+    val P = CPIntVar(155 to 170)(cp)
+    val W = CPIntVar(0 to 40)(cp)
     cp.add(new Knapsack(X,p,w,P,W))
     cp.add(X(3) == 0)
     X(0).getValue should be (0)
@@ -100,9 +100,9 @@ class TestKnapsack extends FunSuite with ShouldMatchers  {
     val p = Array(57,85,71,24,33)
     val w = Array(10,40,37,21,30)
     val cp = CPSolver()
-    val X = Array.fill(w.size)(CPVarBool(cp))
-    val P = CPVarInt(cp,85 to 170)
-    val W = CPVarInt(cp,0 to 40)
+    val X = Array.fill(w.size)(CPBoolVar()(cp))
+    val P = CPIntVar(85 to 170)(cp)
+    val W = CPIntVar(0 to 40)(cp)
     cp.add(X(1) == 0)
     cp.add(new Knapsack(X,p,w,P,W))
     X(0).getValue should be (1)

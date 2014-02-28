@@ -66,7 +66,7 @@ object SetPartition {
     // variables
     // 
     // The matrix
-    val a = Array.fill(num_sets,n)(CPVarInt(cp, 0 to 1))
+    val a = Array.fill(num_sets,n)(CPIntVar(0 to 1)(cp))
 
 
     //
@@ -124,10 +124,10 @@ object SetPartition {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binary(a.flatten)
-
+      binaryStatic(a.flatten.toSeq)
+    } onSolution {
       println("\nSolution:")
       var sums = 0
       var sums_squared = 0
@@ -147,10 +147,9 @@ object SetPartition {
 
       numSols += 1
 
-    } run()
+    }
+    println(cp.start())
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
 
   }
 

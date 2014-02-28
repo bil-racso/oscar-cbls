@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,7 +25,7 @@ import oscar.cp.core.Constraint;
  */
 public class AllDifferent extends Constraint {
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 
     /**
      * Post the constraint that for every pair of variables in x[i], x[j], we have x[i] != x[j] <br>
@@ -33,7 +33,7 @@ public class AllDifferent extends Constraint {
      * @see CPPropagStrength
      * @param x
      */
-	public AllDifferent(CPVarInt ...x) {
+	public AllDifferent(CPIntVar ...x) {
 		super(x[0].s(),"AllDifferent");
 		this.x = x;
 	}

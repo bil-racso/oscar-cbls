@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,7 +26,7 @@ import oscar.cp.core.Constraint;
  */
 public class Circuit extends Constraint {
 	
-	private CPVarInt [] succ;
+	private CPIntVar [] succ;
 	
 	private ReversibleInt [] dest; // dest[i] is the end node index of the longest assigned path (unique) from i
 	private ReversibleInt [] lengthToDest; // lengthToDest[i] is the number of edges on the path from i to dest[i]
@@ -41,7 +41,7 @@ public class Circuit extends Constraint {
      * @param succ
      * @see CPPropagStrength
      */
-	public Circuit(CPVarInt [] succ) {
+	public Circuit(CPIntVar [] succ) {
 		super(succ[0].s(),"Circuit");
 		this.succ = succ;
 		
@@ -82,7 +82,7 @@ public class Circuit extends Constraint {
 	}
 
 	@Override
-	public CPOutcome valBindIdx(CPVarInt var, int i) {
+	public CPOutcome valBindIdx(CPIntVar var, int i) {
 		int j = var.getValue();
 		// We have a new assigned path because of new edge i->j:
 		// o *-> i -> j *-> d

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -24,16 +24,16 @@ import oscar.cp.core.Constraint;
  */
 public class AllDiffAC extends Constraint {
 
-	private CPVarInt[] x;
+	private CPIntVar[] x;
 
-	public AllDiffAC(CPVarInt[] x) {
+	public AllDiffAC(CPIntVar[] x) {
 		super(x[0].s(),"Alldifferent AC");
 		this.x = x;
 	}
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		CPVarInt nvalues = CPVarInt.apply(s(),x.length,x.length);
+		CPIntVar nvalues = CPIntVar.apply(s(),x.length,x.length);
 		CPOutcome ok = s().post(new AtLeastNValueAC(x,nvalues));
 		if (ok == CPOutcome.Failure) {
 			return CPOutcome.Failure;

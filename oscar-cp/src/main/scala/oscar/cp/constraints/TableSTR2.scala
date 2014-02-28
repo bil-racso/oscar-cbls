@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
  * 
  * @author Jean-Baptiste Mairy and Pierre Schaus (pschaus@gmail.com)
  */
-class TableSTR2(val X: Array[CPVarInt], table: Array[Array[Int]]) extends Constraint(X(0).s, "Table2") {
+class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).s, "Table2") {
 
   val lastSize = Array.fill(X.size)(new ReversibleInt(s,-1))
   
@@ -113,7 +113,7 @@ object TableSTR2 {
   def main(args: Array[String]) {
 	  val tuples = Array(Array(1,2,3),Array(2,2,3),Array(3,2,1))
 	  val cp = CPSolver()
-	  var X = Array.fill(3)(CPVarInt(cp,0 to 5))
+	  var X = Array.fill(3)(CPIntVar(0 to 5)(cp))
 	  cp.add(new TableSTR2(X,tuples))
 	  println(X.mkString(" - "))
   }

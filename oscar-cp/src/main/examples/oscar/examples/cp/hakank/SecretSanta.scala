@@ -81,7 +81,7 @@ object SecretSanta {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val x = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     //
     // constraints
@@ -103,10 +103,10 @@ object SecretSanta {
         cp.add(family(x(i)) != family(i))
       }
       
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
       println("\nSolution:")
 
       println("x: " + x.mkString(""))
@@ -116,14 +116,8 @@ object SecretSanta {
 
       numSols += 1
 
-      if (num_to_show > 0 && numSols >= num_to_show) {
-        cp.stop()
-      }
-
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+   println(cp.start(nSols = num_to_show))
 
   }
 

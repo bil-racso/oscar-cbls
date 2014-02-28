@@ -24,7 +24,7 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
+class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible(n) {
   
   // Pointer to the object to trail
   private var pointer: T = v
@@ -70,7 +70,7 @@ class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
     pointer = value.asInstanceOf[T]
   }
 
-  override def toString(): String = if (hasValue) pointer + "" else ""
+  override def toString(): String = if (hasValue) s"$pointer" else ""
 }
 
 object ReversiblePointer {

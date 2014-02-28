@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPStore;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,7 +26,7 @@ import oscar.cp.core.Constraint;
  */
 public class GrEq extends Constraint {
 
-	CPVarInt x, y;
+	CPIntVar x, y;
 
     /**
      * Constraint x >= y
@@ -35,14 +35,14 @@ public class GrEq extends Constraint {
      * @see GrEqCteReif
      * @see GrEqVarReif
      */
-	public GrEq(CPVarInt x, CPVarInt y) {
+	public GrEq(CPIntVar x, CPIntVar y) {
 		super(x.s(),"GrEq");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public GrEq(CPVarInt x, int v) {
-		this(x, CPVarInt.apply(x.s(),v,v));
+	public GrEq(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(x.s(),v,v));
 	}
 	
 	@Override

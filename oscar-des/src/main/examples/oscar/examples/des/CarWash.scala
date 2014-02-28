@@ -24,7 +24,6 @@ import oscar.des.engine
 import oscar.invariants._
 import scala.util.continuations._
 import JSci.maths.statistics._
-import oscar.stochastic._
 
 //import org.scala_tools.time.Imports._
 //import oscar.util.date._

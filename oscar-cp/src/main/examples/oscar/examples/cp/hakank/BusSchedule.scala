@@ -57,14 +57,13 @@ object BusSchedule {
     //
  
     // How many buses start the schedule at time slot t
-    val x = Array.fill(time_slots)(CPVarInt(cp, 0 to max_num))
+    val x = Array.fill(time_slots)(CPIntVar(0 to max_num)(cp))
     // Total number of buses
     val num_buses  = sum(x)
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.minimize(num_buses) subjectTo {
 
@@ -77,22 +76,22 @@ object BusSchedule {
       cp.add(x(time_slots-1) + x(0) - demands(time_slots-1) == 0)
       
       
-    } exploration {
+    } search {
        
-      cp.binary(x)
+      binaryStatic(x)
 
+
+    } onSolution {
+      
       println("\nSolution:")
 
       println("x: " + x.mkString(""))
       println("num_buses : " + num_buses)
       println()
 
-      numSols += 1
+    }
 
-   }
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

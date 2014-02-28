@@ -14,38 +14,36 @@
  ******************************************************************************/
 package oscar.examples.dfo
 
-import oscar.dfo.modeling._
-import oscar.dfo._
-import oscar.algebra._
+import oscar.algebra.int2const
+import oscar.dfo.modeling.DFOModel
+import oscar.dfo.modeling.DFOFloatVar
+import oscar.dfo.modeling.minimize
+import oscar.dfo.modeling.onSolution
 
 /**
  * @author pschaus@gmail.com
  */
-object Rosenbrock2D {
+object Rosenbrock2D extends DFOModel with App {
 
-  def main(args: Array[String]): Unit = {  
-    
-      val dfo = DFOSolver()
 
-      // declare two variables and their domain
-      val x = DFOVar(dfo, "x1", -10, +10)
-      val y = DFOVar(dfo, "x2", -10, +10)
-    
-      // 2D Rosenbrock function
-      val objective = (1-x) * (1-x) + 100 * (y-x*x) * (y-x*x)
-      
-      // callback to print evolution of objective during optimization
-      dfo.onSolution {
-        () => println(objective.value)
-      }    
-      
-      // start the effective optimization
-      dfo.minimize(objective)
 
-      println(x+" "+x.value)
-      println(y+" "+y.value)
-      println("objective:"+objective.value) 
-  
+  // declare two variables and their domain
+  val x = DFOFloatVar("x1", -10, +10)
+  val y = DFOFloatVar("x2", -10, +10)
+
+  // 2D Rosenbrock function
+  val objective = (1 - x) * (1 - x) + 100 * (y - x * x) * (y - x * x)
+
+  // callback to print evolution of objective during optimization
+  onSolution {
+    println(objective.value)
   }
+
+  // start the effective optimization
+  minimize(objective)
+
+  println(x + " " + x.value)
+  println(y + " " + y.value)
+  println("objective:" + objective.value)
 
 }

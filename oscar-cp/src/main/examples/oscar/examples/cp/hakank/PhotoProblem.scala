@@ -72,7 +72,7 @@ object PhotoProblem {
   //   x is the position array
   //   y are the placements
   // 
-  def inverse(cp: CPSolver, x: Array[CPVarInt], y: Array[CPVarInt]) {
+  def inverse(cp: CPSolver, x: Array[CPIntVar], y: Array[CPIntVar]) {
     val len = x.length
       for(i <- 0 until len;
           j <- 0 until len) {
@@ -113,8 +113,8 @@ object PhotoProblem {
     //
     // variables
     //
-    val positions = Array.fill(n)(CPVarInt(cp, 0 to n-1))
-    val places    = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val positions = Array.fill(n)(CPIntVar(0 to n-1)(cp))
+    val places    = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     // calculate all the successful preferences
     val z =  sum(
@@ -147,10 +147,10 @@ object PhotoProblem {
       // cp.add(z == 6)
 
 
-    } exploration {
+    } search {
        
-      cp.binary(positions)
-
+      binaryStatic(positions)
+    } onSolution {
       println("\nSolution:")
       println("positions: " + positions.mkString(""))
       println("places   : " + places.mkString(""))
@@ -178,11 +178,8 @@ object PhotoProblem {
 
       numSols += 1
 
-   }
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
-
+   } 
+   println(cp.start())
   }
 
 }

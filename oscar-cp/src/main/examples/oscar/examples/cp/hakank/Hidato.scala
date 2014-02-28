@@ -124,7 +124,7 @@ object Hidato {
     //
 
     // the grid as an array
-    val x = Array.fill(n*n)(CPVarInt(cp, 1 to n2))
+    val x = Array.fill(n*n)(CPIntVar(1 to n2)(cp))
 
     //
     // constraints
@@ -146,10 +146,10 @@ object Hidato {
 
       for(k <- 1 until n*n-1) {
 
-        val i = CPVarInt(cp, 0 to n-1)
-        val j = CPVarInt(cp, 0 to n-1)
-        val a = CPVarInt(cp, -1 to 1) 
-        val b = CPVarInt(cp, -1 to 1) 
+        val i = CPIntVar(0 to n-1)(cp)
+        val j = CPIntVar(0 to n-1)(cp)
+        val a = CPIntVar(-1 to 1)(cp)
+        val b = CPIntVar(-1 to 1)(cp)
 
         val ix1 = i*n+j
         val ix2 = (i+a)*n + j+b
@@ -174,10 +174,11 @@ object Hidato {
       }
   
 
-    } exploration {
+    } search {
  
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
+      
       println("\nSolution:")
       for(i <- 0 until n) {
         for(j <- 0 until n) {
@@ -189,12 +190,10 @@ object Hidato {
 
       numSols += 1
 
-   } run()
-
-    println("It was " + numSols + " solutions.")
-
-    cp.printStats()
-
+    } 
+   
+    println(cp.start())
+    
   }
 
 }

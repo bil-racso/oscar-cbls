@@ -89,8 +89,8 @@ object SichermanDice {
     //
     // variables
     //
-    val x1 = Array.fill(n)(CPVarInt(cp, lowest_value to m))
-    val x2 = Array.fill(n)(CPVarInt(cp, lowest_value to m))
+    val x1 = Array.fill(n)(CPIntVar(lowest_value to m)(cp))
+    val x2 = Array.fill(n)(CPIntVar(lowest_value to m)(cp))
 
     //
     // constraints
@@ -114,20 +114,19 @@ object SichermanDice {
       }
       
 
-    } exploration {
+    } search {
        
-      cp.binary(x1 ++ x2, _.min, _.min)
-
+      binary(x1 ++ x2, _.min, _.min)
+    } onSolution {
       println("x1: " + x1.mkString(""))
       println("x2: " + x2.mkString(""))
       println()
 
       numSols += 1
 
-    } run()
+    } 
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

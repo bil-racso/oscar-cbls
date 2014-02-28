@@ -18,8 +18,8 @@ import oscar.algo.reversible.ReversibleBool;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -28,8 +28,8 @@ import oscar.cp.core.Constraint;
  */
 public class Or extends Constraint {
 	
-	private CPVarBool [] x;
-	private CPVarBool y;
+	private CPBoolVar [] x;
+	private CPBoolVar y;
 	
 	ReversibleInt nbBound;
 	ReversibleBool ytrue;
@@ -41,7 +41,7 @@ public class Or extends Constraint {
      * @param x
      * @param y
      */
-	public Or(CPVarBool [] x, CPVarBool y) {
+	public Or(CPBoolVar [] x, CPBoolVar y) {
 		super(x[0].s(),"Or");
 		this.x = x;
 		this.y = y;
@@ -109,7 +109,7 @@ public class Or extends Constraint {
 	
 	
 	@Override
-	public CPOutcome valBindIdx(CPVarInt var, int idx) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -137,7 +137,7 @@ public class Or extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPVarInt yvar) {
+	public CPOutcome valBind(CPIntVar yvar) {
 		if (yvar.getValue() == 0) {
 			for (int i = 0; i < x.length; i++) {
 					if (x[i].assign(0) == CPOutcome.Failure) {

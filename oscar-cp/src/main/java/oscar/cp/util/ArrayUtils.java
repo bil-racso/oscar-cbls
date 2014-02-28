@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 
 
 /**
@@ -166,13 +166,13 @@ public class ArrayUtils {
 	}
 
 	
-	public  static  CPVarInt[] append(CPVarInt[] a1, CPVarInt[] a2) {
-		CPVarInt [] res = new CPVarInt[a1.length + a2.length];
+	public  static  CPIntVar[] append(CPIntVar[] a1, CPIntVar[] a2) {
+		CPIntVar [] res = new CPIntVar[a1.length + a2.length];
 		int i = 0;
-		for (CPVarInt x: a1) {
+		for (CPIntVar x: a1) {
 			res[i++] = x;
 		}
-		for (CPVarInt x: a2) {
+		for (CPIntVar x: a2) {
 			res[i++] = x;
 		}
 		return res;
@@ -183,9 +183,9 @@ public class ArrayUtils {
      * @param a matrix array
      * @return  the column c that is [a[0][c] , ... , a[n-1][c]]
      */
-    public static CPVarInt[] getSlice(CPVarInt [][] a, int c) {
+    public static CPIntVar[] getSlice(CPIntVar [][] a, int c) {
         assert(c > 0);
-		CPVarInt [] res = new CPVarInt[a.length];
+		CPIntVar [] res = new CPIntVar[a.length];
 		for (int i = 0; i < a.length; i++) {
             assert(c < a[i].length);
 			res[i] = a[i][c];
@@ -244,8 +244,8 @@ public class ArrayUtils {
      * @param a
      * @return an array containing all element in matrix a
      */
-	public static CPVarInt[] flattenvars(CPVarInt [][] a) {
-		return flatten(a).toArray(new CPVarInt[0]);
+	public static CPIntVar[] flattenvars(CPIntVar [][] a) {
+		return flatten(a).toArray(new CPIntVar[0]);
 	}
 
     /**
@@ -253,9 +253,9 @@ public class ArrayUtils {
      * @param a
      * @return the minimum domain value over all the variables in a
      */
-	public static int getMinVal(CPVarInt [] a) {
+	public static int getMinVal(CPIntVar [] a) {
 		int res = a[0].getMin();
-		for (CPVarInt x: a) {
+		for (CPIntVar x: a) {
 			if (x.getMin() < res) {
 				res = x.getMin();
 			}
@@ -268,9 +268,9 @@ public class ArrayUtils {
      * @param a
      * @return the maximum domain value over all the elements in a
      */
-	public static int getMaxVal(CPVarInt [] a) {
+	public static int getMaxVal(CPIntVar [] a) {
 		int res = a[0].getMax();
-		for (CPVarInt x: a) {
+		for (CPIntVar x: a) {
 			if (x.getMax() > res) {
 				res = x.getMax();
 			}
@@ -285,7 +285,7 @@ public class ArrayUtils {
      * @param x
      * @return the index of the first unbound variable, -1 if all variables are bound
      */
-	public static int getFirstNotBound(CPVarInt [] x){
+	public static int getFirstNotBound(CPIntVar [] x){
 		for (int i = 0; i < x.length; i++) {
 			if(!x[i].isBound()){
 				return i;
@@ -300,7 +300,7 @@ public class ArrayUtils {
      * @return  the index of the unbound variable having the smalles possible value in its domain, <br>
      *          -1 if all variables are bound.
      */
-	public static int getMinValNotBound(CPVarInt [] x) {
+	public static int getMinValNotBound(CPIntVar [] x) {
 		int val = Integer.MAX_VALUE;
 		int var = -1;
 		for (int i = 0; i < x.length; i++) {
@@ -317,7 +317,7 @@ public class ArrayUtils {
 	 * @param x
 	 * @return the index in x of a randomly chosen unbound variable according to uniform distribution, -1 if every variable is bound
 	 */
-	public static int getRandomNotBound(final CPVarInt [] x) {
+	public static int getRandomNotBound(final CPIntVar [] x) {
 		assert(x.length > 0);
 		Random rand = x[0].s().getRandom();
 		int cpt = 0;
@@ -341,7 +341,7 @@ public class ArrayUtils {
      * @param x
      * @return the index of the unbound variable in x having the smallest domain (useful for first fail heuristics).
      */
-	public static int getMinDomNotBound(final CPVarInt [] x) {
+	public static int getMinDomNotBound(final CPIntVar [] x) {
 		return getVarNotBound(x, new Comparator<Integer>() {
 			public int compare(Integer o1, Integer o2) {
 				return x[o1].getSize()-x[o2].getSize();
@@ -355,7 +355,7 @@ public class ArrayUtils {
 	 * @return the index of the unbound variable in x which is the smallest one according  <br>
 	 * 			 to comparators comp used lexicographically, -1 if all variables are bound.
 	 */
-	public static int getVarNotBound(CPVarInt [] x, Comparator<Integer> ...comp) {
+	public static int getVarNotBound(CPIntVar [] x, Comparator<Integer> ...comp) {
 		int ind = -1;
 		for (int i = 0; i < x.length; i++) {
 			if (! x[i].isBound()) {
@@ -384,7 +384,7 @@ public class ArrayUtils {
      * @param x
      * @return the larger index of a bound variable in x, Integer.MIN_VALUE is not such variable
      */
-	public static int getMaxBoundVal(CPVarInt [] x) {
+	public static int getMaxBoundVal(CPIntVar [] x) {
 		int v = Integer.MIN_VALUE;
 		for (int i = 0; i < x.length; i++) {
 			if(x[i].isBound()){

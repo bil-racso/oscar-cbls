@@ -64,7 +64,7 @@ object SafeCracking {
     //
     // variables
     //
-    val x   = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val x   = Array.fill(n)(CPIntVar(1 to n)(cp))
     val Array(c1,c2,c3,c4,c5,c6,c7,c8,c9) = x
 
     //
@@ -81,18 +81,16 @@ object SafeCracking {
 
       (0 until n).foreach(i=> cp.add(x(i) != i+1))
       
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(x)
-
+      binaryFirstFail(x)
+    } onSolution {
       println("x:" + x.mkString(""))
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+   println(cp.start())
 
   }
 

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,8 +25,8 @@ import oscar.cp.core.Constraint;
  */
 public class AtLeastNValue extends Constraint {
 	
-	CPVarInt [] x;
-	CPVarInt  nval;
+	CPIntVar [] x;
+	CPIntVar  nval;
 
     /**
      * This is a generalization of the AllDifferent constraint where we can specify
@@ -37,7 +37,7 @@ public class AtLeastNValue extends Constraint {
      * @see CPPropagStrength
      * @see AllDifferent
      */
-	public AtLeastNValue(CPVarInt [] x, CPVarInt nval) {
+	public AtLeastNValue(CPIntVar [] x, CPIntVar nval) {
 		super(x[0].s(),"AtLeastNValue");
 		this.x = x;
 		this.nval = nval;

@@ -58,7 +58,7 @@ object BowlsAndOranges {
     //
     // variables
     //
-    val x = Array.fill(m)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(m)(CPIntVar(1 to n)(cp))
 
     //
     // constraints
@@ -82,19 +82,18 @@ object BowlsAndOranges {
         }
       }
  
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(x)
+      binaryMaxDegree(x)
 
+   } onSolution {
+     
       println(x.mkString(""))
-
-      numSols += 1
-
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
-
+      numSols += 1     
+   }
+   
+   println(cp.start())
+  
   }
 
 }

@@ -29,27 +29,27 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
   test("Multiplication 1") {
     val cp = CPSolver()
 
-    val x = CPVarInt(cp,-10 to 10);
-    val y = CPVarInt(cp,Set(-70,-50,50,70))
-    val z = CPVarInt(cp,100 to 100);
+    val x = CPIntVar(-10 to 10)(cp)
+    val y = CPIntVar(Set(-70,-50,50,70))(cp)
+    val z = CPIntVar(100 to 100)(cp)
     	
-    cp.post(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
+    cp.add(new oscar.cp.constraints.MulVar(x,y,z)); // should post a MulCteRes because z is fixed
     	
     var nbSol = 0
-    cp.exploration {
-      cp.binaryFirstFail(Array(x,y))
+    cp.search {
+      binaryFirstFail(Array(x,y))
+    } onSolution {
       ((x.isBoundTo(-2) && y.isBoundTo(-50)) || (x.isBoundTo(2) && y.isBoundTo(50))) should be(true)
-      nbSol += 1
-    } run()
-    nbSol should be(2)
+    }
+    cp.start().nSols should be(2)
 
   }
   
   test("Multiplication 2") {
     val cp = CPSolver()
 
-    val x = CPVarInt(cp,-1 to 0)
-    val y = CPVarInt(cp,0 to 1)
+    val x = CPIntVar(-1 to 0)(cp)
+    val y = CPIntVar(0 to 1)(cp)
     cp.post(x*x == y)
     	
     cp.isFailed should be(false)
@@ -59,9 +59,9 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
   test("Multiplication 3") {
     val cp = CPSolver()
 
-    val x = CPVarInt(cp,-10 to -1)
-    val y = CPVarInt(cp,3 to 9)
-    cp.post(x*x == y)
+    val x = CPIntVar(-10 to -1)(cp)
+    val y = CPIntVar(3 to 9)(cp)
+    cp.add(x*x == y)
     	
     cp.isFailed should be(false)
 
@@ -74,22 +74,22 @@ class TestMultiplication extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     
 
-    val digits = Array.fill(5)(CPVarInt(cp,0 to 9))
+    val digits = Array.fill(5)(CPIntVar(0 to 9)(cp))
     
     // with a one after (larger one)
     val nb1 =  digits(0)*100000 + digits(1)*10000 + digits(2)*1000 +  digits(3)*100 + digits(4)*10 + 1
     // with a one before (smaller one)
-    val nb2 =  CPVarInt(cp,100000) + digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4)
+    val nb2 =  CPIntVar(100000)(cp) + digits(0)*10000 + digits(1)*1000 +  digits(2)*100 + digits(3)*10 + digits(4)
     var nbsol = 0
     cp.solve subjectTo {
       cp.add(nb1 == (nb2*3))
-    } exploration {
-      cp.binary(digits)
-      nbsol += 1
+    } search {
+      binaryStatic(digits)
+    } onSolution {
       nb1.value should be(428571)
-      nb2.value should be(142857)
-    } run()
-    nbsol should be(1)
+      nb2.value should be(142857)      
+    }
+    cp.start().nSols should be(1)
     
     
   }    

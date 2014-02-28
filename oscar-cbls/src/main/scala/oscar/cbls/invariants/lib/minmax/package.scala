@@ -22,6 +22,7 @@
 package oscar.cbls.invariants.lib
 
 /** This package includes a set of invariants that compute min max, argmin and argmax over a wealth of differents structures.
+* @author renaud.delandtsheer@cetic.be
  * */
 package object minmax{
 }

@@ -26,11 +26,11 @@ import org.scalatest.matchers.ShouldMatchers
  */
 class CuttingStockTest extends FunSuite with ShouldMatchers {
 	
-  class Column (val x : LPVar, val pattern : Array[Int]) {
+  class Column (val x : LPFloatVar, val pattern : Array[Int]) {
 	  override def toString() : String = {
 	 	  pattern.mkString("\t")
 	  }   
-	  def number() : Int = Math.ceil(x.getValue).toInt
+	  def number() : Int = Math.ceil(x.value.get).toInt
   }
 
   
@@ -41,44 +41,45 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  val demand = Array(48, 35, 24, 10,  8)
 	  val Rolls = 0 until roll.size
 	  
-	  val lp = LPSolver(lib)
+	  implicit val lp = LPSolver(lib)
 	  var C : Array[Column] = Array()
 	  for (r <- Rolls) {
 	 	  val config = Array.tabulate(roll.size)(_ => 0)
 	 	  config(r) = rollStock/roll(r)
-	 	  C = C :+ new Column(LPVar(lp,"pattern"+r), config)
+	 	  C = C :+ new Column(LPFloatVar(lp,"pattern"+r), config)
 	  }
 	   
 	  var constraints = Array[LPConstraint]()
- 
-	  // Master Problem 
-	  lp.minimize(sum(C)(c => c.x)) subjectTo {
-	 	  for (r <- Rolls) {
-	 	 	  constraints = constraints :+ lp.add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
-	 	  }
-	  }
+
+      // Master Problem 
+      minimize(sum(C)(c => c.x))
+      for (r <- Rolls) {
+        constraints = constraints :+ add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
+      }
+      start()
 	 
-	  println("master obj:" + lp.getObjectiveValue)
+	  println("master obj:" + objectiveValue)
 	  
 	  // Pricing Problem
 	  var mip : MIPSolver = null
 	  do {
 		  mip = MIPSolver(lib)
-		  val newPattern = Array.tabulate(roll.size)(_ => MIPVar(mip,"use",0 to rollStock))
+		  val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar("use",0 to rollStock)(mip))
 		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 
-		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) subjectTo {
-			  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
-		  }
+		 
+		  mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
+		  mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) 
+		  mip.start()
 
-		  val x = lp.addColumn(1,constraints, newPattern.map(_.getValue)) //create a new variable by introducing a new column
+		  val x = lp.addColumn(1,constraints, newPattern.map(_.value.get)) //create a new variable by introducing a new column
 		  
-		  C = C :+ new Column(x, newPattern.map(_.getValue.toInt))		
+		  C = C :+ new Column(x, newPattern.map(_.value.get.toInt))		
 		  
-		  println("master obj:" + lp.getObjectiveValue)
+		  println("master obj:" + lp.objectiveValue)
 		  mip.status should equal (LPStatus.OPTIMAL)
 
-	  } while(mip.getObjectiveValue < 0)
+	  } while(mip.objectiveValue.get < 0)
 
 	  	  
 	  println("\n"+roll.mkString("\t"))

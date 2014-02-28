@@ -35,7 +35,7 @@ object SendMoreMoney2 {
       val cp = CPSolver()
 
       // variables
-      val all = Array.fill(8)(CPVarInt(cp, 0 to 9))
+      val all = Array.fill(8)(CPIntVar(0 to 9)(cp))
       val Array(s,e,n,d,m,o,r,y) = all
 
       cp.solve subjectTo {
@@ -48,17 +48,13 @@ object SendMoreMoney2 {
         cp.add(m > 0)
         cp.add(allDifferent(all), Strong)
 
-      } exploration {
-
-         cp.binaryFirstFail(all)
-
+      } search {
+         binaryFirstFail(all)
+      } onSolution {
          println(all.mkString(""))
-
-      } run()
+      } 
+      println(cp.start())
       
-      println()
-      cp.printStats()
-
   }
 
 }

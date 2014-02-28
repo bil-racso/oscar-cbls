@@ -135,7 +135,7 @@ object Futoshiki {
     //
     // variables
     //
-    val field = Array.fill(size)(Array.fill(size)(CPVarInt(cp, 1 to size)))
+    val field = Array.fill(size)(Array.fill(size)(CPIntVar(1 to size)(cp)))
 
     //
     // constraints
@@ -167,10 +167,9 @@ object Futoshiki {
       }
 
 
-    } exploration {
-       
-      cp.binaryFirstFail(field.flatten)
-
+    } search {
+      binaryFirstFail(field.flatten.toSeq)
+    } onSolution {
       for(i <- RANGE) {
         println(field(i).mkString(""))
       }
@@ -178,10 +177,10 @@ object Futoshiki {
 
       numSols += 1
 
-   } run()
+   } 
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
+
 
   }
 

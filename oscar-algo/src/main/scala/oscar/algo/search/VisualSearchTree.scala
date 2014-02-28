@@ -19,6 +19,7 @@ import oscar.util.tree.Node
 import javax.swing.JPanel
 import java.awt.BorderLayout
 import oscar.visual.tree.VisualLabelledTree
+import oscar.util.tree.Tree
 
 
 
@@ -27,15 +28,15 @@ import oscar.visual.tree.VisualLabelledTree
  * Class to show a visual search tree (currently only available for binary search trees)
  * @author Pierre Schaus pschaus@gmail.com
  */
-class VisualSearchTree(node: SearchNode) extends JPanel (new BorderLayout()) {
+class VisualSearchTree(tree: Tree) extends JPanel (new BorderLayout()) {
 	
-	var root = Node.design( node.tree.toNode(0), 42)
+	var root = Node.design(tree.toNode(0), 42)
 	var visualTree = new VisualLabelledTree(root)
 	add(visualTree)
 
 	
 	def update() {
-	  root = Node.design( node.tree.toNode(0), 42)
+	  root = Node.design(tree.toNode(0), 42)
 	  visualTree.update(root)	  
 	}
 	

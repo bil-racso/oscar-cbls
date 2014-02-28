@@ -68,7 +68,7 @@ object Kakuro {
    */
   def calc(cp: CPSolver,
            cc: Array[Int],
-           x: Array[Array[CPVarInt]],
+           x: Array[Array[CPIntVar]],
            res: Int) {
 
     // ensure that the values are positive
@@ -146,7 +146,7 @@ object Kakuro {
     //
     // Variables
     // 
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 0 to 9)))
+    val x = Array.fill(n)(Array.fill(n)(CPIntVar(0 to 9)(cp)))
 
     //
     // constraints
@@ -174,10 +174,11 @@ object Kakuro {
 
       }
 
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(x.flatten)
-
+      binaryMaxDegree(x.flatten.toSeq)
+    } onSolution {
+      
       for(i <- 0 until n) {
         for(j <- 0 until n) {
           val v = x(i)(j).value
@@ -193,10 +194,9 @@ object Kakuro {
 
       numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+    
+   println(cp.start())
 
   }
 

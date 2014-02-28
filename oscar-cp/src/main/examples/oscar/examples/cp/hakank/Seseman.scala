@@ -67,8 +67,8 @@ object Seseman {
      val border_sum = n*n
 
      // variables
-     val x = Array.fill(n,n)(CPVarInt(cp, 0 to n*n))
-     val total_sum = CPVarInt(cp, 1 to n*n*n*n)
+     val x = Array.fill(n,n)(CPIntVar(0 to n*n)(cp))
+     val total_sum = CPIntVar(1 to n*n*n*n)(cp)
 
      // constraints
      var numSols = 0
@@ -95,10 +95,10 @@ object Seseman {
        cp.add(total_sum == sum(x.flatten))
 
 
-     } exploration {
+     } search {
        
-       cp.binaryFirstFail(x.flatten)
-
+       binaryFirstFail(x.flatten.toSeq)
+     } onSolution {
        for(i <- 0 until n) {
          println(x(i).mkString(""))
        }
@@ -106,10 +106,8 @@ object Seseman {
 
        numSols += 1
        
-     } run()
-
-     println("\nIt was " + numSols + " solutions.")
-     cp.printStats()
+     } 
+     println(cp.start())
   }
 
 }

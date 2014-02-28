@@ -79,7 +79,7 @@ object MaxFlowWinston1 {
 
 
     // variables
-    val flow = Array.fill(n,n)(CPVarInt(cp, 0 to 200))
+    val flow = Array.fill(n,n)(CPIntVar(0 to 200)(cp))
     // to maximize
     val z = flow(n-1)(0)
 
@@ -116,10 +116,10 @@ object MaxFlowWinston1 {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binary(flow.flatten)
-
+      binaryStatic(flow.flatten.toSeq)
+    } onSolution {
       println("z: " + z)
       for(i <- NODES) {
         for(j <- NODES) {
@@ -132,9 +132,8 @@ object MaxFlowWinston1 {
       numSols += 1
        
      }
-     println("\nIt was " + numSols + " solutions.\n")
+     println(cp.start())
 
-     cp.printStats()
    }
 
 }

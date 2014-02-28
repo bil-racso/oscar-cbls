@@ -60,16 +60,15 @@ object Crypta {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 0 to 9))
+    val x = Array.fill(n)(CPIntVar(0 to 9)(cp))
     val Array(a,b,c,d,e,f,g,h,i,j) = x
-    val sr1 = CPVarInt(cp, 0 to 1)
-    val sr2 = CPVarInt(cp, 0 to 1)
+    val sr1 = CPIntVar(0 to 1)(cp)
+    val sr2 = CPIntVar(0 to 1)(cp)
 
 
     //
     // constraints
     //
-    var numSols = 0
     cp.solve subjectTo {
 
         cp.add(allDifferent(x), Strong)
@@ -92,19 +91,18 @@ object Crypta {
                (c + a*10 + g*100 + e*1000 + j*10000 + g*100000))
 
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(x)
-
+      binaryFirstFail(x)
+      
+    } onSolution {
+      
       println("\nSolution:")
       println("x:" + x.mkString(""))
 
-      numSols += 1
-
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    } 
+    
+    println(cp.start())
 
   }
 

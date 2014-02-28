@@ -77,7 +77,7 @@ object QuasigroupCompletion {
 
 
     // variables
-    val x = Array.fill(n)(Array.fill(n)(CPVarInt(cp, 1 to n)))
+    val x = Array.fill(n)(Array.fill(n)(CPIntVar(1 to n)(cp)))
 
     //
     // constraints
@@ -99,10 +99,10 @@ object QuasigroupCompletion {
       }
 
 
-     } exploration {
+     } search {
        
-       cp.binaryFirstFail(x.flatten)
-
+       binaryFirstFail(x.flatten.toSeq)
+     } onSolution {
        println("\nSolution:")
        for(i <- 0 until n) {
          println(x(i).mkString(""))
@@ -111,10 +111,8 @@ object QuasigroupCompletion {
 
        numSols += 1
        
-     } run()
-     println("\nIt was " + numSols + " solutions.")
-
-     cp.printStats()
+     } 
+     println(cp.start())
    }
 
 }

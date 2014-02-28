@@ -29,7 +29,7 @@ class TestConstraintDegree extends FunSuite with ShouldMatchers  {
 
   test("ConstraintDegree1") {
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarInt(cp, 1 to 3))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
     cp.post(x(0) != x(1))
     cp.post(x(0) != x(2))

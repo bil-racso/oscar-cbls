@@ -98,7 +98,7 @@ object Minesweeper {
 
 
     // variables
-    val mines = Array.fill(r)(Array.fill(c)(CPVarInt(cp, 0 to 1)))
+    val mines = Array.fill(r)(Array.fill(c)(CPIntVar(0 to 1)(cp)))
 
     //
     // constraints
@@ -124,10 +124,10 @@ object Minesweeper {
       }
 
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(mines.flatten)
-
+      binaryFirstFail(mines.flatten.toSeq)
+    } onSolution {
       println("\nSolution:")
       for(i <- 0 until r) {
         println(mines(i).mkString(""))
@@ -135,10 +135,9 @@ object Minesweeper {
 
       numSols += 1
        
-     } run()
+    } 
 
-     println("\nIt was " + numSols + " solutions.\n")
-     cp.printStats()
+    println(cp.start())
 
    }
 

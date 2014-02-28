@@ -41,10 +41,8 @@ import scala.math._
  
 */
 
-object FurnitureMovingScheduling {
-
-  def main(args: Array[String]) {
-
+object FurnitureMovingScheduling extends CPModel with App {
+/*
     //
     // data
     //
@@ -57,7 +55,6 @@ object FurnitureMovingScheduling {
     val capa = 4 // capacity, number of workers
 
     val horizon = durations.sum
-    val cp = CPScheduler(horizon)
 
     //
     // variables
@@ -73,14 +70,14 @@ object FurnitureMovingScheduling {
     //
     // constraints
     //
-    var numSols = 0
 
     cp.minimize(makespan) subjectTo{ 
 
-    } exploration {
+    } search {
        
-      cp.setTimes(cp.activities)
-
+      setTimes(activities.map(_.start),activities.map(_.dur),activities.map(_.end))
+    } onSolution {
+      
       println("\nSolution:")
 
       println("makespan : " + makespan)
@@ -92,13 +89,11 @@ object FurnitureMovingScheduling {
       println(activities.map(a=>"Activity " + a.id + ":" + a.start + " --" + a.dur + " -- " + a.end).mkString("\n"))
       println()
 
-      numSols += 1
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
-  }
+  }*/
 
 }

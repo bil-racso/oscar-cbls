@@ -1,33 +1,7 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
-import oscar.util._
-import oscar.visual._
-import scala.collection.JavaConversions._
-import scala.io.Source
-import java.lang._
-import java.awt.Color
-import oscar.cp.constraints.MinAssignment
-import oscar.visual.shapes.VisualLine
-import oscar.visual.shapes.VisualCircle
-import oscar.visual.plot.PlotLine
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -38,74 +12,75 @@ import oscar.visual.plot.PlotLine
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object TSPVisu extends App {
+object TSPVisu extends CPModel with App {
 
+  // Data
   val nCities = 20
   val Cities = 0 until nCities
+  val (distMatrix, coordinates) = TSPGenerator.randomInstance(nCities)
 
-  // Data parsing
-  // ------------
-  val rand = new scala.util.Random(0)
+  // Variables
+  val succ = Array.fill(nCities)(CPIntVar(Cities)) 
+  val totDist = CPIntVar(0 to distMatrix.flatten.sum)
 
-  // Random coordinates
-  val coord = Array.tabulate(nCities)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
+  // Constraints
+  add(circuit(succ), Strong)
+  add(minAssignment(succ, distMatrix, totDist))
+  add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
-  // Computes the distance between two cities
+  // Search heuristic
+  minimize(totDist) search binaryFirstFail(succ)
+
+  // Visual Component
+  val visual = new VisualTSP(coordinates, succ)
+
+  var nSols = 0
+  onSolution {
+    nSols += 1
+    visual.updateTour(nSols, totDist.value)
+  }
+
+  println(start())
+}
+
+/** Generates a random TSP instance */
+object TSPGenerator {
+  def randomInstance(nCities: Int, seed: Int = 0): (Array[Array[Int]], Array[(Int, Int)]) = {
+    val rand = new scala.util.Random(seed)
+    val coord = Array.tabulate(nCities)(i => (100 + rand.nextInt(400), rand.nextInt(400)))
+    val distMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
+    (distMatrix, coord)
+  }
+
   def getDist(p1: (Int, Int), p2: (Int, Int)): Int = {
     val dx = p2._1 - p1._1
     val dy = p2._2 - p1._2
     math.sqrt(dx * dx + dy * dy).toInt
   }
+}
 
-  // Builds the distance matrix
-  val distMatrix = Array.tabulate(nCities, nCities)((i, j) => getDist(coord(i), coord(j)))
+/** Visualization for TSP */
+class VisualTSP(coordinates: Array[(Int, Int)], succ: Array[CPIntVar]) {
 
-  // Model
-  // -----
-  val cp = new CPSolver()
+  import oscar.visual._
+  import oscar.visual.plot.PlotLine
 
-  // Successors
-  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  // Total distance
-  val totDist = CPVarInt(cp, 0 to distMatrix.flatten.sum)
-
-  // Visual Components
-  // -----------------
-  val f = VisualFrame("TSP")
+  val Cities = 0 until coordinates.size
+  val frame = VisualFrame("TSP")
 
   // Creates the plot and place it into the frame
   val plot = new PlotLine("", "Solution number", "Distance")
-  f.createFrame("TSP Objective Function").add(plot)
+  frame.createFrame("TSP Objective Function").add(plot)
 
   // Creates the visualization of the tour and place it into the frame
-  val tour = VisualTour(coord)
-  f.createFrame("TSP Tour").add(tour)
-  f.pack()
-  
-  // Updates the visualization
-  def updateVisu() {
+  val tour = VisualTour(coordinates)
+  frame.createFrame("TSP Tour").add(tour)
+  frame.pack()
+
+  // Updates the visualization  
+  def updateTour(nSol: Int, dist: Int): Unit = {
     Cities.foreach(i => tour.edgeDest(i, succ(i).value))
     tour.repaint()
-    plot.addPoint(nbSol, totDist.value)
+    plot.addPoint(nSol, dist)
   }
-
-  // Constraints + Search
-  // --------------------
-  var nbSol = 0
-  cp.minimize(totDist) subjectTo {
-    // Consistency of the circuit with Strong filtering
-    cp.add(circuit(succ), Strong)
-    cp.add(new MinAssignment(succ,distMatrix,totDist))
-    // Total distance
-    cp.add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
-
-  } exploration {
-    cp.binaryFirstFail(succ)
-    // One additional solution
-    nbSol += 1
-    // Updates the visualization
-    updateVisu()
-  } run()
-  
-  cp.printStats()
 }

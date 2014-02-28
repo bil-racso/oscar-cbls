@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * x must be a value of the set
  * @author Pierre Schaus pschaus@gmail.com
  */
-class InSetReif(val x: CPVarInt, val set: Set[Int], val b: CPVarBool) extends Constraint(x.s, "InSetReif") {
+class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Constraint(x.s, "InSetReif") {
   val setSize = set.size
   val setMin = set.min
   val setMax = set.max
@@ -74,7 +74,7 @@ class InSetReif(val x: CPVarInt, val set: Set[Int], val b: CPVarBool) extends Co
     }
   }  
   
-  override def valBind(variable: CPVarInt): CPOutcome = {
+  override def valBind(variable: CPIntVar): CPOutcome = {
     if (b.isTrue) {
       for (v <- x.toSet if !set.contains(v)) {
         if (x.removeValue(v) == Failure) {

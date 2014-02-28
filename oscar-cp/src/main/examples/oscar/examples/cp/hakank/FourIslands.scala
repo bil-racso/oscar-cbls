@@ -86,15 +86,15 @@ object FourIslands {
     // variables
     //
     // the digits
-    val island = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val island = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(pwana, quero, rayou, skern) = island
     val islandStr = Array("Pwana", "Quero", "Rayou", "Skern")
 
-    val export = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val export = Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(alabaster, bananas, coconuts, durian_fruit) = export
     val exportStr = Array("alabaster", "bananas", "coconuts", "durian fruit")
 
-    val attraction =  Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val attraction =  Array.fill(n)(CPIntVar(0 to n-1)(cp))
     val Array(resort_hotel, ice_skating_rink, jai_alai_stadium, koala_preserve) = attraction
     val attractionStr = Array("resort hotel", "ice skating rink", "jai alai stadium", "koala preserve")
     val Array(a,b,c,d) = (0 to n-1).toArray
@@ -104,7 +104,6 @@ object FourIslands {
     //
     // constraints
     //
-    var numSols = 0
     cp.solve subjectTo {
       
       cp.add(allDifferent(island), Strong)
@@ -169,10 +168,11 @@ object FourIslands {
        (ice_skating_rink === c && jai_alai_stadium === b)
       )
 
-    } exploration {
+    } search {
      
-      cp.binary(island)
-
+      binaryStatic(island)
+    } onSolution {
+      
       println("\nSolution:")
       println("island    : " +  island.mkString(""))
       println("export    : " +  export.mkString(""))
@@ -188,12 +188,10 @@ object FourIslands {
 
       println()
 
-      numSols += 1
 
-    } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    } 
+    
+    println(cp.start())
 
   }
 

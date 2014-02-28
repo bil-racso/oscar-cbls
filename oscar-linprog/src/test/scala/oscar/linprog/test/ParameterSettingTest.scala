@@ -12,24 +12,6 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.linprog.test
 
@@ -59,21 +41,21 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    val lp = new LPSolver(LPSolverLib.lp_solve)
+    implicit val lp = new LPSolver(LPSolverLib.lp_solve)
 
     lp.solver.configFile = configLP
-    val x = new LPVar(lp, "x", 100, 200)
-    val y = new LPVar(lp, "y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
-    lp.maximize(-2 * x + 5 * y) subjectTo {
-      lp.add(y >= -x + 200)
-    }
+    maximize(-2 * x + 5 * y)
+    add(y >= -x + 200)
+    start()
 
     x.value should equal(Some(100))
     y.value should equal(Some(170))
-    lp.getObjectiveValue() should equal(650)
-    lp.status should equal(LPStatus.OPTIMAL)
-    lp.checkConstraints() should be(true)
+    objectiveValue.get should equal(650)
+    status should equal(LPStatus.OPTIMAL)
+    checkConstraints() should be(true)
 
     val lpModel: LpSolve = lp.solver match {
       case s: LPSolve => s.lp
@@ -83,9 +65,38 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     lpModel.getPivoting should equal(34)
     lpModel.getPresolve should equal(3)
 
-    lp.release()
+    release()
     configLP.delete
   }
+
+  test("Config file for LPSolve: Bug 72 ") {
+
+    val configLP = new java.io.File("LPParam.ini")
+    val writer = new java.io.PrintWriter(new java.io.FileWriter(configLP))
+    // The correct header must be specified
+    writer.print("[Default]\n")
+    writer.print("[Default] break_at_first=1\n")
+    writer.flush
+    writer.close
+
+    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+
+    val x0 = MIPFloatVar(mip, "x0", 0, 40)
+    val x1 = MIPIntVar(mip, "x1", 0 to 1000) // can take integer value in range[0 .. 1000]
+    val x2 = MIPIntVar(mip, "x2", 0 until 18) // can take integer value in range[0 .. 17] 
+    val x3 = MIPFloatVar(mip, "x3", 2, 3)
+
+    maximize(x0 + 2 * x1 + 3 * x2 + x3)
+    add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
+    add(x0 - 3.0 * x1 + x2 <= 30)
+    add(x1 - 3.5 * x3 == 0)
+    mip.start()
+    println("objective" + objectiveValue)
+    println(x1.value)
+    mip.release()
+    configLP.delete
+  }  
+  
   test("Config file for Gurobi") {
 	assume(canInstantiateSolver(LPSolverLib.gurobi), "The test could not access Gurobi. Check you have it installed.")
     val configLP = new java.io.File("GurobiParam.txt")
@@ -95,21 +106,21 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    val lp = new LPSolver(LPSolverLib.gurobi)
+    implicit val lp = LPSolver(LPSolverLib.gurobi)
 
     lp.solver.configFile = configLP
-    val x = new LPVar(lp, "x", 100, 200)
-    val y = new LPVar(lp, "y", 80, 170)
+    val x = LPFloatVar("x", 100, 200)
+    val y = LPFloatVar("y", 80, 170)
 
-    lp.maximize(-2 * x + 5 * y) subjectTo {
-      lp.add(y >= -x + 200)
-    }
+    maximize(-2 * x + 5 * y) 
+    add(y >= -x + 200)
+    start()
 
     x.value should equal(Some(100))
     y.value should equal(Some(170))
-    lp.getObjectiveValue() should equal(650)
-    lp.status should equal(LPStatus.OPTIMAL)
-    lp.checkConstraints() should be(true)
+    objectiveValue.get should equal(650)
+    status should equal(LPStatus.OPTIMAL)
+    checkConstraints() should be(true)
 
     val grbModel: GRBModel = lp.solver match {
       case s: GurobiLP => s.model
@@ -119,7 +130,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     grbModel.getEnv.get(GRB.IntParam.Method) should equal(3)
     grbModel.getEnv.get(GRB.IntParam.PreDepRow) should equal(0)
 
-    lp.release()
+    release()
     configLP.delete
 
   }

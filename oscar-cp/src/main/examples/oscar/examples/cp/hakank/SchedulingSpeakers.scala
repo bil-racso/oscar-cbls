@@ -57,7 +57,7 @@ object SchedulingSpeakers {
       //
       // decision variables
       // 
-      val speakers = Array.tabulate(num_speakers)(i=>CPVarInt(cp, available(i).toSet ))
+      val speakers = Array.tabulate(num_speakers)(i=>CPIntVar(available(i).toSet)(cp))
 
       var numSols = 0
       cp.solve subjectTo {
@@ -65,17 +65,15 @@ object SchedulingSpeakers {
         cp.add(allDifferent(speakers))
 
 
-      } exploration {
+      } search {
 
-        cp.binary(speakers)
-
+        binaryStatic(speakers)
+      } onSolution {
         println(speakers.mkString(""))
 
         numSols += 1
-      } run()
-
-      println("\nIt was " + numSols + " solutions.")	  
-      cp.printStats()
+      } 
+      println(cp.start())
 
   }
 

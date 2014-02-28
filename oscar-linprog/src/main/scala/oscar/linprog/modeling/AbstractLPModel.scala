@@ -1,37 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.linprog.modeling
 
@@ -227,7 +207,7 @@ abstract class AbstractLP {
  * [0,+inf] is unbounded = true,
  * [-inf,+inf] otherwise
  */
-class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
+class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
 
   // do not swap next two lines
   val index = solver.register(this)
@@ -257,13 +237,6 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
    * Returns the value of the variable (integer rounded if the variable is integer)
    */
   override def value = solver.getValue(index)
-
-  def getValue: Double = {
-    value match {
-      case Some(v) => v
-      case _ => Double.NegativeInfinity
-    }
-  }
 
   /**
    * Return true if the variable is integer, false otherwise
@@ -320,11 +293,11 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
     val ex = cstr.linExpr.coef.toArray
 
     for ((i, a) <- varIds.zip(coef)) {
-      val x: AbstractLPVar = solver.variable(i) match {
+      val x: AbstractLPFloatVar = solver.variable(i) match {
         case Some(variable) => variable
         case None => throw new IllegalArgumentException("Variable with index " + i + " not present in lp solver")
       }
-      res += a * x.getValue
+      res += a * x.value.get
     }
     cstr.consType match {
       case ConstraintType.GQ => res - rhs
@@ -339,19 +312,17 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
 abstract class AbstractLPSolver {
 
   // map from the index of variables to their implementation
-  protected val vars = mutable.HashMap.empty[Int, AbstractLPVar]
+  protected val vars = mutable.HashMap.empty[Int, AbstractLPFloatVar]
   private val cons = mutable.HashMap.empty[Int, LPConstraint]
   private val solution = mutable.HashMap.empty[Int, Double]
   protected var objective: LinearExpression = 0
   protected var minimize = true
-  /** Should solveModel be called at end of subjectTo and suchThat blocks?*/
-  protected var autoSolve = true
 
   protected val solver: AbstractLP
 
   protected var statuss = LPStatus.NOT_SOLVED
 
-  def register(vari: AbstractLPVar): Int = {
+  def register(vari: AbstractLPFloatVar): Int = {
     vars(vars.size) = vari
     vars.size - 1
   }
@@ -396,7 +367,7 @@ abstract class AbstractLPSolver {
     }
   }
 
-  def setVarBounds(x: AbstractLPVar, reoptimize: Boolean = false) = {
+  def setVarBounds(x: AbstractLPFloatVar, reoptimize: Boolean = false) = {
     if (x.isUnbounded) {
       solver.setUnboundUpperBound(x.index)
       solver.setUnboundLowerBound(x.index)
@@ -406,7 +377,7 @@ abstract class AbstractLPSolver {
     if (reoptimize) solveModel()
   }
 
-  def setBounds(x: AbstractLPVar, lb: Double, ub: Double, reoptimize: Boolean = false) = {
+  def setBounds(x: AbstractLPFloatVar, lb: Double, ub: Double, reoptimize: Boolean = false) = {
     solver.setBounds(x.index, lb, ub)
     if (reoptimize) solveModel()
   }
@@ -425,10 +396,11 @@ abstract class AbstractLPSolver {
     optimize(expr, false)
   }
 
-  def subjectTo(constraintsBlock: => Unit) {
-    //executes the block containing the constraints
-    constraintsBlock
-
+  /**
+   * effectively start the concrete model building and solving
+   * @returns true if a feasible solution is found (optimal or sub-optimal)
+   */
+  def start(): Boolean = {
     solver.startModelBuilding(cons.size, vars.size)
 
     println("Setting variable bounds...")
@@ -444,17 +416,10 @@ abstract class AbstractLPSolver {
     val t0 = System.currentTimeMillis()
     addAllConstraints()
     println("time to add constraints:" + (System.currentTimeMillis() - t0))
-
-    //close the model and optimize
-    if (autoSolve) solveModel()
+    solveModel()
+    (status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)
   }
 
-  def suchThat(constraints: LinearConstraint*) {
-    // add all the constraints
-    constraints.foreach(add(_))
-    //close the model and optimize
-    if (autoSolve) solveModel()
-  }
 
   def solveModel() {
     solver.endModelBuilding()
@@ -465,28 +430,15 @@ abstract class AbstractLPSolver {
     }
   }
 
-  /**
-   * @return The objective value, 0 if no objective
-   */
-  def getObjectiveValue(): Double = {
-    objective.value match {
-      case Some(v) => v
-      case None => {
-        0
-      }
-    }
-  }
 
   /**
-   * @return The objective value, None if no objective (problem not yet solved or infeasible)
+   * @return The objective value (None if problem not yet solved or infeasible)
    */
-  def objectiveValue(): Option[Double] = objective.value
+  def objectiveValue() = objective.value
 
   def status(): LPStatus.Value = statuss
 
   def release() = solver.release()
-
-  def desactivateAutoSolve { autoSolve = false }
 
   /**
    * Check that all the constraints are satisfied
@@ -512,7 +464,7 @@ abstract class AbstractLPSolver {
   /**
    *  Set the coefficient of the variable in the corresponding constraint to the specified value
    */
-  def updateCoef(constraint: LPConstraint, variable: AbstractLPVar, coeff: Double) = {
+  def updateCoef(constraint: LPConstraint, variable: AbstractLPFloatVar, coeff: Double) = {
     // update directly in the solver if the model has already been build
     if (statuss != LPStatus.NOT_SOLVED) solver.updateCoef(constraint.index, variable.index, coeff)
 

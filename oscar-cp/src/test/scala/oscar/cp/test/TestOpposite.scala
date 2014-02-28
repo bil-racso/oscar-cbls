@@ -24,7 +24,7 @@ class TestOpposite extends FunSuite with ShouldMatchers {
 
 	test("Test Opposite 1") {
 		val cp = CPSolver()
-		val a = CPVarInt(cp, Set(0, 1, 2, 3, 4))
+		val a = CPIntVar(Set(0, 1, 2, 3, 4))(cp)
 		val b = -a
 		b.max should be(0)
 		b.min should be(-4)

@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,8 +26,8 @@ import oscar.cp.core.Constraint;
 public class Maximum extends Constraint {
 	
 	
-	private CPVarInt [] x;
-	private CPVarInt y;
+	private CPIntVar [] x;
+	private CPIntVar y;
 	private ReversibleInt maxval;
 	private ReversibleInt maxvalsupport;
 	
@@ -39,7 +39,7 @@ public class Maximum extends Constraint {
 	 * @param x
 	 * @param y
 	 */
-	public Maximum(CPVarInt [] x, CPVarInt y) {
+	public Maximum(CPIntVar [] x, CPIntVar y) {
 		super(x[0].s(),"Maximum");
 		this.x = x;
 		this.y = y;
@@ -97,7 +97,7 @@ public class Maximum extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBoundsIdx(CPVarInt x, int idx) {
+	public CPOutcome updateBoundsIdx(CPIntVar x, int idx) {
 		if (idx == minvalsupport.getValue() || idx == maxvalsupport.getValue()) {
 			updateSupport();
 			if (y.updateMin(minval.getValue()) == CPOutcome.Failure) {
@@ -119,7 +119,7 @@ public class Maximum extends Constraint {
 	
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt y) {
+	public CPOutcome updateBounds(CPIntVar y) {
 		for (int i=0; i < x.length; i++) {			
 			if (x[i].updateMax(y.getMax()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

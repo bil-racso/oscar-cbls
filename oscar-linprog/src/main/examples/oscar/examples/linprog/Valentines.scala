@@ -15,7 +15,6 @@
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
-import oscar.linprog._
 import oscar.algebra._
 import oscar.visual.VisualFrame
 import oscar.visual.VisualTable
@@ -26,7 +25,7 @@ import java.awt.Color
  * http://orbythebeach.wordpress.com/2011/02/04/transporting-flowers-with-love/
  * @author Alastair Andrew alastair.andrew@gmail.com
  */
-object Valentines extends App {
+object Valentines extends LPModel with App {
 	
   // The Problem Data
   val Florists = 8 // No. of Flower Shops
@@ -76,25 +75,24 @@ object Valentines extends App {
   
   Thread.sleep(2000) // Delay to allow the GUI pre-solve to be visible.
   
-  // The Actual LP Model.
-  val lp = new LPSolver()
+
   // The decision vars are binary: does a shop send a bouquet to a valentine or not?
-  val x = Array.tabulate(Florists, Valentines)((f, v) => LPVar(lp, s"x($f,$v)", 0, 1))
-  
-  lp.minimize(sum(0 until Florists, 0 until Valentines)((f, v) => x(f)(v) * cost(f)(v))) subjectTo {
-	  (0 until Florists).foreach(f => lp.add(sum(0 until Valentines)(v => x(f)(v)) == stock(f))) 
-	  (0 until Valentines).foreach(v => lp.add(sum(0 until Florists)(f => x(f)(v)) == requests(v)))
-  }
+  val x = Array.tabulate(Florists, Valentines)((f, v) => LPFloatVar(s"x($f,$v)", 0, 1))
+
+  minimize(sum(0 until Florists, 0 until Valentines)((f, v) => x(f)(v) * cost(f)(v)))
+  (0 until Florists).foreach(f => add(sum(0 until Valentines)(v => x(f)(v)) == stock(f)))
+  (0 until Valentines).foreach(v => add(sum(0 until Florists)(f => x(f)(v)) == requests(v)))
+  start()
 
   // Double check we actually found the optimal solution!
-  assert(lp.getObjectiveValue() == 38)
-  assert(lp.status == LPStatus.OPTIMAL)
+  assert(objectiveValue.get == 38)
+  assert(status == LPStatus.OPTIMAL)
   
-  lp.release() // Frees up the memory held by the external solver.
+  release() // Frees up the memory held by the external solver.
   
   // Update the GUI to show the (romantic) solution. 
   (0 until Florists).foreach(f => table.setValueAt(sum(0 until Valentines)(v => x(f)(v)).value.get.toString, f, Valentines))
   (0 until Valentines).foreach(v => table.setValueAt(sum(0 until Florists)(f => x(f)(v)).value.get.toString, Florists, v))
-  (0 until Florists).foreach(f => (0 until Valentines).filter(x(f)(_).getValue.ceil < 1).foreach(v => table.setColorAt(Color.WHITE, f, v)))
-  table.setValueAt(lp.getObjectiveValue.toString, Florists + 2, Valentines)
+  (0 until Florists).foreach(f => (0 until Valentines).filter(x(f)(_).value.get.ceil < 1).foreach(v => table.setColorAt(Color.WHITE, f, v)))
+  table.setValueAt(objectiveValue.get.toString, Florists + 2, Valentines)
 }

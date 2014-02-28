@@ -56,7 +56,7 @@ object SetCovering {
     // variables
     //
  
-    val x = Array.fill(num_cities)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(num_cities)(CPIntVar(0 to 1)(cp))
     val z = sum(x)
 
 
@@ -79,10 +79,11 @@ object SetCovering {
                )
       }
       
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
+      
       println("\nSolution:")
       println("x: " + x.mkString(""))
       println("z: " + z)
@@ -91,8 +92,7 @@ object SetCovering {
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

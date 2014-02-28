@@ -75,14 +75,13 @@ object BrokenWeights {
     //
     // variables
     //
-    val weights = Array.fill(n)(CPVarInt(cp, 1 to m))
-    val x   = Array.fill(m, n)(CPVarInt(cp, -1 to 1))
+    val weights = Array.fill(n)(CPIntVar(1 to m)(cp))
+    val x   = Array.fill(m, n)(CPIntVar(-1 to 1)(cp))
     val x_flat = x.flatten
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.minimize(weights(n-1)) subjectTo {
 
@@ -100,10 +99,12 @@ object BrokenWeights {
       }
 
       
-    } exploration {
+    } search {
        
-      cp.binaryMaxDegree(weights ++ x_flat)
+      binaryMaxDegree(weights ++ x_flat)
 
+    } onSolution {
+      
       println("\nSolution:")
       println("weights:" + weights.mkString(""))
       for(i <- 0 until m) {
@@ -113,13 +114,9 @@ object BrokenWeights {
         }
         println()
       }
-
-      numSols += 1
-
-   }
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    }
+    
+    println(cp.start())
 
   }
 

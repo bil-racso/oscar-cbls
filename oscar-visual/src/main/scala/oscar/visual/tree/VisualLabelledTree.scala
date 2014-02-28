@@ -54,6 +54,7 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
       val newNode = new VisualLabelledRoundRectangle(this, accOffset + node.pos, level * levelHeight, node.label.toString, 10)
       newNode.innerCol = node.col
+      newNode.onClick(node.action())
       rectSet += newNode
       for (i <- 0 until node.sons.length) {
         branchSet += new VisualLabelledBranch(this,
@@ -88,7 +89,7 @@ object VisualLabelledTree{
 	val f = VisualFrame("toto");
 	val inf = f.createFrame("Drawing");
 	
-	val C = Node("C")
+	val C = Node("C",action = () => {println("hello")})
 	val D = Node("D")
 	val E = Node("E")
 	val H = Node("H")

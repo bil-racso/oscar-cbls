@@ -55,20 +55,19 @@ object Coins3 {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 0 to 99))
+    val x = Array.fill(n)(CPIntVar(0 to 99)(cp))
     val num_coins  = sum(x)
 
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.minimize(num_coins) subjectTo {
 
       // Check that all changes from 1 to 99 can be made.
       for(j <- 1 until 100) {
-        val tmp = Array.fill(n)(CPVarInt(cp, 0 to 99))
+        val tmp = Array.fill(n)(CPIntVar(0 to 99)(cp))
         cp.add(weightedSum(variables, tmp) == j)
         
         for(i <- 0 until n) {
@@ -77,22 +76,21 @@ object Coins3 {
         
       }
 
-    } exploration {
+    } search {
        
-      cp.binary(x)
-
+      binaryStatic(x)
+    } onSolution {
       println("\nSolution:")
 
       println("num_coins : " + num_coins)
       println("x: " + x.mkString(""))
       println()
 
-      numSols += 1
 
    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   println(cp.start())
+
 
   }
 

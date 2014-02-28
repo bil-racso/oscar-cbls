@@ -97,8 +97,8 @@ class TestParetoConstraint extends FunSuite with ShouldMatchers  {
     val distMatrices = for (p <- problems) yield computeDistMatrix(coords(p))
     
     val cp = CPSolver()
-    val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-    val totDists = for (o <- Objs) yield CPVarInt(cp, 0 to distMatrices(o).flatten.sum)
+    val succ = Array.fill(nCities)(CPIntVar(Cities)(cp))
+    val totDists = for (o <- Objs) yield CPIntVar(0 to distMatrices(o).flatten.sum)(cp)
     
     cp.solve() subjectTo {
       cp.post(circuit(succ), Strong)
@@ -106,19 +106,20 @@ class TestParetoConstraint extends FunSuite with ShouldMatchers  {
       cp.post(new ParetoConstraint(paretoSet, isMax, totDists.toArray))
     } 
     
-    cp.exploration {
-      while (!allBounds(succ)) {
-        val i = selectMin(Cities)(!succ(_).isBound)(succ(_).size).get
-        val j = if (isMax(0)) selectMin(Cities)(succ(i).hasValue(_))(-distMatrices(0)(i)(_)).get
-        else selectMin(Cities)(succ(i).hasValue(_))(distMatrices(0)(i)(_)).get
-        cp.branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
-      }     
-      val inserted = paretoSet.insert(cp.lastSol, totDists.map(_.value): _*) 
-      // Only non-dominated solutions are found
+    cp.search {
+      selectMin(Cities)(!succ(_).isBound)(succ(_).size) match {
+        case None => noAlternative
+        case Some(i) => {
+          val j = if (isMax(0)) selectMin(Cities)(succ(i).hasValue(_))(-distMatrices(0)(i)(_)).get
+        		  else selectMin(Cities)(succ(i).hasValue(_))(distMatrices(0)(i)(_)).get
+          branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
+        }
+      }
+    } onSolution {
+       val inserted = paretoSet.insert(cp.lastSol, totDists.map(_.value): _*) 
+        // Only non-dominated solutions are found
       inserted should be(true)
-    }
-    
-    cp.run()
+    } start()
     paretoSet.objectiveSols
   }
   

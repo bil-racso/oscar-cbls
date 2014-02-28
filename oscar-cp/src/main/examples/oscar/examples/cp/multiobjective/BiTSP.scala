@@ -45,11 +45,11 @@ object BiTSP extends App {
   cp.silent = true
   
   // Successors & Predecessors
-  val succ = Array.fill(nCities)(CPVarInt(cp, Cities))
-  val pred = Array.fill(nCities)(CPVarInt(cp, Cities))
+  val succ = Array.fill(nCities)(CPIntVar(Cities)(cp))
+  val pred = Array.fill(nCities)(CPIntVar(Cities)(cp))
 
   // Total distance
-  val totDists = Array.tabulate(nObjs)(o => CPVarInt(cp, 0 to distMatrices(o).flatten.sum))
+  val totDists = Array.tabulate(nObjs)(o => CPIntVar(0 to distMatrices(o).flatten.sum)(cp))
 
   // Constraints
   // -----------
@@ -65,24 +65,18 @@ object BiTSP extends App {
     for (o <- Objs) {
       cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
       cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
-      cp.add(new MinAssignment(pred, distMatrices(o), totDists(o)))
-      cp.add(new MinAssignment(succ, distMatrices(o), totDists(o)))
+      cp.add(minAssignment(pred, distMatrices(o), totDists(o)))
+      cp.add(minAssignment(succ, distMatrices(o), totDists(o)))
     }
-  }
-  
-  // Search
-  // ------
-  val objective = 1
-  cp.exploration {
-    TSPUtils.regretHeuristic(cp, succ, distMatrices(objective))
-  } 
+  } search {
+    binaryFirstFail(succ)
+  }  
   
   // Run
   // ---  
   println("Search...")
-  cp.run()  
+  println(cp.start())
  
-  cp.printStats() 
   println("Pareto Set")
   println(cp.nonDominatedSolutionsObjs.mkString("\n"))
 }

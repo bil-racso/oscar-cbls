@@ -119,15 +119,14 @@ object CrossWord {
     //
     // variables
     //
-    val A = Array.fill(num_words,word_len)(CPVarInt(cp, 0 to 26))
+    val A = Array.fill(num_words,word_len)(CPIntVar(0 to 26)(cp))
     val A_flatten = A.flatten
 
-    val E = Array.fill(N)(CPVarInt(cp, 0 to num_words))
-
+    val E = Array.fill(N)(CPIntVar(0 to num_words)(cp))
+    
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
 
@@ -157,10 +156,12 @@ object CrossWord {
       }
 
 
-     } exploration {
+     } search {
 
-        cp.binary(E)
-          
+        binaryStatic(E)
+        
+     } onSolution {
+       
         println("E: " + E.mkString(" "))
         for(ee <- 0 until N) {
           print(ee + ": (" + "%2d".format(E(ee).value) + ") ")
@@ -169,16 +170,12 @@ object CrossWord {
           }
           println()
         }
-
         println()
 
-        numSols += 1
 
-     } run()
-
-     println("\nIt was " + numSols + " solutions.")
-
-     cp.printStats()
+     } 
+     
+     println(cp.start())
    }
 
 }

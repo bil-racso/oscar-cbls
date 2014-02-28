@@ -1,13 +1,13 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import scala.collection.mutable.PriorityQueue
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 
-abstract class MaxCumulative(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], demands: Array[CPVarInt], resources: Array[CPVarInt], capacity: CPVarInt, id: Int = 1) extends Constraint(starts.head.store, "Max Cumulative") {
+abstract class MaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int = 1) extends Constraint(starts.head.store, "Max Cumulative") {
 
   // Low priority
   priorityL2 = 0

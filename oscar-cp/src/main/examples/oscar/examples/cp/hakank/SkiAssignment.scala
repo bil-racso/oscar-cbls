@@ -64,7 +64,7 @@ object SkiAssignment {
     val skier_heights = Array(3, 4, 7, 11, 18)
       
     // variables
-    val x = Array.fill(num_skiers)(CPVarInt(cp, 1 to num_skis))
+    val x = Array.fill(num_skiers)(CPIntVar(1 to num_skis)(cp))
     // sum of differences between height of assigned skis to the skiers
     val z = sum(Array.tabulate(num_skiers)(i=> (ski_heights(x(i)) - skier_heights(i)).abs()))
 
@@ -77,22 +77,21 @@ object SkiAssignment {
 
       cp.add(allDifferent(x), Strong)
 
-     } exploration {
-       
-       cp.binaryFirstFail(x)
+    } search {
 
-       for(s <- 0 until num_skiers) {
-         println("skier " + s + " ski: " + x(s))
-       }
-       println()
+      binaryFirstFail(x.toSeq)
+    } onSolution {
+      for (s <- 0 until num_skiers) {
+        println("skier " + s + " ski: " + x(s))
+      }
+      println()
 
-       numSols += 1
-       
-     }
+      numSols += 1
 
-     println("\nIt was " + numSols + " solutions.\n")
-     cp.printStats()
+    }
 
-   }
+    println(cp.start())
+
+  }
 
 }

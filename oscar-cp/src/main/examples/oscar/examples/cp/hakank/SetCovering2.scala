@@ -66,7 +66,7 @@ object SetCovering2 {
     //
     // variables
     //
-    val x = Array.fill(n)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(n)(CPIntVar(0 to 1)(cp))
     // number of telephones, to be minimized
     val z = sum(x)
 
@@ -83,10 +83,10 @@ object SetCovering2 {
         cp.add(x(corner(i)(0)-1) + x(corner(i)(1)-1) >= 1)
       }
       
-    } exploration {
+    } search {
        
-      cp.binary(x)
-        
+      binaryStatic(x)
+    } onSolution {
       println("\nSolution:")
       println("x: " + x.mkString(""))
       println("z: " + z)
@@ -95,8 +95,7 @@ object SetCovering2 {
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

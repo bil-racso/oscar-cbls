@@ -39,7 +39,7 @@ import oscar.cp.core._
  */
 object Grocery {
 
-   def increasing(cp: CPSolver, y: Array[CPVarInt]) = {
+   def increasing(cp: CPSolver, y: Array[CPIntVar]) = {
      for (i <- 1 until y.length) {
        cp.add(y(i-1) <= y(i), Strong)
      }
@@ -57,7 +57,7 @@ object Grocery {
       println("m2: " + m2)
 
       // variables
-      val item = Array.fill(n)(CPVarInt(cp, 1 to (m / 2).toInt))
+      val item = Array.fill(n)(CPIntVar(1 to (m / 2).toInt)(cp))
 
       var numSols = 0
       cp.solve subjectTo {
@@ -72,20 +72,19 @@ object Grocery {
         // cp.add(item(0).mul(item(1)).mul(item(2)).mul(item(3)) == m2)
         cp.add(item.reduceLeft((acc,x) => acc*x) == m2, Strong)
 
-      } exploration {
+      } onSolution {
 
-         cp.binaryFirstFail(item)
-
+         binaryFirstFail(item)
+      
+      } onSolution {
+        
          println(item.mkString(""))
          println()
 
          numSols += 1
 
-      } run()
-	  
-      println("\nIt was " + numSols + " solutions.\n")
-  
-      cp.printStats()
+      } 
+      println(cp.start())
 
   }
 

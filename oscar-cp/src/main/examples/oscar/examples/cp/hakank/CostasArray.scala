@@ -59,15 +59,14 @@ object CostasArray {
     //
     // variables
     //
-    val costas = Array.fill(n)(CPVarInt(cp, 1 to n))
+    val costas = Array.fill(n)(CPIntVar(1 to n)(cp))
     // Matrix of differences
-    val differences = Array.fill(n,n)(CPVarInt(cp, -n+1 to n-1))
+    val differences = Array.fill(n,n)(CPIntVar(-n+1 to n-1)(cp))
 
 
     //
     // constraints
     //
-    var numSols = 0
 
     cp.solve subjectTo {
 
@@ -120,10 +119,11 @@ object CostasArray {
       }
       
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(costas)
-
+      binaryFirstFail(costas)
+    } onSolution {
+      
       println("\nSolution:")
 
       println("costas:" + costas.mkString(""))
@@ -137,12 +137,9 @@ object CostasArray {
       }
       println()
  
-      numSols += 1
 
-   } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+   } 
+   println(cp.start())
 
   }
 

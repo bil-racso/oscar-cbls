@@ -21,14 +21,13 @@ import oscar.cp.modeling._
 import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 
 /**
- *
  *  @authors: Pierre Schaus  pschaus@gmail.com
  *  @authors: Renaud Hartert ren.hartert@gmail.com
  */
-object RCPSP extends App {
+object RCPSP extends CPModel with App {
 
   // (duration, consumption)
   val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2))
@@ -39,28 +38,22 @@ object RCPSP extends App {
   val Tasks = 0 until nTasks
 
   val horizon = durationsData.sum
-  val cp = CPSolver()
-  
-  val durations = Array.tabulate(nTasks)(t => CPVarInt(cp, durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPVarInt(cp, 0 to horizon - durations(t).min))
-  val ends = Array.tabulate(nTasks)(t => CPVarInt(cp, durations(t).min to horizon))
-  val demands = Array.tabulate(nTasks)(t => CPVarInt(cp, demandsData))
-  val resources = Array.tabulate(nTasks)(t => CPVarInt(cp, 0))
+  implicit val cp = CPSolver()
+
+  val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
+  val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
+  val resources = Array.tabulate(nTasks)(t => CPIntVar(0))
 
   val makespan = maximum(ends)
 
-  cp.minimize(makespan) subjectTo {
-    
-    // Consistency
-    for (t <- Tasks) {
-      cp.add(ends(t) == starts(t) + durations(t))
-    }
-    
-    // Cumulative
-    cp.add(new SweepMaxCumulative(starts, ends, durations, demands, resources, CPVarInt(cp, capa), 0))
+  // Cumulative
+  add(maxCumulativeResource(starts, durations, ends, demands, resources, CPIntVar(capa), 0))
 
-  } exploration {
-    cp.binaryFirstFail(starts)
-  } run ()
-  cp.printStats()
+  minimize(makespan) search {
+    binaryFirstFail(starts)
+  }
+
+  println(cp.start())
 }

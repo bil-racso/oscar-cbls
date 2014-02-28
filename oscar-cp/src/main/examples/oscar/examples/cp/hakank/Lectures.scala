@@ -82,7 +82,7 @@ object Lectures {
     // variables
     // 
 
-    val v = Array.fill(n)(CPVarInt(cp, 0 to n-1))
+    val v = Array.fill(n)(CPIntVar(0 to n-1)(cp))
 
     // Maximum color (hour) to minimize.
     // Note: since C# is 0-based, the
@@ -108,10 +108,12 @@ object Lectures {
       cp.add(v(0) == 0);
       cp.add(v(1) <= 1);
 
-    } exploration {
+    } search {
        
-      cp.binary(v)
-
+      binaryStatic(v)
+      
+    } onSolution {
+      
       println("\nSolution:")
       println("max hour: " + max_c)
       println("v: " + v.mkString(""))
@@ -121,10 +123,9 @@ object Lectures {
 
       numSols += 1
 
-   }
+    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -33,13 +33,13 @@ public class SoftGCC extends Constraint{
 	
 	private boolean posted;
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	private int minval;
 	private int maxval;
 	private int nbVals;
 	private int [] low; 
 	private int [] up;
-	private CPVarInt viol;
+	private CPIntVar viol;
 
 	private int sumLow;
 
@@ -100,7 +100,7 @@ public class SoftGCC extends Constraint{
      * @param viol = sum(i) viol(i)
      * @see GCC
      */
-	public SoftGCC(CPVarInt [] x,int minval, int [] low, int [] up, CPVarInt viol) {
+	public SoftGCC(CPIntVar [] x,int minval, int [] low, int [] up, CPIntVar viol) {
 		super(x[0].s(),"SoftGCC");
 		this.x = x;
 		this.minval = minval;

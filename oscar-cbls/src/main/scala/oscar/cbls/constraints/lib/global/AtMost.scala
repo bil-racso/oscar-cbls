@@ -1,121 +1,108 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
-
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{Variable, IntVar}
-import oscar.cbls.invariants.lib.logic.{IntElement, IntVar2IntVarFun}
+import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, CBLSIntVar}
+import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, Int2Int}
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.minmax.Max2
+import oscar.cbls.invariants.lib.numeric.Sum
 
-//TODO: check
 /**Implements the AtMost constraint on IntVar.
- * There is a set of bounds, defined in the parameter bound as pair (value,bound).
- * The variables should be such that there is at most ''bound'' of them which have the value ''value''.
- * WARNING: not tested!
- * @param variables the variables that should be bounded
- * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
- * @author  Renaud De Landtsheer rdl@cetic.be
- */
-case class AtMost(variables:Iterable[IntVar], bounds:SortedMap[Int, Int]) extends Constraint {
+  * There is a set of bounds, defined in the parameter bound as pair (value,bound).
+  * The variables should be such that there is at most ''bound'' of them which have the value ''value''.
+  *
+  * @param variables the variables that should be bounded
+  * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
+  * @author renaud.delandtsheer@cetic.be
+  */
+case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
-  registerConstrainedVariablesAll(variables)
-  registerStaticAndDynamicDependencyAllNoID(variables)
+  model = InvariantHelper.findModel(variables)
+  registerConstrainedVariables(variables)
   finishInitialization()
 
-  private val Violation:IntVar = new IntVar(model,0,Int.MaxValue,0,"ViolationsOfAtMost")
-  Violation.setDefiningInvariant(this)
+  private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
+  private val offset:Int = countInvariant.offset
+  private val valueCount = countInvariant.counts //v => #occurrence of v+offset in variables
 
-  private val N0:Int = variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MaxVal > acc) intvar.MaxVal else acc))
-  private val offset:Int = - variables.foldLeft(0)((acc:Int,intvar:IntVar) => (if(intvar.MinVal < acc) intvar.MinVal else acc))
-  private val N = N0 + offset
-  private val range = 0 until N
+  private val noViolation:CBLSIntVar = 0
+  private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
 
-  private val Violations:SortedMap[IntVar,IntVar] = variables.foldLeft(SortedMap.empty[IntVar,IntVar])((acc,intvar)
+  for((value,bound) <- bounds){
+    violationByVal(value) = Max2(noViolation,valueCount(value) - bound).toIntVar
+  }
+
+  //the violation of each input variable
+  private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])((acc,intvar)
   => {
-    val newvar = new IntVar(model,0,1,1,"Violation_AtMost_"+intvar.name)
-    acc + ((intvar,newvar))
+    val newVar = new CBLSIntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
+    newVar <== violationByVal.element(intvar + offset)
+    acc + ((intvar,newVar))
   })
 
-  private val ValueCount:Array[IntVar] = (for(i <- 0 to N) yield {
-    val tmp = new IntVar(model,-1,variables.size,(if(Bound(i) == -1) -1 else 0),"AtMost_count_of_value_" + (i-offset))
-    tmp.setDefiningInvariant(this)
-    tmp}
-    ).toArray
-
-  private val Bound:Array[Int]= new Array[Int](N)
-  for(v <- range){Bound(v) = bounds.getOrElse(v,-1)}
-
-  for(v <- variables){
-    val varval = v.value
-    if(Bound(varval) != -1){
-      ValueCount(varval + offset) :+= 1
-    }
-    Violations(v) <== (IntElement(v + offset, ValueCount) - new IntVar2IntVarFun(v,(v:Int) => Bound(v+offset)))
-  }
-
-  for(i <- range){
-    Violation :+= 0.max(ValueCount(i).getValue(true) - Bound(i))
-  }
-
-  @inline
-  override def notifyIntChanged(v:IntVar,OldVal:Int,NewVal:Int){
-    val NewBounded = (Bound(NewVal+offset) == -1)
-    val OldBounded = (Bound(OldVal+offset) == -1)
-
-    if (!OldBounded) ValueCount(OldVal+offset) := ValueCount(OldVal+offset).getValue(true) - 1
-    if (!NewBounded) ValueCount(NewVal+offset) := ValueCount(NewVal+offset).getValue(true) + 1
-
-    if(NewBounded){
-      if (OldBounded){
-        val DeltaOldVal = if(ValueCount(OldVal+offset).getValue(true) - Bound(OldVal+offset) == 0) 0 else -1
-        val DeltaNewVal = if(ValueCount(NewVal+offset).getValue(true) - Bound(NewVal+offset) == 1) 0 else 1
-        Violation :+= (DeltaNewVal + DeltaOldVal)
-      }else{
-        val DeltaNewVal = if(ValueCount(NewVal+offset).getValue(true) > Bound(NewVal+offset)) 1 else 0
-        Violation :+= DeltaNewVal
-      }
-    }else{
-      if (OldBounded){
-        val DeltaOldVal = if(ValueCount(OldVal+offset).getValue(true) >= Bound(OldVal+offset)) -1 else 0
-        Violation :+= DeltaOldVal
-      }
-    }
-  }
+  private val Violation:CBLSIntVar = new CBLSIntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
+  Violation <== Sum(bounds.keys.map(bound => violationByVal(bound)))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
-   * the number of variable in excess is the max between zero and
-   * (the number of variable that have the value of the bound minus the bound).
-   */
+    * the number of variable in excess is the max between zero and
+    * (the number of variable that have the value of the bound minus the bound).
+    */
   override def violation = Violation
 
   /**The violation of a variable is zero if its value is not the one of a bound.
-   * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
-   */
-  override def violation(v: Variable):IntVar = {
-    val tmp:IntVar = Violations.getOrElse(v.asInstanceOf[IntVar],null)
-    assert(tmp != null)
-    tmp
+    * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
+    */
+  override def violation(v: Variable):CBLSIntVar = {
+    Violations(v.asInstanceOf[CBLSIntVar])
   }
 
+  override def checkInternals(c: Checker) {
+    var checkBounds:SortedMap[Int, Int] = SortedMap.empty
+    for(i <- bounds.keys) checkBounds += ((i,0))
+    for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value) +1))
+
+    for (v <- variables){
+      /*The violation of a variable is zero if its value is not the one of a bound.
+        * If the variable has the value of a bound, its violation is the number of variable in excess for that bound.
+        */
+      val violationOfV = violation(v)
+      val expectedViolation =
+        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value))
+        else 0
+      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + "== expectedViolation" + expectedViolation))
+    }
+
+    /*The violation of the constraint is the sum on all bound of the number of variable that are in excess.
+      * the number of variable in excess is the max between zero and
+      * (the number of variable that have the value of the bound minus the bound).*/
+    var summedViolation = 0;
+    for(i <- bounds.keys){
+      if (checkBounds(i) > bounds(i)) summedViolation += (checkBounds(i) - bounds(i))
+    }
+    c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
+  }
 }
+

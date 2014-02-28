@@ -60,7 +60,7 @@ object Sudoku {
                         Array(0, 0, 0, 6, 0, 8, 0, 0, 0))
 
     // variables
-    val x = Array.fill(n,n)(CPVarInt(cp, 1 to n))
+    val x = Array.fill(n,n)(CPIntVar(1 to n)(cp))
     val x_t = x.transpose
 
     //
@@ -87,10 +87,12 @@ object Sudoku {
       }
 
 
-    } exploration {
+    } search {
        
-       cp.binaryFirstFail(x.flatten)
-
+       binaryFirstFail(x.flatten.toSeq)
+       
+    } onSolution {
+       
        println("\nSolution:")
        for(i <- 0 until n) {
          println(x(i).mkString(" "))
@@ -99,10 +101,9 @@ object Sudoku {
 
        numSols += 1
        
-    } run()
+    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

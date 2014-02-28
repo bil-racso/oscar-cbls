@@ -82,8 +82,8 @@ object TouristSiteCompetition {
     //
     // variables
     //
-    val x = Array.fill(num_sites, num_judges)(CPVarInt(cp, 0 to 1))
-    val judges_where = Array.fill(num_judges, num_sites)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(num_sites, num_judges)(CPIntVar(0 to 1)(cp))
+    val judges_where = Array.fill(num_judges, num_sites)(CPIntVar(0 to 1)(cp))
 
     //
     // constraints
@@ -120,10 +120,9 @@ object TouristSiteCompetition {
         cp.add((x(s)(j) === 1) === judges_where(j)(s) === 1)
       }
 
-    } exploration {
-       
-      cp.binaryMaxDegree(x.flatten)
-
+    } search {      
+      binaryMaxDegree(x.flatten.toSeq)
+    } onSolution {
       println(x.map(i=>i.mkString(" ")).mkString("\n"))
       println("Judges:")
       println(judges.map(j=>judgesStr(j) + ": " + judges_where(j).
@@ -133,10 +132,9 @@ object TouristSiteCompetition {
 
       numSols += 1
 
-    } run()
+    }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

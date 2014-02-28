@@ -32,7 +32,7 @@ import oscar.cp.modeling._
  *
  * @author Pierre Schaus pschaus@gmail.com and Bertrand Cornelusse bcr@n-side.com
  */
-class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).s, "GCCFWC") {
+class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).s, "GCCFWC") {
 
   val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))
   val nbVarWithValue = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))
@@ -43,7 +43,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
    */
   override def setup(l: CPPropagStrength): CPOutcome = {
     
-    println("chez beber")
+    //println("chez beber")
     var outcome: CPOutcome = CPOutcome.Suspend
     
     // initialize correctly nbBound and nbVarWithValue
@@ -66,7 +66,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     outcome
   }
   
-  override def valBind(x:CPVarInt): CPOutcome = {
+  override def valBind(x:CPIntVar): CPOutcome = {
     val idx = x.min - minVal
     if (idx >= 0 && idx < low.size) {
       nbBound(idx).incr()
@@ -77,7 +77,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     CPOutcome.Suspend
   }
   
-   override def valRemove(x:CPVarInt,v: Int): CPOutcome = {
+   override def valRemove(x:CPIntVar,v: Int): CPOutcome = {
     
     CPOutcome.Suspend
   }
@@ -98,7 +98,7 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
     //    println("something changed:" + X.mkString(","));
 
     // Set of variables that have at least one value in the set of cardinality constrained values 
-    var X2 = Set[oscar.cp.core.CPVarInt]()
+    var X2 = Set[oscar.cp.core.CPIntVar]()
     constrainedValues foreach (v => X2 = X2 union (X filter (x => x.hasValue(v)) toSet))
 
     // Process constrained values one by one
@@ -198,24 +198,3 @@ class GCCFWC(val X: Array[CPVarInt], val minVal: Int, val low: Array[Int], val u
   }
 }
 
-
-object GCCFWC {
-  def main(args: Array[String]) {
-//    var nbSol = 0  
-//    import oscar.cp.test.TestGCCFWC._
-//    val cp = new CPSolver()
-//    
-//    // Generate the constraint and solve
-//    val GCC = GCCGen(cp)
-//    cp.solveAll subjectTo {
-//      cp.add(GCC)
-//    } exploration {
-//      cp.binaryFirstFail(GCC.getX)
-//      println(GCC)
-//      println((GCC.getX map (_.value)).mkString(";"))
-//      GCC.check()
-//      nbSol += 1
-//    }
-    
-  }
-}

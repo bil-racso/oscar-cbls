@@ -48,8 +48,8 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
 
     val cp = CPSolver()
 
-    val wife    = Array.fill(n)(CPVarInt(cp, Women)) // wife(i) is the woman chosen for man i
-    val husband = Array.fill(n)(CPVarInt(cp, Men)) // husband(j) is the man chosen for woman j
+    val wife    = Array.fill(n)(CPIntVar(Women)(cp)) // wife(i) is the woman chosen for man i
+    val husband = Array.fill(n)(CPIntVar(Men)(cp)) // husband(j) is the man chosen for woman j
 
 
     cp.solve subjectTo {
@@ -69,16 +69,13 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
           cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
           cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))         
       }
-     } exploration {
-       
-       cp.binary(wife)
-
-       println()
-       
+     } search {
+       binaryStatic(wife)
+     } onSolution {
        wife.map(_.getValue) should be(Array(0,2,1,4,3))
        husband.map(_.getValue) should be(Array(0,2,1,4,3))
-
-     }
+     } 
+     cp.start().nSols should be(1)
     
   }
 

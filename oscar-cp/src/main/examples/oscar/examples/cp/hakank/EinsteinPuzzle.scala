@@ -58,17 +58,15 @@ object EinsteinPuzzle {
     //
     // variables
     // 
-    val nationality = Array.fill(n)(CPVarInt(cp, RANGE))
-    val animal      = Array.fill(n)(CPVarInt(cp, RANGE))
-    val drink       = Array.fill(n)(CPVarInt(cp, RANGE))
-    val smoke       = Array.fill(n)(CPVarInt(cp, RANGE))
-    val color       = Array.fill(n)(CPVarInt(cp, RANGE))
+    val nationality = Array.fill(n)(CPIntVar(RANGE)(cp))
+    val animal      = Array.fill(n)(CPIntVar(RANGE)(cp))
+    val drink       = Array.fill(n)(CPIntVar(RANGE)(cp))
+    val smoke       = Array.fill(n)(CPIntVar(RANGE)(cp))
+    val color       = Array.fill(n)(CPIntVar(RANGE)(cp))
 
     //
     // constraints
     //
-    var numSols = 0
-
     cp.solve subjectTo {
 
        cp.add(allDifferent(nationality), Strong)    
@@ -127,10 +125,12 @@ object EinsteinPuzzle {
        cp.add((smoke(blends) - drink(water)).abs == 1);      
 
 
-    } exploration {
+    } search {
        
-      cp.binaryFirstFail(nationality ++ animal ++ drink ++ smoke ++ color)
-
+      binaryFirstFail(nationality ++ animal ++ drink ++ smoke ++ color)
+      
+    } onSolution {
+      
       println("\nSolution:")
       val nats = "Brit, Swede, Dane, Norwegian, German"            split(", *")
       val anis = "dogs, fish, birds, cats, horses"                 split(", *")
@@ -139,7 +139,7 @@ object EinsteinPuzzle {
       val cols = "red, green, white, yellow, blue"                 split(", *")
 
       // find the index in x where thing is
-      def getIndex(x : Array[CPVarInt], thing: Int) =
+      def getIndex(x : Array[CPIntVar], thing: Int) =
         x.zipWithIndex.filter(_._1.value == thing)(0)._2 
 
 
@@ -154,12 +154,10 @@ object EinsteinPuzzle {
 
       println("\nWho owns the fish: The " + nats(getIndex(animal, fish )))
 
-      numSols += 1
+    }
+    
+    println(cp.start())
 
-    } run()
-
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
 
   }
 

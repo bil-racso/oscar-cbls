@@ -59,7 +59,7 @@ object SetCovering3 {
     // variables
     //
  
-    val x = Array.fill(num_senators)(CPVarInt(cp, 0 to 1))
+    val x = Array.fill(num_senators)(CPIntVar(0 to 1)(cp))
     // number of assigned senators, to be minimized
     val z = sum(x)
 
@@ -81,9 +81,10 @@ object SetCovering3 {
       }
 
       
-    } exploration {
+    } search {
        
-      cp.binary(x)
+      binaryStatic(x)
+    } onSolution {
 
       println("\nSolution:")
       println("z: " + z)
@@ -102,8 +103,7 @@ object SetCovering3 {
 
     }
 
-    println("\nIt was " + numSols + " solutions.")
-    cp.printStats()
+    println(cp.start())
 
   }
 

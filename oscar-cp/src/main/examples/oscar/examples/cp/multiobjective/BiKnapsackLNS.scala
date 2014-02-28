@@ -64,11 +64,11 @@ object BiKnapsackLNS extends App {
   val cp = CPSolver()
   cp.silent = true
 
-  val x: Array[CPVarBool] = Array.fill(nItems)(CPVarBool(cp))
-  val capaVar1 = CPVarInt(cp, 0 to capa1)
-  val capaVar2 = CPVarInt(cp, 0 to capa2)
-  val profitVar1 = CPVarInt(cp, 0 to profit(0).sum)
-  val profitVar2 = CPVarInt(cp, 0 to profit(1).sum)
+  val x: Array[CPBoolVar] = Array.fill(nItems)(CPBoolVar()(cp))
+  val capaVar1 = CPIntVar(0 to capa1)(cp)
+  val capaVar2 = CPIntVar(0 to capa2)(cp)
+  val profitVar1 = CPIntVar(0 to profit(0).sum)(cp)
+  val profitVar2 = CPIntVar(0 to profit(1).sum)(cp)
 
   val knapsack1 = binaryKnapsack(x, items1.map(_._2), items1.map(_._1), profitVar1, capaVar1)
   val knapsack2 = binaryKnapsack(x, items2.map(_._2), items2.map(_._1), profitVar2, capaVar2)
@@ -76,19 +76,19 @@ object BiKnapsackLNS extends App {
   cp.addDecisionVariables(x)
   cp.addDecisionVariables(Array(capaVar1, capaVar2))
 
+  var obj = 0
   cp.paretoMaximize(profitVar1, profitVar2) subjectTo {
     cp.add(knapsack1)
     cp.add(knapsack2)
-  }
-
-  var obj = 0
-  cp.exploration {
-    while (!allBounds(x)) {
-      val i = selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)).get
-      cp.branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
+  } search {
+    selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)) match {
+      case None => noAlternative
+      case Some(i) => branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
+  } onSolution {
     paretoPlot.insert(profitVar1.value, profitVar2.value)
-  } run (1)
+  } start(1)
+
 
   val rand = new scala.util.Random()
   // MO LNS PARAMETERS
@@ -106,7 +106,7 @@ object BiKnapsackLNS extends App {
     if (rand.nextInt(100) < probaIntensify) cp.objective.intensify(sol)
     else cp.objective.diversify()
     // search
-    cp.runSubjectTo(failureLimit = maxFailures) {
+    cp.startSubjectTo(failureLimit = maxFailures) {
       relaxRandomly(x, sol, relaxSize)
     }
   }
