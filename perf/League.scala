@@ -12,58 +12,21 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.invariants.test
-
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-import scala.collection.immutable._
-import oscar.invariants._
+import oscar.cp.modeling._
+import oscar.cp.core._
+import oscar.cp.minizinc.FlatZinc2OscaR
+import java.io.File
 
 /**
- * Test functionality of Invariants
- * @author Sebatien Mouthuy & Pierre Schaus
+ * Minizinc competition bench 2013: instance model15-4-3
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class InvariantsTest extends FunSuite with ShouldMatchers  {
-
-  
-  test("test whener on VarInt") {
-	  	val y = new VarInt(1)
-	  	
-	  	var nb = 0
-	  	
-	  	whenever ( y.filter(_ == 5) ){
-	  	 	nb += 1
-	  	}
-	  	
-	  	y := 5
-	  	nb should equal(1)
-	  	y := 6
-	  	nb should equal(1)
-	  	y := 5
-	  	nb should equal(2)  	
+object League {
+  def main(args: Array[String]) {
+    val file = if ((new File("data/minizinc/league.fzn")).exists()) "data/minizinc/league.fzn" else "../data/minizinc/league.fzn"
+	val args = Array[String]("-s","-a", file)
+	FlatZinc2OscaR.parse(args)
   }
-  
-  test("test once on VarInt") {
-	  	val y = new VarInt(1)
-	  	
-	  	var nb = 0
-	  	
-	  	once ( y.filter(_ == 5) ){
-	  	 	nb += 1
-	  	}
-	  	
-	  	y := 5
-	  	nb should equal(1)
-	  	y := 6
-	  	nb should equal(1)
-	  	y := 5
-	  	nb should equal(1)  	
-  }
-  
-  
-	
- 
-  
-
 }
+
 

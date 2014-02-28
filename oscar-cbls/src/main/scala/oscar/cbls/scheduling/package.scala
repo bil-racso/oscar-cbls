@@ -23,7 +23,10 @@ package oscar.cbls
 import scheduling.algo.IFlatIRelax
 import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
 
-/** This package is a scheduling library.
+/**
+ * THIS PACKAGE IS EXPERIMENTAL
+ *
+ *  This package is a scheduling library.
  * it supports
  - [[oscar.cbls.scheduling.model.CumulativeResource]]
  - [[oscar.cbls.scheduling.model.Activity]] with varying durations and precedence constraints

@@ -25,20 +25,14 @@ import scala.collection.generic._
 class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPIntVar(st, name) {
 
   val dom = new IntDomain(store, minimum, maximum)
-  val onMinL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  val onMaxL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
 
-  val onMinL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onMaxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
 
-  val onMinIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onMaxIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
@@ -49,9 +43,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    */
   def this(st: CPStore, r: Range) = this(st, r.start, if (r.isInclusive) r.end else r.end - 1)
 
-  def rootVar: CPIntVar = this
-
-  def offset: Int = 0
+  def transform(v: Int ) = v
 
   def iterator = {
     dom.iterator
@@ -63,20 +55,14 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    */
   def constraintDegree() = {
     var tot = 0
-    if (onMinL2.hasValue()) tot += onMinL2.value.size
-    if (onMaxL2.hasValue()) tot += onMaxL2.value.size
     if (onBoundsL2.hasValue()) tot += onBoundsL2.value.size
     if (onBindL2.hasValue()) tot += onBindL2.value.size
     if (onDomainL2.hasValue()) tot += onDomainL2.value.size
 
-    if (onMinL1.hasValue()) tot += onMinL1.value.size
-    if (onMaxL1.hasValue()) tot += onMaxL1.value.size
     if (onBoundsL1.hasValue()) tot += onBoundsL1.value.size
     if (onBindL1.hasValue()) tot += onBindL1.value.size
     if (onDomainL1.hasValue()) tot += onDomainL1.value.size
 
-    if (onMinIdxL1.hasValue()) tot += onMinIdxL1.value.size
-    if (onMaxIdxL1.hasValue()) tot += onMaxIdxL1.value.size
     if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.value.size
     if (onBindIdxL1.hasValue()) tot += onBindIdxL1.value.size
     if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.value.size
@@ -86,7 +72,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   /**
    * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
    */
-  def isBound = {
+  @inline def isBound = {
     assert(!store.isFailed())
     size == 1
   }
@@ -105,7 +91,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  def hasValue(value: Int) = dom.hasValue(value)
+  @inline def hasValue(value: Int) = dom.hasValue(value)
 
   /**
    * @param val
@@ -162,7 +148,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   override def toString(): String = {
     if (isEmpty) name + " phi"
     else if (isBound) name + (if (name.isEmpty) "" else " ") + value
-    else name + (if (name.isEmpty) "" else " ") + dom.toString()
+    else name + (if (name.isEmpty) "" else " ") + "{" + dom.toString() + "}"
   }
 
   /**
@@ -189,28 +175,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * the maximum of the domain changes
-   * @param c
-   * @see oscar.cp.core.Constraint#propagate()
-   */
-  def callPropagateWhenMaxChanges(c: Constraint, trackDelta: Boolean = false) {
-    onMaxL2.setValue(new ConstraintQueue(onMaxL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
-  }
-
-  /**
-   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * the minimum of the domain changes
-   * @param c
-   * @see oscar.cp.core.Constraint#propagate()
-   */
-  def callPropagateWhenMinChanges(c: Constraint, trackDelta: Boolean = false) {
-    onMinL2.setValue(new ConstraintQueue(onMinL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
-  }
-
-  /**
-   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
@@ -227,11 +191,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
   def callValBindWhenBind(c: Constraint) {
-    callValBindWhenBind(c, this, 0)
+    callValBindWhenBind(c, this)
   }
 
-  def callValBindWhenBind(c: Constraint, variable: CPIntVar, delta: Int) {
-    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable, delta))
+  def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
+    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
   }
 
   /**
@@ -241,39 +205,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
   def callUpdateBoundsWhenBoundsChange(c: Constraint) {
-    callUpdateBoundsWhenBoundsChange(c, this, 0)
+    callUpdateBoundsWhenBoundsChange(c, this)
   }
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar, delta: Int) {
-    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable, delta))
-  }
-
-  /**
-   * Level 1 registration: ask that the updateMax(CPIntVar, int) method of the constraint c is called whenever
-   * the maximum value of the domain changes.
-   * @param c
-   * @see oscar.cp.core.Constraint#updateMax(CPIntVar, int)
-   */
-  def callUpdateMaxWhenMaxChanges(c: Constraint) {
-    callUpdateMaxWhenMaxChanges(c, this, 0)
-  }
-
-  def callUpdateMaxWhenMaxChanges(c: Constraint, variable: CPIntVar, delta: Int) {
-    onMaxL1.setValue(new PropagEventQueueVarInt(onMaxL1.value, c, variable, delta))
-  }
-
-  /**
-   * Level 1 registration: ask that the updateMin(CPIntVar, int) method of the constraint c is called whenever
-   * the minimum value of the domain changes.
-   * @param c
-   * @see oscar.cp.core.Constraint#updateMin(CPIntVar, int)
-   */
-  def callUpdateMinWhenMinChanges(c: Constraint) {
-    callUpdateMinWhenMinChanges(c, this, 0)
-  }
-
-  def callUpdateMinWhenMinChanges(c: Constraint, variable: CPIntVar, delta: Int) {
-    onMinL1.setValue(new PropagEventQueueVarInt(onMinL1.value, c, variable, delta))
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
+    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
   }
 
   /**
@@ -283,11 +219,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
    */
   def callValRemoveWhenValueIsRemoved(c: Constraint) {
-    callValRemoveWhenValueIsRemoved(c, this, 0)
+    callValRemoveWhenValueIsRemoved(c, this)
   }
 
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar, delta: Int) {
-    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable, delta))
+  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) {
+    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable))
   }
 
   /**
@@ -298,41 +234,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#valRemoveIdx(CPIntVar, int, int)
    */
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) {
-    callValRemoveIdxWhenValueIsRemoved(c, this, idx, 0)
+    callValRemoveIdxWhenValueIsRemoved(c, this, idx)
   }
 
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx, delta))
-  }
-
-  /**
-   * Level 1 registration: ask that the updateMinIdx(CPIntVar, int, int) method of the constraint c is called whenever
-   * the minimum value of the domain changes
-   * @param c
-   * @param idx, an index that will be given as parameter to updateMinIdx(CPIntVar, int, int)
-   * @see Constraint#updateMinIdx(CPIntVar, int, int)
-   */
-  def callUpdateMinIdxWhenMinChanges(c: Constraint, idx: Int) {
-    callUpdateMinIdxWhenMinChanges(c, this, idx, 0)
-  }
-
-  def callUpdateMinIdxWhenMinChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onMinIdxL1.setValue(new PropagEventQueueVarInt(onMinIdxL1.value, c, variable, idx, delta))
-  }
-
-  /**
-   * Level 1 registration: ask that the updateMaxIdx(CPIntVar, int, int) method of the constraint c is called whenever
-   * the maximum value of the domain changes
-   * @param c
-   * @param idx, an index that will be given as parameter to updateMaxIdx(CPIntVar, int, int)
-   * @see Constraint#updateMaxIdx(CPIntVar, int, int)
-   */
-  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, idx: Int) {
-    callUpdateMaxIdxWhenMaxChanges(c, this, idx, 0)
-  }
-
-  def callUpdateMaxIdxWhenMaxChanges(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onMaxIdxL1.setValue(new PropagEventQueueVarInt(onMaxIdxL1.value, c, variable, idx, delta))
+  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) {
+    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -343,11 +249,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#updateBoundsIdx(CPIntVar, int)
    */
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) {
-    callUpdateBoundsIdxWhenBoundsChange(c, this, idx, 0)
+    callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
   }
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx, delta))
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
+    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -358,11 +264,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @see Constraint#valBindIdx(CPIntVar, int)
    */
   def callValBindIdxWhenBind(c: Constraint, idx: Int) {
-    callValBindIdxWhenBind(c, this, idx, 0)
+    callValBindIdxWhenBind(c, this, idx)
   }
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int, delta: Int) {
-    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx, delta))
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
+    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -377,10 +283,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       val assignToMax = max == value
       val assignToMin = min == value
       // -------- AC3 notifications ------------
-      if (!assignToMax)
-        store.notifyL2(onMaxL2.value)
-      if (!assignToMin)
-        store.notifyL2(onMinL2.value)
       //println(this+" notifyL2 onBounds "+onBoundsL2.value)
       store.notifyL2(onBoundsL2.value)
       store.notifyL2(onDomainL2.value)
@@ -390,18 +292,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyUpdateBoundsL1(onBoundsL1.value, this)
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-      if (value == dom.getMin()) {
-        store.notifyUpdateMaxL1(onMaxL1.value, this, dom.getMax())
-        store.notifyUpdateMaxIdxL1(onMaxIdxL1.value, this, dom.getMax())
-      } else if (value == dom.getMax()) {
-        store.notifyUpdateMinL1(onMinL1.value, this, dom.getMin())
-        store.notifyUpdateMinIdxL1(onMinIdxL1.value, this, dom.getMin())
-      } else {
-        store.notifyUpdateMaxL1(onMaxL1.value, this, dom.getMax())
-        store.notifyUpdateMaxIdxL1(onMaxIdxL1.value, this, dom.getMax())
-        store.notifyUpdateMinL1(onMinL1.value, this, dom.getMin())
-        store.notifyUpdateMinIdxL1(onMinIdxL1.value, this, dom.getMin())
-      }
       // must notify AC5 event before the actual removal
       if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
         var i = dom.getMin()
@@ -457,9 +347,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyL2(onBindL2.value)
     }
-    store.notifyUpdateMinL1(onMinL1.value, this, omin)
-    store.notifyUpdateMinIdxL1(onMinIdxL1.value, this, omin)
-    store.notifyL2(onMinL2.value)
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
     store.notifyL2(onBoundsL2.value)
@@ -501,9 +388,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyL2(onBindL2.value)
     }
-    store.notifyUpdateMaxL1(onMaxL1.value, this, omax)
-    store.notifyUpdateMaxIdxL1(onMaxIdxL1.value, this, omax)
-    store.notifyL2(onMaxL2.value)
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
     store.notifyL2(onBoundsL2.value)
@@ -532,16 +416,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyUpdateBoundsL1(onBoundsL1.value, this)
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
       store.notifyL2(onBoundsL2.value)
-    }
-    if (minRemoved) {
-      store.notifyUpdateMinL1(onMinL1.value, this, omin)
-      store.notifyUpdateMinIdxL1(onMinIdxL1.value, this, omin)
-      store.notifyL2(onMinL2.value)
-    }
-    if (maxRemoved) {
-      store.notifyUpdateMaxL1(onMaxL1.value, this, omax)
-      store.notifyUpdateMaxIdxL1(onMaxIdxL1.value, this, omax)
-      store.notifyL2(onMaxL2.value)
     }
     if (indom) {
       store.notifRemoveL1(onDomainL1.value, this, value)

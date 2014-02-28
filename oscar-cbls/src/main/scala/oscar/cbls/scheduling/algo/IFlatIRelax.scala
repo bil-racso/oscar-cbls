@@ -52,7 +52,6 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
       println(p.MakeSpan)
       println("----------------")
     }
-    p.updateVisual()
 
     var plateaulength = 0
     var BestMakeSpan = p.MakeSpan.value
@@ -82,7 +81,6 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
         BestMakeSpan = p.MakeSpan.value
         plateaulength = 0
         println("Better MakeSpan found")
-        p.updateVisual()
       } else {
         plateaulength += 1
         p.clean()
@@ -95,8 +93,6 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     p.clean()
 
     println("restored best solution")
-
-    p.updateVisual()
   }
 
   /**
@@ -174,3 +170,5 @@ class IFlatIRelax(p: Planning, Verbose: Boolean = true) extends SearchEngine {
     }
   }
 }
+
+

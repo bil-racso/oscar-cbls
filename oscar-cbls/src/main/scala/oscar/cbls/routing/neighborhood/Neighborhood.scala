@@ -51,6 +51,8 @@ abstract class Neighborhood() {
    * @return
    */
   final def climbAll(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Int = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
+
     var toreturn = 0;
 
     while (doSearch(s, moveAcceptor, false).found && !s.abort()) {
@@ -66,6 +68,7 @@ abstract class Neighborhood() {
    * @return true if a move vans discovered, false otherwise
    */
   final def climbFirst(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, false).found
   }
@@ -77,6 +80,7 @@ abstract class Neighborhood() {
    * @return true if a move vans discovered, false otherwise
    */
   final def climbBest(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     bestImprovingMove(s, moveAcceptor) match {
       case Some(m) =>
         m.doMove; true
@@ -90,6 +94,7 @@ abstract class Neighborhood() {
    * @return
    */
   final def firstImprovingMove(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, true) match {
       case MoveFound(move) => Some(move)
@@ -100,6 +105,8 @@ abstract class Neighborhood() {
   final def bestImprovingMove(
     s: SearchZone,
     moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
+
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
 
     var bestMove: Option[Move] = None
     var bestObj = Int.MaxValue

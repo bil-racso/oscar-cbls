@@ -67,7 +67,7 @@ object NQueensEasy1 extends CBLSModel with App{
         queens(q1) :=: queens(q2)
         tabu(q1)= it + tenure
         tabu(q2) = it + tenure
-      case _ => println("Warning: Tabu it too big compared to queens count")
+      case _ => ;
     }
     it += 1
   }

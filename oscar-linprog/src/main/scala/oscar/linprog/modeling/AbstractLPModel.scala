@@ -368,9 +368,7 @@ abstract class AbstractLPSolver {
     vars.size - 1
   }
 
-  /**
-   * @deprecated("no need to use option", "1.0")
-   */
+  @deprecated("no need to use option", "1.0")
   def add(constr: LinearConstraint, name: Option[String]): LPConstraint = {
     name match {
       case None => add(constr, "")

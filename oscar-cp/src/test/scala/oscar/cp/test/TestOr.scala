@@ -30,7 +30,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val cp = CPSolver()
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 	  cp.add(A(0) == 1)
 	  
 	  B.isBoundTo(1) should be(true)
@@ -41,7 +41,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(A(0) == 1)
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 	  B.isBoundTo(1) should be(true)
   } 
   
@@ -50,7 +50,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  A.foreach(x => cp.add(x == 0))
 	  val B = CPBoolVar()(cp)
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 	  B.isBoundTo(0) should be(true)
   } 
   
@@ -58,7 +58,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val cp = CPSolver()
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 	  A.foreach(x => cp.add(x == 0))
 	  B.isBoundTo(0) should be(true)
   } 
@@ -71,7 +71,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  cp.add(A(0) == 0)
 	  cp.add(A(1) == 0)
 	  
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 
 	  A(2).isBoundTo(1) should be(true)
   }  
@@ -81,7 +81,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  
-	  cp.add(new Or(A,B))
+	  cp.add(or(A,B))
 	  
 	  cp.add(B == 1)
 	  cp.add(A(0) == 0)
@@ -95,7 +95,7 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  
-	  cp.add(new Or(A,B))	  
+	  cp.add(or(A,B))	  
 	  cp.add(B == 0)
 
 	  A.forall(_.isBoundTo(0)) should be(true)
@@ -106,13 +106,108 @@ class TestOr extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(B == 0)
-	  cp.add(new Or(A,B))	  
+	  cp.add(or(A,B))	  
 	  
 
 	  A.forall(_.isBoundTo(0)) should be(true)
-  }    
+  }
   
- 
+  test("or9") {
+	  val cp = CPSolver()
+	  val A = Array.fill(4)(CPBoolVar()(cp))
+	  cp.add(or(A))	  
+	  cp.add(A(0) == 0)
+	  cp.add(A(3) == 0)
+	  A(2).isBound should be(false)
+	  cp.add(A(1) == 0)
+	  A(2).isBoundTo(1) should be(true)
+  }
+  
+  test("or10") {
+	  val cp = CPSolver()
+	  val A = Array.fill(4)(CPBoolVar()(cp))
 
+	  cp.add(or(A))	  
+	  
+	  cp.pushState()
+	  
+	  cp.add(A(3) == 0)
+	  cp.add(A(2) == 0)
+	  A(0).isBound should be(false)
+	  cp.add(A(1) == 0)
+	  A(0).isBoundTo(1) should be(true)
+	  
+	  cp.pop()
+	  
+	  cp.add(A(0) == 0)
+	  cp.add(A(3) == 0)
+	  A(2).isBound should be(false)
+	  cp.add(A(1) == 0)
+	  A(2).isBoundTo(1) should be(true)	  
+  } 
+  
+  test("or11") {
+	  val cp = CPSolver()
+	  val A = Array.fill(4)(CPBoolVar()(cp))
+
+	  cp.add(or(A))	  
+	  
+	  cp.pushState()
+	  
+	  cp.post(A(3) == 0)
+	  cp.post(A(2) == 0)
+	  A(0).isBound should be(false)
+	  cp.post(A(1) == 0)
+	  A(0).isBoundTo(1) should be(true)
+	  
+	  cp.pop()
+	  
+	  cp.post(A(0) == 0)
+	  cp.post(A(3) == 0)
+	  A(2).isBound should be(false)
+	  var exception = false
+	  try {
+	    cp.add(Seq(A(1) == 0, A(2) == 0))
+	  } catch {
+	  	case e: NoSolutionException => exception = true
+	  }
+	    
+	  exception should be(true)
+  }
+
+  test("or12") {
+    val rand = new scala.util.Random()
+    for (i <- 0 until 200) {
+
+      implicit val cp = CPSolver()
+      val A = Array.fill(10)(CPBoolVar()(cp))
+      def randClause(): Iterable[CPBoolVar] = {
+        val rset = (for (i <- 0 until A.size/3) yield rand.nextInt(10)).toSet
+        return (for (i <- rset) yield A(i))
+      }
+      val randClauses = for (i <- 0 until 10) yield randClause()
+      
+      for (i <-0 until 3) {
+        cp.post(A(rand.nextInt(A.size)) == rand.nextInt(2))
+      }
+
+      def myOr(decomp: Boolean) {
+        for (c: Iterable[CPBoolVar] <- randClauses) {
+          if (decomp) add(sum(c.toArray) >= 1)
+          else add(or(c.toArray))
+        }
+      }
+      search(binaryFirstFail(A,_.randomValue))
+      val stat1 = startSubjectTo() {
+        myOr(false)
+      }
+      val stat2 = startSubjectTo() {
+        myOr(true)
+      }
+      stat1.nSols should be(stat2.nSols)
+      stat1.nFails should be(stat2.nFails)
+    }
+
+  }
 
 }
