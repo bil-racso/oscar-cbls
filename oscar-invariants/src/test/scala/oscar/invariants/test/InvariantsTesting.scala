@@ -23,7 +23,7 @@ import oscar.invariants._
  * Test functionality of Invariants
  * @author Sebatien Mouthuy & Pierre Schaus
  */
-class InvariantsTest extends FunSuite with ShouldMatchers  {
+class InvariantsTesting extends FunSuite with ShouldMatchers  {
 
   
   test("test whener on VarInt") {

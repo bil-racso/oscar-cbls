@@ -65,19 +65,6 @@ import oscar.cbls.constraints.lib.basic.NE
 import oscar.cbls.constraints.lib.basic.EQ
 import oscar.cbls.test.invariants.bench.{InvGen, InvBench, InvariantChecker}
 
-/**
- * @author yoann.guyot@cetic.be
- */
-class InvariantTests extends FunSuite with Checkers {
-
-  {
-  var assertActivated = false
-  assert({assertActivated = true; true})
-  if(!assertActivated)
-    println("You are executing tests with asserts deactivated, you should activate them for a more thorough test")
-  }
-
-}
 
 /**
  * @author yoann.guyot@cetic.be
