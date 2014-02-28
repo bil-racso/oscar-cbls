@@ -43,7 +43,6 @@ case class Store(override val verbose:Boolean = false,
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
   with Bulker{
 
-
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
   private var Variables:List[Variable] = List.empty
