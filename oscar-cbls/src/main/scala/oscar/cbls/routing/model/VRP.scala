@@ -744,8 +744,6 @@ trait Predecessors extends VRP {
 
 /**
  * This trait maintains strong constraints system.
- * It redefines the propagation method of ObjectiveFunction trait,
- * that saves time by propagating partially.
  * @author renaud.delandtsheer@cetic.be
  */
 trait StrongConstraints extends VRPObjective {
@@ -756,6 +754,26 @@ trait StrongConstraints extends VRPObjective {
 
   override def getObjective(): Int =
     (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
+}
+
+/**
+ * This trait maintains an additional strong constraints system.
+ * the e purpose is that this constraint system will be tested first for
+ * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value if this additonal constraint system is not violated
+ * the proper way to use it in order to get a speedup is to put the constraints
+ * that can be checked quickly in the strongConstraintsFast
+ * and to keep all the other ones in the strongCon.
+ *
+ * @author renaud.delandtsheer@cetic.be
+ */
+trait StrongConstraintsFast extends StrongConstraints {
+  /**
+   * the strong constraints system.
+   */
+  var strongConstraintsFast = ConstraintSystem(m)
+
+  override def getObjective(): Int =
+    (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
 }
 
 /**
