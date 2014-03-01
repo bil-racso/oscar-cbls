@@ -738,8 +738,6 @@ trait Predecessors extends VRP {
    * the data structure array which maintains the predecessors of each node.
    */
   val preds: Array[CBLSIntVar] = Predecessor(next, V).preds
-
-  //TODO: ajouter des moves plus simples, sans les neouds sprécédesseurs à chaque fois
 }
 
 /**
@@ -768,7 +766,9 @@ trait StrongConstraints extends VRPObjective {
  */
 trait StrongConstraintsFast extends StrongConstraints {
   /**
-   * the strong constraints system.
+   * the strong constraints system that is evaluated first.
+   * put all the constraint that are cheap to evaluate here,
+   * as this will be checked first, before the strongConstraints is checked, if necessary
    */
   var strongConstraintsFast = ConstraintSystem(m)
 
