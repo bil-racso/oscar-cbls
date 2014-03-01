@@ -32,7 +32,7 @@ import oscar.cbls.scheduling.model.CumulativeResource
 
 /**
  * @param p
- * @param Verbose
+ * @param verbose
  * @author renaud.delandtsheer@cetic.be
  */
 class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
@@ -40,8 +40,8 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
   /**
    * This solves the jobshop by iterative relaxation and flattening
-   * @param MaxIt the max number of iterations of the search
-   * @param Stable the number of no successice noimprove that will cause the search to stop
+   * @param maxIt the max number of iterations of the search
+   * @param stable the number of no successice noimprove that will cause the search to stop
    */
   def solve(maxIt: Int,
             stable: Int,
@@ -124,7 +124,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
   /**
    * performs the relaxation of the critical path
-   * @param PKill: the probability to kill a killable precedence constraint in percent
+   * @param pKill: the probability to kill a killable precedence constraint in percent
    * @param min: the minimal number of relaxation
    * @return true if something could be relaxed, false if makespan is solid
    */
