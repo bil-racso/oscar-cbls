@@ -8,6 +8,8 @@ import scala.Array.canBuildFrom
 import scala.collection.mutable.{Map => MMap}
 import FZType._
 import oscar.cp.constraints.And
+import oscar.cp.modeling._
+
 
 class FZProblem {
   
@@ -66,9 +68,34 @@ class FZProblem {
   }
   
   def addConstraint(c: Constraint) {
+    println("addcons")
     constraints += c
   }
   
+  val search = new Search()
+  
+  def satisfy() {
+    search.obj = Objective.SATISFY
+  }
+  
+  def minimize(obj: Variable) {
+    search.obj = Objective.MINIMIZE
+    search.variable = Some(obj)
+  }
+  
+  def maximize(obj: Variable) {
+    search.obj = Objective.MAXIMIZE
+    search.variable = Some(obj)
+  }
+  
+  def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
+    println("search "+vrh+" "+vh)
+    search.heuristics =  search.heuristics :+ (s,vrh,vh)
+  }
+  
+  def nSols(n: Int) {
+    search.nSols = n
+  }
   
   def simplify() {
     constraints.foreach(_.simplify(this))
@@ -184,9 +211,45 @@ abstract class Constraint(val annotations: Option[List[Annotat]] = None) {
   }
   
   def post(cp: CPSolver, varMap: Map[String,CPIntVar]) = {}
-  
-  
 
+}
+
+object VariableHeuristic extends Enumeration {
+  val FIRST_FAIL = Value("first_fail")
+  val INPUT_ORDER = Value("input_order")
+  val ANTI_FIRST_FAIL = Value("anti_first_fail")
+  val SMALLEST = Value("smallest")
+  val LARGEST = Value("largest")
+  val OCCURENCE = Value("occurence")
+  val MOST_CONSTRAINED = Value("most_constrained")
+  val MAX_REGRET = Value("max_regret") 
+}
+
+object ValueHeuristic extends Enumeration {
+  val INDOMAIN_MIN = Value("indomain_min")
+  val INDOMAIN_MAX = Value("indomain_max")
+  val INDOMAIN_MIDDLE = Value("indomain_middle")
+  val INDOMAIN_MEDIAN = Value("indomain_median")
+  val INDOMAIN = Value("indomain")
+  val INDOMAIN_RANDOM = Value("indomain_random")
+  val INDOMAIN_SPLIT = Value("indomain_split")
+  val INDOMAIN_REVERSE_SPLIT = Value("indomain_reverse_split")
+  val INDOMAIN_INTERVAL = Value("indomain_interval")  
+}
+
+object Objective extends Enumeration {
+  val MINIMIZE = Value("minimize")
+  val MAXIMIZE = Value("maximize")
+  val SATISFY = Value("satisfy")
+}
+
+
+
+class Search() {
+  var nSols = 0
+  var obj: Objective.Value = Objective.SATISFY
+  var variable: Option[Variable] = None
+  var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
 }
 
 
@@ -195,17 +258,31 @@ abstract class Constraint(val annotations: Option[List[Annotat]] = None) {
 // ----------------------------------
 case class array_bool_and(as: Array[Variable], r: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
   override def simplify(p: FZProblem) {
-
+	  
   }
-  
   override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
     val x = as.map(y => new CPBoolVar(varMap(y.id)))
     val y = new CPBoolVar(varMap(r.id))
     cp.add(new And(x,y))
   }
-  
-  
 }
+
+
+case class array_bool_element(b: Variable, as: Array[Variable], c: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
+  override def simplify(p: FZProblem) {
+	  
+  }
+  
+  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
+    val x = as.map(y => new CPBoolVar(varMap(y.id)))
+    val y = new CPBoolVar(varMap(b.id))
+    val z = new CPBoolVar(varMap(c.id))
+    cp.add(elementVar(x,y,z))
+  }
+}
+
+
+
 
 
 

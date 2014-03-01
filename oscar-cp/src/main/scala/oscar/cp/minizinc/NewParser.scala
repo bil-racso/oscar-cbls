@@ -53,7 +53,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   /**
    * flatzinc model parsing
    */
-  def flatzinc_model: Parser[Any] = rep(pred_decl) ~ rep(param_decl) ~ rep(var_decl) ~ rep(constraint) // ~ solve_goal
+  def flatzinc_model: Parser[Any] = rep(pred_decl) ~ rep(param_decl) ~ rep(var_decl) ~ rep(constraint) ~ solve_goal
 
   /**
    * predicate declaration parsing
@@ -163,6 +163,8 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             case FZType.P_INT => obj.asInstanceOf[ParamInt].value
             case FZType.V_BOOL => obj.asInstanceOf[VarInt].variable
             case FZType.V_INT => obj.asInstanceOf[VarInt].variable
+            case FZType.V_ARRAY_BOOL => obj.asInstanceOf[VarArrayInt].variables
+            case FZType.V_ARRAY_INT => obj.asInstanceOf[VarArrayInt].variables
           }
         }
       }
@@ -385,6 +387,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   
   def getBoolVarArray(x: Any): Array[Variable] = {
     x match {
+      case y: Array[Variable] => y
       case y: List[Any] =>
         y.map(getIntVar(_)).toArray
       case y: String =>
@@ -435,6 +438,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
     x match {
       case y: List[Any] =>
         y.map(getIntVar(_)).toArray
+      case a: Array[Variable] => a
       case y: String =>
         dict.get(y) match {
           case Some((tp, fzo)) =>
@@ -452,6 +456,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
 
   def getIntVar(x: Any): Variable = {
     x match {
+      case x: Variable => x
       case x: List[Any] => getVarFromList(x)
       case x: String => getVarFromString(x)
       case x: Int => model.addVariable(x)
@@ -542,6 +547,7 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
     case "constraint" ~ cstr ~ "(" ~ varList ~ ")" ~ ann ~ ";" => cstr match {
 
       case "array_bool_and" =>
+        println("array_bool_and")
         val array = getBoolVarArray(varList(0))
         //array_bool_cstr(varList, ann, cstr)
         
@@ -819,256 +825,117 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   }  
 
 
-/*
+  def solve_goal: Parser[Any] = (
+    "solve" ~ annotations ~ "satisfy;" ^^ {
+      case "solve" ~ ann ~ "satisfy;" => {
+        println("satisfy")
+        solver("sat", null, ann)
+      }
+    }
+    | "solve" ~ annotations ~ "minimize" ~ expr ~ ";" ^^ {
+      case "solve" ~ ann ~ "minimize" ~ e ~ ";" => {
+        solver("min", e, ann)
+      }
+    }
+    | "solve" ~ annotations ~ "maximize" ~ expr ~ ";" ^^ {
+      case "solve" ~ ann ~ "maximize" ~ e ~ ";" => {
+        solver("max", e, ann)
+      }
+    })
 
-
-
-  def addCPIntVar(ann: List[Annotation], id: String, s: Set[Int]) {
-
-      dict += ((id, (FZType.V_INT,
-        new VarInt(ann,
-          if (s.isEmpty) {
-            model.addVariable(id,UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
-          } else {
-            model.addVariable(id,s)
-          }, id))))
+  def solver(tp: String, expr: Any, ann: List[Annotation]) {
+    println("solve")
+    tp match { // tp = search type
+      case "sat" => {
+        val nbSolMax =
+          if (options.all) Int.MaxValue
+          else if (options.nSols > 0) options.nSols
+          else 1
+        model.satisfy()
+        model.nSols(nbSolMax)       
+      }
+      case "max" => {
+          val variable = 
+          expr match {
+            case x: List[Any] =>
+              getVarFromList(x)
+            case x: String =>
+              getVarFromString(x)
+          }
+          model.maximize(variable)
+      }
+      case "min" => {
+          val variable = 
+          expr match {
+            case x: List[Any] =>
+              getVarFromList(x)
+            case x: String =>
+              getVarFromString(x)
+          }
+          model.minimize(variable)
+      }
+    }
+    explo(ann)
   }
-
-
-  def addCPIntVar(ann: List[Annotation], id: String, cpvar: Variable) {
-    dict += ((id, (FZType.V_INT, new VarInt(ann, cpvar, id))))
-  }
-
-
   
-  def addCPIntVarArray(ann: List[Annotation], id: String, s: Set[Int], l: Int) {
-    dict +=
-      ((id, (FZType.V_ARRAY_INT,
-        new VarArrayInt(s, ann,
-          if (s.isEmpty) {
-            Array.fill(l) { CPIntVar(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)(cp) }
-          } else {
-            Array.fill(l) { CPIntVar(s)(cp) }
-          }, id))))
-  }
-
-  def addCPIntVarArray(ann: List[Annotation], id: String, s: Set[Int], array: Array[Variable]) {
-    dict +=
-      ((id, (FZType.V_ARRAY_INT,
-        new VarArrayInt(s, ann, array, id))))
-  }
-
-
-
-
-  def getBool(x: Any): Boolean = {
-    x match {
-      case y: Boolean => y
-      case y: String =>
-        dict.get(y) match {
-          case Some((tp, fzo)) =>
-            tp match {
-              case FZType.P_BOOL => {
-                fzo.asInstanceOf[ParamBool].value
-              }
-            }
-          case None => throw new Exception("Param " + x + " does not exist")
-        }
+  
+  def explo(ann: List[Annotation]) {
+    for(a <- ann) {
+      a.name match {
+        case "int_search" =>
+            val array = getIntVarArray(a.args(0))
+            println("intsearch:"+array.mkString(","))
+            println(a.args.mkString(","))
+            varHeuris(a.args, array)
+          case "bool_search" =>
+            val array = getIntVarArray(a.args(0))
+            varHeuris(a.args, array)
+      }
     }
   }
-
-
-  def getInt(x: Any): Int = {
-    x match {
-      case y: Int => y
-      case y: String =>
-        dict.get(y) match {
-          case Some((tp, fzo)) =>
-            tp match {
-              case FZType.P_INT => {
-                fzo.asInstanceOf[ParamInt].value
-              }
-            }
-          case None => throw new Exception("Param " + x + " does not exist")
-        }
+  
+  def varHeuris(args: List[Any], array: Array[Variable]) {
+    import VariableHeuristic._
+    val varHeuris =   args(1) match {
+      case "input_order" => INPUT_ORDER
+      case "first_fail" => FIRST_FAIL
+      case "anti_first_fail" => ANTI_FIRST_FAIL
+      case "smallest" => SMALLEST
+      case "largest" => LARGEST
+      case "occurence" => OCCURENCE
+      case "most_constrained" => MOST_CONSTRAINED
+      case "max_regret" => MAX_REGRET
     }
+    valHeuris(args,array,varHeuris)
   }
-
-
-  def getBoolArray(x: Any): Array[Boolean] = {
-    x match {
-      case y: List[Any] => y.asInstanceOf[List[Boolean]].toArray
-      case y: String =>
-        dict.get(y) match {
-          case Some((tp, fzo)) =>
-            tp match {
-              case FZType.P_ARRAY_BOOL => {
-                val list = fzo.asInstanceOf[ParamArrayBool].value.asInstanceOf[List[Boolean]]
-                list.toArray
-              }
-            }
-          case None => throw new Exception("Param " + x + " does not exist")
-        }
+  
+  def valHeuris(args: List[Any],array: Array[Variable],varHeuris: VariableHeuristic.Value) {
+    import ValueHeuristic._
+    val valHeuris =  args(2) match {
+      case "indomain_min" => INDOMAIN_MIN
+      case "indomain_max" => INDOMAIN_MAX
+      case "indomain_middle" => INDOMAIN_MIDDLE
+      case "indomain_median" => INDOMAIN_MEDIAN
+      case "indomain" => INDOMAIN
+      case "indomain_random" => INDOMAIN_RANDOM
+      case "indomain_split" => INDOMAIN_SPLIT
+      case "indomain_reverse_split" => INDOMAIN_REVERSE_SPLIT 
+      case "indomain_interval" => INDOMAIN_INTERVAL
     }
-  }
-
-
-  def getIntArray(x: Any): Array[Int] = {
-    x match {
-      case y: List[Any] => y.asInstanceOf[List[Int]].toArray
-      case y: String =>
-        dict.get(y) match {
-          case Some((tp, fzo)) =>
-            tp match {
-              case FZType.P_ARRAY_INT => {
-                val list = fzo.asInstanceOf[ParamArrayInt].value.asInstanceOf[List[Int]]
-                (list map (_.toInt)).toArray
-              }
-            }
-          case None => throw new Exception("Param " + x + " does not exist")
-        }
-    }
-  }
-
-
-
-
-
-
-  def getCPIntVar(x: Any,id: String): Variable = {
-    x match {
-      case x: Int => model.addVariable(id,x,x)
-      case x: List[Any] => getCPIntVarFromList(x)
-      case x: String => getCPIntVarFromString(x)
-    }
-  }
-
-
-
-  def getCPIntVarFromString(x: String): Variable = {
-    dict.get(x) match {
-      case Some((tp, fzo)) =>
-        tp match {
-          case FZType.V_INT => {
-            fzo.asInstanceOf[VarInt].cpvar
-          }
-          case FZType.V_BOOL => {
-            //System.err.println("found it!!")
-            fzo.asInstanceOf[VarInt].cpvar
-          }
-          case FZType.P_INT => {
-            model.add()
-            CPIntVar(fzo.asInstanceOf[ParamInt].value)(cp)
-          }
-          case _ => {
-            throw new Exception("Var " + x + " does not match")
-          }
-        }
-      case None => throw new Exception("Var " + x + " does not exist")
-    }
-  }
-
-
-
-
-
-
-  def getCPIntVarFromList(x: List[Any]): Variable = {
-    dict.get(x(0).toString) match {
-      case Some((tp, fzo)) =>
-        tp match {
-          case FZType.V_ARRAY_INT => {
-            fzo.asInstanceOf[Variable].cpvar(x(1).toString.toInt - 1)
-          }
-        }
-      case None => throw new Exception("Var " + x + " does not exist")
-    }
-  }
-
-
-
-
-
-  def getCPIntVarArray(x: Any): Array[CPIntVar] = {
-    x match {
-      case y: List[Any] =>
-        (y) map (getCPIntVar(_)) toArray
-      case y: String =>
-        dict.get(y) match {
-          case Some((tp, fzo)) =>
-            tp match {
-              case FZType.V_ARRAY_INT => {
-                fzo.asInstanceOf[VarArrayInt].cpvar
-              }
-              case FZType.P_ARRAY_INT => {
-                val array = fzo.asInstanceOf[ParamArrayInt].value
-                array match {
-                  case x: List[Int] =>
-                    (x) map (CPIntVar(_)(cp)) toArray
-                }
-              }
-            }
-          case None => throw new Exception("Var " + y + " does not exist")
-        }
-    }
-  }
-
-
-  def getCPArrayRangeSize(x: String): Int = {
-    dict.get(x) match {
-      case Some((tp, fzo)) =>
-        tp match {
-          case FZType.V_ARRAY_INT => {
-            fzo.asInstanceOf[VarArrayInt].value.size
-          }
-        }
-      case None => throw new Exception("Var " + x + " does not exist")
-    }
-  }
-
-  def getCPArrayOutputAnnotations(x: String): List[Range] = {
-    var l = List[Range]()
-    dict.get(x) match {
-      case Some((tp, fzo)) =>
-        tp match {
-          case FZType.V_ARRAY_BOOL => {
-            for (
-              ann <- fzo.asInstanceOf[VarArrayBool].annotations if (ann.name == "output_array")
-            ) {
-              l = ann.args.asInstanceOf[List[List[Range]]](0)
-            }
-          }
-          case FZType.V_ARRAY_INT => {
-            for (
-              ann <- fzo.asInstanceOf[VarArrayInt].annotations if (ann.name == "output_array")
-            ) {
-              l = ann.args.asInstanceOf[List[List[Range]]](0)
-            }
-          }
-          case FZType.V_ARRAY_SET => {
-            for (
-              ann <- fzo.asInstanceOf[VarArraySet].annotations if (ann.name == "output_array")
-            ) {
-              l = ann.args.asInstanceOf[List[List[Range]]](0)
-            }
-          }
-        }
-      case None => throw new Exception("Var " + x + " does not exist")
-    }
-    l
-  }
-
-
-
-*/
-
-
+    model.addSearch(array,varHeuris,valHeuris)
+  }  
+  
+  
+  
   def annotations: Parser[List[Annotation]] =
     "::" ~> "seq_search" ~> "(" ~> "[" ~> repsep(annotation, ",") <~ "]" <~ ")" | rep("::" ~> annotation)
   // list of annotations : in flatzinc spec pg10
   def annotation: Parser[Annotation] = (
     pred_ann_id ~ "(" ~ rep1sep(expr, ",") ~ ")" ^^ {
-      case ann ~ "(" ~ list ~ ")" => new Annotation(ann, list)
+      case ann ~ "(" ~ list ~ ")" => {
+        println("annot:"+ann+list)
+        new Annotation(ann, list)
+      }
     }
     | pred_ann_id ^^ (new Annotation(_, null)))
 
