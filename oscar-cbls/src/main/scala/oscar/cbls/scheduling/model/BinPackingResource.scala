@@ -22,14 +22,14 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => Iterable[Int])
   null
   })
 
-
-  //pour chaque unité de temps, on crée une ausse bin, qui conteint ce qu'on apporte comme nouvel item
-  //on veut:
-  //flatbins
-  //flatBinSizes
-  //t => (usage(Activity,UsageLevel,BinNumber,ItemViolation),bins:List[(size,maxSize)],)
+  //pour chaque unité de temps, on crée une aux bin, qui contient ce qu'on apporte comme nouvel item
+  //ou ce qu'on voudrait éjecter.
+  //on veut: pour poster la contrainte:
+  //flatbins: tt les bins dans un seul array (le contenu des bins en fait)
+  //flatBinSizes: la taille des bins en un seul array
   //
-
+  //t => (list[usage(Activity,UsageLevel,BinNumber,ItemViolation)],bins:List[(size,maxSize)],)
+  //
   //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
 
 
@@ -52,5 +52,11 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => Iterable[Int])
   override def close(): Unit = ???
 
   override val overShoot: CBLSIntVar = _
-
 }
+
+/*
+il faut aussi savoir dans quel ordre on va faire le flatten.
+Je pense qu'il vaut mieux faire les cumulative en premier, puis les binPacking.
+bon, au final on va quand-même les intertwiner alors je sais aps si ça va changer grand chose.
+par contre, le pense qu'il vaut mieux faire du début à la fin pour les binPAcking parce-que le déplacement va induire plus de conflits que dans le cas de cumulatives.
+ */
