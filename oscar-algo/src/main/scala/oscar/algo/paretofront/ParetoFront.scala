@@ -3,6 +3,7 @@ package oscar.algo.paretofront
 import scala.collection.mutable.Queue
 
 abstract class ParetoFront[U: Numeric, T <: ParetoElement[U]] {
+    
   /** Returns true if the Pareto front contains no element; false otherwise */
   def isEmpty: Boolean
   
@@ -32,5 +33,12 @@ abstract class ParetoFront[U: Numeric, T <: ParetoElement[U]] {
     (e1.dominance(e2) + score(e1) - score(e2)) > 0
   }
   
+  /** Returns true if the Pareto front contains elem */
   def contains[T1 <: ParetoElement[U]](elem: T1): Boolean
+  
+  /** Function called every time an element is removed from the Pareto front */
+  var onElementRemoved: (T) => Unit = {element: T => }
+  
+  /** Function called every time an element is added to the Pareto front */
+  var onElementAdded: (T) => Unit = {element: T => }
 }
