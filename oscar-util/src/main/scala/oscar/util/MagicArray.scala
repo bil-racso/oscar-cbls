@@ -3,7 +3,10 @@ package oscar.util
 import scala.collection.mutable.IndexedSeq
 
 /**
- *  @author Renaud Hartert ren.hartert@gmail.com
+ * A mutable IndexedSeq of Boolean which is able to reset all 
+ * its booleans to false in constant time.
+ * 
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 class MagicArray(override val size: Int) extends IndexedSeq[Boolean] {
    
