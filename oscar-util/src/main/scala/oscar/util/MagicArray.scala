@@ -1,12 +1,16 @@
 package oscar.util
 
+import scala.collection.mutable.IndexedSeq
+
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
-class MagicArray(override val size: Int) extends Traversable[Boolean] {
+class MagicArray(override val size: Int) extends IndexedSeq[Boolean] {
    
   private val array: Array[Int] = Array.fill(size)(Int.MinValue)
   private var magic = Int.MinValue + 1
+  
+  override val length: Int = size
   
   /** 
    *  Sets all the booleans to false in constant time.
@@ -23,14 +27,14 @@ class MagicArray(override val size: Int) extends Traversable[Boolean] {
     }
   }
   
-  def update(i: Int, b: Boolean): Unit = {
+  override def update(i: Int, b: Boolean): Unit = {
     if (b) array(i) = magic
     else array(i) = magic - 1
   }
   
-  def apply(i: Int): Boolean = array(i) == magic
+  override def apply(i: Int): Boolean = array(i) == magic
   
-  def foreach[T](f: Boolean => T): Unit = {
+  override def foreach[T](f: Boolean => T): Unit = {
     var i = 0
     while (i < size) {
       f(array(i) == magic)
