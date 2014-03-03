@@ -94,7 +94,7 @@ object FillAPix {
     //
     // decision variables
     // 
-    val pict = Array.fill(n,n)(CPVarInt(0 to 1)(cp))
+    val pict = Array.fill(n,n)(CPIntVar(0 to 1)(cp))
     val pict_flat = pict.flatten
 
     //

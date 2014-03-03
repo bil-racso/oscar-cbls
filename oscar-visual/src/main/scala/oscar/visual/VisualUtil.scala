@@ -21,8 +21,8 @@ import java.awt.Color
 /**
  * Provides some tools for the visual package.
  *
- * @authors Renaud Hartert ren.hartert@gmail.com
- * @authors Pierre Schaus  pierre.schaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
+ * @author Pierre Schaus  pierre.schaus@gmail.com
  */
 
 object VisualUtil {

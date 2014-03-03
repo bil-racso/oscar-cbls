@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.NumberUtils;
 
@@ -26,7 +26,7 @@ import oscar.cp.util.NumberUtils;
  */
 public class MulCte extends Constraint {
 
-	private CPVarInt x, z;
+	private CPIntVar x, z;
 	private int c;
 
     /**
@@ -34,10 +34,10 @@ public class MulCte extends Constraint {
      * @param x
      * @param c
      * @param z
-     * @see CPVarInt#mul(int)
+     * @see CPIntVar#mul(int)
      */
-	public MulCte(CPVarInt x, int c, CPVarInt z) {
-		super(x.s(),"MulCte");
+	public MulCte(CPIntVar x, int c, CPIntVar z) {
+		super(x.store(),"MulCte");
 		this.x = x;
 		this.z = z;
 		this.c = c;

@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
  * Weights must be > 0, Profit must be non negative.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Array[Int], val P: CPVarInt, val W: CPVarInt, val filter: Boolean = true ) extends Constraint(X(0).s, "Table2") {
+class Knapsack(val X: Array[CPBoolVar], val profit: Array[Int], val weight: Array[Int], val P: CPIntVar, val W: CPIntVar, val filter: Boolean = true ) extends Constraint(X(0).store, "Table2") {
 
   def pre(): Boolean = weight.forall(_ > 0) && profit.forall(_ >= 0)
   
@@ -68,14 +68,14 @@ class Knapsack(val X: Array[CPVarBool], val profit: Array[Int], val weight: Arra
     		if (ok == CPOutcome.Failure) return CPOutcome.Failure
     	}
     	if (propagate() == CPOutcome.Failure) return CPOutcome.Failure
-    	P.callPropagateWhenMinChanges(this)
-    	W.callPropagateWhenMaxChanges(this)
+    	P.callPropagateWhenBoundsChange(this)
+    	W.callPropagateWhenBoundsChange(this)
     }
     CPOutcome.Suspend
   }
 
   
-  override def valBindIdx(y: CPVarInt, i: Int) : CPOutcome = {
+  override def valBindIdx(y: CPIntVar, i: Int) : CPOutcome = {
     unbound.removeValue(i);
     if (y.min == 1) {
     	// add this to the capacity and to the reward

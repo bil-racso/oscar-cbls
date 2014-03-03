@@ -17,8 +17,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -27,11 +27,11 @@ import oscar.cp.core.Constraint;
  */
 public class BinPacking extends Constraint {
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	private int [] w;
-	private CPVarInt [] l;
+	private CPIntVar [] l;
 	
-	private CPVarBool [][] b;
+	private CPBoolVar [][] b;
 
     /**
      * Links a number of weighted/sized items to be placed into a set of bins.
@@ -42,8 +42,8 @@ public class BinPacking extends Constraint {
      * @see CPPropagStrength
      * @see BinaryKnapsack
      */
-	public BinPacking(CPVarInt [] x, int [] w, CPVarInt [] l) {
-		super(x[0].s(),"BinPacking");
+	public BinPacking(CPIntVar [] x, int [] w, CPIntVar [] l) {
+		super(x[0].store(),"BinPacking");
 		this.x = x;
 		this.w = w;
 		this.l = l;
@@ -60,14 +60,14 @@ public class BinPacking extends Constraint {
 			}
 		}
 		
-		b = new CPVarBool[l.length][];
+		b = new CPBoolVar[l.length][];
 		//b[i][j] == true iff item x[j] is placed into bin i
 		int totW = 0;
 		for (int j = 0; j < x.length; j++) {
 			totW += w[j];
 		}
 		for (int i = 0; i < b.length; i++) {
-			b[i] = new CPVarBool[x.length];
+			b[i] = new CPBoolVar[x.length];
 			for (int j = 0; j < x.length; j++) {
 				b[i][j] = x[j].isEq(i);
 			}
@@ -76,13 +76,13 @@ public class BinPacking extends Constraint {
 			}
 		}
 		for (int j = 0; j < x.length; j++) {
-			CPVarBool [] itemj = new CPVarBool[l.length];
+			CPBoolVar [] itemj = new CPBoolVar[l.length];
 			for (int i = 0; i < itemj.length; i++) {
 				itemj[i] = b[i][j];
 			}
 		}
 		//redundant constraint
-		if (s().post(new Sum(l,CPVarInt.apply(s(),totW,totW))) == CPOutcome.Failure) {
+		if (s().post(new Sum(l,CPIntVar.apply(s(),totW,totW))) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		return CPOutcome.Success;

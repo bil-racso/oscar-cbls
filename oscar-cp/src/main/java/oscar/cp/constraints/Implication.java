@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -27,9 +27,9 @@ import oscar.cp.core.CPStore;
  */
 public class Implication extends Constraint {
 
-	CPVarInt A;
-	CPVarInt B;
-	CPVarInt V;
+	CPIntVar A;
+	CPIntVar B;
+	CPIntVar V;
 
 
     /**
@@ -38,8 +38,8 @@ public class Implication extends Constraint {
      * @param B
      * @param V
      */
-	public Implication(CPVarBool A, CPVarBool B, CPVarBool V) {
-		super(A.s(),"Implication");
+	public Implication(CPBoolVar A, CPBoolVar B, CPBoolVar V) {
+		super(A.store(),"Implication");
 		this.A = A; 
 		this.B = B;
 		this.V = V;
@@ -73,7 +73,7 @@ public class Implication extends Constraint {
 
 
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (A.isBound()) {
 			if (A.isBoundTo(0)) {
 				// F => X is always true

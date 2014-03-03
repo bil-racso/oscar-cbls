@@ -27,27 +27,27 @@ class TestSpread extends FunSuite with ShouldMatchers {
 
   test("Spread 1") {
     val cp = CPSolver()
-    var x = Array.fill(5)(CPVarInt(0 to 4)(cp))
-    var s2 = CPVarInt(0 to 1000)(cp)
+    var x = Array.fill(5)(CPIntVar(0 to 4)(cp))
+    var s2 = CPIntVar(0 to 1000)(cp)
     cp.add(new Spread(x, 10, s2))
     s2.min should be(20)
   }
 
   test("Spread 2") {
     val cp = CPSolver()
-    var x = Array.fill(5)(CPVarInt(0 to 4)(cp))
-    var s2 = CPVarInt(0 to 1000)(cp)
+    var x = Array.fill(5)(CPIntVar(0 to 4)(cp))
+    var s2 = CPIntVar(0 to 1000)(cp)
     cp.add(new Spread(x, 11, s2))
     s2.min should be(25)
   }
 
   test("Spread 3") {
     val cp = CPSolver()
-    var x = Array(CPVarInt(-1 to 0)(cp),
-      CPVarInt(-2 to -1)(cp),
-      CPVarInt(-3 to -2)(cp))
+    var x = Array(CPIntVar(-1 to 0)(cp),
+      CPIntVar(-2 to -1)(cp),
+      CPIntVar(-3 to -2)(cp))
 
-    var s2 = CPVarInt(0 to 1000)(cp)
+    var s2 = CPIntVar(0 to 1000)(cp)
     cp.add(new Spread(x, -4, s2))
 
     s2.min should be(6)
@@ -55,11 +55,11 @@ class TestSpread extends FunSuite with ShouldMatchers {
 
   test("Spread 4") {
     val cp = CPSolver()
-    var x = Array(CPVarInt(-1 to 0)(cp),
-      CPVarInt(-3 to -2)(cp),
-      CPVarInt(-3 to -2)(cp))
+    var x = Array(CPIntVar(-1 to 0)(cp),
+      CPIntVar(-3 to -2)(cp),
+      CPIntVar(-3 to -2)(cp))
 
-    var s2 = CPVarInt(0 to 1000)(cp)
+    var s2 = CPIntVar(0 to 1000)(cp)
     cp.add(new Spread(x, -5, s2))
     s2.min should be(9)
   }
@@ -67,15 +67,15 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 5") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(103)(cp),
-      CPVarInt(99)(cp),
-      CPVarInt(90 to 98)(cp),
-      CPVarInt(72 to 82)(cp),
-      CPVarInt(78)(cp),
-      CPVarInt(65)(cp),
-      CPVarInt(73)(cp))
+    var x = Array(CPIntVar(103)(cp),
+      CPIntVar(99)(cp),
+      CPIntVar(90 to 98)(cp),
+      CPIntVar(72 to 82)(cp),
+      CPIntVar(78)(cp),
+      CPIntVar(65)(cp),
+      CPIntVar(73)(cp))
 
-    var s2 = CPVarInt(0 to x.map(y => y.max*y.max).sum)(cp)
+    var s2 = CPIntVar(0 to x.map(y => y.max*y.max).sum)(cp)
     cp.add(new Spread(x, 591, s2))
     cp.isFailed should be(false)
   }
@@ -86,12 +86,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
     // 4 vars, with dom 0 to 100
     // sum should be 8 (2 on average)
 
-    var x = Array(CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
 
-    var s2 = CPVarInt(0 to 16)(cp)
+    var s2 = CPIntVar(0 to 16)(cp)
     cp.add(new Spread(x, 8, s2))
     cp.isFailed should be(false)
     s2.min should be(16)
@@ -103,12 +103,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 7") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,2,3,3                   
-    var s2 = CPVarInt(0 to 22)(cp)
+    var s2 = CPIntVar(0 to 22)(cp)
     cp.add(new Spread(x, 8, s2))
     cp.isFailed should be(false)
     s2.min should be(22)
@@ -121,12 +121,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 8") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(1 to 2)(cp),
-      CPVarInt(0 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(1 to 2)(cp),
+      CPIntVar(0 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,2,3,3                   
-    var s2 = CPVarInt(0 to 22)(cp)
+    var s2 = CPIntVar(0 to 22)(cp)
     cp.add(new Spread(x, 8, s2))
     cp.isFailed should be(false)
     s2.min should be(22)
@@ -140,12 +140,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 9") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(1 to 2)(cp),
-      CPVarInt(4 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(1 to 2)(cp),
+      CPIntVar(4 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,2,4,2                   
-    var s2 = CPVarInt(0 to 24)(cp)
+    var s2 = CPIntVar(0 to 24)(cp)
     cp.add(new Spread(x, 8, s2))
     cp.isFailed should be(false)
     s2.min should be(24)
@@ -159,12 +159,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 10") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(1 to 2)(cp),
-      CPVarInt(4 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(1 to 2)(cp),
+      CPIntVar(4 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,2,4,2 => let's allow this one 0,1,4,3 with s2=26                   
-    var s2 = CPVarInt(0 to 26)(cp)
+    var s2 = CPIntVar(0 to 26)(cp)
     cp.add(new Spread(x, 8, s2))
     cp.isFailed should be(false)
     s2.min should be(24)
@@ -176,12 +176,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 11") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(-2 to -1)(cp),
-      CPVarInt(-100 to -4)(cp),
-      CPVarInt(-100 to 0)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(-2 to -1)(cp),
+      CPIntVar(-100 to -4)(cp),
+      CPIntVar(-100 to 0)(cp))
     // optimal assignment will be 0,-2,-4,-2 => let's allow this one 0,-1,-4,-3 with s2=26                   
-    var s2 = CPVarInt(0 to 26)(cp)
+    var s2 = CPIntVar(0 to 26)(cp)
     cp.add(new Spread(x, -8, s2))
     cp.isFailed should be(false)
     s2.min should be(24)
@@ -193,12 +193,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 12") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(1 to 3)(cp),
-      CPVarInt(4 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(1 to 3)(cp),
+      CPIntVar(4 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,3,4,3 s2=18+16=34                    
-    var s2 = CPVarInt(0 to 34)(cp)
+    var s2 = CPIntVar(0 to 34)(cp)
     cp.add(new Spread(x, 10, s2))
     cp.isFailed should be(false)
     s2.min should be(34)
@@ -212,12 +212,12 @@ class TestSpread extends FunSuite with ShouldMatchers {
   test("Spread 13") {
     val cp = CPSolver()
 
-    var x = Array(CPVarInt(0 to 0)(cp),
-      CPVarInt(1 to 3)(cp),
-      CPVarInt(4 to 100)(cp),
-      CPVarInt(0 to 100)(cp))
+    var x = Array(CPIntVar(0 to 0)(cp),
+      CPIntVar(1 to 3)(cp),
+      CPIntVar(4 to 100)(cp),
+      CPIntVar(0 to 100)(cp))
     // optimal assignment will be 0,3,4,3, we want to allow this one 0,2,4,4 with s2 = 36                     
-    var s2 = CPVarInt(0 to 36)(cp)
+    var s2 = CPIntVar(0 to 36)(cp)
     cp.add(new Spread(x, 10, s2))
     cp.isFailed should be(false)
     s2.min should be(34)
@@ -270,9 +270,9 @@ class TestSpread extends FunSuite with ShouldMatchers {
     // submitted by Janho
 
     val cp = CPSolver();
-    val nd = CPVarInt(0 to 5)(cp)
+    val nd = CPIntVar(0 to 5)(cp)
     val rng = 0 until 5;
-    val x = for (i <- rng) yield CPVarInt(-10 to 10)(cp)
+    val x = for (i <- rng) yield CPIntVar(-10 to 10)(cp)
     cp.add(new Spread(x, 0, nd))
     for (y <- x) {
       y.max should be(1)
@@ -282,10 +282,10 @@ class TestSpread extends FunSuite with ShouldMatchers {
 
 
 
-  def decomposition(x: Array[CPVarInt], sum: Int, sum2: CPVarInt): CPOutcome = {
+  def decomposition(x: Array[CPIntVar], sum: Int, sum2: CPIntVar): CPOutcome = {
     if (sum2.store.post(new Sum(x.map(i => i * i), sum2)) == CPOutcome.Failure) {
       CPOutcome.Failure
-    } else if (sum2.store.post(new Sum(x, CPVarInt(sum)(sum2.s))) == CPOutcome.Failure) {
+    } else if (sum2.store.post(new Sum(x, CPIntVar(sum)(sum2.store))) == CPOutcome.Failure) {
       CPOutcome.Failure
     } else {
       CPOutcome.Suspend
@@ -296,8 +296,8 @@ class TestSpread extends FunSuite with ShouldMatchers {
     var nbSol = 0
     val cp = CPSolver()
 
-    val x = doms.map { case (min, max) => CPVarInt(min to max)(cp) }
-    val sum2 = CPVarInt(0 to sum2Max)(cp)
+    val x = doms.map { case (min, max) => CPIntVar(min to max)(cp) }
+    val sum2 = CPIntVar(0 to sum2Max)(cp)
 
     if (decomp) {
       decomposition(x, sum, sum2)
@@ -308,7 +308,7 @@ class TestSpread extends FunSuite with ShouldMatchers {
       binaryFirstFail(x)
     } 
     val stat = cp.start()
-    stat.nbSols
+    stat.nSols
   }
 
 }

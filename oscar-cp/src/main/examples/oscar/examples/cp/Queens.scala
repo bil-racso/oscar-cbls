@@ -17,7 +17,7 @@ object Queens extends CPModel with App {
   val Queens = 0 until nQueens
 
   // Variables
-  val queens = Array.fill(nQueens)(CPVarInt(Queens))
+  val queens = Array.fill(nQueens)(CPIntVar(Queens))
 
   // Constraints
   add(allDifferent(queens))
@@ -25,10 +25,10 @@ object Queens extends CPModel with App {
   add(allDifferent(Queens.map(i => queens(i) - i)))
 
   // Search heuristic
-  solve search binaryFirstFail(queens)
+  search(binaryFirstFail(queens))
   
   // Execution
-  val stats = start()
+  val stats = start(nSols = 1)
 
   println(stats)
 }

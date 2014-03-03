@@ -31,6 +31,7 @@ class GlpkLP extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("ToBImplemented")
+  protected var timeout = Int.MaxValue
 
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
@@ -44,7 +45,16 @@ class GlpkLP extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+    GLPK.glp_set_col_name(lp, colId + 1, name)
+  }
+  
+  override def setTimeout(t: Int) {
+    require(0 <= t)
+    timeout = t
+  }
+  
+  override def setName(name: String) {
+    GLPK.glp_set_prob_name(lp, name)
   }
 
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
@@ -149,6 +159,11 @@ class GlpkLP extends AbstractLP {
     //GLPK.glp_write_lp(lp,null,"model.lp")
     val parm = new glp_smcp()
     GLPK.glp_init_smcp(parm)
+    parm.setMsg_lev(GLPKConstants.GLP_MSG_ERR)
+    if(timeout < Int.MaxValue) {
+    	parm.setTm_lim(timeout)
+    }
+
     val ret = GLPK.glp_simplex(lp, parm)
     GLPK.glp_get_status(lp) match {
       case GLPKConstants.GLP_UNBND => LPStatus.UNBOUNDED
@@ -181,6 +196,10 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_IV)
   }
 
+  def setBinary(colId: Int) {
+    GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_BV)
+  }
+  
   def setFloat(colId: Int) {
     GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_CV)
   }
@@ -236,28 +255,37 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_del_cols(lp, 1, num)
     nbCols -= 1
   }
-
-  def exportModel(fileName: String) {
-    GLPK._glp_lpx_write_cpxlp(lp, fileName)
-  }
+  
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
+        case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
+        case _ => println(s"Unrecognised export format ${format}")
+    }  
+}
 
   def release() {
     GLPK.glp_delete_prob(lp)
   }
 
   def updateRhs(consId: Int, rhs: Double): Unit = {
-    println("Warning: updateRhs method is not implemented for GLPK")
+    GLPK.glp_set_row_bnds(lp, consId + 1, GLPKConstants.GLP_UP, 0.0, rhs)
   }
-
+ 
   def updateCoef(consId: Int, varId: Int, coeff: Double): Unit = {
-    println("Warning: updateCoef method is not implemented for GLPK")
+    val nColumns = GLPK.glp_get_num_cols(lp)
+    // + 1 to array lengths since the cols start from 1 
+    val coef = GLPK.new_doubleArray(nColumns + 1) 
+    val ind = GLPK.new_intArray(nColumns + 1)
+    // Populates coef and ind arrays with selected row's values
+    GLPK.glp_get_mat_row(lp, consId + 1, ind, coef)
+    
+    // Need to find which index in the coef array to update
+    // Maybe varId should represent model index to make this
+    // translation unnecessary. 
+    val id = (0 to nColumns).find(i => GLPK.intArray_getitem(ind, i) == (varId + 1)).get
+
+    GLPK.doubleArray_setitem(coef, id, coeff) // Replace element
+    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, coef) // Update whole row.
   }
 }
-
-/*
- GLPK.glp_write_lp(lp,null,"model.lp")// write model in file
- GLPK.glp_get_status(lp) 
-GLPK.glp_delete_prob(lp) //delete model
-
-
-*/

@@ -16,9 +16,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 1") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 2)(cp), CPVarInt(1 to 2)(cp), CPVarInt(1 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 2)(cp), CPIntVar(1 to 2)(cp), CPIntVar(1 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
     z.min should be(1)
@@ -27,9 +27,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 2") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(Set(1, 3))(cp), CPVarInt(Set(4))(cp), CPVarInt(Set(1, 4))(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(Set(1, 3))(cp), CPIntVar(Set(4))(cp), CPIntVar(Set(1, 4))(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
     z.hasValue(2) should be(false)
@@ -46,9 +46,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 3") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(Set(1, 3))(cp), CPVarInt(Set(4))(cp), CPVarInt(Set(1, 5))(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(Set(1, 3))(cp), CPIntVar(Set(4))(cp), CPIntVar(Set(1, 5))(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
 
@@ -61,9 +61,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 4") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(Set(1, 3))(cp), CPVarInt(Set(4))(cp), CPVarInt(Set(1, 5))(cp))
-    val z = CPVarInt(-20 to 10000)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(Set(1, 3))(cp), CPIntVar(Set(4))(cp), CPIntVar(Set(1, 5))(cp))
+    val z = CPIntVar(-20 to 10000)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
 
@@ -75,9 +75,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 5") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 3)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 3)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
 
@@ -91,9 +91,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 6") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(3, 4)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(3, 4)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
 
@@ -107,24 +107,24 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var AC 7") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(Set(0, 3, 5))(cp), CPVarInt(0 to 0)(cp), CPVarInt(Set(1, 3, 5))(cp))
-    val z = CPVarInt(0 to 5)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(Set(0, 3, 5))(cp), CPIntVar(0 to 0)(cp), CPIntVar(Set(1, 3, 5))(cp))
+    val z = CPIntVar(0 to 5)(cp)
 
     cp.add(elementVar(y, x, z), Strong)
 
     x.removeValue(0)
     y(0).removeValue(0)
     cp.add(x >= -1)
-    println("y:" + y.mkString(",") + " x:" + x + z)
+    //println("y:" + y.mkString(",") + " x:" + x + z)
     z.hasValue(0) should be(true)
   }
 
   test("Test Element Var AC8") {
     val len = 6
     val cp = CPSolver()
-    val x = Array.tabulate(len)(i => CPVarInt(0 to len - 1)(cp))
-    val z = Array.tabulate(len)(i => CPVarInt(0 to len - 1)(cp))
+    val x = Array.tabulate(len)(i => CPIntVar(0 to len - 1)(cp))
+    val z = Array.tabulate(len)(i => CPIntVar(0 to len - 1)(cp))
 
     cp.add(allDifferent(x), Strong)
     cp.add(allDifferent(z), Strong)
@@ -150,9 +150,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val z = CPVarInt(1, 2)(cp)
-    val x = CPVarInt(0 to 3)(cp)
-    val tab = Array(CPVarInt(1 to 2)(cp), CPVarInt(2 to 3)(cp))
+    val z = CPIntVar(1, 2)(cp)
+    val x = CPIntVar(0 to 3)(cp)
+    val tab = Array(CPIntVar(1 to 2)(cp), CPIntVar(2 to 3)(cp))
 
     cp.add(elementVar(tab, x, z),Strong)
 
@@ -169,9 +169,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val z = CPVarInt(0 to 2)(cp)
-    val x = CPVarInt(0 to 2)(cp)
-    val tab = Array(CPVarInt(0 to 2)(cp), CPVarInt(0 to 2)(cp), CPVarInt(0 to 2)(cp))
+    val z = CPIntVar(0 to 2)(cp)
+    val x = CPIntVar(0 to 2)(cp)
+    val tab = Array(CPIntVar(0 to 2)(cp), CPIntVar(0 to 2)(cp), CPIntVar(0 to 2)(cp))
 
     cp.add(elementVar(tab, x, z),Strong)
 
@@ -210,9 +210,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val z = CPVarInt(1 to 3)(cp)
-    val x = CPVarInt(0 to 3)(cp)
-    val tab = Array(CPVarInt(1 to 2)(cp), CPVarInt(2 to 3)(cp), CPVarInt(2 to 3)(cp))
+    val z = CPIntVar(1 to 3)(cp)
+    val x = CPIntVar(0 to 3)(cp)
+    val tab = Array(CPIntVar(1 to 2)(cp), CPIntVar(2 to 3)(cp), CPIntVar(2 to 3)(cp))
 
     cp.add(elementVar(tab, x, z),Strong)
 
@@ -238,9 +238,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val z = CPVarInt(1 to 3)(cp)
-    val x = CPVarInt(0 to 1)(cp)
-    val tab = Array(CPVarInt(1 to 2)(cp), CPVarInt(3)(cp))
+    val z = CPIntVar(1 to 3)(cp)
+    val x = CPIntVar(0 to 1)(cp)
+    val tab = Array(CPIntVar(1 to 2)(cp), CPIntVar(3)(cp))
 
     cp.add(elementVar(tab, x, z),Strong)
     
@@ -261,9 +261,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var BC 1") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 2)(cp), CPVarInt(1 to 2)(cp), CPVarInt(1 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 2)(cp), CPIntVar(1 to 2)(cp), CPIntVar(1 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Weak)
     z.min should be(1)
@@ -274,9 +274,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var BC 2") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 3)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 3)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Weak)
 
@@ -287,9 +287,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var BC 3") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 3)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 3)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Weak)
 
@@ -305,9 +305,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var BC 4") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(1 to 3)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(1 to 3)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Weak)
 
@@ -318,9 +318,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
   test("Test Element Var BC 5") {
     val cp = CPSolver()
-    val x = CPVarInt(-3 to 10)(cp)
-    val y = Array(CPVarInt(3, 4)(cp), CPVarInt(2 to 2)(cp), CPVarInt(2 to 2)(cp))
-    val z = CPVarInt(-20 to 100)(cp)
+    val x = CPIntVar(-3 to 10)(cp)
+    val y = Array(CPIntVar(3, 4)(cp), CPIntVar(2 to 2)(cp), CPIntVar(2 to 2)(cp))
+    val z = CPIntVar(-20 to 100)(cp)
 
     cp.add(elementVar(y, x, z), Weak)
 

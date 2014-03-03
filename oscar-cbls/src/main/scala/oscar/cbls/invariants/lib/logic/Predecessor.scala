@@ -19,8 +19,8 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Invariant, IntVar}
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.computation.{Invariant, CBLSIntVar}
+import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * This invariant maintains the predecessors of each node.
@@ -31,37 +31,38 @@ import oscar.cbls.invariants.core.propagation.checker
       - value N for unrouted node in preds array.
  * @param next the array of successors of each points (deposits and customers) of the VRP.
  * @param V the number of vehicles.
- */
-case class Predecessor(next:Array[IntVar],V:Int) extends Invariant{
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class Predecessor(next:Array[CBLSIntVar],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
-  finishInitialization();
-  val preds = for(i<- 0 until N) yield if (i<V) new IntVar(model, 0, N, i, "preds" + i)
-    else new IntVar(model, 0, N, N, "preds" + i)
+  finishInitialization()
+  val preds:Array[CBLSIntVar] = Array.tabulate(N)(i => if (i<V) CBLSIntVar(model, 0, N, i, "preds" + i)
+    else CBLSIntVar(model, 0, N, N, "preds" + i))
 
   for(p <- preds) p.setDefiningInvariant(this)
 
   def length = N
   def apply(i:Int) = preds(i)
 
-  override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,index:Int,OldVal:Int,NewVal:Int){
     assert(next(index) == v)
     // it unroutes a node
     if(NewVal == N) preds(index) := N
     else preds(NewVal) := index
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(n<- 0 until N){
       //n is unrouted
-      if(next(n).value==N) c.check(preds(n).value==N)
+      if(next(n).value==N) c.check(preds(n).value==N, Some("preds(n).value==N"))
       // n is routed
-      else  c.check(n == preds(next(n).value).value)
+      else  c.check(n == preds(next(n).value).value, Some("n == preds(next(n).value).value"))
       }
   }
 
-  override def toString()={
+  override def toString ={
     var toReturn = ""
     toReturn +="\npreds array: ["
     for (v <- preds){toReturn += (""+v.getValue(true) +",")}

@@ -15,7 +15,6 @@
 
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.visual._
@@ -77,7 +76,7 @@ object ChemicalTanker  {
      * allocated to cargo exceed the volume of this cargo to place we immediately
      * forbid this cargo in other tanks.
      */
-    class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPVarInt]) extends Constraint(cargos(0).s) {
+    class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPIntVar]) extends Constraint(cargos(0).store) {
       
       val curCapa = new ReversibleInt(s,0)
 
@@ -86,7 +85,7 @@ object ChemicalTanker  {
           CPOutcome.Suspend
       }
 
-      override def valBindIdx(x: CPVarInt, tank: Int) = {
+      override def valBindIdx(x: CPIntVar, tank: Int) = {
         if (x.getValue == cargo.id) {
             curCapa.setValue(curCapa.getValue+tanks(tank).capa)
             if (curCapa.getValue >= cargo.volume) { 
@@ -134,11 +133,11 @@ object ChemicalTanker  {
     val cp = CPSolver()
     cp.silent = true
     // for each tank, the cargo type placed into it (dummy cargo if emmty)
-    val cargo = Array.tabulate(tanks.size)(t => CPVarInt(cp, tanks(t).possibleCargos))
+    val cargo = Array.tabulate(tanks.size)(t => CPIntVar(cp, tanks(t).possibleCargos))
     // for each cargo, the total cacity allocated to it (must be at least the volume to place)
-    val load = Array.tabulate(cargos.size)(c => CPVarInt(cp, cargos(c).volume to totCapa))
+    val load = Array.tabulate(cargos.size)(c => CPIntVar(cp, cargos(c).volume to totCapa))
     // for each cargo, the number of tanks allocated to it
-    val card = Array.tabulate(cargos.size)(c => CPVarInt(cp, 0 to tanks.size))
+    val card = Array.tabulate(cargos.size)(c => CPIntVar(cp, 0 to tanks.size))
 
     // objective = maximize the total empty space
     val freeSpace = load(0)
@@ -158,38 +157,35 @@ object ChemicalTanker  {
     
     val slack =  Array.tabulate(cargos.size)(c => load(0) - cargos(c).volume)
 
-    
     // --------------- state the objective, the constraints and the search -------------
 
-    cp.maximize(freeSpace /*nbFreeTanks*/) subjectTo {
-	  cp.add(freeSpace <= 4500)
+    cp.maximize(freeSpace /*nbFreeTanks*/ ) subjectTo {
+      cp.add(freeSpace <= 4500)
       // make the link between cargo and load vars with binPacking constraint
       cp.add(binPacking(cargo, tanks.map(_.capa), load), Strong)
       cp.add(binPackingCardinality(cargo, tanks.map(_.capa), load, card))
 
       for (i <- 1 until cargos.size) {
-        cp.add(new ChemicalConstraint(cargos(i),tanks,cargo)) // dominance rules
+        cp.add(new ChemicalConstraint(cargos(i), tanks, cargo)) // dominance rules
       }
       // enforce that for any two neighbor tanks, they must contain compatible cargo types
-      for (t <- tanks; t2 <- t.neighbours; if (t2>t.id)) {
-	      cp.add(table(cargo(t.id-1),cargo(t2-1),compatibles))
+      for (t <- tanks; t2 <- t.neighbours; if (t2 > t.id)) {
+        cp.add(table(cargo(t.id - 1), cargo(t2 - 1), compatibles))
       }
-      
-    } exploration {
-      while(!allBounds(cargo)) {
-          val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
-          // the largest tank having still no cargo assigned to it
-          //val (tankVar,tank) = cargo.zipWithIndex.filter(c => !c._1.isBound).maxBy(c => (tanks(c._2).capa,-c._1.getSize))
-          val unboundTanks = cargo.zipWithIndex.filter{case (x,c) => !x.isBound}
-          val (tankVar,tank) = unboundTanks.maxBy{case (x,c) => (tanks(c).capa,-x.getSize)}
-          val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
-          cp.branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace)) 
+
+    } search {
+      if (allBounds(cargo)) noAlternative
+      else {
+        val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))
+        // the largest tank having still no cargo assigned to it
+        val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
+        val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
+        val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
+        branch(cp.post(tankVar == cargoToPlace))(cp.post(tankVar != cargoToPlace))
       }
-      nbSol += 1
-    } run()
+    } start ()    
     
-    cp.printStats()
-    
+
  
   }   
     

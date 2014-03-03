@@ -16,8 +16,9 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarBool;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPStore;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,9 +27,9 @@ import oscar.cp.core.Constraint;
  */
 public class EqReif extends Constraint {
 
-	CPVarInt x;
+	CPIntVar x;
 	int v;
-	CPVarBool b;
+	CPBoolVar b;
 
     /**
      * x is equal to v if and only if b is true i.e.
@@ -38,12 +39,12 @@ public class EqReif extends Constraint {
      * @param b
      * @see DiffReif
      */
-	public EqReif(CPVarInt x, int v, CPVarBool b) {
-		super(x.s(),"EqReif");
+	public EqReif(CPIntVar x, int v, CPBoolVar b) {
+		super(x.store(),"EqReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;
-		
+		idempotent_$eq(true);
 		//priorityBindL1_$eq(CPStore.MAXPRIORL1());
 		//priorityL2_$eq(CPStore.MAXPRIORL2());
 	}
@@ -57,15 +58,19 @@ public class EqReif extends Constraint {
 		else {
 			x.callValBindWhenBind(this);
 			b.callValBindWhenBind(this);
+			
 			//x.addAC5Bounds(this);
 			//x.callValRemoveWhenValueIsRemoved(this);
+			
 			x.callPropagateWhenDomainChanges(this,false);
+			//x.callPropagateWhenBind(this,false);
+			//b.callPropagateWhenBind(this,false);
 			return propagate();
 		}
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPVarInt x) {
+	public CPOutcome updateBounds(CPIntVar x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -77,6 +82,9 @@ public class EqReif extends Constraint {
 	
 	@Override
 	public CPOutcome propagate() {
+		//if (x.isBound()) return valBind(x);
+		//if (b.isBound()) return valBind(b);
+		
 		if (!x.hasValue(v)) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -87,8 +95,8 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valRemove(CPVarInt x, int val) {
-		if (val == v) {
+	public CPOutcome valRemove(CPIntVar variable, int val) {		
+		if (variable == x && val == v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -99,8 +107,9 @@ public class EqReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBind(CPVarInt var) {
-		if (b.isBound()) {
+	public CPOutcome valBind(CPIntVar var) {
+		deactivate();
+		if (var == b) {	
 			if (b.isFalse()) {
 				//x != v
 				if (x.removeValue(v) == CPOutcome.Failure) {
@@ -114,8 +123,7 @@ public class EqReif extends Constraint {
 			}
 			return CPOutcome.Success;
 		}
-		
-		if (x.isBound()) {
+		else {
 			if (x.getValue() == v) {
 				if (b.assign(1) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -128,8 +136,6 @@ public class EqReif extends Constraint {
 			}
 			return CPOutcome.Success;
 		}
-		
-		return CPOutcome.Suspend;
 	}
 
 }

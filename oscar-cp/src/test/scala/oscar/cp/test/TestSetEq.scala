@@ -23,15 +23,15 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 
 /**
- * @author Léonard Debroux leonard.debroux@gmail.com
+ * @author Leonard Debroux leonard.debroux@gmail.com
  */
 class TestSetEq extends FunSuite with ShouldMatchers  {
 
   test("Test SetEq1") {
     var nbSol = 0
     val cp = CPSolver()
-    var x = CPVarSet(Set(1,2,3,4), Set(1,2))(cp)
-    var y = CPVarSet(Set(1,2,3,4,5), Set(1))(cp)
+    var x = CPSetVar(Set(1,2,3,4), Set(1,2))(cp)
+    var y = CPSetVar(Set(1,2,3,4,5), Set(1))(cp)
     cp.post(new SetEq(x,y))
     y.isPossible(5) should be(false)
     y.isPossible(2) should be(true)

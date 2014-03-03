@@ -62,7 +62,7 @@ object LongestPath {
     
     val cp = CPSolver()
     cp.silent = true
-    val path = Array.fill(len)(CPVarInt(cp, nodes))
+    val path = Array.fill(len)(CPIntVar(cp, nodes))
     val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
 
     cp.maximize(weight) subjectTo {
@@ -71,10 +71,9 @@ object LongestPath {
       }
       cp.add(allDifferent(path), Weak)
 
-    } exploration {
-      cp.binaryFirstFail(path)
-    } run()
-    cp.printStats
+    } search {
+      binaryFirstFail(path)
+    } start()
 
   }
 

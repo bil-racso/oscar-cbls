@@ -1,18 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -33,7 +18,7 @@ import java.lang._
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object QuadraticAssignment extends App {
+object QuadraticAssignment extends CPModel with App {
 
   // Read the data
   var lines = Source.fromFile("data/qap.txt").getLines.toList.filter(_ != "")
@@ -51,28 +36,23 @@ object QuadraticAssignment extends App {
     lines = lines.drop(1)
   }
 
-  // State the model and solve it
-  val cp = CPSolver()
-  
-  cp.onSolution {
-    println("solution" + x.mkString(","))
-  }
+  onSolution { println("solution" + x.mkString(",")) }
+
   // for each facilities, the location chosen for it
-  val x = N map (v => CPVarInt(0 until n)(cp))
-  cp.minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) subjectTo {
-    cp.add(allDifferent(x), Strong)
-  } search {
+  val x = N map (v => CPIntVar(0 until n))
+
+  add(allDifferent(x), Strong)
+
+  minimize(sum(N, N)((i, j) => d(x(i))(x(j)) * w(i)(j))) search {
     selectMin(x)(y => !y.isBound)(y => y.size) match {
-       case None => noAlternative
-       case Some(y) => {
-          val v = y.min
-          branch(cp.add(y == v))(cp.add(y != v))
-       }
+      case None => noAlternative
+      case Some(y) => {
+        val v = y.min
+        branch(post(y == v))(post(y != v))
+      }
     }
   }
 
-  // start the search and print some statistics
-  println(cp.start())
-
-
+  val stats = start()
+  println(stats)
 }

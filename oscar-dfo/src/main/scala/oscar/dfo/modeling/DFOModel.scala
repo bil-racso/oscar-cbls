@@ -25,7 +25,7 @@ import oscar.dfo.singleobjective.algos.NelderMead
 import oscar.util.Interval
 
 /**
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
 class DFOFloatVar(val solver: DFOSolver, val varName: String, val lb: Double = 0.0, val ub: Double = Double.PositiveInfinity) extends Var {
     val index = solver.register(this)
@@ -45,7 +45,7 @@ object DFOFloatVar {
 
 /**
  *
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */ 
 class DFOSolver(val algo: DFOAlgo.Value = DFOAlgo.NelderMead) {
     

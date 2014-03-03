@@ -1,20 +1,3 @@
-/**
- * *****************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -53,8 +36,8 @@ object CookieMonster extends CPModel with App {
   val jars = Array(15, 13, 12, 4, 2, 1)
   val maxMove = 6
 
-  val x = Array.fill(maxMove)(CPVarInt(0 to jars.max))
-  val b = Array.fill(maxMove, jars.size)(CPVarBool())
+  val x = Array.fill(maxMove)(CPIntVar(0 to jars.max))
+  val b = Array.fill(maxMove, jars.size)(CPBoolVar())
   val bx = Array.tabulate(maxMove, jars.size) { case (m, j) => b(m)(j) * x(m) }
   var nbSol = 0
 
@@ -77,12 +60,12 @@ object CookieMonster extends CPModel with App {
     add(lexLeq(bx(m + 1), bx(m)))
   }
 
-  solve search {
+  search {
     binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
   }
 
   for (i <- 0 until maxMove; if nbSol == 0) {
-    startSubjectTo(nSolutions = 1) {
+    startSubjectTo(nSols = 1) {
       for (m <- i + 1 until maxMove) {
         if (m > i) post(x(m) == 0)
         else post(x(m) > 0)

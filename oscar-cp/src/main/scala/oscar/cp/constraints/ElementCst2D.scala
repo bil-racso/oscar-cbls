@@ -18,7 +18,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils;
 import oscar.algo.reversible.ReversibleInt
@@ -32,7 +32,7 @@ object ElementCst2D {
   private var prevT: Array[Array[Int]] = null
   private var prevData: TableData = null
 
-  def apply(T: Array[Array[Int]], x: CPVarInt, y: CPVarInt, z: CPVarInt) = {
+  def apply(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) = {
     if (prevT != T) {
       prevT = T;
       prevData = new TableData(3);
@@ -49,7 +49,7 @@ object ElementCst2D {
  * BC Element Constraint on a 2D array
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ElementCst2D(T: Array[Array[Int]], x: CPVarInt, y: CPVarInt, z: CPVarInt) extends Constraint(x.s, "ElementCst2D") {
+class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ElementCst2D") {
 
   val sortedTuples = (for (i <- 0 until T.size; j <- 0 until T(i).size) yield (T(i)(j), i, j)).sortBy(t => t).toArray
   val nbColSupports = Array.fill(T.size)(new ReversibleInt(s, 0))

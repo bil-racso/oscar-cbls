@@ -65,7 +65,7 @@ import Array._
 object PandigitalNumbers {
 
   // channeling between IntVar array t <=> IntVar s
-  def toNum(t: Array[CPVarInt], base: Int=10) = sum(
+  def toNum(t: Array[CPIntVar], base: Int=10) = sum(
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
 
   //
@@ -85,11 +85,11 @@ object PandigitalNumbers {
     //
     // variables
     //
-    val num1 = CPVarInt(1 to max_num)(cp)
-    val num2 = CPVarInt(1 to max_num)(cp)
-    val res  = CPVarInt(1 to max_num)(cp)
+    val num1 = CPIntVar(1 to max_num)(cp)
+    val num2 = CPIntVar(1 to max_num)(cp)
+    val res  = CPIntVar(1 to max_num)(cp)
     // the digits
-    val x    = Array.fill(x_len)(CPVarInt(start to max_d)(cp))
+    val x    = Array.fill(x_len)(CPIntVar(start to max_d)(cp))
 
     // for labeling    
     val all = x ++ Array(num1, num2, res)

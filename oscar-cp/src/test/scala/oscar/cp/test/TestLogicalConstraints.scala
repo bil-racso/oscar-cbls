@@ -13,7 +13,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
   test("test logical 1") {
 
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarBool()(cp))
+    var x = Array.fill(3)(CPBoolVar()(cp))
 
     cp.post((x(0) && x(1)) || x(2))
 
@@ -28,7 +28,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
   test("test logical 2") {
 
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarBool()(cp))
+    var x = Array.fill(3)(CPBoolVar()(cp))
 
     cp.post((x(0) && x(1)) || x(2))
 
@@ -43,7 +43,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
   test("test logical 3") {
 
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarBool()(cp))
+    var x = Array.fill(3)(CPBoolVar()(cp))
 
     cp.post((x(0) && x(1)) && x(2))
 
@@ -58,10 +58,10 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val A = CPVarBool()(cp)
-    val B = CPVarBool()(cp)
-    val C = CPVarBool()(cp)
-    val D = CPVarBool()(cp)
+    val A = CPBoolVar()(cp)
+    val B = CPBoolVar()(cp)
+    val C = CPBoolVar()(cp)
+    val D = CPBoolVar()(cp)
 
     cp.add(((A ==> B) || C) && D)
 
@@ -78,8 +78,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val w = CPVarInt(1 to 5)(cp)
-    val x = CPVarInt(1 to 5)(cp)
+    val w = CPIntVar(1 to 5)(cp)
+    val x = CPIntVar(1 to 5)(cp)
 
     val A = w <<= x
 
@@ -96,8 +96,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(1 to 5)(cp)
-    val z = CPVarInt(1 to 5)(cp)
+    val y = CPIntVar(1 to 5)(cp)
+    val z = CPIntVar(1 to 5)(cp)
 
     cp.add(z >>= y)
     z.min should be(2)
@@ -111,8 +111,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(1 to 5)(cp)
-    val z = CPVarInt(3 to 5)(cp)
+    val y = CPIntVar(1 to 5)(cp)
+    val z = CPIntVar(3 to 5)(cp)
     val b = z === y
 
     cp.add(y <= 2)
@@ -124,11 +124,11 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(Set(1, 5, 9))(cp)
-    val z = CPVarInt(Set(5, 10, 13))(cp)
+    val y = CPIntVar(Set(1, 5, 9))(cp)
+    val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z === y
 
-    println(b)
+    //println(b)
 
     b.isBound should be(false)
 
@@ -142,8 +142,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(Set(1, 5, 9))(cp)
-    val z = CPVarInt(Set(5, 10, 13))(cp)
+    val y = CPIntVar(Set(1, 5, 9))(cp)
+    val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z === y
     cp.add(b)
 
@@ -156,8 +156,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(Set(1, 5, 9))(cp)
-    val z = CPVarInt(Set(5, 10, 13))(cp)
+    val y = CPIntVar(Set(1, 5, 9))(cp)
+    val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z === y
     cp.add(b.constraintFalse())
     cp.add(z == 5)
@@ -169,8 +169,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val y = CPVarInt(Set(1, 5, 9))(cp)
-    val z = CPVarInt(Set(5, 10, 13))(cp)
+    val y = CPIntVar(Set(1, 5, 9))(cp)
+    val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z !== y
     cp.add(b)
     cp.add(z == 5)
@@ -182,8 +182,8 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val x = CPVarBool()(cp)
-    val y = CPVarBool()(cp)
+    val x = CPBoolVar()(cp)
+    val y = CPBoolVar()(cp)
     cp.add(x || y)
     cp.post(x === 0 && y === 0)
     cp.isFailed should be(true)

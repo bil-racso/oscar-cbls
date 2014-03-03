@@ -21,10 +21,10 @@ import oscar.linprog.modeling._
 object BasicLP extends LPModel with App  {
 
 
-  val x0 = LPVar("x0", 0, 40)
-  val x1 = LPVar("x1", 0, 1000)
-  val x2 = LPVar("x2", 0, 17)
-  val x3 = LPVar("x3", 2, 3)
+  val x0 = LPFloatVar("x0", 0, 40)
+  val x1 = LPFloatVar("x1", 0, 1000)
+  val x2 = LPFloatVar("x2", 0, 17)
+  val x3 = LPFloatVar("x3", 2, 3)
 
   var cons = Array[LPConstraint]()
   

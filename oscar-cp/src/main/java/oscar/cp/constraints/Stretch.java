@@ -18,7 +18,7 @@ package oscar.cp.constraints;
 import java.util.Set;
 import java.util.TreeSet;
 
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.util.ArrayUtils;
 
 /**
@@ -37,7 +37,7 @@ public class Stretch{
      * @see Regular
      *
      */
-	public static Automaton getStretchAutomaton(CPVarInt [] x , int [] shortest, int [] longest) {
+	public static Automaton getStretchAutomaton(CPIntVar [] x , int [] shortest, int [] longest) {
 		int maxval = Math.max(shortest.length,longest.length) - 1;
 		int nbval = maxval+1;
 		int [] transiFrom = new int [nbval*nbval-nbval];
@@ -68,7 +68,7 @@ public class Stretch{
      * @param transiTo
      * @return
      */
-	public static Automaton getStretchAutomaton(CPVarInt [] x, int [] shortest, int [] longest, int [] transiFrom, int [] transiTo) {
+	public static Automaton getStretchAutomaton(CPIntVar [] x, int [] shortest, int [] longest, int [] transiFrom, int [] transiTo) {
 		if (transiFrom.length != transiTo.length) {
 			throw new RuntimeException("getStretchAutomaton: transiFrom and transiTo must have the same length");
 		}

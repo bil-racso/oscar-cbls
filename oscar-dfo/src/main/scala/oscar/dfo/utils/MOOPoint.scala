@@ -50,8 +50,6 @@ class MOOPoint(val coords: Array[Double], val evaluations: Array[Double]) extend
     evaluations(functionIndex)
   }
   
-  var iter = 0
-  
   def equals(other: MOOPoint): Boolean = {
     for(evalIndex <- 0 until evaluations.length) {
       if(evaluations(evalIndex) != other.evaluations(evalIndex)) return false
@@ -60,7 +58,7 @@ class MOOPoint(val coords: Array[Double], val evaluations: Array[Double]) extend
   }
   
   override def toString: String = {
-    "[" + iter + "] Coordinates: (" + coordinates.mkString(", ") + ")   ->   Evaluations: (" + evaluations.mkString(", ") + ")"
+    "Coordinates: (" + coordinates.mkString(", ") + ")   ->   Evaluations: (" + evaluations.mkString(", ") + ")"
   }
 }
 

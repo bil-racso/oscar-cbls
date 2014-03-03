@@ -32,15 +32,25 @@ class LPSolve extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("options.ini")
-
+  
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
     this.nbCols = nbCols
     lp = LpSolve.makeLp(0, nbCols) //0 row, nbCols
     lp.setInfinite(Double.MaxValue)
     lp.setAddRowmode(true)
+    lp.setVerbose(LpSolve.CRITICAL)
     if (configFile.exists()) {
-      lp.readParams(configFile.getAbsolutePath, "[Default]");
+      try {
+    	  lp.readParams(configFile.getAbsolutePath, "[Default]");
+      } catch {
+        case e : LpSolveException => { 
+        	System.err.println(s"lp_solve encountered a problem reading from params file [${configFile.getAbsolutePath}")
+        	System.err.println(s"Ignoring the parameters file")
+        	System.err.println(s"Error Message was: ${e.getMessage()}")
+        	
+        }
+      }
     }
   }
 
@@ -50,21 +60,25 @@ class LPSolve extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+	  lp.setColName(colId + 1, name)
   }
 
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
+    lp.setRowName(nbRows, name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) { 
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.LE, rhs)
+    lp.setRowName(nbRows, name)
   }
+  
   def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.EQ, rhs)
+    lp.setRowName(nbRows, name)
   }
 
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
@@ -72,6 +86,19 @@ class LPSolve extends AbstractLP {
     if (!minMode) {
       lp.setMaxim()
     }
+  }
+  
+  override def setTimeout(t: Int) {
+    require(0 <= t)
+    lp.setTimeout(t)
+  }
+  
+  override def setName(name: String) {
+    lp.setLpName(name)
+  }
+  
+  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
+    lp.addSOS(name, 1, 1, col.size, col.map(_ + 1), coef)
   }
 
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double]) {
@@ -107,12 +134,16 @@ class LPSolve extends AbstractLP {
         objectiveValue = lp.getObjective()
         LPStatus.OPTIMAL
       case LpSolve.SUBOPTIMAL =>
+        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows + c + 1))
         objectiveValue = lp.getObjective()
         LPStatus.SUBOPTIMAL
       case LpSolve.INFEASIBLE =>
         LPStatus.INFEASIBLE
       case LpSolve.UNBOUNDED =>
         LPStatus.UNBOUNDED
+      case LpSolve.TIMEOUT => { println("lp_solve timed out before integer solution found...")
+      	LPStatus.NOT_SOLVED
+      }
       case _ =>
         LPStatus.INFEASIBLE
     }
@@ -139,11 +170,15 @@ class LPSolve extends AbstractLP {
   def setInteger(colId: Int) {
     lp.setInt(colId + 1, true)
   }
+  
+  def setBinary(colId: Int) {
+    lp.setBinary(colId + 1, true)
+  }
 
   def setFloat(colId: Int) {
     lp.setInt(colId + 1, false)
-
   }
+  
   def setBounds(colId: Int, low: Double, up: Double) {
     lp.setBounds(colId + 1, low, up)
   }
@@ -168,7 +203,7 @@ class LPSolve extends AbstractLP {
     if (rowId < 0 || rowId >= nbRows) {
       0.0
     } else {
-      println( lp.getPtrDualSolution().mkString(", " ))
+      // println( lp.getPtrDualSolution().mkString(", " ))
       lp.getPtrDualSolution()(rowId +1)
     }
   }
@@ -185,8 +220,12 @@ class LPSolve extends AbstractLP {
     lp.delColumn(colId)
   }
 
-  def exportModel(fileName: String) {
-    lp.writeLp(fileName)
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.LP => lp.writeLp(fileName) // NB: this is lp_solve's own .lp format NOT CPLEX's
+        case LPExportFormat.MPS => lp.writeFreeMps(fileName)
+        case _ => println(s"Unrecognised format ${format}")
+    }
   }
 
   def release() {
@@ -195,15 +234,11 @@ class LPSolve extends AbstractLP {
 
   def updateRhs(rowId: Int, rhs: Double): Unit = {
     lp.setRh(rowId + 1, rhs)
-
   }
 
   def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
     lp.setMat(rowId + 1, colId + 1, coeff)
   }
-}
-	
-/*
-lp.writeLp("model.lp"+tmp);
 
-*/
+}
+

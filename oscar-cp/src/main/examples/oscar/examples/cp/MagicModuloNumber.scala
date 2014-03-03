@@ -1,23 +1,6 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 
 /**
@@ -38,23 +21,20 @@ import oscar.cp.core._
  * Can you find it?
  *
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-object MagicModuloNumber extends App {
+object MagicModuloNumber extends CPModel with App {
 
-  val cp = CPSolver()
+  val x = CPIntVar(0 to 10000)
 
-  var x = CPVarInt(0 to 10000)(cp)
-
-  cp.solve subjectTo {
-    for (i <- 2 to 10) {
-      cp.add(modulo(x, i, i - 1))
-    }
-  } search {
-    binaryFirstFail(Seq(x))
-  } onSolution {
-    println(x)
+  for (i <- 2 to 10) {
+    add(modulo(x, i, i - 1))
   }
-  
-  println(cp.start(1))
 
+  search { binaryFirstFail(Seq(x)) }
+
+  onSolution { println(x) }
+
+  val stats = start(nSols = 1)
+  println(stats)
 }

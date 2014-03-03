@@ -35,7 +35,7 @@ import scala.io.Source
  */
 object Steel {
 
-  class Column(val x: LPVar, val capa: Int, val contains: Array[Int]) {
+  class Column(val x: LPFloatVar, val capa: Int, val contains: Array[Int]) {
     override def toString(): String = {
       contains.mkString("\t")
     }
@@ -86,7 +86,7 @@ object Steel {
     for (s <- 0 until nbSlab) {
       val cont = Array.tabulate(nbSlab)(_ => 0)
       cont(s) = 1
-      C = C :+ new Column(LPVar("x", 0, 10000), loss(weight(s)), cont)
+      C = C :+ new Column(LPFloatVar("x", 0, 10000), loss(weight(s)), cont)
     }
 
     var meet: Array[LPConstraint] = Array()
@@ -105,8 +105,8 @@ object Steel {
         added = false
         val mip = MIPSolver(LPSolverLib.lp_solve)
 
-        val use = Array.tabulate(nbSlab)(_ => MIPVar(mip, "use", 0 to 1))
-        val v = Array.tabulate(nbCol)(_ => MIPVar(mip, "v", 0 to 1))
+        val use = Array.tabulate(nbSlab)(_ => MIPIntVar(mip, "use", 0 to 1))
+        val v = Array.tabulate(nbCol)(_ => MIPIntVar(mip, "v", 0 to 1))
         val cost = Array.tabulate(nbSlab)(meet(_).dual)
 
         mip.maximize(sum(Slabs)(s => ((cost(s) + weight(s)) * use(s))))

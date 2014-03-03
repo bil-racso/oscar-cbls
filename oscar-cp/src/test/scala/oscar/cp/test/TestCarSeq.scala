@@ -21,53 +21,47 @@ import oscar.cp.modeling._
 import collection.immutable.SortedSet
 import oscar.algo.reversible.SetIndexedArray
 
-class TestCarSeq extends FunSuite with ShouldMatchers  {
-
+class TestCarSeq extends FunSuite with ShouldMatchers {
 
   test("Car Sequencing") {
-    
-	
-    	//   -----------------  data -----------------------
-		val nbCars = 10
-		val nbConfigs = 6
-		val nbOptions = 5
-		val lb = Array(1,2,1,2,1)
-		val ub = Array(2,3,3,5,5)
-		val demand = Array(1, 1, 2, 2, 2, 2) // demand for each config
-		val requires = Array(Array(1, 0, 1, 1, 0), // nbConfigs x nbOptions
-							 Array(0, 0, 0, 1, 0),
-							 Array(0, 1, 0, 0, 1),
-							 Array(0, 1, 0, 1, 0),
-							 Array(1, 0, 1, 0, 0),
-							 Array(1, 1, 0, 0, 0));	
-		val options = Array.fill(nbOptions)(new oscar.algo.reversible.SetIndexedArray(0,nbConfigs,true))
-		for (o <- 0 until nbOptions; c <- 0 until nbConfigs; if (requires(c)(o) == 1)) {
-			options(o).insert(c);
-			
-		}
-		//   -----------------  model -----------------------
-        
-    	val cp = CPSolver()
-    	
-		val line = Array.fill(nbCars)(CPVarInt(0,nbConfigs-1)(cp))
-		
-		var nbSol = 0
-		cp.solve subjectTo {
-    	  for (o <- 1 until nbOptions) {
-    	    cp.add(new oscar.cp.constraints.Sequence(line, options(o), ub(o), 0, lb(o)))
-    	  }
-    	  cp.add(new oscar.cp.constraints.GCC(line, 0, Array.fill(nbConfigs)(0), demand));
-    	} exploration {
-    	  cp.binaryFirstFail(line)
-    	  nbSol += 1
-    	} run()
-    	nbSol should be(860)
 
-    
-  }  
-  
+    //   -----------------  data -----------------------
+    val nbCars = 10
+    val nbConfigs = 6
+    val nbOptions = 5
+    val lb = Array(1, 2, 1, 2, 1)
+    val ub = Array(2, 3, 3, 5, 5)
+    val demand = Array(1, 1, 2, 2, 2, 2) // demand for each config
+    val requires = Array(Array(1, 0, 1, 1, 0), // nbConfigs x nbOptions
+      Array(0, 0, 0, 1, 0),
+      Array(0, 1, 0, 0, 1),
+      Array(0, 1, 0, 1, 0),
+      Array(1, 0, 1, 0, 0),
+      Array(1, 1, 0, 0, 0));
+    val options = Array.fill(nbOptions)(new oscar.algo.reversible.SetIndexedArray(0, nbConfigs, true))
+    for (o <- 0 until nbOptions; c <- 0 until nbConfigs; if (requires(c)(o) == 1)) {
+      options(o).insert(c);
 
-  
+    }
+    //   -----------------  model -----------------------
 
+    val cp = CPSolver()
+
+    val line = Array.fill(nbCars)(CPIntVar(0, nbConfigs - 1)(cp))
+
+    var nbSol = 0
+
+    for (o <- 1 until nbOptions) {
+      cp.add(new oscar.cp.constraints.Sequence(line, options(o), ub(o), 0, lb(o)))
+    }
+    cp.add(new oscar.cp.constraints.GCC(line, 0, Array.fill(nbConfigs)(0), demand));
+    cp.search {
+      binaryFirstFail(line)
+    } onSolution {
+      nbSol += 1
+    } start ()
+    nbSol should be(860)
+
+  }
 
 }

@@ -24,7 +24,7 @@ import oscar.cp.core._
   Ski assignment in Oscar
  
   From  
-  Jeffrey Lee Hellrung, Jr.: PIC 60, Fall 2008 – Final Review, December 12, 2008
+  Jeffrey Lee Hellrung, Jr.: PIC 60, Fall 2008 - Final Review, December 12, 2008
   http://www.math.ucla.edu/~jhellrun/course_files/Fall%25202008/PIC%252060%2520-%2520Data%2520Structures%2520and%2520Algorithms/final_review.pdf
   """
   5. Ski Optimization! Your job at Snapple is pleasant but in the winter you've 
@@ -64,7 +64,7 @@ object SkiAssignment {
     val skier_heights = Array(3, 4, 7, 11, 18)
       
     // variables
-    val x = Array.fill(num_skiers)(CPVarInt(1 to num_skis)(cp))
+    val x = Array.fill(num_skiers)(CPIntVar(1 to num_skis)(cp))
     // sum of differences between height of assigned skis to the skiers
     val z = sum(Array.tabulate(num_skiers)(i=> (ski_heights(x(i)) - skier_heights(i)).abs()))
 

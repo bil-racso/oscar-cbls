@@ -33,8 +33,8 @@ object MagicSquare extends MIPModel(LPSolverLib.glpk) with App {
   val Columns = 0 until n
 
 
-  val x = Array.tabulate(n, n, n * n)((l, c, N) => MIPVar("x" + (l, c, N), 0 to 1))
-  val s = MIPVar("s", 0 to 10000000)
+  val x = Array.tabulate(n, n, n * n)((l, c, N) => MIPIntVar("x" + (l, c, N), 0 to 1))
+  val s = MIPIntVar("s", 0 to 10000000)
 
   /* each cell must be assigned exactly one integer */
   for (l <- Lines; c <- Columns)

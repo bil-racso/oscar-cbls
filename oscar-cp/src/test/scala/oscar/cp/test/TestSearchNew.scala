@@ -16,13 +16,13 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     var nbSol = 0
     cp.onSolution { nbSol += 1 }
 
-    val x = Array(CPVarInt(0)(cp))
-
+    val x = Array(CPIntVar(0)(cp))
+    cp.silent = true
     cp.minimize(x(0)) subjectTo () search {
       new BinaryFirstFailBranching(x)
     }
     val stat = cp.start()
-    stat.nbSols should be(1)
+    stat.nSols should be(1)
     nbSol should be(1)
   }
 
@@ -32,22 +32,22 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     var nbSol = 0
     cp.onSolution { nbSol += 1 }
 
-    val x = Array.tabulate(3)(i => CPVarBool()(cp))
+    val x = Array.tabulate(3)(i => CPBoolVar()(cp))
 
     cp.search {
       new BinaryStaticOrderBranching(x)
     }
 
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
-    cp.start(nbSolMax = 3).completed should be(false)
+    cp.start(nSols = 3).completed should be(false)
     cp.start().completed should be(true)
     cp.start(failureLimit = 3).completed should be(false)
   }
 
   test("timelimit") {
     val cp = CPSolver()
-    val x = Array.fill(40)(CPVarInt(0 to 1)(cp))
+    val x = Array.fill(40)(CPIntVar(0 to 1)(cp))
 
     var t0 = System.currentTimeMillis()
     cp.solve subjectTo {} search {
@@ -66,7 +66,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
   test("optimize") {
 
     val cp = new CPSolver()
-    val x = CPVarInt(Array(1, 5, 9, 10))(cp)
+    val x = CPIntVar(Array(1, 5, 9, 10))(cp)
     cp.minimize(x) subjectTo {}
 
     var best = 0
@@ -76,7 +76,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
       new BinaryStaticOrderBranching(Array(x), _.max)
     }
     val stat = cp.start()
-    stat.nbSols should be(4)
+    stat.nSols should be(4)
     best should be(1)
 
   }
@@ -84,10 +84,10 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
   test("test 2 dfs") {
 
     val cp = CPSolver()
-    val x = Array.fill(2)(CPVarInt(1 to 2)(cp))
-    val y = Array.fill(2)(CPVarInt(1 to 2)(cp))
+    val x = Array.fill(2)(CPIntVar(1 to 2)(cp))
+    val y = Array.fill(2)(CPIntVar(1 to 2)(cp))
 
-    //def dom(x: CPVarInt) = (x.min to x.max).filter(x.hasValue(_))
+    //def dom(x: CPIntVar) = (x.min to x.max).filter(x.hasValue(_))
 
     var nbSol = 0
     cp.onSolution { nbSol += 1 }
@@ -98,6 +98,28 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
 
     val stat = cp.start()
     nbSol should equal(16)
-    stat.nbSols should be(16)
+    stat.nSols should be(16)
   }
+  
+  test("test 3 split") {
+
+    val cp = CPSolver()
+    val x = Array.fill(4)(CPIntVar(1 to 2)(cp))
+
+    //def dom(x: CPIntVar) = (x.min to x.max).filter(x.hasValue(_))
+
+    var nbSol = 0
+    cp.onSolution { nbSol += 1 }
+
+    cp.search {
+      binaryFirstFail(x, _.min)
+    }  
+    val nFails = cp.start().nFails
+    cp.search {
+      binarySplit(x, _.size)
+    }  
+    cp.start().nFails should be(nFails)
+  }
+    
+    
 }

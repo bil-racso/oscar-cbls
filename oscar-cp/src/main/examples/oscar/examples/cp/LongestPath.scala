@@ -1,38 +1,19 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import scala.io.Source
-import scala.io.Source
-import oscar.util._
-import oscar.visual._
 
 /**
  * Longest Path Problem
  * @author Pierre Schaus pschaus@gmail.com
  */
-object LongestPath extends App {
+object LongestPath extends CPModel with App {
 
   // --- reading the data ---
 
   val lines = Source.fromFile("data/longestpath/planar-n50.ins1.txt_com10_ins1").getLines.reduceLeft(_ + " " + _)
-  
+
   val vals = lines.split("[ ,\t]").toList.filterNot(_ == "")
   var index = 0
   def next() = {
@@ -66,20 +47,17 @@ object LongestPath extends App {
   val len = 12 // path lenth
 
   println("----------- trying with length:" + len + "-------------")
-  
-  val cp = CPSolver()
-  val path = Array.fill(len)(CPVarInt(nodes)(cp))
+
+  val path = Array.fill(len)(CPIntVar(nodes))
   val weight = sum(0 until len - 1)(i => distMatrix_(path(i))(path(i + 1)))
 
-
-  cp.maximize(weight) subjectTo {
-    for (i <- 0 until len - 1) {
-      cp.add(table(path(i), path(i + 1), tuples)) // for each consecutive visits, give the possible valid transitions
-    }
-    cp.add(allDifferent(path), Weak)
-
-  } search {
-    binaryFirstFail(path)
+  for (i <- 0 until len - 1) {
+    add(table(path(i), path(i + 1), tuples)) // for each consecutive visits, give the possible valid transitions
   }
-  println(cp.start())
+  add(allDifferent(path), Weak)
+
+  maximize(weight) search { binaryFirstFail(path) }
+  
+  val stats = start()
+  println(stats)
 }

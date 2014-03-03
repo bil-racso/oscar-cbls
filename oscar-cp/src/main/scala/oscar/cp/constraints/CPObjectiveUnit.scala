@@ -17,7 +17,7 @@ package oscar.cp.constraints
 
 import oscar.cp.modeling.TightenType
 import oscar.cp.modeling.TightenType._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
@@ -28,7 +28,7 @@ import oscar.cp.core.CPPropagStrength
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends Objective {
+abstract class CPObjectiveUnit(val objVar: CPIntVar, val n: String = "") extends Objective {
   
   // Upper bound of the objective
   protected val lb = objVar.min - 1 // Avoids to remove the min value in the first propagate
@@ -66,7 +66,9 @@ abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends
   
   /** Tightens the objective according to its tightening mode */
   def tighten(): Unit = {
-    if (!objVar.isBound) throw new RuntimeException("objective"+n+" not bound:" + objVar)
+    if (!objVar.isBound) {
+      if (tightenType != NoTighten) throw new RuntimeException("objective"+n+" not bound:" + objVar)
+    }
     else {
       best = objVar.value // Sets new best value
       if (!objVar.store.silent && tightenType != NoTighten) {
@@ -104,7 +106,7 @@ abstract class CPObjectiveUnit(val objVar: CPVarInt, val n: String = "") extends
 /** Best  : smallest value
  *  Worst : largest value
  */
-class CPObjectiveUnitMinimize(objVar: CPVarInt, n: String = "") extends CPObjectiveUnit(objVar, n) {
+class CPObjectiveUnitMinimize(objVar: CPIntVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
 
   def domBest: Int = objVar.min
   def domWorst: Int = objVar.max 
@@ -124,7 +126,7 @@ class CPObjectiveUnitMinimize(objVar: CPVarInt, n: String = "") extends CPObject
 /** Best  : largest value
  *  Worst : smallest value
  */
-class CPObjectiveUnitMaximize(objVar: CPVarInt, n: String = "") extends CPObjectiveUnit(objVar, n) {
+class CPObjectiveUnitMaximize(objVar: CPIntVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
 
   def domBest: Int = objVar.max
   def domWorst: Int = objVar.min 

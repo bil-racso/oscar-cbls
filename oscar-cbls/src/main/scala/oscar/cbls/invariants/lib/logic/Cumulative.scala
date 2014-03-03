@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Invariant, IntSetVar, IntVar}
+import oscar.cbls.invariants.core.computation.{Invariant, CBLSSetVar, CBLSIntVar}
 import collection.immutable.SortedSet
 
 /**
@@ -31,8 +31,9 @@ import collection.immutable.SortedSet
  * @param amount the amount that tasks use of this resource
  * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
  * @param active the tasks that are active maintained to active(time) <== (task.indices | task.start <= time <= t.start+t.duration)
- */
-case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[IntVar], amount:Array[IntVar], profile:Array[IntVar], active:Array[IntSetVar]) extends Invariant {
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class Cumulative(indices:Array[Int], start:Array[CBLSIntVar], duration:Array[CBLSIntVar], amount:Array[CBLSIntVar], profile:Array[CBLSIntVar], active:Array[CBLSSetVar]) extends Invariant {
 
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v),v)
   for (v <- duration.indices) registerStaticAndDynamicDependency(duration(v),v)
@@ -45,7 +46,7 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   
   for(i <- start.indices)insert(start(i).value, duration(i).value, amount(i).value, i)
 
-  def remove(start:Int, duration:Int, amount:Int,index:Int){
+  def remove(start:Int, duration:Int, amount:Int, index:Int){
     for (t <- start until (start + duration)){
       profile(t) :-= amount
       active(t).deleteValue(indices(index))
@@ -54,13 +55,14 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
 
   def insert(start:Int, duration:Int, amount:Int, index:Int){
     for (t <- start until (start + duration)){
+      //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
       profile(t) :+= amount
       active(t).insertValue(indices(index))
     }
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,index:Int,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar, index:Int, OldVal:Int, NewVal:Int){
     if (start(index) == v){
       //start
       remove(OldVal, duration(index).value, amount(index).value, index)
@@ -82,4 +84,3 @@ case class Cumulative(indices:Array[Int], start:Array[IntVar], duration:Array[In
   }
   //TODO: checkInternals.
 }
-

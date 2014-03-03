@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -27,9 +27,9 @@ import oscar.cp.core.Constraint;
 public class Deviation extends Constraint {
 
 
-    private CPVarInt [] x;
+    private CPIntVar [] x;
     private int n; // length of x
-    private CPVarInt nd;
+    private CPIntVar nd;
     private int s;
 
 
@@ -51,8 +51,8 @@ public class Deviation extends Constraint {
      * @param s
      * @param nd
      */
-    public Deviation(CPVarInt [] x, int s, CPVarInt nd) {
-        super(x[0].s(),"Deviation");
+    public Deviation(CPIntVar [] x, int s, CPIntVar nd) {
+        super(x[0].store(),"Deviation");
         assert (x.length >= 2);
         this.x = x;
         this.nd = nd;
@@ -72,7 +72,7 @@ public class Deviation extends Constraint {
             if (!x[i].isBound())
                 x[i].callPropagateWhenBoundsChange(this,false);
         }
-        nd.callPropagateWhenMaxChanges(this,false);
+        nd.callPropagateWhenBoundsChange(this,false);
         return propagate();
     }
 
@@ -414,7 +414,7 @@ public class Deviation extends Constraint {
      * @param mirror
      * @return false if Failure during the pruning
      */
-    private boolean pruneBound(CPVarInt x, int bound, boolean mirror) {
+    private boolean pruneBound(CPIntVar x, int bound, boolean mirror) {
         if (!mirror) {
             if (x.updateMax(bound) == CPOutcome.Failure)
                 return false;

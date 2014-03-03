@@ -12,7 +12,7 @@ import oscar.cp.core._
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-object TSPVisu extends CPModel {
+object TSPVisu extends CPModel with App {
 
   // Data
   val nCities = 20
@@ -20,8 +20,8 @@ object TSPVisu extends CPModel {
   val (distMatrix, coordinates) = TSPGenerator.randomInstance(nCities)
 
   // Variables
-  val succ = Array.fill(nCities)(CPVarInt(Cities)) 
-  val totDist = CPVarInt(0 to distMatrix.flatten.sum)
+  val succ = Array.fill(nCities)(CPIntVar(Cities)) 
+  val totDist = CPIntVar(0 to distMatrix.flatten.sum)
 
   // Constraints
   add(circuit(succ), Strong)
@@ -60,7 +60,7 @@ object TSPGenerator {
 }
 
 /** Visualization for TSP */
-class VisualTSP(coordinates: Array[(Int, Int)], succ: Array[CPVarInt]) {
+class VisualTSP(coordinates: Array[(Int, Int)], succ: Array[CPIntVar]) {
 
   import oscar.visual._
   import oscar.visual.plot.PlotLine

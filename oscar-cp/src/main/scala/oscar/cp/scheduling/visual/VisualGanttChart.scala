@@ -18,14 +18,14 @@ package oscar.cp.scheduling.visual
 
 import oscar.visual._
 import oscar.cp.scheduling._
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import scala.Array.canBuildFrom
 
-class VisualGanttChart(starts: Array[CPVarInt], durations: Array[CPVarInt], ends: Array[CPVarInt], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
+class VisualGanttChart(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], f: (Int) => Int, colors: (Int) => Color = i => Color.WHITE) extends VisualDrawing(false, false) {
 
   private val rectangles: Array[VisualRectangle] = Array.tabulate(starts.size)(a => {
     val rect = new VisualRectangle(this, 0, 0, 0, 0)

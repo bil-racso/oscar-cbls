@@ -23,7 +23,8 @@ package oscar.cbls.scheduling.algo
 /** a class that proposes several conflict search algorithms.
   * given a set of items I, and a condition over subsets of I that is monotonic (forall X, Y subset of I, conflict(X) => conflict(X U Y)
   * a minimal conflict C is a subset of I such that conflict(C) and if any part of C is removed, C is not in conflict anymore.
-  */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 object ConflictSearch {
 
   /**Computes a minimal conflict over a list of thinks.
@@ -44,7 +45,7 @@ object ConflictSearch {
   /**init includes items*/
   private def search[S,C](init:S,
                           items:List[C],
-                          toInject:List[C],
+                          toInject:Iterable[C],
                           inject:(S, C)=>S,
                           isConflict:S=>Boolean):List[C] = {
 
@@ -53,9 +54,9 @@ object ConflictSearch {
     var accumulator = init
     var ListA:List[C] = List.empty
     var ListB:List[C] = List.empty
-    var fillA = true;
-    var remaining = toInject;
-    
+    var fillA = true
+    var remaining = toInject
+
     while(true){
       if(remaining.isEmpty) throw new Exception("no conflict")
       val item = remaining.head

@@ -24,7 +24,7 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
+class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible(n) {
   
   // Pointer to the object to trail
   private var pointer: T = v
@@ -37,30 +37,30 @@ class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
   }
 
   /**
-   * @param: value to assign
+   * @param value to assign
    */
   def value_= (value: T): Unit = setValue(value)
   
   /**
-   * @param: value to assign
+   * @param value to assign
    */
   def := (value: T): Unit = setValue(value)
   
   /**
-   * @return: current value
+   * @return current value
    */
-  def value = getValue
+  @inline def value = pointer
 
   /**
    * Check if the pointer is different from null
    * @return true if the pointer is != null, false otherwise
    */
-  def hasValue(): Boolean = pointer != null
+  @inline def hasValue(): Boolean = pointer != null
 
   /**
    * @return the current pointer
    */
-  def getValue(): T = pointer
+  @inline def getValue(): T = pointer
 
   override def addOnTrail(): Unit = {
     node.getTrail().addEntry(this, pointer)
@@ -70,7 +70,7 @@ class ReversiblePointer[T](n: ReversibleContext, v: T) extends Reversible(n) {
     pointer = value.asInstanceOf[T]
   }
 
-  override def toString(): String = if (hasValue) pointer + "" else ""
+  override def toString(): String = if (hasValue) s"$pointer" else ""
 }
 
 object ReversiblePointer {

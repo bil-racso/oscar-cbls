@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPStore;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,21 +26,21 @@ import oscar.cp.core.Constraint;
  */
 public class Gr extends Constraint {
 
-	CPVarInt x, y;
+	CPIntVar x, y;
 
     /**
      * x > y
      * @param x
      * @param y
      */
-	public Gr(CPVarInt x, CPVarInt y) {
-		super(x.s(),">");
+	public Gr(CPIntVar x, CPIntVar y) {
+		super(x.store(),">");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public Gr(CPVarInt x, int v) {
-		this(x, CPVarInt.apply(x.s(),v,v));
+	public Gr(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override
@@ -48,8 +48,8 @@ public class Gr extends Constraint {
 		priorityL2_$eq(CPStore.MAXPRIORL2());
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);
-			if (!x.isBound()) x.callPropagateWhenMaxChanges(this,false);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
 		}
 		return oc;
 	}

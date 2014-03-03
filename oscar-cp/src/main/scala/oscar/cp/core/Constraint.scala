@@ -24,7 +24,7 @@ abstract class Snapshot {
   def update()
 }
 
-class SnapshotVarInt(x: CPVarInt) extends Snapshot {
+class SnapshotVarInt(x: CPIntVar) extends Snapshot {
   var oldMin: Int = x.min 
   var oldMax: Int = x.max
   var oldSize: Int = x.size
@@ -35,7 +35,7 @@ class SnapshotVarInt(x: CPVarInt) extends Snapshot {
   }
 }
 
-class SnapshotVarSet(x: CPVarSet) extends Snapshot {
+class SnapshotVarSet(x: CPSetVar) extends Snapshot {
   var oldSizePossible: Int = x.possibleSize
   var oldSizeRequired: Int = x.requiredSize
   def update() {
@@ -53,13 +53,13 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   val active = new ReversibleBool(s,true)
   val inQueue = new ReversibleBool(s,false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPVarInt, SnapshotVarInt]() 
-  val snapshotsVarSet = scala.collection.mutable.Map[CPVarSet, SnapshotVarSet]()
+  val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
+  val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
 
 
   private var _mustSnapshot = false
 
-  def addSnapshot(x: CPVarInt): Unit = {
+  def addSnapshot(x: CPIntVar): Unit = {
     snapshotsVarInt(x) = new SnapshotVarInt(x)
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
@@ -80,7 +80,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
   
 
-  def addSnapshot(x: CPVarSet): Unit = {
+  def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new SnapshotVarSet(x)
     snapshotsVarSet(x).update()
     if (!_mustSnapshot) {
@@ -121,13 +121,13 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param b
    * @return a garded version of this constraint i.e. that will only be posted when b is true
    */
-  def when(b: CPVarBool): Constraint = new Garded(b, this, true)
+  def when(b: CPBoolVar): Constraint = new Garded(b, this, true)
 
   /**
    * @param b
    * @return a garded version of this constraint i.e. that will only be posted when b is false
    */
-  def whenNot(b: CPVarBool) = new Garded(b, this, false)
+  def whenNot(b: CPBoolVar) = new Garded(b, this, false)
 
   override def toString = "constraint:" + name
 
@@ -226,7 +226,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x has a new minimum and/or maximum value in its domain since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBounds(x: CPVarInt) = CPOutcome.Suspend
+  def updateBounds(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -236,43 +236,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBoundsIdx(x: CPVarInt, idx: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked so
-   * with the method call x.callUpdateMaxWhenMaxChanges(this)
-   * @param value is the old maximum of x that has changed
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMax(x: CPVarInt, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked to do so
-   * with the method call x.callUpdateMinIdxWhenMaxChanges(this,idx)
-   * @param value is the old maximum of x that has changed
-   * @param idx is a key value that was given to callUpdateMaxIdxWhenMaxChanges(x,this,idx) attached to variable x.
-   *        This is typically used to retrieve the index of x in an array of variables in constant time
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMaxIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked so
-   * with the method call x.callUpdateMinWhenMinChanges(this)
-   * @param val is the old minimum of x that has changed
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMin(x: CPVarInt, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked to do so
-   * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-   * @param value is the old maximum of x that has changed
-   * @param idx is a key value that was given to callUpdateMaxIdxWhenMinChanges(x,this,idx) attached to variable x.
-   *        This is typically used to retrieve the index of x in an array of variables in constant time
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMinIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend
+  def updateBoundsIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -280,7 +244,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x is bind
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBind(x: CPVarInt) = CPOutcome.Suspend
+  def valBind(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -290,7 +254,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBindIdx(x: CPVarInt, idx: Int) = CPOutcome.Suspend
+  def valBindIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -298,7 +262,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param value is a value that has been removed from the domain of x since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valRemove(x: CPVarInt, value: Int) = CPOutcome.Suspend
+  def valRemove(x: CPIntVar, value: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -308,7 +272,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valRemoveIdx(x: CPVarInt, idx: Int, value: Int) = CPOutcome.Suspend
+  def valRemoveIdx(x: CPIntVar, idx: Int, value: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -316,7 +280,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param val is a value that has been put as required in the domain of x since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valRequired(x: CPVarSet, value: Int) = CPOutcome.Suspend
+  def valRequired(x: CPSetVar, value: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -326,7 +290,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valRequiredIdx(x: CPVarSet, idx: Int, value: Int) = CPOutcome.Suspend
+  def valRequiredIdx(x: CPSetVar, idx: Int, value: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -334,7 +298,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param val is a value that has been excluded in the domain of x since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valExcluded(x: CPVarSet, value: Int) = CPOutcome.Suspend
+  def valExcluded(x: CPSetVar, value: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -344,7 +308,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valExcludedIdx(x: CPVarSet, idx: Int, value: Int) = CPOutcome.Suspend
+  def valExcludedIdx(x: CPSetVar, idx: Int, value: Int) = CPOutcome.Suspend
 
   def execute(): CPOutcome = {
     inQueue.value = false
@@ -368,7 +332,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 }
 
 
-abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends Constraint(x.s, "DeltaVarInt") {
+abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
   
   val sn = new SnapshotVarInt(x)
   s.onPop {
@@ -392,7 +356,7 @@ abstract class DeltaVarInt(x: CPVarInt,filter: DeltaVarInt => CPOutcome) extends
   
 }
 
-abstract class DeltaVarSet(x: CPVarSet,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
+abstract class DeltaVarSet(x: CPSetVar,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
   
   val sn = new SnapshotVarSet(x)
   s.onPop {

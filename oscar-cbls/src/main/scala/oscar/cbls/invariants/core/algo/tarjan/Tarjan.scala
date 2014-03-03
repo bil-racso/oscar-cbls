@@ -20,9 +20,14 @@
 
 package oscar.cbls.invariants.core.algo.tarjan
 
-import collection.immutable.SortedSet;
-import collection.immutable.SortedMap;
+import collection.immutable.SortedSet
+import collection.immutable.SortedMap
 
+/** The Tarjan algorithm for detecting SCC is graphs
+ * @author renaud.delandtsheer@cetic.be
+ * @param A
+ * @tparam T
+ */
 class Tarjan[T]( implicit A:Ordering[T]){ // <: Ordered[T]]{
 
   def getStronlyConnexComponents(Nodes:Iterable[T], GetSucceedingNodes:(T => Iterable[T])):List[SortedSet[T]] = {
@@ -75,6 +80,6 @@ class Tarjan[T]( implicit A:Ordering[T]){ // <: Ordered[T]]{
 //      Components = SortedSet(n) :: Components
 //    }}
 
-    Components;
+    Components
   }
 }

@@ -26,6 +26,10 @@ object LPStatus extends Enumeration {
   val INFEASIBLE = Value("infeasible")
 }
 
+object LPExportFormat extends Enumeration {
+    val LP, MPS = Value
+}
+
 /**
  * Abstract class that must be extended to define a new LP solver
  */
@@ -75,12 +79,13 @@ abstract class AbstractLP {
       i <- cons.keys.toSeq.sortWith(_ < _)
       c = cons(i)
     } {
-      if (nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
-      c.cstr.consType match {
-        case ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
-        case ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
-        case ConstraintType.EQ => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
-      }
+      if (nbC > 0 && nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
+        c match {
+        	case c: SOSConstraint => addConstraintSOS1(c.varIds, c.weightings(), c.name)
+        	case _ if(c.cstr.consType == ConstraintType.GQ) => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if(c.cstr.consType == ConstraintType.LQ) => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if(c.cstr.consType == ConstraintType.EQ) => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
+      	}
       nbC += 1
     }
   }
@@ -98,7 +103,15 @@ abstract class AbstractLP {
    * @param col indicates to which column/variable the coefficients refer to
    */
   def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
-
+  
+  /**
+   * Add an Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable 
+   * in a collection to be equal to 1. Useful for modelling discrete choices
+   * @param col indicates which variables are included in the SOS constraints 
+   * @param ceof the weightings on the variables (these influence the search branching decision)
+   */
+  def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null, name: String): Unit = ???
+  
   /**
    * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
    * @param coef are the coefficients of the linear term
@@ -116,8 +129,7 @@ abstract class AbstractLP {
    */
   def updateCoef(consId: Int, varId: Int, coeff: Double): Unit
 
-  /**
-   * Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
+  /** Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
    * @param minMode = true if this objective should be minimized (default), false to maximize it
@@ -151,6 +163,9 @@ abstract class AbstractLP {
 
   /** Set name of variable in solver */
   def setVarName(colId: Int, name: String)
+  
+  /** Set name of model in solver */
+  def setName(name: String)
 
   def deleteConstraint(rowId: Int)
 
@@ -158,7 +173,10 @@ abstract class AbstractLP {
 
   def deleteVariable(colId: Int)
 
-  def exportModel(fineName: String)
+  def exportModel(fileName: String, format: LPExportFormat.Value = LPExportFormat.MPS)
+  
+  def setTimeout(t: Int)
+  
 
   /**
    * Release the memory of this solver
@@ -187,7 +205,12 @@ abstract class AbstractLP {
    * Set the column/variable as an integer variable
    */
   def setInteger(colId: Int)
-
+  
+  /**
+   * Set the column / variable as an binary 0-1 integer variable
+   */
+  def setBinary(colId: Int)
+  
   /**
    * Set the column/variable as a float variable
    */
@@ -207,7 +230,7 @@ abstract class AbstractLP {
  * [0,+inf] is unbounded = true,
  * [-inf,+inf] otherwise
  */
-class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
+class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: Double, ubound: Double, doubleUnbounded: Boolean) extends Var {
 
   // do not swap next two lines
   val index = solver.register(this)
@@ -216,6 +239,7 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
   val ub = ubound
   var unbounded = doubleUnbounded // unbounded [-inf,+inf]
   var integer: Boolean = false
+  var binary = false
 
   def name = varName
 
@@ -227,7 +251,7 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
   }
 
   /**
-   * Reset initial bounds and repotimize
+   * Reset initial bounds and re-optimize
    */
   def resetBounds() {
     solver.setVarProperties()
@@ -242,7 +266,12 @@ class AbstractLPVar(val solver: AbstractLPSolver, varName: String, lbound: Doubl
    * Return true if the variable is integer, false otherwise
    */
   def isInteger(): Boolean = integer
-
+  
+  /**
+   * @return true if the variable is a binary integer variable (e.g. 0-1)
+   */
+  def isBinary(): Boolean = binary
+  
   /**
    * Return true if the variable is unbounded, false otherwise
    */
@@ -293,7 +322,7 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
     val ex = cstr.linExpr.coef.toArray
 
     for ((i, a) <- varIds.zip(coef)) {
-      val x: AbstractLPVar = solver.variable(i) match {
+      val x: AbstractLPFloatVar = solver.variable(i) match {
         case Some(variable) => variable
         case None => throw new IllegalArgumentException("Variable with index " + i + " not present in lp solver")
       }
@@ -307,29 +336,39 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
   }
 
   def isTight(tol: Double = 10e-6) = slack.abs <= tol
+  override def toString: String = name + ": " + cstr
 }
+
+class SOSConstraint(override val solver: AbstractLPSolver, override val cstr: LinearConstraint, override val index: Int, override val name: String) extends LPConstraint(solver, cstr, index, name) {
+	
+	def weightings() = coef
+	def getSOSType() = rhs
+}
+
 
 abstract class AbstractLPSolver {
 
   // map from the index of variables to their implementation
-  protected val vars = mutable.HashMap.empty[Int, AbstractLPVar]
+  protected val vars = mutable.HashMap.empty[Int, AbstractLPFloatVar]
   private val cons = mutable.HashMap.empty[Int, LPConstraint]
   private val solution = mutable.HashMap.empty[Int, Double]
   protected var objective: LinearExpression = 0
   protected var minimize = true
-
+ 
   protected val solver: AbstractLP
 
   protected var statuss = LPStatus.NOT_SOLVED
-
-  def register(vari: AbstractLPVar): Int = {
+  protected var modelName = "" 
+ 
+  def name_= (n: String): Unit = modelName = n
+  def name: String = modelName
+  
+  def register(vari: AbstractLPFloatVar): Int = {
     vars(vars.size) = vari
     vars.size - 1
   }
 
-  /**
-   * @deprecated("no need to use option",1.0)
-   */
+  @deprecated("no need to use option", "1.0")
   def add(constr: LinearConstraint, name: Option[String]): LPConstraint = {
     name match {
       case None => add(constr, "")
@@ -340,6 +379,13 @@ abstract class AbstractLPSolver {
   def add(constr: LinearConstraint, name: String = ""): LPConstraint = {
     val cstName = if (name.isEmpty()) "cstr" + cons.size else name
     val constraint = new LPConstraint(this, constr, cons.size, cstName)
+    cons(cons.size) = constraint
+    constraint
+  }
+  
+  def addSOS(constr: LinearConstraint, name: String = ""): SOSConstraint = {
+    val cstName = if (name.isEmpty()) "SOS_" + cons.size else name
+    val constraint = new SOSConstraint(this, constr, cons.size, cstName)
     cons(cons.size) = constraint
     constraint
   }
@@ -367,7 +413,7 @@ abstract class AbstractLPSolver {
     }
   }
 
-  def setVarBounds(x: AbstractLPVar, reoptimize: Boolean = false) = {
+  def setVarBounds(x: AbstractLPFloatVar, reoptimize: Boolean = false) = {
     if (x.isUnbounded) {
       solver.setUnboundUpperBound(x.index)
       solver.setUnboundLowerBound(x.index)
@@ -377,7 +423,7 @@ abstract class AbstractLPSolver {
     if (reoptimize) solveModel()
   }
 
-  def setBounds(x: AbstractLPVar, lb: Double, ub: Double, reoptimize: Boolean = false) = {
+  def setBounds(x: AbstractLPFloatVar, lb: Double, ub: Double, reoptimize: Boolean = false) = {
     solver.setBounds(x.index, lb, ub)
     if (reoptimize) solveModel()
   }
@@ -395,14 +441,15 @@ abstract class AbstractLPSolver {
   def maximize(expr: LinearExpression): AbstractLPSolver = {
     optimize(expr, false)
   }
-
+ 
   /**
-   * effectively start the concrete model building and solving
-   * @returns true if a feasible solution is found (optimal or sub-optimal)
+   * Effectively start the concrete model building and solving
+   * @param timeLimit (in seconds) to pass to the solver
+   * @return true if a feasible solution is found (optimal or sub-optimal)
    */
-  def start(): Boolean = {
+  def start(timeLimit: Int = Int.MaxValue): Boolean = {
     solver.startModelBuilding(cons.size, vars.size)
-
+    solver.setName(modelName)
     println("Setting variable bounds...")
     setVarProperties() //set the the var bounds correctly
     val e = objective.coef.toList
@@ -415,7 +462,11 @@ abstract class AbstractLPSolver {
     println("Creating constraints...")
     val t0 = System.currentTimeMillis()
     addAllConstraints()
-    println("time to add constraints:" + (System.currentTimeMillis() - t0))
+    println(s"Time to add constraints ${System.currentTimeMillis() - t0} ms")
+    if(timeLimit < Int.MaxValue){
+      solver.setTimeout(timeLimit)
+    }
+    
     solveModel()
     (status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)
   }
@@ -429,7 +480,6 @@ abstract class AbstractLPSolver {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
     }
   }
-
 
   /**
    * @return The objective value (None if problem not yet solved or infeasible)
@@ -464,7 +514,7 @@ abstract class AbstractLPSolver {
   /**
    *  Set the coefficient of the variable in the corresponding constraint to the specified value
    */
-  def updateCoef(constraint: LPConstraint, variable: AbstractLPVar, coeff: Double) = {
+  def updateCoef(constraint: LPConstraint, variable: AbstractLPFloatVar, coeff: Double) = {
     // update directly in the solver if the model has already been build
     if (statuss != LPStatus.NOT_SOLVED) solver.updateCoef(constraint.index, variable.index, coeff)
 

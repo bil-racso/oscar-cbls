@@ -29,7 +29,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   
   val rand = new scala.util.Random(0)
 
-  class SetDiffDecomp(val a: CPVarSet, val b: CPVarSet, val c: CPVarSet) extends Constraint(a.store, "SetDiffDecomp") {
+  class SetDiffDecomp(val a: CPSetVar, val b: CPSetVar, val c: CPSetVar) extends Constraint(a.store, "SetDiffDecomp") {
 
     override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -86,9 +86,9 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   
   def solCount(aReq: Set[Int], aPoss: Set[Int], bReq: Set[Int], bPoss: Set[Int], cReq: Set[Int], cPoss: Set[Int], decomp: Boolean = false): Int = {
     val cp = CPSolver()
-    var a = CPVarSet(aReq ++ aPoss, aReq)(cp)
-    var b = CPVarSet(bReq ++ bPoss, bReq)(cp)
-    var c = CPVarSet(cReq ++ cPoss, cReq)(cp)
+    var a = CPSetVar(aReq ++ aPoss, aReq)(cp)
+    var b = CPSetVar(bReq ++ bPoss, bReq)(cp)
+    var c = CPSetVar(cReq ++ cPoss, cReq)(cp)
     var nbSol = 0
     val oc = 
       if (decomp) cp.post(new SetDiffDecomp(a, b, c))
@@ -98,7 +98,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
     cp search {
       binary(a) ++ binary(b) ++ binary(c)
     } 
-    cp.start().nbSols
+    cp.start().nSols
   }
 
   // a - b = c
@@ -106,9 +106,9 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
   test("Test SetDiff 1") {
     var nbSol = 0
     val cp = CPSolver()
-    var a = CPVarSet(Set(1, 4, 5, 7, 8), Set(1, 4))(cp)
-    var b = CPVarSet(Set(4, 5), Set(4))(cp)
-    var c = CPVarSet(Set(1, 2, 3, 4, 5))(cp)
+    var a = CPSetVar(Set(1, 4, 5, 7, 8), Set(1, 4))(cp)
+    var b = CPSetVar(Set(4, 5), Set(4))(cp)
+    var c = CPSetVar(Set(1, 2, 3, 4, 5))(cp)
 
     cp.add(new SetDiff(a, b, c))
 
@@ -123,7 +123,7 @@ class TestSetDiff extends FunSuite with ShouldMatchers {
       binary(a) ++ binary(b) ++ binary(c)
     }
 
-    cp.start().nbSols should be(4)
+    cp.start().nSols should be(4)
   }
 
   test("Test SetDiff 2") {

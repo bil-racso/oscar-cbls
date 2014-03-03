@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.ArrayUtils;
 import oscar.cp.util.NumberUtils;
@@ -27,17 +27,17 @@ import oscar.cp.util.NumberUtils;
  */
 public class MulVar extends Constraint {
 
-	private CPVarInt x, y, z;
+	private CPIntVar x, y, z;
 
     /**
      * x * y == z
      * @param x
      * @param y
      * @param z
-     * @see CPVarInt#mul(cp.core.CPVarInt)
+     * @see CPIntVar#mul(cp.core.CPIntVar)
      */
-	public MulVar(CPVarInt x, CPVarInt y, CPVarInt z) {
-		super(x.s(),"Mul x*y=z");
+	public MulVar(CPIntVar x, CPIntVar y, CPIntVar z) {
+		super(x.store(),"Mul x*y=z");
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -139,7 +139,7 @@ public class MulVar extends Constraint {
 	 * @param d != 0
 	 * @return Suspend if no failure detected during this propagation
 	 */
-	private CPOutcome propagDiv(CPVarInt w, int a, int b, int c, int d) {
+	private CPOutcome propagDiv(CPIntVar w, int a, int b, int c, int d) {
 		int wmin = Math.min(NumberUtils.minCeilDiv(a, c, d), NumberUtils.minCeilDiv(b, c, d)); 
 		if (w.updateMin(wmin) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
@@ -154,7 +154,7 @@ public class MulVar extends Constraint {
 	
 
 	// propagate variable u for expression (u * w = z) with neither of the variable bound
-	private CPOutcome propagateMul(CPVarInt u, CPVarInt w, CPVarInt z) {
+	private CPOutcome propagateMul(CPIntVar u, CPIntVar w, CPIntVar z) {
 	   if (w.getMin() > 0 || w.getMax() < 0) { 
 		   return propagDiv(u, z.getMin(), z.getMax(), w.getMin(), w.getMax());
 	   } else {

@@ -58,7 +58,7 @@ object BowlsAndOranges {
     //
     // variables
     //
-    val x = Array.fill(m)(CPVarInt(1 to n)(cp))
+    val x = Array.fill(m)(CPIntVar(1 to n)(cp))
 
     //
     // constraints

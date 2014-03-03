@@ -84,21 +84,21 @@ object StochasticFarmer extends App {
     implicit val detModel = LPSolver()
 
     // Creating all variables 
-    val detVars = Map[String, LPVar]()
+    val detVars = Map[String, LPFloatVar]()
 
     // First stage
     for { vG <- firstStage; crop <- crops } {
       firstStageSolution match {
         case Some(solution) =>
           val lb, ub = solution.getValue(vG + crop)
-          detVars += (vG + crop -> LPVar(vG + crop, lb, ub))
+          detVars += (vG + crop -> LPFloatVar(vG + crop, lb, ub))
         case None =>
-          detVars += (vG + crop -> LPVar(vG + crop))
+          detVars += (vG + crop -> LPFloatVar(vG + crop))
       }
     }
 
     // Second stage
-    secondStage foreach { vG => crops foreach (crop => detVars += (vG + crop -> LPVar(detModel, vG + crop))) }
+    secondStage foreach { vG => crops foreach (crop => detVars += (vG + crop -> LPFloatVar(detModel, vG + crop))) }
 
     // Generating and solving the model
     minimize(sum(crops)(c => (detVars("surface" + c) * costs(c)) // Plantation costs
@@ -135,14 +135,14 @@ object StochasticFarmer extends App {
 
   def solveStochasticModel(): Solution = {
     implicit val stoModel = LPSolver(LPSolverLib.lp_solve)
-    val stoVars = Map[String, LPVar]()
+    val stoVars = Map[String, LPFloatVar]()
 
     for (varGroup <- firstStage) {
-      crops.foreach(crop => stoVars += (varGroup + crop -> LPVar(varGroup + crop)))
+      crops.foreach(crop => stoVars += (varGroup + crop -> LPFloatVar(varGroup + crop)))
     }
     // All variables corresponding to second stage should be particularized to a scenario
     for (varGroup <- secondStage) {
-      scenarios foreach (s => crops foreach (crop => stoVars += (varGroup + crop + s -> LPVar(varGroup + crop + s))))
+      scenarios foreach (s => crops foreach (crop => stoVars += (varGroup + crop + s -> LPFloatVar(varGroup + crop + s))))
     }
 
     minimize((sum(crops)(c => (stoVars("surface" + c) * costs(c)))) // Plantation costs
@@ -192,7 +192,7 @@ object StochasticFarmer extends App {
   /**
    * CPStore variable values
    */
-  class Solution(vars: Map[String, LPVar]) {
+  class Solution(vars: Map[String, LPFloatVar]) {
     val data = vars map (el => (el._1, el._2.value.get)) toMap
 
     def getValue(key: String) = data(key)

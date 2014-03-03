@@ -21,7 +21,7 @@ import scala.collection.JavaConversions._
 import oscar.cp.core._
 
 /**
- * Implementation of Path Constraint descomposition as described in 
+ * Implementation of Path Constraint decomposition as described in 
  * "Solving the Longest Simple Path Problem with Constraint-Based Techniques" by Quang Dung, Yves Deville (CPAIOR2012)
  * 
  * - succ[i] is the successor of node i (also place i inside the domain of succ[i] if you want to allow it not to be part of the path
@@ -35,10 +35,10 @@ import oscar.cp.core._
  * the successor of the last node of the path is the first node by convention
  * @author Pierre Schaus
  */
-class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarInt) extends Constraint(succ(0).s, "Path") {
+class Path(succ: Array[CPIntVar], start: CPIntVar, end: CPIntVar, length: CPIntVar) extends Constraint(succ(0).store, "Path") {
 
   // for each node, it's position in the path
-  val y = Array.fill(succ.size)(CPVarInt(0 until succ.size)(s))
+  val y = Array.fill(succ.size)(CPIntVar(0 until succ.size)(s))
   
 
   override def setup(l: CPPropagStrength): CPOutcome = {    
@@ -60,25 +60,4 @@ class Path(succ: Array[CPVarInt], start: CPVarInt, end: CPVarInt, length: CPVarI
     return CPOutcome.Success
   }
 
-}
-
-
-object Path {
-  def main(args: Array[String]) {
-      val succ = Array(Set(0,1),Set(1,2,3),Set(2,4),Set(3,2,5),Set(4,5),Set(5,0))
-      
-
-	  val cp = CPSolver()
-	  var X = Array.tabulate(succ.length)(i => CPVarInt(succ(i))(cp))
-	  var start = CPVarInt(0)(cp)
-	  var end = CPVarInt(5)(cp)
-	  var length = CPVarInt(3)(cp)
-	  
-	  cp.solve subjectTo {
-        cp.add(new Path(X,start,end,length))
-      } exploration {
-        cp.binaryFirstFail(X)
-        println(X.mkString(","))
-      } run()
-  }
 }

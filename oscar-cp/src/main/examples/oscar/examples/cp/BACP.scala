@@ -1,20 +1,3 @@
-/**
- * *****************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -64,9 +47,9 @@ object BACP extends CPModel with App {
   val credits = Array.fill(nbCourses)(next())
   val prerequisites = Array.fill(nbPre)((next(), next()))
 
-  val x = Array.fill(nbCourses)(CPVarInt(periods))
-  val l = Array.fill(nbPeriods)(CPVarInt(0 to credits.sum))
-  val vari = CPVarInt(0 to 10000000)
+  val x = Array.fill(nbCourses)(CPIntVar(periods))
+  val l = Array.fill(nbPeriods)(CPIntVar(0 to credits.sum))
+  val vari = CPIntVar(0 to 10000000)
 
   add(spread(l, credits.sum, vari))
   add(binPacking(x, credits, l))

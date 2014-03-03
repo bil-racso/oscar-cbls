@@ -28,7 +28,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
 
   test("Table Test 1") {
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarInt(1 to 3)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
     val tuples = Array(Array(1,1,1),Array(1,2,3))
     
@@ -50,9 +50,9 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
   test("Table Test 2") {
     val cp = CPSolver()
     
-    var x = CPVarInt(0 to 4)(cp)
-    var y = CPVarInt(0 to 4)(cp)
-    var z = CPVarInt(0 to 24)(cp)
+    var x = CPIntVar(0 to 4)(cp)
+    var y = CPIntVar(0 to 4)(cp)
+    var z = CPIntVar(0 to 24)(cp)
     
     
     val tuples = (for (i <- 0 until 5; j <- i+1 until 5) yield Array(i,j,i*4+j-1)).toArray
@@ -66,7 +66,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
   
   test("Table Test 3") {
     val cp = CPSolver()
-    var x = Array.fill(3)(CPVarInt(1 to 7)(cp))
+    var x = Array.fill(3)(CPIntVar(1 to 7)(cp))
     
     val tuples = Array(Array(1,1,1),Array(1,2,3),Array(1,2,7),Array(2,1,4))
     
@@ -88,7 +88,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
   
     test("Table Test 4") {
     val cp = CPSolver()
-    var x = Array.fill(2)(CPVarInt(1 to 1)(cp))
+    var x = Array.fill(2)(CPIntVar(1 to 1)(cp))
     
     val tuples = Array(Array(1,2),Array(2,1))
     

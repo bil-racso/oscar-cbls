@@ -41,7 +41,7 @@ import scala.math._
   """
   
   Also, see
-  "Intel® Parallel Studio: Great for Serial Code Too (Episode 1)"
+  "Intel Parallel Studio: Great for Serial Code Too (Episode 1)"
   http://software.intel.com/en-us/blogs/2009/12/07/intel-parallel-studio-great-for-serial-code-too-episode-1/
 
   This is a generalized version of oscar.examples.cp.DivisibleBy9Through1
@@ -82,9 +82,9 @@ object DivisibleBy9Through1 {
     //
     // variables
     //
-    val digits   = Array.fill(n)(CPVarInt(1 to n)(cp))
-    val numbers  = Array.fill(n)(CPVarInt(1 to m)(cp))
-    val divisors = Array.fill(n)(CPVarInt(1 to m2)(cp))
+    val digits   = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val numbers  = Array.fill(n)(CPIntVar(1 to m)(cp))
+    val divisors = Array.fill(n)(CPIntVar(1 to m2)(cp))
 
     //
     // constraints

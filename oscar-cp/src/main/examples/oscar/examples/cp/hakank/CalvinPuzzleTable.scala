@@ -52,27 +52,7 @@ import scala.math._
  */
 object CalvinPuzzleTable {
 
-  def binaryMedianSelection(cp: CPSolver,
-                            vars : Array[CPVarInt], 
-                            varHeuris : CPVarInt => Int, 
-                            valHeuris : CPVarInt => Int) : Unit @suspendable = {
-                                
-    while (!allBounds(vars)) {
-                                        
-      // Variable selection
-      val unbound   = vars.filter(!_.isBound)
-      val minHeuris = unbound.map(varHeuris(_)).min
-      val x         = unbound.filter(varHeuris(_) == minHeuris).head
-      
-      // Value selection
-      val vals      = x.toArray
-      // val sortedVal = vals.sortBy(valHeuris)
-      // val v         = sortedVal(vals.size/2)
-      val v         = vals(vals.size/2)
-      // println("x: " + x + " v: " + v)
-      cp.branch (cp.post(x == v))(cp.post(x != v))
-    }
-  }
+
 
 
     //
@@ -117,7 +97,7 @@ object CalvinPuzzleTable {
       //
       // variables
       //
-      val x = Array.fill(n,n)(CPVarInt(0 to n*n-1)(cp))
+      val x = Array.fill(n,n)(CPIntVar(0 to n*n-1)(cp))
       val x_flat = x.flatten
 
       //
@@ -163,7 +143,7 @@ object CalvinPuzzleTable {
         
       }
  
-      println(cp.start(nbSolMax = num_to_show))
+      println(cp.start(nSols = num_to_show))
 
   }
 

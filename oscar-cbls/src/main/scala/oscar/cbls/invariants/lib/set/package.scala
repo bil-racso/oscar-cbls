@@ -21,8 +21,10 @@
 
 package oscar.cbls.invariants.lib
 
-/** This package proposes a set of invariants related to set manipulation: union, intersect, diff, plus some operators such as sum and prod.
- * */
+/** This package proposes a set of invariants related to set manipulation:
+  * union, intersect, diff, plus some operators such as sum and prod.
+  * @author renaud.delandtsheer@cetic.be
+  * */
 package object set {
 }
 

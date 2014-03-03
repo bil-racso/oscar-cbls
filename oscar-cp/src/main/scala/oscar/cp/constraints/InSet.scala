@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * x must be a value of the set
  * @author Pierre Schaus pschaus@gmail.com
  */
-class InSet(val x: CPVarInt, val set: Set[Int]) extends Constraint(x.s, "InSet") {
+class InSet(val x: CPIntVar, val set: Set[Int]) extends Constraint(x.store, "InSet") {
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     for (v <- x.min to x.max if !set.contains(v)) {

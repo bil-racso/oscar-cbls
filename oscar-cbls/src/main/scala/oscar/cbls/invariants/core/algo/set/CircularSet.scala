@@ -28,6 +28,8 @@ import collection.Iterator
  * although the memory footprint will not be efficient at all
  * stores elements from 0 to size-1
  * ensure that the maxsize is not so big because it consumes O(maxsize) memory.
+  * @author renaud.delandtsheer@cetic.be
+  * THIS IS EXPERIMENTAL STUFF
  */
 class CircularIntSet(maxsize:Int) extends Set[Int]{
 
@@ -36,7 +38,7 @@ class CircularIntSet(maxsize:Int) extends Set[Int]{
   private[set] val prev:Array[Int] = new Array[Int](maxsize) //gives the id of the next element, so that they constitute a cycle in the array
 
   private var handle:Int = -1
-  private var sizevar:Int = 0;
+  private var sizevar:Int = 0
 
   def -=(elem: Int):this.type = {
     containsvar(elem) = false

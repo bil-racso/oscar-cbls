@@ -15,7 +15,6 @@
 
 
 import oscar.cp.modeling._
-import oscar.algo.search._
 import oscar.cp.core._
 import oscar.visual._
 import oscar.util._
@@ -80,9 +79,9 @@ object Steel {
 
     val cp = new CPSolver()
     cp.silent = true
-    val x = (for (s <- Slabs) yield CPVarInt(cp, 0 until nbSlab))
+    val x = (for (s <- Slabs) yield CPIntVar(cp, 0 until nbSlab))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
-    val l = for (s <- Slabs) yield CPVarInt(cp, 0 to capa.max)
+    val l = for (s <- Slabs) yield CPIntVar(cp, 0 to capa.max)
   
 
     val rnd = new Random(0)
@@ -92,22 +91,22 @@ object Steel {
     cp.minimize(obj) subjectTo {
       cp.add(binPacking(x, weight, l), Strong)
       for (s <- Slabs) {
-        def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPVarBool telling whether color c is present is slab s
+        def colPresent(c: Int) = isOr((for (o <- colorOrders(c)) yield x(o) === s)) //return a CPBoolVar telling whether color c is present is slab s
         cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
       }
-    } exploration {
-      while (!allBounds(x)) {
-        val maxUsed = x.maxBoundOrElse(-1)
-        val y = x.find(!_.isBound).get
-        cp.branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.post(y == v))
+    } search {
+      selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)) match {
+        case None => noAlternative
+        case Some(y) => {
+          // dynamic symmetry breaking
+          val maxUsed = x.maxBoundOrElse(-1)
+          branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.add(y == v))
+        }
       }
-      nbSol += 1
-      println("sol #fail:" + cp.nFail)
-    } run()
+    } 
 
-    println("end--------------")
+    println(cp.start())
 
-    cp.printStats()
 
   }
 }

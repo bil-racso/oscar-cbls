@@ -69,7 +69,7 @@ object JustForgotten {
     //
     // variables
     // 
-    val x = Array.fill(cols)(CPVarInt(0 to 9)(cp))
+    val x = Array.fill(cols)(CPIntVar(0 to 9)(cp))
 
     //
     // constraints

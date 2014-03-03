@@ -16,8 +16,8 @@
 package oscar.algo.paretofront
 
 /**
- * @author: Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
- * @author: Renaud Hartert ren.hartert@gmail.com
+ * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class QTNode[U: Numeric] extends ParetoElement[U] {
   

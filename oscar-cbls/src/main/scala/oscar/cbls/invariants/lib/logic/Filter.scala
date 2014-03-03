@@ -25,15 +25,16 @@ package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.checker
+import oscar.cbls.invariants.core.propagation.Checker
 
 /** { i in index(values) | cond(values[i] }
  * @param values is an array of IntVar
  * @param cond is a function that selects values to be includes in the output set.
  * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
- */
-case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetInvariant {
-  var output:IntSetVar=null
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class Filter(var values:Array[CBLSIntVar], cond:(Int=>Boolean)=_>0) extends SetInvariant {
+  var output:CBLSSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
   finishInitialization()
@@ -41,24 +42,26 @@ case class Filter(var values:Array[IntVar], cond:(Int=>Boolean)) extends IntSetI
   def myMin = values.indices.start
   def myMax = values.indices.end
 
-  override def setOutputVar(v:IntSetVar){
+  override def setOutputVar(v:CBLSSetVar){
     output = v
     output.setDefiningInvariant(this)
-    output := values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else{acc})
+    output := values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc)
   }
 
   @inline
-  override def notifyIntChanged(v:IntVar,index:Int, OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v:CBLSIntVar,index:Int, OldVal:Int,NewVal:Int){
     val OldCond = cond(OldVal)
     val NewCond = cond(NewVal)
     if(OldCond  && !NewCond) output.deleteValue(index)
     else if(NewCond && !OldCond) output.insertValue(index)
   }
 
-  override def checkInternals(c:checker){
+  override def checkInternals(c:Checker){
     for(i <- values.indices){
-      c.check(!cond(values(i).value) ||output.value.contains(i))
-      c.check(cond(values(i).value) || !output.value.contains(i))
+      c.check(!cond(values(i).value) || output.value.contains(i),
+          Some("!cond(values(i).value) || output.value.contains(i)"))
+      c.check(cond(values(i).value) || !output.value.contains(i), 
+          Some("cond(values(i).value) || !output.value.contains(i)"))
     }
   }
 }

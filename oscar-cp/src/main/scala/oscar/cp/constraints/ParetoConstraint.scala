@@ -14,14 +14,14 @@
  ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.cp.core.CPVarInt
+import oscar.cp.core.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.multiobjective.Pareto
 
-class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPVarInt]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPIntVar]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
 
   // Simplifies code understanding
   type Point = IndexedSeq[Int]
@@ -89,8 +89,8 @@ class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars:
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs if !objVars(o).isBound) {
-    	if (isMax(o)) objVars(o).callPropagateWhenMaxChanges(this)
-    	else objVars(o).callPropagateWhenMinChanges(this)
+    	if (isMax(o)) objVars(o).callPropagateWhenBoundsChange(this)
+    	else objVars(o).callPropagateWhenBoundsChange(this)
       }
       Suspend
     }
@@ -98,5 +98,5 @@ class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars:
 }
 
 object ParetoConstraint {  
-  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPVarInt]): ParetoConstraint[Sol] = new ParetoConstraint(pareto, isMax, objs)
+  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPIntVar]): ParetoConstraint[Sol] = new ParetoConstraint(pareto, isMax, objs)
 }

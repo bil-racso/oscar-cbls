@@ -29,6 +29,9 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
   def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
       case ddsState: DirectionalDirectSearchState => {
+        if (ddsState.getSmallestStepSize < tolerance) {
+          ddsState.reinitialize
+        }
         for (i <- 0 until ddsState.basisSize) {
           val newPoint = ddsState.getNewPoint(i, evaluator, feasReg)
           if (currentArchive.cmpWithArchive(newPoint, ddsState.bestPoint)) {

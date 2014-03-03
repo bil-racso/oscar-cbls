@@ -229,7 +229,7 @@ class IntDomain(val s: CPStore, minVal: Int, maxVal: Int) extends Iterable[Int] 
   }
 
   override def toString(): String = {
-    if (_withHoles.value) _values.toString
+    if (_withHoles.value) _values.mkString(", ")
     else _interval.min+".."+_interval.max
   }  
 

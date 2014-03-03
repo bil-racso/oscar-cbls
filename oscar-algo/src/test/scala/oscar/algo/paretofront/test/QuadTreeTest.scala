@@ -141,8 +141,6 @@ class QuadTreeTest extends FunSuite with ShouldMatchers {
     qt.insert(dominator)
     qt.toSet should be(Set(root, dominator, elemL21, elemL22))
     root.successorsToSet should be (Set(dominator))
-    println(dominator.successors.mkString(", "))
-    dominator.successorsToSet should be (Set(elemL21, elemL22))
   }
 
 }

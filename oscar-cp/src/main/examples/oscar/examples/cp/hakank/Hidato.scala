@@ -124,7 +124,7 @@ object Hidato {
     //
 
     // the grid as an array
-    val x = Array.fill(n*n)(CPVarInt(1 to n2)(cp))
+    val x = Array.fill(n*n)(CPIntVar(1 to n2)(cp))
 
     //
     // constraints
@@ -146,10 +146,10 @@ object Hidato {
 
       for(k <- 1 until n*n-1) {
 
-        val i = CPVarInt(0 to n-1)(cp)
-        val j = CPVarInt(0 to n-1)(cp)
-        val a = CPVarInt(-1 to 1)(cp)
-        val b = CPVarInt(-1 to 1)(cp)
+        val i = CPIntVar(0 to n-1)(cp)
+        val j = CPIntVar(0 to n-1)(cp)
+        val a = CPIntVar(-1 to 1)(cp)
+        val b = CPIntVar(-1 to 1)(cp)
 
         val ix1 = i*n+j
         val ix2 = (i+a)*n + j+b

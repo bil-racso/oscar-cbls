@@ -22,7 +22,7 @@ import oscar.cp.core.*;
  */
 public class GCC extends Constraint {
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	private int minval;
 	private int [] low;
 	private int [] up;
@@ -36,19 +36,19 @@ public class GCC extends Constraint {
      * @see SoftGCC
      * @see GCCVar
      */
-	public GCC(CPVarInt [] x,int minval, int [] low, int [] up) {
-		super(x[0].s(),"GCC");
+	public GCC(CPIntVar [] x,int minval, int [] low, int [] up) {
+		super(x[0].store(),"GCC");
 		this.x = x;
 		this.minval = minval;
 		this.low = low;
 		this.up = up;
-        // super(x,minval,low,up,CPVarInt.apply(x[0].s(),0,0));
+        // super(x,minval,low,up,CPIntVar.apply(x[0].s(),0,0));
     }
 	
 	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = CPOutcome.Success;
 		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy
-			ok = s().post(new SoftGCC(x, minval, low, up, CPVarInt.apply(s(),0,0)));
+			ok = s().post(new SoftGCC(x, minval, low, up, CPIntVar.apply(s(),0,0)));
 		} /*else {
 			ok = s().post(new GCCFWC(x, minval, low, up));
 		}*/

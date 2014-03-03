@@ -28,15 +28,15 @@ class TestGCC extends FunSuite with ShouldMatchers {
    */
   def nbSolution(randomDom: Array[Array[Int]], randomOcc: Array[Array[Int]], gccvar: Boolean): Int = {
     val cp = CPSolver()
-    val x: Array[CPVarInt] = Array.tabulate(randomDom(0).size)(i => CPVarInt(randomDom(0)(i) to randomDom(1)(i))(cp))
-    val o: Array[CPVarInt] = Array.tabulate(randomOcc(0).size)(i => CPVarInt(randomOcc(0)(i) to randomOcc(1)(i))(cp))
+    val x: Array[CPIntVar] = Array.tabulate(randomDom(0).size)(i => CPIntVar(randomDom(0)(i) to randomDom(1)(i))(cp))
+    val o: Array[CPIntVar] = Array.tabulate(randomOcc(0).size)(i => CPIntVar(randomOcc(0)(i) to randomOcc(1)(i))(cp))
 
     var nb = 0
 
     if (gccvar) {
       cp.post(new oscar.cp.constraints.GCCVar(x, -1, o));
     } else {
-      cp.post(new oscar.cp.constraints.SoftGCC(x, -1, randomOcc(0), randomOcc(1), CPVarInt(0)(cp)));
+      cp.post(new oscar.cp.constraints.SoftGCC(x, -1, randomOcc(0), randomOcc(1), CPIntVar(0)(cp)));
     }
     if (cp.isFailed()) {
       return -1;
@@ -63,13 +63,13 @@ class TestGCC extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
 
-    val x = Array.fill(10)(CPVarInt(0 to 10)(cp))
+    val x = Array.fill(10)(CPIntVar(0 to 10)(cp))
 
     for (i <- 0 until 2; v <- 0 until 5) {
       cp.post(x(i * 5 + v) == v)
     }
 
-    val o = Array.fill(10)(CPVarInt(0 to 10)(cp))
+    val o = Array.fill(10)(CPIntVar(0 to 10)(cp))
 
     cp.post(new oscar.cp.constraints.GCCVar(x, 0, o));
 

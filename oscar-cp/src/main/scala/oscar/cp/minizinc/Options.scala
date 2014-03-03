@@ -18,6 +18,7 @@ package oscar.cp.minizinc
 import java.io.FileReader
 
 class Options(args: Array[String]) {
+  //println("options:"+args.mkString("%"))
 
   var file: FileReader = null
   
@@ -31,7 +32,7 @@ class Options(args: Array[String]) {
 
   var timeOut = 0
 
-  var nSolutions = -1
+  var nSols = -1
   //println("<==>")
   if (args.length == 0) {
     System.out.println("fz2oscar: no model file specified");
@@ -59,21 +60,29 @@ class Options(args: Array[String]) {
     }
   } else { // args.length > 1
     var i = 0
-    def oneOf(poss: String*) = poss.exists(args(i) == _)
+    def oneOf(poss: String*) = poss.exists(args(i).startsWith(_))
     while (i < args.length - 1) {
       if (oneOf("-a", "--all-solutions", "--all")) {
         all = true
         i += 1
       } else if (oneOf("-t", "--time-out")) {
-        timeOut = args(i + 1).toInt
-        i += 2
-      } else if (oneOf("-s", "--statistics")) {
+        timeOut = args(i).drop(2).toInt
+        i += 1
+      } else if (oneOf("--time-out")) {
+        timeOut = args(i).drop(10).toInt
+        i += 1
+      } 
+      else if (oneOf("-s", "--statistics")) {
         statistics = true
         i += 1
       } else if (oneOf("-n", "--num-solutions")) {
-        nSolutions = args(i + 1).toInt
-        i += 2
-      } else if (oneOf("-v", "--verbose")) {
+        nSols = args(i).drop(2).toInt
+        i += 1
+      } else if (oneOf("--num-solutions")) {
+        nSols = args(i).drop(15).toInt
+        i += 1
+      }  
+      else if (oneOf("-v", "--verbose")) {
         verbose = true;
         i += 1
       } else {
@@ -83,6 +92,7 @@ class Options(args: Array[String]) {
     }
     try {
       fileName = args.last
+      //println("parsing file:"+args.last)
       file = new FileReader(args.last);
     } catch {
       case e: java.io.FileNotFoundException => {

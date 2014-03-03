@@ -24,7 +24,7 @@ import oscar.cp.core.CPOutcome._
  *   N variables of X take the values Y
  * @author Pierre Schaus pschaus@gmail.com
  */
-class Count(val N: CPVarInt, val X: Array[CPVarInt], val Y: CPVarInt) extends Constraint(N.s, "Among") {
+class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Constraint(N.store, "Among") {
 
     /*
      * propagate X & Y -> N
@@ -177,7 +177,7 @@ class Count(val N: CPVarInt, val X: Array[CPVarInt], val Y: CPVarInt) extends Co
     	filterYBound()
     }
     
-    def filterX(x: CPVarInt, d: DeltaVarInt): CPOutcome = {
+    def filterX(x: CPIntVar, d: DeltaVarInt): CPOutcome = {
         //println("FilterX"+X.mkString(",")+" Y:"+Y)
         for (v <- d.values) {
           //println("lost value"+v)

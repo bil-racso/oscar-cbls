@@ -1,46 +1,27 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
-
 package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import scala.io.Source
-import scala.io.Source
-import oscar.util._
-import oscar.visual._
-import java.awt.Color
+import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualCircle
-import oscar.cp.search.BinaryBranching
-import oscar.cp.search.BinaryFirstFailBranching
+import oscar.visual.VisualFrame
+import scala.io.Source
+import java.awt.Color
 
 /**
  * P-Median Problem
- * 
- * Let us consider a set I={1,..., n} of potential locations for p facilities, 
- * a set J={1,..., m} of customers, and  n x m matrix of transportations costs 
- * for satisfying the demands of the customers from the facilities.  
- * The p-median problem is to locate the p facilities at locations of I in order 
- * to minimize the total transportation cost for satisfying the demand of the customers. 
+ *
+ * Let us consider a set I={1,..., n} of potential locations for p facilities,
+ * a set J={1,..., m} of customers, and  n x m matrix of transportations costs
+ * for satisfying the demands of the customers from the facilities.
+ * The p-median problem is to locate the p facilities at locations of I in order
+ * to minimize the total transportation cost for satisfying the demand of the customers.
  * Also each location has fixed capacity for the demand that cannot be exceeded.
- * 
+ *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PMedian extends App {
+object PMedian extends CPModel with App {
 
   val lines = Source.fromFile("data/pmed.txt").getLines.reduceLeft(_ + " " + _)
 
@@ -68,13 +49,12 @@ object PMedian extends App {
 
   val cost = Array.tabulate(nbCust, nbCust)((i, j) => dist(i)(j))
 
-  val cp = CPSolver()
-  val x = Array.fill(nbCust)(CPVarInt(0 until nbCust)(cp))
+  val x = Array.fill(nbCust)(CPIntVar(0 until nbCust))
   val xsol = Array.fill(nbCust)(0)
-  val load = Array.fill(nbCust)(CPVarInt(0 until capa)(cp))
+  val load = Array.fill(nbCust)(CPIntVar(0 until capa))
 
   // ----------- visu ----------
-  val f = new VisualFrame("P-Median Problem",1,2)
+  val f = new VisualFrame("P-Median Problem", 1, 2)
   val w = f.createFrame("Layout")
   val scale = 5
   val offsetx = 100
@@ -82,40 +62,42 @@ object PMedian extends App {
   val drawing = VisualDrawing(true)
   w.add(drawing)
   val vcircles = for (i <- 0 until nbCust) yield {
-    new VisualCircle(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale  + offsety, demand(i))
+    new VisualCircle(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, demand(i))
   }
   val vlines = for (i <- 0 until nbCust) yield {
     VisualLine(drawing, cust(i)._1 * scale + offsetx, cust(i)._2 * scale + offsety, 0, 0)
   }
   f.pack()
 
-  def updateVisu() { 
+  def updateVisu() {
     for (i <- 0 until nbCust) {
       val j = x(i).value
       vcircles(i).innerCol = Color.WHITE;
       vcircles(j).innerCol = Color.RED
-      vlines(i).dest = (cust(j)._1 * scale + offsetx, cust(j)._2 * scale  + offsety)
+      vlines(i).dest = (cust(j)._1 * scale + offsetx, cust(j)._2 * scale + offsety)
     }
   }
   // ---------------------------
 
   val rnd = new scala.util.Random(0)
-  
-  
-  
+
   val costs = Array.tabulate(nbCust)(i => cost(i)(x(i)))
-  val totCost = sum(costs) 
-  cp.onSolution {
+  val totCost = sum(costs)
+
+  onSolution {
     for (i <- 0 until nbCust) xsol(i) = x(i).value
     updateVisu()
-    println("\n"+totCost)
+    println("\n" + totCost)
   }
+
+  add(binPacking(x, demand, load))
+  add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
   
-  cp.minimize(totCost) subjectTo {
-    cp.add(binPacking(x, demand, load))
-    cp.add(sum(0 until nbCust)(i => load(i) >>= 0) <= nbMed)
-  } search {
-    binaryFirstFail(x,_.randomValue)
-  } start()
+  minimize(totCost) search {
+    binaryFirstFail(x, _.randomValue)
+  }
+
+  val stats = start()
+  println(stats)
 
 }

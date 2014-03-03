@@ -1,37 +1,21 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 package oscar.cbls.invariants.core.algo.heap
 
 import collection.Iterator
-
-/*******************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- ******************************************************************************/
+import oscar.cbls.invariants.core.propagation.PropagationElement
 
 /*******************************************************************************
  * Contributors:
@@ -44,8 +28,10 @@ import collection.Iterator
  * A binomial heap is maintained to record the lowest position in the heap.
  * This is more efficient if it often occurs that elements have the same position.
  * keys is assumed to start at zero.
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
-class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
+class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
 
 
   val b= new BinomialHeap[Int](a => a, MaxPosition)
@@ -58,7 +44,7 @@ class AggregatedBinomialHeap[T](GetKey:T => Int,MaxPosition:Int) extends Abstrac
   override def dropAll(){
     for (i <- b) a(i) = List.empty[T]
     msize = 0
-    b.dropAll
+    b.dropAll()
   }
 
   override def insert(elem:T){

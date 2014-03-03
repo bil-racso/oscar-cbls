@@ -110,8 +110,8 @@ object NurseRosteringRegular2 {
     //
     // variables
     //
-    val x = Array.fill(num_nurses,num_days)(CPVarInt(shifts_r)(cp))
-    val stat = Array.fill(num_days,num_shifts)(CPVarInt(nurses)(cp))
+    val x = Array.fill(num_nurses,num_days)(CPIntVar(shifts_r)(cp))
+    val stat = Array.fill(num_days,num_shifts)(CPIntVar(nurses)(cp))
 
     val all = ((x.flatten).toList ++ (stat.flatten.toList)).toArray
 
@@ -177,7 +177,7 @@ object NurseRosteringRegular2 {
       
      }
 
-     println(cp.start(nbSolMax = num_to_show))
+     println(cp.start(nSols = num_to_show))
    }
 
 }

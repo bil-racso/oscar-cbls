@@ -19,16 +19,18 @@
  ******************************************************************************/
 
 package oscar.cbls.search
-import scala.util.Random;
+import scala.util.Random
 
 /**Provides a set of selectors to ease the development of search engines
- * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine*/
+ * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine
+ * @author renaud.delandtsheer@cetic.be
+  * */
 class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
   setRandomized(isRandomized)
 }
 
 trait SearchEngineTrait{
-  var RandomGenerator: Random = null;
+  var RandomGenerator: Random = null
 
   var Randomized:Boolean = true
   setRandomized(true)
@@ -208,6 +210,17 @@ trait SearchEngineTrait{
       null.asInstanceOf[R]
   }
 
+  /**return the first element r that is allowed: st(r) is true
+    * @param st is optional and set to true if not specified
+    */
+  def selectFirstDo[R](r: Iterable[R],st: (R => Boolean) = ((r:R) => true))(doIt:R => Unit, ifNone: (()=> Unit) = ()=>{println("no suitable item found")}): Unit = {
+    for(rr <- r) if(st(rr)) {
+      doIt(rr)
+      return
+    }
+    ifNone()
+  }
+
   /**returns a randomly chosen boolean (50%-50%)*/
   def flip(PercentTrue:Int = 50):Boolean = (RandomGenerator.nextInt(100) < PercentTrue)
 
@@ -240,9 +253,24 @@ trait SearchEngineTrait{
   }
 }
 
+/*
+class selectFirst[R](r: Iterable[R],st: (R => Boolean)){
+  def apply(doIt:R => Unit, ifNone: (()=> Unit)= ()=>{println("no suitable item found in " + r)}){
+    for(rr <- r) if(st(rr)) {
+      doIt(rr)
+      return
+    }
+    ifNone()
+  }
 
+  def getIt:R ={
+    for(rr <- r) if(st(rr)) return rr
+    null.asInstanceOf[R]
+  }
+}
 
-
-
-
-
+object selectFirst{
+  def apply[R](r: Iterable[R],st: (R => Boolean) = ((r:R) => true)):selectFirst[R] = new selectFirst[R](r,st)
+  implicit def selectToR[R](s:selectFirst[R]):R = s.getIt
+}
+*/

@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPVarInt;
+import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -29,9 +29,9 @@ public class AtLeastNValueAC extends Constraint {
 	
 	private boolean posted;
 	
-	private CPVarInt [] x;
+	private CPIntVar [] x;
 	
-	private CPVarInt nValueVar;
+	private CPIntVar nValueVar;
 	
 	private int []	match;
 	private int []	varSeen;
@@ -60,8 +60,8 @@ public class AtLeastNValueAC extends Constraint {
 	private int top;
 	
 	
-	public AtLeastNValueAC(CPVarInt [] x, CPVarInt nval) {
-		super(x[0].s(),"AtLeastNValueAC");
+	public AtLeastNValueAC(CPIntVar [] x, CPIntVar nval) {
+		super(x[0].store(),"AtLeastNValueAC");
 		this.x = x;
 		this.posted = false;
 		this.nValueVar = nval;
@@ -69,7 +69,7 @@ public class AtLeastNValueAC extends Constraint {
 		//this.idempotent_$eq(true);
 	}
 	
-	public AtLeastNValueAC(CPVarInt [] x, CPVarInt nval, boolean dontPostFWC) {
+	public AtLeastNValueAC(CPIntVar [] x, CPIntVar nval, boolean dontPostFWC) {
 		this(x,nval);
 	}
 

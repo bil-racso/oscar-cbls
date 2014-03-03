@@ -1,17 +1,3 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
 package oscar.examples.cp
 
 import oscar.cp.modeling._
@@ -24,24 +10,24 @@ import scala.io.Source
  * Hexiom Problem: http://www.kongregate.com/games/Moonkey/hexiom
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Hexiom extends App {
+object Hexiom extends CPModel with App {
 
   /* Here is an Hexagon of dimension 3 (size of first row).
-		 * Each entry is numbered this way:
-		 * 
-		 *      00  01  02
-		 * 
-		 *   03  04  05  06
-		 * 
-		 * 07  08  09  10  11
-		 * 
-		 *   12  13  14  15
-		 *  
-		 *     16  17  18
-		 *     
-		 * A method neighbors (below) allow to retrieve the set of neighbors for an entry
-		 * For instance neighbors(7) = {3,8,12} 
-		 */
+   * Each entry is numbered this way:
+   * 
+   *      00  01  02
+   *      
+   *    03  04  05  06
+   *
+   *  07  08  09  10  11
+   *  
+   *    12  13  14  15
+   *
+   *      16  17  18
+   *      
+   * A method neighbors (below) allow to retrieve the set of neighbors for an entry
+   * For instance neighbors(7) = {3,8,12} 
+   */
 
   val lines = Source.fromFile("data/hexiom16.txt").getLines.toArray
   val oneline = (1 until lines.size).map(lines(_)).foldLeft("")((i, j) => i + j)
@@ -88,25 +74,24 @@ object Hexiom extends App {
   // compute the number of cardinalities of every type of pawns
   val cardinalities = (0 to 6).map(i => oneline.count((i + '0').toChar ==)).toArray :+ oneline.count(('.').toChar ==)
 
-  val cp = CPSolver()
   // used(i) = true iff there is a pawn at this position
-  val used = Array.fill(k)(CPVarBool()(cp))
+  val used = Array.fill(k)(CPBoolVar())
   val dummy = 7 // dummy value when no pawn in the neighborhood
   // card(i) = if (used(i)): number of pawns in the neighbors else: dummy 
-  val card = Array.fill(k)(CPVarInt(0 to 7)(cp))
+  val card = Array.fill(k)(CPIntVar(0 to 7))
   var nbSol = 0
-  cp.solve subjectTo {
 
-    val tuples = (for (i <- 0 to 6) yield (i, 0, 7)) ++ (for (i <- 0 to 6) yield (i, 1, i))
-    println(tuples)
-    for (i <- 0 until k) {
-      val nbNeighbors = sum(neighbors(i))(used(_))
-      cp.add(table(nbNeighbors, used(i), card(i), tuples))
-    }
-    cp.add(gcc(card, 0 to 6, cardinalities, cardinalities), Strong)
-  } search {
-    binaryStatic(used,_.max)
-  } onSolution {
+  val tuples = (for (i <- 0 to 6) yield (i, 0, 7)) ++ (for (i <- 0 to 6) yield (i, 1, i))
+  println(tuples)
+  for (i <- 0 until k) {
+    val nbNeighbors = sum(neighbors(i))(used(_))
+    add(table(nbNeighbors, used(i), card(i), tuples))
+  }
+  add(gcc(card, 0 to 6, cardinalities, cardinalities), Strong)
+
+  search { binaryStatic(used, _.max) }
+
+  onSolution {
     println("++++++++++++++++++ solution ++++++++++++++++++++\n")
     // pretty print
     for (ind <- 0 until k; if (card(ind).value < 7)) {
@@ -117,6 +102,6 @@ object Hexiom extends App {
     println("++++++++++++++++++++++++++++++++++++++++++++++++\n")
   }
 
-  println(cp.start())
-
+  val stats = solver.start()
+  println(stats)
 }
