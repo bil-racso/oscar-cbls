@@ -1,19 +1,12 @@
 package oscar.cp.minizinc
 
-import oscar.cp.modeling.CPSolver
-import oscar.cp.core.CPIntVar
 import scala.collection.mutable.{Map => MMap}
-import oscar.cp.core.CPBoolVar
 import scala.Array.canBuildFrom
 import scala.collection.mutable.{Map => MMap}
 import FZType._
-import oscar.cp.constraints.And
-import oscar.cp.modeling._
 
 
 class FZProblem {
-  
-  
 
   var map: Map[String,Variable] = Map.empty[String,Variable]
   
@@ -100,17 +93,7 @@ class FZProblem {
   def simplify() {
     constraints.foreach(_.simplify(this))
   }
-  
-  
-  def instanciate(cp: CPSolver): Map[String,CPIntVar] = {
-    var res = Map.empty[String,CPIntVar]
-    val varMap = MMap[Variable,CPIntVar]()
-    for ((s,v) <- map) {
-      v.instanciate(cp, varMap)
-      res += s -> varMap(v)
-    }
-    res
-  }
+
   
 
 }
@@ -141,60 +124,30 @@ case class DomainSet(val values: Set[Int]) extends Domain {
 
 
 abstract class Variable(val id: String, val isIntroduced: Boolean = false) {
-  def instanciate(cp: CPSolver,varMap: MMap[Variable, CPIntVar])
   def min: Int
   def max: Int
   def is01: Boolean = min >= 0 && max <= 1
   def isTrue: Boolean = this.is01 && min == 1
-  def isFalse: Boolean = this.is01 && max == 0
-  
+  def isFalse: Boolean = this.is01 && max == 0 
 }
 
-case class ConcreteVariable(i: String,dom: Domain) extends Variable(i) {
-  def instanciate(cp: CPSolver,varMap: MMap[Variable, CPIntVar]) {
-    if (varMap.contains(this)) return
-    else {
-      val variable: CPIntVar = dom match {
-        case DomainRange(min, max) => CPIntVar(min to max)(cp)
-        case DomainSet(v) => CPIntVar(v)(cp)
-        case _ => throw new RuntimeException("unknown domain")
-      }
-      varMap += (this -> variable)
-    }
-  }
-  
+case class ConcreteVariable(i: String,dom: Domain) extends Variable(i) {  
   def min = dom.min
   def max = dom.max
 }
 
 case class OffSetVariable(i: String,offset: Int,x: Variable) extends Variable(i) {
-  def instanciate(cp: CPSolver,varMap: MMap[Variable, CPIntVar]) {
-    if (varMap.contains(this)) return
-    else {
-      x.instanciate(cp, varMap)
-      assert(varMap.contains(x))
-      varMap += (this -> (varMap(x)+offset))
-    }
-  }
   def min = x.min + offset
   def max = x.max + offset
 }
 
 case class MinusVariable(i: String, x: Variable) extends Variable(i) {
-  def instanciate(cp: CPSolver,varMap: MMap[Variable, CPIntVar]) {
-    if (varMap.contains(this)) return
-    else {
-      x.instanciate(cp, varMap)
-      assert(varMap.contains(x))
-      varMap += (this -> (-varMap(x)))
-    }
-  }
   def min = -x.max
   def max = -x.min
 }
 
 abstract class Constraint(val annotations: Option[List[Annotat]] = None) {
-  def simplify(p: FZProblem)
+  def simplify(p: FZProblem){}
   
   def definesVar(x: Variable) = {
     annotations match {
@@ -209,9 +162,6 @@ abstract class Constraint(val annotations: Option[List[Annotat]] = None) {
       }
     }
   }
-  
-  def post(cp: CPSolver, varMap: Map[String,CPIntVar]) = {}
-
 }
 
 object VariableHeuristic extends Enumeration {
@@ -257,34 +207,13 @@ class Search() {
 
 // ----------------------------------
 case class array_bool_and(as: Array[Variable], r: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
-  override def simplify(p: FZProblem) {
-	  
-  }
-  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
-    val x = as.map(y => new CPBoolVar(varMap(y.id)))
-    val y = new CPBoolVar(varMap(r.id))
-    cp.add(new And(x,y))
-  }
+  override def simplify(p: FZProblem) { }
 }
 
 
 case class array_bool_element(b: Variable, as: Array[Variable], c: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
-  override def simplify(p: FZProblem) {
-	  
-  }
-  
-  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
-    val x = as.map(y => new CPBoolVar(varMap(y.id)))
-    val y = new CPBoolVar(varMap(b.id))
-    val z = new CPBoolVar(varMap(c.id))
-    cp.add(elementVar(x,y,z))
-  }
+  override def simplify(p: FZProblem) { }
 }
-
-
-
-
-
 
 case class bool_eq(x: Variable, y: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
   override def simplify(p: FZProblem) {
@@ -295,15 +224,7 @@ case class bool_eq(x: Variable, y: Variable, ann: Option[List[Annotat]] = None) 
     }
     p.constraints -= this
   }
-  
-  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
-    throw new RuntimeException("should not be posted")
-  }
 }
-
-
-
-
 
 //case class sum(args: Array[Variable]) extends Constraint
 
@@ -316,12 +237,7 @@ case class bool2int(b: Variable, x: Variable, ann: Option[List[Annotat]] = None)
        p.map += b.id -> x
       p.constraints -= this     
     }
-  }
-  
-  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
-    throw new RuntimeException("should not be posted")
   }  
-  
 }
 
 case class int_eq(x: Variable, y: Variable, ann: Option[List[Annotat]] = None) extends Constraint(ann) {
@@ -332,10 +248,6 @@ case class int_eq(x: Variable, y: Variable, ann: Option[List[Annotat]] = None) e
       p.map += x.id -> y
     }
     p.constraints -= this
-  }
-  
-  override def post(cp: CPSolver, varMap: Map[String,CPIntVar]) {
-    throw new RuntimeException("should not be posted")
   }
 }
 
