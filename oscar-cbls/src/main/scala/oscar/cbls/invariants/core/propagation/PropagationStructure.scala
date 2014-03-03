@@ -617,7 +617,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def dependencyAdded(){
     if(autoSort){
       val waiting = newDependenciesToInject.head
-      if(waiting.from.Position > waiting.to.Position){
+      if(waiting.from.Position < waiting.to.Position){
         waiting.inject1
         waiting.inject2
         notifyAddEdge(waiting.from,waiting.to)
