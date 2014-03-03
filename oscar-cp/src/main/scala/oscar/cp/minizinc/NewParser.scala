@@ -166,6 +166,8 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
             case FZType.V_ARRAY_BOOL => obj.asInstanceOf[VarArrayInt].variables
             case FZType.V_ARRAY_INT => obj.asInstanceOf[VarArrayInt].variables
           }
+        } else {
+          id
         }
       }
     }
@@ -828,7 +830,6 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
   def solve_goal: Parser[Any] = (
     "solve" ~ annotations ~ "satisfy;" ^^ {
       case "solve" ~ ann ~ "satisfy;" => {
-        println("satisfy")
         solver("sat", null, ann)
       }
     }
@@ -844,7 +845,6 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
     })
 
   def solver(tp: String, expr: Any, ann: List[Annotation]) {
-    println("solve")
     tp match { // tp = search type
       case "sat" => {
         val nbSolMax =
@@ -884,8 +884,6 @@ class NewParser extends JavaTokenParsers { // RegexParsers {
       a.name match {
         case "int_search" =>
             val array = getIntVarArray(a.args(0))
-            println("intsearch:"+array.mkString(","))
-            println(a.args.mkString(","))
             varHeuris(a.args, array)
           case "bool_search" =>
             val array = getIntVarArray(a.args(0))

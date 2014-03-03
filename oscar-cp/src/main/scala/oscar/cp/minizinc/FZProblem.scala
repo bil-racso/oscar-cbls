@@ -89,7 +89,7 @@ class FZProblem {
   }
   
   def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
-    println("search "+vrh+" "+vh)
+    println("search "+vrh+" "+vh+ " variables:"+s.mkString(","))
     search.heuristics =  search.heuristics :+ (s,vrh,vh)
   }
   
