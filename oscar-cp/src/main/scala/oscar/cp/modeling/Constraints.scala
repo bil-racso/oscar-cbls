@@ -932,6 +932,38 @@ trait Constraints {
     }
     cons
   }
+
+  /**
+   * Non overlapping between 2D rectangles 
+   * @param x is the x coordinates of the bottom left corner of rectangles
+   * @param dx is the length in direction of x of each rectangle
+   * @param y is the y coordinates of the bottom left corner of rectangles
+   * @param dy is the length in direction y of each rectangle
+   * @return a set of constraints such that posting all of them enforces the non overlapping of rectangles
+   */   
+  def diffn(x: Array[CPIntVar], dx: Array[CPIntVar], y: Array[CPIntVar], dy: Array[CPIntVar]): Iterable[Constraint] = {
+    val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
+    val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
+    val capay = maximum(endy) - minimum(y)
+    val capax = maximum(endx) - minimum(x)
+    var cons = Vector[Constraint]()
+    for (i <- 0 until x.length; j <- i + 1 until x.length) {
+      cons = cons :+ (new Or(Array(x(i) + dx(i) <== x(j),
+        x(j) + dx(j) <== x(i),
+        y(i) + dy(i) <== y(j),
+        y(j) + dy(j) <== y(i),
+        x(i) + dx(i) <== x(j),
+        x(j) + dx(j) <== x(i),
+        y(i) + dy(i) <== y(j),
+        y(j) + dy(j) <== y(i))));
+    }
+    cons = cons :+ (maxCumulativeResource(x, dx, endx, dy, capay))
+    cons = cons :+ (maxCumulativeResource(y, dy, endy, dx, capax))
+    return cons
+  }
+  
+
+  
   // scheduling constraints
 
 

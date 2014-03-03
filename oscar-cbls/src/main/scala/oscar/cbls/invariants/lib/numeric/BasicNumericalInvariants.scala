@@ -32,7 +32,8 @@ import oscar.cbls.invariants.core.propagation.Checker;
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
-  assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
+//actually, it works fine with zero vars.
+//  assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()

@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.algo.dll
 
+
 abstract class AbstractPermaFilter[T]{
   def notifyInsert(s: PFDLLStorageElement[T])
   def notifyDelete(s: PFDLLStorageElement[T])
@@ -80,9 +81,11 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,=>Unit, => Boolean) => Unit,
   * */
 class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
+
   private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   headfantom.setNext(endfantom)
+
 
 
   /** this function is called on insert. It takes
@@ -169,6 +172,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
       currentstorageElement = currentstorageElement.next
     }
   }
+
   /**
    * @param fn the function to execute on each items included in this list
    * @tparam U the output type of the function
@@ -182,6 +186,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     }
     toReturn
   }
+
 }
 
 /**

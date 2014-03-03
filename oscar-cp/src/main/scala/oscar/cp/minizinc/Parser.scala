@@ -914,18 +914,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
         val y = getCPIntVarArray(varList(1))
         val dx = getCPIntVarArray(varList(2))
         val dy = getCPIntVarArray(varList(3))
-        val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
-        val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
-        val capay = maximum(endy) - minimum(y)
-        val capax = maximum(endx) - minimum(x)
-
-        for (i <- 0 until x.length; j <- i + 1 until x.length) {
-          cp.add(
-            ((x(i) + dx(i) <== x(j)) || (x(j) + dx(j) <== x(i))) ||
-              ((y(i) + dy(i) <== y(j)) || (y(j) + dy(j) <== y(i))))
-        }
-        addCstr(maxCumulativeResource(x, dx, endx, dy, capay))
-        addCstr(maxCumulativeResource(y, dy, endy, dx, capax))
+        diffn(x,dx,y,dx).foreach(addCstr(_))
       case "oscar_disjoint" =>
         addCstr(disjoint(getCPSetVar(varList(0)), getCPSetVar(varList(1))), ann)
       case "oscar_distribute" =>
