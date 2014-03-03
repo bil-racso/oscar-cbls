@@ -1386,10 +1386,10 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "int_lin_ne_reif" =>
         int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
 
-      case "bool_lin_eq" =>
-        addCstr(weightedSum(cst, cpvar) == c)
-      case "bool_lin_le" =>
-        addCstr(weightedSum(cst, cpvar) <= c)
+      case "bool_lin_eq" => addCstr(ScalarProduct.zero(    CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp))
+        // addCstr(weightedSum(cst, cpvar) == c)
+      case "bool_lin_le" => addCstr(ScalarProduct.leq(     CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp), ann)
+        // addCstr(weightedSum(cst, cpvar) <= c)
     }
   }
 
