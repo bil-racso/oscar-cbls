@@ -599,13 +599,9 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
   }
 
-  def newWaitingDependency(from:PropagationElement, to:PropagationElement){
-    newDependenciesToInject = WaitingDependency(from,to) :: newDependenciesToInject
-  }
-
   def addDependency(from:PropagationElement, to:PropagationElement){
     if(autoSort){
-      newWaitingDependency(from:PropagationElement, to:PropagationElement)
+      newDependenciesToInject = WaitingDependency(from,to) :: newDependenciesToInject
     }
   }
 

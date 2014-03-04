@@ -125,7 +125,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-//    elemkey.prev = null
+    elemkey.prev = null
     msize -=1
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
