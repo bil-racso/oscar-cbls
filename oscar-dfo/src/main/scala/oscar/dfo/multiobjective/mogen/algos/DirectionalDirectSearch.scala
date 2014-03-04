@@ -22,27 +22,35 @@ import oscar.dfo.utils.MOEvaluator
 import oscar.dfo.utils.MOOPoint
 import oscar.dfo.utils.FeasibleRegion
 import oscar.algo.paretofront.ParetoElement
+import oscar.dfo.utils.Utils
 
 object DirectionalDirectSearch extends ComparativeAlgorithm {
-  var tolerance = math.pow(10.0, -3.0)
+  var tolerance = math.pow(10.0, -5.0)
+  
+  /** The polling direction heuristic */
+  var pollingHeuristic: (Int) => Array[Array[Double]] = unitPolling
   
   def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
       case ddsState: DirectionalDirectSearchState => {
-        if (ddsState.getSmallestStepSize < tolerance) {
+        if (ddsState.alpha < tolerance) {
           ddsState.reinitialize
         }
-        for (i <- 0 until ddsState.basisSize) {
-          val newPoint = ddsState.getNewPoint(i, evaluator, feasReg)
+        val newPointCoordinates = ddsState.getPollCoordinates(pollingHeuristic(ddsState.bestPoint.nCoordinates))
+        var potentialPoints = List[MOOPoint]()
+        for (coords <- newPointCoordinates) {
+          val newPoint = evaluator.eval(coords, feasReg)
           if (currentArchive.cmpWithArchive(newPoint, ddsState.bestPoint)) {
-            ddsState.updateBasis
-            ddsState.increaseStepSizes
-            return List(newPoint)
+            potentialPoints ::= newPoint
           }
         }
-        ddsState.updateBasis
-        ddsState.decreaseStepSizes
-        List[MOOPoint]()
+        if (!potentialPoints.isEmpty) {
+          ddsState.increaseStepSize
+        }
+        else {
+          ddsState.decreaseStepSize
+        }
+        potentialPoints
       }
       case _ => throw new IllegalArgumentException("The Directional Direct-Search algorithm can only be used with a state for Directional Direct-Search");
     }
@@ -50,6 +58,18 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
   
   
   def getInitialState(coordinates: Array[Double], stepSizeIntervals: Array[(Double, Double)], evaluator: MOEvaluator, feasReg: FeasibleRegion): ComparativeAlgorithmState = {
-    DirectionalDirectSearchState(evaluator.eval(coordinates, feasReg), stepSizeIntervals)
+    DirectionalDirectSearchState(evaluator.eval(coordinates, feasReg), (stepSizeIntervals(0)._1 + stepSizeIntervals(0)._2) / 2)
+  }
+  
+  def randomPolling(nDimensions: Int): Array[Array[Double]] = {
+    val positiveDirections = Array.tabulate(nDimensions)(i => Utils.randomNormalizedVector(nDimensions))
+    val negativeDirections = positiveDirections.map(direction => direction.map(e => e * -1))
+    positiveDirections ++ negativeDirections
+  }
+  
+  def unitPolling(nDimensions: Int): Array[Array[Double]] = {
+    val positiveDirections = Array.tabulate(nDimensions)(i => Array.tabulate(nDimensions)(j => if (i == j) 1.0 else 0.0))
+    val negativeDirections = Array.tabulate(nDimensions)(i => Array.tabulate(nDimensions)(j => if (i == j) -1.0 else 0.0))
+    positiveDirections ++ negativeDirections
   }
 }

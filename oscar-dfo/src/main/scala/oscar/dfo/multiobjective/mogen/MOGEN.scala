@@ -23,15 +23,16 @@ import oscar.algo.paretofront.ParetoFront
 import scala.Array.canBuildFrom
 import oscar.dfo.multiobjective.mogen.algos.ComparativeAlgorithm
 import oscar.dfo.multiobjective.mogen.algos.states.NelderMeadState
+import oscar.algo.paretofront.ParetoFront
 
-class MOGEN(var evaluator: MOEvaluator) {
+class MOGEN(val evaluator: MOEvaluator) {
 
   /** Function defining the feasible region of the problem */
   val feasibleRegion = FeasibleRegion()
   /** The set of non-dominated points (approximation of the Pareto front) */
   var archive = LinearList[Double, MOGENTriplet]()
   /** The iterate selection heuristic */
-  var selectionHeuristic: ParetoFront[Double, MOGENTriplet] => MOGENTriplet = MOGEN.fairSelect
+  var selectionHeuristic: () => MOGENTriplet = archive.fairSelect
   /** The starting intervals of the points */
   var startIntervals = Array[(Double, Double)]()
   /** The probability of performing a search step */
@@ -53,7 +54,6 @@ class MOGEN(var evaluator: MOEvaluator) {
           val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint))
           archive.insert(newTriplet)
           if (archive.contains(newTriplet)) MOGEN.onArchiveChanged(archive)
-          if (archive.size >= maxNbPoints) return
         }
       }
     }
@@ -62,7 +62,7 @@ class MOGEN(var evaluator: MOEvaluator) {
   def initSinglePointArchive(startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
     this.startIntervals = startIntervals
     this.algorithms = algorithms
-    val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
+    val newCoordinates = startIntervals.map(elem => (elem._1 + elem._2) / 2.0)
     if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
       val newAlgo = getRandomAlgo(algorithms)
       val newAlgoState = newAlgo.getInitialState(newCoordinates, startIntervals, evaluator, feasibleRegion)
@@ -70,6 +70,24 @@ class MOGEN(var evaluator: MOEvaluator) {
         val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint))
         archive.insert(newTriplet)
         if (archive.contains(newTriplet)) MOGEN.onArchiveChanged(archive)
+      }
+    }
+  }
+  
+  def initLineArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
+    this.startIntervals = startIntervals
+    this.algorithms = algorithms
+    for (i <- 0 until maxNbPoints) {
+      val newCoordinates = startIntervals.map(elem => elem._1 + (i / (maxNbPoints - 1)) * (elem._2 - elem._1))
+      if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
+        val newAlgo = getRandomAlgo(algorithms)
+        val newAlgoState = newAlgo.getInitialState(newCoordinates, startIntervals, evaluator, feasibleRegion)
+        for (newPoint <- newAlgoState.getPoints) {
+          val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint))
+          archive.insert(newTriplet)
+          if (archive.contains(newTriplet)) MOGEN.onArchiveChanged(archive)
+          if (archive.size >= maxNbPoints) return
+        }
       }
     }
   }
@@ -114,7 +132,7 @@ class MOGEN(var evaluator: MOEvaluator) {
 	  val point1 = archive.randomElement
 	  val point2 = archive.randomElement
 	  val randMultiplier = RandomGenerator.nextDouble
-	  val newCoords = Array.tabulate(point1.nbCoordinates)(i => point1.coordinates(i) + randMultiplier * point1.coordinates(i) + (1.0 - randMultiplier) * point2.coordinates(i))
+	  val newCoords = Array.tabulate(point1.nCoordinates)(i => point1.coordinates(i) + randMultiplier * point1.coordinates(i) + (1.0 - randMultiplier) * point2.coordinates(i))
 	  val newAlgoState = point1.getAlgorithm.getInitialState(newCoords, startIntervals, evaluator, feasibleRegion)
 	  for (newPoint <- newAlgoState.getPoints) {
 	    val newTriplet = MOGENTriplet(newPoint, point1.getAlgorithm, newAlgoState.getNewState(newPoint))
@@ -137,7 +155,7 @@ class MOGEN(var evaluator: MOEvaluator) {
   }
 
   def selectIterate: MOGENTriplet = {
-    val newIterate = selectionHeuristic(archive)
+    val newIterate = selectionHeuristic()
     newIterate
   }
 
@@ -145,21 +163,7 @@ class MOGEN(var evaluator: MOEvaluator) {
 
 object MOGEN {
 
-  def apply(evaluator: MOEvaluator, visu: Boolean = false) = new MOGEN(evaluator)
-
-  def fairSelect[E](archive: ParetoFront[Double, MOGENTriplet]): MOGENTriplet = {
-    archive.priorityQueue.dequeue match {
-      case triplet: MOGENTriplet => triplet
-      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplet")
-    }
-  }
-  
-  def randomSelect[E](archive: ParetoFront[Double, MOGENTriplet]): MOGENTriplet = {
-    archive.randomElement match {
-      case triplet: MOGENTriplet => triplet
-      case _ => throw new IllegalArgumentException("A MOGEN archive must only contain MOGEN triplet")
-    }
-  }
+  def apply(evaluator: MOEvaluator) = new MOGEN(evaluator)
   
   var onIterateSelected: (MOGENTriplet) => Unit = {triplet: MOGENTriplet => }
   var onArchiveChanged: (ParetoFront[_, _]) => Unit = {newArchive: ParetoFront[_, _] => }

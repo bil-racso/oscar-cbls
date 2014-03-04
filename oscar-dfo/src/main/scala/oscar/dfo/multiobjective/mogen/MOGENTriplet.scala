@@ -34,12 +34,6 @@ class MOGENTriplet(point: MOOPoint, algorithm: ComparativeAlgorithm, algorithmSt
   /** Returns the algorithm contained in the triplet */
   def getAlgorithmState: ComparativeAlgorithmState = algorithmState
   
-  /** The number of evaluations contained in the MOOPoint of the triplet */
-  def nbEvaluations: Int = point.nbEvaluations
-  
-  /** The number of coordinates contained in the MOOPoint of the triplet */
-  def nbCoordinates: Int = point.nbCoordinates
-  
   /** The evaluation at the index referenced by functionIndex contained in the MOOPoint of the triplet */
   def getEvaluation(functionIndex: Int): Double = point.getEvaluation(functionIndex)
 }

@@ -14,7 +14,7 @@ abstract class ParetoFront[U: Numeric, T <: ParetoElement[U]] {
   def getEvaluations(): Set[Array[Double]]
   
   /** Queue keeping the elements in the order in which they were inserted */
-  val priorityQueue = new Queue[T]()
+  var priorityQueue = new Queue[T]()
   
   /** Returns a random element from the archive */
   def randomElement: T
@@ -35,6 +35,18 @@ abstract class ParetoFront[U: Numeric, T <: ParetoElement[U]] {
   
   /** Returns true if the Pareto front contains elem */
   def contains[T1 <: ParetoElement[U]](elem: T1): Boolean
+  
+  /** Returns the first element in the Priority queue */
+  def fairSelect(): T = {
+    priorityQueue.dequeue
+  }
+  
+  /** Returns a random element from the archive */
+  def randomSelect(): T = {
+    val randElem = randomElement
+    priorityQueue = priorityQueue.filter(e => e != randElem)
+    randElem
+  }
   
   /** Function called every time an element is removed from the Pareto front */
   var onElementRemoved: (T) => Unit = {element: T => }
