@@ -32,22 +32,21 @@ class CPIntVarViewTimes(v: CPIntVar,val a: Int) extends CPIntVar(v.store) {
 	
 	def constraintDegree = v.constraintDegree()
 	
-	def isBoundTo(value: Int): Boolean = v.isBoundTo(a * value)
-	
-	def hasValue(value: Int): Boolean = v.hasValue(a * value)
+	def isBoundTo(value: Int): Boolean = if (value % a != 0) false else v.isBoundTo(value / a)	
+	def hasValue(value: Int): Boolean  = if (value % a != 0) false else v.hasValue( value / a)
 
 	// Scala's division always rounds to the integer closest to zero, but we need flooring/ceiling versions.
 	// The following divisions are just a little faster than using the modulo version,
 	// and safer+faster than using casting to Double and using Double's ceil/floor 
 	@inline
-	def floor_div(a: Int, b:Int) = { 
+	private def floor_div(a: Int, b:Int) = { 
       val q = a / b
       if (a < 0 && q * b != a) q - 1
       else q
     }
 	
 	@inline
-	def ceiling_div(a: Int, b:Int) = {
+	private def ceiling_div(a: Int, b:Int) = {
       val q = a / b
       if (a > 0 && q * b != a) q + 1
       else q
