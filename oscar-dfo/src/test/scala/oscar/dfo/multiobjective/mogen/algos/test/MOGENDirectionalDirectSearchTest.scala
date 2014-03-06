@@ -111,6 +111,8 @@ class MOGENDirectionalDirectSearchTest extends FunSuite with ShouldMatchers {
     val coordinates = Array.fill(nCoordinates)(0.5)
     val alpha = 0.25
     val ddsState = DirectionalDirectSearchState(evaluator.eval(coordinates, feasibleRegion), alpha)
+    DirectionalDirectSearchState.increaseFactor = 2.0
+    DirectionalDirectSearchState.decreaseFactor = 0.5
     DirectionalDirectSearch.pollingHeuristic = DirectionalDirectSearch.unitPolling
     val triplet = MOGENTriplet(ddsState.getBestPoint, NelderMead, ddsState)
     val archive = LinearListDouble[MOGENTriplet]()
@@ -119,5 +121,6 @@ class MOGENDirectionalDirectSearchTest extends FunSuite with ShouldMatchers {
     res.length should be (2)
     res(0).coordinates should (be (Array(0.25, 0.5)) or be (Array(0.5, 0.25)))
     res(1).coordinates should (be (Array(0.25, 0.5)) or be (Array(0.5, 0.25)))
+    ddsState.alpha should be (alpha * 2.0)
   }
 }

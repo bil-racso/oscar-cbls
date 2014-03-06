@@ -79,8 +79,8 @@ class MOGENNelderMeadTest extends FunSuite with ShouldMatchers {
     val nmState = NelderMeadState(initSimplex, unitInterval)
     nmState.applyShrink(evaluator, feasibleRegion)
     nmState.simplex(0).coordinates should be (Array(0.0, 0.0))
-    nmState.simplex(1).coordinates should be (Array(0.5, 0.0))
-    nmState.simplex(2).coordinates should be (Array(0.0, 0.5))
+    nmState.simplex(1).coordinates should (be (Array(0.5, 0.0)) or be (Array(0.0, 0.5)))
+    nmState.simplex(2).coordinates should (be (Array(0.5, 0.0)) or be (Array(0.0, 0.5)))
   }
   
   test("NelderMeadState applySinglePointTransformation should modify the simplex correctly") {

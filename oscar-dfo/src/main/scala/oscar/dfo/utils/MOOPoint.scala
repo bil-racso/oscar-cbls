@@ -33,6 +33,8 @@ class MOOPoint(val coords: Array[Double], val evaluations: Array[Double]) extend
   
   def objectives = evaluations
   
+  override def clone() = MOOPoint(coordinates.clone(), evaluations.clone())
+  
   def this(coordinates: Array[Double], evaluator: (Array[Double] => Array[Double])) = {
     this(coordinates, evaluator(coordinates))
   }

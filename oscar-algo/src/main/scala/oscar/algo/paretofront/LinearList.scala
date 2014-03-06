@@ -54,7 +54,7 @@ class LinearList[U: Numeric, T <: ParetoElement[U]] extends ParetoFront[U, T] wi
   
   def contains[T1 <: ParetoElement[U]](elem: T1): Boolean = {
     for (element <- elements) {
-      if (elem.objectives == element.objectives) return true
+      if (elem.objectives.deep == element.objectives.deep) return true
     }
     false
   }

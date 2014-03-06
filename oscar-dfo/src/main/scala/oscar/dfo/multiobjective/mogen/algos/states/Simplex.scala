@@ -57,17 +57,22 @@ trait Simplex[E] {
     orderSimplex()
   }
   
+  def getMultiPointTransformation(factor: Double, evaluator: MOEvaluator, feasibleReg: FeasibleRegion): Array[MOOPoint] = {
+    Array.tabulate(simplex.length){i =>
+      if (i == 0) bestPoint.clone()
+      else evaluator.eval(arrayDiff(bestPoint.coordinates, arrayProd(arrayDiff(simplex(i).coordinates, bestPoint.coordinates), factor)), feasibleReg)
+    }
+  }
+  
+  def applyMultiPointTransformation(newSimplex: Array[MOOPoint]) {
+    for (i <- 0 until simplex.length)
+      simplex(i) = newSimplex(i)
+    orderSimplex()
+  }
+  
   def getCentroid: Array[Double] = {
     val allButWorstCoordinates = simplex.map(mooP => mooP.coordinates).take(simplexSize - 1)
     arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
-  }
-  
-  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, coefficient: Double) = {
-    val simplexCoordinates = simplex.map(mooP => mooP.coordinates)
-    for (i <- 1 until simplexSize) {
-      simplex(i) = evaluator.eval(arrayProd(simplexCoordinates(i), coefficient), feasibleReg)
-    }
-    orderSimplex()
   }
   
   def getValidCoordinate(index: Int, intervals: Array[(Double, Double)]): Double = {

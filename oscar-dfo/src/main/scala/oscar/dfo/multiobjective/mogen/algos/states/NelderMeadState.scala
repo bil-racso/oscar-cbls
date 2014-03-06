@@ -56,7 +56,7 @@ class NelderMeadState(simplexInit: Array[MOOPoint], val startIntervals: Array[(D
       println(i + ": " + simplex(i).toString)
   }
   
-  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion): Unit = applyShrink(evaluator, feasibleReg, gammaS)
+  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion): Unit = applyMultiPointTransformation(getMultiPointTransformation(-gammaS, evaluator, feasibleReg))
 }
 
 object NelderMeadState {
