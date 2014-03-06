@@ -19,6 +19,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.dfo.multiobjective.mogen.MOGEN
 import oscar.dfo.multiobjective.mogen.algos.DirectionalDirectSearch
+import oscar.dfo.multiobjective.mogen.algos.NelderMead
 import oscar.dfo.utils.MOEvaluator
 
 /**
@@ -85,5 +86,14 @@ class MOGENTest extends FunSuite with ShouldMatchers {
         coord should (be <= (1.0) and be >= (0.0))
       }
     }
+  }
+  
+  test("MOGEN getRandomAlgo should return a coorect algorithm according to the input") {
+    val nCoordinates = 3
+    val evaluator = MOEvaluator(unitOppositeFunction, Array.fill(nCoordinates)(Double.MaxValue))
+    val mogenSolver = MOGEN(evaluator)
+    mogenSolver.getRandomAlgo(List((NelderMead, 1.0))) should be (NelderMead)
+    mogenSolver.getRandomAlgo(List((NelderMead, 1.0), (DirectionalDirectSearch, 0.0))) should be (NelderMead)
+    mogenSolver.getRandomAlgo(List((NelderMead, 1.0), (DirectionalDirectSearch, 1.0))) should (be (NelderMead) or be (DirectionalDirectSearch))
   }
 }

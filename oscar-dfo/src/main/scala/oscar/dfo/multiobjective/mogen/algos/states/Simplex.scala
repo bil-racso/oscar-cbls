@@ -28,7 +28,7 @@ trait Simplex[E] {
 
   def getBestPoint = bestPoint
   
-  def nbCoordinates = simplex(0).nbCoordinates
+  def nCoordinates = simplex(0).nCoordinates
   
   def worstPoint = simplex(simplexSize - 1)
 
@@ -46,6 +46,29 @@ trait Simplex[E] {
   def arrayDiff(ar1: Array[Double], ar2: Array[Double]): Array[Double] = Array.tabulate(ar1.length)(i => ar1(i) - ar2(i))
   
   def arrayProd(ar: Array[Double], factor: Double): Array[Double] = Array.tabulate(ar.length)(i => factor * ar(i))
+  
+  def getSinglePointTransformation(centroid: Array[Double], factor: Double, evaluator: MOEvaluator, feasibleReg: FeasibleRegion): MOOPoint = {
+    val newCoordinates = arraySum(centroid, arrayProd(arrayDiff(centroid, worstPoint.coordinates), factor))
+    evaluator.eval(newCoordinates, feasibleReg)
+  }
+  
+  def applySinglePointTransformation(newPoint: MOOPoint) = {
+    simplex(simplexSize - 1) = newPoint
+    orderSimplex()
+  }
+  
+  def getCentroid: Array[Double] = {
+    val allButWorstCoordinates = simplex.map(mooP => mooP.coordinates).take(simplexSize - 1)
+    arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
+  }
+  
+  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, coefficient: Double) = {
+    val simplexCoordinates = simplex.map(mooP => mooP.coordinates)
+    for (i <- 1 until simplexSize) {
+      simplex(i) = evaluator.eval(arrayProd(simplexCoordinates(i), coefficient), feasibleReg)
+    }
+    orderSimplex()
+  }
   
   def getValidCoordinate(index: Int, intervals: Array[(Double, Double)]): Double = {
     val randPerturb = (0.5 - RandomGenerator.nextDouble) * math.abs(intervals(index)._2 - intervals(index)._1)

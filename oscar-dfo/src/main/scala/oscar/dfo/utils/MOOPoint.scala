@@ -40,12 +40,6 @@ class MOOPoint(val coords: Array[Double], val evaluations: Array[Double]) extend
   /** Returns the MOOPoint contained in the archive element */
   def getMOOPoint: MOOPoint = this
   
-  /** The number of evaluations */
-  def nbEvaluations: Int = evaluations.length
-  
-  /** The number of coordinates */
-  def nbCoordinates: Int = coordinates.length
-  
   def getEvaluation(functionIndex: Int): Double = {
     evaluations(functionIndex)
   }

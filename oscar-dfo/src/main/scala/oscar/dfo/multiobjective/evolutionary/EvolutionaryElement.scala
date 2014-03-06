@@ -10,12 +10,6 @@ class EvolutionaryElement(val point: MOOPoint) extends ParetoElement[Double] {
   
   def objectives: Array[Double] = point.objectives
   
-  /** The number of evaluations contained in the MOOPoint of the triplet */
-  def nbEvaluations: Int = point.nbEvaluations
-  
-  /** The number of coordinates contained in the MOOPoint of the triplet */
-  def nbCoordinates: Int = point.nbCoordinates
-  
   /** The evaluation at the index referenced by functionIndex contained in the MOOPoint of the triplet */
   def getEvaluation(functionIndex: Int): Double = point.getEvaluation(functionIndex)
   

@@ -24,8 +24,8 @@ class NelderMeadState(simplexInit: Array[MOOPoint], val startIntervals: Array[(D
   val simplex = simplexInit
   var bestPoint = simplex(0)
 
-  var deltaR = 1
-  var deltaE = 2
+  var deltaR = 1.0
+  var deltaE = 2.0
   var deltaOC = 0.5
   var deltaIC = -0.5
   var gammaS = 0.5
@@ -50,35 +50,13 @@ class NelderMeadState(simplexInit: Array[MOOPoint], val startIntervals: Array[(D
   
   def getOutsideContraction(evaluator: MOEvaluator, feasibleReg: FeasibleRegion, centroid: Array[Double] = getCentroid): MOOPoint = getSinglePointTransformation(centroid, deltaOC, evaluator, feasibleReg)
   
-  def getSinglePointTransformation(centroid: Array[Double], factor: Double, evaluator: MOEvaluator, feasibleReg: FeasibleRegion): MOOPoint = {
-    val newCoordinates = arraySum(centroid, arrayProd(arrayDiff(centroid, worstPoint.coordinates), factor))
-    evaluator.eval(newCoordinates, feasibleReg)
-  }
-  
-  def applySinglePointTransformation(newPoint: MOOPoint) = {
-    simplex(simplexSize - 1) = newPoint
-    orderSimplex()
-  }
-  
-  def getCentroid: Array[Double] = {
-    val allButWorstCoordinates = simplex.map(mooP => mooP.coordinates).take(simplexSize - 1)
-    arrayProd(allButWorstCoordinates.drop(1).foldLeft(allButWorstCoordinates(0))((acc, newCoords) => arraySum(acc, newCoords)), 1.0 / (simplexSize - 1))
-  }
-  
-  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion) = {
-    val simplexCoordinates = simplex.map(mooP => mooP.coordinates)
-    for (i <- 1 until simplexSize) {
-      simplex(i) = evaluator.eval(arrayProd(simplexCoordinates(i), gammaS), feasibleReg)
-    }
-    orderSimplex()
-  }
-  
   def printSimplex = {
     println("=" * 80)
     for (i <- 0 until simplexSize)
       println(i + ": " + simplex(i).toString)
   }
   
+  def applyShrink(evaluator: MOEvaluator, feasibleReg: FeasibleRegion): Unit = applyShrink(evaluator, feasibleReg, gammaS)
 }
 
 object NelderMeadState {

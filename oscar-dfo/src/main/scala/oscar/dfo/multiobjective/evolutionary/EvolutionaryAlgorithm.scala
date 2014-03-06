@@ -121,7 +121,7 @@ trait EvolutionaryAlgorithm {
     * @return A pair of two evolutionary elements (e1, e2) generated
     */
   def crossover(parent1: EvolutionaryElement, parent2: EvolutionaryElement): (EvolutionaryElement, EvolutionaryElement) = {
-    val crossoverPoint = RandomGenerator.nextInt(parent1.nbCoordinates + 1)
+    val crossoverPoint = RandomGenerator.nextInt(parent1.nCoordinates + 1)
     val child1Coordinates = parent1.getCoordinates.take(crossoverPoint) ++ parent2.getCoordinates.drop(crossoverPoint)
     val child2Coordinates = parent2.getCoordinates.take(crossoverPoint) ++ parent1.getCoordinates.drop(crossoverPoint)
     (EvolutionaryElement(evaluator.eval(child1Coordinates, feasibleRegion)), EvolutionaryElement(evaluator.eval(child2Coordinates, feasibleRegion)))
@@ -140,7 +140,7 @@ trait EvolutionaryAlgorithm {
           RandomGenerator.nextDouble * (mutationIntervals(index)._2 - mutationIntervals(index)._1))
     }
     if (RandomGenerator.nextDouble < mutationProba) {
-	  val newCoordinates = Array.tabulate(element.nbCoordinates)(i => {
+	  val newCoordinates = Array.tabulate(element.nCoordinates)(i => {
 	    if (RandomGenerator.nextDouble < mutationProba) getRandPerturb(i)
 	    else element.getCoordinates(i)
 	  })

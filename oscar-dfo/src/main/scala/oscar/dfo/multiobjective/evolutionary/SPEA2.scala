@@ -62,7 +62,7 @@ class SPEA2(val evaluator: MOEvaluator,
     else {
       def distCmp(e1: EvolutionaryElement, e2: EvolutionaryElement): Boolean = {
         def distCmpAux(index: Int): Boolean = {
-          if (index >= e1.nbCoordinates) true
+          if (index >= e1.nCoordinates) true
           else {
             if (distances(e1)._2(index) > distances(e2)._2(index)) true
             else if (distances(e1)._2(index) < distances(e2)._2(index)) false
@@ -102,7 +102,7 @@ class SPEA2(val evaluator: MOEvaluator,
   def densityAndDistance(allPoints: Array[EvolutionaryElement]): HashMap[EvolutionaryElement, (Double, Array[Double])] = {
     def euclidianDistance(e1: EvolutionaryElement, e2:EvolutionaryElement): Double = {
       var sum = 0.0
-      for (i <- 0 until e1.nbCoordinates) {
+      for (i <- 0 until e1.nCoordinates) {
         sum += math.pow(e1.getCoordinates(i) - e2.getCoordinates(i), 2.0)
       }
       math.sqrt(sum)
