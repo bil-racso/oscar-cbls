@@ -78,6 +78,7 @@ class MOGEN(val evaluator: MOEvaluator) {
     this.startIntervals = startIntervals
     this.algorithms = algorithms
     for (i <- 0 until maxNbPoints) {
+      if (maxNbPoints <= 1) initSinglePointArchive(startIntervals, algorithms)
       val newCoordinates = startIntervals.map(elem => elem._1 + (i / (maxNbPoints - 1)) * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
         val newAlgo = getRandomAlgo(algorithms)

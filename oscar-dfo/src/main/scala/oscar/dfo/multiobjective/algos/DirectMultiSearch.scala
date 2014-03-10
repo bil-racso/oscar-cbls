@@ -63,6 +63,7 @@ class DirectMultiSearch(val evaluator: MOEvaluator) {
   def initLineArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], alpha: Double): Unit = {
     this.startIntervals = startIntervals
     this.initialAlpha = alpha
+    if (maxNbPoints <= 1) initSinglePointArchive(startIntervals, alpha)
     for (i <- 0 until maxNbPoints) {
       val newCoordinates = startIntervals.map(elem => elem._1 + (i.toDouble / (maxNbPoints - 1).toDouble) * (elem._2 - elem._1))
       if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
