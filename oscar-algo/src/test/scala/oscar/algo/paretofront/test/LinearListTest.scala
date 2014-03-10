@@ -77,5 +77,20 @@ class LinearListTest extends FunSuite with ShouldMatchers {
     linLs.insert(dominated)
     linLs.toSet should be(Set(elem1, elem2, elem3, elem4))    
   }
+  
+  test("A point with same objectives as another point in the archive should not be inserted") {
+    val linLs = LinearListDouble[ParetoElement[Double]]()
+    val elem1 = DummyElement(Array(0, 0, 0))
+    val elem2 = DummyElement(Array(1, 0, -1))
+    val elem3 = DummyElement(Array(-1, 0, 1))
+    val elem4 = DummyElement(Array(0, 1, -1))
+    val elem1Copy = DummyElement(Array(0, 0, 0))
+    linLs.insert(elem1)
+    linLs.insert(elem2)
+    linLs.insert(elem3)
+    linLs.insert(elem4)
+    linLs.toSet should be(Set(elem1, elem2, elem3, elem4))
+    linLs.insert(elem1Copy)
+    linLs.toSet should be(Set(elem1, elem2, elem3, elem4))
+  }
 }
-

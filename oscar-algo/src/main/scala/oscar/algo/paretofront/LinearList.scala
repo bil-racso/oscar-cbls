@@ -12,7 +12,10 @@ class LinearList[U: Numeric, T <: ParetoElement[U]] extends ParetoFront[U, T] wi
         case head :: tail => {
           val domi = candidate.dominance(head)
           if (domi == -1) arch ::: ls
-          else if (domi == 0) newArchive(tail, dom, head :: ls) 
+          else if (domi == 0) {
+            if (head.objectives.deep == candidate.objectives.deep) arch ::: ls
+            else newArchive(tail, dom, head :: ls)
+          }
           else {
             onElementRemoved(candidate)
             newArchive(tail, true, ls)
