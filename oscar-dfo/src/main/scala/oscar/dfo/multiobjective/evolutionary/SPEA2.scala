@@ -22,6 +22,7 @@ import oscar.dfo.utils.FeasibleRegion
 import oscar.algo.paretofront.ParetoElement
 import scala.collection.mutable.HashMap
 import oscar.algo.paretofront.ParetoFront
+import oscar.algo.paretofront.LinearList
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -32,13 +33,16 @@ class SPEA2(val evaluator: MOEvaluator,
 			val mutationProba: Double
 	  ) extends EvolutionaryAlgorithm {
   
+  /** The set of non-dominated points (approximation of the Pareto front) */
+  val globalArchive = LinearList[Double, EvolutionaryElement]()
+  
   def optimizeMOO(maxIters: Int, maxEvals: Int): Set[MOOPoint] = {
     var nbIterations = 1
-    while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
+    while (nbIterations <= maxIters && evaluator.nCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
     }
-    archive.map(elem => elem.getMOOPoint).toSet
+    globalArchive.map(elem => elem.getMOOPoint).toSet
   }
   
   def performIteration(iterationNumber: Int): Unit = {
@@ -55,7 +59,7 @@ class SPEA2(val evaluator: MOEvaluator,
     }
     else if (potentialArchive.length < archiveSize) {
       archive = potentialArchive
-      for (i <- potentialArchive.length until archiveSize) {
+      for (i <- potentialArchive.length until archiveSize if (i < fitnessValues.length)) {
         archive ::= fitnessValues(i)._1
       }
     }
@@ -73,6 +77,9 @@ class SPEA2(val evaluator: MOEvaluator,
       }
       val potArchive = potentialArchive.sortWith((e1, e2) => distCmp(e1, e2))
       archive = potArchive.take(archiveSize)      
+    }
+    for (elem <- archive) {
+      globalArchive.insert(elem)
     }
   }
   
@@ -113,7 +120,7 @@ class SPEA2(val evaluator: MOEvaluator,
       distanceMatrixPre(i)(j) = dist
       distanceMatrixPre(j)(i) = dist
     }
-    val distanceMatrix = distanceMatrixPre.map(e => e.sortWith((e1, e2) => e1 <= e2))
+    val distanceMatrix = distanceMatrixPre.map(e => e.sortWith((e1, e2) => e1 < e2))
     val densityMap = HashMap[EvolutionaryElement, (Double, Array[Double])]()
     val k = math.sqrt(allPoints.length).toInt
     for (i <- 0 until allPoints.length) {
@@ -147,6 +154,10 @@ object SPEA2 {
       archiveSize: Int
 	): SPEA2 = new SPEA2(evaluator, populationSize, archiveSize, 0.1)
     
+  
+  var onElementRemoved: (EvolutionaryElement) => Unit = {element: EvolutionaryElement => }
+  var onElementAdded: (EvolutionaryElement) => Unit = {element: EvolutionaryElement => }
+  
   var onArchChan: (ParetoFront[_, _]) => Unit = {newArchive: ParetoFront[_, _] => }
   
   def onArchiveChanged(newFun: ParetoFront[_, _] => Unit) {

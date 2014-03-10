@@ -76,7 +76,7 @@ class DirectMultiSearch(val evaluator: MOEvaluator) {
 
   def optimizeMOO(maxIters: Int, maxEvals: Int = Int.MaxValue): Set[MOOPoint] = {
     var nbIterations = 1
-    while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
+    while (nbIterations <= maxIters && evaluator.nCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
     }

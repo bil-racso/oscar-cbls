@@ -30,7 +30,7 @@ class MOGEN(val evaluator: MOEvaluator) {
   /** Function defining the feasible region of the problem */
   val feasibleRegion = FeasibleRegion()
   /** The set of non-dominated points (approximation of the Pareto front) */
-  var archive = LinearList[Double, MOGENTriplet]()
+  val archive = LinearList[Double, MOGENTriplet]()
   /** The iterate selection heuristic */
   var selectionHeuristic: () => MOGENTriplet = archive.fairSelect
   /** The starting intervals of the points */
@@ -105,7 +105,7 @@ class MOGEN(val evaluator: MOEvaluator) {
 
   def optimizeMOO(maxIters: Int, maxEvals: Int = Int.MaxValue): Set[MOOPoint] = {
     var nbIterations = 1
-    while (nbIterations <= maxIters && evaluator.nbCallToEvalFunction <= maxEvals) {
+    while (nbIterations <= maxIters && evaluator.nCallToEvalFunction <= maxEvals) {
       performIteration(nbIterations)
       nbIterations += 1
     }

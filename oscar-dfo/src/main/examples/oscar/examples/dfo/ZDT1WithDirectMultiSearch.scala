@@ -64,6 +64,6 @@ object ZDT1WithDirectMultiSearch extends App {
     paretoPlot.update(DMSSolver.archive.toSet, 0)
   }
   println("Nb points in the Pareto front estimation: " + DMSSolver.archive.size)
-  println("Nb calls to evaluation functions: " + DMSSolver.evaluator.nbCallToEvalFunction)
+  println("Nb calls to evaluation functions: " + DMSSolver.evaluator.nCallToEvalFunction)
 
 }

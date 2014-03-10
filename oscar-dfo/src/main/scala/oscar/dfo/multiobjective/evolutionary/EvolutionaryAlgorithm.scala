@@ -60,7 +60,20 @@ trait EvolutionaryAlgorithm {
       population ::= newElement
     }
     mutationIntervals = Array.tabulate(startIntervals.length)(i => {
-      val intervalSize = (startIntervals(i)._2 - startIntervals(i)._1) / 20
+      val intervalSize = (startIntervals(i)._2 - startIntervals(i)._1)
+      (-intervalSize, intervalSize)
+    })
+  }
+  
+  def initLinePopulation(startIntervals: Array[(Double, Double)]): Unit = {
+    population = List[EvolutionaryElement]()
+    for (i <- 1 to populationSize) {
+      val newCoordinates = startIntervals.map(elem => elem._1 + RandomGenerator.nextDouble * (elem._2 - elem._1))
+      val newElement = EvolutionaryElement(evaluator.eval(newCoordinates, feasibleRegion))
+      population ::= newElement
+    }
+    mutationIntervals = Array.tabulate(startIntervals.length)(i => {
+      val intervalSize = (startIntervals(i)._2 - startIntervals(i)._1)
       (-intervalSize, intervalSize)
     })
   }
@@ -155,11 +168,11 @@ trait EvolutionaryAlgorithm {
   def updatePopulation(fitnessValues: List[(EvolutionaryElement, Double)]): Unit = {
     var newPopulation = List[EvolutionaryElement]()
     for (i <- 1 to populationSize by 2) {
-      val parent1 = archive(RandomGenerator.nextInt(archiveSize))
-      val parent2 = archive(RandomGenerator.nextInt(archiveSize))
+      val parent1 = archive(RandomGenerator.nextInt(archive.length))
+      val parent2 = archive(RandomGenerator.nextInt(archive.length))
       val (child1, child2) = crossover(parent1, parent2)
-      newPopulation ::= mutation(child1)
-      newPopulation ::= mutation(child2)
+      newPopulation ::= {if (RandomGenerator.nextDouble < mutationProba) mutation(child1) else child1}
+      newPopulation ::= {if (RandomGenerator.nextDouble < mutationProba) mutation(child2) else child2}
     }
     population = newPopulation
   }

@@ -17,7 +17,7 @@ package oscar.dfo.utils
 import scala.collection.mutable.HashMap
 
 class MOEvaluator(var evalFunctions: Array[Double] => Array[Double], val unfeasibleValue: Array[Double]) {
-  var nbCallToEvalFunction = 0
+  var nCallToEvalFunction = 0
   
   def eval(coordinates: Array[Double], feasibleReg: FeasibleRegion): MOOPoint = {
     val newEvals = if (!feasibleReg.isFeasible(coordinates)) {
@@ -27,7 +27,7 @@ class MOEvaluator(var evalFunctions: Array[Double] => Array[Double], val unfeasi
       evalFunctions(coordinates)
     }
     val newPoint = MOOPoint(coordinates, newEvals)
-    nbCallToEvalFunction += 1
+    nCallToEvalFunction += 1
     newPoint
   }
 }

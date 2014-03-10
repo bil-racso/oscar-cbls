@@ -50,7 +50,7 @@ object ZDT1WithSPEA2 extends App {
   val evaluator = MOEvaluator(zdt1, Array.fill(2)(Double.MaxValue))
   val populationSize = 100
   val archiveSize = 100
-  val mutationProba = 100
+  val mutationProba = 0.2
   val spea2Solver = SPEA2(evaluator, populationSize,
       archiveSize, mutationProba)
 
@@ -65,10 +65,10 @@ object ZDT1WithSPEA2 extends App {
   paretoPlot.xDom = 0 to 1
   paretoPlot.yDom = 0 to 1
   
-  
   for (i <- 1 to 1000) {
     spea2Solver.performIteration(i)
-    paretoPlot.update(spea2Solver.archive.toSet, 0)
+    paretoPlot.update(spea2Solver.globalArchive.toSet, 0)
   }
-
+  println("Nb points in the Pareto front estimation: " + spea2Solver.globalArchive.size)
+  println("Nb calls to evaluation functions: " + spea2Solver.evaluator.nCallToEvalFunction)
 }

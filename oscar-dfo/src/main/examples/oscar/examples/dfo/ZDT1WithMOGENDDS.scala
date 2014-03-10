@@ -65,6 +65,6 @@ object ZDT1WithMOGENDDS extends App {
     paretoPlot.update(mogenSolver.archive.toSet, 0)
   }
   println("Nb points in the Pareto front estimation: " + mogenSolver.archive.size)
-  println("Nb calls to evaluation functions: " + mogenSolver.evaluator.nbCallToEvalFunction)
+  println("Nb calls to evaluation functions: " + mogenSolver.evaluator.nCallToEvalFunction)
 
 }
