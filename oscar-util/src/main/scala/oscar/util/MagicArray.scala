@@ -3,7 +3,7 @@ package oscar.util
 import scala.collection.mutable.IndexedSeq
 
 /**
- * A mutable IndexedSeq of Boolean which is able to reset all 
+ * A mutable IndexedSeq of Boolean which is able to sets all 
  * its booleans to false in constant time.
  * 
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -12,8 +12,6 @@ class MagicArray(override val size: Int) extends IndexedSeq[Boolean] {
    
   private val array: Array[Int] = Array.fill(size)(Int.MinValue)
   private var magic = Int.MinValue + 1
-  
-  override val length: Int = size
   
   /** 
    *  Sets all the booleans to false in constant time.
@@ -30,6 +28,8 @@ class MagicArray(override val size: Int) extends IndexedSeq[Boolean] {
     }
   }
   
+  override val length: Int = size
+  
   override def update(i: Int, b: Boolean): Unit = {
     if (b) array(i) = magic
     else array(i) = magic - 1
@@ -37,7 +37,7 @@ class MagicArray(override val size: Int) extends IndexedSeq[Boolean] {
   
   override def apply(i: Int): Boolean = array(i) == magic
   
-  override def foreach[T](f: Boolean => T): Unit = {
+  override def foreach[U](f: Boolean => U): Unit = {
     var i = 0
     while (i < size) {
       f(array(i) == magic)
@@ -71,16 +71,15 @@ object MagicArray {
   def apply(values: Boolean*): MagicArray = {
     var list = List.empty[Boolean]
     var size = 0
-    values.foreach(v => {
-      list = v :: list
+    values.foreach(b => {
+      list = b :: list
       size += 1
     })
     val magic = new MagicArray(size)
-    while (size > 0) {
+    list.foreach(b => {
       size -= 1
-      magic(size) = list.head
-      list = list.tail
-    }
+      magic(size) = b
+    })
     magic
   }
 }
