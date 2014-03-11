@@ -77,17 +77,21 @@ class MOGEN(val evaluator: MOEvaluator) {
   def initLineArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], algorithms: List[(ComparativeAlgorithm, Double)]): Unit = {
     this.startIntervals = startIntervals
     this.algorithms = algorithms
-    for (i <- 0 until maxNbPoints) {
-      if (maxNbPoints <= 1) initSinglePointArchive(startIntervals, algorithms)
-      val newCoordinates = startIntervals.map(elem => elem._1 + (i / (maxNbPoints - 1)) * (elem._2 - elem._1))
-      if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
-        val newAlgo = getRandomAlgo(algorithms)
-        val newAlgoState = newAlgo.getInitialState(newCoordinates, startIntervals, evaluator, feasibleRegion)
-        for (newPoint <- newAlgoState.getPoints) {
-          val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint))
-          archive.insert(newTriplet)
-          if (archive.contains(newTriplet)) MOGEN.onArchiveChanged(archive)
-          if (archive.size >= maxNbPoints) return
+    if (maxNbPoints <= 1) {
+      initSinglePointArchive(startIntervals, algorithms)
+    }
+    else {
+      for (i <- 0 until maxNbPoints) {
+        val newCoordinates = startIntervals.map(elem => elem._1 + (i / (maxNbPoints - 1)) * (elem._2 - elem._1))
+        if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
+          val newAlgo = getRandomAlgo(algorithms)
+          val newAlgoState = newAlgo.getInitialState(newCoordinates, startIntervals, evaluator, feasibleRegion)
+          for (newPoint <- newAlgoState.getPoints) {
+            val newTriplet = MOGENTriplet(newPoint, newAlgo, newAlgoState.getNewState(newPoint))
+            archive.insert(newTriplet)
+            if (archive.contains(newTriplet)) MOGEN.onArchiveChanged(archive)
+            if (archive.size >= maxNbPoints) return
+          }
         }
       }
     }

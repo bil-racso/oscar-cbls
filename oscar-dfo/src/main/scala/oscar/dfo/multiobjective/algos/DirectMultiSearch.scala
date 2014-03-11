@@ -63,14 +63,17 @@ class DirectMultiSearch(val evaluator: MOEvaluator) {
   def initLineArchive(maxNbPoints: Int, startIntervals: Array[(Double, Double)], alpha: Double): Unit = {
     this.startIntervals = startIntervals
     this.initialAlpha = alpha
-    if (maxNbPoints <= 1) initSinglePointArchive(startIntervals, alpha)
-    for (i <- 0 until maxNbPoints) {
-      val newCoordinates = startIntervals.map(elem => elem._1 + (i.toDouble / (maxNbPoints - 1).toDouble) * (elem._2 - elem._1))
-      if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
-        val newDMSElement = DirectMultiSearchElement(evaluator.eval(newCoordinates, feasibleRegion), initialAlpha)
-        archive.insert(newDMSElement)
-        if (archive.contains(newDMSElement)) MOGEN.onArchiveChanged(archive)
-        if (archive.size >= maxNbPoints) return
+    if (maxNbPoints <= 1)
+      initSinglePointArchive(startIntervals, alpha)
+    else {
+      for (i <- 0 until maxNbPoints) {
+        val newCoordinates = startIntervals.map(elem => elem._1 + (i.toDouble / (maxNbPoints - 1).toDouble) * (elem._2 - elem._1))
+        if (feasibleRegion.isFeasible(newCoordinates.toArray)) {
+          val newDMSElement = DirectMultiSearchElement(evaluator.eval(newCoordinates, feasibleRegion), initialAlpha)
+          archive.insert(newDMSElement)
+          if (archive.contains(newDMSElement)) MOGEN.onArchiveChanged(archive)
+          if (archive.size >= maxNbPoints) return
+        }
       }
     }
   }
