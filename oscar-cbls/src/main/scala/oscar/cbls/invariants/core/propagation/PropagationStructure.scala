@@ -868,7 +868,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
 
   /**
    * unregisters an element in the dynamic propagation graph.
-   * @param p the key that was given when the eement was registered in the dynamic propagation graph
+   * @param p the key that was given when the element was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
     DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)

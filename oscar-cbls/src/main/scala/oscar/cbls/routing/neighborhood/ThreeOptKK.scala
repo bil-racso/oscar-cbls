@@ -60,42 +60,39 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
         .toList
         .map(_._2.toList)
 
-      case class MoveException(m:SearchResult) extends Exception
-
-      try{
-        for(nodeList <- otherNodes){
-          exploreNodeList(nodeList)
-        }
-      }catch {
-        case x:MoveException => return x.m
-      }
-
-      def exploreNodeList(nodeList:List[Int]){
-        nodeList match{
-          case head :: tail => exploreTail(head,tail) ; exploreNodeList(tail)
-          case _ => ;
+      for(nodeList <- otherNodes){
+        for((a,b) <- makeAllUnsortedPairs(nodeList)){
+          val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
+          if(!vrp.isBetween(insertionPoint, first, second) && !(vrp.next(insertionPoint).value == first)){
+            ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
+              startObj, returnMove, moveAcceptor, vrp) match {
+              case m:NoMoveFound => ()
+              case result:SearchResult => return result
+            }
+          }
         }
       }
-
-      def exploreTail(head:Int, tail:List[Int]){
-        tail match{
-          case other :: newtail => explore(head,other) ; exploreTail(head,newtail)
-          case _ => ;
-        }
-      }
-
-      def explore(a:Int,b:Int){
-        val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
-        if(vrp.isBetween(insertionPoint, first, second)) return
-        ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
-          startObj, returnMove, moveAcceptor, vrp) match {
-          case m:NoMoveFound => ()
-          case result:SearchResult => throw new MoveException(result)
-        }
-      }
-
-    } //end while
+    }//end while
     NoMoveFound()
+  }
+
+  /**
+   * @param l a list
+   * @return a list of all pairs of element made from the elements in l
+   */
+  def makeAllUnsortedPairs(l:List[Int]):List[(Int,Int)] = {
+
+    l match{
+      case nil => List.empty
+      case head :: tail => makeAllUnsortedPairsWithHead(head,tail,makeAllUnsortedPairs(tail))
+    }
+
+    def makeAllUnsortedPairsWithHead(head:Int, tail:List[Int], toAppend:List[(Int,Int)]):List[(Int,Int)] = {
+      tail match{
+        case other :: newTail => makeAllUnsortedPairsWithHead(head, newTail, (head,other) :: toAppend)
+        case Nil => toAppend
+      }
+    }
   }
 
   override def toString: String = "3-optKK"
