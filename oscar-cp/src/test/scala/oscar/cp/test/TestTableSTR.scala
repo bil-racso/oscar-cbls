@@ -94,7 +94,6 @@ class TestTableSTR extends FunSuite with ShouldMatchers  {
     
     val tuples = Array(Array(1,2),Array(2,1))
     
-
     cp.post(new TableSTR(x,tuples))
     cp.isFailed should be(true)
     

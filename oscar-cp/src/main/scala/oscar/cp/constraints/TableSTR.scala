@@ -7,6 +7,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
 import oscar.algo.reversible.ReversibleInt
 import scala.collection.mutable.HashSet
+import oscar.algo.reversible.ReversibleBool
 
 class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableSTR"){
   
@@ -15,6 +16,7 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   
   val arity = X.length
   val variablesIndexes = 0 until X.length
+  val isBoundAndChecked = Array.fill(arity)(new ReversibleBool(s,false))
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     idempotent = true
@@ -25,9 +27,9 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   
   override def propagate(): CPOutcome = {
     println(currentLimit.getValue)
-	val gacValues = Array.fill(arity)(HashSet[Int]())
+	val notGACValues = Array.tabulate(arity)(i => HashSet[Int](X(i).iterator.toArray :_*))
 			
-	val unboundVariableIndexes = variablesIndexes.filter(i => !X(i).isBound)
+	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)
 	
 	var i = 0
 	var cpVarIndex = 0
@@ -53,7 +55,7 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
 	  if(isCurrentTupleValid) {
 	    unboundCpVarIndex = 0
 	    while(unboundCpVarIndex < unboundVariableIndexes.length) {
-	    	gacValues(unboundVariableIndexes(unboundCpVarIndex)).add(tau(unboundVariableIndexes(unboundCpVarIndex)))
+	    	notGACValues(unboundVariableIndexes(unboundCpVarIndex)).remove(tau(unboundVariableIndexes(unboundCpVarIndex)))
 	    	unboundCpVarIndex += 1
 	    }
 	    i += 1
@@ -69,13 +71,14 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
 	
 	unboundCpVarIndex = 0
 	while(unboundCpVarIndex < unboundVariableIndexes.length) {
-	  if (gacValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty)
+	  if (notGACValues(unboundVariableIndexes(unboundCpVarIndex)).size == X(unboundVariableIndexes(unboundCpVarIndex)).size)
 	    return Failure
-	  if(gacValues(unboundVariableIndexes(unboundCpVarIndex)).size != X(unboundVariableIndexes(unboundCpVarIndex)).size) {
-	    for(value <- X(unboundVariableIndexes(unboundCpVarIndex)).domainIterator if(!gacValues(unboundVariableIndexes(unboundCpVarIndex)).contains(value))) {
-	    	  X(unboundVariableIndexes(unboundCpVarIndex)).removeValue(value)
-	    }
+	  if(!notGACValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty) {
+	    for(value <- notGACValues(unboundVariableIndexes(unboundCpVarIndex)))
+	      X(unboundVariableIndexes(unboundCpVarIndex)).removeValue(value)
 	  }
+	  if(X(unboundVariableIndexes(unboundCpVarIndex)).isBound)
+	    isBoundAndChecked(unboundVariableIndexes(unboundCpVarIndex)).setValue(true)
 	  unboundCpVarIndex += 1
     }
 	 
