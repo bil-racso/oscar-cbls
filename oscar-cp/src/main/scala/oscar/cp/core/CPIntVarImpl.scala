@@ -91,7 +91,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  @inline def hasValue(value: Int) = domain.value.hasValue(value)
+  def hasValue(value: Int) = domain.value.hasValue(value)
 
   /**
    * @param val
@@ -146,9 +146,14 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   }
 
   override def toString(): String = {
-    if (isEmpty) name + " phi"
-    else if (isBound) name + (if (name.isEmpty) "" else " ") + value
-    else name + (if (name.isEmpty) "" else " ") + domain.value.toString
+    if (isBound) {
+      if (name.isEmpty()) value.toString
+      else name + " " + value
+    }
+    else {
+      if (name.isEmpty()) domain.value.toString
+      else name + " " + domain.value
+    }
   }
 
   /**
@@ -318,17 +323,20 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   def updateMin(value: Int): CPOutcome = {
+    
+    val dom = domain.value
 
-    if (value > domain.value.max) return CPOutcome.Failure
-    if (value <= domain.value.min) return CPOutcome.Suspend
-
-    val omin = domain.value.min
+    if (value > dom.max) return CPOutcome.Failure
+    
+    val omin = dom.min
+    
+    if (value <= omin) return CPOutcome.Suspend
 
     //must notif AC5 event with the removed values before the actual removal
     if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-      var i = domain.value.min
+      var i = omin
       while (i < value) {
-        if (domain.value.hasValue(i)) {
+        if (dom.hasValue(i)) {
           if (onDomainL1.hasValue())
             store.notifRemoveL1(onDomainL1.value, this, i)
           if (onDomainIdxL1.hasValue())
@@ -338,10 +346,10 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       }
     }
 
-    val ok = domain.value.updateMin(value)
+    val ok = dom.updateMin(value)
     assert(ok != CPOutcome.Failure)
 
-    if (domain.value.size == 1) {
+    if (dom.size == 1) {
       assert(isBound)
       store.notifyBindL1(onBindL1.value, this)
       store.notifyBindIdxL1(onBindIdxL1.value, this)
@@ -360,16 +368,20 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   def updateMax(value: Int): CPOutcome = {
-    if (value < domain.value.min) return CPOutcome.Failure
-    if (value >= domain.value.max) return CPOutcome.Suspend
-
-    val omax = domain.value.max
+    
+    val dom = domain.value
+    
+    if (value < dom.min) return CPOutcome.Failure
+     
+    val omax = dom.max
+    
+    if (value >= omax) return CPOutcome.Suspend
 
     //must notifyAC3 the removed value before the actual removal
     if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
       var i = omax
       while (i > value) {
-        if (domain.value.hasValue(i)) {
+        if (dom.hasValue(i)) {
           if (onDomainL1.hasValue())
             store.notifRemoveL1(onDomainL1.value, this, i)
           if (onDomainIdxL1.hasValue())
@@ -379,10 +391,10 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       }
     }
 
-    val ok = domain.value.updateMax(value)
+    val ok = dom.updateMax(value)
     assert(ok != CPOutcome.Failure)
 
-    if (domain.value.size == 1) {
+    if (dom.size == 1) {
       assert(isBound)
       store.notifyBindL1(onBindL1.value, this)
       store.notifyBindIdxL1(onBindIdxL1.value, this)
@@ -401,15 +413,18 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
    */
   def removeValue(value: Int): CPOutcome = {
-    val omin = domain.value.min
-    val omax = domain.value.max
-    val minRemoved = domain.value.min == value
-    val maxRemoved = domain.value.max == value
-    val indom = domain.value.hasValue(value)
+    
+    val dom = domain.value
+    
+    val omin = dom.min
+    val omax = dom.max
+    val minRemoved = dom.min == value
+    val maxRemoved = dom.max == value
+    val indom = dom.hasValue(value)
 
     if (!indom) return CPOutcome.Suspend
 
-    val ok = domain.value.removeValue(value)
+    val ok = dom.removeValue(value)
     if (ok == CPOutcome.Failure) return CPOutcome.Failure
 
     if (minRemoved || maxRemoved) {
