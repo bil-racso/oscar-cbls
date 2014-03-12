@@ -26,7 +26,6 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   }
   
   override def propagate(): CPOutcome = {
-    println(currentLimit.getValue)
 	val notGACValues = Array.tabulate(arity)(i => HashSet[Int](X(i).iterator.toArray :_*))
 			
 	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)

@@ -65,7 +65,6 @@ class TestTableSTR extends FunSuite with ShouldMatchers  {
   }
   
   test("Table Test 3") {
-    println("test3")
     val cp = CPSolver()
     var x = Array.fill(3)(CPIntVar(1 to 7)(cp))
     
@@ -81,7 +80,6 @@ class TestTableSTR extends FunSuite with ShouldMatchers  {
     } search {
       binaryStatic(x)
     } onSolution {
-      println(x.mkString(" "))
       nbSol += 1
     }start()
     nbSol should be(4)
