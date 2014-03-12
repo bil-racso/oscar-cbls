@@ -19,6 +19,7 @@ import oscar.cp.constraints.Sum
 import scala.util.continuations._
 import oscar.cp.constraints.SetDiff
 import java.sql.Time
+import oscar.cp.constraints.ScalarProduct
 import oscar.cp.constraints.WeightedSum
 import scala.collection.mutable.HashMap
 import java.util.Collection
@@ -1374,53 +1375,10 @@ class Parser extends JavaTokenParsers { // RegexParsers {
     val c = getInt(varList(2))
 
     cstr match {
-      case "int_lin_ne" =>
-        addCstr(weightedSum(cst, cpvar) != c)
-      case "int_lin_eq" => {
-        /*
-        if (cst.forall(_.abs <= 1)) { // simplification into sum
-          val left = for (i <- 0 until cpvar.size; if (cst(i) == 1)) yield cpvar(i)
-          val right = for (i <- 0 until cpvar.size; if (cst(i) == -1)) yield cpvar(i)
-          if (right.size == 0) {
-            addCstr(sum(left,CPIntVar(cp,c)))
-          } else {
-            addCstr(sum(left,sum(right) + c))
-          }
-        }*/
-        
-        if (c == 0 && cst(0) == -1 && cst.tail.forall(_ == 1)) {
-          // sum constraint
-          //System.err.println("int_lin_eq, sum identified")
-          addCstr(sum(cpvar.tail, cpvar.head))
-        } else if (c == 0 && cst(0) == 1 && cst.tail.forall(_ == -1)) {
-          //System.err.println("int_lin_eq, sum identified")
-          addCstr(sum(cpvar.tail, cpvar.head))
-        } else if (c == 0 && cst.last == -1 && cst.reverse.tail.forall(_ == 1)) {
-          //System.err.println("int_lin_eq, sum identified")
-          addCstr(sum(cpvar.reverse.tail, cpvar.last))
-        } else if (c == 0 && cst.last == 1 && cst.reverse.tail.forall(_ == -1)) {
-          //System.err.println("int_lin_eq, sum identified")
-          addCstr(sum(cpvar.reverse.tail, cpvar.last))
-        } 
-         
-        
-        
-        
-        else if(cst.size == 2 && (cst(0) == -1 || cst(1) == -1)) {
-          if (cst(0) == -1) {
-            addCstr(new MulCte(cpvar(1),cst(1),cpvar(0)+c))
-          } else {
-            addCstr(new MulCte(cpvar(0),cst(0),(cpvar(1)+c)))
-          }
-        }
-        else {
-          //println(cst.zip(cpvar).mkString("+")+"=="+c)
-          addCstr(weightedSum(cst, cpvar, c))
-        }
+      case "int_lin_ne" => addCstr(ScalarProduct.nonzero( CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp))
+      case "int_lin_eq" => addCstr(ScalarProduct.zero(    CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp))
+      case "int_lin_le" => addCstr(ScalarProduct.leq(     CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp), ann)
 
-      }
-      case "int_lin_le" =>
-        addCstr(weightedSum(cst, cpvar) <= c, ann)
       case "int_lin_eq_reif" =>
         int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
       case "int_lin_le_reif" =>
@@ -1428,10 +1386,10 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "int_lin_ne_reif" =>
         int_lin_reif_cstr(cpvar, cst, c, varList, ann, cstr)
 
-      case "bool_lin_eq" =>
-        addCstr(weightedSum(cst, cpvar) == c)
-      case "bool_lin_le" =>
-        addCstr(weightedSum(cst, cpvar) <= c)
+      case "bool_lin_eq" => addCstr(ScalarProduct.zero(    CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp))
+        // addCstr(weightedSum(cst, cpvar) == c)
+      case "bool_lin_le" => addCstr(ScalarProduct.leq(     CPIntVar(1)(cp) +: cpvar, (-c) +: cst)(cp), ann)
+        // addCstr(weightedSum(cst, cpvar) <= c)
     }
   }
 

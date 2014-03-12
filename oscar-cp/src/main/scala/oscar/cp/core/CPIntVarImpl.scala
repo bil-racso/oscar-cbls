@@ -18,13 +18,17 @@ import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
 import scala.collection._
 import scala.collection.generic._
+import oscar.cp.core.domains.IntDomain
+import oscar.cp.core.domains.AdaptableIntDomain
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
 class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPIntVar(st, name) {
 
-  val dom = new IntDomain(store, minimum, maximum)
+  // Reversible pointer to the domain structure (can change from interval to sparse set) 
+  private val domain: ReversiblePointer[IntDomain] = AdaptableIntDomain(st, minimum, maximum)
+  
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
@@ -45,9 +49,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 
   def transform(v: Int ) = v
 
-  def iterator = {
-    dom.iterator
-  }
+  def iterator: Iterator[Int] = domain.value.iterator
 
   /**
    *
@@ -72,7 +74,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   /**
    * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
    */
-  @inline def isBound = {
+  def isBound: Boolean = {
     assert(!store.isFailed())
     size == 1
   }
@@ -82,16 +84,14 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @param v
    * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
    */
-  def isBoundTo(v: Int) = {
-    isBound && value == v
-  }
+  def isBoundTo(v: Int): Boolean = isBound && value == v
 
   /**
    * Test if a value is in the domain
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  @inline def hasValue(value: Int) = dom.hasValue(value)
+  def hasValue(value: Int) = domain.value.hasValue(value)
 
   /**
    * @param val
@@ -102,7 +102,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       println("error: no value after " + value + " maximum=" + max)
       value
     } else {
-      dom.getNextValue(value + 1)
+      domain.value.nextValue(value + 1)
     }
   }
 
@@ -115,40 +115,45 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       println("error: no value before " + value + " minimum=" + min)
       value
     } else {
-      dom.getPrevValue(value - 1)
+      domain.value.prevValue(value - 1)
     }
   }
 
   /**
    * @return  the size of the domain
    */
-  override def size = dom.size
+  override def size = domain.value.size
 
   /**
    * @return true if the domain is empty, false otherwise
    */
-  override def isEmpty = dom.isEmpty
+  override def isEmpty = domain.value.isEmpty
 
   /**
    * @return  the minimum value in the domain
    */
   def min = {
-    assert(!dom.isEmpty)
-    dom.min
+    assert(!domain.value.isEmpty)
+    domain.value.min
   }
 
   /**
    * @return  the maximum value in the domain
    */
   def max = {
-    assert(!dom.isEmpty)
-    dom.max
+    assert(!domain.value.isEmpty)
+    domain.value.max
   }
 
   override def toString(): String = {
-    if (isEmpty) name + " phi"
-    else if (isBound) name + (if (name.isEmpty) "" else " ") + value
-    else name + (if (name.isEmpty) "" else " ") + "{" + dom.toString() + "}"
+    if (isBound) {
+      if (name.isEmpty()) value.toString
+      else name + " " + value
+    }
+    else {
+      if (name.isEmpty()) domain.value.toString
+      else name + " " + domain.value
+    }
   }
 
   /**
@@ -294,9 +299,9 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
       // must notify AC5 event before the actual removal
       if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-        var i = dom.getMin()
-        while (i <= dom.getMax()) {
-          if (i != value && dom.hasValue(i)) {
+        var i = domain.value.min
+        while (i <= domain.value.max) {
+          if (i != value && domain.value.hasValue(i)) {
             if (onDomainL1.hasValue()) {
               store.notifRemoveL1(onDomainL1.value, this, i)
             }
@@ -308,7 +313,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
         }
       }
       // finally do the assignment
-      return dom.assign(value)
+      return domain.value.assign(value)
     }
   }
 
@@ -318,15 +323,18 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   def updateMin(value: Int): CPOutcome = {
+    
+    val dom = domain.value
 
-    if (value > dom.getMax()) return CPOutcome.Failure
-    if (value <= dom.getMin()) return CPOutcome.Suspend
-
+    if (value > dom.max) return CPOutcome.Failure
+    
     val omin = dom.min
+    
+    if (value <= omin) return CPOutcome.Suspend
 
     //must notif AC5 event with the removed values before the actual removal
     if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-      var i = dom.min
+      var i = omin
       while (i < value) {
         if (dom.hasValue(i)) {
           if (onDomainL1.hasValue())
@@ -360,10 +368,14 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   def updateMax(value: Int): CPOutcome = {
+    
+    val dom = domain.value
+    
     if (value < dom.min) return CPOutcome.Failure
-    if (value >= dom.max) return CPOutcome.Suspend
-
+     
     val omax = dom.max
+    
+    if (value >= omax) return CPOutcome.Suspend
 
     //must notifyAC3 the removed value before the actual removal
     if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
@@ -401,6 +413,9 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
    */
   def removeValue(value: Int): CPOutcome = {
+    
+    val dom = domain.value
+    
     val omin = dom.min
     val omax = dom.max
     val minRemoved = dom.min == value
@@ -433,7 +448,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   // ----------------------------------
 
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
-    dom.delta(oldMin, oldMax, oldSize)
+    domain.value.delta(oldMin, oldMax, oldSize)
   }
 
   def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))

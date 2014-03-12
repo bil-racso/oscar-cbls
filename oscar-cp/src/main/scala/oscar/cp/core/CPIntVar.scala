@@ -452,7 +452,15 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @param c
    * @return a variable in the same store representing: x * c
    */
-  def mul(c: Int): CPIntVar = {
+  def mul(y: Int): CPIntVar = {
+    if (y == 0)       CPIntVar(0)(this.store)
+    else if (y == 1)  this
+    else if (y > 0)   new CPIntVarViewTimes(this, y)
+    else              this.mul(-y).opposite    
+  }
+  
+  /*
+  def mul(c:Int): CPIntVar = {
     if (c == 1) {
       return this
     }
@@ -463,6 +471,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     assert(ok != CPOutcome.Failure)
     return y;
   }
+*/
 
   /**
    * @param y a variable in the same store as x
@@ -605,11 +614,14 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * x*y
    */
-  def *(y: CPIntVar) = this.mul(y)
+  def *(y: CPIntVar): CPIntVar = {
+    if (y.isBound) this*(y.value)
+    else this.mul(y)
+  }
   /**
    * x*y
    */
-  def *(y: Int) = this.mul(y)
+  def *(y: Int): CPIntVar = this.mul(y)
   /**
    * x!=y
    */
