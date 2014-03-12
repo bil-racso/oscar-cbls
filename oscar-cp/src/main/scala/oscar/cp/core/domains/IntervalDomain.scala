@@ -11,7 +11,7 @@ import oscar.algo.reversible.ReversiblePointer
  *  @author Pierre Schaus
  */
 
-class IntervalDomain(domain: ReversiblePointer[CPIntDomain], val minValue: Int, val maxValue: Int) extends CPIntDomain {
+class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, val maxValue: Int) extends IntDomain {
   
   private val _maxValue = if (maxValue - minValue - 1 < Int.MaxValue) maxValue 
   else sys.error("the domain contains more than Int.MaxValue values")
@@ -53,7 +53,7 @@ class IntervalDomain(domain: ReversiblePointer[CPIntDomain], val minValue: Int, 
     else value
   }
   
-  def removeValue(value: Int): CPOutcome = {
+  override def removeValue(value: Int): CPOutcome = {
     if (value == _min.value) updateMin(value+1)
     else if (value == _max.value) updateMax(value-1)
     else if (value > _min.value && value < _max.value) {
@@ -68,12 +68,7 @@ class IntervalDomain(domain: ReversiblePointer[CPIntDomain], val minValue: Int, 
     assert(isEmpty)
     value <= _max.value && value >= _min.value
   }
-  
-  def hasInside(value: Int): Boolean = {
-    assert(isEmpty)
-    value < _max.value && value > _min.value
-  }
-  
+
   override def iterator: Iterator[Int] = (_min.value to _max.value).iterator
   
   override def updateMax(value: Int): CPOutcome = {

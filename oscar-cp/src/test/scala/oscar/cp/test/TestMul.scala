@@ -236,10 +236,7 @@ class TestMul extends FunSuite with ShouldMatchers {
     val x = CPIntVar(6, 43986624)
     val y = CPIntVar(4, 355)
     var z = CPIntVar(711, 711)
-    //s.post(new MulVar(x, y, z))
-    System.out.println("hello")
     z = x.mul(y)
-    System.out.println("z:" + z)
     s.post(new Eq(z, CPIntVar(711))) // should detect it is a square constraint
     assert(!s.isFailed())
 

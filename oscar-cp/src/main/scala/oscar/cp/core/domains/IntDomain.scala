@@ -4,7 +4,7 @@ import oscar.cp.core.CPOutcome
 
 /** @author Renaud Hartert */
 
-abstract class CPIntDomain extends Iterable[Int] {
+abstract class IntDomain extends Iterable[Int] {
   
   def size: Int
 

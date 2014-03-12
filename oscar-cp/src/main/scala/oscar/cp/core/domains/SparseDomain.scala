@@ -9,7 +9,7 @@ import oscar.cp.core.CPOutcome
  *  @author Renaud Hartert 
  *  @author Pierre Schaus
  */
-class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) extends CPIntDomain {
+class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntDomain {
 
   private val offset = minValue
 
@@ -22,13 +22,13 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
 
   override def size: Int = _size.value
 
-  def min: Int = {
+  override def min: Int = {
     val v = _min.value
     if (hasValue(v)) v
     else updateMinValue()
   }
 
-  def max: Int = {    
+  override def max: Int = {    
     val v = _max.value
     if (hasValue(v)) v
     else updateMaxValue()
@@ -39,13 +39,14 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     v <= offset + values.size - 1
   }
 
-  def hasValue(v: Int): Boolean = {
+  override def hasValue(v: Int): Boolean = {
     if (v < offset || v >= offset + indexes.size) false
     else indexes(v - offset) < _size.value
   }
 
   override def isEmpty = _size.value == 0
 
+  @inline
   private def exchangePositions(val1: Int, val2: Int): Unit = {
     assert(checkVal(val1))
     assert(checkVal(val2))
@@ -102,25 +103,25 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     }
   }
 
-  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+  override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
     (oldMin until minValue).iterator ++ delta(oldSize) ++ (maxValue + 1 to oldMax).iterator
   }
 
-  def delta(oldSize: Int): Iterator[Int] = {
+  private def delta(oldSize: Int): Iterator[Int] = {
     var ind = size
     new Iterator[Int] {
-      def next(): Int = {
+      override def next(): Int = {
         val v = values(ind)
         ind += 1
         v + offset
       }
-      def hasNext: Boolean = {
+      override def hasNext: Boolean = {
         ind < oldSize && ind < values.size
       }
     }
   }
   
-  def removeValue(v: Int): CPOutcome = {  
+  override def removeValue(v: Int): CPOutcome = {  
     assert(checkVal(v))
     if (!hasValue(v)) Suspend
     else {
@@ -136,7 +137,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
    * @param value
    * @return smallest value in the domain >= value, value-1 is returned if no such value
    */
-  def nextValue(v: Int): Int = {
+  override def nextValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
 
@@ -154,7 +155,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
    * @param value
    * @return largest value in the domain <= value, value+1 is returned if no such value
    */
-  def prevValue(v: Int): Int = {
+  override def prevValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
 
@@ -168,7 +169,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     v + 1
   }
 
-  def assign(v: Int): CPOutcome = {
+  override def assign(v: Int): CPOutcome = {
     // we only have to put in first position this value and set the size to 1
     assert(checkVal(v));
 
@@ -187,7 +188,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     }
   }
 
-  def updateMin(minv: Int): CPOutcome = {
+  override def updateMin(minv: Int): CPOutcome = {
     assert(checkVal(minv))
     assert(!isEmpty)
 
@@ -212,7 +213,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     }
   }
   
-  def updateMax(maxv: Int): CPOutcome = {
+  override def updateMax(maxv: Int): CPOutcome = {
     assert(checkVal(maxv))
     assert(!isEmpty)
     
