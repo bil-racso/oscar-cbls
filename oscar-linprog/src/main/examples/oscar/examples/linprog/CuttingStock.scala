@@ -23,7 +23,7 @@ import oscar.algebra._
  */
 object CuttingStock extends App {
 
-   implicit val lp = LPSolver() 
+  implicit val lp = LPSolver() 
     
   class Column(val x: LPFloatVar, val pattern: Array[Int]) {
     override def toString(): String = {
@@ -73,7 +73,6 @@ object CuttingStock extends App {
     val x = lp.addColumn(1, constraints, newPattern.map(_.value.get)) //create a new variable by introducing a new column
     objective = mip.objectiveValue.get
     C = C :+ new Column(x, newPattern.map(_.value.get.toInt))
-    objective = lp.objectiveValue.get
     println("master obj:" + lp.objectiveValue)
     
   } while (objective < 0)
