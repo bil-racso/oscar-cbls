@@ -81,17 +81,16 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
    * @return a list of all pairs of element made from the elements in l
    */
   def makeAllUnsortedPairs(l:List[Int]):List[(Int,Int)] = {
-
-    l match{
-      case nil => List.empty
-      case head :: tail => makeAllUnsortedPairsWithHead(head,tail,makeAllUnsortedPairs(tail))
-    }
-
     def makeAllUnsortedPairsWithHead(head:Int, tail:List[Int], toAppend:List[(Int,Int)]):List[(Int,Int)] = {
       tail match{
         case other :: newTail => makeAllUnsortedPairsWithHead(head, newTail, (head,other) :: toAppend)
         case Nil => toAppend
       }
+    }
+
+    l match{
+      case Nil => List.empty
+      case head :: tail => makeAllUnsortedPairsWithHead(head,tail,makeAllUnsortedPairs(tail))
     }
   }
 
