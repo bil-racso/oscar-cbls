@@ -114,7 +114,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     r.notifyUsedBy(this, amount)
   }
 
-  def maxDuration = planning.maxduration
+  def maxDuration = planning.maxDuration
 
   var earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
       "esd(" + name + ")")
@@ -170,7 +170,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
         "succeeding_activities_of_" + name)
 
       latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
-          planning.maxduration)
+          planning.maxDuration)
     }
   }
 }

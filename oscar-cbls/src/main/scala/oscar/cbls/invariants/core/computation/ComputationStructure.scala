@@ -840,7 +840,7 @@ object CBLSIntVar{
     new CBLSIntVar(model, domain, value, name)
   }
 
-  def apply(model: Store, value:Int = 0, name:String) = {
+  def apply(model: Store, value:Int = 0, name:String = "") = {
     val domain = Int.MinValue to Int.MaxValue
     new CBLSIntVar(model, domain, value, name)
   }
@@ -1033,6 +1033,7 @@ class CBLSSetVar(override val model:Store,
 
   /**Use this to specify that the IntSetVar is the output of the IntSetInvariant*/
   def <==(i:SetInvariant){i.setOutputVar(this)}
+  def <==(i: CBLSSetVar) {this <== IdentitySet(i)}
 
   /**We suppose that the new value is not the same as the actual value.
     * otherwise, there is a huge waste of time.
@@ -1050,7 +1051,7 @@ object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
   
-  def apply(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
+  def apply(r:Range = Int.MinValue to Int.MaxValue, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
     new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
   }

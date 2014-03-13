@@ -30,10 +30,10 @@ import oscar.cbls.modeling.Algebra._
 
 /**
  * @param model
- * @param maxduration
+ * @param maxDuration is the full duration considered here. The engine will crash if it needs to put an activity after this date
  * @author renaud.delandtsheer@cetic.be
  */
-class Planning(val model: Store, val maxduration: Int) {
+class Planning(val model: Store, val maxDuration: Int) {
 
   var isClosed = false
 
@@ -60,7 +60,7 @@ class Planning(val model: Store, val maxduration: Int) {
   var earliestEndDates: Array[CBLSIntVar] = null
   var latestStartDates: Array[CBLSIntVar] = null
 
-  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxduration, 0, "makeSpan")
+  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxDuration, 0, "makeSpan")
   var earliestOvershotResources: CBLSSetVar = null
   var worseOvershotResource: CBLSSetVar = null
 
@@ -79,7 +79,7 @@ class Planning(val model: Store, val maxduration: Int) {
     isClosed = true
     val activitiesNoSentinel = activities
     sentinelActivity = new Activity(0, this, "sentinelActivity")
-    sentinelActivity.latestEndDate := maxduration
+    sentinelActivity.latestEndDate := maxDuration
 
     for (a <- activitiesNoSentinel) {
       sentinelActivity.addStaticPredecessor(a)

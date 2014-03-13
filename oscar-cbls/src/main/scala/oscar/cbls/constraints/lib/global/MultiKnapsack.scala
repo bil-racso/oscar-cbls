@@ -52,16 +52,16 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
 
   finishInitialization()
 
-  val bincontents:Array[CBLSSetVar] = Cluster.MakeDense(items).clusters
-  val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
+  private val bincontents:Array[CBLSSetVar] = Cluster.MakeDense(items).clusters
+  private val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
 
-  val binviolations:Array[CBLSIntVar] = (
+  private val binviolations:Array[CBLSIntVar] = (
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
-  val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval))
+  private val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval))
 
-  val Violation:CBLSIntVar = Sum(binviolations).toIntVar
+  private val Violation:CBLSIntVar = Sum(binviolations).toIntVar
 
   val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
     var acc = SortedMap.empty[CBLSIntVar,CBLSIntVar]
@@ -87,6 +87,9 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
     assert(tmp != null)
     tmp
   }
+
+  def violationOfBin(binNumber:Int):CBLSIntVar = binviolations(binNumber)
+  def itemsInBin(binNumber:Int) = bincontents(binNumber)
 
   /** To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.

@@ -1,6 +1,10 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.constraints.lib.global.MultiKnapsack
+import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.modeling.Algebra._
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -11,26 +15,82 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
  * We suppose that the bins cover the full history that is available in the planning.
  *
  */
-class BinPackingResource(planning:Planning, n:String, bins:Int => Iterable[Int]) extends  Resource(planning:Planning, n:String) {
+class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int]) extends  Resource(planning:Planning, n:String) {
 
-  //création des bins et des clusters par jours
-  //on fait un array d'array de bins
+  //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
 
-  val binCLusters:Array[Array[CBLSIntVar]] = Array.tabulate(planning.maxduration)((t:Int) => {
-    val binsT:Iterable[Int] = bins(t)
-    val vars = Array.fill(binsT.size)(((size:Int) => ))
-  null
+  var resourceUsage:List[(Activity,Int)] = null
+
+  var activityBin:Array[CBLSIntVar] = null;
+var activitySize:Array[CBLSIntVar] = null;
+
+  case class Bin(number:Int,
+                 size:Int,
+                 var items:CBLSSetVar = null,
+                 var violation:CBLSIntVar = null)
+
+  case class ResourceAtTime(t:Int,
+                            zeroBin:Bin,
+                            bins:List[Bin],
+                            var overallViolation:CBLSIntVar = null,
+                            var violationNotZero:CBLSIntVar = null)
+
+  private var binCount = 0;
+  private def newBinNumber():Int = {
+    val toReturn = binCount
+    binCount += 1
+    toReturn
+  }
+
+  val resourcesAtAllTimes:Array[ResourceAtTime] = Array.tabulate(planning.maxDuration)(t => {
+    ResourceAtTime(t,
+      Bin(newBinNumber(),0 /*maxSize*/),
+      bins(t).map((binSize:Int) => Bin(newBinNumber(), binSize)),
+      CBLSIntVar(planning.model, name="overall_violation") ,CBLSIntVar(planning.model, name="violationNotZero"))
   })
 
-  //pour chaque unité de temps, on crée une aux bin, qui contient ce qu'on apporte comme nouvel item
-  //ou ce qu'on voudrait éjecter.
-  //on veut: pour poster la contrainte:
-  //flatbins: tt les bins dans un seul array (le contenu des bins en fait)
-  //flatBinSizes: la taille des bins en un seul array
-  //
-  //t => (list[usage(Activity,UsageLevel,BinNumber,ItemViolation)],bins:List[(size,maxSize)],)
-  //
-  //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
+  def flatBins():Array[Bin] = {
+    val allbins:List[Bin] = resourcesAtAllTimes.map(r => r.zeroBin :: r.bins).flatten.toList
+    val binArray:Array[Bin] = Array.fill(binCount)(null)
+    for(bin <- allbins){
+      binArray(bin.number) = bin
+    }
+    binArray
+  }
+
+  def binSizes(bins:Array[Bin]):Array[Int] = {
+    bins.map(bin => bin.size)
+  }
+  def binViolations(bins:Array[Bin]):Array[CBLSIntVar]
+
+  /** This method is called by the framework before starting the scheduling
+    * put anything that needs to be done after instantiation here
+    */
+  override def close(){
+    val allBins = flatBins()
+
+
+    val sc = ConstraintSystem(planning.model)
+    val mkp = MultiKnapsack(activityBin, activitySize, binSizes(allBins).map((i:Int) => CBLSIntConst(i)))
+    sc.post(mkp)
+
+    for(bin <- allBins){
+      bin.violation = mkp.violationOfBin(bin.number)
+      bin.items = mkp.itemsInBin(bin.number)
+    }
+
+    for(r <- resourcesAtAllTimes){
+      r.violationNotZero = Sum(r.bins.map(bin => bin.violation))
+      r.overallViolation = r.violationNotZero + r.zeroBin.violation
+    }
+  }
+
+
+  def solveNewActivities(tine:Int){
+
+
+
+  }
 
 
   override def toAsciiArt(headerLength: Int): String = ???
@@ -45,13 +105,8 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => Iterable[Int])
     */
   override def worseOverShootTime: Int = ???
 
-
-  /** this method is called by the framework before starting the scheduling
-    * put anything that needs to be done after instantiation here
-    */
-  override def close(): Unit = ???
-
   override val overShoot: CBLSIntVar = _
+
 }
 
 /*

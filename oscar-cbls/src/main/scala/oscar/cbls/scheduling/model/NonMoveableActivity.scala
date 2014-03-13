@@ -55,7 +55,7 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
 
     //This is not correct. but since no task can be put before this one, this is not an issue.
     latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
-      planning.maxduration)
+      planning.maxDuration)
   }
 }
 
