@@ -17,6 +17,9 @@ object ScalarProduct {
   def zero(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = { // the scalar product must be zero
     assert(vars.size == scalars.size)
     
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) == 0
+    
+    /*
     // step 1, take all indices where x_i * a_i is known in advance, and put these in a separate int
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
     val constant = constants.foldLeft(0){ (acc, i) => scalars(i) * vars(i).min }
@@ -41,12 +44,17 @@ object ScalarProduct {
       val negativesSum = if (!negatives.isEmpty) sum(negatives.map(i => vars(i) * -scalars(i))) else CPIntVar(0)
       (positivesSum + constant == negativesSum)
     }
+    * 
+    */
   }
   
   // the scalar product must be nonzero, code is a copypasta of zero
   def nonzero(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
     assert(vars.size == scalars.size)
     
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) != 0
+    
+    /*
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
     val constant = constants.foldLeft(0){ (acc, i) => scalars(i) * vars(i).min }
     
@@ -56,12 +64,16 @@ object ScalarProduct {
     val positivesSum = if (!positives.isEmpty) sum(positives.map(i => vars(i) *  scalars(i))) else CPIntVar(0)
     val negativesSum = if (!negatives.isEmpty) sum(negatives.map(i => vars(i) * -scalars(i))) else CPIntVar(0)
     (positivesSum + constant != negativesSum)
+    */
   }
   
   // the scalar product must be negative or zero, code is a copypasta of zero
   def leq(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
     assert(vars.size == scalars.size)
-    
+
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) <= 0
+
+    /*
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
     val constant = constants.foldLeft(0){ (acc, i) => scalars(i) * vars(i).min }
     
@@ -71,6 +83,8 @@ object ScalarProduct {
     val positivesSum = if (!positives.isEmpty) sum(positives.map(i => vars(i) *  scalars(i))) else CPIntVar(0)
     val negativesSum = if (!negatives.isEmpty) sum(negatives.map(i => vars(i) * -scalars(i))) else CPIntVar(0)
     (positivesSum + constant <= negativesSum)
+    * 
+    */
   }
 
 }
