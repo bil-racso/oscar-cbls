@@ -31,7 +31,6 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
 	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)
 	
 	var i = 0
-	var cpVarIndex = 0
 	var unboundCpVarIndex = -1
 	var index = -1
 	var tau = Array[Int]()
@@ -43,12 +42,12 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
 	  tau = table(index)
 	  
 	  //if is validTuple
-	  cpVarIndex = 0
+	  unboundCpVarIndex = 0
 	  isCurrentTupleValid = true
-	  while (cpVarIndex < arity && isCurrentTupleValid) {
-	    if(!X(cpVarIndex).hasValue(tau(cpVarIndex)))
+	  while (unboundCpVarIndex < unboundVariableIndexes.length && isCurrentTupleValid) {
+	    if(!X(unboundVariableIndexes(unboundCpVarIndex)).hasValue(tau(unboundVariableIndexes(unboundCpVarIndex))))
 	        isCurrentTupleValid = false
-	    cpVarIndex += 1      
+	    unboundCpVarIndex += 1      
 	  }
 	  
 	  if(isCurrentTupleValid) {
