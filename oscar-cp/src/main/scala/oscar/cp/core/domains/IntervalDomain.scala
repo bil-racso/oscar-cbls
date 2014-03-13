@@ -21,6 +21,8 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
   
   override def size: Int = _max - _min + 1
   
+  override def isBound: Boolean = _max.value == _min.value
+  
   override def min: Int = {
 	assert(!isEmpty)
     _min.value
@@ -54,8 +56,8 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
   }
   
   override def removeValue(value: Int): CPOutcome = {
-    if (value == _min.value) updateMin(value+1)
-    else if (value == _max.value) updateMax(value-1)
+    if (value == _min.value) incrMin()
+    else if (value == _max.value) decrMax()
     else if (value > _min.value && value < _max.value) {
       val sparse = new SparseDomain(domain.node, _min.value, _max.value)
       domain.value = sparse
@@ -93,6 +95,22 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
       _min.value = value
       Suspend
     }
+  }
+  
+  @inline
+  private def incrMin(): CPOutcome = {
+    val v = _min.value + 1
+    _min.value = v
+    if (v > _max.value) Failure
+    else Suspend
+  }
+  
+  @inline
+  private def decrMax(): CPOutcome = {
+    val v = _max.value - 1
+    _max.value = v
+    if (v < _min.value) Failure
+    else Suspend
   }
   
   override def assign(value: Int): CPOutcome = {

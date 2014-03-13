@@ -21,6 +21,8 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
   private val indexes = Array.tabulate(size)(i => i)
 
   override def size: Int = _size.value
+  
+  override def isBound: Boolean = _size.value == 1
 
   override def min: Int = {
     val v = _min.value

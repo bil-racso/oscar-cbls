@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
@@ -28,7 +30,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
 
   // Reversible pointer to the domain structure (can change from interval to sparse set) 
   private val domain: ReversiblePointer[IntDomain] = AdaptableIntDomain(st, minimum, maximum)
-  
+
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
@@ -47,7 +49,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    */
   def this(st: CPStore, r: Range) = this(st, r.start, if (r.isInclusive) r.end else r.end - 1)
 
-  def transform(v: Int ) = v
+  def transform(v: Int) = v
 
   def iterator: Iterator[Int] = domain.value.iterator
 
@@ -76,7 +78,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    */
   def isBound: Boolean = {
     assert(!store.isFailed())
-    size == 1
+    domain.value.isBound
   }
 
   /**
@@ -149,8 +151,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
     if (isBound) {
       if (name.isEmpty()) value.toString
       else name + " " + value
-    }
-    else {
+    } else {
       if (name.isEmpty()) domain.value.toString
       else name + " " + domain.value
     }
@@ -282,8 +283,9 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if val was in the domain, Failure otherwise
    */
   def assign(value: Int): CPOutcome = {
-    if (!hasValue(value)) return CPOutcome.Failure
-    else if (isBound) return CPOutcome.Suspend
+    val dom = domain.value
+    if (!dom.hasValue(value)) CPOutcome.Failure
+    else if (dom.isBound) CPOutcome.Suspend
     else { // more than one value
       val assignToMax = max == value
       val assignToMin = min == value
@@ -299,9 +301,9 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
       // must notify AC5 event before the actual removal
       if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-        var i = domain.value.min
-        while (i <= domain.value.max) {
-          if (i != value && domain.value.hasValue(i)) {
+        var i = dom.min
+        while (i <= dom.max) {
+          if (i != value && dom.hasValue(i)) {
             if (onDomainL1.hasValue()) {
               store.notifRemoveL1(onDomainL1.value, this, i)
             }
@@ -313,7 +315,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
         }
       }
       // finally do the assignment
-      return domain.value.assign(value)
+      dom.assign(value)
     }
   }
 
@@ -323,13 +325,13 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   def updateMin(value: Int): CPOutcome = {
-    
+
     val dom = domain.value
 
     if (value > dom.max) return CPOutcome.Failure
-    
+
     val omin = dom.min
-    
+
     if (value <= omin) return CPOutcome.Suspend
 
     //must notif AC5 event with the removed values before the actual removal
@@ -349,8 +351,7 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
     val ok = dom.updateMin(value)
     assert(ok != CPOutcome.Failure)
 
-    if (dom.size == 1) {
-      assert(isBound)
+    if (dom.isBound) {
       store.notifyBindL1(onBindL1.value, this)
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyL2(onBindL2.value)
@@ -368,13 +369,13 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   def updateMax(value: Int): CPOutcome = {
-    
+
     val dom = domain.value
-    
+
     if (value < dom.min) return CPOutcome.Failure
-     
+
     val omax = dom.max
-    
+
     if (value >= omax) return CPOutcome.Suspend
 
     //must notifyAC3 the removed value before the actual removal
@@ -392,10 +393,8 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
     }
 
     val ok = dom.updateMax(value)
-    assert(ok != CPOutcome.Failure)
 
-    if (dom.size == 1) {
-      assert(isBound)
+    if (dom.isBound) {
       store.notifyBindL1(onBindL1.value, this)
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyL2(onBindL2.value)
@@ -413,36 +412,38 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
    * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
    */
   def removeValue(value: Int): CPOutcome = {
-    
+
     val dom = domain.value
-    
+
     val omin = dom.min
     val omax = dom.max
     val minRemoved = dom.min == value
     val maxRemoved = dom.max == value
     val indom = dom.hasValue(value)
 
-    if (!indom) return CPOutcome.Suspend
-
-    val ok = dom.removeValue(value)
-    if (ok == CPOutcome.Failure) return CPOutcome.Failure
-
-    if (minRemoved || maxRemoved) {
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-      store.notifyL2(onBoundsL2.value)
+    if (!indom) CPOutcome.Suspend
+    else {
+      val ok = dom.removeValue(value)
+      if (ok == CPOutcome.Failure) CPOutcome.Failure
+      else {
+        if (minRemoved || maxRemoved) {
+          store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+          store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+          store.notifyL2(onBoundsL2.value)
+        }
+        if (indom) {
+          store.notifRemoveL1(onDomainL1.value, this, value)
+          store.notifyRemoveIdxL1(onDomainIdxL1.value, this, value)
+          store.notifyL2(onDomainL2.value)
+        }
+        if (dom.isBound) {
+          store.notifyBindL1(onBindL1.value, this)
+          store.notifyBindIdxL1(onBindIdxL1.value, this)
+          store.notifyL2(onBindL2.value)
+        }
+        ok
+      }
     }
-    if (indom) {
-      store.notifRemoveL1(onDomainL1.value, this, value)
-      store.notifyRemoveIdxL1(onDomainIdxL1.value, this, value)
-      store.notifyL2(onDomainL2.value)
-    }
-    if (isBound) {
-      store.notifyBindL1(onBindL1.value, this)
-      store.notifyBindIdxL1(onBindIdxL1.value, this)
-      store.notifyL2(onBindL2.value)
-    }
-    return ok
   }
 
   // ----------------------------------

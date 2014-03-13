@@ -9,6 +9,8 @@ abstract class IntDomain extends Iterable[Int] {
   def size: Int
 
   def isEmpty: Boolean
+  
+  def isBound: Boolean 
 
   def max: Int
 
