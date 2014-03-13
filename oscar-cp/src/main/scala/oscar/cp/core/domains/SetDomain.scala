@@ -14,10 +14,12 @@
  ******************************************************************************/
 
 
-package oscar.cp.core
+package oscar.cp.core.domains
 
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSubset
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPStore
 
 
 /**

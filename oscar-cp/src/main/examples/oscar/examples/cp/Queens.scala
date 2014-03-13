@@ -13,8 +13,8 @@ import oscar.cp.core._
  */
 object Queens extends CPModel with App {
 
-  val nQueens = 12 // Number of queens
-  val Queens = 0 until nQueens
+  val nQueens = 1000 // Number of queens
+  val Queens  = 0 until nQueens
 
   // Variables
   val queens = Array.fill(nQueens)(CPIntVar(Queens))
@@ -23,12 +23,16 @@ object Queens extends CPModel with App {
   add(allDifferent(queens))
   add(allDifferent(Queens.map(i => queens(i) + i)))
   add(allDifferent(Queens.map(i => queens(i) - i)))
+  
+  val array = Array.tabulate(10)(i => i)
+  
+  val c = array(queens(0))
 
   // Search heuristic
   search(binaryFirstFail(queens))
   
   // Execution
-  val stats = start(nSols = 3)
+  val stats = start(nSols = 1)
 
   println(stats)
 }
