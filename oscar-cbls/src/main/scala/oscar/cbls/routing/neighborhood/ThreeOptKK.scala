@@ -54,48 +54,49 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
       assert(vrp.isRouted(insertionPoint),
         "ThreeOpt should be applied to routed nodes only.")
 
+      require(vrp.isRecording, "VRP should be recording")
+
       val otherNodes:List[List[Int]] = s.relevantNeighbors(insertionPoint)
-        .filter(vrp.isRouted)
+        .filter((neighbor:Int) => vrp.isRouted(neighbor) && neighbor != insertionPoint)
         .groupBy(vrp.routeNr(_).value)
         .toList
         .map(_._2.toList)
 
-      case class MoveException(m:SearchResult) extends Exception
+      for(nodeList <- otherNodes){
+        for((a,b) <- makeAllUnsortedPairs(nodeList)){
+          val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
 
-      try{
-        for(nodeList <- otherNodes){
-          exploreNodeList(nodeList)
-        }
-      }catch {
-        case x:MoveException => return x.m
-      }
-
-      def exploreNodeList(nodeList:List[Int]){
-        nodeList match{
-          case head :: tail => exploreTail(head,tail) ; exploreNodeList(tail)
-          case _ => ;
-        }
-      }
-
-      def exploreTail(head:Int, tail:List[Int]){
-        tail match{
-          case other :: newtail => explore(head,other) ; exploreTail(head,newtail)
-          case _ => ;
+          if(!vrp.isBetween(insertionPoint, first, second)
+            && !(vrp.next(insertionPoint).value == first)){
+            //println("searching for best 3-opt insertionPoint:" + insertionPoint + " first:" + first + "second: " + second)
+            ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
+              startObj, returnMove, moveAcceptor, vrp) match {
+              case m:NoMoveFound => ()
+              case result:SearchResult => return result
+            }
+          }
         }
       }
-
-      def explore(a:Int,b:Int){
-        val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
-        if(vrp.isBetween(insertionPoint, first, second)) return
-        ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
-          startObj, returnMove, moveAcceptor, vrp) match {
-          case m:NoMoveFound => ()
-          case result:SearchResult => throw new MoveException(result)
-        }
-      }
-
-    } //end while
+    }//end while
     NoMoveFound()
+  }
+
+  /**
+   * @param l a list
+   * @return a list of all pairs of element made from the elements in l
+   */
+  def makeAllUnsortedPairs(l:List[Int]):List[(Int,Int)] = {
+    def makeAllUnsortedPairsWithHead(head:Int, tail:List[Int], toAppend:List[(Int,Int)]):List[(Int,Int)] = {
+      tail match{
+        case other :: newTail => makeAllUnsortedPairsWithHead(head, newTail, (head,other) :: toAppend)
+        case Nil => toAppend
+      }
+    }
+
+    l match{
+      case Nil => List.empty
+      case head :: tail => makeAllUnsortedPairsWithHead(head,tail,makeAllUnsortedPairs(tail))
+    }
   }
 
   override def toString: String = "3-optKK"

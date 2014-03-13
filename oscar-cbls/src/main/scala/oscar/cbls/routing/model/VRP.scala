@@ -188,11 +188,13 @@ trait HotSpotRecording extends VRP with MoveDescription {
 trait MoveDescription extends VRP {
   private var Recording = true //recording ou comitted
   def isRecording = Recording
+  def noMoveRecorded = affects.isEmpty
 
   protected var affects: List[Affect] = List.empty
 
   protected def addMove(affect: Affect) {
     require(Recording)
+    //println("addMove: " + affect)
     affects = affect :: affects
   }
 
@@ -249,6 +251,7 @@ trait MoveDescription extends VRP {
   }
 
   def reverse(s: Segment): Segment = {
+    //println("reversing " + s)
     var prev = s.start
     var current: Int = next(prev).value
     while (prev != s.end) {
@@ -256,10 +259,12 @@ trait MoveDescription extends VRP {
       prev = current
       current = next(current).value
     }
+    //println("done")
     Segment(s.end, s.start)
   }
 
   def insert(s: Segment, node: Int) {
+    //println("inserting " + s + " after node " + node)
     addMove(affectFromVariable(s.end, node))
     addMove(affectFromConst(node, s.start))
   }
@@ -490,11 +495,11 @@ abstract trait ClosestNeighbors extends VRP {
    */
   def computeKNearestNeighbors(node: Int, k: Int, filter: (Int => Boolean) = (_ => true)): List[Int] = {
 
-    val reachableneigbors = nodes.filter((next: Int) => node != next && filter(next) && (getDistance(node, next) != Int.MaxValue || getDistance(next, node) != Int.MaxValue))
+    val reachableNeigbors = nodes.filter((next: Int) => node != next && filter(next) && (getDistance(node, next) != Int.MaxValue || getDistance(next, node) != Int.MaxValue))
 
     val heap = new BinomialHeap[(Int, Int)](-_._2, k + 1)
 
-    for (neigbor <- reachableneigbors) {
+    for (neigbor <- reachableNeigbors) {
       heap.insert(neigbor, min(getDistance(neigbor, node), getDistance(node, neigbor)))
       if (heap.size > k) heap.popFirst()
     }
@@ -738,8 +743,6 @@ trait Predecessors extends VRP {
    * the data structure array which maintains the predecessors of each node.
    */
   val preds: Array[CBLSIntVar] = Predecessor(next, V).preds
-
-  //TODO: ajouter des moves plus simples, sans les neouds sprécédesseurs à chaque fois
 }
 
 /**
@@ -754,6 +757,28 @@ trait StrongConstraints extends VRPObjective {
 
   override def getObjective(): Int =
     (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
+}
+
+/**
+ * This trait maintains an additional strong constraints system.
+ * the e purpose is that this constraint system will be tested first for
+ * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value if this additonal constraint system is not violated
+ * the proper way to use it in order to get a speedup is to put the constraints
+ * that can be checked quickly in the strongConstraintsFast
+ * and to keep all the other ones in the strongCon.
+ *
+ * @author renaud.delandtsheer@cetic.be
+ */
+trait StrongConstraintsFast extends StrongConstraints {
+  /**
+   * the strong constraints system that is evaluated first.
+   * put all the constraint that are cheap to evaluate here,
+   * as this will be checked first, before the strongConstraints is checked, if necessary
+   */
+  var strongConstraintsFast = ConstraintSystem(m)
+
+  override def getObjective(): Int =
+    (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
 }
 
 /**

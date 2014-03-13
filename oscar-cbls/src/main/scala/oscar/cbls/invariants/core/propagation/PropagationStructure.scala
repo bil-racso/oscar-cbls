@@ -599,13 +599,9 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
   }
 
-  def newWaitingDependency(from:PropagationElement, to:PropagationElement){
-    newDependenciesToInject = WaitingDependency(from,to) :: newDependenciesToInject
-  }
-
   def addDependency(from:PropagationElement, to:PropagationElement){
     if(autoSort){
-      newWaitingDependency(from:PropagationElement, to:PropagationElement)
+      newDependenciesToInject = WaitingDependency(from,to) :: newDependenciesToInject
     }
   }
 
@@ -617,7 +613,7 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def dependencyAdded(){
     if(autoSort){
       val waiting = newDependenciesToInject.head
-      if(waiting.from.Position > waiting.to.Position){
+      if(waiting.from.Position < waiting.to.Position){
         waiting.inject1
         waiting.inject2
         notifyAddEdge(waiting.from,waiting.to)
@@ -872,7 +868,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
 
   /**
    * unregisters an element in the dynamic propagation graph.
-   * @param p the key that was given when the eement was registered in the dynamic propagation graph
+   * @param p the key that was given when the element was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
     DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)

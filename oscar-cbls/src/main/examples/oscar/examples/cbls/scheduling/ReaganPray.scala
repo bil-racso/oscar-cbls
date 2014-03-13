@@ -74,10 +74,10 @@ object ReaganPray extends App {
   model.close(false)
 
 
-  solver.Solve(MaxIt = 100,
-            Stable = 50,
-            NbRelax = 5,
-            PkillPerRelax = 10,
+  solver.Solve(maxIt = 100,
+            stable = 50,
+            nbRelax = 5,
+            pkillPerRelax = 10,
             tenure = 5,
             jumpAfterPlateau = 7)
 
