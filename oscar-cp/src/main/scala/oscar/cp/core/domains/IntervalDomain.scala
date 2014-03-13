@@ -67,7 +67,7 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
   }
   
   override def hasValue(value: Int) = {
-    assert(isEmpty)
+    assert(!isEmpty)
     value <= _max.value && value >= _min.value
   }
 
