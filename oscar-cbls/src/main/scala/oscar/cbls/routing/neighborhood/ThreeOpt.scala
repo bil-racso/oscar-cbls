@@ -242,7 +242,7 @@ case class ThreeOpt(beforeStart: Int, segEndPoint: Int, insertionPoint: Int,
 
   override def toString: String =
     ("TreeOpt(point before segment start = " + beforeStart
-      + ", segment start point = " + segEndPoint
+      + ", segment end point = " + segEndPoint
       + ", insertion point = " + insertionPoint
       + ", reverse segment = " + reverseSegment + ")")
 }

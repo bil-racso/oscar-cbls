@@ -54,8 +54,10 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
       assert(vrp.isRouted(insertionPoint),
         "ThreeOpt should be applied to routed nodes only.")
 
+      require(vrp.isRecording, "VRP should be recording")
+
       val otherNodes:List[List[Int]] = s.relevantNeighbors(insertionPoint)
-        .filter(vrp.isRouted)
+        .filter((neighbor:Int) => vrp.isRouted(neighbor) && neighbor != insertionPoint)
         .groupBy(vrp.routeNr(_).value)
         .toList
         .map(_._2.toList)
@@ -63,7 +65,10 @@ object ThreeOptKK extends Neighborhood with SearchEngineTrait {
       for(nodeList <- otherNodes){
         for((a,b) <- makeAllUnsortedPairs(nodeList)){
           val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
-          if(!vrp.isBetween(insertionPoint, first, second) && !(vrp.next(insertionPoint).value == first)){
+
+          if(!vrp.isBetween(insertionPoint, first, second)
+            && !(vrp.next(insertionPoint).value == first)){
+            //println("searching for best 3-opt insertionPoint:" + insertionPoint + " first:" + first + "second: " + second)
             ThreeOpt.chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint,
               startObj, returnMove, moveAcceptor, vrp) match {
               case m:NoMoveFound => ()
