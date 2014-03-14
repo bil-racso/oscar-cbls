@@ -52,17 +52,33 @@ case class Store(override val verbose:Boolean = false,
 
   def isClosed = Closed
 
+  private var inputVariables:List[Variable] = null;
+
+  private def filterInputVariables(){
+    inputVariables = List.empty
+    for (v:Variable <- Variables if v.getDefiningInvariant == null){
+      inputVariables = v :: inputVariables
+    }
+  }
+
   /**To save the current value of the variables registered in the model
-    * @param OnlyPrimitive if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
+    * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
-  def solution(OnlyPrimitive:Boolean = true):Solution = {
+  def solution(inputOnly:Boolean = true):Solution = {
     var assignationInt:SortedMap[CBLSIntVar,Int] = SortedMap.empty
     var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
-    for (v:Variable <- Variables if !OnlyPrimitive || v.getDefiningInvariant == null){
-      if(v.isInstanceOf[CBLSIntVar]){
-        assignationInt += ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].value))
-      }else if(v.isInstanceOf[CBLSSetVar]){
-        assignationIntSet += ((v.asInstanceOf[CBLSSetVar], v.asInstanceOf[CBLSSetVar].value))
+
+    val VariablesToSave = if(inputOnly) {
+      if(inputVariables == null) filterInputVariables()
+      inputVariables
+    }else Variables
+
+    for (v:Variable <- VariablesToSave){
+      v match {
+        case i:CBLSIntVar =>
+          assignationInt += ((i, i.value))
+        case s:CBLSSetVar =>
+          assignationIntSet += ((s, s.value))
       }
     }
     Solution(assignationInt,assignationIntSet,this)
