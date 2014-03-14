@@ -54,13 +54,6 @@ case class Store(override val verbose:Boolean = false,
 
   private var inputVariables:List[Variable] = null;
 
-  private def filterInputVariables(){
-    inputVariables = List.empty
-    for (v:Variable <- Variables if v.getDefiningInvariant == null){
-      inputVariables = v :: inputVariables
-    }
-  }
-
   /**To save the current value of the variables registered in the model
     * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
@@ -69,7 +62,12 @@ case class Store(override val verbose:Boolean = false,
     var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
 
     val VariablesToSave = if(inputOnly) {
-      if(inputVariables == null) filterInputVariables()
+      if(inputVariables == null){
+        inputVariables  = List.empty
+        for (v:Variable <- Variables if v.getDefiningInvariant == null){
+          inputVariables = v :: inputVariables
+        }
+      }
       inputVariables
     }else Variables
 
@@ -1065,7 +1063,7 @@ class CBLSSetVar(override val model:Store,
 object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
-  
+
   def apply(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
     new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
