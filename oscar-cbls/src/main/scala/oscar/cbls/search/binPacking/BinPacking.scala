@@ -17,6 +17,7 @@ package oscar.cbls.search.binPacking
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.moves.Neighborhood
 
 case class Item(number:Int,
                 size:Int,
@@ -31,7 +32,8 @@ object BinPackingSolver extends SearchEngineTrait{
   def solveBinPacking(items:Map[Int,Item], bins: Map[Int,Bin], overallViolation:Objective, mostViolatedBins:CBLSSetVar, maxStep:Int) = {
     val swapNB = new SwapItemsNeighborhood(items, bins, overallViolation, mostViolatedBins)
     val moveNB = new ItemMoveNeighborhood(items, bins, overallViolation, mostViolatedBins)
-    val compose = moveNB exhaustBack swapNB
+
+    val compose:Neighborhood = moveNB exhaustBack swapNB
 
     var remainingIt = maxStep;
     while(remainingIt < 0 && compose.doFirstImprovingMove()){

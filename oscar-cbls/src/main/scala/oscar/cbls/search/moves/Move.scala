@@ -26,7 +26,7 @@ class Random(a:Neighborhood, b:Neighborhood) extends Neighborhood{
       val current = if(currentIsA) a else b
       current.getFirstImprovingMove() match{
         case None => currentIsA = !currentIsA ; if (canDoMore) search(false) else None
-        case s:Some => s
+        case Some(x) => Some(x)
       }
     }
     search(true)
@@ -70,7 +70,7 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends Neighborhood{
       val current = if(currentIsA) a else b
       current.getFirstImprovingMove() match{
         case None => if(currentIsA){currentIsA = false; search()} else None
-        case s:Some => s
+        case Some(x) => Some(x)
       }
     }
     search()
@@ -88,10 +88,44 @@ class ExhaustBack(a:Neighborhood, b:Neighborhood) extends Neighborhood{
       val current = if(currentIsA) a else b
       current.getFirstImprovingMove() match{
         case None => currentIsA = !currentIsA ; if (canDoMore) search(false) else None
-        case s:Some => s
+        case Some(x) => Some(x)
       }
     }
     search(true)
+  }
+}
+
+/**this composer is stateless, it checks the condition on every invocation. If the condition is false,
+  * it does not try the Neighborhood and finds no move.
+  * */
+class Conditional(c:()=>Boolean, b:Neighborhood) extends Neighborhood{
+  override def getFirstImprovingMove(): Option[Move] = {
+    if(c()) b.getFirstImprovingMove()
+    else None
+  }
+}
+
+/**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
+  * and swaps neighborhood after "step" invocations
+  * */
+class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends Neighborhood{
+  var currentStep:Int = steps
+  override def getFirstImprovingMove(): Option[Move] = {
+    if(currentStep >0){
+      currentStep -= 1
+      if(currentStep == 0) currentStep = -steps
+      a.getFirstImprovingMove() match{
+        case None => currentStep = - steps; b.getFirstImprovingMove()
+        case Some(x) => Some(x)
+      }
+    }else{
+      currentStep += 1
+      if(currentStep == 0) currentStep = steps
+      b.getFirstImprovingMove() match{
+        case None => currentStep = steps; a.getFirstImprovingMove()
+        case Some(x) => Some(x)
+      }
+    }
   }
 }
 
@@ -110,6 +144,8 @@ abstract class Neighborhood{
   def andThen(b:Neighborhood):Neighborhood = new AndThen(this,b)
   def best(b:Neighborhood):Neighborhood = new Best(this,b)
   def random(b:Neighborhood):Neighborhood = new Random(this,b)
+  def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
+  //TODO roundRobin
 }
 
 abstract class Move(val objAfter:Int){

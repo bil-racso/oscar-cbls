@@ -88,24 +88,22 @@ var activitySize:Array[CBLSIntVar] = null;
 
   def solveNewActivities(tine:Int){
 
-
-
   }
 
 
-  override def toAsciiArt(headerLength: Int): String = ???
+  override def toAsciiArt(headerLength: Int): String = null
 
   /** you need to eject one of these to solve the conflict
     * this can be null if the problem is actually solved in between, or if the problem cannot be solved */
-  override def conflictingActivities(t: Int): Iterable[Activity] = ???
+  override def conflictingActivities(t: Int): Iterable[Activity] = null
 
   /** the first violation of the resource in time
     *
     * @return
     */
-  override def worseOverShootTime: Int = ???
+  override def worseOverShootTime: Int = 1
 
-  override val overShoot: CBLSIntVar = _
+  override val overShoot: CBLSIntVar = null
 
 }
 
