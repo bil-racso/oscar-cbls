@@ -17,6 +17,7 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   val arity = X.length
   val variablesIndexes = 0 until X.length
   val isBoundAndChecked = Array.fill(arity)(new ReversibleBool(s,false))
+  val notGACValues = Array.fill(arity)(HashSet[Int]())
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     idempotent = true
@@ -26,11 +27,17 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   }
   
   override def propagate(): CPOutcome = {
-	val notGACValues = Array.tabulate(arity)(i => HashSet[Int](X(i).iterator.toArray :_*))
+	
+    var i = 0
+    while(i < arity) {
+      notGACValues(i).clear 
+      notGACValues(i) ++= X(i)
+      i += 1
+    }
 			
 	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)
 	
-	var i = 0
+	i = 0
 	var unboundCpVarIndex = -1
 	var index = -1
 	var tau = Array[Int]()

@@ -17,6 +17,7 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
   val arity = X.length
   val variablesIndexes = 0 until X.length
   val isBoundAndChecked = Array.fill(arity)(new ReversibleBool(s,false))
+  val notGACValues = Array.fill(arity)(HashSet[Int]())
   
   val lastSize = Array.tabulate(X.length)(i=>new ReversibleInt(s,-1)) //last size must be initially different from the domain size
   
@@ -28,7 +29,12 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
   }
   
   override def propagate(): CPOutcome = {
-	val notGACValues = Array.tabulate(arity)(i => HashSet[Int](X(i).iterator.toArray :_*))
+	var i = 0
+    while(i < arity) {
+      notGACValues(i).clear 
+      notGACValues(i) ++= X(i)
+      i += 1
+    }
 			
 	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)
 	val isInS_Sup = Array.fill(unboundVariableIndexes.length)(true) //true if there exist at least one value in the domain for which no support has been found yet
@@ -38,7 +44,7 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
 	  inS_SVal
 	} //true if the domain of the variable changed during last execution of TableSTR2
 	
-	var i = 0
+	i = 0
 	var unboundCpVarIndex = -1
 	var index = -1
 	var tau = Array[Int]()
@@ -89,8 +95,8 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
 	      }
 	    if(X(unboundVariableIndexes(unboundCpVarIndex)).isBound)
 	      isBoundAndChecked(unboundVariableIndexes(unboundCpVarIndex)).setValue(true)
+	    lastSize(unboundCpVarIndex).setValue(X(unboundVariableIndexes(unboundCpVarIndex)).size)
 	  }
-	  lastSize(unboundCpVarIndex).setValue(X(unboundVariableIndexes(unboundCpVarIndex)).size)
 	  unboundCpVarIndex += 1
     }
 	 
