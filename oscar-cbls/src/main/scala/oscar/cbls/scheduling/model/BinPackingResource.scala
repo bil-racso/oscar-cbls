@@ -5,6 +5,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.binPacking.Bin
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -24,10 +25,6 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int]) ext
   var activityBin:Array[CBLSIntVar] = null;
 var activitySize:Array[CBLSIntVar] = null;
 
-  case class Bin(number:Int,
-                 size:Int,
-                 var items:CBLSSetVar = null,
-                 var violation:CBLSIntVar = null)
 
   case class ResourceAtTime(t:Int,
                             zeroBin:Bin,

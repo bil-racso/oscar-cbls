@@ -77,6 +77,12 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends Neighborhood{
   }
 }
 
+/** a neighborhood that never finds any move
+  */
+class NoMove extends Neighborhood{
+  override def getFirstImprovingMove(): Option[Move] = None
+}
+
 /**this composer is stateful.
   * it returns the result of one Neighborhood until it returns none. It then switches to the other Neighborhood.
   * it starts with Neighborhood a
@@ -92,6 +98,15 @@ class ExhaustBack(a:Neighborhood, b:Neighborhood) extends Neighborhood{
       }
     }
     search(true)
+  }
+}
+
+class BoundMove(a:Neighborhood, var maxMove:Int) extends Neighborhood{
+  override def getFirstImprovingMove(): Option[Move] = {
+    if(maxMove >0){
+      maxMove -= 1
+      a.getFirstImprovingMove()
+    }else None
   }
 }
 
@@ -129,6 +144,13 @@ class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends Neighbor
   }
 }
 
+class RoundRobinNoParam(val a:Neighborhood,val b:Neighborhood){
+  def step(s:Int):Neighborhood = new RoundRobin(a,b,s)
+}
+
+object RoundRobinNoParam{
+  implicit def toNeighBorHood(rr:RoundRobinNoParam):Neighborhood = new RoundRobin(rr.a,rr.b,1)
+}
 
 abstract class Neighborhood{
   def getFirstImprovingMove():Option[Move]
@@ -145,7 +167,7 @@ abstract class Neighborhood{
   def best(b:Neighborhood):Neighborhood = new Best(this,b)
   def random(b:Neighborhood):Neighborhood = new Random(this,b)
   def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
-  //TODO roundRobin
+  def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
 }
 
 abstract class Move(val objAfter:Int){

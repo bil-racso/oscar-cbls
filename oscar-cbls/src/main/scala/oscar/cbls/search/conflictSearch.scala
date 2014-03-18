@@ -23,6 +23,7 @@ package oscar.cbls.search
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.search.moves.{Move, Neighborhood}
 
 /**generic search procedure
   * selects most violated variable, and assigns value that minimizes overall violation
@@ -49,4 +50,42 @@ object conflictSearch extends SearchEngine{
       it = it + 1
     }
   }
+}
+
+
+class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
+  val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
+  val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
+  override def getFirstImprovingMove(): Option[Move] = {
+    val oldObj = c.ObjectiveVar.value
+    val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
+    val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int))
+
+    val objAfter = c.assignVal(Variables(MaxViolVarID),NewVal)
+
+    if(objAfter < oldObj){
+      Some(new AssingMove(Variables(MaxViolVarID),NewVal,objAfter))
+    }else{
+      None
+    }
+  }
+}
+
+class conflictMoveFirstImprove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
+  val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
+  val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
+  override def getFirstImprovingMove(): Option[Move] = {
+    val oldObj = c.ObjectiveVar.value
+    val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
+    selectFirstDo(Variables(MaxViolVarID).domain,(newVal:Int) => c.assignVal(Variables(MaxViolVarID),newVal) < oldObj)(
+    (newVal:Int) => {
+      val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
+      return Some(new AssingMove(Variables(MaxViolVarID),newVal,objAfter))}
+    ,{ null })
+    None
+  }
+}
+
+class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
+  override def comit() {i := v}
 }
