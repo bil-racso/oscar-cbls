@@ -46,7 +46,7 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
 
     additionalPredecessors = SortedSet.empty[Int]
     allPrecedingActivities = SortedSet.empty[Int]
-    earliestStartDate := startDate
+    earliestStartDate <== startDate
     definingPredecessors = SortedSet.empty[Int]
     potentiallyKilledPredecessors = SortedSet.empty[Int]
 
