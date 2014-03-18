@@ -23,7 +23,7 @@ package oscar.cbls.search
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.search.moves.{Move, Neighborhood}
+import oscar.cbls.search.moves.{AssingMove, Move, Neighborhood}
 
 /**generic search procedure
   * selects most violated variable, and assigns value that minimizes overall violation
@@ -52,7 +52,6 @@ object conflictSearch extends SearchEngine{
   }
 }
 
-
 class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
@@ -77,15 +76,14 @@ class conflictMoveFirstImprove(c:ConstraintSystem) extends Neighborhood with Sea
   override def getFirstImprovingMove(): Option[Move] = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
-    selectFirstDo(Variables(MaxViolVarID).domain,(newVal:Int) => c.assignVal(Variables(MaxViolVarID),newVal) < oldObj)(
-    (newVal:Int) => {
-      val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
-      return Some(new AssingMove(Variables(MaxViolVarID),newVal,objAfter))}
-    ,{ null })
-    None
+
+    val newVal = selectFirst(Variables(MaxViolVarID).domain, (newVal:Int) => c.assignVal(Variables(MaxViolVarID),newVal) < oldObj)
+    val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
+
+    if(objAfter < oldObj)
+      Some(new AssingMove(Variables(MaxViolVarID),newVal,objAfter))
+    else
+      None
   }
 }
 
-class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
-  override def comit() {i := v}
-}

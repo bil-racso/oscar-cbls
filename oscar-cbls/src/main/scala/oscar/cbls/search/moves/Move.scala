@@ -14,6 +14,8 @@
   ******************************************************************************/
 package oscar.cbls.search.moves
 
+import oscar.cbls.invariants.core.computation.CBLSIntVar
+
 /** this composer randomly tries one neighborhood.
   * it trie the other if the first did not find any move
   * @param a
@@ -173,3 +175,12 @@ abstract class Neighborhood{
 abstract class Move(val objAfter:Int){
   def comit()
 }
+
+case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
+  override def comit() {i := v}
+}
+
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int) extends Move(objAfter){
+  override def comit() {i :=: j}
+}
+
