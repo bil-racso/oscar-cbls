@@ -46,7 +46,7 @@ object Activity {
  * @param duration
  * @param planning
  * @param name
- * @param Shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
+ * @param shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
  * @author renaud.delandtsheer@cetic.be
  */
 class Activity(val duration: CBLSIntVar, val planning: Planning, val name: String = "",
@@ -116,7 +116,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
 
   def maxDuration = planning.maxduration
 
-  var earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
+  val earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, 0,
       "esd(" + name + ")")
   val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
       "eed(" + name + ")")
