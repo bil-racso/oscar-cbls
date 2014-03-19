@@ -572,8 +572,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   def injectNewDependencies(autoSort:Boolean){
     for(d:WaitingDependency <- newDependenciesToInject){
       if(d.isStillValid()){
-          d.inject1
-          d.inject2
+          d.inject1()
+          d.inject2()
           if(autoSort) notifyAddEdge(d.from,d.to)
       }
     }
@@ -614,8 +614,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     if(autoSort){
       val waiting = newDependenciesToInject.head
       if(waiting.from.Position < waiting.to.Position){
-        waiting.inject1
-        waiting.inject2
+        waiting.inject1()
+        waiting.inject2()
         notifyAddEdge(waiting.from,waiting.to)
         newDependenciesToInject = newDependenciesToInject.tail
       }
