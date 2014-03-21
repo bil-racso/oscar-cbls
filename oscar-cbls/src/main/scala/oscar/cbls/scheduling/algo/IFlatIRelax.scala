@@ -178,5 +178,3 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     }
   }
 }
-
-

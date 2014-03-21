@@ -22,11 +22,11 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
   * @param b
   */
 class Random(a:Neighborhood, b:Neighborhood) extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     var currentIsA:Boolean = math.random > 0.5
     def search(canDoMore:Boolean):Option[Move] = {
       val current = if(currentIsA) a else b
-      current.getFirstImprovingMove() match{
+      current.getImprovingMove() match{
         case None => currentIsA = !currentIsA ; if (canDoMore) search(false) else None
         case Some(x) => Some(x)
       }
@@ -42,9 +42,9 @@ class Random(a:Neighborhood, b:Neighborhood) extends Neighborhood{
   * @param b
   */
 class AndThen(a:Neighborhood, b:Neighborhood) extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = {
-    a.getFirstImprovingMove() match{
-      case None => b.getFirstImprovingMove()
+  override def getImprovingMove(): Option[Move] = {
+    a.getImprovingMove() match{
+      case None => b.getImprovingMove()
       case Some(x) => Some(x)
     }
   }
@@ -52,8 +52,8 @@ class AndThen(a:Neighborhood, b:Neighborhood) extends Neighborhood{
 
 /**this composer always selects the best move between the two parameters*/
 class Best(a:Neighborhood, b:Neighborhood) extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = {
-    (a.getFirstImprovingMove(),b.getFirstImprovingMove()) match{
+  override def getImprovingMove(): Option[Move] = {
+    (a.getImprovingMove(),b.getImprovingMove()) match{
       case (None,x) => x
       case (x,None) => x
       case (Some(x),Some(y)) => if (x.objAfter < y.objAfter) Some(x) else Some(y)
@@ -67,10 +67,10 @@ class Best(a:Neighborhood, b:Neighborhood) extends Neighborhood{
   * */
 class Exhaust(a:Neighborhood, b:Neighborhood) extends Neighborhood{
   var currentIsA = true
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     def search():Option[Move] = {
       val current = if(currentIsA) a else b
-      current.getFirstImprovingMove() match{
+      current.getImprovingMove() match{
         case None => if(currentIsA){currentIsA = false; search()} else None
         case Some(x) => Some(x)
       }
@@ -82,7 +82,7 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends Neighborhood{
 /** a neighborhood that never finds any move
   */
 class NoMove extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = None
+  override def getImprovingMove(): Option[Move] = None
 }
 
 /**this composer is stateful.
@@ -91,10 +91,10 @@ class NoMove extends Neighborhood{
   * */
 class ExhaustBack(a:Neighborhood, b:Neighborhood) extends Neighborhood{
   var currentIsA = true
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     def search(canDoMore:Boolean):Option[Move] = {
       val current = if(currentIsA) a else b
-      current.getFirstImprovingMove() match{
+      current.getImprovingMove() match{
         case None => currentIsA = !currentIsA ; if (canDoMore) search(false) else None
         case Some(x) => Some(x)
       }
@@ -104,10 +104,10 @@ class ExhaustBack(a:Neighborhood, b:Neighborhood) extends Neighborhood{
 }
 
 class BoundMove(a:Neighborhood, var maxMove:Int) extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     if(maxMove >0){
       maxMove -= 1
-      a.getFirstImprovingMove()
+      a.getImprovingMove()
     }else None
   }
 }
@@ -116,8 +116,8 @@ class BoundMove(a:Neighborhood, var maxMove:Int) extends Neighborhood{
   * it does not try the Neighborhood and finds no move.
   * */
 class Conditional(c:()=>Boolean, b:Neighborhood) extends Neighborhood{
-  override def getFirstImprovingMove(): Option[Move] = {
-    if(c()) b.getFirstImprovingMove()
+  override def getImprovingMove(): Option[Move] = {
+    if(c()) b.getImprovingMove()
     else None
   }
 }
@@ -127,19 +127,19 @@ class Conditional(c:()=>Boolean, b:Neighborhood) extends Neighborhood{
   * */
 class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends Neighborhood{
   var currentStep:Int = steps
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     if(currentStep >0){
       currentStep -= 1
       if(currentStep == 0) currentStep = -steps
-      a.getFirstImprovingMove() match{
-        case None => currentStep = - steps; b.getFirstImprovingMove()
+      a.getImprovingMove() match{
+        case None => currentStep = - steps; b.getImprovingMove()
         case Some(x) => Some(x)
       }
     }else{
       currentStep += 1
       if(currentStep == 0) currentStep = steps
-      b.getFirstImprovingMove() match{
-        case None => currentStep = steps; a.getFirstImprovingMove()
+      b.getImprovingMove() match{
+        case None => currentStep = steps; a.getImprovingMove()
         case Some(x) => Some(x)
       }
     }
@@ -155,13 +155,31 @@ object RoundRobinNoParam{
 }
 
 abstract class Neighborhood{
-  def getFirstImprovingMove():Option[Move]
+  def getImprovingMove():Option[Move]
 
-  def doFirstImprovingMove():Boolean =
-    getFirstImprovingMove() match{
+  /**
+   *
+   * @return true if a move has been performed, false otherwise
+   */
+  def doImprovingMove():Boolean =
+    getImprovingMove() match{
       case None => false
       case Some(n) => n.comit; true
     }
+
+  /**
+   *
+   * @return the number of moves performed
+   */
+  def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
+    var toReturn = 0;
+    var remainingMoves = maxMoves
+    while(remainingMoves != 0 && doImprovingMove()){
+      toReturn += 1
+      remainingMoves -= 1
+    }
+    toReturn
+  }
 
   def exhaust(b:Neighborhood):Neighborhood = new Exhaust(this,b)
   def exhaustBack(b:Neighborhood):Neighborhood = new ExhaustBack(this,b)

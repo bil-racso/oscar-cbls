@@ -27,17 +27,3 @@ case class Bin(number:Int,
                size:Int,
                var items:CBLSSetVar = null,
                var violation:CBLSIntVar = null)
-
-object BinPackingSolver extends SearchEngineTrait{
-  def solveBinPacking(items:Map[Int,Item], bins: Map[Int,Bin], overallViolation:Objective, mostViolatedBins:CBLSSetVar, maxStep:Int) = {
-    val swapNB = new SwapItemsNeighborhood(items, bins, overallViolation, mostViolatedBins)
-    val moveNB = new ItemMoveNeighborhood(items, bins, overallViolation, mostViolatedBins)
-
-    val compose:Neighborhood = moveNB exhaustBack swapNB
-
-    var remainingIt = maxStep;
-    while(remainingIt < 0 && compose.doFirstImprovingMove()){
-      remainingIt -= 1
-    }
-  }
-}

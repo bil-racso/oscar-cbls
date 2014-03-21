@@ -55,7 +55,7 @@ object conflictSearch extends SearchEngine{
 class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
     val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int))
@@ -73,7 +73,7 @@ class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTra
 class conflictMoveFirstImprove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
 

@@ -110,3 +110,4 @@ Je pense qu'il vaut mieux faire les cumulative en premier, puis les binPacking.
 bon, au final on va quand-même les intertwiner alors je sais aps si ça va changer grand chose.
 par contre, le pense qu'il vaut mieux faire du début à la fin pour les binPAcking parce-que le déplacement va induire plus de conflits que dans le cas de cumulatives.
  */
+

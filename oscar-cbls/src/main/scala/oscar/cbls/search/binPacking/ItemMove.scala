@@ -18,7 +18,7 @@ import oscar.cbls.invariants.core.computation.CBLSSetVar
 import oscar.cbls.search._
 import oscar.cbls.objective.Objective
 import scala.Some
-import oscar.cbls.search.moves.{Neighborhood, Move}
+import oscar.cbls.search.moves.{AssingMove, Neighborhood, Move}
 
 /**moves item away from most violated bin*/
 class ItemMoveNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViolation:Objective, mostViolatedBins:CBLSSetVar)
@@ -26,7 +26,7 @@ class ItemMoveNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViola
 
   val binList:List[Bin] = bins.toList.map(_._2)
 
-  override def getFirstImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): Option[Move] = {
     val oldViolation:Int = overallViolation.Objective.value
     if(mostViolatedBins.value.isEmpty) return None
     val bin1 = bins(selectFirst(mostViolatedBins.value))
@@ -34,16 +34,10 @@ class ItemMoveNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViola
       for(bin2 <- bins if bin2._2.number != bin1.number && bin2._2.violation.value == 0){
         val objAfter = overallViolation.assignVal(item.bin, bin2._1)
         if(objAfter < oldViolation){
-          Some(ItemMove(item,bin2._1,objAfter))
+          Some(AssingMove(item.bin,bin2._1,objAfter))
         }
       }
     }
     None
-  }
-}
-
-case class ItemMove(i:Item,binNumber:Int, override val objAfter:Int) extends Move(objAfter){
-  def comit(){
-    i.bin := binNumber
   }
 }

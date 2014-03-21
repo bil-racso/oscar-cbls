@@ -552,7 +552,6 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
     }
     for (e <- Elements) {
       e.InitiateDynamicGraphFromSameComponent()
-      //TODO: uniquement ceux qui sont boundary? les autres, on pourrait se contenter du graphe statique.
     }
   }
 
