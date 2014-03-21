@@ -16,6 +16,14 @@
  */
 package oscar.cbls.scheduling.algo
 
+import oscar.cbls.invariants.core.computation.Solution
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.scheduling.model.Activity
+import oscar.cbls.scheduling.model.Planning
+import oscar.cbls.scheduling.model.PrecedenceCleaner
+import oscar.cbls.scheduling.model.Resource
+import oscar.cbls.search.SearchEngine
+
 /**
  * *****************************************************************************
  * Contributors:
@@ -23,12 +31,6 @@ package oscar.cbls.scheduling.algo
  *         by Renaud De Landtsheer
  * ****************************************************************************
  */
-
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.invariants.core.computation.{ CBLSIntVar, Solution, Store }
-import oscar.cbls.scheduling.model._
-import oscar.cbls.invariants.core.computation.Solution
-import oscar.cbls.scheduling.model.CumulativeResource
 
 /**
  * @param p
@@ -143,7 +145,12 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
   /**implements the standard flatten procedure*/
   def flattenWorseFirst() {
+    var iterations = 0
     while (!p.worseOvershotResource.value.isEmpty) {
+      if (iterations < p.activityCount)
+        throw new IllegalStateException("FlattenWorseFirst() will not terminate. Check there is no conflict between non moveable activities.")
+      iterations += 1
+
       val r: Resource = p.resourceArray(selectFrom(p.worseOvershotResource.value))
 
       val t: Int = r.worseOverShootTime
