@@ -108,6 +108,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
    * the activity and the resource must be registered to the same planning
    * @param r a resource that the activity uses
    * @param amount the amount of this resource that the activity uses
+   * FIXME potential problem if amount = 0
    */
   def usesCumulativeResource(r: CumulativeResource, amount: CBLSIntVar) {
     Resources = (r, amount) :: Resources
