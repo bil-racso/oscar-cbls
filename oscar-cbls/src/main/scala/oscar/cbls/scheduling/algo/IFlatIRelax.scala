@@ -56,7 +56,6 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
     var bestSolution: Solution = model.solution(true)
     if (verbose) {
-      println(p.makeSpan)
       println("----------------")
     }
     p.updateVisual()
@@ -147,7 +146,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
   def flattenWorseFirst() {
     var iterations = 0
     while (!p.worseOvershotResource.value.isEmpty) {
-      if (iterations < p.activityCount)
+      if (iterations > p.activityCount)
         throw new IllegalStateException("FlattenWorseFirst() will not terminate. Check there is no conflict between non moveable activities.")
       iterations += 1
 
