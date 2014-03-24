@@ -63,9 +63,10 @@ import oscar.cbls.invariants.core.computation.StorageUtilityManager
  * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param noCycle is to be set to true only if the static dependency graph is acyclic.
  * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
+ * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean){
+abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true){
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -136,7 +137,9 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         a.head
       } else {
         acyclic = false
-        val c = new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
+
+        val c = if (sortScc) new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
+        else new StronglyConnectedComponentNoSort(a,this,GetNextID())
         StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
@@ -532,8 +535,6 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
 
 class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
                                  core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
-
-
 
   override def dependencyAdded(): Unit = {}
   override def addDependency(from: PropagationElement, to: PropagationElement): Unit = {}

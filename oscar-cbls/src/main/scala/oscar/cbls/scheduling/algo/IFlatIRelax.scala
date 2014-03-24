@@ -124,7 +124,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
   /**
    * performs the relaxation of the critical path
-   * @param PKill: the probability to kill a killable precedence constraint in percent
+   * @param pKill: the probability to kill a killable precedence constraint in percent
    * @param min: the minimal number of relaxation
    * @return true if something could be relaxed, false if makespan is solid
    */
