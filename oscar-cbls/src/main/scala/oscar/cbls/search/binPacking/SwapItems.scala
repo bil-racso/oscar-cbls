@@ -21,19 +21,19 @@ import scala.Some
 import oscar.cbls.search.moves.{SwapMove, Neighborhood, Move}
 
 /**swaps items of different sizes out of most violated bin*/
-class SwapItemsNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViolation:Objective, mostViolatedBins:CBLSSetVar)
+class SwapItemsNeighborhood(p:BinPackingProblem)
   extends Neighborhood with SearchEngineTrait{
 
-  val binList:List[Bin] = bins.toList.map(_._2)
-  val itemList:List[Item] = items.toList.map(_._2)
+  val binList:List[Bin] = p.bins.toList.map(_._2)
+  val itemList:List[Item] = p.items.toList.map(_._2)
 
   override def getImprovingMove(): Option[Move] = {
-    val oldViolation:Int = overallViolation.Objective.value
-    if(mostViolatedBins.value.isEmpty) return None
-    val bin1 = bins(selectFirst(mostViolatedBins.value))
-    for(itemId <- bin1.items.value; item1 = items(itemId)){
+    val oldViolation:Int = p.overallViolation.Objective.value
+    if(p.mostViolatedBins.value.isEmpty) return None
+    val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
+    for(itemId <- bin1.items.value; item1 = p.items(itemId)){
       for(item2 <- itemList if item2.bin.value != bin1.number && item1.size != item2.size){
-        val objAfter = overallViolation.swapVal(item1.bin, item2.bin)
+        val objAfter = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(objAfter < oldViolation){
           Some(SwapMove(item1.bin,item2.bin,objAfter))
         }
@@ -42,3 +42,4 @@ class SwapItemsNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViol
     None
   }
 }
+

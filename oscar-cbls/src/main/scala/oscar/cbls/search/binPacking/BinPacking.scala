@@ -27,3 +27,8 @@ case class Bin(number:Int,
                size:Int,
                var items:CBLSSetVar = null,
                var violation:CBLSIntVar = null)
+
+case class BinPackingProblem(items:Map[Int,Item],
+                             bins: Map[Int,Bin],
+                             overallViolation:Objective,
+                             mostViolatedBins:CBLSSetVar)

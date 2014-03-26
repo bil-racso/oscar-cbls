@@ -5,7 +5,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.binPacking.Bin
+import oscar.cbls.search.binPacking.{BinPackingProblem, Bin}
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -23,7 +23,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int]) ext
   var resourceUsage:List[(Activity,Int)] = null
 
   var activityBin:Array[CBLSIntVar] = null;
-var activitySize:Array[CBLSIntVar] = null;
+  var activitySize:Array[CBLSIntVar] = null;
 
 
   case class ResourceAtTime(t:Int,
@@ -59,6 +59,15 @@ var activitySize:Array[CBLSIntVar] = null;
     bins.map(bin => bin.size)
   }
   def binViolations(bins:Array[Bin]):Array[CBLSIntVar]
+
+  /** This method builds a binpacking problem regrouping the items etc.
+    * of a binpacking happending at the given point in time
+    */
+  def getBinPackingProblem(t:Int):BinPackingProblem = {
+    null
+  }
+
+
 
   /** This method is called by the framework before starting the scheduling
     * put anything that needs to be done after instantiation here

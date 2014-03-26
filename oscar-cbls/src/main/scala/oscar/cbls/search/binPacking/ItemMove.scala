@@ -21,18 +21,18 @@ import scala.Some
 import oscar.cbls.search.moves.{AssingMove, Neighborhood, Move}
 
 /**moves item away from most violated bin*/
-class ItemMoveNeighborhood(items:Map[Int,Item], bins: Map[Int,Bin], overallViolation:Objective, mostViolatedBins:CBLSSetVar)
+class ItemMoveNeighborhood(p:BinPackingProblem)
   extends Neighborhood with SearchEngineTrait{
 
-  val binList:List[Bin] = bins.toList.map(_._2)
+  val binList:List[Bin] =p.bins.toList.map(_._2)
 
   override def getImprovingMove(): Option[Move] = {
-    val oldViolation:Int = overallViolation.Objective.value
-    if(mostViolatedBins.value.isEmpty) return None
-    val bin1 = bins(selectFirst(mostViolatedBins.value))
-    for(itemId <- bin1.items.value; item = items(itemId)){
-      for(bin2 <- bins if bin2._2.number != bin1.number && bin2._2.violation.value == 0){
-        val objAfter = overallViolation.assignVal(item.bin, bin2._1)
+    val oldViolation:Int = p.overallViolation.Objective.value
+    if(p.mostViolatedBins.value.isEmpty) return None
+    val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
+    for(itemId <- bin1.items.value; item = p.items(itemId)){
+      for(bin2 <- p.bins if bin2._2.number != bin1.number && bin2._2.violation.value == 0){
+        val objAfter = p.overallViolation.assignVal(item.bin, bin2._1)
         if(objAfter < oldViolation){
           Some(AssingMove(item.bin,bin2._1,objAfter))
         }
