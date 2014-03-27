@@ -16,14 +16,14 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
+
 import oscar.cp.constraints._
 import oscar.cp.core._
-import oscar.cp.modeling._
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class TestTableSTR2 extends FunSuite with ShouldMatchers  {
+import oscar.cp.modeling._
+
+
+class TestTableSTR2_old extends FunSuite with ShouldMatchers  {
 
 
   test("Table Test 1") {
@@ -33,7 +33,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     val tuples = Array(Array(1,1,1),Array(1,2,3))
     
 
-    cp.post(new TableSTR2(x,tuples))
+    cp.post(new TableSTR2_old(x,tuples))
     	
     x(0).isBound should be(true)
     x(0).value should be(1)
@@ -56,7 +56,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     
     
     val tuples = (for (i <- 0 until 5; j <- i+1 until 5) yield Array(i,j,i*4+j-1)).toArray
-    cp.post(new TableSTR2(Array(x,y,z),tuples))
+    cp.post(new TableSTR2_old(Array(x,y,z),tuples))
     cp.post(z == 0)
     x.value should be(0)
     y.value should be(1)
@@ -76,7 +76,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     var nbSol = 0
     	
     cp.solve subjectTo {
-      cp.add(new TableSTR2(x,tuples))
+      cp.add(new TableSTR2_old(x,tuples))
     } search {
       binaryStatic(x)
     } onSolution {
@@ -93,7 +93,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     val tuples = Array(Array(1,2),Array(2,1))
     
 
-    cp.post(new TableSTR2(x,tuples))
+    cp.post(new TableSTR2_old(x,tuples))
     cp.isFailed should be(true)
     
 
