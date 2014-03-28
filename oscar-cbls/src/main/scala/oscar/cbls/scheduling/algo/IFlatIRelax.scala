@@ -172,14 +172,18 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
                 t1 => Array.tabulate(conflictActivityArray.size)(
                   t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1), conflictActivityArray(t2))))
 
-            val (a, b) = selectMax2(conflictActivityArray.indices, conflictActivityArray.indices,
+            selectMax2(conflictActivityArray.indices, conflictActivityArray.indices,
               (a: Int, b: Int) => (conflictActivityArray(b).latestEndDate.value - conflictActivityArray(a).earliestStartDate.value),
-              (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled)
+              (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
+                case (a, b) => {
+                  println("need to kill dependencies to complete flattening")
+                  dependencyKillers(a)(b).killDependencies(verbose)
 
-            println("need to kill dependencies to complete flattening")
-            dependencyKillers(a)(b).killDependencies(verbose)
+                  conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a), verbose)
+                }
+                case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
+              }
 
-            conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a), verbose)
         }
     }
   }
