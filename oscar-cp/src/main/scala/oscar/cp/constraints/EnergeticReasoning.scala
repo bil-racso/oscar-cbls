@@ -1,7 +1,6 @@
 package oscar.cp.constraints
 
 import scala.collection.mutable.HashSet
-import scala.collection.mutable.TreeSet
 import scala.math.min
 import scala.math.max
 import scala.math.ceil
@@ -16,10 +15,25 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
   assert(starts.length == durations.length && starts.length == ends.length && starts.length == demands.length && starts.length == resources.length, "starts, durations, ends, demands and resources must be of same length")
 
+  //cache arrays
+  
+  val numTasks = starts.length
+  
+  val smin = Array.fill(numTasks)(-1)
+  val smax = Array.fill(numTasks)(-1)
+  val emin = Array.fill(numTasks)(-1)
+  val emax = Array.fill(numTasks)(-1)
+  val demmin = Array.fill(numTasks)(-1)
+  val durmin = Array.fill(numTasks)(-1)
+  
+  var cmin = -1
+  
+  val tasksId = 0 until starts.length toArray 
+  
   def setup(l: CPPropagStrength): CPOutcome = {
     if (propagate == Failure) Failure
     else {
-      for (task <- 0 until starts.length) {
+      for (task <- tasksId) {
         starts(task).callPropagateWhenBoundsChange(this)
         durations(task).callPropagateWhenBoundsChange(this)
         ends(task).callPropagateWhenBoundsChange(this)
@@ -32,18 +46,34 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
 
   override def propagate: CPOutcome = {
+    
+    //cache
+    var i = 0
+    while(i < numTasks) {
+      smin(i) = starts(i).min
+      smax(i) = starts(i).max
+      emin(i) = ends(i).min
+      emax(i) = ends(i).max
+      demmin(i) = demands(i).min
+      durmin(i) = durations(i).min
+      i += 1
+    }
+    
+    cmin = capacity.min
+    i = 0
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = (0 until starts.length) filter (task => resources(task).isBound && resources(task).getValue == id && durations(task).min > 0 && demands(task).min > 0)
+    val tasks = tasksId filter (task => resources(task).isBound && resources(task).value == id && durmin(task) > 0 && demmin(task) > 0)
 
-    val newEets = ends map (_.min)
-    val newLsts = starts map (_.max)
+    val newEets = emin map ( v => v)
+    val newLsts = smax map (v => v)
 
     val intervals = computeIntervals(tasks)
-
+    
     for ((t1, t2) <- intervals) {
+      
       val currentIntervalEnergy = energyForInterval(t1, t2, tasks)
-      val currentMaxIntervalEnergy = capacity.min * (t2 - t1)
+      val currentMaxIntervalEnergy = cmin * (t2 - t1)
       if (currentIntervalEnergy > currentMaxIntervalEnergy) {
         if (capacity.updateMin(ceil(currentIntervalEnergy.toDouble / (t2 - t1)).toInt) == Failure) {
           return Failure
@@ -54,14 +84,14 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
         for (task <- tasks) {
           val slackWithoutCurrentActivity = currentMaxIntervalEnergy - currentIntervalEnergy + activityEnergyForInterval(task, t1, t2, tasks)
 
-          val leftShiftedEnergy = p_plusForInterval(task, t1, t2, tasks) * demands(task).min 
-          val rightShiftedEnergy = p_minusForInterval(task, t1, t2, tasks) * demands(task).min
+          val leftShiftedEnergy = p_plusForInterval(task, t1, t2, tasks) * demmin(task) 
+          val rightShiftedEnergy = p_minusForInterval(task, t1, t2, tasks) * demmin(task)
           
           if (slackWithoutCurrentActivity < leftShiftedEnergy)
-            newEets(task) = max(newEets(task), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity).toDouble / demands(task).min).toInt)
+            newEets(task) = max(newEets(task), t2 + ceil((leftShiftedEnergy - slackWithoutCurrentActivity).toDouble / demmin(task)).toInt)
 
           if (slackWithoutCurrentActivity < rightShiftedEnergy)
-            newLsts(task) = min(newLsts(task), t1 - ceil((rightShiftedEnergy - slackWithoutCurrentActivity).toDouble / demands(task).min).toInt)
+            newLsts(task) = min(newLsts(task), t1 - ceil((rightShiftedEnergy - slackWithoutCurrentActivity).toDouble / demmin(task)).toInt)
 
         }
       }
@@ -69,25 +99,21 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
     //apply bound adjustements
     for (task <- tasks) {
-      if (starts(task).updateMax(newLsts(task)) == Failure) {
+      if (smax(task) > newLsts(task) && starts(task).updateMax(newLsts(task)) == Failure)
         return Failure
-      }
 
-      if (ends(task).updateMin(newEets(task)) == Failure) {
+      if (emin(task) < newEets(task) && ends(task).updateMin(newEets(task)) == Failure) {
         return Failure
       }
-      
     }
-
     Suspend
   }
 
   @inline
   private def computeIntervals(tasks: IndexedSeq[Int]) = {
     
-    val horizon = ends.map(_.max) max
+    val (o1,o2,ot) = getO1_O_2_Ot(tasks)
     
-    val (o1, o2, ot) = getO1_O_2_Ot(tasks)
     val intervals = HashSet[Tuple2[Int, Int]]()
 
     for (t1 <- o1; t2 <- o2 if t1 < t2)
@@ -102,27 +128,28 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     }
     intervals
   }
-
+  
   @inline
   private def getO1_O_2_Ot(tasks: IndexedSeq[Int]) = {
 
-    val o1 = TreeSet[Int]()
-    val o2 = TreeSet[Int]()
-    val ot = HashSet[(Int) => Int]()
+	  val o1 = HashSet[Int]()
+	  val o2 = HashSet[Int]()
+	  val ot = HashSet[(Int) => Int]()
 
-    for (task <- tasks) {
-      o1 += starts(task).getMin //est
-      o1 += ends(task).getMin //ect
-      o1 += starts(task).getMax //lst
+	  for (task <- tasks) {
+		  o1 += smin(task) //est
+	  
+		  o1 += emin(task) //ect
+		  o1 += smax(task) //lst
 
-      o2 += starts(task).getMax //lst
-      o2 += ends(task).getMin //ect
-      o2 += ends(task).getMax //lct
+		  o2 += smax(task) //lst
+		  o2 += emin(task) //ect
+		  o2 += emax(task) //lct
 
-      ot += ((t: Int) => starts(task).getMin + ends(task).getMax - t) //est + lct - t
-    }
-
-    (o1, o2, ot)
+		  ot += ((t: Int) => emin(task) + emax(task) - t) //est + lct - t
+		  
+	  }
+	  (o1, o2, ot)
   }
 
   @inline
@@ -136,12 +163,12 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
 
   @inline
-  private def p_plusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durations(task).min - max(0, t1 - starts(task).min)) 
+  private def p_plusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durmin(task) - max(0, t1 - smin(task))) 
 
   @inline
-  private def p_minusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durations(task).min - max(0, ends(task).max - t2))
+  private def p_minusForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = max(0, durmin(task) - max(0, emax(task) - t2))
 
   @inline
-  private def activityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(p_plusForInterval(task, t1, t2, tasks), p_minusForInterval(task, t1, t2, tasks))) * demands(task).min
+  private def activityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(p_plusForInterval(task, t1, t2, tasks), p_minusForInterval(task, t1, t2, tasks))) * demmin(task)
 }
 
