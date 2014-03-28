@@ -14,71 +14,53 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.visual.shapes
+package oscar.visual.calendar
 
 import java.awt.Color
 import java.awt.geom.RoundRectangle2D
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
+import java.awt.geom.Rectangle2D
+import oscar.visual.shapes.VisualText
+import oscar.visual.shapes.VisualRoundRectangle
+import java.awt.Graphics2D
+import oscar.visual.shapes.VisualLabelledRoundRectangle
+import java.awt.Font
 
 /**
  *
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  *
  */
-class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double, label: String, _marginWidth: Double = 0) extends VisualRoundRectangle(d, s) {
+class VisualCalendarTile(d: VisualDrawing, s: RoundRectangle2D.Double, dayLabel: String, _marginWidth: Double = 0) extends VisualLabelledRoundRectangle(d, s, dayLabel, _marginWidth) {
+  this.marginWidth = _marginWidth
   
-  def rect: RoundRectangle2D.Double = shape
-  val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
-  var marginWidth = _marginWidth
-  
-  textDraw.move(xText, yText)
-
-  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double = 5, arcw: Double = 7, arch: Double = 7) = {
+  def this(d: VisualDrawing, x: Double, y: Double, size: Int, label: String, arcw: Double = 7, arch: Double = 7) = {
     this(d, new RoundRectangle2D.Double(x,
         y,
-        d.getFontMetrics(d.getFont()).stringWidth(label) + marginWidth * 2,
-        d.getFontMetrics(d.getFont()).getHeight() + marginWidth * 2,
+        size,
+        size,
         arcw,
         arch),
       label,
-      marginWidth)
+      (size - d.getFontMetrics(d.getFont()).stringWidth(label)) / 2)
   }
-
-  /**
-   * X coordinates of bottom left corner
-   * @return
-   */
-  def xText = (x + marginWidth).toInt
-
+  
   /**
    * Y coordinates of bottom left corner
    * @return
    */
-  def yText = (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt
-
-  /**
-   * Move the specified left corner
-   * @param x
-   */
-  override def move(x: Double, y: Double) {
-    super.move(x, y)
-    textDraw.move(xText, yText)
-  }
-
-  def getWidth(newLabel: String) = {
-    d.getFontMetrics(d.getFont()).stringWidth(newLabel) + marginWidth * 2
-  }
+  override def yText = (y + d.getFontMetrics(d.getFont()).getHeight()).toInt
 }
 
-object VisualLabelledRoundRectangle {
+object VisualCalendarTile {
 
   def main(args: Array[String]) {
     val f = VisualFrame("toto");
     val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
 
-    val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", marginWidth=10);
+    val rect = new VisualCalendarTile(d, 50, 50, 100, "Rectangle");
     rect.toolTip = ("Hello");
 
     inf.add(d);
@@ -86,7 +68,6 @@ object VisualLabelledRoundRectangle {
 
     Thread.sleep(1000);
     rect.innerCol = (Color.red);
-    rect.textDraw.innerCol = (Color.BLUE)
     Thread.sleep(1000);
     rect.move(100, 20);
     for (i <- 0 until 20) {

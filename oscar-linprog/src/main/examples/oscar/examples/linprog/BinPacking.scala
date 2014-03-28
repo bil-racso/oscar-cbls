@@ -16,14 +16,21 @@ package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.algebra._
+import scala.io.Source
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
- * Cutting Stock using Column Generation
+ * BinPacking using Column Generation
  */
-object CuttingStock extends App {
-
-  implicit val lp = LPSolver() 
+object BinPacking extends App {
+  
+  var lines = Source.fromFile("data/bp/u100_00.bpa").getLines.toList.drop(1)
+  val data = lines.head.split(" ").map(_.toInt)
+  val weights = lines.drop(1).map(_.toInt)
+  val n = weights.size
+  println(weights)
+  
+  implicit val lp = LPSolver(LPSolverLib.glpk) 
     
   class Column(val x: LPFloatVar, val pattern: Array[Int]) {
     override def toString(): String = {
@@ -32,55 +39,61 @@ object CuttingStock extends App {
     def number(): Int = Math.ceil(x.value.get).toInt
   }
 
-  val rollStock = 110
-  val roll = Array(20, 45, 50, 55, 75)
-  val demand = Array(48, 35, 24, 10, 8)
-  val Rolls = 0 until roll.size
-
+  val capa = 150
 
   var C: Array[Column] = Array()
-  for (r <- Rolls) {
-    val config = Array.tabulate(roll.size)(_ => 0)
-    config(r) = rollStock / roll(r)
-    C = C :+ new Column(LPFloatVar( "pattern" + r), config)
+  for (i <- 0 until n) {
+    val config = Array.fill(n)(0)
+    config(i) = 1
+    C = C :+ new Column(LPFloatVar( "pattern" + i), config)
   }
 
-
-  
   var constraints = Array[LPConstraint]()
 
   // Master Problem 
   minimize(sum(C)(c => c.x))
-
-  for (r <- Rolls) {
-    constraints = constraints :+ add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
+  
+  for (i <- 0 until n) {
+    // item i must be selected at least once
+    constraints = constraints :+ add(sum(C)(c => c.x * c.pattern(i)) >= 1)
   }
 
   start()
   println("master obj:" + objectiveValue)
-
+  
   // Pricing Problem
-  var objective = Double.MinValue
+  var reducedCost = Double.MinValue
   do {
     
     implicit val mip = MIPSolver()
-    val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar(mip, "use", 0 to rollStock))
-    val cost = Array.tabulate(roll.size)(constraints(_).dual)
-    mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)
-    mip.minimize(1 - sum(Rolls)(r => cost(r) * newPattern(r))) 
+    val newPattern = Array.tabulate(n)(_ => MIPIntVar(mip, "use", 0 to 1))
+    val cost = Array.tabulate(n)(constraints(_).dual)
+    
+    mip.add(sum(0 until n)(i => weights(i) * newPattern(i)) <= capa)
+    mip.minimize(1 - sum(0 until n)(r => cost(r) * newPattern(r))) 
     mip.start()
 
     val x = lp.addColumn(1, constraints, newPattern.map(_.value.get)) //create a new variable by introducing a new column
-    objective = mip.objectiveValue.get
+    reducedCost = mip.objectiveValue.get
+    println("pricing obj:"+reducedCost)
     C = C :+ new Column(x, newPattern.map(_.value.get.toInt))
-    println("master obj:" + lp.objectiveValue)
+    //objective = lp.objectiveValue.get
     
-  } while (objective < 0)
-
+    println("master obj:" + lp.objectiveValue.get)
+    println("reduce cost:" + (reducedCost))
+    println("master objlb:" + (lp.objectiveValue.get+reducedCost*n))
+    
+    
+  } while (reducedCost < 0)
+    
+  println("number of columns"+C.size)
+  println(C.map(_.x.value.get).mkString(","))
+  println("number of bins:"+C.map(_.number).sum)
+/*
   println("\n" + roll.mkString("\t"))
   println("-----------------------------------")
   C.foreach(c => println(c + " * " + c.number))
   println("-----------------------------------")
   println("total #boards:" + C.map(_.number).sum)
-
+*/
 }
