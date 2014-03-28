@@ -25,7 +25,7 @@ object QueensVisu extends CPModel with App {
   val queens = Array.fill(nQueens)(CPIntVar(Queens))
   
   queens(0).filterWhenBind { d =>
-    Suspend
+    CPOutcome.Suspend
   }
 
   val tree = new Tree()
