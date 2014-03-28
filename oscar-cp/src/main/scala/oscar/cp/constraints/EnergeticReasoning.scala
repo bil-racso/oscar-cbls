@@ -60,7 +60,6 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     }
     
     cmin = capacity.min
-    i = 0
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
     val tasks = tasksId filter (task => resources(task).isBound && resources(task).value == id && durmin(task) > 0 && demmin(task) > 0)
