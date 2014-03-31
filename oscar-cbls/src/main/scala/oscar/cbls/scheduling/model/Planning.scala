@@ -337,6 +337,9 @@ trait EarliestStartDate extends Planning {
   /**
    * Technically, it creates a task which ends at the wanted earliest start date,
    * and posts it as a static predecessor of the given task.
+   *
+   * Note: It seems that using an Activity (instead of a NonMoveableActivity)
+   * saves scheduling engine performances.
    */
   def addEarliestStartDate(task: Activity, earliestStartDate: Int,
                            nameOfOwner: String = "") {
