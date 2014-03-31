@@ -9,7 +9,7 @@ import oscar.algo.reversible.ReversibleInt
 import scala.collection.mutable.HashSet
 import oscar.algo.reversible.ReversibleBool
 
-class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableSTR"){
+class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableSTR2"){
   
   val position = Array.tabulate(table.length)(i=>i)
   val currentLimit = new ReversibleInt(s,table.length-1)
