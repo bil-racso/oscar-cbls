@@ -350,3 +350,32 @@ trait EarliestStartDate extends Planning {
     }
   }
 }
+
+/**
+ * This trait lets one post variable resources.
+ * Typically: resources which vary with week days.
+ *
+ * Technically, the trait contains a function which takes
+ * an array indexing the amount of resources to the scheduler's unit,
+ * modulo the array size.
+ */
+trait VariableResources extends Planning {
+  private val resourceReductionTasks = new Array[NonMoveableActivity](maxduration + 1)
+
+  def postVariableResource(amounts: Array[Int], name: String = null): CumulativeResource = {
+    val maxAmount = amounts.max
+    val resource = new CumulativeResource(this, maxAmount, name)
+
+    for (time <- 0 to maxduration) {
+      val amount = amounts(time % amounts.size)
+      if (amount < maxAmount) {
+        val reduction = maxAmount - amount
+        if (resourceReductionTasks(time) == null)
+          resourceReductionTasks(time) = new NonMoveableActivity(time, 1, this, "ResourceReductionAt" + time)
+        resourceReductionTasks(time).usesCumulativeResource(resource, reduction)
+      }
+    }
+
+    resource
+  }
+}
