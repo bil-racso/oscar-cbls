@@ -362,20 +362,166 @@ trait EarliestStartDate extends Planning {
 trait VariableResources extends Planning {
   private val resourceReductionTasks = new Array[NonMoveableActivity](maxduration + 1)
 
-  def postVariableResource(amounts: Array[Int], name: String = null): CumulativeResource = {
-    val maxAmount = amounts.max
-    val resource = new CumulativeResource(this, maxAmount, name)
+  def postVariableResource(availabilities: Array[Int], name: String = null): CumulativeResource = {
+    val nbAvailabilities = availabilities.size
+    val maxAvailability = availabilities.max
+    val resource = new CumulativeResource(this, maxAvailability, name)
+
+    val mergedReductions = mergePeriods(availabilities.map(maxAvailability - _))
 
     for (time <- 0 to maxduration) {
-      val amount = amounts(time % amounts.size)
-      if (amount < maxAmount) {
-        val reduction = maxAmount - amount
-        if (resourceReductionTasks(time) == null)
-          resourceReductionTasks(time) = new NonMoveableActivity(time, 1, this, "ResourceReductionAt" + time)
-        resourceReductionTasks(time).usesCumulativeResource(resource, reduction)
+      val timeModulo = time % nbAvailabilities
+      if (!mergedReductions(timeModulo).isEmpty) {
+        mergedReductions(timeModulo).foreach(reduction => {
+          val (duration, occupation) = reduction
+          if (resourceReductionTasks(time) == null)
+            resourceReductionTasks(time) =
+              new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
+          resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
+        })
       }
     }
 
     resource
+  }
+
+  /**
+   * This function produces a list of availability task specifications,
+   * in the form of an array: merged(startDate) = [(task1_duration, task1_amount), ...]
+   * where availabilities are "merged" when equal in several positions
+   * of the given availabilities array.
+   */
+  private def mergePeriods(availabilities: Array[Int]): Array[List[(Int, Int)]] = {
+    val modulo = availabilities.size
+    var merged: Array[List[(Int, Int)]] = Array.fill(modulo)(List())
+    var merging = new Array[(Int, Int)](modulo)
+
+    /**
+     * Extends the merging period starting at given time,
+     * i.e. increments period's duration.
+     */
+    def extendPeriod(startDate: Int) {
+      val period = merging(startDate)
+      merging(startDate) = (period._1 + 1, period._2)
+    }
+
+    /**
+     * Closes the period starting at given time, i.e.:
+     * - saves the merging period in merged periods
+     * - removes it from merging periods
+     * - decrementing remaining amount difference by the removed period amount
+     */
+    def closePeriod(startDate: Int) = {
+      val period = merging(startDate)
+      merged(startDate) = period :: merged(startDate)
+      merging(startDate) = null
+      period
+    }
+
+    var previousAvailability = 0
+    /**
+     * For each time, we evaluate the variation of availability between
+     * the current time and the previous one.
+     */
+    for (time <- 0 to modulo - 1) {
+      val availability = availabilities(time)
+
+      /**
+       * If the availability is increased or stays the same...
+       */
+      if (availability >= previousAvailability) {
+
+        /**
+         * and previous availability was not zero,
+         * durations of all currently merging periods must be extended.
+         * merging(time) = (duration + 1, amount)
+         */
+        if (previousAvailability > 0) {
+          for (i <- 0 to time - 1) {
+            if (merging(i) != null)
+              extendPeriod(i)
+          }
+        }
+
+        /**
+         * If the availability is increased,
+         * a new merging period must be added for the increase.
+         * merging(time) = (1, increase)
+         */
+        if (availability > previousAvailability) {
+          merging(time) = (1, availability - previousAvailability)
+        }
+
+        /**
+         * If the availability is reduced...
+         */
+      } else { // availability < previousAvailability
+        /**
+         * ... to zero, all currently merging periods must be closed
+         * (moved from merging to merged)
+         */
+        if (availability == 0) {
+          for (i <- 0 to modulo - 1)
+            if (merging(i) != null)
+              merged(i) = merging(i) :: merged(i)
+          merging = new Array[(Int, Int)](modulo)
+          /**
+           * ... to a strictly positive value,
+           * the difference must be computed and
+           * latest merging periods must be
+           * - closed (if smaller) or
+           * - divided (if bigger) while the difference is not zero
+           * remaining merging periods must be incremented
+           */
+        } else { // 0 < availability < previousAvailability
+          var diff = previousAvailability - availability
+
+          /**
+           * Divides the period starting at given time, i.e.:
+           * - saves period (startDate, duration, diff) in merged periods
+           * - adds period (startDate, duration + 1, amount - diff) to merging periods
+           * - sets remaining amount difference to zero
+           */
+          def dividePeriod(startDate: Int) {
+            val period = merging(startDate)
+            merged(startDate) = (period._1, diff) :: merged(startDate)
+            merging(startDate) = (period._1 + 1, period._2 - diff)
+          }
+
+          /**
+           * Beginning with latest merging period,
+           * closes or divides periods until all exceeding amount is removed.
+           * If total exceeding amount < total amount,
+           * remaining periods are extended.
+           */
+          for (i <- time - 1 to 0 by -1) {
+            if (merging(i) != null) {
+              if (diff > 0) {
+                if (merging(i)._2 <= diff) {
+                  val closedPeriod = closePeriod(i)
+                  diff = diff - closedPeriod._2
+                } else { // merging(i)._2 (amount) > diff
+                  dividePeriod(i)
+                  diff = 0
+                }
+              } else { // diff = 0
+                extendPeriod(i)
+              }
+            }
+          }
+        }
+      }
+      previousAvailability = availability
+    }
+
+    /**
+     * Closes last merging periods
+     */
+    for (i <- 0 to modulo - 1)
+      if (merging(i) != null)
+        closePeriod(i)
+
+//    merged.foreach(println)
+    merged
   }
 }
