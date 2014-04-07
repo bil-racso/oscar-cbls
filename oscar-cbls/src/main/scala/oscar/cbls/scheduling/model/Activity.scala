@@ -115,16 +115,16 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     r.notifyUsedBy(this, amount)
   }
 
-  def maxDuration = planning.maxduration
+  def maxDuration = planning.maxDuration
 
   val earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, 0,
-      "esd(" + name + ")")
+    "esd(" + name + ")")
   val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
-      "eed(" + name + ")")
+    "eed(" + name + ")")
   earliestEndDate <== earliestStartDate + duration
 
   val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, maxDuration,
-      "led(" + name + ")")
+    "led(" + name + ")")
 
   val latestStartDate: CBLSIntVar = latestEndDate - duration
   var allSucceedingActivities: CBLSSetVar = null
@@ -171,8 +171,20 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
         "succeeding_activities_of_" + name)
 
       latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
-          planning.maxduration)
+        planning.maxDuration)
     }
   }
-}
 
+  def toAsciiArt: String = {
+    def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+    def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+
+    padToLength(this.name, 20) + ":" +
+      "[" + padToLength("" + this.earliestStartDate.value, 4) + ";" +
+      padToLength("" + this.earliestEndDate.value, 4) + "] " +
+      (if (this.duration.value == 1)
+        nStrings(this.earliestStartDate.value, " ") + "#\n"
+      else
+        nStrings(this.earliestStartDate.value, " ") + "#" + nStrings(this.duration.value - 2, "=") + "#\n")
+  }
+}

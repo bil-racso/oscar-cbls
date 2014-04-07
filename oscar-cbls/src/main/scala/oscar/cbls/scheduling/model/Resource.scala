@@ -12,7 +12,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 abstract class Resource(planning:Planning, n:String) {
   val ResourceID = planning.addResource(this)
   def model = planning.model
-  def maxDuration = planning.maxduration
+  def maxDuration = planning.maxDuration
   val name = Option(n) getOrElse s"Resource $ResourceID"
 
   /** the level of overshoot of the resource.

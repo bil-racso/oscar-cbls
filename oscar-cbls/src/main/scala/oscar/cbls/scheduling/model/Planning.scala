@@ -38,7 +38,7 @@ import oscar.cbls.modeling.Algebra._
  * @param maxduration
  * @author renaud.delandtsheer@cetic.be
  */
-class Planning(val model: Store, val maxduration: Int) {
+class Planning(val model: Store, val maxDuration: Int) {
 
   var isClosed = false
 
@@ -65,7 +65,7 @@ class Planning(val model: Store, val maxduration: Int) {
   var earliestEndDates: Array[CBLSIntVar] = null
   var latestStartDates: Array[CBLSIntVar] = null
 
-  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxduration, 0, "makeSpan")
+  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxDuration, 0, "makeSpan")
   var earliestOvershotResources: CBLSSetVar = null
   var worseOvershotResource: CBLSSetVar = null
 
@@ -85,7 +85,7 @@ class Planning(val model: Store, val maxduration: Int) {
     isClosed = true
     val activitiesNoSentinel = activities
     sentinelActivity = new Activity(0, this, "sentinelActivity")
-    sentinelActivity.latestEndDate := maxduration
+    sentinelActivity.latestEndDate := maxDuration
 
     for (a <- activitiesNoSentinel) {
       sentinelActivity.addStaticPredecessor(a)
@@ -148,12 +148,10 @@ class Planning(val model: Store, val maxduration: Int) {
   def toAsciiArt: String = {
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
-    val activityList = activities.filter(_ != sentinelActivity).sortWith((a, b) => a.earliestStartDate.value < b.earliestStartDate.value)
-    val activityStrings = activityList.map(activity =>
-      "" + padToLength(activity.name, 20) + ":" + "[" +
-        padToLength("" + activity.earliestStartDate.value, 4) + ";" + padToLength("" + activity.earliestEndDate.value, 4) + "] " +
-        (if (activity.duration.value == 1) nStrings(activity.earliestStartDate.value, " ") + "#\n"
-        else nStrings(activity.earliestStartDate.value, " ") + "#" + nStrings(activity.duration.value - 2, "=") + "#\n"))
+    val activityList =
+      activities.filter(_ != sentinelActivity).sortWith((a, b) =>
+        a.earliestStartDate.value < b.earliestStartDate.value)
+    val activityStrings = activityList.map(_.toAsciiArt)
 
     activityStrings.mkString + makeSpan + "\n"
   }
@@ -360,7 +358,7 @@ trait EarliestStartDate extends Planning {
  * modulo the array size.
  */
 trait VariableResources extends Planning {
-  private val resourceReductionTasks = new Array[NonMoveableActivity](maxduration + 1)
+  private val resourceReductionTasks = new Array[NonMoveableActivity](maxDuration + 1)
 
   def postVariableResource(availabilities: Array[Int], name: String = null): CumulativeResource = {
     val nbAvailabilities = availabilities.size
@@ -369,14 +367,22 @@ trait VariableResources extends Planning {
 
     val mergedReductions = mergePeriods(availabilities.map(maxAvailability - _))
 
-    for (time <- 0 to maxduration) {
+    for (time <- 0 to maxDuration) {
       val timeModulo = time % nbAvailabilities
       if (!mergedReductions(timeModulo).isEmpty) {
         mergedReductions(timeModulo).foreach(reduction => {
           val (duration, occupation) = reduction
-          if (resourceReductionTasks(time) == null)
-            resourceReductionTasks(time) =
-              new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
+          if (resourceReductionTasks(time) == null) {
+            if (time + duration > maxDuration) {
+              // println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
+              resourceReductionTasks(time) =
+                new NonMoveableActivity(time, maxDuration - time, this, "ResReducAt" + time)
+            } else {
+              // println("ResReducAt" + time + " with duration " + duration + " created.")
+              resourceReductionTasks(time) =
+                new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
+            }
+          }
           resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
         })
       }
@@ -521,7 +527,7 @@ trait VariableResources extends Planning {
       if (merging(i) != null)
         closePeriod(i)
 
-//    merged.foreach(println)
+    //    merged.foreach(println)
     merged
   }
 }

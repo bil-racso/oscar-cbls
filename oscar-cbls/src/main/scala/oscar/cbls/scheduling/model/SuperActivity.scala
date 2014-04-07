@@ -36,7 +36,7 @@ import oscar.cbls.modeling.Algebra._
  * @author renaud.delandtsheer@cetic.be
  */
 class SuperActivity(start: Activity, end: Activity, override val name: String = "")
-  extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxduration,
+  extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxDuration,
     start.duration.value, "duration of " + name), start.planning, name) {
 
   start precedes end
