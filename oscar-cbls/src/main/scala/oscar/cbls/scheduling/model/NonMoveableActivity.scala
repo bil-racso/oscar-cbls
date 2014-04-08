@@ -57,6 +57,10 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
     latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
       planning.maxDuration)
   }
+
+  override def addStaticPredecessor(j: Activity): Unit = {
+    throw new Exception("NonMoveableActivity cannot have a static predecessor activity, even a NonMoveableActivity. ")
+  }
 }
 
 object NonMoveableActivity {

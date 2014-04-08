@@ -5,7 +5,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.binPacking.{BinPackingProblem, Bin}
+import oscar.cbls.search.binPacking.{BinPackingSolver, BinPackingProblem, Bin}
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -16,7 +16,7 @@ import oscar.cbls.search.binPacking.{BinPackingProblem, Bin}
  * We suppose that the bins cover the full history that is available in the planning.
  *
  */
-class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int]) extends  Resource(planning:Planning, n:String) {
+class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], MaxBPSteps:Int) extends  Resource(planning:Planning, n:String) {
 
   //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
 
@@ -91,17 +91,22 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int]) ext
     }
   }
 
-
-  def solveNewActivities(tine:Int){
-
-  }
-
-
   override def toAsciiArt(headerLength: Int): String = null
 
   /** you need to eject one of these to solve the conflict
     * this can be null if the problem is actually solved in between, or if the problem cannot be solved */
-  override def conflictingActivities(t: Int): Iterable[Activity] = null
+  override def conflictingActivities(t: Int): Iterable[Activity] = {
+    //build the binPacking problem happening at time t
+    val bp = getBinPackingProblem(t)
+
+    BinPackingSolver.solveBinPacking(bp,MaxBPSteps)
+    if(bp.overallViolation.Objective.value == 0) return null
+
+
+    //try to solve it
+    //if not working, identify which activity could be usefully ejected
+
+  }
 
   /** the first violation of the resource in time
     *

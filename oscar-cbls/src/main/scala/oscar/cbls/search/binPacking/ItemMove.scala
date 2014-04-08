@@ -21,7 +21,7 @@ import scala.Some
 import oscar.cbls.search.moves.{AssingMove, Neighborhood, Move}
 
 /**moves item away from most violated bin*/
-class ItemMoveNeighborhood(p:BinPackingProblem)
+case class ItemMoveNeighborhood(p:BinPackingProblem)
   extends Neighborhood with SearchEngineTrait{
 
   val binList:List[Bin] =p.bins.toList.map(_._2)

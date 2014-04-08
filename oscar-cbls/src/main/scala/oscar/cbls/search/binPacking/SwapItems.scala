@@ -21,7 +21,7 @@ import scala.Some
 import oscar.cbls.search.moves.{SwapMove, Neighborhood, Move}
 
 /**swaps items of different sizes out of most violated bin*/
-class SwapItemsNeighborhood(p:BinPackingProblem)
+case class SwapItemsNeighborhood(p:BinPackingProblem)
   extends Neighborhood with SearchEngineTrait{
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
