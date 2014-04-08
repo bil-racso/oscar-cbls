@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.minmax.MinArray
 import scala.collection.immutable.SortedSet
 
 /**
- *
  * @param startDate
  * @param duration
  * @param planning
@@ -59,7 +58,7 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
   }
 
   override def addStaticPredecessor(j: Activity): Unit = {
-    throw new Exception("NonMoveableActivity cannot have a static predecessor activity, even a NonMoveableActivity. ")
+    throw new Exception("NonMoveableActivity cannot have a static predecessor activity. ")
   }
 }
 

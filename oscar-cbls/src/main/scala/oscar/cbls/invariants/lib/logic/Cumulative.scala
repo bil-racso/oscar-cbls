@@ -35,6 +35,10 @@ import collection.immutable.SortedSet
  * */
 case class Cumulative(indices:Array[Int], start:Array[CBLSIntVar], duration:Array[CBLSIntVar], amount:Array[CBLSIntVar], profile:Array[CBLSIntVar], active:Array[CBLSSetVar]) extends Invariant {
 
+  //horizon is the uppermost indice of the profile, which is supposed to be the same as active
+  val horizon = profile.length-1
+  assert(active.length == horizon +1)
+
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v),v)
   for (v <- duration.indices) registerStaticAndDynamicDependency(duration(v),v)
   for (v <- amount.indices) registerStaticAndDynamicDependency(amount(v),v)
@@ -47,18 +51,21 @@ case class Cumulative(indices:Array[Int], start:Array[CBLSIntVar], duration:Arra
   for(i <- start.indices)insert(start(i).value, duration(i).value, amount(i).value, i)
 
   def remove(start:Int, duration:Int, amount:Int, index:Int){
-
-    for (t <- start until (start + duration)){
-      profile(t) :-= amount
-      active(t).deleteValue(indices(index))
+    if(start <= horizon){
+      for (t <- start until (horizon min (start + duration))){
+        profile(t) :-= amount
+        active(t).deleteValue(indices(index))
+      }
     }
   }
 
   def insert(start:Int, duration:Int, amount:Int, index:Int){
-    for (t <- start until (start + duration)){
-      //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
-      profile(t) :+= amount
-      active(t).insertValue(indices(index))
+    if(start <= horizon){
+      for (t <- start until (horizon min (start + duration))){
+        //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
+        profile(t) :+= amount
+        active(t).insertValue(indices(index))
+      }
     }
   }
 
@@ -77,9 +84,11 @@ case class Cumulative(indices:Array[Int], start:Array[CBLSIntVar], duration:Arra
       }
     }else{
       //amount
-      val Delta = NewVal - OldVal
-      for (t <- start(index).value until (start(index).value + duration(index).value)){
-        profile(t) :+= Delta
+      if(start(index).value <= horizon){
+        val Delta = NewVal - OldVal
+        for (t <- start(index).value until (horizon min (start(index).value + duration(index).value))){
+          profile(t) :+= Delta
+        }
       }
     }
   }

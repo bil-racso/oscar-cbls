@@ -1,6 +1,6 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar}
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
