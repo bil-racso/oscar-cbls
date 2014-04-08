@@ -34,10 +34,12 @@ case class ItemMoveNeighborhood(p:BinPackingProblem)
       for(bin2 <- p.bins if bin2._2.number != bin1.number && bin2._2.violation.value == 0){
         val objAfter = p.overallViolation.assignVal(item.bin, bin2._1)
         if(objAfter < oldViolation){
-          Some(AssingMove(item.bin,bin2._1,objAfter))
+          return Some(AssingMove(item.bin,bin2._1,objAfter))
         }
       }
     }
     None
   }
 }
+
+

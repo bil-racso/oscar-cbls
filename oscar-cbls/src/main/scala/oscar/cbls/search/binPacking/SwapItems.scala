@@ -35,7 +35,7 @@ case class SwapItemsNeighborhood(p:BinPackingProblem)
       for(item2 <- itemList if item2.bin.value != bin1.number && item1.size != item2.size){
         val objAfter = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(objAfter < oldViolation){
-          Some(SwapMove(item1.bin,item2.bin,objAfter))
+          return Some(SwapMove(item1.bin,item2.bin,objAfter))
         }
       }
     }
