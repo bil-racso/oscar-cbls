@@ -187,7 +187,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
                   t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
 
             selectMax2(baseForEjectionArray.indices, conflictActivityArray.indices,
-              (a: Int, b: Int) => (conflictActivityArray(b).latestEndDate.value - baseForEjectionArray(a).earliestStartDate.value),
+              (a: Int, b: Int) => (conflictActivityArray(b).latestStartDate.value - baseForEjectionArray(a).earliestEndDate.value),
               (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
                 case (a, b) => {
                   println("need to kill dependencies to complete flattening")
