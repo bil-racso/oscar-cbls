@@ -62,6 +62,8 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
     var plateaulength = 0
     var bestMakeSpan = p.makeSpan.value
+    
+    println("Initial best make span: " + bestMakeSpan)
 
     while (it < maxIt && plateaulength < stable) {
       //iterative weakening and flattening
@@ -74,7 +76,10 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       } else {
         val m = p.makeSpan.value
-        if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) return
+        if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) {
+          println("STOP criterion: no relaxation could be achieved.")
+          return
+        }
         if (p.makeSpan.value == m) println("skip")
       }
 
@@ -96,6 +101,12 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       println("----------------")
     }
+
+    if (it >= maxIt)
+      println("STOP criterion: maximum iteration number reached.")
+    if (plateaulength >= stable)
+      println("STOP criterion: " + stable + " iterations without improvement.")
+
     model.restoreSolution(bestSolution)
 
     p.clean()

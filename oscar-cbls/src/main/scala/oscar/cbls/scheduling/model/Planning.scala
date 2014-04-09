@@ -374,16 +374,17 @@ trait VariableResources extends Planning {
           val (duration, occupation) = reduction
           if (resourceReductionTasks(time) == null) {
             if (time + duration > maxDuration) {
-              // println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
               resourceReductionTasks(time) =
                 new NonMoveableActivity(time, maxDuration - time, this, "ResReducAt" + time)
+              println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
             } else {
-              // println("ResReducAt" + time + " with duration " + duration + " created.")
               resourceReductionTasks(time) =
                 new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
+              println("ResReducAt" + time + " with duration " + duration + " created.")
             }
           }
           resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
+          println("At " + time + ": " + occupation + " / " + resource.MaxAmount + " of " + resource.name)
         })
       }
     }
