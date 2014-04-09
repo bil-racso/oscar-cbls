@@ -169,7 +169,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
       val baseForEjection = r.baseActivityForEjection(t)
 
       selectMax2(baseForEjection, conflictActivities,
-        (a: Activity, b: Activity) => (b.latestEndDate.value - a.earliestStartDate.value),
+        (a: Activity, b: Activity) => (b.latestStartDate.value - a.earliestEndDate.value),
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a, b)) match {
           case (a, b) =>
             b.addDynamicPredecessor(a, verbose)
