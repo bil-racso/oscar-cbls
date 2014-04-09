@@ -136,7 +136,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
   /**
    * performs the relaxation of the critical path
-   * @param PKill: the probability to kill a killable precedence constraint in percent
+   * @param pKill: the probability to kill a killable precedence constraint in percent
    * @param min: the minimal number of relaxation
    * @return true if something could be relaxed, false if makespan is solid
    */
@@ -166,8 +166,9 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
       val t: Int = r.worseOverShootTime
 
       val conflictActivities = r.conflictingActivities(t)
+      val baseForEjection = r.baseActivityForEjection(t)
 
-      selectMax2(conflictActivities, conflictActivities,
+      selectMax2(baseForEjection, conflictActivities,
         (a: Activity, b: Activity) => (b.latestEndDate.value - a.earliestStartDate.value),
         (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a, b)) match {
           case (a, b) =>
@@ -178,19 +179,21 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
             //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
             //we search which dependency can be killed in the conflict set,
             val conflictActivityArray = conflictActivities.toArray
-            val dependencyKillers: Array[Array[PrecedenceCleaner]] =
-              Array.tabulate(conflictActivityArray.size)(
-                t1 => Array.tabulate(conflictActivityArray.size)(
-                  t2 => p.getDependencyToKillToAvoidCycle(conflictActivityArray(t1), conflictActivityArray(t2))))
+            val baseForEjectionArray = baseForEjection.toArray
 
-            selectMax2(conflictActivityArray.indices, conflictActivityArray.indices,
-              (a: Int, b: Int) => (conflictActivityArray(b).latestEndDate.value - conflictActivityArray(a).earliestStartDate.value),
+            val dependencyKillers: Array[Array[PrecedenceCleaner]] =
+              Array.tabulate(baseForEjection.size)(
+                t1 => Array.tabulate(conflictActivityArray.size)(
+                  t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
+
+            selectMax2(baseForEjectionArray.indices, conflictActivityArray.indices,
+              (a: Int, b: Int) => (conflictActivityArray(b).latestEndDate.value - baseForEjectionArray(a).earliestStartDate.value),
               (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
                 case (a, b) => {
                   println("need to kill dependencies to complete flattening")
                   dependencyKillers(a)(b).killDependencies(verbose)
 
-                  conflictActivityArray(b).addDynamicPredecessor(conflictActivityArray(a), verbose)
+                  conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
                 }
                 case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
               }

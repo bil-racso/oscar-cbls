@@ -83,6 +83,10 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
     conflictSet.map(_._1)
   }
 
+  def baseActivityForEjection(t:Int):Iterable[Activity] = {
+    activitiesAndUse(t).map(_._1)
+  }
+
   def close() {
 
     val tasks:Array[Activity] = ActivitiesAndUse.keys.toArray
