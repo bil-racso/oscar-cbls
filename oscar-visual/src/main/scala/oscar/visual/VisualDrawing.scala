@@ -42,12 +42,12 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
   setBackground(Color.white)
 
   // Shapes contained in the panel
-  private val shapes: Queue[VisualShape] = Queue()
+  protected val shapes: Queue[VisualShape] = Queue()
 
-  private var marginT: Double = 0
-  private var marginR: Double = 0
-  private var marginB: Double = 0
-  private var marginL: Double = 0
+  protected var marginT: Double = 0
+  protected var marginR: Double = 0
+  protected var marginB: Double = 0
+  protected var marginL: Double = 0
 
   /** Returns the margins of the panel. */
   def margin = (marginT, marginR, marginB, marginL)
@@ -64,7 +64,7 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
   }
 
   // Returns the bounds of the bounding box containing all the shapes.
-  private def findBounds(shapes: Iterable[VisualShape]): (Double, Double, Double, Double) = {
+  protected def findBounds(shapes: Iterable[VisualShape]): (Double, Double, Double, Double) = {
     var minX = Double.MaxValue
     var maxX = Double.MinValue
     var minY = Double.MaxValue
