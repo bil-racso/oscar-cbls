@@ -42,6 +42,8 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
                           name: String = "")
   extends Activity(duration: CBLSIntVar, planning: Planning, name) {
 
+  override val isTakenInSentinel = false
+
   if (startDate + duration.minVal > maxDuration)
     sys.error("Cannot post non moveable activity " + name +
       " because it exceeds the scheduler horizon (startDate + duration.minVal = " +

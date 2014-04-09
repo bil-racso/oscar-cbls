@@ -53,6 +53,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
                shifter: (CBLSIntVar, CBLSIntVar) => CBLSIntVar = (a: CBLSIntVar, _) => a) {
   val ID: Int = planning.addActivity(this)
 
+  val isTakenInSentinel = true
+
   override def equals(obj: Any): Boolean = {
     obj match {
       case a: Activity => a.ID == ID

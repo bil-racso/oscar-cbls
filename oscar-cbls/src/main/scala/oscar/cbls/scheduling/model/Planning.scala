@@ -88,7 +88,7 @@ class Planning(val model: Store, val maxDuration: Int) {
     sentinelActivity.latestEndDate := maxDuration
 
     for (a <- activitiesNoSentinel) {
-      sentinelActivity.addStaticPredecessor(a)
+      if (a.isTakenInSentinel) sentinelActivity.addStaticPredecessor(a)
     }
 
     activityArray = new Array[Activity](activityCount)
