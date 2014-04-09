@@ -43,8 +43,8 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
   require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
-  val useAmount = Array.tabulate(maxDuration)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
+  val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+  val useAmount = Array.tabulate(maxDuration+1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
   
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: CBLSSetVar = HighestUseTracker
@@ -81,6 +81,10 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
     )
 
     conflictSet.map(_._1)
+  }
+
+  def baseActivityForEjection(t:Int):Iterable[Activity] = {
+    activitiesAndUse(t).map(_._1)
   }
 
   def close() {

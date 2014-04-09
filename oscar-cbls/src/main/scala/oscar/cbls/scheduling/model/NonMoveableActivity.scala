@@ -40,12 +40,20 @@ import scala.collection.immutable.SortedSet
 class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planning,
                           name: String = "")
   extends Activity(duration: CBLSIntVar, planning: Planning, name) {
+
+  override val isTakenInSentinel = false
+
+  if (startDate + duration.minVal > maxDuration)
+    sys.error("Cannot post non moveable activity " + name +
+      " because it exceeds the scheduler horizon (startDate + duration.minVal = " +
+      (startDate + duration.minVal) + ").")
+
   override def canAddPrecedence: Boolean = false
   override def close() {
 
     additionalPredecessors = SortedSet.empty[Int]
     allPrecedingActivities = SortedSet.empty[Int]
-    earliestStartDate <== startDate
+    earliestStartDate := startDate
     definingPredecessors = SortedSet.empty[Int]
     potentiallyKilledPredecessors = SortedSet.empty[Int]
 

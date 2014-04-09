@@ -53,6 +53,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
                shifter: (CBLSIntVar, CBLSIntVar) => CBLSIntVar = (a: CBLSIntVar, _) => a) {
   val ID: Int = planning.addActivity(this)
 
+  val isTakenInSentinel = true
+
   override def equals(obj: Any): Boolean = {
     obj match {
       case a: Activity => a.ID == ID
@@ -108,6 +110,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
    * the activity and the resource must be registered to the same planning
    * @param r a resource that the activity uses
    * @param amount the amount of this resource that the activity uses
+   * FIXME potential problem if amount = 0
    */
   def usesCumulativeResource(r: CumulativeResource, amount: CBLSIntVar) {
     Resources = (r, amount) :: Resources
@@ -117,13 +120,13 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
   def maxDuration = planning.maxDuration
 
   val earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, 0,
-      "esd(" + name + ")")
+    "esd(" + name + ")")
   val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
-      "eed(" + name + ")")
+    "eed(" + name + ")")
   earliestEndDate <== earliestStartDate + duration
 
   val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, maxDuration,
-      "led(" + name + ")")
+    "led(" + name + ")")
 
   val latestStartDate: CBLSIntVar = latestEndDate - duration
   var allSucceedingActivities: CBLSSetVar = null
@@ -173,5 +176,17 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
           planning.maxDuration)
     }
   }
-}
 
+  def toAsciiArt: String = {
+    def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+    def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+
+    padToLength(this.name, 20) + ":" +
+      "[" + padToLength("" + this.earliestStartDate.value, 4) + ";" +
+      padToLength("" + this.earliestEndDate.value, 4) + "] " +
+      (if (this.duration.value == 1)
+        nStrings(this.earliestStartDate.value, " ") + "#\n"
+      else
+        nStrings(this.earliestStartDate.value, " ") + "#" + nStrings(this.duration.value - 2, "=") + "#\n")
+  }
+}
