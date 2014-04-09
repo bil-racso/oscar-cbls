@@ -123,7 +123,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     "esd(" + name + ")")
   val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, duration.value,
     "eed(" + name + ")")
-  earliestEndDate <== earliestStartDate + duration
+  earliestEndDate <== earliestStartDate + duration - 1
 
   val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, maxDuration,
     "led(" + name + ")")
@@ -162,8 +162,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
       val staticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ staticPredecessors.map((j: Activity) => j.ID)
       allPrecedingActivities = Union(staticPredecessorsID, additionalPredecessors)
 
-      val argMax = ArgMaxArray(planning.earliestEndDates, allPrecedingActivities, 0)
-      earliestStartDate <== argMax.getMax
+      val argMax = ArgMaxArray(planning.earliestEndDates, allPrecedingActivities, -1)
+      earliestStartDate <== argMax.getMax + 1
 
       definingPredecessors = argMax
 

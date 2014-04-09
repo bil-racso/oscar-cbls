@@ -370,26 +370,35 @@ trait VariableResources extends Planning {
     for (time <- 0 to maxDuration) {
       val timeModulo = time % nbAvailabilities
       if (!mergedReductions(timeModulo).isEmpty) {
-        mergedReductions(timeModulo).foreach(reduction => {
-          val (duration, occupation) = reduction
-          if (resourceReductionTasks(time) == null) {
-            if (time + duration > maxDuration) {
-              resourceReductionTasks(time) =
-                new NonMoveableActivity(time, maxDuration - time, this, "ResReducAt" + time)
-              println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
-            } else {
-              resourceReductionTasks(time) =
-                new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
-              println("ResReducAt" + time + " with duration " + duration + " created.")
-            }
-          }
-          resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
-          println("At " + time + ": " + occupation + " / " + resource.MaxAmount + " of " + resource.name)
-        })
+        mergedReductions(timeModulo).foreach(reduceResourceAt(time, _, resource))
       }
     }
 
     resource
+  }
+
+  private def reduceResourceAt(time: Int,
+                               reduction: (Int, Int),
+                               resource: CumulativeResource) {
+    val (duration, occupation) = reduction
+
+    val currentRedTaskDuration =
+      if (resourceReductionTasks(time) == null) 0
+      else resourceReductionTasks(time).asInstanceOf[Activity].duration.value
+
+    if (currentRedTaskDuration == 0 || currentRedTaskDuration != duration) {
+      if (time + duration > maxDuration && currentRedTaskDuration != maxDuration - time) {
+        resourceReductionTasks(time) =
+          new NonMoveableActivity(time, maxDuration - time, this, "ResReducAt" + time)
+        println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
+      } else if (time + duration <= maxDuration) {
+        resourceReductionTasks(time) =
+          new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
+        println("ResReducAt" + time + " with duration " + duration + " created.")
+      }
+    }
+    resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
+    println("At " + time + ": " + occupation + " / " + resource.maxAmount + " of " + resource.name)
   }
 
   /**

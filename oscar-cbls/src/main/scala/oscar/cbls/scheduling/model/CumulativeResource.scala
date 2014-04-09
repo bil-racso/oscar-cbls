@@ -34,13 +34,13 @@ import collection.SortedMap
  * the resource listens to the tasks using it, and maintains its overshoot times, and first overshoot
  *
  * @param planning the [[oscar.cbls.scheduling.model.Planning]] where the task is located
- * @param MaxAmount the available amount of this resource that is available throughout the planning
+ * @param maxAmount the available amount of this resource that is available throughout the planning
  * @param n the name of the resource, used to annotate the internal variables of the problem
   * @author renaud.delandtsheer@cetic.be
  */
-case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String = null)
+case class CumulativeResource(planning: Planning, maxAmount: Int = 1, n: String = null)
   extends Resource(planning:Planning, n) with SearchEngineTrait {
-  require(MaxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
+  require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   /**The set of activities using this resource at every position*/
   val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
@@ -67,7 +67,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
     })
   }
 
-  val overShoot: CBLSIntVar = HighestUse - MaxAmount
+  val overShoot: CBLSIntVar = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
 
   /** you need to eject one of these to solve the conflict */
@@ -77,7 +77,7 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
       activitiesAndUse(t),
       (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use + ActivityAndamount._2.value,
       (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use - ActivityAndamount._2.value,
-      (use: Int) => use > MaxAmount
+      (use: Int) => use > maxAmount
     )
 
     conflictSet.map(_._1)
@@ -106,14 +106,13 @@ case class CumulativeResource(planning: Planning, MaxAmount: Int = 1, n: String 
 
     var lines:List[String] = List.empty
 
-    for(i <- 1 to MaxAmount){
+    for(i <- 1 to maxAmount){
       //header
       lines =
-        ("" + padToLength(if (i == MaxAmount)n else "", 21)
+        ("" + padToLength(if (i == maxAmount)n else "", 21)
         + "|" + padToLength("" + i, 9) + "| " + useAmount.toList.map((v:CBLSIntVar) => if(v.value >= i) "+" else " ").mkString + "\n"
         ):: lines
     }
     lines.mkString
   }
 }
-

@@ -1,18 +1,19 @@
-/******************************************************************************
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU Lesser General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *   
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU Lesser General Public License  for more details.
-  *   
-  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
 /**
  * *****************************************************************************
   * Contributors:
@@ -44,8 +45,8 @@ case class Cumulative(indices: Array[Int],
                       active: Array[CBLSSetVar]) extends Invariant {
 
   //horizon is the uppermost indice of the profile, which is supposed to be the same as active
-  val horizon = profile.length - 1
-  assert(active.length == horizon + 1)
+  val horizonPlus1 = profile.length
+  assert(active.length == horizonPlus1)
 
   //horizon is the uppermost indice of the profile, which is supposed to be the same as active
   val horizon = profile.length-1
@@ -63,8 +64,8 @@ case class Cumulative(indices: Array[Int],
   for (i <- start.indices) insert(start(i).value, duration(i).value, amount(i).value, i)
 
   def remove(start: Int, duration: Int, amount: Int, index: Int) {
-    if(start <= horizon){
-      for (t <- start until (horizon min (start + duration))){
+    if (start < horizonPlus1) {
+      for (t <- start until (horizonPlus1 min (start + duration))) {
         profile(t) :-= amount
         active(t).deleteValue(indices(index))
       }
@@ -72,8 +73,8 @@ case class Cumulative(indices: Array[Int],
   }
 
   def insert(start: Int, duration: Int, amount: Int, index: Int) {
-    if(start <= horizon){
-      for (t <- start until (horizon min (start + duration))){
+    if (start < horizonPlus1) {
+      for (t <- start until (horizonPlus1 min (start + duration))) {
         //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
         profile(t) :+= amount
         active(t).insertValue(indices(index))
@@ -96,9 +97,9 @@ case class Cumulative(indices: Array[Int],
       }
     } else {
       //amount
-      if(start(index).value <= horizon){
+      if (start(index).value < horizonPlus1) {
         val Delta = NewVal - OldVal
-        for (t <- start(index).value until (horizon min (start(index).value + duration(index).value))){
+        for (t <- start(index).value until (horizonPlus1 min (start(index).value + duration(index).value))) {
           profile(t) :+= Delta
         }
       }
