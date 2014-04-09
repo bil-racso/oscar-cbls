@@ -17,7 +17,7 @@ class LinearList[U: Numeric, T <: ParetoElement[U]] extends ParetoFront[U, T] wi
             else newArchive(tail, dom, head :: ls)
           }
           else {
-            onElementRemoved(candidate)
+            onElementRemoved(head)
             newArchive(tail, true, ls)
           }
         }
