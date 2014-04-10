@@ -42,30 +42,11 @@ case class CumulativeResource(planning: Planning, maxAmount: Int = 1, n: String 
   extends Resource(planning:Planning, n) with SearchEngineTrait {
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
-  /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   val useAmount = Array.tabulate(maxDuration+1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
   
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: CBLSSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
-
-  var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
-
-  /**called by activities to register itself to the resource*/
-  def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    ActivitiesAndUse += ((j,
-      if(ActivitiesAndUse.isDefinedAt(j))
-        ActivitiesAndUse(j) + amount
-      else amount))
-  }
-
-  def activitiesAndUse(t:Int):List[(Activity, CBLSIntVar)] = {
-    use(t).value.toList.map((a:Int) => {
-      val activity:Activity = planning.activityArray(a);
-      (activity,ActivitiesAndUse(activity))
-    })
-  }
 
   val overShoot: CBLSIntVar = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
@@ -81,10 +62,6 @@ case class CumulativeResource(planning: Planning, maxAmount: Int = 1, n: String 
     )
 
     conflictSet.map(_._1)
-  }
-
-  def baseActivityForEjection(t:Int):Iterable[Activity] = {
-    activitiesAndUse(t).map(_._1)
   }
 
   def close() {

@@ -1,11 +1,12 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntConst, CBLSIntVar}
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.binPacking.{BinPackingSolver, BinPackingProblem, Bin}
+import oscar.cbls.invariants.lib.logic.TranslatedDenseCluster
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -16,20 +17,15 @@ import oscar.cbls.search.binPacking.{BinPackingSolver, BinPackingProblem, Bin}
  * We suppose that the bins cover the full history that is available in the planning.
  *
  */
-class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], MaxBPSteps:Int) extends  Resource(planning:Planning, n:String) {
+class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], MaxBPSteps:Int)
+  extends  Resource(planning:Planning, n:String) {
 
-  //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
+  //all the bins, flattened over the whole horizon in a single array
+  var activityBin:Array[CBLSIntVar] = null
 
-
-  /** these are the activities that you can use for ejecting one of the conflicting activities */
-  override def baseActivityForEjection(t: Int): Iterable[Activity] = null
-
-
-
-  var resourceUsage:List[(Activity,Int)] = null
-
-  var activityBin:Array[CBLSIntVar] = null;
-  var activitySize:Array[CBLSIntVar] = null;
+  //all the activities
+  var activitySize:Array[CBLSIntVar] = null
+  var activityArray:Array[Activity] = null
 
 
   case class ResourceAtTime(t:Int,
@@ -52,38 +48,36 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
       CBLSIntVar(planning.model, name="overall_violation") ,CBLSIntVar(planning.model, name="violationNotZero"))
   })
 
-  def flatBins():Array[Bin] = {
-    val allbins:List[Bin] = resourcesAtAllTimes.map(r => r.zeroBin :: r.bins).flatten.toList
-    val binArray:Array[Bin] = Array.fill(binCount)(null)
-    for(bin <- allbins){
-      binArray(bin.number) = bin
-    }
-    binArray
-  }
-
-  def binSizes(bins:Array[Bin]):Array[Int] = {
-    bins.map(bin => bin.size)
-  }
   def binViolations(bins:Array[Bin]):Array[CBLSIntVar] = null
 
-  /** This method builds a binpacking problem regrouping the items etc.
-    * of a binpacking happending at the given point in time
+  /** This method builds a bin packing problem regrouping the items etc.
+    * of a bin packing happening at the given point in time
     */
   def getBinPackingProblem(t:Int):BinPackingProblem = {
     null
   }
 
-
-
   /** This method is called by the framework before starting the scheduling
     * put anything that needs to be done after instantiation here
     */
   override def close(){
-    val allBins = flatBins()
 
+    //keeping track of which activity starts where through a cluster invariant
+    val activitiesAndUseArray = ActivitiesAndUse.toList
+    //an array of the tasks using me
+    activityArray = activitiesAndUseArray.map(_._1).toArray
+    activitySize = activitiesAndUseArray.map(_._2).toArray
+
+    TranslatedDenseCluster(activityArray.map(_.earliestStartDate), activityArray.map(_.ID), use)
+
+    val allBins:List[Bin] = resourcesAtAllTimes.map(r => r.zeroBin :: r.bins).flatten.toList
+    val binArray:Array[Bin] = Array.fill(binCount)(null)
+    for(bin <- allBins){
+      binArray(bin.number) = bin
+    }
 
     val sc = ConstraintSystem(planning.model)
-    val mkp = MultiKnapsack(activityBin, activitySize, binSizes(allBins).map((i:Int) => CBLSIntConst(i)))
+    val mkp = MultiKnapsack(activityBin, activitySize, binArray.map(bin => bin.size).map((i:Int) => CBLSIntConst(i)))
     sc.post(mkp)
 
     for(bin <- allBins){
