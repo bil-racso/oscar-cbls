@@ -353,191 +353,33 @@ trait EarliestStartDate extends Planning {
  * This trait lets one post variable resources.
  * Typically: resources which vary with week days.
  *
- * Technically, the trait contains a function which takes
- * an array indexing the amount of resources to the scheduler's unit,
- * modulo the array size.
+ * Technically, variable resources are cumulative resources,
+ * of which we restrict the availability (at time t)
+ * using non-movable activities.
+ * @author yoann.guyot@cetic.be
  */
 trait VariableResources extends Planning {
-  private val resourceReductionTasks = new Array[NonMoveableActivity](maxDuration + 1)
-
-  def postVariableResource(availabilities: Array[Int], name: String = null): CumulativeResource = {
-    val nbAvailabilities = availabilities.size
-    val maxAvailability = availabilities.max
-    val resource = new CumulativeResource(this, maxAvailability, name)
-
-    val mergedReductions = mergePeriods(availabilities.map(maxAvailability - _))
-
-    for (time <- 0 to maxDuration) {
-      val timeModulo = time % nbAvailabilities
-      if (!mergedReductions(timeModulo).isEmpty) {
-        mergedReductions(timeModulo).foreach(reduceResourceAt(time, _, resource))
-      }
-    }
-
-    resource
-  }
-
-  private def reduceResourceAt(time: Int,
-                               reduction: (Int, Int),
-                               resource: CumulativeResource) {
-    val (duration, occupation) = reduction
-
-    val currentRedTaskDuration =
-      if (resourceReductionTasks(time) == null) 0
-      else resourceReductionTasks(time).asInstanceOf[Activity].duration.value
-
-    if (currentRedTaskDuration == 0 || currentRedTaskDuration != duration) {
-      if (time + duration > maxDuration && currentRedTaskDuration != maxDuration - time) {
-        resourceReductionTasks(time) =
-          new NonMoveableActivity(time, maxDuration - time, this, "ResReducAt" + time)
-        println("ResReducAt" + time + " with duration " + (maxDuration - time) + " created.")
-      } else if (time + duration <= maxDuration) {
-        resourceReductionTasks(time) =
-          new NonMoveableActivity(time, duration, this, "ResReducAt" + time)
-        println("ResReducAt" + time + " with duration " + duration + " created.")
-      }
-    }
-    resourceReductionTasks(time).usesCumulativeResource(resource, occupation)
-    println("At " + time + ": " + occupation + " / " + resource.maxAmount + " of " + resource.name)
-  }
+  /**
+   * This array contains the list of restricting activities,
+   * indexed by the scheduler's unit.
+   */
+  val resourceRestrictionTasks: Array[List[NonMoveableActivity]] =
+    Array.fill(maxDuration + 1)(List())
 
   /**
-   * This function produces a list of availability task specifications,
-   * in the form of an array: merged(startDate) = [(task1_duration, task1_amount), ...]
-   * where availabilities are "merged" when equal in several positions
-   * of the given availabilities array.
+   * One should use this function to add a variable resource
+   * to his scheduling model.
+   *
+   * Availabilities(t) = amount of the resource available at time t
+   * If the size of availabilities is less than the horizon, it will be
+   * used modulo this size:
+   *    let t be such that: availabilities.size <= t <= horizon
+   *    the amount of resource at time t will be:
+   *    availabilities(t % availabilities.size)
+   * @author yoann.guyot@cetic.be
    */
-  private def mergePeriods(availabilities: Array[Int]): Array[List[(Int, Int)]] = {
-    val modulo = availabilities.size
-    var merged: Array[List[(Int, Int)]] = Array.fill(modulo)(List())
-    var merging = new Array[(Int, Int)](modulo)
-
-    /**
-     * Extends the merging period starting at given time,
-     * i.e. increments period's duration.
-     */
-    def extendPeriod(startDate: Int) {
-      val period = merging(startDate)
-      merging(startDate) = (period._1 + 1, period._2)
-    }
-
-    /**
-     * Closes the period starting at given time, i.e.:
-     * - saves the merging period in merged periods
-     * - removes it from merging periods
-     * - decrementing remaining amount difference by the removed period amount
-     */
-    def closePeriod(startDate: Int) = {
-      val period = merging(startDate)
-      merged(startDate) = period :: merged(startDate)
-      merging(startDate) = null
-      period
-    }
-
-    var previousAvailability = 0
-    /**
-     * For each time, we evaluate the variation of availability between
-     * the current time and the previous one.
-     */
-    for (time <- 0 to modulo - 1) {
-      val availability = availabilities(time)
-
-      /**
-       * If the availability is increased or stays the same...
-       */
-      if (availability >= previousAvailability) {
-
-        /**
-         * and previous availability was not zero,
-         * durations of all currently merging periods must be extended.
-         * merging(time) = (duration + 1, amount)
-         */
-        if (previousAvailability > 0) {
-          for (i <- 0 to time - 1) {
-            if (merging(i) != null)
-              extendPeriod(i)
-          }
-        }
-
-        /**
-         * If the availability is increased,
-         * a new merging period must be added for the increase.
-         * merging(time) = (1, increase)
-         */
-        if (availability > previousAvailability) {
-          merging(time) = (1, availability - previousAvailability)
-        }
-
-        /**
-         * If the availability is reduced...
-         */
-      } else { // availability < previousAvailability
-        /**
-         * ... to zero, all currently merging periods must be closed
-         * (moved from merging to merged)
-         */
-        if (availability == 0) {
-          for (i <- 0 to modulo - 1)
-            if (merging(i) != null)
-              merged(i) = merging(i) :: merged(i)
-          merging = new Array[(Int, Int)](modulo)
-          /**
-           * ... to a strictly positive value,
-           * the difference must be computed and
-           * latest merging periods must be
-           * - closed (if smaller) or
-           * - divided (if bigger) while the difference is not zero
-           * remaining merging periods must be incremented
-           */
-        } else { // 0 < availability < previousAvailability
-          var diff = previousAvailability - availability
-
-          /**
-           * Divides the period starting at given time, i.e.:
-           * - saves period (startDate, duration, diff) in merged periods
-           * - adds period (startDate, duration + 1, amount - diff) to merging periods
-           * - sets remaining amount difference to zero
-           */
-          def dividePeriod(startDate: Int) {
-            val period = merging(startDate)
-            merged(startDate) = (period._1, diff) :: merged(startDate)
-            merging(startDate) = (period._1 + 1, period._2 - diff)
-          }
-
-          /**
-           * Beginning with latest merging period,
-           * closes or divides periods until all exceeding amount is removed.
-           * If total exceeding amount < total amount,
-           * remaining periods are extended.
-           */
-          for (i <- time - 1 to 0 by -1) {
-            if (merging(i) != null) {
-              if (diff > 0) {
-                if (merging(i)._2 <= diff) {
-                  val closedPeriod = closePeriod(i)
-                  diff = diff - closedPeriod._2
-                } else { // merging(i)._2 (amount) > diff
-                  dividePeriod(i)
-                  diff = 0
-                }
-              } else { // diff = 0
-                extendPeriod(i)
-              }
-            }
-          }
-        }
-      }
-      previousAvailability = availability
-    }
-
-    /**
-     * Closes last merging periods
-     */
-    for (i <- 0 to modulo - 1)
-      if (merging(i) != null)
-        closePeriod(i)
-
-    //    merged.foreach(println)
-    merged
+  def postVariableResource(availabilities: Array[Int],
+                           name: String = null): VariableResource = {
+    VariableResource(this, availabilities, name)
   }
 }
