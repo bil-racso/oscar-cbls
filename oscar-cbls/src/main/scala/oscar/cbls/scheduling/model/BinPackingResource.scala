@@ -20,6 +20,12 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
 
   //MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar])
 
+
+  /** these are the activities that you can use for ejecting one of the conflicting activities */
+  override def baseActivityForEjection(t: Int): Iterable[Activity] = null
+
+
+
   var resourceUsage:List[(Activity,Int)] = null
 
   var activityBin:Array[CBLSIntVar] = null;
@@ -58,7 +64,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
   def binSizes(bins:Array[Bin]):Array[Int] = {
     bins.map(bin => bin.size)
   }
-  def binViolations(bins:Array[Bin]):Array[CBLSIntVar]
+  def binViolations(bins:Array[Bin]):Array[CBLSIntVar] = null
 
   /** This method builds a binpacking problem regrouping the items etc.
     * of a binpacking happending at the given point in time
@@ -105,7 +111,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
 
     //try to solve it
     //if not working, identify which activity could be usefully ejected
-
+   null
   }
 
   /** the first violation of the resource in time
