@@ -11,6 +11,7 @@ import oscar.cbls.objective.Objective
 import scala.collection.SortedMap
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import scala.collection.immutable.SortedSet
+import oscar.cbls.invariants.lib.set.SetMap
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -56,18 +57,17 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
                             zeroBin:Bin,
                             bins:List[Bin],
                             var overallViolation:Objective = null,
-                            var violationNotZero:Objective = null){
+                            var violationNotZero:Objective = null,
+                             var mostViolatedBins:CBLSSetVar=null){
     def getAllBins:List[Bin] = zeroBin :: bins
   }
 
   var resourcesAtAllTimes:Array[ResourceAtTime] = Array.tabulate(planning.maxDuration)(t => {
     ResourceAtTime(t=t,
       zeroBin=Bin(newBinNumber(),0 /*maxSize is zero for entry bin, representing the additional phantom bin*/),
-      bins=bins(t).map((binSize:Int) => Bin(newBinNumber(), binSize)))
+      bins=bins(t).map((binSize:Int) => Bin(newBinNumber(), binSize))
+    )
   })
-
-  var selectedBins:CBLSSetVar
-  var mostViolatedBins:CBLSSetVar
 
   /** This method is called by the framework before starting the scheduling
     * put anything that needs to be done after instantiation here
@@ -102,9 +102,12 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     for(r <- resourcesAtAllTimes){
       r.violationNotZero = Objective(Sum(r.bins.map(bin => bin.violation)))
       r.overallViolation = Objective(r.violationNotZero.Objective + r.zeroBin.violation)
-    }
 
-    mostViolatedBins = ArgMaxArray(binArray.map(_.violation), selectedBins)
+      val binArrayForTime:Array[Bin] = r.getAllBins.toArray
+      val binArrayToBinID = binArrayForTime.map(_.number)
+
+      r.mostViolatedBins = ArgMaxArray(binArrayForTime.map(_.violation)).map(binArrayToBinID(_))
+    }
   }
 
 
@@ -115,15 +118,11 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     val activitiesStartingAtT:Iterable[Activity] = use(t).value.map((activityID:Int) => planning.activityArray(activityID))
     val itemsAtTimeT:Iterable[Item] = activitiesStartingAtT.map((a:Activity) => ActivitiesAndItems(a))
 
-    selectedBins := SortedSet.empty ++ (if(withBinZero) resourcesAtAllTimes(t).getAllBins else resourcesAtAllTimes(t).bins).map(_.number)
-
     BinPackingProblem(activitiesStartingAtT.map((a:Activity) => {val item = ActivitiesAndItems(a); (item.number,item)}).toMap,
       (if(withBinZero) resourcesAtAllTimes(t).getAllBins else resourcesAtAllTimes(t).bins).map((b:Bin) => (b.number,b)).toMap,
       if(withBinZero) resourcesAtAllTimes(t).overallViolation else resourcesAtAllTimes(t).violationNotZero,
-      mostViolatedBins)
+      resourcesAtAllTimes(t)mostViolatedBins)
   }
-
-
 }
 
 /*

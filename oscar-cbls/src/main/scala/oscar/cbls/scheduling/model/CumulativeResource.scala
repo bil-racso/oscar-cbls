@@ -41,15 +41,13 @@ import collection.SortedMap
  *
  * @param planning the [[oscar.cbls.scheduling.model.Planning]] where the task is located
  * @param maxAmount the available amount of this resource that is available throughout the planning
- * @param n the name of the resource, used to annotate the internal variables of the problem
+ * @param name the name of the resource, used to annotate the internal variables of the problem
  * @author renaud.delandtsheer@cetic.be
  */
 class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: String = null)
   extends Resource(planning: Planning, name) with SearchEngineTrait {
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
-  /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration + 1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
   var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
 
@@ -70,7 +68,7 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   def activitiesAndUse(t: Int): List[(Activity, CBLSIntVar)] = {
     use(t).value.toList.map((a: Int) => {
       val activity: Activity = planning.activityArray(a);
-      (activity, activitiesAndUse(activity))
+      (activity, ActivitiesAndUse(activity))
     })
   }
 
@@ -89,13 +87,13 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
 
   def close() {
 
-    val tasks: Array[Activity] = activitiesAndUse.keys.toArray
+    val tasks: Array[Activity] = ActivitiesAndUse.keys.toArray
 
     Cumulative(
       tasks.map(_.ID),
       tasks.map(_.earliestStartDate),
       tasks.map(_.duration),
-      tasks.map(activitiesAndUse(_)),
+      tasks.map(ActivitiesAndUse(_)),
       useAmount,
       use)
   }

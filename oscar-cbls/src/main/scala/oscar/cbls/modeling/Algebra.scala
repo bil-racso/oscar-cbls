@@ -23,12 +23,48 @@ package oscar.cbls.modeling
 
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.set.{Interval, Inter, Diff, Union}
+import oscar.cbls.invariants.lib.set._
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.logic.{SetElement, Elements, IntElement}
 import oscar.cbls.invariants.lib.numeric._
 import collection.Iterator
 import language.implicitConversions
+import oscar.cbls.invariants.lib.numeric.Mod
+import oscar.cbls.constraints.lib.basic.G
+import oscar.cbls.invariants.lib.logic.IntElement
+import oscar.cbls.invariants.lib.numeric.Sum2
+import oscar.cbls.invariants.lib.logic.Elements
+import oscar.cbls.invariants.lib.numeric.Div
+import oscar.cbls.constraints.lib.basic.GE
+import oscar.cbls.invariants.lib.numeric.Prod
+import oscar.cbls.constraints.lib.basic.EQ
+import oscar.cbls.constraints.lib.basic.L
+import oscar.cbls.invariants.lib.logic.SetElement
+import oscar.cbls.constraints.lib.basic.NE
+import oscar.cbls.invariants.core.computation.CBLSIntConst
+import oscar.cbls.constraints.lib.basic.LE
+import oscar.cbls.invariants.lib.numeric.Minus
+import oscar.cbls.invariants.core.computation.CBLSSetConst
+import oscar.cbls.invariants.lib.numeric.Mod
+import oscar.cbls.constraints.lib.basic.G
+import oscar.cbls.invariants.lib.logic.IntElement
+import oscar.cbls.invariants.lib.numeric.Sum2
+import oscar.cbls.invariants.lib.set.Inter
+import oscar.cbls.invariants.lib.logic.Elements
+import oscar.cbls.invariants.lib.numeric.Div
+import oscar.cbls.constraints.lib.basic.GE
+import oscar.cbls.invariants.lib.set.Union
+import oscar.cbls.invariants.lib.numeric.Prod
+import oscar.cbls.constraints.lib.basic.EQ
+import oscar.cbls.invariants.lib.set.Interval
+import oscar.cbls.constraints.lib.basic.L
+import oscar.cbls.invariants.lib.logic.SetElement
+import oscar.cbls.constraints.lib.basic.NE
+import oscar.cbls.invariants.lib.set.Diff
+import oscar.cbls.invariants.core.computation.CBLSIntConst
+import oscar.cbls.constraints.lib.basic.LE
+import oscar.cbls.invariants.lib.numeric.Minus
+import oscar.cbls.invariants.core.computation.CBLSSetConst
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
@@ -136,7 +172,10 @@ trait AlgebraTrait{
     def inter(v: CBLSSetVar): SetInvariant = Inter(x, v)
 
     def minus(v: CBLSSetVar): SetInvariant = Diff(x, v)
-  }
+
+    def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin,myMax)
+
+    }
 
   implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
   = new InstrumentedArrayOfIntVar(inputarray)
