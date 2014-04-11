@@ -21,20 +21,6 @@ abstract class Resource(planning:Planning, n:String) {
   /**The set of activities using this resource at every position*/
   val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
 
-  var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
-
-  /**called by activities to register itself to the resource*/
-  def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    require(!ActivitiesAndUse.isDefinedAt(j), "an activity cannot use the same resource several times")
-    ActivitiesAndUse += ((j,amount))
-  }
-
-  def activitiesAndUse(t:Int):List[(Activity, CBLSIntVar)] = {
-    use(t).value.toList.map((a:Int) => {
-      val activity:Activity = planning.activityArray(a);
-      (activity,ActivitiesAndUse(activity))
-    })
-  }
 
   /** the level of overshoot of the resource.
     * The higher, the more important it is to solve it first in the flattening

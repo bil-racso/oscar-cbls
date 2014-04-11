@@ -43,13 +43,29 @@ case class CumulativeResource(planning: Planning, maxAmount: Int = 1, n: String 
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   val useAmount = Array.tabulate(maxDuration+1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
-  
+  var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
+
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: CBLSSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
   val overShoot: CBLSIntVar = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
+
+
+  /**called by activities to register itself to the resource*/
+  def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
+    require(!ActivitiesAndUse.isDefinedAt(j), "an activity cannot use the same resource several times")
+    ActivitiesAndUse += ((j,amount))
+  }
+
+  def activitiesAndUse(t:Int):List[(Activity, CBLSIntVar)] = {
+    use(t).value.toList.map((a:Int) => {
+      val activity:Activity = planning.activityArray(a);
+      (activity,ActivitiesAndUse(activity))
+    })
+  }
+
 
   /** you need to eject one of these to solve the conflict */
   def conflictingActivities(t: Int): List[Activity] = {
