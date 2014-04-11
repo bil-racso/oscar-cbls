@@ -62,8 +62,8 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
     var plateaulength = 0
     var bestMakeSpan = p.makeSpan.value
-    
-    println("Initial best make span: " + bestMakeSpan)
+
+    if (verbose) println("Initial best make span: " + bestMakeSpan)
 
     while (it < maxIt && plateaulength < stable) {
       //iterative weakening and flattening
@@ -72,7 +72,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
       if (plateaulength > 10 && (plateaulength % 50) == 0) {
 
         for (i <- 0 until nbRelax * 3) { relax(pkillPerRelax); }
-        println("jumping****************")
+        if (verbose) println("jumping****************")
 
       } else {
         val m = p.makeSpan.value
@@ -85,33 +85,37 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       flattenWorseFirst()
 
-      println(p.makeSpan)
-      println("iteration: " + it)
+      if (verbose) {
+        println(p.makeSpan)
+        println("iteration: " + it)
+      }
 
       if (p.makeSpan.value < bestMakeSpan) {
         bestSolution = model.solution(true)
         bestMakeSpan = p.makeSpan.value
         plateaulength = 0
-        println("Better MakeSpan found")
+        if (verbose) println("Better MakeSpan found")
         p.updateVisual()
       } else {
         plateaulength += 1
         p.clean()
       }
 
-      println("----------------")
+      if (verbose) println("----------------")
     }
 
-    if (it >= maxIt)
-      println("STOP criterion: maximum iteration number reached.")
-    if (plateaulength >= stable)
-      println("STOP criterion: " + stable + " iterations without improvement.")
+    if (verbose) {
+      if (it >= maxIt)
+        println("STOP criterion: maximum iteration number reached.")
+      if (plateaulength >= stable)
+        println("STOP criterion: " + stable + " iterations without improvement.")
+    }
 
     model.restoreSolution(bestSolution)
 
     p.clean()
 
-    println("restored best solution")
+    if (verbose) println("restored best solution")
 
     p.updateVisual()
   }
@@ -144,9 +148,9 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     val m = p.makeSpan.value
     var n = 0
     var SomethingCouldBeRelaxed = false
-    while ((p.makeSpan.value == m) | (n < min)) {
+    while ((p.makeSpan.value == m) || (n < min)) {
       n += 1
-      SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | relax(pKill)
+      SomethingCouldBeRelaxed = relax(pKill) || SomethingCouldBeRelaxed
       if (!SomethingCouldBeRelaxed) return false
     }
     if (verbose) println("relaxed " + n + " times to shorten makespan")
