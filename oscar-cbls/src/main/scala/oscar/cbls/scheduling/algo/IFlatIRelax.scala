@@ -148,9 +148,9 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     val m = p.makeSpan.value
     var n = 0
     var SomethingCouldBeRelaxed = false
-    while ((p.makeSpan.value == m) | (n < min)) {
+    while ((p.makeSpan.value == m) || (n < min)) {
       n += 1
-      SomethingCouldBeRelaxed = SomethingCouldBeRelaxed | relax(pKill)
+      SomethingCouldBeRelaxed = relax(pKill) || SomethingCouldBeRelaxed
       if (!SomethingCouldBeRelaxed) return false
     }
     if (verbose) println("relaxed " + n + " times to shorten makespan")

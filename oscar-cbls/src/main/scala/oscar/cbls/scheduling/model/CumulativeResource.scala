@@ -337,7 +337,7 @@ case class VariableResource(planning: Planning with VariableResources,
         case None => {
           val restrictionEnd = time + duration - 1
           val restrictionTask = new NonMoveableActivity(
-            time, duration, planning, "ResRestriction" + time + "->" + restrictionEnd)
+            time, duration, planning, "ResRestriction" + time + "to" + restrictionEnd)
           planning.resourceRestrictionTasks(time) =
             restrictionTask :: planning.resourceRestrictionTasks(time)
           //          println("ResReduc" + time + "->" + reducEnd + " added.")
