@@ -72,6 +72,10 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
     })
   }
 
+  /**these are the activities that you can use for ejecting one of the conflicting activities*/
+  def baseActivityForEjection(t:Int):Iterable[Activity] = {
+    activitiesAndUse(t).map(_._1)
+  }
 
   /** you need to eject one of these to solve the conflict */
   def conflictingActivities(t: Int): List[Activity] = {
@@ -349,7 +353,7 @@ case class VariableResource(planning: Planning with VariableResources,
    * (not only restrictions beginning at this time!)
    * @author yoann.guyot@cetic.be
    */
-  private def restrictionAt(time: Int) = {
+  private def restrictionAt(time: Int):Int = {
     val restrictions = (0 to time) flatMap { (i: Int) =>
       planning.resourceRestrictionTasks(i) map { (task: Activity) =>
         if (i + task.duration.value - 1 >= time) this.activitiesAndUse(task).value

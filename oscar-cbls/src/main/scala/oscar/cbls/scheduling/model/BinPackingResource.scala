@@ -59,7 +59,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
                             var overallViolation:Objective = null,
                             var violationNotZero:Objective = null,
                              var mostViolatedBins:CBLSSetVar=null){
-    def getAllBins:List[Bin] = zeroBin :: bins
+    def allBins:List[Bin] = zeroBin :: bins
   }
 
   var resourcesAtAllTimes:Array[ResourceAtTime] = Array.tabulate(planning.maxDuration)(t => {
@@ -80,7 +80,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     //setting the use, which keeps track of which activity uses the resoruce at any time slot
     TranslatedDenseCluster(activityArray.map(_.earliestStartDate), activityArray.map(_.ID), use)
 
-    val allBins:List[Bin] = resourcesAtAllTimes.map(_.getAllBins).flatten.toList
+    val allBins:List[Bin] = resourcesAtAllTimes.map(_.allBins).flatten.toList
     val binArray:Array[Bin] = Array.fill(binCount)(null)
     for(bin <- allBins){
       binArray(bin.number) = bin
@@ -103,7 +103,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
       r.violationNotZero = Objective(Sum(r.bins.map(bin => bin.violation)))
       r.overallViolation = Objective(r.violationNotZero.Objective + r.zeroBin.violation)
 
-      val binArrayForTime:Array[Bin] = r.getAllBins.toArray
+      val binArrayForTime:Array[Bin] = r.allBins.toArray
       val binArrayToBinID = binArrayForTime.map(_.number)
 
       r.mostViolatedBins = ArgMaxArray(binArrayForTime.map(_.violation)).map(binArrayToBinID(_))
@@ -119,7 +119,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     val itemsAtTimeT:Iterable[Item] = activitiesStartingAtT.map((a:Activity) => ActivitiesAndItems(a))
 
     BinPackingProblem(activitiesStartingAtT.map((a:Activity) => {val item = ActivitiesAndItems(a); (item.number,item)}).toMap,
-      (if(withBinZero) resourcesAtAllTimes(t).getAllBins else resourcesAtAllTimes(t).bins).map((b:Bin) => (b.number,b)).toMap,
+      (if(withBinZero) resourcesAtAllTimes(t).allBins else resourcesAtAllTimes(t).bins).map((b:Bin) => (b.number,b)).toMap,
       if(withBinZero) resourcesAtAllTimes(t).overallViolation else resourcesAtAllTimes(t).violationNotZero,
       resourcesAtAllTimes(t)mostViolatedBins)
   }

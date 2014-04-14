@@ -30,6 +30,9 @@ import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.computation.Solution
 import oscar.cbls.scheduling.model.CumulativeResource
 
+
+//TODO: integrte the chenges from the original algo, or inherit from it
+
 /**
  * @param p
  * @param verbose

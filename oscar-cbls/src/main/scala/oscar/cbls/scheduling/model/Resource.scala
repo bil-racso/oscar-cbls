@@ -43,9 +43,7 @@ abstract class Resource(planning:Planning, n:String) {
   def conflictingActivities(t:Int):Iterable[Activity]
 
   /**these are the activities that you can use for ejecting one of the conflicting activities*/
-  def baseActivityForEjection(t:Int):Iterable[Activity] = {
-    activitiesAndUse(t).map(_._1)
-  }
+  def baseActivityForEjection(t:Int):Iterable[Activity]
 
   def toAsciiArt(headerLength:Int):String
 }
