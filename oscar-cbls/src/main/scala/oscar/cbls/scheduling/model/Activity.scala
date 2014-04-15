@@ -163,7 +163,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
       allPrecedingActivities = Union(staticPredecessorsID, additionalPredecessors)
 
       val argMax = ArgMaxArray(planning.earliestEndDates, allPrecedingActivities, -1)
-      earliestStartDate <== argMax.getMax + 1
+      earliestStartDate <== shifter(argMax.getMax + 1, duration)
 
       definingPredecessors = argMax
 
