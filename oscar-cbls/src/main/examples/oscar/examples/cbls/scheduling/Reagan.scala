@@ -39,7 +39,6 @@ object Reagan extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)
-  val solver = new IFlatIRelaxTabu(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
@@ -73,13 +72,10 @@ object Reagan extends App {
 
   model.close(false)
 
+  val solver = new IFlatIRelax(planning)
 
-  solver.Solve(maxIt = 100,
-            stable = 50,
-            nbRelax = 5,
-            pkillPerRelax = 10,
-            tenure = 5,
-            jumpAfterPlateau = 7)
+  solver.solve(maxIt = 100,
+            stable = 50)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)

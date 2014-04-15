@@ -106,7 +106,10 @@ class IFlatIRelax(p: Planning,
         jumpAndFlatten()
 
       } else {
-        if(!relaxAndFlatten) return
+        if(!relaxAndFlatten){
+          if (verbose) println("Exit because could not shorten Makespan through relax")
+          return
+        }
       }
 
       if (verbose) {

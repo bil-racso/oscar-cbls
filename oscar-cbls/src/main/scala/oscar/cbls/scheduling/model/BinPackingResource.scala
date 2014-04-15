@@ -123,6 +123,23 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
       if(withBinZero) resourcesAtAllTimes(t).overallViolation else resourcesAtAllTimes(t).violationNotZero,
       resourcesAtAllTimes(t)mostViolatedBins)
   }
+
+  override def toAsciiArt(headerLength: Int): String = ""
+
+  /** these are the activities that you can use for ejecting one of the conflicting activities */
+  override def baseActivityForEjection(t: Int): Iterable[Activity] = null
+
+  /** you need to eject one of these to solve the conflict
+    * this can be null if the problem is actually solved in between, or if the problem cannot be solved */
+  override def conflictingActivities(t: Int): Iterable[Activity] = null
+
+  /** the first violation of the resource in time
+    *
+    * @return
+    */
+  override def worseOverShootTime: Int = 0
+
+  override val overShoot: CBLSIntVar = null
 }
 
 /*
