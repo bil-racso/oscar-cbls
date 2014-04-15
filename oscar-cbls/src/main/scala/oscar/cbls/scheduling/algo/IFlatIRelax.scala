@@ -91,6 +91,8 @@ class IFlatIRelax(p: Planning,
 
     flattenWorseFirst()
 
+    if (verbose) println("initial Makespan: " + p.makeSpan.value)
+
     var bestSolution: Solution = model.solution(true)
     var bestMakeSpan = p.makeSpan.value
     var plateaulength = 0
@@ -108,8 +110,14 @@ class IFlatIRelax(p: Planning,
         jumpAndFlatten()
 
       } else {
-        if(!relaxAndFlatten){
+        if(relaxAndFlatten()){
           if (verbose) println("STOP criterion: no relaxation could be achieved.")
+
+          model.restoreSolution(bestSolution)
+
+          p.clean()
+
+          if (verbose) println("restored best solution")
           return
         }
       }
@@ -163,8 +171,10 @@ class IFlatIRelax(p: Planning,
     * @return true if the planning is actually solid, that is: no relaxation can be performed.
     */
   def relaxAndFlatten():Boolean = {
-    if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) {
-      println("STOP criterion: no relaxation could be achieved.")
+    val m = p.makeSpan.value
+    relaxUntilMakespanReduced(pkillPerRelax, nbRelax)
+
+    if(p.makeSpan.value == m){
       return true
     }
 
@@ -209,7 +219,7 @@ class IFlatIRelax(p: Planning,
       if (relax(pKill)) {
         SomethingCouldBeRelaxed = true
       } else {
-        if (verbose) println("Could not relax anymore (after " + (n - 1) + " relaxations.")
+        if (verbose) println("Could not relax anymore (after " + (n - 1) + " relaxations)")
         return SomethingCouldBeRelaxed
       }
     }
