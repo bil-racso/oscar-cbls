@@ -49,7 +49,7 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
   val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
-  var ActivitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
+  var activitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
 
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: CBLSSetVar = HighestUseTracker
@@ -61,14 +61,14 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
 
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    require(!ActivitiesAndUse.isDefinedAt(j), "an activity cannot use the same resource several times")
-    ActivitiesAndUse += ((j,amount))
+    require(!activitiesAndUse.isDefinedAt(j), "an activity cannot use the same resource several times")
+    activitiesAndUse += ((j,amount))
   }
 
   def activitiesAndUse(t: Int): List[(Activity, CBLSIntVar)] = {
     use(t).value.toList.map((a: Int) => {
       val activity: Activity = planning.activityArray(a);
-      (activity, ActivitiesAndUse(activity))
+      (activity, activitiesAndUse(activity))
     })
   }
 
@@ -91,13 +91,13 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
 
   def close() {
 
-    val tasks: Array[Activity] = ActivitiesAndUse.keys.toArray
+    val tasks: Array[Activity] = activitiesAndUse.keys.toArray
 
     Cumulative(
       tasks.map(_.ID),
       tasks.map(_.earliestStartDate),
       tasks.map(_.duration),
-      tasks.map(ActivitiesAndUse(_)),
+      tasks.map(activitiesAndUse(_)),
       useAmount,
       use)
   }
