@@ -84,13 +84,15 @@ class IFlatIRelax(p: Planning,
 
   /**
    * This solves the jobshop by iterative relaxation and flattening
+   * @param maxIt the max number of iterations of the search
+   * @param stable the number of no successive noimprove that will cause the search to stop
    */
   def solve(maxIt: Int, stable: Int) {
 
     flattenWorseFirst()
 
     var bestSolution: Solution = model.solution(true)
-    var bestMakeSpan = p.makeSpan
+    var bestMakeSpan = p.makeSpan.value
     var plateaulength = 0
 
     if (verbose) {
@@ -107,7 +109,7 @@ class IFlatIRelax(p: Planning,
 
       } else {
         if(!relaxAndFlatten){
-          if (verbose) println("Exit because could not shorten Makespan through relax")
+          if (verbose) println("STOP criterion: no relaxation could be achieved.")
           return
         }
       }
@@ -204,8 +206,12 @@ class IFlatIRelax(p: Planning,
     var SomethingCouldBeRelaxed = false
     while ((p.makeSpan.value == m) || (n < min)) {
       n += 1
-      SomethingCouldBeRelaxed = relax(pKill) || SomethingCouldBeRelaxed
-      if (!SomethingCouldBeRelaxed) return false
+      if (relax(pKill)) {
+        SomethingCouldBeRelaxed = true
+      } else {
+        if (verbose) println("Could not relax anymore (after " + (n - 1) + " relaxations.")
+        return SomethingCouldBeRelaxed
+      }
     }
     if (verbose) println("relaxed " + n + " times to shorten makespan")
     return SomethingCouldBeRelaxed
@@ -248,7 +254,7 @@ class IFlatIRelax(p: Planning,
             (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
             (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
             case (a, b) => {
-              println("need to kill dependencies to complete flattening")
+                  if (verbose) println("need to kill dependencies to complete flattening")
               dependencyKillers(a)(b).killDependencies(verbose)
 
               conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
