@@ -150,8 +150,12 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     var SomethingCouldBeRelaxed = false
     while ((p.makeSpan.value == m) || (n < min)) {
       n += 1
-      SomethingCouldBeRelaxed = relax(pKill) || SomethingCouldBeRelaxed
-      if (!SomethingCouldBeRelaxed) return false
+      if (relax(pKill)) {
+        SomethingCouldBeRelaxed = true
+      } else {
+        if (verbose) println("Could not relax anymore (after " + (n - 1) + " relaxations.")
+        return SomethingCouldBeRelaxed
+      }
     }
     if (verbose) println("relaxed " + n + " times to shorten makespan")
     return SomethingCouldBeRelaxed
