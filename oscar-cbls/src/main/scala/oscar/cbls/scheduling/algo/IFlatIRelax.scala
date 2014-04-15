@@ -77,10 +77,10 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
       } else {
         val m = p.makeSpan.value
         if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) {
-          println("STOP criterion: no relaxation could be achieved.")
+          if (verbose) println("STOP criterion: no relaxation could be achieved.")
           return
         }
-        if (p.makeSpan.value == m) println("skip")
+        //        if (p.makeSpan.value == m) println("skip")
       }
 
       flattenWorseFirst()
@@ -198,7 +198,7 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
               (a: Int, b: Int) => (conflictActivityArray(b).latestStartDate.value - baseForEjectionArray(a).earliestEndDate.value),
               (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
                 case (a, b) => {
-                  println("need to kill dependencies to complete flattening")
+                  if (verbose) println("need to kill dependencies to complete flattening")
                   dependencyKillers(a)(b).killDependencies(verbose)
 
                   conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
