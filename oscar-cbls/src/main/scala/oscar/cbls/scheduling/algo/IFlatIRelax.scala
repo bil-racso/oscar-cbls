@@ -1,3 +1,5 @@
+package oscar.cbls.scheduling.algo
+
 /**
  * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
@@ -14,15 +16,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.cbls.scheduling.algo
-
-import oscar.cbls.invariants.core.computation.Solution
-import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.scheduling.model.Activity
-import oscar.cbls.scheduling.model.Planning
-import oscar.cbls.scheduling.model.PrecedenceCleaner
-import oscar.cbls.scheduling.model.Resource
-import oscar.cbls.search.SearchEngine
 
 /**
  * *****************************************************************************
@@ -32,38 +25,77 @@ import oscar.cbls.search.SearchEngine
  * ****************************************************************************
  */
 
+import oscar.cbls.invariants.core.computation.Solution
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.scheduling.model.Activity
+import oscar.cbls.scheduling.model.Planning
+import oscar.cbls.scheduling.model.PrecedenceCleaner
+import oscar.cbls.scheduling.model.Resource
+import oscar.cbls.search.SearchEngine
+
+/*
+abstract class StopCriterion(){
+
+  //This method is called by the iFlatRelax at each step where the model is feasible
+  def shouldStop(it:Int,p:Planning):Boolean
+}
+
+case class plateauMaxItStopCriterion(maxIt: Int, stable: Int, verbose:Boolean)
+  extends StopCriterion{
+
+  var plateauLength = 0
+  var bestMakeSpan = Int.MaxValue
+
+  def shouldStop(it:Int,p:Planning):Boolean = {
+    if (p.makeSpan.value < bestMakeSpan) {
+      bestMakeSpan = p.makeSpan.value
+      plateauLength = 0
+      if (verbose) println("Better MakeSpan found: " + bestMakeSpan)
+    } else {
+      plateauLength += 1
+    }
+
+    if (it >= maxIt){
+      if (verbose) println("STOP criterion: maximum iteration number reached.")
+      return true
+    }
+    if (plateauLength >= stable){
+      if (verbose) println("STOP criterion: " + stable + " iterations without improvement.")
+      return true
+    }
+    return false
+  }
+}
+*/
+
 /**
  * @param p
  * @param verbose
  * @author renaud.delandtsheer@cetic.be
  */
-class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
+class IFlatIRelax(p: Planning,
+                  verbose: Boolean = true,
+                  nbRelax: Int = 4,
+                  pkillPerRelax: Int = 50) extends SearchEngine {
   val model: Store = p.model
+
+  var it: Int = 0
+
 
   /**
    * This solves the jobshop by iterative relaxation and flattening
-   * @param maxIt the max number of iterations of the search
-   * @param stable the number of no successive noimprove that will cause the search to stop
    */
-  def solve(maxIt: Int,
-            stable: Int,
-            nbRelax: Int = 4,
-            pkillPerRelax: Int = 50) {
-
-    var it: Int = 0
+  def solve(maxIt: Int, stable: Int) {
 
     flattenWorseFirst()
 
     var bestSolution: Solution = model.solution(true)
+    var bestMakeSpan = p.makeSpan
+    var plateaulength = 0
+
     if (verbose) {
       println("----------------")
     }
-    p.updateVisual()
-
-    var plateaulength = 0
-    var bestMakeSpan = p.makeSpan.value
-
-    if (verbose) println("Initial best make span: " + bestMakeSpan)
 
     while (it < maxIt && plateaulength < stable) {
       //iterative weakening and flattening
@@ -71,19 +103,11 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
       if (plateaulength > 10 && (plateaulength % 50) == 0) {
 
-        for (i <- 0 until nbRelax * 3) { relax(pkillPerRelax); }
-        if (verbose) println("jumping****************")
+        jumpAndFlatten()
 
       } else {
-        val m = p.makeSpan.value
-        if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) {
-          println("STOP criterion: no relaxation could be achieved.")
-          return
-        }
-        if (p.makeSpan.value == m) println("skip")
+        if(!relaxAndFlatten) return
       }
-
-      flattenWorseFirst()
 
       if (verbose) {
         println(p.makeSpan)
@@ -116,8 +140,31 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
     p.clean()
 
     if (verbose) println("restored best solution")
+  }
 
-    p.updateVisual()
+
+  /** performs a large set of relaxation to actually get away
+    * from a seemignly exhausted search zone
+    *
+    */
+  def jumpAndFlatten(){
+    if (verbose) println("jumping****************")
+    for (i <- 0 until nbRelax * 3) { relax(pkillPerRelax); }
+    flattenWorseFirst()
+  }
+
+  /** performs the relaxation, followed by the flattening
+    *
+    * @return true if the planning is actually solid, that is: no relaxation can be performed.
+    */
+  def relaxAndFlatten():Boolean = {
+    if (!relaxUntilMakespanReduced(pkillPerRelax, nbRelax)) {
+      println("STOP criterion: no relaxation could be achieved.")
+      return true
+    }
+
+    flattenWorseFirst()
+    return false
   }
 
   /**
@@ -132,10 +179,14 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
 
     for ((from, to) <- potentiallykilledNodes) {
       if (flip(pKill)) {
-        to.removeDynamicPredecessor(from, verbose)
+        doRelax(from,to,verbose)
       }
     }
     true
+  }
+
+  def doRelax(from:Activity, to:Activity, verbose:Boolean ){
+    to.removeDynamicPredecessor(from, verbose)
   }
 
   /**
@@ -172,37 +223,51 @@ class IFlatIRelax(p: Planning, verbose: Boolean = true) extends SearchEngine {
       val conflictActivities = r.conflictingActivities(t)
       val baseForEjection = r.baseActivityForEjection(t)
 
-      selectMax2(baseForEjection, conflictActivities,
-        (a: Activity, b: Activity) => (b.latestStartDate.value - a.earliestEndDate.value),
-        (a: Activity, b: Activity) => p.canAddPrecedenceAssumingResourceConflict(a, b)) match {
-          case (a, b) =>
-            b.addDynamicPredecessor(a, verbose)
-          case null =>
+      selectMin2(baseForEjection, conflictActivities,
+        estimateMakespanExpansionForNewDependency,
+        p.canAddPrecedenceAssumingResourceConflict) match {
+        case (a, b) =>
+          b.addDynamicPredecessor(a, verbose)
+        case null =>
 
-            //no precedence can be added because some additional precedence must be killed to allow that
-            //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
-            //we search which dependency can be killed in the conflict set,
-            val conflictActivityArray = conflictActivities.toArray
-            val baseForEjectionArray = baseForEjection.toArray
+          //no precedence can be added because some additional precedence must be killed to allow that
+          //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
+          //we search which dependency can be killed in the conflict set,
+          val conflictActivityArray = conflictActivities.toArray
+          val baseForEjectionArray = baseForEjection.toArray
 
-            val dependencyKillers: Array[Array[PrecedenceCleaner]] =
-              Array.tabulate(baseForEjection.size)(
-                t1 => Array.tabulate(conflictActivityArray.size)(
-                  t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
+          val dependencyKillers: Array[Array[PrecedenceCleaner]] =
+            Array.tabulate(baseForEjection.size)(
+              t1 => Array.tabulate(conflictActivityArray.size)(
+                t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
 
-            selectMax2(baseForEjectionArray.indices, conflictActivityArray.indices,
-              (a: Int, b: Int) => (conflictActivityArray(b).latestStartDate.value - baseForEjectionArray(a).earliestEndDate.value),
-              (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
-                case (a, b) => {
-                  println("need to kill dependencies to complete flattening")
-                  dependencyKillers(a)(b).killDependencies(verbose)
+          selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
+            (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
+            (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
+            case (a, b) => {
+              println("need to kill dependencies to complete flattening")
+              dependencyKillers(a)(b).killDependencies(verbose)
 
-                  conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
-                }
-                case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
-              }
+              conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
+            }
+            case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
+          }
 
-        }
+      }
     }
   }
+
+
+  /** This computes an estimate of the Makespan expansion if the given precedence is added.
+    * this estmate is completely wrong in itself, as a constant factor is added to each estimate.
+    * since it is the same factor, you can use this method to chose among a set of precedence
+    * because this will forget about the correcting factor.
+    * @param from
+    * @param to
+    * @return
+    */
+  def estimateMakespanExpansionForNewDependency(from:Activity, to:Activity):Int = {
+    from.earliestEndDate.value - to.latestStartDate.value
+  }
+
 }

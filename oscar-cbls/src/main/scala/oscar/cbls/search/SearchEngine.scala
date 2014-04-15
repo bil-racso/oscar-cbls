@@ -90,6 +90,14 @@ trait SearchEngineTrait{
     selectMaxNR[R](r , -f(_), st)
   }
 
+  /**return a couple (r,s) that is allowed: st(r,s) is true, and minimizing f(r,s) among the allowed couples
+    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
+    * @param st is optional and set to true if not specified
+    */
+  def selectMin2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
+    selectMax2[R,S](r , s, -f(_,_), st)
+  }
+
   /**return a couple (r,s) that is allowed: st(r,s) is true, and maximizing f(r,s) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified

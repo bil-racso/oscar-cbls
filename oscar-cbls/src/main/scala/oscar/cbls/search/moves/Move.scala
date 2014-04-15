@@ -168,7 +168,6 @@ abstract class Neighborhood{
     }
 
   /**
-   *
    * @return the number of moves performed
    */
   def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
