@@ -110,7 +110,6 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     }
   }
 
-
   /** This method builds a bin packing problem regrouping the items etc.
     * of a bin packing happening at the given point in time
     */
@@ -133,8 +132,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     * this can be null if the problem is actually solved in between, or if the problem cannot be solved */
   override def conflictingActivities(t: Int): Iterable[Activity] = null
 
-  /** the first violation of the resource in time
-    *
+  /** The first violation of the resource in time
     * @return
     */
   override def worseOverShootTime: Int = 0

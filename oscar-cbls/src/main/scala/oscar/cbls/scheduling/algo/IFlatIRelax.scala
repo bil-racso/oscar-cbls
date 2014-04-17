@@ -79,6 +79,7 @@ class IFlatIRelax(p: Planning,
                   pkillPerRelax: Int = 50) extends SearchEngine {
   val model: Store = p.model
 
+  require(model.isClosed, "model should be closed before iFlatRelax algo can be isntantiated")
   var it: Int = 0
 
 
@@ -88,6 +89,7 @@ class IFlatIRelax(p: Planning,
    * @param stable the number of no successive noimprove that will cause the search to stop
    */
   def solve(maxIt: Int, stable: Int) {
+    var finished = false;
 
     flattenWorseFirst()
 
@@ -101,7 +103,7 @@ class IFlatIRelax(p: Planning,
       println("----------------")
     }
 
-    while (it < maxIt && plateaulength < stable) {
+    while (!finished) {
       //iterative weakening and flattening
       it += 1
 
@@ -139,13 +141,15 @@ class IFlatIRelax(p: Planning,
       }
 
       if (verbose) println("----------------")
-    }
 
-    if (verbose) {
-      if (it >= maxIt)
-        println("STOP criterion: maximum iteration number reached.")
-      if (plateaulength >= stable)
-        println("STOP criterion: " + stable + " iterations without improvement.")
+      if (it >= maxIt){
+        if (verbose) println("STOP criterion: maximum iteration number reached.")
+        finished = true
+      }
+      if (plateaulength >= stable){
+        if (verbose) println("STOP criterion: " + stable + " iterations without improvement.")
+        finished = true
+      }
     }
 
     model.restoreSolution(bestSolution)
@@ -154,7 +158,6 @@ class IFlatIRelax(p: Planning,
 
     if (verbose) println("restored best solution")
   }
-
 
   /** performs a large set of relaxation to actually get away
     * from a seemignly exhausted search zone
@@ -264,7 +267,7 @@ class IFlatIRelax(p: Planning,
             (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
             (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
             case (a, b) => {
-                  if (verbose) println("need to kill dependencies to complete flattening")
+              if (verbose) println("need to kill dependencies to complete flattening")
               dependencyKillers(a)(b).killDependencies(verbose)
 
               conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)

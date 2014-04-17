@@ -74,27 +74,12 @@ object Reagan extends App {
 
   val solver = new IFlatIRelaxTabu(planning)
 
-  solver.solve(maxIt = 10,
-            stable = 5)
+  solver.solve(maxIt = 20,
+            stable = 10)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)
   println(planning.dependencies)
 
-  /*
-  digest              :[0   ;15  ] #=============#
-  eat                 :[0   ;2   ] ##
-  chew                :[2   ;5   ]   #=#
-  pray                :[5   ;7   ]      ##
-  think               :[7   ;19  ]        #==========#
-  sleep               :[7   ;15  ]        #======#
-  speak               :[19  ;22  ]                    #=#
-  drink               :[22  ;25  ]                       #=#
-  MakeSpan:=25
-
-  Reagan               |3        | ++   ++++++++++    ++++++
-                       |2        | +++++++++++++++    ++++++
-                       |1        | +++++++++++++++++++++++++
-  */
 }
 

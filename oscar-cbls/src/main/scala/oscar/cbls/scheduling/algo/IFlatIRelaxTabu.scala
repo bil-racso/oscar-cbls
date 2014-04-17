@@ -37,7 +37,7 @@ class IFlatIRelaxTabu(p: Planning,
                       verbose: Boolean = true,
                       nbRelax: Int = 4,
                       pkillPerRelax: Int = 50,
-                      tenure:Int = 10) extends IFlatIRelax(p,verbose, nbRelax, pkillPerRelax) {
+                      tenure:Int = 1) extends IFlatIRelax(p,verbose, nbRelax, pkillPerRelax) {
 
   val initialTabu = 0
 
