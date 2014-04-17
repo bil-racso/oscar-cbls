@@ -61,8 +61,11 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
 
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    require(!activitiesAndUse.isDefinedAt(j), "an activity cannot use the same resource several times")
-    activitiesAndUse += ((j,amount))
+    if(activitiesAndUse.isDefinedAt(j)){
+    activitiesAndUse += ((j,activitiesAndUse.get(j).get + amount))
+    }else{
+      activitiesAndUse += ((j,amount))
+    }
   }
 
   def activitiesAndUse(t: Int): List[(Activity, CBLSIntVar)] = {
