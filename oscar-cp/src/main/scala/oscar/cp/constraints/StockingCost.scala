@@ -8,26 +8,21 @@ import oscar.cp.constraints.AllDiffBC
 import scala.collection.mutable.PriorityQueue
 
 /**
- * The StockingCost constraint has the following form:
- * $StockingCost([X_1,...,X_n],[d_1,...,d_n],H,c)$ where: 
- *   - the variable $X_i$ is the date of production of item $i$ on the machine,
- *   - the integer $d_i$ is the due-date for item $i$,
- *   - the integer $c$ is the maximum number of items the machine can produce 
- *     during one time slot (capacity), if an item is produced before 
- *     its due date, then it must be stocked. 
- *   - the variable $H$ is an upper bound on the 
- *     total number of slots all the items are need in stock.
- *     
- * This constraint is design for the stocking part of 
- * Production Planning Problem such as Lot Sizing Probem
- *     
- * The StockingCost constraint holds when each item is produced before
- * its due date ($X_i <= d_i$), the capacity of the machine is respected
- * (i.e. no more than $c$ variables $X_i$ have the same value), and $H$
- * is an upper bound on the total stocking cost ($sum_i(d_i - X_i) <= H$).
- * 
- * @author Ratheil Houndji and Pierre Schaus pschaus@gmail.com
- */
+  * The StockingCost constraint holds when each item is produced before
+  * its due date ($X_i <= d_i$), the capacity of the machine is respected
+  * (i.e. no more than $c$ variables $X_i$ have the same value), and $H$
+  * is an upper bound on the total stocking cost ($sum_i(d_i - X_i) <= H$).
+  * 
+  * This constraint is useful for modeling
+  * Production Planning Problem such as Lot Sizing Problems
+  * 
+  * @param X, the variable $X_i$ is the date of production of item $i$ on the machine
+  * @param d, the integer $d_i$ is the due-date for item $i$
+  * @param H, the variable $H$ is an upper bound on the total number of slots all the items are need in stock.
+  * @param c is the maximum number of items the machine can produce during one time slot (capacity), 
+  *        if an item is produced before its due date, then it must be stocked.
+  * @author Ratheil Houndji and Pierre Schaus pschaus@gmail.com
+  */
 class StockingCost(val Y: Array[CPIntVar], val deadline: Array[Int], val H: CPIntVar, val c: Int) extends Constraint(Y(0).store, "StockingCost") {
 
   val allDiffBC = new AllDiffBC(Y)

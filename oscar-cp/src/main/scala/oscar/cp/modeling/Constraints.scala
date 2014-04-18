@@ -23,6 +23,7 @@ import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
 import scala.collection.immutable.Set
+import oscar.cp.constraints.stockingCost.StockingCost
 
 trait Constraints {
 
@@ -932,6 +933,24 @@ trait Constraints {
     }
     cons
   }
+
+  /**
+   * The StockingCost constraint holds when each item is produced before
+   * its due date ($X_i <= d_i$), at most one item is produced at any time
+   * on the machine (all the $X_i$ are distinct), and $H$
+   * is an upper bound on the total stocking cost ($sum_i(d_i - X_i) <= H$).
+   * 
+   * This constraint is useful for modeling
+   * Production Planning Problem such as Lot Sizing Problems
+   * 
+   * @param X, the variable $X_i$ is the date of production of item $i$ on the machine
+   * @param d, the integer $d_i$ is the due-date for item $i$
+   * @param H, the variable $H$ is an upper bound on the total number of slots all the items are need in stock.
+   */
+  def stockingCost(X: Array[CPIntVar], d: Array[Int], H: CPIntVar): Constraint = {
+    new StockingCost(X, d, H, 1)
+  }
+
 
   /**
    * Non overlapping between 2D rectangles 
