@@ -23,7 +23,7 @@ package oscar.cbls.search
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.search.moves.{AssingMove, Move, Neighborhood}
+import oscar.cbls.search.moves.{StatelessNeighborhood, AssingMove, Move, Neighborhood}
 
 /**generic search procedure
   * selects most violated variable, and assigns value that minimizes overall violation
@@ -52,7 +52,7 @@ object conflictSearch extends SearchEngine{
   }
 }
 
-class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
+class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
   override def getImprovingMove(): Option[Move] = {
@@ -70,7 +70,7 @@ class conflictMove(c:ConstraintSystem) extends Neighborhood with SearchEngineTra
   }
 }
 
-class conflictMoveFirstImprove(c:ConstraintSystem) extends Neighborhood with SearchEngineTrait{
+class conflictMoveFirstImprove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
   override def getImprovingMove(): Option[Move] = {

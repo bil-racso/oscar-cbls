@@ -18,11 +18,11 @@ import oscar.cbls.invariants.core.computation.CBLSSetVar
 import oscar.cbls.search._
 import oscar.cbls.objective.Objective
 import scala.Some
-import oscar.cbls.search.moves.{SwapMove, Neighborhood, Move}
+import oscar.cbls.search.moves.{StatelessNeighborhood, SwapMove, Neighborhood, Move}
 
 /**swaps items of different sizes out of most violated bin*/
 case class SwapItemsNeighborhood(p:BinPackingProblem)
-  extends Neighborhood with SearchEngineTrait{
+  extends StatelessNeighborhood with SearchEngineTrait{
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
   val itemList:List[Item] = p.items.toList.map(_._2)
