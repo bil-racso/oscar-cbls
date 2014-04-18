@@ -14,7 +14,58 @@
   ******************************************************************************/
 package oscar.cbls.search.moves
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+abstract class Neighborhood{
+  def getImprovingMove():Option[Move]
+
+  //this resets the internal state of the move combinators
+  def reset()
+
+  /**
+   *
+   * @return true if a move has been performed, false otherwise
+   */
+  def doImprovingMove():Boolean =
+    getImprovingMove() match{
+      case None => false
+      case Some(n) => n.comit; true
+    }
+
+  /**
+   * @return the number of moves performed
+   */
+  def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
+    var toReturn = 0;
+    var remainingMoves = maxMoves
+    while(remainingMoves != 0 && doImprovingMove()){
+      toReturn += 1
+      remainingMoves -= 1
+    }
+    toReturn
+  }
+
+  def exhaust(b:Neighborhood):Neighborhood = new Exhaust(this,b)
+  def exhaustBack(b:Neighborhood):Neighborhood = new ExhaustBack(this,b)
+  def andThen(b:Neighborhood):Neighborhood = new AndThen(this,b)
+  def best(b:Neighborhood):Neighborhood = new Best(this,b)
+  def random(b:Neighborhood):Neighborhood = new Random(this,b)
+  def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
+  def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
+}
+
+abstract class BinaryNeighborhoodCombinator(a:Neighborhood, b:Neighborhood) extends Neighborhood{
+  //this resets the internal state of the move combinators
+  override def reset(){
+    a.reset()
+    b.reset()
+  }
+}
+
+abstract class UnaryNeighborhoodCombinator(a:Neighborhood) extends Neighborhood{
+  //this resets the internal state of the move combinators
+  override def reset(){
+    a.reset()
+  }
+}
 
 /** this composer randomly tries one neighborhood.
   * it trie the other if the first did not find any move
@@ -85,17 +136,23 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinat
   }
 }
 
-/** a neighborhood that never finds any move
-  */
-class NoMove extends StatelessNeighborhood{
-  override def getImprovingMove(): Option[Move] = None
-}
-
 /**this composer is stateful.
   * it returns the result of one Neighborhood until it returns none. It then switches to the other Neighborhood.
   * it starts with Neighborhood a
   * */
 class ExhaustBack(a:Neighborhood, b:Neighborhood) extends ResetOnExhausted(new Exhaust(a,b))
+
+class ResetOnExhausted(a:Neighborhood) extends UnaryNeighborhoodCombinator(a){
+  override def getImprovingMove(): Option[Move] = {
+    a.getImprovingMove()  match{
+      case None => {
+        a.reset()
+        a.getImprovingMove()
+      }
+      case Some(m) => Some(m)
+    }
+  }
+}
 
 class ExhaustAndContinueIfMovesFound(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinator(a,b){
   var currentIsA = true
@@ -129,15 +186,13 @@ class ExhaustAndContinueIfMovesFound(a:Neighborhood, b:Neighborhood) extends Bin
   }
 }
 
-class ResetOnExhausted(a:Neighborhood) extends UnaryNeighborhoodCombinator(a){
+/**this composer is stateless, it checks the condition on every invocation. If the condition is false,
+  * it does not try the Neighborhood and finds no move.
+  * */
+class Conditional(c:()=>Boolean, b:Neighborhood) extends UnaryNeighborhoodCombinator(b){
   override def getImprovingMove(): Option[Move] = {
-    a.getImprovingMove()  match{
-      case None => {
-        a.reset()
-        a.getImprovingMove()
-      }
-      case Some(m) => Some(m)
-    }
+    if(c()) b.getImprovingMove()
+    else None
   }
 }
 
@@ -154,16 +209,6 @@ class BoundMove(a:Neighborhood, val maxMove:Int) extends UnaryNeighborhoodCombin
   override def reset(){
     remainingMoves = maxMove
     super.reset()
-  }
-}
-
-/**this composer is stateless, it checks the condition on every invocation. If the condition is false,
-  * it does not try the Neighborhood and finds no move.
-  * */
-class Conditional(c:()=>Boolean, b:Neighborhood) extends UnaryNeighborhoodCombinator(b){
-  override def getImprovingMove(): Option[Move] = {
-    if(c()) b.getImprovingMove()
-    else None
   }
 }
 
@@ -211,75 +256,5 @@ class RoundRobinNoParam(val a:Neighborhood,val b:Neighborhood){
 
 object RoundRobinNoParam{
   implicit def toNeighBorHood(rr:RoundRobinNoParam):Neighborhood = new RoundRobin(rr.a,rr.b,1)
-}
-
-abstract class BinaryNeighborhoodCombinator(a:Neighborhood, b:Neighborhood) extends Neighborhood{
-  //this resets the internal state of the move combinators
-  override def reset(){
-    a.reset()
-    b.reset()
-  }
-}
-
-abstract class UnaryNeighborhoodCombinator(a:Neighborhood) extends Neighborhood{
-  //this resets the internal state of the move combinators
-  override def reset(){
-    a.reset()
-  }
-}
-
-abstract class StatelessNeighborhood extends Neighborhood{
-  //this resets the internal state of the move combinators
-  override def reset(){}
-}
-
-abstract class Neighborhood{
-  def getImprovingMove():Option[Move]
-
-  //this resets the internal state of the move combinators
-  def reset()
-
-  /**
-   *
-   * @return true if a move has been performed, false otherwise
-   */
-  def doImprovingMove():Boolean =
-    getImprovingMove() match{
-      case None => false
-      case Some(n) => n.comit; true
-    }
-
-  /**
-   * @return the number of moves performed
-   */
-  def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
-    var toReturn = 0;
-    var remainingMoves = maxMoves
-    while(remainingMoves != 0 && doImprovingMove()){
-      toReturn += 1
-      remainingMoves -= 1
-    }
-    toReturn
-  }
-
-  def exhaust(b:Neighborhood):Neighborhood = new Exhaust(this,b)
-  def exhaustBack(b:Neighborhood):Neighborhood = new ExhaustBack(this,b)
-  def andThen(b:Neighborhood):Neighborhood = new AndThen(this,b)
-  def best(b:Neighborhood):Neighborhood = new Best(this,b)
-  def random(b:Neighborhood):Neighborhood = new Random(this,b)
-  def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
-  def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
-}
-
-abstract class Move(val objAfter:Int){
-  def comit()
-}
-
-case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
-  override def comit() {i := v}
-}
-
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int) extends Move(objAfter){
-  override def comit() {i :=: j}
 }
 
