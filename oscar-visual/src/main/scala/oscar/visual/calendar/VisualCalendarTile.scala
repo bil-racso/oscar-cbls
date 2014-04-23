@@ -35,17 +35,16 @@ import java.awt.Font
 class VisualCalendarTile(d: VisualDrawing, s: RoundRectangle2D.Double, dayLabel: String, _marginWidth: Double = 0) extends VisualLabelledRoundRectangle(d, s, dayLabel, _marginWidth) {
   this.marginWidth = _marginWidth
   
-  def this(d: VisualDrawing, x: Double, y: Double, size: Int, label: String, arcw: Double = 7, arch: Double = 7) = {
-    this(d, new RoundRectangle2D.Double(x,
-        y,
-        size,
-        size,
-        arcw,
-        arch),
-      label,
-      (size - d.getFontMetrics(d.getFont()).stringWidth(label)) / 2)
-  }
   
+  def this(d: VisualDrawing, x: Double, y: Double, size: Int, label: String, arcw: Double, arch: Double) = {
+    this(d, 
+         new RoundRectangle2D.Double(x,y,size,size,arcw,arch),
+         label,
+         (size - d.getFontMetrics(d.getFont()).stringWidth(label)) / 2)
+  }
+
+  def this(d: VisualDrawing, x: Double, y: Double, size: Int, label: String) = this(d,x,y,size,label,7.0,7.0)
+    
   /**
    * Y coordinates of bottom left corner
    * @return

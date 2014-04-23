@@ -27,14 +27,14 @@ import oscar.visual.VisualFrame
  *
  */
 class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double, label: String, _marginWidth: Double = 0) extends VisualRoundRectangle(d, s) {
-  
+
   def rect: RoundRectangle2D.Double = shape
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
   var marginWidth = _marginWidth
   
   textDraw.move(xText, yText)
 
-  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double = 5, arcw: Double = 7, arch: Double = 7) = {
+  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double, arcw: Double, arch: Double) = {
     this(d, new RoundRectangle2D.Double(x,
         y,
         d.getFontMetrics(d.getFont()).stringWidth(label) + marginWidth * 2,
@@ -44,6 +44,10 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
       label,
       marginWidth)
   }
+  
+  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double) = this(d,x,y,label,marginWidth,7,7)
+  
+  def this(d: VisualDrawing, x: Double, y: Double, label: String) = this(d,x,y,label,5,7,7)
 
   /**
    * X coordinates of bottom left corner

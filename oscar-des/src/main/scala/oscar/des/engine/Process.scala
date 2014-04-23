@@ -13,49 +13,29 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.des.engine
-import scala.util.continuations._
 
 /**
  * Every simulated object taking part in the simulation should extend this class.
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
-abstract class Process (m: Model, name : String = "Process"){
+class Process (m: Model, name : String = "Process"){
 
-	m.addProcess(this)
 	private var suspending = false
 	private var suspended = {}
 	
-	def suspend(): Unit @ suspendable = {
-//		if (suspending) {
-//			//throw new RuntimeException("The process " + name + " is already suspending");
-//		}
-		suspending = true
-		shift{k:(Unit=>Unit)=>
-		  suspended = {k()}
+	def suspend(block : => Unit) {
+		if (suspending) {
+			//throw new RuntimeException("The process " + name + " is already suspending");
 		}
+		suspending = true
+		suspended = block
 	}
 	
 	def resume(){
-//		if (!suspending){
-//			//throw new RuntimeException("The process " + name + " is not suspending");
-//		}
+		if (!suspending){
+			//throw new RuntimeException("The process " + name + " is not suspending");
+		}
 		suspending = false
 		suspended
 	}
-	
-	/**
-	 * Entry point of the simulation for this process
-	 */
-	def start(): Unit @ suspendable
-	
-	/**
-	 * Properly start the simulation of this process (method normally called by the engine, not the modeler).
-	 */
-	def simulate(){
-	  reset {
-	    start()
-	  }
-	}
-	
-	
 }

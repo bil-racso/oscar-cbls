@@ -16,20 +16,19 @@ package oscar.des.engine
 
 /**
  * Objects stored in the main queue of the simulation. The modeler should not have knowledge of it.
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
-abstract class SimEvent[A<%Ordered[A]](val time: A) extends Ordered[SimEvent[A]] {
+abstract class SimEvent(val time: Double) extends Ordered[SimEvent] {
+	def process = {}
 	
-	def compare(that : SimEvent[A]) = time.compare(that.time)
+	def compare(that : SimEvent) = that.time.compare(this.time)
 	
 	
 }
 
-class WaitEvent[A<%Ordered[A]](time: A, block: A => Boolean ) extends SimEvent[A](time) {
+class WaitEvent(time: Double, block: => Unit ) extends SimEvent(time) {
 	
-	def process(){
-	  block(time)
-	}
+	override def process = block
 	
 }
 

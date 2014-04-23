@@ -16,7 +16,6 @@ import oscar.cp.constraints.DiffReif
 import oscar.cp.constraints.Abs
 import oscar.cp.constraints.Automaton
 import oscar.cp.constraints.Sum
-import scala.util.continuations._
 import oscar.cp.constraints.SetDiff
 import java.sql.Time
 import oscar.cp.constraints.ScalarProduct

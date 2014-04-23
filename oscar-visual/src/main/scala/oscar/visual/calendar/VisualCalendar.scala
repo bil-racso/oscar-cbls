@@ -100,7 +100,7 @@ class VisualCalendar(startDate: GregorianCalendar, nMonthsToDisplay: Int) extend
          X_OFFSET + weekOfYearWidth + (CAL_TILE_SIZE + SPACE_BETWEEN_TILES) * (getCorrectDayOfWeek(datesToDisplay(i)(j).get(Calendar.DAY_OF_WEEK))) + i * (SPACE_BETWEEN_MONTHS + monthWidth),
          Y_OFFSET + 2.5 * fontHeight + (CAL_TILE_SIZE + SPACE_BETWEEN_TILES) * (datesToDisplay(i)(j).get(Calendar.WEEK_OF_MONTH) - 1),
          CAL_TILE_SIZE,
-         "%02d" format datesToDisplay(i)(j).get(Calendar.DAY_OF_MONTH), 10);
+         "%02d" format datesToDisplay(i)(j).get(Calendar.DAY_OF_MONTH), 10, 7);
     })
   })
   

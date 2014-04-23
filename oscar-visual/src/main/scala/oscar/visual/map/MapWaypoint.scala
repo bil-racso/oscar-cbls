@@ -27,7 +27,7 @@ class MapWaypoint(map: VisualMap, xlat: Double, xlong: Double, col: Color = Colo
 
   var label = lbl
 
-  def this(map: VisualMap, o: (Double, Double), col: Color = Color.BLUE) = this(map, o._1, o._2, col)
+  def this(map: VisualMap, o: (Double, Double), col: Color) = this(map, o._1, o._2, col)
   def remove = map.removeWaypoint(this)
 
 }
