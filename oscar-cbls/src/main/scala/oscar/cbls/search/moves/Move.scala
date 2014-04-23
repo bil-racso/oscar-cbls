@@ -22,14 +22,15 @@ abstract class StatelessNeighborhood extends Neighborhood{
   override def reset(){}
 }
 
-abstract class Move(val objAfter:Int){
-  def comit()
+/** a neighborhood that never finds any move (quite useless, actually)
+  */
+class NoMoveNeighborhood extends StatelessNeighborhood{
+  override def getImprovingMove(): Option[Move] = None
 }
 
-/** a neighborhood that never finds any move
-  */
-class NoMove extends StatelessNeighborhood{
-  override def getImprovingMove(): Option[Move] = None
+
+abstract class Move(val objAfter:Int){
+  def comit()
 }
 
 case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){

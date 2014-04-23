@@ -58,6 +58,12 @@ abstract class Neighborhood{
   def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
 }
 
+
+//TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
+//TODO: ajouter la gestion de meilleure solution, jump, restart, et acceptor
+//TODO: ajouter un moyen pour instancier les voisinages lors de la construction des combinateurs. il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
+
+
 /**
  * @author renaud.delandtsheer@cetic.be
  */
@@ -106,6 +112,7 @@ class Random(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinato
   * @param b
   * @author renaud.delandtsheer@cetic.be
   */
+//TODO: rename: ORElse
 class AndThen(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinator(a,b){
   override def getImprovingMove(): Option[Move] = {
     a.getImprovingMove() match{
@@ -316,3 +323,5 @@ object RoundRobinNoParam{
   implicit def toNeighBorHood(rr:RoundRobinNoParam):Neighborhood = new RoundRobin(rr.a,rr.b,1)
 }
 
+
+//sauvegarde de la solution à chaque amélioration, et restauration à la demande?
