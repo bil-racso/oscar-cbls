@@ -24,20 +24,35 @@ import oscar.cbls.search.moves.{StatelessNeighborhood, AssingMove, Neighborhood,
 case class ItemMoveNeighborhood(p:BinPackingProblem)
   extends StatelessNeighborhood with SearchEngineTrait{
 
-  val binList:List[Bin] =p.bins.toList.map(_._2)
+  val binList:List[Bin] = p.bins.toList.map(_._2)
 
   override def getImprovingMove(): Option[Move] = {
+
     val oldViolation:Int = p.overallViolation.Objective.value
-    if(p.mostViolatedBins.value.isEmpty) return None
+
+    if(p.mostViolatedBins.value.isEmpty){
+      if (verbose) println("ItemMoveNeighborhood: problem is solved")
+      return None
+    }
     val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
+
+    if(bin1.violation.value == 0){
+      if (verbose) println("ItemMoveNeighborhood: problem is solved")
+      return None
+    }
+
     for(itemId <- bin1.items.value; item = p.items(itemId)){
       for(bin2 <- p.bins if bin2._2.number != bin1.number && bin2._2.violation.value == 0){
+        //if (verbose) println("ItemMoveNeighborhood: trying to move item " + item + " to bin " + bin2._2)
         val objAfter = p.overallViolation.assignVal(item.bin, bin2._1)
         if(objAfter < oldViolation){
-          return Some(AssingMove(item.bin,bin2._1,objAfter))
+          val toReturn = Some(AssingMove(item.bin,bin2._1,objAfter))
+          if (verbose) println("ItemMoveNeighborhood: move found: move " + item + " to bin " + bin2._2 + " objAfter " + objAfter )
+          return toReturn
         }
       }
     }
+    if (verbose) println("ItemMoveNeighborhood: no improvement found")
     None
   }
 }

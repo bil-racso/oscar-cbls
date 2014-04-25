@@ -35,6 +35,10 @@ abstract class Move(val objAfter:Int){
 
 case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
   override def comit() {i := v}
+
+  override def toString: String = {
+    "AssingMove(" + i + " set to " + v + " objAfter: " + objAfter + ")"
+  }
 }
 
 case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int) extends Move(objAfter){

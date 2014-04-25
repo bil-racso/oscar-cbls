@@ -20,7 +20,6 @@ import oscar.cbls.invariants.lib.set.SetMap
  * must fit into the bins of the time unit.
  *
  * We suppose that the bins cover the full history that is available in the planning.
- *
  */
 class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], MaxBPSteps:Int)
   extends  Resource(planning:Planning, n:String) {

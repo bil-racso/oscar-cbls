@@ -23,14 +23,26 @@ abstract class Neighborhood{
   //this resets the internal state of the move combinators
   def reset()
 
+  var _verbose:Boolean = false
+  def verbose:Boolean = _verbose
+  def verbose_=(b:Boolean){
+    _verbose = b
+  }
+
   /**
-   *
    * @return true if a move has been performed, false otherwise
    */
   def doImprovingMove():Boolean =
     getImprovingMove() match{
-      case None => false
-      case Some(n) => n.comit; true
+      case None => {
+        if (verbose) println("doImprovingMove: no move found")
+        false
+      }
+      case Some(n) => {
+        if(verbose) println("doImprovingMove: move: " + n)
+        n.comit
+        true
+      }
     }
 
   /**
@@ -42,6 +54,11 @@ abstract class Neighborhood{
     while(remainingMoves != 0 && doImprovingMove()){
       toReturn += 1
       remainingMoves -= 1
+    }
+    if(verbose){
+      println("doAllImprovingMoves completed with " + toReturn + " moves")
+      if(remainingMoves == 0) println("doAllImprovingMoves STOP criterion: maxMoves performed")
+      else println("doAllImprovingMoves STOP criterion: no more move found")
     }
     toReturn
   }
@@ -73,6 +90,12 @@ abstract class BinaryNeighborhoodCombinator(a:Neighborhood, b:Neighborhood) exte
     a.reset()
     b.reset()
   }
+
+  override def verbose_=(v: Boolean): Unit = {
+    a.verbose = v
+    b.verbose = v
+    super.verbose_=(v)
+  }
 }
 
 /**
@@ -82,6 +105,11 @@ abstract class UnaryNeighborhoodCombinator(a:Neighborhood) extends Neighborhood{
   //this resets the internal state of the move combinators
   override def reset(){
     a.reset()
+  }
+
+  override def verbose_=(v: Boolean): Unit = {
+    a.verbose = v
+    super.verbose_=(v)
   }
 }
 

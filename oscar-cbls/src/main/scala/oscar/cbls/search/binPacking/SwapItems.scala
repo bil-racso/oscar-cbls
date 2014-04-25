@@ -21,7 +21,7 @@ import scala.Some
 import oscar.cbls.search.moves.{StatelessNeighborhood, SwapMove, Neighborhood, Move}
 
 /**swaps items of different sizes out of most violated bin*/
-case class SwapItemsNeighborhood(p:BinPackingProblem)
+case class ItemsSwapNeighborhood(p:BinPackingProblem)
   extends StatelessNeighborhood with SearchEngineTrait{
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
@@ -29,16 +29,29 @@ case class SwapItemsNeighborhood(p:BinPackingProblem)
 
   override def getImprovingMove(): Option[Move] = {
     val oldViolation:Int = p.overallViolation.Objective.value
-    if(p.mostViolatedBins.value.isEmpty) return None
+
+    if(p.mostViolatedBins.value.isEmpty){
+      if (verbose) println("ItemsSwapNeighborhood: problem is solved")
+      return None
+    }
+
     val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
+
+    if(bin1.violation.value == 0){
+      if (verbose) println("ItemsSwapNeighborhood: problem is solved")
+      return None
+    }
+
     for(itemId <- bin1.items.value; item1 = p.items(itemId)){
       for(item2 <- itemList if item2.bin.value != bin1.number && item1.size != item2.size){
         val objAfter = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(objAfter < oldViolation){
+          if (verbose) println("ItemsSwapNeighborhood: move found: swapping bins of " + item1 + " and " + item2 + " objAfter:" + objAfter)
           return Some(SwapMove(item1.bin,item2.bin,objAfter))
         }
       }
     }
+    if (verbose) println("ItemsSwapNeighborhood: no improvement found")
     None
   }
 }

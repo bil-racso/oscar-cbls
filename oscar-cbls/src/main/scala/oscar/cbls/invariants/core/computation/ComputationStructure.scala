@@ -924,8 +924,10 @@ class CBLSSetVar(override val model:Store,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
-    (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
+
+  def valueString:String = "{" + value.mkString(",") + "}"
+
 
   /** this method is a toString that does not trigger a propagation.
     * use this when debugguing your software.
@@ -1089,8 +1091,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
     ,if(ConstValue.isEmpty) Int.MaxValue else ConstValue.max
     ,toString,ConstValue){
   override def getValue(NewValue:Boolean=false):SortedSet[Int] = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntSetConst{" + ConstValue.foldLeft("")(
-      (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = "IntSetConst{" + ConstValue.mkString(",") + "}"
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar
