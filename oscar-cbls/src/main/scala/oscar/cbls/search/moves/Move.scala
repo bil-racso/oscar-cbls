@@ -17,6 +17,7 @@ package oscar.cbls.search.moves
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 
+
 abstract class StatelessNeighborhood extends Neighborhood{
   //this resets the internal state of the move combinators
   override def reset(){}
@@ -25,12 +26,7 @@ abstract class StatelessNeighborhood extends Neighborhood{
 /** a neighborhood that never finds any move (quite useless, actually)
   */
 class NoMoveNeighborhood extends StatelessNeighborhood{
-  override def getImprovingMove(): Option[Move] = None
-}
-
-
-abstract class Move(val objAfter:Int){
-  def comit()
+  override def getImprovingMove(): SearchResult = NoMoveFound
 }
 
 case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){

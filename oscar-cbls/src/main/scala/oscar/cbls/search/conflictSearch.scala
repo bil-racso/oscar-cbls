@@ -23,7 +23,10 @@ package oscar.cbls.search
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.search.moves.{StatelessNeighborhood, AssingMove, Move, Neighborhood}
+import oscar.cbls.search.moves._
+import oscar.cbls.search.moves.AssingMove
+import scala.Some
+import oscar.cbls.constraints.core.ConstraintSystem
 
 /**generic search procedure
   * selects most violated variable, and assigns value that minimizes overall violation
@@ -55,7 +58,7 @@ object conflictSearch extends SearchEngine{
 class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
-  override def getImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): SearchResult = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
     val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int))
@@ -63,9 +66,9 @@ class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with Search
     val objAfter = c.assignVal(Variables(MaxViolVarID),NewVal)
 
     if(objAfter < oldObj){
-      Some(new AssingMove(Variables(MaxViolVarID),NewVal,objAfter))
+       AssingMove(Variables(MaxViolVarID),NewVal,objAfter)
     }else{
-      None
+      NoMoveFound
     }
   }
 }
@@ -73,7 +76,7 @@ class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with Search
 class conflictMoveFirstImprove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
   val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
   val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
-  override def getImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): SearchResult = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
 
@@ -81,9 +84,9 @@ class conflictMoveFirstImprove(c:ConstraintSystem) extends StatelessNeighborhood
     val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
 
     if(objAfter < oldObj)
-      Some(new AssingMove(Variables(MaxViolVarID),newVal,objAfter))
+      AssingMove(Variables(MaxViolVarID),newVal,objAfter)
     else
-      None
+      NoMoveFound
   }
 }
 

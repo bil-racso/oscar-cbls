@@ -14,11 +14,9 @@
   ******************************************************************************/
 package oscar.cbls.search.binPacking
 
-import oscar.cbls.invariants.core.computation.CBLSSetVar
 import oscar.cbls.search._
-import oscar.cbls.objective.Objective
-import scala.Some
-import oscar.cbls.search.moves.{StatelessNeighborhood, AssingMove, Neighborhood, Move}
+import oscar.cbls.search.moves._
+import oscar.cbls.search.moves.AssingMove
 
 /**moves item away from most violated bin*/
 case class ItemMoveNeighborhood(p:BinPackingProblem)
@@ -26,19 +24,19 @@ case class ItemMoveNeighborhood(p:BinPackingProblem)
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(): Option[Move] = {
+  override def getImprovingMove():SearchResult = {
 
     val oldViolation:Int = p.overallViolation.Objective.value
 
     if(p.mostViolatedBins.value.isEmpty){
       if (verbose) println("ItemMoveNeighborhood: problem is solved")
-      return None
+      return ProblemSolved
     }
     val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
       if (verbose) println("ItemMoveNeighborhood: problem is solved")
-      return None
+      return ProblemSolved
     }
 
     for(itemId <- bin1.items.value; item = p.items(itemId)){
@@ -46,14 +44,13 @@ case class ItemMoveNeighborhood(p:BinPackingProblem)
         //if (verbose) println("ItemMoveNeighborhood: trying to move item " + item + " to bin " + bin2._2)
         val objAfter = p.overallViolation.assignVal(item.bin, bin2._1)
         if(objAfter < oldViolation){
-          val toReturn = Some(AssingMove(item.bin,bin2._1,objAfter))
           if (verbose) println("ItemMoveNeighborhood: move found: move " + item + " to bin " + bin2._2 + " objAfter " + objAfter )
-          return toReturn
+          return AssingMove(item.bin,bin2._1,objAfter)
         }
       }
     }
     if (verbose) println("ItemMoveNeighborhood: no improvement found")
-    None
+    NoMoveFound
   }
 }
 

@@ -14,11 +14,11 @@
   ******************************************************************************/
 package oscar.cbls.search.binPacking
 
-import oscar.cbls.invariants.core.computation.CBLSSetVar
+
 import oscar.cbls.search._
-import oscar.cbls.objective.Objective
-import scala.Some
-import oscar.cbls.search.moves.{StatelessNeighborhood, SwapMove, Neighborhood, Move}
+import oscar.cbls.search.moves._
+import oscar.cbls.search.moves.SwapMove
+
 
 /**swaps items of different sizes out of most violated bin*/
 case class ItemsSwapNeighborhood(p:BinPackingProblem)
@@ -27,19 +27,19 @@ case class ItemsSwapNeighborhood(p:BinPackingProblem)
   val binList:List[Bin] = p.bins.toList.map(_._2)
   val itemList:List[Item] = p.items.toList.map(_._2)
 
-  override def getImprovingMove(): Option[Move] = {
+  override def getImprovingMove(): SearchResult = {
     val oldViolation:Int = p.overallViolation.Objective.value
 
     if(p.mostViolatedBins.value.isEmpty){
       if (verbose) println("ItemsSwapNeighborhood: problem is solved")
-      return None
+      return ProblemSolved
     }
 
     val bin1 = p.bins(selectFirst(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
       if (verbose) println("ItemsSwapNeighborhood: problem is solved")
-      return None
+      return ProblemSolved
     }
 
     for(itemId <- bin1.items.value; item1 = p.items(itemId)){
@@ -47,12 +47,12 @@ case class ItemsSwapNeighborhood(p:BinPackingProblem)
         val objAfter = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(objAfter < oldViolation){
           if (verbose) println("ItemsSwapNeighborhood: move found: swapping bins of " + item1 + " and " + item2 + " objAfter:" + objAfter)
-          return Some(SwapMove(item1.bin,item2.bin,objAfter))
+          return SwapMove(item1.bin,item2.bin,objAfter)
         }
       }
     }
     if (verbose) println("ItemsSwapNeighborhood: no improvement found")
-    None
+    NoMoveFound
   }
 }
 

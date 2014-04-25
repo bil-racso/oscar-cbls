@@ -23,10 +23,9 @@ object BinPackingTest extends CBLSModel with App{
 
   s.close()
 
-  val x:Neighborhood = ItemMoveNeighborhood(problem) exhaust ItemsSwapNeighborhood(problem)
+  val x = ItemMoveNeighborhood(problem) exhaust ItemsSwapNeighborhood(problem)
   x.verbose = true
   x.doAllImprovingMoves(100)
-  //exhaustBack SwapItemsNeighborhood(p)) doAllImprovingMoves(maxStep)
 
-  println("binPacking: " + problem)
+  println(problem)
 }
