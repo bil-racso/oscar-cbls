@@ -1,3 +1,18 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.cbls.search.moves
 
 abstract sealed class SearchResult
@@ -26,23 +41,7 @@ abstract class Neighborhood{
   /**
    * @return true if a move has been performed, false otherwise
    */
-  def doImprovingMove():Boolean =
-    getImprovingMove() match{
-      case ProblemSolved => {
-          if (verbose) println("doImprovingMove: problem solved")
-          false
-        }
-      case NoMoveFound => {
-        if (verbose) println("doImprovingMove: no move found")
-        false
-      }
-      case m:Move => {
-        if(verbose) println("doImprovingMove: move: " + m)
-        m.comit
-        true
-      }
-
-    }
+  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(1))
 
   /**
    * @return the number of moves performed
@@ -50,15 +49,26 @@ abstract class Neighborhood{
   def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
     var toReturn = 0;
     var remainingMoves = maxMoves
-    while(remainingMoves != 0 && doImprovingMove()){
+    while(remainingMoves != 0){
+      getImprovingMove() match {
+        case ProblemSolved => {
+          if (verbose) println("doAllImprovingMoves: problem solved after " + toReturn + " it")
+          return toReturn;
+        }
+        case NoMoveFound => {
+          if (verbose) println("doAllImprovingMoves: no move found after " + toReturn + " it")
+          return toReturn;
+        }
+        case m: Move => {
+          if (verbose) println("doAllImprovingMoves: " + m)
+          m.comit
+          true
+        }
+      }
       toReturn += 1
       remainingMoves -= 1
     }
-    if(verbose){
-      println("doAllImprovingMoves completed with " + toReturn + " moves")
-      if(remainingMoves == 0) println("doAllImprovingMoves STOP criterion: maxMoves performed")
-      else println("doAllImprovingMoves STOP criterion: no more move found")
-    }
+    if(verbose)println("doAllImprovingMoves STOP criterion: maxMoves ("+ maxMoves+") performed")
     toReturn
   }
 
@@ -73,6 +83,3 @@ abstract class Neighborhood{
   def maxMoves(maxMove:Int) = new BoundMoves(this, maxMove)
   def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
 }
-
-
-

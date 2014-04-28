@@ -74,6 +74,7 @@ class Random(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinato
 /** this composer sequentially tries all neighborhoods until one move is found
   * between calls, it will roll back to the first neighborhood
   * it tries a first, and if no move it found, tries b
+  * a is reset if it did not find anything.
   * @param a
   * @param b
   * @author renaud.delandtsheer@cetic.be
@@ -81,7 +82,7 @@ class Random(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinato
 class OrElse(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinator(a,b){
   override def getImprovingMove(): SearchResult = {
     a.getImprovingMove() match{
-      case NoMoveFound => b.getImprovingMove()
+      case NoMoveFound => a.reset() ; b.getImprovingMove()
       case ProblemSolved => ProblemSolved
       case x => x
     }
@@ -135,7 +136,34 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinat
   * it starts with Neighborhood a
   * @author renaud.delandtsheer@cetic.be
   */
-class ExhaustBack(a:Neighborhood, b:Neighborhood) extends ResetOnExhausted(new Exhaust(a,b))
+class ExhaustBack(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinator(a,b){
+  var currentIsA = true
+  override def getImprovingMove(): SearchResult = {
+    def search():SearchResult = {
+      val current = if(currentIsA) a else b
+      current.getImprovingMove() match{
+        case NoMoveFound => {
+          if (currentIsA) {
+            currentIsA = false;
+            b.getImprovingMove()
+          } else {
+            currentIsA = true;
+            a.getImprovingMove()
+          }
+        }
+        case ProblemSolved => ProblemSolved
+        case x:Move => x
+      }
+    }
+    search()
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    currentIsA = true
+    super.reset()
+  }
+}
 
 /**
  * @author renaud.delandtsheer@cetic.be

@@ -33,7 +33,7 @@ case class Bin(number:Int,
                size:Int,
                var items:CBLSSetVar = null,
                var violation:CBLSIntVar = null){
-  override def toString: String = "Item(nr:" + number + " size:" + size + " items:" + items.valueString + ")"
+  override def toString: String = "Bin(nr:" + number + " size:" + size + " items:" + items.valueString + " viol:" + violation.value +")"
 }
 
 case class BinPackingProblem(items:Map[Int,Item],
@@ -46,6 +46,8 @@ case class BinPackingProblem(items:Map[Int,Item],
       "\toverallViolation:" + overallViolation.Objective.value + "\n" +
       "\tmostViolatedBins:" + mostViolatedBins.valueString+")"
 
+  def itemCount = items.size
+  def binCount = bins.size
 }
 
 object BinPackingProblem{
