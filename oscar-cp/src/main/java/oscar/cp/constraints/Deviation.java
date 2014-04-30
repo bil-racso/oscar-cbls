@@ -68,6 +68,18 @@ public class Deviation extends Constraint {
 
     @Override
     public CPOutcome setup(CPPropagStrength l) {
+    	// post the decomposition
+    	CPIntVar [] devVar = new CPIntVar[n];
+    	for (int i = 0; i < x.length; i++) {
+    		devVar[i] = x[i].$times(n).$minus(s).abs();
+    	}
+    	if (s().post(new Sum(devVar,nd)) == CPOutcome.Failure) {
+    		return CPOutcome.Failure;
+    	}
+    	
+    	//add(vari == sum(periods)(p => (l(p)*nbPeriods - credits.sum).abs))
+    	
+    	
         for (int i = 0; i < x.length; i++) {
             if (!x[i].isBound())
                 x[i].callPropagateWhenBoundsChange(this,false);
