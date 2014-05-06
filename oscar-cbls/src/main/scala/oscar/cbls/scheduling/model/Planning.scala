@@ -32,6 +32,9 @@ import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
 import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.lib.logic.Sort
+import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.lib.numeric.Sum
 
 /**
  * @param model
@@ -346,6 +349,27 @@ trait EarliestStartDate extends Planning {
       val esdTask = new Activity(earliestStartDate, this, esdTaskName)
       task.addStaticPredecessor(esdTask)
     }
+  }
+}
+
+/**
+ * This trait lets one use activities with due dates.
+ *
+ * @author yoann.guyot@cetic.be
+ */
+trait Deadlines extends Planning {
+  var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
+
+  var activitiesWithDeadlinesArray: Array[ActivityWithDeadline] =
+    if (isClosed) activitiesWithDeadlines.toArray else Array()
+
+  var sortedTardinesses: Sort =
+    Sort.MakeSort(activitiesWithDeadlinesArray.map(_.tardiness))
+
+  var totalTardiness: CBLSIntVar = Sum(activitiesWithDeadlinesArray.map(_.tardiness))
+
+  def addActivityWithDeadline(activity: ActivityWithDeadline) {
+    activitiesWithDeadlines = activity :: activitiesWithDeadlines
   }
 }
 

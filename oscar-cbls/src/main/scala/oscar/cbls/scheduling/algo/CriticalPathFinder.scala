@@ -31,14 +31,14 @@ object CriticalPathFinder extends SearchEngine {
    * @param p the planning
    * @return a list of activities that is a critical path for the planning
    */
-  def criticalPath(p: Planning): List[Activity] = {
+  def criticalPath(p: Planning)(from: Activity = p.sentinelActivity): List[Activity] = {
     def PrecedingNode(j: Activity): Activity = {
       if (j.definingPredecessors.value.isEmpty) null
       else p.activityArray(selectFrom(j.definingPredecessors.value))
       //random tie break, as it is likely that there will be few forks.
     }
 
-    var CurrentActivity: Activity = PrecedingNode(p.sentinelActivity)
+    var CurrentActivity: Activity = PrecedingNode(from)
     var TaskList: List[Activity] = List.empty
 
     while (CurrentActivity != null) {
@@ -50,13 +50,13 @@ object CriticalPathFinder extends SearchEngine {
   }
 
   /**
-   * returns the non-solid fragments of a ctitical path.
+   * returns the non-solid fragments of a critical path.
    *
    * @param p the planning including all tasks
-   * @return a list of pair of activities. They are a subset of a citical path
+   * @return a list of pair of activities. They are a subset of a critical path
    *         such that there is a tight additional dependency between them
    */
-  def nonSolidCriticalPath(p: Planning): List[(Activity, Activity)] = {
+  def nonSolidCriticalPath(p: Planning)(from: Activity = p.sentinelActivity): List[(Activity, Activity)] = {
 
     def PrecedingNode(j: Activity): Activity = {
       if (j.definingPredecessors.value.isEmpty) null
@@ -64,7 +64,7 @@ object CriticalPathFinder extends SearchEngine {
       //random tie break, as it is likely that there will be few forks.
     }
 
-    var CurrentActivity: Activity = PrecedingNode(p.sentinelActivity)
+    var CurrentActivity: Activity = PrecedingNode(from)
     var toreturn: List[(Activity, Activity)] = List.empty
     while (CurrentActivity != null) {
       val Predecessor = PrecedingNode(CurrentActivity)

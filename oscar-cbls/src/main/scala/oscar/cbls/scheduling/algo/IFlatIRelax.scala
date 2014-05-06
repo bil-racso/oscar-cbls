@@ -194,7 +194,7 @@ class IFlatIRelax(p: Planning,
    */
   def relax(pKill: Int): Boolean = {
 
-    val potentiallykilledNodes = CriticalPathFinder.nonSolidCriticalPath(p)
+    val potentiallykilledNodes = CriticalPathFinder.nonSolidCriticalPath(p)()
     if (potentiallykilledNodes.isEmpty) return false
 
     for ((from, to) <- potentiallykilledNodes) {
@@ -240,8 +240,10 @@ class IFlatIRelax(p: Planning,
         throw new IllegalStateException("FlattenWorseFirst() will not terminate. Check there is no conflict between non moveable activities.")
       iterations += 1
 
+      // the most violated resource
       val r: Resource = p.resourceArray(selectFrom(p.worseOvershotResource.value))
 
+      // the first violation of the resource in time
       val t: Int = r.worseOverShootTime
 
       val conflictActivities = r.conflictingActivities(t)
@@ -283,7 +285,7 @@ class IFlatIRelax(p: Planning,
 
   /**
    * This computes an estimate of the Makespan expansion if the given precedence is added.
-   * this estmate is completely wrong in itself, as a constant factor is added to each estimate.
+   * this estimate is completely wrong in itself, as a constant factor is added to each estimate.
    * since it is the same factor, you can use this method to chose among a set of precedence
    * because this will forget about the correcting factor.
    * @param from
