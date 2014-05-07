@@ -25,11 +25,12 @@
 
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar }
-import scala.collection.immutable.SortedSet
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.lib.minmax.MaxArray
+import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
+import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 import oscar.cbls.invariants.lib.minmax.Max2
+import oscar.cbls.modeling.Algebra.InstrumentIntInvariant
+import oscar.cbls.modeling.Algebra.InstrumentIntVar
 
 /**
  * @author yoann.guyot@cetic.be
@@ -42,15 +43,12 @@ class ActivityWithDeadline(
   shifter: (CBLSIntVar, CBLSIntVar) => CBLSIntVar = (a: CBLSIntVar, _) => a)
   extends Activity(duration, planning, name, shifter) {
 
-  val deadline: CBLSIntVar = 0
-  val weight: CBLSIntVar = 1
-  val tardiness: CBLSIntVar = Max2(0, (earliestEndDate - deadline) * weight)
+  val tardiness = CBLSIntVar(planning.model, Int.MinValue, Int.MaxValue, 0, name + "_tardiness")
 
   planning.addActivityWithDeadline(this)
 
-  def setDeadline(dueDate: CBLSIntVar, weightingFactor: CBLSIntVar) {
-    deadline <== dueDate
-    weight <== weightingFactor
+  def setDeadline(deadline: CBLSIntVar, weight: CBLSIntVar) {
+    tardiness <== Max2(0, (earliestEndDate - deadline) * weight)
   }
 
   def isLate: Boolean = tardiness.value > 0

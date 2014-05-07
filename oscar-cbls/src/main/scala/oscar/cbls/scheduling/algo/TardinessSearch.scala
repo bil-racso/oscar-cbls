@@ -46,11 +46,11 @@ import CriticalPathFinder.nonSolidCriticalPath
  */
 class TardinessSearch(planning: Planning with Deadlines,
                       maxLocalIterations: Int = 5,
-                      temperature: Int = 100,
+                      temperature: Float = 100,
                       verbose: Boolean = false) extends SearchEngine {
   val model: Store = planning.model
 
-  require(model.isClosed, "model should be closed before TardinessSearch algo can be isntantiated")
+  require(model.isClosed, "model should be closed before TardinessSearch algo can be instantiated")
 
   var bestSolution: Solution = model.solution(true)
 

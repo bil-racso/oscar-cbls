@@ -359,14 +359,13 @@ trait EarliestStartDate extends Planning {
  */
 trait Deadlines extends Planning {
   var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
-
-  var activitiesWithDeadlinesArray: Array[ActivityWithDeadline] =
-    if (isClosed) activitiesWithDeadlines.toArray else Array()
-
-  var sortedTardinesses: Sort =
-    Sort.MakeSort(activitiesWithDeadlinesArray.map(_.tardiness))
-
-  var totalTardiness: CBLSIntVar = Sum(activitiesWithDeadlinesArray.map(_.tardiness))
+  val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
+  
+  override def close() {
+    if (isClosed) return
+    totalTardiness <== Sum(activitiesWithDeadlines.toArray.map(_.tardiness))
+    super.close()
+  }
 
   def addActivityWithDeadline(activity: ActivityWithDeadline) {
     activitiesWithDeadlines = activity :: activitiesWithDeadlines
