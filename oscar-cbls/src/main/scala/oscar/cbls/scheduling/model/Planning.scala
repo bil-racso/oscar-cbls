@@ -118,14 +118,14 @@ class Planning(val model: Store, val maxDuration: Int) {
       resourceArray(r.ResourceID) = r; r.close()
     }
 
-    val WorseOvershootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
     for (r <- resources) {
-      WorseOvershootArray(r.ResourceID) = r.overShoot
+      overshootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
+    val ResourceWithOvershoot: CBLSSetVar = Filter(overshootArray)
 
-    worseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
+    worseOvershotResource = ArgMaxArray(overshootArray, ResourceWithOvershoot)
   }
 
   var gantt: Gantt = null
@@ -360,9 +360,9 @@ trait EarliestStartDate extends Planning {
 trait Deadlines extends Planning {
   var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
   val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
-  
+
   model.addToCallBeforeClose(_ => closeDeadlines())
-  
+
   private def closeDeadlines() {
     totalTardiness <== Sum(activitiesWithDeadlines.toArray.map(_.tardiness))
   }
@@ -404,5 +404,23 @@ trait VariableResources extends Planning {
   def postVariableResource(availabilities: Array[Int],
                            name: String = null): VariableResource = {
     VariableResource(this, availabilities, name)
+  }
+}
+
+/**
+ * This trait maintains the total resources overshoot value of a planning.
+ * @author yoann.guyot@cetic.be
+ */
+trait TotalResourcesOvershootEvaluation extends Planning {
+  val totalOvershoot = CBLSIntVar(model, 0, name = "Total resources overshoot")
+  
+  model.addToCallBeforeClose(_ => setTotalOvershoot())
+
+  private def setTotalOvershoot() = {
+    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    for (r <- resources) {
+      overshootArray(r.ResourceID) = r.overShoot
+    }
+    totalOvershoot <== Sum(overshootArray)
   }
 }

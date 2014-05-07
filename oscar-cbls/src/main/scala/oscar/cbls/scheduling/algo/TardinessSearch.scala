@@ -11,6 +11,7 @@ import oscar.cbls.scheduling.model.Deadlines
 import scala.util.control.Breaks.break
 import oscar.cbls.scheduling.model.ActivityWithDeadline
 import CriticalPathFinder.nonSolidCriticalPath
+import oscar.cbls.scheduling.model.TotalResourcesOvershootEvaluation
 
 /**
  * *****************************************************************************
@@ -44,7 +45,7 @@ import CriticalPathFinder.nonSolidCriticalPath
  * @param verbose
  * @author yoann.guyot@cetic.be
  */
-class TardinessSearch(planning: Planning with Deadlines,
+class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvershootEvaluation,
                       maxLocalIterations: Int = 5,
                       temperature: Float = 100,
                       verbose: Boolean = false) extends SearchEngine {
@@ -52,6 +53,7 @@ class TardinessSearch(planning: Planning with Deadlines,
 
   require(model.isClosed, "model should be closed before TardinessSearch algo can be instantiated")
 
+  var minOvershootValue: Int = planning.totalOvershoot.value
   var bestSolution: Solution = model.solution(true)
 
   /**
@@ -92,7 +94,11 @@ class TardinessSearch(planning: Planning with Deadlines,
 
       val gain = swap(from, to)
       if (gain < 0) {
-        bestSolution = model.solution(true)
+        val currentOvershoot = planning.totalOvershoot.value 
+        if (currentOvershoot <= minOvershootValue) {
+          minOvershootValue = currentOvershoot
+          bestSolution = model.solution(true)
+        }
         if (verbose) println("(improvement) Swaped " + from + " with " + to)
         moved = true
         // metropolis criterion
