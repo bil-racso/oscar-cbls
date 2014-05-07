@@ -361,10 +361,10 @@ trait Deadlines extends Planning {
   var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
   val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
   
-  override def close() {
-    if (isClosed) return
+  model.addToCallBeforeClose(_ => closeDeadlines())
+  
+  private def closeDeadlines() {
     totalTardiness <== Sum(activitiesWithDeadlines.toArray.map(_.tardiness))
-    super.close()
   }
 
   def addActivityWithDeadline(activity: ActivityWithDeadline) {
