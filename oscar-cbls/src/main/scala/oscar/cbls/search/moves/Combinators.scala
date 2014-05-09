@@ -14,6 +14,8 @@
   ******************************************************************************/
 package oscar.cbls.search.moves
 
+import oscar.cbls.invariants.core.computation.{Solution, Store, CBLSIntVar}
+
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
 //TODO: ajouter la gestion de meilleure solution, jump, restart, et acceptor
 //TODO: ajouter un moyen pour instancier les voisinages lors de la construction des combinateurs. il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
@@ -28,10 +30,10 @@ abstract class BinaryNeighborhoodCombinator(a:Neighborhood, b:Neighborhood) exte
     b.reset()
   }
 
-  override def verbose_=(v: Boolean): Unit = {
-    a.verbose = v
-    b.verbose = v
-    super.verbose_=(v)
+  override def verbose_=(i: Int): Unit = {
+    a.verbose = i
+    b.verbose = i
+    super.verbose_=(i)
   }
 }
 
@@ -44,11 +46,90 @@ abstract class UnaryNeighborhoodCombinator(a:Neighborhood) extends Neighborhood{
     a.reset()
   }
 
-  override def verbose_=(v: Boolean): Unit = {
-    a.verbose = v
-    super.verbose_=(v)
+  override def verbose_=(i: Int): Unit = {
+    a.verbose = i
+    super.verbose_=(i)
   }
 }
+
+class ProtectBest(a:Neighborhood, i:CBLSIntVar, s:Store) extends UnaryNeighborhoodCombinator(a){
+  var oldObj = i.value
+  var best:Solution = s.solution()
+  override def getImprovingMove(): SearchResult = {
+    if(i.value < oldObj){
+      best = s.solution(true)
+      oldObj = i.value
+    }
+    a.getImprovingMove()
+  }
+
+  def restoreBest(){
+    if (best != null && i.value > oldObj){
+      s.restoreSolution(best)
+      if(verbose >= 1) println("restoring best solution")
+    }else
+    if(verbose >= 1) println("no better solution to restore")
+  }
+}
+
+
+/** this combinator attaches a custom code to a given neighborhood.
+  * the code is called whenever a move is asked to the neighborhood.
+  * @param a
+  * @param proc
+  */
+class DoOnQuery(a:Neighborhood, proc: =>Unit) extends UnaryNeighborhoodCombinator(a){
+  override def getImprovingMove(): SearchResult = {
+    proc
+    a.getImprovingMove()
+  }
+}
+
+/** this combinator attaches a custom code to a given neighborhood.
+  * the code is called whenever a move from this neighborhood is taken
+  * @param a
+  * @param proc
+  */
+class DoOnMove(a:Neighborhood, proc: =>Unit) extends UnaryNeighborhoodCombinator(a){
+  override def getImprovingMove(): SearchResult = {
+    a.getImprovingMove() match {
+     case m:Move => CallBackMove(m,proc)
+     case x => x
+    }
+  }
+}
+
+/** this combinator attaches a custom code to a given neighborhood.
+  * the code is called whenever a move from this neighborhood is taken
+  * @param a
+  * @param proc
+  */
+class DoOnFirstMove(a:Neighborhood, proc: =>Unit) extends UnaryNeighborhoodCombinator(a){
+  var isFirstMove = true
+  override def getImprovingMove(): SearchResult = {
+    if (isFirstMove) {
+      a.getImprovingMove() match {
+        case m: Move => CallBackMove(m, notifyMoveTaken)
+        case x => x
+      }
+    }else{
+      a.getImprovingMove()
+    }
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset() {
+    isFirstMove = true
+    super.reset()
+  }
+
+  private def notifyMoveTaken(){
+    proc
+    isFirstMove = false
+  }
+
+}
+
 
 /** this composer randomly tries one neighborhood.
   * it trie the other if the first did not find any move
@@ -131,6 +212,40 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodCombinat
   }
 }
 
+/** retries n times the move before concluding to noMove can be found
+  * resets o nhe first found move, or on reset
+  * @param a
+  * @param n
+  */
+class Retry(a:Neighborhood, n:Int = 1) extends UnaryNeighborhoodCombinator(a){
+  var remainingTries = n
+  override def getImprovingMove(): SearchResult = {
+    a.getImprovingMove() match{
+      case NoMoveFound => {
+        remainingTries -= 1
+        if (remainingTries == 0) NoMoveFound
+        else this.getImprovingMove()
+      }
+      case x => {
+        remainingTries = n
+        x
+      }
+    }
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    super.reset()
+    remainingTries = n
+  }
+}
+
+case class NoReset(a:Neighborhood) extends UnaryNeighborhoodCombinator(a){
+  override def getImprovingMove() = a.getImprovingMove()
+
+  //this resets the internal state of the move combinators
+  override def reset(){}
+}
 /**this composer is stateful.
   * it returns the result of one Neighborhood until it returns NoMoveFound. It then switches to the other Neighborhood.
   * it starts with Neighborhood a
@@ -145,9 +260,11 @@ class ExhaustBack(a:Neighborhood, b:Neighborhood) extends BinaryNeighborhoodComb
         case NoMoveFound => {
           if (currentIsA) {
             currentIsA = false;
+            b.reset()
             b.getImprovingMove()
           } else {
             currentIsA = true;
+            a.reset()
             a.getImprovingMove()
           }
         }
@@ -254,7 +371,10 @@ class BoundMoves(a:Neighborhood, val maxMove:Int) extends UnaryNeighborhoodCombi
   var remainingMoves = maxMove
   override def getImprovingMove(): SearchResult = {
     if (remainingMoves > 0) {
-      a.getImprovingMove()
+      a.getImprovingMove() match{
+        case m:Move => CallBackMove(m,notifyMoveTaken())
+        case x => x
+      }
     } else NoMoveFound
   }
 
@@ -266,13 +386,6 @@ class BoundMoves(a:Neighborhood, val maxMove:Int) extends UnaryNeighborhoodCombi
 
   def notifyMoveTaken(){
     remainingMoves -= 1
-  }
-
-  class BoundedMove(initialMove:Move, bound:BoundMoves) extends Move(initialMove.objAfter){
-    def comit(){
-      bound.notifyMoveTaken()
-      initialMove.comit
-    }
   }
 }
 

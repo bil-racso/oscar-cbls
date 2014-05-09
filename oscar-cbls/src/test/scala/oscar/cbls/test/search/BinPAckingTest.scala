@@ -18,6 +18,7 @@ package oscar.cbls.test.search
 import oscar.cbls.search.binPacking._
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.search.binPacking.JumpSwapItems
+import oscar.cbls.search.moves.{NoReset, NoMoveNeighborhood, ProtectBest}
 
 /**
  * Created by rdl on 24/04/2014.
@@ -29,15 +30,17 @@ object BinPackingTest extends CBLSModel with App{
 
   val itemSizes = List(20, 5, 6, 7, 3, 5, 9, 7, 3, 5)
 
-  val binSizes = List(20, 20, 30)
+  val binSizes = List(20, 21, 29)
 
   val problem = BinPackingProblem(itemSizes,binSizes,s, c, 0)
 
   s.close()
 
-  val x =  MoveItem(problem) exhaustBack SwapItems(problem) orElse JumpSwapItems(problem)
-  x.verbose = true
-  x.doAllImprovingMoves(100)
+  val x =  ((MoveItem(problem) exhaustBack SwapItems(problem)) exhaustBack (JumpSwapItems(problem) onFirstMove println("Jumping") maxMoves 2)) protectBest(problem.overallViolation.Objective, s)
+  x.verbose = 1
+  x.doAllImprovingMoves(200)
+
+  x.restoreBest()
 
   println(problem)
 }

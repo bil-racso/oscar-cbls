@@ -15,6 +15,8 @@
 
 package oscar.cbls.search.moves
 
+import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar}
+
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
 case object ProblemSolved extends SearchResult
@@ -32,10 +34,14 @@ abstract class Neighborhood{
   //this resets the internal state of the move combinators
   def reset()
 
-  var _verbose:Boolean = false
-  def verbose:Boolean = _verbose
-  def verbose_=(b:Boolean){
-    _verbose = b
+  /** verbosity: 0: none
+    * 1: combinators
+    * 2: combinators + neighborhoods
+    */
+  var _verbose:Int = 0
+  def verbose:Int = _verbose
+  def verbose_=(i:Int){
+    _verbose = i
   }
 
   /**
@@ -52,15 +58,15 @@ abstract class Neighborhood{
     while(remainingMoves != 0){
       getImprovingMove() match {
         case ProblemSolved => {
-          if (verbose) println("doAllImprovingMoves: problem solved after " + toReturn + " it")
+          if (verbose >= 1) println("doAllImprovingMoves: problem solved after " + toReturn + " it")
           return toReturn;
         }
         case NoMoveFound => {
-          if (verbose) println("doAllImprovingMoves: no move found after " + toReturn + " it")
+          if (verbose >= 1) println("doAllImprovingMoves: no move found after " + toReturn + " it")
           return toReturn;
         }
         case m: Move => {
-          if (verbose) println("doAllImprovingMoves: " + m)
+          if (verbose >= 1) println("doAllImprovingMoves: " + m)
           m.comit
           true
         }
@@ -68,7 +74,7 @@ abstract class Neighborhood{
       toReturn += 1
       remainingMoves -= 1
     }
-    if(verbose)println("doAllImprovingMoves STOP criterion: maxMoves ("+ maxMoves+") performed")
+    if(verbose >= 1)println("doAllImprovingMoves STOP criterion: maxMoves ("+ maxMoves+") performed")
     toReturn
   }
 
@@ -82,4 +88,8 @@ abstract class Neighborhood{
   def maxSearches(maxMove:Int) = new BoundSearches(this, maxMove)
   def maxMoves(maxMove:Int) = new BoundMoves(this, maxMove)
   def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
+  def onQuery(proc:  => Unit) = new DoOnQuery(this,proc)
+  def onMove(proc: => Unit) = new DoOnMove(this,proc)
+  def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,proc)
+  def protectBest(i:CBLSIntVar, s:Store) = new ProtectBest(this, i, s)
 }

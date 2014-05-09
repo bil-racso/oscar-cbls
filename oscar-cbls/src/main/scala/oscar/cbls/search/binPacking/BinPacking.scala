@@ -32,8 +32,9 @@ case class Item(number:Int,
 case class Bin(number:Int,
                size:Int,
                var items:CBLSSetVar = null,
-               var violation:CBLSIntVar = null){
-  override def toString: String = "Bin(nr:" + number + " size:" + size + " items:" + items.valueString + " viol:" + violation.value +")"
+               var violation:CBLSIntVar = null,
+               var content:CBLSIntVar = null){
+  override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.valueString + " viol:" + violation.value +")"
 }
 
 case class BinPackingProblem(items:Map[Int,Item],
@@ -116,6 +117,7 @@ object BinPackingProblem{
     for (bin <- binArray) {
       bin.violation = mkp.violationOfBin(bin.number)
       bin.items = mkp.itemsInBin(bin.number)
+      bin.content = mkp.fillingOfBin(bin.number)
     }
 
     BinPackingProblem(itemArray,

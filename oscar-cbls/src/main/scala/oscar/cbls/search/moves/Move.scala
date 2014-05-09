@@ -25,23 +25,49 @@ abstract class StatelessNeighborhood extends Neighborhood{
 
 /** a neighborhood that never finds any move (quite useless, actually)
   */
-class NoMoveNeighborhood extends StatelessNeighborhood{
+case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove(): SearchResult = NoMoveFound
 }
 
-case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int) extends Move(objAfter){
+case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = "") extends Move(objAfter){
   override def comit() {i := v}
 
   override def toString: String = {
-    "AssingMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
+    neighborhoodName + ": AssingMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
   }
 }
 
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int) extends Move(objAfter){
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = "") extends Move(objAfter){
   override def comit() {i :=: j}
 
   override def toString: String  = {
-    "SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
+    neighborhoodName + ": SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
   }
 }
 
+case class CompositeMove(ml:List[Move], override val objAfter:Int) extends Move(objAfter){
+  def this(ml:List[Move]){
+    this(ml, ml.last.objAfter)
+  }
+
+  override def comit() {
+    for(m <- ml) m.comit()
+  }
+
+  override def toString: String  = {
+    "CompositeMove(" + ml.mkString(" and ") + " objAfter:" + objAfter + ")"
+  }
+}
+
+object CallBackMove{
+  def apply(initialMove:Move, callBack: => Unit): CallBackMove = new CallBackMove(initialMove, (_:Unit) => callBack)
+}
+
+case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(initialMove.objAfter){
+  def comit(){
+    initialMove.comit
+    callBack()
+  }
+
+  override def toString: String = initialMove.toString + " (with callBack)"
+}

@@ -90,6 +90,7 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
 
   def violationOfBin(binNumber:Int):CBLSIntVar = binviolations(binNumber)
   def itemsInBin(binNumber:Int) = bincontents(binNumber)
+  def fillingOfBin(binNumber:Int) = binfilling(binNumber)
 
   /** To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
