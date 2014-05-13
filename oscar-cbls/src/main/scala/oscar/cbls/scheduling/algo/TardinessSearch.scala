@@ -53,8 +53,8 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
 
   require(model.isClosed, "model should be closed before TardinessSearch algo can be instantiated")
 
-  var minOvershootValue: Int = planning.totalOvershoot.value
-  var bestSolution: Solution = model.solution(true)
+  var minOvershootValue: Int = 0
+  var bestSolution: Solution = null
 
   /**
    * This solves the jobshop by neighborhood exploration. This is done by applying
@@ -62,7 +62,11 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
    * @param maxTrials the max number of iterations of the search
    * @param stable the max number of successive iterations with no improvement
    */
-  def solve(maxTrials: Int, stable: Int) {
+  def solve(maxTrials: Int, stable: Int, saveCurrentSolution: Boolean = false) {
+    if (saveCurrentSolution) {
+      bestSolution = model.solution(true)
+      minOvershootValue = planning.totalOvershoot.value
+    }
     var nbTrials: Int = 0
 
     while (nbTrials < maxTrials) {
@@ -76,7 +80,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
       nbTrials = nbTrials + 1
     }
 
-    model.restoreSolution(bestSolution)
+    if (bestSolution != null) model.restoreSolution(bestSolution)
     planning.clean()
     if (verbose) println("Restored best solution.")
   }
@@ -94,7 +98,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
 
       val gain = swap(from, to)
       if (gain < 0) {
-        val currentOvershoot = planning.totalOvershoot.value 
+        val currentOvershoot = planning.totalOvershoot.value
         if (currentOvershoot <= minOvershootValue) {
           minOvershootValue = currentOvershoot
           bestSolution = model.solution(true)
