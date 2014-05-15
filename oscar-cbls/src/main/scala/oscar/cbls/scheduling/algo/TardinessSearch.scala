@@ -46,7 +46,6 @@ import oscar.cbls.scheduling.model.TotalResourcesOvershootEvaluation
  * @author yoann.guyot@cetic.be
  */
 class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvershootEvaluation,
-                      maxLocalIterations: Int = 5,
                       temperature: Float = 100,
                       verbose: Boolean = false) extends SearchEngine {
   val model: Store = planning.model
@@ -62,36 +61,50 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
    * @param maxTrials the max number of iterations of the search
    * @param stable the max number of successive iterations with no improvement
    */
-  def solve(maxTrials: Int, stable: Int, saveCurrentSolution: Boolean = false) {
-    if (saveCurrentSolution) {
-      bestSolution = model.solution(true)
-      minOvershootValue = planning.totalOvershoot.value
-    }
-    var nbTrials: Int = 0
-
-    while (nbTrials < maxTrials) {
-      if (verbose) println("Tardiness seartch trial " + nbTrials + ".")
-      for (activity <- planning.activitiesWithDeadlines.filter(_.isLate)) {
-        if (verbose) println("Activity " + activity.name + " is late.")
-        // a list of (predecessor, activity) with an additional tight dependence
-        val criticalActivities = nonSolidCriticalPath(planning)(activity)
-        exploreNeighborhood(criticalActivities)
+  def solve(maxTrials: Int,
+            stable: Int,
+            maxLocalIterations: Int = 5,
+            saveCurrentSolution: Boolean = false) = {
+    var hasImproved = false
+    if (planning.totalTardiness.value > 0) {
+      if (saveCurrentSolution) {
+        bestSolution = model.solution(true)
+        minOvershootValue = planning.totalOvershoot.value
       }
-      nbTrials = nbTrials + 1
-    }
+      var nbTrials: Int = 0
 
-    if (bestSolution != null) model.restoreSolution(bestSolution)
-    planning.clean()
-    if (verbose) println("Restored best solution.")
+      while (nbTrials < maxTrials) {
+        if (verbose) println("Tardiness search trial " + nbTrials + ".")
+        for (activity <- planning.activitiesWithDeadlines.filter(_.isLate)) {
+          if (verbose) println("Activity " + activity.name + " is late.")
+          // a list of (predecessor, activity) with an additional tight dependence
+          val criticalActivities = nonSolidCriticalPath(planning)(activity)
+          if (exploreNeighborhood(criticalActivities, maxLocalIterations))
+            hasImproved = true
+        }
+        nbTrials = nbTrials + 1
+      }
+
+      if (bestSolution != null) model.restoreSolution(bestSolution)
+      planning.clean()
+      if (verbose) println("Restored best solution.")
+    }
+    hasImproved
   }
 
   // a list of (predecessor, activity) with an additional tight dependence
-  private def exploreNeighborhood(criticals: List[(Activity, Activity)]) {
+  private def exploreNeighborhood(criticals: List[(Activity, Activity)],
+                                  maxLocalIterations: Int) = {
+    var hasImproved = false
     var moved = false
     var i = 0
+    
     var criticalsIterator = criticals.iterator
 
-    while (!moved && i < maxLocalIterations && criticalsIterator.hasNext) {
+    while (!moved
+      && (if (maxLocalIterations > 0) i < maxLocalIterations else true)
+      && criticalsIterator.hasNext) {
+
       if (verbose) println("Exploration iteration " + i + ".")
       moved = false
       val (from, to) = criticalsIterator.next
@@ -102,6 +115,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
         if (currentOvershoot <= minOvershootValue) {
           minOvershootValue = currentOvershoot
           bestSolution = model.solution(true)
+          hasImproved = true
         }
         if (verbose) println("(improvement) Swaped " + from + " with " + to)
         moved = true
@@ -117,6 +131,8 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
 
       i = i + 1
     }
+
+    hasImproved
   }
 
   private def swap(from: Activity, to: Activity): Int = {

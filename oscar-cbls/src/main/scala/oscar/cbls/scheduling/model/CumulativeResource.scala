@@ -58,13 +58,12 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   val overShoot: CBLSIntVar = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
 
-
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    if(activitiesAndUse.isDefinedAt(j)){
-    activitiesAndUse += ((j,activitiesAndUse.get(j).get + amount))
-    }else{
-      activitiesAndUse += ((j,amount))
+    if (activitiesAndUse.isDefinedAt(j)) {
+      activitiesAndUse += ((j, activitiesAndUse.get(j).get + amount))
+    } else {
+      activitiesAndUse += ((j, amount))
     }
   }
 
@@ -76,7 +75,7 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   }
 
   /**these are the activities that you can use for ejecting one of the conflicting activities*/
-  def baseActivityForEjection(t:Int):Iterable[Activity] = {
+  def baseActivityForEjection(t: Int): Iterable[Activity] = {
     activitiesAndUse(t).map(_._1)
   }
 
@@ -356,10 +355,11 @@ case class VariableResource(planning: Planning with VariableResources,
    * (not only restrictions beginning at this time!)
    * @author yoann.guyot@cetic.be
    */
-  private def restrictionAt(time: Int):Int = {
+  private def restrictionAt(time: Int): Int = {
     val restrictions = (0 to time) flatMap { (i: Int) =>
       planning.resourceRestrictionTasks(i) map { (task: Activity) =>
-        if (i + task.duration.value - 1 >= time) this.activitiesAndUse(task).value
+        if (i + task.duration.value - 1 >= time && this.activitiesAndUse.contains(task))
+          this.activitiesAndUse(task).value
         else 0
       }
     }
