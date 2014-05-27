@@ -36,7 +36,7 @@ object BinPackingTest extends CBLSModel with App{
 
   s.close()
 
-  val x =  ((MoveItem(problem) exhaustBack SwapItems(problem)) exhaustBack (JumpSwapItems(problem) onFirstMove println("Jumping") maxMoves 2)) protectBest(problem.overallViolation.Objective, s)
+  val x =  ((MoveItem(problem) exhaustBack SwapItems(problem, true)) orElse (JumpSwapItems(problem) onMove println("Jumping"))) maxMoves 20 orElse (EmptyMostViolatedBin(problem) onFirstMove println("Jumping10")) protectBest(problem.overallViolation.Objective)
   x.verbose = 1
   x.doAllImprovingMoves(200)
 

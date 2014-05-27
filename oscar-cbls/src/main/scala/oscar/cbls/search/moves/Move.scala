@@ -29,23 +29,25 @@ case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove(): SearchResult = NoMoveFound
 }
 
-case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = "") extends Move(objAfter){
+case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
   override def comit() {i := v}
 
   override def toString: String = {
-    neighborhoodName + ": AssingMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+    "AssingMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
   }
 }
 
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = "") extends Move(objAfter){
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
   override def comit() {i :=: j}
 
   override def toString: String  = {
-    neighborhoodName + ": SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+    "SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
   }
 }
 
-case class CompositeMove(ml:List[Move], override val objAfter:Int) extends Move(objAfter){
+case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
   def this(ml:List[Move]){
     this(ml, ml.last.objAfter)
   }
@@ -55,6 +57,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int) extends Move(
   }
 
   override def toString: String  = {
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
     "CompositeMove(" + ml.mkString(" and ") + " objAfter:" + objAfter + ")"
   }
 }
@@ -65,8 +68,8 @@ object CallBackMove{
 
 case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(initialMove.objAfter){
   def comit(){
-    initialMove.comit
     callBack()
+    initialMove.comit
   }
 
   override def toString: String = initialMove.toString + " (with callBack)"

@@ -52,8 +52,9 @@ abstract class UnaryNeighborhoodCombinator(a:Neighborhood) extends Neighborhood{
   }
 }
 
-class ProtectBest(a:Neighborhood, i:CBLSIntVar, s:Store) extends UnaryNeighborhoodCombinator(a){
+class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends UnaryNeighborhoodCombinator(a){
   var oldObj = i.value
+  val s:Store = i.model
   var best:Solution = s.solution()
   override def getImprovingMove(): SearchResult = {
     if(i.value < oldObj){
@@ -127,7 +128,6 @@ class DoOnFirstMove(a:Neighborhood, proc: =>Unit) extends UnaryNeighborhoodCombi
     proc
     isFirstMove = false
   }
-
 }
 
 

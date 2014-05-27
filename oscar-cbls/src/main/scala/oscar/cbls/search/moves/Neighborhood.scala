@@ -91,5 +91,6 @@ abstract class Neighborhood{
   def onQuery(proc:  => Unit) = new DoOnQuery(this,proc)
   def onMove(proc: => Unit) = new DoOnMove(this,proc)
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,proc)
-  def protectBest(i:CBLSIntVar, s:Store) = new ProtectBest(this, i, s)
+  def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
+  def retry() = new Retry(this)
 }

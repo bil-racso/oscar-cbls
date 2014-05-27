@@ -49,6 +49,7 @@ case class BinPackingProblem(items:Map[Int,Item],
 
   def itemCount = items.size
   def binCount = bins.size
+
 }
 
 object BinPackingProblem{
