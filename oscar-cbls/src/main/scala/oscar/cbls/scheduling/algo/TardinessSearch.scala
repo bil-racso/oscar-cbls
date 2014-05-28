@@ -12,6 +12,11 @@ import scala.util.control.Breaks.break
 import oscar.cbls.scheduling.model.ActivityWithDeadline
 import CriticalPathFinder.nonSolidCriticalPath
 import oscar.cbls.scheduling.model.TotalResourcesOvershootEvaluation
+import oscar.cbls.scheduling.model.ActivityWithDeadline
+import oscar.cbls.scheduling.model.NonMoveableActivity
+import oscar.cbls.routing.model.TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm
+import oscar.cbls.scheduling.model.ActivityWithDeadline
+import oscar.cbls.scheduling.model.VariableResources
 
 /**
  * *****************************************************************************
@@ -45,7 +50,7 @@ import oscar.cbls.scheduling.model.TotalResourcesOvershootEvaluation
  * @param verbose
  * @author yoann.guyot@cetic.be
  */
-class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvershootEvaluation,
+class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvershootEvaluation with VariableResources,
                       temperature: Float = 100,
                       verbose: Boolean = false) extends SearchEngine {
   val model: Store = planning.model
@@ -64,6 +69,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
   def solve(maxTrials: Int,
             stable: Int,
             maxLocalIterations: Int = 5,
+            onlyImprovingMoves: Boolean = true,
             saveCurrentSolution: Boolean = false) = {
     var hasImproved = false
     if (planning.totalTardiness.value > 0) {
@@ -72,15 +78,26 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
         minOvershootValue = planning.totalOvershoot.value
       }
       var nbTrials: Int = 0
+      var change: Boolean = true
 
       while (nbTrials < maxTrials) {
         if (verbose) println("Tardiness search trial " + nbTrials + ".")
+
+        var precCriticalActivities: List[(Activity, Activity)] = List()
         for (activity <- planning.activitiesWithDeadlines.filter(_.isLate)) {
           if (verbose) println("Activity " + activity.name + " is late.")
           // a list of (predecessor, activity) with an additional tight dependence
           val criticalActivities = nonSolidCriticalPath(planning)(activity)
-          if (exploreNeighborhood(criticalActivities, maxLocalIterations))
-            hasImproved = true
+          // if (exploreNeighborhood(criticalActivities, maxLocalIterations))
+          if (!criticalActivities.isEmpty
+            && criticalActivities != precCriticalActivities) {
+            if (exploreNeighborhood(criticalActivities,
+              maxLocalIterations, onlyImprovingMoves))
+              hasImproved = true
+          } else {
+            if (verbose) println("Skip (nothing to do).\n")
+          }
+          precCriticalActivities = criticalActivities
         }
         nbTrials = nbTrials + 1
       }
@@ -94,11 +111,12 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
 
   // a list of (predecessor, activity) with an additional tight dependence
   private def exploreNeighborhood(criticals: List[(Activity, Activity)],
-                                  maxLocalIterations: Int) = {
+                                  maxLocalIterations: Int,
+                                  onlyImproving: Boolean = true) = {
     var hasImproved = false
     var moved = false
     var i = 0
-    
+
     var criticalsIterator = criticals.iterator
 
     while (!moved
@@ -109,24 +127,43 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
       moved = false
       val (from, to) = criticalsIterator.next
 
+      if (verbose) {
+        println("tardiness: " + planning.totalTardiness)
+      }
       val gain = swap(from, to)
-      if (gain < 0) {
+      if (verbose) {
+        println("tardiness: " + planning.totalTardiness)
+      }
+
+      if (verbose) println("gain = " + gain)
+
+      if (gain <= 0) {
         val currentOvershoot = planning.totalOvershoot.value
+        if (verbose) println("overshoot = " + minOvershootValue + " -> " + currentOvershoot)
         if (currentOvershoot <= minOvershootValue) {
           minOvershootValue = currentOvershoot
           bestSolution = model.solution(true)
           hasImproved = true
+          if (verbose) println("(improvement) Swapped " + from + " with " + to + "\n")
+          moved = true
+        } else if (!onlyImproving && math.random < math.exp(-gain / temperature)) {
+          if (verbose) println("(random " + temperature + "°) Swapped "
+            + from + " with " + to + "\n")
+          moved = true
+        } else {
+          // cancel move
+          swap(to, from)
+          if (verbose) println("No move (Swap undone).\n")
         }
-        if (verbose) println("(improvement) Swaped " + from + " with " + to)
-        moved = true
         // metropolis criterion
-      } else if (math.random < math.exp(-gain / temperature)) {
-        if (verbose) println("(random " + temperature + "°) Swaped " + from + " with " + to)
+      } else if (!onlyImproving && math.random < math.exp(-gain / temperature)) {
+        if (verbose) println("(random " + temperature + "°) Swapped "
+          + from + " with " + to + "\n")
         moved = true
       } else {
         // cancel move
         swap(to, from)
-        if (verbose) println("No move.")
+        if (verbose) println("No move (Swap undone).\n")
       }
 
       i = i + 1
@@ -137,10 +174,23 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
 
   private def swap(from: Activity, to: Activity): Int = {
     val previousTardiness = planning.totalTardiness.value
-    to.removeDynamicPredecessor(from, verbose)
-    from.addDynamicPredecessor(to, verbose)
-    val currentTardiness = planning.totalTardiness.value
+    if (to.canAddPrecedence) {
+      to.removeDynamicPredecessor(from, verbose)
 
-    currentTardiness - previousTardiness
+//      val predecessors = from.potentiallyKilledPredecessors.value.toList.map(
+//        planning.activityArray(_))
+//      println("PREDECESSORS: " + predecessors)
+//      val restrictors = predecessors.filter(planning.resourceRestrictionTasks.contains(_))
+//      println("RESTRICTORS: " + restrictors)
+//      restrictors.foreach(to.addDynamicPredecessor(_, verbose))
+
+      if (from.canAddPrecedence)
+        from.addDynamicPredecessor(to, verbose)
+
+      val currentTardiness = planning.totalTardiness.value
+      currentTardiness - previousTardiness
+    } else {
+      -1
+    }
   }
 }

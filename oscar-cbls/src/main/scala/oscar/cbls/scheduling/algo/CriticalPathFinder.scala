@@ -64,7 +64,7 @@ object CriticalPathFinder extends SearchEngine {
       //random tie break, as it is likely that there will be few forks.
     }
 
-    var CurrentActivity: Activity = PrecedingNode(from)
+    var CurrentActivity: Activity = if (from == p.sentinelActivity) PrecedingNode(from) else from
     var toreturn: List[(Activity, Activity)] = List.empty
     while (CurrentActivity != null) {
       val Predecessor = PrecedingNode(CurrentActivity)
