@@ -93,16 +93,17 @@ trait SearchEngineTrait{
   /**return a couple (r,s) that is allowed: st(r,s) is true, and minimizing f(r,s) among the allowed couples
     * this selector is randomized; in case of tie breaks the returned one is chosen randomly
     * @param st is optional and set to true if not specified
+    * @param stop earlier stop if a couple (and output value is found)
     */
-  def selectMin2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-    selectMax2[R,S](r , s, -f(_,_), st)
+  def selectMin2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
+    selectMax2[R,S](r , s, -f(_,_), st, stop)
   }
 
   /**return a couple (r,s) that is allowed: st(r,s) is true, and maximizing f(r,s) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified
     */
-  def selectMax2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
+  def selectMax2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
     val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
     selectMax[(R,S)](flattened , (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
   }
@@ -111,12 +112,15 @@ trait SearchEngineTrait{
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified
    */
-  def selectMax[R](r: Iterable[R] , f: R => Int, st: (R => Boolean) = ((r:R) => true)): R = {
+  def selectMax[R](r: Iterable[R] , f: R => Int, st: (R => Boolean) = ((r:R) => true), stop: (R,Int) => Boolean = (_:R,_:Int) => false): R = {
     var MaxSoFar = Int.MinValue
     var Val:List[R] = List.empty
     for (i <- r) {
       if (st(i)) {
         val v:Int = f(i)
+        if(stop(i,v)){
+          return i
+        }
         if (v > MaxSoFar || Val.isEmpty) {
           Val = List(i)
           MaxSoFar = v

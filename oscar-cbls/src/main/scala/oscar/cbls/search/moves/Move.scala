@@ -20,7 +20,9 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 
 abstract class StatelessNeighborhood extends Neighborhood{
   //this resets the internal state of the move combinators
-  override def reset(){}
+  final override def reset(){}
+
+  override def toString: String = this.getClass.getSimpleName
 }
 
 /** a neighborhood that never finds any move (quite useless, actually)
@@ -72,5 +74,5 @@ case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(i
     initialMove.comit
   }
 
-  override def toString: String = initialMove.toString + " (with callBack)"
+  override def toString: String = initialMove.toString
 }

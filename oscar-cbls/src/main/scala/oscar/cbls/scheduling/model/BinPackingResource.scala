@@ -5,13 +5,14 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.binPacking.{Item, BinPackingSolver, BinPackingProblem, Bin}
+import oscar.cbls.binPacking.BinPackingSolver
 import oscar.cbls.invariants.lib.logic.TranslatedDenseCluster
 import oscar.cbls.objective.Objective
 import scala.collection.SortedMap
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import scala.collection.immutable.SortedSet
 import oscar.cbls.invariants.lib.set.SetMap
+import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it

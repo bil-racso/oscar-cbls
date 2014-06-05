@@ -29,6 +29,8 @@ abstract class Move(val objAfter:Int) extends SearchResult{
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
+//  def getImprovingMove(acceptor:(Int,Int) => Boolean):SearchResult =  getImprovingMove()
+
   def getImprovingMove():SearchResult
 
   //this resets the internal state of the move combinators
@@ -58,15 +60,15 @@ abstract class Neighborhood{
     while(remainingMoves != 0){
       getImprovingMove() match {
         case ProblemSolved => {
-          if (verbose >= 1) println("doAllImprovingMoves: problem solved after " + toReturn + " it")
+          if (verbose >= 1) println("problem solved after " + toReturn + " it")
           return toReturn;
         }
         case NoMoveFound => {
-          if (verbose >= 1) println("doAllImprovingMoves: no move found after " + toReturn + " it")
+          if (verbose >= 1) println("no move found after " + toReturn + " it")
           return toReturn;
         }
         case m: Move => {
-          if (verbose >= 1) println("doAllImprovingMoves: " + m)
+          if (verbose >= 1) println(m)
           m.comit
           true
         }
@@ -74,7 +76,7 @@ abstract class Neighborhood{
       toReturn += 1
       remainingMoves -= 1
     }
-    if(verbose >= 1)println("doAllImprovingMoves STOP criterion: maxMoves ("+ maxMoves+") performed")
+    if(verbose >= 1)println("maxMoves ("+ maxMoves+") performed")
     toReturn
   }
 

@@ -15,10 +15,9 @@
 
 package oscar.cbls.test.search
 
-import oscar.cbls.search.binPacking._
+import oscar.cbls.binPacking._
 import oscar.cbls.modeling.CBLSModel
-import oscar.cbls.search.binPacking.JumpSwapItems
-import oscar.cbls.search.moves.{NoReset, NoMoveNeighborhood, ProtectBest}
+import oscar.cbls.binPacking.model.BinPackingProblem
 
 /**
  * Created by rdl on 24/04/2014.
@@ -28,7 +27,7 @@ object BinPackingTest extends CBLSModel with App{
   //the index is the first element of the couple
   def indexList(l:List[Int]):List[(Int,Int)] = null
 
-  val itemSizes = List(20, 5, 6, 7, 3, 5, 9, 7, 3, 5)
+  val itemSizes = List(20, 5, 7, 6, 3, 5, 9, 7, 3, 5)
 
   val binSizes = List(20, 21, 29)
 
@@ -36,7 +35,11 @@ object BinPackingTest extends CBLSModel with App{
 
   s.close()
 
-  val x =  ((MoveItem(problem) exhaustBack SwapItems(problem, true)) orElse (JumpSwapItems(problem) onMove println("Jumping"))) maxMoves 20 orElse (EmptyMostViolatedBin(problem) onFirstMove println("Jumping10")) protectBest(problem.overallViolation.Objective)
+  val x =  ((MoveItem(problem) exhaustBack SwapItems(problem))
+    exhaust ((MoveItem(problem, true) exhaustBack SwapItems(problem, true)
+             orElse (JumpSwapItems(problem) maxMoves 3 onMove println("Jump"))
+             orElse (EmptyMostViolatedBin(problem) onMove println("BigJump"))))) protectBest(problem.overallViolation.Objective)
+
   x.verbose = 1
   x.doAllImprovingMoves(200)
 
