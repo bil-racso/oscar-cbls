@@ -18,6 +18,7 @@ package oscar.cbls.test.search
 import oscar.cbls.binPacking._
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.binPacking.model.BinPackingProblem
+import oscar.cbls.binPacking.solver.{EmptyMostViolatedBin, JumpSwapItems, SwapItems, MoveItem}
 
 /**
  * Created by rdl on 24/04/2014.
@@ -38,7 +39,7 @@ object BinPackingTest extends CBLSModel with App{
   val x =  ((MoveItem(problem) exhaustBack SwapItems(problem))
     exhaust ((MoveItem(problem, true) exhaustBack SwapItems(problem, true)
              orElse (JumpSwapItems(problem) maxMoves 3 onMove println("Jump"))
-             orElse (EmptyMostViolatedBin(problem) onMove println("BigJump"))))) protectBest(problem.overallViolation.Objective)
+             orElse (EmptyMostViolatedBin(problem) onMove println("BigJump"))))) protectBest(problem.overallViolation.objective)
 
   x.verbose = 1
   x.doAllImprovingMoves(200)

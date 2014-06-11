@@ -1,18 +1,17 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntConst, CBLSIntVar}
+import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
+import oscar.cbls.binPacking.solver.BinPackingSolver
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, CBLSSetVar}
+import oscar.cbls.invariants.lib.logic.TranslatedDenseCluster
+import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.binPacking.BinPackingSolver
-import oscar.cbls.invariants.lib.logic.TranslatedDenseCluster
 import oscar.cbls.objective.Objective
+
 import scala.collection.SortedMap
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import scala.collection.immutable.SortedSet
-import oscar.cbls.invariants.lib.set.SetMap
-import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
 /**
  * A bin packing resource is a resource that is held only at the first time unit of the activity using it
@@ -25,10 +24,30 @@ import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], MaxBPSteps:Int)
   extends  Resource(planning:Planning, n:String) {
 
+  val maxBinsPerTimeUnit:Int = (0 to planning.maxDuration).foldLeft(0)((acc,t) => scala.math.max(acc,bins(t).length))
+
+  case class ResourceAtTime(t:Int,
+                            bins:Array[ShiftedBin],
+                            var overallViolation:Objective = null,
+                            var mostViolatedBins:CBLSSetVar=null){
+  }
+
+  class ShiftedItem(override val number:Int,
+                    override val size:Int,
+                    override val bin:CBLSIntVar, //this is the bin of he day
+                    offset:CBLSIntVar //this is the offset, taken as the time unit where it happens
+                     ) extends Item(number, size, bin){
+    val shiftedBin = bin + (offset * maxBinsPerTimeUnit) //this is the absolute bin
+  }
+
+  class ShiftedBin(override val number:Int,
+                   override val size:Int,
+                   val shiftedNumber:Int) extends Bin(number, size)
+
   //for each activity using the resource, we have an item representing it (
   // this also keeps trac of the level of usage of the activity
   //As well as the bin to which the activity is set.
-  var ActivitiesAndItems: SortedMap[Activity, Item] = SortedMap.empty
+  var ActivitiesAndItems: SortedMap[Activity, ShiftedItem] = SortedMap.empty
 
   var itemCount = 0;
   private def newItemNumber():Int = {
@@ -38,36 +57,37 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
 
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: Int) {
-    require(!ActivitiesAndItems.isDefinedAt(j), "an activity cannot use the same resource several times")
-    ActivitiesAndItems += ((j, Item(
+    require(!ActivitiesAndItems.isDefinedAt(j), "an activity cannot use the same BinPacking resource several times")
+    ActivitiesAndItems += ((j, new ShiftedItem(
       number=newItemNumber(),
       size=amount,
-      bin=CBLSIntVar(planning.model, name="overall_violation"))
-      ))
+      bin=CBLSIntVar(planning.model, name="bin of activity " + j),
+      offset = j.earliestStartDate
+    )))
   }
 
-  private var binCount = 0;
-  private def newBinNumber():Int = {
-    val toReturn = binCount
-    binCount += 1
-    toReturn
-  }
+  val binCount:Int = planning.maxDuration * maxBinsPerTimeUnit
 
-  case class ResourceAtTime(t:Int,
-                            zeroBin:Bin,
-                            bins:List[Bin],
-                            var overallViolation:Objective = null,
-                            var violationNotZero:Objective = null,
-                             var mostViolatedBins:CBLSSetVar=null){
-    def allBins:List[Bin] = zeroBin :: bins
-  }
+  private val binsAtAllTimes:Array[ResourceAtTime] = Array.tabulate(planning.maxDuration)(t => {
+    val standardBinSizes = bins(t)
+    val extendedBinSizes = standardBinSizes ::: List.fill(maxBinsPerTimeUnit - standardBinSizes.length)(0)
+    val shift = t * maxBinsPerTimeUnit
 
-  var resourcesAtAllTimes:Array[ResourceAtTime] = Array.tabulate(planning.maxDuration)(t => {
-    ResourceAtTime(t=t,
-      zeroBin=Bin(newBinNumber(),0 /*maxSize is zero for entry bin, representing the additional phantom bin*/),
-      bins=bins(t).map((binSize:Int) => Bin(newBinNumber(), binSize))
-    )
+    val binArray:Array[ShiftedBin] = Array.tabulate(maxBinsPerTimeUnit)(null)
+    extendedBinSizes.zipWithIndex.map(
+    {case (binSize:Int, index:Int) =>
+      binArray(index) = new ShiftedBin(number = index,
+                                       binSize,
+                                       shiftedNumber = index + shift)})
+
+    ResourceAtTime(t,binArray)
   })
+
+  private val violationTracker = ArgMaxArray(binsAtAllTimes.map(_.overallViolation.objective))
+  private val highestViolationPositions: CBLSSetVar = violationTracker
+
+  val overShoot: CBLSIntVar = violationTracker.getMax
+  def worseOverShootTime: Int = highestViolationPositions.value.firstKey
 
   /** This method is called by the framework before starting the scheduling
     * put anything that needs to be done after instantiation here
@@ -77,50 +97,48 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     //keeping track of which activity starts where through a cluster invariant
     val activityArray:Array[Activity] = ActivitiesAndItems.keys.toArray
 
-    //setting the use, which keeps track of which activity uses the resoruce at any time slot
+    //setting the use, which keeps track of which activity uses the resource at any time slot
     TranslatedDenseCluster(activityArray.map(_.earliestStartDate), activityArray.map(_.ID), use)
 
-    val allBins:List[Bin] = resourcesAtAllTimes.map(_.allBins).flatten.toList
     val binArray:Array[Bin] = Array.fill(binCount)(null)
-    for(bin <- allBins){
-      binArray(bin.number) = bin
+    for(resourceAtTime <- binsAtAllTimes){
+      for(bin <- resourceAtTime.bins)
+        binArray(bin.number) = bin
     }
 
     val sc = ConstraintSystem(planning.model)
 
-    val mkp = MultiKnapsack(activityArray.map((a:Activity) => ActivitiesAndItems(a).bin),
+    val mkp = MultiKnapsack(
+      activityArray.map((a:Activity) => ActivitiesAndItems(a).bin),
       activityArray.map((a:Activity) => CBLSIntConst(ActivitiesAndItems(a).size)),
       binArray.map(bin => bin.size).map((i:Int) => CBLSIntConst(i)))
 
     sc.post(mkp)
 
-    for(bin <- allBins){
-      bin.violation = mkp.violationOfBin(bin.number)
-      bin.items = mkp.itemsInBin(bin.number)
+    for(resourceAtTime <- binsAtAllTimes) {
+      for (bin <- resourceAtTime.bins) {
+        bin.violation = mkp.violationOfBin(bin.number)
+        bin.items = mkp.itemsInBin(bin.number)
+      }
     }
 
-    for(r <- resourcesAtAllTimes){
-      r.violationNotZero = Objective(Sum(r.bins.map(bin => bin.violation)))
-      r.overallViolation = Objective(r.violationNotZero.Objective + r.zeroBin.violation)
-
-      val binArrayForTime:Array[Bin] = r.allBins.toArray
-      val binArrayToBinID = binArrayForTime.map(_.number)
-
-      r.mostViolatedBins = ArgMaxArray(binArrayForTime.map(_.violation)).map(binArrayToBinID(_))
+    for(r <- binsAtAllTimes){
+      r.overallViolation = Objective(Sum(r.bins.map(_.violation)))
+      r.mostViolatedBins = ArgMaxArray(r.bins.map(_.violation))
     }
   }
 
   /** This method builds a bin packing problem regrouping the items etc.
     * of a bin packing happening at the given point in time
     */
-  def getBinPackingProblem(t:Int, withBinZero:Boolean):BinPackingProblem = {
+  private def getBinPackingProblem(t:Int):BinPackingProblem = {
     val activitiesStartingAtT:Iterable[Activity] = use(t).value.map((activityID:Int) => planning.activityArray(activityID))
-    val itemsAtTimeT:Iterable[Item] = activitiesStartingAtT.map((a:Activity) => ActivitiesAndItems(a))
 
-    BinPackingProblem(activitiesStartingAtT.map((a:Activity) => {val item = ActivitiesAndItems(a); (item.number,item)}).toMap,
-      (if(withBinZero) resourcesAtAllTimes(t).allBins else resourcesAtAllTimes(t).bins).map((b:Bin) => (b.number,b)).toMap,
-      if(withBinZero) resourcesAtAllTimes(t).overallViolation else resourcesAtAllTimes(t).violationNotZero,
-      resourcesAtAllTimes(t)mostViolatedBins)
+    BinPackingProblem(
+      activitiesStartingAtT.map((a:Activity) => {val item = ActivitiesAndItems(a); (item.number,item)}).toMap,
+      binsAtAllTimes(t).bins.map((b:Bin) => (b.number,b)).toMap,
+      binsAtAllTimes(t).overallViolation,
+      binsAtAllTimes(t).mostViolatedBins)
   }
 
   override def toAsciiArt(headerLength: Int): String = ""
@@ -130,20 +148,15 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
 
   /** you need to eject one of these to solve the conflict
     * this can be null if the problem is actually solved in between, or if the problem cannot be solved */
-  override def conflictingActivities(t: Int): Iterable[Activity] = null
+  override def conflictingActivities(t: Int): Iterable[Activity] = {
 
-  /** The first violation of the resource in time
-    * @return
-    */
-  override def worseOverShootTime: Int = 0
+    val binPackingProblem = getBinPackingProblem(t)
+    BinPackingSolver.solveBinPacking(binPackingProblem, 4)
 
-  override val overShoot: CBLSIntVar = null
+    //either the problem can be solved, or all activities could be moved later
+    if(binPackingProblem.overallViolation.value == 0)
+      return null
+
+    use(t).value.map((activityID:Int) => planning.activityArray(activityID))
+  }
 }
-
-/*
-il faut aussi savoir dans quel ordre on va faire le flatten.
-Je pense qu'il vaut mieux faire les cumulative en premier, puis les binPacking.
-bon, au final on va quand-même les intertwiner alors je sais aps si ça va changer grand chose.
-par contre, le pense qu'il vaut mieux faire du début à la fin pour les binPAcking parce-que le déplacement va induire plus de conflits que dans le cas de cumulatives.
- */
-

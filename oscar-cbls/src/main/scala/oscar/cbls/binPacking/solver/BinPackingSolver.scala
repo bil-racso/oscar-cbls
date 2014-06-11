@@ -10,11 +10,13 @@ import oscar.cbls.search.moves.AssingMove
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
 object BinPackingSolver extends SearchEngineTrait {
-  def solveBinPacking(p: BinPackingProblem, maxStep: Int) = {
+  def solveBinPacking(p: BinPackingProblem, maxStep: Int){
 
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
-              orElse EmptyMostViolatedBin(p)) protectBest(p.overallViolation.Objective)
+              orElse EmptyMostViolatedBin(p)) protectBest(p.overallViolation.objective)
+
+
     x.doAllImprovingMoves(maxStep)
     x.restoreBest()
   }
@@ -56,7 +58,7 @@ case class MoveItem(p:BinPackingProblem,
 
   override def getImprovingMove():SearchResult = {
 
-    val oldViolation:Int = p.overallViolation.Objective.value
+    val oldViolation:Int = p.overallViolation.objective.value
 
     if(p.mostViolatedBins.value.isEmpty){
       if (verbose >= 2) println("ItemMove: problem is solved")
@@ -124,7 +126,7 @@ case class SwapItems(p:BinPackingProblem,
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
   override def getImprovingMove(): SearchResult = {
-    val oldViolation:Int = p.overallViolation.Objective.value
+    val oldViolation:Int = p.overallViolation.objective.value
 
     if(p.mostViolatedBins.value.isEmpty){
       if (verbose >= 2) println("ItemsSwap: problem is solved")
