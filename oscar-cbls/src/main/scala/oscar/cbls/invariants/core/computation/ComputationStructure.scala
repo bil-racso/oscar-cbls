@@ -33,14 +33,14 @@ import language.implicitConversions
   * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
   * @param topologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
-  *
+  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
   */
 case class Store(override val verbose:Boolean = false,
                  override val checker:Option[Checker] = None,
                  override val noCycle:Boolean = true,
                  override val topologicalSort:Boolean = false,
-                 val propagateOnToString:Boolean = true)
-  extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
+                 val propagateOnToString:Boolean = true, override val sortScc:Boolean = true)
+  extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
   with Bulker with StorageUtilityManager{
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
