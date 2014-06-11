@@ -23,17 +23,26 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import scala.collection.immutable.SortedMap
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 object Item{
   def apply(number:Int, size:Int, bin: CBLSIntVar = null) =
     new Item(number, size,bin)
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Item(val number:Int,
            val size:Int,
            var bin: CBLSIntVar = null){
   override def toString: String = "Item(nr:" + number + " size:" + size + " bin:" + bin.value + ")"
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 object Bin{
   def apply(number:Int,
             size:Int,
@@ -43,6 +52,9 @@ object Bin{
     new Bin(number,size,items,violation,content)
   }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Bin(val number:Int,
                val size:Int,
                var items:CBLSSetVar = null,
@@ -51,6 +63,9 @@ class Bin(val number:Int,
   override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.valueString + " viol:" + violation.value +")"
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 case class BinPackingProblem(items:Map[Int,Item],
                              bins: Map[Int,Bin],
                              overallViolation:Objective,
@@ -66,6 +81,9 @@ case class BinPackingProblem(items:Map[Int,Item],
 
 }
 
+/**
+ * @author renaud.delandtsheer@cetic.be
+ */
 object BinPackingProblem{
 
   private def arrayToIndexElementList[T](a:Array[T]):Map[Int,T]={

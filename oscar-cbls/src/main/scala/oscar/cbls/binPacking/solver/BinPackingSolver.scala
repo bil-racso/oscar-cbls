@@ -9,6 +9,11 @@ import oscar.cbls.search.moves._
 import oscar.cbls.search.moves.AssingMove
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
+/**
+ * this is a standard solver for a binPacking. 
+ * it performs a comination of MoveItem, Swaps, randomSwaps and binEmptying
+ * @author renaud.delandtsheer@cetic.be 
+ */
 object BinPackingSolver extends SearchEngineTrait {
   def solveBinPacking(p: BinPackingProblem, maxStep: Int){
 
@@ -22,7 +27,11 @@ object BinPackingSolver extends SearchEngineTrait {
   }
 }
 
-object identicalMerger{
+/**
+ * a generic algorithm for aggregating identical stuff
+ * @author renaud.delandtsheer@cetic.be
+ * */
+object identicalAggregator{
   def removeIdenticals[T](l:List[T], isIdentical:(T,T) => Boolean):List[T] =
     removeIdenticals[T](l, isIdentical, Nil)
 
@@ -47,7 +56,8 @@ object identicalMerger{
  * @param areBinsIdentical only one of identical bins will be considered for moves; this speeds up things. Supposed to be an equivalence relation.
   *                         items of different sizes will be considered as different by the algorithms through an additional mechanism, so this does not need to be tested.
   *                         by default, we consider that bins with identical free spaces are identical
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class MoveItem(p:BinPackingProblem,
                     best:Boolean = false,
                     areItemsIdentical: (Item,Item) => Boolean = null,
@@ -75,13 +85,13 @@ case class MoveItem(p:BinPackingProblem,
 
     val itemsOfBin1GroupedBySize = itemOfBin1.groupBy(_.size).values
     val itemsOfBin1Canonical:Iterable[Item] = if(areItemsIdentical == null) itemsOfBin1GroupedBySize.map(l => l.head)
-    else itemsOfBin1GroupedBySize.map(l => identicalMerger.removeIdenticals(l,areItemsIdentical)).flatten
+    else itemsOfBin1GroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
 
     val binsNotBin1GroupedBySpareSize = binList
       .filter(bin => bin.number != bin1.number && bin.violation.value == 0)
       .groupBy(bin => bin.size - bin.content.value).values
     val binsNotBin1Canonical:Iterable[Bin] = if(areBinsIdentical == null) binsNotBin1GroupedBySpareSize.map(l => l.head)
-    else binsNotBin1GroupedBySpareSize.map(l => identicalMerger.removeIdenticals(l,areBinsIdentical)).flatten
+    else binsNotBin1GroupedBySpareSize.map(l => identicalAggregator.removeIdenticals(l,areBinsIdentical)).flatten
 
     (if (best)
       selectMin2(itemsOfBin1Canonical,
@@ -116,7 +126,8 @@ case class MoveItem(p:BinPackingProblem,
   * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing. supposed to be an equivalence relation.
   *                          Identical items must be of the same size, but this does not need to be tested, since an internal pre-filter performs this.
   *                          by default, we consider that items of the same size are identical
- */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class SwapItems(p:BinPackingProblem,
                      best:Boolean = false,
                      areItemsIdentical: (Item,Item) => Boolean = null)
@@ -146,7 +157,7 @@ case class SwapItems(p:BinPackingProblem,
     val itemsOfBin1Canonical:Iterable[Item] = if(areItemsIdentical == null){
       itemsOfBin1GroupedBySize.map(l => l.head)
     }else{
-      itemsOfBin1GroupedBySize.map(l => identicalMerger.removeIdenticals(l,areItemsIdentical)).flatten
+      itemsOfBin1GroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
     }
 
     //TODO: this should be made lazy in case we go for the first improving move
@@ -156,7 +167,7 @@ case class SwapItems(p:BinPackingProblem,
       if(areItemsIdentical == null){
         itemsOfSameBinGroupedBySize.map(l => l.head)
       }else{
-        itemsOfSameBinGroupedBySize.map(l => identicalMerger.removeIdenticals(l,areItemsIdentical)).flatten
+        itemsOfSameBinGroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
       })
 
     val itemsNotOfBin1Canonical:Iterable[Item] = itemsGroupedByBinsAndCanonicals.flatten
@@ -188,7 +199,8 @@ case class SwapItems(p:BinPackingProblem,
 
 /** this move performs a random move in the search space.
   * it is a swap of two items of different sizes, from different bins
-  */
+  * @author renaud.delandtsheer@cetic.be
+  * */
 case class JumpSwapItems(p:BinPackingProblem)
   extends StatelessNeighborhood with SearchEngineTrait {
 
@@ -226,6 +238,7 @@ case class JumpSwapItems(p:BinPackingProblem)
 
 /** this move performs a random move in the search space.
   * it is a swap of two items of different sizes, from different bins
+  * @author renaud.delandtsheer@cetic.be
   */
 case class EmptyMostViolatedBin(p:BinPackingProblem)
   extends StatelessNeighborhood with SearchEngineTrait {
