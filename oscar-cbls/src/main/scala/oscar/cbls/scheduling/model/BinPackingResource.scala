@@ -34,7 +34,7 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
 
   class ShiftedItem(override val number:Int,
                     override val size:Int,
-                    override val bin:CBLSIntVar, //this is the bin of he day
+                    bin:CBLSIntVar, //this is the bin of he day
                     offset:CBLSIntVar //this is the offset, taken as the time unit where it happens
                      ) extends Item(number, size, bin){
     val shiftedBin = bin + (offset * maxBinsPerTimeUnit) //this is the absolute bin
