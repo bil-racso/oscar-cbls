@@ -21,6 +21,8 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.search.moves.Move
+
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.propagation._
 import language.implicitConversions
@@ -270,7 +272,7 @@ case class Solution(assignationInt:SortedMap[CBLSIntVar,Int],
   }
 }
 
-
+/*
 trait Checkpointing extends Store{
 
   def defineCheckpoint():Checkpoint
@@ -284,20 +286,27 @@ trait Checkpointing extends Store{
   def liveCheckpoints:List[Checkpoint]
 }
 
-class changeRecorder(s:Store) extends Invariant{
+class ChangeRecorder(s:Store) extends Invariant{
 
   s.addToCallBeforeClose(_ => this.close())
 
+  var keys : List[KeyForElementRemoval] = List.empty
+
   private var myActive = false
+
   def active_=(a:Boolean){
     if(a && !myActive){
-      //on active l'enregistrement, sui était désactivé
+      //on active l'enregistrement, qui était désactivé
+      keys = List.empty
+      for(v <- s.inputVariables){
+        keys = registerDynamicDependency(v) :: keys
+      }
     }else if (!a && myActive){
       //on désactive l'enregistrement
-    }
-
-    for(v <- s.inputVariables){
-      registerDynamicDependency(v)
+      for(k <- keys) {
+        unregisterDynamicDependency(k)
+      }
+      keys = List.empty
     }
 
     myActive = a
@@ -308,11 +317,20 @@ class changeRecorder(s:Store) extends Invariant{
   def close() {
     registerStaticDependencyAll(s.inputVariables())
   }
+
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int): Unit = super.notifyIntChanged(v, OldVal, NewVal)
+
+  override def notifyInsertOn(v: CBLSSetVar, value: Int): Unit = super.notifyInsertOn(v, value)
+
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int): Unit = super.notifyDeleteOn(v, value)
 }
 
-class Checkpoint{
+class Checkpoint(prevCheckpoint:Checkpoint){
+  var undoList:List[Move] = List.empty
 
+  def
 }
+*/
 
 object Invariant{
   implicit val Ord:Ordering[Invariant] = new Ordering[Invariant]{
