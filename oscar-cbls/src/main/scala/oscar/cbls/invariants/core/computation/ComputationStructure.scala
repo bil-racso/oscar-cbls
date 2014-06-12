@@ -270,50 +270,6 @@ case class Solution(assignationInt:SortedMap[CBLSIntVar,Int],
   }
 }
 
-
-trait Checkpointing extends Store{
-
-  def defineCheckpoint():Checkpoint
-
-  def restoreCheckpoint(c:Checkpoint)
-
-  def dropCheckpoints()
-
-  def dropCheckpoint(c:Checkpoint)
-
-  def liveCheckpoints:List[Checkpoint]
-}
-
-class changeRecorder(s:Store) extends Invariant{
-
-  s.addToCallBeforeClose(_ => this.close())
-
-  private var myActive = false
-  def active_=(a:Boolean){
-    if(a && !myActive){
-      //on active l'enregistrement, sui était désactivé
-    }else if (!a && myActive){
-      //on désactive l'enregistrement
-    }
-
-    for(v <- s.inputVariables){
-      registerDynamicDependency(v)
-    }
-
-    myActive = a
-  }
-
-  def active:Boolean = myActive
-
-  def close() {
-    registerStaticDependencyAll(s.inputVariables())
-  }
-}
-
-class Checkpoint{
-
-}
-
 object Invariant{
   implicit val Ord:Ordering[Invariant] = new Ordering[Invariant]{
     def compare(o1: Invariant, o2: Invariant) = o1.compare(o2)
