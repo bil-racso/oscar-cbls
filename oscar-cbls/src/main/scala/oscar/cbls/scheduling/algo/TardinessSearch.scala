@@ -79,10 +79,11 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
         minOvershootValue = planning.totalOvershoot.value
       }
       var nbTrials: Int = 0
-      var change: Boolean = true
+      var continue: Boolean = true
 
-      while (nbTrials < maxTrials) {
+      while (nbTrials < maxTrials && continue) {
         if (verbose) println("Tardiness search trial " + nbTrials + ".")
+        continue = false
 
         var precCriticalActivities: List[(Activity, Activity)] = List()
         for (activity <- planning.activitiesWithDeadlines.filter(_.isLate)) {
@@ -93,8 +94,10 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
           if (!criticalActivities.isEmpty
             && criticalActivities != precCriticalActivities) {
             if (exploreNeighborhood(criticalActivities,
-              maxLocalIterations, onlyImprovingMoves))
+              maxLocalIterations, onlyImprovingMoves)) {
               hasImproved = true
+              continue = true
+            }
           } else {
             if (verbose) println("Skip (nothing to do).\n")
           }
@@ -183,7 +186,9 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
       predecessors.foreach(to.addDynamicPredecessor(_, verbose))
 
       val successors = to.allSucceedingActivities.value.toList.map(planning.activityArray(_))
-      successors.foreach(_.addDynamicPredecessor(from, verbose))
+      successors.foreach(
+        (succ: Activity) =>
+          if (succ.canAddPrecedence) succ.addDynamicPredecessor(from, verbose))
 
       if (from.canAddPrecedence)
         from.addDynamicPredecessor(to, verbose)
