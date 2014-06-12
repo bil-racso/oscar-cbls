@@ -22,7 +22,7 @@ case object NoMoveFound extends SearchResult
 case object ProblemSolved extends SearchResult
 
 abstract class Move(val objAfter:Int) extends SearchResult{
-  def comit()
+  def commit()
 }
 
 /**
@@ -69,7 +69,7 @@ abstract class Neighborhood{
         }
         case m: Move => {
           if (verbose >= 1) println(m)
-          m.comit
+          m.commit
           true
         }
       }

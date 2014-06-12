@@ -6,7 +6,7 @@ package oscar.cbls.binPacking.solver
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.search.moves._
-import oscar.cbls.search.moves.AssingMove
+import oscar.cbls.search.moves.AssignMove
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
 /**
@@ -104,7 +104,7 @@ case class MoveItem(p:BinPackingProblem,
     match{
       case (item, newBin) => {
         val objAfter = p.overallViolation.assignVal(item.bin, newBin.number)
-        if(objAfter < oldViolation) AssingMove(item.bin,newBin.number,objAfter, "ItemMove")
+        if(objAfter < oldViolation) AssignMove(item.bin,newBin.number,objAfter, "ItemMove")
         else{
           if (verbose >= 2) println("ItemMove: no improvement found")
           NoMoveFound
@@ -259,7 +259,7 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
       bin1.items.value.toList.map(itemid => {
         val item = p.items(itemid)
         val newBin = selectFrom(binList, (bin:Bin) => bin.number != bin1.number)
-        AssingMove(item.bin,newBin.number,0)
+        AssignMove(item.bin,newBin.number,0)
       }), 0, "Jump, Emptying bin " + bin1.number
     )
 
