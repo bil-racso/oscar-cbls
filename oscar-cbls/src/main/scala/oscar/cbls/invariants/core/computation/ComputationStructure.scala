@@ -52,8 +52,17 @@ case class Store(override val verbose:Boolean = false,
 
   def isClosed = Closed
 
-  private var inputVariables:List[Variable] = null;
+  private var privateInputVariables:List[Variable] = null;
 
+  def inputVariables():List[Variable] = {
+    if(privateInputVariables == null){
+      privateInputVariables  = List.empty
+      for (v:Variable <- Variables if v.getDefiningInvariant == null){
+        privateInputVariables = v :: privateInputVariables
+      }
+    }
+    privateInputVariables
+  }
   /**To save the current value of the variables registered in the model
     * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
@@ -62,13 +71,7 @@ case class Store(override val verbose:Boolean = false,
     var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
 
     val VariablesToSave = if(inputOnly) {
-      if(inputVariables == null){
-        inputVariables  = List.empty
-        for (v:Variable <- Variables if v.getDefiningInvariant == null){
-          inputVariables = v :: inputVariables
-        }
-      }
-      inputVariables
+      inputVariables()
     }else Variables
 
     for (v:Variable <- VariablesToSave){
@@ -265,6 +268,50 @@ case class Solution(assignationInt:SortedMap[CBLSIntVar,Int],
     }
     acc + ")"
   }
+}
+
+
+trait Checkpointing extends Store{
+
+  def defineCheckpoint():Checkpoint
+
+  def restoreCheckpoint(c:Checkpoint)
+
+  def dropCheckpoints()
+
+  def dropCheckpoint(c:Checkpoint)
+
+  def liveCheckpoints:List[Checkpoint]
+}
+
+class changeRecorder(s:Store) extends Invariant{
+
+  s.addToCallBeforeClose(_ => this.close())
+
+  private var myActive = false
+  def active_=(a:Boolean){
+    if(a && !myActive){
+      //on active l'enregistrement, sui était désactivé
+    }else if (!a && myActive){
+      //on désactive l'enregistrement
+    }
+
+    for(v <- s.inputVariables){
+      registerDynamicDependency(v)
+    }
+
+    myActive = a
+  }
+
+  def active:Boolean = myActive
+
+  def close() {
+    registerStaticDependencyAll(s.inputVariables())
+  }
+}
+
+class Checkpoint{
+
 }
 
 object Invariant{
