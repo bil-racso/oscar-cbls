@@ -74,12 +74,8 @@ object ReaganPray extends App {
   model.close(false)
 
 
-  solver.Solve(maxIt = 100,
-            stable = 50,
-            nbRelax = 5,
-            pkillPerRelax = 10,
-            tenure = 5,
-            jumpAfterPlateau = 7)
+  solver.solve(maxIt = 100,
+            stable = 50)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)

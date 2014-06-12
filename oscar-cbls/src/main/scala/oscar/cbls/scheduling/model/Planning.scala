@@ -35,7 +35,7 @@ import oscar.cbls.modeling.Algebra._
 
 /**
  * @param model
- * @param maxduration
+ * @param maxDuration is the full duration considered here. The engine will crash if it needs to put an activity after this date
  * @author renaud.delandtsheer@cetic.be
  */
 class Planning(val model: Store, val maxDuration: Int) {
@@ -88,7 +88,9 @@ class Planning(val model: Store, val maxDuration: Int) {
     sentinelActivity.latestEndDate := maxDuration
 
     for (a <- activitiesNoSentinel) {
-      if (a.isTakenInSentinel) sentinelActivity.addStaticPredecessor(a)
+      if (a.isTakenInSentinel && ! a.hasSuccessor){
+        sentinelActivity.addStaticPredecessor(a)
+      }
     }
 
     activityArray = new Array[Activity](activityCount)
@@ -157,18 +159,19 @@ class Planning(val model: Store, val maxDuration: Int) {
   }
 
   def dependencies: String = {
-    var toreturn: String = ""
+    var toreturnAdditional:String = ""
+    var toreturnInitial:String = ""
     for (activity <- activities.sortBy(t => t.earliestStartDate.value)) {
       for (t2 <- activity.allSucceedingActivities.value if t2 != activity.ID && t2 != sentinelActivity.ID) {
         val activity2 = activityArray(t2)
         if (activity2.additionalPredecessors.value.contains(activity.ID)) {
-          toreturn += activity.name + " -> " + activity2.name + "\n"
+          toreturnAdditional += activity.name + " -> " + activity2.name + "\n"
         } else {
-          toreturn += activity.name + " ->> " + activity2.name + "\n"
+          toreturnInitial += activity.name + " ->> " + activity2.name + "\n"
         }
       }
     }
-    toreturn
+    toreturnInitial + toreturnAdditional
   }
 
   def resourceUsage: String = {

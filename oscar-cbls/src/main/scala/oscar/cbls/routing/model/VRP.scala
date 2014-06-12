@@ -771,15 +771,14 @@ trait StrongConstraints extends VRPObjective {
  */
 trait StrongConstraintsFast extends StrongConstraints {
   /**
-   * the strong constraints system that is evaluated first.
-   * put all the constraint that are cheap to evaluate here,
-   * as this will be checked first, before the strongConstraints is checked, if necessary
+   * the strong constraints system.
    */
   var strongConstraintsFast = ConstraintSystem(m)
 
   override def getObjective(): Int =
     (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
 }
+
 
 /**
  * This trait maintains weak constraints system.

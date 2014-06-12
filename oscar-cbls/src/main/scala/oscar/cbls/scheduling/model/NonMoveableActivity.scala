@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.minmax.MinArray
 import scala.collection.immutable.SortedSet
 
 /**
- *
  * @param startDate
  * @param duration
  * @param planning
@@ -64,6 +63,10 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
     //This is not correct. but since no task can be put before this one, this is not an issue.
     latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
       planning.maxDuration)
+  }
+
+  override def addStaticPredecessor(j: Activity): Unit = {
+    throw new Exception("NonMoveableActivity cannot have a static predecessor activity. ")
   }
 }
 

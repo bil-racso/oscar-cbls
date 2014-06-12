@@ -901,7 +901,7 @@ object CBLSIntVar{
     new CBLSIntVar(model, domain, value, name)
   }
 
-  def apply(model: Store, value:Int = 0, name:String) = {
+  def apply(model: Store, value:Int = 0, name:String = "") = {
     val domain = Int.MinValue to Int.MaxValue
     new CBLSIntVar(model, domain, value, name)
   }
@@ -971,8 +971,10 @@ class CBLSSetVar(override val model:Store,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
-    (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
+
+  def valueString:String = "{" + value.mkString(",") + "}"
+
 
   /** this method is a toString that does not trigger a propagation.
     * use this when debugguing your software.
@@ -1094,6 +1096,7 @@ class CBLSSetVar(override val model:Store,
 
   /**Use this to specify that the IntSetVar is the output of the IntSetInvariant*/
   def <==(i:SetInvariant){i.setOutputVar(this)}
+  def <==(i: CBLSSetVar) {this <== IdentitySet(i)}
 
   /**We suppose that the new value is not the same as the actual value.
     * otherwise, there is a huge waste of time.
@@ -1111,7 +1114,7 @@ object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
 
-  def apply(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
+  def apply(r:Range = Int.MinValue to Int.MaxValue, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
     new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
   }
@@ -1135,8 +1138,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
     ,if(ConstValue.isEmpty) Int.MaxValue else ConstValue.max
     ,toString,ConstValue){
   override def getValue(NewValue:Boolean=false):SortedSet[Int] = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntSetConst{" + ConstValue.foldLeft("")(
-      (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = "IntSetConst{" + ConstValue.mkString(",") + "}"
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar

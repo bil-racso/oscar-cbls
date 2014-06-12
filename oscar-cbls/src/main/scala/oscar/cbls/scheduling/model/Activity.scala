@@ -73,11 +73,14 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
 
   def addStaticPredecessor(j: Activity) {
     staticPredecessors = j :: staticPredecessors
+    j.hasSuccessor = true
   }
 
   def precedes(j: Activity) {
     j.addStaticPredecessor(this)
   }
+
+  var hasSuccessor:Boolean = false;
 
   def uses(n: CBLSIntVar): ActivityAndAmount = ActivityAndAmount(this, n)
 
@@ -173,7 +176,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
         "succeeding_activities_of_" + name)
 
       latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
-        planning.maxDuration)
+          planning.maxDuration)
     }
   }
 

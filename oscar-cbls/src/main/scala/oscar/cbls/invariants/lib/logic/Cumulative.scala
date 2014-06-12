@@ -16,11 +16,10 @@
  */
 /**
  * *****************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- * ****************************************************************************
- */
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+ ******************************************************************************/
 
 package oscar.cbls.invariants.lib.logic
 
@@ -47,6 +46,10 @@ case class Cumulative(indices: Array[Int],
   //horizon is the uppermost indice of the profile, which is supposed to be the same as active
   val horizonPlus1 = profile.length
   assert(active.length == horizonPlus1)
+
+  //horizon is the uppermost indice of the profile, which is supposed to be the same as active
+  val horizon = profile.length-1
+  assert(active.length == horizon +1)
 
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v), v)
   for (v <- duration.indices) registerStaticAndDynamicDependency(duration(v), v)

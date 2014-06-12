@@ -1,6 +1,8 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+import scala.collection.SortedMap
+import oscar.cbls.modeling.Algebra._
 
 /**
  * this is an abstract class representing a resource.
@@ -14,6 +16,11 @@ abstract class Resource(planning:Planning, n:String) {
   def model = planning.model
   def maxDuration = planning.maxDuration
   val name = Option(n) getOrElse s"Resource $ResourceID"
+
+
+  /**The set of activities using this resource at every position*/
+  val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+
 
   /** the level of overshoot of the resource.
     * The higher, the more important it is to solve it first in the flattening

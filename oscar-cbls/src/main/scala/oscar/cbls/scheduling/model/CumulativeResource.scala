@@ -41,29 +41,31 @@ import collection.SortedMap
  *
  * @param planning the [[oscar.cbls.scheduling.model.Planning]] where the task is located
  * @param maxAmount the available amount of this resource that is available throughout the planning
- * @param n the name of the resource, used to annotate the internal variables of the problem
+ * @param name the name of the resource, used to annotate the internal variables of the problem
  * @author renaud.delandtsheer@cetic.be
  */
 class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: String = null)
   extends Resource(planning: Planning, name) with SearchEngineTrait {
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
-  /**The set of activities using this resource at every position*/
-  val use = Array.tabulate(maxDuration + 1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
+  var activitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
 
   val HighestUseTracker = ArgMaxArray(useAmount)
   val HighestUsePositions: CBLSSetVar = HighestUseTracker
   val HighestUse = HighestUseTracker.getMax
 
-  var activitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
+  val overShoot: CBLSIntVar = HighestUse - maxAmount
+  def worseOverShootTime: Int = HighestUsePositions.value.firstKey
+
 
   /**called by activities to register itself to the resource*/
   def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
-    activitiesAndUse += ((j,
-      if (activitiesAndUse.isDefinedAt(j))
-        activitiesAndUse(j) + amount
-      else amount))
+    if(activitiesAndUse.isDefinedAt(j)){
+    activitiesAndUse += ((j,activitiesAndUse.get(j).get + amount))
+    }else{
+      activitiesAndUse += ((j,amount))
+    }
   }
 
   def activitiesAndUse(t: Int): List[(Activity, CBLSIntVar)] = {
@@ -73,8 +75,10 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
     })
   }
 
-  val overShoot: CBLSIntVar = HighestUse - maxAmount
-  def worseOverShootTime: Int = HighestUsePositions.value.firstKey
+  /**these are the activities that you can use for ejecting one of the conflicting activities*/
+  def baseActivityForEjection(t:Int):Iterable[Activity] = {
+    activitiesAndUse(t).map(_._1)
+  }
 
   /** you need to eject one of these to solve the conflict */
   def conflictingActivities(t: Int): List[Activity] = {
@@ -86,10 +90,6 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
       (use: Int) => use > maxAmount)
 
     conflictSet.map(_._1)
-  }
-
-  def baseActivityForEjection(t: Int): Iterable[Activity] = {
-    activitiesAndUse(t).map(_._1)
   }
 
   def close() {
@@ -356,7 +356,7 @@ case class VariableResource(planning: Planning with VariableResources,
    * (not only restrictions beginning at this time!)
    * @author yoann.guyot@cetic.be
    */
-  private def restrictionAt(time: Int) = {
+  private def restrictionAt(time: Int):Int = {
     val restrictions = (0 to time) flatMap { (i: Int) =>
       planning.resourceRestrictionTasks(i) map { (task: Activity) =>
         if (i + task.duration.value - 1 >= time) this.activitiesAndUse(task).value

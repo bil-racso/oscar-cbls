@@ -23,6 +23,10 @@ package oscar.cbls.search
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.search.moves._
+import oscar.cbls.search.moves.AssingMove
+import scala.Some
+import oscar.cbls.constraints.core.ConstraintSystem
 
 /**generic search procedure
   * selects most violated variable, and assigns value that minimizes overall violation
@@ -50,3 +54,39 @@ object conflictSearch extends SearchEngine{
     }
   }
 }
+
+class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
+  val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
+  val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
+  override def getImprovingMove(): SearchResult = {
+    val oldObj = c.ObjectiveVar.value
+    val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
+    val NewVal = selectMin(Variables(MaxViolVarID).domain)(c.assignVal(Variables(MaxViolVarID),_:Int))
+
+    val objAfter = c.assignVal(Variables(MaxViolVarID),NewVal)
+
+    if(objAfter < oldObj){
+       AssingMove(Variables(MaxViolVarID),NewVal,objAfter)
+    }else{
+      NoMoveFound
+    }
+  }
+}
+
+class conflictMoveFirstImprove(c:ConstraintSystem) extends StatelessNeighborhood with SearchEngineTrait{
+  val Variables:Array[CBLSIntVar] = c.constrainedVariables.asInstanceOf[Iterable[CBLSIntVar]].toArray
+  val Violations:Array[CBLSIntVar] = Variables.clone().map(c.violation(_))
+  override def getImprovingMove(): SearchResult = {
+    val oldObj = c.ObjectiveVar.value
+    val MaxViolVarID = selectMax(Variables.indices,Violations(_:Int).value)
+
+    val newVal = selectFirst(Variables(MaxViolVarID).domain, (newVal:Int) => c.assignVal(Variables(MaxViolVarID),newVal) < oldObj)
+    val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
+
+    if(objAfter < oldObj)
+      AssingMove(Variables(MaxViolVarID),newVal,objAfter)
+    else
+      NoMoveFound
+  }
+}
+

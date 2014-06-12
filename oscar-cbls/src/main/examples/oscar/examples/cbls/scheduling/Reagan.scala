@@ -39,7 +39,6 @@ object Reagan extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)
-  val solver = new IFlatIRelaxTabu(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
@@ -73,32 +72,14 @@ object Reagan extends App {
 
   model.close(false)
 
+  val solver = new IFlatIRelaxTabu(planning)
 
-  solver.Solve(maxIt = 100,
-            stable = 50,
-            nbRelax = 5,
-            pkillPerRelax = 10,
-            tenure = 5,
-            jumpAfterPlateau = 7)
+  solver.solve(maxIt = 20,
+            stable = 10)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)
   println(planning.dependencies)
 
-  /*
-  digest              :[0   ;15  ] #=============#
-  eat                 :[0   ;2   ] ##
-  chew                :[2   ;5   ]   #=#
-  pray                :[5   ;7   ]      ##
-  think               :[7   ;19  ]        #==========#
-  sleep               :[7   ;15  ]        #======#
-  speak               :[19  ;22  ]                    #=#
-  drink               :[22  ;25  ]                       #=#
-  MakeSpan:=25
-
-  Reagan               |3        | ++   ++++++++++    ++++++
-                       |2        | +++++++++++++++    ++++++
-                       |1        | +++++++++++++++++++++++++
-  */
 }
 

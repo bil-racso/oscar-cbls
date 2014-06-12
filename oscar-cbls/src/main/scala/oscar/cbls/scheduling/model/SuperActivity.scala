@@ -39,7 +39,13 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
   extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxDuration,
     start.duration.value, "duration of " + name), start.planning, name) {
 
+  require(end.canAddPrecedence, "end task of SuperActivity must support precedence constraints (eg: cannot be a NonMoveableActivity")
+  //as a consequence, SuperActivities are taken in the sentinel.
+
   start precedes end
+
+  override def canAddPrecedence: Boolean = start.canAddPrecedence
+
 
   override def close() {
 
