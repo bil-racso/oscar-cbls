@@ -17,6 +17,7 @@ import oscar.cbls.scheduling.model.NonMoveableActivity
 import oscar.cbls.routing.model.TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm
 import oscar.cbls.scheduling.model.ActivityWithDeadline
 import oscar.cbls.scheduling.model.VariableResources
+import oscar.cbls.invariants.core.computation.Snapshot
 
 /**
  * *****************************************************************************
@@ -127,17 +128,13 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
       moved = false
       val (from, to) = criticalsIterator.next
 
-      if (verbose) {
-        println("tardiness: " + planning.totalTardiness)
-      }
-      val gain = swap(from, to)
-      if (verbose) {
-        println("tardiness: " + planning.totalTardiness)
-      }
+      if (verbose) println("tardiness: " + planning.totalTardiness)
+      val (gain, beforeSwapSnapshot) = swap(from, to)
+      if (verbose) println("tardiness: " + planning.totalTardiness)
 
       if (verbose) println("gain = " + gain)
 
-      if (gain <= 0) {
+      if (gain < 0) {
         val currentOvershoot = planning.totalOvershoot.value
         if (verbose) println("overshoot = " + minOvershootValue + " -> " + currentOvershoot)
         if (currentOvershoot <= minOvershootValue) {
@@ -152,7 +149,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
           moved = true
         } else {
           // cancel move
-          swap(to, from)
+          planning.model.restoreSnapshot(beforeSwapSnapshot)
           if (verbose) println("No move (Swap undone).\n")
         }
         // metropolis criterion
@@ -162,7 +159,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
         moved = true
       } else {
         // cancel move
-        swap(to, from)
+        planning.model.restoreSnapshot(beforeSwapSnapshot)
         if (verbose) println("No move (Swap undone).\n")
       }
 
@@ -172,17 +169,21 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
     hasImproved
   }
 
-  private def swap(from: Activity, to: Activity): Int = {
+  private def swap(from: Activity, to: Activity): (Int, Snapshot) = {
+    val successors = to.allSucceedingActivities.value.toList.map(planning.activityArray(_))
+    val successorsPredecessors = successors.map(_.additionalPredecessors)
+    val activitiesToSnap = from.additionalPredecessors :: to.additionalPredecessors :: successorsPredecessors
+    val snapshot = planning.model.saveValues(activitiesToSnap: _*)
+
     val previousTardiness = planning.totalTardiness.value
-    if (to.canAddPrecedence) {
+    val gain = if (to.canAddPrecedence) {
       to.removeDynamicPredecessor(from, verbose)
 
-//      val predecessors = from.potentiallyKilledPredecessors.value.toList.map(
-//        planning.activityArray(_))
-//      println("PREDECESSORS: " + predecessors)
-//      val restrictors = predecessors.filter(planning.resourceRestrictionTasks.contains(_))
-//      println("RESTRICTORS: " + restrictors)
-//      restrictors.foreach(to.addDynamicPredecessor(_, verbose))
+      val predecessors = from.allPrecedingActivities.value.toList.map(planning.activityArray(_))
+      predecessors.foreach(to.addDynamicPredecessor(_, verbose))
+
+      val successors = to.allSucceedingActivities.value.toList.map(planning.activityArray(_))
+      successors.foreach(_.addDynamicPredecessor(from, verbose))
 
       if (from.canAddPrecedence)
         from.addDynamicPredecessor(to, verbose)
@@ -192,5 +193,7 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
     } else {
       -1
     }
+
+    (gain, snapshot)
   }
 }
