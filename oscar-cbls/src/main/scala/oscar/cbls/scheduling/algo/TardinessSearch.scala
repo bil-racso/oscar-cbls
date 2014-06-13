@@ -183,12 +183,18 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
       to.removeDynamicPredecessor(from, verbose)
 
       val predecessors = from.allPrecedingActivities.value.toList.map(planning.activityArray(_))
-      predecessors.foreach(to.addDynamicPredecessor(_, verbose))
+      predecessors.foreach(
+        (pred: Activity) =>
+          if (!from.staticPredecessors.contains(pred))
+            to.addDynamicPredecessor(pred, verbose))
 
       val successors = to.allSucceedingActivities.value.toList.map(planning.activityArray(_))
       successors.foreach(
         (succ: Activity) =>
-          if (succ.canAddPrecedence) succ.addDynamicPredecessor(from, verbose))
+          if (succ.canAddPrecedence) {
+            if (!succ.staticPredecessors.contains(to))
+              succ.addDynamicPredecessor(from, verbose)
+          })
 
       if (from.canAddPrecedence)
         from.addDynamicPredecessor(to, verbose)
