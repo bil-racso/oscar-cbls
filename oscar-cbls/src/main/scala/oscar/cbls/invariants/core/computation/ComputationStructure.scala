@@ -272,9 +272,9 @@ case class Solution(assignationInt:SortedMap[CBLSIntVar,Int],
   }
 }
 
-/*
 trait Checkpointing extends Store{
 
+  private val recorder = new ChangeRecorder(this)
   def defineCheckpoint():Checkpoint
 
   def restoreCheckpoint(c:Checkpoint)
@@ -290,23 +290,29 @@ class ChangeRecorder(s:Store) extends Invariant{
 
   s.addToCallBeforeClose(_ => this.close())
 
-  var keys : List[KeyForElementRemoval] = List.empty
+  var keys : Array[KeyForElementRemoval] = null
 
   private var myActive = false
+  var recordingCheckpoint:Checkpoint = null
 
   def active_=(a:Boolean){
     if(a && !myActive){
       //on active l'enregistrement, qui était désactivé
-      keys = List.empty
+
+      keys = Array.tabulate(s.inputVariables.length)(null)
+
+      var varId = 0;
       for(v <- s.inputVariables){
-        keys = registerDynamicDependency(v) :: keys
+        keys(varId) = registerDynamicDependency(v,varId)
+        varId +=1
       }
+      changesVariables = List.empty
     }else if (!a && myActive){
       //on désactive l'enregistrement
       for(k <- keys) {
-        unregisterDynamicDependency(k)
+        if(k != null) unregisterDynamicDependency(k)
       }
-      keys = List.empty
+      keys = null
     }
 
     myActive = a
@@ -318,19 +324,52 @@ class ChangeRecorder(s:Store) extends Invariant{
     registerStaticDependencyAll(s.inputVariables())
   }
 
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int): Unit = super.notifyIntChanged(v, OldVal, NewVal)
+  def varHasChanged(variable:Variable, varId:Int){
+    unregisterDynamicDependency(keys(varId))
+    keys(varId) = null
+    changesVariables = (variable,varId) :: changesVariables
+  }
 
-  override def notifyInsertOn(v: CBLSSetVar, value: Int): Unit = super.notifyInsertOn(v, value)
+  def reactivateForNewCheckpoint(){
+    for((variable,varId) <- changesVariables){
+      keys(varId) = registerDynamicDependency(variable,varId)
+    }
+    changesVariables = List.empty
+  }
 
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int): Unit = super.notifyDeleteOn(v, value)
+  var changesVariables:List[(Variable,Int)] = List.empty
+
+  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
+    val moveForUndo:(=>Unit) = {v := OldVal}
+    varHasChanged(v, i)
+    recordingCheckpoint.addUndo(moveForUndo)
+  }
+
+  override def notifyInsertOn(v: CBLSSetVar, i: Int, value: Int){
+    val moveForUndo:(=>Unit) = {v := (v.value - i)}
+    varHasChanged(v, i)
+    recordingCheckpoint.addUndo(moveForUndo)
+  }
+
+  override def notifyDeleteOn(v: CBLSSetVar, i: Int, value: Int){
+    val moveForUndo:(=>Unit) = {v := (v.value + i)}
+    varHasChanged(v, i)
+    recordingCheckpoint.addUndo(moveForUndo)
+  }
 }
 
 class Checkpoint(prevCheckpoint:Checkpoint){
-  var undoList:List[Move] = List.empty
+  private var undoList:List[(=>Unit)] = List.empty
 
-  def
+  protected[ChangeRecorder] def addUndo(op:(=>Unit)){
+    undoList = op :: undoList
+  }
+
+  protected[ChangeRecorder] def undoHistory(){
+    for(op <- undoList) op   //TODO: check this!
+  }
 }
-*/
+
 
 object Invariant{
   implicit val Ord:Ordering[Invariant] = new Ordering[Invariant]{
