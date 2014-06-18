@@ -158,9 +158,9 @@ case class Store(override val verbose:Boolean = false,
     PropagationElements
   }
 
-  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+  var toCallBeforeClose:List[(()=>Unit)] = List.empty
 
-  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+  def addToCallBeforeClose(toCallBeforeCloseProc : (()=>Unit)){
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
 
@@ -539,7 +539,7 @@ object Event{
   def apply(v:Variable,
             action: =>Unit):Event = {
     val toreturn = new Event(v,null,null)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -549,7 +549,7 @@ object Event{
             action: =>Unit,
             ModifiedVars:Iterable[Variable]):Event = {
     val toreturn = new Event(v,null,ModifiedVars)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -622,7 +622,7 @@ object Event{
 class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
-  private var action: (Unit=>Unit)=null
+  private var action: (()=>Unit)=null
   private var actionIntParam: (Int=>Unit) = null
   private var actionIntSetParam: (SortedSet[Int] => Unit) = null
 
@@ -636,7 +636,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   private var intsetintaction:((SortedSet[Int],Int) => Unit) = null
   private var intintsetaction:((Int,SortedSet[Int]) => Unit) = null
 
-  def setAction(action: Unit=>Unit){
+  def setAction(action: ()=>Unit){
     this.action = action
   }
   def setIntAction(action: Int=>Unit){

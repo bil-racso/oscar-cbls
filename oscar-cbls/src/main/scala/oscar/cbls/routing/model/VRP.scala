@@ -366,7 +366,7 @@ trait VRPObjective extends VRP {
     objectiveFunctionTerms = o :: objectiveFunctionTerms
   }
 
-  m.addToCallBeforeClose(_ => closeObjectiveFunction)
+  m.addToCallBeforeClose(() => closeObjectiveFunction)
 
   /**
    * This finished the accumulation of terms in the objective unction.

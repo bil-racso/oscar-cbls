@@ -74,7 +74,7 @@ class Planning(val model: Store, val maxDuration: Int) {
 
   var sentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
-  model.addToCallBeforeClose(_ => this.close())
+  model.addToCallBeforeClose(() => this.close())
 
   /**
    * this is to close the planning when you are done with declaring tasks, precedence  and resource

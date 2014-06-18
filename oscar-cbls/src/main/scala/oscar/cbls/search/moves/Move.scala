@@ -30,7 +30,9 @@ case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove(): SearchResult = NoMoveFound
 }
 
-case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   override def commit() {i := v}
 
   override def toString: String = {
@@ -39,7 +41,9 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoo
   }
 }
 
-case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   override def commit() {s :+= v}
 
   override def toString: String = {
@@ -48,7 +52,9 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborh
   }
 }
 
-case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   override def commit() {s :-= v}
 
   override def toString: String = {
@@ -57,7 +63,9 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neig
   }
 }
 
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   override def commit() {i :=: j}
 
   override def toString: String  = {
@@ -66,7 +74,9 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighb
   }
 }
 
-case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   def this(ml:List[Move]){
     this(ml, ml.last.objAfter)
   }
@@ -81,11 +91,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
   }
 }
 
-object CallBackMove{
-  def apply(initialMove:Move, callBack: => Unit): CallBackMove = new CallBackMove(initialMove, (_:Unit) => callBack)
-}
-
-case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(initialMove.objAfter){
+case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter){
   def commit(){
     callBack()
     initialMove.commit
@@ -93,3 +99,4 @@ case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(i
 
   override def toString: String = initialMove.toString
 }
+

@@ -41,7 +41,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
 
   finishInitialization(_model)
 
-  model.addToCallBeforeClose(_ => this.close())
+  model.addToCallBeforeClose(() => this.close())
 
   class GlobalViolationDescriptor(val Violation:CBLSIntVar){
     var AggregatedViolation:List[CBLSIntVar] = List.empty
