@@ -182,10 +182,10 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationvariable = CBLSIntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
-      v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationvariable))
+      val violationVariable = CBLSIntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
+      v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationVariable))
       registerConstrainedVariable(v)
-      violationvariable
+      violationVariable
     }else{
       //already registered
       CPStoredRecord.Violation
@@ -209,3 +209,4 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     */
   override def checkInternals(c: Checker): Unit = {}
 }
+

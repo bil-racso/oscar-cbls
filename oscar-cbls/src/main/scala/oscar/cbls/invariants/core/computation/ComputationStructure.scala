@@ -166,13 +166,20 @@ case class Store(override val verbose:Boolean = false,
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
 
+
+  protected def performCallsBeforeClose() {
+    for (p <- toCallBeforeClose) p()
+    toCallBeforeClose = List.empty
+  }
+
   /**calls this when you have declared all your invariants and variables.
-    * This must be called before any query and update can be made on the model, and after all the invariants and variables have been declared.
-    */
+    * This must be called before any query and update can be made on the model,
+    * and after all the invariants and variables have been declared.
+   * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+   */
   def close(DropStaticGraph: Boolean = true){
     assert(!Closed, "cannot close a model twice")
-    for(p <- toCallBeforeClose) p()
-    toCallBeforeClose = List.empty
+    performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
     Closed=true
   }
@@ -272,103 +279,7 @@ case class Solution(assignationInt:SortedMap[CBLSIntVar,Int],
   }
 }
 
-trait Checkpointing extends Store{
 
-  private val recorder = new ChangeRecorder(this)
-  def defineCheckpoint():Checkpoint
-
-  def restoreCheckpoint(c:Checkpoint)
-
-  def dropCheckpoints()
-
-  def dropCheckpoint(c:Checkpoint)
-
-  def liveCheckpoints:List[Checkpoint]
-}
-
-class ChangeRecorder(s:Store) extends Invariant{
-
-  s.addToCallBeforeClose(_ => this.close())
-
-  var keys : Array[KeyForElementRemoval] = null
-
-  private var myActive = false
-  var recordingCheckpoint:Checkpoint = null
-
-  def active_=(a:Boolean){
-    if(a && !myActive){
-      //on active l'enregistrement, qui était désactivé
-
-      keys = Array.tabulate(s.inputVariables.length)(null)
-
-      var varId = 0;
-      for(v <- s.inputVariables){
-        keys(varId) = registerDynamicDependency(v,varId)
-        varId +=1
-      }
-      changesVariables = List.empty
-    }else if (!a && myActive){
-      //on désactive l'enregistrement
-      for(k <- keys) {
-        if(k != null) unregisterDynamicDependency(k)
-      }
-      keys = null
-    }
-
-    myActive = a
-  }
-
-  def active:Boolean = myActive
-
-  def close() {
-    registerStaticDependencyAll(s.inputVariables())
-  }
-
-  def varHasChanged(variable:Variable, varId:Int){
-    unregisterDynamicDependency(keys(varId))
-    keys(varId) = null
-    changesVariables = (variable,varId) :: changesVariables
-  }
-
-  def reactivateForNewCheckpoint(){
-    for((variable,varId) <- changesVariables){
-      keys(varId) = registerDynamicDependency(variable,varId)
-    }
-    changesVariables = List.empty
-  }
-
-  var changesVariables:List[(Variable,Int)] = List.empty
-
-  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
-    val moveForUndo:(=>Unit) = {v := OldVal}
-    varHasChanged(v, i)
-    recordingCheckpoint.addUndo(moveForUndo)
-  }
-
-  override def notifyInsertOn(v: CBLSSetVar, i: Int, value: Int){
-    val moveForUndo:(=>Unit) = {v := (v.value - i)}
-    varHasChanged(v, i)
-    recordingCheckpoint.addUndo(moveForUndo)
-  }
-
-  override def notifyDeleteOn(v: CBLSSetVar, i: Int, value: Int){
-    val moveForUndo:(=>Unit) = {v := (v.value + i)}
-    varHasChanged(v, i)
-    recordingCheckpoint.addUndo(moveForUndo)
-  }
-}
-
-class Checkpoint(prevCheckpoint:Checkpoint){
-  private var undoList:List[(=>Unit)] = List.empty
-
-  protected[ChangeRecorder] def addUndo(op:(=>Unit)){
-    undoList = op :: undoList
-  }
-
-  protected[ChangeRecorder] def undoHistory(){
-    for(op <- undoList) op   //TODO: check this!
-  }
-}
 
 
 object Invariant{
