@@ -20,15 +20,19 @@ import oscar.cp.core.CPIntVar
 class TestBuild extends FunSuite with ShouldMatchers {
   
 
-  
- 
 	test("Test fzn models") {
+	  var ineclipse = false
 	  
 	  val pwd = new java.io.File(".").getCanonicalPath
-	  
-	  val modelFileList = new File(pwd+"/../minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
+	  // 
+	  val modelFileList = 
+	  if (ineclipse) new File("minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
+	  else new File(pwd+"/../minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
+
+	  println("testing ..."+modelFileList.mkString(","))
 	  val old = Console.out;
 	  for(f <- modelFileList) {
+	    
 	    old.println("Testing: " + f.getName())
 	    
 	    // redirect Console.out
@@ -49,8 +53,12 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	    //baos.writeTo(os);
 	    
 	    val str = baos.toString().lines.toList
-	    val output = Source.fromFile(pwd+"/../minizinc/test/output/"+f.getName().dropRight(4)+".output").getLines.toList
 
+	    val output = 
+	      if (ineclipse) Source.fromFile("minizinc/test/output/"+f.getName().dropRight(4)+".output").getLines.toList
+	      else Source.fromFile(pwd+"/../minizinc/test/output/"+f.getName().dropRight(4)+".output").getLines.toList
+	    
+	    //println(str.mkString("\n"))
 	    str.length should be(output.length)
 	    //println(str.length + " --- " + output.length)
 	    

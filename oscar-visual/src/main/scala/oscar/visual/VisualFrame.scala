@@ -83,8 +83,8 @@ class VisualFrame(title: String, nbLines: Int = 1, nbCols: Int = 1) extends JFra
     frame
   }
 
-  def createToolBar(withVisuController: Boolean = false): VisualToolBar = {
-    val toolbar = new VisualToolBar(withVisuController)
+  def createToolBar(): VisualToolBar = {
+    val toolbar = new VisualToolBar()
     content.add(toolbar, BorderLayout.NORTH)
     toolbar
   }

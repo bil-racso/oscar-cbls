@@ -16,7 +16,6 @@ package oscar.des.engine
 
 import scala.math._
 import scala.util.Random
-import scala.util.continuations._
 import JSci.maths.statistics._
 
 class NumberGenerator(dist: ProbabilityDistribution) {

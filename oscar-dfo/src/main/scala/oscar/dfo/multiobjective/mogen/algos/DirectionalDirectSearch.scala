@@ -29,10 +29,6 @@ object DirectionalDirectSearch extends ComparativeAlgorithm {
   def singleIteration[T <: ParetoElement[Double]](state: ComparativeAlgorithmState, currentArchive: ParetoFront[Double, T], feasReg: FeasibleRegion, evaluator: MOEvaluator): List[MOOPoint] = {
     state match {
       case ddsState: DirectionalDirectSearchState => {
-        println("-" * 80)
-        println("BestPoint: " + ddsState.bestPoint)
-        println("Basis: \n" + ddsState.currentBasis.map(e => e.mkString("(", ", ", ")")).mkString("\n"))
-        println("StepSize: " + ddsState.stepSizes.mkString(","))
         if (ddsState.getSmallestStepSize < tolerance) {
           ddsState.reinitialize
         }

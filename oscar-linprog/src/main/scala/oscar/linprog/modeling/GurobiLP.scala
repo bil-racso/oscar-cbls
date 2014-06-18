@@ -160,7 +160,6 @@ class GurobiLP extends AbstractLP {
 
   def getValue(colId: Int): Double = {
     sol(colId)
-
   }
 
   def getObjectiveValue(): Double = {
@@ -168,8 +167,11 @@ class GurobiLP extends AbstractLP {
   }
 
   def setInteger(colId: Int) {
-    model.getVar(colId).set(GRB.CharAttr.VType, 'I')
-
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.INTEGER)
+  }
+  
+  def setBinary(colId: Int) {
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.BINARY)
   }
   
   override def setTimeout(t: Int) {
@@ -182,7 +184,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def setFloat(colId: Int) {
-
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.CONTINUOUS)
   }
 
   def setBounds(colId: Int, low: Double, up: Double) {

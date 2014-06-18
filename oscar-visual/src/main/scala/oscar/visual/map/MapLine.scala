@@ -28,7 +28,7 @@ class MapLine(map : VisualMap,  lat1 : Double, long1 : Double, lat2 : Double, lo
 	
 	var color = col
 
-	def this(map : VisualMap, o: (Double, Double), d: (Double, Double), col : Color = Color.RED) = this(map, o._1, o._2, d._1, d._2, col)
+	def this(map : VisualMap, o: (Double, Double), d: (Double, Double), col : Color) = this(map, o._1, o._2, d._1, d._2, col)
 	def remove = map.removeLine(this)
 	
 	def dest_=(d:(Double,Double)) : Unit = {

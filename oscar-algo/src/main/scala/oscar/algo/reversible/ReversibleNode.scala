@@ -17,7 +17,6 @@
 package oscar.algo.reversible
 
 import java.util.Stack
-import scala.util.continuations._
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 

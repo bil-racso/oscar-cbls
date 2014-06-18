@@ -18,6 +18,8 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
+import java.awt.Font
+import java.awt.Color
 
 /**
  * @author Pierre Schaus, pschaus@gmail.com
@@ -33,6 +35,13 @@ class VisualText(d: VisualDrawing, private var x: Double, private var y: Double,
   
   val fm = d.getFontMetrics(d.getFont())
   shape.setRect(x,y, fm.stringWidth(text),fm.getHeight())
+  
+  var font = new Font(Font.SANS_SERIF, Font.PLAIN, 13);
+  var fontColor = Color.BLACK
+  
+  def setFont(font: Font) = {
+    this.font = font
+  }
   
   
   /**
@@ -64,6 +73,8 @@ class VisualText(d: VisualDrawing, private var x: Double, private var y: Double,
   }
 
   def drawCenteredString(text: String, x: Int, y: Int, g: Graphics2D) {
+    g.setFont(font)
+    g.setColor(fontColor)
     val fm = g.getFontMetrics();
     val w = fm.stringWidth(text);
     g.drawString(text, x - (w / 2), y);
