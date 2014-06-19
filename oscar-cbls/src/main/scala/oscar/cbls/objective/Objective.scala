@@ -23,8 +23,9 @@ package oscar.cbls.objective
 import oscar.cbls.invariants.core.computation._
 
 
-case class Objective(Objective: CBLSIntVar) extends ObjectiveTrait {
-  setObjectiveVar(Objective)
+case class Objective(objective: CBLSIntVar) extends ObjectiveTrait {
+  setObjectiveVar(objective)
+  def value = objective.value
 }
 
 /**

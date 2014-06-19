@@ -41,15 +41,14 @@ import oscar.cbls.routing.model.RoutedAndUnrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.neighborhood.OnePointMove
-import oscar.cbls.routing.neighborhood.SearchZone
-import oscar.cbls.routing.neighborhood.Swap
-import oscar.cbls.routing.neighborhood.ThreeOpt
-import oscar.cbls.routing.neighborhood.TwoOptMove
-import oscar.cbls.routing.neighborhood.TwoOptNeighborhood
+import oscar.cbls.routing.neighborhood._
 import oscar.cbls.routing.initial.BestInsert
 import oscar.cbls.routing.model.ClosestNeighbors
 import oscar.cbls.routing.model.Predecessors
+import oscar.cbls.routing.neighborhood.SearchZone
+import scala.Some
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.routing.neighborhood.TwoOptMove
 
 /**
  * The tests marked with a star (*) require the assertion mechanism of IntVar in ComputationStructure file, which
@@ -57,6 +56,8 @@ import oscar.cbls.routing.model.Predecessors
  * These tests (with star) show the lack of robustness of the current framework.
  */
 class TestMove extends FunSuite with ShouldMatchers with Checkers {
+
+  /*
   test("A node can be cut.") {
     (f: MoveFixture) =>
       val cutNode = f.randomCutNodeAfter()
@@ -398,6 +399,27 @@ class TestMove extends FunSuite with ShouldMatchers with Checkers {
           case None => false
         }
   }
+*/
+  moveTest("A three-optKK move is done correctly.", 1, true) {
+    (f: MoveFixture) =>
+      val relevantNeighbors = (n: Int) => f.vrp.nodes
+      println("VRP before the search: " + f.vrp)
+      ThreeOptKK.bestImprovingMove(
+        SearchZone(relevantNeighbors, f.vrp.nodes.iterator, f.vrp)) match {
+        case Some(m) => {
+          m.isInstanceOf[ThreeOpt] should be(true)
+          val move = m.asInstanceOf[ThreeOpt]
+          println("An improving move was found ! : " + move)
+
+          m.doMove
+
+          check3OptMove(f, move)
+          true
+        }
+        case None => false
+      }
+  }
+
   //
   //  test("3opt with 1-2, 4-5 and 7-8"){
   //    val f = fixture

@@ -78,6 +78,11 @@ trait DAG {
         assert(from.Position < to.Position,"topological sort is wrong at " + from + "->" + to)
       }
     }
+    for (from <- nodes){
+      for(to <- from.getDAGSucceedingNodes){
+        assert(from.Position < to.Position,"topological sort is wrong at " + from + "->" + to)
+      }
+    }
   }
 
   /**Checks that node have correct reference to each other.

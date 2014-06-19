@@ -15,7 +15,6 @@
 package oscar.cbls
 
 /**
- * THIS PACKAGE IS EXPERIMENTAL
  *
  * This is a package to solve routing problems.
  * It includes modeling features as well as standard neighbor to conduct the search.

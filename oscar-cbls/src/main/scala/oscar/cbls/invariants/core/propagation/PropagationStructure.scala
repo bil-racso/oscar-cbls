@@ -26,6 +26,7 @@ import oscar.cbls.invariants.core.algo.dll._
 import collection.immutable.SortedMap
 import collection.mutable.Queue
 import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
+import oscar.cbls.invariants.core.computation.StorageUtilityManager
 ;
 
 /**
@@ -40,7 +41,6 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * propagation are triggered by calling the propagate method.
  * additionally, before calling setupPropagationStructure, the method registerForPartialPropagation can be
  * called to specify propagation elements that might require lazy propagation.
- *
  *
  *  Two debug mechanisms are provided: trace printing and debug mode.
  *
@@ -63,9 +63,10 @@ import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHea
  * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param noCycle is to be set to true only if the static dependency graph is acyclic.
  * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
+ * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean) extends StorageUtilityManager{
+abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true){
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -94,14 +95,6 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * If the propagation structure has been created with NoCycle set to true, this will return true
     */
   def isAcyclic: Boolean = acyclic
-
-  /**return the summed stalls of all SCC.
-    * A stall is when the SCC is unable to maintain the topological sort incrementally,
-    * and must recompute it from scratch
-    * this happens when dependencies are modified with transient cycles
-    * @return the summed number of stalls for all the SCC
-    */
-  def getStalls = StronglyConnexComponentsList.foldLeft(0)((acc,scc) => acc + scc.getStalls)
 
   private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
 
@@ -144,7 +137,9 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         a.head
       } else {
         acyclic = false
-        val c = new StronglyConnectedComponent(a, this, GetNextID())
+
+        val c = if (sortScc) new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
+        else new StronglyConnectedComponentNoSort(a,this,GetNextID())
         StronglyConnexComponentsList = c :: StronglyConnexComponentsList
         c
       }
@@ -538,11 +533,8 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   def initialize(value:T){for (i <- storage.indices) storage(i) = value}
 }
 
-class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
-                                 val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with DAG {
-
-  var ScheduledElements: List[PropagationElement] = List.empty
-
+abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
+                                                val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement {
   UniqueID = _UniqueID
 
   for (e <- Elements) {e.component = this}
@@ -551,40 +543,158 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
 
   override def getPropagationStructure: PropagationStructure = core
 
-  //for the DAG
-  override def nodes = Elements.asInstanceOf[Iterable[DAGNode]]
+  /** This returns the dot node to display on the DOT output for the node. Only the argument of the nodes
+    * example: "[label= \"toto\" shape=diamond color=red]"
+    * */
+  def getDotNode: String = {
+    throw new Exception("StrognlyConnectedComponent are handled as subgraph in dot files")
+    ""
+  }
+
+  def addDependency(from:PropagationElement, to:PropagationElement);
+
+  def dependencyAdded();
 
   override def determineBoundary() {
     for (e <- Elements) {
       e.determineBoundary()
     }
-    for (e <- Elements) {
-      e.InitiateDynamicGraphFromSameComponent()
-      //TODO: uniquement ceux qui sont boundary? les autres, on pourrait se contenter du graphe statique.
-    }
   }
+
+  var ScheduledElements: List[PropagationElement] = List.empty
 
   def scheduleForPropagation(element: PropagationElement) {
     ScheduledElements = element :: ScheduledElements
     super.scheduleForPropagation()
   }
 
-  var Stalls = 0
-  def getStalls = Stalls
+  override def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
+    var toreturn = acc
+    for (element <- Elements){
+      toreturn = element.decrementSucceedingAndAccumulateFront(toreturn)
+    }
+    toreturn
+  }
+
+  override def setCounterToPrecedingCount(): Boolean = {
+    Position = Elements.count(p => p.setCounterToPrecedingCount())
+    (Position != 0)
+  }
+
+  override private[core] def rescheduleIfNeeded() {}
+  //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
+
+  override def checkInternals(c: Checker) {
+    for (e <- Elements) { e.checkInternals(c) }
+  }
+}
+
+class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
+                                       core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
+
+  override def dependencyAdded(): Unit = {}
+  override def addDependency(from: PropagationElement, to: PropagationElement): Unit = {}
+
+  override def performPropagation() {
+    //TODO: this is performing a stack-based prioritization: maybe a queue would perform better? actually.
+    while (!ScheduledElements.isEmpty) {
+      val x = ScheduledElements.head
+      ScheduledElements = ScheduledElements.tail
+      x.propagate()
+    }
+  }
+}
+
+class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[PropagationElement],
+                                 override val core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) with DAG {
+
+  //for the DAG
+  override def nodes = Elements.asInstanceOf[Iterable[DAGNode]]
+
+  override def determineBoundary() {
+    super.determineBoundary()
+    for (e <- Elements) {
+      InitiateDynamicGraphFromSameComponent(e)
+      //TODO: uniquement ceux qui sont boundary? les autres, on pourrait se contenter du graphe statique.
+    }
+  }
+
+  def InitiateDynamicGraphFromSameComponent(e:PropagationElement){
+    assert(component != null)
+
+    def filterForListened(listened:PropagationElement,injector:(()=>Unit), isStillValid:(()=> Boolean)):Unit = {
+      if(this == listened.component)
+        registerListenedWaitingDependency(injector, isStillValid)
+    }
+    e.DynamicallyListenedElementsFromSameComponent
+      = e.DynamicallyListenedElements.delayedPermaFilter(filterForListened)
+
+    def filterForListening(listeningAndPayload:(PropagationElement,Any),injector:(()=>Unit), isStillValid:(()=> Boolean)){
+      if(this == listeningAndPayload._1.component)
+        registerListeningWaitingDependency(injector)
+    }
+
+    e.DynamicallyListeningElementsFromSameComponent
+      = e.DynamicallyListeningElements.delayedPermaFilter(filterForListening, (e) => e._1)
+  }
+
+  var newDependenciesToInject:List[WaitingDependency] = List.empty
+
+  case class WaitingDependency(val from:PropagationElement,
+                               val to:PropagationElement,
+                               var inject1:(()=>Unit) = null,
+                               var inject2:(()=>Unit) = null,
+                               var isStillValid:(()=>Boolean) = null)
+
+  def injectNewDependencies(autoSort:Boolean){
+    for(d:WaitingDependency <- newDependenciesToInject){
+      if(d.isStillValid()){
+          d.inject1()
+          d.inject2()
+          if(autoSort) notifyAddEdge(d.from,d.to)
+      }
+    }
+    newDependenciesToInject = List.empty
+  }
+
+  def registerListenedWaitingDependency(injector:(()=>Unit), isStillValid:(()=>Boolean)){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      waiting.inject1 = injector
+      waiting.isStillValid = isStillValid
+    }else{
+      injector()
+    }
+  }
+
+  def registerListeningWaitingDependency(injector:(()=>Unit)){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      waiting.inject2 = injector
+    }else{
+      injector()
+    }
+  }
 
   def addDependency(from:PropagationElement, to:PropagationElement){
     if(autoSort){
-      try{
-        notifyAddEdge(from,to)
-      }catch{
-        case c:CycleException => {
-          //This can happen if we perform heavy changes to the dependencies in a careless way,
-          // eg: reloading a previous model.
-          // We wait for the dependencies to be stable, when the propagation is performed.
-          println("cycle in SCC, reverting to differed non-incremental sort")
-          autoSort = false
-          Stalls +=1
-        }
+      newDependenciesToInject = WaitingDependency(from,to) :: newDependenciesToInject
+    }
+  }
+
+  /** this is called when the dependency has been added and all its field are filled.
+    * We take the opportunity to check if the dependency is by any chance already implemented
+    * in the sort.
+    * if yes, we inject it right away, since it does not trigger any computation, actually.
+    */
+  def dependencyAdded(){
+    if(autoSort){
+      val waiting = newDependenciesToInject.head
+      if(waiting.from.Position < waiting.to.Position){
+        waiting.inject1()
+        waiting.inject2()
+        notifyAddEdge(waiting.from,waiting.to)
+        newDependenciesToInject = newDependenciesToInject.tail
       }
     }
   }
@@ -594,6 +704,8 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
   override def performPropagation() {
     //setting autosort to true will not perform any operation unless it was set to false. This happens in two cases:
     //at the initial propagation, and when a stall just occurred. In these case, a non-incremental sort takes place
+
+    injectNewDependencies(autoSort)
     autoSort = true
 
     for (e <- ScheduledElements) {
@@ -614,31 +726,6 @@ class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
       }
       ScheduledElements = List.empty
     }
-  }
-
-  override def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
-    var toreturn = acc
-    for (element <- Elements){
-      toreturn = element.decrementSucceedingAndAccumulateFront(toreturn)
-    }
-    toreturn
-  }
-
-  override def setCounterToPrecedingCount(): Boolean = {
-    Position = Elements.count(p => p.setCounterToPrecedingCount())
-    (Position != 0)
-  }
-
-  def getDotNode: String = {
-    throw new Exception("StrognlyConnectedComponent are handled as subgraph in dot files")
-    ""
-  }
-
-  override private[core] def rescheduleIfNeeded() {}
-  //we do nothing, since it is the propagation elements that trigger the registration if needed of SCC
-
-  override def checkInternals(c: Checker) {
-    for (e <- Elements) { e.checkInternals(c) }
   }
 }
 
@@ -666,7 +753,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-trait PropagationElement extends DAGNode with TarjanNode with DistributedStorageUtility{
+trait PropagationElement extends DAGNode with TarjanNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -723,13 +810,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 
   var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
-  def InitiateDynamicGraphFromSameComponent() {
-    assert(component != null)
-    DynamicallyListenedElementsFromSameComponent
-      = DynamicallyListenedElements.permaFilter((e: PropagationElement) => e.component == component)
-    DynamicallyListeningElementsFromSameComponent
-      = DynamicallyListeningElements.permaFilter((e) => e._1.component == component, (e) => e._1)
-  }
+
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
@@ -744,6 +825,10 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   final def getDynamicallyListeningElements: Iterable[(PropagationElement, Any)] = DynamicallyListeningElements
 
   final def getDynamicallyListenedElements: Iterable[PropagationElement] = DynamicallyListenedElements
+
+  final def getDAGPrecedingNodes: Iterable[DAGNode] = DynamicallyListenedElementsFromSameComponent
+
+  final def getDAGSucceedingNodes: Iterable[DAGNode] = DynamicallyListeningElementsFromSameComponent
 
   /**registers an element in the static dependency graph.
     * Beware that you also need to register elements in the dynamic propagation graph for something to happen.
@@ -781,17 +866,22 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
   protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
     assert(isStaticPropagationGraphOrBulked(p, 1),
       "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
-    val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
-    val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
 
-    //We need to check for boundary here Because other elemenbts might indeed change their dependencies,
+    //We need to check for boundary here Because other elements might indeed change their dependencies,
     // but since they are not boundary, this would require resorting the SCC during the propagation
     if (IsBoundary && p.component == this.component) {
       //this is only called once the component is established, so no worries.
+      //we must call this before performing hte injection to create the waitingDependency in the SCC
       component.addDependency(p, this)
+      val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
+      val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
+      component.dependencyAdded()
+      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
+    }else{
+      val KeyForListeningElement = DynamicallyListenedElements.addElem(p)
+      val KeyForListenedElement = p.DynamicallyListeningElements.addElem((this, i))
+      KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
     }
-
-    KeyForElementRemoval(p, KeyForListenedElement, KeyForListeningElement)
   }
 
   /**checks that the propagation element is statically listened to, possibly
@@ -813,7 +903,7 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
 
   /**
    * unregisters an element in the dynamic propagation graph.
-   * @param p the key that was given when the eement was registered in the dynamic propagation graph
+   * @param p the key that was given when the element was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
     DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
@@ -824,12 +914,6 @@ trait PropagationElement extends DAGNode with TarjanNode with DistributedStorage
     StaticallyListenedElements = null
     StaticallyListeningElements = null
   }
-
-  final def getDAGPrecedingNodes: Iterable[DAGNode]
-  = DynamicallyListenedElementsFromSameComponent
-
-  final def getDAGSucceedingNodes: Iterable[DAGNode]
-  = DynamicallyListeningElementsFromSameComponent
 
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc

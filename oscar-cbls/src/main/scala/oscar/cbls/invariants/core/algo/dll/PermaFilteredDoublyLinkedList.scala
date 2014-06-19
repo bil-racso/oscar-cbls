@@ -52,14 +52,16 @@ class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
  * @param mMap
  * @tparam T
  */
-class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,=>Unit, => Boolean) => Unit,
+class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => Unit,
                                mMap:T => F, filtered:PermaFilteredDoublyLinkedList[F])
   extends AbstractPermaFilter[T]{
 
   override def notifyInsert(inserted: PFDLLStorageElement[T]): Unit = {
-    mFilter(inserted.elem,
-    {inserted.filtered = filtered.addElem(mMap(inserted.elem))},
-    {inserted.prev != null})
+
+    def injector():Unit = {inserted.filtered = filtered.addElem(mMap(inserted.elem))}
+    def isStillValid():Boolean = {inserted.prev != null}
+    mFilter(inserted.elem, injector, isStillValid)
+
   }
 
   def notifyDelete(s: PFDLLStorageElement[T]){
@@ -126,7 +128,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-//    elemkey.prev = null
+    elemkey.prev = null
     msize -=1
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
@@ -139,7 +141,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
   override def iterator = new PFDLLIterator[T](headfantom,endfantom)
 
-  def delayedPermaFilter[F <: AnyRef](filter:(T,=>Unit, => Boolean) => Unit,
+  def delayedPermaFilter[F <: AnyRef](filter:(T,()=>Unit, ()=> Boolean) => Unit,
                                       mMap:T => F = (t:T) => t.asInstanceOf[F]):PermaFilteredDoublyLinkedList[F] = {
     assert(permaFilter == null,"DelayedPermaFilteredDoublyLinkedList can only accept a single filter")
 

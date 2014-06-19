@@ -52,7 +52,6 @@ object Reagan extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 40)
-  val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 
@@ -82,10 +81,11 @@ object Reagan extends App {
   Chew precedes Speak
 
   planning.close()
-
   model.close(false)
+  
+  val solver = new IFlatIRelax(planning)
  // println(model.dumpToDot(true, true))
-  solver.Solve(15, 10, 2, 50)
+  solver.solve(15, 10)
 
   println(planning.toAsciiArt)
   println(planning.resourceUsage)
