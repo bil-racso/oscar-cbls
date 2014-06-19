@@ -26,20 +26,29 @@ import oscar.cbls.invariants.core.propagation._
 import language.implicitConversions
 
 /**This class contains the invariants and variables
-  * They are all modelled as propagation Elements, which are handled by the inherited [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
+  * They are all modelled as propagation Elements, which are handled by the inherited
+  * [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
   *
-  * @param verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
-  * @param checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
-  * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
+  * @param verbose requires that the propagation structure prints a trace of what it is doing.
+  *                All prints are preceded by ''PropagationStruture''
+  * @param checker specifies that once propagation is finished,
+  *                it must call the checkInternals method on all propagation elements.
+  * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles.
+  *                If unsure, set to false, the engine will discover it by itself.
+  *                See also method isAcyclic to query a propagation structure.
   * @param topologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
-  * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
-  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
+  * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise.
+  *                            Set to false only for deep debugging
+  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing.
+  *                Setting to false might provide a speedup (eg in routing problems),
+  *                but propagation will not be single pass on SCC anymore
   */
 case class Store(override val verbose:Boolean = false,
                  override val checker:Option[Checker] = None,
                  override val noCycle:Boolean = true,
                  override val topologicalSort:Boolean = false,
-                 val propagateOnToString:Boolean = true, override val sortScc:Boolean = true)
+                 val propagateOnToString:Boolean = true,
+                 override val sortScc:Boolean = true)
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
   with Bulker with StorageUtilityManager{
 
