@@ -533,22 +533,6 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
   def initialize(value:T){for (i <- storage.indices) storage(i) = value}
 }
 
-class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
-                                 core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
-
-  override def dependencyAdded(): Unit = {}
-  override def addDependency(from: PropagationElement, to: PropagationElement): Unit = {}
-
-  override def performPropagation() {
-    //TODO: this is performing a stack-based prioritization: maybe a queue would perform better, actually.
-    while (!ScheduledElements.isEmpty) {
-      val x = ScheduledElements.head
-      ScheduledElements = ScheduledElements.tail
-      x.propagate()
-    }
-  }
-}
-
 abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
                                                 val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement {
   UniqueID = _UniqueID
@@ -602,6 +586,22 @@ abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElem
 
   override def checkInternals(c: Checker) {
     for (e <- Elements) { e.checkInternals(c) }
+  }
+}
+
+class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
+                                       core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
+
+  override def dependencyAdded(): Unit = {}
+  override def addDependency(from: PropagationElement, to: PropagationElement): Unit = {}
+
+  override def performPropagation() {
+    //TODO: this is performing a stack-based prioritization: maybe a queue would perform better? actually.
+    while (!ScheduledElements.isEmpty) {
+      val x = ScheduledElements.head
+      ScheduledElements = ScheduledElements.tail
+      x.propagate()
+    }
   }
 }
 

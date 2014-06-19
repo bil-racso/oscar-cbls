@@ -14,11 +14,10 @@
  ******************************************************************************/
 package oscar.des.engine
 
-import scala.util.continuations._
 import oscar.invariants._
 
 class Tank(m: Model, capacity: Double) {
-
+/*
   val load = new Var[Double](0.0)  
 
   def get(qty: Double): Unit @suspendable = {
@@ -31,4 +30,5 @@ class Tank(m: Model, capacity: Double) {
     waitFor(load.filter( _ <= capacity-qty) )
     load := load + qty
   }
+  */
 }

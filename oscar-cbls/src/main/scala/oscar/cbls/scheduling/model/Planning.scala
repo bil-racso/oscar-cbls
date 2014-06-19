@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
 import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
-import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 
 /**
@@ -74,7 +73,7 @@ class Planning(val model: Store, val maxDuration: Int) {
 
   var sentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
-  model.addToCallBeforeClose(_ => this.close())
+  model.addToCallBeforeClose(() => this.close())
 
   /**
    * this is to close the planning when you are done with declaring tasks, precedence  and resource
@@ -125,24 +124,6 @@ class Planning(val model: Store, val maxDuration: Int) {
     val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
 
     worseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
-  }
-
-  var gantt: Gantt = null
-  var plot: PlotLine = null
-  def displayVisualRendering() {
-    val frame = new VisualFrame("Cumulative JobShop Problem", 1, 1)
-    frame.setBounds(0, 0, 500, 800)
-    gantt = new Gantt(this)
-    frame.createFrame("Gantt chart").add(gantt)
-    //   plot = new Plot2D("makespan", "iterations", "makespan");
-    //   frame.createFrame("progress").add(plot)
-
-    frame.pack
-    frame.setSize(1500, 500)
-  }
-
-  def updateVisual() {
-    if (gantt != null) gantt.update(1.0f, 30)
   }
 
   override def toString: String = toAsciiArt

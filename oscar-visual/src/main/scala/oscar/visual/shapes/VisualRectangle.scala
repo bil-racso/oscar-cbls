@@ -99,38 +99,18 @@ object VisualRectangle {
 
   def main(args: Array[String]) {
 
-    import oscar.visual.VisualController._
-    import scala.util.continuations._
 
     val f = VisualFrame("toto");
     val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
-    val toolBar = f.createToolBar(withVisuController = true)
+    val toolBar = f.createToolBar()
     inf.add(d);
     f.pack();
 
     val rect = new VisualRectangle(d, 50, 50, 100, 50);
     rect.toolTip = "Hello";
 
-    withController {
-      rect.innerCol = Color.red
-      pause()
-      rect.width = 200;
-      pause()
-      rect.height = 100;
-      pause()
-      rect.move(100, 20);
-      pause()
-      rect.borderWidth = 3
-      pause()
-      rect.dashed = true
 
-      for (i <- (0 until 20).suspendable) {
-        pause()
-        //Thread.sleep(200)
-        rect.move(rect.x + 5, rect.y);
-      }
-    }
 
   }
 }

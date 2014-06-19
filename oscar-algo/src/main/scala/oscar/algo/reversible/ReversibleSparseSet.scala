@@ -1,23 +1,23 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 package oscar.algo.reversible
 
 import scala.collection.Iterable
-
 
 /**
  * Initializes a set with all values min..max in it
@@ -28,20 +28,16 @@ import scala.collection.Iterable
  */
 class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
 
-  val offset = minValue
-  val _min = new ReversibleInt(s,minValue)
-  val _max = new ReversibleInt(s,maxValue)
-  val _size = new ReversibleInt(s,maxValue-minValue+1)
-  
-  val values = Array.tabulate(size)(i => i)
-  val indexes = Array.tabulate(size)(i => i)
-  
-  
+  private val offset = minValue
+  private val _min = new ReversibleInt(s, minValue)
+  private val _max = new ReversibleInt(s, maxValue)
+  private val _size = new ReversibleInt(s, maxValue - minValue + 1)
+
+  private val values = Array.tabulate(size)(i => i)
+  private val indexes = Array.tabulate(size)(i => i)
+
   override def size: Int = _size.value
-  private def size_=(v: Int) {
-    _size.value = v
-  }
-  
+
   def min: Int = {
     if (!hasValue(_min.value)) updateMinValRemoved(_min.value)
     _min.value
@@ -54,8 +50,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     if (!hasValue(_max.value)) updateMaxValRemoved(_max.value)
     _max.value
   }
-  
-  
+
   private def max_=(v: Int) {
     _max.value = v
   }
@@ -65,20 +60,18 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     assert(v <= offset + values.size - 1)
     true
   }
-  
+
   def hasValue(v: Int) = {
-		if (v < offset || v >= offset+indexes.size) false
-		else indexes(v-offset) < size;
-  }  
-  
-  override def isEmpty = size == 0
+    if (v < offset || v >= offset + indexes.size) false
+    else indexes(v - offset) < _size.value;
+  }
+
+  override def isEmpty = _size.value == 0
 
   /**
    * remove all elements in the set
    */
-  def empty() {
-    size = 0
-  }
+  def empty(): Unit = _size.value = 0
 
   private def exchangePositions(val1: Int, val2: Int) {
     assert(checkVal(val1))
@@ -92,14 +85,14 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     indexes(v1) = i2
     indexes(v2) = i1
   }
-  
+
   private def updateBoundsValRemoved(v: Int) {
-	updateMaxValRemoved(v)
-	updateMinValRemoved(v)
+    updateMaxValRemoved(v)
+    updateMinValRemoved(v)
   }
 
   private def updateMaxValRemoved(v: Int) {
-    
+
     /*
     if (!isEmpty) {
       assert(!hasValue(v));
@@ -112,7 +105,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
         cv -= 1
       }
     }*/
-    
+
     if (!isEmpty) {
       // max = iterator.max
       var i = 0
@@ -129,7 +122,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
   }
 
   private def updateMinValRemoved(v: Int) {
-    
+
     /*
     if (!isEmpty) {
       var cv = v
@@ -141,7 +134,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
         cv += 1
       }
     }*/
-    
+
     if (!isEmpty) {
       // min = iterator.min
       var i = 0
@@ -155,7 +148,6 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
       }
       min = m + offset
     }
-     
   }
 
   def removeValue(v: Int): Boolean = {
@@ -169,7 +161,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
   /**
    * @param value
    * @return smallest value in the domain >= value, value-1 is returned if no such value
-   */  
+   */
   def nextValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
@@ -186,7 +178,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
   /**
    * @param value
    * @return largest value in the domain <= value, value+1 is returned if no such value
-   */  
+   */
   def prevValue(v: Int): Int = {
     assert(checkVal(v))
     assert(!isEmpty)
@@ -212,8 +204,8 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     values(index) = value
     min = v
     max = v
-    size = 1
-  } 
+    _size.value = 1
+  }
 
   def updateMin(minv: Int): Unit = {
     assert(checkVal(minv))
@@ -221,7 +213,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     if (minv < min) {
       return // the min does not change
     } else if (minv > max) {
-      size = 0 // the set becomes empty since the new min is larger than the current max
+      _size.value = 0 // the set becomes empty since the new min is larger than the current max
     } else if (minv == max) {
       // the new min is equal to the current max hence only one value in the set
       removeAllBut(minv)
@@ -243,7 +235,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     if (maxv >= max) {
       return
     } else if (maxv < min) {
-      size = 0 // the set becomes empty since the new max is smaller than the current min
+      _size.value = 0 // the set becomes empty since the new max is smaller than the current min
     } else if (maxv == min) {
       // the new max is equal to the current min hence only one value in the set
       removeAllBut(maxv)
@@ -260,17 +252,17 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
   }
 
   def iterator: Iterator[Int] = {
-      var iterIndex = 0
-      new Iterator[Int] {
-        def next(): Int = {
-          val i = iterIndex
-          iterIndex += 1
-          values(i) + offset  
-        }
-        def hasNext: Boolean = {
-          iterIndex < _size.value
-        }
+    var iterIndex = 0
+    new Iterator[Int] {
+      def next(): Int = {
+        val i = iterIndex
+        iterIndex += 1
+        values(i) + offset
       }
+      def hasNext: Boolean = {
+        iterIndex < _size.value
+      }
+    }
   }
 
   def delta(oldSize: Int): Iterator[Int] = {
@@ -286,7 +278,5 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
       }
     }
   }
-  
 
-  
 }

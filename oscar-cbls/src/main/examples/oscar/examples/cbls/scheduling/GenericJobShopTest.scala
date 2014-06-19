@@ -104,7 +104,6 @@ object GenericJobShopTest extends StopWatch with App {
   val solver = new IFlatIRelax(planning, false)
 
   model.close()
-  planning.displayVisualRendering()
 
   println("start search")
   //println(model.dumpToDot(true,true))

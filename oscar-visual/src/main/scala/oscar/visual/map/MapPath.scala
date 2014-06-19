@@ -85,9 +85,12 @@ class MapPath(m : VisualMap, o: MapPoint, d : MapPoint, col : Color = Color.BLAC
   }
   
   // constructor without using internal MapPoint structure
-  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double, col : Color = Color.BLACK) = 
+  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double, col : Color) = 
     this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong), col) 
-    
+  
+  // constructor without using internal MapPoint structure
+  def this(map : VisualMap, origlat : Double, origlong: Double, destlat : Double, destlong : Double) = 
+    this(map, new MapPoint(origlat,origlong), new MapPoint(destlat, destlong), Color.BLACK)     
     
   def remove = map.removePath(this)
   /*

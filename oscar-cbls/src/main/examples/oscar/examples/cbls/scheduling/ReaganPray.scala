@@ -25,7 +25,7 @@ package oscar.examples.cbls.scheduling
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.scheduling._
-import oscar.cbls.scheduling.algo.{IFlatIRelaxTabu, IFlatIRelax}
+import oscar.cbls.scheduling.algo.IFlatIRelax
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.scheduling.model.CumulativeResource
@@ -39,7 +39,7 @@ object ReaganPray extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)
-  val solver = new IFlatIRelaxTabu(planning)
+  val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 

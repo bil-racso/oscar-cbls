@@ -18,7 +18,6 @@ import oscar.cp.modeling._
 
 import oscar.cp.core._
 import oscar.cp.constraints._
-import scala.util.continuations._
 
 import scala.collection.JavaConversions._
 import scala.math._

@@ -170,6 +170,10 @@ class LPSolve extends AbstractLP {
   def setInteger(colId: Int) {
     lp.setInt(colId + 1, true)
   }
+  
+  def setBinary(colId: Int) {
+    lp.setBinary(colId + 1, true)
+  }
 
   def setFloat(colId: Int) {
     lp.setInt(colId + 1, false)

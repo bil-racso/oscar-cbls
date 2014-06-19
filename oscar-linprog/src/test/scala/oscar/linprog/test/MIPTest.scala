@@ -22,6 +22,8 @@ import oscar.linprog.modeling._
 import oscar.linprog._
 import oscar.algebra._
 
+import java.io.File
+
 /**
  * MIP Testing
  */
@@ -29,7 +31,6 @@ class MIPTest extends FunSuite with ShouldMatchers {
 
   test("mip test 1") {
     for (lib <- solvers) {
-
       implicit val mip = MIPSolver(lib)
       mip.name = "Mip Test 1"
       val x = MIPFloatVar("x", 0, 100)
@@ -125,7 +126,8 @@ class MIPTest extends FunSuite with ShouldMatchers {
       mip.release()
     }
   }
-  test("MIP Test 4: update coeficient and rhs in constraint") {
+  
+  test("MIP Test 4: update coefficient and rhs in constraint") {
     for (lib <- solvers) {
 
       implicit val mip = MIPSolver(lib)
@@ -151,6 +153,24 @@ class MIPTest extends FunSuite with ShouldMatchers {
       y.value should equal(Some(5))
 
       mip.release()
+    }
+  }
+  
+  test("MIP Test 5: test whether 0-1 variables set as binary") {
+    for (lib <- solvers) {
+        implicit val mip = MIPSolver(lib)
+        val x = Array.tabulate(6)(j => MIPIntVar(s"x${j}", 0 to 1))
+        val z = 3 * x(0) + 5 * x(1) + 6 * x(2) + 9 * x(3) + 10 * x(4) + 10 * x(5)
+        minimize(z)
+        add(-2 * x(0) + 6 * x(1) - 3 * x(2) + 4 * x(3) + x(4) - 2 * x(5) >= 2)
+        add(-5 * x(0) - 3 * x(1) + x(2) + 3 * x(3) - 2 * x(4) + x(5) >= -2)
+        add(5 * x(0) - x(1) + 4 * x(2) -2 * x(3) + 2 * x(4) - x(5) >= 3)    
+	x.foreach(_.isBinary() should be(true))
+	    
+        start()
+	status should equal(LPStatus.OPTIMAL)
+	z.value should be(Some(11.0))
+        release()
     }
   }
 }

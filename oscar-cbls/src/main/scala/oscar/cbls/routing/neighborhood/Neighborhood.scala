@@ -172,7 +172,7 @@ case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
                       vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
                                with MoveDescription,
-                      abort: Unit => Boolean = (_ => false))
+                      abort: () => Boolean = {() => false})
 // format: ON
 
 abstract class SearchResult {

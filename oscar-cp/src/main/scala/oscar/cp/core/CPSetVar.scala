@@ -6,6 +6,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.constraints.sets.Requires
 import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
+import oscar.cp.core.domains.SetDomain
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

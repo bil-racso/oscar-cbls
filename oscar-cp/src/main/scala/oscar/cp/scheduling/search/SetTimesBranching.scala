@@ -59,6 +59,7 @@ class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIn
         bound(x).value = true
         if (!cp.isFailed) updateAndCheck()
       } {
+        cp.propagate()
         selectable(x).value = false
         oldEST(x).value = est
         updateAndCheck()

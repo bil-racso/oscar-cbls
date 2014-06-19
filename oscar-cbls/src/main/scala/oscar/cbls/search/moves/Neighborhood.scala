@@ -90,9 +90,9 @@ abstract class Neighborhood{
   def maxSearches(maxMove:Int) = new BoundSearches(this, maxMove)
   def maxMoves(maxMove:Int) = new BoundMoves(this, maxMove)
   def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
-  def onQuery(proc:  => Unit) = new DoOnQuery(this,proc)
-  def onMove(proc: => Unit) = new DoOnMove(this,proc)
-  def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,proc)
+  def onQuery(proc:  => Unit) = new DoOnQuery(this,() => proc)
+  def onMove(proc: => Unit) = new DoOnMove(this,() => proc)
+  def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
   def retry() = new Retry(this)
 }

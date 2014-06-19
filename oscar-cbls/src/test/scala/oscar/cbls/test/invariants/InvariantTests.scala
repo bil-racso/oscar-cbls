@@ -65,19 +65,12 @@ import oscar.cbls.constraints.lib.basic.NE
 import oscar.cbls.constraints.lib.basic.EQ
 import oscar.cbls.test.invariants.bench.{InvGen, InvBench, InvariantChecker}
 
-class smalltest extends FunSuite with Checkers {
-  //this is not working so far.
-  test("SelectLEHeapHeap") {
-    val bench = new InvBench(2)
-    new SelectLEHeapHeap(bench.genIntVarsArray(4, 0 to 5), bench.genIntVar(3 to 10)).toIntSetVar
-    bench.run
-  }
-}
 
 /**
  * @author yoann.guyot@cetic.be
  */
 class InvariantTests extends FunSuite with Checkers {
+
 
   {
   var assertActivated = false
@@ -294,7 +287,7 @@ class InvariantTests extends FunSuite with Checkers {
     new MinLin(bench.genSortedIntVars(6, 0 to 10)).toIntVar
     bench.run
   }
-
+/*
   test("Min") {
     val bench = new InvBench(verbose)
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
@@ -306,7 +299,7 @@ class InvariantTests extends FunSuite with Checkers {
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
-
+*/
   test("Min2") {
     val bench = new InvBench(verbose)
     new Min2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar

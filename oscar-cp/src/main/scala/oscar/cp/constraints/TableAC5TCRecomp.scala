@@ -103,7 +103,7 @@ class TableAC5TCRecomp(val data: TableData, val x: CPIntVar*) extends Constraint
   
   def updateAndSeekNextSupport(i: Int, startTuple: Int, v: Int): Boolean = {
     var t = startTuple
-    while (!tupleOk(t) && data.hasNextSupport(i,t)) {
+    while (data.hasNextSupport(i,t) && !tupleOk(t)) {
         t = data.nextSupport(i,t)
     }
     if (!tupleOk(t)) {

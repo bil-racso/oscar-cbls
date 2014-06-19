@@ -317,7 +317,7 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
       x(i).callPropagateWhenDomainChanges(this)
     }
     if (!cost.isBound) {
-      cost.callPropagateWhenMaxChanges(this)
+      cost.callPropagateWhenBoundsChange(this)
     }
     CPOutcome.Suspend
   }

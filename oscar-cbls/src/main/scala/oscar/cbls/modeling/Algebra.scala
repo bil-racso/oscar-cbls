@@ -74,9 +74,8 @@ object Algebra extends AlgebraTrait{
 }
 
 trait AlgebraTrait{
-  class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
-    extends Range(start,end,step) {
-    if(!(this.contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
+  class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1) extends Iterable[Int]{
+    if(!(Range(start,end,step).contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
     if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
 
     //include the at Value
@@ -95,7 +94,7 @@ trait AlgebraTrait{
       else a+1
     }
 
-    override def toIterator: Iterator[Int] = new ShiftedRangeIterator(this)
+    override def iterator: Iterator[Int] = new ShiftedRangeIterator(this)
 
     override def toList: List[Int] = unfold(startBy)
 
