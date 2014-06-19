@@ -138,8 +138,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
    */
-  @deprecated("you do not need to call close on a ConstraintSystem, it is closed by the Model when the model is closed.","1.0")
-  def close(){
+  protected[cbls] def close(){
     if(!isClosed){
       isClosed = true
       Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
