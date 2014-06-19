@@ -27,7 +27,7 @@ import scala.math.pow
 import scala.math.round
 import scala.math.sqrt
 import org.scalacheck.Gen
-import org.scalatest.FunSuite
+import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.Checkers
 import oscar.cbls.invariants.core.computation.Store
@@ -55,7 +55,7 @@ import oscar.cbls.routing.neighborhood.TwoOptMove
  * verifies the domain of a variable variable.
  * These tests (with star) show the lack of robustness of the current framework.
  */
-class TestMove extends FunSuite with ShouldMatchers with Checkers {
+class TestMove extends FunSuite with Matchers with Checkers {
 
   /*
   test("A node can be cut.") {
