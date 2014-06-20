@@ -1,6 +1,5 @@
 package oscar.cbls.binPacking.solver
 
-//TODO: détection de dominance
 //TODO: tabu
 
 import oscar.cbls.search.SearchEngineTrait
@@ -20,7 +19,6 @@ object BinPackingSolver extends SearchEngineTrait {
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
               orElse EmptyMostViolatedBin(p)) protectBest(p.overallViolation.objective)
-
 
     x.doAllImprovingMoves(maxStep)
     x.restoreBest()
