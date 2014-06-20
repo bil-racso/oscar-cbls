@@ -21,10 +21,12 @@ import oscar.cp.core.CPOutcome._
 /**
  * x + y = z 
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Steven Gay steven.gay@uclouvain.be
+ * 
  */
 class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Constraint(x.store, "BinarySum") {
 
-  
+  idempotent = true
   override def setup(l: CPPropagStrength): CPOutcome = {
     priorityL2 = CPStore.MAXPRIORL2 - 1
     if (!x.isBound) x.callPropagateWhenBoundsChange(this)
@@ -34,13 +36,71 @@ class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Const
   }
 
   override def propagate(): CPOutcome = {
-    if (z.updateMax(x.max + y.max) == Failure) Failure
-    else if (z.updateMin(x.min + y.min) == Failure) Failure
-    else if (x.updateMax(z.max - y.min) == Failure) Failure
-    else if (x.updateMin(z.min - y.max) == Failure) Failure
-    else if (y.updateMax(z.max - x.min) == Failure) Failure
-    else if (y.updateMin(z.min - x.max) == Failure) Failure
-    else Suspend
+    // While reading this code, remember that there are sorting networks in Java's default sort. Check and compare, this is not so bad.
+    // The logic itself is much lighter than the CP variable manipulations, so we add logic to do the fewest manipulations we can.
+    
+    // min and max are expensive, better remember values than recompute
+    var xmax = x.max ; var xmin = x.min
+    var ymax = y.max ; var ymin = y.min
+    var zmax = z.max ; var zmin = z.min
+    
+    var reduce = true // for idempotence
+    var newbound = 0
+    
+    while(reduce) {
+      reduce = false
+      
+      newbound = xmax + ymax
+      if (zmax > newbound) { // update only if necessary
+        if(z.updateMax(newbound) == Failure) return Failure
+        zmax = z.max
+        if(zmax < newbound)  // if zmax is a multiplicative or non bijective view, recompute for idempotence 
+          reduce = true
+      }
+
+      newbound = zmax - ymin
+      if (xmax > newbound) {
+        if(x.updateMax(newbound) == Failure) return Failure
+        xmax = x.max
+        if (xmax < newbound) 
+          reduce = true
+      }
+
+      newbound = zmax - xmin
+      if (ymax > newbound) {
+        if(y.updateMax(newbound) == Failure) return Failure
+        ymax = y.max
+        if (ymax < newbound) 
+          reduce = true
+      }
+
+      newbound = xmin + ymin
+      if (zmin < newbound) {
+        if(z.updateMin(newbound) == Failure) return Failure
+        zmin = z.min
+        if (zmin > newbound) 
+          reduce = true
+      }
+      
+      newbound = zmin - ymax
+      if (xmin < newbound) {
+        if(x.updateMin(newbound) == Failure) return Failure
+        xmin = x.min
+        if (xmin > newbound) 
+          reduce = true
+      }
+            
+      newbound = zmin - xmax
+      if (ymin < newbound) {
+        if(y.updateMin(newbound) == Failure) return Failure
+        ymin = y.min
+        if (ymin > newbound) 
+          reduce = true
+      }
+    }
+    Suspend
+    // Fine-tuning is relaxing for the mind.
+    // Except for all this red, it feels like M. Odersky himself punishes my eyes for using so many mutables.  
   }
 }
 

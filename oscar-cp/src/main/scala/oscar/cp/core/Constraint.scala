@@ -239,42 +239,6 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   def updateBoundsIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
-   * Propagation method of Level L1 that is called if variable x has asked so
-   * with the method call x.callUpdateMaxWhenMaxChanges(this)
-   * @param value is the old maximum of x that has changed
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMax(x: CPIntVar, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked to do so
-   * with the method call x.callUpdateMinIdxWhenMaxChanges(this,idx)
-   * @param value is the old maximum of x that has changed
-   * @param idx is a key value that was given to callUpdateMaxIdxWhenMaxChanges(x,this,idx) attached to variable x.
-   *        This is typically used to retrieve the index of x in an array of variables in constant time
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMaxIdx(x: CPIntVar, idx: Int, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked so
-   * with the method call x.callUpdateMinWhenMinChanges(this)
-   * @param val is the old minimum of x that has changed
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMin(x: CPIntVar, value: Int) = CPOutcome.Suspend
-
-  /**
-   * Propagation method of Level L1 that is called if variable x has asked to do so
-   * with the method call x.callUpdateMinIdxWhenMinChanges(this,idx)
-   * @param value is the old maximum of x that has changed
-   * @param idx is a key value that was given to callUpdateMaxIdxWhenMinChanges(x,this,idx) attached to variable x.
-   *        This is typically used to retrieve the index of x in an array of variables in constant time
-   * @return the outcome i.e. Failure, Success or Suspend
-   */
-  def updateMinIdx(x: CPIntVar, idx: Int, value: Int) = CPOutcome.Suspend
-
-  /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
    * with the method call x.callValBind(this)
    * @param x is bind

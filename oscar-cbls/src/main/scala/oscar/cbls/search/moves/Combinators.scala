@@ -66,9 +66,9 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
   * @param a
   * @param proc
   */
-class DoOnQuery(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator(a){
+class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(a){
   override def getImprovingMove(): SearchResult = {
-    proc
+    proc()
     a.getImprovingMove()
   }
 }
@@ -78,7 +78,7 @@ class DoOnQuery(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator(a){
   * @param a
   * @param proc
   */
-class DoOnMove(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator(a){
+class DoOnMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinator(a){
   override def getImprovingMove(): SearchResult = {
     a.getImprovingMove() match {
      case m:Move => CallBackMove(m,proc)
@@ -92,7 +92,7 @@ class DoOnMove(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator(a){
   * @param a
   * @param proc
   */
-class DoOnFirstMove(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator(a){
+class DoOnFirstMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinator(a){
   var isFirstMove = true
   override def getImprovingMove(): SearchResult = {
     if (isFirstMove) {
@@ -112,7 +112,7 @@ class DoOnFirstMove(a:Neighborhood, proc: =>Unit) extends NeighborhoodCombinator
   }
 
   private def notifyMoveTaken(){
-    proc
+    proc()
     isFirstMove = false
   }
 }
@@ -360,7 +360,7 @@ class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator
   override def getImprovingMove(): SearchResult = {
     if (remainingMoves > 0) {
       a.getImprovingMove() match{
-        case m:Move => CallBackMove(m,notifyMoveTaken())
+        case m:Move => CallBackMove(m,notifyMoveTaken)
         case x => x
       }
     } else NoMoveFound

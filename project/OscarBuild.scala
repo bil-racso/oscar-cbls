@@ -14,8 +14,8 @@ object OscarBuild extends Build {
   
   object BuildSettings {
     val buildOrganization = "oscar"
-    val buildVersion = "1.0.0.RC2beta"
-    val buildScalaVersion = "2.10.0"
+    val buildVersion = "1.1.0.beta"
+    val buildScalaVersion = "2.11.0"
     val buildSbtVersion= "0.13.0"
 
     val osNativeLibDir = (sys.props("os.name"), sys.props("os.arch")) match {
@@ -29,11 +29,7 @@ object OscarBuild extends Build {
     val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
-      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked","-P:continuations:enable", "-Xdisable-assertions"),
-      
-      libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
-      	deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
-      },
+      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"),
       testOptions in Test <+= (target in Test) map {
           t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports")) },
       parallelExecution in Test := false,
@@ -54,7 +50,7 @@ object OscarBuild extends Build {
 
     //val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
     val junit = "junit" % "junit" % "4.8.1" % "test"
-    val scalaswing = "org.scala-lang" % "scala-swing" % "2.10.0"
+    val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 
     // DSL for adding source dependencies ot projects.
     def dependsOnSource(dir: String): Seq[Setting[_]] = {

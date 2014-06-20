@@ -49,18 +49,18 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
   /**
    * @return current value
    */
-  def value = getValue
+  @inline def value = pointer
 
   /**
    * Check if the pointer is different from null
    * @return true if the pointer is != null, false otherwise
    */
-  def hasValue(): Boolean = pointer != null
+  @inline def hasValue(): Boolean = pointer != null
 
   /**
    * @return the current pointer
    */
-  def getValue(): T = pointer
+  @inline def getValue(): T = pointer
 
   override def addOnTrail(): Unit = {
     node.getTrail().addEntry(this, pointer)

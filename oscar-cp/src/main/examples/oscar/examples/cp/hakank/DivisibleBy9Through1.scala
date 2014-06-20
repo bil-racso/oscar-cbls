@@ -41,7 +41,7 @@ import scala.math._
   """
   
   Also, see
-  "Intel® Parallel Studio: Great for Serial Code Too (Episode 1)"
+  "Intel Parallel Studio: Great for Serial Code Too (Episode 1)"
   http://software.intel.com/en-us/blogs/2009/12/07/intel-parallel-studio-great-for-serial-code-too-episode-1/
 
   This is a generalized version of oscar.examples.cp.DivisibleBy9Through1

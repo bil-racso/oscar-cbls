@@ -68,8 +68,8 @@ class Knapsack(val X: Array[CPBoolVar], val profit: Array[Int], val weight: Arra
     		if (ok == CPOutcome.Failure) return CPOutcome.Failure
     	}
     	if (propagate() == CPOutcome.Failure) return CPOutcome.Failure
-    	P.callPropagateWhenMinChanges(this)
-    	W.callPropagateWhenMaxChanges(this)
+    	P.callPropagateWhenBoundsChange(this)
+    	W.callPropagateWhenBoundsChange(this)
     }
     CPOutcome.Suspend
   }

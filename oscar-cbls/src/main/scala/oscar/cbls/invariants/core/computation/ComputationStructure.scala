@@ -33,14 +33,14 @@ import language.implicitConversions
   * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
   * @param topologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
   * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
-  *
+  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
   */
 case class Store(override val verbose:Boolean = false,
                  override val checker:Option[Checker] = None,
                  override val noCycle:Boolean = true,
                  override val topologicalSort:Boolean = false,
-                 val propagateOnToString:Boolean = true)
-  extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
+                 val propagateOnToString:Boolean = true, override val sortScc:Boolean = true)
+  extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
   with Bulker with StorageUtilityManager{
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
@@ -52,8 +52,17 @@ case class Store(override val verbose:Boolean = false,
 
   def isClosed = Closed
 
-  private var inputVariables:List[Variable] = null;
+  private var privateInputVariables:List[Variable] = null;
 
+  def inputVariables():List[Variable] = {
+    if(privateInputVariables == null){
+      privateInputVariables  = List.empty
+      for (v:Variable <- Variables if v.getDefiningInvariant == null){
+        privateInputVariables = v :: privateInputVariables
+      }
+    }
+    privateInputVariables
+  }
   /**To save the current value of the variables registered in the model
     * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
@@ -62,13 +71,7 @@ case class Store(override val verbose:Boolean = false,
     var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
 
     val VariablesToSave = if(inputOnly) {
-      if(inputVariables == null){
-        inputVariables  = List.empty
-        for (v:Variable <- Variables if v.getDefiningInvariant == null){
-          inputVariables = v :: inputVariables
-        }
-      }
-      inputVariables
+      inputVariables()
     }else Variables
 
     for (v:Variable <- VariablesToSave){
@@ -155,9 +158,9 @@ case class Store(override val verbose:Boolean = false,
     PropagationElements
   }
 
-  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+  var toCallBeforeClose:List[(()=>Unit)] = List.empty
 
-  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+  def addToCallBeforeClose(toCallBeforeCloseProc : (()=>Unit)){
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
 
@@ -536,7 +539,7 @@ object Event{
   def apply(v:Variable,
             action: =>Unit):Event = {
     val toreturn = new Event(v,null,null)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -546,7 +549,7 @@ object Event{
             action: =>Unit,
             ModifiedVars:Iterable[Variable]):Event = {
     val toreturn = new Event(v,null,ModifiedVars)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -619,7 +622,7 @@ object Event{
 class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
-  private var action: (Unit=>Unit)=null
+  private var action: (()=>Unit)=null
   private var actionIntParam: (Int=>Unit) = null
   private var actionIntSetParam: (SortedSet[Int] => Unit) = null
 
@@ -633,7 +636,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   private var intsetintaction:((SortedSet[Int],Int) => Unit) = null
   private var intintsetaction:((Int,SortedSet[Int]) => Unit) = null
 
-  def setAction(action: Unit=>Unit){
+  def setAction(action: ()=>Unit){
     this.action = action
   }
   def setIntAction(action: Int=>Unit){

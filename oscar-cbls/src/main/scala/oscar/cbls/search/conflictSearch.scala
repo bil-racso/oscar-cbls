@@ -24,7 +24,7 @@ package oscar.cbls.search
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.search.moves._
-import oscar.cbls.search.moves.AssingMove
+import oscar.cbls.search.moves.AssignMove
 import scala.Some
 import oscar.cbls.constraints.core.ConstraintSystem
 
@@ -66,7 +66,7 @@ class conflictMove(c:ConstraintSystem) extends StatelessNeighborhood with Search
     val objAfter = c.assignVal(Variables(MaxViolVarID),NewVal)
 
     if(objAfter < oldObj){
-       AssingMove(Variables(MaxViolVarID),NewVal,objAfter)
+       AssignMove(Variables(MaxViolVarID),NewVal,objAfter)
     }else{
       NoMoveFound
     }
@@ -84,7 +84,7 @@ class conflictMoveFirstImprove(c:ConstraintSystem) extends StatelessNeighborhood
     val objAfter = c.assignVal(Variables(MaxViolVarID),newVal)
 
     if(objAfter < oldObj)
-      AssingMove(Variables(MaxViolVarID),newVal,objAfter)
+      AssignMove(Variables(MaxViolVarID),newVal,objAfter)
     else
       NoMoveFound
   }

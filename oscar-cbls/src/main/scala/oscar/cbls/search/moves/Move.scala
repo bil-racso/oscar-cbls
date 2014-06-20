@@ -15,8 +15,7 @@
 
 package oscar.cbls.search.moves
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
-
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 
 abstract class StatelessNeighborhood extends Neighborhood{
   //this resets the internal state of the move combinators
@@ -31,17 +30,43 @@ case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove(): SearchResult = NoMoveFound
 }
 
-case class AssingMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
-  override def comit() {i := v}
+case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {i := v}
 
   override def toString: String = {
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "AssingMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
+    "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
   }
 }
 
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
-  override def comit() {i :=: j}
+case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {s :+= v}
+
+  override def toString: String = {
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+      "AddToSetMove(" + s + " :+= " + v + " objAfter:" + objAfter + ")"
+  }
+}
+
+case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {s :-= v}
+
+  override def toString: String = {
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+      "RemoveFromSetMove(" + s + " :-= " + v + " objAfter:" + objAfter + ")"
+  }
+}
+
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {i :=: j}
 
   override def toString: String  = {
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
@@ -49,13 +74,15 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighb
   }
 }
 
-case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null) extends Move(objAfter){
+case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
   def this(ml:List[Move]){
     this(ml, ml.last.objAfter)
   }
 
-  override def comit() {
-    for(m <- ml) m.comit()
+  override def commit() {
+    for(m <- ml) m.commit()
   }
 
   override def toString: String  = {
@@ -64,15 +91,12 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
   }
 }
 
-object CallBackMove{
-  def apply(initialMove:Move, callBack: => Unit): CallBackMove = new CallBackMove(initialMove, (_:Unit) => callBack)
-}
-
-case class CallBackMove(initialMove:Move, callBack: Unit => Unit) extends Move(initialMove.objAfter){
-  def comit(){
+case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter){
+  def commit(){
     callBack()
-    initialMove.comit
+    initialMove.commit
   }
 
   override def toString: String = initialMove.toString
 }
+

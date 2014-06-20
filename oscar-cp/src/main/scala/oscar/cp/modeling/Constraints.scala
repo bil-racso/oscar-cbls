@@ -23,6 +23,7 @@ import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
 import scala.collection.immutable.Set
+import oscar.cp.constraints.stockingCost.StockingCost
 
 trait Constraints {
 
@@ -38,9 +39,7 @@ trait Constraints {
     return new BinPacking(x.toArray, w.toArray, l.toArray)
   }
 
-  /**
-   * @deprecated("use binPacking instead", "1.0")
-   */
+  @deprecated("use binPacking instead", "1.0")
   def binpacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]) = binPacking(x, w, l)
 
   /**
@@ -255,7 +254,7 @@ trait Constraints {
    * @return a constraints such that tab, x and z are linked by the relation tab(x) == z
    */
   def elementVar(tab: IndexedSeq[CPBoolVar], x: CPIntVar, z: Boolean): Constraint = {
-    val z_ = new CPBoolVar(x.store, z)
+    val z_ = CPBoolVar(z)(x.store)
     new ElementVar(tab.map(_.asInstanceOf[CPIntVar]).toArray, x, z_)
   }
 
@@ -289,6 +288,7 @@ trait Constraints {
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
   def sum(vars: Iterable[CPIntVar]): CPIntVar = {
+    if (vars.size == 1) return vars.head
     val x = vars.toArray
     val minVal = (0 /: vars) {
       (sum, v) => sum + v.getMin
@@ -394,21 +394,55 @@ trait Constraints {
   /**
    * Or (logical) Constraint
    * @param vars a non empty array of n variables
-   * @return a variable that will be true if at least one variable of vars is true
+   * @param z the result of the or over vars
+   * @return an or constraint
+   */  
+  def or(vars: Iterable[CPBoolVar], z:CPBoolVar): Constraint = {
+    if (z.isTrue) or(vars)
+    else new OrReif(vars.toArray, z)
+    //new OrReif2(vars, z)
+  }
+  
+  /**
+   * Or (logical) Constraint
+   * @return a constraint such that at least one variables in vars must be true
    */
-  def or(vars: Array[CPBoolVar]): CPBoolVar = {
-    val z = new CPBoolVar(vars(0).store)
-    vars(0).store.post(new Or(vars, z))
-    return (z)
+  def or(vars: Iterable[CPBoolVar]): Constraint = {
+    new Or(vars.toArray)
+    //sum(vars) >= 1
   }
 
   /**
    * Or (logical) Constraint
-   * @return a variable that will be true if at least one variable of f(i) is true for i in indexes
+   * @return a constraint such that at least one variables in vars must be true
    */
-  def or[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
-    or((for (i <- indexes) yield f(i)).toArray)
+  def or[A](indexes: Iterable[A])(f: A => CPBoolVar): Constraint = {
+    or((for (i <- indexes) yield f(i)))
   }
+
+  /**
+   * Or (logical) Constraint
+   * @param vars a non empty array of n variables
+   * @return result of the or over vars
+   */
+  def isOr(vars: Iterable[CPBoolVar]): CPBoolVar = {
+    val z = new CPBoolVar(vars.head.store)
+    vars.head.store.add(or(vars, z))
+    z
+  }
+
+  /**
+   * Or (logical) Constraint
+   * @return z the result of the or over or(f(i))
+   */  
+  def isOr[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
+    val x = (for (i <- indexes) yield f(i)).toArray
+    val z = new CPBoolVar(x(0).store)
+    x(0).store.add(or(x,z))
+    z
+  }  
+  
+
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
@@ -551,9 +585,14 @@ trait Constraints {
    * @param y is a variable
    * @return a constraint enforcing that n = #{ i | x(i) = y }
    */  
-  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
-    new Count(n,x,y)
+  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar): Constraint = {
+    if (y.isBound) countEq(n,x,y.value)
+    else new CountSimple(n,x,y)
   }
+  
+  def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], v: Int) = {
+    new CountCst(n,x,v)
+  }  
   
   /**
    * Count Constraint: n is greater or equal to the number of variables from x equal to y.
@@ -894,6 +933,56 @@ trait Constraints {
     }
     cons
   }
+
+  /**
+   * The StockingCost constraint holds when each item is produced before
+   * its due date ($X_i <= d_i$), at most one item is produced at any time
+   * on the machine (all the $X_i$ are distinct), and $H$
+   * is an upper bound on the total stocking cost ($sum_i(d_i - X_i) <= H$).
+   * 
+   * This constraint is useful for modeling
+   * Production Planning Problem such as Lot Sizing Problems
+   * 
+   * @param X, the variable $X_i$ is the date of production of item $i$ on the machine
+   * @param d, the integer $d_i$ is the due-date for item $i$
+   * @param H, the variable $H$ is an upper bound on the total number of slots all the items are need in stock.
+   */
+  def stockingCost(X: Array[CPIntVar], d: Array[Int], H: CPIntVar): Constraint = {
+    new StockingCost(X, d, H, 1)
+  }
+
+
+  /**
+   * Non overlapping between 2D rectangles 
+   * @param x is the x coordinates of the bottom left corner of rectangles
+   * @param dx is the length in direction of x of each rectangle
+   * @param y is the y coordinates of the bottom left corner of rectangles
+   * @param dy is the length in direction y of each rectangle
+   * @return a set of constraints such that posting all of them enforces the non overlapping of rectangles
+   */   
+  def diffn(x: Array[CPIntVar], dx: Array[CPIntVar], y: Array[CPIntVar], dy: Array[CPIntVar]): Iterable[Constraint] = {
+    val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
+    val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
+    val capay = maximum(endy) - minimum(y)
+    val capax = maximum(endx) - minimum(x)
+    var cons = Vector[Constraint]()
+    for (i <- 0 until x.length; j <- i + 1 until x.length) {
+      cons = cons :+ (new Or(Array(x(i) + dx(i) <== x(j),
+        x(j) + dx(j) <== x(i),
+        y(i) + dy(i) <== y(j),
+        y(j) + dy(j) <== y(i),
+        x(i) + dx(i) <== x(j),
+        x(j) + dx(j) <== x(i),
+        y(i) + dy(i) <== y(j),
+        y(j) + dy(j) <== y(i))));
+    }
+    cons = cons :+ (maxCumulativeResource(x, dx, endx, dy, capay))
+    cons = cons :+ (maxCumulativeResource(y, dy, endy, dx, capax))
+    return cons
+  }
+  
+
+  
   // scheduling constraints
 
 
@@ -944,7 +1033,7 @@ trait Constraints {
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    new SweepMaxCumulative(starts: Array[CPIntVar],durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
+    new MaxCumulativeAlternative(starts,durations,ends,demands,resources,capacity,id)
   }
   
   /**
