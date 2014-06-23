@@ -106,8 +106,6 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     }
   }
 
-  var Resources: List[(CumulativeResource, CBLSIntVar)] = List.empty
-
   /**
    * use this method to add resource requirement to a activity.
    * the activity and the resource must be registered to the same planning
@@ -116,7 +114,6 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
    * FIXME potential problem if amount = 0
    */
   def usesCumulativeResource(r: CumulativeResource, amount: CBLSIntVar) {
-    Resources = (r, amount) :: Resources
     r.notifyUsedBy(this, amount)
   }
 

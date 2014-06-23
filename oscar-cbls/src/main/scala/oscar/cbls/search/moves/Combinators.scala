@@ -175,7 +175,8 @@ class Best(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
 }
 
 /**this composer is stateful.
-  * it returns the result of the first Neighborhood until it returns NoMoveFound. It then switches to the other Neighborhood.
+  * it returns the result of the first Neighborhood until it returns NoMoveFound.
+  * It then switches to the other Neighborhood.
   * it does not come back to the first one after the second one is exhausted
   * @author renaud.delandtsheer@cetic.be
   */
