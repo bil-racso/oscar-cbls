@@ -22,6 +22,7 @@ import scala.collection._
 import scala.collection.generic._
 import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
+import scala.util.Random
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -120,6 +121,11 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
       domain.value.prevValue(value - 1)
     }
   }
+  
+  /**
+   * @return A random value in the domain of the variable (uniform distribution)
+   */
+  override def randomValue(rand: Random): Int = domain.value.randomValue(rand)
 
   /**
    * @return  the size of the domain

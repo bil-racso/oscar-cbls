@@ -1,5 +1,7 @@
 package oscar.cp.core
 
+import scala.util.Random
+
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
  * 1 is used for true, 0 for false.
@@ -31,6 +33,8 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
   def valueAfter(value: Int): Int = x.valueAfter(value)
 
   def valueBefore(value: Int): Int = x.valueBefore(value)
+  
+  def randomValue(rand: Random): Int = x.randomValue(rand)
 
   def updateMin(value: Int) = x.updateMin(value)
 

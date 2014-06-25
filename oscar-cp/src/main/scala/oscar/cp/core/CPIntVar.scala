@@ -20,6 +20,7 @@ package oscar.cp.core
 import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
+import scala.util.Random
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -81,20 +82,12 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * @return A random value in the domain of the variable (uniform distribution)
    */
-  def randomValue: Int = {
-    val ind = store.getRandom().nextInt(size);
-    this.toArray.apply(ind)
-    /*
-		var cpt = 0;
-		for (v: Int <- this) {
-			if (cpt == ind) {
-				return v
-			}
-			cpt += 1
-		}
-		min
-		*/
-  }
+  def randomValue(rand: Random): Int
+  
+  /**
+   * @return A random value in the domain of the variable (uniform distribution)
+   */
+  def randomValue: Int = randomValue(store.getRandom)
 
   /**
    * @return The median value of the domain of the variable
