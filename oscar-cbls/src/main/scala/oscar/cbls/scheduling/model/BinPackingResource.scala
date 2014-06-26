@@ -56,14 +56,20 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
   }
 
   /**called by activities to register itself to the resource*/
-  def notifyUsedBy(j: Activity, amount: Int) {
-    require(!ActivitiesAndItems.isDefinedAt(j), "an activity cannot use the same BinPacking resource several times")
-    ActivitiesAndItems += ((j, new ShiftedItem(
-      number=newItemNumber(),
-      size=amount,
-      bin=CBLSIntVar(planning.model, name="bin of activity " + j),
-      offset = j.earliestStartDate
-    )))
+  override def notifyUsedBy(j: Activity, varAmount: CBLSIntVar) {
+    varAmount match{
+      case c:CBLSIntConst => {
+        val amount = c.value
+        require(!ActivitiesAndItems.isDefinedAt(j), "an activity cannot use the same BinPacking resource several times")
+        ActivitiesAndItems += ((j, new ShiftedItem(
+          number=newItemNumber(),
+          size=amount,
+          bin=CBLSIntVar(planning.model, name="bin of activity " + j),
+          offset = j.earliestStartDate
+        )))
+      }
+      case _ => throw new Error("binPacking resoruces cannot use CBLSIntVar, only constants")
+    }
   }
 
   val binCount:Int = planning.maxDuration * maxBinsPerTimeUnit

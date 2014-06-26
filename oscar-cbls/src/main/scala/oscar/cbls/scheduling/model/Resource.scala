@@ -17,7 +17,6 @@ abstract class Resource(planning:Planning, n:String) {
   def maxDuration = planning.maxDuration
   val name = Option(n) getOrElse s"Resource $ResourceID"
 
-
   /**The set of activities using this resource at every position*/
   val use = Array.tabulate(maxDuration+1)(t => new CBLSSetVar(model, 0, Int.MaxValue, s"use_amount_${name}_at_time_$t"))
 
@@ -46,5 +45,7 @@ abstract class Resource(planning:Planning, n:String) {
   def baseActivityForEjection(t:Int):Iterable[Activity]
 
   def toAsciiArt(headerLength:Int):String
+
+  def notifyUsedBy(a: Activity, amount:CBLSIntVar)
 }
 

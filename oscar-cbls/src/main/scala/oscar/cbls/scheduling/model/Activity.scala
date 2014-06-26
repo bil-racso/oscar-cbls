@@ -85,16 +85,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
   def uses(n: CBLSIntVar): ActivityAndAmount = ActivityAndAmount(this, n)
 
   case class ActivityAndAmount(t: Activity, amount: CBLSIntVar) {
-    def ofResource(r: CumulativeResource) {
-      t.usesCumulativeResource(r, amount)
-    }
-
-    def ofResources(rr: CumulativeResource*) {
-      for (r <- rr) { t.usesCumulativeResource(r, amount) }
-    }
-
-    def ofResources(rr: Iterable[CumulativeResource]) {
-      rr.foreach(t.usesCumulativeResource(_, amount))
+    def ofResource(r: Resource) {
+      t.usesResource(r, amount)
     }
   }
 
@@ -113,7 +105,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
    * @param amount the amount of this resource that the activity uses
    * FIXME potential problem if amount = 0
    */
-  def usesCumulativeResource(r: CumulativeResource, amount: CBLSIntVar) {
+  def usesResource(r: Resource, amount: CBLSIntVar) {
     r.notifyUsedBy(this, amount)
   }
 

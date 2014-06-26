@@ -346,7 +346,7 @@ case class VariableResource(planning: Planning with VariableResources,
         case Some(restrictionTask) => restrictionTask
       }
 
-    restrictionTask.usesCumulativeResource(this, occupation)
+    restrictionTask.usesResource(this, occupation)
     //    println("At " + time + ": " +
     //      occupation + " / " + resource.maxAmount + " of " + resource.name)
   }
