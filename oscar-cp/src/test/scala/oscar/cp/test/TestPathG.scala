@@ -26,7 +26,7 @@ import oscar.cp.modeling._
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be
  */
-/*
+
 class TestPathG extends FunSuite with ShouldMatchers  {
 
   test("Test 1 : Test constraint initial propagation") {
@@ -257,4 +257,3 @@ class TestPathG extends FunSuite with ShouldMatchers  {
     g.requiredEdges(3).sorted  should be (List(4))
   }
 }
-*/

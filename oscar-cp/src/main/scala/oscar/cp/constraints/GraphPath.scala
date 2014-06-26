@@ -158,7 +158,6 @@ class GraphPath(val g : CPGraphVar, src : Int, dest : Int, w : (Int,Int) => Int,
       val (minDist, maxDist) : (Int,Int) = computeBounds
       if (minDist==maxDist){
         val outcome = isEntailed(g.possibleNodes, g.requiredNodes)
-        if (outcome == Suspend) return Failure
         outcome
       } else {
         if (minDist > I.min) if (I.updateMin(minDist) == Failure) return Failure
@@ -420,12 +419,16 @@ class GraphPath(val g : CPGraphVar, src : Int, dest : Int, w : (Int,Int) => Int,
         }
       } 
       
-      var possEdges : List[(Int,Int)] = g.possibleNodes.flatMap(g.possibleOutEdges(_)).map(g.edge(_))
-      val reqEdges : List[(Int,Int)] = g.requiredNodes.flatMap(g.requiredOutEdges(_)).map(g.edge(_))
+      val reqNodes = g.requiredNodes
+      var possEdges : List[(Int,Int)] = reqNodes.flatMap(g.possibleOutEdges(_)).map(g.edge(_))
+      // possible edges for the spanning tree are edges that have both endPoints required
+      possEdges = possEdges.filter(e => reqNodes.contains(e._1) && reqNodes.contains(e._2))
+      val reqEdges : List[(Int,Int)] = reqNodes.flatMap(g.requiredOutEdges(_)).map(g.edge(_))  
       var sumWeights = 0
       
       // build connected components with required edges or the minimal possible edge if no requiredEdges
       if (reqEdges.isEmpty){
+        if (possEdges.isEmpty) return 0 // no edges
         val edge = possEdges.minBy(t => w(t._1,t._2))
         possEdges = possEdges diff List(edge)
         addConnectEdge(edge._1, edge._2)
@@ -454,11 +457,13 @@ class GraphPath(val g : CPGraphVar, src : Int, dest : Int, w : (Int,Int) => Int,
     }
     
     private def computeBounds() : (Int,Int) = {
-      val minB = minSpanTreeWeight
+      val lmin = g.requiredNodes.map(g.possibleOutEdges(_))
+      val minH = lmin.map(innerList => if (innerList.isEmpty) 0 else innerList.map(e => w(g.edge(e)._1,g.edge(e)._2)).min).sum
+      val minSpan = minSpanTreeWeight // efficient when all nodes are mandatory
+      val minB = List(minH,minSpan).max
       
-      val l = g.possibleNodes.map(g.possibleOutEdges(_))
-      val maxL = l.map(innerList => if (innerList.isEmpty) 0 else innerList.map(e => w(g.edge(e)._1,g.edge(e)._2)).max).sum
-      val maxB = List(maxL,2*minB).min
+      val lmax = g.possibleNodes.map(g.possibleOutEdges(_))
+      val maxB = lmax.map(innerList => if (innerList.isEmpty) 0 else innerList.map(e => w(g.edge(e)._1,g.edge(e)._2)).max).sum
       
       (minB, maxB)
     }
