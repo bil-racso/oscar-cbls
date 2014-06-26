@@ -28,7 +28,7 @@ import scala.math.pow
 import scala.math.round
 import scala.math.sqrt
 
-import org.scalatest.FunSuite
+import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cbls.invariants.core.computation.Store
@@ -40,7 +40,7 @@ import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 
-class TestUnroutedAndPenalty extends FunSuite with ShouldMatchers {
+class TestUnroutedAndPenalty extends FunSuite with Matchers {
 
   def fixture =
     new {

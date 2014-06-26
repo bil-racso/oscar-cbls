@@ -4,6 +4,7 @@ import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPOutcome
+import scala.util.Random
 
 /** 
  *  @author Renaud Hartert 
@@ -15,6 +16,7 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
 
   private val _min = new ReversibleInt(s, minValue)
   private val _max = new ReversibleInt(s, maxValue)
+  // Values with a position strictly lower than size are possible
   private val _size = new ReversibleInt(s, maxValue - minValue + 1)
 
   private val values = Array.tabulate(size)(i => i)
@@ -36,6 +38,11 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
     else updateMaxValue()
   }
 
+  override def randomValue(rand: Random): Int = {
+    val i = rand.nextInt(_size.value)
+    values(i)
+  }
+  
   private def checkVal(v: Int): Boolean = {
     v >= offset &&
     v <= offset + values.size - 1

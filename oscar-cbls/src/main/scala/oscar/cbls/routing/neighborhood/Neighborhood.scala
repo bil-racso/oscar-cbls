@@ -111,6 +111,7 @@ abstract class Neighborhood() {
     var bestMove: Option[Move] = None
     var bestObj = Int.MaxValue
     while (true) {
+      //println("VRP before trying next move: " + s.vrp)
       firstImprovingMove(s, moveAcceptor) match {
         case None => return bestMove
         case Some(move) if (move.objAfter < bestObj) =>
@@ -171,7 +172,7 @@ case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
                       vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
                                with MoveDescription,
-                      abort: Unit => Boolean = (_ => false))
+                      abort: () => Boolean = {() => false})
 // format: ON
 
 abstract class SearchResult {

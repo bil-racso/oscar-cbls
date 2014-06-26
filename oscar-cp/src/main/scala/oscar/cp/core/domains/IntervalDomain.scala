@@ -5,6 +5,7 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPOutcome
 import oscar.algo.reversible.ReversiblePointer
+import scala.util.Random
 
 /** 
  *  @author Renaud Hartert 
@@ -33,6 +34,11 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
     _max.value
   }
   
+  override def randomValue(rand: Random): Int = {
+    val minVal = _min.value
+    minVal + rand.nextInt(_max.value - minVal + 1)
+  }
+  
   override def isEmpty: Boolean = _max.value < _min.value
   
   /**
@@ -59,6 +65,7 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
     if (value == _min.value) incrMin()
     else if (value == _max.value) decrMax()
     else if (value > _min.value && value < _max.value) {
+      // Change of representation
       val sparse = new SparseDomain(domain.node, _min.value, _max.value)
       domain.value = sparse
       sparse.removeValue(value)

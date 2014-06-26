@@ -1,6 +1,7 @@
 package oscar.cp.core.domains
 
 import oscar.cp.core.CPOutcome
+import scala.util.Random
 
 /** @author Renaud Hartert */
 
@@ -15,6 +16,8 @@ abstract class IntDomain extends Iterable[Int] {
   def max: Int
 
   def min: Int
+  
+  def randomValue(rand: Random): Int
   
   def hasValue(value: Int): Boolean
   

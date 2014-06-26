@@ -127,6 +127,59 @@ case class Inter(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 }
 
+case class SetMap(a: CBLSSetVar, fun: Int=>Int,
+               override val myMin:Int = Int.MinValue,
+               override val myMax:Int = Int.MaxValue) extends SetInvariant {
+
+  var output: CBLSSetVar = null
+
+  registerStaticAndDynamicDependency(a)
+  finishInitialization()
+
+  var outputCount:SortedMap[Int,Int] = SortedMap.empty
+
+  override def setOutputVar(v: CBLSSetVar) {
+    output = v
+    output.setDefiningInvariant(this)
+
+    output := SortedSet.empty
+
+    for(v <- a.value){
+      val mappedV = fun(v)
+      val oldCount = outputCount.getOrElse(mappedV,0)
+      if(oldCount == 0){
+        output :+= mappedV
+      }
+      outputCount += ((mappedV, oldCount+1))
+    }
+  }
+
+  @inline
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+    val mappedV = fun(value)
+    val oldCount = outputCount.getOrElse(mappedV,0)
+    if(oldCount == 0){
+      output :+= mappedV
+    }
+    outputCount += ((mappedV, oldCount+1))
+  }
+
+  @inline
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+    val mappedV = fun(value)
+    val oldCount = outputCount.getOrElse(mappedV,0)
+    if(oldCount == 1){
+      output :-= mappedV
+    }
+    outputCount += ((mappedV, oldCount-1))
+
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(output.value.intersect(a.value.map(fun)).size == output.value.size)
+  }
+}
+
 /**
  * left MINUS right, the set diff operator
  * @param left is the base set

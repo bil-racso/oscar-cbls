@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.cp.core;
 
+import scala.util.Random
+
 /**
  * Represents a view on variable applying an offset on it.
  * @author Cyrille Dejemeppe Cyrille.Dejemeppe@gmail.com
@@ -55,6 +57,8 @@ class CPIntVarViewTimes(v: CPIntVar,val a: Int) extends CPIntVar(v.store) {
 	def valueAfter(value: Int): Int = v.valueAfter(floor_div(value, a)) * a
 	
 	def valueBefore(value: Int): Int = v.valueBefore(ceiling_div(value, a)) * a
+	
+	def randomValue(rand: Random): Int = v.randomValue(rand) * a
 	
 	def updateMin(value: Int) = v.updateMin(ceiling_div(value, a))
 	

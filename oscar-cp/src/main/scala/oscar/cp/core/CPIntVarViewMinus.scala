@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.cp.core;
 
+import scala.util.Random
+
 /**
  * Represents a view -x on variable x 
  * @author Pierre Schaus pschaus@gmail.com
@@ -38,6 +40,8 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar(v.store) {
 	def valueAfter(value: Int): Int = -v.valueBefore(-value)
 	
 	def valueBefore(value: Int): Int = -v.valueAfter(-value)
+	
+	def randomValue(rand: Random): Int = -v.randomValue(rand)
 	
 	def updateMin(value: Int) = v.updateMax(-value)
 	

@@ -122,6 +122,58 @@ case class DenseCluster(values:Array[CBLSIntVar], clusters:Array[CBLSSetVar]) ex
   }
 }
 
+
+/**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
+  * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class TranslatedDenseCluster(values:Array[CBLSIntVar],  indicesArray:Array[Int], clusters:Array[CBLSSetVar]) extends Invariant {
+
+  //We register the static and dynamic dependencies.
+  //Dynamic dependencies are the ones considered for the notifications.
+  //Static dependencies are the ones considered for ordering the propagations
+  for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
+
+  //This must be called once all static dependencies are registered
+  //It must be called before the output dependencies are notified
+  finishInitialization()
+
+  //We then define the variable that we control
+  //By theway, an initial value is set to each of them (SortedSet.empty)
+  for(c <- clusters){
+    c.setDefiningInvariant(this) //A variable can only have a single controlling invariant
+    c.setValue(SortedSet.empty)
+  }
+
+  //We then complete the initialization the output variables to the value they should have
+  for(v <- values.indices){
+    clusters(values(v).value).insertValue(indicesArray(v))
+  }
+
+  //This method is called by each IntVar that is registered to the dynamic dependency graph.
+  //We update the output variables incrementally based on this update.
+  override def notifyIntChanged(v:CBLSIntVar,index:Int,OldVal:Int,NewVal:Int){
+    assert(values(index) == v)
+    clusters(OldVal).deleteValue(indicesArray(index))
+    clusters(NewVal).insertValue(indicesArray(index))
+  }
+
+  //This method is optional, it is called by the model when its debug mode is activated (see the constructor of model)
+  //In this method, we check that the outputs are correct, based on non-incremental code
+  override def checkInternals(c:Checker){
+    for(v <- values.indices){
+      c.check(clusters(values(v).value).value.contains(indicesArray(v)),
+        Some("clusters(values(v (" + v + ")).value (" + values(v).value + ")).value.contains(v)"))
+    }
+    for(value <- clusters.indices){
+      for (indices1 <- clusters(value).value; indices = indicesArray(indices1)){
+        c.check(values(indices).value == value,
+          Some("values(indices).value (" + values(indices).value + ") == value (" + value + ")"))
+      }
+    }
+  }
+}
+
 /**This is a helper object for the [[oscar.cbls.invariants.lib.logic.DenseCluster]]
   * and [[oscar.cbls.invariants.lib.logic.SparseCluster]]
   * invariants.
