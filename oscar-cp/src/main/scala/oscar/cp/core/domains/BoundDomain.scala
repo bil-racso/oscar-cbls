@@ -12,13 +12,13 @@ import scala.util.Random
  *  @author Pierre Schaus
  */
 
-class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, val maxValue: Int) extends IntDomain {
+class BoundDomain(context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntervalIntDomain {
   
   private val _maxValue = if (maxValue - minValue - 1 < Int.MaxValue) maxValue 
   else sys.error("the domain contains more than Int.MaxValue values")
   
-  private val _min = new ReversibleInt(domain.node, minValue)
-  private val _max = new ReversibleInt(domain.node, _maxValue)
+  private val _min = new ReversibleInt(context, minValue)
+  private val _max = new ReversibleInt(context, _maxValue)
   
   override def size: Int = _max - _min + 1
   
@@ -59,18 +59,6 @@ class IntervalDomain(domain: ReversiblePointer[IntDomain], val minValue: Int, va
     if (isEmpty || value < _min) value + 1
     else if (value > _max) _max
     else value
-  }
-  
-  override def removeValue(value: Int): CPOutcome = {
-    if (value == _min.value) incrMin()
-    else if (value == _max.value) decrMax()
-    else if (value > _min.value && value < _max.value) {
-      // Change of representation
-      val sparse = new SparseDomain(domain.node, _min.value, _max.value)
-      domain.value = sparse
-      sparse.removeValue(value)
-    }
-    else Suspend
   }
   
   override def hasValue(value: Int) = {
