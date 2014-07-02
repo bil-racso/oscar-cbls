@@ -2,8 +2,11 @@ package oscar.cp.core.domains
 
 import oscar.cp.core.CPOutcome
 import scala.util.Random
+import oscar.algo.reversible.ReversibleContext
 
-abstract class IntervalIntDomain extends Iterable[Int] {
+abstract class IntervalDomain extends Iterable[Int] {
+  
+  def context: ReversibleContext
 
   def size: Int
 

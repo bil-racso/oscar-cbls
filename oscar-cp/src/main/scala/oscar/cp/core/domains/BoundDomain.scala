@@ -12,7 +12,7 @@ import scala.util.Random
  *  @author Pierre Schaus
  */
 
-class BoundDomain(context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntervalIntDomain {
+class BoundDomain(override val context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntervalDomain {
   
   private val _maxValue = if (maxValue - minValue - 1 < Int.MaxValue) maxValue 
   else sys.error("the domain contains more than Int.MaxValue values")
@@ -109,7 +109,11 @@ class BoundDomain(context: ReversibleContext, val minValue: Int, val maxValue: I
   }
   
   override def assign(value: Int): CPOutcome = {
-    if (!hasValue(value)) Failure 
+    if (!hasValue(value)) {
+      _max.value = value
+      _min.value = value + 1
+      Failure 
+    }
     else {
       _min.value = value
       _max.value = value

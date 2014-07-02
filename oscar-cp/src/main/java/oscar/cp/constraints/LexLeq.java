@@ -56,10 +56,10 @@ public class LexLeq extends Constraint {
 		
 		this.x = x;
 		this.y = y;
-		q = new ReversibleInt(super.s());
-		r = new ReversibleInt(super.s());		
-		s = new ReversibleInt(super.s());
-		u = new ReversibleInt(super.s());
+		q = new ReversibleInt(super.s(), 0);
+		r = new ReversibleInt(super.s(), 0);		
+		s = new ReversibleInt(super.s(), 0);
+		u = new ReversibleInt(super.s(), 0);
 		u.setValue(0);
 		
 		posted = false;

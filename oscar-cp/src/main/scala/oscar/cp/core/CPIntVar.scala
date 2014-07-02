@@ -412,7 +412,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return a variable in the same store representing: x - y
    */
   def minus(y: CPIntVar) = {
-    val c = new CPIntVarImpl(store, min - y.max, max - y.min);
+    val c = CPIntVarImpl(store, min - y.max, max - y.min);
     store.post(new oscar.cp.constraints.Minus(this, y, c));
     c;
   }
@@ -434,7 +434,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     if (y.isBound) {
       this.plus(y.value)
     } else {
-      val c = new CPIntVarImpl(store, min + y.min, max + y.max);
+      val c = CPIntVarImpl(store, min + y.min, max + y.max);
       val ok = store.post(new oscar.cp.constraints.BinarySum(this, y, c));
       assert(ok != CPOutcome.Failure);
       c
@@ -477,7 +477,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     val d = y.max
     import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-    val z = new CPIntVarImpl(store, t.min, t.max)
+    val z = CPIntVarImpl(store, t.min, t.max)
     val ok = store.post(new oscar.cp.constraints.MulVar(this, y, z))
     assert(ok != CPOutcome.Failure);
     z
@@ -487,7 +487,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return a variable in the same store representing: |x|
    */
   def abs(): CPIntVar = {
-    val c = new CPIntVarImpl(store, 0, Math.max(Math.abs(min), Math.abs(max)));
+    val c = CPIntVarImpl(store, 0, Math.max(Math.abs(min), Math.abs(max)));
     val ok = store.post(new oscar.cp.constraints.Abs(this, c));
     assert(ok != CPOutcome.Failure);
     return c
@@ -783,7 +783,7 @@ object CPIntVar {
    * as initial domain.
    */
   def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    new CPIntVarImpl(store, minValue, maxValue, name)
+    CPIntVarImpl(store, minValue, maxValue, name)
   }
 
   /**
@@ -803,7 +803,7 @@ object CPIntVar {
    * @param store the CPStore in which the variable is created
    * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = new CPIntVarImpl(store, value, value, name)
+  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, name)
 
   /**
    * Creates a new CP Integer Variable assigned to value
@@ -811,7 +811,7 @@ object CPIntVar {
    * @param store the CPStore in which the variable is created
    * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPIntVar = new CPIntVarImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, "")
 
   @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int], name: String): CPIntVar = apply(values, name)(store)
@@ -840,7 +840,7 @@ object CPIntVar {
   /** Builds a CPIntVar from a range */
   private def rangeDomain(domain: Range, name: String, store: CPStore): CPIntVar = {
     if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
-    else new CPIntVarImpl(store, domain.min, domain.max, name)
+    else CPIntVarImpl(store, domain.min, domain.max, name)
   }
 
   /** Builds a CPIntVar from an iterable */
@@ -850,7 +850,7 @@ object CPIntVar {
   private def setDomain(domain: Set[Int], name: String, store: CPStore): CPIntVar = {
     val min = domain.min
     val max = domain.max
-    val x = new CPIntVarImpl(store, min, max, name)
+    val x = CPIntVarImpl(store, min, max, name)
     if (max - min + 1 > domain.size) {
       for (v <- min to max if !domain.contains(v)) {
         x.removeValue(v)

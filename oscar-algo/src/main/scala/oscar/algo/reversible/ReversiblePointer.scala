@@ -27,7 +27,7 @@ package oscar.algo.reversible
 class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible(n) {
   
   // Pointer to the object to trail
-  private var pointer: T = v
+  protected var pointer: T = v
 
   def setValue(value: T): Unit = {
     if (value != pointer) {

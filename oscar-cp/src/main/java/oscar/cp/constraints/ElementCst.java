@@ -65,9 +65,9 @@ public class ElementCst extends Constraint {
 			public int compare(Integer i1, Integer i2) {
 				return (y[i1]-y[i2]);
 			}});
-		minIndSupp = new ReversibleInt(s());
+		minIndSupp = new ReversibleInt(s(), 0);
 		minIndSupp.setValue(0);
-		maxIndSupp = new ReversibleInt(s());
+		maxIndSupp = new ReversibleInt(s(), 0);
 		maxIndSupp.setValue(y.length-1);
 		
 	}

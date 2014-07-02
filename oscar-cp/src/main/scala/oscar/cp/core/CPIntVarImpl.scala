@@ -21,15 +21,13 @@ import oscar.algo.reversible.ReversiblePointer
 import scala.collection._
 import scala.collection.generic._
 import scala.util.Random
+import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") extends CPIntVar(st, name) {
-
-  // Reversible pointer to the domain structure (can change from interval to sparse set) 
-  private val domain: AdaptableIntDomain = new AdaptableIntDomain(st, minimum, maximum)
+class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntVar(store, name) {
 
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
@@ -42,12 +40,6 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-
-  /**
-   * Builds a variable with domain defined by the range into the store s
-   * @param r a scala range
-   */
-  def this(st: CPStore, r: Range) = this(st, r.start, if (r.isInclusive) r.end else r.end - 1)
 
   def transform(v: Int) = v
 
@@ -476,5 +468,12 @@ class CPIntVarImpl(st: CPStore, minimum: Int, maximum: Int, name: String = "") e
   def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
     delta(sn.oldMin, sn.oldMax, sn.oldSize)
+  }
+}
+
+object CPIntVarImpl {
+  def apply(store: CPStore, minimum: Int, maximum: Int, name: String = ""): CPIntVarImpl = {
+    val domain = new AdaptableIntDomain(store, minimum, maximum)
+    new CPIntVarImpl(store, domain, name)
   }
 }
