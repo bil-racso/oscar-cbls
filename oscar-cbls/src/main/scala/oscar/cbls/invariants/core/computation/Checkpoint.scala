@@ -30,33 +30,79 @@ trait Checkpointing extends Store{
     * notice that all preceding checkpoints can still be restored ass well,
     * @return the checkpoint
     */
-  def defineCheckpoint():Checkpoint
+  def defineCheckpoint():Checkpoint = {
+
+    recorder.recordingCheckpoint = new Checkpoint(recorder.recordingCheckpoint)
+
+    if(recorder.active){
+      recorder.reactivateForNewCheckpoint
+    }else{
+      recorder.active = true;
+    }
+    recorder.recordingCheckpoint
+  }
 
   /** restores the given checkpoint.
     * notice that all preceding checkpoints can still be restored ass well,
     * not the checkpoints that have been defined later
-    * notice that when a checkpoint is restored, the recording mechanism is deactivated
+    * notice that when a checkpoint is restored, the recording mechanism is still active and starts at this checkpoint
     * @param c
     */
-  def restoreCheckpoint(c:Checkpoint){
+  def rollBackTo(c:Checkpoint){
+    require(recorder.active)
+    while(recorder.recordingCheckpoint != c && recorder.recordingCheckpoint != null){
+      recorder.recordingCheckpoint.rollBackSingleCheckpoint()
+      recorder.recordingCheckpoint = recorder.recordingCheckpoint.prevCheckpoint
+    }
 
+    if(recorder.recordingCheckpoint != c){
+      throw new Error("checkpoint is not live, could not be restored (state was restored to the oldest checkpoint)")
+    }else{
+      recorder.recordingCheckpoint.rollBackSingleCheckpoint()
+      recorder.recordingCheckpoint.clear()
+    }
+    recorder.reactivateForNewCheckpoint
+  }
+
+  /** when you are sure of where you are, you can forget about past chekpoints
+    *
+    * @param c
+    */
+  def dropAllCheckpointsBefore(c:Checkpoint){
+    require(recorder.active)
+    c.prevCheckpoint = null
   }
 
   /** defines a new checkpoint, and drop all live ones.
     * it is the most efficient one
     * @return a new checkpoint
     */
-  def defineCheckpointAndDropAllOthers():Checkpoint
+  def defineCheckpointAndDropAllOthers():Checkpoint = {
+    require(recorder.active)
+    val toReturn = defineCheckpoint()
+    dropAllCheckpointsBefore(toReturn)
+    toReturn
+  }
 
   /** this drops all live checkpoints
     * and deactivate the checkpointing mechanism
+    * (notice that activating and deactivating checkpointing takes time)
     */
-  def dropAllCheckpoints()
+  def turnOffCheckpointing(){
+    recorder.active = false
+    recorder.recordingCheckpoint = null
+  }
 
   /**
    * @return the list of live checkpoints, that can be restored
    */
-  def liveCheckpoints:List[Checkpoint]
+  def liveCheckpoints:List[Checkpoint] = {
+    def accumulate(c:Checkpoint):List[Checkpoint] = {
+      if(c == null)List.empty
+      else c :: accumulate(c.prevCheckpoint)
+    }
+    accumulate(recorder.recordingCheckpoint)
+  }
 
   override def close(DropStaticGraph: Boolean){
     performCallsBeforeClose()
@@ -71,6 +117,7 @@ class ChangeRecorder(s:Store) extends Invariant{
 
   private var myActive = false
   var recordingCheckpoint:Checkpoint = null
+  var changesVariables:List[(Variable,Int)] = List.empty
 
   def active_=(a:Boolean){
     if(a && !myActive){
@@ -114,8 +161,6 @@ class ChangeRecorder(s:Store) extends Invariant{
     changesVariables = List.empty
   }
 
-  var changesVariables:List[(Variable,Int)] = List.empty
-
   override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
     val moveForUndo:(Unit=>Unit) = (_ => v := OldVal)
     varHasChanged(v, i)
@@ -137,15 +182,20 @@ class ChangeRecorder(s:Store) extends Invariant{
   }
 }
 
-class Checkpoint(var nextCheckpoint:Checkpoint = null){
+class Checkpoint(var prevCheckpoint:Checkpoint = null){
   private var undoList:List[(Unit=>Unit)] = List.empty
 
   protected[cbls] def addUndo(op:(Unit=>Unit)){
     undoList = op :: undoList
   }
 
-  protected[cbls] def undoHistory(){
-    for(op <- undoList) op   //TODO: check this!
+  protected[cbls] def rollBackSingleCheckpoint(){
+    for(op <- undoList) op
+    undoList = null //this is to ensure a crash in case we try to undo twice.
+  }
+
+  protected[cbls] def clear(){
+    undoList = List.empty
   }
 }
 
