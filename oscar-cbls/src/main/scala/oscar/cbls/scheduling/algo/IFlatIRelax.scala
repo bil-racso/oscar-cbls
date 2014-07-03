@@ -134,7 +134,6 @@ class IFlatIRelax(p: Planning,
         bestMakeSpan = p.makeSpan.value
         plateaulength = 0
         if (verbose) println("Better MakeSpan found")
-        p.updateVisual()
       } else {
         plateaulength += 1
         p.clean()

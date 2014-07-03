@@ -24,7 +24,6 @@ import scheduling.algo.IFlatIRelax
 import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
 
 /**
- * THIS PACKAGE IS EXPERIMENTAL
  *
  *  This package is a scheduling library.
  * it supports

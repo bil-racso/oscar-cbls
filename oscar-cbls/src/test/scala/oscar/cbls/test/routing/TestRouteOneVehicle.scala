@@ -23,7 +23,7 @@
 
 package oscar.cbls.test.routing
 
-import org.scalatest.FunSuite
+import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cbls.invariants.core.computation.{ CBLSIntVar, Store }
 import oscar.cbls.invariants.lib.logic.Routes
@@ -34,7 +34,7 @@ import scala.language.reflectiveCalls
  * verifies the domain of a variable variable.
  * These tests (with star) show the lack of robustness of the current framework.
  */
-class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
+class TestRouteOneVehicle extends FunSuite with Matchers {
 
   def fixture =
     new {
@@ -88,11 +88,11 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
     val f = fixture
     f.model.propagate()
 
-    evaluating {
+    an [java.lang.Error] should be thrownBy {
       f.next(5) := 1
       f.next(0) := f.UNROUTED
       f.model.propagate()
-    } should produce[java.lang.Error]
+    }
   }
 
   test("Unroute 2 and 4") {
@@ -188,10 +188,12 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
 
   test("* form a cycle") {
     val f = fixture
-    evaluating {
+
+    an [java.lang.Error] should be thrownBy {
       f.next(4) := 3
       f.model.propagate()
-    } should produce[java.lang.Error]
+    }
+
   }
 
   test("form a temp cycle") {
@@ -216,13 +218,12 @@ class TestRouteOneVehicle extends FunSuite with ShouldMatchers {
   test("* temp depot unrouted") {
     val f = fixture
 
-    evaluating {
+    an [java.lang.Error] should be thrownBy {
       f.next(0) := f.UNROUTED
       f.next(4) := 1
       f.next(5) := 2
       f.next(0) := 5
       f.model.propagate()
-    } should produce[java.lang.Error]
-
+    }
   }
 }
