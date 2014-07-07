@@ -26,6 +26,7 @@ case object ProblemSolved extends SearchResult
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
   def objAfter = m.objAfter
+  override def toString():String = m.toString()
 }
 
 object SearchResult {
@@ -196,15 +197,4 @@ abstract class StatelessNeighborhood extends Neighborhood{
   */
 case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove: SearchResult = NoMoveFound
-}
-
-case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
-
-  override def commit() {i := v}
-
-  override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
-  }
 }

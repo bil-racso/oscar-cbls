@@ -1127,6 +1127,13 @@ abstract class IntInvariant extends Invariant{
     a
   }
 
+  def toIntVar(name:String):CBLSIntVar = {
+    val a = new CBLSIntVar(model, (myMin to myMax), 0, name)
+    a <== this //ca invoque setOutputVar en fait.
+    a
+  }
+
+
   /**this method is called by the output variable
     * basically, the invariant does not know what is its output variable at creation time.
     * if this is an issue, you can always create an output variable internally,
@@ -1147,11 +1154,20 @@ object IntInvariant{
 abstract class SetInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
-  implicit def toIntSetVar:CBLSSetVar = {
+  implicit def toSetVar:CBLSSetVar = {
     val a = new CBLSSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
+    a <== this //the variable calls setOutputVar
+    a
+  }
+
+  def toSetVar(name:String):CBLSSetVar = {
+    val a = new CBLSSetVar(model,myMin,myMax,name,SortedSet.empty)
     a <== this //the variable calls setoutputVar
     a
   }
+
+  @deprecated("use toSetVar instead", "1.1")
+  def toIntSetVar:CBLSSetVar = toSetVar
 
   /**this method is called by the output variable
     * basically, the invariant does not know what is its output variable at creation time.
@@ -1164,7 +1180,7 @@ abstract class SetInvariant extends Invariant{
 }
 
 object SetInvariant{
-  implicit def toIntSetVar(i:SetInvariant):CBLSSetVar = i.toIntSetVar
+  implicit def toIntSetVar(i:SetInvariant):CBLSSetVar = i.toSetVar
 }
 
 /** an invariant that is the identity function

@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
   * @author renaud.delandtsheer@cetic.be
   * */
-case class Filter(var values:Array[CBLSIntVar], cond:(Int=>Boolean)=_>0) extends SetInvariant {
+case class Filter(values:Array[CBLSIntVar], cond:(Int=>Boolean)=_>0) extends SetInvariant {
   var output:CBLSSetVar=null
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
