@@ -84,21 +84,104 @@ abstract class Neighborhood{
     toReturn
   }
 
+  /** this composer randomly tries one neighborhood.
+    * it tries the other if the first did not find any move
+    * @param b another neighborhood
+    * @author renaud.delandtsheer@cetic.be
+    */
   def random(b:Neighborhood):Neighborhood = new Random(this,b)
+
+  /** this composer sequentially tries all neighborhoods until one move is found
+    * between calls, it will roll back to the first neighborhood
+    * it tries a first, and if no move it found, tries b
+    * a is reset if it did not find anything.
+    * @param b another neighborhood
+    * @author renaud.delandtsheer@cetic.be
+    */
   def orElse(b:Neighborhood):Neighborhood = new OrElse(this,b)
+
+  /**this composer always selects the best move between the two parameters
+    * notice that this combinator makes more sense
+    * if the two neighborhood return their best found move,
+    * and not their first found move, as usually done.
+    * @author renaud.delandtsheer@cetic.be
+    */
   def best(b:Neighborhood):Neighborhood = new Best(this,b)
+
+  /**this composer is stateful.
+    * it returns the result of the first Neighborhood until it returns NoMoveFound.
+    * It then switches to the other Neighborhood.
+    * it does not come back to the first one after the second one is exhausted
+    * @author renaud.delandtsheer@cetic.be
+    */
   def exhaust(b:Neighborhood):Neighborhood = new Exhaust(this,b)
+
+  /**this composer is stateful.
+    * it returns the result of one Neighborhood until it returns NoMoveFound.
+    * It then switches to the other Neighborhood.
+    * it starts with Neighborhood a
+    * @author renaud.delandtsheer@cetic.be
+    */
   def exhaustBack(b:Neighborhood):Neighborhood = new ExhaustBack(this,b)
+
+  /**this composer is stateful.
+    * it returns the result of the first Neighborhood until it returns NoMoveFound.
+    * It then switches to the other Neighborhood,
+    * but only if a move was found by the first neighborhood
+    * it does not come back to the first one after the second one is exhausted
+    * @author renaud.delandtsheer@cetic.be
+    */
   def exhaustAndContinueIfMovesFound(b:Neighborhood) = new ExhaustAndContinueIfMovesFound(this, b)
+
+  /**this composer is stateless, it checks the condition on every invocation. If the condition is false,
+    * it does not try the Neighborhood and finds no move.
+    * @author renaud.delandtsheer@cetic.be
+    */
   def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
+
+  /**this one bounds the number of time the search is actually performed
+    * notice that the count is reset by the reset operation
+    * @author renaud.delandtsheer@cetic.be
+    */
   def maxSearches(maxMove:Int) = new BoundSearches(this, maxMove)
+
+  /**this one bounds the number of moves done with this neighborhood
+    * notice that the count is reset by the reset operation
+    * @author renaud.delandtsheer@cetic.be
+    */
   def maxMoves(maxMove:Int) = new BoundMoves(this, maxMove)
+
+  /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
+    * and swaps neighborhood after "step" invocations
+    * @author renaud.delandtsheer@cetic.be
+    */
   def roundRobin(b:Neighborhood):RoundRobinNoParam = new RoundRobinNoParam(this,b)
+
+  /** this combinator attaches a custom code to a given neighborhood.
+    * the code is called whenever a move is asked to the neighborhood.
+    * @param proc the procedure to execute before the neighborhood is queried
+    */
   def onQuery(proc:  => Unit) = new DoOnQuery(this,() => proc)
+
+  /** this combinator attaches a custom code to a given neighborhood.
+    * the code is called whenever a move from this neighborhood is taken
+    * @param proc the procedure to execute when the move is taken
+    */
   def onMove(proc: => Unit) = new DoOnMove(this,() => proc)
+
+  /** this combinator attaches a custom code to a given neighborhood.
+    * the code is called whenever a move from this neighborhood is taken for the first time.
+    * notice that this neighborhood is reset, so first time can occur several times.
+    * @param proc the procedure to call on one first move that is performed from this neighborhood
+    */
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
-  def retry() = new Retry(this)
+
+  /** retries n times the move before concluding to noMove can be found
+    * resets o nhe first found move, or on reset
+    * @param n the maximal number of retries on a before concluding it is dead
+    */
+  def retry(n:Int = 1) = new Retry(this,n)
 
 }
 

@@ -1,9 +1,23 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.cbls.binPacking.solver
 
 //TODO: tabu
 
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.search.moves._
 import oscar.cbls.search.moves.AssignMove
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
@@ -54,11 +68,13 @@ object identicalAggregator{
    * @return a maximal subset of l such that
    *         all items are of different class according to itemClass (with Int.MinValue exception)
    */
-/*  def removeIdenticalClasses[T](l:List[T], itemClass:(T) => Int):List[T] =
-    removeIdenticalClasses[T](l, itemClass, Nil, SortedSet.empty)
+  def removeIdenticalClasses[T](l:List[T], itemClass:T => Int):List[T] = {
+    val a: Set[Int] = SortedSet.empty
+    removeIdenticalClasses[T](l, itemClass, Nil, a)
+  }
 
   private def removeIdenticalClasses[T](l:List[T],
-                                        itemClass:(T) => Int,
+                                        itemClass:T => Int,
                                         canonicals:List[T],
                                         classes:Set[Int]):List[T] = {
     l match{
@@ -70,7 +86,6 @@ object identicalAggregator{
         else removeIdenticalClasses(t, itemClass, h::canonicals, classes+classOfH)
     }
   }
-  */
 }
 
 /** moves one item away from most violated bin
@@ -96,7 +111,7 @@ case class MoveItem(p:BinPackingProblem,
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove():SearchResult = {
+  override def getImprovingMove:SearchResult = {
 
     val oldViolation:Int = p.overallViolation.objective.value
 
@@ -164,7 +179,7 @@ case class SwapItems(p:BinPackingProblem,
   val itemList:List[Item] = p.items.toList.map(_._2)
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove: SearchResult = {
     val oldViolation:Int = p.overallViolation.objective.value
 
     if(p.mostViolatedBins.value.isEmpty){
@@ -233,7 +248,7 @@ case class JumpSwapItems(p:BinPackingProblem)
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove: SearchResult = {
 
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
@@ -270,7 +285,7 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove: SearchResult = {
 
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
@@ -286,7 +301,6 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
         AssignMove(item.bin,newBin.number,0)
       }), 0, "Jump, Emptying bin " + bin1.number
     )
-
   }
 }
 

@@ -288,9 +288,13 @@ class ResetOnExhausted(a:Neighborhood) extends NeighborhoodCombinator(a){
   }
 }
 
-/**
- * @author renaud.delandtsheer@cetic.be
- */
+/**this composer is stateful.
+  * it returns the result of the first Neighborhood until it returns NoMoveFound.
+  * It then switches to the other Neighborhood,
+  * but only if a move was found by the first neighborhood
+  * it does not come back to the first one after the second one is exhausted
+  * @author renaud.delandtsheer@cetic.be
+  */
 class ExhaustAndContinueIfMovesFound(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
   var currentIsA = true
   var movesFoundWithCurrent = false
@@ -353,6 +357,7 @@ class BoundSearches(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombina
 }
 
 /**this one bounds the number of moves done with this neighborhood
+  * notice that the count is reset by the reset operation
   * @author renaud.delandtsheer@cetic.be
   */
 class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a){
