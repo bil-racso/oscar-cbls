@@ -38,6 +38,25 @@ abstract class IntervalDomainSuite extends TestSuite {
     assert((5 to 10).forall(domain.hasValue))
   }
   
+  test("HasValue should return true if value is in the domain") {
+    val context = new ReversibleContext()
+    val domain = intervalDomain(context, 5, 15)
+    assert(domain.hasValue(5))
+    assert(domain.hasValue(10))
+    assert(domain.hasValue(15))
+  }
+  
+  test("HasValue should return false if value is not in the domain") {
+    val context = new ReversibleContext()
+    val domain = intervalDomain(context, 5, 15)
+    assert(!domain.hasValue(-1000))
+    assert(!domain.hasValue(-10))
+    assert(!domain.hasValue(4))
+    assert(!domain.hasValue(16))
+    assert(!domain.hasValue(20))
+    assert(!domain.hasValue(1000))
+  }
+  
   test("UpdateMin should adjust the minimum value and the size") {
     val context = new ReversibleContext()
     val domain = intervalDomain(context, 5, 15)
