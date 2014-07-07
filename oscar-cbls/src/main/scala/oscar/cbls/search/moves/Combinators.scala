@@ -38,6 +38,7 @@ abstract class NeighborhoodCombinator(a:Neighborhood*) extends Neighborhood{
   }
 
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
+
 }
 
 class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a){

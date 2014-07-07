@@ -190,7 +190,7 @@ class Checkpoint(var prevCheckpoint:Checkpoint = null){
   }
 
   protected[cbls] def rollBackSingleCheckpoint(){
-    for(op <- undoList) op
+    for(op <- undoList) op()
     undoList = null //this is to ensure a crash in case we try to undo twice.
   }
 

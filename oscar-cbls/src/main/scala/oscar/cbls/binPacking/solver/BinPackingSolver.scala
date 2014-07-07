@@ -8,6 +8,8 @@ import oscar.cbls.search.moves._
 import oscar.cbls.search.moves.AssignMove
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 
+import scala.collection.immutable.SortedSet
+
 /**
  * this is a standard solver for a binPacking. 
  * it performs a comination of MoveItem, Swaps, randomSwaps and binEmptying
@@ -30,6 +32,7 @@ object BinPackingSolver extends SearchEngineTrait {
  * @author renaud.delandtsheer@cetic.be
  * */
 object identicalAggregator{
+
   def removeIdenticals[T](l:List[T], isIdentical:(T,T) => Boolean):List[T] =
     removeIdenticals[T](l, isIdentical, Nil)
 
@@ -42,17 +45,45 @@ object identicalAggregator{
         else removeIdenticals(t, isIdentical, h::canonicals)
     }
   }
-}
 
+  /**
+   * @param l a list of items such that we want to discard items of identical class
+   * @param itemClass a function that gives a class for a given item.
+   *                  Class Int.MinValue is considered as different from itself
+   * @tparam T
+   * @return a maximal subset of l such that
+   *         all items are of different class according to itemClass (with Int.MinValue exception)
+   */
+  def removeIdenticalClasses[T](l:List[T], itemClass:(T) => Int):List[T] =
+    removeIdenticalClasses[T](l, itemClass, Nil, SortedSet.empty)
+
+  private def removeIdenticalClasses[T](l:List[T],
+                                        itemClass:(T) => Int,
+                                        canonicals:List[T],
+                                        classes:Set[Int]):List[T] = {
+    l match{
+      case Nil => canonicals
+      case h :: t =>
+        val classOfH:Int = itemClass(h)
+        if(classOfH != Int.MinValue && classes.contains(classOfH))
+          removeIdenticalClasses(t, itemClass, canonicals,classes)
+        else removeIdenticalClasses(t, itemClass, h::canonicals, classes+classOfH)
+    }
+  }
+}
 
 /** moves one item away from most violated bin
  * @param p the problem
  * @param best true: the best move is returned, false: the first move is returned tie breaks are both random
- * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing. supposed to be an equivalence relation.
- *                          Identical items must be of the same size, but this does not need to be tested, since an internal pre-filter performs this.
+ * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing.
+  *                          supposed to be an equivalence relation.
+ *                          Identical items must be of the same size, but this does not need to be tested,
+  *                          since an internal pre-filter performs this.
   *                          by default, we consider that items of the same size are identical
- * @param areBinsIdentical only one of identical bins will be considered for moves; this speeds up things. Supposed to be an equivalence relation.
-  *                         items of different sizes will be considered as different by the algorithms through an additional mechanism, so this does not need to be tested.
+ * @param areBinsIdentical only one of identical bins will be considered for moves; this speeds up things.
+  *                         Supposed to be an equivalence relation.
+  *                         items of different sizes will be considered as different by the algorithms
+  *                         through an additional mechanism, so this does not need to be tested.
   *                         by default, we consider that bins with identical free spaces are identical
   * @author renaud.delandtsheer@cetic.be
   * */

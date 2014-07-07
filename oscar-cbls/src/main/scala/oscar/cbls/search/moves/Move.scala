@@ -41,6 +41,12 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoo
   }
 }
 
+
+abstract class Move(val objAfter:Int){
+  def commit()
+}
+
+
 case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
   extends Move(objAfter){
 

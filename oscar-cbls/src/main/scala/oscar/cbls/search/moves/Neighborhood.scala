@@ -20,9 +20,11 @@ import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar}
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
 case object ProblemSolved extends SearchResult
+//case object MovePerformed extends SearchResult
 
-abstract class Move(val objAfter:Int) extends SearchResult{
-  def commit()
+case class MoveFound(m:Move) extends SearchResult{
+  def commit(){m.commit()}
+  def objAfter = m.objAfter
 }
 
 /**
@@ -33,7 +35,7 @@ abstract class Neighborhood{
 
   def getImprovingMove():SearchResult
 
-  //this resets the internal state of the move combinators
+  //this resets the internal state of the Neighborhood
   def reset()
 
   /** verbosity: 0: none
@@ -95,4 +97,6 @@ abstract class Neighborhood{
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
   def retry() = new Retry(this)
+
+  implicit def moveToSearchResult(m:Move):MoveFound = MoveFound(m)
 }
