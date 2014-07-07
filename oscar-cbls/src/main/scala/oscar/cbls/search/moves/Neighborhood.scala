@@ -15,7 +15,7 @@
 
 package oscar.cbls.search.moves
 
-import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import scala.language.implicitConversions
 
 abstract sealed class SearchResult
@@ -38,7 +38,7 @@ object SearchResult {
 abstract class Neighborhood{
 //  def getImprovingMove(acceptor:(Int,Int) => Boolean):SearchResult =  getImprovingMove()
 
-  def getImprovingMove():SearchResult
+  def getImprovingMove:SearchResult
 
   //this resets the internal state of the Neighborhood
   def reset()
@@ -62,23 +62,20 @@ abstract class Neighborhood{
    * @return the number of moves performed
    */
   def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
-    var toReturn = 0;
+    var toReturn = 0
     var remainingMoves = maxMoves
     while(remainingMoves != 0){
-      getImprovingMove() match {
-        case ProblemSolved => {
+      getImprovingMove match {
+        case ProblemSolved =>
           if (verbose >= 1) println("problem solved after " + toReturn + " it")
           return toReturn;
-        }
-        case NoMoveFound => {
+        case NoMoveFound =>
           if (verbose >= 1) println("no move found after " + toReturn + " it")
           return toReturn;
-        }
-        case m: MoveFound => {
+        case m: MoveFound =>
           if (verbose >= 1) println(m)
-          m.commit
+          m.commit()
           true
-        }
       }
       toReturn += 1
       remainingMoves -= 1
@@ -115,7 +112,7 @@ abstract class StatelessNeighborhood extends Neighborhood{
 /** a neighborhood that never finds any move (quite useless, actually)
   */
 case class NoMoveNeighborhood() extends StatelessNeighborhood{
-  override def getImprovingMove(): SearchResult = NoMoveFound
+  override def getImprovingMove: SearchResult = NoMoveFound
 }
 
 case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)

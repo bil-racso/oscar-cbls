@@ -76,7 +76,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
 case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter){
   def commit(){
     callBack()
-    initialMove.commit
+    initialMove.commit()
   }
 
   override def toString: String = initialMove.toString

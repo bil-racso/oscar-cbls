@@ -12,7 +12,7 @@ import scala.collection.immutable.SortedSet
 
 /**
  * this is a standard solver for a binPacking. 
- * it performs a comination of MoveItem, Swaps, randomSwaps and binEmptying
+ * it performs a combination of MoveItem, Swaps, randomSwaps and binEmptying
  * @author renaud.delandtsheer@cetic.be 
  */
 object BinPackingSolver extends SearchEngineTrait {
@@ -20,7 +20,7 @@ object BinPackingSolver extends SearchEngineTrait {
 
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
-              orElse EmptyMostViolatedBin(p)) protectBest(p.overallViolation.objective)
+              orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation.objective
 
     x.doAllImprovingMoves(maxStep)
     x.restoreBest()
@@ -128,22 +128,20 @@ case class MoveItem(p:BinPackingProblem,
         binsNotBin1Canonical,
         (item:Item,bin:Bin) => p.overallViolation.assignVal(item.bin, bin.number))
     else
-      selectFirst2(itemsOfBin1Canonical.toList.sortBy(item => -(item.size)),
+      selectFirst2(itemsOfBin1Canonical.toList.sortBy(item => -item.size),
         binsNotBin1Canonical,
         (item:Item,bin:Bin) => p.overallViolation.assignVal(item.bin, bin.number) < oldViolation))
     match{
-      case (item, newBin) => {
+      case (item, newBin) =>
         val objAfter = p.overallViolation.assignVal(item.bin, newBin.number)
         if(objAfter < oldViolation) AssignMove(item.bin,newBin.number,objAfter, "ItemMove")
         else{
           if (verbose >= 2) println("ItemMove: no improvement found")
           NoMoveFound
         }
-      }
-      case null => {
+      case null =>
         if (verbose >= 2) println("ItemMove: no improvement found")
         NoMoveFound
-      }
     }
   }
 }
@@ -151,7 +149,7 @@ case class MoveItem(p:BinPackingProblem,
 /**swaps items of different sizes, one of them being in one of the mostViolated bins.
   * the first item is taken from the mode violated bin.
   *
-  * @param p
+  * @param p the problem
   * @param best true if the best swap is seeked, false then the first improving move is enough
   * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing. supposed to be an equivalence relation.
   *                          Identical items must be of the same size, but this does not need to be tested, since an internal pre-filter performs this.
@@ -210,18 +208,16 @@ case class SwapItems(p:BinPackingProblem,
       (item1:Item,item2:Item) => item1.size != item2.size
         && p.overallViolation.swapVal(item1.bin, item2.bin) < oldViolation))
     match {
-      case (item1, item2) => {
+      case (item1, item2) =>
         val newObj = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(newObj < oldViolation) SwapMove(item1.bin, item2.bin, newObj, "ItemsSwap")
         else{
           if (verbose >= 2) println("ItemsSwap: no improvement found")
           NoMoveFound
         }
-      }
-      case null => {
+      case null =>
         if (verbose >= 2) println("ItemsSwap: no improvement found")
         NoMoveFound
-      }
     }
   }
 }
@@ -254,14 +250,12 @@ case class JumpSwapItems(p:BinPackingProblem)
         item1.size != item2.size
       })
     match {
-      case (item1,item2) => {
+      case (item1,item2) =>
         if (verbose >= 2) println("Jump: swapping bins of " + item1 + " and " + item2)
-        return SwapMove(item1.bin, item2.bin, 0, "Jump")
-      }
-      case null => {
+        SwapMove(item1.bin, item2.bin, 0, "Jump")
+      case null =>
         if (verbose >= 2) println("Jump: no move found")
         NoMoveFound
-      }
     }
   }
 }
