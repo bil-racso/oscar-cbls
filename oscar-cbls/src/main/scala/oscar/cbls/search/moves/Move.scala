@@ -17,30 +17,6 @@ package oscar.cbls.search.moves
 
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 
-abstract class StatelessNeighborhood extends Neighborhood{
-  //this resets the internal state of the move combinators
-  final override def reset(){}
-
-  override def toString: String = this.getClass.getSimpleName
-}
-
-/** a neighborhood that never finds any move (quite useless, actually)
-  */
-case class NoMoveNeighborhood() extends StatelessNeighborhood{
-  override def getImprovingMove(): SearchResult = NoMoveFound
-}
-
-case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
-
-  override def commit() {i := v}
-
-  override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
-  }
-}
-
 
 abstract class Move(val objAfter:Int){
   def commit()
@@ -105,4 +81,3 @@ case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(ini
 
   override def toString: String = initialMove.toString
 }
-

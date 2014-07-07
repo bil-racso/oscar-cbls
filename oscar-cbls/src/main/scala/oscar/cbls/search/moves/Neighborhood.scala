@@ -16,6 +16,7 @@
 package oscar.cbls.search.moves
 
 import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar}
+import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
@@ -25,6 +26,10 @@ case object ProblemSolved extends SearchResult
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
   def objAfter = m.objAfter
+}
+
+object SearchResult {
+  implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
 /**
@@ -69,7 +74,7 @@ abstract class Neighborhood{
           if (verbose >= 1) println("no move found after " + toReturn + " it")
           return toReturn;
         }
-        case m: Move => {
+        case m: MoveFound => {
           if (verbose >= 1) println(m)
           m.commit
           true
@@ -98,5 +103,28 @@ abstract class Neighborhood{
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
   def retry() = new Retry(this)
 
-  implicit def moveToSearchResult(m:Move):MoveFound = MoveFound(m)
+}
+
+abstract class StatelessNeighborhood extends Neighborhood{
+  //this resets the internal state of the move combinators
+  final override def reset(){}
+
+  override def toString: String = this.getClass.getSimpleName
+}
+
+/** a neighborhood that never finds any move (quite useless, actually)
+  */
+case class NoMoveNeighborhood() extends StatelessNeighborhood{
+  override def getImprovingMove(): SearchResult = NoMoveFound
+}
+
+case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {i := v}
+
+  override def toString: String = {
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+      "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
+  }
 }

@@ -54,7 +54,7 @@ object identicalAggregator{
    * @return a maximal subset of l such that
    *         all items are of different class according to itemClass (with Int.MinValue exception)
    */
-  def removeIdenticalClasses[T](l:List[T], itemClass:(T) => Int):List[T] =
+/*  def removeIdenticalClasses[T](l:List[T], itemClass:(T) => Int):List[T] =
     removeIdenticalClasses[T](l, itemClass, Nil, SortedSet.empty)
 
   private def removeIdenticalClasses[T](l:List[T],
@@ -70,6 +70,7 @@ object identicalAggregator{
         else removeIdenticalClasses(t, itemClass, h::canonicals, classes+classOfH)
     }
   }
+  */
 }
 
 /** moves one item away from most violated bin
