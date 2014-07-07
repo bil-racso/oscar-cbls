@@ -17,7 +17,6 @@ package oscar.cbls.search.moves
 
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 
-
 /** standard move template
   *
   * @param objAfter the objective after this assignation will be performed

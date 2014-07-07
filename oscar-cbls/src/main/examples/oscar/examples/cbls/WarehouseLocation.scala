@@ -2,8 +2,9 @@ package oscar.examples.cbls
 
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.minmax.MinArray
+import oscar.cbls.invariants.lib.minmax.{ArgMinArray, MinArray}
 import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
+import oscar.cbls.invariants.lib.set.TakeAny
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.{SwapsNeighborhood, AssignNeighborhood}
@@ -46,6 +47,9 @@ object WarehouseLocation extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_location_" + d))
 
+  val aNearestOpenWarehouse = Array.tabulate(D)(d =>
+    TakeAny(ArgMinArray(distanceCost(d), openWarehouses),-1).toIntVar("closest_open_warehouse_for_" + d))
+
   val warehouseCost = SumElements(costForOpeningWarehouse, openWarehouses)
 
   val totalCost = Sum(distanceToNearestOpenWarehouse) + warehouseCost
@@ -54,12 +58,14 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "TurnLocationOtherwise")
-                     exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouseOpenings"))
+  val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouse")
+                     exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses"))
+
   neighborhood.verbose = 1
   neighborhood.doAllImprovingMoves(W+D)
 
   println(openWarehouses)
-  println(distanceToNearestOpenWarehouse.toList)
+  println("distanceToNearestOpenWarehouse: (" + distanceToNearestOpenWarehouse.map(_.value).mkString(",") + ")")
+  println("aNearestOpenWarehouse         : (" + aNearestOpenWarehouse.map(_.value).mkString(",") + ")")
 }
 

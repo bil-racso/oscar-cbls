@@ -33,6 +33,10 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
+
+//TODO: add acceptor, and parametric searchZone, and best
+//TODO: add performMove instead of findMove
+
 /**
  * @author renaud.delandtsheer@cetic.be
  */

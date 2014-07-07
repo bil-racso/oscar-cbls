@@ -19,7 +19,7 @@ import oscar.cbls.binPacking.model.BinPackingProblem
 import oscar.cbls.binPacking.solver.{EmptyMostViolatedBin, JumpSwapItems, SwapItems, MoveItem}
 import oscar.cbls.modeling.CBLSModel
 
-object Combinators extends CBLSModel with App{
+object BinPackingAndCombinators extends CBLSModel with App{
 
   //the index is the first element of the couple
   def indexList(l:List[Int]):List[(Int,Int)] = null

@@ -193,5 +193,6 @@ trait AlgebraTrait{
   }
 
   implicit def arrayOfIntTOArrayOfIntConst(a:Array[Int]):Array[CBLSIntVar] = a.map(CBLSIntConst(_))
+  implicit def arrayOfIntInvariantArrayOfIntVar(a:Array[IntInvariant]):Array[CBLSIntVar] = a.map(_.toIntVar)
 }
 

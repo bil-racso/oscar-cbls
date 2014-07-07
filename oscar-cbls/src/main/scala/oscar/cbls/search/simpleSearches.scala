@@ -5,6 +5,9 @@ import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.moves._
 
+//TODO: symmetry elimination static & dynamic
+//TODO: add some random stuff
+
 /**
  * will iteratively find a variable in the array, and find a value from its range that improves the objective function
  *
@@ -17,22 +20,25 @@ import oscar.cbls.search.moves._
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
                               name:String = "IntAdjust",
-                              searchZone:CBLSSetVar = null)
+                              searchZone:CBLSSetVar = null,
+                              solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def getImprovingMove: SearchResult = {
 
     val oldObj = obj.value
-    if(verbose > 1) println("searching " + name + " (obj:" + oldObj + ")")
+    if(oldObj <= solvedPivot) return ProblemSolved
+
     val iterationScheme = if(searchZone == null) vars.indices startBy startIndice else searchZone.value
+
     for(i <- iterationScheme){
       val currentVar = vars(i)
-      if(verbose > 1) println("trying " + currentVar)
       val oldVal = currentVar.value
+
       for(newVal <- currentVar.domain if newVal != oldVal){
         val newObj = obj.assignVal(currentVar,newVal)
-        if(verbose > 1) println("trying value " + newVal + " (newObj:" + newObj + ")")
+
         if(newObj < oldObj){
           if(searchZone == null) startIndice = i
           return AssignMove(currentVar,newVal, newObj, name)
@@ -57,7 +63,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                   If none is provided, all the array will be considered each time
  * @param name the name of the neighborhood
  */
-case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String = "IntSwaps", searchZone:CBLSSetVar = null)
+case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String = "IntSwaps", searchZone:CBLSSetVar = null, solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -65,17 +71,23 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String 
 
     val oldObj = obj.value
 
-    val iterationScheme = if(searchZone == null) vars.indices startBy startIndice else searchZone.value
-    for(i:Int <- iterationScheme){
+    if(oldObj <= solvedPivot) return ProblemSolved
+
+    val firstIterationScheme = if(searchZone == null) vars.indices startBy startIndice else searchZone.value
+    val secondIterationScheme = if(searchZone == null) vars.indices else searchZone.value
+
+    for(i:Int <- firstIterationScheme){
       val firstVar = vars(i)
       val oldValOfFirstVar = firstVar.value
-      for(j:Int <- iterationScheme;
+
+      for(j:Int <- secondIterationScheme;
         secondVar = vars(j);
         oldValOfSecondVar = secondVar.value;
-        if i != j
+        if i < j  //we break symmetry here
         && oldValOfFirstVar != oldValOfSecondVar
         && secondVar.domain.contains(oldValOfFirstVar)
         && firstVar.domain.contains(oldValOfSecondVar)) {
+
         val newObj = obj.swapVal(firstVar, secondVar)
         if (newObj < oldObj) {
           if (searchZone == null) startIndice = i
@@ -91,3 +103,4 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String 
     startIndice = 0
   }
 }
+
