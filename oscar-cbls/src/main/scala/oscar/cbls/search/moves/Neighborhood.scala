@@ -59,6 +59,7 @@ abstract class Neighborhood{
     _verbose = i
   }
 
+  protected def amIVerbose = verbose >= 2
   /**
    * @return true if a move has been performed, false otherwise
    */

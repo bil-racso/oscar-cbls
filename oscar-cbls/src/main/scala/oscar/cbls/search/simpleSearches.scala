@@ -27,7 +27,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def getImprovingMove: SearchResult = {
-
+    if(amIVerbose) println(name + ": trying")
     val oldObj = obj.value
     if(oldObj <= solvedPivot) return ProblemSolved
 
@@ -42,10 +42,12 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 
         if(newObj < oldObj){
           if(searchZone == null) startIndice = i
+          if(amIVerbose) println(name + ": move found")
           return AssignMove(currentVar,newVal, newObj, name)
         }
       }
     }
+    if(amIVerbose) println(name + ": no move found")
     NoMoveFound
   }
 
@@ -74,6 +76,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   var startIndice:Int = 0
   override def getImprovingMove: SearchResult = {
 
+    if(amIVerbose) println(name + ": trying")
     val oldObj = obj.value
 
     if(oldObj <= solvedPivot) return ProblemSolved
@@ -96,10 +99,12 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
         val newObj = obj.swapVal(firstVar, secondVar)
         if (newObj < oldObj) {
           if (searchZone == null) startIndice = i
+          if(amIVerbose) println(name + ": move found")
           return SwapMove(firstVar, secondVar, newObj, name)
         }
       }
     }
+    if(amIVerbose) println(name + ": no move found")
     NoMoveFound
   }
 
@@ -126,6 +131,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def getImprovingMove: SearchResult = {
+    if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
 
@@ -143,6 +149,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),0) :: toReturn
       }
     }
+    if(amIVerbose) println(name + ": move found")
     return CompositeMove(toReturn, 0, name)
   }
 }
