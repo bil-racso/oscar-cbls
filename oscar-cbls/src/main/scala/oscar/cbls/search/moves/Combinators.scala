@@ -56,7 +56,7 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
   def restoreBest(){
     if (best != null && i.value > oldObj){
       s.restoreSolution(best)
-      if(verbose >= 1) println("restoring best solution")
+      if(verbose >= 1) println("restoring best solution (obj:" + oldObj + ")")
     }else if(verbose >= 1) println("no better solution to restore")
   }
 }

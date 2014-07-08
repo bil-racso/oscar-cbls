@@ -16,6 +16,7 @@
 package oscar.cbls.search.moves
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.objective.Objective
 import scala.language.implicitConversions
 
 abstract sealed class SearchResult
@@ -181,6 +182,7 @@ abstract class Neighborhood{
     */
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
+  def protectBest(o:Objective) = new ProtectBest(this, o.objective)
 
   /** retries n times the move before concluding to noMove can be found
     * resets o nhe first found move, or on reset

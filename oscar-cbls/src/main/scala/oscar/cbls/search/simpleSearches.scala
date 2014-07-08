@@ -5,8 +5,9 @@ import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.moves._
 
+import scala.collection.immutable.SortedSet
+
 //TODO: symmetry elimination static & dynamic
-//TODO: add some random stuff
 
 /**
  * will iteratively find a variable in the array, and find a value from its range that improves the objective function
@@ -19,7 +20,7 @@ import oscar.cbls.search.moves._
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
-                              name:String = "IntAdjust",
+                              name:String = "AssignNeighborhood",
                               searchZone:CBLSSetVar = null,
                               solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
@@ -63,7 +64,11 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                   If none is provided, all the array will be considered each time
  * @param name the name of the neighborhood
  */
-case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String = "IntSwaps", searchZone:CBLSSetVar = null, solvedPivot:Int = Int.MinValue)
+case class SwapsNeighborhood(vars:Array[CBLSIntVar],
+                             obj:Objective,
+                             name:String = "SwapsNeighborhood",
+                             searchZone:CBLSSetVar = null,
+                             solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -104,3 +109,40 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar], obj:Objective, name:String 
   }
 }
 
+/**
+ * will randomize the array, typically to get out of a local minimal
+ *
+ * @param vars an array of [[CBLSIntVar]] defining the search space
+ * @param degree the number of variables to change randomly
+ * @param searchZone a subset of the indices of vars to consider.
+ *                   If none is provided, all the array will be considered each time
+ * @param name the name of the neighborhood
+ */
+case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
+                                 degree:Int = 1,
+                                 name:String = "RandomizeNeighborhood",
+                              searchZone:CBLSSetVar = null)
+  extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
+  //the indice to start with for the exploration
+  var startIndice:Int = 0
+  override def getImprovingMove: SearchResult = {
+
+    var toReturn:List[Move] = List.empty
+
+    if(searchZone != null && searchZone.value.size <= degree){
+      //We move everything
+      for(i <- searchZone.value){
+        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),0) :: toReturn
+      }
+    }else{
+      var touchedVars:Set[Int] = SortedSet.empty
+      for(r <- 1 to degree){
+        val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
+        touchedVars = touchedVars + i
+        val oldVal = vars(i).value
+        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),0) :: toReturn
+      }
+    }
+    return CompositeMove(toReturn, 0, name)
+  }
+}
