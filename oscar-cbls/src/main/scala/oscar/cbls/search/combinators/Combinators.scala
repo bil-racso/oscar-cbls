@@ -15,16 +15,14 @@
 package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
-import oscar.cbls.search.core.{NoMoveFound, MoveFound, SearchResult, Neighborhood}
+import oscar.cbls.search.core.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
 import oscar.cbls.search.move.{CallBackMove, Move}
 
 import scala.language.implicitConversions
 
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
-//TODO: ajouter la gestion de meilleure solution, jump, restart, et acceptor
-//TODO: ajouter un moyen pour instancier les voisinages lors de la construction des combinateurs.
-//      il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
-//TODO: tabu
+//TODO: restart
+//TODO: il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
 
 /**
  * @author renaud.delandtsheer@cetic.be

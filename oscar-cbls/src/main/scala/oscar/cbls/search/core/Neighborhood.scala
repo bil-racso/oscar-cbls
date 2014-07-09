@@ -24,7 +24,6 @@ import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
-//case object MovePerformed extends SearchResult
 
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
@@ -35,10 +34,6 @@ case class MoveFound(m:Move) extends SearchResult{
 object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
-
-
-//TODO: add acceptor, and parametric searchZone, and best
-//TODO: add performMove instead of findMove
 
 /**
  * @author renaud.delandtsheer@cetic.be

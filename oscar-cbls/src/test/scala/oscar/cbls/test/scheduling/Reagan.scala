@@ -39,9 +39,9 @@ package oscar.cbls.test.scheduling
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.scheduling._
-import algo.IFlatIRelax
 import model.{Planning, SuperActivity, Activity, CumulativeResource}
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.scheduling.solver.IFlatIRelax
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention

@@ -17,6 +17,7 @@ package oscar.cbls.binPacking.solver
 
 //TODO: tabu
 
+import oscar.cbls.search.algo.IdenticalAggregator
 import oscar.cbls.search.core.{StatelessNeighborhood, NoMoveFound, SearchResult}
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
@@ -40,52 +41,6 @@ object BinPackingSolver extends SearchEngineTrait {
   }
 }
 
-/**
- * a generic algorithm for aggregating identical stuff
- * @author renaud.delandtsheer@cetic.be
- * */
-object identicalAggregator{
-
-  def removeIdenticals[T](l:List[T], isIdentical:(T,T) => Boolean):List[T] =
-    removeIdenticals[T](l, isIdentical, Nil)
-
-  private def removeIdenticals[T](l:List[T], isIdentical:(T,T) => Boolean, canonicals:List[T]):List[T] = {
-    l match{
-      case Nil => canonicals
-      case h :: t =>
-        if(canonicals.exists(c => isIdentical(c,h)))
-          removeIdenticals(t, isIdentical, canonicals)
-        else removeIdenticals(t, isIdentical, h::canonicals)
-    }
-  }
-
-  /**
-   * @param l a list of items such that we want to discard items of identical class
-   * @param itemClass a function that gives a class for a given item.
-   *                  Class Int.MinValue is considered as different from itself
-   * @tparam T
-   * @return a maximal subset of l such that
-   *         all items are of different class according to itemClass (with Int.MinValue exception)
-   */
-  def removeIdenticalClasses[T](l:List[T], itemClass:T => Int):List[T] = {
-    val a: Set[Int] = SortedSet.empty
-    removeIdenticalClasses[T](l, itemClass, Nil, a)
-  }
-
-  private def removeIdenticalClasses[T](l:List[T],
-                                        itemClass:T => Int,
-                                        canonicals:List[T],
-                                        classes:Set[Int]):List[T] = {
-    l match{
-      case Nil => canonicals
-      case h :: t =>
-        val classOfH:Int = itemClass(h)
-        if(classOfH != Int.MinValue && classes.contains(classOfH))
-          removeIdenticalClasses(t, itemClass, canonicals,classes)
-        else removeIdenticalClasses(t, itemClass, h::canonicals, classes+classOfH)
-    }
-  }
-}
 
 /** moves one item away from most violated bin
  * @param p the problem
@@ -125,13 +80,13 @@ case class MoveItem(p:BinPackingProblem,
 
     val itemsOfBin1GroupedBySize = itemOfBin1.groupBy(_.size).values
     val itemsOfBin1Canonical:Iterable[Item] = if(areItemsIdentical == null) itemsOfBin1GroupedBySize.map(l => l.head)
-    else itemsOfBin1GroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
+    else itemsOfBin1GroupedBySize.map(l => IdenticalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
 
     val binsNotBin1GroupedBySpareSize = binList
       .filter(bin => bin.number != bin1.number && bin.violation.value == 0)
       .groupBy(bin => bin.size - bin.content.value).values
     val binsNotBin1Canonical:Iterable[Bin] = if(areBinsIdentical == null) binsNotBin1GroupedBySpareSize.map(l => l.head)
-    else binsNotBin1GroupedBySpareSize.map(l => identicalAggregator.removeIdenticals(l,areBinsIdentical)).flatten
+    else binsNotBin1GroupedBySpareSize.map(l => IdenticalAggregator.removeIdenticals(l,areBinsIdentical)).flatten
 
     (if (best)
       selectMin2(itemsOfBin1Canonical,
@@ -191,7 +146,7 @@ case class SwapItems(p:BinPackingProblem,
     val itemsOfBin1Canonical:Iterable[Item] = if(areItemsIdentical == null){
       itemsOfBin1GroupedBySize.map(l => l.head)
     }else{
-      itemsOfBin1GroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
+      itemsOfBin1GroupedBySize.map(l => IdenticalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
     }
 
     //TODO: this should be made lazy in case we go for the first improving move
@@ -201,7 +156,7 @@ case class SwapItems(p:BinPackingProblem,
       if(areItemsIdentical == null){
         itemsOfSameBinGroupedBySize.map(l => l.head)
       }else{
-        itemsOfSameBinGroupedBySize.map(l => identicalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
+        itemsOfSameBinGroupedBySize.map(l => IdenticalAggregator.removeIdenticals(l,areItemsIdentical)).flatten
       })
 
     val itemsNotOfBin1Canonical:Iterable[Item] = itemsGroupedByBinsAndCanonicals.flatten
