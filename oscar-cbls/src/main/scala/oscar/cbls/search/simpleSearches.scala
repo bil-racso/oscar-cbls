@@ -196,7 +196,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
  *  the new value can be either the best one or the first one that improves according to parameter "best"
  *
  *  notice that the search of variable is performed linearly, as for the search of new value.
- *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]]
+ *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]] and a searchZone set with [[oscar.cbls.invariants.lib.minmax.ArgMaxArray]]
  *
  * @param c the constraint system
  * @param variables the array of variable that define the search space of this neighborhood
