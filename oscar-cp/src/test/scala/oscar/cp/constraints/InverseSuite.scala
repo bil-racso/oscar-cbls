@@ -14,7 +14,7 @@ class InverseSuite extends TestSuite {
     intercept[IllegalArgumentException] { solver.add(new Inverse(prev, next)) }  
   }
 
-  test("Inverse should reduce the domain to the ids of its arrays") {
+  test("Inverse should reduce the domains to the ids of its arrays") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(-5 to 10)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 5)(solver))
@@ -38,7 +38,7 @@ class InverseSuite extends TestSuite {
     assert(solver.isFailed)
   } 
   
-  test("Inverse should fail if i is not in prev(j) when next(i) == j") {
+  test("Inverse should fail if i is not in prev(j) and next(i) == j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
@@ -48,7 +48,7 @@ class InverseSuite extends TestSuite {
     assert(solver.isFailed)
   }
   
-  test("Inverse should fail if i is not in next(j) when prev(i) == j") {
+  test("Inverse should fail if i is not in next(j) and prev(i) == j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
@@ -88,7 +88,7 @@ class InverseSuite extends TestSuite {
     assert(next(1).value == 1)
   }
   
-  test("Inverse should remove i from next(j) if prev(i) != j") {
+  test("Inverse should remove i from next(j) when prev(i) != j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
@@ -99,7 +99,7 @@ class InverseSuite extends TestSuite {
     assert(!next(1).hasValue(1)) 
   }
   
-  test("Inverse should remove i from prev(j) if next(i) != j") {
+  test("Inverse should remove i from prev(j) when next(i) != j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
