@@ -12,7 +12,7 @@ import scala.collection.immutable.SortedSet
 /**
  * will iteratively find a variable in the array, and find a value from its range that improves the objective function
  *
- * @param vars an array of [[CBLSIntVar]] defining the search space
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param obj te objective function to improve
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
@@ -76,13 +76,14 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 /**
  * will iteratively swap the value of two different variables in the array
  *
- * @param vars an array of [[CBLSIntVar]] defining the search space
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param obj te objective function to improve
  * @param searchZone1 a subset of the indices of vars to consider for the first moved point
  *                   If none is provided, all the array will be considered each time
  * @param searchZone2 a subset of the indices of vars to consider for the second moved point
  *                   If none is provided, all the array will be considered each time
  * @param symmetryCanBeBroken set to true, and the neighborhood will break symmetries on indices of swapped vars
+ *                            typically, you always want it except if you have specified the two searchZones, and they are different
  * @param name the name of the neighborhood
  */
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
@@ -151,7 +152,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 /**
  * will randomize the array, typically to get out of a local minimal
  *
- * @param vars an array of [[CBLSIntVar]] defining the search space
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param degree the number of variables to change randomly
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time

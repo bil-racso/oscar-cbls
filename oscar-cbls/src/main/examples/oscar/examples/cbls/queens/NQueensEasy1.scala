@@ -20,11 +20,8 @@
 
 package oscar.examples.cbls.queens
 
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.constraints.core._
-import oscar.cbls.modeling._
-import oscar.util._
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.modeling._
 
 /**
  * Local Search for NQueens

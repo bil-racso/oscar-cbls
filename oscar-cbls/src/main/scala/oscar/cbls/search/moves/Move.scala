@@ -15,7 +15,7 @@
 
 package oscar.cbls.search.moves
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar}
 
 /** standard move template
   *
@@ -25,6 +25,15 @@ import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 abstract class Move(val objAfter:Int){
   /**to actually take the move*/
   def commit()
+
+  /**
+   * to get the list of variables that are modified by the move.
+   * use this to update a Tabu for instance
+   * notice that is a variable is touched twice by the move, it will appear twice in this list
+   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[CompositeMove]]
+   * @return the list of touched variables.
+   */
+  def touchedVariables:List[Variable]
 }
 
 /** standard move that assigns an int value to a CBLSIntVar
@@ -44,6 +53,8 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoo
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(i)
 }
 
 /** standard move that swaps the value of two CBLSIntVar
@@ -63,6 +74,8 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighb
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(i,j)
 }
 
 /** standard move that adds a value to a CBLSSEtVar
@@ -82,6 +95,8 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborh
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "AddToSetMove(" + s + " :+= " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(s)
 }
 
 /** standard move that removes a value to a CBLSSEtVar
@@ -101,6 +116,8 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neig
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "RemoveFromSetMove(" + s + " :-= " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(s)
 }
 
 /** a composition of a list of moves; the move will be taken in the order given by the list
@@ -125,6 +142,8 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
     "CompositeMove(" + ml.mkString(" and ") + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = ml.flatMap(_.touchedVariables)
 }
 
 /** an instrumented move that performs a callBack before being taken
@@ -141,4 +160,6 @@ case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(ini
   }
 
   override def toString: String = initialMove.toString
+
+  override def touchedVariables: List[Variable] = initialMove.touchedVariables
 }

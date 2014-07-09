@@ -172,9 +172,19 @@ abstract class Neighborhood{
 
   /** this combinator attaches a custom code to a given neighborhood.
     * the code is called whenever a move from this neighborhood is taken
+    * The callBack is performed before the move is actually taken.
     * @param proc the procedure to execute when the move is taken
     */
   def onMove(proc: => Unit) = new DoOnMove(this,() => proc)
+
+    /** this combinator attaches a custom code to a given neighborhood.
+      * the code is called whenever a move from this neighborhood is taken
+      * is gets the applied move in input.
+      * The callBack is performed before the move is actually taken.
+      * @param procOnMove a procedure that inputs the move that is applied;
+      *                   use this to update a Tabu for instance
+      */
+  def onMove(procOnMove:Move => Unit) = new DoOnMove(this,null,procOnMove)
 
   /** this combinator attaches a custom code to a given neighborhood.
     * the code is called whenever a move from this neighborhood is taken for the first time.

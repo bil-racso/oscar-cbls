@@ -20,22 +20,18 @@
 
 package oscar.examples.cbls.queens
 
-import scala.swing.Applet
-import scala.swing.Button
-import scala.swing.event.ButtonClicked
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-import javax.swing.ImageIcon
-import scala.swing.Label
-import scala.swing.GridPanel
 import java.awt.Color
-import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.CBLSIntVar
-import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.modeling.Algebra._
+import javax.swing.ImageIcon
 import javax.swing.border.LineBorder
+
+import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.constraints.lib.global.AllDiff
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.SearchEngineTrait
+
+import scala.swing.{Applet, BoxPanel, Button, GridPanel, Label, Orientation}
+import scala.swing.event.ButtonClicked
 
 class NQueensApplet extends Applet {
 

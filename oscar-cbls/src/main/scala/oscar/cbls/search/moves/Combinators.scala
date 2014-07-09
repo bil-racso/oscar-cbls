@@ -75,13 +75,18 @@ class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(
 
 /** this combinator attaches a custom code to a given neighborhood.
   * the code is called whenever a move from this neighborhood is taken
+  * The callBack is performed before the move is actually taken.
   * @param a a neighborhood
   * @param proc the procedure to execute when the move is taken
+  * @param procOnMove a procedure that inputs the move that is applied;
+  *                   use this to update a Tabu for instance
   */
-class DoOnMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinator(a){
+class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null) extends NeighborhoodCombinator(a){
   override def getImprovingMove: SearchResult = {
     a.getImprovingMove match {
-     case m:MoveFound => CallBackMove(m.m,proc)
+     case m:MoveFound =>
+       val callBackNoParam:Move = if(proc != null) CallBackMove(m.m,proc) else m.m
+       if(procOnMove!= null) CallBackMove(callBackNoParam,() => procOnMove(m.m)) else callBackNoParam
      case x => x
     }
   }
