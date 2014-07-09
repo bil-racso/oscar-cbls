@@ -15,21 +15,35 @@
 
 package oscar.cbls.search.moves
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar}
 
-abstract class StatelessNeighborhood extends Neighborhood{
-  //this resets the internal state of the move combinators
-  final override def reset(){}
-
-  override def toString: String = this.getClass.getSimpleName
-}
-
-/** a neighborhood that never finds any move (quite useless, actually)
+/** standard move template
+  *
+  * @param objAfter the objective after this assignation will be performed
+  * @author renaud.delandtsheer@cetic.be
   */
-case class NoMoveNeighborhood() extends StatelessNeighborhood{
-  override def getImprovingMove(): SearchResult = NoMoveFound
+abstract class Move(val objAfter:Int){
+  /**to actually take the move*/
+  def commit()
+
+  /**
+   * to get the list of variables that are modified by the move.
+   * use this to update a Tabu for instance
+   * notice that is a variable is touched twice by the move, it will appear twice in this list
+   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[CompositeMove]]
+   * @return the list of touched variables.
+   */
+  def touchedVariables:List[Variable]
 }
 
+/** standard move that assigns an int value to a CBLSIntVar
+  *
+  * @param i the variable
+  * @param v the value to assign
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
   extends Move(objAfter){
 
@@ -37,10 +51,41 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoo
 
   override def toString: String = {
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
+      "AssignMove(" + i + " set to " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(i)
 }
 
+/** standard move that swaps the value of two CBLSIntVar
+  *
+  * @param i the variable
+  * @param j the other variable
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null)
+  extends Move(objAfter){
+
+  override def commit() {i :=: j}
+
+  override def toString: String  = {
+    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
+      "SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
+  }
+
+  override def touchedVariables: List[Variable] = List(i,j)
+}
+
+/** standard move that adds a value to a CBLSSEtVar
+  *
+  * @param s the variable
+  * @param v the value to add to the set
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
   extends Move(objAfter){
 
@@ -50,8 +95,18 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborh
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "AddToSetMove(" + s + " :+= " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(s)
 }
 
+/** standard move that removes a value to a CBLSSEtVar
+  *
+  * @param s the variable
+  * @param v the value to remove to the set
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
   extends Move(objAfter){
 
@@ -61,19 +116,17 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neig
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
       "RemoveFromSetMove(" + s + " :-= " + v + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = List(s)
 }
 
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
-
-  override def commit() {i :=: j}
-
-  override def toString: String  = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "SwapMove(" + i + " swapped with " + j + " objAfter:" + objAfter + ")"
-  }
-}
-
+/** a composition of a list of moves; the move will be taken in the order given by the list
+  *
+  * @param ml the list of moves constituting this one
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null)
   extends Move(objAfter){
 
@@ -89,14 +142,24 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
     (if (neighborhoodName != null) neighborhoodName + ": " else "") +
     "CompositeMove(" + ml.mkString(" and ") + " objAfter:" + objAfter + ")"
   }
+
+  override def touchedVariables: List[Variable] = ml.flatMap(_.touchedVariables)
 }
 
+/** an instrumented move that performs a callBack before being taken
+  * the move itself is given in parameter.
+  *
+  * @param initialMove the actual move
+  * @param callBack the method to invoke before the actual move is taken
+  * @author renaud.delandtsheer@cetic.be
+  */
 case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter){
   def commit(){
     callBack()
-    initialMove.commit
+    initialMove.commit()
   }
 
   override def toString: String = initialMove.toString
-}
 
+  override def touchedVariables: List[Variable] = initialMove.touchedVariables
+}

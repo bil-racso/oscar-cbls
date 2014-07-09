@@ -79,6 +79,7 @@ case class BinPackingProblem(items:Map[Int,Item],
   def itemCount = items.size
   def binCount = bins.size
 
+  def store = overallViolation.objective.model
 }
 
 /**

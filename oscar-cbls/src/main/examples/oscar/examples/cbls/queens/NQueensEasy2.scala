@@ -20,8 +20,9 @@
 
 package oscar.examples.cbls.queens
 
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.CBLSModel
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+
 import scala.language.postfixOps
 
 /**
