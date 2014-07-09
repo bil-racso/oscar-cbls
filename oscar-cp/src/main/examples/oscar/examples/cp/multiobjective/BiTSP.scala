@@ -16,7 +16,7 @@ package oscar.examples.cp.multiobjective
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.cp.constraints.ChannelingPredSucc
+import oscar.cp.constraints.Inverse
 import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
 import oscar.cp.constraints.MinAssignment
@@ -56,7 +56,7 @@ object BiTSP extends App {
   cp.paretoMinimize(totDists:_*) subjectTo {
 
     // Channeling between predecessors and successors
-    cp.add(ChannelingPredSucc(pred, succ))
+    cp.add(new Inverse(pred, succ))
 
     // Consistency of the circuit with Strong filtering
     cp.add(circuit(succ), Strong)
