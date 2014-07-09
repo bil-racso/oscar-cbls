@@ -19,10 +19,15 @@ import scala.collection.immutable.SortedSet
  * @param best true for the best move, false for the first move, default false
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
- * @param symmetryClass a function that input the ID of a variable and returns a symmetry class;
+ * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
  *                      ony one of the variable in each class will be considered to make search faster
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
+ * @param symmetryClassOfValues a function that inputs the ID of a variable and a possible value for this variable,
+ *                              and returns a symmetry class for this variable and value
+ *                              only values belonging to different same symmetry classes will be tested
+ *                             Int.MinValue is considered different to itself
+ *                             (this is only useful if your model is awfully expensive to evaluate)
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
@@ -30,7 +35,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj,
                               best:Boolean = false,
                               searchZone:CBLSSetVar = null,
-                              symmetryClass:Option[Int => Int] = None)
+                              symmetryClassOfVariables:Option[Int => Int] = None,
+                              symmetryClassOfValues:Option[Int => Int => Int] = None)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -44,7 +50,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       else vars.indices startBy startIndice
     else searchZone.value
 
-    val iterationScheme = symmetryClass match {
+    val iterationScheme = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
     }
@@ -53,7 +59,12 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       val currentVar = vars(i)
       val oldVal = currentVar.value
 
-      for (newVal <- currentVar.domain if newVal != oldVal) {
+      val domainIterationScheme = symmetryClassOfValues match {
+        case None => currentVar.domain
+        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(currentVar.domain, s(i))
+      }
+
+      for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
 
         if (acceptanceCriteria(oldObj, newObj)) {
