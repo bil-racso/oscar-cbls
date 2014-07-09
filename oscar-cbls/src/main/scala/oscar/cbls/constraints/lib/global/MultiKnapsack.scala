@@ -53,7 +53,7 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
   finishInitialization()
 
   private val bincontents:Array[CBLSSetVar] = Cluster.MakeDense(items).clusters
-  private val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => SumElements(itemsizes,bincontent).toIntVar)
+  private val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => Sum(itemsizes,bincontent).toIntVar)
 
   private val binviolations:Array[CBLSIntVar] = (
     for (binid <- binsizes.indices)

@@ -182,17 +182,16 @@ trait SearchEngineTrait{
    */
   def selectFrom[R](r: Iterable[R], st: (R => Boolean) = null): R = {
     if (st == null){
-      var i = RandomGenerator.nextInt(r.size) -1
+      var i = RandomGenerator.nextInt(r.size)
       val it = r.iterator
-      //TODO: is it possible to do to the nth directly instead of scrolling the iterator?
       while(i > 0){it.next(); i-=1}
       it.next()
     }else{
       val emptyRlist:List[R]=List.empty
-      var Val:List[R] = r.foldLeft(emptyRlist)((acc,rr) => (if (st(rr)) (rr :: acc) else acc))
-      if (Val.isEmpty) return null.asInstanceOf[R]
-      var i = RandomGenerator.nextInt(Val.size)
-      Val(i)
+      val filteredList:List[R] = r.foldLeft(emptyRlist)((acc,rr) => (if (st(rr)) (rr :: acc) else acc))
+      if (filteredList.isEmpty) return null.asInstanceOf[R]
+      var i = RandomGenerator.nextInt(filteredList.size)
+      filteredList(i)
     }
   }
 

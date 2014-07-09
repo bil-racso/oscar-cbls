@@ -26,12 +26,23 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.propagation.Checker;
 
+object Sum{
+  def apply(vars: Iterable[CBLSIntVar]):Sum = new Sum(vars)
+  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):SumElements = SumElements(vars, cond)
+}
+
+
+object Prod{
+  def apply(vars: Iterable[CBLSIntVar]):Prod = new Prod(vars)
+  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):ProdElements = ProdElements(vars, cond)
+}
+
 /**
  * sum(vars)
  * @param vars is an iterable of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
+class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
 //actually, it works fine with zero vars.
 //  assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
 
@@ -65,7 +76,7 @@ case class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
+class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)

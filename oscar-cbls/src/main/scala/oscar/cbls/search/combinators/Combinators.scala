@@ -12,16 +12,17 @@
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-package oscar.cbls.search.moves
+package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{Solution, Store, CBLSIntVar}
-import language.implicitConversions
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
+import oscar.cbls.search.core.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
+import oscar.cbls.search.move.{CallBackMove, Move}
+
+import scala.language.implicitConversions
 
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
-//TODO: ajouter la gestion de meilleure solution, jump, restart, et acceptor
-//TODO: ajouter un moyen pour instancier les voisinages lors de la construction des combinateurs. il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
-//TODO: tabu
-
+//TODO: restart
+//TODO: il faut un moyen pour passer les paramètres (modèle, acceptor, etc.) de manière standard.
 
 /**
  * @author renaud.delandtsheer@cetic.be
@@ -45,63 +46,69 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
   var oldObj = i.value
   val s:Store = i.model
   var best:Solution = s.solution()
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if(i.value < oldObj){
       best = s.solution(true)
       oldObj = i.value
     }
-    a.getImprovingMove()
+    a.getImprovingMove(acceptanceCriteria)
   }
 
   def restoreBest(){
     if (best != null && i.value > oldObj){
       s.restoreSolution(best)
-      if(verbose >= 1) println("restoring best solution")
+      if(verbose >= 1) println("restoring best solution (obj:" + oldObj + ")")
     }else if(verbose >= 1) println("no better solution to restore")
   }
 }
 
 /** this combinator attaches a custom code to a given neighborhood.
   * the code is called whenever a move is asked to the neighborhood.
-  * @param a
-  * @param proc
+  * @param a a neighborhood
+  * @param proc the procedure to execute before the neighborhood is queried
   */
 class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(a){
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     proc()
-    a.getImprovingMove()
+    a.getImprovingMove(acceptanceCriteria)
   }
 }
 
 /** this combinator attaches a custom code to a given neighborhood.
   * the code is called whenever a move from this neighborhood is taken
-  * @param a
-  * @param proc
+  * The callBack is performed before the move is actually taken.
+  * @param a a neighborhood
+  * @param proc the procedure to execute when the move is taken
+  * @param procOnMove a procedure that inputs the move that is applied;
+  *                   use this to update a Tabu for instance
   */
-class DoOnMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinator(a){
-  override def getImprovingMove(): SearchResult = {
-    a.getImprovingMove() match {
-     case m:Move => CallBackMove(m,proc)
+class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null) extends NeighborhoodCombinator(a){
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria) match {
+     case m:MoveFound =>
+       val callBackNoParam:Move = if(proc != null) CallBackMove(m.m,proc) else m.m
+       if(procOnMove!= null) CallBackMove(callBackNoParam,() => procOnMove(m.m)) else callBackNoParam
      case x => x
     }
   }
 }
 
 /** this combinator attaches a custom code to a given neighborhood.
-  * the code is called whenever a move from this neighborhood is taken
-  * @param a
-  * @param proc
+  * the code is called whenever a move from this neighborhood is taken for the first time.
+  * notice that this neighborhood is reset, so first time can occur several times.
+  * @param a a neighborhood
+  * @param proc the procedure to call on one first move that is performed from this neighborhood
   */
 class DoOnFirstMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinator(a){
   var isFirstMove = true
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (isFirstMove) {
-      a.getImprovingMove() match {
-        case m: Move => CallBackMove(m, notifyMoveTaken)
+      a.getImprovingMove(acceptanceCriteria) match {
+        case m: MoveFound => CallBackMove(m.m, notifyMoveTaken)
         case x => x
       }
     }else{
-      a.getImprovingMove()
+      a.getImprovingMove(acceptanceCriteria)
     }
   }
 
@@ -120,19 +127,18 @@ class DoOnFirstMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinat
 
 /** this composer randomly tries one neighborhood.
   * it trie the other if the first did not find any move
-  * @param a
-  * @param b
+  * @param a a neighborhood
+  * @param b another neighborhood
   * @author renaud.delandtsheer@cetic.be
   */
 class Random(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     var currentIsA:Boolean = math.random > 0.5
     def search(canDoMore:Boolean):SearchResult = {
       val current = if(currentIsA) a else b
-      current.getImprovingMove() match{
+      current.getImprovingMove(acceptanceCriteria) match{
         case NoMoveFound => currentIsA = !currentIsA ; if (canDoMore) search(false) else NoMoveFound
-        case x:Move => x
-        case ProblemSolved => ProblemSolved
+        case x:MoveFound => x
       }
     }
     search(true)
@@ -143,51 +149,51 @@ class Random(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b)
   * between calls, it will roll back to the first neighborhood
   * it tries a first, and if no move it found, tries b
   * a is reset if it did not find anything.
-  * @param a
-  * @param b
+  * @param a a neighborhood
+  * @param b another neighborhood
   * @author renaud.delandtsheer@cetic.be
   */
 class OrElse(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
-  override def getImprovingMove(): SearchResult = {
-    a.getImprovingMove() match{
-      case NoMoveFound => a.reset() ; b.getImprovingMove()
-      case ProblemSolved => ProblemSolved
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria) match{
+      case NoMoveFound => a.reset() ; b.getImprovingMove(acceptanceCriteria)
       case x => x
     }
   }
 }
 
 /**this composer always selects the best move between the two parameters
+  * notice that this combinator makes more sense
+  * if the two neighborhood return their best found move,
+  * and not their first found move, as usually done.
   * @author renaud.delandtsheer@cetic.be
   */
 class Best(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
 
-  override def getImprovingMove(): SearchResult = {
-    (a.getImprovingMove(),b.getImprovingMove()) match{
-      case (ProblemSolved,x) => ProblemSolved //TODO: avoid calling the b.GetImprobingMove
-      case (x,ProblemSolved) => ProblemSolved
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    (a.getImprovingMove(acceptanceCriteria),b.getImprovingMove(acceptanceCriteria)) match{
       case (NoMoveFound,x) => x
       case (x,NoMoveFound) => x
-      case (x:Move,y:Move) => if (x.objAfter < y.objAfter) x else y
+      case (x:MoveFound,y:MoveFound) => if (x.objAfter < y.objAfter) x else y
 
     }
   }
 }
 
 /**this composer is stateful.
-  * it returns the result of the first Neighborhood until it returns NoMoveFound. It then switches to the other Neighborhood.
+  * it returns the result of the first Neighborhood until it returns NoMoveFound.
+  * It then switches to the other Neighborhood.
   * it does not come back to the first one after the second one is exhausted
   * @author renaud.delandtsheer@cetic.be
   */
 class Exhaust(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
   var currentIsA = true
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     def search():SearchResult = {
       val current = if(currentIsA) a else b
-      current.getImprovingMove() match{
+      current.getImprovingMove(acceptanceCriteria) match{
         case NoMoveFound => if(currentIsA){currentIsA = false; search()} else NoMoveFound
-        case ProblemSolved => ProblemSolved
-        case x:Move => x
+        case x:MoveFound => x
       }
     }
     search()
@@ -202,22 +208,20 @@ class Exhaust(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b
 
 /** retries n times the move before concluding to noMove can be found
   * resets o nhe first found move, or on reset
-  * @param a
-  * @param n
+  * @param a the neighborhood on which we will perform retries
+  * @param n the maximal number of retries on a before concluding it is dead
   */
 class Retry(a:Neighborhood, n:Int = 1) extends NeighborhoodCombinator(a){
   var remainingTries = n
-  override def getImprovingMove(): SearchResult = {
-    a.getImprovingMove() match{
-      case NoMoveFound => {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria) match{
+      case NoMoveFound =>
         remainingTries -= 1
         if (remainingTries == 0) NoMoveFound
-        else this.getImprovingMove()
-      }
-      case x => {
+        else this.getImprovingMove(acceptanceCriteria)
+      case x =>
         remainingTries = n
         x
-      }
     }
   }
 
@@ -229,35 +233,34 @@ class Retry(a:Neighborhood, n:Int = 1) extends NeighborhoodCombinator(a){
 }
 
 class NoReset(a:Neighborhood) extends NeighborhoodCombinator(a){
-  override def getImprovingMove() = a.getImprovingMove()
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean) = a.getImprovingMove(acceptanceCriteria)
 
   //this resets the internal state of the move combinators
   override def reset(){}
 }
 /**this composer is stateful.
-  * it returns the result of one Neighborhood until it returns NoMoveFound. It then switches to the other Neighborhood.
+  * it returns the result of one Neighborhood until it returns NoMoveFound.
+  * It then switches to the other Neighborhood.
   * it starts with Neighborhood a
   * @author renaud.delandtsheer@cetic.be
   */
 class ExhaustBack(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
   var currentIsA = true
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     def search():SearchResult = {
       val current = if(currentIsA) a else b
-      current.getImprovingMove() match{
-        case NoMoveFound => {
+      current.getImprovingMove(acceptanceCriteria) match{
+        case NoMoveFound =>
           if (currentIsA) {
-            currentIsA = false;
+            currentIsA = false
             b.reset()
-            b.getImprovingMove()
+            b.getImprovingMove(acceptanceCriteria)
           } else {
-            currentIsA = true;
+            currentIsA = true
             a.reset()
-            a.getImprovingMove()
+            a.getImprovingMove(acceptanceCriteria)
           }
-        }
-        case ProblemSolved => ProblemSolved
-        case x:Move => x
+        case x:MoveFound => x
       }
     }
     search()
@@ -274,41 +277,40 @@ class ExhaustBack(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator
  * @author renaud.delandtsheer@cetic.be
  */
 class ResetOnExhausted(a:Neighborhood) extends NeighborhoodCombinator(a){
-  override def getImprovingMove(): SearchResult = {
-    a.getImprovingMove()  match{
-      case NoMoveFound => {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria)  match{
+      case NoMoveFound =>
         a.reset()
-        a.getImprovingMove()
-      }
-      case m:Move => m
-      case ProblemSolved => ProblemSolved
+        a.getImprovingMove(acceptanceCriteria)
+      case m:MoveFound => m
     }
   }
 }
 
-/**
- * @author renaud.delandtsheer@cetic.be
- */
+/**this composer is stateful.
+  * it returns the result of the first Neighborhood until it returns NoMoveFound.
+  * It then switches to the other Neighborhood,
+  * but only if a move was found by the first neighborhood
+  * it does not come back to the first one after the second one is exhausted
+  * @author renaud.delandtsheer@cetic.be
+  */
 class ExhaustAndContinueIfMovesFound(a:Neighborhood, b:Neighborhood) extends NeighborhoodCombinator(a,b){
   var currentIsA = true
   var movesFoundWithCurrent = false
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     def search():SearchResult = {
       val current = if(currentIsA) a else b
-      current.getImprovingMove() match{
-        case NoMoveFound =>{
+      current.getImprovingMove(acceptanceCriteria) match{
+        case NoMoveFound =>
           if(currentIsA){
             currentIsA = false
-            movesFoundWithCurrent = false;
+            movesFoundWithCurrent = false
             search()
           }
           else NoMoveFound
-        }
-        case x:Move => {
-          movesFoundWithCurrent = true;
+        case x:MoveFound =>
+          movesFoundWithCurrent = true
           x
-        }
-        case ProblemSolved => ProblemSolved
       }
     }
     search()
@@ -327,8 +329,8 @@ class ExhaustAndContinueIfMovesFound(a:Neighborhood, b:Neighborhood) extends Nei
   * @author renaud.delandtsheer@cetic.be
   */
 class Conditional(c:()=>Boolean, b:Neighborhood) extends NeighborhoodCombinator(b){
-  override def getImprovingMove(): SearchResult = {
-    if(c()) b.getImprovingMove()
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    if(c()) b.getImprovingMove(acceptanceCriteria)
     else NoMoveFound
   }
 }
@@ -338,10 +340,10 @@ class Conditional(c:()=>Boolean, b:Neighborhood) extends NeighborhoodCombinator(
   */
 class BoundSearches(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a){
   var remainingMoves = maxMove
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if(remainingMoves >0){
       remainingMoves -= 1
-      a.getImprovingMove()
+      a.getImprovingMove(acceptanceCriteria)
     }else NoMoveFound
   }
 
@@ -353,14 +355,15 @@ class BoundSearches(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombina
 }
 
 /**this one bounds the number of moves done with this neighborhood
+  * notice that the count is reset by the reset operation
   * @author renaud.delandtsheer@cetic.be
   */
 class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a){
   var remainingMoves = maxMove
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
-      a.getImprovingMove() match{
-        case m:Move => CallBackMove(m,notifyMoveTaken)
+      a.getImprovingMove(acceptanceCriteria) match{
+        case m:MoveFound => CallBackMove(m.m,notifyMoveTaken)
         case x => x
       }
     } else NoMoveFound
@@ -383,30 +386,26 @@ class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator
   */
 class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends NeighborhoodCombinator(a,b){
   var currentStep:Int = steps
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if(currentStep >0){
       currentStep -= 1
       if(currentStep == 0) currentStep = -steps
-      a.getImprovingMove() match{
-        case NoMoveFound =>{
+      a.getImprovingMove(acceptanceCriteria) match{
+        case NoMoveFound =>
           currentStep = - steps
           b.reset()
-          b.getImprovingMove()
-        }
-        case x:Move => x
-        case ProblemSolved => ProblemSolved
+          b.getImprovingMove(acceptanceCriteria)
+        case x:MoveFound => x
       }
     }else{
       currentStep += 1
       if(currentStep == 0) currentStep = steps
-      b.getImprovingMove() match{
-        case NoMoveFound => {
+      b.getImprovingMove(acceptanceCriteria) match{
+        case NoMoveFound =>
           currentStep = steps
           a.reset()
-          a.getImprovingMove()
-        }
-        case x:Move => x
-        case ProblemSolved => ProblemSolved
+          a.getImprovingMove(acceptanceCriteria)
+        case x:MoveFound => x
       }
     }
   }
