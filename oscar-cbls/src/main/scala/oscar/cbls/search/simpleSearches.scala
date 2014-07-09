@@ -1,5 +1,6 @@
 package oscar.cbls.search
 
+import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
@@ -10,7 +11,7 @@ import scala.collection.immutable.SortedSet
 //TODO: symmetry elimination static & dynamic
 
 /**
- * will iteratively find a variable in the array, and find a value from its range that improves the objective function
+ * will find a variable in the array, and find a value from its range that improves the objective function
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param obj te objective function to improve
@@ -188,3 +189,35 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
     CompositeMove(toReturn, 0, name)
   }
 }
+
+/**
+ *  will chose a variable in the array of variable that maximizes its violation (ties broken randomly)
+ *  and find a value from its range that improves the objective function
+ *  the new value can be either the best one or the first one that improves according to parameter "best"
+ *
+ *  notice that the search of variable is performed linearly, as for the search of new value.
+ *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]]
+ *
+ * @param c the constraint system
+ * @param variables the array of variable that define the search space of this neighborhood
+ * @param best true: the new value is the best one, false, the new value is the first found one that improves
+ */
+class conflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false) extends StatelessNeighborhood with SearchEngineTrait{
+  var varArray = variables.toArray
+  val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
+  override def getImprovingMove(): SearchResult = {
+    val oldObj = c.ObjectiveVar.value
+    val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
+
+    val NewVal = if(best) selectMin(varArray(MaxViolVarID).domain)(c.assignVal(varArray(MaxViolVarID),_:Int))
+    else selectFirst(varArray(MaxViolVarID).domain, (newVal:Int) => c.assignVal(varArray(MaxViolVarID),newVal) < oldObj)
+    val objAfter = c.assignVal(varArray(MaxViolVarID),NewVal)
+
+    if(objAfter < oldObj){
+      AssignMove(varArray(MaxViolVarID),NewVal,objAfter)
+    }else{
+      NoMoveFound
+    }
+  }
+}
+
