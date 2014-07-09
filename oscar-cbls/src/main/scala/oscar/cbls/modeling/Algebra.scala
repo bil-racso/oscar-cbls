@@ -75,7 +75,7 @@ object Algebra extends AlgebraTrait{
 
 trait AlgebraTrait{
   class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1) extends Iterable[Int]{
-    if(!(Range(start,end,step).contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
+    if(!(Range.inclusive(start,end,step).contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
     if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
 
     //include the at Value
@@ -119,7 +119,7 @@ trait AlgebraTrait{
   implicit def instrumentRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
 
   class InstrumentedRange(r:Range){
-    def startBy (start:Int)  =  new ShiftedRange(r.start, r.end,start:Int, r.step)
+    def startBy (start:Int)  =  new ShiftedRange(r.head, r.last,start:Int, r.step)
   }
 
   implicit def InstrumentIntVar(v: CBLSIntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
@@ -161,7 +161,7 @@ trait AlgebraTrait{
 
   implicit def InstrumentIntSetVar(v: CBLSSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
-  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toIntSetVar)
+  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toSetVar)
 
   implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(CBLSSetConst(a))
 
@@ -192,6 +192,7 @@ trait AlgebraTrait{
     def apply(index: CBLSIntVar): CBLSSetVar = SetElement(index, inputarray)
   }
 
-
+  implicit def arrayOfIntTOArrayOfIntConst(a:Array[Int]):Array[CBLSIntVar] = a.map(CBLSIntConst(_))
+  implicit def arrayOfIntInvariantArrayOfIntVar(a:Array[IntInvariant]):Array[CBLSIntVar] = a.map(_.toIntVar)
 }
 
