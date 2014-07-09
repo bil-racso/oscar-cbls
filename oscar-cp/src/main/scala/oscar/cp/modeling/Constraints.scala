@@ -16,14 +16,59 @@
 
 package oscar.cp.modeling
 
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.scheduling._
-import scala.collection._
-import scala.collection.mutable.ArrayBuffer
 import java.util.LinkedList
+
+import scala.Vector
+import scala.collection.IndexedSeq
+import scala.collection.Iterable
 import scala.collection.immutable.Set
+
+import oscar.cp.constraints.AllDifferent
+import oscar.cp.constraints.Among
+import oscar.cp.constraints.AtLeastNValue
+import oscar.cp.constraints.Automaton
+import oscar.cp.constraints.BinPacking
+import oscar.cp.constraints.BinPackingFlow
+import oscar.cp.constraints.BinaryKnapsack
+import oscar.cp.constraints.BinarySum
+import oscar.cp.constraints.Circuit
+import oscar.cp.constraints.Count
+import oscar.cp.constraints.CountCst
+import oscar.cp.constraints.CountSimple
+import oscar.cp.constraints.Deviation
+import oscar.cp.constraints.Disjoint
+import oscar.cp.constraints.ElementCst
+import oscar.cp.constraints.ElementCst2D
+import oscar.cp.constraints.ElementVar
+import oscar.cp.constraints.GCC
+import oscar.cp.constraints.GCCVar
+import oscar.cp.constraints.Inverse
+import oscar.cp.constraints.Knapsack
+import oscar.cp.constraints.LexLeq
+import oscar.cp.constraints.MaxCumulativeAlternative
+import oscar.cp.constraints.Maximum
+import oscar.cp.constraints.MinAssignment
+import oscar.cp.constraints.Minimum
+import oscar.cp.constraints.Modulo
+import oscar.cp.constraints.Or
+import oscar.cp.constraints.OrReif
+import oscar.cp.constraints.Permutation
+import oscar.cp.constraints.Regular
+import oscar.cp.constraints.SoftGCC
+import oscar.cp.constraints.Spread
+import oscar.cp.constraints.Stretch
+import oscar.cp.constraints.SweepMinCumulative
+import oscar.cp.constraints.TableData
+import oscar.cp.constraints.UnaryResource
+import oscar.cp.constraints.WeightedSum
 import oscar.cp.constraints.stockingCost.StockingCost
+import oscar.cp.core.CPBoolVar
+import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPSetVar
+import oscar.cp.core.Constraint
+import oscar.cp.core._
 
 trait Constraints {
 
@@ -257,6 +302,16 @@ trait Constraints {
     val z_ = CPBoolVar(z)(x.store)
     new ElementVar(tab.map(_.asInstanceOf[CPIntVar]).toArray, x, z_)
   }
+  
+  /**
+   * Inverse constraint
+   * @param prev an array of `n` integer variables
+   * @param next an array of `n` integer variables 
+   * @return a constraint enforcing for all `i` in `0 until n`:
+   *         1. `next(prev(i)) == i`
+   *         2. `prev(next(i)) == i`
+   */
+  def inverse(prev: Array[CPIntVar], next: Array[CPIntVar]): Inverse = new Inverse(prev, next)
 
   /**
    * Sum Constraint
