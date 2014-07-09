@@ -43,7 +43,7 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
       var i = 0
       while (i < prev.length) {
         if (!prev(i).isBound) prev(i).callValRemoveIdxWhenValueIsRemoved(this, i)
-        if (!next(i).isBound) prev(i).callValRemoveIdxWhenValueIsRemoved(this, i)
+        if (!next(i).isBound) next(i).callValRemoveIdxWhenValueIsRemoved(this, i)
         i += 1
       }
       Suspend
