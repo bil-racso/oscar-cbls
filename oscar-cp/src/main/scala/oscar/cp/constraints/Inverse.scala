@@ -42,8 +42,14 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
     else {
       var i = 0
       while (i < prev.length) {
-        if (!prev(i).isBound) prev(i).callValRemoveIdxWhenValueIsRemoved(this, i)
-        if (!next(i).isBound) next(i).callValRemoveIdxWhenValueIsRemoved(this, i)
+        if (!prev(i).isBound) {
+          prev(i).callValRemoveIdxWhenValueIsRemoved(this, i)
+          prev(i).callValBindIdxWhenBind(this, i)
+        }
+        if (!next(i).isBound) {
+          next(i).callValRemoveIdxWhenValueIsRemoved(this, i)
+          next(i).callValBindIdxWhenBind(this, i)
+        }
         i += 1
       }
       Suspend
@@ -89,6 +95,11 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
   override def valRemoveIdx(intVar: CPIntVar, id: Int, value: Int): CPOutcome = {
     if (intVar == next(id)) prev(value).removeValue(id)
     else next(value).removeValue(id)
+  }
+  
+  override def valBindIdx(intVar: CPIntVar, id: Int): CPOutcome = {
+    if (intVar == next(id)) prev(next(id).value).assign(id)
+    else next(prev(id).value).assign(id)
   }
 }
 
