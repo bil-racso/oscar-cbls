@@ -26,11 +26,9 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-class CPSolver() extends CPStore() {
-
-  def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
-    this.add(cons, propagStrength)
-  }
+class CPSolver(propagStrength: CPPropagStrength) extends CPStore(propagStrength) {
+  
+  def this() = this(CPPropagStrength.Weak)
   
   var objective = new CPObjective(this, Array[CPObjectiveUnit]());
   
@@ -142,6 +140,19 @@ class CPSolver() extends CPStore() {
 }
 
 object CPSolver {
+  
   /** Creates a new CP Solver */
   def apply(): CPSolver = new CPSolver()
+  
+  /** Creates a new CP Solver with `propagStrength` as default level of propagation */
+  def apply(propagStrength: CPPropagStrength) = new CPSolver(propagStrength)
+  
+  /** Creates a new CP Solver with `Weak` as default level of propagation */
+  def weak: CPSolver = new CPSolver(CPPropagStrength.Weak)
+  
+  /** Creates a new CP Solver with `Medium` as default level of propagation */
+  def medium: CPSolver = new CPSolver(CPPropagStrength.Medium)
+  
+  /** Creates a new CP Solver with `Strong` as default level of propagation */
+  def strong: CPSolver = new CPSolver(CPPropagStrength.Strong)
 }

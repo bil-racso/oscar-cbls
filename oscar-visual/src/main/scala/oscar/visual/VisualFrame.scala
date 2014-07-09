@@ -88,7 +88,6 @@ class VisualFrame(title: String, nbLines: Int = 1, nbCols: Int = 1) extends JFra
     content.add(toolbar, BorderLayout.NORTH)
     toolbar
   }
-
 }
 
 object VisualFrame {

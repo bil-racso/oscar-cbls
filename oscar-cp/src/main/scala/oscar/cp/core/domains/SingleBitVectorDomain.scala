@@ -7,7 +7,10 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import java.lang.Integer.bitCount
 
-// Still contains some bugs to fix
+/** 
+ *  An integer domain based on a bit vector of 32 bits. 
+ *  @author Renaud Hartert 
+ */
 class SingleBitVectorDomain(override val context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntDomain {
 
   // Initial size of the domain
@@ -46,12 +49,13 @@ class SingleBitVectorDomain(override val context: ReversibleContext, val minValu
   override def randomValue(rand: Random): Int = {
     val n = size
     val r = rand.nextInt(n) + 1
-    if (r == 1) min // Lazy update
-    else if (r == n) max // Lazy update
+    val minVal = min // Lazy update
+    if (r == 1) minVal 
+    else if (r == n) max
     else {
       val domain = bits.value
       var counter = 1
-      var id = minId.value + 1
+      var id = minId.value + 1 // up to date
       while (counter < r) {
         val bit = (1 << id)
         if ((domain & bit) == bit) counter += 1
