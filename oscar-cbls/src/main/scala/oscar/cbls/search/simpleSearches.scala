@@ -21,6 +21,7 @@ import scala.collection.immutable.SortedSet
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
                               name:String = "AssignNeighborhood",
+                              best:Boolean = false,
                               searchZone:CBLSSetVar = null,
                               solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
@@ -28,10 +29,15 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   var startIndice:Int = 0
   override def getImprovingMove: SearchResult = {
     if(amIVerbose) println(name + ": trying")
-    val oldObj = obj.value
+    var oldObj = obj.value
+    var toReturn:SearchResult = NoMoveFound
+
     if(oldObj <= solvedPivot) return ProblemSolved
 
-    val iterationScheme = if(searchZone == null) vars.indices startBy startIndice else searchZone.value
+    val iterationScheme = if(searchZone == null)
+      if (best) vars.indices
+      else vars.indices startBy startIndice
+    else searchZone.value
 
     for(i <- iterationScheme){
       val currentVar = vars(i)
@@ -41,14 +47,24 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         val newObj = obj.assignVal(currentVar,newVal)
 
         if(newObj < oldObj){
-          if(searchZone == null) startIndice = i
-          if(amIVerbose) println(name + ": move found")
-          return AssignMove(currentVar,newVal, newObj, name)
+          if(best){
+            oldObj = newObj
+            toReturn = AssignMove(currentVar,newVal, newObj, name)
+          }else{
+            if(searchZone == null) startIndice = i
+            if(amIVerbose) println(name + ": move found")
+            return AssignMove(currentVar,newVal, newObj, name)
+          }
         }
       }
     }
-    if(amIVerbose) println(name + ": no move found")
-    NoMoveFound
+    if(amIVerbose) {
+      toReturn match {
+        case NoMoveFound => println(name + ": no move found")
+        case _ => println(name + ": move found")
+      }
+    }
+    toReturn
   }
 
   //this resets the internal state of the Neighborhood
@@ -62,14 +78,20 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *
  * @param vars an array of [[CBLSIntVar]] defining the search space
  * @param obj te objective function to improve
- * @param searchZone a subset of the indices of vars to consider.
+ * @param searchZone1 a subset of the indices of vars to consider for the first moved point
  *                   If none is provided, all the array will be considered each time
+ * @param searchZone2 a subset of the indices of vars to consider for the second moved point
+ *                   If none is provided, all the array will be considered each time
+ * @param symmetryCanBeBroken set to true, and the neighborhood will break symmetries on indices of swapped vars
  * @param name the name of the neighborhood
  */
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              obj:Objective,
                              name:String = "SwapsNeighborhood",
-                             searchZone:CBLSSetVar = null,
+                             searchZone1:CBLSSetVar = null,
+                             searchZone2:CBLSSetVar = null,
+                             symmetryCanBeBroken:Boolean = true,
+                             best:Boolean = false,
                              solvedPivot:Int = Int.MinValue)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
@@ -77,35 +99,47 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   override def getImprovingMove: SearchResult = {
 
     if(amIVerbose) println(name + ": trying")
-    val oldObj = obj.value
+    var oldObj = obj.value
+    var toReturn:SearchResult = NoMoveFound
 
     if(oldObj <= solvedPivot) return ProblemSolved
 
-    val firstIterationScheme = if(searchZone == null) vars.indices startBy startIndice else searchZone.value
-    val secondIterationScheme = if(searchZone == null) vars.indices else searchZone.value
+    val firstIterationScheme = if(searchZone1 == null) if (best) vars.indices else vars.indices startBy startIndice else searchZone1.value
+    val secondIterationScheme = if(searchZone2 == null) vars.indices else searchZone2.value
 
     for(i:Int <- firstIterationScheme){
       val firstVar = vars(i)
       val oldValOfFirstVar = firstVar.value
 
       for(j:Int <- secondIterationScheme;
-        secondVar = vars(j);
-        oldValOfSecondVar = secondVar.value;
-        if i < j  //we break symmetry here
-        && oldValOfFirstVar != oldValOfSecondVar
-        && secondVar.domain.contains(oldValOfFirstVar)
-        && firstVar.domain.contains(oldValOfSecondVar)) {
+          secondVar = vars(j);
+          oldValOfSecondVar = secondVar.value
+          if (!symmetryCanBeBroken || i < j)  //we break symmetry here
+            && i != j
+            && oldValOfFirstVar != oldValOfSecondVar
+            && secondVar.domain.contains(oldValOfFirstVar)
+            && firstVar.domain.contains(oldValOfSecondVar)) {
 
         val newObj = obj.swapVal(firstVar, secondVar)
         if (newObj < oldObj) {
-          if (searchZone == null) startIndice = i
-          if(amIVerbose) println(name + ": move found")
-          return SwapMove(firstVar, secondVar, newObj, name)
+          if(best){
+            toReturn =  SwapMove(firstVar, secondVar, newObj, name)
+            oldObj = newObj
+          }else {
+            if (searchZone1 == null) startIndice = i
+            if (amIVerbose) println(name + ": move found")
+            return SwapMove(firstVar, secondVar, newObj, name)
+          }
         }
       }
     }
-    if(amIVerbose) println(name + ": no move found")
-    NoMoveFound
+    if(amIVerbose) {
+      toReturn match {
+        case NoMoveFound => println(name + ": no move found")
+        case _ => println(name + ": move found")
+      }
+    }
+    toReturn
   }
 
   //this resets the internal state of the Neighborhood
@@ -126,7 +160,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  degree:Int = 1,
                                  name:String = "RandomizeNeighborhood",
-                              searchZone:CBLSSetVar = null)
+                                 searchZone:CBLSSetVar = null)
   extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -150,6 +184,6 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
       }
     }
     if(amIVerbose) println(name + ": move found")
-    return CompositeMove(toReturn, 0, name)
+    CompositeMove(toReturn, 0, name)
   }
 }

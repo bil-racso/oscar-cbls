@@ -77,7 +77,7 @@ abstract class Neighborhood{
           if (verbose >= 1) println("problem solved after " + toReturn + " it")
           return toReturn;
         case NoMoveFound =>
-          if (verbose >= 1) println("no move found after " + toReturn + " it")
+          if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
         case m: MoveFound =>
           if (verbose >= 1) println(m)
