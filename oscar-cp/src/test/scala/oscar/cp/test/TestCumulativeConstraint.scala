@@ -8,6 +8,7 @@ import oscar.cp.modeling._
 import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
 import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp.constraints.EnergeticReasoning
 
 abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100) extends FunSuite with ShouldMatchers {
 
@@ -106,5 +107,11 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulative") {
   override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
     new SweepMaxCumulative(starts, durations, ends, demands, resources, capacity, id: Int)
+  }
+}
+
+class TestEnergeticReasoning extends TestCumulativeConstraint("EnergeticReasoning") {
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+    new EnergeticReasoning(starts, durations, ends, demands, resources, capacity, id: Int)
   }
 }
