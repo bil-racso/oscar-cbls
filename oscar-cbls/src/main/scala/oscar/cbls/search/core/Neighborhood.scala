@@ -13,15 +13,17 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.cbls.search.moves
+package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.combinators._
+import oscar.cbls.search.move.Move
+
 import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
-case object ProblemSolved extends SearchResult
 //case object MovePerformed extends SearchResult
 
 case class MoveFound(m:Move) extends SearchResult{
@@ -44,7 +46,12 @@ object SearchResult {
 abstract class Neighborhood{
 //  def getImprovingMove(acceptor:(Int,Int) => Boolean):SearchResult =  getImprovingMove()
 
-  def getImprovingMove:SearchResult
+  /**
+   * @param acceptanceCriterion oldObj,newObj => should the move to the newObj be kept (default is oldObj > newObj)
+   *                         beware that a changing criteria might interact unexpectedly with stateful neighborhood combinators
+   * @return an improving move
+   */
+  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult
 
   //this resets the internal state of the Neighborhood
   def reset()
@@ -63,19 +70,24 @@ abstract class Neighborhood{
   /**
    * @return true if a move has been performed, false otherwise
    */
-  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(1))
+  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(_ >= 1))
 
   /**
    * @return the number of moves performed
    */
-  def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
+
+  /**
+   * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+   *                   eg if the problem is considered as solved
+   *                   you can evaluate some objective function there such as a violation degree
+   * @param acceptanceCriterion a criterion for accepting a move
+   * @return
+   */
+  def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
     var toReturn = 0
-    var remainingMoves = maxMoves
-    while(remainingMoves != 0){
-      getImprovingMove match {
-        case ProblemSolved =>
-          if (verbose >= 1) println("problem solved after " + toReturn + " it")
-          return toReturn;
+    var moveCount = 0
+    while(!shouldStop(moveCount)){
+      getImprovingMove(acceptanceCriterion) match {
         case NoMoveFound =>
           if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
@@ -85,9 +97,9 @@ abstract class Neighborhood{
           true
       }
       toReturn += 1
-      remainingMoves -= 1
+      moveCount += 1
     }
-    if(verbose >= 1)println("maxMoves ("+ maxMoves+") performed")
+    if(verbose >= 1)println("stop criteria met after "+ moveCount+" moves")
     toReturn
   }
 
@@ -213,5 +225,5 @@ abstract class StatelessNeighborhood extends Neighborhood{
 /** a neighborhood that never finds any move (quite useless, actually)
   */
 case class NoMoveNeighborhood() extends StatelessNeighborhood{
-  override def getImprovingMove: SearchResult = NoMoveFound
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
 }

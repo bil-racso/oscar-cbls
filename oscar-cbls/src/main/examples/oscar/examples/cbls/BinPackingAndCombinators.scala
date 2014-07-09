@@ -38,7 +38,7 @@ object BinPackingAndCombinators extends CBLSModel with App{
     orElse (EmptyMostViolatedBin(problem) onMove println("BigJump")))) protectBest problem.overallViolation.objective
 
   x.verbose = 1
-  x.doAllImprovingMoves(200)
+  x.doAllImprovingMoves(_ >= 200 || problem.overallViolation.value == 0)
 
   x.restoreBest()
 

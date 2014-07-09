@@ -13,9 +13,9 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.cbls.search.moves
+package oscar.cbls.search.move
 
-import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
 
 /** standard move template
   *

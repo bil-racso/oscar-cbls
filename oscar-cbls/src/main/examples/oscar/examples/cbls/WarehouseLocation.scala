@@ -24,8 +24,11 @@ object WarehouseLocation extends App with AlgebraTrait{
   val maxXY = 100
   val side = maxXY - minXY
 
-  val costForOpeningWarehouse:Array[Int] = Array.tabulate(W)(w => (math.random * side * 2).toInt)
+  val weightingForOpeningWarehouseCost = 3
 
+  val costForOpeningWarehouse:Array[Int] = Array.tabulate(W)(w => (math.random * side * weightingForOpeningWarehouseCost).toInt)
+
+  //we generate te cost distance matrix
   def randomXY:Int = (minXY + (math.random * side)).toInt
   def randomPosition = (randomXY,randomXY)
   val warehousePositions:Array[(Int,Int)] = Array.tabulate(W)(w => randomPosition)
@@ -52,11 +55,11 @@ object WarehouseLocation extends App with AlgebraTrait{
   m.close()
 
   val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouse")
-                     exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
-                     orElse (RandomizeNeighborhood(warehouseOpenArray, W/2) maxMoves 2) protectBest obj)
+                      exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
+                      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj)
 
   neighborhood.verbose = 1
-  neighborhood.doAllImprovingMoves(W+D)
+  neighborhood.doAllImprovingMoves(_ >= W+D)
   neighborhood.restoreBest()
 
   println(openWarehouses)

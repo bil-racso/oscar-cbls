@@ -4,36 +4,37 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.moves._
+import oscar.cbls.search.core.{StatelessNeighborhood, NoMoveFound, SearchResult, Neighborhood}
+import oscar.cbls.search.move.{CompositeMove, SwapMove, AssignMove, Move}
 
 import scala.collection.immutable.SortedSet
 
 //TODO: symmetry elimination static & dynamic
+
 
 /**
  * will find a variable in the array, and find a value from its range that improves the objective function
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param obj te objective function to improve
+ * @param name the name of the neighborhood
+ * @param best true for the best move, ffalse for the first move, default false
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
- * @param name the name of the neighborhood
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
                               name:String = "AssignNeighborhood",
+                              acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj,
                               best:Boolean = false,
-                              searchZone:CBLSSetVar = null,
-                              solvedPivot:Int = Int.MinValue)
+                              searchZone:CBLSSetVar = null)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove: SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     if(amIVerbose) println(name + ": trying")
     var oldObj = obj.value
     var toReturn:SearchResult = NoMoveFound
-
-    if(oldObj <= solvedPivot) return ProblemSolved
 
     val iterationScheme = if(searchZone == null)
       if (best) vars.indices
@@ -47,7 +48,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       for(newVal <- currentVar.domain if newVal != oldVal){
         val newObj = obj.assignVal(currentVar,newVal)
 
-        if(newObj < oldObj){
+        if(acceptanceCriteria(oldObj,newObj)){
           if(best){
             oldObj = newObj
             toReturn = AssignMove(currentVar,newVal, newObj, name)
@@ -86,25 +87,22 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  * @param symmetryCanBeBroken set to true, and the neighborhood will break symmetries on indices of swapped vars
  *                            typically, you always want it except if you have specified the two searchZones, and they are different
  * @param name the name of the neighborhood
- */
+ * */
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              obj:Objective,
                              name:String = "SwapsNeighborhood",
                              searchZone1:CBLSSetVar = null,
                              searchZone2:CBLSSetVar = null,
                              symmetryCanBeBroken:Boolean = true,
-                             best:Boolean = false,
-                             solvedPivot:Int = Int.MinValue)
+                             best:Boolean = false)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove: SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
 
     if(amIVerbose) println(name + ": trying")
     var oldObj = obj.value
     var toReturn:SearchResult = NoMoveFound
-
-    if(oldObj <= solvedPivot) return ProblemSolved
 
     val firstIterationScheme = if(searchZone1 == null) if (best) vars.indices else vars.indices startBy startIndice else searchZone1.value
     val secondIterationScheme = if(searchZone2 == null) vars.indices else searchZone2.value
@@ -123,7 +121,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
             && firstVar.domain.contains(oldValOfSecondVar)) {
 
         val newObj = obj.swapVal(firstVar, secondVar)
-        if (newObj < oldObj) {
+        if (acceptanceCriteria(oldObj,newObj)) {
           if(best){
             toReturn =  SwapMove(firstVar, secondVar, newObj, name)
             oldObj = newObj
@@ -166,7 +164,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
   extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove: SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -202,19 +200,19 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
  * @param variables the array of variable that define the search space of this neighborhood
  * @param best true: the new value is the best one, false, the new value is the first found one that improves
  */
-class conflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false) extends StatelessNeighborhood with SearchEngineTrait{
+class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false) extends StatelessNeighborhood with SearchEngineTrait{
   var varArray = variables.toArray
   val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
-  override def getImprovingMove(): SearchResult = {
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.ObjectiveVar.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
 
     val NewVal = if(best) selectMin(varArray(MaxViolVarID).domain)(c.assignVal(varArray(MaxViolVarID),_:Int))
     else selectFirst(varArray(MaxViolVarID).domain, (newVal:Int) => c.assignVal(varArray(MaxViolVarID),newVal) < oldObj)
-    val objAfter = c.assignVal(varArray(MaxViolVarID),NewVal)
+    val newObj = c.assignVal(varArray(MaxViolVarID),NewVal)
 
-    if(objAfter < oldObj){
-      AssignMove(varArray(MaxViolVarID),NewVal,objAfter)
+    if(acceptanceCriteria(oldObj,newObj)){
+      AssignMove(varArray(MaxViolVarID),NewVal,newObj)
     }else{
       NoMoveFound
     }

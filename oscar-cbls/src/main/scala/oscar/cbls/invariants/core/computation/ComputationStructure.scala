@@ -21,8 +21,6 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.search.moves.Move
-
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.propagation._
 import language.implicitConversions
