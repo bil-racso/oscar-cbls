@@ -51,18 +51,18 @@ public class ReversibleBoundedSet implements Iterable<Integer>, Iterator<Integer
 		this.node = node;
 		this.n = maxval+1;
 		
-		size = new ReversibleInt(this.node);
+		size = new ReversibleInt(this.node, 0);
 		size.setValue(0);
 		
-		first = new ReversibleInt(this.node);
+		first = new ReversibleInt(this.node, 0);
 		first.setValue(n);
 		
 		next = new ReversibleInt[n];
 		prev = new ReversibleInt[n];
 		for (int i = 0; i < next.length; i++) {
-			next[i] =  new ReversibleInt(this.node);
+			next[i] =  new ReversibleInt(this.node, 0);
 			next[i].setValue(n);
-			prev[i] =  new ReversibleInt(this.node);
+			prev[i] =  new ReversibleInt(this.node, 0);
 			prev[i].setValue(n);
 		}	
 	}

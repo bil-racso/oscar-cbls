@@ -35,12 +35,12 @@ public class ReversibleOrderedSet extends AbstractOrderedSet {
 		prev = new ReversibleInt [max-min+1];
 		next = new ReversibleInt [max-min+1];
 		for (int i = 0; i < max-min+1; i++) {
-			prev[i] = new ReversibleInt(n);
-			next[i] = new ReversibleInt(n);
+			prev[i] = new ReversibleInt(n, 0);
+			next[i] = new ReversibleInt(n, 0);
 		}
-		size = new ReversibleInt(n);
-		first = new ReversibleInt(n);
-		last = new ReversibleInt(n);
+		size = new ReversibleInt(n, 0);
+		first = new ReversibleInt(n, 0);
+		last = new ReversibleInt(n, 0);
 		init();
 	}
 	

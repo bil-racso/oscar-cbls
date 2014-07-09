@@ -54,9 +54,9 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 
 	@Override
 	protected void createSizeMinMax() {
-		size = new ReversibleInt(s);
-		minV = new ReversibleInt(s);
-		maxV = new ReversibleInt(s);
+		size = new ReversibleInt(s, 0);
+		minV = new ReversibleInt(s, 0);
+		maxV = new ReversibleInt(s, 0);
 	}
 
 	@Override

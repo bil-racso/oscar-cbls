@@ -43,10 +43,10 @@ public class Maximum extends Constraint {
 		super(x[0].store(),"Maximum");
 		this.x = x;
 		this.y = y;
-		maxval = new ReversibleInt(s());
-		maxvalsupport = new ReversibleInt(s());
-		minval = new ReversibleInt(s());
-		minvalsupport = new ReversibleInt(s());
+		maxval = new ReversibleInt(s(), 0);
+		maxvalsupport = new ReversibleInt(s(), 0);
+		minval = new ReversibleInt(s(), 0);
+		minvalsupport = new ReversibleInt(s(), 0);
 	}
 	
 	private void updateSupport() {

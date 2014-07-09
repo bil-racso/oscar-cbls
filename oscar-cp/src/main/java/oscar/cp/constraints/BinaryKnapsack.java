@@ -378,9 +378,9 @@ class LightBinaryKnapsack extends Constraint {
 			candidate[i].setValue(true);
 		}
 		
-		rsum = new ReversibleInt(s());
+		rsum = new ReversibleInt(s(), 0);
 		rsum.setValue(0);
-		psum = new ReversibleInt(s());
+		psum = new ReversibleInt(s(), 0);
 		psum.setValue(0);
 		
 		for (int i = 0; i < w.length; i++) {

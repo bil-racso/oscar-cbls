@@ -143,6 +143,10 @@ package object modeling extends Constraints with Branchings {
   def minVal(x: CPIntVar): Int = x.min
   def maxVal(x: CPIntVar): Int = x.max
   def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
+  
+  def branchAssign(variable: CPIntVar, value: Int)(implicit solver: CPSolver): Seq[Alternative] = {
+    branch { solver.post(variable == value) } { solver.post(variable != value) }
+  }
 
   // helper functions to model with an implicit CPSolver
   def add(constraints: Iterable[_ <: Constraint])(implicit cp: CPSolver): Unit = cp.add(constraints)

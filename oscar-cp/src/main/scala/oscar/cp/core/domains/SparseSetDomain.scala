@@ -10,14 +10,14 @@ import scala.util.Random
  *  @author Renaud Hartert 
  *  @author Pierre Schaus
  */
-class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntDomain {
+class SparseSetDomain(override val context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntDomain {
 
   private val offset = minValue
 
-  private val _min = new ReversibleInt(s, minValue)
-  private val _max = new ReversibleInt(s, maxValue)
+  private val _min = new ReversibleInt(context, minValue)
+  private val _max = new ReversibleInt(context, maxValue)
   // Values with a position strictly lower than size are possible
-  private val _size = new ReversibleInt(s, maxValue - minValue + 1)
+  private val _size = new ReversibleInt(context, maxValue - minValue + 1)
 
   private val values = Array.tabulate(size)(i => i)
   private val indexes = Array.tabulate(size)(i => i)
@@ -39,8 +39,8 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
   }
 
   override def randomValue(rand: Random): Int = {
-    val i = rand.nextInt(_size.value)
-    values(i)
+    val pos = rand.nextInt(_size.value)
+    values(pos) + offset
   }
   
   private def checkVal(v: Int): Boolean = {
@@ -59,7 +59,6 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
   private def exchangePositions(val1: Int, val2: Int): Unit = {
     assert(checkVal(val1))
     assert(checkVal(val2))
-
     val v1 = val1 - offset
     val v2 = val2 - offset
     val i1 = indexes(v1)
@@ -181,8 +180,10 @@ class SparseDomain(s: ReversibleContext, val minValue: Int, val maxValue: Int) e
   override def assign(v: Int): CPOutcome = {
     // we only have to put in first position this value and set the size to 1
     assert(checkVal(v));
-
-    if (!hasValue(v)) Failure
+    if (!hasValue(v)) {
+      _size.value = 0
+      Failure
+    }
     else {
       val value = values(0)
       val index = indexes(v - offset)
