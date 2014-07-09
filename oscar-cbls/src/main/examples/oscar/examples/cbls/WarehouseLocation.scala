@@ -3,20 +3,18 @@ package oscar.examples.cbls
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.minmax.MinArray
-import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
+import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.{RandomizeNeighborhood, SwapsNeighborhood, AssignNeighborhood}
+import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 object WarehouseLocation extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 5
+  val W:Int = 15
 
   //the number of delivery points
-  val D:Int = 15
-
-  val costForOpeningWarehouse:Array[Int] = Array(20, 40, 20, 25, 30)
+  val D:Int = 150
 
   //the cost per delivery point if no location is open
   val defaultCostForNoOpenWarehouse = 10000
@@ -25,6 +23,9 @@ object WarehouseLocation extends App with AlgebraTrait{
   val minXY = 0
   val maxXY = 100
   val side = maxXY - minXY
+
+  val costForOpeningWarehouse:Array[Int] = Array.tabulate(W)(w => (math.random * side * 2).toInt)
+
   def randomXY:Int = (minXY + (math.random * side)).toInt
   def randomPosition = (randomXY,randomXY)
   val warehousePositions:Array[(Int,Int)] = Array.tabulate(W)(w => randomPosition)
@@ -44,9 +45,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
 
-  val warehouseCost = SumElements(costForOpeningWarehouse, openWarehouses)
-
-  val totalCost = Sum(distanceToNearestOpenWarehouse) + warehouseCost
+  val totalCost = Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses)
 
   val obj = Objective(totalCost)
 
