@@ -58,7 +58,7 @@ object WarehouseLocation extends App with AlgebraTrait{
                       exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
                       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj)
 
-  //you can also use the following composite to replace SwapNeighborhood (but it will be slower)
+  //you can also use the following composite to replace SwapNeighborhood (but it will be slower than the Swap)
   //AssignNeighborhood(warehouseOpenArray, obj, "SwitchFirstWarehouse") maxMoves 5 andThen AssignNeighborhood(warehouseOpenArray, obj, "SwitchSecondWarehouse")
 
   neighborhood.verbose = 1

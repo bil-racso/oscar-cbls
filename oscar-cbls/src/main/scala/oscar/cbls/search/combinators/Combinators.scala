@@ -471,17 +471,17 @@ object RoundRobinNoParam{
   *
   * @param a the first neighborhood, all moves delivered by this one will be considered
   * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
-  * @param maxfirstStep the maximal number of moves to consider to the first neighborhood
+  * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
   *
   * @author renaud.delandtsheer@cetic.be
  */
-class AndThen(a:Neighborhood, b:Neighborhood, maxfirstStep:Int = Int.MaxValue) extends NeighborhoodCombinator(a,b){
+class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10) extends NeighborhoodCombinator(a,b){
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
 
     a.reset()
 
-    var remainingFirstSteps = maxfirstStep
+    var remainingFirstSteps = maxFirstStep
 
     var oldObj:Int = 0
     def instrumentedFullyAcceptanceCriteria:(Int,Int) => Boolean = (stolenOldObj,_) => {oldObj = stolenOldObj; true}
