@@ -1,6 +1,6 @@
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Store}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.search.{StopWatch, SearchEngineTrait}
 import oscar.cbls.modeling._
@@ -49,5 +49,4 @@ class CBLSModel(val verbose:Boolean = false,
 
   def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:ObjectiveTrait) = o.swapVal(a,b)
   def assignVal(a: CBLSIntVar, v: Int)(implicit o:ObjectiveTrait) = o.assignVal(a, v)
-
 }

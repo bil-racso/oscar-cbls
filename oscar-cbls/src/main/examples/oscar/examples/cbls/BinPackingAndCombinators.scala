@@ -13,16 +13,13 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.cbls.test.search
+package oscar.examples.cbls
 
-import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.binPacking.model.BinPackingProblem
-import oscar.cbls.binPacking.solver._
+import oscar.cbls.binPacking.solver.{EmptyMostViolatedBin, JumpSwapItems, SwapItems, MoveItem}
+import oscar.cbls.modeling.CBLSModel
 
-/**
- * Created by rdl on 24/04/2014.
- */
-object BinPackingTest extends CBLSModel with App{
+object BinPackingAndCombinators extends CBLSModel with App{
 
   //the index is the first element of the couple
   def indexList(l:List[Int]):List[(Int,Int)] = null
@@ -36,9 +33,9 @@ object BinPackingTest extends CBLSModel with App{
   s.close()
 
   val x =  ((MoveItem(problem) exhaustBack SwapItems(problem))
-    exhaust ((MoveItem(problem, true) exhaustBack SwapItems(problem, true)
-             orElse (JumpSwapItems(problem) maxMoves 3 onMove println("Jump"))
-             orElse (EmptyMostViolatedBin(problem) onMove println("BigJump"))))) protectBest(problem.overallViolation.objective)
+    exhaust (MoveItem(problem, true) exhaustBack SwapItems(problem, true)
+    orElse (JumpSwapItems(problem) maxMoves 3 onMove println("Jump"))
+    orElse (EmptyMostViolatedBin(problem) onMove println("BigJump")))) protectBest problem.overallViolation.objective
 
   x.verbose = 1
   x.doAllImprovingMoves(_ >= 200 || problem.overallViolation.value == 0)
