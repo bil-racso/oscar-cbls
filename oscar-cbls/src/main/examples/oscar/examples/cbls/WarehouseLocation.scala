@@ -11,10 +11,10 @@ import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighb
 object WarehouseLocation extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 15
+  val W:Int = 5
 
   //the number of delivery points
-  val D:Int = 150
+  val D:Int = 15
 
   //the cost per delivery point if no location is open
   val defaultCostForNoOpenWarehouse = 10000
@@ -57,6 +57,9 @@ object WarehouseLocation extends App with AlgebraTrait{
   val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouse")
                       exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
                       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj)
+
+  //you can also use the following composite to replace SwapNeighborhood (but it will be slower than the Swap)
+  //AssignNeighborhood(warehouseOpenArray, obj, "SwitchFirstWarehouse") maxMoves 5 andThen AssignNeighborhood(warehouseOpenArray, obj, "SwitchSecondWarehouse")
 
   neighborhood.verbose = 1
   neighborhood.doAllImprovingMoves(_ >= W+D)
