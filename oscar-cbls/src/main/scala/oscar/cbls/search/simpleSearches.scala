@@ -4,7 +4,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.algo.IdenticalAggregator
+import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult, StatelessNeighborhood}
 import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}
 
@@ -25,9 +25,13 @@ import scala.collection.immutable.SortedSet
  *                      if you set to None this will not be used at all
  * @param symmetryClassOfValues a function that inputs the ID of a variable and a possible value for this variable,
  *                              and returns a symmetry class for this variable and value
- *                              only values belonging to different same symmetry classes will be tested
+ *                              only values belonging to different symmetry classes will be tested
  *                             Int.MinValue is considered different to itself
  *                             (this is only useful if your model is awfully expensive to evaluate)
+ * @param hotRestart  if true, the exploration order in case you ar not going for the best is a hotRestart
+ *                    even if you specify a searchZone that is: the exploration starts again
+ *                    at the position where it stopped, and consider the indices in increasing order
+ *                    if false, consider the exploration range in natural order from the first position.
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
@@ -36,7 +40,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               best:Boolean = false,
                               searchZone:CBLSSetVar = null,
                               symmetryClassOfVariables:Option[Int => Int] = None,
-                              symmetryClassOfValues:Option[Int => Int => Int] = None)
+                              symmetryClassOfValues:Option[Int => Int => Int] = None,
+                              hotRestart:Boolean = true)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -47,8 +52,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 
     val iterationSchemeOnZone = if (searchZone == null)
       if (best) vars.indices
-      else vars.indices startBy startIndice
-    else searchZone.value
+      else if (hotRestart) {if(startIndice >= vars.size) startIndice = 0; vars.indices startBy startIndice} else vars.indices
+    else if (hotRestart)HotRestart(searchZone.value,startIndice) else searchZone.value
 
     val iterationScheme = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
@@ -72,7 +77,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
             oldObj = newObj
             toReturn = AssignMove(currentVar, newVal, newObj, name)
           } else {
-            if (searchZone == null) startIndice = i
+            startIndice = i+1
             if (amIVerbose) println(name + ": move found")
             return AssignMove(currentVar, newVal, newObj, name)
           }
@@ -106,11 +111,16 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  * @param symmetryCanBeBroken set to true, and the neighborhood will break symmetries on indices of swapped vars
  *                            typically, you always want it except if you have specified the two searchZones, and they are different
  * @param name the name of the neighborhood
- * @param symmetryClass a function that input the ID of a variable and returns a symmetry class;
+ * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
  *                      for each role of the move, ony one of the variable in each class will be considered
  *                      this makes search faster
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
+ * @param hotRestart  if true, the exploration order in case you ar not going for the best
+ *                    is a hotRestart on the first indice
+ *                    even if you specify a searchZone that is: the exploration starts again
+ *                    at the position where it stopped, and consider the indices in increasing order
+ *                    if false, consider the exploration range in natural order from the first position.
  **/
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              obj:Objective,
@@ -119,7 +129,8 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              searchZone2:CBLSSetVar = null,
                              symmetryCanBeBroken:Boolean = true,
                              best:Boolean = false,
-                             symmetryClass:Option[Int => Int] = None)
+                             symmetryClassOfVariables:Option[Int => Int] = None,
+                             hotRestart:Boolean = true)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -129,16 +140,20 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
     var oldObj = obj.value
     var toReturn:SearchResult = NoMoveFound
 
-    val firstIterationSchemeZone = if(searchZone1 == null) if (best) vars.indices else vars.indices startBy startIndice else searchZone1.value
+    val firstIterationSchemeZone =
+      if(searchZone1 == null)
+        if (best) vars.indices
+        else if (hotRestart) vars.indices startBy startIndice else vars.indices
+      else if (hotRestart) HotRestart(searchZone1.value,startIndice) else searchZone1.value
 
-    val firstIterationScheme = symmetryClass match {
+    val firstIterationScheme = symmetryClassOfVariables match {
       case None => firstIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(firstIterationSchemeZone, s)
     }
 
     val secondIterationSchemeZone = if(searchZone2 == null) vars.indices else searchZone2.value
 
-    val secondIterationScheme = symmetryClass match {
+    val secondIterationScheme = symmetryClassOfVariables match {
       case None => secondIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
@@ -162,7 +177,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
             toReturn =  SwapMove(firstVar, secondVar, newObj, name)
             oldObj = newObj
           }else {
-            if (searchZone1 == null) startIndice = i
+            startIndice = i+1
             if (amIVerbose) println(name + ": move found")
             return SwapMove(firstVar, secondVar, newObj, name)
           }
@@ -199,7 +214,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  searchZone:CBLSSetVar = null)
   extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
   //the indice to start with for the exploration
-  var startIndice:Int = 0
+
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 

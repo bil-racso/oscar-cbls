@@ -15,8 +15,8 @@
 package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
-import oscar.cbls.search.core.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
-import oscar.cbls.search.move.{CallBackMove, Move}
+import oscar.cbls.search.core._
+import oscar.cbls.search.move.{CompositeMove, CallBackMove, Move}
 
 import scala.language.implicitConversions
 
@@ -358,7 +358,7 @@ class BoundSearches(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombina
   * notice that the count is reset by the reset operation
   * @author renaud.delandtsheer@cetic.be
   */
-class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a){
+class MaxMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a){
   var remainingMoves = maxMove
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
@@ -378,6 +378,29 @@ class BoundMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator
   def notifyMoveTaken(){
     remainingMoves -= 1
   }
+
+  /**to build a composite neighborhood.
+    * the first neighborhood is used only to provide a round robin exploration on its possible moves
+    * you must ensure that this first neighborhood will perform a hotRestart, so that it will enumerate all its moves
+    * internally, this neighborhood will be called with a fully acceptant acceptanceCriteria,
+    *
+    * the move combinator for every move provided by the first neighborhood, the combinator calls the second one
+    * and we consider the composition of the two moves for the acceptance criteria.
+    * the returned move is the composition of the two found moves
+    *
+    * you must also ensure that the two neighborhood evaluate the same objective function,
+    * since this combinator needs to evaluate the whole composite move, and not only the last part of the composition
+    *
+    * A native composite neighborhood will probably be much faster than this combinator, so use this for prototyping
+    * for instance, this combinator does not allow for some form of symmetry breaking, unless you are really doing it the hard way.
+    *
+    * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
+
+    * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
+    *
+    */
+  def andThen(b:Neighborhood) = new AndThen(a, b, maxMove)
+
 }
 
 /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
@@ -429,3 +452,63 @@ object RoundRobinNoParam{
   }
 }
 
+/**to build a composite neighborhood.
+  * the first neighborhood is used only to provide a round robin exploration on its possible moves
+  * you must ensure that this first neighborhood will perform a hotRestart, so that it will enumerate all its moves
+  * internally, this neighborhood will be called with a fully acceptant acceptanceCriteria,
+  *
+  * the move combinator for every move provided by the first neighborhood, the combinator calls the second one
+  * and we consider the composition of the two moves for the acceptance criteria.
+  * the returned move is the composition of the two found moves
+  *
+  * you must also ensure that the two neighborhood evaluate the same objective function,
+  * since this combinator needs to evaluate the whole composite move, and not only the last part of the composition
+  *
+  * A native composite neighborhood will probably be much faster than this combinator, so use this for prototyping
+  * for instance, this combinator does not allow for some form of symmetry breaking, unless you are really doing it the hard way.
+  *
+  * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
+  *
+  * @param a the first neighborhood, all moves delivered by this one will be considered
+  * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
+  * @param maxfirstStep the maximal number of moves to consider to the first neighborhood
+  *
+  * @author renaud.delandtsheer@cetic.be
+ */
+class AndThen(a:Neighborhood, b:Neighborhood, maxfirstStep:Int = Int.MaxValue) extends NeighborhoodCombinator(a,b){
+
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+
+    a.reset()
+
+    var remainingFirstSteps = maxfirstStep
+
+    var oldObj:Int = 0
+    def instrumentedFullyAcceptanceCriteria:(Int,Int) => Boolean = (stolenOldObj,_) => {oldObj = stolenOldObj; true}
+
+    while(remainingFirstSteps > 0){
+      remainingFirstSteps -= 1
+      a.getImprovingMove(instrumentedFullyAcceptanceCriteria) match{
+        case NoMoveFound => return NoMoveFound
+        case MoveFound(firstMove) => {
+          val touchedVars = firstMove.touchedVariables
+          val model = touchedVars.head.model
+          val snapshot = model.saveValues(touchedVars:_*)
+          firstMove.commit()
+          if(amIVerbose) println("Andthen: trying first move " + firstMove)
+          def globalAcceptanceCriteria:(Int,Int) => Boolean = (_,newObj) => acceptanceCriteria(oldObj,newObj)
+          b.getImprovingMove(globalAcceptanceCriteria) match{
+            case NoMoveFound => model.restoreSnapshot(snapshot)
+            case MoveFound(secondMove) =>{
+              model.restoreSnapshot(snapshot)
+              return CompositeMove(List(firstMove,secondMove),
+                secondMove.objAfter,
+                firstMove.neighborhoodName + "_AndThen_" + secondMove.neighborhoodName)
+            }
+          }
+        }
+      }
+    }
+   NoMoveFound
+  }
+}
